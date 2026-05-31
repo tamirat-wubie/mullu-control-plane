@@ -77,6 +77,7 @@ def test_runbook_names_required_closure_artifacts_and_counts() -> None:
     assert "terminal minting gate requires explicit authority" in runbook_text
     assert "terminal certificate minting executor requires ready gate" in runbook_text
     assert "`requires_execution_environment`" in runbook_text
+    assert "`requires_dependency_closure`" in runbook_text
     assert "`approval_and_environment_blocked`" in runbook_text
 
 

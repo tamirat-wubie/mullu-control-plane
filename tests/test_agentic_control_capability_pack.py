@@ -2,8 +2,8 @@
 
 Governance scope: autonomous mission control, governance gating, resource
 bounding, verification planning, product planning, swarm coordination, and
-interrogation, recursive refinement, and append-only evidence ledger capability
-boundaries.
+interrogation, recursive refinement, memory-admission planning,
+incident-recovery planning, and append-only evidence ledger capability boundaries.
 Dependencies: gateway capability fabric loader and governed capability contracts.
 Invariants:
   - Agentic-control capabilities grant planning and ledger authority only.
@@ -39,7 +39,7 @@ def test_agentic_control_capability_entries_are_schema_valid() -> None:
     payload = _load_json(AGENTIC_CONTROL_CAPABILITY_PACK_PATH)
     entries = payload["capabilities"]
 
-    assert len(entries) == 12
+    assert len(entries) == 14
     assert all(_validate_schema_instance(schema, entry) == [] for entry in entries)
     assert all(CapabilityRegistryEntry.from_mapping(entry).domain == "agentic_control" for entry in entries)
 
@@ -136,9 +136,9 @@ def test_agentic_control_pack_installs_through_explicit_capability_fabric() -> N
     raw_tool_decision = gate.admit(command_id="cmd-raw-tool", intent_name="agentic_control.raw_tool.execute")
 
     assert capsule.domain == "agentic_control"
-    assert len(entries) == 12
+    assert len(entries) == 14
     assert read_model["capsule_count"] == 1
-    assert read_model["capability_count"] == 12
+    assert read_model["capability_count"] == 14
     assert read_model["domains"] == ({"domain": "agentic_control", "capability_ids": tuple(sorted(capsule.capability_refs))},)
     assert mission_decision.status.value == "accepted"
     assert evidence_decision.status.value == "accepted"
@@ -153,6 +153,8 @@ def test_agentic_control_governed_records_bind_planning_and_ledger_boundaries() 
     swarm_record = governed["agentic_control.swarm.coordinate"]
     interrogation_record = governed["agentic_control.interrogation.plan"]
     refinement_record = governed["agentic_control.self_audit.refine"]
+    memory_record = governed["agentic_control.memory_admission.plan"]
+    incident_record = governed["agentic_control.incident_recovery.plan"]
     evidence_record = governed["agentic_control.evidence.append"]
 
     assert mission_record["read_only"] is True
@@ -172,6 +174,18 @@ def test_agentic_control_governed_records_bind_planning_and_ledger_boundaries() 
         "unbounded_recursion_authorized",
         "action_executed_without_verification",
         "workspace_file_written",
+    ]
+    assert memory_record["read_only"] is True
+    assert memory_record["forbidden_effects"] == [
+        "memory_written",
+        "raw_logs_admitted",
+        "unverified_summary_generalized",
+    ]
+    assert incident_record["read_only"] is True
+    assert incident_record["forbidden_effects"] == [
+        "rollback_executed",
+        "incident_closed_without_evidence",
+        "external_message_sent",
     ]
     assert evidence_record["read_only"] is False
     assert evidence_record["world_mutating"] is True

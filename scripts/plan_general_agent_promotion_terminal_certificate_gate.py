@@ -44,6 +44,7 @@ DEFAULT_GENERATED_AT = "2026-05-01T12:00:00+00:00"
 TERMINAL_CERTIFICATE_SCHEMA_ID = "urn:mullusi:schema:terminal-closure-certificate:1"
 ADMITTED_STATUSES = frozenset({"admitted_runnable", "admitted_approved"})
 APPROVAL_CLASSES = frozenset({"requires_approval", "review_only"})
+DEPENDENCY_BLOCKED_CLASSES = frozenset({"requires_dependency_closure"})
 ENVIRONMENT_BLOCKED_CLASSES = frozenset(
     {
         "requires_environment_binding",
@@ -258,6 +259,12 @@ def _terminal_gate_status(
             reasons.append("approval_receipt_missing")
         reasons.extend(approval_state.errors)
         return "blocked_approval", tuple(dict.fromkeys(reasons))
+    if execution_class in DEPENDENCY_BLOCKED_CLASSES:
+        reasons = list(queue_blockers)
+        if not reasons:
+            reasons.append("dependency_action_requires_closure")
+        reasons.extend(approval_state.errors)
+        return "blocked_dependency", tuple(dict.fromkeys(reasons))
     if execution_class in ENVIRONMENT_BLOCKED_CLASSES:
         reasons = list(queue_blockers)
         if approval_required and not approval_ref_present:

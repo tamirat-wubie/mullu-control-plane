@@ -2,16 +2,16 @@
 """Plan the general-agent promotion live-evidence execution queue.
 
 Purpose: classify aggregate promotion closure actions into runnable, approval,
-environment-bound, execution-environment-bound, and review-only queue items
-without executing live effects.
+environment-bound, execution-environment-bound, dependency-bound, and
+review-only queue items without executing live effects.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: aggregate promotion closure plan, environment binding contract,
 redacted environment binding receipt, and live evidence queue schema.
 Invariants:
   - The queue is a proof artifact, not an execution grant.
   - Secret values are never read, printed, or serialized.
-  - Missing bindings, uncontracted bindings, manual parameters, and execution
-    environment blockers are explicit.
+  - Missing bindings, uncontracted bindings, manual parameters, dependency
+    actions, and execution environment blockers are explicit.
   - Approval-required source actions remain approval-required.
 """
 
@@ -55,6 +55,12 @@ PLACEHOLDER_MANUAL_PARAMETERS: dict[str, str] = {
     "connector_id": "email_calendar_connector_id",
     "read_only_query": "email_calendar_read_only_query",
 }
+LIVE_RECEIPT_DEPENDENCY_PREFIXES: dict[str, tuple[str, ...]] = {
+    "browser_live_evidence_missing": ("browser_dependency_missing:",),
+    "document_live_evidence_missing": ("document_dependency_missing:",),
+    "voice_live_evidence_missing": ("voice_dependency_missing:",),
+    "email_calendar_live_evidence_missing": ("email_calendar_dependency_missing:",),
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,6 +88,7 @@ class LiveEvidenceQueueAction:
     missing_bindings: tuple[str, ...]
     uncontracted_bindings: tuple[str, ...]
     manual_parameters: tuple[str, ...]
+    dependent_action_ids: tuple[str, ...]
     execution_environment: dict[str, Any] | None
     blocked_reasons: tuple[str, ...]
     command: str
@@ -102,6 +109,7 @@ class LiveEvidenceQueueAction:
             "missing_bindings": list(self.missing_bindings),
             "uncontracted_bindings": list(self.uncontracted_bindings),
             "manual_parameters": list(self.manual_parameters),
+            "dependent_action_ids": list(self.dependent_action_ids),
             "blocked_reasons": list(self.blocked_reasons),
             "command": self.command,
             "evidence_required": list(self.evidence_required),
@@ -171,14 +179,16 @@ def plan_general_agent_promotion_live_evidence_queue(
         receipt_path=environment_binding_receipt_path,
         contract_path=environment_bindings_path,
     )
+    source_actions = _source_actions(promotion_plan)
     actions = tuple(
         _queue_action(
             index=index,
             action=action,
+            source_actions=source_actions,
             contract_bindings=contract_bindings,
             receipt_state=receipt_state,
         )
-        for index, action in enumerate(_source_actions(promotion_plan), start=1)
+        for index, action in enumerate(source_actions, start=1)
     )
     missing_bindings = tuple(
         sorted(
@@ -259,6 +269,7 @@ def _queue_action(
     *,
     index: int,
     action: dict[str, Any],
+    source_actions: tuple[dict[str, Any], ...],
     contract_bindings: frozenset[str],
     receipt_state: EnvironmentReceiptState,
 ) -> LiveEvidenceQueueAction:
@@ -276,10 +287,12 @@ def _queue_action(
     )
     execution_environment = _execution_environment(action)
     execution_environment_reasons = _execution_environment_blocked_reasons(execution_environment)
+    dependent_action_ids = _dependent_action_ids(action=action, source_actions=source_actions)
     blocked_reasons = _blocked_reasons(
         missing_bindings=missing_bindings,
         uncontracted_bindings=uncontracted_bindings,
         manual_parameters=manual_parameters,
+        dependent_action_ids=dependent_action_ids,
         execution_environment_reasons=execution_environment_reasons,
         receipt_state=receipt_state,
     )
@@ -289,6 +302,7 @@ def _queue_action(
         approval_required=approval_required,
         missing_bindings=missing_bindings,
         manual_parameters=manual_parameters,
+        dependency_blocked=bool(dependent_action_ids),
         execution_environment_blocked=bool(execution_environment_reasons),
     )
     return LiveEvidenceQueueAction(
@@ -303,6 +317,7 @@ def _queue_action(
         missing_bindings=missing_bindings,
         uncontracted_bindings=uncontracted_bindings,
         manual_parameters=manual_parameters,
+        dependent_action_ids=dependent_action_ids,
         execution_environment=execution_environment,
         blocked_reasons=blocked_reasons,
         command=command,
@@ -381,6 +396,7 @@ def _blocked_reasons(
     missing_bindings: tuple[str, ...],
     uncontracted_bindings: tuple[str, ...],
     manual_parameters: tuple[str, ...],
+    dependent_action_ids: tuple[str, ...],
     execution_environment_reasons: tuple[str, ...],
     receipt_state: EnvironmentReceiptState,
 ) -> tuple[str, ...]:
@@ -391,6 +407,7 @@ def _blocked_reasons(
     reasons.extend(f"binding_not_in_environment_contract:{binding}" for binding in uncontracted_bindings)
     reasons.extend(f"environment_binding_missing:{binding}" for binding in missing_bindings)
     reasons.extend(f"manual_parameter_required:{parameter}" for parameter in manual_parameters)
+    reasons.extend(f"dependency_action_requires_closure:{action_id}" for action_id in dependent_action_ids)
     reasons.extend(execution_environment_reasons)
     return tuple(dict.fromkeys(reasons))
 
@@ -401,20 +418,47 @@ def _execution_class(
     approval_required: bool,
     missing_bindings: tuple[str, ...],
     manual_parameters: tuple[str, ...],
+    dependency_blocked: bool,
     execution_environment_blocked: bool,
 ) -> str:
     environment_blocked = bool(missing_bindings or manual_parameters)
     if source_plan_type == "portfolio":
         return "approval_and_environment_blocked" if environment_blocked else "review_only"
-    if approval_required and (environment_blocked or execution_environment_blocked):
+    if approval_required and (environment_blocked or dependency_blocked or execution_environment_blocked):
         return "approval_and_environment_blocked"
     if approval_required:
         return "requires_approval"
+    if dependency_blocked:
+        return "requires_dependency_closure"
     if execution_environment_blocked:
         return "requires_execution_environment"
     if environment_blocked:
         return "requires_environment_binding"
     return "runnable_local"
+
+
+def _dependent_action_ids(
+    *,
+    action: dict[str, Any],
+    source_actions: tuple[dict[str, Any], ...],
+) -> tuple[str, ...]:
+    blocker = _field_text(action, "blocker", "")
+    dependency_prefixes = LIVE_RECEIPT_DEPENDENCY_PREFIXES.get(blocker, ())
+    if not dependency_prefixes:
+        return ()
+    adapter_id = str(action.get("adapter_id", "")).strip()
+    dependent_ids: list[str] = []
+    for candidate in source_actions:
+        candidate_blocker = _field_text(candidate, "blocker", "")
+        if not any(candidate_blocker.startswith(prefix) for prefix in dependency_prefixes):
+            continue
+        candidate_adapter_id = str(candidate.get("adapter_id", "")).strip()
+        if adapter_id and candidate_adapter_id and candidate_adapter_id != adapter_id:
+            continue
+        candidate_action_id = _field_text(candidate, "action_id", "")
+        if candidate_action_id:
+            dependent_ids.append(candidate_action_id)
+    return tuple(dict.fromkeys(dependent_ids))
 
 
 def _execution_environment(action: dict[str, Any]) -> dict[str, Any] | None:
