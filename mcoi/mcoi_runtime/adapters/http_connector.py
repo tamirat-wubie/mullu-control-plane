@@ -1,4 +1,4 @@
-"""Purpose: governed HTTP connector — read-only, allowlisted, bounded, hardened.
+"""Purpose: governed HTTP connector — allowlisted, bounded, hardened.
 Governance scope: external integration adapter only.
 Dependencies: provider registry, integration contracts.
 Invariants:
@@ -6,6 +6,7 @@ Invariants:
   - URL normalization before scope check.
   - DNS resolution checked against private IP ranges (anti-rebinding).
   - Redirect following disabled (anti-SSRF via redirect).
+  - Request JSON bodies are deterministic, bounded, and digest-only in receipts.
   - Response size limits.
   - Content-type checks.
   - Status-code mapping into typed results.
@@ -15,9 +16,10 @@ Invariants:
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Any, Callable
 
 import hashlib
+import json
 import socket
 import urllib.request
 import urllib.error
@@ -54,6 +56,7 @@ class HttpConnectorConfig:
     timeout_seconds: float = 30.0
     read_timeout_seconds: float = 60.0  # Max time for response body read
     max_response_bytes: int = 10 * 1024 * 1024  # 10MB
+    max_request_body_bytes: int = 1 * 1024 * 1024  # 1MB
     allowed_methods: tuple[str, ...] = ("GET",)
     allowed_content_types: tuple[str, ...] = ()  # empty = no restriction
     allowed_headers: tuple[str, ...] = ()  # headers to forward from request
@@ -65,6 +68,8 @@ class HttpConnectorConfig:
             raise ValueError("read_timeout_seconds must be positive")
         if self.max_response_bytes <= 0:
             raise ValueError("max_response_bytes must be positive")
+        if self.max_request_body_bytes <= 0:
+            raise ValueError("max_request_body_bytes must be positive")
 
 
 # v4.29.0 (audit F9): SSRF policy unified into core/ssrf_policy. The
@@ -213,6 +218,37 @@ def _sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
 
 
+def _encode_json_body(value: Any, *, max_bytes: int) -> tuple[bytes, str]:
+    """Encode a deterministic JSON request body and return bytes + digest."""
+
+    try:
+        encoded = json.dumps(
+            value,
+            sort_keys=True,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    except (TypeError, ValueError) as exc:
+        raise ValueError("json_body must be deterministic JSON") from exc
+    if len(encoded) > max_bytes:
+        raise ValueError(f"json_body_too_large:{len(encoded)}")
+    return encoded, hashlib.sha256(encoded).hexdigest()
+
+
+def _request_hash_payload(*, url: str, method: str, request: dict) -> dict[str, Any]:
+    headers = sorted((request.get("headers") or {}).keys()) if isinstance(request.get("headers"), dict) else ()
+    payload: dict[str, Any] = {
+        "url": url,
+        "method": method,
+        "headers": headers,
+    }
+    body_digest = request.get("body_digest")
+    if body_digest:
+        payload["body_digest"] = str(body_digest)
+    return payload
+
+
 def _build_connector_receipt(
     *,
     result_id: str,
@@ -227,11 +263,7 @@ def _build_connector_receipt(
     status_code: int | None = None,
     error_code: str | None = None,
 ) -> ConnectorInvocationReceipt:
-    request_hash = _sha256_text(str({
-        "url": url,
-        "method": method,
-        "headers": sorted((request.get("headers") or {}).keys()) if isinstance(request.get("headers"), dict) else (),
-    }))
+    request_hash = _sha256_text(str(_request_hash_payload(url=url, method=method, request=request)))
     receipt_id = stable_identifier(
         "connector-invocation-receipt",
         {
@@ -292,11 +324,15 @@ class HttpConnector:
           - url: str (required)
           - method: str (optional, default GET, must be in allowed_methods)
           - headers: dict[str, str] (optional, filtered by allowed_headers)
+          - json_body: JSON-compatible value (optional, not allowed for GET/HEAD)
         """
         started_at = self._clock()
         url = request.get("url", "")
         method = request.get("method", "GET").upper()
         request_headers = request.get("headers", {})
+        request_body: bytes | None = None
+        body_digest: str | None = None
+        receipt_request = request
 
         result_id = stable_identifier("http-result", {
             "connector_id": connector.connector_id,
@@ -321,11 +357,24 @@ class HttpConnector:
             return self._failure(result_id, connector, method, url, request, started_at,
                                  f"method_not_allowed:{method}")
 
+        if "json_body" in request:
+            if method in {"GET", "HEAD"}:
+                return self._failure(result_id, connector, method, url, request, started_at,
+                                     f"json_body_not_allowed_for_method:{method}")
+            try:
+                request_body, body_digest = _encode_json_body(
+                    request["json_body"],
+                    max_bytes=self._config.max_request_body_bytes,
+                )
+            except ValueError as exc:
+                return self._failure(result_id, connector, method, url, request, started_at, str(exc))
+            receipt_request = {**request, "body_digest": body_digest}
+
         # URL normalization
         try:
             normalized_url = _normalize_url(url)
         except (ValueError, TypeError):
-            return self._failure(result_id, connector, method, url, request, started_at, "malformed_url")
+            return self._failure(result_id, connector, method, url, receipt_request, started_at, "malformed_url")
 
         # SSRF protection: block private/loopback/metadata addresses
         # (includes DNS resolution + cloud metadata blocklist).
@@ -334,7 +383,7 @@ class HttpConnector:
         # window between the SSRF check and urllib's own DNS lookup.
         is_private, pinned_ip = _resolve_and_check(normalized_url)
         if is_private or pinned_ip is None:
-            return self._failure(result_id, connector, method, normalized_url, request, started_at,
+            return self._failure(result_id, connector, method, normalized_url, receipt_request, started_at,
                                  "blocked_private_address")
 
         # Effective max response bytes (policy overrides config if stricter)
@@ -344,11 +393,13 @@ class HttpConnector:
 
         # Build request with filtered headers
         try:
-            req = urllib.request.Request(normalized_url, method=method)
+            req = urllib.request.Request(normalized_url, data=request_body, method=method)
             if self._config.allowed_headers and isinstance(request_headers, dict):
                 for key, value in request_headers.items():
                     if key.lower() in (h.lower() for h in self._config.allowed_headers):
                         req.add_header(key, value)
+            if request_body is not None:
+                req.add_header("Content-Type", "application/json")
 
             # v4.29.0 (audit F10): per-request opener pinned to the
             # resolved IP. Connects to ``pinned_ip`` directly while
@@ -362,7 +413,7 @@ class HttpConnector:
                 if self._config.allowed_content_types:
                     ct_base = content_type.split(";")[0].strip().lower()
                     if ct_base not in (t.lower() for t in self._config.allowed_content_types):
-                        return self._failure(result_id, connector, method, normalized_url, request, started_at,
+                        return self._failure(result_id, connector, method, normalized_url, receipt_request, started_at,
                                              f"content_type_not_allowed:{ct_base}")
 
                 # Time-bounded and size-bounded read (defends against slow trickle)
@@ -379,7 +430,7 @@ class HttpConnector:
                             connector=connector,
                             method=method,
                             url=normalized_url,
-                            request=request,
+                            request=receipt_request,
                             response_digest="none",
                             status=ConnectorStatus.TIMEOUT,
                             started_at=started_at,
@@ -402,7 +453,7 @@ class HttpConnector:
                     chunks.append(chunk)
                     total_read += len(chunk)
                     if total_read > max_bytes:
-                        return self._failure(result_id, connector, method, normalized_url, request, started_at,
+                        return self._failure(result_id, connector, method, normalized_url, receipt_request, started_at,
                                              f"response_too_large:{total_read}")
                 body = b"".join(chunks)
 
@@ -415,7 +466,7 @@ class HttpConnector:
                     connector=connector,
                     method=method,
                     url=normalized_url,
-                    request=request,
+                    request=receipt_request,
                     response_digest=digest,
                     status=status,
                     started_at=started_at,
@@ -423,6 +474,16 @@ class HttpConnector:
                     status_code=response.status,
                     error_code=None if status is ConnectorStatus.SUCCEEDED else f"http_{response.status}",
                 )
+                metadata = {
+                    "url": normalized_url,
+                    "method": method,
+                    "status_code": response.status,
+                    "content_type": content_type,
+                    "content_length": len(body),
+                    "connector_receipt": receipt.to_json_dict(),
+                }
+                if body_digest is not None:
+                    metadata["request_body_digest"] = body_digest
                 return ConnectorResult(
                     result_id=result_id,
                     connector_id=connector.connector_id,
@@ -431,23 +492,16 @@ class HttpConnector:
                     started_at=started_at,
                     finished_at=finished_at,
                     error_code=None if status is ConnectorStatus.SUCCEEDED else f"http_{response.status}",
-                    metadata={
-                        "url": normalized_url,
-                        "method": method,
-                        "status_code": response.status,
-                        "content_type": content_type,
-                        "content_length": len(body),
-                        "connector_receipt": receipt.to_json_dict(),
-                    },
+                    metadata=metadata,
                 )
         except urllib.error.HTTPError as exc:
             error_msg = f"http_{exc.code}"
             # Surface redirect-blocked errors distinctly
             if exc.msg and exc.msg.startswith("redirect_blocked:"):
                 error_msg = exc.msg
-            return self._failure(result_id, connector, method, url, request, started_at, error_msg)
+            return self._failure(result_id, connector, method, url, receipt_request, started_at, error_msg)
         except urllib.error.URLError as exc:
-            return self._failure(result_id, connector, method, url, request, started_at,
+            return self._failure(result_id, connector, method, url, receipt_request, started_at,
                                  f"url_error:{exc.reason}")
         except TimeoutError:
             finished_at = self._clock()
@@ -456,7 +510,7 @@ class HttpConnector:
                 connector=connector,
                 method=method,
                 url=url,
-                request=request,
+                request=receipt_request,
                 response_digest="none",
                 status=ConnectorStatus.TIMEOUT,
                 started_at=started_at,
@@ -474,7 +528,7 @@ class HttpConnector:
                 metadata={"connector_receipt": receipt.to_json_dict()},
             )
         except Exception as exc:
-            return self._failure(result_id, connector, method, url, request, started_at,
+            return self._failure(result_id, connector, method, url, receipt_request, started_at,
                                  f"unexpected:{type(exc).__name__}")
 
     def _failure(
