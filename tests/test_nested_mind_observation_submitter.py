@@ -11,6 +11,8 @@ raw response bodies are never persisted.
 
 from __future__ import annotations
 
+import pytest
+
 from mcoi_runtime.adapters import (
     JsonConnectorOutcome,
     NESTED_MIND_OBSERVATION_SUBMIT_CONNECTOR_ID,
@@ -138,6 +140,31 @@ def _submitter(fake: FakeJsonConnector) -> NestedMindObservationSubmitter:
     )
 
 
+def test_submitter_constructor_rejects_unsafe_base_urls() -> None:
+    for base_url in (
+        "http://nested.example",
+        "https://nested.example?debug=true",
+        "https://nested.example#fragment",
+        "https://user:pass@nested.example",
+    ):
+        with pytest.raises(ValueError, match="base_url"):
+            NestedMindObservationSubmitter(
+                clock=_clock,
+                base_url=base_url,
+                http_json_connector=FakeJsonConnector(),
+            )
+
+
+def test_submitter_constructor_accepts_https_path_base_url() -> None:
+    submitter = NestedMindObservationSubmitter(
+        clock=_clock,
+        base_url="https://nested.example/api/",
+        http_json_connector=FakeJsonConnector(),
+    )
+
+    assert submitter.base_url == "https://nested.example/api"
+
+
 def test_disabled_submit_flag_returns_disabled_without_transport_call() -> None:
     fake = FakeJsonConnector()
     report = _submitter(fake).submit_observation_plan(_plan(), submit_enabled=False)
@@ -184,6 +211,27 @@ def test_payload_hash_mismatch_blocks_submission() -> None:
     assert report.status is NestedMindObservationSubmissionStatus.BLOCKED
     assert "payload_hash_mismatch" in report.blockers
     assert fake.calls == []
+
+
+def test_observation_key_must_be_strict_path_segment() -> None:
+    for key in (
+        "observations/../x",
+        "observations/x/y",
+        "observations/x\\y",
+        "observations/x?y",
+        "observations/x#y",
+        "observations/%2e%2e",
+    ):
+        payload = _payload(key=key)
+        fake = FakeJsonConnector()
+        report = _submitter(fake).submit_observation_plan(
+            _plan(proposal_payload=payload, payload_hash=stable_json_hash(payload)),
+            submit_enabled=True,
+        )
+
+        assert report.status is NestedMindObservationSubmissionStatus.BLOCKED
+        assert "op_key_must_not_shape_route" in report.blockers
+        assert fake.calls == []
 
 
 def test_arbitrary_op_list_blocks_submission() -> None:
@@ -314,6 +362,28 @@ def test_bearer_token_appears_only_in_authorization_header_not_report() -> None:
     assert "secret-token" not in str(outcome.commit_witness.to_json_dict())
 
 
+def test_response_boolean_sequence_is_unverified() -> None:
+    plan = _plan()
+    for sequence in (True, False):
+        fake = FakeJsonConnector(payload=_accepted_response(payload_hash=plan.payload_hash, sequence=sequence))
+        outcome = _submitter(fake).submit_observation_plan_with_witness(plan, submit_enabled=True)
+
+        assert outcome.report.status is NestedMindObservationSubmissionStatus.UNVERIFIED_RESPONSE
+        assert outcome.commit_witness is None
+        assert any("sequence must be a non-negative integer" in failure for failure in outcome.report.failures)
+
+
+def test_response_numeric_sequence_is_accepted() -> None:
+    plan = _plan()
+    for sequence in (0, 1):
+        fake = FakeJsonConnector(payload=_accepted_response(payload_hash=plan.payload_hash, sequence=sequence))
+        outcome = _submitter(fake).submit_observation_plan_with_witness(plan, submit_enabled=True)
+
+        assert outcome.report.status is NestedMindObservationSubmissionStatus.ACCEPTED
+        assert outcome.commit_witness is not None
+        assert outcome.commit_witness.metadata["sequence"] == sequence
+
+
 def test_same_observation_creates_same_idempotency_key() -> None:
     evidence = _proposal_evidence()
     payload_a = build_observation_proposal_payload(
@@ -336,6 +406,27 @@ def test_same_observation_creates_same_idempotency_key() -> None:
     assert payload_a["metadata"]["idempotency_key"] == expected
     assert payload_b["metadata"]["idempotency_key"] == expected
     assert stable_json_hash(payload_a) == stable_json_hash(payload_b)
+
+
+def test_observation_payload_builder_rejects_unsafe_observation_ids() -> None:
+    evidence = _proposal_evidence()
+
+    payload = build_observation_proposal_payload(
+        evidence,
+        observation_id="obs-1",
+        observation_hash="observation-hash-1",
+        observation_value={"observation_id": "obs-1"},
+    )
+    assert payload["ops"][0]["key"] == "observations/obs-1"
+
+    for observation_id in ("../x", "x/y", "x\\y", "x?y", "x#y", "%2e%2e"):
+        with pytest.raises(ValueError, match="observation_id"):
+            build_observation_proposal_payload(
+                evidence,
+                observation_id=observation_id,
+                observation_hash="observation-hash-1",
+                observation_value={"observation_id": observation_id},
+            )
 
 
 def test_duplicate_response_verifies_when_hashes_and_idempotency_match() -> None:

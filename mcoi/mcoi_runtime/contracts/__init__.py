@@ -34,6 +34,7 @@ from .nested_mind_observation_submission import (
     nested_mind_observation_idempotency_key,
     nested_mind_observation_submission_report_hash,
     stable_json_hash,
+    validate_observation_id,
 )
 from .nested_mind_receipts import (
     NestedMindCommitWitness,
@@ -2106,6 +2107,7 @@ __all__ = [
     "nested_mind_observation_idempotency_key",
     "nested_mind_observation_submission_report_hash",
     "stable_json_hash",
+    "validate_observation_id",
     "ConflictRecord",
     "ConflictStrategy",
     "CoordinationCheckpoint",

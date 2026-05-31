@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from hashlib import sha256
 import json
+import re
 from typing import Any, Mapping, Sequence
 
 from ._base import (
@@ -38,6 +39,18 @@ class NestedMindObservationSubmissionStatus(StrEnum):
     REJECTED = "rejected"
     FAILED = "failed"
     UNVERIFIED_RESPONSE = "unverified_response"
+
+
+_OBSERVATION_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+
+
+def validate_observation_id(observation_id: str) -> str:
+    """Return a path-segment-safe nested-mind observation identifier."""
+
+    value = str(observation_id or "").strip()
+    if not _OBSERVATION_ID_RE.fullmatch(value):
+        raise ValueError("observation_id must be a path-segment-safe identifier")
+    return value
 
 
 def stable_json_hash(payload: Mapping[str, Any]) -> str:
@@ -83,9 +96,7 @@ def build_observation_proposal_payload(
 ) -> Mapping[str, Any]:
     """Build the only proposal payload shape allowed for live observation writes."""
 
-    safe_observation_id = require_non_empty_text(observation_id, "observation_id")
-    if "../" in safe_observation_id or safe_observation_id.startswith("/"):
-        raise ValueError("observation_id must not shape routes")
+    safe_observation_id = validate_observation_id(observation_id)
     idempotency_key = nested_mind_observation_idempotency_key(
         evidence,
         observation_hash=observation_hash,

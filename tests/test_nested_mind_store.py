@@ -180,6 +180,18 @@ def test_raw_response_body_not_accepted(tmp_path) -> None:
         store.record_submission_report(unsafe_report)
 
 
+def test_existing_store_forbidden_payload_field_is_corruption(tmp_path) -> None:
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_plan(_plan())
+    entry = json.loads(store_path.read_text(encoding="utf-8"))
+    entry["payload"]["metadata"] = {"bearer_token": "secret"}
+    store_path.write_text(json.dumps(entry, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="forbidden sensitive field"):
+        NestedMindEvidenceStore(store_path)
+
+
 def test_existing_store_rejects_unexpected_top_level_fields(tmp_path) -> None:
     store_path = tmp_path / "nested-mind.jsonl"
     store = NestedMindEvidenceStore(store_path)
