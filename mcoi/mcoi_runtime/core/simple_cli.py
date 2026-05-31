@@ -17,6 +17,7 @@ from typing import Sequence
 
 from .invariants import RuntimeCoreInvariantError
 from .simple_platform import SimpleActionRequest, SimplePlatform, SimpleTaskRequest, SimpleWorkflowRequest
+from .simple_platform_api import SimplePlatformRuntime
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -54,6 +55,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     tasks_parser = subparsers.add_parser("tasks", help="List common task templates")
     tasks_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
+
+    actions_parser = subparsers.add_parser("actions", help="List plain action types")
+    actions_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
 
     workflow_parser = subparsers.add_parser("workflow", help="Check a common workflow")
     workflow_parser.add_argument(
@@ -129,6 +133,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             print(_readable_tasks(templates))
         return 0
+    if args.command == "actions":
+        actions = SimplePlatformRuntime().action_menu().to_dict()["payload"]["actions"]
+        if args.json:
+            print(json.dumps(_envelope(True, "listed", {"actions": actions}), sort_keys=True, separators=(",", ":")))
+        else:
+            print(_readable_actions(actions))
+        return 0
     if args.command == "workflow":
         plan = SimplePlatform().check_workflow(
             SimpleWorkflowRequest(
@@ -195,6 +206,18 @@ def _readable_tasks(templates: list[dict[str, str]]) -> str:
         target_hint = " --target <target>" if not template["default_target"] else ""
         lines.append(f"- {task_name}: {template['label']}")
         lines.append(f"  command: mullu task {task_name}{target_hint}")
+    return "\n".join(lines)
+
+
+def _readable_actions(actions: object) -> str:
+    lines = ["Plain actions:"]
+    if not isinstance(actions, list):
+        raise RuntimeCoreInvariantError("simple action menu must be a list")
+    for action in actions:
+        if not isinstance(action, dict):
+            raise RuntimeCoreInvariantError("simple action menu item must be an object")
+        lines.append(f"- {action['action']}: {action['label']}")
+        lines.append(f"  purpose: {action['purpose']}")
     return "\n".join(lines)
 
 

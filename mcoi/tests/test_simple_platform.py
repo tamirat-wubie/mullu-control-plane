@@ -383,6 +383,29 @@ def test_simple_cli_lists_task_templates_as_json(capsys) -> None:
     assert envelope["payload"]["tasks"][2]["default_target"] == "support@mullusi.com"
 
 
+def test_simple_cli_lists_actions_as_readable_catalog(capsys) -> None:
+    exit_code = guarded_main(["actions"])
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "Plain actions:" in output
+    assert "- view: View" in output
+    assert "purpose: Read an allowed file or artifact." in output
+    assert "- send: Send" in output
+
+
+def test_simple_cli_lists_actions_as_json(capsys) -> None:
+    exit_code = guarded_main(["actions", "--json"])
+    envelope = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "listed"
+    assert envelope["payload"]["actions"][0]["action"] == "view"
+    assert envelope["payload"]["actions"][2]["label"] == "Send"
+
+
 def test_simple_cli_workflow_outputs_ready_result(capsys) -> None:
     exit_code = guarded_main(
         [
