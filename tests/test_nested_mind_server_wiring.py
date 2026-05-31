@@ -32,6 +32,8 @@ def test_server_imports_nested_mind_integration_helper() -> None:
 
     assert "from mcoi_runtime.app.nested_mind_integration import (" in source
     assert "mount_nested_mind_connector_from_env" in source
+    assert "mount_nested_mind_observation_bridge_from_env" in source
+    assert "mount_nested_mind_observation_submitter_from_env" in source
 
 
 def test_server_registers_nested_mind_bootstrap_and_enabled_connector() -> None:
@@ -48,11 +50,39 @@ def test_server_registers_nested_mind_bootstrap_and_enabled_connector() -> None:
     )
 
 
+def test_server_registers_nested_mind_observation_bridge_and_submitter() -> None:
+    source = _server_source()
+
+    assert (
+        "nested_mind_observation_bridge_bootstrap = "
+        "mount_nested_mind_observation_bridge_from_env("
+    ) in source
+    assert (
+        'deps.set(\n    "nested_mind_observation_bridge_bootstrap",'
+    ) in source
+    assert (
+        'deps.set(\n    "nested_mind_observation_bridge_planner",'
+    ) in source
+    assert (
+        "nested_mind_observation_submitter_bootstrap = "
+        "mount_nested_mind_observation_submitter_from_env("
+    ) in source
+    assert (
+        'deps.set(\n    "nested_mind_observation_submitter_bootstrap",'
+    ) in source
+    assert "if nested_mind_observation_submitter_bootstrap.submitter is not None:" in source
+    assert (
+        'deps.set(\n        "nested_mind_observation_submitter",'
+    ) in source
+
+
 def test_nested_mind_wiring_runs_after_note_memory_and_before_god_mode() -> None:
     source = _server_source()
 
     note_memory_index = source.index("note_memory_bootstrap = mount_note_memory_router_from_env")
     nested_mind_index = source.index("nested_mind_bootstrap = mount_nested_mind_connector_from_env")
+    bridge_index = source.index("nested_mind_observation_bridge_bootstrap = mount_nested_mind_observation_bridge_from_env")
+    submitter_index = source.index("nested_mind_observation_submitter_bootstrap = mount_nested_mind_observation_submitter_from_env")
     god_mode_index = source.index("from mcoi_runtime.core.god_mode_integration import install_god_mode")
 
-    assert note_memory_index < nested_mind_index < god_mode_index
+    assert note_memory_index < nested_mind_index < bridge_index < submitter_index < god_mode_index

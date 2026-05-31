@@ -26,14 +26,23 @@ def product_spec_from_mapping(payload: Mapping[str, Any]) -> ProductSpec:
     if missing:
         raise ValueError(f"product_spec_fields_missing:{','.join(missing)}")
     return ProductSpec(
-        app_name=str(payload["app_name"]),
+        app_name=_required_text(payload["app_name"], "app_name"),
         users=_tuple_from_payload(payload["users"], "users"),
         jobs_to_be_done=_tuple_from_payload(payload["jobs_to_be_done"], "jobs_to_be_done"),
         core_flows=_tuple_from_payload(payload["core_flows"], "core_flows"),
         non_goals=_tuple_from_payload(payload["non_goals"], "non_goals"),
         security_requirements=_tuple_from_payload(payload["security_requirements"], "security_requirements"),
-        metadata=dict(payload.get("metadata") or {}),
+        metadata=_metadata_from_payload(payload.get("metadata")),
     )
+
+
+def _required_text(value: Any, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must be a string")
+    text = value.strip()
+    if not text:
+        raise ValueError(f"{field_name} must be non-empty")
+    return text
 
 
 def _tuple_from_payload(value: Any, field_name: str) -> tuple[str, ...]:
@@ -47,3 +56,11 @@ def _tuple_from_payload(value: Any, field_name: str) -> tuple[str, ...]:
         if not isinstance(item, str):
             raise ValueError(f"{field_name}[{index}] must be a string")
     return items
+
+
+def _metadata_from_payload(value: Any) -> dict[str, Any]:
+    if value is None:
+        return {}
+    if not isinstance(value, Mapping):
+        raise ValueError("metadata must be a mapping")
+    return dict(value)
