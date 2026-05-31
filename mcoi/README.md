@@ -50,8 +50,13 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
 - `build_operational_dashboard_state(..., simple_action_checks=...)` projects checks into `simple_action_summaries`, `simple_ready_action_refs`, `simple_review_action_refs`, and `simple_blocked_action_refs` for dashboard rendering without granting execution authority.
 - `build_operational_dashboard_state(..., simple_workflow_plans=...,
   simple_start_guide=...)` projects simple workflows and the start guide into
-  `simple_workflow_summaries` and `simple_start_guide` for dashboard onboarding
-  without granting execution authority.
+  `simple_workflow_summaries`, `simple_start_guide`, and `simple_home_summary`
+  for dashboard onboarding without granting execution authority.
+- `OperationalDashboardRuntime` and
+  `create_operational_dashboard_fastapi_router(runtime)` expose read-only
+  dashboard routes for apps:
+  - `GET /api/v1/dashboard/home`
+  - `GET /api/v1/dashboard/state`
 
 ## Command Surface
 

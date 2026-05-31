@@ -41,6 +41,7 @@ from mcoi_runtime.core.note_memory_temporal_bridge import build_temporal_candida
 from mcoi_runtime.core.note_memory_world_state_bridge import bridge_projection_to_world_state
 from mcoi_runtime.core.operational_dashboard_intelligence import (
     DashboardSimpleActionSummary,
+    DashboardSimpleHomeSummary,
     DashboardSimpleStartGuideSummary,
     DashboardSimpleWorkflowSummary,
     WorkflowHealth,
@@ -437,8 +438,14 @@ def test_dashboard_projects_simple_workflows_and_start_guide_without_execution_a
     assert payload["simple_workflow_summaries"][1]["review_count"] == 1
     assert payload["simple_workflow_summaries"][2]["blocked_count"] == 2
     assert payload["simple_start_guide"]["recommended_commands"][0] == "mullu workflows"
+    assert payload["simple_home_summary"]["title"] == "Blocked"
+    assert payload["simple_home_summary"]["primary_command"] == "mullu workflows"
+    assert payload["simple_home_summary"]["ready_workflow_count"] == 1
+    assert payload["simple_home_summary"]["review_workflow_count"] == 1
+    assert payload["simple_home_summary"]["blocked_workflow_count"] == 1
     assert all(summary["execution_allowed"] is False for summary in payload["simple_workflow_summaries"])
     assert payload["simple_start_guide"]["execution_allowed"] is False
+    assert payload["simple_home_summary"]["execution_allowed"] is False
     assert payload["execution_allowed"] is False
 
 
@@ -534,6 +541,19 @@ def test_dashboard_simple_start_guide_rejects_execution_authority() -> None:
             message="Unsafe guide.",
             recommended_commands=("mullu workflows",),
             outcomes=("Ready",),
+            execution_allowed=True,
+        )
+
+
+def test_dashboard_simple_home_summary_rejects_execution_authority() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="dashboard simple home cannot allow execution"):
+        DashboardSimpleHomeSummary(
+            title="Ready",
+            message="Unsafe home.",
+            primary_command="mullu workflows",
+            ready_workflow_count=1,
+            review_workflow_count=0,
+            blocked_workflow_count=0,
             execution_allowed=True,
         )
 
