@@ -123,7 +123,7 @@ def _invoice_request_from_mapping(value: Mapping[str, Any]) -> InvoiceSwarmReque
         goal_id=_required_text(value, "goal_id"),
         tenant_id=_required_text(value, "tenant_id"),
         invoice_ref=_required_text(value, "invoice_ref"),
-        invoice_amount_usd=Decimal(str(value["invoice_amount_usd"])),
+        invoice_amount_usd=_required_decimal_text(value, "invoice_amount_usd"),
         vendor_verified=_required_bool(value, "vendor_verified"),
         duplicate_found=_required_bool(value, "duplicate_found"),
         budget_available=_required_bool(value, "budget_available"),
@@ -155,6 +155,26 @@ def _required_bool(value: Mapping[str, Any], field_name: str) -> bool:
     if not isinstance(raw_value, bool):
         raise ValueError(f"{field_name} must be boolean")
     return raw_value
+
+
+def _required_decimal_text(value: Mapping[str, Any], field_name: str) -> Decimal:
+    """Return a required finite decimal parsed from explicit text."""
+
+    if field_name not in value:
+        raise KeyError(f"missing field: {field_name}")
+    raw_value = value[field_name]
+    if not isinstance(raw_value, str):
+        raise ValueError(f"{field_name} must be a decimal string")
+    text = raw_value.strip()
+    if not text:
+        raise ValueError(f"{field_name} must be non-empty")
+    try:
+        parsed = Decimal(text)
+    except InvalidOperation as exc:
+        raise ValueError(f"{field_name} must be decimal text") from exc
+    if not parsed.is_finite():
+        raise ValueError(f"{field_name} must be finite")
+    return parsed
 
 
 def _optional_bool(value: Mapping[str, Any], field_name: str, *, default: bool) -> bool:
