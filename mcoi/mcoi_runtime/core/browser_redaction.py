@@ -1,11 +1,11 @@
 """Purpose: redact sensitive values from governed browser observations.
 Governance scope: masking of secret-bearing element values, page text, and
-metadata values only.
+URL or metadata values only.
 Dependencies: browser contracts and Python regular expressions.
 Invariants:
   - Redaction is fail-safe: when in doubt, mask rather than expose.
   - Masking never grows or invents structure; it only replaces values.
-  - Selector identity, status, tags, url, title, and metadata keys are preserved.
+  - Selector identity, status, tags, title, URL host/path, and metadata keys are preserved.
   - Redaction is deterministic; same input yields same masked output.
   - No floats and no numeric decisioning; string classification only.
 """
@@ -15,6 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import re
 from typing import Any, Mapping
+from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
 
 from mcoi_runtime.contracts.browser import (
     PageDescriptor,
@@ -54,6 +55,17 @@ _DEFAULT_FIELD_KEYWORDS: tuple[str, ...] = (
     "routing",
     "private_key",
     "privatekey",
+)
+
+_SECRET_URL_PARAM_FRAGMENTS: tuple[str, ...] = _DEFAULT_FIELD_KEYWORDS + (
+    "auth",
+    "code",
+    "key",
+    "session",
+    "sessionid",
+    "sid",
+    "sig",
+    "signature",
 )
 
 # Value-shaped patterns scrubbed from free page text regardless of selector.
@@ -113,6 +125,50 @@ def scrub_text(
     scrubbed = _CARD_PATTERN.sub(policy.mask, text)
     scrubbed = _SSN_PATTERN.sub(policy.mask, scrubbed)
     return scrubbed
+
+
+def _is_secret_url_param(name: str) -> bool:
+    lowered = name.lower()
+    return any(fragment in lowered for fragment in _SECRET_URL_PARAM_FRAGMENTS)
+
+
+def _redact_url_query(query: str, *, policy: SensitivityPolicy) -> str:
+    if "=" not in query:
+        return query
+    pairs = parse_qsl(query, keep_blank_values=True)
+    redacted = [
+        (name, policy.mask if _is_secret_url_param(name) else value)
+        for name, value in pairs
+    ]
+    return urlencode(redacted)
+
+
+def _redact_url_netloc_userinfo(netloc: str, *, policy: SensitivityPolicy) -> str:
+    if "@" not in netloc:
+        return netloc
+    _, host_port = netloc.rsplit("@", 1)
+    return f"{quote(policy.mask, safe='')}@{host_port}"
+
+
+def redact_url(
+    url: str,
+    *,
+    policy: SensitivityPolicy = DEFAULT_SENSITIVITY_POLICY,
+) -> str:
+    """Mask URL userinfo and secret-bearing query or fragment parameters."""
+    if not url or ("=" not in url and "@" not in url):
+        return url
+    try:
+        scheme, netloc, path, query, fragment = urlsplit(url)
+    except ValueError:
+        return url
+    return urlunsplit((
+        scheme,
+        _redact_url_netloc_userinfo(netloc, policy=policy),
+        path,
+        _redact_url_query(query, policy=policy),
+        _redact_url_query(fragment, policy=policy),
+    ))
 
 
 def redact_metadata(
@@ -222,7 +278,7 @@ def redact_page(
         redact_selector_match(element, policy=policy) for element in page.elements
     )
     return PageDescriptor(
-        url=page.url,
+        url=redact_url(page.url, policy=policy),
         title=page.title,
         elements=redacted_elements,
         text_content=scrub_text(page.text_content, policy=policy),
