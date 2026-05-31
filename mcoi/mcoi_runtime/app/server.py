@@ -32,6 +32,9 @@ from mcoi_runtime.app.nested_mind_integration import (
     mount_nested_mind_observation_bridge_from_env,
     mount_nested_mind_observation_submitter_from_env,
 )
+from mcoi_runtime.app.inceptadive_shadow_integration import (
+    build_inceptadive_shadow_runtime,
+)
 from mcoi_runtime.app.operational_math_integration import (
     select_operational_math_receipt_store,
 )
@@ -221,6 +224,9 @@ _dependency_bootstrap = bootstrap_dependency_registry(
     capability_bootstrap=_capability_bootstrap,
 )
 platform = _dependency_bootstrap.platform
+
+_shadow_runtime = build_inceptadive_shadow_runtime(os.environ)
+deps.set("inceptadive_shadow_runtime", _shadow_runtime)
 
 _software_receipt_bootstrap = select_software_receipt_store(os.environ)
 software_receipt_store = _software_receipt_bootstrap.store
