@@ -22,7 +22,7 @@ from mcoi_runtime.contracts import (
     NestedMindObservationSubmissionReport,
     NestedMindObservationSubmissionStatus,
 )
-from mcoi_runtime.persistence import CorruptedDataError, NestedMindEvidenceStore
+from mcoi_runtime.persistence import CorruptedDataError, NestedMindEvidenceStore, PersistenceWriteError
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "report_nested_mind_evidence.py"
 
@@ -114,6 +114,33 @@ def test_report_cli_rejects_corrupted_evidence_store(tmp_path, capsys) -> None:
     store_path.write_text("{not-json}\n", encoding="utf-8")
 
     with pytest.raises(CorruptedDataError, match="invalid nested-mind evidence entry"):
+        module.main(["--store", str(store_path)])
+    assert capsys.readouterr().out == ""
+
+
+def test_report_cli_rejects_duplicate_evidence_ids(tmp_path, capsys) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    existing_line = store_path.read_text(encoding="utf-8")
+    store_path.write_text(existing_line + existing_line, encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="duplicate nested-mind evidence id"):
+        module.main(["--store", str(store_path)])
+    assert capsys.readouterr().out == ""
+
+
+def test_report_cli_rejects_stored_sensitive_fields(tmp_path, capsys) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    entry = json.loads(store_path.read_text(encoding="utf-8"))
+    entry["payload"]["metadata"] = {"raw_response_body": "{}"}
+    store_path.write_text(json.dumps(entry, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(PersistenceWriteError, match="forbidden sensitive field"):
         module.main(["--store", str(store_path)])
     assert capsys.readouterr().out == ""
 
