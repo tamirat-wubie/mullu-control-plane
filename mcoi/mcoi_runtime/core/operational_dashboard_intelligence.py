@@ -94,6 +94,8 @@ class DashboardSimpleWorkflowSummary:
             raise RuntimeCoreInvariantError("dashboard simple workflow cannot allow execution")
         if min(self.ready_count, self.review_count, self.blocked_count) < 0:
             raise RuntimeCoreInvariantError("dashboard simple workflow counts cannot be negative")
+        if self.outcome not in {"ready", "needs_review", "blocked"}:
+            raise RuntimeCoreInvariantError("dashboard simple workflow outcome is unsupported")
         if self.ready_count + self.review_count + self.blocked_count != len(self.action_refs):
             raise RuntimeCoreInvariantError("dashboard simple workflow counts must match action refs")
         if self.outcome == "ready" and (self.review_count or self.blocked_count):

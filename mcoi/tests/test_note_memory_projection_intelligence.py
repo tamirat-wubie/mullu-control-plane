@@ -510,6 +510,23 @@ def test_dashboard_simple_workflow_summary_rejects_inconsistent_outcome() -> Non
         )
 
 
+def test_dashboard_simple_workflow_summary_rejects_unknown_outcome() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="outcome is unsupported"):
+        DashboardSimpleWorkflowSummary(
+            workflow_ref="dashboard-simple-workflow-test",
+            workflow="docs_update",
+            label="Update docs",
+            outcome="unknown",
+            title="Unknown",
+            message="Unknown display state.",
+            next_step="Stop.",
+            ready_count=1,
+            review_count=0,
+            blocked_count=0,
+            action_refs=("gate-decision-test",),
+        )
+
+
 def test_dashboard_simple_start_guide_rejects_execution_authority() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="dashboard simple start guide cannot allow execution"):
         DashboardSimpleStartGuideSummary(
