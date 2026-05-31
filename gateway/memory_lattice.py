@@ -37,6 +37,8 @@ TRUST_CLASSES = ("untrusted", "observed", "admitted", "trusted", "authority", "r
 P3_LATTICE_CONTRACT_STATUSES = ("blocked", "ready")
 P3_TOPOLOGY_NODE_KINDS = ("nested_mind", "memory", "world_ref", "evidence")
 P3_TOPOLOGY_EDGE_KINDS = ("contains", "admits", "observes", "supported_by")
+P3_TOPOLOGY_READ_MODEL_DEFAULT_LIMIT = 50
+P3_TOPOLOGY_READ_MODEL_MAX_LIMIT = 250
 
 
 @dataclass(frozen=True, slots=True)
@@ -543,6 +545,72 @@ def build_p3_memory_topology_map(
     )
 
 
+def build_p3_memory_topology_read_model(
+    topology: P3MemoryTopologyMap,
+    *,
+    node_limit: int = P3_TOPOLOGY_READ_MODEL_DEFAULT_LIMIT,
+    edge_limit: int = P3_TOPOLOGY_READ_MODEL_DEFAULT_LIMIT,
+) -> dict[str, Any]:
+    """Build a bounded operator read model for a P3 memory topology map."""
+    if not isinstance(topology, P3MemoryTopologyMap):
+        raise ValueError("topology_must_be_p3_memory_topology_map")
+
+    bounded_node_limit = _read_model_limit(node_limit, "node_limit")
+    bounded_edge_limit = _read_model_limit(edge_limit, "edge_limit")
+    sorted_nodes = tuple(sorted(topology.nodes, key=lambda node: node.node_id))
+    sorted_edges = tuple(sorted(topology.edges, key=lambda edge: edge.edge_id))
+    nodes = sorted_nodes[:bounded_node_limit]
+    edges = sorted_edges[:bounded_edge_limit]
+
+    return {
+        "surface": "p3_memory_topology",
+        "read_model_only": True,
+        "operator_projection": True,
+        "raw_topology_metadata_exposed": False,
+        "raw_memory_metadata_exposed": False,
+        "live_write_enabled": False,
+        "execution_authority_granted": False,
+        "topology_id": topology.topology_id,
+        "contract_id": topology.contract_id,
+        "status": topology.status,
+        "mind_id": topology.mind_id,
+        "topology_hash": topology.topology_hash,
+        "blocked_reasons": list(topology.blocked_reasons),
+        "node_count": len(sorted_nodes),
+        "edge_count": len(sorted_edges),
+        "node_kind_counts": _topology_node_kind_counts(sorted_nodes),
+        "edge_kind_counts": _topology_edge_kind_counts(sorted_edges),
+        "node_page": {
+            "limit": bounded_node_limit,
+            "returned": len(nodes),
+            "omitted": len(sorted_nodes) - len(nodes),
+        },
+        "edge_page": {
+            "limit": bounded_edge_limit,
+            "returned": len(edges),
+            "omitted": len(sorted_edges) - len(edges),
+        },
+        "nodes": [
+            {
+                "node_id": node.node_id,
+                "node_kind": node.node_kind,
+                "ref_id": node.ref_id,
+            }
+            for node in nodes
+        ],
+        "edges": [
+            {
+                "edge_id": edge.edge_id,
+                "from_node_id": edge.from_node_id,
+                "to_node_id": edge.to_node_id,
+                "edge_kind": edge.edge_kind,
+                "evidence_refs": list(edge.evidence_refs),
+            }
+            for edge in edges
+        ],
+    }
+
+
 def _class_admission(
     entry: MemoryLatticeEntry,
     missing: list[str],
@@ -735,3 +803,27 @@ def _validate_topology_graph(
     for edge in edges:
         if edge.from_node_id not in node_id_set or edge.to_node_id not in node_id_set:
             raise ValueError("topology_edge_endpoint_missing")
+
+
+def _read_model_limit(value: int, field_name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"{field_name}_must_be_integer")
+    if value < 0:
+        raise ValueError(f"{field_name}_must_be_non_negative")
+    return min(value, P3_TOPOLOGY_READ_MODEL_MAX_LIMIT)
+
+
+def _topology_node_kind_counts(nodes: tuple[P3MemoryTopologyNode, ...]) -> dict[str, int]:
+    return {
+        node_kind: sum(node.node_kind == node_kind for node in nodes)
+        for node_kind in P3_TOPOLOGY_NODE_KINDS
+        if any(node.node_kind == node_kind for node in nodes)
+    }
+
+
+def _topology_edge_kind_counts(edges: tuple[P3MemoryTopologyEdge, ...]) -> dict[str, int]:
+    return {
+        edge_kind: sum(edge.edge_kind == edge_kind for edge in edges)
+        for edge_kind in P3_TOPOLOGY_EDGE_KINDS
+        if any(edge.edge_kind == edge_kind for edge in edges)
+    }
