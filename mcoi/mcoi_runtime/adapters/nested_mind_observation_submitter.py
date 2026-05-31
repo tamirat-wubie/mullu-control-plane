@@ -411,6 +411,7 @@ class NestedMindObservationSubmitter:
             mind_id=plan.mind_id,
             proposal_evidence_id=plan.proposal_evidence_id,
             payload_hash=plan.payload_hash,
+            mullu_receipt_hash=plan.mullu_receipt_hash,
             connector_result_id=connector_result_id,
             connector_response_digest=connector_response_digest,
             response_envelope_hash=response_envelope_hash,

@@ -134,6 +134,7 @@ def _bridge_hash_content(
     report_id: str,
     proposal_evidence_id: str,
     commit_witness_id: str | None,
+    mullu_receipt_hash: str,
     status: NestedMindBridgeStatus | NestedMindReceiptBridgeStatus,
     bridged_at: str,
     blockers: Sequence[str],
@@ -143,6 +144,7 @@ def _bridge_hash_content(
         "report_id": report_id,
         "proposal_evidence_id": proposal_evidence_id,
         "commit_witness_id": commit_witness_id,
+        "mullu_receipt_hash": mullu_receipt_hash,
         "status": status,
         "bridged_at": bridged_at,
         "blockers": tuple(blockers),
@@ -239,6 +241,7 @@ class NestedMindReceiptBridgeReport(ContractRecord):
     proposal_evidence_id: str
     status: NestedMindBridgeStatus | NestedMindReceiptBridgeStatus
     bridged_at: str
+    mullu_receipt_hash: str
     commit_witness_id: str | None = None
     bridge_hash: str = ""
     mind_id: str = ""
@@ -246,7 +249,7 @@ class NestedMindReceiptBridgeReport(ContractRecord):
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        for field_name in ("report_id", "proposal_evidence_id"):
+        for field_name in ("report_id", "proposal_evidence_id", "mullu_receipt_hash"):
             object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
         if self.commit_witness_id is not None:
             object.__setattr__(self, "commit_witness_id", require_non_empty_text(self.commit_witness_id, "commit_witness_id"))
@@ -391,6 +394,7 @@ def bridge_report_hash(report: NestedMindReceiptBridgeReport) -> str:
             report_id=report.report_id,
             proposal_evidence_id=report.proposal_evidence_id,
             commit_witness_id=report.commit_witness_id,
+            mullu_receipt_hash=report.mullu_receipt_hash,
             status=report.status,
             bridged_at=report.bridged_at,
             blockers=report.blockers,
@@ -422,6 +426,7 @@ def build_bridge_report(
         report_id=report_id,
         proposal_evidence_id=evidence.evidence_id,
         commit_witness_id=witness.witness_id,
+        mullu_receipt_hash=evidence.mullu_receipt.receipt_hash,
         status=status,
         bridged_at=bridged_at,
         blockers=tuple(blockers),
@@ -431,6 +436,7 @@ def build_bridge_report(
         report_id=report_id,
         proposal_evidence_id=evidence.evidence_id,
         commit_witness_id=witness.witness_id,
+        mullu_receipt_hash=evidence.mullu_receipt.receipt_hash,
         status=status,
         bridged_at=bridged_at,
         blockers=tuple(blockers),
@@ -473,6 +479,7 @@ def build_verified_observation_bridge_report(
         proposal_evidence_id=evidence_id,
         mind_id=mind_id,
         commit_witness_id=witness.witness_id if witness is not None else None,
+        mullu_receipt_hash=getattr(evidence, "mullu_receipt_hash", ""),
         status=(
             NestedMindReceiptBridgeStatus.BLOCKED
             if blockers

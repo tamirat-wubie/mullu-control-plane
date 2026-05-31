@@ -30,6 +30,7 @@ class NestedMindObservationReconciliationReport(ContractRecord):
     plan_id: str
     commit_witness_id: str
     mind_id: str
+    mullu_receipt_hash: str
     expected_commit_hash: str
     expected_history_hash: str
     projection_connector_result_id: str
@@ -46,6 +47,7 @@ class NestedMindObservationReconciliationReport(ContractRecord):
             "plan_id",
             "commit_witness_id",
             "mind_id",
+            "mullu_receipt_hash",
             "expected_commit_hash",
             "expected_history_hash",
             "projection_connector_result_id",

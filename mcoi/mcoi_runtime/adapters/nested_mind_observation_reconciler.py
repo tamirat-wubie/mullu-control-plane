@@ -160,6 +160,7 @@ class NestedMindObservationReconciler:
             plan_id=plan_id,
             commit_witness_id=witness.witness_id,
             mind_id=witness.mind_id,
+            mullu_receipt_hash=witness.mullu_receipt_hash,
             expected_commit_hash=witness.nested_mind_commit_hash,
             expected_history_hash=witness.nested_mind_history_hash,
             projection_connector_result_id=projection_result_id,

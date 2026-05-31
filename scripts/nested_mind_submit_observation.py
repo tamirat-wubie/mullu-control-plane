@@ -215,6 +215,7 @@ def _dry_run_report(plan: NestedMindObservationProposalPlan, submitted_at: str) 
         mind_id=plan.mind_id,
         proposal_evidence_id=plan.proposal_evidence_id,
         payload_hash=plan.payload_hash,
+        mullu_receipt_hash=plan.mullu_receipt_hash,
         connector_result_id=None,
         connector_response_digest=None,
         response_envelope_hash=None,
