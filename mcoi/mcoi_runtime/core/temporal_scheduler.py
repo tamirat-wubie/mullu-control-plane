@@ -72,6 +72,10 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "minutit",
         "noimead",
         "noimeid",
+        "munud",
+        "munudau",
+        "mionaid",
+        "mionaidean",
     }
     hour_units = {
         "hour",
@@ -114,6 +118,9 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "valandu",
         "uair",
         "uaire",
+        "awr",
+        "oriau",
+        "uairean",
     }
     day_units = {
         "day",
@@ -153,6 +160,10 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "dienu",
         "la",
         "laethanta",
+        "diwrnod",
+        "diwrnodau",
+        "latha",
+        "laithean",
     }
     if unit in minute_units:
         delta = timedelta(minutes=amount)
@@ -509,6 +520,30 @@ def _irish_weekdays() -> dict[str, int]:
     }
 
 
+def _welsh_weekdays() -> dict[str, int]:
+    return {
+        "dydd llun": 0,
+        "dydd mawrth": 1,
+        "dydd mercher": 2,
+        "dydd iau": 3,
+        "dydd gwener": 4,
+        "dydd sadwrn": 5,
+        "dydd sul": 6,
+    }
+
+
+def _scottish_gaelic_weekdays() -> dict[str, int]:
+    return {
+        "diluain": 0,
+        "dimairt": 1,
+        "diciadain": 2,
+        "diardaoin": 3,
+        "dihaoine": 4,
+        "disathairne": 5,
+        "didomhnaich": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -577,6 +612,10 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_lithuanian_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"ga", "ga-ie"}:
         return _resolve_irish_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"cy", "cy-gb"}:
+        return _resolve_welsh_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"gd", "gd-gb"}:
+        return _resolve_scottish_gaelic_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -1903,6 +1942,109 @@ def _resolve_irish_temporal_phrase(
     }:
         return "ambiguous", "temporal_phrase_ambiguous", ""
     if re.fullmatch(r"an chead (luan|mairt|ceadaoin|deardaoin|aoine|satharn|domhnach) eile", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_welsh_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"mewn ([1-9][0-9]*) (munud|munudau|awr|oriau|diwrnod|diwrnodau)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(heddiw|yfory) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "yfory" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"(dydd llun|dydd mawrth|dydd mercher|dydd iau|dydd gwener|dydd sadwrn|dydd sul) nesaf ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_welsh_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "heddiw",
+        "yfory",
+        "heno",
+        "yn nes ymlaen",
+        "cyn bo hir",
+        "wythnos nesaf",
+        "mis nesaf",
+        "blwyddyn nesaf",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(
+        r"(dydd llun|dydd mawrth|dydd mercher|dydd iau|dydd gwener|dydd sadwrn|dydd sul) nesaf",
+        normalized,
+    ):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_scottish_gaelic_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"ann an ([1-9][0-9]*) (mionaid|mionaidean|uair|uairean|latha|laithean)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(an-diugh|a-maireach) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "a-maireach" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"an ath (diluain|dimairt|diciadain|diardaoin|dihaoine|disathairne|didomhnaich) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_scottish_gaelic_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "an-diugh",
+        "a-maireach",
+        "a-nochd",
+        "nas fhaide air adhart",
+        "a dh aithghearr",
+        "an ath sheachdain",
+        "an ath mhios",
+        "an ath bhliadhna",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"an ath (diluain|dimairt|diciadain|diardaoin|dihaoine|disathairne|didomhnaich)", normalized):
         return "ambiguous", "temporal_phrase_ambiguous", ""
     return "unsupported", "temporal_phrase_unsupported", ""
 
