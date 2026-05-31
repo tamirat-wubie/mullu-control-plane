@@ -102,7 +102,7 @@ def test_validate_promotion_operator_checklist_rejects_stale_readiness_count_evi
     for step in payload["required_commands"]:
         if step["step_id"] == "write_promotion_readiness":
             step["required_evidence"] = [
-                evidence for evidence in step["required_evidence"] if evidence != "capability_count=77"
+                evidence for evidence in step["required_evidence"] if evidence != "capability_count=78"
             ]
             step["required_evidence"].append("capability_count=52")
     checklist_path.write_text(json.dumps(payload), encoding="utf-8")
@@ -111,7 +111,7 @@ def test_validate_promotion_operator_checklist_rejects_stale_readiness_count_evi
 
     assert result.valid is False
     assert any("write_promotion_readiness required_evidence missing" in error for error in result.errors)
-    assert any("capability_count=77" in error for error in result.errors)
+    assert any("capability_count=78" in error for error in result.errors)
     assert not any("capability_count=52" in error for error in result.errors)
 
 

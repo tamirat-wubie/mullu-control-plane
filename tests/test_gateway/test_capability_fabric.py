@@ -78,9 +78,9 @@ def test_capability_fabric_env_loader_installs_checked_in_default_packs(
     assert gate is not None
     read_model = gate.read_model()
     assert read_model["capsule_count"] == 13
-    assert read_model["capability_count"] == 77
-    assert len(read_model["capability_maturity_assessments"]) == 77
-    assert read_model["capability_maturity_counts"]["C3"] == 75
+    assert read_model["capability_count"] == 78
+    assert len(read_model["capability_maturity_assessments"]) == 78
+    assert read_model["capability_maturity_counts"]["C3"] == 76
     assert read_model["capability_maturity_counts"]["C6"] == 2
     assert read_model["production_ready_count"] == 2
     assert read_model["autonomy_ready_count"] == 0
@@ -365,13 +365,14 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     deployment_collect_record = records["deployment.witness.collect"]
     deployment_publish_record = records["deployment.witness.publish.with_approval"]
     mission_record = records["agentic_control.mission.define"]
+    code_change_record = records["agentic_control.code_change.plan"]
     evidence_record = records["agentic_control.evidence.append"]
     planes = {
         plane["plane_id"]: plane
         for plane in gate.read_model()["general_agent_planes"]
     }
 
-    assert len(records) == 77
+    assert len(records) == 78
     assert payment_capability["maturity_assessment"]["maturity_level"] == "C6"
     assert payment_capability["maturity_assessment"]["production_ready"] is True
     assert payment_capability["maturity_assessment"]["autonomy_ready"] is False
@@ -497,6 +498,16 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     assert mission_record["world_mutating"] is False
     assert mission_record["requires_approval"] is False
     assert mission_record["allowed_tools"] == ["agentic_control.mission.define"]
+    assert code_change_record["risk_level"] == "medium"
+    assert code_change_record["read_only"] is True
+    assert code_change_record["world_mutating"] is False
+    assert code_change_record["allowed_roles"] == ["developer"]
+    assert code_change_record["allowed_tools"] == ["agentic_control.code_change.plan"]
+    assert code_change_record["forbidden_effects"] == [
+        "workspace_file_written",
+        "git_state_mutated",
+        "test_result_fabricated",
+    ]
     assert evidence_record["risk_level"] == "high"
     assert evidence_record["read_only"] is False
     assert evidence_record["world_mutating"] is True
@@ -504,6 +515,7 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     assert evidence_record["receipt_required"] is True
     assert evidence_record["rollback_or_compensation_required"] is True
     assert "agentic_control.mission.define" in planes["0.governance_core"]["capability_ids"]
+    assert "agentic_control.code_change.plan" in planes["0.governance_core"]["capability_ids"]
     assert "agentic_control.evidence.append" in planes["0.governance_core"]["capability_ids"]
     assert "financial.send_payment" in planes["8.financial_effect_plane"]["capability_ids"]
     assert "computer.command.run" in planes["4.computer_control_plane"]["capability_ids"]

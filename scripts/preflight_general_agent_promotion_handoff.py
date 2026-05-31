@@ -53,7 +53,7 @@ DEFAULT_DRIFT_VALIDATION = REPO_ROOT / ".change_assurance" / "general_agent_prom
 DEFAULT_READINESS = REPO_ROOT / ".change_assurance" / "general_agent_promotion_readiness.json"
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "general_agent_promotion_handoff_preflight.json"
 EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT = 4
-EXPECTED_CAPABILITY_COUNT = 77
+EXPECTED_CAPABILITY_COUNT = 78
 EXPECTED_CAPSULE_COUNT = 13
 EXPECTED_READINESS_LEVEL = "pilot-governed-core"
 EXPECTED_SOURCE_PLAN_TYPES = ("adapter", "deployment")
@@ -408,7 +408,7 @@ def _readiness_report_step(path: Path) -> tuple[HandoffPreflightStep, str, bool]
         and payload.get("capsule_count") == EXPECTED_CAPSULE_COUNT
     )
     detail = (
-        "readiness_level=pilot-governed-core capability_count=77 capsule_count=13 production_ready=false"
+        "readiness_level=pilot-governed-core capability_count=78 capsule_count=13 production_ready=false"
         if passed
         else f"expected pilot-governed-core counts; observed={_public_report_projection(payload)}"
     )

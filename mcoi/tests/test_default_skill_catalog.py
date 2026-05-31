@@ -105,6 +105,29 @@ def test_default_skill_provider_requirements_match_step_boundaries() -> None:
     )
 
 
+def test_agentic_control_skill_plans_code_change_before_evidence_append() -> None:
+    descriptor = next(
+        descriptor
+        for descriptor in default_skill_descriptors()
+        if descriptor.skill_id == "agentic_control.autonomous_operations.v1"
+    )
+    steps = {step.step_id: step for step in descriptor.steps}
+    action_order = tuple(step.action_type for step in descriptor.steps)
+
+    assert "agentic_control.code_change.plan" in action_order
+    assert action_order.index("agentic_control.verification.plan") < action_order.index(
+        "agentic_control.code_change.plan"
+    )
+    assert action_order.index("agentic_control.code_change.plan") < action_order.index(
+        "agentic_control.evidence.append"
+    )
+    assert steps["plan_code_change"].depends_on == ("plan_verification",)
+    assert steps["append_evidence"].depends_on == ("plan_code_change",)
+    assert steps["append_evidence"].input_bindings["code_change_plan_ref"] == (
+        "plan_code_change.code_change_plan_ref"
+    )
+
+
 def test_register_default_skill_descriptors_is_idempotent_for_identical_catalog() -> None:
     registry = SkillRegistry()
 
