@@ -107,7 +107,13 @@ def build_operational_dashboard_state(
         if action.status in {CandidateActionStatus.BLOCKED, CandidateActionStatus.REPAIR_REQUIRED}
     )
     high_intensity_box_ids = tuple(box.box_id for box in boxes if box.risk_facets)
-    active_project_count = len({claim.scope for claim in projection.active_claims})
+    active_project_count = len(
+        {
+            box.box_id
+            for box in boxes
+            if box.box_type.value == "project" and any(note_id in _active_note_ids(projection) for note_id in box.source_note_ids)
+        }
+    )
     confidence_values = tuple(claim.confidence for claim in projection.active_claims)
     confidence_trend = sum(confidence_values) / len(confidence_values) if confidence_values else 0.0
     workflow_health = _workflow_health(projection, repair_items, blocked_action_ids)
@@ -169,3 +175,7 @@ def _execution_readiness(
     if ready_action_ids and not blocked_action_ids:
         return "candidate_ready_for_mullu_governance_verdict"
     return "no_action_candidate_ready"
+
+
+def _active_note_ids(projection: NoteMemoryProjection) -> set[str]:
+    return {claim.note_id for claim in projection.active_claims}

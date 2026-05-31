@@ -215,7 +215,7 @@ def _target_box(
     for source_id in source_ids:
         if source_id in box_by_source_note:
             return box_by_source_note[source_id]
-    return boxes[0] if boxes else None
+    return None
 
 
 def _dedupe(tasks: Sequence[InterrogationTask]) -> tuple[InterrogationTask, ...]:

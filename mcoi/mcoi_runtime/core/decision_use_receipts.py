@@ -103,7 +103,16 @@ def build_decision_use_receipt(
 ) -> DecisionUseReceipt:
     """Build a deterministic receipt for one memory-influenced decision."""
 
-    blocking_note_ids = tuple(sorted({source_id for blocker in projection.blockers for source_id in blocker.source_ids}))
+    known_note_ids = {
+        claim.note_id
+        for claim in (
+            *projection.active_claims,
+            *projection.inactive_claims,
+        )
+    }
+    blocking_note_ids = tuple(
+        sorted({source_id for blocker in projection.blockers for source_id in blocker.source_ids if source_id in known_note_ids})
+    )
     supporting_note_ids = tuple(sorted({note_id for action in projection.candidate_actions for note_id in action.source_note_ids}))
     receipt = DecisionUseReceipt(
         decision_id=decision_id,
