@@ -1188,6 +1188,7 @@ resumed_at
 resumed_by_id
 retention_days
 retrieval_influence_count
+retrieval_influence_total_count
 retrieved_at
 retry_after_seconds
 retry_count

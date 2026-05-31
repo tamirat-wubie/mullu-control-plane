@@ -975,6 +975,7 @@ class NoteMemoryMesh:
                 "episode_capsule_count": len(episode_capsules),
                 "contradiction_count": len(contradictions),
                 "retrieval_influence_count": len(retrieval_influence),
+                "retrieval_influence_total_count": len(retrieval_influence_rows),
                 "index_proof_state": index_report.proof_state.value,
             },
             "recent_notes": [

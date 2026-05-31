@@ -216,6 +216,7 @@ def test_captured_decision_can_cite_retrieval_receipt_without_mutating_read(tmp_
     assert mesh.event_count == 2
     assert snapshot["summary"]["event_count"] == 2
     assert snapshot["summary"]["retrieval_influence_count"] == 1
+    assert snapshot["summary"]["retrieval_influence_total_count"] == 1
     assert snapshot["recent_notes"][0]["note_id"] == decision.note_id
     assert snapshot["recent_notes"][0]["retrieval_receipt_refs"] == [result.receipt.receipt_id]
     assert snapshot["retrieval_influence"][0]["receipt_id"] == result.receipt.receipt_id
@@ -316,6 +317,7 @@ def test_dashboard_snapshot_limits_retrieval_influence_rows(tmp_path) -> None:
     snapshot = mesh.dashboard_snapshot(now="2026-05-01T00:02:00+00:00", limit=1)
 
     assert snapshot["summary"]["retrieval_influence_count"] == 2
+    assert snapshot["summary"]["retrieval_influence_total_count"] == 2
     assert len(snapshot["retrieval_influence"]) == 1
     assert snapshot["retrieval_influence"][0]["receipt_id"] == second_receipt
     assert snapshot["retrieval_influence"][0]["citing_note_id"] == second.note_id
@@ -362,6 +364,7 @@ def test_dashboard_snapshot_filters_retrieval_influence_by_receipt(tmp_path) -> 
     assert snapshot["filters"]["retrieval_receipt_ref"] == first_receipt
     assert snapshot["summary"]["event_count"] == 2
     assert snapshot["summary"]["retrieval_influence_count"] == 1
+    assert snapshot["summary"]["retrieval_influence_total_count"] == 2
     assert snapshot["retrieval_influence"][0]["receipt_id"] == first_receipt
     assert snapshot["retrieval_influence"][0]["citing_note_id"] == first.note_id
     assert snapshot["retrieval_influence"][0]["citing_note_id"] != second.note_id

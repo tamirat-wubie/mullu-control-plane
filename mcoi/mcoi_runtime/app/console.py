@@ -342,6 +342,7 @@ def render_note_memory_summary(view: NoteMemorySummary) -> str:
         f"  episode_capsules:       {view.episode_capsule_count}",
         f"  contradictions:         {view.contradiction_count}",
         f"  retrieval_influence:    {view.retrieval_influence_count}",
+        f"  retrieval_influence_total: {view.retrieval_influence_total_count}",
         f"  index_proof_state:      {view.index_proof_state}",
         f"  assessed_at:            {view.assessed_at}",
     ]

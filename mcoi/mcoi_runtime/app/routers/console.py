@@ -296,6 +296,7 @@ def _empty_note_memory_payload(extension: dict[str, object]) -> dict[str, object
             "episode_capsule_count": 0,
             "contradiction_count": 0,
             "retrieval_influence_count": 0,
+            "retrieval_influence_total_count": 0,
             "index_proof_state": "Unknown",
         },
         "filters": {
@@ -390,6 +391,7 @@ def _render_note_memory_console_html(payload: dict[str, object]) -> str:
         ("Episode Capsules", summary.get("episode_capsule_count", 0)),
         ("Contradictions", summary.get("contradiction_count", 0)),
         ("Retrieval Influence", summary.get("retrieval_influence_count", 0)),
+        ("Retrieval Influence Total", summary.get("retrieval_influence_total_count", 0)),
         ("Index Proof", summary.get("index_proof_state", "Unknown")),
     ]
     metric_items = "\n".join(

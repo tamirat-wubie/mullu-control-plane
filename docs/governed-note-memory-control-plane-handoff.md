@@ -70,7 +70,9 @@ note event cited which retrieval receipt without adding retrieval events to the
 append-only log. The dashboard, CLI dashboard, FastAPI dashboard, and operator
 console accept a read-only `retrieval_receipt_ref` filter for narrowing that
 graph to one retrieval witness. The filter uses the same bounded
-`note-retrieval-*` validation and does not mutate note memory.
+`note-retrieval-*` validation and does not mutate note memory. Filtered
+snapshots report `retrieval_influence_count` for the current view and
+`retrieval_influence_total_count` for the full unfiltered graph.
 
 Episode capsules write a structured sidecar under the configured note-memory
 store and append one `EpisodeCapsule` lineage event. Capsules with
@@ -100,6 +102,7 @@ memory_anchor_count
 episode_capsule_count
 contradiction_count
 retrieval_influence_count
+retrieval_influence_total_count
 index_proof_state
 assessed_at
 ```
