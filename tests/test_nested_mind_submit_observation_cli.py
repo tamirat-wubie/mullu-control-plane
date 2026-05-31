@@ -113,6 +113,88 @@ def test_cli_evidence_mismatch_blocks_before_output(tmp_path) -> None:
         module.main(["--plan", str(plan_path), "--evidence", str(evidence_path)])
 
 
+def test_cli_rejects_plan_with_unexpected_field_before_output(tmp_path, capsys) -> None:
+    module = _script_module()
+    plan_path, evidence_path = _write_inputs(tmp_path)
+    plan_payload = json.loads(plan_path.read_text(encoding="utf-8"))
+    plan_payload["unexpected_plan_field"] = "ignored"
+    plan_path.write_text(json.dumps(plan_payload, sort_keys=True), encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="plan JSON has unexpected fields"):
+        module.main(["--plan", str(plan_path), "--evidence", str(evidence_path)])
+    assert capsys.readouterr().out == ""
+
+
+def test_cli_rejects_evidence_with_missing_required_field_before_output(tmp_path, capsys) -> None:
+    module = _script_module()
+    plan_path, evidence_path = _write_inputs(tmp_path)
+    evidence_payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+    del evidence_payload["authority_receipt_hash"]
+    evidence_path.write_text(json.dumps(evidence_payload, sort_keys=True), encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="evidence JSON missing required fields"):
+        module.main(["--plan", str(plan_path), "--evidence", str(evidence_path)])
+    assert capsys.readouterr().out == ""
+
+
+def test_cli_rejects_non_object_plan_metadata_before_output(tmp_path, capsys) -> None:
+    module = _script_module()
+    plan_path, evidence_path = _write_inputs(tmp_path)
+    plan_payload = json.loads(plan_path.read_text(encoding="utf-8"))
+    plan_payload["metadata"] = ["not", "object"]
+    plan_path.write_text(json.dumps(plan_payload, sort_keys=True), encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="plan metadata must be a JSON object"):
+        module.main(["--plan", str(plan_path), "--evidence", str(evidence_path)])
+    assert capsys.readouterr().out == ""
+
+
+def test_cli_rejects_non_text_plan_id_before_output(tmp_path, capsys) -> None:
+    module = _script_module()
+    plan_path, evidence_path = _write_inputs(tmp_path)
+    plan_payload = json.loads(plan_path.read_text(encoding="utf-8"))
+    plan_payload["plan_id"] = 123
+    plan_path.write_text(json.dumps(plan_payload, sort_keys=True), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="plan_id must be a non-empty string"):
+        module.main(["--plan", str(plan_path), "--evidence", str(evidence_path)])
+    assert capsys.readouterr().out == ""
+
+
+def test_cli_rejects_non_text_plan_blocker_before_output(tmp_path, capsys) -> None:
+    module = _script_module()
+    plan_path, evidence_path = _write_inputs(tmp_path)
+    plan_payload = json.loads(plan_path.read_text(encoding="utf-8"))
+    plan_payload["blockers"] = ["ready", 7]
+    plan_path.write_text(json.dumps(plan_payload, sort_keys=True), encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match=r"plan blockers\[1\] must be a non-empty string"):
+        module.main(["--plan", str(plan_path), "--evidence", str(evidence_path)])
+    assert capsys.readouterr().out == ""
+
+
+def test_cli_rejects_empty_plan_blocker_before_output(tmp_path, capsys) -> None:
+    module = _script_module()
+    plan_path, evidence_path = _write_inputs(tmp_path)
+    plan_payload = json.loads(plan_path.read_text(encoding="utf-8"))
+    plan_payload["blockers"] = [""]
+    plan_path.write_text(json.dumps(plan_payload, sort_keys=True), encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match=r"plan blockers\[0\] must be a non-empty string"):
+        module.main(["--plan", str(plan_path), "--evidence", str(evidence_path)])
+    assert capsys.readouterr().out == ""
+
+
+def test_cli_rejects_non_finite_plan_json_before_output(tmp_path, capsys) -> None:
+    module = _script_module()
+    plan_path, evidence_path = _write_inputs(tmp_path)
+    plan_path.write_text('{"plan_id": NaN}', encoding="utf-8")
+
+    with pytest.raises(RuntimeError, match="failed to parse strict JSON"):
+        module.main(["--plan", str(plan_path), "--evidence", str(evidence_path)])
+    assert capsys.readouterr().out == ""
+
+
 def test_cli_submit_requires_submit_env_flag(tmp_path, monkeypatch) -> None:
     module = _script_module()
     plan_path, evidence_path = _write_inputs(tmp_path)

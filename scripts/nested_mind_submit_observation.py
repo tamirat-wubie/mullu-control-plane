@@ -36,7 +36,31 @@ from mcoi_runtime.contracts import (  # noqa: E402
     NestedMindProposalEvidence,
 )
 from mcoi_runtime.core.invariants import stable_identifier  # noqa: E402
+from mcoi_runtime.persistence._serialization import loads_strict_json  # noqa: E402
 from mcoi_runtime.persistence import NestedMindEvidenceStore  # noqa: E402
+
+_PLAN_REQUIRED_FIELDS = {
+    "plan_id",
+    "proposal_evidence_id",
+    "mind_id",
+    "method",
+    "target_route",
+    "proposal_payload",
+    "payload_hash",
+    "mullu_receipt_hash",
+    "authority_receipt_hash",
+    "status",
+    "planned_at",
+}
+_PLAN_OPTIONAL_FIELDS = {"blockers", "metadata"}
+_EVIDENCE_REQUIRED_FIELDS = {
+    "evidence_id",
+    "mind_id",
+    "evidence_hash",
+    "mullu_receipt_hash",
+    "authority_receipt_hash",
+}
+_EVIDENCE_OPTIONAL_FIELDS = {"metadata"}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -78,11 +102,13 @@ def main(argv: list[str] | None = None) -> int:
 
 def _load_json(path: Path) -> Mapping[str, Any]:
     try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
+        raw = loads_strict_json(path.read_text(encoding="utf-8"))
     except OSError as exc:
         raise RuntimeError(f"failed to read {path}") from exc
     except json.JSONDecodeError as exc:
         raise RuntimeError(f"failed to parse JSON from {path}") from exc
+    except ValueError as exc:
+        raise RuntimeError(f"failed to parse strict JSON from {path}") from exc
     if not isinstance(raw, Mapping):
         raise RuntimeError(f"{path} must contain a JSON object")
     return raw
@@ -90,33 +116,79 @@ def _load_json(path: Path) -> Mapping[str, Any]:
 
 def _load_plan(path: Path) -> NestedMindObservationProposalPlan:
     raw = _load_json(path)
+    _validate_contract_fields(
+        raw,
+        required_fields=_PLAN_REQUIRED_FIELDS,
+        optional_fields=_PLAN_OPTIONAL_FIELDS,
+        label="plan",
+    )
+    proposal_payload = _require_mapping(raw["proposal_payload"], "plan proposal_payload")
+    metadata = _require_mapping(raw.get("metadata", {}), "plan metadata")
     return NestedMindObservationProposalPlan(
-        plan_id=str(raw.get("plan_id", "")),
-        proposal_evidence_id=str(raw.get("proposal_evidence_id", "")),
-        mind_id=str(raw.get("mind_id", "")),
-        method=str(raw.get("method", "")),
-        target_route=str(raw.get("target_route", "")),
-        proposal_payload=raw.get("proposal_payload") if isinstance(raw.get("proposal_payload"), Mapping) else {},
-        payload_hash=str(raw.get("payload_hash", "")),
-        mullu_receipt_hash=str(raw.get("mullu_receipt_hash", "")),
-        authority_receipt_hash=str(raw.get("authority_receipt_hash", "")),
-        status=NestedMindObservationProposalPlanStatus(str(raw.get("status", ""))),
-        planned_at=str(raw.get("planned_at", "")),
-        blockers=tuple(str(item) for item in raw.get("blockers", ()) or ()),
-        metadata=raw.get("metadata") if isinstance(raw.get("metadata"), Mapping) else {},
+        plan_id=raw["plan_id"],
+        proposal_evidence_id=raw["proposal_evidence_id"],
+        mind_id=raw["mind_id"],
+        method=raw["method"],
+        target_route=raw["target_route"],
+        proposal_payload=proposal_payload,
+        payload_hash=raw["payload_hash"],
+        mullu_receipt_hash=raw["mullu_receipt_hash"],
+        authority_receipt_hash=raw["authority_receipt_hash"],
+        status=NestedMindObservationProposalPlanStatus(raw["status"]),
+        planned_at=raw["planned_at"],
+        blockers=_optional_text_array(raw.get("blockers", ()), "plan blockers"),
+        metadata=metadata,
     )
 
 
 def _load_evidence(path: Path) -> NestedMindProposalEvidence:
     raw = _load_json(path)
-    return NestedMindProposalEvidence(
-        evidence_id=str(raw.get("evidence_id", "")),
-        mind_id=str(raw.get("mind_id", "")),
-        evidence_hash=str(raw.get("evidence_hash", "")),
-        mullu_receipt_hash=str(raw.get("mullu_receipt_hash", "")),
-        authority_receipt_hash=str(raw.get("authority_receipt_hash", "")),
-        metadata=raw.get("metadata") if isinstance(raw.get("metadata"), Mapping) else {},
+    _validate_contract_fields(
+        raw,
+        required_fields=_EVIDENCE_REQUIRED_FIELDS,
+        optional_fields=_EVIDENCE_OPTIONAL_FIELDS,
+        label="evidence",
     )
+    metadata = _require_mapping(raw.get("metadata", {}), "evidence metadata")
+    return NestedMindProposalEvidence(
+        evidence_id=raw["evidence_id"],
+        mind_id=raw["mind_id"],
+        evidence_hash=raw["evidence_hash"],
+        mullu_receipt_hash=raw["mullu_receipt_hash"],
+        authority_receipt_hash=raw["authority_receipt_hash"],
+        metadata=metadata,
+    )
+
+
+def _validate_contract_fields(
+    raw: Mapping[str, Any],
+    *,
+    required_fields: set[str],
+    optional_fields: set[str],
+    label: str,
+) -> None:
+    allowed_fields = required_fields | optional_fields
+    unexpected_fields = sorted(set(raw) - allowed_fields)
+    if unexpected_fields:
+        raise RuntimeError(f"{label} JSON has unexpected fields: {', '.join(unexpected_fields)}")
+    missing_fields = sorted(required_fields - set(raw))
+    if missing_fields:
+        raise RuntimeError(f"{label} JSON missing required fields: {', '.join(missing_fields)}")
+
+
+def _require_mapping(value: Any, label: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise RuntimeError(f"{label} must be a JSON object")
+    return value
+
+
+def _optional_text_array(value: Any, label: str) -> tuple[str, ...]:
+    if isinstance(value, (str, bytes)) or not isinstance(value, (tuple, list)):
+        raise RuntimeError(f"{label} must be a JSON array")
+    for index, item in enumerate(value):
+        if not isinstance(item, str) or not item.strip():
+            raise RuntimeError(f"{label}[{index}] must be a non-empty string")
+    return tuple(value)
 
 
 def _validate_evidence_binding(
