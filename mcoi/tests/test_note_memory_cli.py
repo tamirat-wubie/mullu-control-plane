@@ -120,6 +120,43 @@ def test_cli_dashboard_rejects_unbounded_limit(tmp_path, capsys) -> None:
     assert "dashboard limit" in dashboard_envelope["error"]
 
 
+def test_cli_rejects_malformed_retrieval_receipt_ref(tmp_path, capsys) -> None:
+    note_store = tmp_path / "notes"
+
+    capture_code = guarded_main(
+        [
+            "--note-store",
+            str(note_store),
+            "capture",
+            "--kind",
+            "DecisionRecord",
+            "--scope",
+            "task",
+            "--summary",
+            "CLI decision rejects arbitrary retrieval refs",
+            "--source-ref",
+            "test:cli-bad-retrieval-ref",
+            "--proof-state",
+            "Pass",
+            "--trust-zone",
+            "workspace",
+            "--evidence-ref",
+            "test_cli_rejects_malformed_retrieval_receipt_ref",
+            "--retrieval-receipt-ref",
+            "manual-note-ref",
+        ]
+    )
+    capture_envelope = _last_json(capsys)
+    list_code = guarded_main(["--note-store", str(note_store), "list-events"])
+    list_envelope = _last_json(capsys)
+
+    assert capture_code == 1
+    assert capture_envelope["status"] == "rejected"
+    assert "retrieval_receipt_ref must reference a note retrieval receipt" in capture_envelope["error"]
+    assert list_code == 0
+    assert list_envelope["payload"]["count"] == 0
+
+
 def test_cli_claim_contradiction_records_decision_evidence(tmp_path, capsys) -> None:
     note_store = tmp_path / "notes"
 

@@ -80,6 +80,27 @@ def test_runtime_rejects_invalid_capture_without_persisting(tmp_path) -> None:
     assert listed["payload"]["count"] == 0
 
 
+def test_runtime_rejects_malformed_retrieval_receipt_refs(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.capture_note(
+        _working_note(
+            kind="DecisionRecord",
+            content_summary="runtime decision must reject arbitrary retrieval refs",
+            source_ref="test:runtime-bad-retrieval-ref",
+            expires_at=None,
+            retrieval_receipt_refs=["manual-note-ref"],
+        )
+    ).to_dict()
+    listed = runtime.list_events().to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "retrieval_receipt_ref must reference a note retrieval receipt" in rejected["error"]
+    assert listed["payload"]["count"] == 0
+
+
 def test_runtime_rejected_delta_expiry_and_rebuild_emit_receipts(tmp_path) -> None:
     runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
     runtime.capture_note(_working_note(expires_at="2026-06-01T00:00:00+00:00"))
