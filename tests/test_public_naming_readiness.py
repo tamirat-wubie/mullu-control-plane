@@ -103,6 +103,86 @@ def _write_witness(tmp_path: Path, witness: dict[str, object]) -> Path:
     return path
 
 
+VALID_CAPTURE_PDF_BYTES = b"""%PDF-1.4
+1 0 obj
+<< /Type /Catalog >>
+endobj
+trailer
+<< /Root 1 0 R >>
+%%EOF
+"""
+
+
+def _write_valid_capture_file(path: Path, required_file: str, decision_fields: list[str]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if required_file.endswith(".pdf"):
+        path.write_bytes(VALID_CAPTURE_PDF_BYTES)
+        return
+    if required_file == "decision.md":
+        decision_rows = [
+            f"| {field_name.replace('_', ' ')} | recorded |"
+            for field_name in decision_fields
+        ]
+        path.write_text(
+            "\n".join(
+                [
+                    "# Gate Decision",
+                    "",
+                    "Purpose: bind captured evidence to required reviewer authority.",
+                    "",
+                    "| Field | Value |",
+                    "| --- | --- |",
+                    *decision_rows,
+                    "",
+                    "Review outcome recorded by the required authority.",
+                    "",
+                    "STATUS:",
+                    "  Completeness: 100%",
+                    "  Invariants verified: [evidence bound, reviewer authority recorded]",
+                    "  Open issues: none",
+                    "  Next action: update public naming witness only after all gates close",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        return
+    if required_file.endswith(".md"):
+        path.write_text(
+            "\n".join(
+                [
+                    "# Capture Evidence",
+                    "",
+                    "Reviewer: required authority",
+                    "Evidence files: official capture attached",
+                    "Decision: recorded for review packet intake",
+                    "Launch impact: no paid public launch claim made by this file",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        return
+    raise AssertionError(f"unexpected capture file extension: {required_file}")
+
+
+def _write_temp_capture_requirements(tmp_path: Path) -> tuple[dict[str, object], Path, Path]:
+    requirements = json.loads(CAPTURE_REQUIREMENTS_PATH.read_text(encoding="utf-8"))
+    evidence_root = tmp_path / "docs" / "clearance-evidence" / "mullu" / "2026-05-15"
+    requirements["evidence_root"] = str(evidence_root)
+    requirements_path = evidence_root / "capture-requirements.json"
+    requirements_path.parent.mkdir(parents=True)
+    requirements_path.write_text(json.dumps(requirements, indent=2), encoding="utf-8")
+    return requirements, evidence_root, requirements_path
+
+
+def _write_valid_capture_packet(requirements: dict[str, object], evidence_root: Path) -> None:
+    for gate in requirements["gates"]:
+        gate_dir = evidence_root / gate["directory"]
+        for required_file in gate["required_files"]:
+            _write_valid_capture_file(gate_dir / required_file, required_file, gate["decision_fields"])
+
+
 def test_public_naming_readiness_witness_passes() -> None:
     witness = _load_witness()
 
@@ -293,6 +373,7 @@ def test_clearance_capture_readiness_report_outputs_json(capsys: pytest.CaptureF
     assert payload["company_brand"] == "Mullusi"
     assert payload["public_paid_launch_allowed"] is False
     assert payload["required_files_missing"] > 0
+    assert payload["required_files_invalid"] > 0
     assert payload["status"] == "blocked"
 
 
@@ -319,30 +400,74 @@ def test_clearance_capture_readiness_strict_writes_receipt_before_blocking(tmp_p
     assert receipt_path.exists()
     _validate_capture_readiness_report(payload)
     assert payload["required_files_missing"] > 0
+    assert payload["required_files_invalid"] > 0
     assert payload["status"] == "blocked"
 
 
 def test_clearance_capture_readiness_all_present(tmp_path: Path) -> None:
-    requirements = json.loads(CAPTURE_REQUIREMENTS_PATH.read_text(encoding="utf-8"))
-    evidence_root = tmp_path / "docs" / "clearance-evidence" / "mullu" / "2026-05-15"
-    requirements["evidence_root"] = str(evidence_root)
-    requirements_path = tmp_path / "docs" / "clearance-evidence" / "mullu" / "2026-05-15" / "capture-requirements.json"
-    requirements_path.parent.mkdir(parents=True)
-    requirements_path.write_text(json.dumps(requirements, indent=2), encoding="utf-8")
-
-    for gate in requirements["gates"]:
-        gate_dir = evidence_root / gate["directory"]
-        gate_dir.mkdir(parents=True, exist_ok=True)
-        for required_file in gate["required_files"]:
-            (gate_dir / required_file).write_text("evidence placeholder\n", encoding="utf-8")
+    requirements, evidence_root, requirements_path = _write_temp_capture_requirements(tmp_path)
+    _write_valid_capture_packet(requirements, evidence_root)
 
     report = build_capture_readiness(requirements_path)
 
     _validate_capture_readiness_report(report)
     assert report["required_files_present"] == report["required_files_total"]
+    assert report["required_files_valid"] == report["required_files_total"]
     assert report["required_files_missing"] == 0
+    assert report["required_files_invalid"] == 0
     assert all(gate["status"] == "capture_ready_for_review" for gate in report["gates"])
     assert report["status"] == "capture_ready_for_review"
+
+
+def test_clearance_capture_readiness_rejects_invalid_pdf_shape(tmp_path: Path) -> None:
+    requirements, evidence_root, requirements_path = _write_temp_capture_requirements(tmp_path)
+    _write_valid_capture_packet(requirements, evidence_root)
+    invalid_pdf = evidence_root / "01-uspto" / "uspto-search-mullu-govern.pdf"
+    invalid_pdf.write_bytes(b"not a pdf\n")
+
+    report = build_capture_readiness(requirements_path)
+    uspto_report = next(gate for gate in report["gates"] if gate["gate"] == "uspto_search")
+
+    _validate_capture_readiness_report(report)
+    assert report["required_files_missing"] == 0
+    assert report["required_files_invalid"] == 1
+    assert report["status"] == "blocked"
+    assert uspto_report["invalid_count"] == 1
+    assert uspto_report["invalid_files"] == [
+        {"file": "uspto-search-mullu-govern.pdf", "reason": "pdf_header_missing"}
+    ]
+
+
+def test_clearance_capture_readiness_rejects_pending_decision(tmp_path: Path) -> None:
+    requirements, evidence_root, requirements_path = _write_temp_capture_requirements(tmp_path)
+    _write_valid_capture_packet(requirements, evidence_root)
+    pending_decision = evidence_root / "06-legal-review" / "decision.md"
+    pending_decision.write_text(
+        "\n".join(
+            [
+                "# Legal Review Decision",
+                "",
+                "| Field | Value |",
+                "| --- | --- |",
+                "| Reviewer | Pending |",
+                "| Review date | Pending |",
+                "| Decision | Pending |",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_capture_readiness(requirements_path)
+    legal_report = next(gate for gate in report["gates"] if gate["gate"] == "legal_review")
+
+    _validate_capture_readiness_report(report)
+    assert report["required_files_missing"] == 0
+    assert report["required_files_invalid"] == 1
+    assert report["status"] == "blocked"
+    assert legal_report["invalid_files"] == [
+        {"file": "decision.md", "reason": "placeholder_marker: | pending |"}
+    ]
 
 
 def test_clearance_capture_manifest_maps_source_tasks() -> None:

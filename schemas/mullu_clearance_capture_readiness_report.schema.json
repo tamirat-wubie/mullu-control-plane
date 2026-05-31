@@ -11,8 +11,10 @@
     "evidence_root",
     "public_paid_launch_allowed",
     "required_files_present",
+    "required_files_valid",
     "required_files_total",
     "required_files_missing",
+    "required_files_invalid",
     "gates",
     "status"
   ],
@@ -41,11 +43,19 @@
       "type": "integer",
       "minimum": 0
     },
+    "required_files_valid": {
+      "type": "integer",
+      "minimum": 0
+    },
     "required_files_total": {
       "type": "integer",
       "minimum": 1
     },
     "required_files_missing": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "required_files_invalid": {
       "type": "integer",
       "minimum": 0
     },
@@ -75,9 +85,13 @@
         "authority",
         "required_count",
         "present_count",
+        "valid_count",
         "missing_count",
+        "invalid_count",
         "present_files",
+        "valid_files",
         "missing_files",
+        "invalid_files",
         "status"
       ],
       "properties": {
@@ -108,11 +122,27 @@
           "type": "integer",
           "minimum": 0
         },
+        "valid_count": {
+          "type": "integer",
+          "minimum": 0
+        },
         "missing_count": {
           "type": "integer",
           "minimum": 0
         },
+        "invalid_count": {
+          "type": "integer",
+          "minimum": 0
+        },
         "present_files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "valid_files": {
           "type": "array",
           "items": {
             "type": "string",
@@ -128,12 +158,37 @@
           },
           "uniqueItems": true
         },
+        "invalid_files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/invalid_file"
+          },
+          "uniqueItems": true
+        },
         "status": {
           "type": "string",
           "enum": [
             "blocked",
             "capture_ready_for_review"
           ]
+        }
+      }
+    },
+    "invalid_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "reason"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
         }
       }
     }

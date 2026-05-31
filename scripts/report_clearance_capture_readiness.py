@@ -50,6 +50,17 @@ SOURCE_REFS_BY_GATE = {
         "qualified legal or trademark reviewer decision packet",
     ),
 }
+PDF_HEADER = b"%PDF-"
+PDF_EOF_MARKER = b"%%EOF"
+PDF_TAIL_SCAN_BYTES = 4096
+MIN_MARKDOWN_CAPTURE_CHARS = 24
+MARKDOWN_PLACEHOLDER_MARKERS = (
+    "evidence placeholder",
+    "pending capture",
+    "pending official",
+    "pending source evidence",
+    "| pending |",
+)
 
 SEARCH_QUERY_BY_REQUIRED_FILE = {
     "uspto-search-mullu-govern.pdf": "Mullu Govern",
@@ -93,10 +104,86 @@ def _read_json(path: Path) -> dict[str, object]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _decision_field_label(field_name: str) -> str:
+    return field_name.replace("_", " ").casefold()
+
+
+def _pdf_validation_error(path: Path) -> str | None:
+    try:
+        size = path.stat().st_size
+        with path.open("rb") as capture_file:
+            header = capture_file.read(len(PDF_HEADER))
+            if size > PDF_TAIL_SCAN_BYTES:
+                capture_file.seek(-PDF_TAIL_SCAN_BYTES, 2)
+                tail = capture_file.read()
+            else:
+                capture_file.seek(0)
+                tail = capture_file.read()
+    except OSError as exc:
+        return f"unreadable: {exc}"
+
+    if header != PDF_HEADER:
+        return "pdf_header_missing"
+    if PDF_EOF_MARKER not in tail:
+        return "pdf_eof_marker_missing"
+    return None
+
+
+def _markdown_validation_error(path: Path, required_file: str, decision_fields: list[str]) -> str | None:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        return f"markdown_not_utf8: {exc}"
+    except OSError as exc:
+        return f"unreadable: {exc}"
+
+    stripped_text = text.strip()
+    if len(stripped_text) < MIN_MARKDOWN_CAPTURE_CHARS:
+        return "markdown_too_short"
+
+    normalized_text = stripped_text.casefold()
+    for marker in MARKDOWN_PLACEHOLDER_MARKERS:
+        if marker in normalized_text:
+            return f"placeholder_marker: {marker}"
+
+    if required_file == "decision.md":
+        missing_fields = [
+            field_name
+            for field_name in decision_fields
+            if _decision_field_label(field_name) not in normalized_text
+        ]
+        if missing_fields:
+            return f"decision_missing_fields: {', '.join(missing_fields)}"
+
+    return None
+
+
+def _capture_file_validation_error(path: Path, required_file: str, decision_fields: list[str]) -> str | None:
+    if required_file.endswith(".pdf"):
+        return _pdf_validation_error(path)
+    if required_file.endswith(".md"):
+        return _markdown_validation_error(path, required_file, decision_fields)
+    return "unsupported_capture_file_extension"
+
+
 def _gate_missing_files(evidence_root: Path, gate: dict[str, object]) -> list[str]:
     directory = evidence_root / str(gate["directory"])
     required_files = [str(required_file) for required_file in gate["required_files"]]
     return [required_file for required_file in required_files if not (directory / required_file).exists()]
+
+
+def _gate_invalid_files(evidence_root: Path, gate: dict[str, object]) -> list[dict[str, str]]:
+    directory = evidence_root / str(gate["directory"])
+    decision_fields = [str(field_name) for field_name in gate["decision_fields"]]
+    invalid_files: list[dict[str, str]] = []
+    for required_file in [str(required_file) for required_file in gate["required_files"]]:
+        path = directory / required_file
+        if not path.exists():
+            continue
+        validation_error = _capture_file_validation_error(path, required_file, decision_fields)
+        if validation_error is not None:
+            invalid_files.append({"file": required_file, "reason": validation_error})
+    return invalid_files
 
 
 def build_capture_readiness(requirements_path: Path = REQUIREMENTS_PATH) -> dict[str, Any]:
@@ -107,13 +194,18 @@ def build_capture_readiness(requirements_path: Path = REQUIREMENTS_PATH) -> dict
     gate_reports: list[dict[str, Any]] = []
     total_required = 0
     total_missing = 0
+    total_invalid = 0
 
     for gate in gates:
         required_files = [str(required_file) for required_file in gate["required_files"]]
         missing_files = _gate_missing_files(evidence_root, gate)
+        invalid_files = _gate_invalid_files(evidence_root, gate)
+        invalid_file_names = {invalid_file["file"] for invalid_file in invalid_files}
         present_files = [required_file for required_file in required_files if required_file not in missing_files]
+        valid_files = [required_file for required_file in present_files if required_file not in invalid_file_names]
         total_required += len(required_files)
         total_missing += len(missing_files)
+        total_invalid += len(invalid_files)
         gate_reports.append(
             {
                 "gate": gate["gate"],
@@ -121,15 +213,20 @@ def build_capture_readiness(requirements_path: Path = REQUIREMENTS_PATH) -> dict
                 "authority": gate["authority"],
                 "required_count": len(required_files),
                 "present_count": len(present_files),
+                "valid_count": len(valid_files),
                 "missing_count": len(missing_files),
+                "invalid_count": len(invalid_files),
                 "present_files": present_files,
+                "valid_files": valid_files,
                 "missing_files": missing_files,
-                "status": "capture_ready_for_review" if not missing_files else "blocked",
+                "invalid_files": invalid_files,
+                "status": "capture_ready_for_review" if not missing_files and not invalid_files else "blocked",
             }
         )
 
     total_present = total_required - total_missing
-    status = "capture_ready_for_review" if total_missing == 0 else "blocked"
+    total_valid = total_present - total_invalid
+    status = "capture_ready_for_review" if total_missing == 0 and total_invalid == 0 else "blocked"
     return {
         "product_name": requirements["product_name"],
         "suite_family": requirements["suite_family"],
@@ -137,8 +234,10 @@ def build_capture_readiness(requirements_path: Path = REQUIREMENTS_PATH) -> dict
         "evidence_root": requirements["evidence_root"],
         "public_paid_launch_allowed": requirements["public_paid_launch_allowed"],
         "required_files_present": total_present,
+        "required_files_valid": total_valid,
         "required_files_total": total_required,
         "required_files_missing": total_missing,
+        "required_files_invalid": total_invalid,
         "gates": gate_reports,
         "status": status,
     }
@@ -207,6 +306,7 @@ def print_capture_readiness(report: dict[str, Any]) -> None:
 
     for gate in report["gates"]:
         print(f"{gate['gate']}: {gate['present_count']}/{gate['required_count']} required files present")
+        print(f"  valid: {gate['valid_count']}/{gate['required_count']}")
         print(f"  directory: {gate['directory']}")
         print(f"  authority: {gate['authority']}")
         if gate["missing_files"]:
@@ -215,10 +315,18 @@ def print_capture_readiness(report: dict[str, Any]) -> None:
                 print(f"    - {missing_file}")
         else:
             print("  missing: none")
+        if gate["invalid_files"]:
+            print("  invalid:")
+            for invalid_file in gate["invalid_files"]:
+                print(f"    - {invalid_file['file']}: {invalid_file['reason']}")
+        else:
+            print("  invalid: none")
         print()
 
     print(f"Required files present: {report['required_files_present']}/{report['required_files_total']}")
+    print(f"Required files valid: {report['required_files_valid']}/{report['required_files_total']}")
     print(f"Required files missing: {report['required_files_missing']}")
+    print(f"Required files invalid: {report['required_files_invalid']}")
     print(f"STATUS: {report['status']}")
 
 

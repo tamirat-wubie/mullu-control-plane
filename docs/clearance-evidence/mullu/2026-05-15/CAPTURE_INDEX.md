@@ -32,8 +32,21 @@ Do not update `docs/public-naming-readiness.json` until the matching decision
 is evidence-backed and the required authority in the capture plan has approved
 the change.
 
+## File Validation Rule
+
+`python .\scripts\report_clearance_capture_readiness.py --strict` rejects:
+
+1. Missing required files.
+2. `.pdf` captures without PDF header and EOF markers.
+3. Empty or placeholder `.md` captures.
+4. `decision.md` files that still contain pending markers or omit gate-specific fields.
+
+Only a packet with all required files present and valid may reach
+`capture_ready_for_review`. That state still does not close a public naming gate
+without the required authority decision.
+
 STATUS:
   Completeness: 100%
-  Invariants verified: [intake filenames declared, decision mutation blocked, paid public launch remains blocked]
+  Invariants verified: [intake filenames declared, intake validation declared, decision mutation blocked, paid public launch remains blocked]
   Open issues: [official source files, reviewer decisions, legal decision]
   Next action: attach official evidence files in the matching gate directories
