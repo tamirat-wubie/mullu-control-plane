@@ -21,7 +21,7 @@ Invariants: this snapshot may not claim public production health, legal clearanc
 ## Allowed short description
 
 ```text
-Mullu Govern is governed symbolic intelligence execution: symbolic intelligence agents and symbolic workflows can do real work only through authority, policy, budget, evidence, temporal, capability, proof, audit, and closure controls.
+Mullu Govern is governed symbolic execution: symbolic workflows can do real work only through authority, policy, budget, evidence, temporal, capability, proof, audit, and closure controls.
 ```
 
 ## Blocked short descriptions
@@ -30,7 +30,7 @@ Do not use these until the corresponding evidence exists:
 
 1. `production-certified autonomous operating system`
 2. `legally safe autonomous worker`
-3. `court-proof autonomous agent`
+3. `court-proof autonomous worker`
 4. `SOC2-ready governance platform`
 5. `public production SaaS`
 6. `enterprise-compliant autonomous workforce`
