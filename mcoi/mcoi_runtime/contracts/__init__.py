@@ -18,6 +18,31 @@ from .capability_contract import (
 )
 from .connector import ConnectorDescriptor, ConnectorResult, ConnectorStatus
 from .connector_effects import ConnectorInvocationReceipt
+from .nested_mind_observation_reconciliation import (
+    NestedMindObservationReconciliationReport,
+    NestedMindObservationReconciliationStatus,
+)
+from .nested_mind_observation_submission import (
+    NestedMindCommitResponseEnvelope,
+    NestedMindObservationProposalPlan,
+    NestedMindObservationProposalPlanStatus,
+    NestedMindObservationSubmissionReport,
+    NestedMindObservationSubmissionStatus,
+    NestedMindProposalEvidence,
+    build_observation_proposal_payload,
+    nested_mind_commit_response_hash,
+    nested_mind_observation_idempotency_key,
+    nested_mind_observation_submission_report_hash,
+    stable_json_hash,
+)
+from .nested_mind_receipts import (
+    NestedMindCommitWitness,
+    NestedMindCommitWitnessStatus,
+    NestedMindReceiptBridgeReport,
+    NestedMindReceiptBridgeStatus,
+    build_commit_witness,
+    build_verified_observation_bridge_report,
+)
 from .accepted_risk import (
     AcceptedRiskDecision,
     AcceptedRiskDisposition,
@@ -2056,6 +2081,25 @@ __all__ = [
     "ConnectorInvocationReceipt",
     "ConnectorResult",
     "ConnectorStatus",
+    "NestedMindCommitResponseEnvelope",
+    "NestedMindCommitWitness",
+    "NestedMindCommitWitnessStatus",
+    "NestedMindObservationProposalPlan",
+    "NestedMindObservationProposalPlanStatus",
+    "NestedMindObservationReconciliationReport",
+    "NestedMindObservationReconciliationStatus",
+    "NestedMindObservationSubmissionReport",
+    "NestedMindObservationSubmissionStatus",
+    "NestedMindProposalEvidence",
+    "NestedMindReceiptBridgeReport",
+    "NestedMindReceiptBridgeStatus",
+    "build_commit_witness",
+    "build_observation_proposal_payload",
+    "build_verified_observation_bridge_report",
+    "nested_mind_commit_response_hash",
+    "nested_mind_observation_idempotency_key",
+    "nested_mind_observation_submission_report_hash",
+    "stable_json_hash",
     "ConflictRecord",
     "ConflictStrategy",
     "CoordinationCheckpoint",

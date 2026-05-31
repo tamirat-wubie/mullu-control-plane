@@ -19,6 +19,8 @@ These invariants are mandatory and mechanically testable:
 6. Policy gate precedes execution.
 7. No action is complete without verification closure.
 8. Learning cannot mutate kernel invariants directly.
+9. Executable actions are incomplete unless their governing structure is present
+   or the non-closure is explicitly recorded.
 
 Rule interpretation:
 
@@ -28,5 +30,8 @@ Rule interpretation:
 - "Admitted knowledge" means knowledge accepted by the learning admission gate.
 - "Verification closure" means a terminal verification result exists for the action.
 - "Kernel invariants" are immutable within learning paths.
+- "Governing structure" means the action is bound to intent, actor, tenant,
+  capability, policy, budget or resource limits, time, evidence, receipt, and
+  closure state.
 
 Any implementation that cannot test one of these rules at runtime or in integration tests is out of scope for compliance.

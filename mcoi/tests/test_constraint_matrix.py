@@ -13,8 +13,6 @@ running ``python -m mcoi.tools.audit_constraint_matrix`` fail here.
 """
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
 from tools.audit_constraint_matrix import (

@@ -29,7 +29,6 @@ excluded from the snapshot, so these tests are stable across runs.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 

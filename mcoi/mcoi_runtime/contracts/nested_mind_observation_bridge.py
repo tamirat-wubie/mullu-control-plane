@@ -164,7 +164,7 @@ class NestedMindObservationProposalPlan(ContractRecord):
             raise ValueError("disabled observation bridge plan must include disabled blocker")
         if self.status is NestedMindObservationBridgeStatus.PLANNED and blockers:
             raise ValueError("planned observation bridge plan must not contain blockers")
-        object.__setattr__(self, "proposal_payload", freeze_value(payload))
+        object.__setattr__(self, "proposal_payload", dict(payload))
         object.__setattr__(self, "blockers", freeze_value(blockers))
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 

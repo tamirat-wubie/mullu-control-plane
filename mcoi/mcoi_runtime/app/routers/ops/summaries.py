@@ -296,3 +296,12 @@ def cache_stats():
 def backpressure_status():
     """Current backpressure state."""
     return deps.backpressure.status()
+
+
+# ═══ Traces Summary ═══
+# NOTE: ``/api/v1/traces/summary`` lives in routers/agent.py because the trace
+# namespace there registers ``/api/v1/traces/{trace_id}`` last. Without the
+# summary route being registered ahead of the {trace_id} parameter capture,
+# FastAPI matches "summary" as a trace_id and returns 404. A duplicate copy
+# here would just generate a FastAPI duplicate-operation-id warning while
+# being shadowed by the agent.py registration. See PR #805 / audit 2026-05-30.

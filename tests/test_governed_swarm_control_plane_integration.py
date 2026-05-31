@@ -222,3 +222,37 @@ def test_enabled_integration_mounts_bundled_swarm_router_with_fake_fastapi(
         ("GET", "/api/v1/swarm/runs/{run_id}"),
         ("GET", "/api/v1/swarm/runs"),
     ]
+
+
+def test_enabled_integration_mounts_external_swarm_router_with_fake_fastapi(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime_root = tmp_path / "external-runtime"
+    (runtime_root / "mcoi_runtime" / "swarm").mkdir(parents=True)
+    fake_fastapi = ModuleType("fastapi")
+    fake_fastapi.APIRouter = FakeAPIRouter
+    fake_fastapi.Body = lambda default: default
+    monkeypatch.setitem(sys.modules, "fastapi", fake_fastapi)
+    app = FakeApp()
+
+    bootstrap = mount_governed_swarm_router_from_env(
+        app=app,
+        runtime_env={
+            "MULLU_GOVERNED_SWARM_ENABLED": "true",
+            "MULLU_GOVERNED_SWARM_AUDIT_STORE_PATH": str(tmp_path / "swarm-runs.jsonl"),
+            "MULLU_GOVERNED_SWARM_RUNTIME_PATH": str(runtime_root),
+        },
+    )
+
+    assert bootstrap.enabled is True
+    assert bootstrap.mounted is True
+    assert bootstrap.reason == "mounted"
+    assert len(app.routers) == 1
+    router = app.routers[0]
+    assert router.prefix == "/api/v1/swarm"
+    assert [(method, path) for method, path, _handler in router.routes] == [
+        ("POST", "/api/v1/swarm/invoice-runs"),
+        ("GET", "/api/v1/swarm/runs/{run_id}"),
+        ("GET", "/api/v1/swarm/runs"),
+    ]

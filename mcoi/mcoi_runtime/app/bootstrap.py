@@ -30,6 +30,7 @@ from mcoi_runtime.core.case_runtime import CaseRuntimeEngine
 from mcoi_runtime.core.evidence_merger import EvidenceMerger
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.meta_reasoning import MetaReasoningEngine
+from mcoi_runtime.core.decision_learning import DecisionLearningEngine
 from mcoi_runtime.core.memory import EpisodicMemory, WorkingMemory
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.operational_graph import OperationalGraph
@@ -108,6 +109,7 @@ class BootstrappedRuntime:
     dispatcher: Dispatcher
     world_state: WorldStateEngine
     meta_reasoning: MetaReasoningEngine
+    decision_learning: DecisionLearningEngine
     provider_registry: ProviderRegistry
     provider_attribution_ledger: ProviderAttributionLedger
     skill_registry: SkillRegistry
@@ -267,6 +269,7 @@ def bootstrap_runtime(
 
     world_state = WorldStateEngine()
     meta_reasoning = MetaReasoningEngine(clock=runtime_clock)
+    decision_learning = DecisionLearningEngine(clock=runtime_clock)
     provider_registry = ProviderRegistry(clock=runtime_clock)
     provider_attribution_ledger = ProviderAttributionLedger(clock=runtime_clock)
     skill_registry = SkillRegistry()
@@ -365,6 +368,7 @@ def bootstrap_runtime(
         dispatcher=dispatcher,
         world_state=world_state,
         meta_reasoning=meta_reasoning,
+        decision_learning=decision_learning,
         provider_registry=provider_registry,
         provider_attribution_ledger=provider_attribution_ledger,
         skill_registry=skill_registry,

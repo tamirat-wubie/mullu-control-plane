@@ -36,6 +36,16 @@ POLICY_MUTATION_CAPABILITIES = frozenset(
         "authority_rules.modify",
     },
 )
+GOVERNED_ACTION_CONTROLS = (
+    "actor_binding",
+    "tenant_binding",
+    "capability_policy",
+    "budget_limit",
+    "request_time",
+    "evidence_or_non_closure",
+    "decision_receipt",
+    "closure_state",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -467,6 +477,10 @@ def _decision(
         evidence_refs=request.evidence_refs,
         metadata={
             "decision_is_not_execution": True,
+            "governed_action_structure_present": allowed,
+            "non_closure_recorded": allowed and not request.evidence_refs,
+            "evidence_ref_count": len(request.evidence_refs),
+            "requested_at": request.requested_at,
             "agent_identity_hash": agent.identity_hash if agent else "",
             "reputation_score": agent.reputation_score if agent else 0.0,
         },
@@ -476,7 +490,7 @@ def _decision(
 
 
 def _required_controls(request: AgentActionRequest) -> tuple[str, ...]:
-    controls = ["agent_identity_admission"]
+    controls = ["agent_identity_admission", *GOVERNED_ACTION_CONTROLS]
     if request.risk_tier in {"high", "critical"}:
         controls.extend(["fresh_approval", "terminal_closure"])
     if request.risk_tier == "critical":

@@ -31,7 +31,6 @@ Run::
 from __future__ import annotations
 
 import argparse
-import dataclasses
 import json
 import sys
 from pathlib import Path
@@ -41,8 +40,9 @@ from mcoi_runtime.domain_adapters._registry import ADAPTERS, AdapterEntry
 
 
 # Result-dataclass field names that hold the ordered protocol / plan.
-# Each adapter uses a domain-specific name; we harvest whichever is
-# present. (Same set the composite layer used.)
+# Each adapter uses a domain-specific name (e.g. care_protocol,
+# settlement_protocol, response_protocol); we harvest whichever is
+# present rather than coupling this tool to all 15 result classes.
 _PROTOCOL_FIELD_NAMES: tuple[str, ...] = (
     "work_plan",
     "workflow_steps",

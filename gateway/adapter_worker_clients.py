@@ -77,6 +77,7 @@ class SignedAdapterWorkerTransport:
         payload: Mapping[str, Any],
         *,
         expected_request_id: str,
+        expected_tenant_id: str,
         expected_capability_id: str,
     ) -> AdapterWorkerResponse:
         """Submit one adapter request and validate the signed worker response."""
@@ -109,6 +110,7 @@ class SignedAdapterWorkerTransport:
             raw_response,
             adapter_id=self._adapter_id,
             expected_request_id=expected_request_id,
+            expected_tenant_id=expected_tenant_id,
             expected_capability_id=expected_capability_id,
         )
 
@@ -304,10 +306,12 @@ def _execute_with_transport(
     adapter_id: str,
 ) -> AdapterWorkerResponse:
     request_id = _require_text(str(payload.get("request_id", "")), f"{adapter_id} request_id")
+    tenant_id = _require_text(str(payload.get("tenant_id", "")), f"{adapter_id} tenant_id")
     capability_id = _require_text(str(payload.get("capability_id", "")), f"{adapter_id} capability_id")
     return transport.submit(
         payload,
         expected_request_id=request_id,
+        expected_tenant_id=tenant_id,
         expected_capability_id=capability_id,
     )
 
@@ -317,6 +321,7 @@ def _adapter_response_from_mapping(
     *,
     adapter_id: str,
     expected_request_id: str,
+    expected_tenant_id: str,
     expected_capability_id: str,
 ) -> AdapterWorkerResponse:
     request_id = _require_text(str(raw.get("request_id", "")), f"{adapter_id} response request_id")
@@ -338,6 +343,9 @@ def _adapter_response_from_mapping(
     receipt_request_id = _require_text(str(receipt.get("request_id", "")), f"{adapter_id} receipt request_id")
     if receipt_request_id != expected_request_id:
         raise RuntimeError(f"{adapter_id} worker receipt request mismatch")
+    receipt_tenant_id = _require_text(str(receipt.get("tenant_id", "")), f"{adapter_id} receipt tenant_id")
+    if receipt_tenant_id != expected_tenant_id:
+        raise RuntimeError(f"{adapter_id} worker receipt tenant mismatch")
     _require_text(str(receipt.get("verification_status", "")), f"{adapter_id} receipt verification_status")
     evidence_refs = receipt.get("evidence_refs")
     if not isinstance(evidence_refs, list | tuple) or not evidence_refs:

@@ -96,7 +96,8 @@ about one of those boxes.
 
 | You now want to... | Go to |
 | --- | --- |
-| Actually run it and watch it work, step by step | [Tutorial 1: Your First Governed Task](../tutorials/01_first_governed_task.md) |
+| Actually run it and watch it work, step by step | [Tutorial 1: Your First Run](../tutorials/01_first_governed_task.md) |
+| Watch it govern real money (refuse an overspend, prove a payment) | [Tutorial 2: Watch Mullu Govern Real Money](../tutorials/02_a_real_governed_task.md) |
 | Understand the special vocabulary | [Glossary](../GLOSSARY.md) |
 | See the whole documentation map | [Start Here](../START_HERE.md) |
 | Get technical fast (you're a developer) | [Quickstart](../QUICKSTART.md) |

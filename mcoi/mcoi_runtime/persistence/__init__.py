@@ -26,6 +26,7 @@ from .mil_audit_store import (
 )
 from .registry_backend import RegistryBackend
 from .replay_store import ReplayStore
+from .nested_mind_store import NestedMindEvidenceEntry, NestedMindEvidenceStore
 from .skill_store import SkillStore
 from .skill_promotion_store import (
     FileSkillPromotionStore,
@@ -68,6 +69,8 @@ __all__ = [
     "MILAuditReplayPersistence",
     "MILAuditStore",
     "MILAuditTracePersistence",
+    "NestedMindEvidenceEntry",
+    "NestedMindEvidenceStore",
     "PathTraversalError",
     "PersistenceError",
     "PersistenceWriteError",

@@ -142,6 +142,60 @@ def test_signed_adapter_transport_rejects_bad_response_signature(monkeypatch) ->
     assert observed_request["timeout"] == 10.0
 
 
+def test_signed_adapter_transport_rejects_receipt_tenant_mismatch(monkeypatch) -> None:
+    secret = "browser-transport-secret"
+    request_payload = {
+        "request_id": "browser-request-1",
+        "tenant_id": "tenant-1",
+        "capability_id": "browser.extract_text",
+        "action": "browser.extract_text",
+        "url": "https://docs.mullusi.com/guide",
+        "metadata": {},
+    }
+    worker_payload = {
+        "request_id": "browser-request-1",
+        "status": "succeeded",
+        "result": {"extracted_text": "ok"},
+        "receipt": {
+            "request_id": "browser-request-1",
+            "tenant_id": "tenant-2",
+            "capability_id": "browser.extract_text",
+            "verification_status": "passed",
+            "evidence_refs": ["browser_action:test"],
+        },
+        "error": "",
+    }
+    response_body = json.dumps(worker_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+    class StubHttpResponse:
+        headers = {"X-Mullu-Browser-Response-Signature": sign_capability_payload(response_body, secret)}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def read(self):
+            return response_body
+
+    monkeypatch.setattr("urllib.request.urlopen", lambda http_request, timeout: StubHttpResponse())
+    client = BrowserWorkerClient(SignedAdapterWorkerTransport(
+        adapter_id="browser",
+        endpoint_url="https://worker.invalid/browser/execute",
+        signing_secret=secret,
+        request_signature_header="X-Mullu-Browser-Signature",
+        response_signature_header="X-Mullu-Browser-Response-Signature",
+    ))
+
+    with pytest.raises(RuntimeError, match="^browser worker receipt tenant mismatch$") as excinfo:
+        client.execute(request_payload)
+
+    assert str(excinfo.value) == "browser worker receipt tenant mismatch"
+    assert request_payload["tenant_id"] == "tenant-1"
+    assert worker_payload["receipt"]["tenant_id"] == "tenant-2"
+
+
 def test_browser_worker_env_requires_complete_signed_transport(monkeypatch) -> None:
     monkeypatch.setenv("MULLU_BROWSER_WORKER_URL", "https://worker.invalid/browser/execute")
     monkeypatch.delenv("MULLU_BROWSER_WORKER_SECRET", raising=False)

@@ -126,6 +126,8 @@ def universal_operator_dispatch(
     estimated_duration_seconds: float = 1.0,
     success_probability: float = 0.9,
     mode: str = "simulation",
+    actor_roles: tuple[str, ...] = (),
+    approval_refs: tuple[str, ...] = (),
 ) -> UniversalActionResult:
     """Dispatch an operator request through the universal governed action path.
 
@@ -149,6 +151,10 @@ def universal_operator_dispatch(
             estimated_duration_seconds=estimated_duration_seconds,
             success_probability=success_probability,
             mode=mode,
+            metadata={
+                "actor_roles": actor_roles,
+                "approval_refs": approval_refs,
+            },
         )
     )
 
@@ -162,6 +168,8 @@ def universal_command_dispatch(
     bindings: Mapping[str, str] | None = None,
     dispatch_route: str = "",
     mode: str = "simulation",
+    actor_roles: tuple[str, ...] = (),
+    approval_refs: tuple[str, ...] = (),
 ) -> UniversalActionResult:
     """Dispatch a command-ledger command through the universal action kernel.
 
@@ -194,6 +202,8 @@ def universal_command_dispatch(
         objective=f"Execute command {command.intent} through the universal action kernel.",
         risk_level=_risk_level_from_tier(action.risk_tier),
         mode=mode,
+        actor_roles=actor_roles,
+        approval_refs=approval_refs,
     )
     command_ledger.transition(
         command.command_id,
@@ -381,6 +391,7 @@ def _universal_action_transition_detail(result: UniversalActionResult) -> dict[s
         ),
         "capability_status": result.capability_decision.status.value if result.capability_decision else "",
         "capability_id": result.capability_decision.capability_id if result.capability_decision else "",
+        "governed_action_id": result.governed_action.governed_action_id if result.governed_action else "",
         "dispatch_ledger_hash": result.dispatch_result.ledger_hash if result.dispatch_result else "",
         "terminal_certificate_id": (
             result.terminal_certificate.certificate_id if result.terminal_certificate else ""

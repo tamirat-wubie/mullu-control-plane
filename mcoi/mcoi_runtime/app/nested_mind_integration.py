@@ -3,9 +3,9 @@
 Purpose: select and mount optional nested-mind integration helpers from runtime
 environment.
 Governance scope: default-off external read boundary, HTTPS-only base URL
-validation, optional credential binding, and default-off observation proposal
-planning.
-Dependencies: shared env flag helper, nested_mind adapter, and nested-mind
+validation, optional credential binding, default-off observation proposal
+planning, and separately gated live observation submission.
+Dependencies: shared env flag helper, nested_mind adapters, and nested-mind
 contract helpers.
 Invariants:
   - unset/false read flag means no connector and no runtime behavior change.
@@ -14,6 +14,7 @@ Invariants:
     stored in the bootstrap record.
   - observation bridge helper constructs plans only; it never executes connector
     calls or submits nested-mind proposals.
+  - observation submitter mounts only when read, planning, and submit gates pass.
 """
 
 from __future__ import annotations
@@ -23,6 +24,9 @@ from typing import Any, Callable, Mapping
 from urllib.parse import urlparse
 
 from mcoi_runtime.adapters.nested_mind import NestedMindConnector
+from mcoi_runtime.adapters.nested_mind_observation_submitter import (
+    NestedMindObservationSubmitter,
+)
 from mcoi_runtime.app._integration_paths import env_flag
 from mcoi_runtime.contracts.nested_mind_observation_bridge import (
     NestedMindObservationProposalPlan,
@@ -33,9 +37,10 @@ from mcoi_runtime.contracts.nested_mind_receipts import NestedMindProposalEviden
 from mcoi_runtime.core.invariants import stable_identifier
 
 NESTED_MIND_ENABLED_ENV = "MULLU_NESTED_MIND_ENABLED"
+NESTED_MIND_OBSERVATION_BRIDGE_ENABLED_ENV = "MULLU_NESTED_MIND_OBSERVATION_BRIDGE_ENABLED"
+NESTED_MIND_OBSERVATION_SUBMIT_ENABLED_ENV = "MULLU_NESTED_MIND_OBSERVATION_SUBMIT_ENABLED"
 NESTED_MIND_BASE_URL_ENV = "MULLU_NESTED_MIND_BASE_URL"
 NESTED_MIND_BEARER_TOKEN_ENV = "MULLU_NESTED_MIND_BEARER_TOKEN"
-NESTED_MIND_OBSERVATION_BRIDGE_ENABLED_ENV = "MULLU_NESTED_MIND_OBSERVATION_BRIDGE_ENABLED"
 
 
 @dataclass(frozen=True)
@@ -43,6 +48,16 @@ class NestedMindConnectorBootstrap:
     """Startup posture for the optional nested-mind read-only connector."""
 
     connector: object | None
+    enabled: bool
+    base_url: str
+    credential_configured: bool
+
+
+@dataclass(frozen=True)
+class NestedMindObservationSubmitterBootstrap:
+    """Startup posture for the optional nested-mind observation submitter."""
+
+    submitter: object | None
     enabled: bool
     base_url: str
     credential_configured: bool
@@ -80,12 +95,7 @@ class NestedMindObservationBridgePlanner:
         observed_at: str | None = None,
         metadata: Mapping[str, Any] | None = None,
     ) -> NestedMindObservationProposalPlan:
-        """Build a fixed-shape record_observation proposal plan.
-
-        This method deliberately does not call ``NestedMindConnector`` and does
-        not submit the proposal. It only creates the hash-bound plan consumed by
-        the next reviewed layer.
-        """
+        """Build a fixed-shape record_observation proposal plan."""
 
         if not isinstance(evidence, NestedMindProposalEvidence):
             raise ValueError("evidence must be NestedMindProposalEvidence")
@@ -165,6 +175,54 @@ def mount_nested_mind_observation_bridge_from_env(
     return NestedMindObservationBridgeBootstrap(
         planner=planner_cls(enabled=enabled, clock=clock),
         enabled=enabled,
+    )
+
+
+def mount_nested_mind_observation_submitter_from_env(
+    *,
+    runtime_env: Mapping[str, str],
+    clock: Callable[[], str],
+    submitter_cls: type[NestedMindObservationSubmitter] = NestedMindObservationSubmitter,
+) -> NestedMindObservationSubmitterBootstrap:
+    """Build the observation submitter only when all mutation gates are enabled."""
+
+    if not env_flag(runtime_env.get(NESTED_MIND_OBSERVATION_SUBMIT_ENABLED_ENV)):
+        return NestedMindObservationSubmitterBootstrap(
+            submitter=None,
+            enabled=False,
+            base_url="",
+            credential_configured=False,
+        )
+    if not env_flag(runtime_env.get(NESTED_MIND_ENABLED_ENV)):
+        raise RuntimeError(
+            f"{NESTED_MIND_ENABLED_ENV} must be enabled when "
+            f"{NESTED_MIND_OBSERVATION_SUBMIT_ENABLED_ENV} is enabled"
+        )
+    if not env_flag(runtime_env.get(NESTED_MIND_OBSERVATION_BRIDGE_ENABLED_ENV)):
+        raise RuntimeError(
+            f"{NESTED_MIND_OBSERVATION_BRIDGE_ENABLED_ENV} must be enabled when "
+            f"{NESTED_MIND_OBSERVATION_SUBMIT_ENABLED_ENV} is enabled"
+        )
+
+    raw_base_url = str(runtime_env.get(NESTED_MIND_BASE_URL_ENV, "")).strip()
+    if not raw_base_url:
+        raise RuntimeError(
+            f"{NESTED_MIND_BASE_URL_ENV} is required when "
+            f"{NESTED_MIND_OBSERVATION_SUBMIT_ENABLED_ENV} is enabled"
+        )
+    base_url = validate_nested_mind_base_url(raw_base_url)
+    raw_token = str(runtime_env.get(NESTED_MIND_BEARER_TOKEN_ENV, "")).strip()
+    token = raw_token or None
+    submitter = submitter_cls(
+        clock=clock,
+        base_url=base_url,
+        bearer_token=token,
+    )
+    return NestedMindObservationSubmitterBootstrap(
+        submitter=submitter,
+        enabled=True,
+        base_url=base_url,
+        credential_configured=token is not None,
     )
 
 
