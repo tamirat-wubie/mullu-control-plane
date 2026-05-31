@@ -20,7 +20,7 @@ from typing import Any, Mapping
 from .audit_store import SwarmAuditStore
 from .contracts import SwarmInvariantViolation
 from .invoice_workflow import InvoiceSwarmRequest, run_invoice_swarm
-from .record import SwarmAuditRecord, invoice_result_to_audit_record
+from .record import invoice_result_to_audit_record
 
 
 @dataclass(frozen=True)
