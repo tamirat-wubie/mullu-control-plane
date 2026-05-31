@@ -207,6 +207,8 @@ def test_temporal_phrase_swedish_next_weekday_local_resolves_before_registration
         ("dalam 2 jam", "id-ID"),
         ("dalam 2 jam", "ms-MY"),
         ("sau 2 gio", "vi-VN"),
+        ("sa loob ng 2 oras", "fil-PH"),
+        ("baada ya 2 saa", "sw-KE"),
     ),
 )
 def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
@@ -244,6 +246,8 @@ def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
         ("besok pukul 09:30 UTC", "id"),
         ("esok pukul 09:30 UTC", "ms-BN"),
         ("ngay mai luc 09:30 UTC", "vi"),
+        ("bukas sa 09:30 UTC", "tl"),
+        ("kesho saa 09:30 UTC", "sw-TZ"),
     ),
 )
 def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_registration(
@@ -281,6 +285,8 @@ def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_regi
         ("senin depan pukul 08:15 local", "id-ID"),
         ("isnin depan pukul 08:15 local", "ms-MY"),
         ("thu hai tiep theo luc 08:15 local", "vi-VN"),
+        ("susunod na lunes sa 08:15 local", "tl-PH"),
+        ("jumatatu ijayo saa 08:15 local", "sw-UG"),
     ),
 )
 def test_temporal_phrase_extended_locale_next_weekday_local_resolves_before_registration(

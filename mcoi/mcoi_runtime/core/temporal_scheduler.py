@@ -63,6 +63,7 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "menit",
         "minit",
         "phut",
+        "minuto",
     }
     hour_units = {
         "hour",
@@ -87,6 +88,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "saat",
         "jam",
         "gio",
+        "oras",
+        "saa",
     }
     day_units = {
         "day",
@@ -108,6 +111,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "gun",
         "hari",
         "ngay",
+        "araw",
+        "siku",
     }
     if unit in minute_units:
         delta = timedelta(minutes=amount)
@@ -296,6 +301,30 @@ def _vietnamese_weekdays() -> dict[str, int]:
     }
 
 
+def _filipino_weekdays() -> dict[str, int]:
+    return {
+        "lunes": 0,
+        "martes": 1,
+        "miyerkules": 2,
+        "huwebes": 3,
+        "biyernes": 4,
+        "sabado": 5,
+        "linggo": 6,
+    }
+
+
+def _swahili_weekdays() -> dict[str, int]:
+    return {
+        "jumatatu": 0,
+        "jumanne": 1,
+        "jumatano": 2,
+        "alhamisi": 3,
+        "ijumaa": 4,
+        "jumamosi": 5,
+        "jumapili": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -336,6 +365,10 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_malay_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"vi", "vi-vn"}:
         return _resolve_vietnamese_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"fil", "fil-ph", "tl", "tl-ph"}:
+        return _resolve_filipino_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"sw", "sw-ke", "sw-tz", "sw-ug"}:
+        return _resolve_swahili_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -953,6 +986,106 @@ def _resolve_vietnamese_temporal_phrase(
     if normalized in {"hom nay", "ngay mai", "toi nay", "lat nua", "som", "tuan toi", "thang toi", "nam toi"}:
         return "ambiguous", "temporal_phrase_ambiguous", ""
     if re.fullmatch(r"(thu hai|thu ba|thu tu|thu nam|thu sau|thu bay|chu nhat) tiep theo", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_filipino_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"sa loob ng ([1-9][0-9]*) (minuto|oras|araw)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(ngayon|bukas) sa ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "bukas" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"susunod na (lunes|martes|miyerkules|huwebes|biyernes|sabado|linggo) sa ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_filipino_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "ngayon",
+        "bukas",
+        "mamaya",
+        "maya-maya",
+        "sa lalong madaling panahon",
+        "susunod na linggo",
+        "susunod na buwan",
+        "susunod na taon",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"susunod na (lunes|martes|miyerkules|huwebes|biyernes|sabado|linggo)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_swahili_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"baada ya ([1-9][0-9]*) (dakika|saa|siku)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(leo|kesho) saa ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "kesho" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"(jumatatu|jumanne|jumatano|alhamisi|ijumaa|jumamosi|jumapili) ijayo saa ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_swahili_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "leo",
+        "kesho",
+        "usiku wa leo",
+        "baadaye",
+        "hivi karibuni",
+        "wiki ijayo",
+        "mwezi ujao",
+        "mwaka ujao",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"(jumatatu|jumanne|jumatano|alhamisi|ijumaa|jumamosi|jumapili) ijayo", normalized):
         return "ambiguous", "temporal_phrase_ambiguous", ""
     return "unsupported", "temporal_phrase_unsupported", ""
 
