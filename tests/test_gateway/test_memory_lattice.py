@@ -27,6 +27,7 @@ from gateway.memory_lattice import (
     P3MemoryTopologyNode,
     build_p3_memory_lattice_contract,
     build_p3_memory_topology_map,
+    build_p3_memory_topology_read_model,
 )
 
 
@@ -385,6 +386,111 @@ def test_p3_topology_map_binds_mind_memory_world_and_evidence_refs() -> None:
     assert "world:world:runtime-target" in node_ids
     assert {"admits", "observes", "supported_by"}.issubset(edge_kinds)
     assert topology.topology_hash
+
+
+def test_p3_topology_read_model_projects_bounded_operator_surface() -> None:
+    entry = _entry(
+        "semantic_fact_memory",
+        "trusted",
+        learning_admission_status="admit",
+        metadata={"world_refs": ("world:runtime-target",)},
+    )
+    admission = MemoryLatticeGate().assess(entry, now=NOW)
+    contract = build_p3_memory_lattice_contract(_ready_readiness(), (admission,), contract_id="p3-contract-1")
+    topology = build_p3_memory_topology_map(contract, (entry,), topology_id="topology-1")
+
+    read_model = build_p3_memory_topology_read_model(topology, node_limit=3, edge_limit=2)
+
+    assert read_model["surface"] == "p3_memory_topology"
+    assert read_model["read_model_only"] is True
+    assert read_model["live_write_enabled"] is False
+    assert read_model["execution_authority_granted"] is False
+    assert read_model["raw_topology_metadata_exposed"] is False
+    assert read_model["raw_memory_metadata_exposed"] is False
+    assert read_model["node_count"] == len(topology.nodes)
+    assert read_model["edge_count"] == len(topology.edges)
+    assert read_model["node_page"] == {"limit": 3, "returned": 3, "omitted": len(topology.nodes) - 3}
+    assert read_model["edge_page"] == {"limit": 2, "returned": 2, "omitted": len(topology.edges) - 2}
+    assert read_model["node_kind_counts"]["memory"] == 1
+    assert read_model["edge_kind_counts"]["supported_by"] == 4
+    assert all("metadata" not in node for node in read_model["nodes"])
+    assert all("metadata" not in edge for edge in read_model["edges"])
+
+
+def test_blocked_p3_topology_read_model_exposes_blockers_without_graph_surface() -> None:
+    contract = build_p3_memory_lattice_contract(
+        {"status": "blocked", "blockers": ("verified_reconciliation_missing",), "mind_id": "root"},
+        (),
+        contract_id="p3-contract-blocked",
+    )
+    topology = build_p3_memory_topology_map(contract, (), topology_id="topology-blocked")
+
+    read_model = build_p3_memory_topology_read_model(topology)
+
+    assert read_model["status"] == "blocked"
+    assert read_model["blocked_reasons"] == ["verified_reconciliation_missing"]
+    assert read_model["node_count"] == 0
+    assert read_model["edge_count"] == 0
+    assert read_model["nodes"] == []
+    assert read_model["edges"] == []
+    assert read_model["read_model_only"] is True
+    assert read_model["execution_authority_granted"] is False
+
+
+def test_p3_topology_read_model_rejects_invalid_limits_and_clamps_large_pages() -> None:
+    entry = _entry("semantic_fact_memory", "trusted", learning_admission_status="admit")
+    admission = MemoryLatticeGate().assess(entry, now=NOW)
+    contract = build_p3_memory_lattice_contract(_ready_readiness(), (admission,), contract_id="p3-contract-1")
+    topology = build_p3_memory_topology_map(contract, (entry,), topology_id="topology-1")
+    errors: list[str] = []
+
+    for kwargs, expected_error in (
+        ({"node_limit": -1}, "node_limit_must_be_non_negative"),
+        ({"edge_limit": "2"}, "edge_limit_must_be_integer"),
+        ({"node_limit": True}, "node_limit_must_be_integer"),
+    ):
+        try:
+            build_p3_memory_topology_read_model(topology, **kwargs)
+        except ValueError as exc:
+            errors.append(str(exc))
+        else:
+            raise AssertionError(f"{expected_error} was not raised")
+
+    clamped = build_p3_memory_topology_read_model(topology, node_limit=999, edge_limit=999)
+
+    assert errors == [
+        "node_limit_must_be_non_negative",
+        "edge_limit_must_be_integer",
+        "node_limit_must_be_integer",
+    ]
+    assert clamped["node_page"]["limit"] == 250
+    assert clamped["edge_page"]["limit"] == 250
+    assert clamped["node_page"]["returned"] == len(topology.nodes)
+
+
+def test_p3_topology_read_model_orders_nodes_and_edges_deterministically() -> None:
+    topology = P3MemoryTopologyMap(
+        topology_id="topology-unsorted",
+        contract_id="p3-contract-1",
+        status="ready",
+        mind_id="root",
+        nodes=(
+            _topology_node("memory:z", "memory", "memory:z"),
+            _topology_node("mind:root", "nested_mind", "root"),
+            _topology_node("evidence:a", "evidence", "evidence:a"),
+        ),
+        edges=(
+            P3MemoryTopologyEdge("edge:z", "mind:root", "memory:z", "admits", ("evidence:z",)),
+            P3MemoryTopologyEdge("edge:a", "mind:root", "evidence:a", "supported_by", ("evidence:a",)),
+        ),
+    )
+
+    read_model = build_p3_memory_topology_read_model(topology)
+
+    assert [node["node_id"] for node in read_model["nodes"]] == ["evidence:a", "memory:z", "mind:root"]
+    assert [edge["edge_id"] for edge in read_model["edges"]] == ["edge:a", "edge:z"]
+    assert read_model["node_kind_counts"] == {"nested_mind": 1, "memory": 1, "evidence": 1}
+    assert read_model["edge_kind_counts"] == {"admits": 1, "supported_by": 1}
 
 
 def test_p3_topology_map_blocks_when_contract_is_not_ready() -> None:
