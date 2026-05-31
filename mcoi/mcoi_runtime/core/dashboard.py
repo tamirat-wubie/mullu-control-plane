@@ -360,6 +360,7 @@ class DashboardEngine:
             else retrieval_receipt_count
         )
         retrieval_filter_active = _bool_at(summary, "retrieval_filter_active", default=False)
+        retrieval_filter_mode = _non_empty_text_at(summary, "retrieval_filter_mode", default="unfiltered")
         now = self._clock()
         summary_id = stable_identifier("dash-note-memory", {
             "status": status,
@@ -381,6 +382,7 @@ class DashboardEngine:
             episode_capsule_count=_non_negative_int_at(summary, "episode_capsule_count"),
             contradiction_count=_non_negative_int_at(summary, "contradiction_count"),
             retrieval_filter_active=retrieval_filter_active,
+            retrieval_filter_mode=retrieval_filter_mode,
             retrieval_influence_count=retrieval_influence_count,
             retrieval_influence_total_count=retrieval_influence_total_count,
             retrieval_receipt_count=retrieval_receipt_count,

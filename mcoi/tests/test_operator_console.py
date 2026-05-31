@@ -114,6 +114,7 @@ def test_console_note_memory_disabled(client: TestClient) -> None:
     assert data["summary"]["episode_capsule_count"] == 0
     assert data["summary"]["index_proof_state"] == "Unknown"
     assert data["summary"]["retrieval_filter_active"] is False
+    assert data["summary"]["retrieval_filter_mode"] == "unfiltered"
     assert data["summary"]["retrieval_influence_count"] == 0
     assert data["summary"]["retrieval_influence_total_count"] == 0
     assert data["summary"]["retrieval_receipt_count"] == 0
@@ -197,6 +198,7 @@ def test_console_note_memory_enabled_read_model(client: TestClient, tmp_path) ->
     assert data["filters"]["retrieval_receipt_ref"] == retrieved["payload"]["receipt"]["receipt_id"]
     assert data["filters"]["retrieval_citing_note_ref"] == decision["payload"]["event"]["note_id"]
     assert data["summary"]["retrieval_filter_active"] is True
+    assert data["summary"]["retrieval_filter_mode"] == "receipt_and_citing_note"
     assert data["summary"]["retrieval_influence_count"] == 1
     assert data["summary"]["retrieval_influence_total_count"] == 1
     assert data["summary"]["retrieval_receipt_count"] == 1
