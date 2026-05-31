@@ -255,27 +255,66 @@ def _effect_graph_commit_receipt_from_dict(payload: Mapping[str, Any]) -> Effect
     if not isinstance(metadata, dict):
         raise ValueError("effect graph commit receipt metadata must be an object")
     return EffectGraphCommitReceipt(
-        receipt_id=str(payload.get("receipt_id", "")),
-        mutation_type=str(payload.get("mutation_type", "")),
-        effect_name=str(payload.get("effect_name", "")),
-        command_id=str(payload.get("command_id", "")),
-        effect_plan_id=str(payload.get("effect_plan_id", "")),
-        reconciliation_id=str(payload.get("reconciliation_id", "")),
-        evidence_ref=str(payload.get("evidence_ref", "")),
-        verification_result_id=(
-            str(payload["verification_result_id"])
-            if payload.get("verification_result_id") is not None
-            else None
-        ),
-        observed_effect_ids=tuple(str(value) for value in payload.get("observed_effect_ids", ())),
-        observed_evidence_refs=tuple(str(value) for value in payload.get("observed_evidence_refs", ())),
-        before_node_count=int(payload.get("before_node_count", -1)),
-        before_edge_count=int(payload.get("before_edge_count", -1)),
-        after_node_count=int(payload.get("after_node_count", -1)),
-        after_edge_count=int(payload.get("after_edge_count", -1)),
-        recorded_at=str(payload.get("recorded_at", "")),
+        receipt_id=_required_receipt_text(payload, "receipt_id"),
+        mutation_type=_required_receipt_text(payload, "mutation_type"),
+        effect_name=_required_receipt_text(payload, "effect_name"),
+        command_id=_required_receipt_text(payload, "command_id"),
+        effect_plan_id=_required_receipt_text(payload, "effect_plan_id"),
+        reconciliation_id=_required_receipt_text(payload, "reconciliation_id"),
+        evidence_ref=_required_receipt_text(payload, "evidence_ref"),
+        verification_result_id=_optional_receipt_text(payload, "verification_result_id"),
+        observed_effect_ids=_required_receipt_text_tuple(payload, "observed_effect_ids"),
+        observed_evidence_refs=_required_receipt_text_tuple(payload, "observed_evidence_refs"),
+        before_node_count=_required_receipt_int(payload, "before_node_count"),
+        before_edge_count=_required_receipt_int(payload, "before_edge_count"),
+        after_node_count=_required_receipt_int(payload, "after_node_count"),
+        after_edge_count=_required_receipt_int(payload, "after_edge_count"),
+        recorded_at=_required_receipt_text(payload, "recorded_at"),
         metadata=dict(metadata),
     )
+
+
+def _required_receipt_text(payload: Mapping[str, Any], field_name: str) -> str:
+    value = payload.get(field_name)
+    if not isinstance(value, str):
+        raise ValueError(f"effect graph commit receipt {field_name} must be a string")
+    if not value.strip():
+        raise ValueError(f"effect graph commit receipt {field_name} is required")
+    return value
+
+
+def _optional_receipt_text(payload: Mapping[str, Any], field_name: str) -> str | None:
+    value = payload.get(field_name)
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ValueError(f"effect graph commit receipt {field_name} must be a string")
+    if not value.strip():
+        raise ValueError(f"effect graph commit receipt {field_name} is required")
+    return value
+
+
+def _required_receipt_int(payload: Mapping[str, Any], field_name: str) -> int:
+    value = payload.get(field_name)
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"effect graph commit receipt {field_name} must be an integer")
+    if value < 0:
+        raise ValueError(f"effect graph commit receipt {field_name} must be non-negative")
+    return value
+
+
+def _required_receipt_text_tuple(payload: Mapping[str, Any], field_name: str) -> tuple[str, ...]:
+    value = payload.get(field_name)
+    if isinstance(value, (str, bytes)) or not isinstance(value, (list, tuple)):
+        raise ValueError(f"effect graph commit receipt {field_name} must be an array")
+    values: list[str] = []
+    for item in value:
+        if not isinstance(item, str):
+            raise ValueError(f"effect graph commit receipt {field_name} entries must be strings")
+        if not item.strip():
+            raise ValueError(f"effect graph commit receipt {field_name} entries are required")
+        values.append(item)
+    return tuple(values)
 
 
 class EffectAssuranceGate:

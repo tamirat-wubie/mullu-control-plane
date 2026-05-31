@@ -394,3 +394,54 @@ def test_jsonl_graph_commit_receipt_store_rejects_malformed_records(tmp_path):
 
     with pytest.raises(ValueError, match="malformed"):
         JsonlEffectGraphCommitReceiptStore(path)
+
+
+def test_jsonl_graph_commit_receipt_store_rejects_loose_count(tmp_path):
+    path = tmp_path / "effect-graph-commit-receipts.jsonl"
+    receipt = _graph_commit_receipt().to_dict()
+    receipt["before_node_count"] = "0"
+    path.write_text(
+        effect_assurance_module.json.dumps(
+            {"type": "effect_graph_commit_receipt", "receipt": receipt},
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="before_node_count must be an integer"):
+        JsonlEffectGraphCommitReceiptStore(path)
+
+
+def test_jsonl_graph_commit_receipt_store_rejects_loose_receipt_id(tmp_path):
+    path = tmp_path / "effect-graph-commit-receipts.jsonl"
+    receipt = _graph_commit_receipt().to_dict()
+    receipt["receipt_id"] = 7
+    path.write_text(
+        effect_assurance_module.json.dumps(
+            {"type": "effect_graph_commit_receipt", "receipt": receipt},
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="receipt_id must be a string"):
+        JsonlEffectGraphCommitReceiptStore(path)
+
+
+def test_jsonl_graph_commit_receipt_store_rejects_loose_observed_effect_id(tmp_path):
+    path = tmp_path / "effect-graph-commit-receipts.jsonl"
+    receipt = _graph_commit_receipt().to_dict()
+    receipt["observed_effect_ids"] = ["ledger_entry_created", 9]
+    path.write_text(
+        effect_assurance_module.json.dumps(
+            {"type": "effect_graph_commit_receipt", "receipt": receipt},
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="observed_effect_ids entries must be strings"):
+        JsonlEffectGraphCommitReceiptStore(path)
