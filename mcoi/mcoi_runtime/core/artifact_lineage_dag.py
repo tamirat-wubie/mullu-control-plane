@@ -177,12 +177,12 @@ class ArtifactLineageSnapshot:
         if not isinstance(payload, Mapping):
             raise RuntimeCoreInvariantError("artifact lineage snapshot must be an object")
         return cls(
-            schema_version=int(payload.get("schema_version", 0)),
-            snapshot_id=str(payload.get("snapshot_id", "")),
-            snapshot_hash=str(payload.get("snapshot_hash", "")),
-            created_at=str(payload.get("created_at", "")),
-            artifact_count=int(payload.get("artifact_count", -1)),
-            edge_count=int(payload.get("edge_count", -1)),
+            schema_version=_required_mapping_int(payload, "schema_version"),
+            snapshot_id=_required_mapping_text(payload, "snapshot_id"),
+            snapshot_hash=_required_mapping_text(payload, "snapshot_hash"),
+            created_at=_required_mapping_text(payload, "created_at"),
+            artifact_count=_required_mapping_int(payload, "artifact_count"),
+            edge_count=_required_mapping_int(payload, "edge_count"),
             artifacts=_mapping_tuple("artifacts", payload.get("artifacts", ())),
             edges=_mapping_tuple("edges", payload.get("edges", ())),
         )
@@ -564,12 +564,12 @@ def _node_from_json_dict(payload: Mapping[str, Any]) -> ArtifactLineageNode:
     if not isinstance(replayable, bool):
         raise RuntimeCoreInvariantError("replayable must be a bool")
     return ArtifactLineageNode(
-        artifact_id=str(payload.get("artifact_id", "")),
-        artifact_hash=str(payload.get("artifact_hash", "")),
-        artifact_type=str(payload.get("artifact_type", "")),
-        tenant_id=str(payload.get("tenant_id", "")),
-        produced_by_event_id=str(payload.get("produced_by_event_id", "")),
-        created_at=str(payload.get("created_at", "")),
+        artifact_id=_required_mapping_text(payload, "artifact_id"),
+        artifact_hash=_required_mapping_text(payload, "artifact_hash"),
+        artifact_type=_required_mapping_text(payload, "artifact_type"),
+        tenant_id=_required_mapping_text(payload, "tenant_id"),
+        produced_by_event_id=_required_mapping_text(payload, "produced_by_event_id"),
+        created_at=_required_mapping_text(payload, "created_at"),
         replayable=replayable,
         metadata=_json_mapping(_mapping_value(payload, "metadata")),
     )
@@ -578,18 +578,18 @@ def _node_from_json_dict(payload: Mapping[str, Any]) -> ArtifactLineageNode:
 def _edge_from_json_dict(payload: Mapping[str, Any]) -> ArtifactLineageEdge:
     if not isinstance(payload, Mapping):
         raise RuntimeCoreInvariantError("artifact edge snapshot row must be an object")
-    relation_raw = str(payload.get("relation", ""))
+    relation_raw = _required_mapping_text(payload, "relation")
     try:
         relation = ArtifactLineageRelation(relation_raw)
     except ValueError as exc:
         raise RuntimeCoreInvariantError("relation must be an ArtifactLineageRelation value") from exc
     return ArtifactLineageEdge(
-        edge_id=str(payload.get("edge_id", "")),
-        upstream_artifact_id=str(payload.get("upstream_artifact_id", "")),
-        downstream_artifact_id=str(payload.get("downstream_artifact_id", "")),
+        edge_id=_required_mapping_text(payload, "edge_id"),
+        upstream_artifact_id=_required_mapping_text(payload, "upstream_artifact_id"),
+        downstream_artifact_id=_required_mapping_text(payload, "downstream_artifact_id"),
         relation=relation,
-        reason=str(payload.get("reason", "")),
-        created_at=str(payload.get("created_at", "")),
+        reason=_required_mapping_text(payload, "reason"),
+        created_at=_required_mapping_text(payload, "created_at"),
     )
 
 
@@ -608,6 +608,20 @@ def _mapping_value(payload: Mapping[str, Any], field_name: str) -> Mapping[str, 
     value = payload.get(field_name, {})
     if not isinstance(value, Mapping):
         raise RuntimeCoreInvariantError(f"{field_name} must be an object")
+    return value
+
+
+def _required_mapping_text(payload: Mapping[str, Any], field_name: str) -> str:
+    value = payload.get(field_name)
+    if not isinstance(value, str):
+        raise RuntimeCoreInvariantError(f"{field_name} must be a string")
+    return ensure_non_empty_text(field_name, value)
+
+
+def _required_mapping_int(payload: Mapping[str, Any], field_name: str) -> int:
+    value = payload.get(field_name)
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise RuntimeCoreInvariantError(f"{field_name} must be an integer")
     return value
 
 

@@ -200,6 +200,54 @@ def test_snapshot_restore_rejects_tampered_hash() -> None:
         ArtifactLineageSnapshot.from_json_dict(snapshot)
 
 
+def test_snapshot_restore_rejects_loose_snapshot_counts() -> None:
+    dag = _dag()
+    _register(dag, "source")
+    snapshot = dag.export_snapshot().to_json_dict()
+    snapshot["artifact_count"] = "1"
+
+    with pytest.raises(RuntimeCoreInvariantError, match="artifact_count must be an integer"):
+        ArtifactLineageSnapshot.from_json_dict(snapshot)
+
+
+def test_snapshot_restore_rejects_loose_artifact_identifier() -> None:
+    row = {
+        "artifact_id": 7,
+        "artifact_hash": hash_artifact_payload({"artifact_id": 7}),
+        "artifact_type": "json",
+        "tenant_id": "tenant-1",
+        "produced_by_event_id": "event-7",
+        "created_at": _clock(),
+        "replayable": True,
+        "metadata": {},
+    }
+    snapshot = ArtifactLineageSnapshot.build(
+        created_at=_clock(),
+        artifacts=(row,),
+        edges=(),
+    ).to_json_dict()
+
+    with pytest.raises(RuntimeCoreInvariantError, match="artifact_id must be a string"):
+        ArtifactLineageDAG.from_snapshot(snapshot, clock=_clock)
+
+
+def test_snapshot_restore_rejects_loose_edge_relation() -> None:
+    dag = _dag()
+    _register(dag, "source")
+    _register(dag, "report")
+    dag.add_edge(upstream_artifact_id="source", downstream_artifact_id="report", reason="derive")
+    snapshot = dag.export_snapshot().to_json_dict()
+    snapshot["edges"][0]["relation"] = 3
+    repaired_snapshot = ArtifactLineageSnapshot.build(
+        created_at=snapshot["created_at"],
+        artifacts=tuple(snapshot["artifacts"]),
+        edges=tuple(snapshot["edges"]),
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="relation must be a string"):
+        ArtifactLineageDAG.from_snapshot(repaired_snapshot, clock=_clock)
+
+
 def test_snapshot_restore_rejects_missing_edge_endpoint() -> None:
     dag = _dag()
     _register(dag, "source")
