@@ -462,6 +462,26 @@ def test_simple_platform_api_rejects_invalid_request() -> None:
     assert payload["error"]
 
 
+def test_simple_platform_api_rejects_non_text_request_fields() -> None:
+    runtime = SimplePlatformRuntime()
+
+    action_payload = runtime.check_action({"goal": 1001, "action": "view"}).to_dict()
+    task_payload = runtime.check_task(
+        {"task": "review_docs", "target": "docs/README.md", "actor_id": False}
+    ).to_dict()
+    workflow_payload = runtime.check_workflow(
+        {"workflow": "docs_update", "target": 1001}
+    ).to_dict()
+
+    assert action_payload["governed"] is True
+    assert action_payload["ok"] is False
+    assert "goal must be text" in action_payload["error"]
+    assert task_payload["ok"] is False
+    assert "actor_id must be text" in task_payload["error"]
+    assert workflow_payload["ok"] is False
+    assert "target must be text" in workflow_payload["error"]
+
+
 def test_simple_platform_api_lists_action_menu() -> None:
     payload = SimplePlatformRuntime().action_menu().to_dict()
 
