@@ -102,6 +102,9 @@
             "minLength": 1
           }
         },
+        "execution_environment": {
+          "$ref": "#/$defs/execution_environment"
+        },
         "risk_level": {
           "type": "string",
           "enum": [
@@ -121,6 +124,42 @@
             "deployment",
             "portfolio"
           ]
+        }
+      }
+    },
+    "execution_environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_host_os",
+        "current_host_os",
+        "current_environment_ready",
+        "blocker_if_unmet",
+        "requirements"
+      ],
+      "properties": {
+        "required_host_os": {
+          "type": "string",
+          "minLength": 1
+        },
+        "current_host_os": {
+          "type": "string",
+          "minLength": 1
+        },
+        "current_environment_ready": {
+          "type": "boolean"
+        },
+        "blocker_if_unmet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requirements": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     }

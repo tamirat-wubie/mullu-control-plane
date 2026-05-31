@@ -46,6 +46,25 @@ REQUIRED_DOCUMENT_PARSERS = frozenset(
         "production-pptx",
     }
 )
+PROBE_EXCEPTION_RECOVERY_ACTIONS = {
+    "browser.playwright": (
+        "verify_browser_worker_reachable",
+        "verify_browser_sandbox_evidence_present",
+        "verify_playwright_browser_dependencies_installed",
+        "rerun_browser_live_receipt_probe",
+    ),
+    "document.production_parsers": (
+        "verify_document_parser_dependencies_installed",
+        "verify_document_parser_registry_loaded",
+        "rerun_document_live_receipt_probe",
+    ),
+    "voice.openai": (
+        "verify_voice_worker_reachable",
+        "verify_voice_provider_credentials_present",
+        "verify_voice_audio_fixture_present",
+        "rerun_voice_live_receipt_probe",
+    ),
+}
 
 
 class BrowserExecutor(Protocol):
@@ -166,6 +185,7 @@ def produce_browser_live_receipt(
             blockers=blockers,
             error="browser_probe_exception",
         )
+        payload.update(_probe_exception_recovery_payload("browser.playwright"))
         payload.update(
             {
                 "sandboxed_worker": sandbox_evidence["passed"],
@@ -218,6 +238,7 @@ def produce_document_live_receipt(
             blockers=blockers,
             error="document_probe_exception",
         )
+        payload.update(_probe_exception_recovery_payload("document.production_parsers"))
     _write_json(output_path, payload)
     return LiveReceiptWrite(
         adapter_id="document.production_parsers",
@@ -301,6 +322,7 @@ def produce_voice_live_receipt(
             blockers=blockers,
             error="voice_probe_exception",
         )
+        payload.update(_probe_exception_recovery_payload("voice.openai"))
     _write_json(output_path, payload)
     return LiveReceiptWrite(
         adapter_id="voice.openai",
@@ -398,6 +420,14 @@ def _email_calendar_recovery_payload(blockers: list[str]) -> dict[str, Any]:
             "verify_connector_scope_read_only",
             "rerun_email_calendar_live_receipt_probe",
         ],
+    }
+
+
+def _probe_exception_recovery_payload(adapter_id: str) -> dict[str, Any]:
+    """Return bounded recovery metadata for failed live probe exceptions."""
+    return {
+        "failure_class": "probe_exception",
+        "recovery_actions": list(PROBE_EXCEPTION_RECOVERY_ACTIONS.get(adapter_id, ())),
     }
 
 
