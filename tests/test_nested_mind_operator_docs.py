@@ -31,3 +31,10 @@ def test_operator_doc_states_blocked_report_exit_contract() -> None:
     assert "It exits with `0` only when the readiness validator reports `ready`" in text
     assert "blocked reports exit with `1`" in text
     assert "automation cannot silently advance P3" in text
+
+
+def test_operator_doc_states_corrupted_evidence_is_not_blocked_json() -> None:
+    text = " ".join(DOC_PATH.read_text(encoding="utf-8").split())
+
+    assert "Malformed or corrupted evidence stores raise a typed persistence error" in text
+    assert "do not emit a normal blocked readiness JSON object" in text
