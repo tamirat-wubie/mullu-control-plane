@@ -123,7 +123,7 @@ class NoteMemoryRuntime:
 
         try:
             body = request_body or {}
-            report = self.mesh.expire_temporary_notes(str(body["now"]) if body.get("now") else None)
+            report = self.mesh.expire_temporary_notes(_optional_text(body, "now"))
             return _ok("expired", {"report": _jsonable(report)})
         except (KeyError, TypeError, ValueError, RuntimeCoreInvariantError) as exc:
             return _rejected(exc)

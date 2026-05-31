@@ -218,6 +218,17 @@ def test_runtime_rejected_delta_expiry_and_rebuild_emit_receipts(tmp_path) -> No
     assert rebuilt["payload"]["report"]["valid_events"] == 3
 
 
+def test_runtime_rejects_non_text_expiry_now(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.expire_temporary_notes({"now": 12345}).to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "now must be a string" in rejected["error"]
+
+
 def test_runtime_dashboard_snapshot_reports_operator_memory_state(tmp_path) -> None:
     runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
     captured = runtime.capture_note(_working_note(content_summary="dashboard parser note")).to_dict()
