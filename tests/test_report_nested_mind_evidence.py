@@ -159,3 +159,21 @@ def test_cli_prints_report_and_returns_blocked_status(tmp_path, capsys) -> None:
     assert exit_code == 1
     assert output["status"] == "blocked"
     assert output["readiness"]["status"] == "blocked"
+
+
+def test_cli_prints_report_and_returns_ready_status(tmp_path, capsys) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    store.record_commit_witness(_witness())
+    store.record_reconciliation_report(_reconciliation())
+
+    exit_code = module.main(["--store", str(store_path), "--mind-id", "root"])
+    output = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert output["status"] == "ready"
+    assert output["mind_id"] == "root"
+    assert output["readiness"]["status"] == "ready"
+    assert output["next_action"] == "p3_gate_ready_for_operator_review"
