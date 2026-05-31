@@ -515,6 +515,12 @@
       "surface": "memory"
     },
     {
+      "schema_id": "p3-memory-topology-read-model",
+      "path": "schemas/p3_memory_topology_read_model.schema.json",
+      "urn": "urn:mullusi:schema:p3-memory-topology-read-model:1",
+      "surface": "memory"
+    },
+    {
       "schema_id": "lineage-query",
       "path": "schemas/lineage_query.schema.json",
       "urn": "urn:mullusi:schema:lineage-query:1",
