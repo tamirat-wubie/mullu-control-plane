@@ -60,6 +60,39 @@ def test_runtime_rejects_missing_or_invalid_fields_without_persisting(tmp_path) 
     assert runtime.audit_store.count == 0
 
 
+def test_runtime_rejects_non_text_run_id_without_persisting(tmp_path) -> None:
+    runtime = InvoiceSwarmRuntime.from_path(tmp_path / "swarm-runs.jsonl")
+
+    rejected = runtime.run_invoice(_payload(run_id=1001)).to_dict()
+    listed = runtime.list_runs().to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "run_id must be a string" in rejected["error"]
+    assert listed["payload"]["count"] == 0
+    assert runtime.audit_store.count == 0
+
+
+def test_runtime_rejects_non_text_symbolic_fields_without_persisting(tmp_path) -> None:
+    runtime = InvoiceSwarmRuntime.from_path(tmp_path / "swarm-runs.jsonl")
+
+    goal_rejected = runtime.run_invoice(_payload(run_id="run_bad_goal", goal_id=1001)).to_dict()
+    tenant_rejected = runtime.run_invoice(_payload(run_id="run_bad_tenant", tenant_id=False)).to_dict()
+    invoice_rejected = runtime.run_invoice(_payload(run_id="run_bad_invoice", invoice_ref=1001)).to_dict()
+    listed = runtime.list_runs().to_dict()
+
+    assert goal_rejected["governed"] is True
+    assert goal_rejected["ok"] is False
+    assert "goal_id must be a string" in goal_rejected["error"]
+    assert tenant_rejected["ok"] is False
+    assert "tenant_id must be a string" in tenant_rejected["error"]
+    assert invoice_rejected["ok"] is False
+    assert "invoice_ref must be a string" in invoice_rejected["error"]
+    assert listed["payload"]["count"] == 0
+    assert runtime.audit_store.count == 0
+
+
 def test_runtime_list_runs_and_not_found_lookup_are_read_only(tmp_path) -> None:
     runtime = InvoiceSwarmRuntime.from_path(tmp_path / "swarm-runs.jsonl")
     runtime.run_invoice(_payload(run_id="run_api_invoice_001"))
