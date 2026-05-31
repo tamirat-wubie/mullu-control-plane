@@ -370,8 +370,10 @@ def test_dashboard_snapshot_filters_retrieval_influence_by_receipt(tmp_path) -> 
     assert snapshot["summary"]["retrieval_filter_mode"] == "receipt"
     assert snapshot["summary"]["retrieval_influence_count"] == 1
     assert snapshot["summary"]["retrieval_influence_total_count"] == 2
+    assert snapshot["summary"]["retrieval_influence_filtered_out_count"] == 1
     assert snapshot["summary"]["retrieval_receipt_count"] == 1
     assert snapshot["summary"]["retrieval_receipt_total_count"] == 2
+    assert snapshot["summary"]["retrieval_receipt_filtered_out_count"] == 1
     assert snapshot["retrieval_receipts"][0]["receipt_id"] == first_receipt
     assert snapshot["retrieval_receipts"][0]["citation_count"] == 1
     assert snapshot["retrieval_influence"][0]["receipt_id"] == first_receipt
@@ -423,8 +425,10 @@ def test_dashboard_snapshot_filters_retrieval_influence_by_citing_note(tmp_path)
     assert snapshot["summary"]["retrieval_filter_mode"] == "citing_note"
     assert snapshot["summary"]["retrieval_influence_count"] == 2
     assert snapshot["summary"]["retrieval_influence_total_count"] == 3
+    assert snapshot["summary"]["retrieval_influence_filtered_out_count"] == 1
     assert snapshot["summary"]["retrieval_receipt_count"] == 2
     assert snapshot["summary"]["retrieval_receipt_total_count"] == 2
+    assert snapshot["summary"]["retrieval_receipt_filtered_out_count"] == 0
     assert {row["receipt_id"] for row in snapshot["retrieval_influence"]} == {first_receipt, second_receipt}
     assert {row["citing_note_id"] for row in snapshot["retrieval_influence"]} == {second.note_id}
     assert second.note_id != first.note_id
@@ -473,6 +477,8 @@ def test_dashboard_snapshot_combines_receipt_and_citing_note_filters(tmp_path) -
     assert snapshot["summary"]["retrieval_filter_mode"] == "receipt_and_citing_note"
     assert snapshot["summary"]["retrieval_influence_count"] == 1
     assert snapshot["summary"]["retrieval_influence_total_count"] == 2
+    assert snapshot["summary"]["retrieval_influence_filtered_out_count"] == 1
+    assert snapshot["summary"]["retrieval_receipt_filtered_out_count"] == 1
     assert snapshot["retrieval_influence"][0]["receipt_id"] == second_receipt
     assert snapshot["retrieval_influence"][0]["citing_note_id"] == second.note_id
     assert snapshot["retrieval_influence"][0]["citing_note_id"] != first.note_id

@@ -1190,8 +1190,10 @@ retention_days
 retrieval_filter_active
 retrieval_filter_mode
 retrieval_influence_count
+retrieval_influence_filtered_out_count
 retrieval_influence_total_count
 retrieval_receipt_count
+retrieval_receipt_filtered_out_count
 retrieval_receipt_total_count
 retrieved_at
 retry_after_seconds

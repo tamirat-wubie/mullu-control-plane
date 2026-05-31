@@ -353,11 +353,21 @@ class DashboardEngine:
             if "retrieval_influence_total_count" in summary
             else retrieval_influence_count
         )
+        retrieval_influence_filtered_out_count = (
+            _non_negative_int_at(summary, "retrieval_influence_filtered_out_count")
+            if "retrieval_influence_filtered_out_count" in summary
+            else retrieval_influence_total_count - retrieval_influence_count
+        )
         retrieval_receipt_count = _non_negative_int_at(summary, "retrieval_receipt_count")
         retrieval_receipt_total_count = (
             _non_negative_int_at(summary, "retrieval_receipt_total_count")
             if "retrieval_receipt_total_count" in summary
             else retrieval_receipt_count
+        )
+        retrieval_receipt_filtered_out_count = (
+            _non_negative_int_at(summary, "retrieval_receipt_filtered_out_count")
+            if "retrieval_receipt_filtered_out_count" in summary
+            else retrieval_receipt_total_count - retrieval_receipt_count
         )
         retrieval_filter_active = _bool_at(summary, "retrieval_filter_active", default=False)
         retrieval_filter_mode = _non_empty_text_at(summary, "retrieval_filter_mode", default="unfiltered")
@@ -385,8 +395,10 @@ class DashboardEngine:
             retrieval_filter_mode=retrieval_filter_mode,
             retrieval_influence_count=retrieval_influence_count,
             retrieval_influence_total_count=retrieval_influence_total_count,
+            retrieval_influence_filtered_out_count=retrieval_influence_filtered_out_count,
             retrieval_receipt_count=retrieval_receipt_count,
             retrieval_receipt_total_count=retrieval_receipt_total_count,
+            retrieval_receipt_filtered_out_count=retrieval_receipt_filtered_out_count,
             index_proof_state=index_proof_state,
             assessed_at=now,
         )

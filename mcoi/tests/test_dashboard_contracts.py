@@ -217,8 +217,10 @@ def _note_summary(
     retrieval_filter_mode: str = "unfiltered",
     retrieval_influence_count: int = 0,
     retrieval_influence_total_count: int = 0,
+    retrieval_influence_filtered_out_count: int = 0,
     retrieval_receipt_count: int = 0,
     retrieval_receipt_total_count: int = 0,
+    retrieval_receipt_filtered_out_count: int = 0,
     index_proof_state: str = "Pass",
     assessed_at: str = "2026-03-20T00:00:00Z",
 ) -> NoteMemorySummary:
@@ -238,8 +240,10 @@ def _note_summary(
         retrieval_filter_mode=retrieval_filter_mode,
         retrieval_influence_count=retrieval_influence_count,
         retrieval_influence_total_count=retrieval_influence_total_count,
+        retrieval_influence_filtered_out_count=retrieval_influence_filtered_out_count,
         retrieval_receipt_count=retrieval_receipt_count,
         retrieval_receipt_total_count=retrieval_receipt_total_count,
+        retrieval_receipt_filtered_out_count=retrieval_receipt_filtered_out_count,
         index_proof_state=index_proof_state,
         assessed_at=assessed_at,
     )
@@ -258,8 +262,10 @@ class TestNoteMemorySummary:
         assert summary.retrieval_filter_mode == "unfiltered"
         assert summary.retrieval_influence_count == 0
         assert summary.retrieval_influence_total_count == 0
+        assert summary.retrieval_influence_filtered_out_count == 0
         assert summary.retrieval_receipt_count == 0
         assert summary.retrieval_receipt_total_count == 0
+        assert summary.retrieval_receipt_filtered_out_count == 0
 
     def test_empty_status_raises(self) -> None:
         with pytest.raises(ValueError, match="status"):
@@ -285,6 +291,14 @@ class TestNoteMemorySummary:
         with pytest.raises(ValueError, match="retrieval_influence_total_count"):
             _note_summary(retrieval_influence_count=2, retrieval_influence_total_count=1)
 
+    def test_retrieval_influence_filtered_out_must_match_difference(self) -> None:
+        with pytest.raises(ValueError, match="retrieval_influence_filtered_out_count"):
+            _note_summary(
+                retrieval_influence_count=1,
+                retrieval_influence_total_count=3,
+                retrieval_influence_filtered_out_count=1,
+            )
+
     def test_non_boolean_retrieval_filter_active_raises(self) -> None:
         with pytest.raises(ValueError, match="retrieval_filter_active"):
             _note_summary(retrieval_filter_active="true")  # type: ignore[arg-type]
@@ -304,6 +318,14 @@ class TestNoteMemorySummary:
     def test_retrieval_receipt_total_must_cover_filtered_count(self) -> None:
         with pytest.raises(ValueError, match="retrieval_receipt_total_count"):
             _note_summary(retrieval_receipt_count=2, retrieval_receipt_total_count=1)
+
+    def test_retrieval_receipt_filtered_out_must_match_difference(self) -> None:
+        with pytest.raises(ValueError, match="retrieval_receipt_filtered_out_count"):
+            _note_summary(
+                retrieval_receipt_count=1,
+                retrieval_receipt_total_count=3,
+                retrieval_receipt_filtered_out_count=1,
+            )
 
     def test_invalid_assessed_at_raises(self) -> None:
         with pytest.raises(ValueError, match="assessed_at"):

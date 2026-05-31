@@ -251,8 +251,10 @@ class NoteMemorySummary(ContractRecord):
     retrieval_filter_mode: str
     retrieval_influence_count: int
     retrieval_influence_total_count: int
+    retrieval_influence_filtered_out_count: int
     retrieval_receipt_count: int
     retrieval_receipt_total_count: int
+    retrieval_receipt_filtered_out_count: int
     index_proof_state: str
     assessed_at: str
 
@@ -323,6 +325,17 @@ class NoteMemorySummary(ContractRecord):
             raise ValueError("retrieval_influence_total_count must be greater than or equal to retrieval_influence_count")
         object.__setattr__(
             self,
+            "retrieval_influence_filtered_out_count",
+            require_non_negative_int(
+                self.retrieval_influence_filtered_out_count,
+                "retrieval_influence_filtered_out_count",
+            ),
+        )
+        expected_influence_filtered_out = self.retrieval_influence_total_count - self.retrieval_influence_count
+        if self.retrieval_influence_filtered_out_count != expected_influence_filtered_out:
+            raise ValueError("retrieval_influence_filtered_out_count must equal total minus current count")
+        object.__setattr__(
+            self,
             "retrieval_receipt_count",
             require_non_negative_int(self.retrieval_receipt_count, "retrieval_receipt_count"),
         )
@@ -333,6 +346,17 @@ class NoteMemorySummary(ContractRecord):
         )
         if self.retrieval_receipt_total_count < self.retrieval_receipt_count:
             raise ValueError("retrieval_receipt_total_count must be greater than or equal to retrieval_receipt_count")
+        object.__setattr__(
+            self,
+            "retrieval_receipt_filtered_out_count",
+            require_non_negative_int(
+                self.retrieval_receipt_filtered_out_count,
+                "retrieval_receipt_filtered_out_count",
+            ),
+        )
+        expected_receipt_filtered_out = self.retrieval_receipt_total_count - self.retrieval_receipt_count
+        if self.retrieval_receipt_filtered_out_count != expected_receipt_filtered_out:
+            raise ValueError("retrieval_receipt_filtered_out_count must equal total minus current count")
         object.__setattr__(
             self,
             "index_proof_state",

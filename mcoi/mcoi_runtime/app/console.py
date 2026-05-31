@@ -345,8 +345,10 @@ def render_note_memory_summary(view: NoteMemorySummary) -> str:
         f"  retrieval_filter_mode:  {view.retrieval_filter_mode}",
         f"  retrieval_influence:    {view.retrieval_influence_count}",
         f"  retrieval_influence_total: {view.retrieval_influence_total_count}",
+        f"  retrieval_influence_filtered_out: {view.retrieval_influence_filtered_out_count}",
         f"  retrieval_receipts:     {view.retrieval_receipt_count}",
         f"  retrieval_receipts_total: {view.retrieval_receipt_total_count}",
+        f"  retrieval_receipts_filtered_out: {view.retrieval_receipt_filtered_out_count}",
         f"  index_proof_state:      {view.index_proof_state}",
         f"  assessed_at:            {view.assessed_at}",
     ]

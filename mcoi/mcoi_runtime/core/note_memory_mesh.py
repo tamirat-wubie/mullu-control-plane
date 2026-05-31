@@ -1002,8 +1002,10 @@ class NoteMemoryMesh:
                 "retrieval_filter_mode": retrieval_filter_mode,
                 "retrieval_influence_count": len(retrieval_influence),
                 "retrieval_influence_total_count": len(retrieval_influence_rows),
+                "retrieval_influence_filtered_out_count": len(retrieval_influence_rows) - len(retrieval_influence),
                 "retrieval_receipt_count": len(retrieval_receipts),
                 "retrieval_receipt_total_count": len(retrieval_receipts_total),
+                "retrieval_receipt_filtered_out_count": len(retrieval_receipts_total) - len(retrieval_receipts),
                 "index_proof_state": index_report.proof_state.value,
             },
             "recent_notes": [

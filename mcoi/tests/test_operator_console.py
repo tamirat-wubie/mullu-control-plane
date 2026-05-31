@@ -117,8 +117,10 @@ def test_console_note_memory_disabled(client: TestClient) -> None:
     assert data["summary"]["retrieval_filter_mode"] == "unfiltered"
     assert data["summary"]["retrieval_influence_count"] == 0
     assert data["summary"]["retrieval_influence_total_count"] == 0
+    assert data["summary"]["retrieval_influence_filtered_out_count"] == 0
     assert data["summary"]["retrieval_receipt_count"] == 0
     assert data["summary"]["retrieval_receipt_total_count"] == 0
+    assert data["summary"]["retrieval_receipt_filtered_out_count"] == 0
     assert data["filters"]["retrieval_receipt_ref"] == ""
     assert data["filters"]["retrieval_citing_note_ref"] == ""
     assert data["recent_notes"] == []
@@ -201,8 +203,10 @@ def test_console_note_memory_enabled_read_model(client: TestClient, tmp_path) ->
     assert data["summary"]["retrieval_filter_mode"] == "receipt_and_citing_note"
     assert data["summary"]["retrieval_influence_count"] == 1
     assert data["summary"]["retrieval_influence_total_count"] == 1
+    assert data["summary"]["retrieval_influence_filtered_out_count"] == 0
     assert data["summary"]["retrieval_receipt_count"] == 1
     assert data["summary"]["retrieval_receipt_total_count"] == 1
+    assert data["summary"]["retrieval_receipt_filtered_out_count"] == 0
     assert data["recent_notes"][0]["kind"] == "DecisionRecord"
     assert data["retrieval_receipts"][0]["receipt_id"] == retrieved["payload"]["receipt"]["receipt_id"]
     assert data["retrieval_influence"][0]["citing_note_id"] == decision["payload"]["event"]["note_id"]
