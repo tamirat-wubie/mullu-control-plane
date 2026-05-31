@@ -52,6 +52,7 @@ from mcoi_runtime.core.world_state import WorldStateEngine
 
 
 NOW = "2026-05-06T12:00:00+00:00"
+REQUIRED_ROLE = "customer_ops_manager"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FABRIC_FIXTURE_DIR = REPO_ROOT / "integration" / "governed_capability_fabric" / "fixtures"
 VALID_TEMPLATE = {
@@ -101,11 +102,35 @@ def test_universal_action_kernel_dispatches_after_all_certificates_pass() -> Non
     assert result.simulation_certificate.verdict.verdict_type is VerdictType.PROCEED
     assert result.capability_decision is not None
     assert result.capability_decision.capability_id == "shell_command"
+    assert result.governed_action is not None
+    assert result.governed_action.typed_intent.intent_name == "shell_command"
+    assert result.governed_action.capability_passport.capability_id == "shell_command"
+    assert result.governed_action.authority_proof.actor_roles == (REQUIRED_ROLE,)
     assert result.terminal_certificate is not None
     assert result.terminal_certificate.disposition is TerminalClosureDisposition.COMMITTED
     assert result.learning_decision is not None
     assert result.learning_decision.status is LearningAdmissionStatus.ADMIT
     assert executor.calls == 1
+    assert result.proof_hash.startswith("universal-action-proof-")
+
+
+def test_universal_action_kernel_blocks_missing_authority_before_plan() -> None:
+    kernel, executor = _kernel_with_capability()
+
+    result = kernel.run(
+        _action_request(
+            intent_id="intent-authority-block",
+            metadata={"actor_roles": ("support_viewer",)},
+        )
+    )
+
+    assert result.blocked is True
+    assert result.block_reason == "governed_action_admission_rejected"
+    assert result.capability_decision is not None
+    assert result.governed_action is None
+    assert result.plan_certificate is None
+    assert result.dispatch_result is None
+    assert executor.calls == 0
     assert result.proof_hash.startswith("universal-action-proof-")
 
 
@@ -175,6 +200,7 @@ def test_universal_operator_dispatch_exposes_kernel_entry_point() -> None:
         tenant_id="tenant-1",
         intent_id="intent-operator-entry",
         objective="Exercise the app-layer universal action entry point.",
+        actor_roles=(REQUIRED_ROLE,),
     )
 
     assert result.blocked is False
@@ -194,6 +220,7 @@ def test_universal_operator_dispatch_derives_objective_and_intent_when_absent() 
         _dispatch_request(goal_id="goal-auto"),
         actor_id="operator-auto",
         tenant_id="tenant-1",
+        actor_roles=(REQUIRED_ROLE,),
     )
 
     assert result.blocked is False
@@ -220,6 +247,7 @@ def test_build_universal_operator_kernel_composes_bootstrapped_runtime() -> None
         actor_id="operator-bootstrap",
         tenant_id="tenant-1",
         intent_id="intent-bootstrap-kernel",
+        actor_roles=(REQUIRED_ROLE,),
     )
 
     assert result.blocked is False
@@ -265,6 +293,7 @@ def test_universal_command_dispatch_binds_command_spine_transitions() -> None:
         template=VALID_TEMPLATE,
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
     )
     current = ledger.get(command.command_id)
     events = ledger.events_for(command.command_id)
@@ -306,6 +335,7 @@ def test_universal_command_proof_view_replays_persisted_success_events() -> None
         template=VALID_TEMPLATE,
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
     )
     reloaded_ledger = CommandLedger(clock=_clock, store=store)
 
@@ -357,6 +387,7 @@ def test_universal_command_dispatch_records_blocked_kernel_result() -> None:
         template=VALID_TEMPLATE,
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
     )
     current = ledger.get(command.command_id)
     events = ledger.events_for(command.command_id)
@@ -404,6 +435,7 @@ def test_universal_command_proof_view_replays_blocked_result() -> None:
         template=VALID_TEMPLATE,
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
     )
     reloaded_ledger = CommandLedger(clock=_clock, store=store)
 
@@ -471,7 +503,11 @@ def _action_request(
     *,
     intent_id: str = "intent-1",
     risk_level: RiskLevel = RiskLevel.LOW,
+    metadata: dict | None = None,
 ) -> UniversalActionRequest:
+    request_metadata = {"actor_roles": (REQUIRED_ROLE,)}
+    if metadata is not None:
+        request_metadata.update(metadata)
     return UniversalActionRequest(
         actor_id="actor-1",
         tenant_id="tenant-1",
@@ -479,6 +515,7 @@ def _action_request(
         objective="Run a bounded shell command through the universal action kernel.",
         dispatch_request=_dispatch_request(),
         risk_level=risk_level,
+        metadata=request_metadata,
     )
 
 

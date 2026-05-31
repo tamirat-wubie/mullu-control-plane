@@ -22,6 +22,13 @@ from typing import Any, Callable, Mapping
 from mcoi_runtime.contracts.effect_assurance import EffectReconciliation, ReconciliationStatus
 from mcoi_runtime.contracts.evidence import EvidenceRecord
 from mcoi_runtime.contracts.execution import ExecutionOutcome, ExecutionResult
+from mcoi_runtime.contracts.governed_action import (
+    AuthorityProofRecord,
+    GovernedAction,
+    GovernedActionState,
+    TypedIntentRecord,
+    build_capability_passport,
+)
 from mcoi_runtime.contracts.goal import GoalDescriptor, GoalPriority
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CommandCapabilityAdmissionDecision,
@@ -131,6 +138,7 @@ class UniversalActionResult:
     plan_certificate: PlanCertificate | None = None
     simulation_certificate: SimulationCertificate | None = None
     capability_decision: CommandCapabilityAdmissionDecision | None = None
+    governed_action: GovernedAction | None = None
     dispatch_result: GovernedDispatchResult | None = None
     terminal_certificate: TerminalClosureCertificate | None = None
     learning_decision: LearningAdmissionDecision | None = None
@@ -197,10 +205,26 @@ class UniversalActionKernel:
                 capability_decision=capability_decision,
             )
 
+        try:
+            governed_action = self._build_governed_action(
+                request=request,
+                capability_decision=capability_decision,
+                issued_at=now,
+            )
+        except (RuntimeCoreInvariantError, ValueError):
+            return self._blocked(
+                action_id=action_id,
+                block_reason="governed_action_admission_rejected",
+                goal_certificate=goal_certificate,
+                world_certificate=world_certificate,
+                capability_decision=capability_decision,
+            )
+
         plan_certificate = self._build_plan_certificate(
             request=request,
             world_certificate=world_certificate,
             capability_decision=capability_decision,
+            governed_action=governed_action,
             issued_at=now,
         )
         simulation_certificate = self._build_simulation_certificate(
@@ -217,6 +241,7 @@ class UniversalActionKernel:
                 plan_certificate=plan_certificate,
                 simulation_certificate=simulation_certificate,
                 capability_decision=capability_decision,
+                governed_action=governed_action,
             )
 
         dispatch_result = self._governed_dispatcher.governed_dispatch(
@@ -241,6 +266,7 @@ class UniversalActionKernel:
             plan_certificate=plan_certificate,
             simulation_certificate=simulation_certificate,
             capability_decision=capability_decision,
+            governed_action=governed_action,
             dispatch_result=dispatch_result,
             terminal_certificate=terminal_certificate,
             learning_decision=learning_decision,
@@ -295,6 +321,7 @@ class UniversalActionKernel:
         request: UniversalActionRequest,
         world_certificate: WorldSupportCertificate,
         capability_decision: CommandCapabilityAdmissionDecision,
+        governed_action: GovernedAction,
         issued_at: str,
     ) -> PlanCertificate:
         plan_item = PlanItem(
@@ -322,6 +349,7 @@ class UniversalActionKernel:
                 "tenant_id": request.tenant_id,
                 "route": request.dispatch_request.route,
                 "capability_id": capability_decision.capability_id,
+                "governed_action_id": governed_action.governed_action_id,
                 "evidence_required": capability_decision.evidence_required,
             },
         )
@@ -382,6 +410,7 @@ class UniversalActionKernel:
         plan_certificate: PlanCertificate | None = None,
         simulation_certificate: SimulationCertificate | None = None,
         capability_decision: CommandCapabilityAdmissionDecision | None = None,
+        governed_action: GovernedAction | None = None,
     ) -> UniversalActionResult:
         result = UniversalActionResult(
             action_id=action_id,
@@ -392,8 +421,82 @@ class UniversalActionKernel:
             plan_certificate=plan_certificate,
             simulation_certificate=simulation_certificate,
             capability_decision=capability_decision,
+            governed_action=governed_action,
         )
         return self._with_proof_hash(result)
+
+    def _build_governed_action(
+        self,
+        *,
+        request: UniversalActionRequest,
+        capability_decision: CommandCapabilityAdmissionDecision,
+        issued_at: str,
+    ) -> GovernedAction:
+        capability_entry = self._capability_admission.capability_for_intent(
+            request.dispatch_request.route
+        )
+        passport_hash = stable_identifier(
+            "capability-passport",
+            {
+                "capability_id": capability_entry.capability_id,
+                "version": capability_entry.version,
+                "input_schema_ref": capability_entry.input_schema_ref,
+                "output_schema_ref": capability_entry.output_schema_ref,
+                "expected_effects": capability_entry.effect_model.expected_effects,
+                "required_roles": capability_entry.authority_policy.required_roles,
+            },
+        )
+        typed_intent = TypedIntentRecord(
+            command_id=request.intent_id,
+            tenant_id=request.tenant_id,
+            actor_id=request.actor_id,
+            intent_name=request.dispatch_request.route,
+            objective=request.objective,
+            input_hash=stable_identifier(
+                "typed-intent-input",
+                {
+                    "route": request.dispatch_request.route,
+                    "template": request.dispatch_request.template,
+                    "bindings": request.dispatch_request.bindings,
+                },
+            ),
+        )
+        capability_passport = build_capability_passport(
+            capability_entry,
+            passport_hash=passport_hash,
+        )
+        authority_proof = AuthorityProofRecord(
+            actor_id=request.actor_id,
+            tenant_id=request.tenant_id,
+            required_roles=capability_passport.required_roles,
+            actor_roles=_text_tuple_from_metadata(request.metadata, "actor_roles"),
+            approval_refs=_text_tuple_from_metadata(request.metadata, "approval_refs"),
+        )
+        return GovernedAction(
+            governed_action_id=stable_identifier(
+                "governed-action",
+                {
+                    "tenant_id": request.tenant_id,
+                    "actor_id": request.actor_id,
+                    "intent_id": request.intent_id,
+                    "capability_id": capability_decision.capability_id,
+                    "passport_hash": passport_hash,
+                },
+            ),
+            command_id=request.intent_id,
+            tenant_id=request.tenant_id,
+            actor_id=request.actor_id,
+            typed_intent=typed_intent,
+            capability_passport=capability_passport,
+            authority_proof=authority_proof,
+            state=GovernedActionState.ADMITTED,
+            issued_at=issued_at,
+            metadata={
+                "capability_decision_reason": capability_decision.reason,
+                "domain": capability_decision.domain,
+                "owner_team": capability_decision.owner_team,
+            },
+        )
 
     def _close_and_admit_learning(
         self,
@@ -460,6 +563,7 @@ class UniversalActionKernel:
             ),
             "capability_status": result.capability_decision.status.value if result.capability_decision else "",
             "capability_id": result.capability_decision.capability_id if result.capability_decision else "",
+            "governed_action_id": result.governed_action.governed_action_id if result.governed_action else "",
             "dispatch_ledger_hash": result.dispatch_result.ledger_hash if result.dispatch_result else "",
             "terminal_certificate_id": (
                 result.terminal_certificate.certificate_id if result.terminal_certificate else ""
@@ -477,6 +581,7 @@ class UniversalActionKernel:
             plan_certificate=result.plan_certificate,
             simulation_certificate=result.simulation_certificate,
             capability_decision=result.capability_decision,
+            governed_action=result.governed_action,
             dispatch_result=result.dispatch_result,
             terminal_certificate=result.terminal_certificate,
             learning_decision=result.learning_decision,
@@ -512,6 +617,15 @@ def build_universal_action_kernel(
         learning_admission=learning_admission,
         clock=clock,
     )
+
+
+def _text_tuple_from_metadata(metadata: Mapping[str, Any], key: str) -> tuple[str, ...]:
+    value = metadata.get(key, ())
+    if isinstance(value, str):
+        return (value,)
+    if not isinstance(value, (tuple, list)):
+        return ()
+    return tuple(item for item in value if isinstance(item, str) and item.strip())
 
 
 def _build_verification_result(
