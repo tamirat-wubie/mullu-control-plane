@@ -1337,6 +1337,21 @@ class TestHandoffs:
         assert "search" not in repr(binding_proof)
         assert "deploy" not in repr(binding_proof)
 
+    def test_manifest_read_model_rejects_non_text_capability_ids(self):
+        with pytest.raises(ValueError, match=r"^capability_ids\[1\] must be a string$"):
+            AgentOrchestrator.from_manifest_read_model(
+                clock=_clock,
+                agent_capabilities={"agent-a": ("search", "deploy")},
+                manifest_read_model={
+                    "capability_ids": ("search", 7),
+                    "manifest_count": 2,
+                },
+            )
+
+    def test_set_admitted_capabilities_rejects_non_text_ids(self, orchestrator):
+        with pytest.raises(ValueError, match=r"^admitted_capabilities\[1\] must be a string$"):
+            orchestrator.set_admitted_capabilities(("search", object()))  # type: ignore[arg-type]
+
     def test_manifest_read_model_none_records_ungated_binding(self):
         orch = AgentOrchestrator.from_manifest_read_model(
             clock=_clock,

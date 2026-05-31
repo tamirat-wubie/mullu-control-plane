@@ -166,8 +166,10 @@ def _capability_ids_from_read_model(read_model: Mapping[str, Any]) -> tuple[str,
     raw_capability_ids = read_model.get("capability_ids", ())
     if not isinstance(raw_capability_ids, (tuple, list)):
         return ()
-    return tuple(
-        str(capability_id).strip()
-        for capability_id in raw_capability_ids
-        if str(capability_id).strip()
-    )
+    capability_ids: list[str] = []
+    for index, capability_id in enumerate(raw_capability_ids):
+        if not isinstance(capability_id, str):
+            raise ValueError(f"capability_ids[{index}] must be a string")
+        if capability_id.strip():
+            capability_ids.append(capability_id.strip())
+    return tuple(capability_ids)

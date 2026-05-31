@@ -150,6 +150,25 @@ def test_manifest_binding_ignores_unconfigured_registry() -> None:
     assert agent_orchestrator.admitted_capability_calls == []
 
 
+def test_manifest_binding_rejects_non_text_capability_ids() -> None:
+    agent_orchestrator = _RecordingOrchestrator()
+
+    with pytest.raises(ValueError, match=r"^capability_ids\[1\] must be a string$"):
+        server_runtime_stack._bind_manifest_admissions_to_orchestrator(
+            operational_bootstrap=SimpleNamespace(agent_orchestrator=agent_orchestrator),
+            capability_bootstrap=SimpleNamespace(
+                capability_manifest_registry=SimpleNamespace(
+                    read_model=lambda: {
+                        "configured": True,
+                        "capability_ids": ("search", 7),
+                    },
+                ),
+            ),
+        )
+
+    assert agent_orchestrator.admitted_capability_calls == []
+
+
 def test_validate_or_raise_returns_bounded_422_payload() -> None:
     validator = server_runtime.build_default_input_validator()
 

@@ -2338,7 +2338,13 @@ class AgentOrchestrator:
 def _normalize_admitted_capabilities(values: tuple[str, ...] | None) -> frozenset[str] | None:
     if values is None:
         return None
-    return frozenset(str(value).strip() for value in values if str(value).strip())
+    normalized: set[str] = set()
+    for index, value in enumerate(values):
+        if not isinstance(value, str):
+            raise ValueError(f"admitted_capabilities[{index}] must be a string")
+        if value.strip():
+            normalized.add(value.strip())
+    return frozenset(normalized)
 
 
 def _capability_ids_from_manifest_read_model(read_model: Mapping[str, Any] | None) -> tuple[str, ...] | None:
@@ -2347,7 +2353,13 @@ def _capability_ids_from_manifest_read_model(read_model: Mapping[str, Any] | Non
     raw_ids = read_model.get("capability_ids", ())
     if not isinstance(raw_ids, (tuple, list)):
         return ()
-    return tuple(str(capability_id).strip() for capability_id in raw_ids if str(capability_id).strip())
+    normalized: list[str] = []
+    for index, capability_id in enumerate(raw_ids):
+        if not isinstance(capability_id, str):
+            raise ValueError(f"capability_ids[{index}] must be a string")
+        if capability_id.strip():
+            normalized.append(capability_id.strip())
+    return tuple(normalized)
 
 
 def _raw_capability_id_count_from_manifest_read_model(read_model: Mapping[str, Any] | None) -> int:
