@@ -44,7 +44,13 @@ DEFAULT_GENERATED_AT = "2026-05-01T12:00:00+00:00"
 TERMINAL_CERTIFICATE_SCHEMA_ID = "urn:mullusi:schema:terminal-closure-certificate:1"
 ADMITTED_STATUSES = frozenset({"admitted_runnable", "admitted_approved"})
 APPROVAL_CLASSES = frozenset({"requires_approval", "review_only"})
-ENVIRONMENT_BLOCKED_CLASSES = frozenset({"requires_environment_binding", "approval_and_environment_blocked"})
+ENVIRONMENT_BLOCKED_CLASSES = frozenset(
+    {
+        "requires_environment_binding",
+        "requires_execution_environment",
+        "approval_and_environment_blocked",
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)

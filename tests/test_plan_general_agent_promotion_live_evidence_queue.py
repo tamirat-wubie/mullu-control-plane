@@ -1,12 +1,14 @@
 """Tests for general-agent promotion live-evidence queue planning.
 
 Purpose: prove aggregate promotion actions are classified into runnable,
-approval-bound, environment-bound, and review-only queue items.
+approval-bound, environment-bound, execution-environment-bound, and review-only
+queue items.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: scripts.plan_general_agent_promotion_live_evidence_queue.
 Invariants:
   - Queue planning never serializes secret values.
-  - Missing bindings, uncontracted bindings, and manual parameters are explicit.
+  - Missing bindings, uncontracted bindings, manual parameters, and execution
+    environment blockers are explicit.
   - Schema validation covers the emitted queue artifact.
 """
 
@@ -78,6 +80,29 @@ def test_live_evidence_queue_exposes_missing_receipt_and_uncontracted_bindings(t
     assert "OPENAI_API_KEY" in actions["voice-secret"].missing_bindings
     assert "binding_not_in_environment_contract:OPENAI_API_KEY" in actions["voice-secret"].blocked_reasons
     assert queue.missing_binding_count >= 1
+    assert validate_general_agent_promotion_live_evidence_queue(queue) == ()
+
+
+def test_live_evidence_queue_blocks_unready_execution_environment(tmp_path: Path) -> None:
+    plan_path = _write_promotion_plan(tmp_path, include_browser_environment=True)
+    contract_path = _write_environment_contract(tmp_path)
+    receipt_path = _write_environment_receipt(tmp_path, present_names=_CONTRACT_NAMES)
+
+    queue = plan_general_agent_promotion_live_evidence_queue(
+        promotion_plan_path=plan_path,
+        environment_bindings_path=contract_path,
+        environment_binding_receipt_path=receipt_path,
+    )
+    browser_action = next(action for action in queue.actions if action.source_action_id == "browser-live")
+
+    assert queue.ready_to_execute is False
+    assert queue.runnable_action_count == 1
+    assert queue.blocked_action_count == 3
+    assert browser_action.execution_class == "requires_execution_environment"
+    assert browser_action.execution_environment is not None
+    assert browser_action.execution_environment["current_host_os"] == "Windows"
+    assert "execution_environment_unmet:browser_sandbox_runner_linux_only" in browser_action.blocked_reasons
+    assert "execution_environment_required_host_os:Linux" in queue.blocked_reasons
     assert validate_general_agent_promotion_live_evidence_queue(queue) == ()
 
 
@@ -182,7 +207,12 @@ _CONTRACT_NAMES = (
 )
 
 
-def _write_promotion_plan(tmp_path: Path, *, include_voice_dependency: bool = False) -> Path:
+def _write_promotion_plan(
+    tmp_path: Path,
+    *,
+    include_voice_dependency: bool = False,
+    include_browser_environment: bool = False,
+) -> Path:
     actions = [
         {
             "action_id": "browser-live",
@@ -241,6 +271,19 @@ def _write_promotion_plan(tmp_path: Path, *, include_voice_dependency: bool = Fa
                 "approval_required": True,
             }
         )
+    if include_browser_environment:
+        actions[0]["execution_environment"] = {
+            "required_host_os": "Linux",
+            "current_host_os": "Windows",
+            "current_environment_ready": False,
+            "blocker_if_unmet": "browser_sandbox_runner_linux_only",
+            "requirements": [
+                "linux_host",
+                "rootless_docker",
+                "no_workspace_changes",
+                "browser_sandbox_evidence_validation",
+            ],
+        }
     plan_path = tmp_path / "general_agent_promotion_closure_plan.json"
     plan_path.write_text(
         json.dumps(

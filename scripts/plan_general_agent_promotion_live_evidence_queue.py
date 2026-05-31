@@ -2,14 +2,16 @@
 """Plan the general-agent promotion live-evidence execution queue.
 
 Purpose: classify aggregate promotion closure actions into runnable, approval,
-environment-bound, and review-only queue items without executing live effects.
+environment-bound, execution-environment-bound, and review-only queue items
+without executing live effects.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: aggregate promotion closure plan, environment binding contract,
 redacted environment binding receipt, and live evidence queue schema.
 Invariants:
   - The queue is a proof artifact, not an execution grant.
   - Secret values are never read, printed, or serialized.
-  - Missing bindings, uncontracted bindings, and manual parameters are explicit.
+  - Missing bindings, uncontracted bindings, manual parameters, and execution
+    environment blockers are explicit.
   - Approval-required source actions remain approval-required.
 """
 
@@ -80,6 +82,7 @@ class LiveEvidenceQueueAction:
     missing_bindings: tuple[str, ...]
     uncontracted_bindings: tuple[str, ...]
     manual_parameters: tuple[str, ...]
+    execution_environment: dict[str, Any] | None
     blocked_reasons: tuple[str, ...]
     command: str
     evidence_required: tuple[str, ...]
@@ -87,7 +90,7 @@ class LiveEvidenceQueueAction:
 
     def as_dict(self) -> dict[str, Any]:
         """Return JSON-ready queue action data."""
-        return {
+        payload = {
             "queue_item_id": self.queue_item_id,
             "source_action_id": self.source_action_id,
             "source_plan_type": self.source_plan_type,
@@ -104,6 +107,9 @@ class LiveEvidenceQueueAction:
             "evidence_required": list(self.evidence_required),
             "receipt_validator": self.receipt_validator,
         }
+        if self.execution_environment is not None:
+            payload["execution_environment"] = dict(self.execution_environment)
+        return payload
 
 
 @dataclass(frozen=True, slots=True)
@@ -268,10 +274,13 @@ def _queue_action(
         contract_bindings=contract_bindings,
         receipt_state=receipt_state,
     )
+    execution_environment = _execution_environment(action)
+    execution_environment_reasons = _execution_environment_blocked_reasons(execution_environment)
     blocked_reasons = _blocked_reasons(
         missing_bindings=missing_bindings,
         uncontracted_bindings=uncontracted_bindings,
         manual_parameters=manual_parameters,
+        execution_environment_reasons=execution_environment_reasons,
         receipt_state=receipt_state,
     )
     approval_required = action.get("approval_required") is True
@@ -280,6 +289,7 @@ def _queue_action(
         approval_required=approval_required,
         missing_bindings=missing_bindings,
         manual_parameters=manual_parameters,
+        execution_environment_blocked=bool(execution_environment_reasons),
     )
     return LiveEvidenceQueueAction(
         queue_item_id=f"live-evidence-queue-item-{index:02d}-{_safe_id(source_action_id)}",
@@ -293,6 +303,7 @@ def _queue_action(
         missing_bindings=missing_bindings,
         uncontracted_bindings=uncontracted_bindings,
         manual_parameters=manual_parameters,
+        execution_environment=execution_environment,
         blocked_reasons=blocked_reasons,
         command=command,
         evidence_required=_string_tuple(action.get("evidence_required", ())),
@@ -370,6 +381,7 @@ def _blocked_reasons(
     missing_bindings: tuple[str, ...],
     uncontracted_bindings: tuple[str, ...],
     manual_parameters: tuple[str, ...],
+    execution_environment_reasons: tuple[str, ...],
     receipt_state: EnvironmentReceiptState,
 ) -> tuple[str, ...]:
     reasons: list[str] = []
@@ -379,6 +391,7 @@ def _blocked_reasons(
     reasons.extend(f"binding_not_in_environment_contract:{binding}" for binding in uncontracted_bindings)
     reasons.extend(f"environment_binding_missing:{binding}" for binding in missing_bindings)
     reasons.extend(f"manual_parameter_required:{parameter}" for parameter in manual_parameters)
+    reasons.extend(execution_environment_reasons)
     return tuple(dict.fromkeys(reasons))
 
 
@@ -388,17 +401,56 @@ def _execution_class(
     approval_required: bool,
     missing_bindings: tuple[str, ...],
     manual_parameters: tuple[str, ...],
+    execution_environment_blocked: bool,
 ) -> str:
     environment_blocked = bool(missing_bindings or manual_parameters)
     if source_plan_type == "portfolio":
         return "approval_and_environment_blocked" if environment_blocked else "review_only"
-    if approval_required and environment_blocked:
+    if approval_required and (environment_blocked or execution_environment_blocked):
         return "approval_and_environment_blocked"
     if approval_required:
         return "requires_approval"
+    if execution_environment_blocked:
+        return "requires_execution_environment"
     if environment_blocked:
         return "requires_environment_binding"
     return "runnable_local"
+
+
+def _execution_environment(action: dict[str, Any]) -> dict[str, Any] | None:
+    environment = action.get("execution_environment")
+    if not isinstance(environment, dict):
+        return None
+    normalized: dict[str, Any] = {}
+    for key in (
+        "required_host_os",
+        "current_host_os",
+        "current_environment_ready",
+        "blocker_if_unmet",
+        "requirements",
+    ):
+        if key in environment:
+            normalized[key] = environment[key]
+    requirements = normalized.get("requirements")
+    if isinstance(requirements, list):
+        normalized["requirements"] = [str(requirement) for requirement in requirements if str(requirement).strip()]
+    return normalized
+
+
+def _execution_environment_blocked_reasons(
+    execution_environment: dict[str, Any] | None,
+) -> tuple[str, ...]:
+    if execution_environment is None or execution_environment.get("current_environment_ready") is True:
+        return ()
+    blocker = str(execution_environment.get("blocker_if_unmet", "")).strip() or "execution_environment_not_ready"
+    required_host = str(execution_environment.get("required_host_os", "")).strip()
+    current_host = str(execution_environment.get("current_host_os", "")).strip()
+    reasons = [f"execution_environment_unmet:{blocker}"]
+    if required_host:
+        reasons.append(f"execution_environment_required_host_os:{required_host}")
+    if current_host:
+        reasons.append(f"execution_environment_current_host_os:{current_host}")
+    return tuple(dict.fromkeys(reasons))
 
 
 def _environment_receipt_state(*, receipt_path: Path, contract_path: Path) -> EnvironmentReceiptState:

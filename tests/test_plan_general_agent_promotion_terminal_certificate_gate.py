@@ -45,14 +45,16 @@ def test_terminal_certificate_gate_admits_only_runnable_and_approved_items(tmp_p
     actions = {action.source_action_id: action for action in gate.actions}
 
     assert gate.ready_for_terminal_certificate is False
-    assert gate.action_count == 5
+    assert gate.action_count == 6
     assert gate.admitted_action_count == 3
-    assert gate.blocked_action_count == 2
+    assert gate.blocked_action_count == 3
     assert gate.approval_bound_admitted_count == 2
     assert actions["document-live"].terminal_gate_status == "admitted_runnable"
     assert actions["deploy-publish"].terminal_gate_status == "admitted_approved"
     assert actions["portfolio-review"].terminal_gate_status == "admitted_approved"
     assert actions["voice-live"].terminal_gate_status == "blocked_environment"
+    assert actions["browser-sandbox"].terminal_gate_status == "blocked_environment"
+    assert "execution_environment_unmet:browser_sandbox_runner_linux_only" in actions["browser-sandbox"].blocked_reasons
     assert actions["deploy-blocked"].terminal_gate_status == "blocked_approval_and_environment"
     assert actions["deploy-blocked"].approval_ref_present is False
     assert "explicit_approval_ref_missing" in actions["deploy-blocked"].blocked_reasons
@@ -177,15 +179,16 @@ def _write_queue(tmp_path: Path) -> Path:
                 "environment_contract_path": "environment-bindings.json",
                 "environment_binding_receipt_path": "environment-receipt.json",
                 "ready_to_execute": False,
-                "action_count": 5,
+                "action_count": 6,
                 "runnable_action_count": 1,
-                "blocked_action_count": 4,
+                "blocked_action_count": 5,
                 "approval_required_action_count": 3,
                 "missing_binding_count": 2,
                 "missing_bindings": ["MULLU_VOICE_PROBE_AUDIO", "MULLU_GATEWAY_URL"],
                 "blocked_reasons": [
                     "environment_binding_missing:MULLU_VOICE_PROBE_AUDIO",
                     "environment_binding_missing:MULLU_GATEWAY_URL",
+                    "execution_environment_unmet:browser_sandbox_runner_linux_only",
                 ],
                 "actions": [
                     _queue_action("document-live", "runnable_local", False, "adapter"),
@@ -197,6 +200,13 @@ def _write_queue(tmp_path: Path) -> Path:
                         False,
                         "adapter",
                         blocked_reasons=["environment_binding_missing:MULLU_VOICE_PROBE_AUDIO"],
+                    ),
+                    _queue_action(
+                        "browser-sandbox",
+                        "requires_execution_environment",
+                        False,
+                        "adapter",
+                        blocked_reasons=["execution_environment_unmet:browser_sandbox_runner_linux_only"],
                     ),
                     _queue_action(
                         "deploy-blocked",
