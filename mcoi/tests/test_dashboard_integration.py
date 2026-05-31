@@ -116,6 +116,8 @@ def _note_memory_snapshot() -> dict[str, object]:
             "contradiction_count": 0,
             "retrieval_influence_count": 0,
             "retrieval_influence_total_count": 0,
+            "retrieval_receipt_count": 0,
+            "retrieval_receipt_total_count": 0,
             "index_proof_state": "Pass",
         },
     }

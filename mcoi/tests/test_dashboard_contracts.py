@@ -215,6 +215,8 @@ def _note_summary(
     contradiction_count: int = 0,
     retrieval_influence_count: int = 0,
     retrieval_influence_total_count: int = 0,
+    retrieval_receipt_count: int = 0,
+    retrieval_receipt_total_count: int = 0,
     index_proof_state: str = "Pass",
     assessed_at: str = "2026-03-20T00:00:00Z",
 ) -> NoteMemorySummary:
@@ -232,6 +234,8 @@ def _note_summary(
         contradiction_count=contradiction_count,
         retrieval_influence_count=retrieval_influence_count,
         retrieval_influence_total_count=retrieval_influence_total_count,
+        retrieval_receipt_count=retrieval_receipt_count,
+        retrieval_receipt_total_count=retrieval_receipt_total_count,
         index_proof_state=index_proof_state,
         assessed_at=assessed_at,
     )
@@ -248,6 +252,8 @@ class TestNoteMemorySummary:
         assert summary.episode_capsule_count == 0
         assert summary.retrieval_influence_count == 0
         assert summary.retrieval_influence_total_count == 0
+        assert summary.retrieval_receipt_count == 0
+        assert summary.retrieval_receipt_total_count == 0
 
     def test_empty_status_raises(self) -> None:
         with pytest.raises(ValueError, match="status"):
@@ -272,6 +278,18 @@ class TestNoteMemorySummary:
     def test_retrieval_influence_total_must_cover_filtered_count(self) -> None:
         with pytest.raises(ValueError, match="retrieval_influence_total_count"):
             _note_summary(retrieval_influence_count=2, retrieval_influence_total_count=1)
+
+    def test_negative_retrieval_receipt_count_raises(self) -> None:
+        with pytest.raises(ValueError, match="retrieval_receipt_count"):
+            _note_summary(retrieval_receipt_count=-1)
+
+    def test_negative_retrieval_receipt_total_count_raises(self) -> None:
+        with pytest.raises(ValueError, match="retrieval_receipt_total_count"):
+            _note_summary(retrieval_receipt_total_count=-1)
+
+    def test_retrieval_receipt_total_must_cover_filtered_count(self) -> None:
+        with pytest.raises(ValueError, match="retrieval_receipt_total_count"):
+            _note_summary(retrieval_receipt_count=2, retrieval_receipt_total_count=1)
 
     def test_invalid_assessed_at_raises(self) -> None:
         with pytest.raises(ValueError, match="assessed_at"):

@@ -302,6 +302,8 @@ def test_note_memory_summary_renders_operator_counts() -> None:
         contradiction_count=0,
         retrieval_influence_count=1,
         retrieval_influence_total_count=2,
+        retrieval_receipt_count=1,
+        retrieval_receipt_total_count=2,
         index_proof_state="Pass",
         assessed_at=_CLOCK,
     )
@@ -315,4 +317,6 @@ def test_note_memory_summary_renders_operator_counts() -> None:
     assert "episode_capsules:       1" in output
     assert "retrieval_influence:    1" in output
     assert "retrieval_influence_total: 2" in output
+    assert "retrieval_receipts:     1" in output
+    assert "retrieval_receipts_total: 2" in output
     assert "index_proof_state:      Pass" in output

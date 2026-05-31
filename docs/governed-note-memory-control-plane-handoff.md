@@ -72,7 +72,10 @@ console accept a read-only `retrieval_receipt_ref` filter for narrowing that
 graph to one retrieval witness. The filter uses the same bounded
 `note-retrieval-*` validation and does not mutate note memory. Filtered
 snapshots report `retrieval_influence_count` for the current view and
-`retrieval_influence_total_count` for the full unfiltered graph.
+`retrieval_influence_total_count` for the full unfiltered graph. They also
+derive a bounded `retrieval_receipts` summary grouped by receipt ID, with
+citation counts, distinct citing-note counts, latest citation witnesses, and
+sample citing note IDs for operator navigation.
 
 Episode capsules write a structured sidecar under the configured note-memory
 store and append one `EpisodeCapsule` lineage event. Capsules with
@@ -103,6 +106,8 @@ episode_capsule_count
 contradiction_count
 retrieval_influence_count
 retrieval_influence_total_count
+retrieval_receipt_count
+retrieval_receipt_total_count
 index_proof_state
 assessed_at
 ```
