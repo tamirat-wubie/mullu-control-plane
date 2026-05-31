@@ -25,6 +25,12 @@ from mcoi_runtime.contracts.temporal_runtime import (
     TemporalRelation,
     TemporalRiskLevel,
     TemporalSequence,
+    TemporalSkillExecutionVerdict,
+    TemporalSkillPlan,
+    TemporalSkillPlanExecution,
+    TemporalSkillStage,
+    TemporalSkillStageExecution,
+    TemporalSkillStageType,
     TemporalSnapshot,
     TemporalStatus,
     TemporalViolation,
@@ -57,6 +63,11 @@ class TestEnums:
         assert len(TemporalPolicyVerdict) == 4
         assert TemporalPolicyVerdict.ALLOW.value == "allow"
         assert TemporalPolicyVerdict.ESCALATE.value == "escalate"
+
+    def test_temporal_skill_enum_values(self) -> None:
+        assert len(TemporalSkillStageType) == 4
+        assert TemporalSkillStageType.APPROVAL.value == "approval"
+        assert TemporalSkillExecutionVerdict.BLOCKED.value == "blocked"
 
 
 class TestTemporalEvent:
@@ -159,6 +170,99 @@ class TestTemporalKernelContracts:
         assert request.risk == TemporalRiskLevel.HIGH
         assert request.execute_at == "2026-05-04T14:00:00+00:00"
         assert request.max_attempts == 3
+
+    def test_action_request_binds_temporal_skill_plan(self) -> None:
+        observe = TemporalSkillStage(
+            stage_id="observe-context",
+            stage_type=TemporalSkillStageType.OBSERVE,
+            output_keys=("evidence_ref",),
+        )
+        approval = TemporalSkillStage(
+            stage_id="approval-gate",
+            stage_type=TemporalSkillStageType.APPROVAL,
+            predecessor_ids=("observe-context",),
+            input_bindings={"evidence": "evidence_ref"},
+            requires_operator_approval=True,
+            verification_evidence_key="approval_receipt",
+        )
+        plan = TemporalSkillPlan(
+            plan_id="plan-1",
+            stages=(observe, approval),
+            terminal_condition="approval_receipt_verified",
+        )
+        request = TemporalActionRequest(
+            action_id="act-1",
+            tenant_id="t-1",
+            actor_id="user-1",
+            action_type="temporal_skill",
+            requested_at=NOW,
+            execute_at=NOW,
+            skill_plan=plan,
+        )
+
+        payload = request.to_json_dict()
+
+        assert request.skill_plan == plan
+        assert payload["skill_plan"]["stages"][1]["stage_type"] == "approval"
+        assert payload["skill_plan"]["stages"][1]["requires_operator_approval"] is True
+        assert payload["skill_plan"]["terminal_condition"] == "approval_receipt_verified"
+
+    def test_skill_plan_rejects_invalid_topology(self) -> None:
+        orphan = TemporalSkillStage(
+            stage_id="verify",
+            stage_type=TemporalSkillStageType.VERIFY,
+            predecessor_ids=("missing-stage",),
+        )
+        cyclic_a = TemporalSkillStage(stage_id="a", predecessor_ids=("b",))
+        cyclic_b = TemporalSkillStage(stage_id="b", predecessor_ids=("a",))
+
+        with pytest.raises(ValueError, match="predecessor_ids"):
+            TemporalSkillPlan(plan_id="bad-plan", stages=(orphan,), terminal_condition="done")
+        with pytest.raises(ValueError, match="acyclic"):
+            TemporalSkillPlan(plan_id="cyclic-plan", stages=(cyclic_a, cyclic_b), terminal_condition="done")
+
+    def test_skill_execution_receipt_serializes_verdicts(self) -> None:
+        stage_receipt = TemporalSkillStageExecution(
+            execution_id="stage-exec-1",
+            plan_id="plan-1",
+            stage_id="verify",
+            stage_type=TemporalSkillStageType.VERIFY,
+            verdict=TemporalSkillExecutionVerdict.PASS,
+            reason="evidence_verified",
+            executed_at=NOW,
+            input_values={"receipt_ref": "receipt-1"},
+            output_values={"verified": True},
+        )
+        plan_receipt = TemporalSkillPlanExecution(
+            execution_id="plan-exec-1",
+            schedule_ref="sched-1",
+            plan_id="plan-1",
+            verdict=TemporalSkillExecutionVerdict.PASS,
+            reason="all_stages_passed",
+            started_at=NOW,
+            completed_at=NOW,
+            stage_receipts=(stage_receipt,),
+            terminal_outputs={"verified": True},
+        )
+
+        payload = plan_receipt.to_json_dict()
+
+        assert payload["verdict"] == "pass"
+        assert payload["stage_receipts"][0]["stage_type"] == "verify"
+        assert payload["stage_receipts"][0]["output_values"]["verified"] is True
+        assert payload["terminal_outputs"]["verified"] is True
+
+    def test_action_request_rejects_untyped_skill_plan(self) -> None:
+        with pytest.raises(ValueError, match="skill_plan"):
+            TemporalActionRequest(
+                action_id="act-1",
+                tenant_id="t-1",
+                actor_id="user-1",
+                action_type="temporal_skill",
+                requested_at=NOW,
+                execute_at=NOW,
+                skill_plan="plan-1",  # type: ignore[arg-type]
+            )
 
     def test_action_decision_records_bounded_verdict(self) -> None:
         decision = TemporalActionDecision(

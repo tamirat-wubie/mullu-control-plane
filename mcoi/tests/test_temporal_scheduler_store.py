@@ -15,7 +15,12 @@ import json
 
 import pytest
 
-from mcoi_runtime.contracts.temporal_runtime import TemporalActionRequest
+from mcoi_runtime.contracts.temporal_runtime import (
+    TemporalActionRequest,
+    TemporalSkillPlan,
+    TemporalSkillStage,
+    TemporalSkillStageType,
+)
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
 from mcoi_runtime.core.temporal_scheduler import (
@@ -43,7 +48,28 @@ def _engine(clock: MutableClock) -> TemporalSchedulerEngine:
     return TemporalSchedulerEngine(temporal, clock=clock)
 
 
-def _action(action_id: str = "act-1") -> TemporalActionRequest:
+def _skill_plan() -> TemporalSkillPlan:
+    observe = TemporalSkillStage(
+        stage_id="observe-context",
+        stage_type=TemporalSkillStageType.OBSERVE,
+        output_keys=("evidence_ref",),
+    )
+    approval = TemporalSkillStage(
+        stage_id="approval-gate",
+        stage_type=TemporalSkillStageType.APPROVAL,
+        predecessor_ids=("observe-context",),
+        input_bindings={"evidence": "evidence_ref"},
+        requires_operator_approval=True,
+        verification_evidence_key="approval_receipt",
+    )
+    return TemporalSkillPlan(
+        plan_id="plan-1",
+        stages=(observe, approval),
+        terminal_condition="approval_receipt_verified",
+    )
+
+
+def _action(action_id: str = "act-1", skill_plan: TemporalSkillPlan | None = None) -> TemporalActionRequest:
     return TemporalActionRequest(
         action_id=action_id,
         tenant_id="tenant-a",
@@ -51,6 +77,7 @@ def _action(action_id: str = "act-1") -> TemporalActionRequest:
         action_type="reminder",
         requested_at="2026-05-04T13:00:00+00:00",
         execute_at="2026-05-04T14:00:00+00:00",
+        skill_plan=skill_plan,
     )
 
 
@@ -114,6 +141,23 @@ def test_file_store_round_trips_scheduler_state(tmp_path) -> None:
     assert reloaded.get_action("sched-1").state == ScheduledActionState.RUNNING
     assert reloaded.list_receipts() == (receipt,)
     assert reloaded.summary()["action_count"] == 1
+
+
+def test_file_store_round_trips_temporal_skill_plan(tmp_path) -> None:
+    path = tmp_path / "temporal_scheduler.json"
+    clock = MutableClock("2026-05-04T13:00:00+00:00")
+    scheduler = _engine(clock)
+    store = FileTemporalSchedulerStore(path)
+    scheduled = scheduler.register("sched-1", _action(skill_plan=_skill_plan()))
+
+    store.save_action(scheduled)
+    reloaded = FileTemporalSchedulerStore(path)
+    restored_action = reloaded.get_action("sched-1").action
+
+    assert restored_action.skill_plan is not None
+    assert restored_action.skill_plan.plan_id == "plan-1"
+    assert restored_action.skill_plan.stages[1].stage_type == TemporalSkillStageType.APPROVAL
+    assert restored_action.skill_plan.stages[1].requires_operator_approval is True
 
 
 def test_file_store_restore_actions_into_empty_scheduler(tmp_path) -> None:

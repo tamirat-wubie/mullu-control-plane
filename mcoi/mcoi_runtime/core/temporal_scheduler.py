@@ -21,9 +21,12 @@ from mcoi_runtime.contracts.temporal_runtime import (
     TemporalActionDecision,
     TemporalActionRequest,
     TemporalPolicyVerdict,
+    TemporalSkillExecutionVerdict,
+    TemporalSkillPlanExecution,
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
+from mcoi_runtime.core.temporal_skill_executor import TemporalSkillPlanExecutor, TemporalSkillStageProvider
 
 
 def _parse_iso(value: str) -> datetime:
@@ -108,14 +111,17 @@ class TemporalSchedulerEngine:
         temporal_runtime: TemporalRuntimeEngine,
         *,
         clock: Any,
+        skill_stage_provider: TemporalSkillStageProvider | None = None,
     ) -> None:
         if not isinstance(temporal_runtime, TemporalRuntimeEngine):
             raise RuntimeCoreInvariantError("temporal_runtime must be a TemporalRuntimeEngine")
         self._temporal_runtime = temporal_runtime
         self._clock = clock
+        self._skill_stage_provider = skill_stage_provider
         self._actions: dict[str, ScheduledTemporalAction] = {}
         self._leases: dict[str, TemporalLease] = {}
         self._receipts: list[TemporalRunReceipt] = []
+        self._skill_plan_executions: dict[str, TemporalSkillPlanExecution] = {}
 
     @property
     def action_count(self) -> int:
@@ -124,6 +130,10 @@ class TemporalSchedulerEngine:
     @property
     def receipt_count(self) -> int:
         return len(self._receipts)
+
+    @property
+    def skill_plan_execution_count(self) -> int:
+        return len(self._skill_plan_executions)
 
     def register(
         self,
@@ -259,6 +269,39 @@ class TemporalSchedulerEngine:
         self._leases.pop(schedule_id, None)
         return self._record(action, ScheduleDecisionVerdict.COMPLETED, "completed", self._clock(), worker_id)
 
+    def execute_skill_plan(self, schedule_id: str, *, worker_id: str = "") -> TemporalSkillPlanExecution:
+        """Execute a bound temporal skill plan through the configured provider."""
+
+        action = self.get(schedule_id)
+        if action.action.skill_plan is None:
+            raise RuntimeCoreInvariantError("skill_plan is required")
+        if action.state is not ScheduledActionState.RUNNING:
+            raise RuntimeCoreInvariantError("schedule must be running before skill plan execution")
+        if self._skill_stage_provider is None:
+            raise RuntimeCoreInvariantError("skill_stage_provider is required")
+        if schedule_id in self._skill_plan_executions:
+            return self._skill_plan_executions[schedule_id]
+        execution = TemporalSkillPlanExecutor(self._skill_stage_provider, clock=self._clock).execute(
+            action.action.skill_plan,
+            schedule_ref=schedule_id,
+        )
+        self._skill_plan_executions[schedule_id] = execution
+        metadata = {
+            "skill_plan_execution_id": execution.execution_id,
+            "skill_plan_execution_verdict": execution.verdict.value,
+            "skill_plan_execution_reason": execution.reason,
+            "worker_id": worker_id,
+        }
+        if execution.verdict is TemporalSkillExecutionVerdict.PASS:
+            self._replace_action(action, ScheduledActionState.COMPLETED, metadata={**dict(action.metadata), **metadata})
+            self._leases.pop(schedule_id, None)
+            self._record(self.get(schedule_id), ScheduleDecisionVerdict.COMPLETED, "skill_plan_executed", self._clock(), worker_id)
+            return execution
+        self._replace_action(action, ScheduledActionState.BLOCKED, metadata={**dict(action.metadata), **metadata})
+        self._leases.pop(schedule_id, None)
+        self._record(self.get(schedule_id), ScheduleDecisionVerdict.BLOCKED, execution.reason, self._clock(), worker_id)
+        return execution
+
     def mark_failed(
         self,
         schedule_id: str,
@@ -324,7 +367,13 @@ class TemporalSchedulerEngine:
             return None
         return lease
 
-    def _replace_action(self, action: ScheduledTemporalAction, state: ScheduledActionState) -> None:
+    def _replace_action(
+        self,
+        action: ScheduledTemporalAction,
+        state: ScheduledActionState,
+        *,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> None:
         now = self._clock()
         self._actions[action.schedule_id] = ScheduledTemporalAction(
             schedule_id=action.schedule_id,
@@ -335,7 +384,7 @@ class TemporalSchedulerEngine:
             handler_name=action.handler_name,
             created_at=action.created_at,
             updated_at=now,
-            metadata=action.metadata,
+            metadata=metadata if metadata is not None else action.metadata,
         )
 
     def _record(
