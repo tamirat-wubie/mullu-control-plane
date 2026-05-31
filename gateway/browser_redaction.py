@@ -5,8 +5,9 @@ browser observations before they enter signed receipts and worker responses.
 Governance scope: redaction of extracted text, observed network/navigation URLs.
 Dependencies: gateway.browser_worker contracts; standard library only.
 Invariants:
-  - Redaction preserves URL scheme, host, and path so domain allowlist checks
-    and receipts stay meaningful; only secret query/fragment values are masked.
+  - Redaction preserves URL scheme, host, port, and path so domain allowlist
+    checks and receipts stay meaningful; URL userinfo and secret query/fragment
+    values are masked.
   - Masking is fail-safe and deterministic; unparseable URLs are returned as-is.
   - No floats and no numeric decisioning - string classification only.
 """
@@ -16,7 +17,7 @@ from __future__ import annotations
 import re
 from dataclasses import replace
 from typing import TYPE_CHECKING
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
 
 if TYPE_CHECKING:
     from gateway.browser_worker import BrowserActionObservation
@@ -72,17 +73,25 @@ def _redact_query(query: str) -> str:
     return urlencode(redacted)
 
 
+def _redact_netloc_userinfo(netloc: str) -> str:
+    if "@" not in netloc:
+        return netloc
+    _, host_port = netloc.rsplit("@", 1)
+    return f"{quote(MASK, safe='')}@{host_port}"
+
+
 def redact_url_query_secrets(url: str) -> str:
-    """Mask secret query/fragment values in a URL, preserving host and path."""
-    if not url or "=" not in url:
+    """Mask URL userinfo and secret query/fragment values."""
+    if not url or ("=" not in url and "@" not in url):
         return url
     try:
         scheme, netloc, path, query, fragment = urlsplit(url)
     except ValueError:
         return url
+    new_netloc = _redact_netloc_userinfo(netloc)
     new_query = _redact_query(query)
     new_fragment = _redact_query(fragment)
-    return urlunsplit((scheme, netloc, path, new_query, new_fragment))
+    return urlunsplit((scheme, new_netloc, path, new_query, new_fragment))
 
 
 def redact_text_secrets(text: str) -> str:

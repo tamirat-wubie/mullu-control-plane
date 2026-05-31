@@ -91,6 +91,12 @@ class TestRedactUrl:
         out = redact_url_query_secrets("https://docs.mullusi.com/a/b?token=z")
         assert out.startswith("https://docs.mullusi.com/a/b")
 
+    def test_basic_auth_userinfo_masked(self):
+        out = redact_url_query_secrets("https://user:pass@docs.mullusi.com:8443/a?state=ok")
+        assert "user:pass" not in out
+        assert out == "https://%5BREDACTED%5D@docs.mullusi.com:8443/a?state=ok"
+        assert "docs.mullusi.com:8443/a" in out
+
     def test_url_without_query_unchanged(self):
         url = "https://docs.mullusi.com/reference"
         assert redact_url_query_secrets(url) == url
@@ -124,12 +130,13 @@ class TestRedactObservation:
     def test_observation_urls_and_text_masked(self):
         obs = BrowserActionObservation(
             succeeded=True,
-            url_before="https://x.io/login?password=p",
+            url_before="https://operator:secret@x.io/login?password=p",
             url_after="https://x.io/cb?code=SECRET",
             extracted_text="card 4111 1111 1111 1111",
             network_requests=("https://api.x.io/v1?api_key=KEY", "https://x.io/plain"),
         )
         red = redact_observation(obs)
+        assert "operator:secret" not in red.url_before
         assert "p" not in red.url_before.split("password=")[1]
         assert "SECRET" not in red.url_after
         assert "4111" not in red.extracted_text
