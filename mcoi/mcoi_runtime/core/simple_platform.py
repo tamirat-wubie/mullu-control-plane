@@ -564,7 +564,7 @@ def _request_from_mapping(value: Mapping[str, object]) -> SimpleActionRequest:
         action=_action_kind(_required_text(value, "action")),
         target=_required_text(value, "target"),
         allowed_area=_required_text(value, "allowed_area"),
-        actor_id=str(value.get("actor_id", "local-user")).strip() or "local-user",
+        actor_id=_optional_text(value, "actor_id", "local-user"),
     )
 
 
@@ -573,9 +573,9 @@ def _task_request_from_mapping(value: Mapping[str, object]) -> SimpleTaskRequest
 
     return SimpleTaskRequest(
         task=_task_kind(_required_text(value, "task")),
-        target=str(value.get("target", "")).strip(),
-        goal=str(value.get("goal", "")).strip(),
-        actor_id=str(value.get("actor_id", "local-user")).strip() or "local-user",
+        target=_optional_text(value, "target", ""),
+        goal=_optional_text(value, "goal", ""),
+        actor_id=_optional_text(value, "actor_id", "local-user"),
     )
 
 
@@ -584,9 +584,9 @@ def _workflow_request_from_mapping(value: Mapping[str, object]) -> SimpleWorkflo
 
     return SimpleWorkflowRequest(
         workflow=_workflow_kind(_required_text(value, "workflow")),
-        target=str(value.get("target", "")).strip(),
-        goal=str(value.get("goal", "")).strip(),
-        actor_id=str(value.get("actor_id", "local-user")).strip() or "local-user",
+        target=_optional_text(value, "target", ""),
+        goal=_optional_text(value, "goal", ""),
+        actor_id=_optional_text(value, "actor_id", "local-user"),
     )
 
 
@@ -657,9 +657,20 @@ def _workflow_kind(value: str) -> SimpleWorkflowKind:
 def _required_text(value: Mapping[str, object], field_name: str) -> str:
     if field_name not in value:
         raise RuntimeCoreInvariantError(f"{field_name} is required")
-    text = str(value[field_name]).strip()
+    if not isinstance(value[field_name], str):
+        raise RuntimeCoreInvariantError(f"{field_name} must be text")
+    text = value[field_name].strip()
     _require_text(text, field_name)
     return text
+
+
+def _optional_text(value: Mapping[str, object], field_name: str, default: str) -> str:
+    field_value = value.get(field_name)
+    if field_value is None:
+        return default
+    if not isinstance(field_value, str):
+        raise RuntimeCoreInvariantError(f"{field_name} must be text")
+    return field_value.strip() or default
 
 
 def _require_text(value: str, field_name: str) -> None:
