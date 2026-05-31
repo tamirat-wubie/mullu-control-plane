@@ -561,11 +561,11 @@ class TestWebChatWebhook:
         accepted = gate.admit(command_id="cmd-default-creative", intent_name="creative.document_generate")
         rejected = gate.admit(command_id="cmd-default-missing", intent_name="creative.missing")
 
-        assert read_model["capsule_count"] == 12
-        assert read_model["capability_count"] == 63
-        assert len(read_model["governed_capability_records"]) == 63
-        assert len(read_model["capability_maturity_assessments"]) == 63
-        assert read_model["capability_maturity_counts"]["C3"] == 61
+        assert read_model["capsule_count"] == 13
+        assert read_model["capability_count"] == 73
+        assert len(read_model["governed_capability_records"]) == 73
+        assert len(read_model["capability_maturity_assessments"]) == 73
+        assert read_model["capability_maturity_counts"]["C3"] == 71
         assert read_model["capability_maturity_counts"]["C6"] == 2
         assert read_model["production_ready_count"] == 2
         assert read_model["autonomy_ready_count"] == 0
