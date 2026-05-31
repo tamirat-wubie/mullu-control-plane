@@ -18,7 +18,7 @@ from mcoi_runtime.app.software_receipt_review_queue import (
     SoftwareReceiptReviewQueue,
     software_receipt_review_request_id,
 )
-from mcoi_runtime.contracts.review import ReviewScopeType
+from mcoi_runtime.contracts.review import ReviewRequest, ReviewScope, ReviewScopeType
 from mcoi_runtime.contracts.software_dev_loop import (
     SoftwareChangeReceipt,
     SoftwareChangeReceiptStage,
@@ -222,6 +222,53 @@ def test_decide_rejects_non_software_receipt_review_request() -> None:
             reviewer_id="operator-1",
             approved=False,
         )
+
+
+@pytest.mark.parametrize(
+    ("metadata_patch", "error_pattern"),
+    (
+        ({"latest_receipt_id": 7}, r"^latest_receipt_id must be a non-empty string$"),
+        ({"evidence_refs": ("evidence:valid", 7)}, r"^evidence_refs\[1\] must be a non-empty string$"),
+        ({"target_refs": "target:not-array"}, r"^target_refs must be an array$"),
+        ({"constraint_refs": ()}, r"^constraint_refs must contain at least one item$"),
+    ),
+)
+def test_decide_rejects_loose_review_metadata(metadata_patch, error_pattern) -> None:
+    store = SoftwareChangeReceiptStore()
+    review_engine = ReviewEngine(clock=lambda: T1)
+    queue = SoftwareReceiptReviewQueue(review_engine=review_engine, receipt_store=store)
+    metadata = {
+        "source": SOFTWARE_RECEIPT_REVIEW_SOURCE,
+        "latest_receipt_id": "receipt-open",
+        "target_refs": ("target:request-open",),
+        "constraint_refs": ("constraint:software_change_lifecycle_v1",),
+        "evidence_refs": ("evidence:receipt-open",),
+    }
+    metadata.update(metadata_patch)
+    request = review_engine.submit(
+        ReviewRequest(
+            request_id="software-receipt-review:request-open",
+            requester_id="software_receipt_monitor",
+            scope=ReviewScope(
+                scope_type=ReviewScopeType.SOFTWARE_RECEIPT_CHAIN,
+                target_id="request-open",
+                description="Software change receipt chain requires terminal closure review",
+            ),
+            reason=SOFTWARE_RECEIPT_REVIEW_REASON,
+            requested_at=T0,
+            metadata=metadata,
+        )
+    )
+
+    with pytest.raises(ValueError, match=error_pattern):
+        queue.decide(
+            request_id=request.request_id,
+            reviewer_id="operator-1",
+            approved=True,
+        )
+
+    assert store.list_receipts() == ()
+    assert queue.pending() == (request,)
 
 
 def test_invalid_wiring_fails_explicitly() -> None:
