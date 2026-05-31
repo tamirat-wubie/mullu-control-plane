@@ -952,6 +952,8 @@ class NoteMemoryMesh:
             for row in retrieval_influence_rows
             if not retrieval_receipt_filter or row["receipt_id"] == retrieval_receipt_filter
         ]
+        retrieval_receipts = self._retrieval_receipt_summary_rows(retrieval_influence)
+        retrieval_receipts_total = self._retrieval_receipt_summary_rows(retrieval_influence_rows)
         pending_promotions = sorted(
             self._pending_promotions(),
             key=lambda entry: str(entry.get("queued_at", "")),
@@ -976,6 +978,8 @@ class NoteMemoryMesh:
                 "contradiction_count": len(contradictions),
                 "retrieval_influence_count": len(retrieval_influence),
                 "retrieval_influence_total_count": len(retrieval_influence_rows),
+                "retrieval_receipt_count": len(retrieval_receipts),
+                "retrieval_receipt_total_count": len(retrieval_receipts_total),
                 "index_proof_state": index_report.proof_state.value,
             },
             "recent_notes": [
@@ -994,6 +998,7 @@ class NoteMemoryMesh:
             "memory_anchors": [self._event_dashboard_row(event) for event in memory_anchors[:limit]],
             "episode_capsules": [self._event_dashboard_row(event) for event in episode_capsules[:limit]],
             "contradictions": [self._event_dashboard_row(event) for event in contradictions[:limit]],
+            "retrieval_receipts": retrieval_receipts[:limit],
             "retrieval_influence": retrieval_influence[:limit],
             "audit_events": [self._event_dashboard_row(event) for event in recent_events[:limit]],
             "index": {
@@ -1057,6 +1062,47 @@ class NoteMemoryMesh:
                     }
                 )
         return rows
+
+    def _retrieval_receipt_summary_rows(self, influence_rows: Sequence[dict[str, object]]) -> list[dict[str, object]]:
+        """Return bounded per-receipt citation summaries for operator navigation."""
+
+        grouped_rows: dict[str, list[dict[str, object]]] = {}
+        for row in influence_rows:
+            receipt_id = str(row.get("receipt_id", ""))
+            if not receipt_id:
+                continue
+            grouped_rows.setdefault(receipt_id, []).append(row)
+
+        summaries: list[dict[str, object]] = []
+        for receipt_id, rows in grouped_rows.items():
+            sorted_rows = sorted(rows, key=lambda row: int(row.get("citing_event_seq", 0)), reverse=True)
+            latest = sorted_rows[0]
+            earliest = sorted_rows[-1]
+            citing_note_ids: list[str] = []
+            for row in sorted_rows:
+                note_id = str(row.get("citing_note_id", ""))
+                if note_id and note_id not in citing_note_ids:
+                    citing_note_ids.append(note_id)
+            summaries.append(
+                {
+                    "receipt_id": receipt_id,
+                    "citation_count": len(rows),
+                    "citing_note_id_count": len(citing_note_ids),
+                    "sample_citing_note_ids": citing_note_ids[:10],
+                    "latest_citing_event_seq": int(latest.get("citing_event_seq", 0)),
+                    "latest_cited_at": str(latest.get("cited_at", "")),
+                    "earliest_cited_at": str(earliest.get("cited_at", "")),
+                }
+            )
+
+        return sorted(
+            summaries,
+            key=lambda row: (
+                -int(row.get("citation_count", 0)),
+                -int(row.get("latest_citing_event_seq", 0)),
+                str(row.get("receipt_id", "")),
+            ),
+        )
 
     def _retrieval_receipt(
         self,

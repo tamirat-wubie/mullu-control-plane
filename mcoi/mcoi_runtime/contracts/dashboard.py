@@ -249,6 +249,8 @@ class NoteMemorySummary(ContractRecord):
     contradiction_count: int
     retrieval_influence_count: int
     retrieval_influence_total_count: int
+    retrieval_receipt_count: int
+    retrieval_receipt_total_count: int
     index_proof_state: str
     assessed_at: str
 
@@ -308,6 +310,18 @@ class NoteMemorySummary(ContractRecord):
         )
         if self.retrieval_influence_total_count < self.retrieval_influence_count:
             raise ValueError("retrieval_influence_total_count must be greater than or equal to retrieval_influence_count")
+        object.__setattr__(
+            self,
+            "retrieval_receipt_count",
+            require_non_negative_int(self.retrieval_receipt_count, "retrieval_receipt_count"),
+        )
+        object.__setattr__(
+            self,
+            "retrieval_receipt_total_count",
+            require_non_negative_int(self.retrieval_receipt_total_count, "retrieval_receipt_total_count"),
+        )
+        if self.retrieval_receipt_total_count < self.retrieval_receipt_count:
+            raise ValueError("retrieval_receipt_total_count must be greater than or equal to retrieval_receipt_count")
         object.__setattr__(
             self,
             "index_proof_state",

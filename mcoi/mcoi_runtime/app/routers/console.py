@@ -297,6 +297,8 @@ def _empty_note_memory_payload(extension: dict[str, object]) -> dict[str, object
             "contradiction_count": 0,
             "retrieval_influence_count": 0,
             "retrieval_influence_total_count": 0,
+            "retrieval_receipt_count": 0,
+            "retrieval_receipt_total_count": 0,
             "index_proof_state": "Unknown",
         },
         "filters": {
@@ -309,6 +311,7 @@ def _empty_note_memory_payload(extension: dict[str, object]) -> dict[str, object
         "memory_anchors": [],
         "episode_capsules": [],
         "contradictions": [],
+        "retrieval_receipts": [],
         "retrieval_influence": [],
         "audit_events": [],
         "index": {
@@ -392,6 +395,8 @@ def _render_note_memory_console_html(payload: dict[str, object]) -> str:
         ("Contradictions", summary.get("contradiction_count", 0)),
         ("Retrieval Influence", summary.get("retrieval_influence_count", 0)),
         ("Retrieval Influence Total", summary.get("retrieval_influence_total_count", 0)),
+        ("Retrieval Receipts", summary.get("retrieval_receipt_count", 0)),
+        ("Retrieval Receipts Total", summary.get("retrieval_receipt_total_count", 0)),
         ("Index Proof", summary.get("index_proof_state", "Unknown")),
     ]
     metric_items = "\n".join(
@@ -439,6 +444,7 @@ def _render_note_memory_console_html(payload: dict[str, object]) -> str:
   {_note_memory_event_table("Recent Notes", payload.get("recent_notes", ()))}
   {_note_memory_event_table("Rejected Deltas", payload.get("rejected_deltas", ()))}
   {_note_memory_event_table("Episode Capsules", payload.get("episode_capsules", ()))}
+  {_note_memory_retrieval_receipt_table(payload.get("retrieval_receipts", ()))}
   {_note_memory_retrieval_influence_table(payload.get("retrieval_influence", ()))}
   {_note_memory_promotion_table(payload.get("pending_promotions", ()))}
   {_note_memory_event_table("Audit Events", payload.get("audit_events", ()))}
@@ -467,6 +473,30 @@ def _note_memory_event_table(title: str, raw_rows: object) -> str:
     <h2>{escape(title)}</h2>
     <table>
       <thead><tr><th>Seq</th><th>Kind</th><th>Action</th><th>Scope</th><th>Proof</th><th>Summary</th><th>Source</th></tr></thead>
+      <tbody>{body}</tbody>
+    </table>
+  </section>"""
+
+
+def _note_memory_retrieval_receipt_table(raw_rows: object) -> str:
+    rows = _sequence_of_mappings(raw_rows)
+    body = "\n".join(
+        "<tr>"
+        f"<td>{escape(str(row.get('receipt_id', '')))}</td>"
+        f"<td>{escape(str(row.get('citation_count', '')))}</td>"
+        f"<td>{escape(str(row.get('citing_note_id_count', '')))}</td>"
+        f"<td>{escape(', '.join(str(item) for item in row.get('sample_citing_note_ids', ())))}</td>"
+        f"<td>{escape(str(row.get('latest_cited_at', '')))}</td>"
+        "</tr>"
+        for row in rows
+    )
+    if not body:
+        body = "<tr><td colspan=\"5\">No retrieval receipts</td></tr>"
+    return f"""
+  <section>
+    <h2>Retrieval Receipts</h2>
+    <table>
+      <thead><tr><th>Receipt</th><th>Citations</th><th>Notes</th><th>Sample Notes</th><th>Latest Citation</th></tr></thead>
       <tbody>{body}</tbody>
     </table>
   </section>"""

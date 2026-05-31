@@ -1189,6 +1189,8 @@ resumed_by_id
 retention_days
 retrieval_influence_count
 retrieval_influence_total_count
+retrieval_receipt_count
+retrieval_receipt_total_count
 retrieved_at
 retry_after_seconds
 retry_count

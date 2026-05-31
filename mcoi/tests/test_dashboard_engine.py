@@ -110,6 +110,8 @@ def _note_memory_snapshot(**summary_overrides: object) -> dict[str, object]:
         "contradiction_count": 0,
         "retrieval_influence_count": 0,
         "retrieval_influence_total_count": 0,
+        "retrieval_receipt_count": 0,
+        "retrieval_receipt_total_count": 0,
         "index_proof_state": "Pass",
     }
     summary.update(summary_overrides)
@@ -327,6 +329,8 @@ class TestBuildNoteMemorySummary:
         assert summary.episode_capsule_count == 1
         assert summary.retrieval_influence_count == 0
         assert summary.retrieval_influence_total_count == 0
+        assert summary.retrieval_receipt_count == 0
+        assert summary.retrieval_receipt_total_count == 0
         assert summary.index_proof_state == "Pass"
 
     def test_builds_note_memory_summary_from_legacy_snapshot_without_total(self):
@@ -340,6 +344,18 @@ class TestBuildNoteMemorySummary:
 
         assert view.retrieval_influence_count == 2
         assert view.retrieval_influence_total_count == 2
+
+    def test_builds_note_memory_summary_from_legacy_snapshot_without_receipt_total(self):
+        engine = _make_engine()
+        snapshot = _note_memory_snapshot(retrieval_receipt_count=2)
+        summary = snapshot["summary"]
+        if isinstance(summary, dict):
+            summary.pop("retrieval_receipt_total_count")
+
+        view = engine.build_note_memory_summary(snapshot)
+
+        assert view.retrieval_receipt_count == 2
+        assert view.retrieval_receipt_total_count == 2
 
     def test_rejects_negative_count(self):
         engine = _make_engine()

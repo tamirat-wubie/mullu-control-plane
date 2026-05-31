@@ -353,6 +353,12 @@ class DashboardEngine:
             if "retrieval_influence_total_count" in summary
             else retrieval_influence_count
         )
+        retrieval_receipt_count = _non_negative_int_at(summary, "retrieval_receipt_count")
+        retrieval_receipt_total_count = (
+            _non_negative_int_at(summary, "retrieval_receipt_total_count")
+            if "retrieval_receipt_total_count" in summary
+            else retrieval_receipt_count
+        )
         now = self._clock()
         summary_id = stable_identifier("dash-note-memory", {
             "status": status,
@@ -375,6 +381,8 @@ class DashboardEngine:
             contradiction_count=_non_negative_int_at(summary, "contradiction_count"),
             retrieval_influence_count=retrieval_influence_count,
             retrieval_influence_total_count=retrieval_influence_total_count,
+            retrieval_receipt_count=retrieval_receipt_count,
+            retrieval_receipt_total_count=retrieval_receipt_total_count,
             index_proof_state=index_proof_state,
             assessed_at=now,
         )
