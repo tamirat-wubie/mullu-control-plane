@@ -11,6 +11,7 @@ and verified reconciliation must bind as one causal chain.
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 from mcoi_runtime.contracts import (
@@ -140,3 +141,33 @@ def test_p3_readiness_blocks_when_chain_does_not_bind(tmp_path) -> None:
 
     assert result["status"] == "blocked"
     assert result["blockers"] == ("verified_causal_chain_missing",)
+
+
+def test_p3_readiness_cli_returns_blocked_status(tmp_path, capsys) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    NestedMindEvidenceStore(store_path)
+
+    exit_code = module.main(["--store", str(store_path)])
+    output = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 1
+    assert output["status"] == "blocked"
+    assert "accepted_submission_missing" in output["blockers"]
+
+
+def test_p3_readiness_cli_returns_ready_status(tmp_path, capsys) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    store.record_commit_witness(_witness())
+    store.record_reconciliation_report(_reconciliation())
+
+    exit_code = module.main(["--store", str(store_path), "--mind-id", "root"])
+    output = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert output["status"] == "ready"
+    assert output["mind_id"] == "root"
+    assert output["commit_witness_id"] == "witness-1"
