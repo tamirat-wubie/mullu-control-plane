@@ -100,6 +100,7 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "uri",
         "chas",
         "chasa",
+        "oresh",
     }
     day_units = {
         "day",
@@ -127,6 +128,10 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "dan",
         "dana",
         "dni",
+        "dena",
+        "denovi",
+        "dite",
+        "ditesh",
     }
     if unit in minute_units:
         delta = timedelta(minutes=amount)
@@ -411,6 +416,30 @@ def _bosnian_weekdays() -> dict[str, int]:
     }
 
 
+def _macedonian_weekdays() -> dict[str, int]:
+    return {
+        "ponedelnik": 0,
+        "vtornik": 1,
+        "sreda": 2,
+        "chetvrtok": 3,
+        "petok": 4,
+        "sabota": 5,
+        "nedela": 6,
+    }
+
+
+def _albanian_weekdays() -> dict[str, int]:
+    return {
+        "te henen": 0,
+        "te marten": 1,
+        "te merkuren": 2,
+        "te enjten": 3,
+        "te premten": 4,
+        "te shtunen": 5,
+        "te dielen": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -467,6 +496,10 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_bulgarian_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"bs", "bs-ba"}:
         return _resolve_bosnian_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"mk", "mk-mk"}:
+        return _resolve_macedonian_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"sq", "sq-al", "sq-xk"}:
+        return _resolve_albanian_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -1484,6 +1517,109 @@ def _resolve_bosnian_temporal_phrase(
     }:
         return "ambiguous", "temporal_phrase_ambiguous", ""
     if re.fullmatch(r"sljedeci (ponedjeljak|utorak|srijeda|cetvrtak|petak|subota|nedjelja)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_macedonian_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"za ([1-9][0-9]*) (minuta|minuti|chas|chasa|den|dena|denovi)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(denes|utre) vo ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "utre" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"sleden (ponedelnik|vtornik|sreda|chetvrtok|petok|sabota|nedela) vo ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_macedonian_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "denes",
+        "utre",
+        "vecerva",
+        "podocna",
+        "naskoro",
+        "slednata sedmica",
+        "sledniot mesec",
+        "slednata godina",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"sleden (ponedelnik|vtornik|sreda|chetvrtok|petok|sabota|nedela)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_albanian_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"pas ([1-9][0-9]*) (minute|minuta|ore|oresh|dite|ditesh)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(sot|neser) ne ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "neser" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"(te henen|te marten|te merkuren|te enjten|te premten|te shtunen|te dielen) e ardhshme ne ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_albanian_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "sot",
+        "neser",
+        "sonte",
+        "me vone",
+        "se shpejti",
+        "javen e ardhshme",
+        "muajin e ardhshem",
+        "vitin e ardhshem",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(
+        r"(te henen|te marten|te merkuren|te enjten|te premten|te shtunen|te dielen) e ardhshme",
+        normalized,
+    ):
         return "ambiguous", "temporal_phrase_ambiguous", ""
     return "unsupported", "temporal_phrase_unsupported", ""
 
