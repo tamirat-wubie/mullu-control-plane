@@ -25,6 +25,7 @@ from mcoi_runtime.core.browser_redaction import (
     redact_metadata,
     redact_page,
     redact_selector_match,
+    redact_url,
     scrub_text,
 )
 from mcoi_runtime.adapters.browser_adapter import (
@@ -137,6 +138,30 @@ class TestScrubText:
         assert scrub_text(text, policy=policy) == text
 
 
+# --- URL redaction ---
+
+
+class TestRedactUrl:
+    def test_secret_query_parameters_masked(self):
+        redacted = redact_url(
+            "https://app.example.com/path?access_token=raw-token&view=summary"
+        )
+        assert "raw-token" not in redacted
+        assert "view=summary" in redacted
+        assert redacted.startswith("https://app.example.com/path?")
+
+    def test_userinfo_masked_and_host_path_preserved(self):
+        redacted = redact_url("https://alice:secret@app.example.com:8443/path")
+        assert "alice" not in redacted
+        assert "secret" not in redacted
+        assert "app.example.com:8443/path" in redacted
+
+    def test_fragment_parameters_masked(self):
+        redacted = redact_url("https://app.example.com/callback#id_token=raw-id")
+        assert "raw-id" not in redacted
+        assert "id_token=" in redacted
+
+
 # --- Match redaction ---
 
 
@@ -176,6 +201,18 @@ class TestRedactPage:
         assert redacted.url == "https://x.com"
         assert redacted.title == "T"
         assert redacted.metadata["k"] == "v"
+
+    def test_url_secret_material_redacted(self):
+        page = PageDescriptor(
+            url="https://user:pass@app.example.com/path?token=raw-token&tab=home",
+            title="T",
+        )
+        redacted = redact_page(page)
+        assert "user" not in redacted.url
+        assert "pass" not in redacted.url
+        assert "raw-token" not in redacted.url
+        assert "app.example.com/path" in redacted.url
+        assert "tab=home" in redacted.url
 
     def test_sensitive_element_masked_others_preserved(self):
         page = PageDescriptor(
