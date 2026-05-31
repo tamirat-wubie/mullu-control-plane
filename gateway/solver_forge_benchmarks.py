@@ -286,6 +286,164 @@ DUPLICATE_INVOICE_SIGNATURE = ProblemSignature(
 )
 
 
+# --------------------------------------------------------------------------- #
+# Second benchmark: single-worker task scheduling with deadlines.
+# A different domain (engineering_puzzle) that exercises the scheduler capsules.
+# The primary metric is on-time rate, so a scheduler that optimizes the wrong
+# thing (clear the big tasks first) is recorded but refused as a winner.
+# --------------------------------------------------------------------------- #
+
+
+@dataclass(frozen=True, slots=True)
+class SchedulingTask:
+    id: str
+    duration: float
+    deadline: float
+    deps: tuple[str, ...] = ()
+
+
+SCHEDULING_FIXTURE: tuple[SchedulingTask, ...] = (
+    SchedulingTask("T1", 2.0, 3.0),
+    SchedulingTask("T2", 1.0, 2.0),
+    SchedulingTask("T3", 3.0, 12.0, ("T1",)),
+    SchedulingTask("T4", 2.0, 6.0),
+    SchedulingTask("T5", 1.0, 5.0, ("T2",)),
+    SchedulingTask("T6", 4.0, 20.0),
+)
+
+_TASK_INDEX = {task.id: i for i, task in enumerate(SCHEDULING_FIXTURE)}
+
+
+def _simulate(tasks: tuple[SchedulingTask, ...], pick_key):
+    """Single worker, sequential, no preemption; respects dependencies."""
+    completed: dict[str, float] = {}
+    remaining = list(tasks)
+    clock = 0.0
+    order: list[str] = []
+    while remaining:
+        ready = [t for t in remaining if all(d in completed for d in t.deps)]
+        if not ready:  # malformed dependency graph; stop deterministically
+            break
+        nxt = min(ready, key=pick_key)
+        clock += nxt.duration
+        completed[nxt.id] = clock
+        order.append(nxt.id)
+        remaining.remove(nxt)
+    return completed, tuple(order)
+
+
+def _key_in_order(task: SchedulingTask):  # naive baseline: original task order
+    return _TASK_INDEX[task.id]
+
+
+def _key_earliest_deadline(task: SchedulingTask):  # earliest-deadline-first
+    return (task.deadline, _TASK_INDEX[task.id])
+
+
+def _key_longest_first(task: SchedulingTask):  # "clear the big rocks first" anti-pattern
+    return (-task.duration, _TASK_INDEX[task.id])
+
+
+def _schedule_metrics(completed: dict[str, float]) -> dict[str, float]:
+    by_id = {t.id: t for t in SCHEDULING_FIXTURE}
+    on_time = sum(1 for tid, done in completed.items() if done <= by_id[tid].deadline)
+    n = len(SCHEDULING_FIXTURE)
+    return {
+        "on_time_rate": round(on_time / n, 4) if n else 0.0,
+        "deadline_miss_count": float(n - on_time),
+        "total_completion_time": round(sum(completed.values()), 4),
+    }
+
+
+# capsule_id -> (priority strategy, declared cost)
+_SCHEDULERS = {
+    "capsule:search_planner.bfs_deadline.v1": (_key_in_order, 1.0),
+    "capsule:constraint_solver.scheduling.v1": (_key_earliest_deadline, 3.0),
+    "capsule:optimization_solver.lp_relax.v1": (_key_longest_first, 2.0),
+}
+
+_SCHEDULE_DIRECTIONS = {
+    "on_time_rate": "maximize",
+    "deadline_miss_count": "minimize",
+    "total_completion_time": "minimize",
+}
+
+_ON_TIME_FLOOR = 0.25
+
+
+def scheduling_evaluator(
+    signature: ProblemSignature,
+    pipeline: CandidatePipeline,
+    seed: str,
+) -> CandidateEvaluation:
+    """Deterministic evaluator for the task-scheduling benchmark. Maps the
+    pipeline's capsule to a scheduling strategy, simulates it on the fixture,
+    and measures the on-time rate. Unknown capsules are skipped, not faked."""
+    capsule_id = pipeline.capsule_ids[0] if pipeline.capsule_ids else ""
+    entry = _SCHEDULERS.get(capsule_id)
+    if entry is None:
+        return CandidateEvaluation(
+            outcome="skipped",
+            scores=(),
+            notes=f"no_reference_scheduler_for:{capsule_id}",
+        )
+    pick_key, cost = entry
+    completed, order = _simulate(SCHEDULING_FIXTURE, pick_key)
+    metrics = _schedule_metrics(completed)
+    scores = tuple(
+        CandidateScore(metric_id=key, value=value, direction=_SCHEDULE_DIRECTIONS[key])
+        for key, value in metrics.items()
+    )
+    outcome = "passed" if metrics["on_time_rate"] >= _ON_TIME_FLOOR else "failed"
+    return CandidateEvaluation(
+        outcome=outcome,
+        scores=scores,
+        evidence_refs=(f"schedule_order_receipt:{'>'.join(order)}",),
+        cost_units=cost,
+        duration_seconds=0.0,
+        notes=(
+            f"on_time_rate={metrics['on_time_rate']} "
+            f"misses={metrics['deadline_miss_count']} order={'>'.join(order)}"
+        ),
+    )
+
+
+SCHEDULING_SIGNATURE = ProblemSignature(
+    problem_id="task_scheduling_with_deadlines.v1",
+    domain="engineering_puzzle",
+    goal="schedule tasks on one worker to meet deadlines",
+    inputs=("tasks", "durations", "deadlines", "dependencies"),
+    constraints=("respect task dependencies", "single worker, no preemption"),
+    risk="medium",
+    metrics=(
+        ProblemMetric(
+            metric_id="on_time_rate",
+            metric_kind="success",
+            direction="maximize",
+            threshold=_ON_TIME_FLOOR,
+            description="fraction of tasks finished by their deadline (primary)",
+        ),
+        ProblemMetric(
+            metric_id="deadline_miss_count", metric_kind="failure", direction="minimize"
+        ),
+        ProblemMetric(
+            metric_id="total_completion_time", metric_kind="failure", direction="minimize"
+        ),
+    ),
+    required_evidence=(
+        ProblemEvidenceRequirement(
+            requirement_id="schedule",
+            evidence_type="schedule_order_receipt",
+            required=True,
+        ),
+    ),
+    budget_units=100.0,
+    timeout_seconds=5.0,
+    allowed_method_families=("search_planner", "constraint_solver", "optimization_solver"),
+    baseline_method_family="search_planner",
+)
+
+
 @dataclass(frozen=True, slots=True)
 class Benchmark:
     benchmark_id: str
@@ -303,6 +461,17 @@ BENCHMARKS: dict[str, Benchmark] = {
             "Invoice duplicate detection over a labeled fixture. Baseline "
             "exact-match vs normalized graph-match vs a same-vendor overflag "
             "trap. Primary metric is F1, so the recall-only trap cannot win."
+        ),
+    ),
+    SCHEDULING_SIGNATURE.problem_id: Benchmark(
+        benchmark_id=SCHEDULING_SIGNATURE.problem_id,
+        signature=SCHEDULING_SIGNATURE,
+        evaluator=scheduling_evaluator,
+        description=(
+            "Single-worker task scheduling with deadlines and dependencies. "
+            "Naive in-order baseline vs earliest-deadline-first vs a "
+            "longest-first anti-pattern. Primary metric is on-time rate, so "
+            "the anti-pattern is recorded but refused."
         ),
     ),
 }
