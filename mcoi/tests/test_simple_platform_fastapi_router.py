@@ -153,6 +153,18 @@ def test_simple_platform_fastapi_adapter_rejects_invalid_requests() -> None:
     assert envelope["payload"] == {}
 
 
+def test_simple_platform_fastapi_adapter_rejects_unknown_fields_without_reflection() -> None:
+    adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
+    envelope = adapter.check_action(_request(scope_override=True))
+
+    assert envelope["governed"] is True
+    assert envelope["ok"] is False
+    assert envelope["status"] == "rejected"
+    assert envelope["payload"] == {}
+    assert envelope["error"] == "request contains unsupported fields"
+    assert "scope_override" not in envelope["error"]
+
+
 def test_simple_platform_fastapi_adapter_rejects_invalid_task() -> None:
     adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
     envelope = adapter.check_task({"task": "unknown-task", "target": "docs/README.md"})
