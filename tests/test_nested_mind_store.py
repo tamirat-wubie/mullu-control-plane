@@ -74,6 +74,7 @@ def _submission() -> NestedMindObservationSubmissionReport:
         mind_id="root",
         proposal_evidence_id="evidence-1",
         payload_hash=_plan().payload_hash,
+        mullu_receipt_hash="mullu-receipt-hash-1",
         connector_result_id="connector-result-1",
         connector_response_digest="d" * 64,
         response_envelope_hash="envelope-hash-1",
@@ -102,6 +103,7 @@ def _bridge() -> NestedMindReceiptBridgeReport:
         proposal_evidence_id="evidence-1",
         mind_id="root",
         commit_witness_id="witness-1",
+        mullu_receipt_hash="mullu-receipt-hash-1",
         status=NestedMindReceiptBridgeStatus.BRIDGED,
         bridged_at=_clock(),
     )
@@ -113,6 +115,7 @@ def _reconciliation() -> NestedMindObservationReconciliationReport:
         plan_id="plan-1",
         commit_witness_id="witness-1",
         mind_id="root",
+        mullu_receipt_hash="mullu-receipt-hash-1",
         expected_commit_hash="commit-hash-1",
         expected_history_hash="history-hash-1",
         projection_connector_result_id="projection-result-1",
@@ -156,12 +159,23 @@ def test_list_by_mind_id(tmp_path) -> None:
 def test_list_by_mullu_receipt_hash(tmp_path) -> None:
     store = NestedMindEvidenceStore(tmp_path / "nested-mind.jsonl")
     store.record_plan(_plan())
+    store.record_submission_report(_submission())
     store.record_commit_witness(_witness())
+    store.record_bridge_report(_bridge())
+    store.record_reconciliation_report(_reconciliation())
     store.record_plan(_plan(plan_id="plan-2", mind_id="tenant-2"))
 
     entries = store.list_by_mullu_receipt_hash("mullu-receipt-hash-1")
-    assert [entry.record_type for entry in entries] == ["plan", "commit_witness", "plan"]
+    assert [entry.record_type for entry in entries] == [
+        "plan",
+        "submission_report",
+        "commit_witness",
+        "bridge_report",
+        "reconciliation_report",
+        "plan",
+    ]
     assert all(entry.mullu_receipt_hash == "mullu-receipt-hash-1" for entry in entries)
+    assert store.list_by_mullu_receipt_hash("unrelated-receipt-hash") == ()
 
 
 def test_no_token_fields_stored(tmp_path) -> None:

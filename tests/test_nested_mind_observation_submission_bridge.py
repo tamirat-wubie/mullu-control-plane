@@ -42,6 +42,7 @@ def _submission(
         mind_id="root",
         proposal_evidence_id="evidence-1",
         payload_hash="payload-hash-1",
+        mullu_receipt_hash="mullu-receipt-hash-1",
         connector_result_id="connector-result-1",
         connector_response_digest="d" * 64,
         response_envelope_hash="envelope-hash-1",

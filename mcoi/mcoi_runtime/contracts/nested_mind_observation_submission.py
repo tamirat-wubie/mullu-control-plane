@@ -249,6 +249,7 @@ class NestedMindObservationSubmissionReport(ContractRecord):
     mind_id: str
     proposal_evidence_id: str
     payload_hash: str
+    mullu_receipt_hash: str
     connector_result_id: str | None
     connector_response_digest: str | None
     response_envelope_hash: str | None
@@ -260,7 +261,14 @@ class NestedMindObservationSubmissionReport(ContractRecord):
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        for field_name in ("report_id", "plan_id", "mind_id", "proposal_evidence_id", "payload_hash"):
+        for field_name in (
+            "report_id",
+            "plan_id",
+            "mind_id",
+            "proposal_evidence_id",
+            "payload_hash",
+            "mullu_receipt_hash",
+        ):
             object.__setattr__(
                 self,
                 field_name,

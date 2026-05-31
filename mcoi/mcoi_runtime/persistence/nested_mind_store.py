@@ -96,7 +96,7 @@ class NestedMindEvidenceStore:
             "submission_report",
             report.report_id,
             report.mind_id,
-            None,
+            report.mullu_receipt_hash,
             report,
         )
 
@@ -110,10 +110,16 @@ class NestedMindEvidenceStore:
         )
 
     def record_bridge_report(self, report: NestedMindReceiptBridgeReport) -> None:
-        self._append("bridge_report", report.report_id, report.mind_id, None, report)
+        self._append("bridge_report", report.report_id, report.mind_id, report.mullu_receipt_hash, report)
 
     def record_reconciliation_report(self, report: NestedMindObservationReconciliationReport) -> None:
-        self._append("reconciliation_report", report.report_id, report.mind_id, None, report)
+        self._append(
+            "reconciliation_report",
+            report.report_id,
+            report.mind_id,
+            report.mullu_receipt_hash,
+            report,
+        )
 
     def list_by_mind_id(self, mind_id: str) -> tuple[NestedMindEvidenceEntry, ...]:
         return tuple(entry for entry in self._entries if entry.mind_id == mind_id)
