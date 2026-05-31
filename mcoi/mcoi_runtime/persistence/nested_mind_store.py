@@ -45,6 +45,13 @@ _ENTRY_FIELDS = {
     "mullu_receipt_hash",
     "payload",
 }
+_PAYLOAD_ID_FIELDS = {
+    "plan": "plan_id",
+    "submission_report": "report_id",
+    "commit_witness": "witness_id",
+    "bridge_report": "report_id",
+    "reconciliation_report": "report_id",
+}
 _FORBIDDEN_KEY_FRAGMENTS = (
     "bearer",
     "authorization",
@@ -204,6 +211,13 @@ def _entry_from_raw(raw: Mapping[str, Any]) -> NestedMindEvidenceEntry:
         raise CorruptedDataError("nested-mind evidence mullu_receipt_hash must be text")
     if not isinstance(payload, Mapping):
         raise CorruptedDataError("nested-mind evidence payload must be object")
+    payload_id = payload.get(_PAYLOAD_ID_FIELDS[str(record_type)])
+    if payload_id != record_id:
+        raise CorruptedDataError("nested-mind evidence record_id payload mismatch")
+    if payload.get("mind_id") != mind_id:
+        raise CorruptedDataError("nested-mind evidence mind_id payload mismatch")
+    if payload.get("mullu_receipt_hash") != mullu_receipt_hash:
+        raise CorruptedDataError("nested-mind evidence mullu_receipt_hash payload mismatch")
     return NestedMindEvidenceEntry(
         record_type=record_type,
         record_id=record_id,

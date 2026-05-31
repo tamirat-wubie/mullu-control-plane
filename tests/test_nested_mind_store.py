@@ -11,6 +11,7 @@ not accepted; query projections are read-only.
 from __future__ import annotations
 
 from dataclasses import replace
+import json
 
 import pytest
 
@@ -188,4 +189,52 @@ def test_existing_store_rejects_unexpected_top_level_fields(tmp_path) -> None:
     store_path.write_text(unsafe_entry + "\n", encoding="utf-8")
 
     with pytest.raises(CorruptedDataError, match="unexpected fields"):
+        NestedMindEvidenceStore(store_path)
+
+
+def test_existing_store_rejects_unsupported_record_type(tmp_path) -> None:
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    entry = json.loads(store_path.read_text(encoding="utf-8"))
+    entry["record_type"] = "unknown_record"
+    store_path.write_text(json.dumps(entry, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="unsupported nested-mind evidence record type"):
+        NestedMindEvidenceStore(store_path)
+
+
+def test_existing_store_rejects_record_id_payload_mismatch(tmp_path) -> None:
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    entry = json.loads(store_path.read_text(encoding="utf-8"))
+    entry["record_id"] = "tampered-report-id"
+    store_path.write_text(json.dumps(entry, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="record_id payload mismatch"):
+        NestedMindEvidenceStore(store_path)
+
+
+def test_existing_store_rejects_mind_id_payload_mismatch(tmp_path) -> None:
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    entry = json.loads(store_path.read_text(encoding="utf-8"))
+    entry["mind_id"] = "tenant-other"
+    store_path.write_text(json.dumps(entry, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="mind_id payload mismatch"):
+        NestedMindEvidenceStore(store_path)
+
+
+def test_existing_store_rejects_mullu_receipt_hash_payload_mismatch(tmp_path) -> None:
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_commit_witness(_witness())
+    entry = json.loads(store_path.read_text(encoding="utf-8"))
+    entry["mullu_receipt_hash"] = "tampered-receipt-hash"
+    store_path.write_text(json.dumps(entry, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="mullu_receipt_hash payload mismatch"):
         NestedMindEvidenceStore(store_path)
