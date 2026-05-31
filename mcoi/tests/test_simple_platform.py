@@ -245,5 +245,6 @@ def test_simple_platform_console_entry_point_is_guarded() -> None:
     metadata = tomllib.loads((ROOT / "mcoi" / "pyproject.toml").read_text(encoding="utf-8"))
 
     assert metadata["project"]["scripts"]["mullu"] == "mcoi_runtime.core.simple_cli:guarded_main"
-    assert metadata["project"]["scripts"]["mcoi-mvk"] == "mcoi_runtime.core.mvk_cli:guarded_main"
+    assert metadata["project"]["scripts"]["mcoi"] == "mcoi_runtime.app.cli:main"
+    assert metadata["project"]["scripts"]["mcoi-swarm"] == "mcoi_runtime.swarm.cli:guarded_main"
     assert metadata["project"]["scripts"]["mcoi-notes"] == "mcoi_runtime.core.note_memory_cli:guarded_main"
