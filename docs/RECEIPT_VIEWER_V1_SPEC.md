@@ -1,6 +1,6 @@
 # Receipt Viewer v1 Specification
 
-Purpose: define the first buyer/operator-facing proof surface for governed AI execution.
+Purpose: define the first buyer/operator-facing proof surface for governed symbolic intelligence execution.
 Governance scope: receipt lookup, admission proof, provider evidence, reconciliation status, closure status, and public-claim-safe display.
 Dependencies: `docs/MAF_RECEIPT_COVERAGE.md`, `docs/STATE_HASH_SPEC.md`, `docs/EVIDENCE_CLASSIFICATION.md`, `DEPLOYMENT_STATUS.md`.
 Invariants: the viewer may show proof artifacts but may not convert internal consistency into external-world truth unless provider and reconciliation evidence are present.

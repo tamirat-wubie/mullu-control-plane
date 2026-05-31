@@ -50,7 +50,7 @@ The current product-facing packet is intentionally claim-bounded:
 | `docs/CURRENT_READINESS_SNAPSHOT.md` | Names current posture without claiming public production health |
 | `docs/EVIDENCE_CLASSIFICATION.md` | Distinguishes fixture, local, CI, staging, pilot, production, external, and historical evidence |
 | `examples/evidence_classification_manifest.json` | Classifies high-risk public evidence examples as fixtures or bounded witnesses |
-| `docs/PILOT_PRODUCT_PACKET.md` | Positions Mullu Govern as private-pilot governed AI execution, not public SaaS |
+| `docs/PILOT_PRODUCT_PACKET.md` | Positions Mullu Govern as private-pilot governed symbolic intelligence execution, not public SaaS |
 | `docs/RECEIPT_VIEWER_V1_SPEC.md` | Defines the first buyer/operator proof surface and receipt tiers |
 | `docs/CAPABILITY_RUNTIME_GATE_SPEC.md` | Converts capability maturity into a runtime admission policy target |
 | `docs/TEMPORAL_SCHEDULER_V2_PLAN.md` | Moves temporal work toward missed-action, evidence-freshness, recurrence, and lease safety |

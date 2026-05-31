@@ -8,7 +8,7 @@ Invariants: the pilot packet may not claim public SaaS launch, production health
 ## Pilot position
 
 ```text
-Mullu Govern is governed AI execution for private pilot review: AI agents and symbolic workflows can do bounded work only through approvals, budgets, policies, receipts, audit trails, and closure evidence.
+Mullu Govern is governed symbolic intelligence execution for private pilot review: symbolic intelligence agents and symbolic workflows can do bounded work only through approvals, budgets, policies, receipts, audit trails, and closure evidence.
 ```
 
 ## Pilot target users
@@ -22,7 +22,7 @@ Mullu Govern is governed AI execution for private pilot review: AI agents and sy
 
 ## Allowed pilot claims
 
-1. Governed AI execution private pilot.
+1. Governed symbolic intelligence execution private pilot.
 2. Approval-gated task review.
 3. Budget-aware action checks.
 4. Receipt and audit-trail demonstration.
