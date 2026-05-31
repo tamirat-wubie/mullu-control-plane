@@ -253,6 +253,91 @@ def test_runtime_rejects_non_text_expiry_now(tmp_path) -> None:
     assert "now must be a string" in rejected["error"]
 
 
+def test_runtime_rejects_non_text_required_note_field_without_persisting(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.capture_note(_working_note(content_summary=12345)).to_dict()
+    listed = runtime.list_events().to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "content_summary must be a string" in rejected["error"]
+    assert listed["payload"]["count"] == 0
+
+
+def test_runtime_rejects_non_text_optional_claim_field_without_persisting(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.capture_note(_working_note(claim_key=7)).to_dict()
+    listed = runtime.list_events().to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "claim_key must be a string" in rejected["error"]
+    assert listed["payload"]["count"] == 0
+
+
+def test_runtime_rejects_non_text_note_evidence_ref_without_persisting(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.capture_note(_working_note(evidence_refs=["test_note_memory_api", 7])).to_dict()
+    listed = runtime.list_events().to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "expected a string list" in rejected["error"]
+    assert listed["payload"]["count"] == 0
+
+
+def test_runtime_rejects_empty_note_evidence_ref_without_persisting(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.capture_note(_working_note(evidence_refs=[""])).to_dict()
+    listed = runtime.list_events().to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "expected a non-empty string list" in rejected["error"]
+    assert listed["payload"]["count"] == 0
+
+
+def test_runtime_rejects_non_text_retrieval_guard_scope(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.retrieve_notes({"query": "parser", "scope": 7}).to_dict()
+    listed = runtime.list_events().to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "scope must be a string" in rejected["error"]
+    assert listed["payload"]["count"] == 0
+
+
+def test_runtime_rejects_non_text_rejected_delta_scope_without_persisting(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.record_rejected_delta(
+        {
+            "summary": "Rejected unsafe note promotion",
+            "source_ref": "test:rejected",
+            "scope": 7,
+            "evidence_refs": ["blocked"],
+        }
+    ).to_dict()
+    listed = runtime.list_events().to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "scope must be a string" in rejected["error"]
+    assert listed["payload"]["count"] == 0
+
+
 def test_runtime_dashboard_snapshot_reports_operator_memory_state(tmp_path) -> None:
     runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
     captured = runtime.capture_note(_working_note(content_summary="dashboard parser note")).to_dict()

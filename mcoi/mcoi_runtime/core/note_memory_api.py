@@ -82,10 +82,11 @@ class NoteMemoryRuntime:
         """Record a durable rejected-delta note."""
 
         try:
+            scope = _optional_text(request_body, "scope") or NoteScope.TASK.value
             event = self.mesh.record_rejected_delta(
                 content_summary=_required_text(request_body, "content_summary", alias="summary"),
                 source_ref=_required_text(request_body, "source_ref"),
-                scope=NoteScope(str(request_body.get("scope", NoteScope.TASK.value))),
+                scope=NoteScope(scope),
                 evidence_refs=_text_tuple(request_body.get("evidence_refs")),
             )
             return _ok("rejected_delta_recorded", {"event": event.to_dict()})
@@ -193,19 +194,19 @@ class NoteMemoryRuntime:
 def _draft_from_mapping(value: Mapping[str, Any]) -> NoteMemoryDraft:
     return NoteMemoryDraft(
         kind=NoteKind(_required_text(value, "kind")),
-        action=NoteAction(str(value.get("action", NoteAction.CREATE.value))),
+        action=NoteAction(_optional_text(value, "action") or NoteAction.CREATE.value),
         scope=NoteScope(_required_text(value, "scope")),
         content_summary=_required_text(value, "content_summary", alias="summary"),
         source_ref=_required_text(value, "source_ref"),
         proof_state=ProofState(_required_text(value, "proof_state")),
         trust_zone=TrustZone(_required_text(value, "trust_zone")),
-        expires_at=str(value["expires_at"]) if value.get("expires_at") else None,
-        note_id=str(value.get("note_id", "")),
+        expires_at=_optional_text(value, "expires_at"),
+        note_id=_optional_text(value, "note_id") or "",
         evidence_refs=_text_tuple(value.get("evidence_refs")),
         relation_refs=_text_tuple(value.get("relation_refs")),
         retrieval_receipt_refs=_text_tuple(value.get("retrieval_receipt_refs")),
-        claim_key=str(value.get("claim_key", "")),
-        claim_value=str(value.get("claim_value", "")),
+        claim_key=_optional_text(value, "claim_key") or "",
+        claim_value=_optional_text(value, "claim_value") or "",
     )
 
 
@@ -222,7 +223,7 @@ def _episode_capsule_from_mapping(value: Mapping[str, Any]) -> EpisodeCapsuleDra
         open_risks=_text_tuple(value.get("open_risks")),
         evidence_refs=_text_tuple(value.get("evidence_refs")),
         relation_refs=_text_tuple(value.get("relation_refs")),
-        episode_id=str(value.get("episode_id", "")),
+        episode_id=_optional_text(value, "episode_id") or "",
     )
 
 
@@ -237,11 +238,12 @@ def _retrieval_guard_from_mapping(value: Mapping[str, Any]) -> RetrievalGuard:
         ProofState,
         default=(ProofState.PASS,),
     )
+    scope = _optional_text(value, "scope")
     return RetrievalGuard(
         allowed_trust_zones=allowed_trust_zones,
         allowed_proof_states=allowed_proof_states,
-        scope=NoteScope(str(value["scope"])) if value.get("scope") else None,
-        now=str(value["now"]) if value.get("now") else None,
+        scope=NoteScope(scope) if scope is not None else None,
+        now=_optional_text(value, "now"),
         include_hypotheses=_optional_bool(value, "include_hypotheses", default=False),
     )
 
@@ -268,7 +270,9 @@ def _required_text(value: Mapping[str, Any], field_name: str, *, alias: str | No
         raw_value = value[alias]
     else:
         raise KeyError(f"missing field: {field_name}")
-    text = str(raw_value).strip()
+    if not isinstance(raw_value, str):
+        raise ValueError(f"{field_name} must be a string")
+    text = raw_value.strip()
     if not text:
         raise ValueError(f"{field_name} must be non-empty")
     return text
@@ -312,7 +316,15 @@ def _text_tuple(value: Any) -> tuple[str, ...]:
         return ()
     if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
         raise ValueError("expected a string list")
-    return tuple(str(item).strip() for item in value if str(item).strip())
+    text_values: list[str] = []
+    for item in value:
+        if not isinstance(item, str):
+            raise ValueError("expected a string list")
+        text = item.strip()
+        if not text:
+            raise ValueError("expected a non-empty string list")
+        text_values.append(text)
+    return tuple(text_values)
 
 
 def _enum_tuple(value: Any, enum_type: type[Enum], *, default: tuple[Any, ...]) -> tuple[Any, ...]:
@@ -320,7 +332,15 @@ def _enum_tuple(value: Any, enum_type: type[Enum], *, default: tuple[Any, ...]) 
         return default
     if not isinstance(value, Sequence) or isinstance(value, (str, bytes)):
         raise ValueError("expected an enum string list")
-    return tuple(enum_type(str(item)) for item in value)
+    enum_values: list[Any] = []
+    for item in value:
+        if not isinstance(item, str):
+            raise ValueError("expected an enum string list")
+        text = item.strip()
+        if not text:
+            raise ValueError("expected a non-empty enum string list")
+        enum_values.append(enum_type(text))
+    return tuple(enum_values)
 
 
 def _ok(status: str, payload: Mapping[str, Any]) -> NoteMemoryEnvelope:
