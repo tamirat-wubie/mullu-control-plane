@@ -56,6 +56,7 @@ def build_parser() -> argparse.ArgumentParser:
     capture_parser.add_argument("--action", choices=[action.value for action in NoteAction], default=NoteAction.CREATE.value)
     capture_parser.add_argument("--evidence-ref", action="append", help="Evidence reference")
     capture_parser.add_argument("--relation-ref", action="append", help="Related note id or event id")
+    capture_parser.add_argument("--retrieval-receipt-ref", action="append", help="Retrieval receipt that influenced this note")
     capture_parser.add_argument("--claim-key", default="", help="Optional deterministic contradiction claim key")
     capture_parser.add_argument("--claim-value", default="", help="Optional deterministic contradiction claim value")
 
@@ -183,6 +184,7 @@ def _draft_from_args(args: argparse.Namespace) -> NoteMemoryDraft:
         note_id=args.note_id,
         evidence_refs=tuple(args.evidence_ref or ()),
         relation_refs=tuple(args.relation_ref or ()),
+        retrieval_receipt_refs=tuple(args.retrieval_receipt_ref or ()),
         claim_key=args.claim_key,
         claim_value=args.claim_value,
     )

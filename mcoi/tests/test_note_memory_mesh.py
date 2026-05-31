@@ -174,6 +174,51 @@ def test_retrieval_receipt_is_deterministic_and_read_only(tmp_path) -> None:
     assert result.receipt.proof_state == ProofState.PASS
 
 
+def test_captured_decision_can_cite_retrieval_receipt_without_mutating_read(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+    source = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.WORKING_NOTE,
+            scope=NoteScope.TASK,
+            content_summary="parser strategy note for downstream decision capture",
+            source_ref="test:retrieval-influence-source",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            expires_at="2026-05-03T00:00:00+00:00",
+            evidence_refs=("test_captured_decision_can_cite_retrieval_receipt_without_mutating_read",),
+        )
+    )
+
+    result = mesh.retrieve_notes_with_receipt(
+        "parser strategy",
+        RetrievalGuard(scope=NoteScope.TASK, now="2026-05-01T00:00:00+00:00"),
+    )
+    event_count_after_read = mesh.event_count
+    clock.set("2026-05-01T00:01:00+00:00")
+    decision = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.DECISION_RECORD,
+            scope=NoteScope.TASK,
+            content_summary="Decision cites the retrieval receipt that selected parser strategy evidence",
+            source_ref="test:retrieval-influence-decision",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            evidence_refs=("test_captured_decision_can_cite_retrieval_receipt_without_mutating_read",),
+            retrieval_receipt_refs=(result.receipt.receipt_id,),
+        )
+    )
+    snapshot = mesh.dashboard_snapshot(now="2026-05-01T00:01:00+00:00")
+
+    assert event_count_after_read == 1
+    assert result.receipt.returned_note_ids == (source.note_id,)
+    assert decision.retrieval_receipt_refs == (result.receipt.receipt_id,)
+    assert mesh.event_count == 2
+    assert snapshot["summary"]["event_count"] == 2
+    assert snapshot["recent_notes"][0]["note_id"] == decision.note_id
+    assert snapshot["recent_notes"][0]["retrieval_receipt_refs"] == [result.receipt.receipt_id]
+
+
 def test_retrieval_receipt_bounds_query_text(tmp_path) -> None:
     clock = MutableClock("2026-05-01T00:00:00+00:00")
     mesh = _mesh(tmp_path, clock)
