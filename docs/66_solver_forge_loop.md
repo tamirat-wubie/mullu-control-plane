@@ -71,6 +71,7 @@ ProblemSignature
 | `gateway/method_registry.py` | `MethodRegistry`, `STARTER_CAPSULES`, `default_registry` | Typed catalog of method capsules. Selects the capsules a signature admits and builds a composer; declaration-only, with no promotion surface. Ships a conservative starter catalog. |
 | `gateway/solver_forge_benchmarks.py` | `reference_evaluator`, `run_benchmark`, `BENCHMARKS`, `DUPLICATE_INVOICE_SIGNATURE` | Worked duplicate-invoice benchmark over a labeled fixture with three real detectors. Deterministic; primary metric is F1 so a recall-only trap cannot win. |
 | `gateway/solver_forge_cli.py` | `main`, `build_parser` | Read-and-experiment CLI: list capsules/benchmarks, run a benchmark, preview a forge input. No promote / install / deploy subcommand. |
+| `gateway/solver_forge_capsule_probes.py` | `CapsuleProbeReviewer`, `CompositeAdversarialReviewer`, `DEFAULT_PROBES` | Candidate-specific Gate-2 reviewer: deterministic probes derived from each capsule's declared contract, so different candidates get different findings. Composes with `RedTeamPlatformReviewer`. |
 
 ## Problem signatures
 
@@ -154,7 +155,7 @@ The adapter tests *platform invariants*, not candidate-specific behavior. Every 
 
 `severity_threshold` tolerates up to N failed cases (default `0` = strict). `cache=True` (default) runs the harness once per adapter instance; `reset_cache()` forces a fresh run. Construct a new adapter for each composer.run() session if you want fresh platform evidence per session.
 
-Candidate-specific adversarial probes (per-pipeline injection patterns derived from declared capsule inputs) remain out of scope and are tracked below as follow-on work.
+Candidate-specific adversarial probes (per-pipeline findings derived from each capsule's declared contract) are implemented by `gateway/solver_forge_capsule_probes.py`; see the Candidate-specific adversarial probes section below.
 
 ## Comparison ledger
 
@@ -297,6 +298,41 @@ candidate ledger to a JSON file. `forge-input` previews the
 `CapabilityForgeInput` a winner would produce — including the stamped
 `solver_forge.*` provenance — but never calls `CapabilityForge.create_candidate`.
 
+## Candidate-specific adversarial probes
+
+`RedTeamPlatformReviewer` tests platform invariants, so every candidate in a
+session inherits the same verdict. `gateway/solver_forge_capsule_probes.py` adds
+the complementary layer: `CapsuleProbeReviewer` is an `AdversarialReviewCallback`
+that derives deterministic probes from each capsule's **declared contract**, so
+two different candidates can receive **different** findings.
+
+The default probes:
+
+- **Unmitigated injection surface** — a capsule that consumes untrusted free
+  text (an LLM-backed family, or an input named `text` / `prompt` / `document` /
+  …) must declare an injection-class failure mode; otherwise the surface is
+  unguarded.
+- **Unguarded external-state assumption** — an assumption that depends on
+  external mutable state (a graph `exists`, data is `fresh`, a service is
+  `reachable`) must have a matching `missing` / `stale` / `unavailable` failure
+  mode.
+- **High-risk / low-oversight** — a high- or physical-risk capsule with low
+  explainability must be paired with a `human_review_gate` in the pipeline.
+
+Findings are honest by construction: they are derived from declared metadata, so
+a finding means "the declared contract leaves a surface unguarded", never "the
+method was attacked and failed". The reviewer obeys every existing gate
+invariant — it is applied symmetrically to the baseline (a flagged baseline sets
+`baseline_compromised` and zeroes winners), and findings are recorded on the
+ledger record. `CompositeAdversarialReviewer` unions several reviewers so the
+platform harness and the capsule probes can run together.
+
+Running the default probes over the starter catalog flags the LLM-backed
+capsules (`llm_planner`, `llm_reviewer`, `multi_agent_debate`) for not declaring
+an injection failure mode — a real contract gap for capsule owners to close —
+while the duplicate-invoice benchmark capsules are clean, so the probes can be
+attached to that benchmark without compromising its baseline.
+
 ## Relationship to existing infrastructure
 
 | Pre-existing module | Relationship |
@@ -331,10 +367,11 @@ candidate ledger to a JSON file. `forge-input` previews the
 | `tests/test_gateway/test_solver_forge_benchmarks.py` | 11 | Detector ground truth (precision / recall), deterministic evaluator, unknown-capsule skip, end-to-end winner selection, recall-only-trap refusal, winner crosses the bridge, ledger winners match the report. |
 | `tests/test_gateway/test_solver_forge_cli.py` | 9 | No-promotion subcommand surface, list capsules / benchmarks (incl. domain + family filters), text + JSON run output, unknown-benchmark error, ledger-file write, read-only forge-input preview. |
 | `tests/test_gateway/test_solver_forge_scheduling_benchmark.py` | 6 | Scheduler ground truth (on-time rate), deterministic evaluator, unknown-capsule skip, EDF wins / longest-first anti-pattern refused, winner crosses the bridge, two-benchmark catalog. |
+| `tests/test_gateway/test_solver_forge_capsule_probes.py` | 14 | Each probe (injection / external-state / high-risk-low-oversight) + its mitigation, deterministic candidate-specific findings, starter-catalog calibration, composite union, composer double-gate exclusion, baseline-compromise. |
 
 ## Open questions deferred to follow-on work
 
 - **Multi-capsule pipelines.** The default composition is one capsule per pipeline. Multi-capsule pipelines (e.g. OCR -> embedding -> rule check -> reviewer summary) are supported by `CandidatePipeline.capsule_ids` but a real composer subclass that emits non-trivial compositions is not in scope here.
-- **Candidate-specific adversarial probes.** The `RedTeamPlatformReviewer` adapter tests platform invariants (every candidate inherits the same verdict). Per-pipeline injection patterns derived from declared capsule inputs — so that two candidates in the same session can receive different findings — are not implemented. The interface supports it; the adapter does not.
+- **Live-attack candidate probes.** Candidate-specific *contract-level* probes are now implemented (`gateway/solver_forge_capsule_probes.py`, `CapsuleProbeReviewer`). The remaining gap is probes that *execute* live attacks per pipeline (rather than auditing the declared contract); the `AdversarialReviewCallback` seam already supports it.
 - **Ledger durability beyond JSON file.** `InMemoryCandidateLedgerStore` and `JsonFileCandidateLedgerStore` are the only stores; a Postgres-backed store mirroring `plan_ledger` durability is a natural follow-on.
 - **Cross-signature learning.** Two signatures with different `signature_hash` values are siblings, not the same problem class. A clustering layer that recognizes "this is the same kind of problem we've seen before" is out of scope; the ledger preserves the evidence to enable it later.
