@@ -61,14 +61,28 @@ Each subdirectory must include:
 
 Capture official USPTO evidence for:
 
-1. `MULLU`
-2. `MULLUSI`
-3. `Mullu by Mullusi`
-4. `Mullu Inspect`
-5. `Mullu CLI`
-6. `Mullu Code`
-7. `Mullu Control Plane`
-8. `MULU`
+1. `Mullu Govern`
+2. `MULLU`
+3. `MULLUSI`
+4. `Mullu Govern by Mullusi`
+5. `Mullu by Mullusi`
+6. `Mullu Inspect`
+7. `Mullu CLI`
+8. `Mullu Code`
+9. `Mullu Control Plane`
+10. `MULU`
+
+Required USPTO evidence files:
+
+```text
+uspto-search-mullu-govern.pdf
+uspto-search-mullu.pdf
+uspto-search-mullusi.pdf
+uspto-search-mullu-govern-by-mullusi.pdf
+uspto-search-mullu-by-mullusi.pdf
+uspto-search-mullu-surfaces.pdf
+uspto-search-mulu.pdf
+```
 
 Required classes:
 
@@ -90,9 +104,21 @@ Required serial status records:
 
 Capture WIPO Global Brand Database results for:
 
-1. `MULLU`
-2. `MULLUSI`
-3. `Mullu by Mullusi`
+1. `Mullu Govern`
+2. `MULLU`
+3. `MULLUSI`
+4. `Mullu Govern by Mullusi`
+5. `Mullu by Mullusi`
+
+Required WIPO evidence files:
+
+```text
+wipo-search-mullu-govern.pdf
+wipo-search-mullu.pdf
+wipo-search-mullusi.pdf
+wipo-search-mullu-govern-by-mullusi.pdf
+wipo-search-mullu-by-mullusi.pdf
+```
 
 Record whether results appear in Madrid, Lisbon, 6ter, or participating office collections.
 
@@ -100,9 +126,26 @@ Record whether results appear in Madrid, Lisbon, 6ter, or participating office c
 
 Capture EUIPO eSearch plus and TMview results for:
 
-1. `MULLU`
-2. `MULLUSI`
-3. `Mullu by Mullusi`
+1. `Mullu Govern`
+2. `MULLU`
+3. `MULLUSI`
+4. `Mullu Govern by Mullusi`
+5. `Mullu by Mullusi`
+
+Required EUIPO and TMview evidence files:
+
+```text
+euipo-search-mullu-govern.pdf
+euipo-search-mullu.pdf
+euipo-search-mullusi.pdf
+euipo-search-mullu-govern-by-mullusi.pdf
+euipo-search-mullu-by-mullusi.pdf
+tmview-search-mullu-govern.pdf
+tmview-search-mullu.pdf
+tmview-search-mullusi.pdf
+tmview-search-mullu-govern-by-mullusi.pdf
+tmview-search-mullu-by-mullusi.pdf
+```
 
 Record owner, jurisdiction, classes, status, and goods/services for any similar result.
 

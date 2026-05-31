@@ -9,9 +9,24 @@ Invariants: no EUIPO or TMview gate is closed by this placeholder; official scre
 
 | Query | Required source | Status |
 | --- | --- | --- |
+| `Mullu Govern` | EUIPO eSearch plus and TMview | Pending capture |
 | `MULLU` | EUIPO eSearch plus and TMview | Pending capture |
 | `MULLUSI` | EUIPO eSearch plus and TMview | Pending capture |
+| `Mullu Govern by Mullusi` | EUIPO eSearch plus and TMview | Pending capture |
 | `Mullu by Mullusi` | EUIPO eSearch plus and TMview | Pending capture |
+
+## Required Evidence Files
+
+1. `euipo-search-mullu-govern.pdf`
+2. `euipo-search-mullu.pdf`
+3. `euipo-search-mullusi.pdf`
+4. `euipo-search-mullu-govern-by-mullusi.pdf`
+5. `euipo-search-mullu-by-mullusi.pdf`
+6. `tmview-search-mullu-govern.pdf`
+7. `tmview-search-mullu.pdf`
+8. `tmview-search-mullusi.pdf`
+9. `tmview-search-mullu-govern-by-mullusi.pdf`
+10. `tmview-search-mullu-by-mullusi.pdf`
 
 ## Required Files
 

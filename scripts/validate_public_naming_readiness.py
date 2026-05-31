@@ -490,6 +490,16 @@ def validate_clearance_evidence_capture_plan(plan_path: Path = CLEARANCE_EVIDENC
         "close_variant_review",
         "domain_ownership",
         "legal_review",
+        "Mullu Govern",
+        "Mullu Govern by Mullusi",
+        "uspto-search-mullu-govern.pdf",
+        "uspto-search-mullu-govern-by-mullusi.pdf",
+        "wipo-search-mullu-govern.pdf",
+        "wipo-search-mullu-govern-by-mullusi.pdf",
+        "euipo-search-mullu-govern.pdf",
+        "euipo-search-mullu-govern-by-mullusi.pdf",
+        "tmview-search-mullu-govern.pdf",
+        "tmview-search-mullu-govern-by-mullusi.pdf",
         "99518598",
         "99264214",
         "85772539",
@@ -522,10 +532,18 @@ def validate_clearance_evidence_scaffold(evidence_root: Path = CLEARANCE_EVIDENC
     capture_index_text = capture_index_path.read_text(encoding="utf-8")
     validate_no_forbidden_terminology(_display_path(capture_index_path), capture_index_text)
     required_index_literals = (
+        "uspto-search-mullu-govern.pdf",
         "uspto-search-mullu.pdf",
+        "uspto-search-mullu-govern-by-mullusi.pdf",
+        "wipo-search-mullu-govern.pdf",
         "wipo-search-mullu.pdf",
+        "wipo-search-mullu-govern-by-mullusi.pdf",
+        "euipo-search-mullu-govern.pdf",
         "euipo-search-mullu.pdf",
+        "euipo-search-mullu-govern-by-mullusi.pdf",
+        "tmview-search-mullu-govern.pdf",
         "tmview-search-mullu.pdf",
+        "tmview-search-mullu-govern-by-mullusi.pdf",
         "tsdr-99518598.pdf",
         "registrar-ownership.pdf",
         "legal-review-decision.pdf",
@@ -551,6 +569,36 @@ def validate_clearance_evidence_scaffold(evidence_root: Path = CLEARANCE_EVIDENC
         decision_text = decision_path.read_text(encoding="utf-8")
         validate_no_forbidden_terminology(_display_path(readme_path), readme_text)
         validate_no_forbidden_terminology(_display_path(decision_path), decision_text)
+        required_readme_literals_by_directory = {
+            "01-uspto": (
+                "Mullu Govern",
+                "Mullu Govern by Mullusi",
+                "uspto-search-mullu-govern.pdf",
+                "uspto-search-mullu-govern-by-mullusi.pdf",
+            ),
+            "02-wipo": (
+                "Mullu Govern",
+                "Mullu Govern by Mullusi",
+                "wipo-search-mullu-govern.pdf",
+                "wipo-search-mullu-govern-by-mullusi.pdf",
+            ),
+            "03-euipo-tmview": (
+                "Mullu Govern",
+                "Mullu Govern by Mullusi",
+                "euipo-search-mullu-govern.pdf",
+                "euipo-search-mullu-govern-by-mullusi.pdf",
+                "tmview-search-mullu-govern.pdf",
+                "tmview-search-mullu-govern-by-mullusi.pdf",
+            ),
+        }
+        required_readme_literals = required_readme_literals_by_directory.get(directory_name, ())
+        missing_readme_literals = sorted(
+            literal for literal in required_readme_literals if literal not in readme_text
+        )
+        _require(
+            not missing_readme_literals,
+            f"{_display_path(readme_path)} missing Mullu Govern capture literals: {missing_readme_literals}",
+        )
         _require("Pending" in readme_text, f"{_display_path(readme_path)} must keep scaffold state pending")
         _require("Decision | Pending" in decision_text, f"{_display_path(decision_path)} must keep decision pending")
         _require(
