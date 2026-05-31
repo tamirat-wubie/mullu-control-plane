@@ -22,7 +22,11 @@ from gateway.memory_lattice import (
     MemoryLatticeEntry,
     MemoryLatticeGate,
     P3MemoryLatticeContract,
+    P3MemoryTopologyEdge,
+    P3MemoryTopologyMap,
+    P3MemoryTopologyNode,
     build_p3_memory_lattice_contract,
+    build_p3_memory_topology_map,
 )
 
 
@@ -361,6 +365,119 @@ def test_p3_contract_builder_rejects_invalid_blocker_shapes() -> None:
     assert all(error.startswith("p3_readiness_") for error in errors)
 
 
+def test_p3_topology_map_binds_mind_memory_world_and_evidence_refs() -> None:
+    entry = _entry(
+        "semantic_fact_memory",
+        "trusted",
+        learning_admission_status="admit",
+        metadata={"world_refs": ("world:runtime-target",)},
+    )
+    admission = MemoryLatticeGate().assess(entry, now=NOW)
+    contract = build_p3_memory_lattice_contract(_ready_readiness(), (admission,), contract_id="p3-contract-1")
+
+    topology = build_p3_memory_topology_map(contract, (entry,), topology_id="topology-1")
+    node_ids = {node.node_id for node in topology.nodes}
+    edge_kinds = {edge.edge_kind for edge in topology.edges}
+
+    assert topology.status == "ready"
+    assert "mind:root" in node_ids
+    assert "memory:memory:semantic_fact_memory" in node_ids
+    assert "world:world:runtime-target" in node_ids
+    assert {"admits", "observes", "supported_by"}.issubset(edge_kinds)
+    assert topology.topology_hash
+
+
+def test_p3_topology_map_blocks_when_contract_is_not_ready() -> None:
+    contract = build_p3_memory_lattice_contract(
+        {"status": "blocked", "blockers": ("verified_reconciliation_missing",), "mind_id": "root"},
+        (),
+        contract_id="p3-contract-blocked",
+    )
+
+    topology = build_p3_memory_topology_map(contract, (), topology_id="topology-blocked")
+
+    assert topology.status == "blocked"
+    assert topology.nodes == ()
+    assert topology.edges == ()
+    assert topology.blocked_reasons == ("verified_reconciliation_missing",)
+    assert topology.topology_hash
+
+
+def test_p3_topology_map_blocks_missing_admitted_entry() -> None:
+    entry = _entry("semantic_fact_memory", "trusted", learning_admission_status="admit")
+    admission = MemoryLatticeGate().assess(entry, now=NOW)
+    contract = build_p3_memory_lattice_contract(_ready_readiness(), (admission,), contract_id="p3-contract-1")
+
+    topology = build_p3_memory_topology_map(contract, (), topology_id="topology-missing")
+
+    assert topology.status == "blocked"
+    assert topology.blocked_reasons == ("admitted_memory_entry_missing:memory:semantic_fact_memory",)
+    assert topology.topology_hash
+
+
+def test_p3_topology_map_rejects_dangling_edge_endpoint() -> None:
+    try:
+        P3MemoryTopologyMap(
+            topology_id="topology-invalid",
+            contract_id="p3-contract-1",
+            status="ready",
+            mind_id="root",
+            nodes=(_topology_node("mind:root", "nested_mind", "root"),),
+            edges=(
+                P3MemoryTopologyEdge(
+                    edge_id="edge-1",
+                    from_node_id="mind:root",
+                    to_node_id="missing-b",
+                    edge_kind="admits",
+                    evidence_refs=("evidence:1",),
+                ),
+            ),
+        )
+    except ValueError as exc:
+        assert str(exc) == "topology_edge_endpoint_missing"
+    else:
+        raise AssertionError("topology with a dangling edge endpoint was accepted")
+
+
+def test_p3_topology_map_rejects_duplicate_edge_ids() -> None:
+    try:
+        P3MemoryTopologyMap(
+            topology_id="topology-duplicate-edge",
+            contract_id="p3-contract-1",
+            status="ready",
+            mind_id="root",
+            nodes=(
+                _topology_node("mind:root", "nested_mind", "root"),
+                _topology_node("memory:1", "memory", "memory:1"),
+            ),
+            edges=(
+                P3MemoryTopologyEdge("edge-1", "mind:root", "memory:1", "admits", ("evidence:1",)),
+                P3MemoryTopologyEdge("edge-1", "mind:root", "memory:1", "admits", ("evidence:2",)),
+            ),
+        )
+    except ValueError as exc:
+        assert str(exc) == "topology_edge_id_duplicate"
+    else:
+        raise AssertionError("duplicate topology edge ids were accepted")
+
+
+def test_blocked_p3_topology_map_rejects_nodes_and_edges() -> None:
+    try:
+        P3MemoryTopologyMap(
+            topology_id="topology-blocked-invalid",
+            contract_id="p3-contract-1",
+            status="blocked",
+            mind_id="root",
+            nodes=(_topology_node("mind:root", "nested_mind", "root"),),
+            edges=(),
+            blocked_reasons=("verified_reconciliation_missing",),
+        )
+    except ValueError as exc:
+        assert str(exc) == "blocked_topology_cannot_have_nodes_or_edges"
+    else:
+        raise AssertionError("blocked topology with nodes was accepted")
+
+
 def _entry(
     memory_class: str,
     trust_class: str,
@@ -376,3 +493,17 @@ def _entry(
     }
     payload.update(overrides)
     return MemoryLatticeEntry(**payload)
+
+
+def _ready_readiness() -> dict[str, str]:
+    return {
+        "status": "ready",
+        "plan_id": "plan-1",
+        "mind_id": "root",
+        "commit_witness_id": "witness-1",
+        "reconciliation_report_id": "reconciliation-1",
+    }
+
+
+def _topology_node(node_id: str, node_kind: str, ref_id: str) -> P3MemoryTopologyNode:
+    return P3MemoryTopologyNode(node_id=node_id, node_kind=node_kind, ref_id=ref_id)
