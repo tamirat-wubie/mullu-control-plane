@@ -2728,7 +2728,7 @@ def create_gateway_app(
         except (OSError, ValueError) as exc:
             raise HTTPException(
                 503,
-                detail=f"physical_promotion_receipt_store_unavailable:{exc}",
+                detail="physical_promotion_receipt_store_unavailable",
             ) from exc
         return {
             "ready": True,
@@ -2756,7 +2756,7 @@ def create_gateway_app(
         except (OSError, ValueError) as exc:
             raise HTTPException(
                 503,
-                detail=f"physical_promotion_receipt_store_unavailable:{exc}",
+                detail="physical_promotion_receipt_store_unavailable",
             ) from exc
         return {
             "physical_capability_promotion_receipts": list(page.receipts),
@@ -2788,7 +2788,7 @@ def create_gateway_app(
         except (OSError, ValueError) as exc:
             raise HTTPException(
                 503,
-                detail=f"physical_promotion_receipt_store_unavailable:{exc}",
+                detail="physical_promotion_receipt_store_unavailable",
             ) from exc
         read_model = {
             "physical_capability_promotion_receipts": list(page.receipts),
