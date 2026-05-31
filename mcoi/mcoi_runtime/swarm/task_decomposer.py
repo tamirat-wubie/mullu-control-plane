@@ -86,7 +86,10 @@ def _optional_text(spec: Mapping[str, object], field_name: str) -> str | None:
 def _text_value(value: object, field_name: str) -> str:
     if not isinstance(value, str):
         raise SwarmInvariantViolation(f"{field_name} must be a string")
-    return value
+    stripped_value = value.strip()
+    if not stripped_value:
+        raise SwarmInvariantViolation(f"{field_name} must be a non-empty string")
+    return stripped_value
 
 
 def _text_sequence(
@@ -102,9 +105,7 @@ def _text_sequence(
         raise SwarmInvariantViolation(f"{field_name} must be a sequence of strings")
     values: list[str] = []
     for index, item in enumerate(value):
-        if not isinstance(item, str):
-            raise SwarmInvariantViolation(f"{field_name}[{index}] must be a string")
-        values.append(item)
+        values.append(_text_value(item, f"{field_name}[{index}]"))
     return tuple(values)
 
 
