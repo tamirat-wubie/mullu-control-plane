@@ -617,6 +617,13 @@ def _decode_audio(request: VoiceActionRequest) -> bytes:
 
 def _redact_pii(text: str) -> str:
     redacted = re.sub(r"\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b", "[redacted-email]", text)
+    # Card-, SSN-, and IP-shaped values are redacted before phone numbers so the
+    # phone pattern cannot capture a sub-span of a longer secret number. These
+    # cover the high-risk categories a spoken transcript can carry; the local
+    # redactor previously masked only email and phone.
+    redacted = re.sub(r"\b(?:\d[ -]?){13,19}\b", "[redacted-card]", redacted)
+    redacted = re.sub(r"\b\d{3}[ -]\d{2}[ -]\d{4}\b", "[redacted-ssn]", redacted)
+    redacted = re.sub(r"\b\d{1,3}(?:\.\d{1,3}){3}\b", "[redacted-ip]", redacted)
     redacted = re.sub(r"\b(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}\b", "[redacted-phone]", redacted)
     return redacted
 
