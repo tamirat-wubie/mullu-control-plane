@@ -93,6 +93,50 @@ def test_runtime_rejects_non_text_symbolic_fields_without_persisting(tmp_path) -
     assert runtime.audit_store.count == 0
 
 
+def test_runtime_rejects_non_text_invoice_amount_without_persisting(tmp_path) -> None:
+    runtime = InvoiceSwarmRuntime.from_path(tmp_path / "swarm-runs.jsonl")
+
+    rejected = runtime.run_invoice(_payload(run_id="run_bad_amount_type", invoice_amount_usd=100)).to_dict()
+    listed = runtime.list_runs().to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "invoice_amount_usd must be a decimal string" in rejected["error"]
+    assert listed["payload"]["count"] == 0
+    assert runtime.audit_store.count == 0
+
+
+def test_runtime_rejects_malformed_invoice_amount_without_persisting(tmp_path) -> None:
+    runtime = InvoiceSwarmRuntime.from_path(tmp_path / "swarm-runs.jsonl")
+
+    rejected = runtime.run_invoice(
+        _payload(run_id="run_bad_amount_text", invoice_amount_usd="not-a-decimal")
+    ).to_dict()
+    listed = runtime.list_runs().to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "invoice_amount_usd must be decimal text" in rejected["error"]
+    assert listed["payload"]["count"] == 0
+    assert runtime.audit_store.count == 0
+
+
+def test_runtime_rejects_non_finite_invoice_amount_without_persisting(tmp_path) -> None:
+    runtime = InvoiceSwarmRuntime.from_path(tmp_path / "swarm-runs.jsonl")
+
+    rejected = runtime.run_invoice(_payload(run_id="run_bad_amount_nan", invoice_amount_usd="NaN")).to_dict()
+    listed = runtime.list_runs().to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "invoice_amount_usd must be finite" in rejected["error"]
+    assert listed["payload"]["count"] == 0
+    assert runtime.audit_store.count == 0
+
+
 def test_runtime_list_runs_and_not_found_lookup_are_read_only(tmp_path) -> None:
     runtime = InvoiceSwarmRuntime.from_path(tmp_path / "swarm-runs.jsonl")
     runtime.run_invoice(_payload(run_id="run_api_invoice_001"))

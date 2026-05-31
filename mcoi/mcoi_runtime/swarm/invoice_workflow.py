@@ -40,6 +40,8 @@ class InvoiceSwarmRequest:
             raise ValueError("tenant_id must be non-empty")
         if not self.invoice_ref or not self.invoice_ref.strip():
             raise ValueError("invoice_ref must be non-empty")
+        if not self.invoice_amount_usd.is_finite():
+            raise ValueError("invoice_amount_usd must be finite")
         if self.invoice_amount_usd <= Decimal("0.00"):
             raise ValueError("invoice_amount_usd must be positive")
 
