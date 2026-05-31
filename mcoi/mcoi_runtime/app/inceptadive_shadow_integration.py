@@ -1,7 +1,8 @@
 """Application integration helpers for InceptaDive Shadow Pass.
 
-Purpose: provide a small dependency-injection boundary for request, planning, and
-preflight shadow checks without mounting routes or executing actions.
+Purpose: provide a small dependency-injection boundary for request, planning,
+preflight, health, and console posture checks without mounting routes or
+executing actions.
 Governance scope: feature-flagged advisory/strict inspection only; final verdict
 remains owned by Mullu governance.
 Dependencies: environment mappings and core shadow modules.
@@ -13,10 +14,16 @@ executes a candidate action.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping
+from typing import Mapping, Sequence
 
 from mcoi_runtime.core.inceptadive_shadow_gate import decide_shadow_mode
 from mcoi_runtime.core.inceptadive_shadow_light import run_light_shadow_pass
+from mcoi_runtime.core.inceptadive_shadow_posture import (
+    ShadowConsoleSummary,
+    ShadowHealthPosture,
+    build_shadow_console_summary,
+    build_shadow_health_posture,
+)
 from mcoi_runtime.core.inceptadive_shadow_preflight import run_strict_preflight
 from mcoi_runtime.core.inceptadive_shadow_receipt import create_shadow_receipt
 from mcoi_runtime.core.inceptadive_shadow_types import (
@@ -40,6 +47,8 @@ class InceptaDiveShadowRuntime:
 
     config: ShadowInterrogationConfig
     receipts_enabled: bool = True
+    dependency_available: bool = True
+    deep_engine_available: bool = False
 
     def inspect_request(self, context: ShadowContext) -> tuple[ShadowPassResult, ShadowReceipt | None]:
         """Inspect interpretation, planning, or workflow context."""
@@ -68,15 +77,47 @@ class InceptaDiveShadowRuntime:
     ) -> tuple[ShadowPassResult, ShadowReceipt | None]:
         """Run strict preflight over a candidate action."""
 
+        preflight_context = _as_preflight(context)
         if not self.config.enabled:
-            result = _off_result(context)
+            result = _off_result(preflight_context)
         else:
             result = run_strict_preflight(
-                _as_preflight(context),
+                preflight_context,
                 required_evidence_refs=required_evidence_refs,
             )
-        receipt = create_shadow_receipt(_as_preflight(context), result) if self.receipts_enabled else None
+        receipt = create_shadow_receipt(preflight_context, result) if self.receipts_enabled else None
         return result, receipt
+
+    def health_posture(
+        self,
+        *,
+        created_at: str = "1970-01-01T00:00:00+00:00",
+    ) -> ShadowHealthPosture:
+        """Return a redacted read-only shadow health posture snapshot."""
+
+        return build_shadow_health_posture(
+            self.config,
+            receipts_enabled=self.receipts_enabled,
+            dependency_available=self.dependency_available,
+            deep_engine_available=self.deep_engine_available,
+            created_at=created_at,
+        )
+
+    def console_summary(
+        self,
+        *,
+        results: Sequence[ShadowPassResult] = (),
+        receipts: Sequence[ShadowReceipt] = (),
+        created_at: str = "1970-01-01T00:00:00+00:00",
+    ) -> ShadowConsoleSummary:
+        """Return a redacted operator summary from recent result metadata."""
+
+        return build_shadow_console_summary(
+            self.config,
+            results=results,
+            receipts=receipts,
+            created_at=created_at,
+        )
 
 
 def build_inceptadive_shadow_runtime(env: Mapping[str, str]) -> InceptaDiveShadowRuntime:
@@ -87,12 +128,20 @@ def build_inceptadive_shadow_runtime(env: Mapping[str, str]) -> InceptaDiveShado
         light_always_on=_env_flag(env.get("MULLU_INCEPTADIVE_SHADOW_LIGHT_ALWAYS_ON", "1")),
         deep_enabled=_env_flag(env.get("MULLU_INCEPTADIVE_SHADOW_DEEP_ENABLED", "1")),
         strict_preflight_enabled=_env_flag(env.get("MULLU_INCEPTADIVE_SHADOW_STRICT_PREFLIGHT", "1")),
-        max_findings=_env_int(env.get("MULLU_INCEPTADIVE_SHADOW_MAX_FINDINGS", "12"), "MULLU_INCEPTADIVE_SHADOW_MAX_FINDINGS"),
-        max_depth=_env_int(env.get("MULLU_INCEPTADIVE_SHADOW_MAX_DEPTH", "3"), "MULLU_INCEPTADIVE_SHADOW_MAX_DEPTH"),
+        max_findings=_env_int(
+            env.get("MULLU_INCEPTADIVE_SHADOW_MAX_FINDINGS", "12"),
+            "MULLU_INCEPTADIVE_SHADOW_MAX_FINDINGS",
+        ),
+        max_depth=_env_int(
+            env.get("MULLU_INCEPTADIVE_SHADOW_MAX_DEPTH", "3"),
+            "MULLU_INCEPTADIVE_SHADOW_MAX_DEPTH",
+        ),
     )
     return InceptaDiveShadowRuntime(
         config=config,
         receipts_enabled=_env_flag(env.get("MULLU_INCEPTADIVE_SHADOW_RECEIPTS_ENABLED", "1")),
+        dependency_available=_env_flag(env.get("MULLU_INCEPTADIVE_SHADOW_DEPENDENCY_AVAILABLE", "1")),
+        deep_engine_available=_env_flag(env.get("MULLU_INCEPTADIVE_SHADOW_DEEP_ENGINE_AVAILABLE", "0")),
     )
 
 
