@@ -289,21 +289,53 @@ def governed_memory_cell_from_mapping(
 ) -> GovernedMemoryCell:
     """Build a governed memory cell from tenant mapping metadata."""
     return GovernedMemoryCell(
-        memory_id=str(raw.get("memory_id", "")),
+        memory_id=_optional_text(raw.get("memory_id", ""), "memory_id"),
         tenant_id=tenant_id,
         owner_id=owner_id,
-        scope=str(raw.get("scope", "")),
-        fact=str(raw.get("fact", "")),
-        source=str(raw.get("source", "")),
+        scope=_required_text(raw.get("scope"), "scope"),
+        fact=_required_text(raw.get("fact"), "fact"),
+        source=_required_text(raw.get("source"), "source"),
         confidence=float(raw.get("confidence", 0.0)),
-        sensitivity=str(raw.get("sensitivity", "")),
-        expires_at=str(raw.get("expires_at", "")),
-        allowed_use=tuple(str(item) for item in raw.get("allowed_use", ())),
-        forbidden_use=tuple(str(item) for item in raw.get("forbidden_use", ())),
-        last_verified_at=str(raw.get("last_verified_at", "")),
-        mutation_history=tuple(str(item) for item in raw.get("mutation_history", ())),
-        created_at=str(raw.get("created_at", "")),
+        sensitivity=_required_text(raw.get("sensitivity"), "sensitivity"),
+        expires_at=_required_text(raw.get("expires_at"), "expires_at"),
+        allowed_use=_required_text_sequence(raw.get("allowed_use"), "allowed_use"),
+        forbidden_use=_text_sequence(raw.get("forbidden_use", ()), "forbidden_use"),
+        last_verified_at=_required_text(raw.get("last_verified_at"), "last_verified_at"),
+        mutation_history=_text_sequence(raw.get("mutation_history", ()), "mutation_history"),
+        created_at=_optional_text(raw.get("created_at", ""), "created_at"),
     )
+
+
+def _required_text(value: object, field_name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"memory_mapping_{field_name}_required")
+    return value.strip()
+
+
+def _optional_text(value: object, field_name: str) -> str:
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        raise ValueError(f"memory_mapping_{field_name}_invalid")
+    return value.strip()
+
+
+def _required_text_sequence(value: object, field_name: str) -> tuple[str, ...]:
+    values = _text_sequence(value, field_name)
+    if not values:
+        raise ValueError(f"memory_mapping_{field_name}_required")
+    return values
+
+
+def _text_sequence(value: object, field_name: str) -> tuple[str, ...]:
+    if isinstance(value, (str, bytes)) or not isinstance(value, (list, tuple)):
+        raise ValueError(f"memory_mapping_{field_name}_invalid")
+    normalized: list[str] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, str) or not item.strip():
+            raise ValueError(f"memory_mapping_{field_name}_{index}_invalid")
+        normalized.append(item.strip())
+    return tuple(normalized)
 
 
 def _is_expired(expires_at: str, now: str) -> bool:

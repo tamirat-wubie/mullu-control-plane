@@ -15,6 +15,7 @@ from gateway.memory_constitution import (  # noqa: E402
     ClosureMemoryCandidate,
     GovernedMemoryCell,
     InMemoryGovernedMemoryStore,
+    governed_memory_cell_from_mapping,
 )
 from gateway.router import GatewayRouter  # noqa: E402
 from gateway.tenant_identity import TenantMapping  # noqa: E402
@@ -226,3 +227,78 @@ def test_router_admits_mapping_memory_metadata():
     assert cells[0].owner_id == "identity-1"
     assert cells[0].allowed_use == ("response_formatting",)
     assert summary["memory_store"]["active_cells"] == 1
+
+
+def test_mapping_memory_metadata_rejects_loose_text_fields():
+    raw = _mapping_memory()
+    invalid_cases = (
+        ("scope", 7, "memory_mapping_scope_required"),
+        ("fact", "", "memory_mapping_fact_required"),
+        ("source", None, "memory_mapping_source_required"),
+        ("memory_id", 12, "memory_mapping_memory_id_invalid"),
+    )
+    errors = []
+
+    for field_name, invalid_value, expected_error in invalid_cases:
+        payload = dict(raw)
+        payload[field_name] = invalid_value
+        try:
+            governed_memory_cell_from_mapping(payload, tenant_id="tenant-1", owner_id="identity-1")
+        except ValueError as exc:
+            errors.append(str(exc))
+        else:
+            raise AssertionError(f"{expected_error} was not raised")
+
+    assert errors == [
+        "memory_mapping_scope_required",
+        "memory_mapping_fact_required",
+        "memory_mapping_source_required",
+        "memory_mapping_memory_id_invalid",
+    ]
+    assert len(errors) == len(invalid_cases)
+    assert all(error.startswith("memory_mapping_") for error in errors)
+
+
+def test_mapping_memory_metadata_rejects_loose_use_sequences():
+    raw = _mapping_memory()
+    invalid_cases = (
+        ("allowed_use", "response_formatting", "memory_mapping_allowed_use_invalid"),
+        ("allowed_use", ["response_formatting", 3], "memory_mapping_allowed_use_1_invalid"),
+        ("forbidden_use", ["external_sharing", ""], "memory_mapping_forbidden_use_1_invalid"),
+        ("mutation_history", ["created:user_profile", None], "memory_mapping_mutation_history_1_invalid"),
+    )
+    errors = []
+
+    for field_name, invalid_value, expected_error in invalid_cases:
+        payload = dict(raw)
+        payload[field_name] = invalid_value
+        try:
+            governed_memory_cell_from_mapping(payload, tenant_id="tenant-1", owner_id="identity-1")
+        except ValueError as exc:
+            errors.append(str(exc))
+        else:
+            raise AssertionError(f"{expected_error} was not raised")
+
+    assert errors == [
+        "memory_mapping_allowed_use_invalid",
+        "memory_mapping_allowed_use_1_invalid",
+        "memory_mapping_forbidden_use_1_invalid",
+        "memory_mapping_mutation_history_1_invalid",
+    ]
+    assert len(errors) == len(invalid_cases)
+    assert all(error.startswith("memory_mapping_") for error in errors)
+
+
+def _mapping_memory():
+    return {
+        "scope": "response_format",
+        "fact": "Prefers architecture, algorithm, code ordering.",
+        "source": "user_profile",
+        "confidence": 0.95,
+        "sensitivity": "low",
+        "expires_at": "never",
+        "allowed_use": ["response_formatting"],
+        "forbidden_use": ["external_sharing"],
+        "last_verified_at": "2026-04-24T12:00:00+00:00",
+        "mutation_history": ["created:user_profile"],
+    }
