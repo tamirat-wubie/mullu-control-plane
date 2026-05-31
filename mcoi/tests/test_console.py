@@ -304,8 +304,10 @@ def test_note_memory_summary_renders_operator_counts() -> None:
         retrieval_filter_mode="receipt_and_citing_note",
         retrieval_influence_count=1,
         retrieval_influence_total_count=2,
+        retrieval_influence_filtered_out_count=1,
         retrieval_receipt_count=1,
         retrieval_receipt_total_count=2,
+        retrieval_receipt_filtered_out_count=1,
         index_proof_state="Pass",
         assessed_at=_CLOCK,
     )
@@ -321,6 +323,8 @@ def test_note_memory_summary_renders_operator_counts() -> None:
     assert "retrieval_filter_mode:  receipt_and_citing_note" in output
     assert "retrieval_influence:    1" in output
     assert "retrieval_influence_total: 2" in output
+    assert "retrieval_influence_filtered_out: 1" in output
     assert "retrieval_receipts:     1" in output
     assert "retrieval_receipts_total: 2" in output
+    assert "retrieval_receipts_filtered_out: 1" in output
     assert "index_proof_state:      Pass" in output

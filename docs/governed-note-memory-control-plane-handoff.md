@@ -81,6 +81,9 @@ read model from the full note-memory retrieval graph without reinterpreting
 raw filter fields. It also exposes `retrieval_filter_mode` with one of
 `unfiltered`, `receipt`, `citing_note`, or `receipt_and_citing_note` so
 operators can identify the active read-model narrowing rule directly.
+`retrieval_influence_filtered_out_count` and
+`retrieval_receipt_filtered_out_count` report the exact reduction caused by
+the active filter without requiring downstream subtraction.
 
 Snapshots also accept a read-only `retrieval_citing_note_ref` filter so
 operators can inspect the retrieval witnesses cited by a specific note or
@@ -117,8 +120,10 @@ contradiction_count
 retrieval_filter_active
 retrieval_filter_mode
 retrieval_influence_count
+retrieval_influence_filtered_out_count
 retrieval_influence_total_count
 retrieval_receipt_count
+retrieval_receipt_filtered_out_count
 retrieval_receipt_total_count
 index_proof_state
 assessed_at

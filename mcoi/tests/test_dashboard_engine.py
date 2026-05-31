@@ -112,8 +112,10 @@ def _note_memory_snapshot(**summary_overrides: object) -> dict[str, object]:
         "retrieval_filter_mode": "unfiltered",
         "retrieval_influence_count": 0,
         "retrieval_influence_total_count": 0,
+        "retrieval_influence_filtered_out_count": 0,
         "retrieval_receipt_count": 0,
         "retrieval_receipt_total_count": 0,
+        "retrieval_receipt_filtered_out_count": 0,
         "index_proof_state": "Pass",
     }
     summary.update(summary_overrides)
@@ -333,8 +335,10 @@ class TestBuildNoteMemorySummary:
         assert summary.retrieval_filter_mode == "unfiltered"
         assert summary.retrieval_influence_count == 0
         assert summary.retrieval_influence_total_count == 0
+        assert summary.retrieval_influence_filtered_out_count == 0
         assert summary.retrieval_receipt_count == 0
         assert summary.retrieval_receipt_total_count == 0
+        assert summary.retrieval_receipt_filtered_out_count == 0
         assert summary.index_proof_state == "Pass"
 
     def test_builds_note_memory_summary_from_legacy_snapshot_without_total(self):
@@ -348,6 +352,7 @@ class TestBuildNoteMemorySummary:
 
         assert view.retrieval_influence_count == 2
         assert view.retrieval_influence_total_count == 2
+        assert view.retrieval_influence_filtered_out_count == 0
 
     def test_builds_note_memory_summary_from_legacy_snapshot_without_receipt_total(self):
         engine = _make_engine()
@@ -360,6 +365,25 @@ class TestBuildNoteMemorySummary:
 
         assert view.retrieval_receipt_count == 2
         assert view.retrieval_receipt_total_count == 2
+        assert view.retrieval_receipt_filtered_out_count == 0
+
+    def test_builds_note_memory_summary_from_legacy_snapshot_without_filtered_out_counts(self):
+        engine = _make_engine()
+        snapshot = _note_memory_snapshot(
+            retrieval_influence_count=1,
+            retrieval_influence_total_count=3,
+            retrieval_receipt_count=1,
+            retrieval_receipt_total_count=2,
+        )
+        summary = snapshot["summary"]
+        if isinstance(summary, dict):
+            summary.pop("retrieval_influence_filtered_out_count")
+            summary.pop("retrieval_receipt_filtered_out_count")
+
+        view = engine.build_note_memory_summary(snapshot)
+
+        assert view.retrieval_influence_filtered_out_count == 2
+        assert view.retrieval_receipt_filtered_out_count == 1
 
     def test_builds_note_memory_summary_with_active_retrieval_filter(self):
         engine = _make_engine()
@@ -370,7 +394,9 @@ class TestBuildNoteMemorySummary:
         assert summary.retrieval_filter_active is True
         assert summary.retrieval_filter_mode == "receipt"
         assert summary.retrieval_influence_count == 0
+        assert summary.retrieval_influence_filtered_out_count == 0
         assert summary.retrieval_receipt_count == 0
+        assert summary.retrieval_receipt_filtered_out_count == 0
 
     def test_rejects_non_boolean_retrieval_filter_active(self):
         engine = _make_engine()

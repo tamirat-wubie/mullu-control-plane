@@ -299,8 +299,10 @@ def _empty_note_memory_payload(extension: dict[str, object]) -> dict[str, object
             "retrieval_filter_mode": "unfiltered",
             "retrieval_influence_count": 0,
             "retrieval_influence_total_count": 0,
+            "retrieval_influence_filtered_out_count": 0,
             "retrieval_receipt_count": 0,
             "retrieval_receipt_total_count": 0,
+            "retrieval_receipt_filtered_out_count": 0,
             "index_proof_state": "Unknown",
         },
         "filters": {
