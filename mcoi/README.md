@@ -61,6 +61,10 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
   dashboard routes for apps:
   - `GET /api/v1/dashboard/home`
   - `GET /api/v1/dashboard/state`
+- `mount_operational_dashboard_router_from_env(app, env, runtime=...)` mounts
+  those dashboard routes only when `MULLU_DASHBOARD_ENABLED=1`, uses
+  `MULLU_DASHBOARD_PREFIX` when provided, and requires an explicit dashboard
+  runtime so host apps do not construct dashboard state implicitly.
 - The dashboard home payload includes plain UI fields: `status_label`,
   `count_summary`, `next_action`, `action_items`, `command_guidance`, and
   `start_here`, so apps can render user-facing status, command guidance, and a
