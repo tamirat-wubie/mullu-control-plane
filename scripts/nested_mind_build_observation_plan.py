@@ -29,6 +29,7 @@ from mcoi_runtime.contracts import (  # noqa: E402
     stable_json_hash,
 )
 from mcoi_runtime.core.invariants import stable_identifier  # noqa: E402
+from mcoi_runtime.persistence._serialization import loads_strict_json  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -118,11 +119,13 @@ def main(argv: list[str] | None = None) -> int:
 
 def _load_observation(path: Path) -> Mapping[str, Any]:
     try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
+        raw = loads_strict_json(path.read_text(encoding="utf-8"))
     except OSError as exc:
         raise RuntimeError(f"failed to read {path}") from exc
     except json.JSONDecodeError as exc:
         raise RuntimeError(f"failed to parse JSON from {path}") from exc
+    except ValueError as exc:
+        raise RuntimeError(f"failed to parse strict JSON from {path}") from exc
     if not isinstance(raw, Mapping):
         raise RuntimeError("observation must be a JSON object")
     _reject_forbidden_observation(raw)
