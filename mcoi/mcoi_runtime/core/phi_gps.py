@@ -19,7 +19,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Any, Callable
+from typing import Any
 
 __all__ = [
     # Phase 0
@@ -845,12 +845,12 @@ class LawDiscoveryResult:
 
     @property
     def hard_law_count(self) -> int:
-        return sum(1 for l in self.laws if l.confidence >= 0.95)
+        return sum(1 for law in self.laws if law.confidence >= 0.95)
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "laws": [{"name": l.name, "type": l.law_type.value,
-                      "confidence": l.confidence} for l in self.laws],
+            "laws": [{"name": law.name, "type": law.law_type.value,
+                      "confidence": law.confidence} for law in self.laws],
             "norms": [{"name": n.name, "kind": n.kind.value,
                        "authority": n.authority_level} for n in self.norms],
             "resources": self.resource_constraints,
@@ -1027,8 +1027,37 @@ def freeze_models(
     )
 
 
+def _first_text(mapping: dict[str, Any], keys: tuple[str, ...], *, default: str) -> str:
+    for key in keys:
+        raw_value = mapping.get(key)
+        if isinstance(raw_value, str) and raw_value.strip():
+            return raw_value.strip()
+    return default
+
+
+def _bounded_probability(value: Any, default: float = 1.0) -> float:
+    if value is None:
+        return default
+    try:
+        probability = float(value)
+    except (TypeError, ValueError):
+        return default
+    if math.isnan(probability) or math.isinf(probability):
+        return default
+    return min(max(probability, 0.0), 1.0)
+
+
+def _slug(value: Any, *, fallback: str = "item", limit: int = 48) -> str:
+    text = str(value).strip().lower()
+    chars = [char if char.isascii() and char.isalnum() else "_" for char in text]
+    slug = "".join(chars).strip("_")
+    while "__" in slug:
+        slug = slug.replace("__", "_")
+    return (slug[:limit].strip("_") or fallback)
+
+
 # ═══════════════════════════════════════════
-# PHASE 5 — TRANSITIONS (structural placeholder)
+# PHASE 5 — TRANSITIONS
 # ═══════════════════════════════════════════
 
 @dataclass(frozen=True, slots=True)
@@ -1049,24 +1078,48 @@ def discover_transitions(
     Identifies how the world changes: state-action-state triples,
     transition probabilities, and reachability from the current state.
 
-    Status: structural stub — returns identity transitions from model laws.
+    Produces bounded transition contracts from observations and frozen laws.
     """
     transitions: list[dict[str, Any]] = []
-    for law in model.laws:
+    state_names: set[str] = set()
+
+    for idx, row in enumerate(observation_data or []):
+        source = _first_text(row, ("source", "from", "state", "state_before"), default=f"observed:{idx}:source")
+        action = _first_text(row, ("action", "event", "operation"), default="observe")
+        target = _first_text(row, ("target", "to", "next_state", "state_after"), default=source)
+        probability = _bounded_probability(
+            row.get("probability", row.get("confidence")),
+            default=1.0,
+        )
+        state_names.update((source, target))
         transitions.append({
-            "source": law.description,
-            "action": "observe",
-            "target": law.description,
-            "probability": law.confidence,
+            "source": source,
+            "action": action,
+            "target": target,
+            "probability": probability,
+            "origin": "observation",
+            "evidence_ref": _first_text(row, ("evidence_ref", "evidence"), default=f"observation:{idx}"),
+        })
+
+    for law in model.laws:
+        state_name = f"law:{law.name}"
+        state_names.add(state_name)
+        transitions.append({
+            "source": state_name,
+            "action": f"preserve_{_slug(law.name)}",
+            "target": state_name,
+            "probability": _bounded_probability(law.confidence),
+            "origin": "law",
+            "guard": law.description,
         })
     return TransitionMap(
         transitions=tuple(transitions),
-        state_space_size=len(transitions),
+        state_space_size=len(state_names),
     )
 
 
 # ═══════════════════════════════════════════
-# PHASE 6 — ACTIONS (structural placeholder)
+# PHASE 6 — ACTIONS
 # ═══════════════════════════════════════════
 
 @dataclass(frozen=True, slots=True)
@@ -1088,20 +1141,78 @@ def synthesize_actions(
     Constructs the action repertoire: primitives (single-step),
     composites (macro-actions), and precondition/effect annotations.
 
-    Status: structural stub — extracts actions from norms and laws.
+    Produces bounded primitive and composite actions from norms and transitions.
     """
     actions: list[dict[str, Any]] = []
+    seen_names: set[str] = set()
+
+    def append_action(spec: dict[str, Any]) -> None:
+        name = str(spec.get("name") or spec.get("action") or "").strip()
+        if not name or name in seen_names:
+            return
+        seen_names.add(name)
+        actions.append(spec)
+
     for norm in (model.norms or ()):
-        actions.append({
-            "name": f"comply_{norm.description[:30]}",
+        if norm.kind == NormKind.PERMISSION:
+            action_name = f"perform_{_slug(norm.name)}"
+            action_class = "world"
+        elif norm.kind == NormKind.PROHIBITION:
+            action_name = f"avoid_{_slug(norm.name)}"
+            action_class = "world"
+        elif norm.kind == NormKind.GOVERNANCE:
+            action_name = f"request_{_slug(norm.name)}"
+            action_class = "epistemic"
+        else:
+            action_name = f"comply_{_slug(norm.name)}"
+            action_class = "world"
+        append_action({
+            "name": action_name,
+            "action": action_name,
             "kind": "primitive",
+            "class": action_class,
             "precondition": f"authority_level<={norm.authority_level}",
             "effect": norm.description,
+            "norm_ref": norm.name,
+            "cost": 0.1 if action_class == "epistemic" else 1.0,
         })
+
+    for idx, transition in enumerate((transitions.transitions if transitions else ())):
+        transition_action = _first_text(transition, ("action",), default=f"transition_{idx}")
+        action_name = f"apply_{_slug(transition_action, fallback=f'transition_{idx}')}"
+        append_action({
+            "name": action_name,
+            "action": action_name,
+            "kind": "primitive",
+            "class": "world" if transition.get("origin") == "observation" else "epistemic",
+            "precondition": transition.get("source", ""),
+            "effect": transition.get("target", ""),
+            "transition_ref": idx,
+            "probability": _bounded_probability(transition.get("probability")),
+            "cost": 1.0,
+        })
+
+    primitive_actions = tuple(action for action in actions if action.get("kind") == "primitive")
+    if transitions and len(primitive_actions) > 1:
+        components = tuple(str(action["name"]) for action in primitive_actions[:5])
+        append_action({
+            "name": "complete_transition_sequence",
+            "action": "complete_transition_sequence",
+            "kind": "composite",
+            "class": "world",
+            "components": components,
+            "precondition": "primitive preconditions satisfied in order",
+            "effect": "advance through bounded transition map",
+            "cost": sum(float(action.get("cost", 0.0)) for action in primitive_actions[:5]),
+            "is_goal_action": True,
+        })
+
+    primitive_count = sum(1 for action in actions if action.get("kind") == "primitive")
+    composite_count = sum(1 for action in actions if action.get("kind") == "composite")
     return ActionSet(
         actions=tuple(actions),
-        primitive_count=len(actions),
-        composite_count=0,
+        primitive_count=primitive_count,
+        composite_count=composite_count,
     )
 
 
@@ -1327,7 +1438,7 @@ class SolverOutcome(StrEnum):
 
 
 # ═══════════════════════════════════════════
-# PHASE 8 — DECOMPOSE (structural placeholder)
+# PHASE 8 — DECOMPOSE
 # ═══════════════════════════════════════════
 
 @dataclass(frozen=True, slots=True)
@@ -1350,22 +1461,80 @@ def decompose_problem(
     Each sub-problem inherits the safety floor and can be solved in parallel
     or sequentially depending on dependency edges.
 
-    Status: structural stub — returns single monolithic subproblem.
+    Emits explicit safety, norm, goal, and evidence subproblems when present.
     """
-    mono = {
-        "id": 0,
-        "description": "monolithic (no decomposition)",
-        "laws": [law.description for law in model.laws],
-        "norms": [n.description for n in (model.norms or ())],
-    }
+    subproblems: list[dict[str, Any]] = []
+    edges: list[tuple[int, int]] = []
+    ids: dict[str, int] = {}
+
+    def append_subproblem(kind: str, description: str, **payload: Any) -> int:
+        subproblem_id = len(subproblems)
+        ids[kind] = subproblem_id
+        subproblem = {"id": subproblem_id, "kind": kind, "description": description}
+        subproblem.update(payload)
+        subproblems.append(subproblem)
+        return subproblem_id
+
+    safety_variables: tuple[str, ...] = ()
+    goal_description = ""
+    goal_criteria: dict[str, Any] = {}
+    if isinstance(model.goal, GoalConstructionResult):
+        safety_variables = model.goal.utility.safety_floor.variables
+        goal_description = model.goal.utility.goal.description
+        goal_criteria = dict(model.goal.utility.goal.satisfaction_criteria)
+
+    hard_violations = tuple(getattr(feasibility, "hard_violations", ()) or ())
+    soft_warnings = tuple(getattr(feasibility, "soft_warnings", ()) or ())
+    if model.laws or safety_variables or hard_violations:
+        append_subproblem(
+            "safety",
+            "preserve hard laws and safety floor",
+            law_refs=[law.name for law in model.laws],
+            safety_variables=list(safety_variables),
+            hard_violations=list(hard_violations),
+            soft_warnings=list(soft_warnings),
+        )
+
+    if model.norms:
+        append_subproblem(
+            "norms",
+            "satisfy governing norms before world action",
+            norm_refs=[norm.name for norm in model.norms],
+            prohibition_refs=[norm.name for norm in model.norms if norm.kind == NormKind.PROHIBITION],
+        )
+
+    if goal_description or goal_criteria:
+        append_subproblem(
+            "goal",
+            goal_description or "satisfy goal criteria",
+            criteria=goal_criteria,
+        )
+
+    if getattr(proof_sketch, "has_unknown", False):
+        append_subproblem(
+            "evidence",
+            "collect evidence for unknown proof obligations",
+            proof_state=getattr(proof_sketch, "to_dict", lambda: {})(),
+        )
+
+    if not subproblems:
+        append_subproblem("monolithic", "bounded fallback problem", laws=[], norms=[])
+
+    goal_id = ids.get("goal")
+    if goal_id is not None:
+        for dependency_kind in ("safety", "norms", "evidence"):
+            dependency_id = ids.get(dependency_kind)
+            if dependency_id is not None and dependency_id != goal_id:
+                edges.append((dependency_id, goal_id))
+
     return DecompositionResult(
-        subproblems=(mono,),
-        dependency_edges=(),
+        subproblems=tuple(subproblems),
+        dependency_edges=tuple(edges),
     )
 
 
 # ═══════════════════════════════════════════
-# PHASE 9 — POLICY (structural placeholder)
+# PHASE 9 — POLICY
 # ═══════════════════════════════════════════
 
 @dataclass(frozen=True, slots=True)
@@ -1390,12 +1559,52 @@ def select_policy(
     or safe-default (when proof sketch is UNKNOWN). Maps decomposed
     sub-problems to action sequences.
 
-    Status: structural stub — returns safe_default with empty sequence.
+    Selects a bounded policy from feasibility, decomposition, and actions.
     """
+    if feasibility is None or not getattr(feasibility, "feasible", False):
+        return PolicyResult(
+            strategy="safe_default",
+            action_sequence=(),
+            expected_cost=0.0,
+        )
+
+    executable_actions = tuple(actions.actions if actions else ())
+    if not executable_actions:
+        return PolicyResult(
+            strategy="safe_default",
+            action_sequence=(),
+            expected_cost=0.0,
+        )
+
+    needs_evidence = any(
+        subproblem.get("kind") == "evidence"
+        for subproblem in (decomposition.subproblems if decomposition else ())
+    )
+    if needs_evidence:
+        selected = tuple(action for action in executable_actions if action.get("class") == "epistemic")
+        if not selected:
+            return PolicyResult(
+                strategy="safe_default",
+                action_sequence=(),
+                expected_cost=0.0,
+            )
+        strategy = "satisficing"
+    elif getattr(feasibility, "soft_warnings", ()):
+        selected = executable_actions[: min(len(executable_actions), 5)]
+        strategy = "satisficing"
+    elif actions and actions.composite_count > 0:
+        selected = tuple(action for action in executable_actions if action.get("kind") == "composite")[:1]
+        strategy = "greedy"
+    else:
+        selected = executable_actions[: min(len(executable_actions), 3)]
+        strategy = "greedy"
+
+    action_sequence = tuple(str(action.get("action") or action.get("name")) for action in selected)
+    expected_cost = sum(float(action.get("cost", 0.0)) for action in selected)
     return PolicyResult(
-        strategy="safe_default",
-        action_sequence=(),
-        expected_cost=0.0,
+        strategy=strategy,
+        action_sequence=action_sequence,
+        expected_cost=expected_cost,
     )
 
 
@@ -1503,7 +1712,7 @@ def execute_plan(
                 result = executor(action_name, action_spec.get("params", {}))
                 outcome = result.get("outcome", "executed") if isinstance(result, dict) else "executed"
                 surprise = float(result.get("surprise", 0.0)) if isinstance(result, dict) else 0.0
-            except Exception as exc:
+            except Exception:
                 outcome = "execution_error"
 
         total_cost += action_cost
@@ -1533,7 +1742,7 @@ def execute_plan(
 
 
 # ═══════════════════════════════════════════
-# PHASE 11 — DIAGNOSE (structural placeholder)
+# PHASE 11 — DIAGNOSE
 # ═══════════════════════════════════════════
 
 @dataclass(frozen=True, slots=True)
@@ -1558,30 +1767,51 @@ def diagnose_failure(
     model mismatch, insufficient actions, violated assumptions, or
     resource exhaustion. Suggests repairs for the next episode.
 
-    Status: structural stub — returns generic diagnosis from trace state.
+    Diagnoses safety, budget, execution, feasibility, and model-drift causes.
     """
     causes: list[str] = []
     repairs: list[str] = []
+    steps = tuple(getattr(trace, "steps", ()) or ())
+    outcomes = tuple(str(getattr(step, "outcome", "")) for step in steps)
+    surprises = tuple(float(getattr(step, "surprise", 0.0) or 0.0) for step in steps)
+    average_surprise = sum(surprises) / max(len(surprises), 1)
+    model_drift_detected = average_surprise > 0.5 or any(surprise > 0.8 for surprise in surprises)
 
     if hasattr(trace, "safety_violations") and trace.safety_violations > 0:
         causes.append("safety_violation")
         repairs.append("tighten safety floor constraints")
+    if "budget_exceeded" in outcomes:
+        causes.append("budget_exhausted")
+        repairs.append("reduce action cost or raise governed cost budget")
+    if "execution_error" in outcomes:
+        causes.append("execution_error")
+        repairs.append("replace failing executor binding before retry")
     if hasattr(trace, "stall_count") and trace.stall_count > 0:
         causes.append("execution_stall")
         repairs.append("expand action repertoire or decompose further")
     if hasattr(trace, "goal_reached") and not trace.goal_reached:
         causes.append("goal_not_reached")
         repairs.append("re-estimate belief state and retry with updated model")
+    if feasibility is not None and not getattr(feasibility, "feasible", True):
+        causes.append("infeasible_model")
+        repairs.append("revise goal or remove hard invariant contradiction")
+    if model_drift_detected:
+        causes.append("model_drift")
+        repairs.append("freeze a new model from fresh observations")
 
     if not causes:
         causes.append("unknown")
         repairs.append("collect more observations before retrying")
 
+    diagnosis = "model_drift" if model_drift_detected else "repairable_failure"
+    if causes == ["unknown"]:
+        diagnosis = "no_failure_observed"
+
     return DiagnosisResult(
-        diagnosis="structural_diagnosis",
+        diagnosis=diagnosis,
         root_causes=tuple(causes),
         suggested_repairs=tuple(repairs),
-        model_drift_detected=False,
+        model_drift_detected=model_drift_detected,
     )
 
 
