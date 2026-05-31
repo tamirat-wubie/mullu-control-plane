@@ -34,6 +34,10 @@ Simple app surface:
 - `create_simple_platform_fastapi_router(runtime)` mounts stable routes:
   - `GET /api/v1/simple/actions`
   - `POST /api/v1/simple/actions/check`
+- `build_operational_dashboard_state(..., simple_action_checks=...)` projects
+  the same checks into `simple_action_summaries`, `simple_ready_action_refs`,
+  `simple_review_action_refs`, and `simple_blocked_action_refs` for dashboard UI
+  rendering without granting execution authority.
 
 Command surface:
 

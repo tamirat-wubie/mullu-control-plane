@@ -6,7 +6,8 @@ workflow health, and execution readiness as a read-only dashboard model.
 Governance scope: projection-only display, constructive/fracture separation,
 readiness gating, repair visibility, and no execution authority.
 Dependencies: dataclasses, Concept Boxes, projection, repair queue, compiled
-actions, interrogation queue, and runtime invariant helpers.
+actions, interrogation queue, simple platform checks, and runtime invariant
+helpers.
 Invariants: dashboard state is derived from receipts and candidates; it never
 promotes truth, executes actions, or hides blockers.
 """
@@ -23,6 +24,7 @@ from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_ident
 from mcoi_runtime.core.memory_action_compiler import CompiledMemoryAction
 from mcoi_runtime.core.memory_repair_queue import MemoryRepairItem
 from mcoi_runtime.core.note_memory_projection import CandidateActionStatus, NoteMemoryProjection
+from mcoi_runtime.core.simple_platform import SimpleActionCheck
 
 
 class WorkflowHealth(StrEnum):
@@ -32,6 +34,42 @@ class WorkflowHealth(StrEnum):
     DEGRADED = "degraded"
     BLOCKED = "blocked"
     REPAIR_REQUIRED = "repair_required"
+
+
+@dataclass(frozen=True)
+class DashboardSimpleActionSummary:
+    """Read-only dashboard projection for one simple action check."""
+
+    action_ref: str
+    outcome: str
+    title: str
+    message: str
+    next_step: str
+    proof_stamp_ref: str
+    boundary_witness_ref: str
+    blocked_reasons: tuple[str, ...]
+    review_reasons: tuple[str, ...]
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if self.execution_allowed:
+            raise RuntimeCoreInvariantError("dashboard simple action cannot allow execution")
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible simple action summary."""
+
+        return {
+            "action_ref": self.action_ref,
+            "outcome": self.outcome,
+            "title": self.title,
+            "message": self.message,
+            "next_step": self.next_step,
+            "proof_stamp_ref": self.proof_stamp_ref,
+            "boundary_witness_ref": self.boundary_witness_ref,
+            "blocked_reasons": list(self.blocked_reasons),
+            "review_reasons": list(self.review_reasons),
+            "execution_allowed": self.execution_allowed,
+        }
 
 
 @dataclass(frozen=True)
@@ -54,6 +92,10 @@ class OperationalDashboardState:
     workflow_health: WorkflowHealth
     execution_readiness: str
     interrogation_task_ids: tuple[str, ...]
+    simple_action_summaries: tuple[DashboardSimpleActionSummary, ...] = ()
+    simple_ready_action_refs: tuple[str, ...] = ()
+    simple_review_action_refs: tuple[str, ...] = ()
+    simple_blocked_action_refs: tuple[str, ...] = ()
     execution_allowed: bool = False
 
     def __post_init__(self) -> None:
@@ -82,6 +124,10 @@ class OperationalDashboardState:
             "workflow_health": self.workflow_health.value,
             "execution_readiness": self.execution_readiness,
             "interrogation_task_ids": list(self.interrogation_task_ids),
+            "simple_action_summaries": [summary.to_dict() for summary in self.simple_action_summaries],
+            "simple_ready_action_refs": list(self.simple_ready_action_refs),
+            "simple_review_action_refs": list(self.simple_review_action_refs),
+            "simple_blocked_action_refs": list(self.simple_blocked_action_refs),
             "execution_allowed": self.execution_allowed,
         }
 
@@ -93,6 +139,7 @@ def build_operational_dashboard_state(
     repair_items: Sequence[MemoryRepairItem] = (),
     compiled_actions: Sequence[CompiledMemoryAction] = (),
     interrogation_tasks: Sequence[InterrogationTask] = (),
+    simple_action_checks: Sequence[SimpleActionCheck] = (),
 ) -> OperationalDashboardState:
     """Build a read-only dashboard state from projection and candidates."""
 
@@ -116,6 +163,7 @@ def build_operational_dashboard_state(
     )
     confidence_values = tuple(claim.confidence for claim in projection.active_claims)
     confidence_trend = sum(confidence_values) / len(confidence_values) if confidence_values else 0.0
+    simple_action_summaries = tuple(_simple_action_summary(check) for check in simple_action_checks)
     workflow_health = _workflow_health(projection, repair_items, blocked_action_ids)
     readiness = _execution_readiness(workflow_health, ready_action_ids, blocked_action_ids)
     dashboard_id = stable_identifier(
@@ -125,6 +173,7 @@ def build_operational_dashboard_state(
             "repair_ids": tuple(repair.repair_id for repair in repair_items),
             "compiled_action_ids": tuple(action.compiled_action_id for action in compiled_actions),
             "interrogation_task_ids": tuple(task.task_id for task in interrogation_tasks),
+            "simple_action_refs": tuple(summary.action_ref for summary in simple_action_summaries),
         },
     )
     return OperationalDashboardState(
@@ -148,6 +197,32 @@ def build_operational_dashboard_state(
         workflow_health=workflow_health,
         execution_readiness=readiness,
         interrogation_task_ids=tuple(task.task_id for task in interrogation_tasks),
+        simple_action_summaries=simple_action_summaries,
+        simple_ready_action_refs=tuple(
+            summary.action_ref for summary in simple_action_summaries if summary.outcome == "ready"
+        ),
+        simple_review_action_refs=tuple(
+            summary.action_ref for summary in simple_action_summaries if summary.outcome == "needs_review"
+        ),
+        simple_blocked_action_refs=tuple(
+            summary.action_ref for summary in simple_action_summaries if summary.outcome == "blocked"
+        ),
+    )
+
+
+def _simple_action_summary(check: SimpleActionCheck) -> DashboardSimpleActionSummary:
+    """Project one simple action check into dashboard display state."""
+
+    return DashboardSimpleActionSummary(
+        action_ref=check.decision_ref,
+        outcome=check.outcome,
+        title=check.title,
+        message=check.message,
+        next_step=check.next_step,
+        proof_stamp_ref=check.proof_stamp_ref,
+        boundary_witness_ref=check.boundary_witness_ref,
+        blocked_reasons=check.blocked_reasons,
+        review_reasons=check.review_reasons,
     )
 
 

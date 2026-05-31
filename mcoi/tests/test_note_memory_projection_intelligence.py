@@ -40,10 +40,12 @@ from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.note_memory_temporal_bridge import build_temporal_candidates
 from mcoi_runtime.core.note_memory_world_state_bridge import bridge_projection_to_world_state
 from mcoi_runtime.core.operational_dashboard_intelligence import (
+    DashboardSimpleActionSummary,
     WorkflowHealth,
     build_operational_dashboard_state,
 )
 from mcoi_runtime.core.outcome_learning_bridge import build_outcome_learning_record
+from mcoi_runtime.core.simple_platform import SimpleActionRequest, SimplePlatform
 
 
 class MutableClock:
@@ -331,6 +333,79 @@ def test_interrogation_queue_targets_blockers_and_dashboard_separates_state(tmp_
     assert dashboard.fracture_delta_ids
     assert dashboard.high_intensity_box_ids
     assert dashboard.execution_allowed is False
+
+
+def test_dashboard_projects_simple_actions_without_execution_authority(tmp_path) -> None:
+    mesh, deploy_note, blocker_note = _capture_projection_notes(tmp_path)
+    boxes = tuple(build_note_concept_box(event) for event in (deploy_note, blocker_note))
+    findings = tuple(finding for box in boxes for finding in traverse_concept_box(box).findings)
+    projection = project_note_memory(
+        mesh.list_events(),
+        concept_boxes=boxes,
+        axis_findings=findings,
+        assessed_at="2026-05-31T12:05:00+00:00",
+    )
+    simple_platform = SimplePlatform()
+    ready_check = simple_platform.check_action(
+        SimpleActionRequest(
+            goal="Review docs",
+            action="view",
+            target="docs/README.md",
+            allowed_area="docs/**",
+            actor_id="dashboard-test",
+        )
+    )
+    review_check = simple_platform.check_action(
+        SimpleActionRequest(
+            goal="Notify support",
+            action="send",
+            target="support@mullusi.com",
+            allowed_area="support@mullusi.com",
+            actor_id="dashboard-test",
+        )
+    )
+    blocked_check = simple_platform.check_action(
+        SimpleActionRequest(
+            goal="Update deployment config",
+            action="change",
+            target="deploy/config.json",
+            allowed_area="docs/**",
+            actor_id="dashboard-test",
+        )
+    )
+
+    dashboard = build_operational_dashboard_state(
+        projection=projection,
+        boxes=boxes,
+        simple_action_checks=(ready_check, review_check, blocked_check),
+    )
+    payload = dashboard.to_dict()
+
+    assert len(dashboard.simple_action_summaries) == 3
+    assert dashboard.simple_ready_action_refs == (ready_check.decision_ref,)
+    assert dashboard.simple_review_action_refs == (review_check.decision_ref,)
+    assert dashboard.simple_blocked_action_refs == (blocked_check.decision_ref,)
+    assert payload["simple_action_summaries"][0]["title"] == "Ready"
+    assert payload["simple_action_summaries"][1]["review_reasons"] == ["External changes require approval."]
+    assert payload["simple_action_summaries"][2]["blocked_reasons"] == ["The target is outside the allowed area."]
+    assert all(summary["execution_allowed"] is False for summary in payload["simple_action_summaries"])
+    assert payload["execution_allowed"] is False
+
+
+def test_dashboard_simple_action_summary_rejects_execution_authority() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="dashboard simple action cannot allow execution"):
+        DashboardSimpleActionSummary(
+            action_ref="gate-decision-test",
+            outcome="ready",
+            title="Ready",
+            message="Ready for display.",
+            next_step="Continue.",
+            proof_stamp_ref="proof-test",
+            boundary_witness_ref="witness-test",
+            blocked_reasons=(),
+            review_reasons=(),
+            execution_allowed=True,
+        )
 
 
 def test_projection_rejects_fracture_finding_without_box_source_lineage(tmp_path) -> None:
