@@ -1006,8 +1006,34 @@ def test_promotion_queue_is_idempotent_and_rejects_malformed_source_sequence(tmp
     assert pending_entries[0]["source_event_seq"] == source.event_seq
     pending_entries[0]["source_event_seq"] = "not-an-int"
     pending_path.write_text(json.dumps(pending_entries[0], sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
-    with pytest.raises(RuntimeCoreInvariantError, match="invalid promotion queue source_event_seq"):
+    with pytest.raises(RuntimeCoreInvariantError, match="source_event_seq must be an integer"):
         mesh.queue_promotion(source.note_id)
+
+
+def test_promotion_queue_rejects_non_text_source_note_id(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+    source = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.DECISION_RECORD,
+            scope=NoteScope.REPOSITORY,
+            content_summary="promotion queue rejects non-text source note id",
+            source_ref="test:promotion-queue-source-note-id",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            evidence_refs=("test_promotion_queue_rejects_non_text_source_note_id",),
+        )
+    )
+    mesh.queue_promotion(source.note_id)
+    pending_path = tmp_path / "notes" / "promotions" / "pending.jsonl"
+    pending_entry = json.loads(pending_path.read_text(encoding="utf-8"))
+    pending_entry["source_note_id"] = 7
+    pending_path.write_text(json.dumps(pending_entry, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+
+    with pytest.raises(RuntimeCoreInvariantError, match="source_note_id must be a string"):
+        mesh.queue_promotion(source.note_id)
+    with pytest.raises(RuntimeCoreInvariantError, match="source_note_id must be a string"):
+        mesh.dashboard_snapshot(now="2026-05-01T00:00:00+00:00")
 
 
 def test_promotion_receipt_is_removed_when_event_append_fails(tmp_path, monkeypatch) -> None:
