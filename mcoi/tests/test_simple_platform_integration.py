@@ -59,6 +59,24 @@ def test_simple_platform_integration_mounts_when_enabled() -> None:
     assert prefix_seen == ["/simple"]
 
 
+def test_simple_platform_integration_uses_shared_env_flag_parser() -> None:
+    app = FakeApp()
+
+    def router_factory(runtime: SimplePlatformRuntime, prefix: str) -> dict[str, str]:
+        return {"prefix": prefix}
+
+    result = mount_simple_platform_router_from_env(
+        app,
+        {"MULLU_SIMPLE_PLATFORM_ENABLED": " ENABLED ", "MULLU_SIMPLE_PLATFORM_PREFIX": "/simple"},
+        router_factory=router_factory,
+    )
+
+    assert result.enabled is True
+    assert result.mounted is True
+    assert result.prefix == "/simple"
+    assert app.routers == [{"prefix": "/simple"}]
+
+
 def test_simple_platform_integration_does_not_mount_when_disabled() -> None:
     app = FakeApp()
 
