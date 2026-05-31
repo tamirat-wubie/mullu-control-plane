@@ -84,6 +84,7 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "minutten",
         "minutura",
         "minuts",
+        "minutoj",
     }
     hour_units = {
         "hour",
@@ -139,6 +140,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "hora",
         "hores",
         "horas",
+        "horo",
+        "horoj",
     }
     day_units = {
         "day",
@@ -191,6 +194,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "dia",
         "dies",
         "dias",
+        "tago",
+        "tagoj",
     }
     if unit in minute_units:
         delta = timedelta(minutes=amount)
@@ -643,6 +648,18 @@ def _galician_weekdays() -> dict[str, int]:
     }
 
 
+def _esperanto_weekdays() -> dict[str, int]:
+    return {
+        "lundo": 0,
+        "mardo": 1,
+        "merkredo": 2,
+        "jaudo": 3,
+        "vendredo": 4,
+        "sabato": 5,
+        "dimanco": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -727,6 +744,8 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_catalan_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"gl", "gl-es"}:
         return _resolve_galician_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"eo", "eo-001"}:
+        return _resolve_esperanto_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -2471,6 +2490,56 @@ def _resolve_galician_temporal_phrase(
     }:
         return "ambiguous", "temporal_phrase_ambiguous", ""
     if re.fullmatch(r"proximo (luns|martes|mercores|xoves|venres|sabado|domingo)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_esperanto_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"post ([1-9][0-9]*) (minuto|minutoj|horo|horoj|tago|tagoj)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(hodiau|morgau) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "morgau" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"venonta (lundo|mardo|merkredo|jaudo|vendredo|sabato|dimanco) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_esperanto_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "hodiau",
+        "morgau",
+        "ci-vespere",
+        "poste",
+        "baldau",
+        "venonta semajno",
+        "venonta monato",
+        "venonta jaro",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"venonta (lundo|mardo|merkredo|jaudo|vendredo|sabato|dimanco)", normalized):
         return "ambiguous", "temporal_phrase_ambiguous", ""
     return "unsupported", "temporal_phrase_unsupported", ""
 
