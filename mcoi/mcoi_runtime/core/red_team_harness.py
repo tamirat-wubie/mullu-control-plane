@@ -214,20 +214,22 @@ def _evaluate_budget_evasion(payload: dict[str, Any]) -> str:
         proof_id_factory=lambda stage: f"proof://red-team/{stage}",
     )
     try:
+        reserved_output_tokens = _required_int(payload, "reserved_output_tokens")
+        requested_output_tokens = _required_int(payload, "requested_output_tokens")
         cursor = protocol.reserve(
             reservation_id="red-team-reservation",
             request_id="red-team-request",
             tenant_id="red-team-tenant",
             budget_id="red-team-budget",
             estimated_input_tokens=1,
-            estimated_output_tokens=int(payload["reserved_output_tokens"]),
+            estimated_output_tokens=reserved_output_tokens,
             policy_version="red-team-budget-v1",
         )
         _cursor, _allowed_tokens, cutoff = protocol.debit_chunk(
             cursor,
-            output_tokens=int(payload["requested_output_tokens"]),
+            output_tokens=requested_output_tokens,
         )
-    except ValueError:
+    except (KeyError, ValueError):
         return "budget_violation_rejected"
     if cutoff is not None:
         return "budget_cutoff_emitted"
@@ -261,15 +263,18 @@ def _evaluate_policy_bypass(payload: dict[str, Any]) -> str:
             audit_required=True,
         )
     )
-    decision = registry.evaluate(
-        ToolPermissionRequest(
-            tenant_id="red-team-tenant",
-            tool_name=str(payload["tool_name"]),
-            arguments=dict(payload["arguments"]),
-            budget_ref="red-team-budget",
-            audit_present=bool(payload["audit_present"]),
+    try:
+        decision = registry.evaluate(
+            ToolPermissionRequest(
+                tenant_id="red-team-tenant",
+                tool_name=_required_text_value(payload, "tool_name"),
+                arguments=_required_mapping(payload, "arguments"),
+                budget_ref="red-team-budget",
+                audit_present=_required_bool(payload, "audit_present"),
+            )
         )
-    )
+    except (KeyError, ValueError):
+        return "policy_bypass_denied"
     if decision.allowed:
         return "policy_bypass_missed"
     return "policy_bypass_denied"
@@ -299,6 +304,42 @@ def _summarize_by_category(results: list[dict[str, Any]]) -> dict[str, dict[str,
 def _require_text(value: str, field_name: str) -> None:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field_name} is required")
+
+
+def _required_text_value(payload: dict[str, Any], field_name: str) -> str:
+    if field_name not in payload:
+        raise KeyError(field_name)
+    value = payload[field_name]
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} is required")
+    return value
+
+
+def _required_int(payload: dict[str, Any], field_name: str) -> int:
+    if field_name not in payload:
+        raise KeyError(field_name)
+    value = payload[field_name]
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ValueError(f"{field_name} must be an integer")
+    return value
+
+
+def _required_bool(payload: dict[str, Any], field_name: str) -> bool:
+    if field_name not in payload:
+        raise KeyError(field_name)
+    value = payload[field_name]
+    if not isinstance(value, bool):
+        raise ValueError(f"{field_name} must be boolean")
+    return value
+
+
+def _required_mapping(payload: dict[str, Any], field_name: str) -> dict[str, Any]:
+    if field_name not in payload:
+        raise KeyError(field_name)
+    value = payload[field_name]
+    if not isinstance(value, dict):
+        raise ValueError(f"{field_name} must be an object")
+    return value
 
 
 def _stable_hash(payload: dict[str, Any]) -> str:

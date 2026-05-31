@@ -65,3 +65,55 @@ def test_red_team_harness_failed_expectation_reduces_pass_rate() -> None:
     assert report["failed_count"] == 1
     assert report["pass_rate"] == 0.0
     assert report["results"][0]["observed_reason"] == "audit_hash_mismatch_detected"
+
+
+def test_budget_evasion_rejects_non_integer_token_payloads() -> None:
+    case = RedTeamCase(
+        case_id="rt-budget-type-001",
+        category="budget_evasion",
+        title="String token reservation rejected",
+        payload={"reserved_output_tokens": "3", "requested_output_tokens": 8},
+        expected_reason="budget_violation_rejected",
+    )
+
+    report = RedTeamHarness((case,)).run()
+
+    assert report["case_count"] == 1
+    assert report["passed_count"] == 1
+    assert report["failed_count"] == 0
+    assert report["results"][0]["observed_reason"] == "budget_violation_rejected"
+
+
+def test_policy_bypass_rejects_loose_payload_fields_fail_closed() -> None:
+    audit_case = RedTeamCase(
+        case_id="rt-policy-audit-type-001",
+        category="policy_bypass",
+        title="String audit flag rejected",
+        payload={
+            "tool_name": "payments.refund",
+            "arguments": {"amount": 42, "currency": "USD"},
+            "audit_present": "false",
+        },
+        expected_reason="policy_bypass_denied",
+    )
+    tool_case = RedTeamCase(
+        case_id="rt-policy-tool-type-001",
+        category="policy_bypass",
+        title="Numeric tool name rejected",
+        payload={
+            "tool_name": 1001,
+            "arguments": {"amount": 42, "currency": "USD"},
+            "audit_present": True,
+        },
+        expected_reason="policy_bypass_denied",
+    )
+
+    report = RedTeamHarness((audit_case, tool_case)).run()
+
+    assert report["case_count"] == 2
+    assert report["passed_count"] == 2
+    assert report["failed_count"] == 0
+    assert [result["observed_reason"] for result in report["results"]] == [
+        "policy_bypass_denied",
+        "policy_bypass_denied",
+    ]
