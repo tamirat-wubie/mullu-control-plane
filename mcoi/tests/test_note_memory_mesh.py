@@ -1143,6 +1143,68 @@ def test_rebuild_reports_corrupt_lines_and_checksum_failures(tmp_path) -> None:
     assert report.proof_state == ProofState.FAIL
 
 
+def test_list_events_rejects_loose_persisted_event_seq_type(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+    event = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.EXECUTION_TRACE,
+            scope=NoteScope.TASK,
+            content_summary="trace for persisted type validation",
+            source_ref="test:persisted-event-seq",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            evidence_refs=("trace",),
+        )
+    )
+    event_path = tmp_path / "notes" / "events" / "2026-05-01.jsonl"
+    tampered = event.to_dict()
+    tampered["event_seq"] = "1"
+    tampered["checksum"] = ""
+    tampered["checksum"] = stable_identifier("tampered-checksum", tampered)
+    event_path.write_text(json.dumps(tampered, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+
+    with pytest.raises(RuntimeCoreInvariantError, match="invalid note event"):
+        mesh.list_events()
+    report = mesh.rebuild_index_from_events()
+
+    assert report.valid_events == 0
+    assert report.rejected_lines == 1
+    assert report.checksum_failures == 0
+    assert report.proof_state == ProofState.FAIL
+
+
+def test_list_events_rejects_loose_persisted_evidence_refs_shape(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+    event = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.EXECUTION_TRACE,
+            scope=NoteScope.TASK,
+            content_summary="trace for persisted evidence refs validation",
+            source_ref="test:persisted-evidence-refs",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            evidence_refs=("trace",),
+        )
+    )
+    event_path = tmp_path / "notes" / "events" / "2026-05-01.jsonl"
+    tampered = event.to_dict()
+    tampered["evidence_refs"] = "trace"
+    tampered["checksum"] = ""
+    tampered["checksum"] = stable_identifier("tampered-checksum", tampered)
+    event_path.write_text(json.dumps(tampered, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+
+    with pytest.raises(RuntimeCoreInvariantError, match="invalid note event"):
+        mesh.list_events()
+    report = mesh.rebuild_index_from_events()
+
+    assert report.valid_events == 0
+    assert report.rejected_lines == 1
+    assert report.checksum_failures == 0
+    assert report.proof_state == ProofState.FAIL
+
+
 def test_mfidel_decomposition_note_is_rejected_without_normalizing_symbols(tmp_path) -> None:
     clock = MutableClock("2026-05-01T00:00:00+00:00")
     mesh = _mesh(tmp_path, clock)
