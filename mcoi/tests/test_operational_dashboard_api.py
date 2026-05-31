@@ -60,6 +60,14 @@ def test_operational_dashboard_runtime_returns_simple_home_envelope() -> None:
     assert envelope["ok"] is True
     assert envelope["status"] == "ready"
     assert envelope["payload"]["home"]["title"] == "Ready"
+    assert envelope["payload"]["home"]["status_label"] == "Ready"
+    assert envelope["payload"]["home"]["count_summary"] == "1 ready, 0 need review, 0 blocked"
+    assert envelope["payload"]["home"]["next_action"] == "Start with `mullu workflows`."
+    assert envelope["payload"]["home"]["action_items"] == []
+    assert envelope["payload"]["home"]["command_guidance"] == ["mullu workflows"]
+    assert envelope["payload"]["home"]["start_here"]["title"] == "Start here"
+    assert envelope["payload"]["home"]["start_here"]["status_label"] == "Ready"
+    assert envelope["payload"]["home"]["start_here"]["command_guidance"] == ["mullu workflows"]
     assert envelope["payload"]["home"]["primary_command"] == "mullu workflows"
     assert envelope["payload"]["home"]["execution_allowed"] is False
 

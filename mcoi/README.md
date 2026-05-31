@@ -57,6 +57,10 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
   dashboard routes for apps:
   - `GET /api/v1/dashboard/home`
   - `GET /api/v1/dashboard/state`
+- The dashboard home payload includes plain UI fields: `status_label`,
+  `count_summary`, `next_action`, `action_items`, `command_guidance`, and
+  `start_here`, so apps can render user-facing status, command guidance, and a
+  compact "what can I do now?" list without deriving it from workflow internals.
 
 ## Command Surface
 
