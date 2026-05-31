@@ -12,6 +12,7 @@ scores deltas, and only governance can approve execution.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import json
 
 import pytest
 
@@ -101,6 +102,57 @@ def test_concept_box_ledger_preserves_projection_lineage_and_hash(tmp_path) -> N
     assert stored.source_note_ids == (deploy_note.note_id,)
     assert stored.to_dict()["projection_only"] is True
     assert "InceptaDive-M" in stored.lineage
+
+
+def test_concept_box_ledger_rejects_non_string_identity_on_readback(tmp_path) -> None:
+    _, deploy_note, _ = _capture_projection_notes(tmp_path)
+    ledger = ConceptBoxLedger(tmp_path / "ledger")
+    stored = ledger.append_box(build_note_concept_box(deploy_note))
+    ledger_path = tmp_path / "ledger" / "concept-boxes.jsonl"
+    payload = json.loads(ledger_path.read_text(encoding="utf-8"))
+    payload["identity_facets"] = [f"note:{deploy_note.note_id}", 42]
+    ledger_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    with pytest.raises(RuntimeCoreInvariantError, match="invalid Concept Box ledger entry") as raised:
+        ledger.list_boxes()
+
+    assert f"{ledger_path}:1" in str(raised.value)
+    assert isinstance(raised.value.__cause__, RuntimeCoreInvariantError)
+    assert stored.snapshot_hash == stored.expected_snapshot_hash()
+
+
+def test_concept_box_ledger_rejects_non_list_lineage_on_readback(tmp_path) -> None:
+    _, deploy_note, _ = _capture_projection_notes(tmp_path)
+    ledger = ConceptBoxLedger(tmp_path / "ledger")
+    stored = ledger.append_box(build_note_concept_box(deploy_note))
+    ledger_path = tmp_path / "ledger" / "concept-boxes.jsonl"
+    payload = json.loads(ledger_path.read_text(encoding="utf-8"))
+    payload["lineage"] = "note-memory"
+    ledger_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    with pytest.raises(RuntimeCoreInvariantError, match="invalid Concept Box ledger entry") as raised:
+        ledger.list_boxes()
+
+    assert f"{ledger_path}:1" in str(raised.value)
+    assert isinstance(raised.value.__cause__, RuntimeCoreInvariantError)
+    assert stored.lineage == ("note-memory", "InceptaDive-M")
+
+
+def test_concept_box_ledger_rejects_non_string_box_id_on_readback(tmp_path) -> None:
+    _, deploy_note, _ = _capture_projection_notes(tmp_path)
+    ledger = ConceptBoxLedger(tmp_path / "ledger")
+    stored = ledger.append_box(build_note_concept_box(deploy_note))
+    ledger_path = tmp_path / "ledger" / "concept-boxes.jsonl"
+    payload = json.loads(ledger_path.read_text(encoding="utf-8"))
+    payload["box_id"] = 1001
+    ledger_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+
+    with pytest.raises(RuntimeCoreInvariantError, match="invalid Concept Box ledger entry") as raised:
+        ledger.list_boxes()
+
+    assert f"{ledger_path}:1" in str(raised.value)
+    assert isinstance(raised.value.__cause__, RuntimeCoreInvariantError)
+    assert stored.source_note_ids == (deploy_note.note_id,)
 
 
 def test_axis_traversal_emits_findings_without_truth_promotion(tmp_path) -> None:

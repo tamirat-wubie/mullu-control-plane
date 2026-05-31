@@ -33,10 +33,38 @@ class ConceptBoxType(StrEnum):
     PROCESS = "process"
 
 
-def _tuple_text(values: Sequence[str] | None) -> tuple[str, ...]:
-    if values is None:
-        return ()
-    return tuple(str(value).strip() for value in values if str(value).strip())
+def _required_text(value: Mapping[str, object], field_name: str) -> str:
+    raw_value = value[field_name]
+    if not isinstance(raw_value, str):
+        raise RuntimeCoreInvariantError(f"{field_name} must be a string")
+    text = raw_value.strip()
+    if not text:
+        raise RuntimeCoreInvariantError(f"{field_name} must be non-empty")
+    return text
+
+
+def _optional_text(value: Mapping[str, object], field_name: str) -> str:
+    raw_value = value.get(field_name, "")
+    if raw_value is None:
+        return ""
+    if not isinstance(raw_value, str):
+        raise RuntimeCoreInvariantError(f"{field_name} must be a string")
+    return raw_value.strip()
+
+
+def _required_text_list(value: Mapping[str, object], field_name: str) -> tuple[str, ...]:
+    raw_value = value[field_name]
+    if not isinstance(raw_value, list):
+        raise RuntimeCoreInvariantError(f"{field_name} must be a list")
+    text_values: list[str] = []
+    for item in raw_value:
+        if not isinstance(item, str):
+            raise RuntimeCoreInvariantError(f"{field_name} items must be strings")
+        text = item.strip()
+        if not text:
+            raise RuntimeCoreInvariantError(f"{field_name} items must be non-empty")
+        text_values.append(text)
+    return tuple(text_values)
 
 
 def _canonical_json(value: Mapping[str, object]) -> str:
@@ -130,26 +158,22 @@ class ConceptBox:
         """Rehydrate a Concept Box from JSON-compatible data."""
 
         return cls(
-            box_id=str(value["box_id"]),
-            box_type=ConceptBoxType(str(value["box_type"])),
-            source_note_ids=_tuple_text(value.get("source_note_ids") if isinstance(value.get("source_note_ids"), list) else ()),
-            source_event_ids=_tuple_text(
-                value.get("source_event_ids") if isinstance(value.get("source_event_ids"), list) else ()
-            ),
-            identity_facets=_tuple_text(value.get("identity_facets") if isinstance(value.get("identity_facets"), list) else ()),
-            behavior_facets=_tuple_text(value.get("behavior_facets") if isinstance(value.get("behavior_facets"), list) else ()),
-            intention_facets=_tuple_text(
-                value.get("intention_facets") if isinstance(value.get("intention_facets"), list) else ()
-            ),
-            cause_facets=_tuple_text(value.get("cause_facets") if isinstance(value.get("cause_facets"), list) else ()),
-            effect_facets=_tuple_text(value.get("effect_facets") if isinstance(value.get("effect_facets"), list) else ()),
-            risk_facets=_tuple_text(value.get("risk_facets") if isinstance(value.get("risk_facets"), list) else ()),
-            evidence_refs=_tuple_text(value.get("evidence_refs") if isinstance(value.get("evidence_refs"), list) else ()),
-            created_at=str(value["created_at"]),
-            updated_at=str(value["updated_at"]),
-            lineage=_tuple_text(value.get("lineage") if isinstance(value.get("lineage"), list) else ()),
-            proof_state=ProofState(str(value["proof_state"])),
-            snapshot_hash=str(value.get("snapshot_hash", "")),
+            box_id=_required_text(value, "box_id"),
+            box_type=ConceptBoxType(_required_text(value, "box_type")),
+            source_note_ids=_required_text_list(value, "source_note_ids"),
+            source_event_ids=_required_text_list(value, "source_event_ids"),
+            identity_facets=_required_text_list(value, "identity_facets"),
+            behavior_facets=_required_text_list(value, "behavior_facets"),
+            intention_facets=_required_text_list(value, "intention_facets"),
+            cause_facets=_required_text_list(value, "cause_facets"),
+            effect_facets=_required_text_list(value, "effect_facets"),
+            risk_facets=_required_text_list(value, "risk_facets"),
+            evidence_refs=_required_text_list(value, "evidence_refs"),
+            created_at=_required_text(value, "created_at"),
+            updated_at=_required_text(value, "updated_at"),
+            lineage=_required_text_list(value, "lineage"),
+            proof_state=ProofState(_required_text(value, "proof_state")),
+            snapshot_hash=_optional_text(value, "snapshot_hash"),
         )
 
 
