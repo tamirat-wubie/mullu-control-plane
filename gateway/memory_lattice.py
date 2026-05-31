@@ -296,15 +296,15 @@ def build_p3_memory_lattice_contract(
 ) -> P3MemoryLatticeContract:
     """Build the P3 memory-lattice contract from readiness and admission claims."""
     if readiness.get("status") != "ready":
-        blockers = tuple(str(reason) for reason in readiness.get("blockers", ())) or ("p3_readiness_not_ready",)
+        blockers = _readiness_blockers(readiness)
         return _stamp_p3_contract(
             P3MemoryLatticeContract(
                 contract_id=contract_id,
                 status="blocked",
-                mind_id=str(readiness.get("mind_id", "")),
-                plan_id=str(readiness.get("plan_id", "")),
-                commit_witness_id=str(readiness.get("commit_witness_id", "")),
-                reconciliation_report_id=str(readiness.get("reconciliation_report_id", "")),
+                mind_id=_readiness_optional_text(readiness, "mind_id"),
+                plan_id=_readiness_optional_text(readiness, "plan_id"),
+                commit_witness_id=_readiness_optional_text(readiness, "commit_witness_id"),
+                reconciliation_report_id=_readiness_optional_text(readiness, "reconciliation_report_id"),
                 admitted_memory_ids=(),
                 evidence_refs=(),
                 blocked_reasons=blockers,
@@ -432,10 +432,45 @@ def _require_p3_ready_ref(value: str, field_name: str) -> None:
 
 
 def _readiness_required_text(readiness: Mapping[str, Any], field_name: str) -> str:
-    value = str(readiness.get(field_name, ""))
-    if not value:
+    value = readiness.get(field_name)
+    if not isinstance(value, str):
         raise ValueError(f"p3_readiness_{field_name}_required")
-    return value
+    text = value.strip()
+    if not text:
+        raise ValueError(f"p3_readiness_{field_name}_required")
+    return text
+
+
+def _readiness_optional_text(readiness: Mapping[str, Any], field_name: str) -> str:
+    value = readiness.get(field_name, "")
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        raise ValueError(f"p3_readiness_{field_name}_invalid")
+    return value.strip()
+
+
+def _readiness_blockers(readiness: Mapping[str, Any]) -> tuple[str, ...]:
+    raw_blockers = readiness.get("blockers", ())
+    if raw_blockers is None:
+        return ("p3_readiness_not_ready",)
+    if isinstance(raw_blockers, str):
+        blocker = raw_blockers.strip()
+        return (blocker,) if blocker else ("p3_readiness_not_ready",)
+    if not isinstance(raw_blockers, (list, tuple)):
+        raise ValueError("p3_readiness_blockers_invalid")
+    blockers = tuple(raw_blockers)
+    normalized = tuple(_readiness_blocker_text(blocker) for blocker in blockers)
+    return normalized or ("p3_readiness_not_ready",)
+
+
+def _readiness_blocker_text(value: Any) -> str:
+    if not isinstance(value, str):
+        raise ValueError("p3_readiness_blocker_required")
+    text = value.strip()
+    if not text:
+        raise ValueError("p3_readiness_blocker_required")
+    return text
 
 
 def _reject_duplicate_refs(values: tuple[str, ...], field_name: str) -> None:

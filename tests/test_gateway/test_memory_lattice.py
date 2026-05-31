@@ -217,6 +217,23 @@ def test_p3_memory_lattice_contract_blocks_without_ready_evidence_chain() -> Non
     assert contract.contract_hash
 
 
+def test_p3_contract_builder_preserves_single_blocker_reason_token() -> None:
+    contract = build_p3_memory_lattice_contract(
+        {
+            "status": "blocked",
+            "blockers": "verified_reconciliation_missing",
+            "mind_id": None,
+        },
+        (),
+        contract_id="p3-contract-single-blocker",
+    )
+
+    assert contract.status == "blocked"
+    assert contract.blocked_reasons == ("verified_reconciliation_missing",)
+    assert contract.mind_id == ""
+    assert contract.contract_hash
+
+
 def test_p3_ready_contract_rejects_unbound_causal_refs() -> None:
     try:
         P3MemoryLatticeContract(
@@ -269,6 +286,79 @@ def test_p3_contract_builder_rejects_incomplete_ready_readiness() -> None:
         assert str(exc) == "p3_readiness_commit_witness_id_required"
     else:
         raise AssertionError("incomplete P3 readiness was accepted")
+
+
+def test_p3_contract_builder_rejects_non_text_ready_references() -> None:
+    admission = MemoryLatticeGate().assess(
+        _entry("semantic_fact_memory", "trusted", learning_admission_status="admit"),
+        now=NOW,
+    )
+    invalid_cases = (
+        (
+            {
+                "status": "ready",
+                "plan_id": None,
+                "mind_id": "root",
+                "commit_witness_id": "witness-1",
+                "reconciliation_report_id": "reconciliation-1",
+            },
+            "p3_readiness_plan_id_required",
+        ),
+        (
+            {
+                "status": "ready",
+                "plan_id": "plan-1",
+                "mind_id": "root",
+                "commit_witness_id": "",
+                "reconciliation_report_id": "reconciliation-1",
+            },
+            "p3_readiness_commit_witness_id_required",
+        ),
+    )
+    errors: list[str] = []
+
+    for readiness, expected_error in invalid_cases:
+        try:
+            build_p3_memory_lattice_contract(
+                readiness,
+                (admission,),
+                contract_id=f"p3-contract-invalid-{len(errors)}",
+            )
+        except ValueError as exc:
+            errors.append(str(exc))
+        else:
+            raise AssertionError(f"{expected_error} was not raised")
+
+    assert errors == ["p3_readiness_plan_id_required", "p3_readiness_commit_witness_id_required"]
+    assert len(errors) == len(invalid_cases)
+    assert admission.allowed_for_planning is True
+
+
+def test_p3_contract_builder_rejects_invalid_blocker_shapes() -> None:
+    invalid_cases = (
+        ({"status": "blocked", "blockers": ("verified_reconciliation_missing", None)}, "p3_readiness_blocker_required"),
+        ({"status": "blocked", "blockers": 42}, "p3_readiness_blockers_invalid"),
+        ({"status": "blocked", "blockers": {"reason": "verified_reconciliation_missing"}}, "p3_readiness_blockers_invalid"),
+        ({"status": "blocked", "blockers": {"verified_reconciliation_missing"}}, "p3_readiness_blockers_invalid"),
+    )
+    errors: list[str] = []
+
+    for readiness, expected_error in invalid_cases:
+        try:
+            build_p3_memory_lattice_contract(readiness, (), contract_id=f"p3-contract-blocker-{len(errors)}")
+        except ValueError as exc:
+            errors.append(str(exc))
+        else:
+            raise AssertionError(f"{expected_error} was not raised")
+
+    assert errors == [
+        "p3_readiness_blocker_required",
+        "p3_readiness_blockers_invalid",
+        "p3_readiness_blockers_invalid",
+        "p3_readiness_blockers_invalid",
+    ]
+    assert len(errors) == len(invalid_cases)
+    assert all(error.startswith("p3_readiness_") for error in errors)
 
 
 def _entry(
