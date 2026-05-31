@@ -4225,6 +4225,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "MemoryLatticeGate.assess",
                 "MemoryLatticeAdmission",
+                "P3MemoryTopologyMap",
+                "build_p3_memory_topology_read_model",
             ],
             "request_proof",
             "action_proof",
@@ -4234,9 +4236,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/62_governed_operational_intelligence.md",
                 "gateway/memory_lattice.py",
                 "schemas/memory_lattice.schema.json",
+                "schemas/p3_memory_topology_read_model.schema.json",
                 "tests/test_gateway/test_memory_lattice.py",
             ],
-            "Memory lattice admission derives planning and execution use from evidence, learning admission, policy authority, freshness, scope, and contradiction state.",
+            "Memory lattice admission derives planning and execution use from evidence, learning admission, policy authority, freshness, scope, contradiction state, and bounded P3 topology projections.",
             [
                 "raw_event_memory_not_directly_admitted",
                 "semantic_memory_requires_learning_admission",
@@ -4244,6 +4247,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "preference_memory_tenant_owner_scoped",
                 "contradiction_and_stale_memory_block_execution",
                 "memory_lattice_schema_valid",
+                "p3_memory_topology_binds_refs",
+                "p3_memory_topology_read_model_schema_valid",
+                "p3_memory_topology_read_model_blocks_authority",
             ],
             runtime_witness_anchor_aliases={
                 "raw_event_memory_not_directly_admitted": [
@@ -4260,6 +4266,17 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "memory_lattice_schema_valid": [
                     "memory_lattice_schema_exposes_admission_claim",
+                ],
+                "p3_memory_topology_binds_refs": [
+                    "p3_topology_map_binds_mind_memory_world_and_evidence_refs",
+                ],
+                "p3_memory_topology_read_model_schema_valid": [
+                    "p3_topology_read_model_projects_bounded_operator_surface",
+                    "blocked_p3_topology_read_model_exposes_blockers_without_graph_surface",
+                ],
+                "p3_memory_topology_read_model_blocks_authority": [
+                    "p3_topology_read_model_projects_bounded_operator_surface",
+                    "blocked_p3_topology_read_model_exposes_blockers_without_graph_surface",
                 ],
             },
         ),
@@ -6648,6 +6665,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         },
         {
             "action_id": "publish_memory_lattice_admission_contract",
+            "surfaces": ["memory_lattice"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_p3_memory_topology_read_model_contract",
             "surfaces": ["memory_lattice"],
             "status": "closed",
         },
