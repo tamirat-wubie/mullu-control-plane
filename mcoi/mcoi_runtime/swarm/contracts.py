@@ -11,6 +11,7 @@ agents, no closure without receipt-backed proof.
 
 from __future__ import annotations
 
+from collections.abc import Mapping as MappingABC
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -139,8 +140,13 @@ class SwarmGoal:
         require_non_empty(self.goal_id, "goal_id")
         require_non_empty(self.tenant_id, "tenant_id")
         require_non_empty(self.description, "description")
+        if not isinstance(self.task_specs, tuple):
+            raise SwarmInvariantViolation("task_specs must be a tuple of task spec mappings")
         if not self.task_specs:
             raise SwarmInvariantViolation("goal must include at least one task spec")
+        for index, spec in enumerate(self.task_specs):
+            if not isinstance(spec, MappingABC):
+                raise SwarmInvariantViolation(f"task_specs[{index}] must be a mapping")
         if self.max_cost_usd < Decimal("0.00"):
             raise SwarmInvariantViolation("max_cost_usd cannot be negative")
 
