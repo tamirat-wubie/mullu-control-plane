@@ -22,6 +22,7 @@ from mcoi_runtime.core.browser_redaction import (
     DEFAULT_SENSITIVITY_POLICY,
     SensitivityPolicy,
     is_sensitive_selector,
+    redact_metadata,
     redact_page,
     redact_selector_match,
     scrub_text,
@@ -179,6 +180,29 @@ class TestRedactPage:
         by_sel = {e.selector.selector_value: e for e in redacted.elements}
         assert by_sel["#password"].element_value == MASK
         assert by_sel["#name"].element_value == "bob"
+
+
+# --- Metadata redaction ---
+
+
+class TestRedactMetadata:
+    def test_sensitive_metadata_value_masked(self):
+        redacted = redact_metadata({"authorization": "Bearer abc123"})
+        assert redacted["authorization"] == MASK
+        assert "abc123" not in str(redacted)
+
+    def test_nested_sensitive_metadata_value_masked(self):
+        redacted = redact_metadata({
+            "headers": {"set-cookie": "sid=secret"},
+            "tags": ["public"],
+        })
+        assert redacted["headers"]["set-cookie"] == MASK
+        assert redacted["tags"] == ["public"]
+
+    def test_metadata_text_patterns_scrubbed_without_masking_key(self):
+        redacted = redact_metadata({"note": "card 4111 1111 1111 1111"})
+        assert "4111" not in redacted["note"]
+        assert redacted["note"] == f"card {MASK}"
 
 
 # --- Engine integration ---
