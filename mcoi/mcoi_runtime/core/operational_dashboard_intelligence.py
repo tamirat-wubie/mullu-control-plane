@@ -6,8 +6,8 @@ workflow health, and execution readiness as a read-only dashboard model.
 Governance scope: projection-only display, constructive/fracture separation,
 readiness gating, repair visibility, and no execution authority.
 Dependencies: dataclasses, Concept Boxes, projection, repair queue, compiled
-actions, interrogation queue, simple platform checks, and runtime invariant
-helpers.
+actions, interrogation queue, simple platform checks, simple workflow plans,
+simple onboarding guide, and runtime invariant helpers.
 Invariants: dashboard state is derived from receipts and candidates; it never
 promotes truth, executes actions, or hides blockers.
 """
@@ -24,7 +24,7 @@ from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_ident
 from mcoi_runtime.core.memory_action_compiler import CompiledMemoryAction
 from mcoi_runtime.core.memory_repair_queue import MemoryRepairItem
 from mcoi_runtime.core.note_memory_projection import CandidateActionStatus, NoteMemoryProjection
-from mcoi_runtime.core.simple_platform import SimpleActionCheck
+from mcoi_runtime.core.simple_platform import SimpleActionCheck, SimpleOnboardingGuide, SimpleWorkflowPlan
 
 
 class WorkflowHealth(StrEnum):
@@ -73,6 +73,74 @@ class DashboardSimpleActionSummary:
 
 
 @dataclass(frozen=True)
+class DashboardSimpleWorkflowSummary:
+    """Read-only dashboard projection for one simple workflow plan."""
+
+    workflow_ref: str
+    workflow: str
+    label: str
+    outcome: str
+    title: str
+    message: str
+    next_step: str
+    ready_count: int
+    review_count: int
+    blocked_count: int
+    action_refs: tuple[str, ...]
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if self.execution_allowed:
+            raise RuntimeCoreInvariantError("dashboard simple workflow cannot allow execution")
+        if min(self.ready_count, self.review_count, self.blocked_count) < 0:
+            raise RuntimeCoreInvariantError("dashboard simple workflow counts cannot be negative")
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible simple workflow summary."""
+
+        return {
+            "workflow_ref": self.workflow_ref,
+            "workflow": self.workflow,
+            "label": self.label,
+            "outcome": self.outcome,
+            "title": self.title,
+            "message": self.message,
+            "next_step": self.next_step,
+            "ready_count": self.ready_count,
+            "review_count": self.review_count,
+            "blocked_count": self.blocked_count,
+            "action_refs": list(self.action_refs),
+            "execution_allowed": self.execution_allowed,
+        }
+
+
+@dataclass(frozen=True)
+class DashboardSimpleStartGuideSummary:
+    """Read-only dashboard projection for the simple onboarding guide."""
+
+    title: str
+    message: str
+    recommended_commands: tuple[str, ...]
+    outcomes: tuple[str, ...]
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if self.execution_allowed:
+            raise RuntimeCoreInvariantError("dashboard simple start guide cannot allow execution")
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible simple start guide summary."""
+
+        return {
+            "title": self.title,
+            "message": self.message,
+            "recommended_commands": list(self.recommended_commands),
+            "outcomes": list(self.outcomes),
+            "execution_allowed": self.execution_allowed,
+        }
+
+
+@dataclass(frozen=True)
 class OperationalDashboardState:
     """Read-only operational dashboard model."""
 
@@ -93,9 +161,14 @@ class OperationalDashboardState:
     execution_readiness: str
     interrogation_task_ids: tuple[str, ...]
     simple_action_summaries: tuple[DashboardSimpleActionSummary, ...] = ()
+    simple_workflow_summaries: tuple[DashboardSimpleWorkflowSummary, ...] = ()
+    simple_start_guide: DashboardSimpleStartGuideSummary | None = None
     simple_ready_action_refs: tuple[str, ...] = ()
     simple_review_action_refs: tuple[str, ...] = ()
     simple_blocked_action_refs: tuple[str, ...] = ()
+    simple_ready_workflow_refs: tuple[str, ...] = ()
+    simple_review_workflow_refs: tuple[str, ...] = ()
+    simple_blocked_workflow_refs: tuple[str, ...] = ()
     execution_allowed: bool = False
 
     def __post_init__(self) -> None:
@@ -125,9 +198,14 @@ class OperationalDashboardState:
             "execution_readiness": self.execution_readiness,
             "interrogation_task_ids": list(self.interrogation_task_ids),
             "simple_action_summaries": [summary.to_dict() for summary in self.simple_action_summaries],
+            "simple_workflow_summaries": [summary.to_dict() for summary in self.simple_workflow_summaries],
+            "simple_start_guide": self.simple_start_guide.to_dict() if self.simple_start_guide else None,
             "simple_ready_action_refs": list(self.simple_ready_action_refs),
             "simple_review_action_refs": list(self.simple_review_action_refs),
             "simple_blocked_action_refs": list(self.simple_blocked_action_refs),
+            "simple_ready_workflow_refs": list(self.simple_ready_workflow_refs),
+            "simple_review_workflow_refs": list(self.simple_review_workflow_refs),
+            "simple_blocked_workflow_refs": list(self.simple_blocked_workflow_refs),
             "execution_allowed": self.execution_allowed,
         }
 
@@ -140,6 +218,8 @@ def build_operational_dashboard_state(
     compiled_actions: Sequence[CompiledMemoryAction] = (),
     interrogation_tasks: Sequence[InterrogationTask] = (),
     simple_action_checks: Sequence[SimpleActionCheck] = (),
+    simple_workflow_plans: Sequence[SimpleWorkflowPlan] = (),
+    simple_start_guide: SimpleOnboardingGuide | None = None,
 ) -> OperationalDashboardState:
     """Build a read-only dashboard state from projection and candidates."""
 
@@ -164,6 +244,8 @@ def build_operational_dashboard_state(
     confidence_values = tuple(claim.confidence for claim in projection.active_claims)
     confidence_trend = sum(confidence_values) / len(confidence_values) if confidence_values else 0.0
     simple_action_summaries = tuple(_simple_action_summary(check) for check in simple_action_checks)
+    simple_workflow_summaries = tuple(_simple_workflow_summary(plan) for plan in simple_workflow_plans)
+    simple_start_guide_summary = _simple_start_guide_summary(simple_start_guide) if simple_start_guide else None
     workflow_health = _workflow_health(projection, repair_items, blocked_action_ids)
     readiness = _execution_readiness(workflow_health, ready_action_ids, blocked_action_ids)
     dashboard_id = stable_identifier(
@@ -174,6 +256,8 @@ def build_operational_dashboard_state(
             "compiled_action_ids": tuple(action.compiled_action_id for action in compiled_actions),
             "interrogation_task_ids": tuple(task.task_id for task in interrogation_tasks),
             "simple_action_refs": tuple(summary.action_ref for summary in simple_action_summaries),
+            "simple_workflow_refs": tuple(summary.workflow_ref for summary in simple_workflow_summaries),
+            "simple_start_guide": simple_start_guide_summary.to_dict() if simple_start_guide_summary else None,
         },
     )
     return OperationalDashboardState(
@@ -198,6 +282,8 @@ def build_operational_dashboard_state(
         execution_readiness=readiness,
         interrogation_task_ids=tuple(task.task_id for task in interrogation_tasks),
         simple_action_summaries=simple_action_summaries,
+        simple_workflow_summaries=simple_workflow_summaries,
+        simple_start_guide=simple_start_guide_summary,
         simple_ready_action_refs=tuple(
             summary.action_ref for summary in simple_action_summaries if summary.outcome == "ready"
         ),
@@ -206,6 +292,15 @@ def build_operational_dashboard_state(
         ),
         simple_blocked_action_refs=tuple(
             summary.action_ref for summary in simple_action_summaries if summary.outcome == "blocked"
+        ),
+        simple_ready_workflow_refs=tuple(
+            summary.workflow_ref for summary in simple_workflow_summaries if summary.outcome == "ready"
+        ),
+        simple_review_workflow_refs=tuple(
+            summary.workflow_ref for summary in simple_workflow_summaries if summary.outcome == "needs_review"
+        ),
+        simple_blocked_workflow_refs=tuple(
+            summary.workflow_ref for summary in simple_workflow_summaries if summary.outcome == "blocked"
         ),
     )
 
@@ -223,6 +318,44 @@ def _simple_action_summary(check: SimpleActionCheck) -> DashboardSimpleActionSum
         boundary_witness_ref=check.boundary_witness_ref,
         blocked_reasons=check.blocked_reasons,
         review_reasons=check.review_reasons,
+    )
+
+
+def _simple_workflow_summary(plan: SimpleWorkflowPlan) -> DashboardSimpleWorkflowSummary:
+    """Project one simple workflow plan into dashboard display state."""
+
+    action_refs = tuple(check.decision_ref for check in plan.checks)
+    workflow_ref = stable_identifier(
+        "dashboard-simple-workflow",
+        {
+            "workflow": plan.workflow,
+            "action_refs": action_refs,
+            "outcome": plan.outcome,
+        },
+    )
+    return DashboardSimpleWorkflowSummary(
+        workflow_ref=workflow_ref,
+        workflow=plan.workflow,
+        label=plan.label,
+        outcome=plan.outcome,
+        title=plan.title,
+        message=plan.message,
+        next_step=plan.next_step,
+        ready_count=plan.ready_count,
+        review_count=plan.review_count,
+        blocked_count=plan.blocked_count,
+        action_refs=action_refs,
+    )
+
+
+def _simple_start_guide_summary(guide: SimpleOnboardingGuide) -> DashboardSimpleStartGuideSummary:
+    """Project the simple onboarding guide into dashboard display state."""
+
+    return DashboardSimpleStartGuideSummary(
+        title=guide.title,
+        message=guide.message,
+        recommended_commands=tuple(step.command for step in guide.recommended_path),
+        outcomes=guide.outcomes,
     )
 
 

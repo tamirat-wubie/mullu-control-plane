@@ -41,11 +41,13 @@ from mcoi_runtime.core.note_memory_temporal_bridge import build_temporal_candida
 from mcoi_runtime.core.note_memory_world_state_bridge import bridge_projection_to_world_state
 from mcoi_runtime.core.operational_dashboard_intelligence import (
     DashboardSimpleActionSummary,
+    DashboardSimpleStartGuideSummary,
+    DashboardSimpleWorkflowSummary,
     WorkflowHealth,
     build_operational_dashboard_state,
 )
 from mcoi_runtime.core.outcome_learning_bridge import build_outcome_learning_record
-from mcoi_runtime.core.simple_platform import SimpleActionRequest, SimplePlatform
+from mcoi_runtime.core.simple_platform import SimpleActionRequest, SimplePlatform, SimpleWorkflowRequest
 
 
 class MutableClock:
@@ -392,6 +394,54 @@ def test_dashboard_projects_simple_actions_without_execution_authority(tmp_path)
     assert payload["execution_allowed"] is False
 
 
+def test_dashboard_projects_simple_workflows_and_start_guide_without_execution_authority(tmp_path) -> None:
+    mesh, deploy_note, blocker_note = _capture_projection_notes(tmp_path)
+    boxes = tuple(build_note_concept_box(event) for event in (deploy_note, blocker_note))
+    findings = tuple(finding for box in boxes for finding in traverse_concept_box(box).findings)
+    projection = project_note_memory(
+        mesh.list_events(),
+        concept_boxes=boxes,
+        axis_findings=findings,
+        assessed_at="2026-05-31T12:05:00+00:00",
+    )
+    simple_platform = SimplePlatform()
+    ready_plan = simple_platform.check_workflow(
+        SimpleWorkflowRequest(
+            workflow="docs_update",
+            target="docs/README.md",
+            actor_id="dashboard-test",
+        )
+    )
+    review_plan = simple_platform.check_workflow({"workflow": "support-notice", "actor_id": "dashboard-test"})
+    blocked_plan = simple_platform.check_workflow(
+        {
+            "workflow": "docs-update",
+            "target": "deploy/config.json",
+            "actor_id": "dashboard-test",
+        }
+    )
+
+    dashboard = build_operational_dashboard_state(
+        projection=projection,
+        boxes=boxes,
+        simple_workflow_plans=(ready_plan, review_plan, blocked_plan),
+        simple_start_guide=SimplePlatform.onboarding_guide(),
+    )
+    payload = dashboard.to_dict()
+
+    assert len(dashboard.simple_workflow_summaries) == 3
+    assert dashboard.simple_ready_workflow_refs == (dashboard.simple_workflow_summaries[0].workflow_ref,)
+    assert dashboard.simple_review_workflow_refs == (dashboard.simple_workflow_summaries[1].workflow_ref,)
+    assert dashboard.simple_blocked_workflow_refs == (dashboard.simple_workflow_summaries[2].workflow_ref,)
+    assert payload["simple_workflow_summaries"][0]["ready_count"] == 3
+    assert payload["simple_workflow_summaries"][1]["review_count"] == 1
+    assert payload["simple_workflow_summaries"][2]["blocked_count"] == 2
+    assert payload["simple_start_guide"]["recommended_commands"][0] == "mullu workflows"
+    assert all(summary["execution_allowed"] is False for summary in payload["simple_workflow_summaries"])
+    assert payload["simple_start_guide"]["execution_allowed"] is False
+    assert payload["execution_allowed"] is False
+
+
 def test_dashboard_simple_action_summary_rejects_execution_authority() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="dashboard simple action cannot allow execution"):
         DashboardSimpleActionSummary(
@@ -404,6 +454,35 @@ def test_dashboard_simple_action_summary_rejects_execution_authority() -> None:
             boundary_witness_ref="witness-test",
             blocked_reasons=(),
             review_reasons=(),
+            execution_allowed=True,
+        )
+
+
+def test_dashboard_simple_workflow_summary_rejects_execution_authority() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="dashboard simple workflow cannot allow execution"):
+        DashboardSimpleWorkflowSummary(
+            workflow_ref="dashboard-simple-workflow-test",
+            workflow="docs_update",
+            label="Update docs",
+            outcome="ready",
+            title="Ready",
+            message="Ready for display.",
+            next_step="Continue.",
+            ready_count=1,
+            review_count=0,
+            blocked_count=0,
+            action_refs=("gate-decision-test",),
+            execution_allowed=True,
+        )
+
+
+def test_dashboard_simple_start_guide_rejects_execution_authority() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="dashboard simple start guide cannot allow execution"):
+        DashboardSimpleStartGuideSummary(
+            title="Mullu simple mode",
+            message="Unsafe guide.",
+            recommended_commands=("mullu workflows",),
+            outcomes=("Ready",),
             execution_allowed=True,
         )
 
