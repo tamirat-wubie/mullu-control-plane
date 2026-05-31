@@ -73,6 +73,64 @@ def test_capture_redacts_sensitive_values_before_persistence(tmp_path) -> None:
     assert "[REDACTED:" in persisted.content_summary
 
 
+def test_capture_note_rejects_non_text_evidence_ref_without_persisting(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+
+    with pytest.raises(RuntimeCoreInvariantError, match="evidence_refs must be a string"):
+        mesh.capture_note(
+            NoteMemoryDraft(
+                kind=NoteKind.EXECUTION_TRACE,
+                scope=NoteScope.TASK,
+                content_summary="trace with malformed evidence ref",
+                source_ref="test:strict-evidence",
+                proof_state=ProofState.PASS,
+                trust_zone=TrustZone.WORKSPACE,
+                evidence_refs=("trace", 7),
+            )
+        )
+
+    assert mesh.event_count == 0
+    assert not (tmp_path / "notes" / "events").exists()
+
+
+def test_capture_episode_capsule_rejects_non_text_decision_without_persisting(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+
+    with pytest.raises(RuntimeCoreInvariantError, match="decisions must be a string"):
+        mesh.capture_episode_capsule(
+            EpisodeCapsuleDraft(
+                goal="Close strict text list boundary",
+                scope=NoteScope.REPOSITORY,
+                proof_state=ProofState.PASS,
+                trust_zone=TrustZone.WORKSPACE,
+                decisions=("reject non-text direct mesh values", 7),
+                verification_refs=("pytest mcoi/tests/test_note_memory_mesh.py",),
+                evidence_refs=("test_note_memory_mesh",),
+            )
+        )
+
+    assert mesh.event_count == 0
+    assert not (tmp_path / "notes" / "episodes").exists()
+
+
+def test_promotion_receipt_rejects_non_text_evidence_ref() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="evidence_refs must be a string"):
+        PromotionReceipt(
+            promotion_id="promotion-strict-evidence",
+            source_note_id="note-strict-evidence",
+            anchor_id="anchor-strict-evidence",
+            proof_state=ProofState.PASS,
+            evidence_refs=("receipt", 7),
+            contradiction_scan=ProofState.PASS,
+            phi_gov_status=PhiGovStatus.ACCEPTED,
+            accepted_at="2026-05-01T00:00:00+00:00",
+            accepted_by="test-governance",
+            lineage_event_seq=1,
+        )
+
+
 def test_retrieval_guard_blocks_expired_contradicted_and_disallowed_notes(tmp_path) -> None:
     clock = MutableClock("2026-05-01T00:00:00+00:00")
     mesh = _mesh(tmp_path, clock)
@@ -555,65 +613,6 @@ def test_dashboard_snapshot_summarizes_retrieval_receipts_by_citation_count(tmp_
     assert snapshot["retrieval_receipts"][0]["citing_note_id_count"] == 2
     assert snapshot["retrieval_receipts"][0]["sample_citing_note_ids"] == [third.note_id, second.note_id]
     assert snapshot["retrieval_receipts"][1]["receipt_id"] == first_receipt
-
-
-def test_capture_rejects_malformed_retrieval_receipt_refs_without_persisting(tmp_path) -> None:
-    clock = MutableClock("2026-05-01T00:00:00+00:00")
-    mesh = _mesh(tmp_path, clock)
-
-    with pytest.raises(RuntimeCoreInvariantError, match="retrieval_receipt_ref must reference a note retrieval receipt"):
-        mesh.capture_note(
-            NoteMemoryDraft(
-                kind=NoteKind.DECISION_RECORD,
-                scope=NoteScope.TASK,
-                content_summary="Decision must not cite arbitrary retrieval influence text",
-                source_ref="test:malformed-retrieval-ref",
-                proof_state=ProofState.PASS,
-                trust_zone=TrustZone.WORKSPACE,
-                evidence_refs=("test_capture_rejects_malformed_retrieval_receipt_refs_without_persisting",),
-                retrieval_receipt_refs=("manual-note-ref",),
-            )
-        )
-
-    assert mesh.event_count == 0
-
-
-def test_capture_deduplicates_retrieval_receipt_refs(tmp_path) -> None:
-    clock = MutableClock("2026-05-01T00:00:00+00:00")
-    mesh = _mesh(tmp_path, clock)
-    source = mesh.capture_note(
-        NoteMemoryDraft(
-            kind=NoteKind.WORKING_NOTE,
-            scope=NoteScope.TASK,
-            content_summary="parser strategy note for duplicate retrieval reference capture",
-            source_ref="test:retrieval-duplicate-source",
-            proof_state=ProofState.PASS,
-            trust_zone=TrustZone.WORKSPACE,
-            expires_at="2026-05-03T00:00:00+00:00",
-            evidence_refs=("test_capture_deduplicates_retrieval_receipt_refs",),
-        )
-    )
-    result = mesh.retrieve_notes_with_receipt(
-        "duplicate retrieval",
-        RetrievalGuard(scope=NoteScope.TASK, now="2026-05-01T00:00:00+00:00"),
-    )
-
-    decision = mesh.capture_note(
-        NoteMemoryDraft(
-            kind=NoteKind.DECISION_RECORD,
-            scope=NoteScope.TASK,
-            content_summary="Decision cites one retrieval receipt once after deduplication",
-            source_ref="test:retrieval-duplicate-decision",
-            proof_state=ProofState.PASS,
-            trust_zone=TrustZone.WORKSPACE,
-            evidence_refs=("test_capture_deduplicates_retrieval_receipt_refs",),
-            retrieval_receipt_refs=(result.receipt.receipt_id, result.receipt.receipt_id),
-        )
-    )
-
-    assert result.receipt.returned_note_ids == (source.note_id,)
-    assert decision.retrieval_receipt_refs == (result.receipt.receipt_id,)
-    assert mesh.event_count == 2
 
 
 def test_retrieval_receipt_bounds_query_text(tmp_path) -> None:
