@@ -77,6 +77,22 @@ def test_simple_platform_integration_does_not_mount_when_disabled() -> None:
     assert app.routers == []
 
 
+def test_simple_platform_integration_defaults_to_disabled_without_env_flag(monkeypatch) -> None:
+    app = FakeApp()
+    monkeypatch.setenv("MULLU_SIMPLE_PLATFORM_ENABLED", "1")
+
+    def router_factory(runtime: SimplePlatformRuntime, prefix: str) -> object:
+        raise AssertionError("explicit env mapping must not fall back to process env")
+
+    result = mount_simple_platform_router_from_env(app, {}, router_factory=router_factory)
+
+    assert result.enabled is False
+    assert result.mounted is False
+    assert result.prefix == "/api/v1/simple"
+    assert result.reason == "disabled_by_env"
+    assert app.routers == []
+
+
 def test_simple_platform_integration_uses_default_prefix() -> None:
     app = FakeApp()
 
