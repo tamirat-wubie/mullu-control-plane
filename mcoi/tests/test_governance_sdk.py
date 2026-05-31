@@ -129,6 +129,44 @@ def test_sdk_mfidel_grid_allows_and_decomposition_blocks() -> None:
     )
 
 
+def test_sdk_gate_rejects_loose_action_payload_types() -> None:
+    client = _client()
+    valid_action = (
+        ActionSentenceBuilder.read_file("src/parser.py")
+        .within_scope("src/parser.py")
+        .requires_proof("scope_checked")
+        .build()
+    )
+
+    for field_name, invalid_value, expected_reason in (
+        ("object_ref", 7, "object_ref must be a string"),
+        ("scope", ("src/parser.py", 7), "scope\\[1\\] must be a string"),
+        ("proof_obligations", ("scope_checked", False), "proof_obligations\\[1\\] must be a string"),
+        ("expected_side_effects", "external_write", "expected_side_effects must be a sequence"),
+        ("domain", 99, "domain must be a string"),
+        ("operation", ["unicode_normalize"], "operation must be a string"),
+    ):
+        with pytest.raises(RuntimeCoreInvariantError, match=expected_reason):
+            client.gate_action(intent=_intent(), action={**valid_action, field_name: invalid_value})
+
+
+def test_sdk_validate_rejects_loose_intent_and_action_sequence_members() -> None:
+    client = _client()
+    valid_action = (
+        ActionSentenceBuilder.read_file("src/parser.py")
+        .within_scope("src/parser.py")
+        .requires_proof("scope_checked")
+        .build()
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="scope\\[1\\] must be a string"):
+        client.validate_intent({**_intent(), "scope": ("src/**", 7)})
+    with pytest.raises(RuntimeCoreInvariantError, match="success_criteria\\[0\\] must be a string"):
+        client.validate_intent({**_intent(), "success_criteria": (False,)})
+    with pytest.raises(RuntimeCoreInvariantError, match="proof_obligations\\[0\\] must be a string"):
+        client.validate_action({**valid_action, "proof_obligations": (False,)})
+
+
 def test_sdk_stdlib_registry_and_proof_helpers() -> None:
     client = _client()
     action = (
