@@ -278,6 +278,15 @@ deadlines than the baseline. This benchmark also exercises the `search_planner`,
 `constraint_solver`, and `optimization_solver` capsules that the duplicate-invoice
 benchmark does not.
 
+A third benchmark, `deployment_gate_decision.v1` (`workflow_automation`),
+completes the first three problem domains and exercises the `simulation_check`
+capsule. It decides GO/NO-GO on deploy requests, scored against recorded incident
+outcomes: a naive tests-only baseline, a full safety policy, and a
+throughput-maximizing "ship-fast" gate. The primary metric is decision accuracy,
+so the full safety policy wins (and approves nothing unsafe) while the
+throughput gate — which approves too much and would wave through real incidents —
+runs, is recorded, and is refused.
+
 ## Running the lab (CLI)
 
 `gateway/solver_forge_cli.py` is the read-and-experiment entrypoint. It has no
@@ -366,7 +375,8 @@ attached to that benchmark without compromising its baseline.
 | `tests/test_gateway/test_method_registry.py` | 12 | Register / duplicate-rejection, family + domain queries, signature admissibility (allow / forbid / risk-ceiling), composer construction, no-promotion-surface, starter-catalog integrity. |
 | `tests/test_gateway/test_solver_forge_benchmarks.py` | 11 | Detector ground truth (precision / recall), deterministic evaluator, unknown-capsule skip, end-to-end winner selection, recall-only-trap refusal, winner crosses the bridge, ledger winners match the report. |
 | `tests/test_gateway/test_solver_forge_cli.py` | 9 | No-promotion subcommand surface, list capsules / benchmarks (incl. domain + family filters), text + JSON run output, unknown-benchmark error, ledger-file write, read-only forge-input preview. |
-| `tests/test_gateway/test_solver_forge_scheduling_benchmark.py` | 6 | Scheduler ground truth (on-time rate), deterministic evaluator, unknown-capsule skip, EDF wins / longest-first anti-pattern refused, winner crosses the bridge, two-benchmark catalog. |
+| `tests/test_gateway/test_solver_forge_scheduling_benchmark.py` | 6 | Scheduler ground truth (on-time rate), deterministic evaluator, unknown-capsule skip, EDF wins / longest-first anti-pattern refused, winner crosses the bridge, catalog membership. |
+| `tests/test_gateway/test_solver_forge_deployment_benchmark.py` | 6 | Gate ground truth (accuracy + unsafe-approval rate), deterministic evaluator, unknown-capsule skip, safety-policy wins / throughput gate refused, winner crosses the bridge, three-domain catalog. |
 | `tests/test_gateway/test_solver_forge_capsule_probes.py` | 14 | Each probe (injection / external-state / high-risk-low-oversight) + its mitigation, deterministic candidate-specific findings, starter-catalog calibration, composite union, composer double-gate exclusion, baseline-compromise. |
 
 ## Open questions deferred to follow-on work

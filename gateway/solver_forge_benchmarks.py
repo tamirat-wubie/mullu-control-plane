@@ -444,6 +444,167 @@ SCHEDULING_SIGNATURE = ProblemSignature(
 )
 
 
+# --------------------------------------------------------------------------- #
+# Third benchmark: deployment-gate decision (workflow_automation).
+# Classify deploy requests GO/NO-GO against recorded incident outcomes, using
+# the workflow_automation capsules. Primary metric is decision accuracy, so a
+# throughput-maximizing gate that approves too much is recorded but refused.
+# --------------------------------------------------------------------------- #
+
+
+@dataclass(frozen=True, slots=True)
+class DeployRequest:
+    id: str
+    has_tests: bool
+    has_rollback: bool
+    reviewed: bool
+    touches_prod: bool
+    off_hours: bool
+    caused_incident: bool  # recorded outcome; approving an incident deploy is wrong
+
+
+DEPLOY_FIXTURE: tuple[DeployRequest, ...] = (
+    #             tests  rollbk review prod   offhr  incident
+    DeployRequest("R1", True, True, True, True, False, False),
+    DeployRequest("R2", False, True, True, True, False, True),
+    DeployRequest("R3", True, False, True, True, False, True),
+    DeployRequest("R4", True, True, False, False, False, False),
+    DeployRequest("R5", True, True, False, True, True, True),
+    DeployRequest("R6", True, True, True, False, True, False),
+    DeployRequest("R7", False, False, False, False, True, True),
+    DeployRequest("R8", True, True, True, True, True, False),
+    DeployRequest("R9", True, False, True, False, False, False),
+    DeployRequest("R10", False, True, True, False, False, True),
+)
+
+
+def _should_approve(req: DeployRequest) -> bool:
+    """Ground truth: approving is correct exactly when the deploy did not cause
+    an incident."""
+    return not req.caused_incident
+
+
+# Three deterministic gate strategies, mapped to the workflow capsules. The
+# capsule is a declared method slot; the evaluator owns the implementation.
+
+
+def gate_tests_only(req: DeployRequest) -> bool:  # naive baseline
+    return req.has_tests
+
+
+def gate_safety_policy(req: DeployRequest) -> bool:  # full policy / dry-run
+    return req.has_tests and req.has_rollback and (req.reviewed or not req.touches_prod)
+
+
+def gate_throughput(req: DeployRequest) -> bool:  # ship-fast anti-pattern
+    return req.off_hours or req.has_tests
+
+
+_GATES = {
+    "capsule:search_planner.bfs_deadline.v1": (gate_tests_only, 1.0),
+    "capsule:simulation_check.deploy_dryrun.v1": (gate_safety_policy, 3.0),
+    "capsule:constraint_solver.scheduling.v1": (gate_throughput, 2.0),
+}
+
+_GATE_DIRECTIONS = {
+    "decision_accuracy": "maximize",
+    "unsafe_approval_rate": "minimize",
+}
+
+_ACCURACY_FLOOR = 0.5
+
+
+def _gate_metrics(predictions: dict[str, bool]) -> dict[str, float]:
+    correct = 0
+    unsafe = 0  # approved a deploy that should have been rejected
+    should_reject = 0
+    for req in DEPLOY_FIXTURE:
+        truth = _should_approve(req)
+        pred = predictions[req.id]
+        if pred == truth:
+            correct += 1
+        if not truth:
+            should_reject += 1
+            if pred:
+                unsafe += 1
+    n = len(DEPLOY_FIXTURE)
+    return {
+        "decision_accuracy": round(correct / n, 4) if n else 0.0,
+        "unsafe_approval_rate": round(unsafe / should_reject, 4) if should_reject else 0.0,
+    }
+
+
+def deployment_evaluator(
+    signature: ProblemSignature,
+    pipeline: CandidatePipeline,
+    seed: str,
+) -> CandidateEvaluation:
+    """Deterministic evaluator for the deployment-gate benchmark."""
+    capsule_id = pipeline.capsule_ids[0] if pipeline.capsule_ids else ""
+    entry = _GATES.get(capsule_id)
+    if entry is None:
+        return CandidateEvaluation(
+            outcome="skipped",
+            scores=(),
+            notes=f"no_reference_gate_for:{capsule_id}",
+        )
+    gate, cost = entry
+    predictions = {req.id: gate(req) for req in DEPLOY_FIXTURE}
+    metrics = _gate_metrics(predictions)
+    scores = tuple(
+        CandidateScore(metric_id=key, value=value, direction=_GATE_DIRECTIONS[key])
+        for key, value in metrics.items()
+    )
+    outcome = "passed" if metrics["decision_accuracy"] >= _ACCURACY_FLOOR else "failed"
+    approvals = sum(1 for v in predictions.values() if v)
+    return CandidateEvaluation(
+        outcome=outcome,
+        scores=scores,
+        evidence_refs=(f"gate_decisions_receipt:{approvals}of{len(DEPLOY_FIXTURE)}",),
+        cost_units=cost,
+        duration_seconds=0.0,
+        notes=(
+            f"accuracy={metrics['decision_accuracy']} "
+            f"unsafe_rate={metrics['unsafe_approval_rate']} approvals={approvals}"
+        ),
+    )
+
+
+DEPLOYMENT_GATE_SIGNATURE = ProblemSignature(
+    problem_id="deployment_gate_decision.v1",
+    domain="workflow_automation",
+    goal="decide GO/NO-GO on deploy requests to avoid incidents",
+    inputs=("deploy_requests",),
+    constraints=("never approve an unreviewed production deploy without rollback",),
+    risk="medium",
+    metrics=(
+        ProblemMetric(
+            metric_id="decision_accuracy",
+            metric_kind="success",
+            direction="maximize",
+            threshold=_ACCURACY_FLOOR,
+            description="fraction of GO/NO-GO decisions matching recorded outcomes (primary)",
+        ),
+        ProblemMetric(
+            metric_id="unsafe_approval_rate",
+            metric_kind="failure",
+            direction="minimize",
+        ),
+    ),
+    required_evidence=(
+        ProblemEvidenceRequirement(
+            requirement_id="gate-decisions",
+            evidence_type="gate_decisions_receipt",
+            required=True,
+        ),
+    ),
+    budget_units=100.0,
+    timeout_seconds=5.0,
+    allowed_method_families=("search_planner", "simulation_check", "constraint_solver"),
+    baseline_method_family="search_planner",
+)
+
+
 @dataclass(frozen=True, slots=True)
 class Benchmark:
     benchmark_id: str
@@ -472,6 +633,17 @@ BENCHMARKS: dict[str, Benchmark] = {
             "Naive in-order baseline vs earliest-deadline-first vs a "
             "longest-first anti-pattern. Primary metric is on-time rate, so "
             "the anti-pattern is recorded but refused."
+        ),
+    ),
+    DEPLOYMENT_GATE_SIGNATURE.problem_id: Benchmark(
+        benchmark_id=DEPLOYMENT_GATE_SIGNATURE.problem_id,
+        signature=DEPLOYMENT_GATE_SIGNATURE,
+        evaluator=deployment_evaluator,
+        description=(
+            "Deployment GO/NO-GO gating against recorded incident outcomes. "
+            "Naive tests-only baseline vs a full safety policy vs a "
+            "throughput-maximizing gate. Primary metric is decision accuracy, "
+            "so the ship-fast gate that approves too much is refused."
         ),
     ),
 }

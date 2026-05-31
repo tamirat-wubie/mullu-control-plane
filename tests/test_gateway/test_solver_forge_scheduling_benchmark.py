@@ -102,6 +102,7 @@ def test_winner_crosses_bridge():
     assert forge_input.metadata["solver_forge"]["primary_metric_id"] == "on_time_rate"
 
 
-def test_catalog_now_has_two_benchmarks():
+def test_catalog_includes_scheduling_benchmark():
     ids = {b.benchmark_id for b in list_benchmarks()}
-    assert ids == {"invoice_duplicate_detection.v1", "task_scheduling_with_deadlines.v1"}
+    # Subset check, not exact equality, so adding further benchmarks is non-breaking.
+    assert {"invoice_duplicate_detection.v1", "task_scheduling_with_deadlines.v1"} <= ids
