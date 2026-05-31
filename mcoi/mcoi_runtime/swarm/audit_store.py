@@ -58,7 +58,7 @@ class SwarmAuditStore:
                     continue
                 try:
                     records.append(SwarmAuditRecord.from_dict(json.loads(stripped)))
-                except (KeyError, TypeError, json.JSONDecodeError) as exc:
+                except (KeyError, TypeError, json.JSONDecodeError, SwarmInvariantViolation) as exc:
                     raise SwarmInvariantViolation(f"invalid audit record at line {line_number}") from exc
         return tuple(records)
 
