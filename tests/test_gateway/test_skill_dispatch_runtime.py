@@ -665,6 +665,8 @@ def test_local_capability_worker_emits_execution_receipt() -> None:
     assert result is not None
     assert result["receipt_status"] == "settled"
     assert result["capability_execution_receipt"]["receipt_id"] == receipt.receipt_id
+    assert result["capability_execution_receipt"]["terminal_closure_required"] is True
+    assert result["capability_execution_receipt"]["receipt_is_not_terminal_closure"] is True
     assert receipt.worker_id == "test-worker"
     assert receipt.isolation_required is True
     assert receipt.evidence_refs
@@ -688,6 +690,8 @@ def test_remote_capability_executor_validates_worker_receipt() -> None:
     assert result["receipt_status"] == "settled"
     assert result["capability_execution_request_id"].startswith("capability-request-")
     assert result["capability_execution_receipt"]["receipt_id"] == receipt.receipt_id
+    assert result["capability_execution_receipt"]["terminal_closure_required"] is True
+    assert result["capability_execution_receipt"]["receipt_is_not_terminal_closure"] is True
     assert receipt.worker_id == "restricted-worker-1"
     assert receipt.evidence_refs[0].startswith("restricted_worker:")
     assert len(transport.requests) == 1
@@ -784,6 +788,8 @@ def test_http_capability_transport_verifies_response_signature(monkeypatch) -> N
     assert response.status == "succeeded"
     assert response.receipt.receipt_id == "capability-receipt-transport"
     assert response.receipt.evidence_refs == ("restricted_worker:transport",)
+    assert response.receipt.terminal_closure_required is True
+    assert response.receipt.receipt_is_not_terminal_closure is True
 
 
 def test_capability_request_parser_rejects_string_isolation_flag() -> None:
@@ -879,6 +885,74 @@ def test_http_capability_transport_rejects_string_receipt_isolation_flag(monkeyp
 
     with pytest.raises(RuntimeError, match="^capability worker response is malformed$"):
         transport.submit(request)
+
+
+def test_http_capability_transport_rejects_receipt_closure_claim(monkeypatch) -> None:
+    secret = "transport-secret"
+    boundary = CapabilityExecutionBoundary(
+        capability_id="financial.send_payment",
+        execution_plane="isolated_worker",
+        isolation_required=True,
+        network_policy=("payment_provider",),
+        filesystem_policy="read_only",
+        max_runtime_seconds=30,
+        max_memory_mb=256,
+        service_account="capability-financial-send_payment",
+        evidence_required=("ledger_hash",),
+    )
+    request = CapabilityExecutionRequest(
+        request_id="capability-request-transport",
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        intent={"skill": "financial", "action": "send_payment", "params": {"amount": "50"}},
+        boundary=boundary,
+        input_hash="input-hash",
+    )
+    result = {"response": "ok", "receipt_status": "settled"}
+    receipt = CapabilityExecutionReceipt(
+        receipt_id="capability-receipt-transport",
+        capability_id=boundary.capability_id,
+        execution_plane=boundary.execution_plane,
+        isolation_required=True,
+        worker_id="restricted-worker-1",
+        input_hash=request.input_hash,
+        output_hash=canonical_hash(result),
+        evidence_refs=("restricted_worker:transport",),
+    )
+    response_payload = capability_execution_response_payload(
+        CapabilityExecutionResponse(
+            request_id=request.request_id,
+            status="succeeded",
+            result=result,
+            receipt=receipt,
+        ),
+    )
+    response_payload["receipt"]["receipt_is_not_terminal_closure"] = False
+    response_body = json.dumps(response_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+    class StubHttpResponse:
+        headers = {"X-Mullu-Capability-Response-Signature": sign_capability_payload(response_body, secret)}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def read(self):
+            return response_body
+
+    monkeypatch.setattr("urllib.request.urlopen", lambda http_request, timeout: StubHttpResponse())
+    transport = HttpCapabilityWorkerTransport(
+        endpoint_url="https://worker.invalid/capability/execute",
+        signing_secret=secret,
+    )
+
+    with pytest.raises(RuntimeError, match="^capability worker response is malformed$"):
+        transport.submit(request)
+
+    assert response_payload["receipt"]["terminal_closure_required"] is True
+    assert response_payload["receipt"]["receipt_is_not_terminal_closure"] is False
 
 
 def test_http_capability_transport_rejects_bad_response_signature(monkeypatch) -> None:

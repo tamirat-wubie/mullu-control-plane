@@ -44,7 +44,12 @@ services:
       MULLU_DB_BACKEND: postgresql
       MULLU_DB_URL: "postgresql://mullu:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/mullu"
       MULLU_CORS_ORIGINS: "${MULLU_CORS_ORIGINS:?Set MULLU_CORS_ORIGINS in .env}"
-      MULLU_LLM_BACKEND: stub
+      # MULLU_ENV=pilot/production FORBID the stub backend (it returns fake
+      # responses under a real audit label). Set MULLU_LLM_BACKEND + the matching
+      # API key in .env (see .env.example); default stub is for local/test only.
+      MULLU_LLM_BACKEND: "${MULLU_LLM_BACKEND:-stub}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
       MULLU_LLM_MODEL: "claude-sonnet-4-20250514"
       MULLU_LLM_BUDGET_MAX_COST: "100.0"
       MULLU_LLM_BUDGET_MAX_CALLS: "10000"
@@ -125,7 +130,11 @@ services:
       MULLU_VOICE_WORKER_SECRET: "${MULLU_VOICE_WORKER_SECRET:-}"
       MULLU_EMAIL_CALENDAR_WORKER_URL: "${MULLU_EMAIL_CALENDAR_WORKER_URL:-}"
       MULLU_EMAIL_CALENDAR_WORKER_SECRET: "${MULLU_EMAIL_CALENDAR_WORKER_SECRET:-}"
-      MULLU_LLM_BACKEND: stub
+      # stub is forbidden when MULLU_ENV=pilot/production — set MULLU_LLM_BACKEND
+      # and the matching API key in .env (see .env.example).
+      MULLU_LLM_BACKEND: "${MULLU_LLM_BACKEND:-stub}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
       MULLU_PII_SCAN: "true"
       # Channel credentials (set in .env):
       # WHATSAPP_PHONE_NUMBER_ID: ""
@@ -322,7 +331,11 @@ services:
       MULLU_VOICE_WORKER_SECRET: "${MULLU_VOICE_WORKER_SECRET:-}"
       MULLU_EMAIL_CALENDAR_WORKER_URL: "${MULLU_EMAIL_CALENDAR_WORKER_URL:-}"
       MULLU_EMAIL_CALENDAR_WORKER_SECRET: "${MULLU_EMAIL_CALENDAR_WORKER_SECRET:-}"
-      MULLU_LLM_BACKEND: stub
+      # stub is forbidden when MULLU_ENV=pilot/production — set MULLU_LLM_BACKEND
+      # and the matching API key in .env (see .env.example).
+      MULLU_LLM_BACKEND: "${MULLU_LLM_BACKEND:-stub}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
       MULLU_PII_SCAN: "true"
       # Channel credentials are needed only if worker sends final responses through adapters:
       # WHATSAPP_PHONE_NUMBER_ID: ""

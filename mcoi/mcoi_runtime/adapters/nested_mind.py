@@ -19,7 +19,7 @@ from __future__ import annotations
 import re
 from typing import Callable, Mapping
 
-from mcoi_runtime.adapters.http_connector import HttpConnector, HttpConnectorConfig
+from mcoi_runtime.adapters.http_connector import HttpConnector, HttpConnectorConfig, JsonConnectorOutcome
 from mcoi_runtime.contracts._shared_enums import EffectClass, TrustClass
 from mcoi_runtime.contracts.integration import ConnectorDescriptor, ConnectorResult
 from mcoi_runtime.contracts.provider_policy import HttpProviderPolicy
@@ -113,15 +113,24 @@ class NestedMindConnector:
 
         return self._get(self._mind_route(mind_id))
 
+    def read_projection_json(self, mind_id: str = "root") -> JsonConnectorOutcome:
+        return self._get_json(self._mind_route(mind_id))
+
     def verify_history(self, mind_id: str = "root") -> ConnectorResult:
         """Read audit verification status for a mind's signed history."""
 
         return self._get(self._mind_route(mind_id, "audit"))
 
+    def verify_history_json(self, mind_id: str = "root") -> JsonConnectorOutcome:
+        return self._get_json(self._mind_route(mind_id, "audit"))
+
     def replay_history(self, mind_id: str = "root") -> ConnectorResult:
         """Read replay verification for a mind's causal history."""
 
         return self._get(self._mind_route(mind_id, "replay"))
+
+    def replay_history_json(self, mind_id: str = "root") -> JsonConnectorOutcome:
+        return self._get_json(self._mind_route(mind_id, "replay"))
 
     def _mind_route(self, mind_id: str, suffix: str = "") -> str:
         safe_mind_id = validate_mind_id(mind_id)
@@ -132,6 +141,16 @@ class NestedMindConnector:
 
     def _get(self, path: str) -> ConnectorResult:
         return self._http_connector.invoke(
+            self._descriptor,
+            {
+                "url": self._url(path),
+                "method": "GET",
+                "headers": self._headers(),
+            },
+        )
+
+    def _get_json(self, path: str) -> JsonConnectorOutcome:
+        return self._http_connector.invoke_json(
             self._descriptor,
             {
                 "url": self._url(path),

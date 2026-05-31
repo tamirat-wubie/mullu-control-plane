@@ -28,6 +28,18 @@ deployment operation.
 - `Mullu Govern` remains product-facing and explains governed execution to users and buyers.
 - `Mullu Control Plane` remains operator-facing and consumes traces, approvals, and status from the shared foundation.
 
+The control-plane architecture treats every executable action as a governed
+structure, not as a bare function call. The minimum action object is:
+
+```text
+Action := intent + actor + tenant + capability + policy + budget + time + evidence + receipt + closure
+```
+
+This makes Mullu Control Plane a higher-order structure over executable symbols:
+features become capabilities, capabilities pass through policy and authority,
+effects emit evidence and receipts, and closure produces the proof surface that
+operators and downstream systems can inspect.
+
 ## Current repository boundary
 
 - Shared definitions live in `docs/` and `schemas/`.

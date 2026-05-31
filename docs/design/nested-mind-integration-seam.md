@@ -61,6 +61,8 @@ no redirect following, DNS/private-address protection, and connector receipts.
 
 ```text
 MULLU_NESTED_MIND_ENABLED=true
+MULLU_NESTED_MIND_OBSERVATION_BRIDGE_ENABLED=false
+MULLU_NESTED_MIND_OBSERVATION_SUBMIT_ENABLED=false
 MULLU_NESTED_MIND_BASE_URL=https://nested-mind.example
 MULLU_NESTED_MIND_BEARER_TOKEN=<optional>
 ```
@@ -74,6 +76,56 @@ Startup posture:
   fragment.
 - bearer token is optional; when present, only the `Authorization` header name
   is included in request hashing/receipts, not the token value.
+
+## Phase P2.3 live record_observation submission
+
+Phase P2.3 adds the first live mutation path, but only for
+`record_observation` proposals generated as `NestedMindObservationProposalPlan`.
+It remains default-off and operator-flagged.
+
+Required gates for a live network write:
+
+```text
+MULLU_NESTED_MIND_ENABLED=true
+MULLU_NESTED_MIND_OBSERVATION_BRIDGE_ENABLED=true
+MULLU_NESTED_MIND_OBSERVATION_SUBMIT_ENABLED=true
+MULLU_NESTED_MIND_BASE_URL=https://nested-mind.example
+MULLU_NESTED_MIND_BEARER_TOKEN=<optional>
+```
+
+Submission path:
+
+```text
+NestedMindProposalEvidence
+  -> NestedMindObservationProposalPlan
+  -> NestedMindObservationSubmitter
+  -> NestedMindCommitResponseEnvelope
+  -> VERIFIED NestedMindCommitWitness
+  -> verified bridge report
+  -> read-after-write reconciliation
+  -> internal append-only evidence store
+```
+
+The live submitter does not enable:
+
+- child-mind creation;
+- lawbook migration;
+- arbitrary patch operations;
+- semantic memory admission;
+- procedural memory admission;
+- system-of-record switching;
+- raw response persistence;
+- raw token persistence.
+
+Operator CLI:
+
+```powershell
+python scripts/nested_mind_submit_observation.py --plan path\to\plan.json --evidence path\to\evidence.json --dry-run
+python scripts/nested_mind_submit_observation.py --plan path\to\plan.json --evidence path\to\evidence.json --submit
+```
+
+The default is dry-run. `--submit` requires all environment gates above and
+prints only a `NestedMindObservationSubmissionReport` JSON object.
 
 ## What changes after this lands?
 
@@ -128,3 +180,16 @@ a separate PR because it changes the information-flow boundary.
 4. Should internal/private nested-mind service URLs be allowed through a
    dedicated operator allowlist, or must production always route through HTTPS
    public ingress?
+
+## Updated phase map
+
+1. **Phase 1 read-only witness bridge**: mount connector, test route
+   construction and fail-closed env behavior.
+2. **Phase P2.3/P2.4 governed record_observation bridge**: submit only
+   verified observation proposals, then reconcile through read-only projection
+   and audit routes.
+3. **Phase P2.5/P2.6 evidence store and operator CLI**: persist typed evidence
+   internally and expose a dry-run-first operator script.
+4. **Phase P3+ nested-brain topology**: map memory lattice, world graph,
+   planning, capabilities, trust ledger, and closure learning only after
+   record_observation is verified and reconciled.

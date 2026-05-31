@@ -122,7 +122,7 @@ def validate_environment() -> EnvironmentValidation:
 
     # Check imports
     try:
-        from mcoi_runtime.app.bootstrap import bootstrap_runtime
+        from mcoi_runtime.app.bootstrap import bootstrap_runtime  # noqa: F401 — load-bearing: probes importability for env validation
         checks.append(ValidationCheck("bootstrap_importable", True, "bootstrap module loads"))
     except Exception as exc:
         checks.append(ValidationCheck("bootstrap_importable", False, _bounded_validation_error("import error", exc)))

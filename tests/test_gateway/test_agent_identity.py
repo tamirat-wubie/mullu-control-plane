@@ -5,12 +5,13 @@ memory scope, approval scope, delegation scope, budgets, evidence, and
 reputation without bypassing central governance.
 Governance scope: accountable identity, tenant isolation, no self-approval,
 policy mutation blocking, lease-bound delegation, budget enforcement, and
-schema compatibility.
+governed action structure, and schema compatibility.
 Dependencies: gateway.agent_identity and schemas/agent_identity.schema.json.
 Invariants:
   - Agent identities cannot approve themselves or mutate policy.
   - Allowed and forbidden capability scopes remain disjoint.
   - Memory, delegation, and budget gates deny before execution.
+  - Allowed decisions expose the governing action structure.
   - Reputation updates require evidence refs.
 """
 
@@ -118,6 +119,30 @@ def test_agent_identity_enforces_memory_and_budget_scope() -> None:
     assert budget_denied.reason == "daily_action_budget_exhausted"
     assert memory_denied.allowed is False
     assert memory_denied.reason == "memory_class_not_allowed_for_execution"
+
+
+def test_agent_identity_allowed_decision_exposes_governing_action_structure() -> None:
+    registry = AgentIdentityRegistry(clock=lambda: "2026-05-05T12:00:00+00:00")
+    registry.register(_identity())
+
+    allowed = registry.evaluate(_request())
+
+    assert allowed.allowed is True
+    assert "actor_binding" in allowed.required_controls
+    assert "tenant_binding" in allowed.required_controls
+    assert "capability_policy" in allowed.required_controls
+    assert "budget_limit" in allowed.required_controls
+    assert "request_time" in allowed.required_controls
+    assert "evidence_or_non_closure" in allowed.required_controls
+    assert "decision_receipt" in allowed.required_controls
+    assert "closure_state" in allowed.required_controls
+    assert allowed.metadata["decision_is_not_execution"] is True
+    assert allowed.metadata["governed_action_structure_present"] is True
+    assert allowed.metadata["non_closure_recorded"] is True
+    assert allowed.metadata["evidence_ref_count"] == 0
+    assert allowed.metadata["requested_at"] == "2026-05-05T12:00:00+00:00"
+    assert allowed.decision_id.startswith("agent-decision-")
+    assert allowed.decision_hash
 
 
 def test_agent_identity_delegation_requires_lease_scope() -> None:

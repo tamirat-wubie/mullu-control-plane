@@ -68,6 +68,8 @@ class CapabilityExecutionReceipt:
     input_hash: str
     output_hash: str
     evidence_refs: tuple[str, ...]
+    terminal_closure_required: bool = True
+    receipt_is_not_terminal_closure: bool = True
 
     def __post_init__(self) -> None:
         _require_non_empty_text(self.receipt_id, "receipt_id")
@@ -83,6 +85,10 @@ class CapabilityExecutionReceipt:
             raise ValueError("evidence_refs must contain at least one item")
         for index, evidence_ref in enumerate(self.evidence_refs):
             _require_non_empty_text(evidence_ref, f"evidence_refs[{index}]")
+        if self.terminal_closure_required is not True:
+            raise ValueError("terminal_closure_required must be true")
+        if self.receipt_is_not_terminal_closure is not True:
+            raise ValueError("receipt_is_not_terminal_closure must be true")
 
 
 @dataclass(frozen=True, slots=True)
@@ -258,6 +264,8 @@ class LocalCapabilityExecutionWorker:
             "worker_id": self._worker_id,
             "input_hash": input_hash,
             "output_hash": output_hash,
+            "terminal_closure_required": True,
+            "receipt_is_not_terminal_closure": True,
         })
         receipt = CapabilityExecutionReceipt(
             receipt_id=f"capability-receipt-{receipt_hash[:16]}",
@@ -539,6 +547,14 @@ def _response_from_mapping(raw: dict[str, Any]) -> CapabilityExecutionResponse:
             input_hash=str(receipt["input_hash"]),
             output_hash=str(receipt["output_hash"]),
             evidence_refs=tuple(receipt["evidence_refs"]),
+            terminal_closure_required=_require_bool(
+                receipt["terminal_closure_required"],
+                "receipt.terminal_closure_required",
+            ),
+            receipt_is_not_terminal_closure=_require_bool(
+                receipt["receipt_is_not_terminal_closure"],
+                "receipt.receipt_is_not_terminal_closure",
+            ),
         )
         return CapabilityExecutionResponse(
             request_id=str(raw["request_id"]),
