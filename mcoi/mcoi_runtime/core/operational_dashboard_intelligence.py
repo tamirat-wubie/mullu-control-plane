@@ -151,6 +151,46 @@ class DashboardSimpleStartGuideSummary:
 
 
 @dataclass(frozen=True)
+class DashboardSimpleHomeAction:
+    """One plain action item for the simple dashboard home."""
+
+    action_ref: str
+    label: str
+    command: str
+    reason: str
+    outcome: str
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if self.execution_allowed:
+            raise RuntimeCoreInvariantError("dashboard simple home action cannot allow execution")
+        if self.outcome not in {"ready", "needs_review", "blocked", "choose"}:
+            raise RuntimeCoreInvariantError("dashboard simple home action outcome is unsupported")
+        for field_name, field_value in {
+            "action_ref": self.action_ref,
+            "label": self.label,
+            "command": self.command,
+            "reason": self.reason,
+        }.items():
+            if not field_value.strip():
+                raise RuntimeCoreInvariantError(f"dashboard simple home action {field_name} is required")
+            if field_value.strip() != field_value:
+                raise RuntimeCoreInvariantError(f"dashboard simple home action {field_name} must be trimmed")
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible home action item."""
+
+        return {
+            "action_ref": self.action_ref,
+            "label": self.label,
+            "command": self.command,
+            "reason": self.reason,
+            "outcome": self.outcome,
+            "execution_allowed": self.execution_allowed,
+        }
+
+
+@dataclass(frozen=True)
 class DashboardSimpleHomeSummary:
     """Compact dashboard home projection for non-technical users."""
 
@@ -160,6 +200,11 @@ class DashboardSimpleHomeSummary:
     ready_workflow_count: int
     review_workflow_count: int
     blocked_workflow_count: int
+    status_label: str = ""
+    count_summary: str = ""
+    next_action: str = ""
+    action_items: tuple[DashboardSimpleHomeAction, ...] = ()
+    command_guidance: tuple[str, ...] = ()
     execution_allowed: bool = False
 
     def __post_init__(self) -> None:
@@ -167,10 +212,36 @@ class DashboardSimpleHomeSummary:
             raise RuntimeCoreInvariantError("dashboard simple home cannot allow execution")
         if min(self.ready_workflow_count, self.review_workflow_count, self.blocked_workflow_count) < 0:
             raise RuntimeCoreInvariantError("dashboard simple home counts cannot be negative")
+        if self.status_label and self.status_label not in {"Ready", "Needs review", "Blocked"}:
+            raise RuntimeCoreInvariantError("dashboard simple home status label is unsupported")
+        if self.count_summary.strip() != self.count_summary:
+            raise RuntimeCoreInvariantError("dashboard simple home count summary must be trimmed")
+        if self.next_action.strip() != self.next_action:
+            raise RuntimeCoreInvariantError("dashboard simple home next action must be trimmed")
+        if len(self.action_items) > 3:
+            raise RuntimeCoreInvariantError("dashboard simple home action items must be three or fewer")
+        if any(item.execution_allowed for item in self.action_items):
+            raise RuntimeCoreInvariantError("dashboard simple home action items cannot allow execution")
+        if len(self.command_guidance) > 3:
+            raise RuntimeCoreInvariantError("dashboard simple home command guidance must be three or fewer")
+        for command in self.command_guidance:
+            if not command.strip():
+                raise RuntimeCoreInvariantError("dashboard simple home command guidance item is required")
+            if command.strip() != command:
+                raise RuntimeCoreInvariantError("dashboard simple home command guidance items must be trimmed")
 
     def to_dict(self) -> dict[str, object]:
         """Return a JSON-compatible simple dashboard home summary."""
 
+        status_label = self.status_label or self.title
+        count_summary = self.count_summary or _home_count_summary(
+            ready_count=self.ready_workflow_count,
+            review_count=self.review_workflow_count,
+            blocked_count=self.blocked_workflow_count,
+        )
+        next_action = self.next_action or _home_next_action(self.title, self.primary_command)
+        command_guidance = self.command_guidance or (self.primary_command,)
+        action_items = [item.to_dict() for item in self.action_items]
         return {
             "title": self.title,
             "message": self.message,
@@ -178,6 +249,22 @@ class DashboardSimpleHomeSummary:
             "ready_workflow_count": self.ready_workflow_count,
             "review_workflow_count": self.review_workflow_count,
             "blocked_workflow_count": self.blocked_workflow_count,
+            "status_label": status_label,
+            "count_summary": count_summary,
+            "next_action": next_action,
+            "action_items": action_items,
+            "command_guidance": list(command_guidance),
+            "start_here": {
+                "title": "Start here",
+                "status_label": status_label,
+                "message": self.message,
+                "count_summary": count_summary,
+                "primary_command": self.primary_command,
+                "next_action": next_action,
+                "command_guidance": list(command_guidance),
+                "action_items": action_items,
+                "execution_allowed": self.execution_allowed,
+            },
             "execution_allowed": self.execution_allowed,
         }
 
@@ -426,7 +513,14 @@ def _simple_home_summary(
         if simple_start_guide and simple_start_guide.recommended_commands
         else "mullu start"
     )
+    command_guidance = _home_command_guidance(primary_command, simple_start_guide)
     if blocked_count:
+        action_items = _home_action_items(
+            title="Blocked",
+            primary_command=primary_command,
+            simple_workflow_summaries=simple_workflow_summaries,
+            simple_start_guide=simple_start_guide,
+        )
         return DashboardSimpleHomeSummary(
             title="Blocked",
             message="Some workflows need a narrower target before users continue.",
@@ -434,8 +528,23 @@ def _simple_home_summary(
             ready_workflow_count=ready_count,
             review_workflow_count=review_count,
             blocked_workflow_count=blocked_count,
+            status_label="Blocked",
+            count_summary=_home_count_summary(
+                ready_count=ready_count,
+                review_count=review_count,
+                blocked_count=blocked_count,
+            ),
+            next_action=_home_next_action("Blocked", primary_command),
+            action_items=action_items,
+            command_guidance=command_guidance,
         )
     if review_count:
+        action_items = _home_action_items(
+            title="Needs review",
+            primary_command=primary_command,
+            simple_workflow_summaries=simple_workflow_summaries,
+            simple_start_guide=simple_start_guide,
+        )
         return DashboardSimpleHomeSummary(
             title="Needs review",
             message="Some workflows need approval before users continue.",
@@ -443,7 +552,22 @@ def _simple_home_summary(
             ready_workflow_count=ready_count,
             review_workflow_count=review_count,
             blocked_workflow_count=blocked_count,
+            status_label="Needs review",
+            count_summary=_home_count_summary(
+                ready_count=ready_count,
+                review_count=review_count,
+                blocked_count=blocked_count,
+            ),
+            next_action=_home_next_action("Needs review", primary_command),
+            action_items=action_items,
+            command_guidance=command_guidance,
         )
+    action_items = _home_action_items(
+        title="Ready",
+        primary_command=primary_command,
+        simple_workflow_summaries=simple_workflow_summaries,
+        simple_start_guide=simple_start_guide,
+    )
     return DashboardSimpleHomeSummary(
         title="Ready",
         message="Users can start with the recommended simple workflow path.",
@@ -451,6 +575,110 @@ def _simple_home_summary(
         ready_workflow_count=ready_count,
         review_workflow_count=review_count,
         blocked_workflow_count=blocked_count,
+        status_label="Ready",
+        count_summary=_home_count_summary(
+            ready_count=ready_count,
+            review_count=review_count,
+            blocked_count=blocked_count,
+        ),
+        next_action=_home_next_action("Ready", primary_command),
+        action_items=action_items,
+        command_guidance=command_guidance,
+    )
+
+
+def _home_count_summary(*, ready_count: int, review_count: int, blocked_count: int) -> str:
+    """Return compact count text for dashboard home cards."""
+
+    return f"{ready_count} ready, {review_count} need review, {blocked_count} blocked"
+
+
+def _home_next_action(title: str, primary_command: str) -> str:
+    """Return the next plain user action for the dashboard home card."""
+
+    if title == "Blocked":
+        return "Open the blocked workflows and choose a narrower target."
+    if title == "Needs review":
+        return "Review the workflows that need approval before continuing."
+    return f"Start with `{primary_command}`."
+
+
+def _home_action_items(
+    *,
+    title: str,
+    primary_command: str,
+    simple_workflow_summaries: Sequence[DashboardSimpleWorkflowSummary],
+    simple_start_guide: DashboardSimpleStartGuideSummary | None,
+) -> tuple[DashboardSimpleHomeAction, ...]:
+    """Return a bounded plain action list for the dashboard home."""
+
+    if title == "Blocked":
+        selected_workflows = tuple(summary for summary in simple_workflow_summaries if summary.outcome == "blocked")
+        return tuple(
+            _home_workflow_action(summary, label_prefix="Fix", command=primary_command)
+            for summary in selected_workflows[:3]
+        )
+    if title == "Needs review":
+        selected_workflows = tuple(summary for summary in simple_workflow_summaries if summary.outcome == "needs_review")
+        return tuple(
+            _home_workflow_action(summary, label_prefix="Review", command=primary_command)
+            for summary in selected_workflows[:3]
+        )
+    selected_workflows = tuple(summary for summary in simple_workflow_summaries if summary.outcome == "ready")
+    if selected_workflows:
+        return tuple(
+            _home_workflow_action(summary, label_prefix="Start", command=primary_command)
+            for summary in selected_workflows[:3]
+        )
+    if simple_start_guide is None:
+        return ()
+    return (
+        DashboardSimpleHomeAction(
+            action_ref=stable_identifier(
+                "dashboard-home-action",
+                {"command": primary_command, "outcome": "choose"},
+            ),
+            label="Choose a workflow",
+            command=primary_command,
+            reason=simple_start_guide.message,
+            outcome="choose",
+        ),
+    )
+
+
+def _home_command_guidance(
+    primary_command: str,
+    simple_start_guide: DashboardSimpleStartGuideSummary | None,
+) -> tuple[str, ...]:
+    """Return a short command path for the dashboard start-here block."""
+
+    commands: list[str] = [primary_command]
+    if simple_start_guide is not None:
+        for command in simple_start_guide.recommended_commands:
+            if command not in commands:
+                commands.append(command)
+            if len(commands) == 3:
+                break
+    return tuple(commands[:3])
+
+
+def _home_workflow_action(
+    summary: DashboardSimpleWorkflowSummary,
+    *,
+    label_prefix: str,
+    command: str,
+) -> DashboardSimpleHomeAction:
+    """Project one workflow summary into a plain home action item."""
+
+    return DashboardSimpleHomeAction(
+        action_ref=stable_identifier(
+            "dashboard-home-action",
+            {"workflow_ref": summary.workflow_ref, "outcome": summary.outcome},
+        ),
+        label=f"{label_prefix} {summary.label}",
+        command=command,
+        reason=summary.next_step,
+        outcome=summary.outcome,
     )
 
 

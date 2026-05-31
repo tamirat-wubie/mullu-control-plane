@@ -41,6 +41,7 @@ from mcoi_runtime.core.note_memory_temporal_bridge import build_temporal_candida
 from mcoi_runtime.core.note_memory_world_state_bridge import bridge_projection_to_world_state
 from mcoi_runtime.core.operational_dashboard_intelligence import (
     DashboardSimpleActionSummary,
+    DashboardSimpleHomeAction,
     DashboardSimpleHomeSummary,
     DashboardSimpleStartGuideSummary,
     DashboardSimpleWorkflowSummary,
@@ -443,6 +444,23 @@ def test_dashboard_projects_simple_workflows_and_start_guide_without_execution_a
     assert payload["simple_home_summary"]["ready_workflow_count"] == 1
     assert payload["simple_home_summary"]["review_workflow_count"] == 1
     assert payload["simple_home_summary"]["blocked_workflow_count"] == 1
+    assert payload["simple_home_summary"]["status_label"] == "Blocked"
+    assert payload["simple_home_summary"]["count_summary"] == "1 ready, 1 need review, 1 blocked"
+    assert payload["simple_home_summary"]["next_action"] == "Open the blocked workflows and choose a narrower target."
+    assert payload["simple_home_summary"]["action_items"][0]["label"] == "Fix Update docs"
+    assert payload["simple_home_summary"]["action_items"][0]["command"] == "mullu workflows"
+    assert payload["simple_home_summary"]["action_items"][0]["outcome"] == "blocked"
+    assert payload["simple_home_summary"]["action_items"][0]["execution_allowed"] is False
+    assert payload["simple_home_summary"]["command_guidance"] == [
+        "mullu workflows",
+        "mullu workflow docs-update --target docs/README.md",
+        "mullu workflow docs-update --target docs/README.md --json",
+    ]
+    assert payload["simple_home_summary"]["start_here"]["title"] == "Start here"
+    assert payload["simple_home_summary"]["start_here"]["status_label"] == "Blocked"
+    assert payload["simple_home_summary"]["start_here"]["primary_command"] == "mullu workflows"
+    assert payload["simple_home_summary"]["start_here"]["action_items"][0]["label"] == "Fix Update docs"
+    assert payload["simple_home_summary"]["start_here"]["execution_allowed"] is False
     assert all(summary["execution_allowed"] is False for summary in payload["simple_workflow_summaries"])
     assert payload["simple_start_guide"]["execution_allowed"] is False
     assert payload["simple_home_summary"]["execution_allowed"] is False
@@ -555,6 +573,56 @@ def test_dashboard_simple_home_summary_rejects_execution_authority() -> None:
             review_workflow_count=0,
             blocked_workflow_count=0,
             execution_allowed=True,
+        )
+
+
+def test_dashboard_simple_home_summary_rejects_unsupported_plain_status() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="status label is unsupported"):
+        DashboardSimpleHomeSummary(
+            title="Ready",
+            message="Unsafe home.",
+            primary_command="mullu workflows",
+            ready_workflow_count=1,
+            review_workflow_count=0,
+            blocked_workflow_count=0,
+            status_label="Operationally degraded",
+        )
+
+
+def test_dashboard_simple_home_summary_rejects_too_many_action_items() -> None:
+    action_items = tuple(
+        DashboardSimpleHomeAction(
+            action_ref=f"dashboard-home-action-{index}",
+            label=f"Start workflow {index}",
+            command="mullu workflows",
+            reason="Workflow is ready.",
+            outcome="ready",
+        )
+        for index in range(4)
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="three or fewer"):
+        DashboardSimpleHomeSummary(
+            title="Ready",
+            message="Unsafe home.",
+            primary_command="mullu workflows",
+            ready_workflow_count=4,
+            review_workflow_count=0,
+            blocked_workflow_count=0,
+            action_items=action_items,
+        )
+
+
+def test_dashboard_simple_home_summary_rejects_too_many_command_guidance_items() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="command guidance must be three or fewer"):
+        DashboardSimpleHomeSummary(
+            title="Ready",
+            message="Unsafe home.",
+            primary_command="mullu workflows",
+            ready_workflow_count=1,
+            review_workflow_count=0,
+            blocked_workflow_count=0,
+            command_guidance=("one", "two", "three", "four"),
         )
 
 
