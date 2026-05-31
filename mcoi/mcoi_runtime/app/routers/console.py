@@ -295,6 +295,7 @@ def _empty_note_memory_payload(extension: dict[str, object]) -> dict[str, object
             "memory_anchor_count": 0,
             "episode_capsule_count": 0,
             "contradiction_count": 0,
+            "retrieval_filter_active": False,
             "retrieval_influence_count": 0,
             "retrieval_influence_total_count": 0,
             "retrieval_receipt_count": 0,

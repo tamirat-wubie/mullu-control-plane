@@ -984,6 +984,7 @@ class NoteMemoryMesh:
                 "memory_anchor_count": len(memory_anchors),
                 "episode_capsule_count": len(episode_capsules),
                 "contradiction_count": len(contradictions),
+                "retrieval_filter_active": bool(retrieval_receipt_filter or retrieval_citing_note_filter),
                 "retrieval_influence_count": len(retrieval_influence),
                 "retrieval_influence_total_count": len(retrieval_influence_rows),
                 "retrieval_receipt_count": len(retrieval_receipts),

@@ -213,6 +213,7 @@ def _note_summary(
     memory_anchor_count: int = 0,
     episode_capsule_count: int = 0,
     contradiction_count: int = 0,
+    retrieval_filter_active: bool = False,
     retrieval_influence_count: int = 0,
     retrieval_influence_total_count: int = 0,
     retrieval_receipt_count: int = 0,
@@ -232,6 +233,7 @@ def _note_summary(
         memory_anchor_count=memory_anchor_count,
         episode_capsule_count=episode_capsule_count,
         contradiction_count=contradiction_count,
+        retrieval_filter_active=retrieval_filter_active,
         retrieval_influence_count=retrieval_influence_count,
         retrieval_influence_total_count=retrieval_influence_total_count,
         retrieval_receipt_count=retrieval_receipt_count,
@@ -250,6 +252,7 @@ class TestNoteMemorySummary:
         assert summary.event_count == 3
         assert summary.pending_promotion_count == 1
         assert summary.episode_capsule_count == 0
+        assert summary.retrieval_filter_active is False
         assert summary.retrieval_influence_count == 0
         assert summary.retrieval_influence_total_count == 0
         assert summary.retrieval_receipt_count == 0
@@ -278,6 +281,10 @@ class TestNoteMemorySummary:
     def test_retrieval_influence_total_must_cover_filtered_count(self) -> None:
         with pytest.raises(ValueError, match="retrieval_influence_total_count"):
             _note_summary(retrieval_influence_count=2, retrieval_influence_total_count=1)
+
+    def test_non_boolean_retrieval_filter_active_raises(self) -> None:
+        with pytest.raises(ValueError, match="retrieval_filter_active"):
+            _note_summary(retrieval_filter_active="true")  # type: ignore[arg-type]
 
     def test_negative_retrieval_receipt_count_raises(self) -> None:
         with pytest.raises(ValueError, match="retrieval_receipt_count"):

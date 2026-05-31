@@ -359,6 +359,7 @@ class DashboardEngine:
             if "retrieval_receipt_total_count" in summary
             else retrieval_receipt_count
         )
+        retrieval_filter_active = _bool_at(summary, "retrieval_filter_active", default=False)
         now = self._clock()
         summary_id = stable_identifier("dash-note-memory", {
             "status": status,
@@ -379,6 +380,7 @@ class DashboardEngine:
             memory_anchor_count=_non_negative_int_at(summary, "memory_anchor_count"),
             episode_capsule_count=_non_negative_int_at(summary, "episode_capsule_count"),
             contradiction_count=_non_negative_int_at(summary, "contradiction_count"),
+            retrieval_filter_active=retrieval_filter_active,
             retrieval_influence_count=retrieval_influence_count,
             retrieval_influence_total_count=retrieval_influence_total_count,
             retrieval_receipt_count=retrieval_receipt_count,
@@ -478,4 +480,11 @@ def _non_negative_int_at(value: Mapping[str, Any], key: str) -> int:
     raw_value = value.get(key, 0)
     if not isinstance(raw_value, int) or isinstance(raw_value, bool) or raw_value < 0:
         raise ValueError(f"{key} must be a non-negative integer")
+    return raw_value
+
+
+def _bool_at(value: Mapping[str, Any], key: str, *, default: bool) -> bool:
+    raw_value = value.get(key, default)
+    if not isinstance(raw_value, bool):
+        raise ValueError(f"{key} must be a boolean")
     return raw_value
