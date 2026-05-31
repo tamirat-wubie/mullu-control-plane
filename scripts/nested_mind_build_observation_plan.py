@@ -21,7 +21,7 @@ MCOI_PATH = REPO_ROOT / "mcoi"
 if str(MCOI_PATH) not in sys.path:
     sys.path.insert(0, str(MCOI_PATH))
 
-from mcoi_runtime.contracts.nested_mind_observation_submission import (  # noqa: E402
+from mcoi_runtime.contracts import (  # noqa: E402
     NestedMindObservationProposalPlan,
     NestedMindObservationProposalPlanStatus,
     NestedMindProposalEvidence,

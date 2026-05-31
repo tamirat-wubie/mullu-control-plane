@@ -22,7 +22,7 @@ MCOI_PATH = REPO_ROOT / "mcoi"
 if str(MCOI_PATH) not in sys.path:
     sys.path.insert(0, str(MCOI_PATH))
 
-from mcoi_runtime.persistence.nested_mind_store import NestedMindEvidenceStore  # noqa: E402
+from mcoi_runtime.persistence import NestedMindEvidenceStore  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:

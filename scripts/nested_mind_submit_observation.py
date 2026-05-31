@@ -28,7 +28,7 @@ from mcoi_runtime.app.nested_mind_integration import (  # noqa: E402
     mount_nested_mind_observation_submitter_from_env,
 )
 from mcoi_runtime.app._integration_paths import env_flag  # noqa: E402
-from mcoi_runtime.contracts.nested_mind_observation_submission import (  # noqa: E402
+from mcoi_runtime.contracts import (  # noqa: E402
     NestedMindObservationProposalPlan,
     NestedMindObservationProposalPlanStatus,
     NestedMindObservationSubmissionReport,
@@ -36,7 +36,7 @@ from mcoi_runtime.contracts.nested_mind_observation_submission import (  # noqa:
     NestedMindProposalEvidence,
 )
 from mcoi_runtime.core.invariants import stable_identifier  # noqa: E402
-from mcoi_runtime.persistence.nested_mind_store import NestedMindEvidenceStore  # noqa: E402
+from mcoi_runtime.persistence import NestedMindEvidenceStore  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:
