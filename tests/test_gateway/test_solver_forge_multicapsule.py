@@ -29,7 +29,6 @@ from gateway.candidate_composer import (
     AdversarialReviewResult,
     CandidateComposer,
     CandidateEvaluation,
-    CandidatePipeline,
     CompositionSpec,
     DeclaredCompositionComposer,
     MethodCapsule,

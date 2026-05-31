@@ -25,15 +25,12 @@ Invariants tested:
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 
 from gateway.candidate_composer import (
     AdversarialReviewResult,
     CandidateComposer,
     CandidateEvaluation,
-    CandidatePipeline,
     MethodCapsule,
 )
 from gateway.candidate_ledger import (
