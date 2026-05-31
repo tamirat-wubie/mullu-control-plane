@@ -291,19 +291,24 @@ def _retrieval_query(query: str) -> tuple[str, tuple[str, ...]]:
 
 
 def _required_promotion_text(entry: Mapping[str, object], field_name: str) -> str:
-    raw_value = entry.get(field_name)
-    text = str(raw_value or "").strip()
+    if field_name not in entry:
+        raise RuntimeCoreInvariantError(f"promotion queue entry missing {field_name}")
+    raw_value = entry[field_name]
+    if not isinstance(raw_value, str):
+        raise RuntimeCoreInvariantError(f"promotion queue entry {field_name} must be a string")
+    text = raw_value.strip()
     if not text:
         raise RuntimeCoreInvariantError(f"promotion queue entry missing {field_name}")
     return text
 
 
 def _required_promotion_int(entry: Mapping[str, object], field_name: str) -> int:
-    text = _required_promotion_text(entry, field_name)
-    try:
-        value = int(text)
-    except ValueError as exc:
-        raise RuntimeCoreInvariantError(f"promotion queue entry {field_name} must be an integer") from exc
+    if field_name not in entry:
+        raise RuntimeCoreInvariantError(f"promotion queue entry missing {field_name}")
+    raw_value = entry[field_name]
+    if not isinstance(raw_value, int) or isinstance(raw_value, bool):
+        raise RuntimeCoreInvariantError(f"promotion queue entry {field_name} must be an integer")
+    value = raw_value
     if value < 1:
         raise RuntimeCoreInvariantError(f"promotion queue entry {field_name} must be positive")
     return value
@@ -313,6 +318,21 @@ def _required_iso_promotion_text(entry: Mapping[str, object], field_name: str) -
     text = _required_promotion_text(entry, field_name)
     _parse_iso(text)
     return text
+
+
+def _promotion_queue_entry(entry: Mapping[str, object]) -> dict[str, object]:
+    promotion_id = _validate_symbol_identifier(_required_promotion_text(entry, "promotion_id"), "promotion_id")
+    source_note_id = _validate_symbol_identifier(_required_promotion_text(entry, "source_note_id"), "source_note_id")
+    source_event_seq = _required_promotion_int(entry, "source_event_seq")
+    source_event_id = _validate_symbol_identifier(_required_promotion_text(entry, "source_event_id"), "source_event_id")
+    queued_at = _required_iso_promotion_text(entry, "queued_at")
+    return {
+        "promotion_id": promotion_id,
+        "source_note_id": source_note_id,
+        "source_event_seq": source_event_seq,
+        "source_event_id": source_event_id,
+        "queued_at": queued_at,
+    }
 
 
 def _canonical_json(value: Mapping[str, object]) -> str:
@@ -1378,26 +1398,13 @@ class NoteMemoryMesh:
     def _promotion_dashboard_row(self, entry: Mapping[str, object]) -> dict[str, object]:
         """Return a bounded operator row for one pending promotion entry."""
 
-        promotion_id = _validate_symbol_identifier(
-            _required_promotion_text(entry, "promotion_id"),
-            "promotion_id",
-        )
-        source_note_id = _validate_symbol_identifier(
-            _required_promotion_text(entry, "source_note_id"),
-            "source_note_id",
-        )
-        source_event_seq = _required_promotion_int(entry, "source_event_seq")
-        source_event_id = _validate_symbol_identifier(
-            _required_promotion_text(entry, "source_event_id"),
-            "source_event_id",
-        )
-        queued_at = _required_iso_promotion_text(entry, "queued_at")
+        queue_entry = _promotion_queue_entry(entry)
         return {
-            "promotion_id": promotion_id,
-            "source_note_id": source_note_id,
-            "source_event_seq": source_event_seq,
-            "source_event_id": source_event_id,
-            "queued_at": queued_at,
+            "promotion_id": queue_entry["promotion_id"],
+            "source_note_id": queue_entry["source_note_id"],
+            "source_event_seq": queue_entry["source_event_seq"],
+            "source_event_id": queue_entry["source_event_id"],
+            "queued_at": queue_entry["queued_at"],
         }
 
     def _draft_to_event(self, draft: NoteMemoryDraft) -> NoteMemoryEvent:
@@ -1580,14 +1587,11 @@ class NoteMemoryMesh:
 
     def _promotion_is_queued(self, promotion_id: str, source_note_id: str, source_event_seq: int) -> bool:
         for entry in self._pending_promotions():
-            try:
-                entry_source_event_seq = int(entry.get("source_event_seq", -1))
-            except (TypeError, ValueError) as exc:
-                raise RuntimeCoreInvariantError("invalid promotion queue source_event_seq") from exc
+            queue_entry = _promotion_queue_entry(entry)
             if (
-                entry.get("promotion_id") == promotion_id
-                and entry.get("source_note_id") == source_note_id
-                and entry_source_event_seq == source_event_seq
+                queue_entry["promotion_id"] == promotion_id
+                and queue_entry["source_note_id"] == source_note_id
+                and queue_entry["source_event_seq"] == source_event_seq
             ):
                 return True
         return False
@@ -1610,7 +1614,12 @@ class NoteMemoryMesh:
                     ) from exc
                 if not isinstance(payload, dict):
                     raise RuntimeCoreInvariantError(f"invalid promotion queue entry at {promotion_path}:{line_number}")
-                entries.append(payload)
+                try:
+                    entries.append(_promotion_queue_entry(payload))
+                except RuntimeCoreInvariantError as exc:
+                    raise RuntimeCoreInvariantError(
+                        f"invalid promotion queue entry at {promotion_path}:{line_number}: {exc}"
+                    ) from exc
         return tuple(entries)
 
     def _append_promotion(self, payload: Mapping[str, object]) -> None:
