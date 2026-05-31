@@ -98,7 +98,11 @@ def _make_routing_outcome(
     )
 
 
-def _note_memory_snapshot(**summary_overrides: object) -> dict[str, object]:
+def _note_memory_snapshot(
+    *,
+    filters: dict[str, object] | None = None,
+    **summary_overrides: object,
+) -> dict[str, object]:
     summary: dict[str, object] = {
         "event_count": 4,
         "active_note_count": 2,
@@ -119,11 +123,14 @@ def _note_memory_snapshot(**summary_overrides: object) -> dict[str, object]:
         "index_proof_state": "Pass",
     }
     summary.update(summary_overrides)
-    return {
+    snapshot: dict[str, object] = {
         "status": "ready",
         "extension": {"state": "mounted"},
         "summary": summary,
     }
+    if filters is not None:
+        snapshot["filters"] = filters
+    return snapshot
 
 
 # ---------------------------------------------------------------------------
@@ -399,6 +406,61 @@ class TestBuildNoteMemorySummary:
         assert summary.retrieval_influence_filtered_out_count == 0
         assert summary.retrieval_receipt_count == 0
         assert summary.retrieval_receipt_filtered_out_count == 0
+
+    def test_builds_note_memory_summary_with_matching_snapshot_filters(self):
+        engine = _make_engine()
+        summary = engine.build_note_memory_summary(
+            _note_memory_snapshot(
+                filters={
+                    "retrieval_receipt_ref": "receipt-1",
+                    "retrieval_citing_note_ref": "note-1",
+                },
+                retrieval_filter_active=True,
+                retrieval_filter_mode="receipt_and_citing_note",
+            )
+        )
+
+        assert summary.retrieval_filter_active is True
+        assert summary.retrieval_filter_mode == "receipt_and_citing_note"
+        assert summary.status == "ready"
+
+    def test_rejects_summary_filter_mode_mismatching_snapshot_filters(self):
+        engine = _make_engine()
+        try:
+            engine.build_note_memory_summary(
+                _note_memory_snapshot(
+                    filters={
+                        "retrieval_receipt_ref": "",
+                        "retrieval_citing_note_ref": "note-1",
+                    },
+                    retrieval_filter_active=True,
+                    retrieval_filter_mode="receipt",
+                )
+            )
+        except ValueError as exc:
+            assert "retrieval_filter_mode" in str(exc)
+            assert "snapshot filters" in str(exc)
+        else:
+            raise AssertionError("retrieval filter mode must match snapshot filters")
+
+    def test_rejects_non_text_snapshot_filter_ref(self):
+        engine = _make_engine()
+        try:
+            engine.build_note_memory_summary(
+                _note_memory_snapshot(
+                    filters={
+                        "retrieval_receipt_ref": 7,
+                        "retrieval_citing_note_ref": "",
+                    },
+                    retrieval_filter_active=True,
+                    retrieval_filter_mode="receipt",
+                )
+            )
+        except ValueError as exc:
+            assert "retrieval_receipt_ref" in str(exc)
+            assert "string" in str(exc)
+        else:
+            raise AssertionError("snapshot retrieval filter refs must be text")
 
     def test_rejects_non_boolean_retrieval_filter_active(self):
         engine = _make_engine()
