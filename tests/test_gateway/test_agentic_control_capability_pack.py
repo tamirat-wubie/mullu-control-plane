@@ -38,7 +38,7 @@ def test_agentic_control_capability_entries_are_schema_valid() -> None:
     payload = _load_json(AGENTIC_CONTROL_CAPABILITY_PACK_PATH)
     entries = payload["capabilities"]
 
-    assert len(entries) == 10
+    assert len(entries) == 12
     assert all(_validate_schema_instance(schema, entry) == [] for entry in entries)
     assert all(CapabilityRegistryEntry.from_mapping(entry).domain == "agentic_control" for entry in entries)
 
@@ -52,7 +52,7 @@ def test_agentic_control_pack_projects_governed_authority_records() -> None:
     evidence_decision = gate.admit(command_id="command-agentic-evidence", intent_name="agentic_control.evidence.append")
 
     assert read_model["capsule_count"] == 1
-    assert read_model["capability_count"] == 10
+    assert read_model["capability_count"] == 12
     assert read_model["production_ready_count"] == 0
     assert mission_decision.status.value == "accepted"
     assert evidence_decision.status.value == "accepted"
