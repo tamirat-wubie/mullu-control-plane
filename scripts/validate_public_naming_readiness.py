@@ -359,6 +359,18 @@ def validate_official_clearance_access_log(log_path: Path = OFFICIAL_CLEARANCE_A
         "mullu.dev",
         "getmullu.com",
         "mullu.mullusi.com",
+        "Follow-Up Access Recheck 2026-05-31",
+        "https://tmsearch.uspto.gov/",
+        "https://ipportal.wipo.int/tools/trademarks",
+        "https://www.tmdn.org/tmview/",
+        "HTTP 401 Unauthorized",
+        "DNS name does not exist",
+        "104.21.82.46",
+        "172.67.153.104",
+        "harleigh.ns.cloudflare.com",
+        "leonard.ns.cloudflare.com",
+        "does not satisfy any",
+        "remaining closure requirement",
         "No clearance gate is closed by this log",
     )
     missing_literals = sorted(literal for literal in required_literals if literal not in log_text)
