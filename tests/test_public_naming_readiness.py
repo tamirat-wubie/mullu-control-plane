@@ -79,6 +79,7 @@ from scripts.validate_public_naming_readiness import (  # noqa: E402
 )
 from scripts.report_public_naming_readiness import main as report_public_naming_readiness  # noqa: E402
 from scripts.report_clearance_capture_readiness import (  # noqa: E402
+    build_capture_manifest,
     build_capture_readiness,
     main as report_clearance_capture_readiness,
 )
@@ -342,6 +343,49 @@ def test_clearance_capture_readiness_all_present(tmp_path: Path) -> None:
     assert report["required_files_missing"] == 0
     assert all(gate["status"] == "capture_ready_for_review" for gate in report["gates"])
     assert report["status"] == "capture_ready_for_review"
+
+
+def test_clearance_capture_manifest_maps_source_tasks() -> None:
+    manifest = build_capture_manifest()
+    tasks = {task["required_file"]: task for task in manifest["tasks"]}
+
+    assert manifest["product_name"] == "Mullu Govern"
+    assert manifest["public_paid_launch_allowed"] is False
+    assert manifest["task_count"] == 34
+    assert tasks["uspto-search-mullu-govern.pdf"]["query_or_record"] == "Mullu Govern"
+    assert "https://tmsearch.uspto.gov/" in "\n".join(tasks["uspto-search-mullu-govern.pdf"]["source_refs"])
+    assert tasks["tsdr-99518598.pdf"]["query_or_record"] == "99518598"
+    assert "https://tsdr.uspto.gov/" in "\n".join(tasks["tsdr-99518598.pdf"]["source_refs"])
+    assert tasks["legal-review-decision.pdf"]["gate_impact"] == "non_closing_capture_only"
+
+
+def test_clearance_capture_manifest_output_lists_official_refs(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = report_clearance_capture_readiness(["--capture-manifest"])
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "Mullu Govern Clearance Capture Manifest" in output
+    assert "every task is non-closing capture only" in output
+    assert "uspto-search-mullu-govern.pdf" in output
+    assert "Mullu Govern by Mullusi" in output
+    assert "https://www.wipo.int/reference/en/branddb/" in output
+    assert "https://www.euipo.europa.eu/en/search-ip" in output
+    assert "https://lookup.icann.org/en/lookup" in output
+    assert "STATUS: capture_manifest_ready" in output
+
+
+def test_clearance_capture_manifest_writes_file(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "capture-manifest.md"
+    exit_code = report_clearance_capture_readiness(["--manifest-path", str(manifest_path)])
+    output = manifest_path.read_text(encoding="utf-8")
+
+    assert exit_code == 0
+    assert manifest_path.exists()
+    assert "Mullu Govern Clearance Capture Manifest" in output
+    assert "Task count: 34" in output
+    assert "STATUS: capture_manifest_ready" in output
 
 
 def test_public_naming_transition_plan_outputs_remaining_actions(capsys: pytest.CaptureFixture[str]) -> None:

@@ -74,7 +74,7 @@ Invariants: every listed artifact must exist; paid public launch remains blocked
 | Artifact | Role |
 | --- | --- |
 | `scripts/validate_public_naming_readiness.py` | Primary launch-gate validator |
-| `scripts/report_clearance_capture_readiness.py` | Read-only required-file intake report for remaining clearance gates |
+| `scripts/report_clearance_capture_readiness.py` | Read-only required-file intake report and non-closing capture manifest for remaining clearance gates |
 | `scripts/report_public_naming_readiness.py` | Human-readable readiness report |
 | `scripts/plan_public_naming_transition.py` | Remaining-action planner |
 | `tests/test_public_naming_readiness.py` | Regression tests for naming gates |
@@ -84,6 +84,7 @@ Invariants: every listed artifact must exist; paid public launch remains blocked
 ```powershell
 python .\scripts\validate_public_naming_readiness.py
 python .\scripts\report_clearance_capture_readiness.py
+python .\scripts\report_clearance_capture_readiness.py --capture-manifest
 python .\scripts\report_public_naming_readiness.py
 python .\scripts\plan_public_naming_transition.py
 python -m pytest tests\test_public_naming_readiness.py -q
