@@ -25,6 +25,47 @@ from .invariants import RuntimeCoreInvariantError
 
 SimpleActionKind = Literal["view", "change", "send", "verify"]
 SimpleOutcome = Literal["ready", "needs_review", "blocked"]
+SimpleTaskKind = Literal["review_docs", "update_docs", "notify_support", "verify_artifact"]
+
+
+@dataclass(frozen=True)
+class SimpleTaskTemplate:
+    """Plain task template that hides action and scope details from users."""
+
+    task: SimpleTaskKind
+    label: str
+    default_goal: str
+    action: SimpleActionKind
+    allowed_area: str
+    default_target: str = ""
+
+    def to_dict(self) -> dict[str, str]:
+        """Return a JSON-compatible template."""
+
+        return {
+            "task": self.task,
+            "label": self.label,
+            "default_goal": self.default_goal,
+            "action": self.action,
+            "allowed_area": self.allowed_area,
+            "default_target": self.default_target,
+        }
+
+
+@dataclass(frozen=True)
+class SimpleTaskRequest:
+    """Plain task request that can be converted into a governed action check."""
+
+    task: SimpleTaskKind
+    target: str = ""
+    goal: str = ""
+    actor_id: str = "local-user"
+
+    def validate(self) -> None:
+        """Reject incomplete task requests before governance execution."""
+
+        _require_text(self.task, "task")
+        _require_text(self.actor_id, "actor_id")
 
 
 @dataclass(frozen=True)
@@ -121,6 +162,52 @@ class SimplePlatform:
             boundary_witness_ref=result.boundary_witness_ref,
         )
 
+    def check_task(self, request: SimpleTaskRequest | Mapping[str, object]) -> SimpleActionCheck:
+        """Check one template-backed task without requiring users to pick scope."""
+
+        task_request = _task_request_from_mapping(request) if isinstance(request, Mapping) else request
+        task_request.validate()
+        return self.check_action(_action_request_from_task(task_request))
+
+    @staticmethod
+    def task_templates() -> tuple[SimpleTaskTemplate, ...]:
+        """Return supported simple task templates."""
+
+        return _TASK_TEMPLATES
+
+
+_TASK_TEMPLATES: tuple[SimpleTaskTemplate, ...] = (
+    SimpleTaskTemplate(
+        task="review_docs",
+        label="Review docs",
+        default_goal="Review documentation",
+        action="view",
+        allowed_area="docs/**",
+    ),
+    SimpleTaskTemplate(
+        task="update_docs",
+        label="Update docs",
+        default_goal="Update documentation",
+        action="change",
+        allowed_area="docs/**",
+    ),
+    SimpleTaskTemplate(
+        task="notify_support",
+        label="Notify support",
+        default_goal="Notify support",
+        action="send",
+        allowed_area="support@mullusi.com",
+        default_target="support@mullusi.com",
+    ),
+    SimpleTaskTemplate(
+        task="verify_artifact",
+        label="Verify artifact",
+        default_goal="Verify an artifact",
+        action="verify",
+        allowed_area="**",
+    ),
+)
+
 
 def _build_action(request: SimpleActionRequest) -> ActionSentenceBuilder:
     """Map a plain action onto a governed action sentence builder."""
@@ -216,6 +303,40 @@ def _request_from_mapping(value: Mapping[str, object]) -> SimpleActionRequest:
     )
 
 
+def _task_request_from_mapping(value: Mapping[str, object]) -> SimpleTaskRequest:
+    """Load a simple task request from a JSON-like mapping."""
+
+    return SimpleTaskRequest(
+        task=_task_kind(_required_text(value, "task")),
+        target=str(value.get("target", "")).strip(),
+        goal=str(value.get("goal", "")).strip(),
+        actor_id=str(value.get("actor_id", "local-user")).strip() or "local-user",
+    )
+
+
+def _action_request_from_task(request: SimpleTaskRequest) -> SimpleActionRequest:
+    """Convert a template-backed task into a governed action request."""
+
+    template = _template_for(request.task)
+    target = request.target.strip() or template.default_target
+    if not target:
+        raise RuntimeCoreInvariantError(f"target is required for task: {request.task}")
+    return SimpleActionRequest(
+        goal=request.goal.strip() or template.default_goal,
+        action=template.action,
+        target=target,
+        allowed_area=template.allowed_area,
+        actor_id=request.actor_id,
+    )
+
+
+def _template_for(task: SimpleTaskKind) -> SimpleTaskTemplate:
+    for template in _TASK_TEMPLATES:
+        if template.task == task:
+            return template
+    raise RuntimeCoreInvariantError(f"unsupported task: {task}")
+
+
 def _plain_reason(reason: object) -> str:
     """Translate internal constraint ids into stable plain language."""
 
@@ -234,6 +355,13 @@ def _action_kind(value: str) -> SimpleActionKind:
     if value in {"view", "change", "send", "verify"}:
         return value  # type: ignore[return-value]
     raise RuntimeCoreInvariantError("action must be one of: view, change, send, verify")
+
+
+def _task_kind(value: str) -> SimpleTaskKind:
+    normalized = value.strip().replace("-", "_")
+    if normalized in {"review_docs", "update_docs", "notify_support", "verify_artifact"}:
+        return normalized  # type: ignore[return-value]
+    raise RuntimeCoreInvariantError("task must be one of: review_docs, update_docs, notify_support, verify_artifact")
 
 
 def _required_text(value: Mapping[str, object], field_name: str) -> str:

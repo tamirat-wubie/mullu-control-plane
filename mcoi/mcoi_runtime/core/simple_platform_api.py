@@ -68,6 +68,26 @@ class SimplePlatformRuntime:
                 error=str(exc),
             )
 
+    def check_task(self, request_body: Mapping[str, Any]) -> SimplePlatformEnvelope:
+        """Validate and check one template-backed task request."""
+
+        try:
+            check = self.platform.check_task(request_body)
+            return SimplePlatformEnvelope(
+                governed=True,
+                ok=check.ok_to_continue,
+                status=check.outcome,
+                payload={"check": check.to_dict()},
+            )
+        except (RuntimeCoreInvariantError, KeyError, TypeError, ValueError) as exc:
+            return SimplePlatformEnvelope(
+                governed=True,
+                ok=False,
+                status="rejected",
+                payload={},
+                error=str(exc),
+            )
+
     def action_menu(self) -> SimplePlatformEnvelope:
         """Return the stable simple action vocabulary."""
 
@@ -98,6 +118,7 @@ class SimplePlatformRuntime:
                         "purpose": "Check an allowed artifact before continuing.",
                     },
                 ],
+                "tasks": [template.to_dict() for template in self.platform.task_templates()],
                 "outcomes": [
                     {"outcome": "ready", "label": "Ready"},
                     {"outcome": "needs_review", "label": "Needs review"},

@@ -16,7 +16,7 @@ import json
 from typing import Sequence
 
 from .invariants import RuntimeCoreInvariantError
-from .simple_platform import SimpleActionRequest, SimplePlatform
+from .simple_platform import SimpleActionRequest, SimplePlatform, SimpleTaskRequest
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -41,6 +41,17 @@ def build_parser() -> argparse.ArgumentParser:
     check_parser.add_argument("--actor-id", default="local-user", help="User or surface checking the task")
     check_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
 
+    task_parser = subparsers.add_parser("task", help="Check a common task without choosing action or scope")
+    task_parser.add_argument(
+        "task",
+        choices=("review-docs", "update-docs", "notify-support", "verify-artifact"),
+        help="Common task template",
+    )
+    task_parser.add_argument("--target", help="File, message, or artifact target")
+    task_parser.add_argument("--goal", default="", help="Optional custom goal text")
+    task_parser.add_argument("--actor-id", default="local-user", help="User or surface checking the task")
+    task_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
+
     subparsers.add_parser("start", help="Show the simple platform task menu")
     return parser
 
@@ -60,6 +71,26 @@ def main(argv: Sequence[str] | None = None) -> int:
                 action=args.action,
                 target=args.target,
                 allowed_area=args.allowed_area,
+                actor_id=args.actor_id,
+            )
+        )
+        if args.json:
+            print(
+                json.dumps(
+                    _envelope(check.ok_to_continue, check.outcome, check.to_dict()),
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+            )
+        else:
+            print(_readable_check(check.to_dict()))
+        return 0 if check.outcome == "ready" else 2
+    if args.command == "task":
+        check = SimplePlatform().check_task(
+            SimpleTaskRequest(
+                task=args.task.replace("-", "_"),
+                target=args.target or "",
+                goal=args.goal,
                 actor_id=args.actor_id,
             )
         )
@@ -111,7 +142,9 @@ def _start_text() -> str:
         (
             "Mullu simple mode",
             "Use one command before a task:",
+            "mullu task review-docs --target docs/README.md",
             "mullu check --goal \"Review docs\" --action view --target docs/README.md --allowed-area docs/**",
+            "Common tasks: review-docs, update-docs, notify-support, verify-artifact",
             "Actions: view, change, send, verify",
             "Outcomes: Ready, Needs review, Blocked",
         )

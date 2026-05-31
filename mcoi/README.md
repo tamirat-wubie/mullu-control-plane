@@ -19,6 +19,9 @@ Simple user surface:
 
 ```powershell
 mullu start
+mullu task review-docs --target docs/README.md
+mullu task update-docs --target docs/README.md
+mullu task notify-support
 mullu check --goal "Review docs" --action view --target docs/README.md --allowed-area docs/**
 mullu check --goal "Update docs" --action change --target docs/README.md --allowed-area docs/**
 mullu check --goal "Notify support" --action send --target support@mullusi.com --allowed-area support@mullusi.com
@@ -34,6 +37,7 @@ Simple app surface:
 - `create_simple_platform_fastapi_router(runtime)` mounts stable routes:
   - `GET /api/v1/simple/actions`
   - `POST /api/v1/simple/actions/check`
+  - `POST /api/v1/simple/tasks/check`
 - `build_operational_dashboard_state(..., simple_action_checks=...)` projects
   the same checks into `simple_action_summaries`, `simple_ready_action_refs`,
   `simple_review_action_refs`, and `simple_blocked_action_refs` for dashboard UI

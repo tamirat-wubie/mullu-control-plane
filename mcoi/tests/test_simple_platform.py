@@ -16,7 +16,7 @@ import tomllib
 from pathlib import Path
 
 from mcoi_runtime.core.simple_cli import guarded_main
-from mcoi_runtime.core.simple_platform import SimpleActionRequest, SimplePlatform
+from mcoi_runtime.core.simple_platform import SimpleActionRequest, SimplePlatform, SimpleTaskRequest
 from mcoi_runtime.core.simple_platform_api import SimplePlatformRuntime
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -76,6 +76,43 @@ def test_simple_platform_sends_external_change_to_review() -> None:
     assert check.blocked_reasons == ()
 
 
+def test_simple_platform_task_template_infers_safe_scope() -> None:
+    check = SimplePlatform().check_task(
+        SimpleTaskRequest(
+            task="review_docs",
+            target="docs/README.md",
+            actor_id="simple-task-test",
+        )
+    )
+
+    assert check.outcome == "ready"
+    assert check.ok_to_continue is True
+    assert check.proof_stamp_ref.startswith("proof-")
+    assert check.blocked_reasons == ()
+
+
+def test_simple_platform_task_template_blocks_target_outside_template_scope() -> None:
+    check = SimplePlatform().check_task(
+        {
+            "task": "update-docs",
+            "target": "deploy/config.json",
+            "actor_id": "simple-task-test",
+        }
+    )
+
+    assert check.outcome == "blocked"
+    assert check.ok_to_continue is False
+    assert check.blocked_reasons == ("The target is outside the allowed area.",)
+
+
+def test_simple_platform_task_template_uses_default_target_for_support_notice() -> None:
+    check = SimplePlatform().check_task({"task": "notify-support", "actor_id": "simple-task-test"})
+
+    assert check.outcome == "needs_review"
+    assert check.ok_to_continue is False
+    assert check.review_reasons == ("External changes require approval.",)
+
+
 def test_simple_cli_outputs_readable_ready_result(capsys) -> None:
     exit_code = guarded_main(
         [
@@ -125,6 +162,27 @@ def test_simple_cli_outputs_json_for_review_result(capsys) -> None:
     assert envelope["payload"]["review_reasons"] == ["External changes require approval."]
 
 
+def test_simple_cli_task_template_outputs_ready_result(capsys) -> None:
+    exit_code = guarded_main(
+        [
+            "task",
+            "review-docs",
+            "--target",
+            "docs/README.md",
+            "--actor-id",
+            "simple-cli-test",
+            "--json",
+        ]
+    )
+    envelope = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "ready"
+    assert envelope["payload"]["outcome"] == "ready"
+
+
 def test_simple_platform_api_projects_ready_check() -> None:
     envelope = SimplePlatformRuntime().check_action(
         {
@@ -142,6 +200,22 @@ def test_simple_platform_api_projects_ready_check() -> None:
     assert payload["status"] == "ready"
     assert payload["payload"]["check"]["proof_stamp_ref"].startswith("proof-")
     assert payload["error"] == ""
+
+
+def test_simple_platform_api_projects_template_backed_task() -> None:
+    envelope = SimplePlatformRuntime().check_task(
+        {
+            "task": "review_docs",
+            "target": "docs/README.md",
+            "actor_id": "simple-api-test",
+        }
+    )
+    payload = envelope.to_dict()
+
+    assert payload["governed"] is True
+    assert payload["ok"] is True
+    assert payload["status"] == "ready"
+    assert payload["payload"]["check"]["outcome"] == "ready"
 
 
 def test_simple_platform_api_rejects_invalid_request() -> None:
@@ -162,6 +236,8 @@ def test_simple_platform_api_lists_action_menu() -> None:
     assert payload["ok"] is True
     assert payload["status"] == "listed"
     assert payload["payload"]["actions"][0]["action"] == "view"
+    assert payload["payload"]["tasks"][0]["task"] == "review_docs"
+    assert payload["payload"]["tasks"][2]["default_target"] == "support@mullusi.com"
     assert payload["payload"]["outcomes"][2]["label"] == "Blocked"
 
 

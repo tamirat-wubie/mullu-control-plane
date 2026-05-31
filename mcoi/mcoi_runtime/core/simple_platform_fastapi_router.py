@@ -39,6 +39,11 @@ class SimplePlatformFastAPIAdapter:
 
         return self.runtime.check_action(request_body).to_dict()
 
+    def check_task(self, request_body: Mapping[str, Any]) -> dict[str, Any]:
+        """Handle POST /tasks/check."""
+
+        return self.runtime.check_task(request_body).to_dict()
+
     def action_menu(self) -> dict[str, Any]:
         """Handle GET /actions."""
 
@@ -61,6 +66,12 @@ class SimplePlatformFastAPIAdapter:
                 path=f"{normalized}/actions/check",
                 handler_name="check_action",
                 purpose="check whether a plain task is ready, needs review, or is blocked",
+            ),
+            SimplePlatformRouteSpec(
+                method="POST",
+                path=f"{normalized}/tasks/check",
+                handler_name="check_task",
+                purpose="check a template-backed task without requiring a manual allowed area",
             ),
         )
 
@@ -87,5 +98,9 @@ def create_simple_platform_fastapi_router(runtime: SimplePlatformRuntime, prefix
     @router.post("/actions/check")
     def check_action(request_body: dict[str, Any] = Body(...)):
         return adapter.check_action(request_body)
+
+    @router.post("/tasks/check")
+    def check_task(request_body: dict[str, Any] = Body(...)):
+        return adapter.check_task(request_body)
 
     return router

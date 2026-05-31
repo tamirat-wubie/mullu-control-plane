@@ -33,10 +33,11 @@ def _request(**overrides: object) -> dict[str, object]:
 def test_simple_platform_fastapi_adapter_route_specs_are_stable() -> None:
     specs = SimplePlatformFastAPIAdapter.route_specs()
 
-    assert len(specs) == 2
+    assert len(specs) == 3
     assert [(spec.method, spec.path, spec.handler_name) for spec in specs] == [
         ("GET", "/api/v1/simple/actions", "action_menu"),
         ("POST", "/api/v1/simple/actions/check", "check_action"),
+        ("POST", "/api/v1/simple/tasks/check", "check_task"),
     ]
     assert all(spec.purpose for spec in specs)
 
@@ -48,6 +49,12 @@ def test_simple_platform_runtime_menu_is_plain_and_governed() -> None:
     assert envelope["ok"] is True
     assert envelope["status"] == "listed"
     assert [item["action"] for item in envelope["payload"]["actions"]] == ["view", "change", "send", "verify"]
+    assert [item["task"] for item in envelope["payload"]["tasks"]] == [
+        "review_docs",
+        "update_docs",
+        "notify_support",
+        "verify_artifact",
+    ]
     assert [item["outcome"] for item in envelope["payload"]["outcomes"]] == [
         "ready",
         "needs_review",
@@ -64,6 +71,22 @@ def test_simple_platform_fastapi_adapter_returns_ready_envelope() -> None:
     assert envelope["status"] == "ready"
     assert envelope["payload"]["check"]["title"] == "Ready"
     assert envelope["payload"]["check"]["proof_stamp_ref"].startswith("proof-")
+
+
+def test_simple_platform_fastapi_adapter_returns_task_envelope() -> None:
+    adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
+    envelope = adapter.check_task(
+        {
+            "task": "review_docs",
+            "target": "docs/README.md",
+            "actor_id": "simple-http-test",
+        }
+    )
+
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "ready"
+    assert envelope["payload"]["check"]["title"] == "Ready"
 
 
 def test_simple_platform_fastapi_adapter_returns_review_envelope() -> None:
@@ -92,6 +115,17 @@ def test_simple_platform_fastapi_adapter_rejects_invalid_requests() -> None:
     assert envelope["ok"] is False
     assert envelope["status"] == "rejected"
     assert "action must be one of" in envelope["error"]
+    assert envelope["payload"] == {}
+
+
+def test_simple_platform_fastapi_adapter_rejects_invalid_task() -> None:
+    adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
+    envelope = adapter.check_task({"task": "unknown-task", "target": "docs/README.md"})
+
+    assert envelope["governed"] is True
+    assert envelope["ok"] is False
+    assert envelope["status"] == "rejected"
+    assert "task must be one of" in envelope["error"]
     assert envelope["payload"] == {}
 
 
