@@ -39,6 +39,7 @@ from mcoi_runtime.core.governed_capability_registry import GovernedCapabilityReg
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_CAPSULE_PATHS = (
+    _REPO_ROOT / "capsules" / "agentic_control.json",
     _REPO_ROOT / "capsules" / "browser.json",
     _REPO_ROOT / "capsules" / "communication.json",
     _REPO_ROOT / "capsules" / "connector.json",
@@ -53,6 +54,7 @@ _DEFAULT_CAPSULE_PATHS = (
     _REPO_ROOT / "capsules" / "voice.json",
 )
 _DEFAULT_CAPABILITY_PACK_PATHS = (
+    _REPO_ROOT / "capabilities" / "agentic_control" / "capability_pack.json",
     _REPO_ROOT / "capabilities" / "browser" / "capability_pack.json",
     _REPO_ROOT / "capabilities" / "communication" / "capability_pack.json",
     _REPO_ROOT / "capabilities" / "connector" / "capability_pack.json",
@@ -69,12 +71,16 @@ _DEFAULT_CAPABILITY_PACK_PATHS = (
 _SOFTWARE_DEV_CAPSULE_PATH = _REPO_ROOT / "capsules" / "software_dev.json"
 _SOFTWARE_DEV_CAPABILITY_PACK_PATH = _REPO_ROOT / "capabilities" / "software_dev" / "capability_pack.json"
 _SOFTWARE_DEV_CAPABILITY_MANIFEST_DIR = _REPO_ROOT / "capabilities" / "software_dev" / "manifests"
+_AGENTIC_CONTROL_CAPSULE_PATH = _REPO_ROOT / "capsules" / "agentic_control.json"
+_AGENTIC_CONTROL_CAPABILITY_PACK_PATH = (
+    _REPO_ROOT / "capabilities" / "agentic_control" / "capability_pack.json"
+)
 _GENERAL_AGENT_PLAN_DEFINITIONS = (
     {
         "plane_index": 0,
         "plane_id": "0.governance_core",
         "name": "Governance Core",
-        "capability_prefixes": (),
+        "capability_prefixes": ("agentic_control.",),
         "capability_ids": (),
         "boundary": "identity, tenant, policy, RBAC, budget, rate-limit, approval, audit, and proof gates",
         "evidence_refs": (
@@ -451,6 +457,32 @@ def build_software_dev_capability_admission_gate(
         require_certified=require_certified,
         require_production_ready=require_production_ready,
         capability_manifest_registry_read_model=capability_manifest_registry_read_model,
+        clock=clock,
+    )
+
+
+def load_agentic_control_domain_capsule() -> DomainCapsule:
+    """Load the explicit agentic-control capsule."""
+    return DomainCapsule.from_mapping(_load_object(_AGENTIC_CONTROL_CAPSULE_PATH))
+
+
+def load_agentic_control_capability_entries() -> tuple[CapabilityRegistryEntry, ...]:
+    """Load explicit agentic-control capability entries."""
+    return tuple(_load_capability_pack(_AGENTIC_CONTROL_CAPABILITY_PACK_PATH))
+
+
+def build_agentic_control_capability_admission_gate(
+    *,
+    clock: Callable[[], str],
+    require_certified: bool = True,
+    require_production_ready: bool = False,
+) -> CommandCapabilityAdmissionGate:
+    """Build an admission gate for only the agentic-control capsule."""
+    return build_capability_admission_gate(
+        capsules=(load_agentic_control_domain_capsule(),),
+        capabilities=load_agentic_control_capability_entries(),
+        require_certified=require_certified,
+        require_production_ready=require_production_ready,
         clock=clock,
     )
 

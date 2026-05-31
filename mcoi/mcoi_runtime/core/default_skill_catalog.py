@@ -43,6 +43,7 @@ _POLICY_PRECONDITION_DESCRIPTIONS = {
     "incident": "incident rollback workflow policy permits descriptor selection",
     "release": "release handoff workflow policy permits descriptor selection",
     "telemetry": "telemetry monitoring workflow policy permits descriptor selection",
+    "agentic_control": "agentic control workflow policy permits descriptor selection",
 }
 _CAPABILITY_PRECONDITION_DESCRIPTIONS = {
     "financial": "financial capability family is admitted in the governed registry",
@@ -54,6 +55,7 @@ _CAPABILITY_PRECONDITION_DESCRIPTIONS = {
     "incident": "incident response and recovery capability family is admitted in the governed registry",
     "release": "release management capability family is admitted in the governed registry",
     "telemetry": "telemetry and monitoring capability family is admitted in the governed registry",
+    "agentic_control": "agentic control capability family is admitted in the governed registry",
 }
 
 
@@ -69,6 +71,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _incident_rollback_recovery_skill(),
         _release_handoff_pr_closure_skill(),
         _telemetry_monitoring_triage_skill(),
+        _agentic_control_autonomous_operations_skill(),
     )
 
 
@@ -634,4 +637,118 @@ def _telemetry_monitoring_triage_skill() -> SkillDescriptor:
         ),
         confidence=0.25,
         metadata={**_NO_NEW_AUTHORITY, "risk_floor": "medium"},
+    )
+
+
+def _agentic_control_autonomous_operations_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.autonomous_operations.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic control autonomous operations",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_WRITE,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_mission",
+                name="Define bounded mission",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "mission_contract_hash", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_work",
+                name="Rank autonomous work",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_mission",),
+                input_bindings={"mission_contract_ref": "define_mission.mission_contract_ref"},
+                output_keys=("priority_order_ref", "dependency_blockers", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_governance_gate",
+                name="Evaluate governance gate",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_work",),
+                input_bindings={"priority_order_ref": "rank_work.priority_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_actions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_resource_budget",
+                name="Bound resource budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_governance_gate",),
+                input_bindings={"gate_decision_ref": "evaluate_governance_gate.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "halt_thresholds", "resource_floor"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="analyze_math_algorithm",
+                name="Analyze math and algorithm",
+                action_type="agentic_control.math_algorithm.analyze",
+                depends_on=("bound_resource_budget",),
+                input_bindings={"budget_envelope_ref": "bound_resource_budget.budget_envelope_ref"},
+                output_keys=("algorithm_analysis_ref", "complexity_bound", "failure_modes"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="build_threat_model",
+                name="Build security threat model",
+                action_type="agentic_control.security_threat_model.build",
+                depends_on=("analyze_math_algorithm",),
+                input_bindings={"algorithm_analysis_ref": "analyze_math_algorithm.algorithm_analysis_ref"},
+                output_keys=("threat_model_ref", "mitigation_refs", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="coordinate_swarm",
+                name="Coordinate agent swarm",
+                action_type="agentic_control.swarm.coordinate",
+                depends_on=("build_threat_model",),
+                input_bindings={"threat_model_ref": "build_threat_model.threat_model_ref"},
+                output_keys=("swarm_plan_ref", "role_assignment_hash", "consensus_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_product_management",
+                name="Plan product management",
+                action_type="agentic_control.product_management.plan",
+                depends_on=("coordinate_swarm",),
+                input_bindings={"swarm_plan_ref": "coordinate_swarm.swarm_plan_ref"},
+                output_keys=("product_plan_ref", "success_metrics", "handoff_risks"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_verification",
+                name="Plan verification gates",
+                action_type="agentic_control.verification.plan",
+                depends_on=("plan_product_management",),
+                input_bindings={"product_plan_ref": "plan_product_management.product_plan_ref"},
+                output_keys=("verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="append_evidence",
+                name="Append evidence ledger",
+                action_type="agentic_control.evidence.append",
+                depends_on=("plan_verification",),
+                input_bindings={"verification_plan_ref": "plan_verification.verification_plan_ref"},
+                output_keys=("ledger_record_id", "ledger_record_hash", "lineage_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes mission control, prioritization, governance gating, resource "
+            "bounds, algorithm review, threat modeling, swarm coordination, product "
+            "planning, verification planning, and evidence ledger closure."
+        ),
+        confidence=0.25,
+        metadata={**_NO_NEW_AUTHORITY, "risk_floor": "high", "approval_expected": True},
     )

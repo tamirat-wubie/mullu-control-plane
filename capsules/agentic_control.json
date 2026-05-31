@@ -1,0 +1,31 @@
+{
+  "capsule_id": "agentic_control.autonomous_ops.v0",
+  "domain": "agentic_control",
+  "version": "0.1.0",
+  "ontology_refs": ["ontologies/agentic_control/autonomous_ops.json"],
+  "capability_refs": [
+    "agentic_control.mission.define",
+    "agentic_control.priority.rank",
+    "agentic_control.governance_gate.evaluate",
+    "agentic_control.verification.plan",
+    "agentic_control.resource_budget.bound",
+    "agentic_control.math_algorithm.analyze",
+    "agentic_control.security_threat_model.build",
+    "agentic_control.swarm.coordinate",
+    "agentic_control.product_management.plan",
+    "agentic_control.evidence.append"
+  ],
+  "policy_refs": ["policies/agentic_control/autonomous_ops.policy.json"],
+  "evidence_rules": ["evidence/agentic_control/autonomous_ops.evidence.json"],
+  "approval_rules": ["approval/agentic_control/autonomous_ops.approval.json"],
+  "recovery_rules": ["recovery/agentic_control/autonomous_ops.recovery.json"],
+  "test_fixture_refs": ["tests/fixtures/agentic_control/autonomous_ops"],
+  "read_model_refs": ["read_models/agentic_control/autonomous_ops.json"],
+  "operator_view_refs": ["operator_views/agentic_control/autonomous_ops.json"],
+  "owner_team": "platform-ops",
+  "certification_status": "certified",
+  "metadata": {
+    "purpose": "Certified control-plane capabilities for autonomous mission, governance, verification, resource, security, product, math, swarm, and evidence workflows"
+  },
+  "extensions": {}
+}

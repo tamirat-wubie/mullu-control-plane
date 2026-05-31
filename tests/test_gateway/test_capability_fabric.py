@@ -5,7 +5,9 @@ Dependencies: gateway capability fabric loader and governed capability registry.
 Invariants:
   - Fabric admission remains disabled unless explicitly enabled.
   - Enabled admission requires explicit sources unless default packs are requested.
-  - Checked-in default packs install all certified browser, communication, connector, creative, document, enterprise, financial, computer, messaging, phone, and voice entries.
+  - Checked-in default packs install all certified agentic_control, browser,
+    communication, connector, creative, document, enterprise, financial,
+    computer, messaging, phone, and voice entries.
   - Operator read models expose governed capability records, not raw tool handles.
 """
 
@@ -48,8 +50,8 @@ def test_capability_fabric_env_loader_stays_disabled_without_enable_flag() -> No
     gate = build_capability_admission_gate_from_env(clock=_clock)
 
     assert gate is None
-    assert load_default_domain_capsules()[0].capsule_id == "browser.restricted_ops.v0"
-    assert load_default_capability_entries()[0].capability_id == "browser.open"
+    assert load_default_domain_capsules()[0].capsule_id == "agentic_control.autonomous_ops.v0"
+    assert load_default_capability_entries()[0].capability_id == "agentic_control.mission.define"
 
 
 def test_capability_fabric_env_loader_requires_source_without_default_packs(
@@ -75,14 +77,15 @@ def test_capability_fabric_env_loader_installs_checked_in_default_packs(
 
     assert gate is not None
     read_model = gate.read_model()
-    assert read_model["capsule_count"] == 12
-    assert read_model["capability_count"] == 63
-    assert len(read_model["capability_maturity_assessments"]) == 63
-    assert read_model["capability_maturity_counts"]["C3"] == 61
+    assert read_model["capsule_count"] == 13
+    assert read_model["capability_count"] == 73
+    assert len(read_model["capability_maturity_assessments"]) == 73
+    assert read_model["capability_maturity_counts"]["C3"] == 71
     assert read_model["capability_maturity_counts"]["C6"] == 2
     assert read_model["production_ready_count"] == 2
     assert read_model["autonomy_ready_count"] == 0
     assert {domain["domain"] for domain in read_model["domains"]} == {
+        "agentic_control",
         "browser",
         "communication",
         "computer",
@@ -211,6 +214,7 @@ def test_default_capability_admission_gate_accepts_pack_capabilities() -> None:
         command_id="command-18",
         intent_name="deployment.witness.publish.with_approval",
     )
+    agentic_decision = gate.admit(command_id="command-20", intent_name="agentic_control.mission.define")
     rejected_decision = gate.admit(command_id="command-3", intent_name="gateway.unknown")
 
     assert creative_decision.status.value == "accepted"
@@ -247,6 +251,8 @@ def test_default_capability_admission_gate_accepts_pack_capabilities() -> None:
     assert deployment_collect_decision.domain == "deployment"
     assert deployment_publish_decision.status.value == "accepted"
     assert deployment_publish_decision.owner_team == "platform-ops"
+    assert agentic_decision.status.value == "accepted"
+    assert agentic_decision.domain == "agentic_control"
     assert rejected_decision.status.value == "rejected"
     assert rejected_decision.capability_id == ""
 
@@ -358,12 +364,14 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     calendar_invite_record = records["calendar.invite"]
     deployment_collect_record = records["deployment.witness.collect"]
     deployment_publish_record = records["deployment.witness.publish.with_approval"]
+    mission_record = records["agentic_control.mission.define"]
+    evidence_record = records["agentic_control.evidence.append"]
     planes = {
         plane["plane_id"]: plane
         for plane in gate.read_model()["general_agent_planes"]
     }
 
-    assert len(records) == 63
+    assert len(records) == 73
     assert payment_capability["maturity_assessment"]["maturity_level"] == "C6"
     assert payment_capability["maturity_assessment"]["production_ready"] is True
     assert payment_capability["maturity_assessment"]["autonomy_ready"] is False
@@ -484,7 +492,19 @@ def test_default_read_model_projects_governed_capability_records() -> None:
         "unsigned_witness_published",
         "secret_value_exposed",
     ]
-    assert planes["0.governance_core"]["capability_ids"] == ()
+    assert mission_record["risk_level"] == "low"
+    assert mission_record["read_only"] is True
+    assert mission_record["world_mutating"] is False
+    assert mission_record["requires_approval"] is False
+    assert mission_record["allowed_tools"] == ["agentic_control.mission.define"]
+    assert evidence_record["risk_level"] == "high"
+    assert evidence_record["read_only"] is False
+    assert evidence_record["world_mutating"] is True
+    assert evidence_record["requires_approval"] is True
+    assert evidence_record["receipt_required"] is True
+    assert evidence_record["rollback_or_compensation_required"] is True
+    assert "agentic_control.mission.define" in planes["0.governance_core"]["capability_ids"]
+    assert "agentic_control.evidence.append" in planes["0.governance_core"]["capability_ids"]
     assert "financial.send_payment" in planes["8.financial_effect_plane"]["capability_ids"]
     assert "computer.command.run" in planes["4.computer_control_plane"]["capability_ids"]
     assert "browser.submit" in planes["5.browser_web_plane"]["capability_ids"]
