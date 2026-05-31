@@ -344,6 +344,7 @@ class DashboardEngine:
 
         summary = _mapping_at(note_snapshot, "summary")
         extension = _optional_mapping_at(note_snapshot, "extension")
+        filters = _optional_mapping_at(note_snapshot, "filters")
         status = _non_empty_text_at(note_snapshot, "status", default="unknown")
         extension_state = _non_empty_text_at(extension, "state", default="mounted")
         index_proof_state = _non_empty_text_at(summary, "index_proof_state", default="Unknown")
@@ -371,6 +372,10 @@ class DashboardEngine:
         )
         retrieval_filter_active = _bool_at(summary, "retrieval_filter_active", default=False)
         retrieval_filter_mode = _non_empty_text_at(summary, "retrieval_filter_mode", default="unfiltered")
+        if filters:
+            expected_filter_mode = _note_memory_retrieval_filter_mode(filters)
+            if retrieval_filter_mode != expected_filter_mode:
+                raise ValueError("retrieval_filter_mode must match note-memory snapshot filters")
         now = self._clock()
         summary_id = stable_identifier("dash-note-memory", {
             "status": status,
@@ -502,3 +507,22 @@ def _bool_at(value: Mapping[str, Any], key: str, *, default: bool) -> bool:
     if not isinstance(raw_value, bool):
         raise ValueError(f"{key} must be a boolean")
     return raw_value
+
+
+def _note_memory_retrieval_filter_mode(filters: Mapping[str, Any]) -> str:
+    receipt_ref = _optional_text_at(filters, "retrieval_receipt_ref")
+    citing_note_ref = _optional_text_at(filters, "retrieval_citing_note_ref")
+    if receipt_ref and citing_note_ref:
+        return "receipt_and_citing_note"
+    if receipt_ref:
+        return "receipt"
+    if citing_note_ref:
+        return "citing_note"
+    return "unfiltered"
+
+
+def _optional_text_at(value: Mapping[str, Any], key: str) -> str:
+    raw_value = value.get(key, "")
+    if not isinstance(raw_value, str):
+        raise ValueError(f"{key} must be a string")
+    return raw_value.strip()
