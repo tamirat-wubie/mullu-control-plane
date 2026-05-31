@@ -335,6 +335,20 @@ def _promotion_queue_entry(entry: Mapping[str, object]) -> dict[str, object]:
     }
 
 
+def _retrieval_influence_summary_row(row: Mapping[str, object]) -> dict[str, object]:
+    receipt_id = _validate_retrieval_receipt_id(_required_mapping_text(row, "receipt_id"), "receipt_id")
+    citing_event_seq = _required_mapping_int(row, "citing_event_seq")
+    citing_note_id = _validate_symbol_identifier(_required_mapping_text(row, "citing_note_id"), "citing_note_id")
+    cited_at = _required_mapping_text(row, "cited_at")
+    _parse_iso(cited_at)
+    return {
+        "receipt_id": receipt_id,
+        "citing_event_seq": citing_event_seq,
+        "citing_note_id": citing_note_id,
+        "cited_at": cited_at,
+    }
+
+
 def _canonical_json(value: Mapping[str, object]) -> str:
     return json.dumps(dict(value), sort_keys=True, separators=(",", ":"), default=str)
 
@@ -1177,20 +1191,19 @@ class NoteMemoryMesh:
 
         grouped_rows: dict[str, list[dict[str, object]]] = {}
         for row in influence_rows:
-            receipt_id = str(row.get("receipt_id", ""))
-            if not receipt_id:
-                continue
-            grouped_rows.setdefault(receipt_id, []).append(row)
+            normalized = _retrieval_influence_summary_row(row)
+            receipt_id = str(normalized["receipt_id"])
+            grouped_rows.setdefault(receipt_id, []).append(normalized)
 
         summaries: list[dict[str, object]] = []
         for receipt_id, rows in grouped_rows.items():
-            sorted_rows = sorted(rows, key=lambda row: int(row.get("citing_event_seq", 0)), reverse=True)
+            sorted_rows = sorted(rows, key=lambda row: row["citing_event_seq"], reverse=True)
             latest = sorted_rows[0]
             earliest = sorted_rows[-1]
             citing_note_ids: list[str] = []
             for row in sorted_rows:
-                note_id = str(row.get("citing_note_id", ""))
-                if note_id and note_id not in citing_note_ids:
+                note_id = str(row["citing_note_id"])
+                if note_id not in citing_note_ids:
                     citing_note_ids.append(note_id)
             summaries.append(
                 {
@@ -1198,18 +1211,18 @@ class NoteMemoryMesh:
                     "citation_count": len(rows),
                     "citing_note_id_count": len(citing_note_ids),
                     "sample_citing_note_ids": citing_note_ids[:10],
-                    "latest_citing_event_seq": int(latest.get("citing_event_seq", 0)),
-                    "latest_cited_at": str(latest.get("cited_at", "")),
-                    "earliest_cited_at": str(earliest.get("cited_at", "")),
+                    "latest_citing_event_seq": latest["citing_event_seq"],
+                    "latest_cited_at": latest["cited_at"],
+                    "earliest_cited_at": earliest["cited_at"],
                 }
             )
 
         return sorted(
             summaries,
             key=lambda row: (
-                -int(row.get("citation_count", 0)),
-                -int(row.get("latest_citing_event_seq", 0)),
-                str(row.get("receipt_id", "")),
+                -row["citation_count"],
+                -row["latest_citing_event_seq"],
+                row["receipt_id"],
             ),
         )
 
