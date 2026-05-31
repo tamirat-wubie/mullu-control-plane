@@ -228,7 +228,9 @@ def test_decide_rejects_non_software_receipt_review_request() -> None:
     ("metadata_patch", "error_pattern"),
     (
         ({"latest_receipt_id": 7}, r"^latest_receipt_id must be a non-empty string$"),
+        ({"latest_receipt_id": " receipt-open "}, r"^latest_receipt_id must be trimmed text$"),
         ({"evidence_refs": ("evidence:valid", 7)}, r"^evidence_refs\[1\] must be a non-empty string$"),
+        ({"evidence_refs": (" evidence:valid ",)}, r"^evidence_refs\[0\] must be trimmed text$"),
         ({"target_refs": "target:not-array"}, r"^target_refs must be an array$"),
         ({"constraint_refs": ()}, r"^constraint_refs must contain at least one item$"),
     ),
