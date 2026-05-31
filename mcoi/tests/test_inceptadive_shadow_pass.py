@@ -6,6 +6,10 @@ from mcoi_runtime.app.inceptadive_shadow_integration import build_inceptadive_sh
 from mcoi_runtime.core.inceptadive_shadow_gate import decide_shadow_mode
 from mcoi_runtime.core.inceptadive_shadow_light import run_light_shadow_pass
 from mcoi_runtime.core.inceptadive_shadow_preflight import run_strict_preflight
+from mcoi_runtime.core.inceptadive_shadow_posture import (
+    build_shadow_console_summary,
+    build_shadow_health_posture,
+)
 from mcoi_runtime.core.inceptadive_shadow_receipt import create_shadow_receipt
 from mcoi_runtime.core.inceptadive_shadow_scoring import (
     ShadowSuppressionVector,
@@ -14,6 +18,7 @@ from mcoi_runtime.core.inceptadive_shadow_scoring import (
 )
 from mcoi_runtime.core.inceptadive_shadow_types import (
     ShadowContext,
+    ShadowInterrogationConfig,
     ShadowFindingKind,
     ShadowMode,
     ShadowSeverity,
@@ -132,3 +137,45 @@ def test_integration_disabled_returns_off_result() -> None:
     assert result.verdict == ShadowVerdict.CLEAR
     assert receipt is not None
     assert receipt.mode == ShadowMode.OFF
+
+
+def test_shadow_health_posture_is_integrity_bound_and_redacted() -> None:
+    config = ShadowInterrogationConfig(enabled=True, strict_preflight_enabled=True)
+
+    posture = build_shadow_health_posture(
+        config,
+        receipts_enabled=True,
+        dependency_available=True,
+        deep_engine_available=False,
+        created_at="2026-05-31T01:00:00+00:00",
+    )
+
+    assert posture.status == "ready"
+    assert posture.snapshot_hash == posture.expected_snapshot_hash()
+    assert posture.to_dict()["execution_authority"] is False
+    assert posture.to_dict()["raw_request_text_exposed"] is False
+
+
+def test_shadow_console_summary_counts_redacted_recent_activity() -> None:
+    context = _context(
+        "delete production logs",
+        stage=ShadowStage.PREFLIGHT,
+        candidate_action="delete production logs",
+        risk_level=ShadowSeverity.HIGH,
+        external_side_effect=True,
+    )
+    result = run_strict_preflight(context)
+    receipt = create_shadow_receipt(context, result)
+
+    summary = build_shadow_console_summary(
+        ShadowInterrogationConfig(enabled=True),
+        results=(result,),
+        receipts=(receipt,),
+        created_at="2026-05-31T01:00:00+00:00",
+    )
+
+    assert summary.recent_result_count == 1
+    assert summary.receipt_count == 1
+    assert summary.block_recommended_count == 1
+    assert summary.last_result_snapshot_hash == result.snapshot_hash
+    assert summary.to_dict()["private_memory_exposed"] is False
