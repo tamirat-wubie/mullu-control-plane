@@ -221,6 +221,28 @@ def test_runtime_rejects_integer_retrieval_include_hypotheses(tmp_path) -> None:
     assert "include_hypotheses must be a boolean" in rejected["error"]
 
 
+def test_runtime_rejects_non_text_retrieval_scope(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.retrieve_notes({"query": "parser", "scope": 7}).to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "scope must be a string" in rejected["error"]
+
+
+def test_runtime_rejects_non_text_retrieval_now(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.retrieve_notes({"query": "parser", "scope": "task", "now": 12345}).to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "now must be a string" in rejected["error"]
+
+
 def test_runtime_rejected_delta_expiry_and_rebuild_emit_receipts(tmp_path) -> None:
     runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
     runtime.capture_note(_working_note(expires_at="2026-06-01T00:00:00+00:00"))
