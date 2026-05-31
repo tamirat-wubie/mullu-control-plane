@@ -76,6 +76,9 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "munudau",
         "mionaid",
         "mionaidean",
+        "minuta",
+        "minuti",
+        "minutur",
     }
     hour_units = {
         "hour",
@@ -121,6 +124,10 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "awr",
         "oriau",
         "uairean",
+        "klukkustund",
+        "klukkustundir",
+        "siegha",
+        "sieghat",
     }
     day_units = {
         "day",
@@ -164,6 +171,10 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "diwrnodau",
         "latha",
         "laithean",
+        "dag",
+        "daga",
+        "jum",
+        "jiem",
     }
     if unit in minute_units:
         delta = timedelta(minutes=amount)
@@ -544,6 +555,30 @@ def _scottish_gaelic_weekdays() -> dict[str, int]:
     }
 
 
+def _icelandic_weekdays() -> dict[str, int]:
+    return {
+        "manudag": 0,
+        "thridjudag": 1,
+        "midvikudag": 2,
+        "fimmtudag": 3,
+        "fostudag": 4,
+        "laugardag": 5,
+        "sunnudag": 6,
+    }
+
+
+def _maltese_weekdays() -> dict[str, int]:
+    return {
+        "it-tnejn": 0,
+        "it-tlieta": 1,
+        "l-erbgha": 2,
+        "il-hamis": 3,
+        "il-gimgha": 4,
+        "is-sibt": 5,
+        "il-hadd": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -616,6 +651,10 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_welsh_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"gd", "gd-gb"}:
         return _resolve_scottish_gaelic_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"is", "is-is"}:
+        return _resolve_icelandic_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"mt", "mt-mt"}:
+        return _resolve_maltese_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -2045,6 +2084,112 @@ def _resolve_scottish_gaelic_temporal_phrase(
     }:
         return "ambiguous", "temporal_phrase_ambiguous", ""
     if re.fullmatch(r"an ath (diluain|dimairt|diciadain|diardaoin|dihaoine|disathairne|didomhnaich)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_icelandic_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"eftir ([1-9][0-9]*) (minuta|minutur|klukkustund|klukkustundir|dag|daga)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(i dag|a morgun) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "a morgun" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"naesta (manudag|thridjudag|midvikudag|fimmtudag|fostudag|laugardag|sunnudag) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_icelandic_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "i dag",
+        "a morgun",
+        "i kvold",
+        "seinna",
+        "fljotlega",
+        "naestu viku",
+        "naesta manud",
+        "naesta ar",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(
+        r"naesta (manudag|thridjudag|midvikudag|fimmtudag|fostudag|laugardag|sunnudag)",
+        normalized,
+    ):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_maltese_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"fi ([1-9][0-9]*) (minuta|minuti|siegha|sieghat|jum|jiem)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(illum|ghada) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "ghada" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"(it-tnejn|it-tlieta|l-erbgha|il-hamis|il-gimgha|is-sibt|il-hadd) li gej ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_maltese_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "illum",
+        "ghada",
+        "illejla",
+        "aktar tard",
+        "dalwaqt",
+        "il-gimgha d-diehla",
+        "ix-xahar id-diehel",
+        "is-sena d-diehla",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(
+        r"(it-tnejn|it-tlieta|l-erbgha|il-hamis|il-gimgha|is-sibt|il-hadd) li gej",
+        normalized,
+    ):
         return "ambiguous", "temporal_phrase_ambiguous", ""
     return "unsupported", "temporal_phrase_unsupported", ""
 

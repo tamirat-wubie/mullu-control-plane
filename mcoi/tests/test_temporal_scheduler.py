@@ -254,6 +254,8 @@ def test_temporal_phrase_swedish_next_weekday_local_resolves_before_registration
         ("i gceann 2 uair", "ga-IE"),
         ("mewn 2 awr", "cy-GB"),
         ("ann an 2 uair", "gd-GB"),
+        ("eftir 2 klukkustundir", "is-IS"),
+        ("fi 2 sieghat", "mt-MT"),
     ),
 )
 def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
@@ -272,6 +274,35 @@ def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
     scheduled = scheduler.register("sched-1", action)
 
     assert scheduled.execute_at == "2026-05-04T15:00:00+00:00"
+    assert scheduled.action.metadata["temporal_phrase_admission_verdict"] == "exact"
+    assert scheduled.action.metadata["temporal_phrase_admission_reason"] == "temporal_phrase_exact_relative"
+
+
+@pytest.mark.parametrize(
+    ("phrase", "locale", "expected_execute_at"),
+    (
+        ("eftir 2 minuta", "is-IS", "2026-05-04T13:02:00+00:00"),
+        ("eftir 2 dag", "is", "2026-05-06T13:00:00+00:00"),
+        ("fi 2 minuti", "mt-MT", "2026-05-04T13:02:00+00:00"),
+    ),
+)
+def test_temporal_phrase_new_locale_relative_unit_variants_resolve_before_registration(
+    phrase: str,
+    locale: str,
+    expected_execute_at: str,
+) -> None:
+    clock = MutableClock("2026-05-04T13:00:00+00:00")
+    scheduler = _engine(clock)
+    action = _action(
+        execute_at="",
+        temporal_phrase=phrase,
+        temporal_phrase_locale=locale,
+        temporal_phrase_policy="require_exact",
+    )
+
+    scheduled = scheduler.register("sched-1", action)
+
+    assert scheduled.execute_at == expected_execute_at
     assert scheduled.action.metadata["temporal_phrase_admission_verdict"] == "exact"
     assert scheduled.action.metadata["temporal_phrase_admission_reason"] == "temporal_phrase_exact_relative"
 
@@ -307,6 +338,8 @@ def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
         ("amarach 09:30 UTC", "ga"),
         ("yfory 09:30 UTC", "cy"),
         ("a-maireach 09:30 UTC", "gd"),
+        ("a morgun 09:30 UTC", "is"),
+        ("ghada 09:30 UTC", "mt"),
     ),
 )
 def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_registration(
@@ -360,6 +393,8 @@ def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_regi
         ("an chead luan eile 08:15 local", "ga-IE"),
         ("dydd llun nesaf 08:15 local", "cy-GB"),
         ("an ath diluain 08:15 local", "gd-GB"),
+        ("naesta manudag 08:15 local", "is-IS"),
+        ("it-tnejn li gej 08:15 local", "mt-MT"),
     ),
 )
 def test_temporal_phrase_extended_locale_next_weekday_local_resolves_before_registration(
