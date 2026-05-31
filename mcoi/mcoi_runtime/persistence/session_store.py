@@ -41,6 +41,53 @@ def _canonical_checkpoint_json(data: dict[str, Any]) -> str:
         raise ValueError("session checkpoint must be deterministic JSON") from exc
 
 
+def _required_text(payload: dict[str, Any], field_name: str) -> str:
+    value = payload[field_name]
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must be a string")
+    if not value:
+        raise ValueError(f"{field_name} must be non-empty")
+    return value
+
+
+def _required_int(payload: dict[str, Any], field_name: str) -> int:
+    value = payload[field_name]
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ValueError(f"{field_name} must be an integer")
+    return value
+
+
+def _optional_int(payload: dict[str, Any], field_name: str, *, default: int) -> int:
+    value = payload.get(field_name, default)
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ValueError(f"{field_name} must be an integer")
+    return value
+
+
+def _required_float(payload: dict[str, Any], field_name: str) -> float:
+    value = payload[field_name]
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        raise ValueError(f"{field_name} must be a number")
+    return float(value)
+
+
+def _context_messages_tuple(value: Any) -> tuple[dict[str, str], ...]:
+    if value is None:
+        return ()
+    if not isinstance(value, list):
+        raise ValueError("context_messages must be a list")
+    messages: list[dict[str, str]] = []
+    for item in value:
+        if not isinstance(item, dict):
+            raise ValueError("context_messages entries must be objects")
+        role = item.get("role")
+        content = item.get("content")
+        if not isinstance(role, str) or not isinstance(content, str):
+            raise ValueError("context_messages entries require string role and content")
+        messages.append({"role": role, "content": content})
+    return tuple(messages)
+
+
 @dataclass(frozen=True, slots=True)
 class SessionCheckpoint:
     """Serializable snapshot of GovernedSession mutable state."""
@@ -83,15 +130,15 @@ class SessionCheckpoint:
             if stored_hash and stored_hash != expected_hash:
                 return None
             return cls(
-                session_id=payload["session_id"],
-                identity_id=payload["identity_id"],
-                tenant_id=payload["tenant_id"],
-                operations=int(payload["operations"]),
-                llm_calls=int(payload["llm_calls"]),
-                total_cost=float(payload["total_cost"]),
-                context_messages=tuple(payload.get("context_messages", ())),
-                compaction_count=int(payload.get("compaction_count", 0)),
-                checkpoint_at=payload.get("checkpoint_at", ""),
+                session_id=_required_text(payload, "session_id"),
+                identity_id=_required_text(payload, "identity_id"),
+                tenant_id=_required_text(payload, "tenant_id"),
+                operations=_required_int(payload, "operations"),
+                llm_calls=_required_int(payload, "llm_calls"),
+                total_cost=_required_float(payload, "total_cost"),
+                context_messages=_context_messages_tuple(payload.get("context_messages")),
+                compaction_count=_optional_int(payload, "compaction_count", default=0),
+                checkpoint_at=_required_text(payload, "checkpoint_at"),
                 checkpoint_hash=expected_hash,
             )
         except (KeyError, TypeError, ValueError):

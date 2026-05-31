@@ -83,6 +83,54 @@ class TestSessionCheckpoint:
         data = {"session_id": "gs-x", "identity_id": "u1"}  # Missing fields
         assert SessionCheckpoint.from_dict(data) is None
 
+    def test_hashless_string_operations_rejected(self):
+        cp = self._checkpoint()
+        data = cp.to_dict()
+        data.pop("checkpoint_hash")
+        data["operations"] = "5"
+
+        restored = SessionCheckpoint.from_dict(data)
+
+        assert restored is None
+        assert data["operations"] == "5"
+        assert "checkpoint_hash" not in data
+
+    def test_hashless_boolean_llm_calls_rejected(self):
+        cp = self._checkpoint()
+        data = cp.to_dict()
+        data.pop("checkpoint_hash")
+        data["llm_calls"] = True
+
+        restored = SessionCheckpoint.from_dict(data)
+
+        assert restored is None
+        assert data["llm_calls"] is True
+        assert "checkpoint_hash" not in data
+
+    def test_hashless_string_total_cost_rejected(self):
+        cp = self._checkpoint()
+        data = cp.to_dict()
+        data.pop("checkpoint_hash")
+        data["total_cost"] = "0.12"
+
+        restored = SessionCheckpoint.from_dict(data)
+
+        assert restored is None
+        assert data["total_cost"] == "0.12"
+        assert "checkpoint_hash" not in data
+
+    def test_hashless_malformed_context_messages_rejected(self):
+        cp = self._checkpoint()
+        data = cp.to_dict()
+        data.pop("checkpoint_hash")
+        data["context_messages"] = [{"role": "user", "content": 42}]
+
+        restored = SessionCheckpoint.from_dict(data)
+
+        assert restored is None
+        assert data["context_messages"][0]["content"] == 42
+        assert "checkpoint_hash" not in data
+
     def test_context_messages_preserved(self):
         msgs = (
             {"role": "user", "content": "What is 2+2?"},
