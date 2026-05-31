@@ -37,6 +37,15 @@ def test_runtime_capture_retrieve_and_list_events_preserve_governed_envelopes(tm
         _working_note(claim_key="runtime.parser.state", claim_value="ready")
     ).to_dict()
     retrieved = runtime.retrieve_notes({"query": "parser", "scope": "task"}).to_dict()
+    decision = runtime.capture_note(
+        _working_note(
+            kind="DecisionRecord",
+            content_summary="runtime decision cites the parser retrieval receipt",
+            source_ref="test:runtime-decision",
+            expires_at=None,
+            retrieval_receipt_refs=[retrieved["payload"]["receipt"]["receipt_id"]],
+        )
+    ).to_dict()
     listed = runtime.list_events().to_dict()
 
     assert captured["governed"] is True
@@ -49,10 +58,13 @@ def test_runtime_capture_retrieve_and_list_events_preserve_governed_envelopes(tm
     assert retrieved["payload"]["receipt"]["query_terms"] == ["parser"]
     assert retrieved["payload"]["receipt"]["returned_count"] == 1
     assert retrieved["payload"]["receipt"]["returned_note_ids"] == [captured["payload"]["event"]["note_id"]]
-    assert listed["payload"]["count"] == 1
+    assert decision["payload"]["event"]["retrieval_receipt_refs"] == [retrieved["payload"]["receipt"]["receipt_id"]]
+    assert listed["payload"]["count"] == 2
     assert listed["payload"]["events"][0]["note_id"] == captured["payload"]["event"]["note_id"]
     assert listed["payload"]["events"][0]["claim_key"] == "runtime.parser.state"
     assert listed["payload"]["events"][0]["claim_value"] == "ready"
+    assert listed["payload"]["events"][1]["note_id"] == decision["payload"]["event"]["note_id"]
+    assert listed["payload"]["events"][1]["retrieval_receipt_refs"] == [retrieved["payload"]["receipt"]["receipt_id"]]
 
 
 def test_runtime_rejects_invalid_capture_without_persisting(tmp_path) -> None:
