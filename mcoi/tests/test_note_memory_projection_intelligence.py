@@ -13,7 +13,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from mcoi_runtime.core.concept_box_ledger import ConceptBoxLedger, build_note_concept_box
+import pytest
+
+from mcoi_runtime.core.concept_box_ledger import ConceptBoxLedger, build_note_concept_box, build_project_concept_box
 from mcoi_runtime.core.decision_use_receipts import build_decision_use_receipt
 from mcoi_runtime.core.incepta_scoring_adapter import ResonanceLinks, ScoringInput, score_axis_finding
 from mcoi_runtime.core.inceptadive_axis_traversal import DeltaType, TraversalAxis, traverse_concept_box
@@ -33,6 +35,7 @@ from mcoi_runtime.core.note_memory_mesh import (
     TrustZone,
 )
 from mcoi_runtime.core.note_memory_projection import CandidateActionStatus, project_note_memory
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.note_memory_temporal_bridge import build_temporal_candidates
 from mcoi_runtime.core.note_memory_world_state_bridge import bridge_projection_to_world_state
 from mcoi_runtime.core.operational_dashboard_intelligence import (
@@ -228,6 +231,8 @@ def test_decision_receipt_and_bridges_are_deterministic_and_projection_only(tmp_
     assert receipt.snapshot_hash == receipt.expected_snapshot_hash()
     assert blocker_note.note_id in receipt.blocking_note_ids
     assert deploy_note.note_id in receipt.supporting_note_ids
+    assert all(note_id.startswith("note-") for note_id in receipt.blocking_note_ids)
+    assert not any(finding.finding_id in receipt.blocking_note_ids for finding in findings)
     assert any(fact.expected_state_violation for fact in world_facts)
     assert all(candidate.schedule_direct_execution is False for candidate in temporal_candidates)
     assert learning.write_back_required is True
@@ -235,7 +240,15 @@ def test_decision_receipt_and_bridges_are_deterministic_and_projection_only(tmp_
 
 def test_interrogation_queue_targets_blockers_and_dashboard_separates_state(tmp_path) -> None:
     mesh, deploy_note, blocker_note = _capture_projection_notes(tmp_path)
-    boxes = tuple(build_note_concept_box(event) for event in (deploy_note, blocker_note))
+    note_boxes = tuple(build_note_concept_box(event) for event in (deploy_note, blocker_note))
+    project_box = build_project_concept_box(
+        project_id="project-dashboard",
+        project_label="Dashboard deployment",
+        source_events=mesh.list_events(),
+        created_at="2026-05-31T12:00:00+00:00",
+        updated_at="2026-05-31T12:05:00+00:00",
+    )
+    boxes = (*note_boxes, project_box)
     findings = tuple(finding for box in boxes for finding in traverse_concept_box(box).findings)
     projection = project_note_memory(
         mesh.list_events(),
@@ -260,8 +273,22 @@ def test_interrogation_queue_targets_blockers_and_dashboard_separates_state(tmp_
     assert any(task.priority == InterrogationPriority.HIGH for task in tasks)
     assert all(task.execution_allowed is False for task in tasks)
     assert dashboard.workflow_health == WorkflowHealth.REPAIR_REQUIRED
+    assert dashboard.active_project_count == 1
     assert dashboard.blocked_action_ids
     assert dashboard.repair_ids
     assert dashboard.fracture_delta_ids
     assert dashboard.high_intensity_box_ids
     assert dashboard.execution_allowed is False
+
+
+def test_projection_rejects_fracture_finding_without_box_source_lineage(tmp_path) -> None:
+    _, _, blocker_note = _capture_projection_notes(tmp_path)
+    box = build_note_concept_box(blocker_note)
+    finding = next(finding for finding in traverse_concept_box(box).findings if finding.delta_type == DeltaType.FRACTURE)
+
+    with pytest.raises(RuntimeCoreInvariantError, match="source note lineage"):
+        project_note_memory(
+            (blocker_note,),
+            axis_findings=(finding,),
+            assessed_at="2026-05-31T12:05:00+00:00",
+        )

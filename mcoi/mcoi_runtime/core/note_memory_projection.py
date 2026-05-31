@@ -249,7 +249,7 @@ def project_note_memory(
         else:
             inactive_claims.append(claim)
     conflicts = _conflicts_from_events(events)
-    blockers = _blockers_from_claims(active_claims) + _blockers_from_findings(axis_findings)
+    blockers = _blockers_from_claims(active_claims) + _blockers_from_findings(axis_findings, concept_boxes)
     candidate_actions = _candidate_actions_from_claims(active_claims, blockers)
     constructive_delta_ids = tuple(finding.finding_id for finding in axis_findings if finding.delta_type == DeltaType.CONSTRUCTIVE)
     fracture_delta_ids = tuple(finding.finding_id for finding in axis_findings if finding.delta_type == DeltaType.FRACTURE)
@@ -369,16 +369,23 @@ def _blockers_from_claims(claims: Sequence[ProjectedClaim]) -> tuple[ProjectionB
     return tuple(blockers)
 
 
-def _blockers_from_findings(findings: Sequence[AxisFinding]) -> tuple[ProjectionBlocker, ...]:
+def _blockers_from_findings(
+    findings: Sequence[AxisFinding],
+    concept_boxes: Sequence[ConceptBox],
+) -> tuple[ProjectionBlocker, ...]:
+    box_note_ids = {box.box_id: box.source_note_ids for box in concept_boxes}
     blockers: list[ProjectionBlocker] = []
     for finding in findings:
         if finding.delta_type != DeltaType.FRACTURE:
             continue
+        source_note_ids = box_note_ids.get(finding.source_box_id, ())
+        if not source_note_ids:
+            raise RuntimeCoreInvariantError("fracture finding blocker requires Concept Box source note lineage")
         blocker_id = stable_identifier("projection-blocker", {"finding_id": finding.finding_id})
         blockers.append(
             ProjectionBlocker(
                 blocker_id=blocker_id,
-                source_ids=(finding.finding_id,),
+                source_ids=source_note_ids,
                 scope="axis-finding",
                 reason=finding.repair_requirement,
                 severity="high" if finding.suppression.execution_risk >= 0.5 else "medium",
