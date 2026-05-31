@@ -313,13 +313,13 @@ def _execute_operation(
 ) -> dict[str, object]:
     if operation_id == "intent.validate":
         intent = _mapping(payload.get("intent"), "intent")
-        _require_sequence(intent, "scope")
-        _require_sequence(intent, "success_criteria")
+        _require_text_sequence(intent, "scope")
+        _require_text_sequence(intent, "success_criteria")
         return {"result": {"valid": True}, "proof_stamp": _proof_stamp(proof_stamp_id)}
     if operation_id == "action.validate":
         action = _mapping(payload.get("action"), "action")
-        _require_sequence(action, "scope")
-        _require_sequence(action, "proof_obligations")
+        _require_text_sequence(action, "scope")
+        _require_text_sequence(action, "proof_obligations")
         return {"result": {"valid": True}, "proof_stamp": _proof_stamp(proof_stamp_id)}
     if operation_id == "action.gate":
         return _gate_action(payload, proof_stamp_id=proof_stamp_id, decision_ref=decision_ref)
@@ -348,13 +348,13 @@ def _proof_stamp_id_for_call(operation_id: str, payload: Mapping[str, object], c
 def _gate_action(payload: Mapping[str, object], *, proof_stamp_id: str, decision_ref: str) -> dict[str, object]:
     intent = _mapping(payload.get("intent"), "intent")
     action = _mapping(payload.get("action"), "action")
-    intent_scope = tuple(str(item) for item in _require_sequence(intent, "scope"))
-    object_ref = str(action.get("object_ref", ""))
-    action_scope = tuple(str(item) for item in _require_sequence(action, "scope"))
-    proof_obligations = tuple(str(item) for item in _require_sequence(action, "proof_obligations"))
-    side_effects = tuple(str(item) for item in action.get("expected_side_effects", ()))
-    domain = str(action.get("domain", "generic"))
-    operation = str(action.get("operation", ""))
+    intent_scope = _require_text_sequence(intent, "scope")
+    object_ref = _optional_text(action, "object_ref", default="")
+    action_scope = _require_text_sequence(action, "scope")
+    proof_obligations = _require_text_sequence(action, "proof_obligations")
+    side_effects = _optional_text_sequence(action, "expected_side_effects", default=())
+    domain = _optional_text(action, "domain", default="generic")
+    operation = _optional_text(action, "operation", default="")
 
     violated: list[str] = []
     escalations: list[str] = []
@@ -423,3 +423,41 @@ def _require_sequence(value: Mapping[str, object], field_name: str) -> Sequence[
     if not isinstance(sequence, Sequence) or isinstance(sequence, (str, bytes)) or not sequence:
         raise RuntimeCoreInvariantError(f"{field_name} must be a non-empty sequence")
     return sequence
+
+
+def _require_text_sequence(value: Mapping[str, object], field_name: str) -> tuple[str, ...]:
+    sequence = _require_sequence(value, field_name)
+    text_values: list[str] = []
+    for index, item in enumerate(sequence):
+        if not isinstance(item, str):
+            raise RuntimeCoreInvariantError(f"{field_name}[{index}] must be a string")
+        text_values.append(item)
+    return tuple(text_values)
+
+
+def _optional_text_sequence(
+    value: Mapping[str, object],
+    field_name: str,
+    *,
+    default: tuple[str, ...],
+) -> tuple[str, ...]:
+    if field_name not in value:
+        return default
+    sequence = value[field_name]
+    if not isinstance(sequence, Sequence) or isinstance(sequence, (str, bytes)):
+        raise RuntimeCoreInvariantError(f"{field_name} must be a sequence")
+    text_values: list[str] = []
+    for index, item in enumerate(sequence):
+        if not isinstance(item, str):
+            raise RuntimeCoreInvariantError(f"{field_name}[{index}] must be a string")
+        text_values.append(item)
+    return tuple(text_values)
+
+
+def _optional_text(value: Mapping[str, object], field_name: str, *, default: str) -> str:
+    if field_name not in value:
+        return default
+    item = value[field_name]
+    if not isinstance(item, str):
+        raise RuntimeCoreInvariantError(f"{field_name} must be a string")
+    return item
