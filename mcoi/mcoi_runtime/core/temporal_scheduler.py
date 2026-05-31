@@ -59,6 +59,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "minuty",
         "minutu",
         "perc",
+        "dakika",
+        "menit",
     }
     hour_units = {
         "hour",
@@ -80,6 +82,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "hodin",
         "ora",
         "ore",
+        "saat",
+        "jam",
     }
     day_units = {
         "day",
@@ -98,6 +102,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "nap",
         "zi",
         "zile",
+        "gun",
+        "hari",
     }
     if unit in minute_units:
         delta = timedelta(minutes=amount)
@@ -238,6 +244,30 @@ def _romanian_weekdays() -> dict[str, int]:
     }
 
 
+def _turkish_weekdays() -> dict[str, int]:
+    return {
+        "pazartesi": 0,
+        "sali": 1,
+        "carsamba": 2,
+        "persembe": 3,
+        "cuma": 4,
+        "cumartesi": 5,
+        "pazar": 6,
+    }
+
+
+def _indonesian_weekdays() -> dict[str, int]:
+    return {
+        "senin": 0,
+        "selasa": 1,
+        "rabu": 2,
+        "kamis": 3,
+        "jumat": 4,
+        "sabtu": 5,
+        "minggu": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -270,6 +300,10 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_hungarian_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"ro", "ro-ro", "ro-md"}:
         return _resolve_romanian_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"tr", "tr-tr", "tr-cy"}:
+        return _resolve_turkish_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"id", "id-id"}:
+        return _resolve_indonesian_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -723,6 +757,88 @@ def _resolve_romanian_temporal_phrase(
     }:
         return "ambiguous", "temporal_phrase_ambiguous", ""
     if re.fullmatch(r"urmatoarea (luni|marti|miercuri|joi|vineri|sambata|duminica)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_turkish_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"([1-9][0-9]*) (dakika|saat|gun) sonra", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(bugun|yarin) saat ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "yarin" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"gelecek (pazartesi|sali|carsamba|persembe|cuma|cumartesi|pazar) saat ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_turkish_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {"bugun", "yarin", "bu aksam", "sonra", "yakinda", "gelecek hafta", "gelecek ay", "gelecek yil"}:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"gelecek (pazartesi|sali|carsamba|persembe|cuma|cumartesi|pazar)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_indonesian_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"dalam ([1-9][0-9]*) (menit|jam|hari)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(hari ini|besok) pukul ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "besok" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"(senin|selasa|rabu|kamis|jumat|sabtu|minggu) depan pukul ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_indonesian_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {"hari ini", "besok", "nanti malam", "nanti", "segera", "minggu depan", "bulan depan", "tahun depan"}:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"(senin|selasa|rabu|kamis|jumat|sabtu|minggu) depan", normalized):
         return "ambiguous", "temporal_phrase_ambiguous", ""
     return "unsupported", "temporal_phrase_unsupported", ""
 
