@@ -116,6 +116,38 @@ def test_report_ready_for_bound_verified_chain(tmp_path) -> None:
     assert report["next_action"] == "p3_gate_ready_for_operator_review"
 
 
+def test_report_blocks_unbound_verified_records(tmp_path) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    store.record_commit_witness(_witness())
+    store.record_reconciliation_report(
+        NestedMindObservationReconciliationReport(
+            report_id="reconciliation-1",
+            plan_id="plan-1",
+            commit_witness_id="witness-1",
+            mind_id="root",
+            expected_commit_hash="wrong-commit",
+            expected_history_hash="history-hash-1",
+            projection_connector_result_id="projection-result-1",
+            audit_connector_result_id="audit-result-1",
+            replay_connector_result_id=None,
+            status=NestedMindObservationReconciliationStatus.VERIFIED,
+            checked_at=_clock(),
+        )
+    )
+
+    report = module.build_nested_mind_evidence_report(store_path, mind_id="root")
+
+    assert report["status"] == "blocked"
+    assert report["total_records"] == 3
+    assert report["verified_commit_witness_ids"] == ("witness-1",)
+    assert report["verified_reconciliation_report_ids"] == ("reconciliation-1",)
+    assert report["readiness"]["blockers"] == ("verified_causal_chain_missing",)
+    assert report["next_action"] == "reconcile_verified_submission_witness_chain"
+
+
 def test_cli_prints_report_and_returns_blocked_status(tmp_path, capsys) -> None:
     module = _module()
     store_path = tmp_path / "nested-mind.jsonl"
