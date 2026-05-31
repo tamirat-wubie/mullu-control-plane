@@ -161,6 +161,62 @@ def test_p3_readiness_cli_rejects_unexpected_top_level_fields(tmp_path, capsys) 
     assert capsys.readouterr().out == ""
 
 
+def test_p3_readiness_cli_rejects_unsupported_record_type(tmp_path, capsys) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    entry = json.loads(store_path.read_text(encoding="utf-8"))
+    entry["record_type"] = "unknown_record"
+    store_path.write_text(json.dumps(entry, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="unsupported nested-mind evidence record type"):
+        module.main(["--store", str(store_path)])
+    assert capsys.readouterr().out == ""
+
+
+def test_p3_readiness_cli_rejects_record_id_payload_mismatch(tmp_path, capsys) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    entry = json.loads(store_path.read_text(encoding="utf-8"))
+    entry["record_id"] = "tampered-report-id"
+    store_path.write_text(json.dumps(entry, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="record_id payload mismatch"):
+        module.main(["--store", str(store_path)])
+    assert capsys.readouterr().out == ""
+
+
+def test_p3_readiness_cli_rejects_mind_id_payload_mismatch(tmp_path, capsys) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    entry = json.loads(store_path.read_text(encoding="utf-8"))
+    entry["mind_id"] = "tenant-other"
+    store_path.write_text(json.dumps(entry, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="mind_id payload mismatch"):
+        module.main(["--store", str(store_path)])
+    assert capsys.readouterr().out == ""
+
+
+def test_p3_readiness_cli_rejects_mullu_receipt_hash_payload_mismatch(tmp_path, capsys) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_commit_witness(_witness())
+    entry = json.loads(store_path.read_text(encoding="utf-8"))
+    entry["mullu_receipt_hash"] = "tampered-receipt-hash"
+    store_path.write_text(json.dumps(entry, sort_keys=True) + "\n", encoding="utf-8")
+
+    with pytest.raises(CorruptedDataError, match="mullu_receipt_hash payload mismatch"):
+        module.main(["--store", str(store_path)])
+    assert capsys.readouterr().out == ""
+
+
 def test_p3_readiness_passes_for_bound_verified_chain(tmp_path) -> None:
     module = _module()
     store_path = tmp_path / "nested-mind.jsonl"
