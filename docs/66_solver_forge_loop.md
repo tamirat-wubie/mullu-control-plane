@@ -72,6 +72,7 @@ ProblemSignature
 | `gateway/solver_forge_benchmarks.py` | `reference_evaluator`, `run_benchmark`, `BENCHMARKS`, `DUPLICATE_INVOICE_SIGNATURE` | Worked duplicate-invoice benchmark over a labeled fixture with three real detectors. Deterministic; primary metric is F1 so a recall-only trap cannot win. |
 | `gateway/solver_forge_cli.py` | `main`, `build_parser` | Read-and-experiment CLI: list capsules/benchmarks, run a benchmark, preview a forge input. No promote / install / deploy subcommand. |
 | `gateway/solver_forge_capsule_probes.py` | `CapsuleProbeReviewer`, `CompositeAdversarialReviewer`, `DEFAULT_PROBES` | Candidate-specific Gate-2 reviewer: deterministic probes derived from each capsule's declared contract, so different candidates get different findings. Composes with `RedTeamPlatformReviewer`. |
+| `gateway/candidate_ledger_postgres.py` | `PostgresCandidateLedgerStore`, `connect` | Durable Postgres-backed `CandidateLedgerStore`. Append-only, rejects duplicate `record_hash`, mirrors the platform `DatabaseConnection` protocol (injectable, so it is fully testable without a live DB). |
 
 ## Problem signatures
 
@@ -368,10 +369,11 @@ attached to that benchmark without compromising its baseline.
 | `tests/test_gateway/test_solver_forge_cli.py` | 9 | No-promotion subcommand surface, list capsules / benchmarks (incl. domain + family filters), text + JSON run output, unknown-benchmark error, ledger-file write, read-only forge-input preview. |
 | `tests/test_gateway/test_solver_forge_scheduling_benchmark.py` | 6 | Scheduler ground truth (on-time rate), deterministic evaluator, unknown-capsule skip, EDF wins / longest-first anti-pattern refused, winner crosses the bridge, two-benchmark catalog. |
 | `tests/test_gateway/test_solver_forge_capsule_probes.py` | 14 | Each probe (injection / external-state / high-risk-low-oversight) + its mitigation, deterministic candidate-specific findings, starter-catalog calibration, composite union, composer double-gate exclusion, baseline-compromise. |
+| `tests/test_gateway/test_candidate_ledger_postgres.py` | 8 | Schema init, append + byte-faithful roundtrip, duplicate rejection, findings roundtrip, per-signature isolation, status, drop-in `CandidateLedger` backend, clear error without psycopg2 (+ skip-gated real-DB smoke). |
 
 ## Open questions deferred to follow-on work
 
 - **Multi-capsule pipelines.** The default composition is one capsule per pipeline. Multi-capsule pipelines (e.g. OCR -> embedding -> rule check -> reviewer summary) are supported by `CandidatePipeline.capsule_ids` but a real composer subclass that emits non-trivial compositions is not in scope here.
 - **Live-attack candidate probes.** Candidate-specific *contract-level* probes are now implemented (`gateway/solver_forge_capsule_probes.py`, `CapsuleProbeReviewer`). The remaining gap is probes that *execute* live attacks per pipeline (rather than auditing the declared contract); the `AdversarialReviewCallback` seam already supports it.
-- **Ledger durability beyond JSON file.** `InMemoryCandidateLedgerStore` and `JsonFileCandidateLedgerStore` are the only stores; a Postgres-backed store mirroring `plan_ledger` durability is a natural follow-on.
+- **Production ledger-pool wiring.** A Postgres-backed store is now implemented (`gateway/candidate_ledger_postgres.py`, `PostgresCandidateLedgerStore`), testable via an injected connection. The remaining follow-on is wiring it to the platform's production connection pool / migration CLI; the store itself is pool-agnostic (it accepts any `DatabaseConnection`).
 - **Cross-signature learning.** Two signatures with different `signature_hash` values are siblings, not the same problem class. A clustering layer that recognizes "this is the same kind of problem we've seen before" is out of scope; the ledger preserves the evidence to enable it later.
