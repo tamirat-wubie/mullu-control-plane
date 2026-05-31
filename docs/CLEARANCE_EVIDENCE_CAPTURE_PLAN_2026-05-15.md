@@ -46,6 +46,24 @@ Each subdirectory must include:
 2. Raw screenshot/export files from the official source.
 3. A short `decision.md` summarizing whether the evidence is clear, risky, blocked, or inconclusive.
 
+## Intake Validation Rule
+
+Capture readiness is validated with:
+
+```powershell
+python .\scripts\report_clearance_capture_readiness.py --strict
+```
+
+The validator treats a file as ready only when:
+
+1. Required `.pdf` evidence starts with a PDF header and contains a PDF EOF marker.
+2. Required `.md` evidence is UTF-8, substantive, and free of placeholder/pending markers.
+3. Gate-local `decision.md` includes every field listed for that gate in `capture-requirements.json`.
+
+File presence alone is not sufficient. Placeholder decisions remain invalid
+until the required authority records the reviewer, review date, evidence files,
+decision, and launch impact.
+
 ## Gate Capture Matrix
 
 | Gate | Evidence path | Required source | Authority |
@@ -181,6 +199,6 @@ Do not update `docs/public-naming-readiness.json` to close any of the remaining 
 
 STATUS:
   Completeness: 100%
-  Invariants verified: [evidence paths defined, evidence directory scaffolds created, remaining gates stay open, authority requirements explicit, paid public launch remains blocked]
+  Invariants verified: [evidence paths defined, evidence directory scaffolds created, intake file validation defined, remaining gates stay open, authority requirements explicit, paid public launch remains blocked]
   Open issues: [official trademark records, domain ownership packet, legal decision]
   Next action: populate the evidence directories with official source captures and qualified reviewer decisions

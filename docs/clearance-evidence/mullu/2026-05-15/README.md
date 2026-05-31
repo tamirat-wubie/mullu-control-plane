@@ -32,8 +32,19 @@ docs/clearance-evidence/mullu/2026-05-15/CAPTURE_INDEX.md
 docs/clearance-evidence/mullu/2026-05-15/capture-requirements.json
 ```
 
+Readiness is checked with:
+
+```powershell
+python .\scripts\report_clearance_capture_readiness.py --strict
+```
+
+The check requires valid capture files, not only filenames. Required `.pdf`
+artifacts must have PDF file shape, required `.md` artifacts must be substantive
+UTF-8, and each `decision.md` must contain the gate-specific decision fields
+without placeholder or pending markers.
+
 STATUS:
   Completeness: 100%
-  Invariants verified: [evidence root exists, gate directories declared, capture requirements declared, paid public launch remains blocked]
+  Invariants verified: [evidence root exists, gate directories declared, capture requirements declared, capture file validation declared, paid public launch remains blocked]
   Open issues: [official source captures, reviewer decisions, legal decision]
   Next action: populate each gate directory with official source records and signed decisions
