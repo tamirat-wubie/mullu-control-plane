@@ -3,8 +3,8 @@
 Governance scope: autonomous mission control, governance gating, resource
 bounding, verification planning, product planning, swarm coordination,
 interrogation, recursive refinement, memory-admission planning,
-incident-recovery planning, code-change planning, and append-only evidence
-ledger capability boundaries.
+incident-recovery planning, code-change planning, release-handoff planning,
+and append-only evidence ledger capability boundaries.
 Dependencies: gateway capability fabric loader and governed capability contracts.
 Invariants:
   - Agentic-control capabilities grant planning and ledger authority only.
@@ -40,7 +40,7 @@ def test_agentic_control_capability_entries_are_schema_valid() -> None:
     payload = _load_json(AGENTIC_CONTROL_CAPABILITY_PACK_PATH)
     entries = payload["capabilities"]
 
-    assert len(entries) == 15
+    assert len(entries) == 16
     assert all(_validate_schema_instance(schema, entry) == [] for entry in entries)
     assert all(CapabilityRegistryEntry.from_mapping(entry).domain == "agentic_control" for entry in entries)
 
@@ -137,9 +137,9 @@ def test_agentic_control_pack_installs_through_explicit_capability_fabric() -> N
     raw_tool_decision = gate.admit(command_id="cmd-raw-tool", intent_name="agentic_control.raw_tool.execute")
 
     assert capsule.domain == "agentic_control"
-    assert len(entries) == 15
+    assert len(entries) == 16
     assert read_model["capsule_count"] == 1
-    assert read_model["capability_count"] == 15
+    assert read_model["capability_count"] == 16
     assert read_model["domains"] == ({"domain": "agentic_control", "capability_ids": tuple(sorted(capsule.capability_refs))},)
     assert mission_decision.status.value == "accepted"
     assert evidence_decision.status.value == "accepted"
@@ -157,6 +157,7 @@ def test_agentic_control_governed_records_bind_planning_and_ledger_boundaries() 
     memory_record = governed["agentic_control.memory_admission.plan"]
     incident_record = governed["agentic_control.incident_recovery.plan"]
     code_change_record = governed["agentic_control.code_change.plan"]
+    release_handoff_record = governed["agentic_control.release_handoff.plan"]
     evidence_record = governed["agentic_control.evidence.append"]
 
     assert mission_record["read_only"] is True
@@ -195,6 +196,13 @@ def test_agentic_control_governed_records_bind_planning_and_ledger_boundaries() 
         "workspace_file_written",
         "git_state_mutated",
         "test_result_fabricated",
+    ]
+    assert release_handoff_record["read_only"] is True
+    assert release_handoff_record["allowed_roles"] == ["developer"]
+    assert release_handoff_record["forbidden_effects"] == [
+        "git_push_executed",
+        "pull_request_opened",
+        "release_published",
     ]
     assert evidence_record["read_only"] is False
     assert evidence_record["world_mutating"] is True

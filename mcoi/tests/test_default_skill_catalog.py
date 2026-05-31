@@ -105,7 +105,7 @@ def test_default_skill_provider_requirements_match_step_boundaries() -> None:
     )
 
 
-def test_agentic_control_skill_plans_code_change_before_evidence_append() -> None:
+def test_agentic_control_skill_plans_release_handoff_before_evidence_append() -> None:
     descriptor = next(
         descriptor
         for descriptor in default_skill_descriptors()
@@ -115,16 +115,27 @@ def test_agentic_control_skill_plans_code_change_before_evidence_append() -> Non
     action_order = tuple(step.action_type for step in descriptor.steps)
 
     assert "agentic_control.code_change.plan" in action_order
+    assert "agentic_control.release_handoff.plan" in action_order
     assert action_order.index("agentic_control.verification.plan") < action_order.index(
         "agentic_control.code_change.plan"
     )
     assert action_order.index("agentic_control.code_change.plan") < action_order.index(
+        "agentic_control.release_handoff.plan"
+    )
+    assert action_order.index("agentic_control.release_handoff.plan") < action_order.index(
         "agentic_control.evidence.append"
     )
     assert steps["plan_code_change"].depends_on == ("plan_verification",)
-    assert steps["append_evidence"].depends_on == ("plan_code_change",)
+    assert steps["plan_release_handoff"].depends_on == ("plan_code_change",)
+    assert steps["append_evidence"].depends_on == ("plan_release_handoff",)
+    assert steps["plan_release_handoff"].input_bindings["code_change_plan_ref"] == (
+        "plan_code_change.code_change_plan_ref"
+    )
     assert steps["append_evidence"].input_bindings["code_change_plan_ref"] == (
         "plan_code_change.code_change_plan_ref"
+    )
+    assert steps["append_evidence"].input_bindings["release_handoff_plan_ref"] == (
+        "plan_release_handoff.release_handoff_plan_ref"
     )
 
 
