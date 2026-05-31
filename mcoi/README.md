@@ -21,6 +21,7 @@ Invariants:
 mullu start
 mullu start --json
 mullu actions
+mullu outcomes
 mullu workflows
 mullu workflow docs-update --target docs/README.md
 mullu task review-docs --target docs/README.md

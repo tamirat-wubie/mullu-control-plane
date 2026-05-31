@@ -20,6 +20,7 @@ from .simple_platform import SimpleActionRequest, SimplePlatform, SimpleTaskRequ
 from .simple_platform_api import SimplePlatformRuntime
 
 SIMPLE_ACTION_VOCABULARY = frozenset(("view", "change", "send", "verify"))
+SIMPLE_OUTCOME_VOCABULARY = frozenset(("ready", "needs_review", "blocked"))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -60,6 +61,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     actions_parser = subparsers.add_parser("actions", help="List plain action types")
     actions_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
+
+    outcomes_parser = subparsers.add_parser("outcomes", help="List possible simple outcomes")
+    outcomes_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
 
     workflow_parser = subparsers.add_parser("workflow", help="Check a common workflow")
     workflow_parser.add_argument(
@@ -146,6 +150,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(json.dumps(_envelope(True, "listed", {"actions": actions}), sort_keys=True, separators=(",", ":")))
         else:
             print(_readable_actions(actions))
+        return 0
+    if args.command == "outcomes":
+        outcomes = _validated_outcomes(SimplePlatformRuntime().action_menu().to_dict()["payload"]["outcomes"])
+        if args.json:
+            print(json.dumps(_envelope(True, "listed", {"outcomes": outcomes}), sort_keys=True, separators=(",", ":")))
+        else:
+            print(_readable_outcomes(outcomes))
         return 0
     if args.command == "workflow":
         plan = SimplePlatform().check_workflow(
@@ -270,6 +281,43 @@ def _validated_actions(actions: object) -> list[dict[str, str]]:
 
 def _action_menu_text(action: dict[object, object], field_name: str) -> str:
     return _catalog_text(action, "action menu item", field_name)
+
+
+def _readable_outcomes(outcomes: object) -> str:
+    lines = ["Possible outcomes:"]
+    descriptions = {
+        "ready": "The task can continue inside the governed boundary.",
+        "needs_review": "The task needs approval before it continues.",
+        "blocked": "The task cannot continue as requested.",
+    }
+    for outcome in _validated_outcomes(outcomes):
+        outcome_id = outcome["outcome"]
+        lines.append(f"- {outcome_id}: {outcome['label']}")
+        lines.append(f"  meaning: {descriptions.get(outcome_id, 'Review the returned message before continuing.')}")
+    return "\n".join(lines)
+
+
+def _validated_outcomes(outcomes: object) -> list[dict[str, str]]:
+    if not isinstance(outcomes, list):
+        raise RuntimeCoreInvariantError("simple outcome menu must be a list")
+    validated: list[dict[str, str]] = []
+    seen_outcomes: set[str] = set()
+    for outcome in outcomes:
+        if not isinstance(outcome, dict):
+            raise RuntimeCoreInvariantError("simple outcome menu item must be an object")
+        outcome_id = _catalog_text(outcome, "outcome menu item", "outcome")
+        if outcome_id not in SIMPLE_OUTCOME_VOCABULARY:
+            raise RuntimeCoreInvariantError("simple outcome menu item outcome is outside the governed vocabulary")
+        if outcome_id in seen_outcomes:
+            raise RuntimeCoreInvariantError("simple outcome menu item outcome must be unique")
+        seen_outcomes.add(outcome_id)
+        validated.append(
+            {
+                "outcome": outcome_id,
+                "label": _catalog_text(outcome, "outcome menu item", "label"),
+            }
+        )
+    return validated
 
 
 def _readable_workflow(value: dict[str, object]) -> str:

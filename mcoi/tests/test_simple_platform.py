@@ -20,6 +20,7 @@ import pytest
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.simple_cli import (
     _readable_actions,
+    _readable_outcomes,
     _readable_tasks,
     _readable_workflows,
     guarded_main,
@@ -448,6 +449,29 @@ def test_simple_cli_lists_actions_as_json(capsys) -> None:
     assert envelope["payload"]["actions"][2]["label"] == "Send"
 
 
+def test_simple_cli_lists_outcomes_as_readable_catalog(capsys) -> None:
+    exit_code = guarded_main(["outcomes"])
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "Possible outcomes:" in output
+    assert "- ready: Ready" in output
+    assert "meaning: The task can continue inside the governed boundary." in output
+    assert "- blocked: Blocked" in output
+
+
+def test_simple_cli_lists_outcomes_as_json(capsys) -> None:
+    exit_code = guarded_main(["outcomes", "--json"])
+    envelope = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "listed"
+    assert envelope["payload"]["outcomes"][0]["outcome"] == "ready"
+    assert envelope["payload"]["outcomes"][1]["label"] == "Needs review"
+
+
 @pytest.mark.parametrize(
     ("actions", "message"),
     (
@@ -471,6 +495,28 @@ def test_simple_cli_lists_actions_as_json(capsys) -> None:
 def test_simple_cli_rejects_loose_action_catalog_entries(actions: object, message: str) -> None:
     with pytest.raises(RuntimeCoreInvariantError, match=message):
         _readable_actions(actions)
+
+
+@pytest.mark.parametrize(
+    ("outcomes", "message"),
+    (
+        ([{"label": "Ready"}], "simple outcome menu item outcome must be text"),
+        ([{"outcome": " ready ", "label": "Ready"}], "simple outcome menu item outcome must be trimmed text"),
+        ([{"outcome": "ready", "label": 7}], "simple outcome menu item label must be text"),
+        ([{"outcome": "ready", "label": ""}], "simple outcome menu item label must be non-empty text"),
+        (
+            [{"outcome": "deferred", "label": "Deferred"}],
+            "simple outcome menu item outcome is outside the governed vocabulary",
+        ),
+        (
+            [{"outcome": "ready", "label": "Ready"}, {"outcome": "ready", "label": "Ready"}],
+            "simple outcome menu item outcome must be unique",
+        ),
+    ),
+)
+def test_simple_cli_rejects_loose_outcome_catalog_entries(outcomes: object, message: str) -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match=message):
+        _readable_outcomes(outcomes)
 
 
 def test_simple_cli_workflow_outputs_ready_result(capsys) -> None:
