@@ -198,6 +198,17 @@ def _validate_symbol_identifier(value: str, field_name: str) -> str:
     return text
 
 
+def _validate_retrieval_receipt_id(value: str, field_name: str = "retrieval_receipt_ref") -> str:
+    text = _validate_symbol_identifier(str(value), field_name)
+    if not text.startswith("note-retrieval-"):
+        raise RuntimeCoreInvariantError(f"{field_name} must reference a note retrieval receipt")
+    return text
+
+
+def _validate_retrieval_receipt_refs(values: Iterable[str]) -> tuple[str, ...]:
+    return _unique_text_tuple(_validate_retrieval_receipt_id(value) for value in values)
+
+
 def _validate_optional_claim(claim_key: str, claim_value: str) -> tuple[str, str]:
     key = str(claim_key or "").strip()
     value = str(claim_value or "").strip()
@@ -371,6 +382,11 @@ class NoteMemoryEvent:
             raise RuntimeCoreInvariantError("promote action requires ProofState Pass")
         if self.action in {NoteAction.SUPERSEDE, NoteAction.CONTRADICT} and not self.relation_refs:
             raise RuntimeCoreInvariantError(f"{self.action.value} action requires relation_refs")
+        object.__setattr__(
+            self,
+            "retrieval_receipt_refs",
+            _validate_retrieval_receipt_refs(self.retrieval_receipt_refs),
+        )
         claim_key, claim_value = _validate_optional_claim(self.claim_key, self.claim_value)
         object.__setattr__(self, "claim_key", claim_key)
         object.__setattr__(self, "claim_value", claim_value)
@@ -515,6 +531,9 @@ class RetrievalReceipt:
     returned_event_ids: tuple[str, ...]
     snapshot_hash: str
     proof_state: ProofState
+
+    def __post_init__(self) -> None:
+        _validate_retrieval_receipt_id(self.receipt_id, "receipt_id")
 
 
 @dataclass(frozen=True)

@@ -219,6 +219,65 @@ def test_captured_decision_can_cite_retrieval_receipt_without_mutating_read(tmp_
     assert snapshot["recent_notes"][0]["retrieval_receipt_refs"] == [result.receipt.receipt_id]
 
 
+def test_capture_rejects_malformed_retrieval_receipt_refs_without_persisting(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+
+    with pytest.raises(RuntimeCoreInvariantError, match="retrieval_receipt_ref must reference a note retrieval receipt"):
+        mesh.capture_note(
+            NoteMemoryDraft(
+                kind=NoteKind.DECISION_RECORD,
+                scope=NoteScope.TASK,
+                content_summary="Decision must not cite arbitrary retrieval influence text",
+                source_ref="test:malformed-retrieval-ref",
+                proof_state=ProofState.PASS,
+                trust_zone=TrustZone.WORKSPACE,
+                evidence_refs=("test_capture_rejects_malformed_retrieval_receipt_refs_without_persisting",),
+                retrieval_receipt_refs=("manual-note-ref",),
+            )
+        )
+
+    assert mesh.event_count == 0
+
+
+def test_capture_deduplicates_retrieval_receipt_refs(tmp_path) -> None:
+    clock = MutableClock("2026-05-01T00:00:00+00:00")
+    mesh = _mesh(tmp_path, clock)
+    source = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.WORKING_NOTE,
+            scope=NoteScope.TASK,
+            content_summary="parser strategy note for duplicate retrieval reference capture",
+            source_ref="test:retrieval-duplicate-source",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            expires_at="2026-05-03T00:00:00+00:00",
+            evidence_refs=("test_capture_deduplicates_retrieval_receipt_refs",),
+        )
+    )
+    result = mesh.retrieve_notes_with_receipt(
+        "duplicate retrieval",
+        RetrievalGuard(scope=NoteScope.TASK, now="2026-05-01T00:00:00+00:00"),
+    )
+
+    decision = mesh.capture_note(
+        NoteMemoryDraft(
+            kind=NoteKind.DECISION_RECORD,
+            scope=NoteScope.TASK,
+            content_summary="Decision cites one retrieval receipt once after deduplication",
+            source_ref="test:retrieval-duplicate-decision",
+            proof_state=ProofState.PASS,
+            trust_zone=TrustZone.WORKSPACE,
+            evidence_refs=("test_capture_deduplicates_retrieval_receipt_refs",),
+            retrieval_receipt_refs=(result.receipt.receipt_id, result.receipt.receipt_id),
+        )
+    )
+
+    assert result.receipt.returned_note_ids == (source.note_id,)
+    assert decision.retrieval_receipt_refs == (result.receipt.receipt_id,)
+    assert mesh.event_count == 2
+
+
 def test_retrieval_receipt_bounds_query_text(tmp_path) -> None:
     clock = MutableClock("2026-05-01T00:00:00+00:00")
     mesh = _mesh(tmp_path, clock)
