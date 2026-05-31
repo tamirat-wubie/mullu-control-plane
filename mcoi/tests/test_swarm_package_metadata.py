@@ -50,6 +50,9 @@ def test_package_readme_documents_simple_platform_surface() -> None:
     text = (ROOT / "mcoi" / "README.md").read_text(encoding="utf-8")
 
     assert "Governance scope" in text
+    assert "Workspace boundary" in text
+    assert "compact support/runtime surface" in text
+    assert "governed import plan" in text
     assert "mullu check" in text
     assert "mullu start --json" in text
     assert "mullu actions" in text
