@@ -217,6 +217,8 @@ def test_temporal_phrase_swedish_next_weekday_local_resolves_before_registration
         ("za 2 sata", "bs-BA"),
         ("za 2 chasa", "mk-MK"),
         ("pas 2 oresh", "sq-AL"),
+        ("se 2 ores", "el-GR"),
+        ("2 tundi parast", "et-EE"),
     ),
 )
 def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
@@ -264,6 +266,8 @@ def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
         ("sutra u 09:30 UTC", "bs"),
         ("utre vo 09:30 UTC", "mk"),
         ("neser ne 09:30 UTC", "sq-XK"),
+        ("avrio stis 09:30 UTC", "el-CY"),
+        ("homme kell 09:30 UTC", "et"),
     ),
 )
 def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_registration(
@@ -311,6 +315,8 @@ def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_regi
         ("sljedeci ponedjeljak u 08:15 local", "bs-BA"),
         ("sleden ponedelnik vo 08:15 local", "mk-MK"),
         ("te henen e ardhshme ne 08:15 local", "sq-AL"),
+        ("tin epomeni deftera stis 08:15 local", "el-GR"),
+        ("jargmisel esmaspaeval kell 08:15 local", "et-EE"),
     ),
 )
 def test_temporal_phrase_extended_locale_next_weekday_local_resolves_before_registration(
