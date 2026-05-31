@@ -286,6 +286,7 @@ def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
         ("eftir 2 minuta", "is-IS", "2026-05-04T13:02:00+00:00"),
         ("eftir 2 dag", "is", "2026-05-06T13:00:00+00:00"),
         ("fi 2 minuti", "mt-MT", "2026-05-04T13:02:00+00:00"),
+        ("an 1 minutt", "lb-LU", "2026-05-04T13:01:00+00:00"),
         ("an 2 minutten", "lb-LU", "2026-05-04T13:02:00+00:00"),
         ("an 2 deeg", "lb", "2026-05-06T13:00:00+00:00"),
         ("en 2 minutos", "gl-ES", "2026-05-04T13:02:00+00:00"),
