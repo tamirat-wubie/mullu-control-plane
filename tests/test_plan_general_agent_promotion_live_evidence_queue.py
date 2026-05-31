@@ -1,14 +1,14 @@
 """Tests for general-agent promotion live-evidence queue planning.
 
 Purpose: prove aggregate promotion actions are classified into runnable,
-approval-bound, environment-bound, execution-environment-bound, and review-only
-queue items.
+approval-bound, environment-bound, execution-environment-bound,
+dependency-bound, and review-only queue items.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: scripts.plan_general_agent_promotion_live_evidence_queue.
 Invariants:
   - Queue planning never serializes secret values.
-  - Missing bindings, uncontracted bindings, manual parameters, and execution
-    environment blockers are explicit.
+  - Missing bindings, uncontracted bindings, manual parameters, dependency
+    actions, and execution environment blockers are explicit.
   - Schema validation covers the emitted queue artifact.
 """
 
@@ -80,6 +80,28 @@ def test_live_evidence_queue_exposes_missing_receipt_and_uncontracted_bindings(t
     assert "OPENAI_API_KEY" in actions["voice-secret"].missing_bindings
     assert "binding_not_in_environment_contract:OPENAI_API_KEY" in actions["voice-secret"].blocked_reasons
     assert queue.missing_binding_count >= 1
+    assert validate_general_agent_promotion_live_evidence_queue(queue) == ()
+
+
+def test_live_evidence_queue_blocks_live_receipt_until_dependency_closes(tmp_path: Path) -> None:
+    plan_path = _write_promotion_plan(tmp_path, include_voice_dependency=True)
+    contract_path = _write_environment_contract(tmp_path)
+    receipt_path = _write_environment_receipt(tmp_path, present_names=_CONTRACT_NAMES)
+
+    queue = plan_general_agent_promotion_live_evidence_queue(
+        promotion_plan_path=plan_path,
+        environment_bindings_path=contract_path,
+        environment_binding_receipt_path=receipt_path,
+    )
+    actions = {action.source_action_id: action for action in queue.actions}
+
+    assert queue.ready_to_execute is False
+    assert queue.runnable_action_count == 1
+    assert queue.blocked_action_count == 4
+    assert actions["voice-live"].execution_class == "requires_dependency_closure"
+    assert actions["voice-live"].dependent_action_ids == ("voice-secret",)
+    assert "dependency_action_requires_closure:voice-secret" in actions["voice-live"].blocked_reasons
+    assert "dependency_action_requires_closure:voice-secret" in queue.blocked_reasons
     assert validate_general_agent_promotion_live_evidence_queue(queue) == ()
 
 

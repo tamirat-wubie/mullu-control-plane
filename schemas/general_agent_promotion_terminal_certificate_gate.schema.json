@@ -168,6 +168,7 @@
             "runnable_local",
             "requires_environment_binding",
             "requires_execution_environment",
+            "requires_dependency_closure",
             "requires_approval",
             "approval_and_environment_blocked",
             "review_only"
@@ -179,6 +180,7 @@
             "admitted_runnable",
             "admitted_approved",
             "blocked_environment",
+            "blocked_dependency",
             "blocked_approval",
             "blocked_approval_and_environment",
             "blocked_invalid_queue_item"

@@ -147,6 +147,7 @@
         "missing_bindings",
         "uncontracted_bindings",
         "manual_parameters",
+        "dependent_action_ids",
         "blocked_reasons",
         "command",
         "evidence_required",
@@ -183,6 +184,7 @@
             "runnable_local",
             "requires_environment_binding",
             "requires_execution_environment",
+            "requires_dependency_closure",
             "requires_approval",
             "approval_and_environment_blocked",
             "review_only"
@@ -213,6 +215,13 @@
           }
         },
         "manual_parameters": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "dependent_action_ids": {
           "type": "array",
           "items": {
             "type": "string",

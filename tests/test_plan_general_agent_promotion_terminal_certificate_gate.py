@@ -52,7 +52,8 @@ def test_terminal_certificate_gate_admits_only_runnable_and_approved_items(tmp_p
     assert actions["document-live"].terminal_gate_status == "admitted_runnable"
     assert actions["deploy-publish"].terminal_gate_status == "admitted_approved"
     assert actions["portfolio-review"].terminal_gate_status == "admitted_approved"
-    assert actions["voice-live"].terminal_gate_status == "blocked_environment"
+    assert actions["voice-live"].terminal_gate_status == "blocked_dependency"
+    assert "dependency_action_requires_closure:voice-secret" in actions["voice-live"].blocked_reasons
     assert actions["browser-sandbox"].terminal_gate_status == "blocked_environment"
     assert "execution_environment_unmet:browser_sandbox_runner_linux_only" in actions["browser-sandbox"].blocked_reasons
     assert actions["deploy-blocked"].terminal_gate_status == "blocked_approval_and_environment"
@@ -183,10 +184,10 @@ def _write_queue(tmp_path: Path) -> Path:
                 "runnable_action_count": 1,
                 "blocked_action_count": 5,
                 "approval_required_action_count": 3,
-                "missing_binding_count": 2,
-                "missing_bindings": ["MULLU_VOICE_PROBE_AUDIO", "MULLU_GATEWAY_URL"],
+                "missing_binding_count": 1,
+                "missing_bindings": ["MULLU_GATEWAY_URL"],
                 "blocked_reasons": [
-                    "environment_binding_missing:MULLU_VOICE_PROBE_AUDIO",
+                    "dependency_action_requires_closure:voice-secret",
                     "environment_binding_missing:MULLU_GATEWAY_URL",
                     "execution_environment_unmet:browser_sandbox_runner_linux_only",
                 ],
@@ -196,10 +197,11 @@ def _write_queue(tmp_path: Path) -> Path:
                     _queue_action("portfolio-review", "review_only", True, "portfolio"),
                     _queue_action(
                         "voice-live",
-                        "requires_environment_binding",
+                        "requires_dependency_closure",
                         False,
                         "adapter",
-                        blocked_reasons=["environment_binding_missing:MULLU_VOICE_PROBE_AUDIO"],
+                        blocked_reasons=["dependency_action_requires_closure:voice-secret"],
+                        dependent_action_ids=["voice-secret"],
                     ),
                     _queue_action(
                         "browser-sandbox",
@@ -239,6 +241,7 @@ def _queue_action(
     source_plan_type: str,
     *,
     blocked_reasons: list[str] | None = None,
+    dependent_action_ids: list[str] | None = None,
 ) -> dict[str, object]:
     return {
         "queue_item_id": f"live-evidence-queue-item-01-{source_action_id}",
@@ -252,6 +255,7 @@ def _queue_action(
         "missing_bindings": [],
         "uncontracted_bindings": [],
         "manual_parameters": [],
+        "dependent_action_ids": dependent_action_ids or [],
         "blocked_reasons": blocked_reasons or [],
         "command": f"Run {source_action_id}.",
         "evidence_required": [f"evidence:{source_action_id}"],

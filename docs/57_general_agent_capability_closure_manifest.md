@@ -19,7 +19,7 @@ The current build moves Mullu from prompt-only extension toward governed capabil
 | Measure | Value |
 | --- | ---: |
 | Capability capsules | 13 capsules |
-| Governed capabilities | 75 capabilities |
+| Governed capabilities | 77 capabilities |
 | Promotion readiness level | `pilot-governed-core` |
 
 The closure boundary is precise:
@@ -152,8 +152,8 @@ The live-evidence queue planning path is:
 
 1. Load `.change_assurance/general_agent_promotion_closure_plan.json`.
 2. Load the environment binding contract and redacted binding receipt.
-3. Classify each closure action as runnable, environment-bound, execution-environment-bound, approval-bound, approval-and-environment-blocked, or review-only.
-4. Preserve missing bindings, uncontracted bindings, manual parameters, and execution-environment requirements without serializing values.
+3. Classify each closure action as runnable, environment-bound, execution-environment-bound, dependency-bound, approval-bound, approval-and-environment-blocked, or review-only.
+4. Preserve missing bindings, uncontracted bindings, manual parameters, dependent action ids, and execution-environment requirements without serializing values.
 5. Write `.change_assurance/general_agent_promotion_live_evidence_queue.json` without executing actions.
 
 The terminal approval receipt validation path is:
@@ -170,7 +170,7 @@ The terminal certificate gate planning path is:
 2. Load optional explicit approval refs from `.change_assurance/general_agent_promotion_terminal_approvals.json` only through the terminal approval validator.
 3. Admit `runnable_local` queue items directly.
 4. Admit approval-bound queue items only when an approved ref exists.
-5. Block environment-bound items even when approval refs exist.
+5. Block environment-bound and dependency-bound items even when approval refs exist.
 6. Write `.change_assurance/general_agent_promotion_terminal_certificate_gate.json` without minting terminal closure certificates.
 
 The terminal certificate candidate planning path is:
@@ -252,7 +252,7 @@ The generated readiness artifact reported:
 
 ```text
 readiness_level: pilot-governed-core
-capability_count: 75
+capability_count: 77
 capsule_count: 13
 ```
 
