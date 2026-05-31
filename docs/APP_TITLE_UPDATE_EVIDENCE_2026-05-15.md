@@ -1,9 +1,9 @@
 # App Title Update Evidence 2026-05-15
 
-Purpose: record that user-facing application title surfaces use `Mullu` and do not use blocked generic product names.
+Purpose: record that user-facing product title surfaces use `Mullu Govern` while suite/operator titles may keep `Mullu`, and blocked generic product names are absent.
 Governance scope: HTML/operator console titles, product route title, app-facing title boundary, and technical title exclusions.
 Dependencies: `site/mullu/index.html`, `gateway/server.py`, `gateway/operator_capability_console.py`, `docs/SDK_API_STABILITY_REVIEW_2026-05-15.md`.
-Invariants: user-facing app titles use `Mullu`; `Mullu Platform` remains allowed only for SDK/API/runtime technical contracts.
+Invariants: product-facing first-reference title uses `Mullu Govern`; suite/operator surfaces may use `Mullu` where they identify the product family; `Mullu Platform` remains allowed only for SDK/API/runtime technical contracts.
 
 ## Decision
 
@@ -13,11 +13,12 @@ Invariants: user-facing app titles use `Mullu`; `Mullu Platform` remains allowed
 
 | Surface | Observed title | Decision |
 | --- | --- | --- |
-| Product landing page | `<title>Mullu, by Mullusi - Governed Symbolic Systems</title>` | Product-facing title uses `Mullu` |
-| Authority operator console | `<title>Mullu Authority Operator Console</title>` | App-facing title uses `Mullu` |
-| Physical promotion receipts | `<title>Mullu Physical Promotion Receipts</title>` | App-facing title uses `Mullu` |
-| Universal action proofs | `<title>Mullu Universal Action Proofs</title>` | App-facing title uses `Mullu` |
-| Operator capabilities | `<title>Mullu Operator Capabilities</title>` | App-facing title uses `Mullu` |
+| Product landing page | `<title>Mullu Govern, by Mullusi - Governed Symbolic Execution</title>` | Product-facing title uses `Mullu Govern` |
+| Historical 2026-05-15 live route snapshot | `<title>Mullu, by Mullusi - Governed Symbolic Systems</title>` | Historical evidence retained; not the current source-title requirement |
+| Authority operator console | `<title>Mullu Authority Operator Console</title>` | Suite/operator title may use `Mullu` |
+| Physical promotion receipts | `<title>Mullu Physical Promotion Receipts</title>` | Suite/operator title may use `Mullu` |
+| Universal action proofs | `<title>Mullu Universal Action Proofs</title>` | Suite/operator title may use `Mullu` |
+| Operator capabilities | `<title>Mullu Operator Capabilities</title>` | Suite/operator title may use `Mullu` |
 
 ## Blocked Names
 
@@ -39,7 +40,7 @@ The following are not user-facing app title blockers because they are SDK/API/ru
 
 ## Gate Decision
 
-`app_title_update` is closed because active app-facing HTML/product titles use `Mullu`, while remaining `Mullu Platform` titles are intentional technical contracts.
+`app_title_update` is closed because the active product route title uses `Mullu Govern`, suite/operator title surfaces preserve the `Mullu` family boundary, and remaining `Mullu Platform` titles are intentional technical contracts.
 
 This evidence does not close:
 
@@ -52,6 +53,6 @@ This evidence does not close:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: [user-facing app titles use Mullu, blocked generic names absent from title evidence, technical Mullu Platform boundary preserved, paid public launch remains blocked]
+  Invariants verified: [product-facing title uses Mullu Govern, suite/operator Mullu family boundary preserved, blocked generic names absent from title evidence, technical Mullu Platform boundary preserved, paid public launch remains blocked]
   Open issues: [official trademark searches, close-variant review, domain ownership evidence, legal review]
   Next action: complete official trademark/domain/legal clearance before paid public launch
