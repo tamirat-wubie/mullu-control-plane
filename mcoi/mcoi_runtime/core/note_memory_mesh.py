@@ -911,6 +911,7 @@ class NoteMemoryMesh:
         now: str | None = None,
         limit: int = 25,
         retrieval_receipt_ref: str | None = None,
+        retrieval_citing_note_ref: str | None = None,
     ) -> dict[str, object]:
         """Return a read-only operator snapshot for the note memory control surface."""
 
@@ -919,6 +920,11 @@ class NoteMemoryMesh:
         retrieval_receipt_filter = (
             _validate_retrieval_receipt_id(retrieval_receipt_ref, "retrieval_receipt_ref")
             if retrieval_receipt_ref
+            else ""
+        )
+        retrieval_citing_note_filter = (
+            _validate_symbol_identifier(str(retrieval_citing_note_ref), "retrieval_citing_note_ref")
+            if retrieval_citing_note_ref
             else ""
         )
         current = _parse_iso(now or self._clock())
@@ -950,7 +956,8 @@ class NoteMemoryMesh:
         retrieval_influence = [
             row
             for row in retrieval_influence_rows
-            if not retrieval_receipt_filter or row["receipt_id"] == retrieval_receipt_filter
+            if (not retrieval_receipt_filter or row["receipt_id"] == retrieval_receipt_filter)
+            and (not retrieval_citing_note_filter or row["citing_note_id"] == retrieval_citing_note_filter)
         ]
         retrieval_receipts = self._retrieval_receipt_summary_rows(retrieval_influence)
         retrieval_receipts_total = self._retrieval_receipt_summary_rows(retrieval_influence_rows)
@@ -966,6 +973,7 @@ class NoteMemoryMesh:
             "assessed_at": assessed_at,
             "filters": {
                 "retrieval_receipt_ref": retrieval_receipt_filter,
+                "retrieval_citing_note_ref": retrieval_citing_note_filter,
             },
             "summary": {
                 "event_count": len(events),

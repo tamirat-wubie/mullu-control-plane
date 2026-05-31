@@ -54,6 +54,12 @@ def test_runtime_capture_retrieve_and_list_events_preserve_governed_envelopes(tm
             "retrieval_receipt_ref": retrieved["payload"]["receipt"]["receipt_id"],
         }
     ).to_dict()
+    citing_note_snapshot = runtime.dashboard_snapshot(
+        {
+            "limit": 5,
+            "retrieval_citing_note_ref": decision["payload"]["event"]["note_id"],
+        }
+    ).to_dict()
 
     assert captured["governed"] is True
     assert captured["ok"] is True
@@ -85,6 +91,10 @@ def test_runtime_capture_retrieve_and_list_events_preserve_governed_envelopes(tm
     assert filtered_snapshot["payload"]["summary"]["retrieval_receipt_count"] == 1
     assert filtered_snapshot["payload"]["summary"]["retrieval_receipt_total_count"] == 1
     assert filtered_snapshot["payload"]["retrieval_influence"][0]["citing_note_id"] == decision["payload"]["event"]["note_id"]
+    assert citing_note_snapshot["payload"]["filters"]["retrieval_citing_note_ref"] == decision["payload"]["event"]["note_id"]
+    assert citing_note_snapshot["payload"]["summary"]["retrieval_influence_count"] == 1
+    assert citing_note_snapshot["payload"]["summary"]["retrieval_influence_total_count"] == 1
+    assert citing_note_snapshot["payload"]["retrieval_influence"][0]["receipt_id"] == retrieved["payload"]["receipt"]["receipt_id"]
 
 
 def test_runtime_rejects_invalid_capture_without_persisting(tmp_path) -> None:
@@ -130,6 +140,17 @@ def test_runtime_rejects_malformed_retrieval_influence_filter(tmp_path) -> None:
     assert rejected["ok"] is False
     assert rejected["status"] == "rejected"
     assert "retrieval_receipt_ref must reference a note retrieval receipt" in rejected["error"]
+
+
+def test_runtime_rejects_malformed_retrieval_citing_note_filter(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.dashboard_snapshot({"retrieval_citing_note_ref": "../bad-note"}).to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "retrieval_citing_note_ref must be a bounded symbolic identifier" in rejected["error"]
 
 
 def test_runtime_rejected_delta_expiry_and_rebuild_emit_receipts(tmp_path) -> None:

@@ -97,6 +97,7 @@ def test_cli_capture_retrieve_dashboard_and_list_events_redacts_before_write(tmp
     assert len(dashboard_envelope["payload"]["snapshot_hash"]) == 64
     assert dashboard_envelope["payload"]["summary"]["event_count"] == 2
     assert dashboard_envelope["payload"]["filters"]["retrieval_receipt_ref"] == ""
+    assert dashboard_envelope["payload"]["filters"]["retrieval_citing_note_ref"] == ""
     assert dashboard_envelope["payload"]["summary"]["retrieval_influence_count"] == 1
     assert dashboard_envelope["payload"]["summary"]["retrieval_influence_total_count"] == 1
     assert dashboard_envelope["payload"]["summary"]["retrieval_receipt_count"] == 1
@@ -140,6 +141,28 @@ def test_cli_capture_retrieve_dashboard_and_list_events_redacts_before_write(tmp
         "payload"
     ]["event"]["note_id"]
 
+    citing_note_dashboard_code = guarded_main(
+        [
+            "--note-store",
+            str(note_store),
+            "dashboard",
+            "--limit",
+            "5",
+            "--retrieval-citing-note-ref",
+            decision_capture_envelope["payload"]["event"]["note_id"],
+        ]
+    )
+    citing_note_dashboard_envelope = _last_json(capsys)
+    assert citing_note_dashboard_code == 0
+    assert (
+        citing_note_dashboard_envelope["payload"]["filters"]["retrieval_citing_note_ref"]
+        == decision_capture_envelope["payload"]["event"]["note_id"]
+    )
+    assert citing_note_dashboard_envelope["payload"]["summary"]["retrieval_influence_count"] == 1
+    assert citing_note_dashboard_envelope["payload"]["retrieval_influence"][0]["receipt_id"] == retrieve_envelope[
+        "payload"
+    ]["receipt"]["receipt_id"]
+
 
 def test_cli_dashboard_rejects_unbounded_limit(tmp_path, capsys) -> None:
     note_store = tmp_path / "notes"
@@ -171,6 +194,26 @@ def test_cli_dashboard_rejects_malformed_retrieval_influence_filter(tmp_path, ca
     assert dashboard_envelope["ok"] is False
     assert dashboard_envelope["status"] == "rejected"
     assert "retrieval_receipt_ref must reference a note retrieval receipt" in dashboard_envelope["error"]
+
+
+def test_cli_dashboard_rejects_malformed_retrieval_citing_note_filter(tmp_path, capsys) -> None:
+    note_store = tmp_path / "notes"
+
+    dashboard_code = guarded_main(
+        [
+            "--note-store",
+            str(note_store),
+            "dashboard",
+            "--retrieval-citing-note-ref",
+            "../bad-note",
+        ]
+    )
+    dashboard_envelope = _last_json(capsys)
+
+    assert dashboard_code == 1
+    assert dashboard_envelope["ok"] is False
+    assert dashboard_envelope["status"] == "rejected"
+    assert "retrieval_citing_note_ref must be a bounded symbolic identifier" in dashboard_envelope["error"]
 
 
 def test_cli_rejects_malformed_retrieval_receipt_ref(tmp_path, capsys) -> None:
