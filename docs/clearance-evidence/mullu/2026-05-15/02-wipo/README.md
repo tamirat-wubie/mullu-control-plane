@@ -9,9 +9,19 @@ Invariants: no WIPO gate is closed by this placeholder; official screenshots or 
 
 | Query | Required coverage | Status |
 | --- | --- | --- |
+| `Mullu Govern` | Madrid, Lisbon, 6ter, participating office collections | Pending capture |
 | `MULLU` | Madrid, Lisbon, 6ter, participating office collections | Pending capture |
 | `MULLUSI` | Madrid, Lisbon, 6ter, participating office collections | Pending capture |
+| `Mullu Govern by Mullusi` | Madrid, Lisbon, 6ter, participating office collections | Pending capture |
 | `Mullu by Mullusi` | Madrid, Lisbon, 6ter, participating office collections | Pending capture |
+
+## Required Evidence Files
+
+1. `wipo-search-mullu-govern.pdf`
+2. `wipo-search-mullu.pdf`
+3. `wipo-search-mullusi.pdf`
+4. `wipo-search-mullu-govern-by-mullusi.pdf`
+5. `wipo-search-mullu-by-mullusi.pdf`
 
 ## Required Files
 

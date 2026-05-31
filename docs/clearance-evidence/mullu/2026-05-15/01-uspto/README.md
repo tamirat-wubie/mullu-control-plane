@@ -9,14 +9,26 @@ Invariants: no USPTO gate is closed by this placeholder; official screenshots or
 
 | Query | Required classes | Status |
 | --- | --- | --- |
+| `Mullu Govern` | 9, 35, 38, 41, 42, 45 | Pending capture |
 | `MULLU` | 9, 35, 38, 41, 42, 45 | Pending capture |
 | `MULLUSI` | 9, 35, 38, 41, 42, 45 | Pending capture |
+| `Mullu Govern by Mullusi` | 9, 35, 38, 41, 42, 45 | Pending capture |
 | `Mullu by Mullusi` | 9, 35, 38, 41, 42, 45 | Pending capture |
 | `Mullu Inspect` | 9, 35, 38, 41, 42, 45 | Pending capture |
 | `Mullu CLI` | 9, 35, 38, 41, 42, 45 | Pending capture |
 | `Mullu Code` | 9, 35, 38, 41, 42, 45 | Pending capture |
 | `Mullu Control Plane` | 9, 35, 38, 41, 42, 45 | Pending capture |
 | `MULU` | 9, 35, 38, 41, 42, 45 | Pending capture |
+
+## Required Evidence Files
+
+1. `uspto-search-mullu-govern.pdf`
+2. `uspto-search-mullu.pdf`
+3. `uspto-search-mullusi.pdf`
+4. `uspto-search-mullu-govern-by-mullusi.pdf`
+5. `uspto-search-mullu-by-mullusi.pdf`
+6. `uspto-search-mullu-surfaces.pdf`
+7. `uspto-search-mulu.pdf`
 
 ## Required Files
 
