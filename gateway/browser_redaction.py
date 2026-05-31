@@ -8,7 +8,7 @@ Invariants:
   - Redaction preserves URL scheme, host, and path so domain allowlist checks
     and receipts stay meaningful; only secret query/fragment values are masked.
   - Masking is fail-safe and deterministic; unparseable URLs are returned as-is.
-  - No floats and no numeric decisioning — string classification only.
+  - No floats and no numeric decisioning - string classification only.
 """
 
 from __future__ import annotations
