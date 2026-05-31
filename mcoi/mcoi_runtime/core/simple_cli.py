@@ -52,6 +52,9 @@ def build_parser() -> argparse.ArgumentParser:
     task_parser.add_argument("--actor-id", default="local-user", help="User or surface checking the task")
     task_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
 
+    tasks_parser = subparsers.add_parser("tasks", help="List common task templates")
+    tasks_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
+
     subparsers.add_parser("start", help="Show the simple platform task menu")
     return parser
 
@@ -105,6 +108,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             print(_readable_check(check.to_dict()))
         return 0 if check.outcome == "ready" else 2
+    if args.command == "tasks":
+        templates = [template.to_dict() for template in SimplePlatform.task_templates()]
+        if args.json:
+            print(json.dumps(_envelope(True, "listed", {"tasks": templates}), sort_keys=True, separators=(",", ":")))
+        else:
+            print(_readable_tasks(templates))
+        return 0
     parser.error(f"unknown command: {args.command}")
     return 1
 
@@ -137,11 +147,22 @@ def _readable_check(value: dict[str, object]) -> str:
     return "\n".join(lines)
 
 
+def _readable_tasks(templates: list[dict[str, str]]) -> str:
+    lines = ["Common tasks:"]
+    for template in templates:
+        task_name = template["task"].replace("_", "-")
+        target_hint = " --target <target>" if not template["default_target"] else ""
+        lines.append(f"- {task_name}: {template['label']}")
+        lines.append(f"  command: mullu task {task_name}{target_hint}")
+    return "\n".join(lines)
+
+
 def _start_text() -> str:
     return "\n".join(
         (
             "Mullu simple mode",
             "Use one command before a task:",
+            "mullu tasks",
             "mullu task review-docs --target docs/README.md",
             "mullu check --goal \"Review docs\" --action view --target docs/README.md --allowed-area docs/**",
             "Common tasks: review-docs, update-docs, notify-support, verify-artifact",
