@@ -115,6 +115,22 @@ def test_p3_readiness_passes_for_bound_verified_chain(tmp_path) -> None:
     assert result["reconciliation_report_id"] == "reconciliation-1"
 
 
+def test_p3_readiness_mind_filter_blocks_other_mind_evidence(tmp_path) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    store.record_commit_witness(_witness())
+    store.record_reconciliation_report(_reconciliation())
+
+    result = module.validate_p3_readiness(store_path, mind_id="tenant-other")
+
+    assert result["status"] == "blocked"
+    assert "accepted_submission_missing" in result["blockers"]
+    assert "verified_commit_witness_missing" in result["blockers"]
+    assert "verified_reconciliation_missing" in result["blockers"]
+
+
 def test_p3_readiness_blocks_when_chain_does_not_bind(tmp_path) -> None:
     module = _module()
     store_path = tmp_path / "nested-mind.jsonl"

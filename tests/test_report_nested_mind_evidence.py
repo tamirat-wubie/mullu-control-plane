@@ -116,6 +116,23 @@ def test_report_ready_for_bound_verified_chain(tmp_path) -> None:
     assert report["next_action"] == "p3_gate_ready_for_operator_review"
 
 
+def test_report_mind_filter_blocks_other_mind_evidence(tmp_path) -> None:
+    module = _module()
+    store_path = tmp_path / "nested-mind.jsonl"
+    store = NestedMindEvidenceStore(store_path)
+    store.record_submission_report(_submission())
+    store.record_commit_witness(_witness())
+    store.record_reconciliation_report(_reconciliation())
+
+    report = module.build_nested_mind_evidence_report(store_path, mind_id="tenant-other")
+
+    assert report["status"] == "blocked"
+    assert report["mind_id"] == "tenant-other"
+    assert report["total_records"] == 0
+    assert report["accepted_submission_ids"] == ()
+    assert "accepted_submission_missing" in report["readiness"]["blockers"]
+
+
 def test_report_blocks_unbound_verified_records(tmp_path) -> None:
     module = _module()
     store_path = tmp_path / "nested-mind.jsonl"
