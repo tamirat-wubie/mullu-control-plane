@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "manifest_id": "mullu-public-evidence-classification-2026-05-31",
+  "generated_at": "2026-05-31T20:00:00Z",
+  "artifacts": [
+    {
+      "artifact": "STATUS.md",
+      "class": "ci",
+      "purpose": "GitHub-visible repository status witness for branch, release, CI, and governance reflection.",
+      "may_support_public_claim": true,
+      "allowed_claims": [
+        "repository-status",
+        "release-boundary",
+        "ci-governance-reflection"
+      ],
+      "blocked_claims": [
+        "public-production-health",
+        "legal-clearance",
+        "enterprise-sla"
+      ],
+      "review_owner": "repository-operator",
+      "freshness_window_days": 30,
+      "notes": "Supports repository-surface claims only; it does not prove live production health."
+    },
+    {
+      "artifact": "DEPLOYMENT_STATUS.md",
+      "class": "ci",
+      "purpose": "Deployment-health witness state and public production closure requirements.",
+      "may_support_public_claim": true,
+      "allowed_claims": [
+        "deployment-boundary",
+        "not-published-state",
+        "public-health-not-claimed"
+      ],
+      "blocked_claims": [
+        "public-production-health",
+        "production-saas-live",
+        "enterprise-sla"
+      ],
+      "review_owner": "deployment-operator",
+      "freshness_window_days": 30,
+      "notes": "May support the negative claim that production health is not yet declared."
+    },
+    {
+      "artifact": "docs/governed-swarm-production-readiness-example.json",
+      "class": "fixture",
+      "purpose": "Production-readiness validator example shape for governed swarm.",
+      "may_support_public_claim": false,
+      "allowed_claims": [
+        "validator-example-only"
+      ],
+      "blocked_claims": [
+        "production-ready",
+        "public-health-declared",
+        "public-production-health"
+      ],
+      "review_owner": "governance-operator",
+      "freshness_window_days": null,
+      "notes": "The filename contains production-like language, but the file is fixture evidence only."
+    },
+    {
+      "artifact": "docs/governed-swarm-production-deployment-witness-example.json",
+      "class": "fixture",
+      "purpose": "Deployment witness validator example shape for governed swarm production evidence.",
+      "may_support_public_claim": false,
+      "allowed_claims": [
+        "validator-example-only"
+      ],
+      "blocked_claims": [
+        "deployment-published",
+        "public-production-health",
+        "runtime-production-conformant"
+      ],
+      "review_owner": "deployment-operator",
+      "freshness_window_days": null,
+      "notes": "Must not be cited as live api.mullusi.com evidence."
+    },
+    {
+      "artifact": "docs/governed-swarm-public-production-health-declaration-example.json",
+      "class": "fixture",
+      "purpose": "Public-health declaration schema/validator example.",
+      "may_support_public_claim": false,
+      "allowed_claims": [
+        "validator-example-only"
+      ],
+      "blocked_claims": [
+        "public-health-declared",
+        "production-health-passing"
+      ],
+      "review_owner": "deployment-operator",
+      "freshness_window_days": null,
+      "notes": "Example declaration only; no public health state changes are supported by this artifact."
+    },
+    {
+      "artifact": "docs/governed-swarm-promotion-readiness-example.json",
+      "class": "fixture",
+      "purpose": "Pilot-promotion readiness validator example shape.",
+      "may_support_public_claim": false,
+      "allowed_claims": [
+        "validator-example-only"
+      ],
+      "blocked_claims": [
+        "pilot-ready-live",
+        "production-ready",
+        "public-production-health"
+      ],
+      "review_owner": "governance-operator",
+      "freshness_window_days": null,
+      "notes": "Does not replace live staging or pilot evidence collection."
+    }
+  ]
+}
