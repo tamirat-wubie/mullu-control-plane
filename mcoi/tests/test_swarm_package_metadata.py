@@ -59,6 +59,7 @@ def test_package_readme_documents_simple_platform_surface() -> None:
     assert "MULLU_SIMPLE_PLATFORM_ENABLED" in text
     assert "SimplePlatformRuntime" in text
     assert "create_simple_platform_fastapi_router" in text
+    assert "GET /api/v1/simple/start" in text
     assert "POST /api/v1/simple/actions/check" in text
     assert "POST /api/v1/simple/tasks/check" in text
     assert "POST /api/v1/simple/workflows/check" in text

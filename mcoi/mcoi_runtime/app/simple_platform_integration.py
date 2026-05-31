@@ -54,9 +54,9 @@ def mount_simple_platform_router_from_env(
 ) -> SimplePlatformMountResult:
     """Mount simple platform routes when enabled by environment policy."""
 
-    runtime_env = env or os.environ
+    runtime_env = os.environ if env is None else env
     prefix = str(runtime_env.get("MULLU_SIMPLE_PLATFORM_PREFIX", "/api/v1/simple")).rstrip("/") or "/api/v1/simple"
-    if not _env_flag(runtime_env.get("MULLU_SIMPLE_PLATFORM_ENABLED", "1")):
+    if not _env_flag(runtime_env.get("MULLU_SIMPLE_PLATFORM_ENABLED")):
         return SimplePlatformMountResult(
             enabled=False,
             mounted=False,

@@ -223,6 +223,52 @@ class SimpleWorkflowPlan:
         }
 
 
+@dataclass(frozen=True)
+class SimpleOnboardingStep:
+    """Plain onboarding step that points to a governed simple command."""
+
+    step: str
+    title: str
+    command: str
+    purpose: str
+
+    def to_dict(self) -> dict[str, str]:
+        """Return a JSON-compatible onboarding step."""
+
+        return {
+            "step": self.step,
+            "title": self.title,
+            "command": self.command,
+            "purpose": self.purpose,
+        }
+
+
+@dataclass(frozen=True)
+class SimpleOnboardingGuide:
+    """Plain start guide for non-technical users."""
+
+    title: str
+    message: str
+    recommended_path: tuple[SimpleOnboardingStep, ...]
+    outcomes: tuple[str, ...]
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if self.execution_allowed:
+            raise RuntimeCoreInvariantError("simple onboarding guide cannot allow execution")
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible onboarding guide."""
+
+        return {
+            "title": self.title,
+            "message": self.message,
+            "recommended_path": [step.to_dict() for step in self.recommended_path],
+            "outcomes": list(self.outcomes),
+            "execution_allowed": self.execution_allowed,
+        }
+
+
 class SimplePlatform:
     """Small governed facade for user-oriented action checks."""
 
@@ -297,6 +343,36 @@ class SimplePlatform:
         """Return supported simple workflow templates."""
 
         return _WORKFLOW_TEMPLATES
+
+    @staticmethod
+    def onboarding_guide() -> SimpleOnboardingGuide:
+        """Return the plain start guide for simple platform users."""
+
+        return SimpleOnboardingGuide(
+            title="Mullu simple mode",
+            message="Choose a workflow, check it, then continue only when it is ready.",
+            recommended_path=(
+                SimpleOnboardingStep(
+                    step="choose",
+                    title="Choose a workflow",
+                    command="mullu workflows",
+                    purpose="Show the common work users can start with.",
+                ),
+                SimpleOnboardingStep(
+                    step="check",
+                    title="Check before continuing",
+                    command="mullu workflow docs-update --target docs/README.md",
+                    purpose="Confirm whether the workflow is ready, needs review, or is blocked.",
+                ),
+                SimpleOnboardingStep(
+                    step="act",
+                    title="Continue only when ready",
+                    command="mullu workflow docs-update --target docs/README.md --json",
+                    purpose="Use the proof-backed outcome in an app, dashboard, or support flow.",
+                ),
+            ),
+            outcomes=("Ready", "Needs review", "Blocked"),
+        )
 
 
 _TASK_TEMPLATES: tuple[SimpleTaskTemplate, ...] = (

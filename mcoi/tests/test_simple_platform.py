@@ -15,9 +15,11 @@ import json
 import tomllib
 from pathlib import Path
 
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.simple_cli import guarded_main
 from mcoi_runtime.core.simple_platform import (
     SimpleActionRequest,
+    SimpleOnboardingGuide,
     SimplePlatform,
     SimpleTaskRequest,
     SimpleWorkflowRequest,
@@ -162,6 +164,32 @@ def test_simple_platform_workflow_projects_support_notice_review() -> None:
     assert plan.checks[0].review_reasons == ("External changes require approval.",)
 
 
+def test_simple_platform_onboarding_guide_is_plain_and_non_executing() -> None:
+    guide = SimplePlatform.onboarding_guide()
+    payload = guide.to_dict()
+
+    assert guide.execution_allowed is False
+    assert payload["title"] == "Mullu simple mode"
+    assert payload["recommended_path"][0]["command"] == "mullu workflows"
+    assert payload["recommended_path"][1]["command"] == "mullu workflow docs-update --target docs/README.md"
+    assert payload["outcomes"] == ["Ready", "Needs review", "Blocked"]
+
+
+def test_simple_platform_onboarding_guide_rejects_execution_authority() -> None:
+    try:
+        SimpleOnboardingGuide(
+            title="Unsafe",
+            message="Unsafe guide.",
+            recommended_path=(),
+            outcomes=("Ready",),
+            execution_allowed=True,
+        )
+    except RuntimeCoreInvariantError as exc:
+        assert "simple onboarding guide cannot allow execution" in str(exc)
+    else:
+        raise AssertionError("onboarding guide must reject execution authority")
+
+
 def test_simple_cli_outputs_readable_ready_result(capsys) -> None:
     exit_code = guarded_main(
         [
@@ -288,6 +316,17 @@ def test_simple_cli_lists_workflow_templates_as_readable_catalog(capsys) -> None
     assert "support-notice" in output
 
 
+def test_simple_cli_start_outputs_onboarding_path(capsys) -> None:
+    exit_code = guarded_main(["start"])
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "Mullu simple mode" in output
+    assert "Recommended path:" in output
+    assert "mullu workflows" in output
+    assert "mullu workflow docs-update --target docs/README.md" in output
+
+
 def test_simple_platform_api_projects_ready_check() -> None:
     envelope = SimplePlatformRuntime().check_action(
         {
@@ -349,6 +388,16 @@ def test_simple_platform_api_rejects_invalid_workflow() -> None:
     assert payload["status"] == "rejected"
     assert payload["payload"] == {}
     assert "workflow must be one of" in payload["error"]
+
+
+def test_simple_platform_api_returns_start_guide() -> None:
+    payload = SimplePlatformRuntime().start_guide().to_dict()
+
+    assert payload["governed"] is True
+    assert payload["ok"] is True
+    assert payload["status"] == "listed"
+    assert payload["payload"]["guide"]["execution_allowed"] is False
+    assert payload["payload"]["guide"]["recommended_path"][0]["step"] == "choose"
 
 
 def test_simple_platform_api_rejects_invalid_request() -> None:

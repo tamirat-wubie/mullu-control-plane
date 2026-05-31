@@ -224,21 +224,24 @@ def _readable_workflows(templates: list[dict[str, object]]) -> str:
 
 
 def _start_text() -> str:
-    return "\n".join(
+    guide = SimplePlatform.onboarding_guide().to_dict()
+    lines = [
+        str(guide["title"]),
+        str(guide["message"]),
+        "Recommended path:",
+    ]
+    for step in guide["recommended_path"]:
+        if isinstance(step, dict):
+            lines.append(f"- {step['title']}: {step['command']}")
+    lines.extend(
         (
-            "Mullu simple mode",
-            "Use one command before a task:",
-            "mullu workflows",
-            "mullu workflow docs-update --target docs/README.md",
-            "mullu tasks",
-            "mullu task review-docs --target docs/README.md",
-            "mullu check --goal \"Review docs\" --action view --target docs/README.md --allowed-area docs/**",
             "Common tasks: review-docs, update-docs, notify-support, verify-artifact",
             "Common workflows: docs-update, support-notice, artifact-review",
             "Actions: view, change, send, verify",
             "Outcomes: Ready, Needs review, Blocked",
         )
     )
+    return "\n".join(lines)
 
 
 def _envelope(ok: bool, status: str, payload: dict[str, object], *, error: str = "") -> dict[str, object]:

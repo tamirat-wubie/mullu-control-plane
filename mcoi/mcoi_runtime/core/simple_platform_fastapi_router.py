@@ -54,6 +54,11 @@ class SimplePlatformFastAPIAdapter:
 
         return self.runtime.action_menu().to_dict()
 
+    def start_guide(self) -> dict[str, Any]:
+        """Handle GET /start."""
+
+        return self.runtime.start_guide().to_dict()
+
     @staticmethod
     def route_specs(prefix: str = "/api/v1/simple") -> tuple[SimplePlatformRouteSpec, ...]:
         """Return the stable HTTP route contracts."""
@@ -65,6 +70,12 @@ class SimplePlatformFastAPIAdapter:
                 path=f"{normalized}/actions",
                 handler_name="action_menu",
                 purpose="list plain user actions and possible outcomes",
+            ),
+            SimplePlatformRouteSpec(
+                method="GET",
+                path=f"{normalized}/start",
+                handler_name="start_guide",
+                purpose="show the plain onboarding path for simple mode",
             ),
             SimplePlatformRouteSpec(
                 method="POST",
@@ -105,6 +116,10 @@ def create_simple_platform_fastapi_router(runtime: SimplePlatformRuntime, prefix
     @router.get("/actions")
     def action_menu():
         return adapter.action_menu()
+
+    @router.get("/start")
+    def start_guide():
+        return adapter.start_guide()
 
     @router.post("/actions/check")
     def check_action(request_body: dict[str, Any] = Body(...)):

@@ -147,3 +147,13 @@ class SimplePlatformRuntime:
                 "workflows": [template.to_dict() for template in self.platform.workflow_templates()],
             },
         )
+
+    def start_guide(self) -> SimplePlatformEnvelope:
+        """Return the plain onboarding guide for user-facing surfaces."""
+
+        return SimplePlatformEnvelope(
+            governed=True,
+            ok=True,
+            status="listed",
+            payload={"guide": self.platform.onboarding_guide().to_dict()},
+        )

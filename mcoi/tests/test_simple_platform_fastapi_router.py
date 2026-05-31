@@ -33,9 +33,10 @@ def _request(**overrides: object) -> dict[str, object]:
 def test_simple_platform_fastapi_adapter_route_specs_are_stable() -> None:
     specs = SimplePlatformFastAPIAdapter.route_specs()
 
-    assert len(specs) == 4
+    assert len(specs) == 5
     assert [(spec.method, spec.path, spec.handler_name) for spec in specs] == [
         ("GET", "/api/v1/simple/actions", "action_menu"),
+        ("GET", "/api/v1/simple/start", "start_guide"),
         ("POST", "/api/v1/simple/actions/check", "check_action"),
         ("POST", "/api/v1/simple/tasks/check", "check_task"),
         ("POST", "/api/v1/simple/workflows/check", "check_workflow"),
@@ -77,6 +78,17 @@ def test_simple_platform_fastapi_adapter_returns_ready_envelope() -> None:
     assert envelope["status"] == "ready"
     assert envelope["payload"]["check"]["title"] == "Ready"
     assert envelope["payload"]["check"]["proof_stamp_ref"].startswith("proof-")
+
+
+def test_simple_platform_fastapi_adapter_returns_start_guide() -> None:
+    adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
+    envelope = adapter.start_guide()
+
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "listed"
+    assert envelope["payload"]["guide"]["execution_allowed"] is False
+    assert envelope["payload"]["guide"]["recommended_path"][0]["command"] == "mullu workflows"
 
 
 def test_simple_platform_fastapi_adapter_returns_task_envelope() -> None:

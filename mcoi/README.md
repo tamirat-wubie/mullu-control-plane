@@ -43,6 +43,7 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
   `MULLU_SIMPLE_PLATFORM_PREFIX` when provided.
 - `create_simple_platform_fastapi_router(runtime)` mounts stable routes:
   - `GET /api/v1/simple/actions`
+  - `GET /api/v1/simple/start`
   - `POST /api/v1/simple/actions/check`
   - `POST /api/v1/simple/tasks/check`
   - `POST /api/v1/simple/workflows/check`
