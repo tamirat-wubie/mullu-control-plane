@@ -205,6 +205,8 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "diem",
         "jorn",
         "jorns",
+        "ghjornu",
+        "ghjorni",
         "deiz",
         "deiziou",
     }
@@ -719,6 +721,18 @@ def _breton_weekdays() -> dict[str, int]:
     }
 
 
+def _corsican_weekdays() -> dict[str, int]:
+    return {
+        "luni": 0,
+        "marti": 1,
+        "mercuri": 2,
+        "ghjovi": 3,
+        "venneri": 4,
+        "sabbatu": 5,
+        "dumenica": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -813,6 +827,8 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_occitan_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"br", "br-fr"}:
         return _resolve_breton_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"co", "co-fr"}:
+        return _resolve_corsican_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -2807,6 +2823,56 @@ def _resolve_breton_temporal_phrase(
     }:
         return "ambiguous", "temporal_phrase_ambiguous", ""
     if re.fullmatch(r"(dilun|dimeurzh|dimercher|diriaou|digwener|disadorn|disul) a zeu", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_corsican_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"in ([1-9][0-9]*) (minutu|minuti|ora|ore|ghjornu|ghjorni)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(oghje|dumane) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "dumane" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"prossimu (luni|marti|mercuri|ghjovi|venneri|sabbatu|dumenica) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_corsican_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "oghje",
+        "dumane",
+        "sta sera",
+        "piu tardi",
+        "prestu",
+        "prossima settimana",
+        "prossimu mese",
+        "prossimu annu",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"prossimu (luni|marti|mercuri|ghjovi|venneri|sabbatu|dumenica)", normalized):
         return "ambiguous", "temporal_phrase_ambiguous", ""
     return "unsupported", "temporal_phrase_unsupported", ""
 
