@@ -35,6 +35,8 @@ MEMORY_CLASSES = (
 )
 TRUST_CLASSES = ("untrusted", "observed", "admitted", "trusted", "authority", "revoked")
 P3_LATTICE_CONTRACT_STATUSES = ("blocked", "ready")
+P3_TOPOLOGY_NODE_KINDS = ("nested_mind", "memory", "world_ref", "evidence")
+P3_TOPOLOGY_EDGE_KINDS = ("contains", "admits", "observes", "supported_by")
 
 
 @dataclass(frozen=True, slots=True)
@@ -225,6 +227,94 @@ class P3MemoryLatticeContract:
             raise ValueError("blocked_reasons_required")
 
 
+@dataclass(frozen=True, slots=True)
+class P3MemoryTopologyNode:
+    """Read-only node in the P3 nested-mind memory topology."""
+
+    node_id: str
+    node_kind: str
+    ref_id: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not self.node_id:
+            raise ValueError("topology_node_id_required")
+        if self.node_kind not in P3_TOPOLOGY_NODE_KINDS:
+            raise ValueError("topology_node_kind_invalid")
+        if not self.ref_id:
+            raise ValueError("topology_node_ref_id_required")
+        object.__setattr__(self, "metadata", dict(self.metadata))
+
+
+@dataclass(frozen=True, slots=True)
+class P3MemoryTopologyEdge:
+    """Read-only relation between two P3 topology nodes."""
+
+    edge_id: str
+    from_node_id: str
+    to_node_id: str
+    edge_kind: str
+    evidence_refs: tuple[str, ...]
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not self.edge_id:
+            raise ValueError("topology_edge_id_required")
+        if not self.from_node_id:
+            raise ValueError("topology_edge_from_node_id_required")
+        if not self.to_node_id:
+            raise ValueError("topology_edge_to_node_id_required")
+        if self.from_node_id == self.to_node_id:
+            raise ValueError("topology_edge_self_reference")
+        if self.edge_kind not in P3_TOPOLOGY_EDGE_KINDS:
+            raise ValueError("topology_edge_kind_invalid")
+        object.__setattr__(self, "evidence_refs", tuple(self.evidence_refs))
+        object.__setattr__(self, "metadata", dict(self.metadata))
+        _reject_duplicate_refs(self.evidence_refs, "topology_edge_evidence_refs")
+
+
+@dataclass(frozen=True, slots=True)
+class P3MemoryTopologyMap:
+    """Read-only topology map derived from a ready P3 memory-lattice contract."""
+
+    topology_id: str
+    contract_id: str
+    status: str
+    mind_id: str
+    nodes: tuple[P3MemoryTopologyNode, ...]
+    edges: tuple[P3MemoryTopologyEdge, ...]
+    blocked_reasons: tuple[str, ...] = ()
+    topology_hash: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not self.topology_id:
+            raise ValueError("topology_id_required")
+        if not self.contract_id:
+            raise ValueError("topology_contract_id_required")
+        if self.status not in P3_LATTICE_CONTRACT_STATUSES:
+            raise ValueError("topology_status_invalid")
+        object.__setattr__(self, "nodes", tuple(self.nodes))
+        object.__setattr__(self, "edges", tuple(self.edges))
+        object.__setattr__(self, "blocked_reasons", tuple(self.blocked_reasons))
+        object.__setattr__(self, "metadata", dict(self.metadata))
+        if self.status == "ready":
+            if not self.mind_id:
+                raise ValueError("topology_mind_id_required")
+            if self.blocked_reasons:
+                raise ValueError("ready_topology_cannot_have_blocked_reasons")
+            if not self.nodes:
+                raise ValueError("ready_topology_nodes_required")
+            if not self.edges:
+                raise ValueError("ready_topology_edges_required")
+            _validate_topology_graph(self.nodes, self.edges)
+        else:
+            if not self.blocked_reasons:
+                raise ValueError("topology_blocked_reasons_required")
+            if self.nodes or self.edges:
+                raise ValueError("blocked_topology_cannot_have_nodes_or_edges")
+
+
 class InMemoryMemoryLatticeStore:
     """Tenant-scoped memory lattice store with governed projections."""
 
@@ -350,6 +440,109 @@ def build_p3_memory_lattice_contract(
     )
 
 
+def build_p3_memory_topology_map(
+    contract: P3MemoryLatticeContract,
+    entries: tuple[MemoryLatticeEntry, ...],
+    *,
+    topology_id: str,
+) -> P3MemoryTopologyMap:
+    """Build a read-only topology map from a P3 contract and admitted entries."""
+    if not isinstance(contract, P3MemoryLatticeContract):
+        raise ValueError("contract_must_be_p3_memory_lattice_contract")
+    if contract.status != "ready":
+        return _stamp_p3_topology(
+            P3MemoryTopologyMap(
+                topology_id=topology_id,
+                contract_id=contract.contract_id,
+                status="blocked",
+                mind_id=contract.mind_id,
+                nodes=(),
+                edges=(),
+                blocked_reasons=contract.blocked_reasons or ("p3_contract_not_ready",),
+            )
+        )
+
+    entry_by_id = {entry.memory_id: entry for entry in entries}
+    missing = tuple(memory_id for memory_id in contract.admitted_memory_ids if memory_id not in entry_by_id)
+    if missing:
+        return _stamp_p3_topology(
+            P3MemoryTopologyMap(
+                topology_id=topology_id,
+                contract_id=contract.contract_id,
+                status="blocked",
+                mind_id=contract.mind_id,
+                nodes=(),
+                edges=(),
+                blocked_reasons=tuple(f"admitted_memory_entry_missing:{memory_id}" for memory_id in missing),
+            )
+        )
+
+    nodes: list[P3MemoryTopologyNode] = [
+        P3MemoryTopologyNode(
+            node_id=f"mind:{contract.mind_id}",
+            node_kind="nested_mind",
+            ref_id=contract.mind_id,
+            metadata={"contract_id": contract.contract_id},
+        )
+    ]
+    edges: list[P3MemoryTopologyEdge] = []
+    for memory_id in contract.admitted_memory_ids:
+        entry = entry_by_id[memory_id]
+        memory_node_id = f"memory:{memory_id}"
+        nodes.append(
+            P3MemoryTopologyNode(
+                node_id=memory_node_id,
+                node_kind="memory",
+                ref_id=memory_id,
+                metadata={"memory_class": entry.memory_class, "trust_class": entry.trust_class},
+            )
+        )
+        edges.append(
+            P3MemoryTopologyEdge(
+                edge_id=f"edge:{contract.mind_id}:admits:{memory_id}",
+                from_node_id=f"mind:{contract.mind_id}",
+                to_node_id=memory_node_id,
+                edge_kind="admits",
+                evidence_refs=tuple(entry.evidence_refs),
+            )
+        )
+        for world_ref in _entry_world_refs(entry):
+            world_node_id = f"world:{world_ref}"
+            nodes.append(P3MemoryTopologyNode(node_id=world_node_id, node_kind="world_ref", ref_id=world_ref))
+            edges.append(
+                P3MemoryTopologyEdge(
+                    edge_id=f"edge:{memory_id}:observes:{world_ref}",
+                    from_node_id=memory_node_id,
+                    to_node_id=world_node_id,
+                    edge_kind="observes",
+                    evidence_refs=tuple(entry.evidence_refs),
+                )
+            )
+    for evidence_ref in contract.evidence_refs:
+        evidence_node_id = f"evidence:{evidence_ref}"
+        nodes.append(P3MemoryTopologyNode(node_id=evidence_node_id, node_kind="evidence", ref_id=evidence_ref))
+        edges.append(
+            P3MemoryTopologyEdge(
+                edge_id=f"edge:{contract.contract_id}:supported_by:{evidence_ref}",
+                from_node_id=f"mind:{contract.mind_id}",
+                to_node_id=evidence_node_id,
+                edge_kind="supported_by",
+                evidence_refs=(evidence_ref,),
+            )
+        )
+
+    return _stamp_p3_topology(
+        P3MemoryTopologyMap(
+            topology_id=topology_id,
+            contract_id=contract.contract_id,
+            status="ready",
+            mind_id=contract.mind_id,
+            nodes=_dedupe_nodes(nodes),
+            edges=tuple(edges),
+        )
+    )
+
+
 def _class_admission(
     entry: MemoryLatticeEntry,
     missing: list[str],
@@ -426,6 +619,12 @@ def _stamp_p3_contract(contract: P3MemoryLatticeContract) -> P3MemoryLatticeCont
     return replace(contract, contract_hash=hashlib.sha256(encoded).hexdigest())
 
 
+def _stamp_p3_topology(topology: P3MemoryTopologyMap) -> P3MemoryTopologyMap:
+    payload = asdict(replace(topology, topology_hash=""))
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+    return replace(topology, topology_hash=hashlib.sha256(encoded).hexdigest())
+
+
 def _require_p3_ready_ref(value: str, field_name: str) -> None:
     if not value:
         raise ValueError(f"{field_name}_required")
@@ -478,3 +677,48 @@ def _reject_duplicate_refs(values: tuple[str, ...], field_name: str) -> None:
         raise ValueError(f"{field_name}_duplicate")
     if any(not value for value in values):
         raise ValueError(f"{field_name}_empty")
+
+
+def _entry_world_refs(entry: MemoryLatticeEntry) -> tuple[str, ...]:
+    raw_refs = entry.metadata.get("world_refs", ())
+    if "world_ref" in entry.metadata:
+        if isinstance(raw_refs, str):
+            raw_refs = (raw_refs, str(entry.metadata["world_ref"]))
+        elif isinstance(raw_refs, (list, tuple)):
+            raw_refs = (*tuple(raw_refs), str(entry.metadata["world_ref"]))
+        else:
+            raise ValueError("world_refs_must_be_array")
+    if isinstance(raw_refs, str):
+        refs = (raw_refs,)
+    elif isinstance(raw_refs, (list, tuple)):
+        refs = tuple(str(ref) for ref in raw_refs)
+    else:
+        raise ValueError("world_refs_must_be_array")
+    _reject_duplicate_refs(refs, "world_refs")
+    return refs
+
+
+def _dedupe_nodes(nodes: list[P3MemoryTopologyNode]) -> tuple[P3MemoryTopologyNode, ...]:
+    deduped: dict[str, P3MemoryTopologyNode] = {}
+    for node in nodes:
+        existing = deduped.get(node.node_id)
+        if existing is not None and existing != node:
+            raise ValueError("topology_node_id_conflict")
+        deduped[node.node_id] = node
+    return tuple(deduped[node_id] for node_id in sorted(deduped))
+
+
+def _validate_topology_graph(
+    nodes: tuple[P3MemoryTopologyNode, ...],
+    edges: tuple[P3MemoryTopologyEdge, ...],
+) -> None:
+    node_ids = [node.node_id for node in nodes]
+    edge_ids = [edge.edge_id for edge in edges]
+    if len(node_ids) != len(set(node_ids)):
+        raise ValueError("topology_node_id_duplicate")
+    if len(edge_ids) != len(set(edge_ids)):
+        raise ValueError("topology_edge_id_duplicate")
+    node_id_set = set(node_ids)
+    for edge in edges:
+        if edge.from_node_id not in node_id_set or edge.to_node_id not in node_id_set:
+            raise ValueError("topology_edge_endpoint_missing")
