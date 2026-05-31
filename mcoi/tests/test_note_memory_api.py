@@ -153,6 +153,50 @@ def test_runtime_rejects_malformed_retrieval_citing_note_filter(tmp_path) -> Non
     assert "retrieval_citing_note_ref must be a bounded symbolic identifier" in rejected["error"]
 
 
+def test_runtime_rejects_string_dashboard_limit(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.dashboard_snapshot({"limit": "5"}).to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "limit must be an integer" in rejected["error"]
+
+
+def test_runtime_rejects_boolean_dashboard_limit(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.dashboard_snapshot({"limit": True}).to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "limit must be an integer" in rejected["error"]
+
+
+def test_runtime_rejects_non_text_dashboard_now(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.dashboard_snapshot({"now": 12345}).to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "now must be a string" in rejected["error"]
+
+
+def test_runtime_rejects_non_text_retrieval_citing_note_filter(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+
+    rejected = runtime.dashboard_snapshot({"retrieval_citing_note_ref": 7}).to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "retrieval_citing_note_ref must be a string" in rejected["error"]
+
+
 def test_runtime_rejected_delta_expiry_and_rebuild_emit_receipts(tmp_path) -> None:
     runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
     runtime.capture_note(_working_note(expires_at="2026-06-01T00:00:00+00:00"))

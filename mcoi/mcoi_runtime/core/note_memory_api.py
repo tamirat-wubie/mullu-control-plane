@@ -173,12 +173,10 @@ class NoteMemoryRuntime:
 
         try:
             body = request_body or {}
-            limit = int(body.get("limit", 25))
-            now = str(body["now"]) if body.get("now") else None
-            retrieval_receipt_ref = str(body["retrieval_receipt_ref"]) if body.get("retrieval_receipt_ref") else None
-            retrieval_citing_note_ref = (
-                str(body["retrieval_citing_note_ref"]) if body.get("retrieval_citing_note_ref") else None
-            )
+            limit = _optional_int(body, "limit", default=25)
+            now = _optional_text(body, "now")
+            retrieval_receipt_ref = _optional_text(body, "retrieval_receipt_ref")
+            retrieval_citing_note_ref = _optional_text(body, "retrieval_citing_note_ref")
             return _ok(
                 "dashboard_snapshot",
                 self.mesh.dashboard_snapshot(
@@ -274,6 +272,23 @@ def _required_text(value: Mapping[str, Any], field_name: str, *, alias: str | No
     if not text:
         raise ValueError(f"{field_name} must be non-empty")
     return text
+
+
+def _optional_text(value: Mapping[str, Any], field_name: str) -> str | None:
+    raw_value = value.get(field_name)
+    if raw_value is None:
+        return None
+    if not isinstance(raw_value, str):
+        raise ValueError(f"{field_name} must be a string")
+    text = raw_value.strip()
+    return text or None
+
+
+def _optional_int(value: Mapping[str, Any], field_name: str, *, default: int) -> int:
+    raw_value = value.get(field_name, default)
+    if not isinstance(raw_value, int) or isinstance(raw_value, bool):
+        raise ValueError(f"{field_name} must be an integer")
+    return raw_value
 
 
 def _text_tuple(value: Any) -> tuple[str, ...]:
