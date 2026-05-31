@@ -195,8 +195,14 @@ def test_task_decomposition_rejects_loose_spec_field_types() -> None:
 
     for field_name, invalid_value, expected_reason in (
         ("task_id", 101, "task_id must be a string"),
+        ("task_id", "   ", "task_id must be a non-empty string"),
+        ("required_role", "   ", "required_role must be a non-empty string"),
         ("required_capabilities", "invoice.read", "required_capabilities must be a sequence of strings"),
+        ("required_capabilities", ("",), "required_capabilities\\[0\\] must be a non-empty string"),
         ("input_refs", ("invoice_001", 9), "input_refs\\[1\\] must be a string"),
+        ("input_refs", ("invoice_001", "   "), "input_refs\\[1\\] must be a non-empty string"),
+        ("expected_output", "", "expected_output must be a non-empty string"),
+        ("deadline", "   ", "deadline must be a non-empty string"),
         ("requires_receipt", "false", "requires_receipt must be a boolean"),
     ):
         goal = SwarmGoal(
