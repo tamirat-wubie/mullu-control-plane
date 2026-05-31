@@ -47,6 +47,20 @@ def validate_route_prefix(
     return prefix
 
 
+def route_prefix_or_default(
+    value: str | None,
+    *,
+    default: str,
+    env_name: str,
+) -> str:
+    """Return a valid route prefix or default for disabled route reporting."""
+
+    try:
+        return validate_route_prefix(value, default=default, env_name=env_name)
+    except RuntimeError:
+        return default
+
+
 def validate_hosted_store_path(
     path_value: str | Path,
     *,

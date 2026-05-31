@@ -119,6 +119,22 @@ def test_operational_dashboard_integration_defaults_to_disabled_without_env_flag
     assert app.routers == []
 
 
+def test_operational_dashboard_integration_ignores_malformed_prefix_when_disabled() -> None:
+    app = FakeApp()
+
+    result = mount_operational_dashboard_router_from_env(
+        app,
+        {"MULLU_DASHBOARD_ENABLED": "0", "MULLU_DASHBOARD_PREFIX": "dashboard"},
+        runtime=_dashboard_runtime(),
+    )
+
+    assert result.enabled is False
+    assert result.mounted is False
+    assert result.prefix == "/api/v1/dashboard"
+    assert result.reason == "disabled_by_env"
+    assert app.routers == []
+
+
 def test_operational_dashboard_integration_requires_runtime_when_enabled() -> None:
     app = FakeApp()
 

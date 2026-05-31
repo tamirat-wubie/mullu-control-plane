@@ -18,12 +18,13 @@ from dataclasses import dataclass
 import os
 from typing import Any, Callable, Mapping
 
-from mcoi_runtime.app._integration_paths import validate_route_prefix
+from mcoi_runtime.app._integration_paths import route_prefix_or_default, validate_route_prefix
 from mcoi_runtime.core.simple_platform_api import SimplePlatformRuntime
 from mcoi_runtime.core.simple_platform_fastapi_router import create_simple_platform_fastapi_router
 
 
 SimplePlatformRouterFactory = Callable[[SimplePlatformRuntime, str], Any]
+_DEFAULT_SIMPLE_PLATFORM_PREFIX = "/api/v1/simple"
 
 
 @dataclass(frozen=True)
@@ -56,18 +57,22 @@ def mount_simple_platform_router_from_env(
     """Mount simple platform routes when enabled by environment policy."""
 
     runtime_env = os.environ if env is None else env
-    prefix = validate_route_prefix(
-        runtime_env.get("MULLU_SIMPLE_PLATFORM_PREFIX"),
-        default="/api/v1/simple",
-        env_name="MULLU_SIMPLE_PLATFORM_PREFIX",
-    )
     if not _env_flag(runtime_env.get("MULLU_SIMPLE_PLATFORM_ENABLED")):
         return SimplePlatformMountResult(
             enabled=False,
             mounted=False,
-            prefix=prefix,
+            prefix=route_prefix_or_default(
+                runtime_env.get("MULLU_SIMPLE_PLATFORM_PREFIX"),
+                default=_DEFAULT_SIMPLE_PLATFORM_PREFIX,
+                env_name="MULLU_SIMPLE_PLATFORM_PREFIX",
+            ),
             reason="disabled_by_env",
         )
+    prefix = validate_route_prefix(
+        runtime_env.get("MULLU_SIMPLE_PLATFORM_PREFIX"),
+        default=_DEFAULT_SIMPLE_PLATFORM_PREFIX,
+        env_name="MULLU_SIMPLE_PLATFORM_PREFIX",
+    )
     simple_runtime = runtime or SimplePlatformRuntime()
     router = router_factory(simple_runtime, prefix)
     app.include_router(router)
