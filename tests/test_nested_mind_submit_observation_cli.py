@@ -18,9 +18,16 @@ import pytest
 from mcoi_runtime.contracts.nested_mind_observation_submission import (
     NestedMindObservationProposalPlan,
     NestedMindObservationProposalPlanStatus,
+    NestedMindObservationSubmissionReport,
+    NestedMindObservationSubmissionStatus,
     NestedMindProposalEvidence,
     stable_json_hash,
 )
+from mcoi_runtime.contracts.nested_mind_receipts import (
+    NestedMindCommitWitness,
+    NestedMindCommitWitnessStatus,
+)
+from mcoi_runtime.persistence.nested_mind_store import NestedMindEvidenceStore
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "nested_mind_submit_observation.py"
 
@@ -115,3 +122,73 @@ def test_cli_submit_requires_submit_env_flag(tmp_path, monkeypatch) -> None:
 
     with pytest.raises(RuntimeError, match="MULLU_NESTED_MIND_OBSERVATION_SUBMIT_ENABLED"):
         module.main(["--plan", str(plan_path), "--evidence", str(evidence_path), "--submit"])
+
+
+def test_cli_submit_store_records_plan_report_and_witness(tmp_path, monkeypatch, capsys) -> None:
+    module = _script_module()
+    plan_path, evidence_path = _write_inputs(tmp_path)
+    store_path = tmp_path / "evidence.jsonl"
+    monkeypatch.setenv("MULLU_NESTED_MIND_OBSERVATION_SUBMIT_ENABLED", "true")
+    monkeypatch.setattr(
+        module,
+        "mount_nested_mind_observation_submitter_from_env",
+        lambda **_: FakeBootstrap(FakeSubmitter()),
+    )
+
+    exit_code = module.main(
+        [
+            "--plan",
+            str(plan_path),
+            "--evidence",
+            str(evidence_path),
+            "--submit",
+            "--store",
+            str(store_path),
+        ]
+    )
+    output = json.loads(capsys.readouterr().out)
+    entries = NestedMindEvidenceStore(store_path).list_by_mind_id("root")
+
+    assert exit_code == 0
+    assert output["status"] == "accepted"
+    assert [entry.record_type for entry in entries] == ["plan", "submission_report", "commit_witness"]
+    assert "secret-token" not in store_path.read_text(encoding="utf-8")
+
+
+class FakeBootstrap:
+    def __init__(self, submitter: object) -> None:
+        self.submitter = submitter
+
+
+class FakeSubmitter:
+    def submit_observation_plan_with_witness(
+        self,
+        plan: NestedMindObservationProposalPlan,
+        *,
+        submit_enabled: bool,
+    ):
+        assert submit_enabled is True
+        report = NestedMindObservationSubmissionReport(
+            report_id="submission-1",
+            plan_id=plan.plan_id,
+            mind_id=plan.mind_id,
+            proposal_evidence_id=plan.proposal_evidence_id,
+            payload_hash=plan.payload_hash,
+            connector_result_id="connector-result-1",
+            connector_response_digest="d" * 64,
+            response_envelope_hash="envelope-hash-1",
+            commit_witness_id="witness-1",
+            status=NestedMindObservationSubmissionStatus.ACCEPTED,
+            submitted_at=_clock(),
+        )
+        witness = NestedMindCommitWitness(
+            witness_id="witness-1",
+            proposal_evidence_id=plan.proposal_evidence_id,
+            mind_id=plan.mind_id,
+            mullu_receipt_hash=plan.mullu_receipt_hash,
+            nested_mind_commit_hash="commit-hash-1",
+            nested_mind_history_hash="history-hash-1",
+            witnessed_at=_clock(),
+            status=NestedMindCommitWitnessStatus.VERIFIED,
+        )
+        return type("Outcome", (), {"report": report, "commit_witness": witness})()
