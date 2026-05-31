@@ -22,7 +22,7 @@ from mcoi_runtime.contracts import (
     NestedMindObservationSubmissionReport,
     NestedMindObservationSubmissionStatus,
 )
-from mcoi_runtime.persistence import CorruptedDataError, NestedMindEvidenceStore, PersistenceWriteError
+from mcoi_runtime.persistence import CorruptedDataError, NestedMindEvidenceStore
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "report_nested_mind_evidence.py"
 
@@ -140,7 +140,7 @@ def test_report_cli_rejects_stored_sensitive_fields(tmp_path, capsys) -> None:
     entry["payload"]["metadata"] = {"raw_response_body": "{}"}
     store_path.write_text(json.dumps(entry, sort_keys=True) + "\n", encoding="utf-8")
 
-    with pytest.raises(PersistenceWriteError, match="forbidden sensitive field"):
+    with pytest.raises(CorruptedDataError, match="forbidden sensitive field"):
         module.main(["--store", str(store_path)])
     assert capsys.readouterr().out == ""
 

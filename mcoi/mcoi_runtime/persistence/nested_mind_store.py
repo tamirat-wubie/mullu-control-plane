@@ -139,7 +139,7 @@ class NestedMindEvidenceStore:
         if record_id in self._ids:
             raise PersistenceWriteError("nested-mind evidence record already exists")
         payload = record.to_json_dict()
-        _reject_forbidden_payload(payload)
+        _reject_forbidden_payload_on_write(payload)
         entry = NestedMindEvidenceEntry(
             record_type=record_type,
             record_id=record_id,
@@ -177,7 +177,7 @@ class NestedMindEvidenceStore:
             entry = _entry_from_raw(raw)
             if entry.record_id in self._ids:
                 raise CorruptedDataError("duplicate nested-mind evidence id in store")
-            _reject_forbidden_payload(entry.payload)
+            _reject_forbidden_payload_on_read(entry.payload)
             self._entries.append(entry)
             self._ids.add(entry.record_id)
 
@@ -262,13 +262,27 @@ def _validate_payload_contract(record_type: str, payload: Mapping[str, Any]) -> 
     raise CorruptedDataError("unsupported nested-mind evidence record type")
 
 
-def _reject_forbidden_payload(value: Any) -> None:
+def _reject_forbidden_payload_on_write(value: Any) -> None:
+    _reject_forbidden_payload(
+        value,
+        error=PersistenceWriteError("nested-mind evidence contains forbidden sensitive field"),
+    )
+
+
+def _reject_forbidden_payload_on_read(value: Any) -> None:
+    _reject_forbidden_payload(
+        value,
+        error=CorruptedDataError("nested-mind evidence contains forbidden sensitive field"),
+    )
+
+
+def _reject_forbidden_payload(value: Any, *, error: Exception) -> None:
     if isinstance(value, Mapping):
         for key, item in value.items():
             key_text = str(key).lower()
             if any(fragment in key_text for fragment in _FORBIDDEN_KEY_FRAGMENTS):
-                raise PersistenceWriteError("nested-mind evidence contains forbidden sensitive field")
-            _reject_forbidden_payload(item)
+                raise error
+            _reject_forbidden_payload(item, error=error)
     elif isinstance(value, (tuple, list)):
         for item in value:
-            _reject_forbidden_payload(item)
+            _reject_forbidden_payload(item, error=error)

@@ -104,6 +104,37 @@ def test_builder_rejects_sensitive_observation_fields(tmp_path) -> None:
         )
 
 
+def test_builder_rejects_unsafe_observation_id_before_output(tmp_path, capsys) -> None:
+    module = _module()
+    observation_path = tmp_path / "observation.json"
+    observation_path.write_text(json.dumps({"observation_id": "obs-1"}), encoding="utf-8")
+
+    for index, observation_id in enumerate(("../x", "x/y", "x\\y", "x?y", "x#y", "%2e%2e")):
+        with pytest.raises(ValueError, match="observation_id"):
+            module.main(
+                [
+                    "--mind-id",
+                    "root",
+                    "--observation-id",
+                    observation_id,
+                    "--observation",
+                    str(observation_path),
+                    "--mullu-receipt-hash",
+                    "mullu-receipt-hash-1",
+                    "--authority-receipt-hash",
+                    "authority-receipt-hash-1",
+                    "--plan-out",
+                    str(tmp_path / f"unsafe-{index}-plan.json"),
+                    "--evidence-out",
+                    str(tmp_path / f"unsafe-{index}-evidence.json"),
+                    "--planned-at",
+                    "2026-05-31T00:00:00+00:00",
+                ]
+            )
+
+    assert capsys.readouterr().out == ""
+
+
 def test_builder_rejects_non_finite_observation_json_before_output(tmp_path, capsys) -> None:
     module = _module()
     observation_path = tmp_path / "observation.json"

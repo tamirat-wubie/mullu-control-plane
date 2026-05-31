@@ -13,6 +13,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import urlparse
 
 from mcoi_runtime.adapters.http_connector import HttpConnector, HttpConnectorConfig
 from mcoi_runtime.adapters.nested_mind import validate_mind_id
@@ -26,6 +27,7 @@ from mcoi_runtime.contracts.nested_mind_observation_submission import (
     NestedMindObservationSubmissionStatus,
     nested_mind_commit_response_hash,
     stable_json_hash,
+    validate_observation_id,
 )
 from mcoi_runtime.contracts.nested_mind_receipts import (
     NestedMindCommitWitness,
@@ -61,9 +63,7 @@ class NestedMindObservationSubmitter:
         bearer_token: str | None = None,
         http_json_connector: object | None = None,
     ) -> None:
-        normalized_base_url = str(base_url or "").strip().rstrip("/")
-        if not normalized_base_url:
-            raise ValueError("base_url must be a non-empty string")
+        normalized_base_url = _validate_submitter_base_url(base_url)
         token = str(bearer_token or "").strip()
         self._clock = clock
         self._base_url = normalized_base_url
@@ -309,8 +309,12 @@ class NestedMindObservationSubmitter:
         key = op.get("key")
         if not isinstance(key, str) or not key.startswith("observations/"):
             blockers.append("op_key_must_target_observations")
-        elif "../" in key or key.startswith("/") or "?" in key or "#" in key:
-            blockers.append("op_key_must_not_shape_route")
+        else:
+            observation_id = key.removeprefix("observations/")
+            try:
+                validate_observation_id(observation_id)
+            except ValueError:
+                blockers.append("op_key_must_not_shape_route")
         if not isinstance(op.get("value"), Mapping):
             blockers.append("op_value_must_be_object")
         return blockers
@@ -361,13 +365,15 @@ class NestedMindObservationSubmitter:
         return failures
 
     def _response_envelope(self, payload: Mapping[str, Any]) -> NestedMindCommitResponseEnvelope:
+        raw_sequence = payload.get("sequence")
+        sequence = None if isinstance(raw_sequence, bool) or not isinstance(raw_sequence, int) else raw_sequence
         return NestedMindCommitResponseEnvelope(
             mind_id=str(payload.get("mind_id", "")),
             status=str(payload.get("status", "")),
             commit_hash=_optional_text(payload.get("commit_hash")),
             history_hash=_optional_text(payload.get("history_hash")),
             state_hash=_optional_text(payload.get("state_hash")),
-            sequence=payload.get("sequence") if isinstance(payload.get("sequence"), int) else None,
+            sequence=sequence,
             committed_at=_optional_text(payload.get("committed_at")),
             proposal_evidence_hash=str(payload.get("proposal_evidence_hash", "")),
             payload_hash=str(payload.get("payload_hash", "")),
@@ -442,3 +448,18 @@ def _optional_text(value: object) -> str | None:
         return None
     text = str(value)
     return text if text else None
+
+
+def _validate_submitter_base_url(base_url: str) -> str:
+    parsed = urlparse(str(base_url or "").strip())
+    if parsed.scheme.lower() != "https":
+        raise ValueError("base_url must use https")
+    if not parsed.netloc or not parsed.hostname:
+        raise ValueError("base_url must include a host")
+    if parsed.username or parsed.password:
+        raise ValueError("base_url must not include credentials")
+    if parsed.params or parsed.query or parsed.fragment:
+        raise ValueError("base_url must not include params, query, or fragment")
+    path = parsed.path.rstrip("/")
+    netloc = parsed.netloc.lower()
+    return f"https://{netloc}{path}" if path else f"https://{netloc}"
