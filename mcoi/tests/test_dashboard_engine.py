@@ -109,6 +109,7 @@ def _note_memory_snapshot(**summary_overrides: object) -> dict[str, object]:
         "episode_capsule_count": 1,
         "contradiction_count": 0,
         "retrieval_filter_active": False,
+        "retrieval_filter_mode": "unfiltered",
         "retrieval_influence_count": 0,
         "retrieval_influence_total_count": 0,
         "retrieval_receipt_count": 0,
@@ -329,6 +330,7 @@ class TestBuildNoteMemorySummary:
         assert summary.event_count == 4
         assert summary.episode_capsule_count == 1
         assert summary.retrieval_filter_active is False
+        assert summary.retrieval_filter_mode == "unfiltered"
         assert summary.retrieval_influence_count == 0
         assert summary.retrieval_influence_total_count == 0
         assert summary.retrieval_receipt_count == 0
@@ -361,9 +363,12 @@ class TestBuildNoteMemorySummary:
 
     def test_builds_note_memory_summary_with_active_retrieval_filter(self):
         engine = _make_engine()
-        summary = engine.build_note_memory_summary(_note_memory_snapshot(retrieval_filter_active=True))
+        summary = engine.build_note_memory_summary(
+            _note_memory_snapshot(retrieval_filter_active=True, retrieval_filter_mode="receipt")
+        )
 
         assert summary.retrieval_filter_active is True
+        assert summary.retrieval_filter_mode == "receipt"
         assert summary.retrieval_influence_count == 0
         assert summary.retrieval_receipt_count == 0
 
@@ -376,6 +381,16 @@ class TestBuildNoteMemorySummary:
             assert "boolean" in str(exc)
         else:
             raise AssertionError("retrieval_filter_active must be a boolean")
+
+    def test_rejects_unknown_retrieval_filter_mode(self):
+        engine = _make_engine()
+        try:
+            engine.build_note_memory_summary(_note_memory_snapshot(retrieval_filter_mode="all"))
+        except ValueError as exc:
+            assert "retrieval_filter_mode" in str(exc)
+            assert "known retrieval filter mode" in str(exc)
+        else:
+            raise AssertionError("retrieval_filter_mode must be bounded")
 
     def test_rejects_negative_count(self):
         engine = _make_engine()

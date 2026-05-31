@@ -301,6 +301,7 @@ def test_note_memory_summary_renders_operator_counts() -> None:
         episode_capsule_count=1,
         contradiction_count=0,
         retrieval_filter_active=True,
+        retrieval_filter_mode="receipt_and_citing_note",
         retrieval_influence_count=1,
         retrieval_influence_total_count=2,
         retrieval_receipt_count=1,
@@ -317,6 +318,7 @@ def test_note_memory_summary_renders_operator_counts() -> None:
     assert "pending_promotions:     1" in output
     assert "episode_capsules:       1" in output
     assert "retrieval_filter_active: True" in output
+    assert "retrieval_filter_mode:  receipt_and_citing_note" in output
     assert "retrieval_influence:    1" in output
     assert "retrieval_influence_total: 2" in output
     assert "retrieval_receipts:     1" in output

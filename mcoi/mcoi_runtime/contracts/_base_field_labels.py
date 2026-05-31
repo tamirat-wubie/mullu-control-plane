@@ -1188,6 +1188,7 @@ resumed_at
 resumed_by_id
 retention_days
 retrieval_filter_active
+retrieval_filter_mode
 retrieval_influence_count
 retrieval_influence_total_count
 retrieval_receipt_count

@@ -209,6 +209,16 @@ def _validate_retrieval_receipt_refs(values: Iterable[str]) -> tuple[str, ...]:
     return _unique_text_tuple(_validate_retrieval_receipt_id(value) for value in values)
 
 
+def _retrieval_filter_mode(*, retrieval_receipt_filter: str, retrieval_citing_note_filter: str) -> str:
+    if retrieval_receipt_filter and retrieval_citing_note_filter:
+        return "receipt_and_citing_note"
+    if retrieval_receipt_filter:
+        return "receipt"
+    if retrieval_citing_note_filter:
+        return "citing_note"
+    return "unfiltered"
+
+
 def _validate_optional_claim(claim_key: str, claim_value: str) -> tuple[str, str]:
     key = str(claim_key or "").strip()
     value = str(claim_value or "").strip()
@@ -927,6 +937,10 @@ class NoteMemoryMesh:
             if retrieval_citing_note_ref
             else ""
         )
+        retrieval_filter_mode = _retrieval_filter_mode(
+            retrieval_receipt_filter=retrieval_receipt_filter,
+            retrieval_citing_note_filter=retrieval_citing_note_filter,
+        )
         current = _parse_iso(now or self._clock())
         events = self.list_events(skip_invalid=False)
         materialized = self._materialize(events)
@@ -985,6 +999,7 @@ class NoteMemoryMesh:
                 "episode_capsule_count": len(episode_capsules),
                 "contradiction_count": len(contradictions),
                 "retrieval_filter_active": bool(retrieval_receipt_filter or retrieval_citing_note_filter),
+                "retrieval_filter_mode": retrieval_filter_mode,
                 "retrieval_influence_count": len(retrieval_influence),
                 "retrieval_influence_total_count": len(retrieval_influence_rows),
                 "retrieval_receipt_count": len(retrieval_receipts),

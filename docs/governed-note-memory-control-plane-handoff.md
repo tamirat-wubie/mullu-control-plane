@@ -78,7 +78,9 @@ citation counts, distinct citing-note counts, latest citation witnesses, and
 sample citing note IDs for operator navigation. The summary exposes
 `retrieval_filter_active` so downstream dashboards can distinguish a narrowed
 read model from the full note-memory retrieval graph without reinterpreting
-raw filter fields.
+raw filter fields. It also exposes `retrieval_filter_mode` with one of
+`unfiltered`, `receipt`, `citing_note`, or `receipt_and_citing_note` so
+operators can identify the active read-model narrowing rule directly.
 
 Snapshots also accept a read-only `retrieval_citing_note_ref` filter so
 operators can inspect the retrieval witnesses cited by a specific note or
@@ -113,6 +115,7 @@ memory_anchor_count
 episode_capsule_count
 contradiction_count
 retrieval_filter_active
+retrieval_filter_mode
 retrieval_influence_count
 retrieval_influence_total_count
 retrieval_receipt_count
