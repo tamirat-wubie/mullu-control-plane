@@ -80,6 +80,29 @@ def test_promotion_closure_plan_schema_accepts_portfolio_source_actions(tmp_path
     assert validation.source_plan_types == ("adapter", "deployment", "portfolio")
 
 
+def test_promotion_closure_plan_schema_accepts_execution_environment(tmp_path: Path) -> None:
+    plan_path = tmp_path / "general_agent_promotion_closure_plan.json"
+    payload = _valid_plan()
+    payload["actions"][0]["execution_environment"] = {  # type: ignore[index]
+        "required_host_os": "Linux",
+        "current_host_os": "Windows",
+        "current_environment_ready": False,
+        "blocker_if_unmet": "browser_sandbox_runner_linux_only",
+        "requirements": ["linux_host", "rootless_docker"],
+    }
+    plan_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_general_agent_promotion_closure_plan_schema(
+        plan_path=plan_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is True
+    assert validation.errors == ()
+    assert validation.action_count == 2
+    assert validation.approval_required_action_count == 1
+
+
 def test_promotion_closure_plan_schema_rejects_missing_source_tag(tmp_path: Path) -> None:
     plan_path = tmp_path / "general_agent_promotion_closure_plan.json"
     payload = _valid_plan()

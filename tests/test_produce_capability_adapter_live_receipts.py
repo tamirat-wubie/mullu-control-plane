@@ -172,6 +172,13 @@ def test_browser_live_receipt_bounds_probe_exception_detail(tmp_path: Path) -> N
     assert payload["error"] == "browser_probe_exception"
     assert "browser_probe_exception" in payload["blockers"]
     assert "secret-browser-probe-token" not in serialized
+    assert payload["failure_class"] == "probe_exception"
+    assert payload["recovery_actions"] == [
+        "verify_browser_worker_reachable",
+        "verify_browser_sandbox_evidence_present",
+        "verify_playwright_browser_dependencies_installed",
+        "rerun_browser_live_receipt_probe",
+    ]
 
 
 def test_document_live_receipt_passes_with_required_parser_probe(tmp_path: Path) -> None:
@@ -229,6 +236,12 @@ def test_document_live_receipt_bounds_probe_exception_detail(tmp_path: Path) -> 
     assert payload["error"] == "document_probe_exception"
     assert "document_probe_exception" in payload["blockers"]
     assert "secret-document-probe-token" not in serialized
+    assert payload["failure_class"] == "probe_exception"
+    assert payload["recovery_actions"] == [
+        "verify_document_parser_dependencies_installed",
+        "verify_document_parser_registry_loaded",
+        "rerun_document_live_receipt_probe",
+    ]
 
 
 def test_voice_live_receipt_passes_with_audio_and_worker_responses(tmp_path: Path) -> None:
@@ -272,6 +285,13 @@ def test_voice_live_receipt_bounds_probe_exception_detail(tmp_path: Path) -> Non
     assert payload["error"] == "voice_probe_exception"
     assert "voice_probe_exception" in payload["blockers"]
     assert "secret-voice-probe-token" not in serialized
+    assert payload["failure_class"] == "probe_exception"
+    assert payload["recovery_actions"] == [
+        "verify_voice_worker_reachable",
+        "verify_voice_provider_credentials_present",
+        "verify_voice_audio_fixture_present",
+        "rerun_voice_live_receipt_probe",
+    ]
 
 
 def test_email_calendar_live_receipt_passes_with_read_only_worker_response(tmp_path: Path) -> None:

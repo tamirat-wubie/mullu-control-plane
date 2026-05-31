@@ -20,9 +20,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import platform
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_READINESS = REPO_ROOT / ".change_assurance" / "general_agent_promotion_readiness.json"
@@ -65,6 +66,7 @@ def plan_general_agent_promotion_closure(
     adapter_plan_path: Path = DEFAULT_ADAPTER_PLAN,
     deployment_plan_path: Path = DEFAULT_DEPLOYMENT_PLAN,
     portfolio_plan_path: Path | None = None,
+    platform_system: Callable[[], str] | None = None,
 ) -> PromotionClosurePlan:
     """Combine current closure plans into one production-promotion plan."""
     readiness = _load_json_object(readiness_path, "promotion readiness")
@@ -75,11 +77,12 @@ def plan_general_agent_promotion_closure(
         if portfolio_plan_path is not None
         else None
     )
+    host_platform = platform_system or platform.system
     actions = tuple(
-        _tag_action(action, source="adapter")
+        _tag_action(action, source="adapter", platform_system=host_platform)
         for action in _action_items(adapter_plan)
     ) + tuple(
-        _tag_action(action, source="deployment")
+        _tag_action(action, source="deployment", platform_system=host_platform)
         for action in _action_items(deployment_plan)
     ) + tuple(
         portfolio_closure_action
@@ -146,10 +149,38 @@ def _action_items(plan: dict[str, Any]) -> tuple[dict[str, Any], ...]:
     return tuple(action for action in actions if isinstance(action, dict))
 
 
-def _tag_action(action: dict[str, Any], *, source: str) -> dict[str, Any]:
+def _tag_action(
+    action: dict[str, Any],
+    *,
+    source: str,
+    platform_system: Callable[[], str],
+) -> dict[str, Any]:
     tagged = dict(action)
     tagged["source_plan_type"] = source
+    if source == "adapter" and tagged.get("blocker") == "browser_live_evidence_missing":
+        tagged["execution_environment"] = _browser_live_evidence_execution_environment(
+            platform_system=platform_system
+        )
     return tagged
+
+
+def _browser_live_evidence_execution_environment(
+    *,
+    platform_system: Callable[[], str],
+) -> dict[str, Any]:
+    current_host_os = str(platform_system()).strip() or "unknown"
+    return {
+        "required_host_os": "Linux",
+        "current_host_os": current_host_os,
+        "current_environment_ready": current_host_os.lower() == "linux",
+        "blocker_if_unmet": "browser_sandbox_runner_linux_only",
+        "requirements": [
+            "linux_host",
+            "rootless_docker",
+            "no_workspace_changes",
+            "browser_sandbox_evidence_validation",
+        ],
+    }
 
 
 def _portfolio_actions(portfolio_plan: dict[str, Any] | None) -> tuple[dict[str, Any], ...]:

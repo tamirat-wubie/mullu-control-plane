@@ -105,6 +105,40 @@ def test_promotion_closure_plan_preserves_deployment_runtime_input_actions(tmp_p
     assert "deployment_dns_not_verified" in plan.blockers
 
 
+def test_promotion_closure_plan_marks_browser_runner_environment(tmp_path: Path) -> None:
+    readiness_path, adapter_plan_path, deployment_plan_path = _write_source_plans(tmp_path)
+    adapter_plan = json.loads(adapter_plan_path.read_text(encoding="utf-8"))
+    adapter_plan["blockers"] = ["browser_live_evidence_missing"]
+    adapter_plan["actions"] = [
+        {
+            "action_id": "browser-playwright-browser-live-evidence-missing",
+            "blocker": "browser_live_evidence_missing",
+            "action_type": "live-receipt",
+            "verification_command": "python scripts/collect_capability_adapter_evidence.py",
+            "receipt_validator": "adapter_evidence.browser.playwright.receipt_check.passed",
+            "approval_required": False,
+        },
+    ]
+    adapter_plan_path.write_text(json.dumps(adapter_plan), encoding="utf-8")
+
+    plan = plan_general_agent_promotion_closure(
+        readiness_path=readiness_path,
+        adapter_plan_path=adapter_plan_path,
+        deployment_plan_path=deployment_plan_path,
+        platform_system=lambda: "Windows",
+    )
+    browser_action = next(
+        action for action in plan.actions if action["blocker"] == "browser_live_evidence_missing"
+    )
+    execution_environment = browser_action["execution_environment"]
+
+    assert execution_environment["required_host_os"] == "Linux"
+    assert execution_environment["current_host_os"] == "Windows"
+    assert execution_environment["current_environment_ready"] is False
+    assert execution_environment["blocker_if_unmet"] == "browser_sandbox_runner_linux_only"
+    assert "rootless_docker" in execution_environment["requirements"]
+
+
 def test_promotion_closure_plan_writer_and_cli_emit_json(tmp_path: Path, capsys) -> None:
     readiness_path, adapter_plan_path, deployment_plan_path = _write_source_plans(tmp_path)
     output_path = tmp_path / "general_agent_promotion_closure_plan.json"
