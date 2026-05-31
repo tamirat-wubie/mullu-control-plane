@@ -296,13 +296,3 @@ def cache_stats():
 def backpressure_status():
     """Current backpressure state."""
     return deps.backpressure.status()
-
-
-# ═══ Traces Summary ═══
-
-
-@router.get("/api/v1/traces/summary")
-def get_traces_summary():
-    """Return OpenTelemetry trace exporter summary."""
-    deps.metrics.inc("requests_governed")
-    return {"traces": deps.otel_exporter.summary(), "governed": True}

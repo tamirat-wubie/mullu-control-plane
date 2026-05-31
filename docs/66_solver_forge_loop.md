@@ -68,6 +68,12 @@ ProblemSignature
 | `gateway/candidate_composer.py` | `CandidateComposer`, `MethodCapsule`, `CandidatePipeline`, `CandidateEvaluation`, `AdversarialReviewResult`, `CandidateComparisonReport` | Composes pipelines from registered capsules, runs each under a deterministic per-pipeline seed, applies both gates, and records every result. |
 | `gateway/solver_forge_bridge.py` | `forge_input_for_winner`, `build_provenance`, `extract_provenance`, `SolverForgeProvenance`, `is_winner` | Carries a winning ledger record into a `CapabilityForgeInput` with full provenance stamped under the reserved `solver_forge.*` metadata key. Refuses non-winners and findings-bearing runs. |
 | `gateway/solver_forge_red_team_adapter.py` | `RedTeamPlatformReviewer` | Production `AdversarialReviewCallback` backed by `RedTeamHarness`. Caches the report per instance by default. Findings derive from the harness category summary; evidence ref is the harness `report_hash`. |
+| `gateway/method_registry.py` | `MethodRegistry`, `STARTER_CAPSULES`, `default_registry` | Typed catalog of method capsules. Selects the capsules a signature admits and builds a composer; declaration-only, with no promotion surface. Ships a conservative starter catalog. |
+| `gateway/solver_forge_benchmarks.py` | `reference_evaluator`, `run_benchmark`, `BENCHMARKS`, `DUPLICATE_INVOICE_SIGNATURE` | Worked duplicate-invoice benchmark over a labeled fixture with three real detectors. Deterministic; primary metric is F1 so a recall-only trap cannot win. |
+| `gateway/solver_forge_cli.py` | `main`, `build_parser` | Read-and-experiment CLI: list capsules/benchmarks, run a benchmark, preview a forge input. No promote / install / deploy subcommand. |
+| `gateway/solver_forge_capsule_probes.py` | `CapsuleProbeReviewer`, `CompositeAdversarialReviewer`, `DEFAULT_PROBES` | Candidate-specific Gate-2 reviewer: deterministic probes derived from each capsule's declared contract, so different candidates get different findings. Composes with `RedTeamPlatformReviewer`. |
+| `gateway/candidate_ledger_postgres.py` | `PostgresCandidateLedgerStore`, `connect` | Durable Postgres-backed `CandidateLedgerStore`. Append-only, rejects duplicate `record_hash`, mirrors the platform `DatabaseConnection` protocol (injectable, so it is fully testable without a live DB). |
+| `gateway/signature_cluster.py` | `SignatureClusterIndex`, `signature_similarity` | Cross-signature clustering: deterministic feature-overlap similarity groups related problem classes and surfaces prior winning method families from the ledger. Read-only, advisory, no promotion surface. |
 
 ## Problem signatures
 
@@ -151,7 +157,7 @@ The adapter tests *platform invariants*, not candidate-specific behavior. Every 
 
 `severity_threshold` tolerates up to N failed cases (default `0` = strict). `cache=True` (default) runs the harness once per adapter instance; `reset_cache()` forces a fresh run. Construct a new adapter for each composer.run() session if you want fresh platform evidence per session.
 
-Candidate-specific adversarial probes (per-pipeline injection patterns derived from declared capsule inputs) remain out of scope and are tracked below as follow-on work.
+Candidate-specific adversarial probes (per-pipeline findings derived from each capsule's declared contract) are implemented by `gateway/solver_forge_capsule_probes.py`; see the Candidate-specific adversarial probes section below.
 
 ## Comparison ledger
 
@@ -242,6 +248,133 @@ Rules specific to the declared composer:
 - **Skip auditing.** Poisoned and duplicate specs are exposed two ways: `skipped_compositions()` returns full `SkippedComposition` records, and the comparison report's `skipped_capsule_ids` / `skipped_reasons` are keyed by the skipped composition's `pipeline_id` with the offending capsule encoded in the reason (the declared composer overrides `_composer_skips()` to make the report describe composition-level skips instead of single-capsule admissibility).
 - **Baseline.** `run()` still detects the baseline as the pipeline whose `method_families` is the single-element tuple `(signature.baseline_method_family,)`. A multi-capsule pipeline can never be mistaken for the baseline; a caller that wants one includes a single-capsule `CompositionSpec` for the baseline family.
 
+## Method registry and starter catalog
+
+`gateway/method_registry.py` is the "Method Registry" box of the loop: a typed
+catalog of `MethodCapsule` declarations the composer can draw on. It owns no
+implementation and no promotion path — `composer_for(signature, ledger)` returns
+a `CandidateComposer` seeded with the capsules whose method family the signature
+admits, and the composer reports any risk-ceiling skips transparently.
+
+`default_registry()` ships a conservative `STARTER_CAPSULES` catalog spanning the
+first three problem domains (`document_verification`, `workflow_automation`,
+`engineering_puzzle`) plus general-purpose families (`llm_planner`,
+`llm_reviewer`, `multi_agent_debate`, `human_review_gate`). These are starter
+DEFAULTS: every capsule is tagged `metadata["provenance"] = "starter_default"`,
+and capsule/adapter owners should review and replace the `risk_ceiling`,
+`cost_class`, and `explainability` claims with measured values before those
+claims inform a promotion decision.
+
+## Reference benchmark
+
+`gateway/solver_forge_benchmarks.py` is a worked, runnable benchmark that
+exercises the whole loop on real computation. `invoice_duplicate_detection.v1`
+embeds a labeled invoice fixture and three genuine detectors:
+
+- `rule_based` exact field match (the baseline): high precision, low recall.
+- `graph_match` normalized vendor + amount proximity: catches variations.
+- `statistical_anomaly` same-vendor overflag: a recall-only trap.
+
+The evaluator is deterministic and measures precision/recall/F1 on the fixture
+rather than declaring scores. The signature's primary metric is **F1, not
+recall**, so the overflag trap — which has perfect recall but low precision —
+runs, is recorded as a passed candidate, and is correctly **refused as a
+winner**. Only the graph-match detector beats the baseline on F1 and is selected.
+This is the loop demonstrating "Promote narrowly": a high-recall result is not a
+winner unless it also clears the primary metric.
+
+A second benchmark, `task_scheduling_with_deadlines.v1` (`engineering_puzzle`),
+makes the same point in a different domain. A naive in-order baseline, an
+earliest-deadline-first scheduler, and a "longest-first" anti-pattern are
+compared on real single-worker scheduling with dependencies. The primary metric
+is on-time rate, so earliest-deadline-first wins (it meets every deadline) while
+the longest-first heuristic runs, is recorded, and is refused for missing more
+deadlines than the baseline. This benchmark also exercises the `search_planner`,
+`constraint_solver`, and `optimization_solver` capsules that the duplicate-invoice
+benchmark does not.
+
+A third benchmark, `deployment_gate_decision.v1` (`workflow_automation`),
+completes the first three problem domains and exercises the `simulation_check`
+capsule. It decides GO/NO-GO on deploy requests, scored against recorded incident
+outcomes: a naive tests-only baseline, a full safety policy, and a
+throughput-maximizing "ship-fast" gate. The primary metric is decision accuracy,
+so the full safety policy wins (and approves nothing unsafe) while the
+throughput gate — which approves too much and would wave through real incidents —
+runs, is recorded, and is refused.
+
+## Running the lab (CLI)
+
+`gateway/solver_forge_cli.py` is the read-and-experiment entrypoint. It has no
+promote / install / certify / deploy subcommand by construction; acting on a
+winner stays a deliberate, downstream step through the C0-C7 maturity ladder.
+
+```text
+python -m gateway.solver_forge_cli list-capsules [--domain D] [--family F]
+python -m gateway.solver_forge_cli list-benchmarks
+python -m gateway.solver_forge_cli run <benchmark_id> [--json] [--ledger-out FILE]
+python -m gateway.solver_forge_cli forge-input <benchmark_id> \
+    --capability-id <id> --owner-team <team>   # PREVIEW only; creates nothing
+```
+
+`run` prints the winners, passed-non-winners (with their negative
+`baseline_delta`), negatives, and skipped capsules, and can persist the full
+candidate ledger to a JSON file. `forge-input` previews the
+`CapabilityForgeInput` a winner would produce — including the stamped
+`solver_forge.*` provenance — but never calls `CapabilityForge.create_candidate`.
+
+## Candidate-specific adversarial probes
+
+`RedTeamPlatformReviewer` tests platform invariants, so every candidate in a
+session inherits the same verdict. `gateway/solver_forge_capsule_probes.py` adds
+the complementary layer: `CapsuleProbeReviewer` is an `AdversarialReviewCallback`
+that derives deterministic probes from each capsule's **declared contract**, so
+two different candidates can receive **different** findings.
+
+The default probes:
+
+- **Unmitigated injection surface** — a capsule that consumes untrusted free
+  text (an LLM-backed family, or an input named `text` / `prompt` / `document` /
+  …) must declare an injection-class failure mode; otherwise the surface is
+  unguarded.
+- **Unguarded external-state assumption** — an assumption that depends on
+  external mutable state (a graph `exists`, data is `fresh`, a service is
+  `reachable`) must have a matching `missing` / `stale` / `unavailable` failure
+  mode.
+- **High-risk / low-oversight** — a high- or physical-risk capsule with low
+  explainability must be paired with a `human_review_gate` in the pipeline.
+
+Findings are honest by construction: they are derived from declared metadata, so
+a finding means "the declared contract leaves a surface unguarded", never "the
+method was attacked and failed". The reviewer obeys every existing gate
+invariant — it is applied symmetrically to the baseline (a flagged baseline sets
+`baseline_compromised` and zeroes winners), and findings are recorded on the
+ledger record. `CompositeAdversarialReviewer` unions several reviewers so the
+platform harness and the capsule probes can run together.
+
+Running the default probes over the starter catalog flags the LLM-backed
+capsules (`llm_planner`, `llm_reviewer`, `multi_agent_debate`) for not declaring
+an injection failure mode — a real contract gap for capsule owners to close —
+while the duplicate-invoice benchmark capsules are clean, so the probes can be
+attached to that benchmark without compromising its baseline.
+
+## Cross-signature clustering
+
+Two signatures with different `signature_hash` values are siblings, not the same
+problem class — so ledger evidence does not transfer between them by default.
+`gateway/signature_cluster.py` adds the advisory layer. `SignatureClusterIndex`
+computes a deterministic, symmetric **feature-overlap** similarity between
+signatures — domain match, goal-token Jaccard, success-metric-id Jaccard,
+allowed-family Jaccard, and risk match, under explicit tunable weights — *not* a
+learned model. Identical content scores 1.0.
+
+It exposes `related(signature)` (registered signatures above the threshold,
+sorted by score), `clusters()` (connected components = problem classes), and
+`prior_winning_families(signature, ledger)` — which reads the ledger's winners
+for related signatures and tallies the method families that have won on problems
+*like this one*. That tally is **evidence, not a recommendation**: the index
+never composes, scores, or promotes anything, and reads each related signature's
+winners with that signature's own primary metric.
+
 ## Relationship to existing infrastructure
 
 | Pre-existing module | Relationship |
@@ -273,10 +406,18 @@ Rules specific to the declared composer:
 | `tests/test_gateway/test_solver_forge_adversarial.py` | 12 | Review-result shape invariants, reviewer-on-passing-only semantics, finding preservation, candidate exclusion despite beating baseline, baseline-compromise zeroing winners, ledger filtering, bridge refusal, double-gate end-to-end. |
 | `tests/test_gateway/test_solver_forge_red_team_adapter.py` | 14 | Default-platform clean path, injected failing case → findings + report_hash evidence ref, multi-category finding derivation (sorted + deduped), malformed/inconsistent report defenses, severity_threshold tolerance, cache hit + opt-out + `reset_cache()` + `latest_report()` immutability, end-to-end composer integration with both clean and failing platform. |
 | `tests/test_gateway/test_solver_forge_multicapsule.py` | 14 | `CompositionSpec` shape, ordered multi-capsule emission, chain poisoning (forbidden / unknown / below-risk-ceiling capsule), `skipped_compositions()` reset-per-call, single-capsule-baseline detection with multi-capsule candidates, double-gate end-to-end, base-composer regression guard, truthful composition-level skip reporting, and duplicate-`pipeline_id` safety. |
+| `tests/test_gateway/test_method_registry.py` | 12 | Register / duplicate-rejection, family + domain queries, signature admissibility (allow / forbid / risk-ceiling), composer construction, no-promotion-surface, starter-catalog integrity. |
+| `tests/test_gateway/test_solver_forge_benchmarks.py` | 11 | Detector ground truth (precision / recall), deterministic evaluator, unknown-capsule skip, end-to-end winner selection, recall-only-trap refusal, winner crosses the bridge, ledger winners match the report. |
+| `tests/test_gateway/test_solver_forge_cli.py` | 9 | No-promotion subcommand surface, list capsules / benchmarks (incl. domain + family filters), text + JSON run output, unknown-benchmark error, ledger-file write, read-only forge-input preview. |
+| `tests/test_gateway/test_solver_forge_scheduling_benchmark.py` | 6 | Scheduler ground truth (on-time rate), deterministic evaluator, unknown-capsule skip, EDF wins / longest-first anti-pattern refused, winner crosses the bridge, catalog membership. |
+| `tests/test_gateway/test_solver_forge_deployment_benchmark.py` | 6 | Gate ground truth (accuracy + unsafe-approval rate), deterministic evaluator, unknown-capsule skip, safety-policy wins / throughput gate refused, winner crosses the bridge, three-domain catalog. |
+| `tests/test_gateway/test_solver_forge_capsule_probes.py` | 14 | Each probe (injection / external-state / high-risk-low-oversight) + its mitigation, deterministic candidate-specific findings, starter-catalog calibration, composite union, composer double-gate exclusion, baseline-compromise. |
+| `tests/test_gateway/test_candidate_ledger_postgres.py` | 8 | Schema init, append + byte-faithful roundtrip, duplicate rejection, findings roundtrip, per-signature isolation, status, drop-in `CandidateLedger` backend, clear error without psycopg2 (+ skip-gated real-DB smoke). |
+| `tests/test_gateway/test_signature_cluster.py` | 8 | Similarity (identical=1, symmetric, variant-related, unrelated below threshold), related excludes self + sorts by score, clusters group problem classes, prior-winning-families reads related evidence (ignores unrelated), threshold validation, no-promotion-surface. |
 
 ## Open questions deferred to follow-on work
 
 - **Composer-invented compositions.** `DeclaredCompositionComposer` runs *caller-declared* chains (see "Multi-capsule pipelines" above). A composer that automatically *generates* candidate compositions — searching the space of capsule orderings under the signature constraints rather than running an explicit list — is not in scope. The declared composer is the deterministic substrate such a search would sit on top of.
-- **Candidate-specific adversarial probes.** The `RedTeamPlatformReviewer` adapter tests platform invariants (every candidate inherits the same verdict). Per-pipeline injection patterns derived from declared capsule inputs — so that two candidates in the same session can receive different findings — are not implemented. The interface supports it; the adapter does not.
-- **Ledger durability beyond JSON file.** `InMemoryCandidateLedgerStore` and `JsonFileCandidateLedgerStore` are the only stores; a Postgres-backed store mirroring `plan_ledger` durability is a natural follow-on.
-- **Cross-signature learning.** Two signatures with different `signature_hash` values are siblings, not the same problem class. A clustering layer that recognizes "this is the same kind of problem we've seen before" is out of scope; the ledger preserves the evidence to enable it later.
+- **Live-attack candidate probes.** Candidate-specific *contract-level* probes are now implemented (`gateway/solver_forge_capsule_probes.py`, `CapsuleProbeReviewer`). The remaining gap is probes that *execute* live attacks per pipeline (rather than auditing the declared contract); the `AdversarialReviewCallback` seam already supports it.
+- **Production ledger-pool wiring.** A Postgres-backed store is now implemented (`gateway/candidate_ledger_postgres.py`, `PostgresCandidateLedgerStore`), testable via an injected connection. The remaining follow-on is wiring it to the platform's production connection pool / migration CLI; the store itself is pool-agnostic (it accepts any `DatabaseConnection`).
+- **Learned cross-signature similarity.** A deterministic feature-overlap clustering layer is now implemented (`gateway/signature_cluster.py`, `SignatureClusterIndex`). A natural follow-on is a *learned* similarity (e.g. embeddings over signature structure) for cross-domain problem classes the feature heuristic misses; the index's `weights` / `threshold` seam and the ledger evidence are already in place.

@@ -817,6 +817,8 @@ def _command_run(
         "returncode": receipt.returncode,
         "network_disabled": receipt.network_disabled,
         "read_only_rootfs": receipt.read_only_rootfs,
+        "capabilities_dropped": receipt.capabilities_dropped,
+        "seccomp_profile_applied": receipt.seccomp_profile_applied,
         "workspace_mount": receipt.workspace_mount,
         "forbidden_effects_observed": receipt.forbidden_effects_observed,
         "verification_status": receipt.verification_status,

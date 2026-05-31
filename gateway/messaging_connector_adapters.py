@@ -360,7 +360,13 @@ def _teams_operation(
     credential: MessagingConnectorCredential,
 ) -> MessagingHttpOperation:
     if request.action == "messaging.thread.read":
-        chat_id = urllib.parse.quote(request.thread_id or request.recipients[0] if request.recipients else "")
+        # thread_id is the canonical chat selector (worker policy requires it and
+        # does not require recipients); fall back to the first recipient only when
+        # thread_id is absent. Parenthesized to avoid the precedence trap where
+        # `a or b if c else ""` drops thread_id whenever recipients is empty.
+        chat_id = urllib.parse.quote(
+            request.thread_id or (request.recipients[0] if request.recipients else "")
+        )
         return MessagingHttpOperation(
             method="GET",
             url=f"{credential.base_url}/v1.0/chats/{chat_id}/messages",

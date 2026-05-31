@@ -582,6 +582,15 @@ def _step_payload(step) -> dict[str, Any]:
     }
 
 
+def _class_for_status(terminal_status: str) -> str:
+    # Mirror gateway.conformance._decide_class so fixtures stay schema-valid.
+    if terminal_status == "conformant":
+        return "class_a"
+    if terminal_status == "conformant_with_gaps":
+        return "class_b"
+    return "class_c"
+
+
 def _signed_certificate(
     *,
     secret: str,
@@ -637,6 +646,7 @@ def _signed_certificate(
         "security_model_aligned": False,
         "open_conformance_gaps": ["known_limitations_documentation_drift"],
         "terminal_status": terminal_status,
+        "conformance_class": _class_for_status(terminal_status),
         "evidence_refs": ["gateway_witness:test"],
         "checks": [
             {

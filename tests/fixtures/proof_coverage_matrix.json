@@ -864,11 +864,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 217,
+      "proven": 218,
       "unproven": 0,
       "witnessed": 148
     },
-    "route_count": 365,
+    "route_count": 366,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1083,6 +1083,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/cases/{case_id}/plan-steps/{step_id}/gate",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/cases/{case_id}/plan-steps/{step_id}/worker-receipt",
         "surface_id": "orgos_case_governance_lifecycle"
       },
       {
@@ -5677,10 +5682,11 @@
         "mcoi/mcoi_runtime/persistence/organization_kernel_store.py",
         "tests/test_gateway/test_orgos_api.py",
         "tests/test_gateway/test_orgos_kernel.py",
+        "mcoi/tests/test_organization_kernel.py",
         "mcoi/tests/test_organization_kernel_router.py",
         "mcoi/tests/test_organization_kernel_store.py"
       ],
-      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, closure decisions, and replayed read models without worker dispatch authority.",
+      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, closure decisions, replayed read models, and admit bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
       "representative_paths": [
         "/api/v1/orgs",
         "/api/v1/orgs/{org_id}/bootstrap-minimum",
@@ -5699,6 +5705,7 @@
         "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness-closure",
         "/api/v1/cases/{case_id}/plan",
         "/api/v1/cases/{case_id}/plan-steps/{step_id}/gate",
+        "/api/v1/cases/{case_id}/plan-steps/{step_id}/worker-receipt",
         "/api/v1/cases/{case_id}/close",
         "/api/v1/orgos/read-model",
         "/api/v1/orgos/replay"
@@ -5722,7 +5729,8 @@
         "launch_gateway_pilot_readiness_read_model_reports_missing_evidence",
         "launch_gateway_pilot_readiness_packet_closes_after_verified_witness",
         "launch_gateway_pilot_readiness_packet_blocks_without_engineering_witness",
-        "jsonl_case_event_log_preserves_hash_chain"
+        "jsonl_case_event_log_preserves_hash_chain",
+        "worker_receipts_satisfy_engineering_gate_evidence"
       ],
       "surface_id": "orgos_case_governance_lifecycle"
     },
@@ -9093,8 +9101,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1118,
-    "runtime_witness_count": 1118,
+    "exact_test_anchor_count": 1119,
+    "runtime_witness_count": 1119,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -12750,10 +12758,16 @@
               "tests/test_gateway/test_orgos_kernel.py::test_jsonl_case_event_log_preserves_hash_chain"
             ],
             "witness": "jsonl_case_event_log_preserves_hash_chain"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_organization_kernel.py::test_worker_receipts_satisfy_engineering_gate_evidence"
+            ],
+            "witness": "worker_receipts_satisfy_engineering_gate_evidence"
           }
         ],
-        "exact_test_anchor_count": 18,
-        "runtime_witness_count": 18,
+        "exact_test_anchor_count": 19,
+        "runtime_witness_count": 19,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
