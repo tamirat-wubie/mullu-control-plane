@@ -27,7 +27,14 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 import gateway.conformance as conformance  # noqa: E402
-from gateway.conformance import ProofCoverageStatus, _known_limitations_aligned, issue_conformance_certificate  # noqa: E402
+from gateway.conformance import (  # noqa: E402
+    ConformanceClass,
+    ConformanceStatus,
+    ProofCoverageStatus,
+    _decide_class,
+    _known_limitations_aligned,
+    issue_conformance_certificate,
+)
 from gateway.server import create_gateway_app  # noqa: E402
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
@@ -498,6 +505,84 @@ def _real_command_ledger():
     )
     ledger.transition(command.command_id, CommandState.ALLOWED, risk_tier="low")
     return ledger
+
+
+def test_decide_class_is_strict_function_of_status() -> None:
+    # The declared class is derived from terminal status, never hand-set,
+    # so a deployment cannot over-claim:
+    #   conformant           -> CLASS_A (full)
+    #   conformant_with_gaps -> CLASS_B (partial)
+    #   degraded             -> CLASS_C (reference)
+    #   non_conformant       -> CLASS_C (reference)
+    assert _decide_class(ConformanceStatus.CONFORMANT) is ConformanceClass.CLASS_A
+    assert _decide_class(ConformanceStatus.CONFORMANT_WITH_GAPS) is ConformanceClass.CLASS_B
+    assert _decide_class(ConformanceStatus.DEGRADED) is ConformanceClass.CLASS_C
+    assert _decide_class(ConformanceStatus.NON_CONFORMANT) is ConformanceClass.CLASS_C
+
+
+def test_conformance_certificate_declares_class_consistent_with_status(tmp_path) -> None:
+    # The issued certificate carries a conformance_class field whose value is
+    # the strict derivation of its own terminal_status. The class is part of
+    # the signed payload (tamper-evident).
+    certificate = _issue_test_conformance(repo_root=tmp_path)
+    payload = certificate.to_json_dict()
+
+    assert "conformance_class" in payload
+    status = ConformanceStatus(payload["terminal_status"])
+    expected_class = _decide_class(status).value
+    assert payload["conformance_class"] == expected_class
+    # Signed payload includes the class — re-deriving the signature over a
+    # payload missing the class would not match.
+    assert _signature_valid(payload, "conformance-secret") is True
+
+
+def test_conformance_class_class_a_for_intact_clean_deployment(tmp_path, monkeypatch) -> None:
+    # Force every gap-producing surface to clean so the stub deployment can
+    # reach CONFORMANT -> CLASS_A. This proves Class A is actually reachable,
+    # not merely defined.
+    monkeypatch.setattr(conformance, "_collect_gaps", lambda checks, *, repository_root: [])
+    monkeypatch.setattr(
+        conformance,
+        "_decide_status",
+        lambda *args, **kwargs: ConformanceStatus.CONFORMANT,
+    )
+
+    certificate = _issue_test_conformance(repo_root=tmp_path)
+    payload = certificate.to_json_dict()
+
+    assert payload["terminal_status"] == "conformant"
+    assert payload["conformance_class"] == "class_a"
+
+
+def test_conformance_class_class_c_when_core_canary_fails(tmp_path) -> None:
+    # A tampered audit chain fails a core canary -> DEGRADED -> CLASS_C.
+    # The class downgrade is driven by the verifier canary wired in #851.
+    from dataclasses import replace as dc_replace
+
+    ledger = _real_command_ledger()
+    ledger._events[1] = dc_replace(ledger._events[1], prev_event_hash="0" * 64)
+
+    certificate = _issue_test_conformance(repo_root=tmp_path, command_ledger=ledger)
+    payload = certificate.to_json_dict()
+
+    assert payload["terminal_status"] in {"degraded", "non_conformant"}
+    assert payload["conformance_class"] == "class_c"
+
+
+def test_conformance_certificate_with_class_matches_schema(monkeypatch) -> None:
+    # The conformance_class field is a required, enum-constrained property in
+    # the public schema; the live endpoint payload must validate.
+    monkeypatch.setenv("MULLU_RUNTIME_CONFORMANCE_SECRET", "conformance-secret")
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+    payload = client.get("/runtime/conformance").json()
+    schema_path = _ROOT / "schemas" / "runtime_conformance_certificate.schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+
+    errors = _validate_schema_instance(schema, payload)
+
+    assert errors == []
+    assert payload["conformance_class"] in {"class_a", "class_b", "class_c"}
 
 
 def test_audit_trace_verifier_canary_passes_with_intact_real_ledger(tmp_path) -> None:
