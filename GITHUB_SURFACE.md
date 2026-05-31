@@ -37,6 +37,23 @@ Invariants: Metadata claims are explicit, machine-checkable, and bounded to the
 | `DEPLOYMENT_STATUS.md` | Deployment-health witness state and closure path |
 | `docs/PRODUCT_BOUNDARY.md` | Product naming, company boundary, control-plane identity, and launch constraint |
 | `docs/52_mullu_governance_protocol.md` | Public protocol schema index and closed runtime boundary |
+| `docs/CURRENT_READINESS_SNAPSHOT.md` | Compact public claim boundary for repository, release, deployment, pilot, and launch posture |
+| `docs/EVIDENCE_CLASSIFICATION.md` | Evidence-class rules that prevent fixtures and examples from supporting production claims |
+| `docs/PILOT_PRODUCT_PACKET.md` | Private-pilot market packet with allowed claims, blocked claims, demo spine, and acceptance criteria |
+
+## Product Surface Packet
+
+The current product-facing packet is intentionally claim-bounded:
+
+| Artifact | Claim boundary |
+|---|---|
+| `docs/CURRENT_READINESS_SNAPSHOT.md` | Names current posture without claiming public production health |
+| `docs/EVIDENCE_CLASSIFICATION.md` | Distinguishes fixture, local, CI, staging, pilot, production, external, and historical evidence |
+| `examples/evidence_classification_manifest.json` | Classifies high-risk public evidence examples as fixtures or bounded witnesses |
+| `docs/PILOT_PRODUCT_PACKET.md` | Positions Mullu Govern as private-pilot governed AI execution, not public SaaS |
+| `docs/RECEIPT_VIEWER_V1_SPEC.md` | Defines the first buyer/operator proof surface and receipt tiers |
+| `docs/CAPABILITY_RUNTIME_GATE_SPEC.md` | Converts capability maturity into a runtime admission policy target |
+| `docs/TEMPORAL_SCHEDULER_V2_PLAN.md` | Moves temporal work toward missed-action, evidence-freshness, recurrence, and lease safety |
 
 ## Proof Chain
 
