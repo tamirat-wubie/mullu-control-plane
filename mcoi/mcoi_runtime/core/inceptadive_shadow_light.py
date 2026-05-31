@@ -31,6 +31,9 @@ _EXTERNAL_VERBS = {"send", "email", "notify", "post", "publish", "message"}
 _APPROVAL_TERMS = {"deploy", "release", "contract", "payment", "legal", "production", "prod", "dns"}
 _EVIDENCE_TERMS = {"approved", "verified", "evidence", "receipt", "proof", "review"}
 _SCOPE_TERMS = {"production", "prod", "staging", "dev", "repository", "project", "module", "tenant"}
+_BENIGN_ACTION_OBJECTS = {
+    "release": frozenset({"note", "notes", "changelog", "changelogs", "docs", "documentation"}),
+}
 
 
 def run_light_shadow_pass(context: ShadowContext) -> ShadowPassResult:
@@ -70,7 +73,7 @@ def run_light_shadow_pass(context: ShadowContext) -> ShadowPassResult:
             )
         )
 
-    risky_hits = sorted(tokens.intersection(_RISKY_VERBS))
+    risky_hits = _action_hits(text, tokens, _RISKY_VERBS)
     if risky_hits:
         findings.append(
             _finding(
@@ -107,7 +110,8 @@ def run_light_shadow_pass(context: ShadowContext) -> ShadowPassResult:
             )
         )
 
-    if tokens.intersection(_APPROVAL_TERMS) and not tokens.intersection(_EVIDENCE_TERMS):
+    approval_hits = _action_hits(text, tokens, _APPROVAL_TERMS)
+    if approval_hits and not tokens.intersection(_EVIDENCE_TERMS):
         findings.append(
             _finding(
                 checked_context,
@@ -252,6 +256,24 @@ def _word_tokens(value: str) -> tuple[str, ...]:
 
 def _contains_ambiguous_reference(tokens: frozenset[str]) -> bool:
     return bool(tokens.intersection(_AMBIGUOUS_TERMS))
+
+
+def _action_hits(text: str, tokens: frozenset[str], action_terms: set[str]) -> tuple[str, ...]:
+    return tuple(
+        term
+        for term in sorted(tokens.intersection(action_terms))
+        if not _all_action_occurrences_are_benign(text, term)
+    )
+
+
+def _all_action_occurrences_are_benign(text: str, action: str) -> bool:
+    benign_objects = _BENIGN_ACTION_OBJECTS.get(action)
+    if not benign_objects:
+        return False
+    matches = tuple(re.finditer(rf"\b{re.escape(action)}\b(?:\s+([a-z0-9_#.-]+))?", text))
+    if not matches:
+        return False
+    return all((match.group(1) or "") in benign_objects for match in matches)
 
 
 def _has_side_effect(tokens: frozenset[str], context: ShadowContext) -> bool:
