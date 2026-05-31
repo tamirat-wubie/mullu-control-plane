@@ -149,7 +149,10 @@ class NestedMindEvidenceStore:
         for line in lines:
             if not line.strip():
                 continue
-            raw = loads_strict_json(line)
+            try:
+                raw = loads_strict_json(line)
+            except (CorruptedDataError, json.JSONDecodeError, TypeError, ValueError) as exc:
+                raise CorruptedDataError("invalid nested-mind evidence entry") from exc
             if not isinstance(raw, dict):
                 raise CorruptedDataError("nested-mind evidence entry must be an object")
             entry = _entry_from_raw(raw)
