@@ -97,6 +97,7 @@ class SoftwareReceiptReviewQueue:
             raise ValueError("review request is not software receipt scoped")
         if self._review_engine.is_review_resolved(request_id):
             raise ValueError("software receipt review request already resolved")
+        self._terminal_metadata_from_request(request)
         decision = self._review_engine.decide(
             request_id=request_id,
             reviewer_id=reviewer_id,
@@ -150,9 +151,9 @@ class SoftwareReceiptReviewQueue:
         decision: ReviewDecision,
     ) -> SoftwareChangeReceipt:
         target_request_id = request.scope.target_id
-        metadata = dict(request.metadata)
-        evidence_refs = tuple(str(ref) for ref in metadata.get("evidence_refs", ()) if str(ref))
-        latest_receipt_id = str(metadata.get("latest_receipt_id", ""))
+        latest_receipt_id, evidence_refs, target_refs, constraint_refs = self._terminal_metadata_from_request(
+            request
+        )
         decision_ref = f"review_decision:{decision.decision_id}"
         request_ref = f"review_request:{request.request_id}"
         terminal_evidence = tuple(
@@ -166,8 +167,8 @@ class SoftwareReceiptReviewQueue:
             stage=SoftwareChangeReceiptStage.TERMINAL_CLOSED,
             cause=f"software receipt review {decision.status.value}",
             outcome=outcome,
-            target_refs=tuple(metadata.get("target_refs", (f"software_request:{target_request_id}",))),
-            constraint_refs=tuple(metadata.get("constraint_refs", ("constraint:software_change_lifecycle_v1",))),
+            target_refs=target_refs,
+            constraint_refs=constraint_refs,
             evidence_refs=terminal_evidence,
             created_at=decision.decided_at,
             metadata={
@@ -181,3 +182,49 @@ class SoftwareReceiptReviewQueue:
                 "comment": decision.comment,
             },
         )
+
+    def _terminal_metadata_from_request(
+        self, request: ReviewRequest
+    ) -> tuple[str, tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+        target_request_id = request.scope.target_id
+        metadata = dict(request.metadata)
+        return (
+            _metadata_required_text(metadata, "latest_receipt_id"),
+            _metadata_text_tuple(metadata, "evidence_refs", default=()),
+            _metadata_text_tuple(
+                metadata,
+                "target_refs",
+                default=(f"software_request:{target_request_id}",),
+            ),
+            _metadata_text_tuple(
+                metadata,
+                "constraint_refs",
+                default=("constraint:software_change_lifecycle_v1",),
+            ),
+        )
+
+
+def _metadata_required_text(metadata: dict[str, Any], field_name: str) -> str:
+    value = metadata.get(field_name)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} must be a non-empty string")
+    return value
+
+
+def _metadata_text_tuple(
+    metadata: dict[str, Any],
+    field_name: str,
+    *,
+    default: tuple[str, ...],
+) -> tuple[str, ...]:
+    value = metadata.get(field_name, default)
+    if isinstance(value, (str, bytes)) or not isinstance(value, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    normalized: list[str] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, str) or not item.strip():
+            raise ValueError(f"{field_name}[{index}] must be a non-empty string")
+        normalized.append(item)
+    if not normalized:
+        raise ValueError(f"{field_name} must contain at least one item")
+    return tuple(normalized)
