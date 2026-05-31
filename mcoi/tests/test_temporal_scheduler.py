@@ -219,6 +219,8 @@ def test_temporal_phrase_swedish_next_weekday_local_resolves_before_registration
         ("pas 2 oresh", "sq-AL"),
         ("se 2 ores", "el-GR"),
         ("2 tundi parast", "et-EE"),
+        ("po 2 valandu", "lt-LT"),
+        ("i gceann 2 uair", "ga-IE"),
     ),
 )
 def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
@@ -268,6 +270,8 @@ def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
         ("neser ne 09:30 UTC", "sq-XK"),
         ("avrio stis 09:30 UTC", "el-CY"),
         ("homme kell 09:30 UTC", "et"),
+        ("rytoj 09:30 UTC", "lt"),
+        ("amarach 09:30 UTC", "ga"),
     ),
 )
 def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_registration(
@@ -317,6 +321,8 @@ def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_regi
         ("te henen e ardhshme ne 08:15 local", "sq-AL"),
         ("tin epomeni deftera stis 08:15 local", "el-GR"),
         ("jargmisel esmaspaeval kell 08:15 local", "et-EE"),
+        ("kita pirmadieni 08:15 local", "lt-LT"),
+        ("an chead luan eile 08:15 local", "ga-IE"),
     ),
 )
 def test_temporal_phrase_extended_locale_next_weekday_local_resolves_before_registration(
