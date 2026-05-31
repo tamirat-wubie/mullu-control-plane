@@ -13,8 +13,10 @@ Add a fourth kind only when at least two real intents need it.
 
 from __future__ import annotations
 
+import math
 import operator
 from dataclasses import dataclass
+from numbers import Real
 from typing import Any, Callable, Mapping
 
 from mcoi_runtime.contracts.event import EventType
@@ -62,7 +64,8 @@ _OPS: dict[str, Callable[[Any, Any], bool]] = {
 class EntityAttributeThreshold:
     """True iff `state[attribute] <op> threshold` numerically.
 
-    Coerces both sides via `float()`. Missing or non-numeric -> False.
+    Coerces observed state values via `float()`. Missing or non-numeric
+    observed values -> False. Thresholds must be finite numeric values.
     For non-numeric equality use EntityAttributeEq.
     """
 
@@ -75,6 +78,10 @@ class EntityAttributeThreshold:
     def __post_init__(self) -> None:
         if self.op not in _OPS:
             raise ValueError(f"op must be one of {sorted(_OPS)}, got {self.op!r}")
+        if isinstance(self.threshold, bool) or not isinstance(self.threshold, Real):
+            raise ValueError("threshold must be a finite number")
+        if not math.isfinite(float(self.threshold)):
+            raise ValueError("threshold must be a finite number")
 
     def evaluate(self, state: "Mapping[str, Any] | None") -> bool:
         if state is None:

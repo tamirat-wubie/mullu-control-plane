@@ -47,6 +47,12 @@ def test_threshold_invalid_op_rejected_at_construction():
         EntityAttributeThreshold("e", "x", "≥", 10)
 
 
+@pytest.mark.parametrize("threshold", ["10", True, float("nan"), float("inf")])
+def test_threshold_non_finite_or_non_numeric_rejected_at_construction(threshold):
+    with pytest.raises(ValueError, match="threshold must be a finite number"):
+        EntityAttributeThreshold("e", "x", ">", threshold)
+
+
 def test_threshold_non_numeric_returns_false():
     p = EntityAttributeThreshold("e", "label", ">", 1)
     assert p.evaluate({"label": "hi"}) is False

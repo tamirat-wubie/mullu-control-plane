@@ -29,6 +29,7 @@ closure is possible.
 from __future__ import annotations
 
 import json
+import math
 from typing import Any
 
 from mcoi_runtime.contracts.event import EventType
@@ -129,7 +130,7 @@ def deserialize_predicate(data: dict[str, Any]) -> IntentPredicate:
             entity_id=data["entity_id"],
             attribute=data["attribute"],
             op=data["op"],
-            threshold=float(data["threshold"]),
+            threshold=_required_finite_threshold(data),
             watches_kinds=watches_kinds,
         )
     if cls is EntityExists:
@@ -138,6 +139,18 @@ def deserialize_predicate(data: dict[str, Any]) -> IntentPredicate:
             watches_kinds=watches_kinds,
         )
     raise ValueError(f"no deserializer for predicate kind {kind!r}")
+
+
+def _required_finite_threshold(data: dict[str, Any]) -> float:
+    """Return a threshold from persisted metadata without loose text coercion."""
+
+    raw_threshold = data["threshold"]
+    if isinstance(raw_threshold, bool) or not isinstance(raw_threshold, (int, float)):
+        raise ValueError("threshold must be a finite number")
+    threshold = float(raw_threshold)
+    if not math.isfinite(threshold):
+        raise ValueError("threshold must be a finite number")
+    return threshold
 
 
 def serialize_predicate_set(

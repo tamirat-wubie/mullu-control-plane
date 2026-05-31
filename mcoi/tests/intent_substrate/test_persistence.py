@@ -69,6 +69,20 @@ def test_attribute_threshold_roundtrip():
     assert restored == p
 
 
+@pytest.mark.parametrize("threshold", ["10000", True, float("nan"), float("inf")])
+def test_attribute_threshold_deserialize_rejects_loose_threshold(threshold):
+    with pytest.raises(ValueError, match="threshold must be a finite number"):
+        deserialize_predicate(
+            {
+                "kind": "EntityAttributeThreshold",
+                "entity_id": "budget",
+                "attribute": "allocated",
+                "op": ">=",
+                "threshold": threshold,
+            }
+        )
+
+
 def test_entity_exists_roundtrip():
     p = EntityExists("vendor")
     restored = deserialize_predicate(serialize_predicate(p))
