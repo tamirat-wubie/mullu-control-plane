@@ -192,6 +192,100 @@ def test_temporal_phrase_swedish_next_weekday_local_resolves_before_registration
     assert scheduled.action.metadata["temporal_phrase_admission_reason"] == "temporal_phrase_exact_local_weekday_wall_time"
 
 
+@pytest.mark.parametrize(
+    ("phrase", "locale"),
+    (
+        ("om 2 timer", "da-DK"),
+        ("om 2 timer", "nb-NO"),
+        ("2 tuntia kuluttua", "fi-FI"),
+        ("za 2 godziny", "pl-PL"),
+        ("za 2 hodiny", "cs-CZ"),
+        ("za 2 hodiny", "sk-SK"),
+    ),
+)
+def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
+    phrase: str,
+    locale: str,
+) -> None:
+    clock = MutableClock("2026-05-04T13:00:00+00:00")
+    scheduler = _engine(clock)
+    action = _action(
+        execute_at="",
+        temporal_phrase=phrase,
+        temporal_phrase_locale=locale,
+        temporal_phrase_policy="require_exact",
+    )
+
+    scheduled = scheduler.register("sched-1", action)
+
+    assert scheduled.execute_at == "2026-05-04T15:00:00+00:00"
+    assert scheduled.action.metadata["temporal_phrase_admission_verdict"] == "exact"
+    assert scheduled.action.metadata["temporal_phrase_admission_reason"] == "temporal_phrase_exact_relative"
+
+
+@pytest.mark.parametrize(
+    ("phrase", "locale"),
+    (
+        ("i morgen klokken 09:30 UTC", "da-GL"),
+        ("i morgen klokken 09:30 UTC", "nn-NO"),
+        ("huomenna kello 09:30 UTC", "fi"),
+        ("jutro o 09:30 UTC", "pl"),
+        ("zitra v 09:30 UTC", "cs"),
+        ("zajtra o 09:30 UTC", "sk"),
+    ),
+)
+def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_registration(
+    phrase: str,
+    locale: str,
+) -> None:
+    clock = MutableClock("2026-05-04T13:00:00+00:00")
+    scheduler = _engine(clock)
+    action = _action(
+        execute_at="",
+        temporal_phrase=phrase,
+        temporal_phrase_locale=locale,
+        temporal_phrase_policy="require_exact",
+    )
+
+    scheduled = scheduler.register("sched-1", action)
+
+    assert scheduled.execute_at == "2026-05-05T09:30:00+00:00"
+    assert scheduled.action.metadata["temporal_phrase_admission_verdict"] == "exact"
+    assert scheduled.action.metadata["temporal_phrase_admission_reason"] == "temporal_phrase_exact_utc_wall_time"
+
+
+@pytest.mark.parametrize(
+    ("phrase", "locale"),
+    (
+        ("naeste mandag klokken 08:15 local", "da"),
+        ("neste mandag klokken 08:15 local", "no"),
+        ("ensi maanantai kello 08:15 local", "fi-FI"),
+        ("nastepny poniedzialek o 08:15 local", "pl-PL"),
+        ("pristi pondeli v 08:15 local", "cs-CZ"),
+        ("buduci pondelok o 08:15 local", "sk-SK"),
+    ),
+)
+def test_temporal_phrase_extended_locale_next_weekday_local_resolves_before_registration(
+    phrase: str,
+    locale: str,
+) -> None:
+    clock = MutableClock("2026-05-04T13:00:00+00:00")
+    scheduler = _engine(clock)
+    action = _action(
+        execute_at="",
+        temporal_phrase=phrase,
+        temporal_phrase_locale=locale,
+        temporal_phrase_policy="require_exact",
+        metadata={"original_timezone": "America/New_York"},
+    )
+
+    scheduled = scheduler.register("sched-1", action)
+
+    assert scheduled.execute_at == "2026-05-11T12:15:00+00:00"
+    assert scheduled.action.metadata["temporal_phrase_admission_verdict"] == "exact"
+    assert scheduled.action.metadata["temporal_phrase_admission_reason"] == "temporal_phrase_exact_local_weekday_wall_time"
+
+
 def test_temporal_phrase_ambiguous_blocks_before_registration() -> None:
     clock = MutableClock("2026-05-04T13:00:00+00:00")
     scheduler = _engine(clock)

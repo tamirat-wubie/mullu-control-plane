@@ -44,9 +44,55 @@ def _normalize_temporal_phrase(value: str) -> str:
 
 
 def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str, str]:
-    minute_units = {"minute", "minutes", "minuut", "minuten", "minut", "minuter"}
-    hour_units = {"hour", "hours", "uur", "uren", "timme", "timmar"}
-    day_units = {"day", "days", "dag", "dagen", "dagar"}
+    minute_units = {
+        "minute",
+        "minutes",
+        "minuut",
+        "minuten",
+        "minut",
+        "minuter",
+        "minutt",
+        "minutter",
+        "minuutti",
+        "minuuttia",
+        "minuta",
+        "minuty",
+        "minutu",
+    }
+    hour_units = {
+        "hour",
+        "hours",
+        "uur",
+        "uren",
+        "timme",
+        "timmar",
+        "time",
+        "timer",
+        "tunti",
+        "tuntia",
+        "godzina",
+        "godzine",
+        "godziny",
+        "godzin",
+        "hodinu",
+        "hodiny",
+        "hodin",
+    }
+    day_units = {
+        "day",
+        "days",
+        "dag",
+        "dagen",
+        "dagar",
+        "dage",
+        "dager",
+        "paiva",
+        "paivaa",
+        "dzien",
+        "dni",
+        "den",
+        "dny",
+    }
     if unit in minute_units:
         delta = timedelta(minutes=amount)
     elif unit in hour_units:
@@ -122,6 +168,46 @@ def _swedish_weekdays() -> dict[str, int]:
     return {"mandag": 0, "tisdag": 1, "onsdag": 2, "torsdag": 3, "fredag": 4, "lordag": 5, "sondag": 6}
 
 
+def _danish_weekdays() -> dict[str, int]:
+    return {"mandag": 0, "tirsdag": 1, "onsdag": 2, "torsdag": 3, "fredag": 4, "lordag": 5, "sondag": 6}
+
+
+def _norwegian_weekdays() -> dict[str, int]:
+    return {"mandag": 0, "tirsdag": 1, "onsdag": 2, "torsdag": 3, "fredag": 4, "lordag": 5, "sondag": 6}
+
+
+def _finnish_weekdays() -> dict[str, int]:
+    return {
+        "maanantai": 0,
+        "tiistai": 1,
+        "keskiviikko": 2,
+        "torstai": 3,
+        "perjantai": 4,
+        "lauantai": 5,
+        "sunnuntai": 6,
+    }
+
+
+def _polish_weekdays() -> dict[str, int]:
+    return {
+        "poniedzialek": 0,
+        "wtorek": 1,
+        "sroda": 2,
+        "czwartek": 3,
+        "piatek": 4,
+        "sobota": 5,
+        "niedziela": 6,
+    }
+
+
+def _czech_weekdays() -> dict[str, int]:
+    return {"pondeli": 0, "utery": 1, "streda": 2, "ctvrtek": 3, "patek": 4, "sobota": 5, "nedele": 6}
+
+
+def _slovak_weekdays() -> dict[str, int]:
+    return {"pondelok": 0, "utorok": 1, "streda": 2, "stvrtok": 3, "piatok": 4, "sobota": 5, "nedela": 6}
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -138,6 +224,18 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_dutch_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"sv", "sv-se", "sv-fi"}:
         return _resolve_swedish_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"da", "da-dk", "da-gl"}:
+        return _resolve_danish_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"no", "no-no", "nb", "nb-no", "nn", "nn-no"}:
+        return _resolve_norwegian_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"fi", "fi-fi"}:
+        return _resolve_finnish_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"pl", "pl-pl"}:
+        return _resolve_polish_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"cs", "cs-cz"}:
+        return _resolve_czech_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"sk", "sk-sk"}:
+        return _resolve_slovak_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -254,6 +352,252 @@ def _resolve_swedish_temporal_phrase(
         )
         return ("exact" if resolved else "unsupported"), reason, resolved
     if normalized in {"idag", "imorgon", "ikvall", "senare", "snart", "nasta vecka", "nasta manad", "nasta ar"}:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_danish_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"om ([1-9][0-9]*) (minut|minutter|time|timer|dag|dage)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(i dag|i morgen) klokken ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "i morgen" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"naeste (mandag|tirsdag|onsdag|torsdag|fredag|lordag|sondag) klokken ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_danish_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {"i dag", "i morgen", "i aften", "senere", "snart", "naeste uge", "naeste maned", "naeste ar"}:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"naeste (mandag|tirsdag|onsdag|torsdag|fredag|lordag|sondag)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_norwegian_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"om ([1-9][0-9]*) (minutt|minutter|time|timer|dag|dager)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(i dag|i morgen) klokken ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "i morgen" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"neste (mandag|tirsdag|onsdag|torsdag|fredag|lordag|sondag) klokken ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_norwegian_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {"i dag", "i morgen", "i kveld", "senere", "snart", "neste uke", "neste maned", "neste ar"}:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"neste (mandag|tirsdag|onsdag|torsdag|fredag|lordag|sondag)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_finnish_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"([1-9][0-9]*) (minuutti|minuuttia|tunti|tuntia|paiva|paivaa) kuluttua", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(tanaan|huomenna) kello ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "huomenna" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"ensi (maanantai|tiistai|keskiviikko|torstai|perjantai|lauantai|sunnuntai) kello ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_finnish_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {"tanaan", "huomenna", "tana iltana", "myohemmin", "pian", "ensi viikko", "ensi kuukausi", "ensi vuosi"}:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"ensi (maanantai|tiistai|keskiviikko|torstai|perjantai|lauantai|sunnuntai)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_polish_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"za ([1-9][0-9]*) (minuta|minuty|minut|godzina|godzine|godziny|godzin|dzien|dni)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(dzisiaj|jutro) o ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "jutro" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"nastepny (poniedzialek|wtorek|sroda|czwartek|piatek|sobota|niedziela) o ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_polish_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {"dzisiaj", "jutro", "dzis wieczorem", "pozniej", "wkrotce", "nastepny tydzien", "nastepny miesiac", "nastepny rok"}:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"nastepny (poniedzialek|wtorek|sroda|czwartek|piatek|sobota|niedziela)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_czech_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"za ([1-9][0-9]*) (minutu|minuty|minut|hodinu|hodiny|hodin|den|dny|dni)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(dnes|zitra) v ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "zitra" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"pristi (pondeli|utery|streda|ctvrtek|patek|sobota|nedele) v ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_czech_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {"dnes", "zitra", "dnes vecer", "pozdeji", "brzy", "pristi tyden", "pristi mesic", "pristi rok"}:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"pristi (pondeli|utery|streda|ctvrtek|patek|sobota|nedele)", normalized):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_slovak_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"za ([1-9][0-9]*) (minutu|minuty|minut|hodinu|hodiny|hodin|den|dni)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(dnes|zajtra) o ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "zajtra" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"buduci (pondelok|utorok|streda|stvrtok|piatok|sobota|nedela) o ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_slovak_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {"dnes", "zajtra", "dnes vecer", "neskor", "coskoro", "buduci tyzden", "buduci mesiac", "buduci rok"}:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(r"buduci (pondelok|utorok|streda|stvrtok|piatok|sobota|nedela)", normalized):
         return "ambiguous", "temporal_phrase_ambiguous", ""
     return "unsupported", "temporal_phrase_unsupported", ""
 
