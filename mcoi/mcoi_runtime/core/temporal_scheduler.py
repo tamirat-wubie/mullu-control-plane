@@ -79,6 +79,10 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "minuta",
         "minuti",
         "minutur",
+        "minutt",
+        "minutten",
+        "minutura",
+        "minuts",
     }
     hour_units = {
         "hour",
@@ -128,6 +132,11 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "klukkustundir",
         "siegha",
         "sieghat",
+        "stonn",
+        "stonnen",
+        "ordura",
+        "hora",
+        "hores",
     }
     day_units = {
         "day",
@@ -173,8 +182,12 @@ def _resolve_relative_phrase(now: datetime, amount: int, unit: str) -> tuple[str
         "laithean",
         "dag",
         "daga",
+        "deeg",
         "jum",
         "jiem",
+        "egunera",
+        "dia",
+        "dies",
     }
     if unit in minute_units:
         delta = timedelta(minutes=amount)
@@ -579,6 +592,42 @@ def _maltese_weekdays() -> dict[str, int]:
     }
 
 
+def _luxembourgish_weekdays() -> dict[str, int]:
+    return {
+        "meindeg": 0,
+        "denscheg": 1,
+        "mettwoch": 2,
+        "donneschdeg": 3,
+        "freideg": 4,
+        "samschdeg": 5,
+        "sonndeg": 6,
+    }
+
+
+def _basque_weekdays() -> dict[str, int]:
+    return {
+        "astelehena": 0,
+        "asteartea": 1,
+        "asteazkena": 2,
+        "osteguna": 3,
+        "ostirala": 4,
+        "larunbata": 5,
+        "igandea": 6,
+    }
+
+
+def _catalan_weekdays() -> dict[str, int]:
+    return {
+        "dilluns": 0,
+        "dimarts": 1,
+        "dimecres": 2,
+        "dijous": 3,
+        "divendres": 4,
+        "dissabte": 5,
+        "diumenge": 6,
+    }
+
+
 def _resolve_bounded_temporal_phrase(
     phrase: str,
     *,
@@ -655,6 +704,12 @@ def _resolve_bounded_temporal_phrase(
         return _resolve_icelandic_temporal_phrase(normalized, now_dt, original_timezone)
     if locale_key in {"mt", "mt-mt"}:
         return _resolve_maltese_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"lb", "lb-lu"}:
+        return _resolve_luxembourgish_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"eu", "eu-es"}:
+        return _resolve_basque_temporal_phrase(normalized, now_dt, original_timezone)
+    if locale_key in {"ca", "ca-es", "ca-ad"}:
+        return _resolve_catalan_temporal_phrase(normalized, now_dt, original_timezone)
     return "unsupported", "temporal_phrase_locale_not_supported", ""
 
 
@@ -2188,6 +2243,165 @@ def _resolve_maltese_temporal_phrase(
         return "ambiguous", "temporal_phrase_ambiguous", ""
     if re.fullmatch(
         r"(it-tnejn|it-tlieta|l-erbgha|il-hamis|il-gimgha|is-sibt|il-hadd) li gej",
+        normalized,
+    ):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_luxembourgish_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"an ([1-9][0-9]*) (minutt|minutten|stonn|stonnen|dag|deeg)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(haut|muer) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "muer" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"naechste (meindeg|denscheg|mettwoch|donneschdeg|freideg|samschdeg|sonndeg) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_luxembourgish_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "haut",
+        "muer",
+        "haut den owend",
+        "speider",
+        "geschwenn",
+        "naechst woch",
+        "naechste mount",
+        "naechst joer",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(
+        r"naechste (meindeg|denscheg|mettwoch|donneschdeg|freideg|samschdeg|sonndeg)",
+        normalized,
+    ):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_basque_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"hemendik ([1-9][0-9]*) (minutura|ordura|egunera)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(gaur|bihar) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "bihar" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"hurrengo (astelehena|asteartea|asteazkena|osteguna|ostirala|larunbata|igandea) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_basque_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "gaur",
+        "bihar",
+        "gaur gauean",
+        "geroago",
+        "laster",
+        "hurrengo astea",
+        "hurrengo hilabetea",
+        "hurrengo urtea",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(
+        r"hurrengo (astelehena|asteartea|asteazkena|osteguna|ostirala|larunbata|igandea)",
+        normalized,
+    ):
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    return "unsupported", "temporal_phrase_unsupported", ""
+
+
+def _resolve_catalan_temporal_phrase(
+    normalized: str,
+    now: datetime,
+    original_timezone: str,
+) -> tuple[str, str, str]:
+    relative = re.fullmatch(r"en ([1-9][0-9]*) (minut|minuts|hora|hores|dia|dies)", normalized)
+    if relative is not None:
+        resolved, reason = _resolve_relative_phrase(now, int(relative.group(1)), relative.group(2))
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    wall_time = re.fullmatch(r"(avui|dema) ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)", normalized)
+    if wall_time is not None:
+        resolved, reason = _resolve_relative_wall_time(
+            now,
+            original_timezone=original_timezone,
+            day_offset=1 if wall_time.group(1) == "dema" else 0,
+            hour=int(wall_time.group(2)),
+            minute=int(wall_time.group(3)),
+            mode=wall_time.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    next_weekday = re.fullmatch(
+        r"(dilluns|dimarts|dimecres|dijous|divendres|dissabte|diumenge) vinent ([0-9]{1,2}):([0-9]{2}) ?(utc|z|local)",
+        normalized,
+    )
+    if next_weekday is not None:
+        resolved, reason = _resolve_next_weekday_wall_time(
+            now,
+            original_timezone=original_timezone,
+            weekday=_catalan_weekdays()[next_weekday.group(1)],
+            hour=int(next_weekday.group(2)),
+            minute=int(next_weekday.group(3)),
+            mode=next_weekday.group(4),
+        )
+        return ("exact" if resolved else "unsupported"), reason, resolved
+    if normalized in {
+        "avui",
+        "dema",
+        "aquest vespre",
+        "mes tard",
+        "aviat",
+        "setmana vinent",
+        "mes vinent",
+        "any vinent",
+    }:
+        return "ambiguous", "temporal_phrase_ambiguous", ""
+    if re.fullmatch(
+        r"(dilluns|dimarts|dimecres|dijous|divendres|dissabte|diumenge) vinent",
         normalized,
     ):
         return "ambiguous", "temporal_phrase_ambiguous", ""
