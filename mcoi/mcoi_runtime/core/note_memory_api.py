@@ -240,8 +240,8 @@ def _retrieval_guard_from_mapping(value: Mapping[str, Any]) -> RetrievalGuard:
     return RetrievalGuard(
         allowed_trust_zones=allowed_trust_zones,
         allowed_proof_states=allowed_proof_states,
-        scope=NoteScope(str(value["scope"])) if value.get("scope") else None,
-        now=str(value["now"]) if value.get("now") else None,
+        scope=NoteScope(scope) if (scope := _optional_text(value, "scope")) else None,
+        now=_optional_text(value, "now"),
         include_hypotheses=_optional_bool(value, "include_hypotheses", default=False),
     )
 
