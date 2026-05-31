@@ -203,6 +203,8 @@ def test_temporal_phrase_swedish_next_weekday_local_resolves_before_registration
         ("za 2 hodiny", "sk-SK"),
         ("2 ora mulva", "hu-HU"),
         ("peste 2 ore", "ro-RO"),
+        ("2 saat sonra", "tr-TR"),
+        ("dalam 2 jam", "id-ID"),
     ),
 )
 def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
@@ -236,6 +238,8 @@ def test_temporal_phrase_extended_locale_relative_resolves_before_registration(
         ("zajtra o 09:30 UTC", "sk"),
         ("holnap 09:30 UTC", "hu"),
         ("maine la 09:30 UTC", "ro-MD"),
+        ("yarin saat 09:30 UTC", "tr-CY"),
+        ("besok pukul 09:30 UTC", "id"),
     ),
 )
 def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_registration(
@@ -269,6 +273,8 @@ def test_temporal_phrase_extended_locale_tomorrow_wall_time_resolves_before_regi
         ("buduci pondelok o 08:15 local", "sk-SK"),
         ("kovetkezo hetfo 08:15 local", "hu-HU"),
         ("urmatoarea luni la 08:15 local", "ro-RO"),
+        ("gelecek pazartesi saat 08:15 local", "tr-TR"),
+        ("senin depan pukul 08:15 local", "id-ID"),
     ),
 )
 def test_temporal_phrase_extended_locale_next_weekday_local_resolves_before_registration(
