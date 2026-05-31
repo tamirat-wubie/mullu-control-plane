@@ -433,6 +433,10 @@ _WORKFLOW_TEMPLATES: tuple[SimpleWorkflowTemplate, ...] = (
     ),
 )
 
+_ACTION_REQUEST_FIELDS = frozenset({"goal", "action", "target", "allowed_area", "actor_id"})
+_TASK_REQUEST_FIELDS = frozenset({"task", "target", "goal", "actor_id"})
+_WORKFLOW_REQUEST_FIELDS = frozenset({"workflow", "target", "goal", "actor_id"})
+
 
 def _build_action(request: SimpleActionRequest) -> ActionSentenceBuilder:
     """Map a plain action onto a governed action sentence builder."""
@@ -559,6 +563,7 @@ def _project_workflow_plan(
 def _request_from_mapping(value: Mapping[str, object]) -> SimpleActionRequest:
     """Load a simple request from a JSON-like mapping."""
 
+    _reject_unsupported_fields(value, _ACTION_REQUEST_FIELDS)
     return SimpleActionRequest(
         goal=_required_text(value, "goal"),
         action=_action_kind(_required_text(value, "action")),
@@ -571,6 +576,7 @@ def _request_from_mapping(value: Mapping[str, object]) -> SimpleActionRequest:
 def _task_request_from_mapping(value: Mapping[str, object]) -> SimpleTaskRequest:
     """Load a simple task request from a JSON-like mapping."""
 
+    _reject_unsupported_fields(value, _TASK_REQUEST_FIELDS)
     return SimpleTaskRequest(
         task=_task_kind(_required_text(value, "task")),
         target=_optional_text(value, "target", default=""),
@@ -582,6 +588,7 @@ def _task_request_from_mapping(value: Mapping[str, object]) -> SimpleTaskRequest
 def _workflow_request_from_mapping(value: Mapping[str, object]) -> SimpleWorkflowRequest:
     """Load a simple workflow request from a JSON-like mapping."""
 
+    _reject_unsupported_fields(value, _WORKFLOW_REQUEST_FIELDS)
     return SimpleWorkflowRequest(
         workflow=_workflow_kind(_required_text(value, "workflow")),
         target=_optional_text(value, "target", default=""),
@@ -675,6 +682,11 @@ def _optional_text(value: Mapping[str, object], field_name: str, *, default: str
     if not text:
         return default
     return text
+
+
+def _reject_unsupported_fields(value: Mapping[str, object], allowed_fields: frozenset[str]) -> None:
+    if any(field_name not in allowed_fields for field_name in value):
+        raise RuntimeCoreInvariantError("request contains unsupported fields")
 
 
 def _require_text(value: str, field_name: str) -> None:

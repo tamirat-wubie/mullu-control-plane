@@ -482,6 +482,38 @@ def test_simple_platform_api_rejects_non_text_request_fields() -> None:
     assert "target must be text" in workflow_payload["error"]
 
 
+def test_simple_platform_api_rejects_unknown_request_fields_without_reflection() -> None:
+    runtime = SimplePlatformRuntime()
+
+    action_payload = runtime.check_action(
+        {
+            "goal": "Review docs",
+            "action": "view",
+            "target": "docs/README.md",
+            "allowed_area": "docs/**",
+            "scope_override": True,
+        }
+    ).to_dict()
+    task_payload = runtime.check_task(
+        {"task": "review_docs", "target": "docs/README.md", "execute_now": True}
+    ).to_dict()
+    workflow_payload = runtime.check_workflow(
+        {"workflow": "docs_update", "target": "docs/README.md", "approval_override": "force"}
+    ).to_dict()
+
+    assert action_payload["ok"] is False
+    assert action_payload["status"] == "rejected"
+    assert action_payload["payload"] == {}
+    assert action_payload["error"] == "request contains unsupported fields"
+    assert "scope_override" not in action_payload["error"]
+    assert task_payload["ok"] is False
+    assert task_payload["error"] == "request contains unsupported fields"
+    assert "execute_now" not in task_payload["error"]
+    assert workflow_payload["ok"] is False
+    assert workflow_payload["error"] == "request contains unsupported fields"
+    assert "approval_override" not in workflow_payload["error"]
+
+
 def test_simple_platform_api_lists_action_menu() -> None:
     payload = SimplePlatformRuntime().action_menu().to_dict()
 
