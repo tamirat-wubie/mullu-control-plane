@@ -157,6 +157,37 @@ def test_temporal_phrase_english_relative_resolves_before_registration() -> None
     assert scheduled.action.metadata["temporal_phrase_resolved_execute_at"] == "2026-05-04T15:00:00+00:00"
 
 
+def test_temporal_phrase_ignore_policy_does_not_supply_execute_at() -> None:
+    clock = MutableClock("2026-05-04T13:00:00+00:00")
+    scheduler = _engine(clock)
+    action = _action(
+        execute_at="",
+        temporal_phrase="in 2 hours",
+        temporal_phrase_policy="ignore",
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="execute_at is required"):
+        scheduler.register("sched-1", action)
+    assert scheduler.action_count == 0
+    assert scheduler.receipt_count == 0
+
+
+def test_temporal_phrase_ignore_policy_preserves_explicit_execute_at() -> None:
+    clock = MutableClock("2026-05-04T13:00:00+00:00")
+    scheduler = _engine(clock)
+    action = _action(
+        execute_at="2026-05-04T16:00:00+00:00",
+        temporal_phrase="in 2 hours",
+        temporal_phrase_policy="ignore",
+    )
+
+    scheduled = scheduler.register("sched-1", action)
+
+    assert scheduled.execute_at == "2026-05-04T16:00:00+00:00"
+    assert "temporal_phrase_admission_verdict" not in scheduled.action.metadata
+    assert "temporal_phrase_resolved_execute_at" not in scheduled.action.metadata
+
+
 def test_temporal_phrase_dutch_wall_time_resolves_before_registration() -> None:
     clock = MutableClock("2026-05-04T13:00:00+00:00")
     scheduler = _engine(clock)
