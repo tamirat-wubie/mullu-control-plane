@@ -373,3 +373,63 @@ def test_runtime_queue_and_promote_memory_anchor_with_receipt(tmp_path) -> None:
     assert promoted["ok"] is True
     assert promoted["payload"]["event"]["kind"] == "MemoryAnchor"
     assert (tmp_path / "notes" / "anchors" / "anchor-runtime-note-contract.json").exists()
+
+
+def test_runtime_rejects_string_promotion_lineage_event_seq(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+    captured = runtime.capture_note(_working_note(scope="repository")).to_dict()
+    source_note_id = captured["payload"]["event"]["note_id"]
+    queued = runtime.queue_promotion({"note_id": source_note_id}).to_dict()
+
+    rejected = runtime.promote_memory_anchor(
+        {
+            "note_id": source_note_id,
+            "receipt": {
+                "promotion_id": queued["payload"]["promotion_id"],
+                "source_note_id": source_note_id,
+                "anchor_id": "anchor-runtime-note-contract",
+                "proof_state": "Pass",
+                "evidence_refs": ["test_note_memory_api"],
+                "contradiction_scan": "Pass",
+                "phi_gov_status": "accepted",
+                "accepted_at": "2026-05-27T00:05:00+00:00",
+                "accepted_by": "test-governance",
+                "lineage_event_seq": "1",
+            },
+        }
+    ).to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "lineage_event_seq must be an integer" in rejected["error"]
+
+
+def test_runtime_rejects_boolean_promotion_lineage_event_seq(tmp_path) -> None:
+    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+    captured = runtime.capture_note(_working_note(scope="repository")).to_dict()
+    source_note_id = captured["payload"]["event"]["note_id"]
+    queued = runtime.queue_promotion({"note_id": source_note_id}).to_dict()
+
+    rejected = runtime.promote_memory_anchor(
+        {
+            "note_id": source_note_id,
+            "receipt": {
+                "promotion_id": queued["payload"]["promotion_id"],
+                "source_note_id": source_note_id,
+                "anchor_id": "anchor-runtime-note-contract",
+                "proof_state": "Pass",
+                "evidence_refs": ["test_note_memory_api"],
+                "contradiction_scan": "Pass",
+                "phi_gov_status": "accepted",
+                "accepted_at": "2026-05-27T00:05:00+00:00",
+                "accepted_by": "test-governance",
+                "lineage_event_seq": True,
+            },
+        }
+    ).to_dict()
+
+    assert rejected["governed"] is True
+    assert rejected["ok"] is False
+    assert rejected["status"] == "rejected"
+    assert "lineage_event_seq must be an integer" in rejected["error"]

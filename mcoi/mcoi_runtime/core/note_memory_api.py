@@ -257,7 +257,7 @@ def _promotion_receipt_from_mapping(value: Mapping[str, Any]) -> PromotionReceip
         phi_gov_status=PhiGovStatus(_required_text(value, "phi_gov_status")),
         accepted_at=_required_text(value, "accepted_at"),
         accepted_by=_required_text(value, "accepted_by"),
-        lineage_event_seq=int(value["lineage_event_seq"]),
+        lineage_event_seq=_required_int(value, "lineage_event_seq"),
     )
 
 
@@ -286,6 +286,15 @@ def _optional_text(value: Mapping[str, Any], field_name: str) -> str | None:
 
 def _optional_int(value: Mapping[str, Any], field_name: str, *, default: int) -> int:
     raw_value = value.get(field_name, default)
+    if not isinstance(raw_value, int) or isinstance(raw_value, bool):
+        raise ValueError(f"{field_name} must be an integer")
+    return raw_value
+
+
+def _required_int(value: Mapping[str, Any], field_name: str) -> int:
+    if field_name not in value:
+        raise KeyError(f"missing field: {field_name}")
+    raw_value = value[field_name]
     if not isinstance(raw_value, int) or isinstance(raw_value, bool):
         raise ValueError(f"{field_name} must be an integer")
     return raw_value
