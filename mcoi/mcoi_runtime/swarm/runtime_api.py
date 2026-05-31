@@ -20,7 +20,7 @@ from typing import Any, Mapping
 from .audit_store import SwarmAuditStore
 from .contracts import SwarmInvariantViolation
 from .invoice_workflow import InvoiceSwarmRequest, run_invoice_swarm
-from .record import SwarmAuditRecord, invoice_result_to_audit_record
+from .record import invoice_result_to_audit_record
 
 
 @dataclass(frozen=True)
@@ -137,7 +137,10 @@ def _required_text(value: Mapping[str, Any], field_name: str) -> str:
 
     if field_name not in value:
         raise KeyError(f"missing field: {field_name}")
-    text = str(value[field_name]).strip()
+    raw_value = value[field_name]
+    if not isinstance(raw_value, str):
+        raise ValueError(f"{field_name} must be a string")
+    text = raw_value.strip()
     if not text:
         raise ValueError(f"{field_name} must be non-empty")
     return text
