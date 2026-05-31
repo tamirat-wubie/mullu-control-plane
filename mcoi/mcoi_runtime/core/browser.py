@@ -25,7 +25,6 @@ from mcoi_runtime.contracts.browser import (
     ElementSelector,
     PageDescriptor,
     SelectorMatchResult,
-    SelectorMatchStatus,
 )
 from .browser_redaction import (
     DEFAULT_SENSITIVITY_POLICY,
@@ -99,7 +98,7 @@ class BrowserEngine:
 
         try:
             page = self._backend.open_page(url)
-        except Exception as exc:
+        except Exception:
             self._session = BrowserSession(
                 session_id=session_id,
                 status=BrowserSessionStatus.ERROR,
