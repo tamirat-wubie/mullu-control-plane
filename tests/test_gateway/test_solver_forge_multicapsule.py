@@ -343,3 +343,128 @@ def test_base_composer_single_capsule_behavior_unchanged() -> None:
     for p in pipelines:
         assert len(p.capsule_ids) == 1
         assert len(p.method_families) == 1
+
+
+# --- Audit refinements: truthful skip reporting + duplicate-id safety -------
+
+
+def _passing_evaluator(signature, pipeline, seed):
+    fam = pipeline.method_families[0]
+    score = 0.5 if fam == "rule_based" else 0.8
+    return CandidateEvaluation(
+        outcome="passed",
+        scores=(CandidateScore(metric_id="precision", value=score, direction="maximize"),),
+    )
+
+
+def test_report_skip_fields_describe_composition_skips_not_capsule_fiction() -> None:
+    """Regression: for the declared composer, report.skipped_* must describe
+    the composition-level skips (keyed by pipeline id), NOT the base composer's
+    single-capsule admissibility view, which never ran for this strategy.
+    """
+    ledger = _ledger()
+    composer = DeclaredCompositionComposer(
+        ledger,
+        capsules=(_capsule("rule_based"), _capsule("graph_match"), _capsule("llm_only")),
+        compositions=(
+            CompositionSpec(pipeline_id="pipe:baseline", capsule_ids=("capsule:rule_based",)),
+            CompositionSpec(pipeline_id="pipe:cand", capsule_ids=("capsule:graph_match",)),
+            CompositionSpec(pipeline_id="pipe:poison", capsule_ids=("capsule:llm_only",)),
+        ),
+    )
+    report = composer.run(_signature(forbidden=("llm_only",)), _passing_evaluator)
+    # The skipped UNIT is the composition pipe:poison, with the offending
+    # capsule encoded in the reason — not a bare capsule id.
+    assert report.skipped_capsule_ids == ("pipe:poison",)
+    assert report.skipped_reasons == {
+        "pipe:poison": "capsule_method_family_not_admissible:capsule:llm_only"
+    }
+    # The detailed record remains available via skipped_compositions().
+    assert composer.skipped_compositions()[0].offending_capsule_id == "capsule:llm_only"
+    # And the candidate that survived is still the real winner.
+    winners = ledger.winners_for(report.signature_hash, primary_metric_id="precision")
+    assert {w.candidate_pipeline_id for w in winners} == {"pipe:cand"}
+
+
+def test_risk_ceiling_chain_skip_surfaces_in_report() -> None:
+    """A chain poisoned by a below-ceiling capsule is reported with the
+    risk reason and the offending capsule, keyed by the composition id.
+    """
+    ledger = _ledger()
+    composer = DeclaredCompositionComposer(
+        ledger,
+        capsules=(
+            _capsule("rule_based", risk_ceiling="high"),
+            _capsule("weak_link", risk_ceiling="low"),
+        ),
+        compositions=(
+            CompositionSpec(pipeline_id="pipe:baseline", capsule_ids=("capsule:rule_based",)),
+            CompositionSpec(
+                pipeline_id="pipe:risky",
+                capsule_ids=("capsule:rule_based", "capsule:weak_link"),
+            ),
+        ),
+    )
+    report = composer.run(_signature(risk="high"), _passing_evaluator)
+    assert report.skipped_capsule_ids == ("pipe:risky",)
+    assert report.skipped_reasons == {
+        "pipe:risky": "capsule_risk_ceiling_below_signature_risk:capsule:weak_link"
+    }
+
+
+def test_duplicate_pipeline_id_is_skipped_not_crashed() -> None:
+    """Regression: two CompositionSpecs sharing a pipeline_id must not crash
+    mid-run with an opaque duplicate_record_hash. The later duplicate is
+    skipped with a clear reason; the run completes and the first occurrence
+    is the one that reaches the ledger.
+    """
+    ledger = _ledger()
+    composer = DeclaredCompositionComposer(
+        ledger,
+        capsules=(_capsule("rule_based"), _capsule("graph_match")),
+        compositions=(
+            CompositionSpec(pipeline_id="pipe:baseline", capsule_ids=("capsule:rule_based",)),
+            CompositionSpec(pipeline_id="dup", capsule_ids=("capsule:graph_match",)),
+            CompositionSpec(pipeline_id="dup", capsule_ids=("capsule:graph_match",)),
+        ),
+    )
+    # Must not raise.
+    report = composer.run(_signature(), _passing_evaluator)
+
+    dup_skips = [
+        s for s in composer.skipped_compositions() if s.reason == "duplicate_pipeline_id"
+    ]
+    assert [s.pipeline_id for s in dup_skips] == ["dup"]
+    # Exactly two records reach the ledger: baseline + the first 'dup'.
+    assert len(ledger.for_signature(report.signature_hash)) == 2
+    assert "dup" in report.skipped_reasons
+    assert report.skipped_reasons["dup"] == "duplicate_pipeline_id"
+    # The first 'dup' still competed and won.
+    winners = ledger.winners_for(report.signature_hash, primary_metric_id="precision")
+    assert {w.candidate_pipeline_id for w in winners} == {"dup"}
+
+
+def test_base_composer_skip_report_unchanged_after_refactor() -> None:
+    """Belt-and-suspenders: extracting _composer_skips() must keep the base
+    composer's report skip fields keyed by capsule id with the original
+    reasons.
+    """
+    from gateway.candidate_composer import CandidateScore as _CS  # noqa: F401
+
+    ledger = _ledger()
+    base = CandidateComposer(
+        ledger,
+        capsules=(_capsule("rule_based"), _capsule("graph_match"), _capsule("forbidden_fam")),
+    )
+
+    def evaluator(signature, pipeline, seed):
+        fam = pipeline.method_families[0]
+        score = 0.5 if fam == "rule_based" else 0.8
+        return CandidateEvaluation(
+            outcome="passed",
+            scores=(CandidateScore(metric_id="precision", value=score, direction="maximize"),),
+        )
+
+    report = base.run(_signature(forbidden=("forbidden_fam",)), evaluator)
+    assert report.skipped_capsule_ids == ("capsule:forbidden_fam",)
+    assert report.skipped_reasons == {"capsule:forbidden_fam": "method_family_not_admissible"}

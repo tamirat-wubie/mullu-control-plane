@@ -119,7 +119,7 @@ Capsule admissibility checks before composition:
 1. `signature.admits_method_family(capsule.method_family)` — allowed list (if any) and forbidden list.
 2. Capsule's `risk_ceiling` covers `signature.risk` (low < medium < high < physical).
 
-Skipped capsules are reported in `CandidateComparisonReport.skipped_capsule_ids` with a reason in `skipped_reasons`.
+Skipped capsules are reported in `CandidateComparisonReport.skipped_capsule_ids` with a reason in `skipped_reasons`. A composer subclass with a different composition strategy overrides `_composer_skips()` so these fields describe what *that* strategy skipped — see the multi-capsule composer below, where the keys become composition pipeline ids rather than capsule ids.
 
 ## Both gates
 
@@ -234,6 +234,19 @@ Method families are open-ended strings; the registry is just whichever capsules 
 3. Register one or more `MethodCapsule` instances declaring the family.
 4. If the family represents elevated risk, set `risk_ceiling` appropriately.
 5. Optionally add the family to `allowed_method_families` on problem signatures where it should compete.
+
+## Multi-capsule pipelines
+
+The base `CandidateComposer` emits one single-capsule pipeline per admissible capsule. `DeclaredCompositionComposer` (a subclass overriding **only** `compose_pipelines`) emits caller-declared ordered multi-capsule chains — e.g. `OCR → field extractor → vendor matcher → duplicate detector`. The composer never invents compositions: the caller declares each one as a `CompositionSpec(pipeline_id, capsule_ids, description)`. Data flow between capsules remains the evaluator's responsibility, exactly as for single-capsule pipelines (composer owns orchestration, evaluator owns subsystem logic).
+
+`run()`, both gates, per-pipeline seed fairness, the ledger, and the comparison report are inherited unchanged — a multi-capsule pipeline is recorded, gated, and scored exactly like a single-capsule one.
+
+Rules specific to the declared composer:
+
+- **Chain poisoning.** Every capsule in a declared chain must be admissible (method family allowed/not-forbidden AND `risk_ceiling` covers the signature risk). A single inadmissible or unknown capsule poisons the *whole* chain — you cannot run half a pipeline. The spec is not composed; the reason is recorded.
+- **Duplicate ids rejected.** Two `CompositionSpec`s sharing a `pipeline_id` would derive the same run seed and the same ledger record hash. The later duplicate is skipped with reason `duplicate_pipeline_id` rather than crashing mid-run.
+- **Skip auditing.** Poisoned and duplicate specs are exposed two ways: `skipped_compositions()` returns full `SkippedComposition` records, and the comparison report's `skipped_capsule_ids` / `skipped_reasons` are keyed by the skipped composition's `pipeline_id` with the offending capsule encoded in the reason (the declared composer overrides `_composer_skips()` to make the report describe composition-level skips instead of single-capsule admissibility).
+- **Baseline.** `run()` still detects the baseline as the pipeline whose `method_families` is the single-element tuple `(signature.baseline_method_family,)`. A multi-capsule pipeline can never be mistaken for the baseline; a caller that wants one includes a single-capsule `CompositionSpec` for the baseline family.
 
 ## Method registry and starter catalog
 
@@ -392,6 +405,7 @@ winners with that signature's own primary metric.
 | `tests/test_gateway/test_solver_forge_bridge.py` | 20 | Winner classification, provenance round-trip, non-winner refusal, signature-hash mismatch, domain/risk laundering refusal, high-risk approval enforcement, reserved-key protection, end-to-end round-trip through `CapabilityForge.create_candidate`. |
 | `tests/test_gateway/test_solver_forge_adversarial.py` | 12 | Review-result shape invariants, reviewer-on-passing-only semantics, finding preservation, candidate exclusion despite beating baseline, baseline-compromise zeroing winners, ledger filtering, bridge refusal, double-gate end-to-end. |
 | `tests/test_gateway/test_solver_forge_red_team_adapter.py` | 14 | Default-platform clean path, injected failing case → findings + report_hash evidence ref, multi-category finding derivation (sorted + deduped), malformed/inconsistent report defenses, severity_threshold tolerance, cache hit + opt-out + `reset_cache()` + `latest_report()` immutability, end-to-end composer integration with both clean and failing platform. |
+| `tests/test_gateway/test_solver_forge_multicapsule.py` | 14 | `CompositionSpec` shape, ordered multi-capsule emission, chain poisoning (forbidden / unknown / below-risk-ceiling capsule), `skipped_compositions()` reset-per-call, single-capsule-baseline detection with multi-capsule candidates, double-gate end-to-end, base-composer regression guard, truthful composition-level skip reporting, and duplicate-`pipeline_id` safety. |
 | `tests/test_gateway/test_method_registry.py` | 12 | Register / duplicate-rejection, family + domain queries, signature admissibility (allow / forbid / risk-ceiling), composer construction, no-promotion-surface, starter-catalog integrity. |
 | `tests/test_gateway/test_solver_forge_benchmarks.py` | 11 | Detector ground truth (precision / recall), deterministic evaluator, unknown-capsule skip, end-to-end winner selection, recall-only-trap refusal, winner crosses the bridge, ledger winners match the report. |
 | `tests/test_gateway/test_solver_forge_cli.py` | 9 | No-promotion subcommand surface, list capsules / benchmarks (incl. domain + family filters), text + JSON run output, unknown-benchmark error, ledger-file write, read-only forge-input preview. |
@@ -403,7 +417,7 @@ winners with that signature's own primary metric.
 
 ## Open questions deferred to follow-on work
 
-- **Multi-capsule pipelines.** The default composition is one capsule per pipeline. Multi-capsule pipelines (e.g. OCR -> embedding -> rule check -> reviewer summary) are supported by `CandidatePipeline.capsule_ids` but a real composer subclass that emits non-trivial compositions is not in scope here.
+- **Composer-invented compositions.** `DeclaredCompositionComposer` runs *caller-declared* chains (see "Multi-capsule pipelines" above). A composer that automatically *generates* candidate compositions — searching the space of capsule orderings under the signature constraints rather than running an explicit list — is not in scope. The declared composer is the deterministic substrate such a search would sit on top of.
 - **Live-attack candidate probes.** Candidate-specific *contract-level* probes are now implemented (`gateway/solver_forge_capsule_probes.py`, `CapsuleProbeReviewer`). The remaining gap is probes that *execute* live attacks per pipeline (rather than auditing the declared contract); the `AdversarialReviewCallback` seam already supports it.
 - **Production ledger-pool wiring.** A Postgres-backed store is now implemented (`gateway/candidate_ledger_postgres.py`, `PostgresCandidateLedgerStore`), testable via an injected connection. The remaining follow-on is wiring it to the platform's production connection pool / migration CLI; the store itself is pool-agnostic (it accepts any `DatabaseConnection`).
 - **Learned cross-signature similarity.** A deterministic feature-overlap clustering layer is now implemented (`gateway/signature_cluster.py`, `SignatureClusterIndex`). A natural follow-on is a *learned* similarity (e.g. embeddings over signature structure) for cross-domain problem classes the feature heuristic misses; the index's `weights` / `threshold` seam and the ledger evidence are already in place.
