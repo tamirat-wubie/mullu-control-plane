@@ -41,7 +41,7 @@ def test_governed_swarm_staging_workflow_collects_validated_witness() -> None:
     assert "python scripts/validate_governed_swarm_promotion_readiness.py" in workflow
     assert "--target-environment pilot" in workflow
     assert ".change_assurance/governed_swarm_promotion_readiness.json" in workflow
-    assert "actions/upload-artifact@v4" in workflow
+    assert "actions/upload-artifact@v6" in workflow
     assert "governed-swarm-staging-activation-witness" in workflow
     assert "governed-swarm-staging-evidence-bundle" in workflow
     assert "governed-swarm-pilot-promotion-readiness" in workflow

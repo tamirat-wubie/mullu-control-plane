@@ -37,9 +37,9 @@ jobs:
           - 8025:8025
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -70,9 +70,9 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -106,7 +106,7 @@ jobs:
           print(f'Import analysis: {result.module_count} modules, 0 cycles, max depth {result.max_depth}')
           "
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         if: hashFiles('maf/rust/Cargo.toml') != ''
         with:
           python-version: "3.13"
@@ -125,9 +125,9 @@ jobs:
     if: github.event_name == 'workflow_dispatch'  # Manual only (costs money)
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 

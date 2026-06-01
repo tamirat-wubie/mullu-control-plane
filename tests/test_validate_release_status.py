@@ -239,7 +239,7 @@ def test_deployment_witness_workflow_reports_missing_conformance_secret_handoff(
         "MULLU_DEPLOYMENT_WITNESS_SECRET\n"
         "python scripts/collect_deployment_witness.py\n"
         ".change_assurance/deployment_witness.json\n"
-        "actions/upload-artifact@v4\n"
+        "actions/upload-artifact@v6\n"
     )
 
     errors = validate_deployment_witness_workflow_text(content)

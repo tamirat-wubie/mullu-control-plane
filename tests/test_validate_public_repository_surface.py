@@ -160,7 +160,7 @@ def test_gateway_publication_workflow_requires_receipt_validator() -> None:
     assert errors == []
     assert "python scripts/validate_deployment_orchestration_receipt.py" in content
     assert ".change_assurance/deployment_witness_orchestration_validation.json" in content
-    assert "actions/upload-artifact@v4" in content
+    assert "actions/upload-artifact@v6" in content
 
 
 def test_ci_workflow_requires_reflex_validator_receipt_artifact() -> None:

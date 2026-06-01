@@ -316,7 +316,7 @@ DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS = (
     "--output .change_assurance/governed_swarm_production_readiness.json",
     "governed-swarm-production-readiness",
     ".change_assurance/governed_swarm_production_readiness.json",
-    "actions/upload-artifact@v4",
+    "actions/upload-artifact@v6",
 )
 GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS = (
     "Gateway Publication Orchestration",
@@ -338,7 +338,7 @@ GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS = (
     "--accept-runtime-secret-env",
     "--accept-conformance-secret-env",
     "--accept-deployment-witness-secret-env",
-    "actions/upload-artifact@v4",
+    "actions/upload-artifact@v6",
 )
 CI_WORKFLOW_REQUIRED_LITERALS = (
     "Validate Reflex deployment witness replay",
