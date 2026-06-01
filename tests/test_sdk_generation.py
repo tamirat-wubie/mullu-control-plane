@@ -11,6 +11,9 @@ are explicit; dry-run execution is side-effect free.
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 from scripts.generate_sdks import load_generators, run_generators
@@ -57,6 +60,8 @@ def test_openapi_source_spec_is_exported_for_sdk_generation() -> None:
     assert spec["info"]["title"] == "Mullu Platform"
     assert spec["info"]["version"] == "3.13.0"
     assert "/api/v1/replay/{trace_id}/determinism" in spec["paths"]
+    assert "/software/receipts/dashboard" in spec["paths"]
+    assert "/software/receipts/sdlc/dashboard" in spec["paths"]
     assert len(spec["paths"]) >= 200
 
 
@@ -78,4 +83,36 @@ def test_openapi_exporter_writes_deterministic_spec(tmp_path: Path) -> None:
     assert output_path.exists()
     assert payload["info"]["title"] == "Mullu Platform"
     assert payload["paths"] == spec["paths"]
+    assert "/software/receipts/dashboard" in payload["paths"]
+    assert "/software/receipts/sdlc/dashboard" in payload["paths"]
     assert len(payload["paths"]) >= 50
+
+
+def test_openapi_exporter_cli_writes_software_receipt_paths(tmp_path: Path) -> None:
+    output_path = tmp_path / "mullu.openapi.json"
+    env = dict(os.environ)
+    env["MULLU_ENV"] = "local_dev"
+    env["MULLU_DB_BACKEND"] = "memory"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(REPO_ROOT / "scripts" / "export_openapi.py"),
+            "--output",
+            str(output_path),
+        ],
+        cwd=REPO_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert output_path.exists()
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    report = json.loads(result.stdout)
+    assert "/software/receipts/dashboard" in payload["paths"]
+    assert "/software/receipts/sdlc/dashboard" in payload["paths"]
+    assert report["governed"] is True

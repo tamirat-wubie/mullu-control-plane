@@ -112,6 +112,18 @@ def test_get_case_audit_explorer_view_rejects_cross_tenant(cross_tenant_kernel):
     assert exc.value.status_code == 403
 
 
+def test_get_case_step_handoffs_rejects_cross_tenant(cross_tenant_kernel):
+    with pytest.raises(HTTPException) as exc:
+        ok.get_case_step_handoffs("case-1", _authed("tenant-a"))
+    assert exc.value.status_code == 403
+
+
+def test_get_case_step_handoffs_view_rejects_cross_tenant(cross_tenant_kernel):
+    with pytest.raises(HTTPException) as exc:
+        ok.get_case_step_handoffs_view("case-1", _authed("tenant-a"))
+    assert exc.value.status_code == 403
+
+
 def test_list_case_events_rejects_cross_tenant(cross_tenant_kernel):
     with pytest.raises(HTTPException) as exc:
         ok.list_case_events("case-1", _authed("tenant-a"))

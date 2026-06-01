@@ -23,6 +23,7 @@ Every governed software delivery PR must either attach the lifecycle artifacts o
 - [ ] Release or deployment candidate does not claim more than evidence supports.
 - [ ] Recovery handoff receipt records rollback state, rollback refs, incident recovery refs, accepted-risk refs, effect boundaries, and terminal closure linkage.
 - [ ] Gate decision envelope is present on each non-terminal artifact: `uao_ref`, `causal_decision_trace_ref`, and `receipt_ref`.
+- [ ] Inventory closure proves design, work plan, implementation receipt, and verification receipt retain canonical schema and example coverage.
 - [ ] Closure receipt records outcome, receipts, remaining blockers, learning, and next action.
 - [ ] Closure receipt retains every upstream UAO, causal trace, implementation receipt, transition receipt, recovery handoff receipt, and receipt reference.
 - [ ] Rollback or incident handoff path is stated for effect-bearing changes.

@@ -77,3 +77,36 @@ draft --> validated --> running --> completed
 3. No unverified completion. A workflow may only reach `completed` status after all stages have produced verified results.
 4. No cycle in the stage graph. The validator rejects any descriptor whose stage predecessors form a cycle.
 5. No dangling bindings. Every binding must reference stages that exist in the descriptor.
+
+## Agentic-Control Governor Chain
+
+Governor cohesion is represented as the read-only workflow descriptor
+`agentic_control.governor_chain.cohesion.v1`. It composes existing governors; it
+does not register a new governor skill and does not grant capability authority.
+
+The canonical order is:
+
+```text
+policy_governor
+  -> decision_governor
+  -> design_governor
+  -> coding_governor
+  -> quality_governor
+  -> release_governor
+  -> runtime_governor
+```
+
+Each stage is a `skill_execution` stage bound to an existing
+`agentic_control.*_governor.v1` descriptor. Every skill in the chain must remain
+`external_read`, keep mandatory verification, and carry
+`grants_new_capability_authority = false`.
+
+The handoff key is explicit:
+
+```text
+governance_packet_ref -> upstream_governance_packet_ref
+```
+
+`mcoi_runtime.core.governor_chain.validate_governor_chain_descriptor` fails
+closed when a governor is missing, blocked, writable, reordered, or detached from
+the expected predecessor/binding topology.

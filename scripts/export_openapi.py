@@ -21,12 +21,19 @@ MCOI_ROOT = REPO_ROOT / "mcoi"
 DEFAULT_OUTPUT = REPO_ROOT / "sdk" / "openapi" / "mullu.openapi.json"
 
 
+def _ensure_import_paths() -> None:
+    """Expose repo-local packages needed by mounted routers."""
+    for path in (REPO_ROOT, MCOI_ROOT):
+        path_text = str(path)
+        if path_text not in sys.path:
+            sys.path.insert(0, path_text)
+
+
 def export_openapi(output_path: Path = DEFAULT_OUTPUT) -> dict[str, Any]:
     """Export the runtime OpenAPI document to a deterministic JSON file."""
     os.environ.setdefault("MULLU_ENV", "local_dev")
     os.environ.setdefault("MULLU_DB_BACKEND", "memory")
-    if str(MCOI_ROOT) not in sys.path:
-        sys.path.insert(0, str(MCOI_ROOT))
+    _ensure_import_paths()
     from mcoi_runtime.app.server import app
 
     spec = app.openapi()
