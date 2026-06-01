@@ -61,6 +61,7 @@ The validator applies these rules deterministically:
 14. Every command replay record must bind to the command id, tenant, actor, and persisted event identity before exposure.
 15. Every command replay record must bind emitted receipts to the matching pipeline stage, receipt kind, tier, and root receipt reference before exposure.
 16. Every command replay record must bind to the same event-local universal action proof detail, including action id, trace, receipts, closure state, orchestration id, and lineage delta before exposure.
+17. Every command replay record must come from a command event whose event hash recomputes from the persisted event payload before exposure.
 
 The core invariant is:
 

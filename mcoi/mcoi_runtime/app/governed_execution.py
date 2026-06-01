@@ -411,6 +411,8 @@ def universal_command_orchestration_record_view(
             actor_id=bound_actor_id,
         ):
             continue
+        if not _event_hash_binds_payload(event):
+            continue
         detail = getattr(event, "detail", {})
         if not isinstance(detail, Mapping):
             continue
@@ -463,6 +465,40 @@ def _event_binds_command_replay(
         and getattr(event, "tenant_id", "") == tenant_id
         and getattr(event, "actor_id", "") == actor_id
     )
+
+
+def _event_hash_binds_payload(event: Any) -> bool:
+    event_hash = getattr(event, "event_hash", "")
+    event_id = getattr(event, "event_id", "")
+    if not _non_empty_text(event_hash) or event_id != f"evt-{event_hash[:16]}":
+        return False
+    detail = getattr(event, "detail", {})
+    if not isinstance(detail, Mapping):
+        return False
+    try:
+        from gateway.command_spine import canonical_hash
+
+        recomputed = canonical_hash(
+            {
+                "command_id": getattr(event, "command_id", ""),
+                "previous_state": _state_text(getattr(event, "previous_state", "")),
+                "next_state": _state_text(getattr(event, "next_state", "")),
+                "policy_version": getattr(event, "policy_version", ""),
+                "risk_tier": getattr(event, "risk_tier", ""),
+                "budget_decision": getattr(event, "budget_decision", ""),
+                "approval_id": getattr(event, "approval_id", ""),
+                "tool_name": getattr(event, "tool_name", ""),
+                "input_hash": getattr(event, "input_hash", ""),
+                "output_hash": getattr(event, "output_hash", ""),
+                "trace_id": getattr(event, "trace_id", ""),
+                "prev_event_hash": getattr(event, "prev_event_hash", ""),
+                "timestamp": getattr(event, "timestamp", ""),
+                "detail": detail,
+            }
+        )
+    except (TypeError, ValueError, ImportError):
+        return False
+    return recomputed == event_hash
 
 
 def _is_replayable_universal_action_orchestration_record(
@@ -794,6 +830,11 @@ def _text_tuple(value: Any) -> tuple[str, ...]:
     return tuple(
         item.strip() for item in value if isinstance(item, str) and item.strip()
     )
+
+
+def _state_text(value: Any) -> str:
+    state_value = getattr(value, "value", value)
+    return state_value if isinstance(state_value, str) else str(state_value)
 
 
 def build_universal_operator_kernel(

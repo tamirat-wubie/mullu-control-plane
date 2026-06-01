@@ -9,6 +9,7 @@ import json
 import copy
 import sys
 import time
+from dataclasses import replace
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parent.parent.parent
@@ -2342,6 +2343,57 @@ class TestGatewayStatus:
                 "universal_action": universal_detail,
                 "universal_action_orchestration": record,
             },
+        )
+
+        resp = client.get(
+            f"/commands/{command.command_id}/universal-action-orchestration"
+        )
+
+        assert resp.status_code == 404
+        assert (
+            resp.json()["detail"] == "universal action orchestration record not found"
+        )
+        assert gateway_app.state.command_ledger.get(command.command_id) is not None
+
+    def test_command_universal_action_orchestration_event_hash_returns_404(
+        self, gateway_app, client
+    ):
+        record = json.loads(
+            (
+                _ROOT
+                / "examples"
+                / "universal_action_orchestration.allowed_status_publish.json"
+            ).read_text(encoding="utf-8")
+        )
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="tenant_ops_demo",
+            actor_id="service:status_page_worker",
+            source="web",
+            conversation_id="conversation-orchestration-event-hash",
+            idempotency_key="universal-orchestration-event-hash",
+            intent="refresh_public_status_page",
+            payload={"body": "event-hash-tampered status page replay"},
+        )
+        record["action_envelope"]["intent"] = command.command_id
+        universal_detail = _bind_uao_fixture_to_universal_action_detail(record)
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.DISPATCHED,
+            detail={
+                "cause": "universal_action_kernel_dispatched",
+                "universal_action": universal_detail,
+                "universal_action_orchestration": record,
+            },
+        )
+        target_index = next(
+            index
+            for index, event in enumerate(gateway_app.state.command_ledger._events)
+            if event.command_id == command.command_id
+            and event.detail.get("cause") == "universal_action_kernel_dispatched"
+        )
+        gateway_app.state.command_ledger._events[target_index] = replace(
+            gateway_app.state.command_ledger._events[target_index],
+            event_hash="0" * 64,
         )
 
         resp = client.get(
