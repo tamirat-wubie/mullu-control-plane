@@ -13,8 +13,11 @@ Invariants:
 from __future__ import annotations
 
 import json
+import importlib.util
 from dataclasses import dataclass
 from pathlib import Path
+
+from jsonschema import Draft202012Validator
 
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
@@ -47,7 +50,11 @@ from mcoi_runtime.core.simulation import SimulationEngine
 from mcoi_runtime.core.system_stabilization import EquilibriumEngine
 from mcoi_runtime.core.template_validator import TemplateValidator
 from mcoi_runtime.core.terminal_closure import TerminalClosureCertifier
-from mcoi_runtime.core.universal_action_kernel import UniversalActionKernel, UniversalActionRequest
+from mcoi_runtime.core.universal_action_kernel import (
+    UniversalActionKernel,
+    UniversalActionRequest,
+    build_universal_action_orchestration_record,
+)
 from mcoi_runtime.core.world_state import WorldStateEngine
 
 
@@ -55,6 +62,8 @@ NOW = "2026-05-06T12:00:00+00:00"
 REQUIRED_ROLE = "customer_ops_manager"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FABRIC_FIXTURE_DIR = REPO_ROOT / "integration" / "governed_capability_fabric" / "fixtures"
+UAO_VALIDATOR_PATH = REPO_ROOT / "scripts" / "validate_universal_action_orchestration.py"
+UAO_SCHEMA_PATH = REPO_ROOT / "schemas" / "universal_action_orchestration.schema.json"
 VALID_TEMPLATE = {
     "template_id": "tpl-universal-1",
     "action_type": "shell_command",
@@ -127,6 +136,23 @@ def test_universal_action_kernel_dispatches_after_all_certificates_pass() -> Non
     assert result.proof_hash.startswith("universal-action-proof-")
 
 
+def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
+    kernel, _executor = _kernel_with_capability()
+    request = _action_request()
+
+    result = kernel.run(request)
+    record = build_universal_action_orchestration_record(request=request, result=result)
+    validation_errors = _validate_uao_record(record)
+
+    assert validation_errors == []
+    assert record["uao_schema_version"] == "uao.v1"
+    assert record["decision"]["status"] == "allow"
+    assert record["execution_receipt_ref"] == result.execution_receipt_ref
+    assert record["raw_reasoning_included"] is False
+    assert record["lineage"]["accepted_deltas"]
+    assert record["lineage"]["rejected_deltas"] == []
+
+
 def test_universal_action_kernel_blocks_missing_authority_before_plan() -> None:
     kernel, executor = _kernel_with_capability()
 
@@ -174,6 +200,34 @@ def test_universal_action_kernel_blocks_open_world_contradictions_before_dispatc
     assert result.dispatch_result is None
     assert executor.calls == 0
     assert result.proof_hash.startswith("universal-action-proof-")
+
+
+def test_universal_action_result_exports_valid_blocked_uao_record() -> None:
+    world_state = WorldStateEngine(clock=_clock)
+    world_state.record_contradiction(
+        ContradictionRecord(
+            contradiction_id="contradiction-1",
+            entity_id="vendor-1",
+            attribute="bank_account",
+            conflicting_evidence_ids=("evidence-a", "evidence-b"),
+            strategy=ContradictionStrategy.ESCALATE,
+            resolved=False,
+        )
+    )
+    kernel, _executor = _kernel_with_capability(world_state=world_state)
+    request = _action_request(intent_id="intent-world-block-record")
+
+    result = kernel.run(request)
+    record = build_universal_action_orchestration_record(request=request, result=result)
+    validation_errors = _validate_uao_record(record)
+
+    assert validation_errors == []
+    assert record["decision"]["status"] == "block"
+    assert record["execution_receipt_ref"] is None
+    assert record["closure_state"] == "closed_blocked"
+    assert record["memory_update"]["learning_allowed"] is False
+    assert record["lineage"]["accepted_deltas"] == []
+    assert record["lineage"]["rejected_deltas"]
 
 
 def test_universal_action_kernel_blocks_uninstalled_capability_before_plan() -> None:
@@ -616,3 +670,16 @@ def _fixture(name: str) -> dict:
         payload = json.load(handle)
     assert isinstance(payload, dict)
     return payload
+
+
+def _validate_uao_record(record: dict) -> list[str]:
+    schema = json.loads(UAO_SCHEMA_PATH.read_text(encoding="utf-8"))
+    Draft202012Validator(schema).validate(record)
+    spec = importlib.util.spec_from_file_location("validate_universal_action_orchestration", UAO_VALIDATOR_PATH)
+    assert spec is not None
+    validator = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(validator)
+    errors = validator.validate_orchestration(record)
+    assert isinstance(errors, list)
+    return errors
