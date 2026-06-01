@@ -25,6 +25,7 @@ from gateway.command_spine import CommandLedger, CommandState, InMemoryCommandLe
 from mcoi_runtime.app.governed_execution import (
     build_universal_operator_kernel,
     universal_command_dispatch,
+    universal_command_orchestration_record_view,
     universal_command_proof_view,
     universal_operator_dispatch,
 )
@@ -434,6 +435,43 @@ def test_universal_command_proof_view_replays_persisted_success_events() -> None
     assert len(proof.event_hashes) >= 5
 
 
+def test_universal_command_orchestration_record_replays_success_events() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-record-view",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    result = universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+    )
+    reloaded_ledger = CommandLedger(clock=_clock, store=store)
+
+    record = universal_command_orchestration_record_view(reloaded_ledger, command.command_id)
+    validation_errors = _validate_uao_record(record)
+
+    assert validation_errors == []
+    assert record is not None
+    assert record["action_id"] == result.action_id
+    assert record["decision"]["status"] == "allow"
+    assert record["execution_receipt_ref"] == result.execution_receipt_ref
+    assert record["closure_state"] == "closed_allowed"
+    assert record["lineage"]["accepted_deltas"]
+
+
 def test_universal_command_dispatch_records_blocked_kernel_result() -> None:
     world_state = WorldStateEngine(clock=_clock)
     world_state.record_contradiction(
@@ -479,6 +517,7 @@ def test_universal_command_dispatch_records_blocked_kernel_result() -> None:
     assert events[-1].detail["cause"] == "universal_action_kernel_blocked"
     assert events[-1].detail["universal_action"]["block_reason"] == "open_world_contradictions"
     assert events[-1].detail["universal_action"]["proof_hash"] == result.proof_hash
+    assert events[-1].detail["universal_action_orchestration"]["decision"]["status"] == "block"
 
 
 def test_universal_command_proof_view_replays_blocked_result() -> None:
@@ -534,6 +573,54 @@ def test_universal_command_proof_view_replays_blocked_result() -> None:
     assert CommandState.REQUIRES_REVIEW.value in proof.state_sequence
     assert CommandState.TERMINALLY_CERTIFIED.value not in proof.state_sequence
     assert len(proof.event_hashes) >= 4
+
+
+def test_universal_command_orchestration_record_replays_blocked_events() -> None:
+    world_state = WorldStateEngine(clock=_clock)
+    world_state.record_contradiction(
+        ContradictionRecord(
+            contradiction_id="contradiction-1",
+            entity_id="vendor-1",
+            attribute="bank_account",
+            conflicting_evidence_ids=("evidence-a", "evidence-b"),
+            strategy=ContradictionStrategy.ESCALATE,
+            resolved=False,
+        )
+    )
+    kernel, _executor = _kernel_with_capability(world_state=world_state)
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-record-block",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    result = universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+    )
+    reloaded_ledger = CommandLedger(clock=_clock, store=store)
+
+    record = universal_command_orchestration_record_view(reloaded_ledger, command.command_id)
+    validation_errors = _validate_uao_record(record)
+
+    assert validation_errors == []
+    assert record is not None
+    assert record["action_id"] == result.action_id
+    assert record["decision"]["status"] == "block"
+    assert record["decision"]["reason_code"] == "open_world_contradictions"
+    assert record["execution_receipt_ref"] is None
+    assert record["lineage"]["rejected_deltas"]
 
 
 def _kernel_with_capability(

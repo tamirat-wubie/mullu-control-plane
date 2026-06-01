@@ -43,7 +43,10 @@ from mcoi_runtime.core.reflex import (
     propose_upgrade,
     verify_reflex_deployment_witness,
 )
-from mcoi_runtime.app.governed_execution import universal_command_proof_view
+from mcoi_runtime.app.governed_execution import (
+    universal_command_orchestration_record_view,
+    universal_command_proof_view,
+)
 from mcoi_runtime.contracts.terminal_closure import (
     TerminalClosureCertificate,
     TerminalClosureDisposition,
@@ -2577,6 +2580,23 @@ def create_gateway_app(
             "event_count": len(proof.event_hashes),
             "state_sequence": list(proof.state_sequence),
             "proof_hash": proof.proof_hash,
+        }
+
+    @app.get("/commands/{command_id}/universal-action-orchestration")
+    def command_universal_action_orchestration(command_id: str):
+        record = universal_command_orchestration_record_view(command_ledger, command_id)
+        if record is None:
+            if command_ledger.get(command_id) is None:
+                raise HTTPException(404, detail="command not found")
+            raise HTTPException(404, detail="universal action orchestration record not found")
+        decision = record.get("decision", {})
+        decision_status = decision.get("status", "") if isinstance(decision, Mapping) else ""
+        return {
+            "command_id": command_id,
+            "universal_action_orchestration": record,
+            "orchestration_id": record.get("orchestration_id", ""),
+            "decision_status": decision_status,
+            "closure_state": record.get("closure_state", ""),
         }
 
     def _operator_universal_actions_payload(

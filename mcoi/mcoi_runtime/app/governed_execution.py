@@ -27,6 +27,7 @@ from mcoi_runtime.core.universal_action_kernel import (
     UniversalActionRequest,
     UniversalActionResult,
     build_universal_action_kernel,
+    build_universal_action_orchestration_record,
 )
 from mcoi_runtime.whqr.mil_compiler import compile_mil_from_policy_decision
 
@@ -145,25 +146,22 @@ def universal_operator_dispatch(
         intent_id = _derive_intent_id(actor_id, request)
     if not objective:
         objective = f"Execute {request.route} for goal {request.goal_id}"
-    return kernel.run(
-        UniversalActionRequest(
-            actor_id=actor_id,
-            tenant_id=tenant_id,
-            intent_id=intent_id,
-            objective=objective,
-            dispatch_request=request,
-            risk_level=risk_level,
-            estimated_cost=estimated_cost,
-            estimated_duration_seconds=estimated_duration_seconds,
-            success_probability=success_probability,
-            mode=mode,
-            metadata={
-                "actor_roles": actor_roles,
-                "approval_refs": approval_refs,
-                "evidence_refs": evidence_refs,
-            },
-        )
+    action_request = _build_universal_action_request(
+        actor_id=actor_id,
+        tenant_id=tenant_id,
+        intent_id=intent_id,
+        objective=objective,
+        request=request,
+        risk_level=risk_level,
+        estimated_cost=estimated_cost,
+        estimated_duration_seconds=estimated_duration_seconds,
+        success_probability=success_probability,
+        mode=mode,
+        actor_roles=actor_roles,
+        approval_refs=approval_refs,
+        evidence_refs=evidence_refs,
     )
+    return kernel.run(action_request)
 
 
 def universal_command_dispatch(
@@ -195,24 +193,28 @@ def universal_command_dispatch(
     if action is None:
         action = command_ledger.bind_governed_action(command_id)
 
-    request = DispatchRequest(
+    dispatch_request = DispatchRequest(
         goal_id=command.command_id,
         route=dispatch_route or action.capability,
         template=template,
         bindings=dict(bindings or {}),
     )
-    result = universal_operator_dispatch(
-        kernel,
-        request,
+    action_request = _build_universal_action_request(
         actor_id=command.actor_id,
         tenant_id=command.tenant_id,
         intent_id=command.command_id,
         objective=f"Execute command {command.intent} through the universal action kernel.",
+        request=dispatch_request,
         risk_level=_risk_level_from_tier(action.risk_tier),
         mode=mode,
         actor_roles=actor_roles,
         approval_refs=approval_refs,
         evidence_refs=evidence_refs,
+    )
+    result = kernel.run(action_request)
+    orchestration_record = build_universal_action_orchestration_record(
+        request=action_request,
+        result=result,
     )
     command_ledger.transition(
         command.command_id,
@@ -223,6 +225,7 @@ def universal_command_dispatch(
         detail={
             "cause": "universal_action_kernel_dispatched" if result.dispatched else "universal_action_kernel_blocked",
             "universal_action": _universal_action_transition_detail(result),
+            "universal_action_orchestration": orchestration_record,
         },
     )
     if result.terminal_certificate is not None:
@@ -326,6 +329,22 @@ def universal_command_proof_view(
     )
 
 
+def universal_command_orchestration_record_view(
+    command_ledger: object,
+    command_id: str,
+) -> Mapping[str, Any] | None:
+    """Replay the persisted UAO v1 orchestration record for one command."""
+    events = command_ledger.events_for(command_id)
+    for event in reversed(events):
+        detail = getattr(event, "detail", {})
+        if not isinstance(detail, Mapping):
+            continue
+        candidate = detail.get("universal_action_orchestration")
+        if isinstance(candidate, Mapping):
+            return dict(candidate)
+    return None
+
+
 def build_universal_operator_kernel(
     runtime: object,
     *,
@@ -375,6 +394,41 @@ def build_universal_operator_kernel(
         terminal_closure=terminal_closure,
         learning_admission=learning_admission,
         clock=clock,
+    )
+
+
+def _build_universal_action_request(
+    *,
+    actor_id: str,
+    tenant_id: str,
+    intent_id: str,
+    objective: str,
+    request: DispatchRequest,
+    risk_level: RiskLevel,
+    estimated_cost: float = 100.0,
+    estimated_duration_seconds: float = 1.0,
+    success_probability: float = 0.9,
+    mode: str = "simulation",
+    actor_roles: tuple[str, ...] = (),
+    approval_refs: tuple[str, ...] = (),
+    evidence_refs: tuple[str, ...] = (),
+) -> UniversalActionRequest:
+    return UniversalActionRequest(
+        actor_id=actor_id,
+        tenant_id=tenant_id,
+        intent_id=intent_id,
+        objective=objective,
+        dispatch_request=request,
+        risk_level=risk_level,
+        estimated_cost=estimated_cost,
+        estimated_duration_seconds=estimated_duration_seconds,
+        success_probability=success_probability,
+        mode=mode,
+        metadata={
+            "actor_roles": actor_roles,
+            "approval_refs": approval_refs,
+            "evidence_refs": evidence_refs,
+        },
     )
 
 

@@ -871,11 +871,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 220,
+      "proven": 221,
       "unproven": 0,
       "witnessed": 149
     },
-    "route_count": 369,
+    "route_count": 370,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2574,6 +2574,11 @@
       },
       {
         "coverage_state": "proven",
+        "route": "/commands/{command_id}/universal-action-orchestration",
+        "surface_id": "gateway_capability_fabric"
+      },
+      {
+        "coverage_state": "proven",
         "route": "/commands/{command_id}/universal-action-proof",
         "surface_id": "gateway_capability_fabric"
       },
@@ -2755,6 +2760,7 @@
         "/commands/{command_id}/closure",
         "/commands/{command_id}/capability-admission",
         "/commands/{command_id}/universal-action-proof",
+        "/commands/{command_id}/universal-action-orchestration",
         "/operator/universal-actions/read-model",
         "/operator/universal-actions",
         "DomainCapsuleCompiler.compile",
@@ -2796,6 +2802,11 @@
         "terminal_closure_requires_evidence_refs": [
           "command_closure_read_model"
         ],
+        "universal_action_orchestration_replays_from_command_events": [
+          "universal_command_orchestration_record_replays_success_events",
+          "universal_command_orchestration_record_replays_blocked_events",
+          "command_universal_action_orchestration_read_model"
+        ],
         "universal_action_proof_replays_from_command_events": [
           "command_universal_action_proof_read_model"
         ],
@@ -2810,6 +2821,7 @@
         "successful_response_is_bound_to_response_evidence_closure",
         "universal_action_proof_replays_from_command_events",
         "universal_action_runtime_record_exports_contract_shape",
+        "universal_action_orchestration_replays_from_command_events",
         "operator_universal_action_read_model_filters_command_proofs",
         "operator_universal_action_console_renders_replay_state",
         "capability_admission_audits_filter_status",
@@ -9214,8 +9226,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1134,
-    "runtime_witness_count": 1134,
+    "exact_test_anchor_count": 1135,
+    "runtime_witness_count": 1135,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -9249,6 +9261,14 @@
               "mcoi/tests/test_universal_action_kernel.py::test_universal_action_result_exports_valid_blocked_uao_record"
             ],
             "witness": "universal_action_runtime_record_exports_contract_shape"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_universal_action_kernel.py::test_universal_command_orchestration_record_replays_success_events",
+              "mcoi/tests/test_universal_action_kernel.py::test_universal_command_orchestration_record_replays_blocked_events",
+              "tests/test_gateway/test_webhooks.py::test_command_universal_action_orchestration_read_model"
+            ],
+            "witness": "universal_action_orchestration_replays_from_command_events"
           },
           {
             "anchors": [
@@ -9306,8 +9326,8 @@
             "witness": "physical_capsule_admission_runs_promotion_preflight"
           }
         ],
-        "exact_test_anchor_count": 14,
-        "runtime_witness_count": 14,
+        "exact_test_anchor_count": 15,
+        "runtime_witness_count": 15,
         "surface_id": "gateway_capability_fabric",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
