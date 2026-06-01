@@ -39,6 +39,7 @@ DOC_REQUIREMENTS: dict[Path, tuple[str, ...]] = {
         "sdlc_gate_decision_envelope",
         "sdlc_implementation_receipt",
         "sdlc_recovery_handoff_receipt",
+        "sdlc_inventory_closure",
         "scripts/validate_sdlc_pr_enforcement.py",
         "No closure without learning.",
     ),
@@ -224,6 +225,9 @@ ARTIFACT_SPECS: tuple[ArtifactSpec, ...] = (
     ),
 )
 ARTIFACT_SPEC_BY_KIND = {spec.kind: spec for spec in ARTIFACT_SPECS}
+CANONICAL_SCHEMA_REFS = tuple(f"schemas/{spec.schema_name}" for spec in ARTIFACT_SPECS)
+CANONICAL_EXAMPLE_REFS = tuple(f"examples/sdlc/{spec.example_name}" for spec in ARTIFACT_SPECS)
+CANONICAL_INVENTORY_REFS = CANONICAL_SCHEMA_REFS + CANONICAL_EXAMPLE_REFS
 
 
 class SdlcArtifactError(ValueError):
@@ -522,6 +526,7 @@ def build_validation_report() -> dict[str, Any]:
         "sdlc_example_artifacts",
         "sdlc_document_contracts",
         "sdlc_cross_artifact_links",
+        "sdlc_inventory_closure",
         "sdlc_gate_decision_envelopes",
         "sdlc_closure_ref_retention",
         "sdlc_recovery_handoff_retention",
@@ -567,6 +572,14 @@ def _validate_design_decision(record: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if record.get("schema_changes") and not record.get("validator_changes"):
         errors.append("design_decision: schema changes require validator changes")
+    errors.extend(
+        _validate_ref_inventory(
+            "design_decision",
+            "schema_changes",
+            record.get("schema_changes", []),
+            CANONICAL_SCHEMA_REFS,
+        )
+    )
     missing_validators = set(REQUIRED_VALIDATORS) - set(record.get("validator_changes", []))
     if missing_validators:
         errors.append(f"design_decision: missing required validators: {sorted(missing_validators)}")
@@ -594,6 +607,14 @@ def _validate_work_plan(record: dict[str, Any]) -> list[str]:
     missing_validators = set(REQUIRED_VALIDATORS) - set(record.get("required_validators", []))
     if missing_validators:
         errors.append(f"work_plan: missing required validators: {sorted(missing_validators)}")
+    errors.extend(
+        _validate_ref_inventory(
+            "work_plan",
+            "expected_artifacts",
+            record.get("expected_artifacts", []),
+            CANONICAL_INVENTORY_REFS,
+        )
+    )
     return errors
 
 
@@ -615,6 +636,22 @@ def _validate_implementation_receipt(record: dict[str, Any]) -> list[str]:
             errors.append(f"implementation_receipt: changed file path must stay workspace-relative: {path_text}")
 
     changed_file_path_set = set(changed_file_paths)
+    errors.extend(
+        _validate_ref_inventory(
+            "implementation_receipt",
+            "changed_files",
+            changed_file_paths,
+            CANONICAL_INVENTORY_REFS,
+        )
+    )
+    errors.extend(
+        _validate_ref_inventory(
+            "implementation_receipt",
+            "schema_changes",
+            record.get("schema_changes", []),
+            CANONICAL_SCHEMA_REFS,
+        )
+    )
     for field_name in ("schema_changes", "validator_changes", "test_changes", "documentation_changes"):
         for ref in record.get(field_name, []):
             if isinstance(ref, str) and ref not in changed_file_path_set:
@@ -655,6 +692,14 @@ def _validate_verification_receipt(record: dict[str, Any]) -> list[str]:
     stale_outputs = observed_output_names - observed_command_names
     if stale_outputs:
         errors.append(f"verification_receipt: validator outputs without commands: {sorted(stale_outputs)}")
+    errors.extend(
+        _validate_ref_inventory(
+            "verification_receipt",
+            "coverage_refs",
+            record.get("coverage_refs", []),
+            CANONICAL_EXAMPLE_REFS,
+        )
+    )
     return errors
 
 
@@ -695,6 +740,21 @@ def _validate_closure_receipt(record: dict[str, Any]) -> list[str]:
     if not record.get("uao_refs") or not record.get("causal_decision_trace_refs"):
         errors.append("closure_receipt: closure must bind UAO and causal decision trace refs")
     return errors
+
+
+def _validate_ref_inventory(
+    kind: str,
+    field_name: str,
+    observed_refs: Any,
+    required_refs: tuple[str, ...],
+) -> list[str]:
+    if not isinstance(observed_refs, list):
+        return []
+    observed_ref_set = {ref for ref in observed_refs if isinstance(ref, str)}
+    missing_refs = sorted(set(required_refs) - observed_ref_set)
+    if not missing_refs:
+        return []
+    return [f"{kind}: {field_name} missing canonical SDLC inventory refs: {missing_refs}"]
 
 
 def _validate_no_private_reasoning_fields(value: Any, path: str) -> list[str]:

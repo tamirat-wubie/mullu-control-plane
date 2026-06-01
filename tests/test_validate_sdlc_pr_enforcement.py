@@ -31,7 +31,9 @@ def test_current_sdlc_pr_enforcement_contract_passes() -> None:
     assert "Implementation receipt" in texts.pr_template
     assert "Transition receipt" in texts.pr_template
     assert "Recovery handoff receipt" in texts.pr_template
+    assert "Inventory closure" in texts.pr_template
     assert "rollback_or_incident_handoff" in texts.enforcement_doc
+    assert "sdlc_inventory_closure proves canonical schema and example coverage" in texts.enforcement_doc
     assert "recovery handoff has `sdlc_recovery_handoff_receipt` evidence" in texts.enforcement_doc
 
 
@@ -128,6 +130,22 @@ def test_missing_recovery_handoff_receipt_evidence_is_rejected() -> None:
 
     assert "pull_request_template missing required term: Recovery handoff receipt" in template_errors
     assert any("sdlc_recovery_handoff_receipt" in error for error in doc_errors)
+    assert len(template_errors) + len(doc_errors) >= 2
+
+
+def test_missing_inventory_closure_evidence_is_rejected() -> None:
+    texts = validator.load_enforcement_texts()
+    invalid_template = texts.pr_template.replace("Inventory closure", "Inventory note")
+    invalid_doc = texts.enforcement_doc.replace(
+        "sdlc_inventory_closure proves canonical schema and example coverage",
+        "inventory notes exist",
+    )
+
+    template_errors = validator.validate_pr_template(invalid_template)
+    doc_errors = validator.validate_enforcement_document(invalid_doc)
+
+    assert "pull_request_template missing required term: Inventory closure" in template_errors
+    assert any("sdlc_inventory_closure" in error for error in doc_errors)
     assert len(template_errors) + len(doc_errors) >= 2
 
 

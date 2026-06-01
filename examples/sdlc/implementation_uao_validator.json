@@ -6,6 +6,9 @@
     "added SDLC doctrine documents",
     "added strict lifecycle artifact schemas",
     "added canonical lifecycle example chain",
+    "added governed implementation receipt contract",
+    "added governed state transition receipt contract",
+    "added governed rollback and incident recovery handoff receipt contract",
     "added deterministic lifecycle validators",
     "bound SDLC checks to workspace preflight",
     "bound PR evidence to CI and pull request review"
@@ -28,7 +31,57 @@
       "surface": "schemas"
     },
     {
+      "path": "schemas/sdlc_requirement.schema.json",
+      "change_type": "add",
+      "surface": "schemas"
+    },
+    {
+      "path": "schemas/sdlc_design_decision.schema.json",
+      "change_type": "add",
+      "surface": "schemas"
+    },
+    {
+      "path": "schemas/sdlc_work_plan.schema.json",
+      "change_type": "add",
+      "surface": "schemas"
+    },
+    {
       "path": "schemas/sdlc_implementation_receipt.schema.json",
+      "change_type": "add",
+      "surface": "schemas"
+    },
+    {
+      "path": "schemas/sdlc_transition_receipt.schema.json",
+      "change_type": "add",
+      "surface": "schemas"
+    },
+    {
+      "path": "schemas/sdlc_verification_receipt.schema.json",
+      "change_type": "add",
+      "surface": "schemas"
+    },
+    {
+      "path": "schemas/sdlc_security_review.schema.json",
+      "change_type": "add",
+      "surface": "schemas"
+    },
+    {
+      "path": "schemas/sdlc_release_candidate.schema.json",
+      "change_type": "add",
+      "surface": "schemas"
+    },
+    {
+      "path": "schemas/sdlc_deployment_candidate.schema.json",
+      "change_type": "add",
+      "surface": "schemas"
+    },
+    {
+      "path": "schemas/sdlc_recovery_handoff_receipt.schema.json",
+      "change_type": "add",
+      "surface": "schemas"
+    },
+    {
+      "path": "schemas/sdlc_closure_receipt.schema.json",
       "change_type": "add",
       "surface": "schemas"
     },
@@ -38,7 +91,57 @@
       "surface": "examples"
     },
     {
+      "path": "examples/sdlc/requirement_uao_validator.json",
+      "change_type": "add",
+      "surface": "examples"
+    },
+    {
+      "path": "examples/sdlc/design_uao_validator.json",
+      "change_type": "add",
+      "surface": "examples"
+    },
+    {
+      "path": "examples/sdlc/work_plan_uao_validator.json",
+      "change_type": "add",
+      "surface": "examples"
+    },
+    {
       "path": "examples/sdlc/implementation_uao_validator.json",
+      "change_type": "add",
+      "surface": "examples"
+    },
+    {
+      "path": "examples/sdlc/transition_uao_validator.json",
+      "change_type": "add",
+      "surface": "examples"
+    },
+    {
+      "path": "examples/sdlc/verification_uao_validator.json",
+      "change_type": "add",
+      "surface": "examples"
+    },
+    {
+      "path": "examples/sdlc/security_review_uao_validator.json",
+      "change_type": "add",
+      "surface": "examples"
+    },
+    {
+      "path": "examples/sdlc/release_candidate_uao_validator.json",
+      "change_type": "add",
+      "surface": "examples"
+    },
+    {
+      "path": "examples/sdlc/deployment_candidate_uao_validator.json",
+      "change_type": "add",
+      "surface": "examples"
+    },
+    {
+      "path": "examples/sdlc/recovery_handoff_uao_validator.json",
+      "change_type": "add",
+      "surface": "examples"
+    },
+    {
+      "path": "examples/sdlc/closure_uao_validator.json",
       "change_type": "add",
       "surface": "examples"
     },
@@ -117,7 +220,17 @@
   ],
   "schema_changes": [
     "schemas/sdlc_change_request.schema.json",
-    "schemas/sdlc_implementation_receipt.schema.json"
+    "schemas/sdlc_requirement.schema.json",
+    "schemas/sdlc_design_decision.schema.json",
+    "schemas/sdlc_work_plan.schema.json",
+    "schemas/sdlc_implementation_receipt.schema.json",
+    "schemas/sdlc_transition_receipt.schema.json",
+    "schemas/sdlc_verification_receipt.schema.json",
+    "schemas/sdlc_security_review.schema.json",
+    "schemas/sdlc_release_candidate.schema.json",
+    "schemas/sdlc_deployment_candidate.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json",
+    "schemas/sdlc_closure_receipt.schema.json"
   ],
   "validator_changes": [
     "scripts/validate_sdlc_artifact.py",
