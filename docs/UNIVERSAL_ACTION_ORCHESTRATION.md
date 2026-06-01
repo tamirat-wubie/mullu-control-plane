@@ -59,6 +59,7 @@ The validator applies these rules deterministically:
 12. Every command replay record must come from persisted command events, not from an in-memory kernel result.
 13. Every command replay record must fail closed when the persisted candidate is malformed or exposes private reasoning fields.
 14. Every command replay record must bind to the command id, tenant, actor, and persisted event identity before exposure.
+15. Every command replay record must bind emitted receipts to the matching pipeline stage, receipt kind, tier, and root receipt reference before exposure.
 
 The core invariant is:
 

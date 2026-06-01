@@ -2223,6 +2223,48 @@ class TestGatewayStatus:
         )
         assert gateway_app.state.command_ledger.get(command.command_id) is not None
 
+    def test_command_universal_action_orchestration_receipt_spoof_returns_404(
+        self, gateway_app, client
+    ):
+        record = json.loads(
+            (
+                _ROOT
+                / "examples"
+                / "universal_action_orchestration.allowed_status_publish.json"
+            ).read_text(encoding="utf-8")
+        )
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="tenant_ops_demo",
+            actor_id="service:status_page_worker",
+            source="web",
+            conversation_id="conversation-orchestration-receipt-spoof",
+            idempotency_key="universal-orchestration-receipt-spoof",
+            intent="refresh_public_status_page",
+            payload={"body": "receipt-spoofed status page replay"},
+        )
+        record["action_envelope"]["intent"] = command.command_id
+        for stage in record["pipeline_stages"]:
+            if stage["stage_kind"] == "closure":
+                stage["receipt_ref"] = "receipt://spoofed-closure"
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.DISPATCHED,
+            detail={
+                "cause": "universal_action_kernel_dispatched",
+                "universal_action_orchestration": record,
+            },
+        )
+
+        resp = client.get(
+            f"/commands/{command.command_id}/universal-action-orchestration"
+        )
+
+        assert resp.status_code == 404
+        assert (
+            resp.json()["detail"] == "universal action orchestration record not found"
+        )
+        assert gateway_app.state.command_ledger.get(command.command_id) is not None
+
     def test_command_universal_action_orchestration_cross_command_returns_404(
         self, gateway_app, client
     ):

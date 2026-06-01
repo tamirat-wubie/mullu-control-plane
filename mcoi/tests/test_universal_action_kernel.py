@@ -575,6 +575,57 @@ def test_universal_command_orchestration_record_ignores_invalid_latest_event() -
     assert "chain_of_thought" not in replayed_record
 
 
+def test_universal_command_orchestration_record_ignores_receipt_spoof_event() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-record-receipt-spoof",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    result = universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+    )
+    valid_record = universal_command_orchestration_record_view(
+        ledger, command.command_id
+    )
+    invalid_record = copy.deepcopy(valid_record)
+    assert isinstance(invalid_record, dict)
+    for receipt in invalid_record["receipts"]:
+        if receipt["kind"] == "admission":
+            receipt["stage_id"] = "stage_trace"
+    ledger.transition(
+        command.command_id,
+        CommandState.DISPATCHED,
+        detail={
+            "cause": "universal_action_kernel_dispatched",
+            "universal_action_orchestration": invalid_record,
+        },
+    )
+    reloaded_ledger = CommandLedger(clock=_clock, store=store)
+
+    replayed_record = universal_command_orchestration_record_view(
+        reloaded_ledger, command.command_id
+    )
+
+    assert replayed_record is not None
+    assert replayed_record["action_id"] == result.action_id
+    assert replayed_record["orchestration_id"] == valid_record["orchestration_id"]
+    assert replayed_record["receipts"] != invalid_record["receipts"]
+
+
 def test_universal_command_orchestration_record_rejects_cross_command_candidate() -> (
     None
 ):
