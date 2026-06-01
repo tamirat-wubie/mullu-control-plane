@@ -73,6 +73,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _telemetry_monitoring_triage_skill(),
         _agentic_control_project_discipline_mesh_skill(),
         _agentic_control_resource_governor_skill(),
+        _agentic_control_temporal_governor_skill(),
         _agentic_control_math_governor_skill(),
         _agentic_control_algorithm_governor_skill(),
         _agentic_control_security_governor_skill(),
@@ -851,6 +852,150 @@ def _agentic_control_resource_governor_skill() -> SkillDescriptor:
                 "halt_thresholds",
                 "budget_envelope_ref",
                 "proof_state",
+            ),
+        },
+    )
+
+
+def _agentic_control_temporal_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.temporal_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic temporal governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_temporal_mission",
+                name="Define temporal mission",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "temporal_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_temporal_constraints",
+                name="Rank temporal constraints",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_temporal_mission",),
+                input_bindings={"mission_contract_ref": "define_temporal_mission.mission_contract_ref"},
+                output_keys=("temporal_constraint_order_ref", "dependency_blockers", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_temporal_governance",
+                name="Evaluate temporal governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_temporal_constraints",),
+                input_bindings={"priority_order_ref": "rank_temporal_constraints.temporal_constraint_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_actions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_temporal_budget",
+                name="Bound temporal budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_temporal_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_temporal_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "time_budget_ref", "halt_thresholds", "resource_floor"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_temporal_verification",
+                name="Plan temporal verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("bound_temporal_budget",),
+                input_bindings={
+                    "temporal_boundary_ref": "define_temporal_mission.temporal_boundary_ref",
+                    "budget_envelope_ref": "bound_temporal_budget.budget_envelope_ref",
+                    "time_budget_ref": "bound_temporal_budget.time_budget_ref",
+                },
+                output_keys=(
+                    "temporal_verification_plan_ref",
+                    "freshness_window_ref",
+                    "lease_window_ref",
+                    "retry_window_ref",
+                    "closure_rule",
+                ),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_temporal_interrogation",
+                name="Plan temporal interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_temporal_verification",),
+                input_bindings={
+                    "verification_plan_ref": "plan_temporal_verification.temporal_verification_plan_ref"
+                },
+                output_keys=("temporal_interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_temporal_triage",
+                name="Plan temporal triage",
+                action_type="agentic_control.telemetry_triage.plan",
+                depends_on=("plan_temporal_interrogation",),
+                input_bindings={
+                    "verification_plan_ref": "plan_temporal_verification.temporal_verification_plan_ref",
+                    "interrogation_plan_ref": "plan_temporal_interrogation.temporal_interrogation_plan_ref",
+                    "time_budget_ref": "bound_temporal_budget.time_budget_ref",
+                },
+                output_keys=(
+                    "temporal_triage_plan_ref",
+                    "monitored_time_surfaces",
+                    "threshold_contracts",
+                    "stale_evidence_blockers",
+                ),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_temporal_gaps",
+                name="Refine temporal gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_temporal_triage",),
+                input_bindings={
+                    "verification_plan_ref": "plan_temporal_verification.temporal_verification_plan_ref",
+                    "interrogation_plan_ref": "plan_temporal_interrogation.temporal_interrogation_plan_ref",
+                    "temporal_triage_plan_ref": "plan_temporal_triage.temporal_triage_plan_ref",
+                },
+                output_keys=("temporal_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_temporal_memory_admission",
+                name="Plan temporal memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_temporal_gaps",),
+                input_bindings={"refinement_plan_ref": "refine_temporal_gaps.temporal_refinement_plan_ref"},
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes read-only temporal discipline by linking mission boundary, "
+            "time-sensitive constraints, governance gate, bounded time budget, "
+            "freshness, lease, retry, and stale-evidence verification surfaces, "
+            "temporal triage, refinement, and memory-admission planning before "
+            "effect-bearing autonomous work."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "temporal_governor": True,
+            "time_surfaces": (
+                "temporal_boundary_ref",
+                "time_budget_ref",
+                "freshness_window_ref",
+                "lease_window_ref",
+                "retry_window_ref",
+                "stale_evidence_blockers",
             ),
         },
     )
