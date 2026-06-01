@@ -188,6 +188,7 @@ REQUIRED_DOCUMENT_TERMS = (
     "Every command replay record must bind to the command id, tenant, actor, and persisted event identity before exposure.",
     "Every command replay record must bind emitted receipts to the matching pipeline stage, receipt kind, tier, and root receipt reference before exposure.",
     "Every command replay record must bind to the same event-local universal action proof detail, including action id, trace, receipts, closure state, orchestration id, and lineage delta before exposure.",
+    "Every command replay record must come from a command event whose event hash recomputes from the persisted event payload before exposure.",
 )
 
 

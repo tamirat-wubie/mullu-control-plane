@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import importlib.util
 import copy
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from jsonschema import Draft202012Validator
@@ -679,6 +679,49 @@ def test_universal_command_orchestration_record_ignores_proof_spoof_event() -> N
     assert replayed_record["action_id"] == result.action_id
     assert replayed_record["orchestration_id"] == valid_record["orchestration_id"]
     assert replayed_record["orchestration_id"] != invalid_record["orchestration_id"]
+
+
+def test_universal_command_orchestration_record_rejects_event_hash_tamper() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-record-event-hash-tamper",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+    )
+    target_index = next(
+        index
+        for index, event in enumerate(store._events)
+        if event.command_id == command.command_id
+        and event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    store._events[target_index] = replace(
+        store._events[target_index], event_hash="0" * 64
+    )
+    reloaded_ledger = CommandLedger(clock=_clock, store=store)
+
+    replayed_record = universal_command_orchestration_record_view(
+        reloaded_ledger, command.command_id
+    )
+
+    assert replayed_record is None
+    assert reloaded_ledger.get(command.command_id) is not None
+    assert len(reloaded_ledger.events_for(command.command_id)) >= 2
 
 
 def test_universal_command_orchestration_record_rejects_cross_command_candidate() -> (

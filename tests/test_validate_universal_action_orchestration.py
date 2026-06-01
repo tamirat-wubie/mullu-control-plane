@@ -137,6 +137,9 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn("Every command replay record must bind", document_text)
         self.assertIn("receipt kind, tier, and root receipt reference", document_text)
         self.assertIn("event-local universal action proof detail", document_text)
+        self.assertIn(
+            "event hash recomputes from the persisted event payload", document_text
+        )
 
     def test_effect_bearing_action_requires_causal_trace(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
