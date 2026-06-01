@@ -81,6 +81,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _agentic_control_security_governor_skill(),
         _agentic_control_swarm_governor_skill(),
         _agentic_control_coding_governor_skill(),
+        _agentic_control_runtime_governor_skill(),
         _agentic_control_autonomous_operations_skill(),
     )
 
@@ -1922,6 +1923,153 @@ def _agentic_control_coding_governor_skill() -> SkillDescriptor:
                 "change_boundary",
                 "test_contract",
                 "rollback_plan",
+            ),
+        },
+    )
+
+
+def _agentic_control_runtime_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.runtime_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic runtime governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_runtime_boundary",
+                name="Define runtime boundary",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "runtime_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_runtime_signals",
+                name="Rank runtime signals",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_runtime_boundary",),
+                input_bindings={"mission_contract_ref": "define_runtime_boundary.mission_contract_ref"},
+                output_keys=("runtime_signal_order_ref", "dependency_blockers", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_runtime_governance",
+                name="Evaluate runtime governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_runtime_signals",),
+                input_bindings={"priority_order_ref": "rank_runtime_signals.runtime_signal_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_actions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_runtime_budget",
+                name="Bound runtime budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_runtime_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_runtime_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "halt_thresholds", "resource_floor"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_runtime_recovery",
+                name="Plan runtime recovery",
+                action_type="agentic_control.incident_recovery.plan",
+                depends_on=("bound_runtime_budget",),
+                input_bindings={
+                    "runtime_boundary_ref": "define_runtime_boundary.runtime_boundary_ref",
+                    "budget_envelope_ref": "bound_runtime_budget.budget_envelope_ref",
+                },
+                output_keys=("incident_recovery_plan_ref", "containment_actions", "verification_steps"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_runtime_telemetry",
+                name="Plan runtime telemetry",
+                action_type="agentic_control.telemetry_triage.plan",
+                depends_on=("bound_runtime_budget", "plan_runtime_recovery"),
+                input_bindings={
+                    "runtime_boundary_ref": "define_runtime_boundary.runtime_boundary_ref",
+                    "incident_recovery_plan_ref": "plan_runtime_recovery.incident_recovery_plan_ref",
+                    "budget_envelope_ref": "bound_runtime_budget.budget_envelope_ref",
+                },
+                output_keys=(
+                    "telemetry_triage_plan_ref",
+                    "monitored_surfaces",
+                    "threshold_contracts",
+                    "remediation_order",
+                ),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_runtime_verification",
+                name="Plan runtime verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("plan_runtime_telemetry",),
+                input_bindings={
+                    "telemetry_triage_plan_ref": "plan_runtime_telemetry.telemetry_triage_plan_ref",
+                    "incident_recovery_plan_ref": "plan_runtime_recovery.incident_recovery_plan_ref",
+                },
+                output_keys=("runtime_verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_runtime_interrogation",
+                name="Plan runtime interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_runtime_verification",),
+                input_bindings={"verification_plan_ref": "plan_runtime_verification.runtime_verification_plan_ref"},
+                output_keys=("runtime_interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_runtime_gaps",
+                name="Refine runtime gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_runtime_interrogation",),
+                input_bindings={
+                    "telemetry_triage_plan_ref": "plan_runtime_telemetry.telemetry_triage_plan_ref",
+                    "incident_recovery_plan_ref": "plan_runtime_recovery.incident_recovery_plan_ref",
+                    "verification_plan_ref": "plan_runtime_verification.runtime_verification_plan_ref",
+                    "interrogation_plan_ref": "plan_runtime_interrogation.runtime_interrogation_plan_ref",
+                },
+                output_keys=("runtime_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_runtime_memory_admission",
+                name="Plan runtime memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_runtime_gaps",),
+                input_bindings={"refinement_plan_ref": "refine_runtime_gaps.runtime_refinement_plan_ref"},
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes read-only runtime governance by linking runtime boundary, "
+            "ranked health signals, governance gate, resource budget, incident "
+            "recovery planning, telemetry triage, verification, interrogation, "
+            "refinement, and memory-admission planning before write-capable "
+            "autonomous operations execute."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "runtime_governor": True,
+            "runtime_surfaces": (
+                "runtime_boundary_ref",
+                "incident_recovery_plan_ref",
+                "telemetry_triage_plan_ref",
+                "threshold_contracts",
+                "remediation_order",
             ),
         },
     )
