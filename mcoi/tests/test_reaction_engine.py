@@ -598,3 +598,19 @@ class TestBackpressureAutoReset:
 
         # Third check: window expired (61s later), should auto-reset
         assert eng._check_backpressure() is True
+
+    def test_clock_parse_error_fails_closed(self) -> None:
+        times = iter(["a-not-a-timestamp", "z-not-a-timestamp"])
+        eng = ReactionEngine(clock=lambda: next(times))
+        policy = BackpressurePolicy(
+            policy_id="bp-clock",
+            max_concurrent=100,
+            max_per_window=100,
+            window_seconds=60,
+            strategy=BackpressureStrategy.RATE_LIMIT,
+        )
+        eng.set_backpressure(policy)
+        eng.reset_window()
+
+        assert eng._check_backpressure() is False
+        assert eng.backpressure_clock_error_count == 1

@@ -95,10 +95,13 @@ class TestPIIScannerEdgeCases:
             pattern=r"[invalid",  # Unclosed bracket
             redaction_mode=RedactionMode.FULL,
         )
-        # Should not crash — invalid pattern silently skipped
+        # Should not crash; invalid pattern is bounded and observable.
         scanner = PIIScanner(patterns=(bad_pattern,))
         result = scanner.scan("test text")
         assert not result.pii_detected
+        assert scanner.invalid_pattern_count == 1
+        assert scanner.invalid_pattern_reasons == ("custom:invalid_regex",)
+        assert "[invalid" not in str(scanner.invalid_pattern_reasons)
 
     def test_very_long_text_truncated(self):
         from mcoi_runtime.core.pii_scanner import PIIScanner

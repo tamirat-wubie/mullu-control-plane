@@ -16,18 +16,15 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping
 
-from mcoi_runtime.contracts.event import EventRecord, EventType
+from mcoi_runtime.contracts.event import EventRecord
 from mcoi_runtime.contracts.reaction import (
     BackpressurePolicy,
-    BackpressureStrategy,
     IdempotencyWindow,
     ReactionCondition,
     ReactionDecision,
     ReactionExecutionRecord,
     ReactionGateResult,
     ReactionRule,
-    ReactionTarget,
-    ReactionTargetKind,
     ReactionVerdict,
 )
 from .invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
@@ -74,6 +71,7 @@ class ReactionEngine:
         self._decisions: dict[str, ReactionDecision] = {}
         self._idempotency: dict[str, IdempotencyWindow] = {}
         self._backpressure: BackpressurePolicy | None = None
+        self._backpressure_clock_error_count: int = 0
         self._active_count: int = 0
         self._window_count: int = 0
         self._window_start: str = ""
@@ -160,7 +158,8 @@ class ReactionEngine:
                         self._window_count = 0
                         self._window_start = now
                 except (ValueError, TypeError):
-                    pass  # clock format issue — keep existing window
+                    self._backpressure_clock_error_count += 1
+                    return False
         if self._active_count >= self._backpressure.max_concurrent:
             return False
         if self._window_count >= self._backpressure.max_per_window:
@@ -181,6 +180,10 @@ class ReactionEngine:
         """Reset the rate-limiting window counter."""
         self._window_count = 0
         self._window_start = self._now()
+
+    @property
+    def backpressure_clock_error_count(self) -> int:
+        return self._backpressure_clock_error_count
 
     # --- Idempotency ---
 

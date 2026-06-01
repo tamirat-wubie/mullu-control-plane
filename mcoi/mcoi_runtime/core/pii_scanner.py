@@ -244,6 +244,7 @@ class PIIScanner:
     ) -> None:
         self._patterns = patterns or BUILTIN_PATTERNS
         self._compiled: list[tuple[PIIPattern, re.Pattern[str]]] = []
+        self._invalid_pattern_reasons: list[str] = []
         self._hash_salt = hash_salt
         self._enabled = enabled
 
@@ -251,7 +252,7 @@ class PIIScanner:
             try:
                 self._compiled.append((p, re.compile(p.pattern)))
             except re.error:
-                pass  # Skip invalid patterns — logged at startup
+                self._invalid_pattern_reasons.append(f"{p.category.value}:invalid_regex")
 
     @property
     def enabled(self) -> bool:
@@ -260,6 +261,14 @@ class PIIScanner:
     @property
     def pattern_count(self) -> int:
         return len(self._compiled)
+
+    @property
+    def invalid_pattern_count(self) -> int:
+        return len(self._invalid_pattern_reasons)
+
+    @property
+    def invalid_pattern_reasons(self) -> tuple[str, ...]:
+        return tuple(self._invalid_pattern_reasons)
 
     def scan(self, text: str) -> ScanResult:
         """Scan text for PII and return redacted version with match details."""
