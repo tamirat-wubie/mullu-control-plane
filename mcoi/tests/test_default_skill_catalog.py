@@ -39,6 +39,7 @@ EXPECTED_SKILL_IDS = (
     "agentic_control.project_discipline_mesh.v1",
     "agentic_control.resource_governor.v1",
     "agentic_control.algorithm_governor.v1",
+    "agentic_control.security_governor.v1",
     "agentic_control.autonomous_operations.v1",
 )
 
@@ -78,6 +79,7 @@ def test_default_skill_effect_classes_match_strongest_workflow_effect() -> None:
     assert descriptors["agentic_control.project_discipline_mesh.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.resource_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.algorithm_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
+    assert descriptors["agentic_control.security_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.autonomous_operations.v1"].effect_class is EffectClass.EXTERNAL_WRITE
     assert all(
         descriptor.metadata["approval_expected"] is True
@@ -287,6 +289,76 @@ def test_agentic_algorithm_governor_bounds_complexity_before_code_planning() -> 
     )
     assert steps["plan_algorithm_memory_admission"].input_bindings["refinement_plan_ref"] == (
         "refine_algorithm_gaps.algorithm_refinement_plan_ref"
+    )
+
+
+def test_agentic_security_governor_plans_threat_recovery_without_effects() -> None:
+    descriptor = next(
+        descriptor
+        for descriptor in default_skill_descriptors()
+        if descriptor.skill_id == "agentic_control.security_governor.v1"
+    )
+    steps = {step.step_id: step for step in descriptor.steps}
+    action_order = tuple(step.action_type for step in descriptor.steps)
+    step_order = tuple(step.step_id for step in descriptor.steps)
+
+    assert descriptor.effect_class is EffectClass.EXTERNAL_READ
+    assert descriptor.metadata["security_governor"] is True
+    assert descriptor.metadata["grants_new_capability_authority"] is False
+    assert descriptor.metadata["protected_surfaces"] == (
+        "security_boundary_ref",
+        "threat_model_ref",
+        "mitigation_refs",
+        "incident_recovery_plan_ref",
+        "redaction_plan_ref",
+    )
+    assert action_order == (
+        "agentic_control.mission.define",
+        "agentic_control.priority.rank",
+        "agentic_control.governance_gate.evaluate",
+        "agentic_control.security_threat_model.build",
+        "agentic_control.verification.plan",
+        "agentic_control.interrogation.plan",
+        "agentic_control.self_audit.refine",
+        "agentic_control.incident_recovery.plan",
+        "agentic_control.memory_admission.plan",
+    )
+    assert "agentic_control.code_change.plan" not in action_order
+    assert "agentic_control.evidence.append" not in action_order
+    assert all(
+        step_order.index(dependency) < step_order.index(step.step_id)
+        for step in descriptor.steps
+        for dependency in step.depends_on
+    )
+    assert steps["rank_security_constraints"].input_bindings["mission_contract_ref"] == (
+        "define_security_boundary.mission_contract_ref"
+    )
+    assert steps["evaluate_security_governance"].input_bindings["priority_order_ref"] == (
+        "rank_security_constraints.security_constraint_order_ref"
+    )
+    assert steps["build_security_threat_model"].input_bindings["security_boundary_ref"] == (
+        "define_security_boundary.security_boundary_ref"
+    )
+    assert steps["build_security_threat_model"].input_bindings["gate_decision_ref"] == (
+        "evaluate_security_governance.gate_decision_ref"
+    )
+    assert steps["plan_security_verification"].input_bindings["threat_model_ref"] == (
+        "build_security_threat_model.threat_model_ref"
+    )
+    assert steps["plan_security_interrogation"].input_bindings["verification_plan_ref"] == (
+        "plan_security_verification.security_verification_plan_ref"
+    )
+    assert steps["refine_security_gaps"].input_bindings["threat_model_ref"] == (
+        "build_security_threat_model.threat_model_ref"
+    )
+    assert steps["refine_security_gaps"].input_bindings["interrogation_plan_ref"] == (
+        "plan_security_interrogation.security_interrogation_plan_ref"
+    )
+    assert steps["plan_security_incident_recovery"].input_bindings["refinement_plan_ref"] == (
+        "refine_security_gaps.security_refinement_plan_ref"
+    )
+    assert steps["plan_security_memory_admission"].input_bindings["incident_recovery_plan_ref"] == (
+        "plan_security_incident_recovery.incident_recovery_plan_ref"
     )
 
 
@@ -505,4 +577,6 @@ def test_bootstrap_installs_default_skill_catalog() -> None:
     assert runtime.skill_registry.get("agentic_control.resource_governor.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.algorithm_governor.v1").metadata["risk_floor"] == "medium"
     assert runtime.skill_registry.get("agentic_control.algorithm_governor.v1").effect_class is EffectClass.EXTERNAL_READ
+    assert runtime.skill_registry.get("agentic_control.security_governor.v1").metadata["risk_floor"] == "medium"
+    assert runtime.skill_registry.get("agentic_control.security_governor.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.autonomous_operations.v1").metadata["risk_floor"] == "high"

@@ -74,6 +74,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _agentic_control_project_discipline_mesh_skill(),
         _agentic_control_resource_governor_skill(),
         _agentic_control_algorithm_governor_skill(),
+        _agentic_control_security_governor_skill(),
         _agentic_control_autonomous_operations_skill(),
     )
 
@@ -974,6 +975,135 @@ def _agentic_control_algorithm_governor_skill() -> SkillDescriptor:
                 "failure_modes",
                 "threat_model",
                 "verification_gates",
+            ),
+        },
+    )
+
+
+def _agentic_control_security_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.security_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic security governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_security_boundary",
+                name="Define security boundary",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "security_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_security_constraints",
+                name="Rank security constraints",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_security_boundary",),
+                input_bindings={"mission_contract_ref": "define_security_boundary.mission_contract_ref"},
+                output_keys=("security_constraint_order_ref", "dependency_blockers", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_security_governance",
+                name="Evaluate security governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_security_constraints",),
+                input_bindings={"priority_order_ref": "rank_security_constraints.security_constraint_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_actions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="build_security_threat_model",
+                name="Build security threat model",
+                action_type="agentic_control.security_threat_model.build",
+                depends_on=("evaluate_security_governance",),
+                input_bindings={
+                    "security_boundary_ref": "define_security_boundary.security_boundary_ref",
+                    "gate_decision_ref": "evaluate_security_governance.gate_decision_ref",
+                },
+                output_keys=("threat_model_ref", "mitigation_refs", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_security_verification",
+                name="Plan security verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("build_security_threat_model",),
+                input_bindings={"threat_model_ref": "build_security_threat_model.threat_model_ref"},
+                output_keys=("security_verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_security_interrogation",
+                name="Plan security interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_security_verification",),
+                input_bindings={
+                    "verification_plan_ref": "plan_security_verification.security_verification_plan_ref"
+                },
+                output_keys=("security_interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_security_gaps",
+                name="Refine security gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_security_interrogation",),
+                input_bindings={
+                    "threat_model_ref": "build_security_threat_model.threat_model_ref",
+                    "verification_plan_ref": "plan_security_verification.security_verification_plan_ref",
+                    "interrogation_plan_ref": "plan_security_interrogation.security_interrogation_plan_ref",
+                },
+                output_keys=("security_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_security_incident_recovery",
+                name="Plan security incident recovery",
+                action_type="agentic_control.incident_recovery.plan",
+                depends_on=("refine_security_gaps",),
+                input_bindings={"refinement_plan_ref": "refine_security_gaps.security_refinement_plan_ref"},
+                output_keys=("incident_recovery_plan_ref", "containment_actions", "verification_steps"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_security_memory_admission",
+                name="Plan security memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_security_gaps", "plan_security_incident_recovery"),
+                input_bindings={
+                    "refinement_plan_ref": "refine_security_gaps.security_refinement_plan_ref",
+                    "incident_recovery_plan_ref": "plan_security_incident_recovery.incident_recovery_plan_ref",
+                },
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes security-bound autonomous planning by linking mission "
+            "boundary, prioritized security constraints, governance gate, threat "
+            "model, verification plan, interrogation plan, refinement, incident "
+            "recovery, and memory-admission planning before effect-bearing work."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "security_governor": True,
+            "protected_surfaces": (
+                "security_boundary_ref",
+                "threat_model_ref",
+                "mitigation_refs",
+                "incident_recovery_plan_ref",
+                "redaction_plan_ref",
             ),
         },
     )
