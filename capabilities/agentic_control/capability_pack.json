@@ -836,6 +836,66 @@
       }
     },
     {
+      "capability_id": "agentic_control.telemetry_triage.plan",
+      "domain": "agentic_control",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/agentic_control/control_action.input.schema.json",
+      "output_schema_ref": "schemas/agentic_control/control_action.output.schema.json",
+      "effect_model": {
+        "expected_effects": ["telemetry_triage_plan_emitted"],
+        "forbidden_effects": ["threshold_mutated", "alert_suppressed", "external_message_sent"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["telemetry_window", "threshold_contract", "remediation_order"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "agentic_control.telemetry_triage.plan",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.02
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 300,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "certified",
+      "metadata": {
+        "display_name": "Plan telemetry triage",
+        "risk_tier": "medium"
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["agentic_control.telemetry_triage.plan"],
+          "allowed_networks": [],
+          "forbidden_effects": ["threshold_mutated", "alert_suppressed", "external_message_sent"],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
       "capability_id": "agentic_control.release_handoff.plan",
       "domain": "agentic_control",
       "version": "0.1.0",

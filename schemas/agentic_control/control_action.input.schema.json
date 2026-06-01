@@ -23,6 +23,7 @@
         "agentic_control.memory_admission.plan",
         "agentic_control.incident_recovery.plan",
         "agentic_control.code_change.plan",
+        "agentic_control.telemetry_triage.plan",
         "agentic_control.release_handoff.plan",
         "agentic_control.evidence.append"
       ]

@@ -13,6 +13,7 @@ closed, and retrieval does not mutate lineage.
 from __future__ import annotations
 
 from mcoi_runtime.core.note_memory_api import NoteMemoryRuntime
+from mcoi_runtime.core.note_memory_mesh import NoteMemoryMesh
 
 
 def _working_note(**overrides: object) -> dict[str, object]:
@@ -23,7 +24,7 @@ def _working_note(**overrides: object) -> dict[str, object]:
         "source_ref": "test:runtime",
         "proof_state": "Pass",
         "trust_zone": "workspace",
-        "expires_at": "2026-06-02T00:00:00+00:00",
+        "expires_at": "2099-06-02T00:00:00+00:00",
         "evidence_refs": ["test_note_memory_api"],
     }
     value.update(overrides)
@@ -244,7 +245,9 @@ def test_runtime_rejects_non_text_retrieval_now(tmp_path) -> None:
 
 
 def test_runtime_rejected_delta_expiry_and_rebuild_emit_receipts(tmp_path) -> None:
-    runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
+    runtime = NoteMemoryRuntime(
+        NoteMemoryMesh(tmp_path / "notes", clock=lambda: "2026-05-31T23:59:00+00:00")
+    )
     runtime.capture_note(_working_note(expires_at="2026-06-01T00:00:00+00:00"))
 
     rejected_delta = runtime.record_rejected_delta(

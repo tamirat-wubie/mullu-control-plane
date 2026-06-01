@@ -2123,6 +2123,7 @@ def test_agentic_control_capability_pack_surface_binds_default_authority() -> No
     assert agentic_surface["request_proof"] == "request_proof"
     assert agentic_surface["action_proof"] == "action_proof"
     assert "agentic_control.mission.define" in agentic_surface["representative_paths"]
+    assert "agentic_control.telemetry_triage.plan" in agentic_surface["representative_paths"]
     assert "agentic_control.code_change.plan" in agentic_surface["representative_paths"]
     assert "agentic_control.release_handoff.plan" in agentic_surface["representative_paths"]
     assert "agentic_control.evidence.append" in agentic_surface["representative_paths"]
