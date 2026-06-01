@@ -210,6 +210,54 @@ def test_review_empty_store_has_no_review_required() -> None:
     assert body["review_signals"] == []
 
 
+def test_dashboard_returns_live_receipt_store_summary() -> None:
+    store = SoftwareChangeReceiptStore()
+    terminal = _receipt(
+        receipt_id="receipt-terminal",
+        stage=SoftwareChangeReceiptStage.TERMINAL_CLOSED,
+        created_at=T1,
+    )
+    open_receipt = _receipt(
+        receipt_id="receipt-open",
+        request_id="request-http-open",
+        stage=SoftwareChangeReceiptStage.GATE_EVALUATED,
+        created_at=T1,
+    )
+    store.append_many((
+        _receipt(receipt_id="receipt-admitted"),
+        terminal,
+        open_receipt,
+    ))
+    client = _client(store)
+
+    response = client.get(
+        "/software/receipts/dashboard",
+        headers={"X-Tenant-ID": "tenant-dashboard"},
+    )
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["operation"] == "dashboard"
+    assert body["tenant_id"] == "tenant-dashboard"
+    assert body["total_receipts"] == 3
+    assert body["request_count"] == 2
+    assert body["terminal_request_count"] == 1
+    assert body["open_request_count"] == 1
+    assert body["requires_operator_review"] is True
+    assert body["review_signal_count"] == 1
+    assert body["dashboard"]["latest_receipt_id"] == "receipt-open"
+    assert body["dashboard"]["by_stage"]["terminal_closed"] == 1
+    assert body["dashboard"]["review_signals"] == [
+        {
+            "request_id": "request-http-open",
+            "latest_receipt_id": "receipt-open",
+            "latest_stage": "gate_evaluated",
+            "latest_outcome": "ok",
+            "reason": "software_change_receipt_chain_open",
+        }
+    ]
+
+
 def test_review_sync_materializes_open_receipt_reviews() -> None:
     store = SoftwareChangeReceiptStore()
     store.append(_receipt(

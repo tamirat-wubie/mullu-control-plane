@@ -45,6 +45,8 @@ change -> stage -> blockers -> evidence -> receipt -> closure
 
 `/software/receipts/sdlc/dashboard` exposes this projection for operator review without mutating lifecycle state.
 
+`/software/receipts/dashboard` exposes live software receipt store counts, terminal/open request totals, stage distribution, and bounded operator-review signals without replaying or mutating receipt chains.
+
 ## Algorithm
 
 1. Intake captures owner, source, scope, risk, target surfaces, and evidence.
