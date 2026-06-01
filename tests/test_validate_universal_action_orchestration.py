@@ -148,6 +148,7 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             "canonical ordered UAO pipeline stage sequence",
             document_text,
         )
+        self.assertIn("Runtime bypass detection scans", document_text)
 
     def test_effect_bearing_action_requires_causal_trace(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
@@ -352,10 +353,14 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             report["example_paths"],
         )
         self.assertEqual(5, report["example_count"])
-        self.assertEqual(5, report["check_count"])
+        self.assertEqual(6, report["check_count"])
         self.assertEqual(0, report["error_count"])
         self.assertEqual([], report["errors"])
         self.assertTrue(all(check["passed"] for check in report["checks"]))
+        self.assertIn(
+            "universal_action_orchestration_runtime_bypass_detector",
+            {check["name"] for check in report["checks"]},
+        )
 
     def test_build_validation_report_sanitizes_load_error_paths_without_receipt_claim(
         self,

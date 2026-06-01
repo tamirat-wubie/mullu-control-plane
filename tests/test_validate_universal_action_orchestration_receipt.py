@@ -57,7 +57,7 @@ def test_saved_receipt_missing_check_field_is_reported(tmp_path: Path) -> None:
 
     assert any("checks[0] missing field: passed" in error for error in errors)
     assert len(errors) >= 1
-    assert invalid_receipt["check_count"] == 5
+    assert invalid_receipt["check_count"] == 6
     assert receipt_path.name == "uao-validation-receipt.json"
 
 

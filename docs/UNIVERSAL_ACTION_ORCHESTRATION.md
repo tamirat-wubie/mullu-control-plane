@@ -2,7 +2,7 @@
 
 Purpose: define the governed v1 action-shape contract for effect-bearing control-plane actions.
 Governance scope: OCE action envelope completeness, RAG trace-to-receipt linkage, CDCV no-execution-by-claim causality, CQTE decidable admission shape, UWMA fixture witness anchoring, and PRS terminal closure state.
-Dependencies: `schemas/universal_action_orchestration.schema.json`, `schemas/universal_action_orchestration_validation_receipt.schema.json`, `scripts/validate_universal_action_orchestration.py`, `scripts/validate_universal_action_orchestration_receipt_contract.py`, `scripts/validate_universal_action_orchestration_receipt.py`, `docs/universal-action-orchestration-validation-receipt-example.json`, `mcoi/mcoi_runtime/core/universal_action_kernel.py`, and examples in `examples/`.
+Dependencies: `schemas/universal_action_orchestration.schema.json`, `schemas/universal_action_orchestration_validation_receipt.schema.json`, `scripts/validate_universal_action_orchestration.py`, `scripts/detect_uao_runtime_bypass.py`, `scripts/validate_universal_action_orchestration_receipt_contract.py`, `scripts/validate_universal_action_orchestration_receipt.py`, `docs/universal-action-orchestration-validation-receipt-example.json`, `mcoi/mcoi_runtime/core/universal_action_kernel.py`, and examples in `examples/`.
 Invariants: UAO v1 validates existence and shape only; it does not execute actions, dispatch workers, call external systems, send messages, move money, mutate schedules, or write memory.
 
 ## Architecture
@@ -64,6 +64,7 @@ The validator applies these rules deterministically:
 17. Every command replay record must come from a command event whose event hash recomputes from the persisted event payload before exposure.
 18. Every command replay record must come from a command event whose source channel, idempotency key, policy version, and trace id match the command envelope before exposure.
 19. Every command replay record must carry the canonical ordered UAO pipeline stage sequence before exposure.
+20. Runtime bypass detection scans effect-bearing dispatch and execute call sites for UAO or governed binding before closure.
 
 The core invariant is:
 
@@ -93,6 +94,7 @@ Run:
 
 ```powershell
 python scripts/validate_universal_action_orchestration.py
+python scripts/detect_uao_runtime_bypass.py
 python scripts/validate_universal_action_orchestration.py --json --receipt-path .tmp/uao-validation-receipt.json
 python scripts/validate_universal_action_orchestration_receipt.py --receipt .tmp/uao-validation-receipt.json
 python -m pytest mcoi/tests/test_universal_action_kernel.py -q
