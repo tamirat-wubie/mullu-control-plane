@@ -41,7 +41,7 @@ The current expected aggregate plan contains:
 | Measure | Value |
 | --- | ---: |
 | Total closure actions | 13 |
-| Approval-required actions | 10 |
+| Approval-required actions | 9 |
 | Source plan types | `adapter`, `deployment`, `portfolio` |
 | Current readiness level | `pilot-governed-core` |
 
@@ -138,7 +138,6 @@ voice_dependency_missing:OPENAI_API_KEY
 email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN
 deployment_witness_not_published
 production_health_not_declared
-deployment_upstream_api_gate_not_ready
 ```
 
 12. Produce live adapter receipts:

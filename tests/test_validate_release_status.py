@@ -386,13 +386,31 @@ def test_ci_workflow_runs_promotion_handoff_packet_gate() -> None:
     assert content.count("validate_general_agent_promotion_environment_bindings.py") == 2
     assert content.count("emit_general_agent_promotion_environment_binding_receipt.py") == 2
     assert content.count("validate_general_agent_promotion_environment_binding_receipt.py") == 2
+    assert content.count("produce_capability_improvement_portfolio.py") == 2
+    assert content.count("--portfolio-plan .change_assurance/capability_improvement_portfolio.json") == 4
     assert content.count("preflight_general_agent_promotion_handoff.py") == 2
     assert content.count("preflight_general_agent_promotion_handoff.py --output") == 2
     assert content.count("validate_general_agent_promotion_handoff_preflight.py") == 2
     assert content.count("validate_general_agent_promotion_handoff_preflight.py --report") == 2
     assert content.count("--strict --json") == 2
+    workflow_lines = content.splitlines()
+    packet_gate_lines = [
+        index
+        for index, line in enumerate(workflow_lines)
+        if "validate_general_agent_promotion_handoff_packet.py --packet" in line
+    ]
+    closure_validation_lines = [
+        index
+        for index, line in enumerate(workflow_lines)
+        if "validate_general_agent_promotion_closure_plan.py" in line
+        and "--output .change_assurance/general_agent_promotion_closure_plan_validation.json" in line
+    ]
+    assert len(packet_gate_lines) == 2
+    assert len(closure_validation_lines) == 2
+    assert all(closure_line < packet_line for closure_line, packet_line in zip(closure_validation_lines, packet_gate_lines))
     assert "examples/general_agent_promotion_handoff_packet.json" in content
     assert "examples/general_agent_promotion_environment_bindings.json" in content
+    assert "capability_improvement_portfolio.json" in content
     assert "general_agent_promotion_environment_binding_receipt.json" in content
     assert "general_agent_promotion_handoff_preflight.json" in content
     assert "Validate general-agent promotion closure plan" in content

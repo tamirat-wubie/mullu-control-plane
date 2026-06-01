@@ -47,7 +47,6 @@ REQUIRED_APPROVAL_BLOCKERS = frozenset({
     "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
     "deployment_witness_not_published",
     "production_health_not_declared",
-    "deployment_upstream_api_gate_not_ready",
 })
 REQUIRED_BLOCKING_GAPS = frozenset({
     "adapter_evidence_not_closed",
@@ -122,7 +121,7 @@ REQUIRED_STEP_EVIDENCE = {
         "terminal_evidence_reconciliation ready_for_terminal_certificate_minting=false",
         "general_agent_promotion_terminal_minting_gate.json schema_valid=true",
         "terminal_minting_gate ready_for_terminal_certificate_minting=false",
-        "approval_required_action_count=10",
+        "approval_required_action_count=9",
         "source_plan_type includes adapter, deployment, and portfolio",
         "closure_chain status=passed_blocked",
         "closure_chain artifact_valid=true",

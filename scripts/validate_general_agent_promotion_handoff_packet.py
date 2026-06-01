@@ -5,8 +5,8 @@ Purpose: keep the operator handoff packet machine-readable, schema-valid, and
 aligned with closure-plan, checklist, blocker, and terminal proof gates.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: examples/general_agent_promotion_handoff_packet.json,
-schemas/general_agent_promotion_handoff_packet.schema.json, and promotion
-closure validation artifacts.
+schemas/general_agent_promotion_handoff_packet.schema.json,
+scripts/validate_general_agent_promotion.py, and promotion closure artifacts.
 Invariants:
   - The packet never claims production readiness while blockers remain.
   - Required blockers and approval-required blockers remain visible.
@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import tempfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -27,36 +28,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from scripts.validate_general_agent_promotion import validate_general_agent_promotion  # noqa: E402
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
 DEFAULT_PACKET = REPO_ROOT / "examples" / "general_agent_promotion_handoff_packet.json"
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "general_agent_promotion_handoff_packet.schema.json"
 DEFAULT_CHECKLIST = REPO_ROOT / "examples" / "general_agent_promotion_operator_checklist.json"
+DEFAULT_CLOSURE_PLAN = REPO_ROOT / ".change_assurance" / "general_agent_promotion_closure_plan.json"
 
-REQUIRED_OPEN_BLOCKERS = frozenset(
-    {
-        "adapter_evidence_not_closed",
-        "browser_adapter_not_closed",
-        "voice_adapter_not_closed",
-        "email_calendar_adapter_not_closed",
-        "deployment_witness_not_published",
-        "production_health_not_declared",
-    }
-)
-REQUIRED_APPROVAL_BLOCKERS = frozenset(
-    {
-        "voice_dependency_missing:OPENAI_API_KEY",
-        "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
-        "deployment_witness_not_published",
-        "production_health_not_declared",
-        "deployment_upstream_api_gate_not_ready",
-        "capability_improvement_required:financial.refund",
-        "capability_improvement_required:agentic_control.evidence.append",
-        "capability_improvement_required:agentic_control.governance_gate.evaluate",
-        "capability_improvement_required:agentic_control.math_algorithm.analyze",
-        "capability_improvement_required:agentic_control.mission.define",
-    }
-)
 REQUIRED_ENTRY_POINTS = {
     "human_runbook": "docs/58_general_agent_promotion_operator_runbook.md",
     "machine_checklist": "examples/general_agent_promotion_operator_checklist.json",
@@ -169,18 +148,21 @@ def validate_general_agent_promotion_handoff_packet(
     packet_path: Path = DEFAULT_PACKET,
     schema_path: Path = DEFAULT_SCHEMA,
     checklist_path: Path = DEFAULT_CHECKLIST,
+    closure_plan_path: Path | None = None,
 ) -> PromotionHandoffPacketValidation:
     """Validate one general-agent promotion handoff packet."""
     errors: list[str] = []
     schema = _load_json_object(schema_path, "handoff packet schema", errors)
     packet = _load_json_object(packet_path, "handoff packet", errors)
     checklist = _load_json_object(checklist_path, "operator checklist", errors)
+    closure_plan = _load_or_derive_closure_plan(closure_plan_path, errors)
     if not schema or not packet:
         return _validation_result(packet_path, schema_path, packet, errors)
 
     errors.extend(_validate_schema_instance(schema, packet))
-    _validate_scalar_fields(packet, checklist, errors)
-    _validate_required_sets(packet, errors)
+    readiness = _evaluate_promotion_readiness(errors)
+    _validate_scalar_fields(packet, checklist, closure_plan, readiness, errors)
+    _validate_required_sets(packet, closure_plan, readiness, errors)
     _validate_entry_points(packet, errors)
     _validate_terminal_proof(packet, errors)
     return _validation_result(packet_path, schema_path, packet, errors)
@@ -189,21 +171,36 @@ def validate_general_agent_promotion_handoff_packet(
 def _validate_scalar_fields(
     packet: dict[str, Any],
     checklist: dict[str, Any],
+    closure_plan: dict[str, Any],
+    readiness: dict[str, Any],
     errors: list[str],
 ) -> None:
     expected_closure_actions = _expected_closure_actions_from_checklist(checklist, errors)
+    closure_action_count = _closure_plan_int(closure_plan, "total_action_count", errors)
+    approval_action_count = _closure_plan_int(closure_plan, "approval_required_action_count", errors)
+    if (
+        expected_closure_actions is not None
+        and closure_action_count is not None
+        and expected_closure_actions != closure_action_count
+    ):
+        errors.append("operator checklist aggregate total_action_count does not match closure plan")
+    expected_status = (
+        "ready_for_final_validation" if readiness.get("ready") is True else "blocked_until_live_evidence"
+    )
+    expected_promotion = "ready" if readiness.get("ready") is True else "blocked"
     expected_scalars: dict[str, Any] = {
         "schema_version": 1,
         "packet_id": "general-agent-promotion-handoff-v1",
-        "status": "blocked_until_live_evidence",
-        "readiness_level": "pilot-governed-core",
-        "capability_capsules": 10,
-        "governed_capabilities": 52,
-        "approval_required_actions": 10,
-        "production_promotion": "blocked",
+        "status": expected_status,
+        "readiness_level": readiness.get("readiness_level"),
+        "capability_capsules": readiness.get("capsule_count"),
+        "governed_capabilities": readiness.get("capability_count"),
+        "production_promotion": expected_promotion,
     }
-    if expected_closure_actions is not None:
-        expected_scalars["aggregate_closure_actions"] = expected_closure_actions
+    if closure_action_count is not None:
+        expected_scalars["aggregate_closure_actions"] = closure_action_count
+    if approval_action_count is not None:
+        expected_scalars["approval_required_actions"] = approval_action_count
     for field_name, expected_value in expected_scalars.items():
         if packet.get(field_name) != expected_value:
             errors.append(f"{field_name} must be {expected_value!r}")
@@ -240,9 +237,24 @@ def _expected_closure_actions_from_checklist(
     return None
 
 
-def _validate_required_sets(packet: dict[str, Any], errors: list[str]) -> None:
-    _require_superset(packet, "open_blockers", REQUIRED_OPEN_BLOCKERS, errors)
-    _require_superset(packet, "approval_required_blockers", REQUIRED_APPROVAL_BLOCKERS, errors)
+def _validate_required_sets(
+    packet: dict[str, Any],
+    closure_plan: dict[str, Any],
+    readiness: dict[str, Any],
+    errors: list[str],
+) -> None:
+    _require_exact_set(
+        packet,
+        "open_blockers",
+        frozenset(str(blocker) for blocker in readiness.get("blockers", ())),
+        errors,
+    )
+    _require_exact_set(
+        packet,
+        "approval_required_blockers",
+        _approval_blockers_from_closure_plan(closure_plan, errors),
+        errors,
+    )
     _require_superset(packet, "required_validation_reports", REQUIRED_VALIDATION_REPORTS, errors)
     _require_superset(packet, "operator_sequence", REQUIRED_SEQUENCE_ITEMS, errors)
     open_blockers = packet.get("open_blockers", [])
@@ -275,6 +287,88 @@ def _validate_terminal_proof(packet: dict[str, Any], errors: list[str]) -> None:
             errors.append(f"terminal_proof_command missing token {token}")
 
 
+def _load_or_derive_closure_plan(path: Path | None, errors: list[str]) -> dict[str, Any]:
+    if path is None:
+        return _derive_closure_plan_or_error(errors)
+    if path.exists() and not _same_path(path, DEFAULT_CLOSURE_PLAN):
+        return _load_json_object(path, "aggregate closure plan", errors)
+    return _derive_closure_plan_or_error(errors)
+
+
+def _derive_closure_plan_or_error(errors: list[str]) -> dict[str, Any]:
+    try:
+        return _derive_current_closure_plan()
+    except (ImportError, OSError, TypeError, ValueError) as exc:
+        errors.append(f"aggregate closure plan could not be derived: {exc.__class__.__name__}")
+        return {}
+
+
+def _derive_current_closure_plan() -> dict[str, Any]:
+    from scripts.collect_capability_adapter_evidence import collect_capability_adapter_evidence
+    from scripts.plan_capability_adapter_closure import plan_capability_adapter_closure
+    from scripts.plan_deployment_publication_closure import plan_deployment_publication_closure
+    from scripts.plan_general_agent_promotion_closure import plan_general_agent_promotion_closure
+    from scripts.produce_capability_improvement_portfolio import produce_capability_improvement_portfolio
+
+    with tempfile.TemporaryDirectory(prefix="mullu-handoff-closure-") as raw_tmp_dir:
+        tmp_dir = Path(raw_tmp_dir)
+        readiness_path = tmp_dir / "general_agent_promotion_readiness.json"
+        adapter_evidence_path = tmp_dir / "capability_adapter_evidence.json"
+        adapter_plan_path = tmp_dir / "capability_adapter_closure_plan.json"
+        deployment_plan_path = tmp_dir / "deployment_publication_closure_plan.json"
+        portfolio_path = tmp_dir / "capability_improvement_portfolio.json"
+
+        _write_json_payload(
+            adapter_evidence_path,
+            collect_capability_adapter_evidence(
+                browser_receipt_path=tmp_dir / "browser_live_receipt.absent.json",
+                document_receipt_path=tmp_dir / "document_live_receipt.absent.json",
+                voice_receipt_path=tmp_dir / "voice_live_receipt.absent.json",
+                email_calendar_receipt_path=tmp_dir / "email_calendar_live_receipt.absent.json",
+                clock=lambda: "2026-05-01T12:00:00+00:00",
+                env_reader=lambda _name: None,
+            ).as_dict(),
+        )
+        _write_json_payload(
+            readiness_path,
+            validate_general_agent_promotion(
+                repo_root=REPO_ROOT,
+                adapter_evidence_path=adapter_evidence_path,
+            ).as_dict(),
+        )
+        _write_json_payload(
+            adapter_plan_path,
+            plan_capability_adapter_closure(evidence_path=adapter_evidence_path).as_dict(),
+        )
+        _write_json_payload(
+            deployment_plan_path,
+            plan_deployment_publication_closure(
+                readiness_path=readiness_path,
+                upstream_blocker_receipt_path=tmp_dir / "deployment_upstream_blocker_receipt.absent.json",
+            ).as_dict(),
+        )
+        portfolio_run = produce_capability_improvement_portfolio(output_path=portfolio_path)
+        if not portfolio_run.passed:
+            raise ValueError("capability improvement portfolio derivation failed")
+        return plan_general_agent_promotion_closure(
+            readiness_path=readiness_path,
+            adapter_plan_path=adapter_plan_path,
+            deployment_plan_path=deployment_plan_path,
+            portfolio_plan_path=portfolio_path,
+        ).as_dict()
+
+
+def _write_json_payload(path: Path, payload: dict[str, Any]) -> None:
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _same_path(left: Path, right: Path) -> bool:
+    try:
+        return left.resolve() == right.resolve()
+    except OSError:
+        return left == right
+
+
 def _require_superset(
     packet: dict[str, Any],
     field_name: str,
@@ -288,6 +382,76 @@ def _require_superset(
     missing = sorted(required_values - {str(item) for item in observed})
     if missing:
         errors.append(f"{field_name} missing {missing}")
+
+
+def _require_exact_set(
+    packet: dict[str, Any],
+    field_name: str,
+    required_values: frozenset[str],
+    errors: list[str],
+) -> None:
+    observed = packet.get(field_name, [])
+    if not isinstance(observed, list):
+        errors.append(f"{field_name} must be a list")
+        return
+    observed_values = {str(item) for item in observed}
+    missing = sorted(required_values - observed_values)
+    unexpected = sorted(observed_values - required_values)
+    if missing:
+        errors.append(f"{field_name} missing {missing}")
+    if unexpected:
+        errors.append(f"{field_name} has unexpected {unexpected}")
+
+
+def _approval_blockers_from_closure_plan(
+    closure_plan: dict[str, Any],
+    errors: list[str],
+) -> frozenset[str]:
+    actions = closure_plan.get("actions", [])
+    if not isinstance(actions, list):
+        errors.append("aggregate closure plan actions must be a list")
+        return frozenset()
+    blockers: set[str] = set()
+    for action in actions:
+        if not isinstance(action, dict):
+            errors.append("aggregate closure plan actions entries must be objects")
+            continue
+        if action.get("approval_required") is not True:
+            continue
+        blocker = str(action.get("blocker", "")).strip()
+        if not blocker:
+            errors.append("approval-required closure action must name blocker")
+            continue
+        blockers.add(blocker)
+    if not blockers:
+        errors.append("aggregate closure plan must include approval-required blockers")
+    return frozenset(blockers)
+
+
+def _closure_plan_int(
+    closure_plan: dict[str, Any],
+    field_name: str,
+    errors: list[str],
+) -> int | None:
+    value = closure_plan.get(field_name)
+    if isinstance(value, int) and value >= 0:
+        return value
+    errors.append(f"aggregate closure plan {field_name} must be a non-negative integer")
+    return None
+
+
+def _evaluate_promotion_readiness(errors: list[str]) -> dict[str, Any]:
+    try:
+        return validate_general_agent_promotion(repo_root=REPO_ROOT).as_dict()
+    except Exception:  # noqa: BLE001
+        errors.append("promotion readiness could not be evaluated")
+        return {
+            "ready": False,
+            "readiness_level": "unknown",
+            "capability_count": None,
+            "capsule_count": None,
+            "blockers": (),
+        }
 
 
 def _validation_result(
@@ -338,6 +502,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--packet", default=str(DEFAULT_PACKET))
     parser.add_argument("--schema", default=str(DEFAULT_SCHEMA))
     parser.add_argument("--checklist", default=str(DEFAULT_CHECKLIST))
+    parser.add_argument(
+        "--closure-plan",
+        default="",
+        help=(
+            "Optional aggregate closure plan artifact to validate against. "
+            "When omitted, the expected closure plan is derived from current governed sources."
+        ),
+    )
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
 
@@ -349,6 +521,7 @@ def main(argv: list[str] | None = None) -> int:
         packet_path=Path(args.packet),
         schema_path=Path(args.schema),
         checklist_path=Path(args.checklist),
+        closure_plan_path=Path(args.closure_plan) if str(args.closure_plan).strip() else None,
     )
     if args.json:
         print(json.dumps(result.as_dict(), indent=2, sort_keys=True))
