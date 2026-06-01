@@ -28,6 +28,7 @@ from mcoi_runtime.core.governor_chain import (
     GOVERNOR_CHAIN_WORKFLOW_ID,
     build_governor_chain_read_model,
 )
+from mcoi_runtime.core.invariants import stable_identifier
 from mcoi_runtime.core.sdlc_dashboard import (
     SdlcDashboardError,
     build_sdlc_dashboard_summary,
@@ -43,6 +44,7 @@ PRIVATE_PILOT_STAGE_TIMEOUT_SECONDS = 600
 DEFAULT_PRIVATE_PILOT_ORG_ID = "org-private-pilot"
 DEFAULT_PRIVATE_PILOT_CASE_ID = "case-private-pilot"
 DEFAULT_PRIVATE_PILOT_ACTOR_ID = "operator:private-pilot"
+LIVE_REHEARSAL_ACTION_SOURCE = "action://orgos-private-pilot-live-rehearsal"
 
 
 class PrivatePilotStoryError(ValueError):
@@ -272,6 +274,287 @@ def load_private_pilot_uao_records(
     return records
 
 
+def build_private_pilot_live_rehearsal_uao_record(
+    request: PrivatePilotStoryRequest,
+    admission_previews: tuple[Mapping[str, Any], ...] | list[Mapping[str, Any]],
+    *,
+    created_at: str = PRIVATE_PILOT_CREATED_AT,
+) -> dict[str, Any]:
+    """Build a UAO v1 simulation receipt from live OrgOS admission previews."""
+
+    _validate_request(request)
+    previews = _validated_live_rehearsal_previews(request, admission_previews)
+    preview_ids = [preview["admission_preview_id"] for preview in previews]
+    preview_decisions = [preview["decision"] for preview in previews]
+    preview_step_ids = [preview["step_id"] for preview in previews]
+    action_id = stable_identifier(
+        "act-private-pilot-rehearsal",
+        {
+            "tenant_id": request.tenant_id,
+            "org_id": request.org_id,
+            "case_id": request.case_id,
+            "actor_id": request.actor_id,
+            "preview_ids": preview_ids,
+            "preview_decisions": preview_decisions,
+        },
+    )
+    trace_ref = f"trace://{stable_identifier('cdt-private-pilot-rehearsal', {'action_id': action_id})}"
+    admission_receipt_ref = f"receipt://{stable_identifier('uao-admission-private-pilot-rehearsal', {'action_id': action_id})}"
+    trace_receipt_ref = f"receipt://{stable_identifier('uao-trace-private-pilot-rehearsal', {'action_id': action_id})}"
+    simulation_receipt_ref = f"receipt://{stable_identifier('uao-simulation-private-pilot-rehearsal', {'action_id': action_id})}"
+    closure_receipt_ref = f"receipt://{stable_identifier('uao-closure-private-pilot-rehearsal', {'action_id': action_id})}"
+    receipt_set_ref = f"receipt-set://{action_id}"
+    simulation_ref = f"simulation://{action_id}"
+    closure_ref = f"closure://{action_id}"
+    capability_refs = _live_rehearsal_capability_refs(previews)
+    evidence_refs = _live_rehearsal_evidence_refs(previews)
+    policy_refs = _live_rehearsal_policy_refs(previews)
+    temporal_refs = [f"temporal://private-pilot/{request.case_id}/rehearsal-window"]
+    closure_confirmation = stable_identifier(
+        "universal-action-closure-confirmation",
+        {
+            "closure_state": "closed_simulated",
+            "reconciliation_ref": "",
+            "memory_ref": "",
+        },
+    )
+    delta_ref = stable_identifier(
+        "private-pilot-rehearsal-delta",
+        {
+            "action_id": action_id,
+            "trace_ref": trace_ref,
+            "preview_ids": preview_ids,
+        },
+    )
+    record = {
+        "orchestration_id": stable_identifier(
+            "private-pilot-rehearsal-uao",
+            {
+                "action_id": action_id,
+                "trace_ref": trace_ref,
+                "delta_ref": delta_ref,
+            },
+        ),
+        "uao_schema_version": "uao.v1",
+        "action_id": action_id,
+        "tenant_id": request.tenant_id,
+        "actor_id": request.actor_id,
+        "created_at": created_at,
+        "action_envelope": {
+            "source": LIVE_REHEARSAL_ACTION_SOURCE,
+            "actor": request.actor_id,
+            "tenant": request.tenant_id,
+            "intent": "private_pilot_live_rehearsal",
+            "target": f"target://orgos/{request.org_id}/{request.case_id}/private-pilot",
+            "risk": "low",
+            "requested_at": created_at,
+            "approval_ref": None,
+            "evidence_refs": evidence_refs,
+            "capability_refs": capability_refs,
+        },
+        "effect_bearing": False,
+        "effect_classes": [],
+        "input_refs": [
+            LIVE_REHEARSAL_ACTION_SOURCE,
+            *evidence_refs,
+        ],
+        "policy_refs": policy_refs,
+        "capability_refs": capability_refs,
+        "temporal_refs": temporal_refs,
+        "exposure_boundary": {
+            "redaction_level": "user_safe",
+            "allowed_audiences": ["operator", "auditor"],
+            "blocked_payload_classes": [
+                "raw_private_reasoning",
+                "secrets",
+                "internal_provider_payloads",
+                "cross_tenant_data",
+            ],
+        },
+        "pipeline_stages": [
+            _uao_stage(
+                "stage_action",
+                1,
+                "action",
+                "completed",
+                [LIVE_REHEARSAL_ACTION_SOURCE],
+                [f"envelope://{action_id}"],
+            ),
+            _uao_stage(
+                "stage_evidence",
+                2,
+                "evidence",
+                "completed",
+                evidence_refs,
+                [f"evidence-set://{action_id}"],
+            ),
+            _uao_stage(
+                "stage_trace",
+                3,
+                "trace",
+                "completed",
+                [f"evidence-set://{action_id}"],
+                [trace_ref],
+                trace_receipt_ref,
+            ),
+            _uao_stage(
+                "stage_admission",
+                4,
+                "admission",
+                "simulated",
+                [trace_ref],
+                [f"decision://{action_id}"],
+                admission_receipt_ref,
+            ),
+            _uao_stage(
+                "stage_capability",
+                5,
+                "capability",
+                "simulated",
+                capability_refs,
+                [f"capability-binding://{action_id}/simulation"],
+            ),
+            _uao_stage(
+                "stage_execution",
+                6,
+                "execution",
+                "simulated",
+                [f"capability-binding://{action_id}/simulation"],
+                [simulation_ref],
+                simulation_receipt_ref,
+            ),
+            _uao_stage(
+                "stage_receipt",
+                7,
+                "receipt",
+                "completed",
+                [simulation_ref],
+                [receipt_set_ref],
+                simulation_receipt_ref,
+            ),
+            _uao_stage(
+                "stage_reconciliation",
+                8,
+                "reconciliation",
+                "skipped",
+                [receipt_set_ref],
+                [],
+                None,
+                "simulation_only",
+            ),
+            _uao_stage(
+                "stage_memory",
+                9,
+                "memory",
+                "skipped",
+                [f"decision://{action_id}"],
+                [],
+                None,
+                "simulation_only",
+            ),
+            _uao_stage(
+                "stage_closure",
+                10,
+                "closure",
+                "completed",
+                [receipt_set_ref],
+                [closure_ref],
+                closure_receipt_ref,
+            ),
+        ],
+        "admission_guards": _live_rehearsal_admission_guards(
+            request=request,
+            previews=previews,
+            capability_refs=capability_refs,
+            evidence_refs=evidence_refs,
+            policy_refs=policy_refs,
+            temporal_refs=temporal_refs,
+            admission_receipt_ref=admission_receipt_ref,
+        ),
+        "decision": {
+            "status": "simulate",
+            "reason_code": "live_orgos_rehearsal_only",
+            "proof_state": "Unknown",
+            "solver_outcome": "AwaitingEvidence",
+            "next_action": "inspect_live_rehearsal_receipt",
+            "execution_allowed": False,
+        },
+        "trace_ref": trace_ref,
+        "causal_decision_trace_ref": trace_ref,
+        "admission_receipt_ref": admission_receipt_ref,
+        "execution_receipt_ref": None,
+        "receipts": [
+            _uao_receipt(
+                admission_receipt_ref,
+                "R1",
+                "admission",
+                "stage_admission",
+                f"live OrgOS admission preview(s): {', '.join(preview_ids)}",
+                False,
+            ),
+            _uao_receipt(
+                trace_receipt_ref,
+                "R1",
+                "trace",
+                "stage_trace",
+                "live OrgOS causal preview trace linked",
+                False,
+            ),
+            _uao_receipt(
+                simulation_receipt_ref,
+                "R0",
+                "simulation",
+                "stage_execution",
+                f"read-only private pilot rehearsal for step(s): {', '.join(preview_step_ids)}",
+                False,
+            ),
+            _uao_receipt(
+                closure_receipt_ref,
+                "R1",
+                "closure",
+                "stage_closure",
+                closure_confirmation,
+                False,
+            ),
+        ],
+        "reconciliation": {
+            "status": "not_required",
+            "observed_outcome_ref": None,
+            "required_for_closure": False,
+            "mismatch_reason": None,
+        },
+        "memory_update": {
+            "status": "not_required",
+            "memory_ref": None,
+            "learning_allowed": False,
+        },
+        "closure_state": "closed_simulated",
+        "closure": {
+            "status": "closed_simulated",
+            "terminal": True,
+            "closure_receipt_ref": closure_receipt_ref,
+            "reconciliation_ref": None,
+            "memory_ref": None,
+            "next_action": "inspect_live_rehearsal_receipt",
+        },
+        "raw_reasoning_included": False,
+        "lineage": {
+            "delta_ref": delta_ref,
+            "logged_in_lineage": True,
+            "accepted_deltas": [],
+            "rejected_deltas": [
+                {
+                    "delta_id": delta_ref,
+                    "reason": "live_orgos_rehearsal_only",
+                    "logged_in_lineage": True,
+                }
+            ],
+        },
+    }
+    _validate_uao_branch_record(UAO_BRANCH_SPECS[2], record)
+    return record
+
+
 def build_private_pilot_story(
     request: PrivatePilotStoryRequest,
     *,
@@ -473,7 +756,7 @@ def _uao_branch_summaries(records: Mapping[str, Mapping[str, Any]]) -> list[dict
             {
                 "branch_id": spec.branch_id,
                 "label": spec.label,
-                "source_ref": spec.source_ref,
+                "source_ref": _branch_source_ref(spec, record),
                 "orchestration_id": _text(record.get("orchestration_id")),
                 "tenant_id": _text(record.get("tenant_id")),
                 "actor_id": _text(record.get("actor_id")),
@@ -490,6 +773,220 @@ def _uao_branch_summaries(records: Mapping[str, Mapping[str, Any]]) -> list[dict
             }
         )
     return branch_rows
+
+
+def _validated_live_rehearsal_previews(
+    request: PrivatePilotStoryRequest,
+    admission_previews: tuple[Mapping[str, Any], ...] | list[Mapping[str, Any]],
+) -> list[Mapping[str, Any]]:
+    if isinstance(admission_previews, (str, bytes)) or not isinstance(admission_previews, (tuple, list)):
+        raise PrivatePilotStoryError("private pilot live rehearsal previews must be an array")
+    if not admission_previews:
+        raise PrivatePilotStoryError("private pilot live rehearsal requires at least one preview")
+    previews: list[Mapping[str, Any]] = []
+    for index, preview in enumerate(admission_previews):
+        if not isinstance(preview, Mapping):
+            raise PrivatePilotStoryError(f"private pilot live rehearsal preview {index} must be an object")
+        for field_name in (
+            "admission_preview_id",
+            "case_id",
+            "step_id",
+            "read_only",
+            "governed",
+            "decision",
+            "reason_code",
+            "execution_authority_granted",
+            "dispatch_authority_granted",
+            "gate_preview",
+            "handoff",
+            "causal_decision_trace",
+        ):
+            if field_name not in preview:
+                raise PrivatePilotStoryError(
+                    f"private pilot live rehearsal preview missing field: {field_name}"
+                )
+        if preview["case_id"] != request.case_id:
+            raise PrivatePilotStoryError("private pilot live rehearsal case binding changed")
+        if preview["read_only"] is not True or preview["governed"] is not True:
+            raise PrivatePilotStoryError("private pilot live rehearsal preview must be governed read-only")
+        if preview["execution_authority_granted"] is not False:
+            raise PrivatePilotStoryError("private pilot live rehearsal must not grant execution authority")
+        if preview["dispatch_authority_granted"] is not False:
+            raise PrivatePilotStoryError("private pilot live rehearsal must not grant dispatch authority")
+        causal_trace = preview.get("causal_decision_trace")
+        if not isinstance(causal_trace, Mapping):
+            raise PrivatePilotStoryError("private pilot live rehearsal causal trace missing")
+        tenant_id = _text(causal_trace.get("tenant"))
+        if tenant_id and tenant_id != request.tenant_id:
+            raise PrivatePilotStoryError("private pilot live rehearsal tenant binding changed")
+        if causal_trace.get("decision") != preview["decision"]:
+            raise PrivatePilotStoryError("private pilot live rehearsal decision trace mismatch")
+        previews.append(preview)
+    return previews
+
+
+def _live_rehearsal_capability_refs(previews: list[Mapping[str, Any]]) -> list[str]:
+    refs: list[str] = []
+    for preview in previews:
+        handoff = preview.get("handoff")
+        if isinstance(handoff, Mapping):
+            capability_id = _text(handoff.get("capability_id"))
+            if capability_id:
+                refs.append(f"capability://orgos/{capability_id}")
+    return _unique_text(refs or ["capability://orgos/private-pilot/read-only-rehearsal"])
+
+
+def _live_rehearsal_evidence_refs(previews: list[Mapping[str, Any]]) -> list[str]:
+    refs: list[str] = []
+    for preview in previews:
+        preview_id = _text(preview.get("admission_preview_id"))
+        if preview_id:
+            refs.append(f"evidence://orgos/admission-preview/{preview_id}")
+        gate_preview = preview.get("gate_preview")
+        if isinstance(gate_preview, Mapping):
+            preview_ref = _text(gate_preview.get("preview_id"))
+            if preview_ref:
+                refs.append(f"evidence://orgos/gate-preview/{preview_ref}")
+            refs.extend(_text_list(gate_preview.get("evidence_refs")))
+        handoff = preview.get("handoff")
+        if isinstance(handoff, Mapping):
+            refs.extend(_text_list(handoff.get("evidence_refs")))
+    return _unique_text(refs or ["evidence://orgos/private-pilot/rehearsal"])
+
+
+def _live_rehearsal_policy_refs(previews: list[Mapping[str, Any]]) -> list[str]:
+    refs: list[str] = ["policy://orgos/private-pilot/read-only-rehearsal"]
+    for preview in previews:
+        handoff = preview.get("handoff")
+        if isinstance(handoff, Mapping):
+            step_id = _text(handoff.get("step_id"))
+            if step_id:
+                refs.append(f"policy://orgos/plan-step/{step_id}/handoff")
+    return _unique_text(refs)
+
+
+def _live_rehearsal_admission_guards(
+    *,
+    request: PrivatePilotStoryRequest,
+    previews: list[Mapping[str, Any]],
+    capability_refs: list[str],
+    evidence_refs: list[str],
+    policy_refs: list[str],
+    temporal_refs: list[str],
+    admission_receipt_ref: str,
+) -> list[dict[str, Any]]:
+    preview_guard_values = [
+        _text(
+            preview.get("causal_decision_trace", {})
+            .get("guard_verdicts", {})
+            .get("evidence_sufficient")
+        )
+        for preview in previews
+        if isinstance(preview.get("causal_decision_trace"), Mapping)
+        and isinstance(preview["causal_decision_trace"].get("guard_verdicts"), Mapping)
+    ]
+    evidence_passed = all(value == "Pass" for value in preview_guard_values) and bool(preview_guard_values)
+    capability_passed = all(
+        _text(
+            preview.get("causal_decision_trace", {})
+            .get("guard_verdicts", {})
+            .get("capability_certified")
+        )
+        in {"", "Pass", "not_required_for_read_only_preview"}
+        for preview in previews
+        if isinstance(preview.get("causal_decision_trace"), Mapping)
+        and isinstance(preview["causal_decision_trace"].get("guard_verdicts"), Mapping)
+    )
+    return [
+        _uao_guard("identity_valid", "passed", "Pass", "actor_identity_bound", [f"actor://{request.actor_id}"]),
+        _uao_guard("tenant_valid", "passed", "Pass", "tenant_scope_resolved", [f"tenant://{request.tenant_id}"]),
+        _uao_guard("authority_valid", "passed", "Pass", "orgos_preview_authority_checked", capability_refs),
+        _uao_guard("policy_allows", "simulated", "Unknown", "preview_only_no_execution", policy_refs),
+        _uao_guard("risk_acceptable", "passed", "Pass", "read_only_rehearsal_low_risk", policy_refs),
+        _uao_guard("budget_available", "passed", "Pass", "read_only_rehearsal_budget_available", [f"budget://{request.tenant_id}/private-pilot"]),
+        _uao_guard(
+            "evidence_sufficient",
+            "passed" if evidence_passed else "simulated",
+            "Pass" if evidence_passed else "Unknown",
+            "orgos_preview_evidence_checked" if evidence_passed else "orgos_preview_evidence_not_terminal",
+            evidence_refs,
+        ),
+        _uao_guard("temporal_window_valid", "passed", "Pass", "rehearsal_window_open", temporal_refs),
+        _uao_guard(
+            "capability_certified",
+            "passed" if capability_passed else "simulated",
+            "Pass" if capability_passed else "Unknown",
+            "orgos_capability_preview_checked" if capability_passed else "orgos_capability_preview_not_terminal",
+            capability_refs,
+        ),
+        _uao_guard("recovery_available", "passed", "Pass", "read_only_no_rollback_needed", ["recovery://orgos/private-pilot/read-only-no-op"]),
+        _uao_guard("receipt_emittable", "passed", "Pass", "live_rehearsal_receipt_emitted", [admission_receipt_ref]),
+    ]
+
+
+def _uao_stage(
+    stage_id: str,
+    stage_order: int,
+    stage_kind: str,
+    status: str,
+    input_refs: list[str],
+    output_refs: list[str],
+    receipt_ref: str | None = None,
+    failure_reason: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "stage_id": stage_id,
+        "stage_order": stage_order,
+        "stage_kind": stage_kind,
+        "status": status,
+        "input_refs": input_refs,
+        "output_refs": output_refs,
+        "receipt_ref": receipt_ref,
+        "failure_reason": failure_reason,
+    }
+
+
+def _uao_guard(
+    guard: str,
+    verdict: str,
+    proof_state: str,
+    reason_code: str,
+    evidence_refs: list[str],
+) -> dict[str, Any]:
+    return {
+        "guard": guard,
+        "verdict": verdict,
+        "proof_state": proof_state,
+        "reason_code": reason_code,
+        "evidence_refs": _unique_text(evidence_refs),
+    }
+
+
+def _uao_receipt(
+    receipt_id: str,
+    tier: str,
+    kind: str,
+    stage_id: str,
+    confirms: str,
+    external_state_confirmed: bool,
+) -> dict[str, Any]:
+    return {
+        "receipt_id": receipt_id,
+        "tier": tier,
+        "kind": kind,
+        "stage_id": stage_id,
+        "confirms": confirms,
+        "external_state_confirmed": external_state_confirmed,
+    }
+
+
+def _branch_source_ref(spec: UaoBranchSpec, record: Mapping[str, Any]) -> str:
+    envelope = record.get("action_envelope")
+    if isinstance(envelope, Mapping):
+        action_source = _text(envelope.get("source"))
+        if action_source == LIVE_REHEARSAL_ACTION_SOURCE:
+            return action_source
+    return spec.source_ref
 
 
 def _stage_rows(
