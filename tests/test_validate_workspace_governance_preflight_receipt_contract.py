@@ -57,6 +57,31 @@ def test_invalid_receipt_status_and_check_flag_are_reported() -> None:
     assert len(status_errors) >= 1
 
 
+def test_unexpected_receipt_fields_are_reported() -> None:
+    passed_receipt, _failed_receipt = validator.build_sample_receipts()
+    invalid_receipt = copy.deepcopy(passed_receipt)
+    invalid_receipt["execution_receipt_ref"] = "receipt:forbidden"
+    invalid_receipt["checks"][0]["unexpected_payload"] = "forbidden"
+
+    errors = validator.validate_receipt(invalid_receipt)
+
+    assert "receipt has unexpected field: execution_receipt_ref" in errors
+    assert "check 0 has unexpected field: unexpected_payload" in errors
+    assert len(errors) >= 2
+
+
+def test_check_count_type_drift_is_reported() -> None:
+    passed_receipt, _failed_receipt = validator.build_sample_receipts()
+    invalid_receipt = copy.deepcopy(passed_receipt)
+    invalid_receipt["check_count"] = "11"
+
+    errors = validator.validate_receipt(invalid_receipt)
+
+    assert "check_count must be integer" in errors
+    assert invalid_receipt["status"] == "passed"
+    assert invalid_receipt["checks"]
+
+
 def test_missing_required_preflight_gate_is_reported() -> None:
     passed_receipt, _failed_receipt = validator.build_sample_receipts()
     invalid_receipt = copy.deepcopy(passed_receipt)
