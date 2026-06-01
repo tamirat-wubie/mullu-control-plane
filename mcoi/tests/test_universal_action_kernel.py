@@ -182,7 +182,25 @@ def test_universal_action_kernel_dispatches_after_all_certificates_pass() -> Non
         result.governed_action.metadata["intent_compilation_certificate"]
         == result.intent_certificate.certificate_id
     )
-    assert result.governed_action.capability_passport.capability_id == "shell_command"
+    passport = result.governed_action.capability_passport
+    assert passport.capability_id == "shell_command"
+    assert (
+        passport.input_schema_ref
+        == "schemas/customer_ops/update_customer_address.input.schema.json"
+    )
+    assert (
+        passport.output_schema_ref
+        == "schemas/customer_ops/update_customer_address.output.schema.json"
+    )
+    assert passport.approval_chain == ("customer_ops_manager",)
+    assert passport.separation_of_duty is True
+    assert passport.execution_plane == "connector_worker"
+    assert passport.network_allowlist == ("crm.internal.mullusi.com",)
+    assert passport.secret_scope == "tenant:customer_ops:crm"
+    assert passport.terminal_certificate_required is True
+    assert passport.review_required_on_failure is True
+    assert passport.budget_class == "customer_ops_mutation"
+    assert passport.max_estimated_cost == 0.25
     assert result.governed_action.authority_proof.actor_roles == (REQUIRED_ROLE,)
     assert result.terminal_certificate is not None
     assert (

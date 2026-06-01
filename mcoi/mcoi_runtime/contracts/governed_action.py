@@ -20,6 +20,7 @@ from ._base import (
     require_datetime_text,
     require_non_empty_text,
     require_non_empty_tuple,
+    require_non_negative_float,
 )
 from .governed_capability_fabric import (
     CapabilityRegistryEntry,
@@ -69,17 +70,38 @@ class CapabilityPassportRecord(ContractRecord):
     version: str
     passport_hash: str
     risk_level: str
+    input_schema_ref: str
+    output_schema_ref: str
     required_roles: tuple[str, ...]
+    approval_chain: tuple[str, ...]
+    separation_of_duty: bool
     evidence_required: tuple[str, ...]
+    terminal_certificate_required: bool
     expected_effects: tuple[str, ...]
     forbidden_effects: tuple[str, ...]
+    execution_plane: str
+    network_allowlist: tuple[str, ...]
+    secret_scope: str
     rollback_capability: str
     compensation_capability: str
+    review_required_on_failure: bool
+    budget_class: str
+    max_estimated_cost: float
     world_mutating: bool
     reconciliation_required: bool
 
     def __post_init__(self) -> None:
-        for field_name in ("capability_id", "version", "passport_hash", "risk_level"):
+        for field_name in (
+            "capability_id",
+            "version",
+            "passport_hash",
+            "risk_level",
+            "input_schema_ref",
+            "output_schema_ref",
+            "execution_plane",
+            "secret_scope",
+            "budget_class",
+        ):
             object.__setattr__(
                 self,
                 field_name,
@@ -87,11 +109,24 @@ class CapabilityPassportRecord(ContractRecord):
             )
         for field_name in (
             "required_roles",
+            "approval_chain",
             "evidence_required",
             "expected_effects",
             "forbidden_effects",
+            "network_allowlist",
         ):
-            values = require_non_empty_tuple(getattr(self, field_name), field_name)
+            raw_values = getattr(self, field_name)
+            values = (
+                require_non_empty_tuple(raw_values, field_name)
+                if field_name
+                in {
+                    "required_roles",
+                    "evidence_required",
+                    "expected_effects",
+                    "forbidden_effects",
+                }
+                else freeze_value(list(raw_values))
+            )
             object.__setattr__(self, field_name, values)
             for index, value in enumerate(values):
                 require_non_empty_text(value, f"{field_name}[{index}]")
@@ -99,9 +134,20 @@ class CapabilityPassportRecord(ContractRecord):
             value = getattr(self, field_name)
             if value:
                 object.__setattr__(self, field_name, require_non_empty_text(value, field_name))
-        for field_name in ("world_mutating", "reconciliation_required"):
+        for field_name in (
+            "separation_of_duty",
+            "terminal_certificate_required",
+            "review_required_on_failure",
+            "world_mutating",
+            "reconciliation_required",
+        ):
             if not isinstance(getattr(self, field_name), bool):
                 raise ValueError(f"{field_name} must be a boolean")
+        object.__setattr__(
+            self,
+            "max_estimated_cost",
+            require_non_negative_float(self.max_estimated_cost, "max_estimated_cost"),
+        )
 
     @property
     def has_recovery_path(self) -> bool:
@@ -187,12 +233,23 @@ def build_capability_passport(
         version=entry.version,
         passport_hash=require_non_empty_text(passport_hash, "passport_hash"),
         risk_level=record.risk_level.value,
+        input_schema_ref=entry.input_schema_ref,
+        output_schema_ref=entry.output_schema_ref,
         required_roles=entry.authority_policy.required_roles,
+        approval_chain=entry.authority_policy.approval_chain,
+        separation_of_duty=entry.authority_policy.separation_of_duty,
         evidence_required=entry.evidence_model.required_evidence,
+        terminal_certificate_required=entry.evidence_model.terminal_certificate_required,
         expected_effects=entry.effect_model.expected_effects,
         forbidden_effects=entry.effect_model.forbidden_effects,
+        execution_plane=entry.isolation_profile.execution_plane,
+        network_allowlist=entry.isolation_profile.network_allowlist,
+        secret_scope=entry.isolation_profile.secret_scope,
         rollback_capability=entry.recovery_plan.rollback_capability,
         compensation_capability=entry.recovery_plan.compensation_capability,
+        review_required_on_failure=entry.recovery_plan.review_required_on_failure,
+        budget_class=entry.cost_model.budget_class,
+        max_estimated_cost=entry.cost_model.max_estimated_cost,
         world_mutating=record.world_mutating,
         reconciliation_required=entry.effect_model.reconciliation_required,
     )
