@@ -11,11 +11,33 @@ prior proof.
 from __future__ import annotations
 
 import json
+import os
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 
 from .contracts import SwarmInvariantViolation
 from .record import SwarmAuditRecord
+
+# Per-file append locks. The duplicate-run-id check and the append must form one
+# atomic critical section: without serialization, two concurrent appends with
+# the same run_id both pass the check and both persist, breaking the
+# append-only-by-run-id invariant. Locks are keyed by absolute path so every
+# store targeting the same file shares one lock, regardless of how many
+# SwarmAuditStore instances exist. This serializes appends within a process;
+# multiple processes writing one file would additionally need an OS file lock.
+_APPEND_LOCKS_GUARD = threading.Lock()
+_APPEND_LOCKS: dict[str, threading.Lock] = {}
+
+
+def _append_lock_for(path: Path) -> threading.Lock:
+    key = os.path.abspath(str(path))
+    with _APPEND_LOCKS_GUARD:
+        lock = _APPEND_LOCKS.get(key)
+        if lock is None:
+            lock = threading.Lock()
+            _APPEND_LOCKS[key] = lock
+        return lock
 
 
 @dataclass
@@ -28,14 +50,19 @@ class SwarmAuditStore:
         self.path = Path(self.path)
 
     def append(self, record: SwarmAuditRecord) -> None:
-        """Append one record, rejecting duplicate run ids."""
+        """Append one record, rejecting duplicate run ids.
 
-        if self.get(record.run_id) is not None:
-            raise SwarmInvariantViolation(f"duplicate swarm run_id: {record.run_id}")
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self.path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(record.to_dict(), sort_keys=True, separators=(",", ":")))
-            handle.write("\n")
+        The duplicate check and the write run under a per-file lock so that
+        concurrent appends with the same run_id cannot both persist.
+        """
+
+        with _append_lock_for(self.path):
+            if self.get(record.run_id) is not None:
+                raise SwarmInvariantViolation(f"duplicate swarm run_id: {record.run_id}")
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            line = json.dumps(record.to_dict(), sort_keys=True, separators=(",", ":"))
+            with self.path.open("a", encoding="utf-8") as handle:
+                handle.write(line + "\n")
 
     def get(self, run_id: str) -> SwarmAuditRecord | None:
         """Return one record by run id, or None when absent."""
