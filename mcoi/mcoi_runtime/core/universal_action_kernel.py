@@ -26,7 +26,6 @@ from mcoi_runtime.contracts.governed_action import (
     AuthorityProofRecord,
     GovernedAction,
     GovernedActionState,
-    TypedIntentRecord,
     build_capability_passport,
 )
 from mcoi_runtime.contracts.goal import GoalDescriptor, GoalPriority
@@ -54,6 +53,11 @@ from mcoi_runtime.core.governed_dispatcher import (
     GovernedDispatchContext,
     GovernedDispatchResult,
     GovernedDispatcher,
+)
+from mcoi_runtime.core.intent_ir import (
+    IntentCompilationCertificate,
+    IntentCompilationError,
+    IntentIRCompiler,
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
 from mcoi_runtime.core.memory import MemoryEntry, MemoryTier
@@ -142,6 +146,7 @@ class UniversalActionResult:
     world_certificate: WorldSupportCertificate
     plan_certificate: PlanCertificate | None = None
     simulation_certificate: SimulationCertificate | None = None
+    intent_certificate: IntentCompilationCertificate | None = None
     capability_decision: CommandCapabilityAdmissionDecision | None = None
     governed_action: GovernedAction | None = None
     dispatch_result: GovernedDispatchResult | None = None
@@ -166,6 +171,7 @@ class UniversalActionKernel:
         governed_dispatcher: GovernedDispatcher,
         terminal_closure: TerminalClosureCertifier | None = None,
         learning_admission: ClosureLearningAdmissionGate | None = None,
+        intent_compiler: IntentIRCompiler | None = None,
         clock: Callable[[], str],
     ) -> None:
         self._world_state = world_state
@@ -174,6 +180,7 @@ class UniversalActionKernel:
         self._governed_dispatcher = governed_dispatcher
         self._terminal_closure = terminal_closure
         self._learning_admission = learning_admission
+        self._intent_compiler = intent_compiler or IntentIRCompiler()
         self._clock = clock
 
     def run(self, request: UniversalActionRequest) -> UniversalActionResult:
@@ -201,9 +208,22 @@ class UniversalActionKernel:
                 world_certificate=world_certificate,
             )
 
+        try:
+            intent_certificate = self._compile_intent(request=request, issued_at=now)
+        except IntentCompilationError:
+            return self._blocked(
+                action_id=action_id,
+                request=request,
+                issued_at=now,
+                trace_ref=trace_ref,
+                block_reason="intent_compilation_rejected",
+                goal_certificate=goal_certificate,
+                world_certificate=world_certificate,
+            )
+
         capability_decision = self._capability_admission.admit(
-            command_id=request.intent_id,
-            intent_name=request.dispatch_request.route,
+            command_id=intent_certificate.typed_intent.command_id,
+            intent_name=intent_certificate.typed_intent.intent_name,
         )
         if capability_decision.status is not CommandCapabilityAdmissionStatus.ACCEPTED:
             return self._blocked(
@@ -214,12 +234,14 @@ class UniversalActionKernel:
                 block_reason="capability_admission_rejected",
                 goal_certificate=goal_certificate,
                 world_certificate=world_certificate,
+                intent_certificate=intent_certificate,
                 capability_decision=capability_decision,
             )
 
         try:
             governed_action = self._build_governed_action(
                 request=request,
+                intent_certificate=intent_certificate,
                 capability_decision=capability_decision,
                 issued_at=now,
             )
@@ -232,6 +254,7 @@ class UniversalActionKernel:
                 block_reason="governed_action_admission_rejected",
                 goal_certificate=goal_certificate,
                 world_certificate=world_certificate,
+                intent_certificate=intent_certificate,
                 capability_decision=capability_decision,
             )
 
@@ -258,6 +281,7 @@ class UniversalActionKernel:
                 world_certificate=world_certificate,
                 plan_certificate=plan_certificate,
                 simulation_certificate=simulation_certificate,
+                intent_certificate=intent_certificate,
                 capability_decision=capability_decision,
                 governed_action=governed_action,
             )
@@ -304,6 +328,7 @@ class UniversalActionKernel:
             world_certificate=world_certificate,
             plan_certificate=plan_certificate,
             simulation_certificate=simulation_certificate,
+            intent_certificate=intent_certificate,
             capability_decision=capability_decision,
             governed_action=governed_action,
             dispatch_result=dispatch_result,
@@ -453,6 +478,7 @@ class UniversalActionKernel:
         simulation_certificate: SimulationCertificate | None = None,
         capability_decision: CommandCapabilityAdmissionDecision | None = None,
         governed_action: GovernedAction | None = None,
+        intent_certificate: IntentCompilationCertificate | None = None,
     ) -> UniversalActionResult:
         result = UniversalActionResult(
             action_id=action_id,
@@ -479,20 +505,39 @@ class UniversalActionKernel:
             world_certificate=world_certificate,
             plan_certificate=plan_certificate,
             simulation_certificate=simulation_certificate,
+            intent_certificate=intent_certificate,
             capability_decision=capability_decision,
             governed_action=governed_action,
         )
         return self._with_proof_hash(result)
 
+    def _compile_intent(
+        self,
+        *,
+        request: UniversalActionRequest,
+        issued_at: str,
+    ) -> IntentCompilationCertificate:
+        return self._intent_compiler.compile(
+            actor_id=request.actor_id,
+            tenant_id=request.tenant_id,
+            command_id=request.intent_id,
+            objective=request.objective,
+            dispatch_request=request.dispatch_request,
+            risk=request.risk_level.value,
+            mode=request.mode,
+            issued_at=issued_at,
+        )
+
     def _build_governed_action(
         self,
         *,
         request: UniversalActionRequest,
+        intent_certificate: IntentCompilationCertificate,
         capability_decision: CommandCapabilityAdmissionDecision,
         issued_at: str,
     ) -> GovernedAction:
         capability_entry = self._capability_admission.capability_for_intent(
-            request.dispatch_request.route
+            intent_certificate.typed_intent.intent_name
         )
         passport_hash = stable_identifier(
             "capability-passport",
@@ -504,21 +549,6 @@ class UniversalActionKernel:
                 "expected_effects": capability_entry.effect_model.expected_effects,
                 "required_roles": capability_entry.authority_policy.required_roles,
             },
-        )
-        typed_intent = TypedIntentRecord(
-            command_id=request.intent_id,
-            tenant_id=request.tenant_id,
-            actor_id=request.actor_id,
-            intent_name=request.dispatch_request.route,
-            objective=request.objective,
-            input_hash=stable_identifier(
-                "typed-intent-input",
-                {
-                    "route": request.dispatch_request.route,
-                    "template": request.dispatch_request.template,
-                    "bindings": request.dispatch_request.bindings,
-                },
-            ),
         )
         capability_passport = build_capability_passport(
             capability_entry,
@@ -539,13 +569,14 @@ class UniversalActionKernel:
                     "actor_id": request.actor_id,
                     "intent_id": request.intent_id,
                     "capability_id": capability_decision.capability_id,
+                    "intent_hash": intent_certificate.intent_hash,
                     "passport_hash": passport_hash,
                 },
             ),
             command_id=request.intent_id,
             tenant_id=request.tenant_id,
             actor_id=request.actor_id,
-            typed_intent=typed_intent,
+            typed_intent=intent_certificate.typed_intent,
             capability_passport=capability_passport,
             authority_proof=authority_proof,
             state=GovernedActionState.ADMITTED,
@@ -554,6 +585,9 @@ class UniversalActionKernel:
                 "capability_decision_reason": capability_decision.reason,
                 "domain": capability_decision.domain,
                 "owner_team": capability_decision.owner_team,
+                "intent_compilation_certificate": intent_certificate.certificate_id,
+                "intent_hash": intent_certificate.intent_hash,
+                "intent_schema": intent_certificate.intent_schema,
             },
         )
 
@@ -625,6 +659,8 @@ class UniversalActionKernel:
             "simulation_certificate_id": (
                 result.simulation_certificate.certificate_id if result.simulation_certificate else ""
             ),
+            "intent_certificate_id": result.intent_certificate.certificate_id if result.intent_certificate else "",
+            "intent_hash": result.intent_certificate.intent_hash if result.intent_certificate else "",
             "capability_status": result.capability_decision.status.value if result.capability_decision else "",
             "capability_id": result.capability_decision.capability_id if result.capability_decision else "",
             "governed_action_id": result.governed_action.governed_action_id if result.governed_action else "",
@@ -649,6 +685,7 @@ class UniversalActionKernel:
             world_certificate=result.world_certificate,
             plan_certificate=result.plan_certificate,
             simulation_certificate=result.simulation_certificate,
+            intent_certificate=result.intent_certificate,
             capability_decision=result.capability_decision,
             governed_action=result.governed_action,
             dispatch_result=result.dispatch_result,
