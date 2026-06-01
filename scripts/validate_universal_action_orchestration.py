@@ -8,7 +8,8 @@ CDCV execution causality, CQTE guard proof states, UWMA lineage anchoring, and
 PRS closure receipts.
 Dependencies: Python standard library only.
 Invariants: validation is read-only, rejects raw private reasoning exposure,
-blocks execution for non-allow decisions, and requires receipt-bound closure.
+blocks execution for non-allow decisions, requires receipt-bound closure, and
+keeps persisted validation receipts under the workspace root.
 """
 
 from __future__ import annotations
@@ -316,12 +317,29 @@ def build_validation_report(
     }
 
 
-def write_validation_report(report: dict[str, Any], receipt_path: Path) -> Path:
+def resolve_validation_receipt_path(receipt_path: Path, workspace_root: Path = WORKSPACE_ROOT) -> Path:
+    """Resolve a workspace-local JSON receipt path and reject path escapes."""
+
+    if receipt_path.suffix.lower() != ".json":
+        raise ValueError("UAO validation receipt path must use .json suffix")
+    resolved_root = workspace_root.resolve()
+    resolved_path = (workspace_root / receipt_path).resolve() if not receipt_path.is_absolute() else receipt_path.resolve()
+    if resolved_path != resolved_root and resolved_root not in resolved_path.parents:
+        raise ValueError(f"UAO validation receipt path must stay under workspace root: {receipt_path}")
+    return resolved_path
+
+
+def write_validation_report(
+    report: dict[str, Any],
+    receipt_path: Path,
+    workspace_root: Path = WORKSPACE_ROOT,
+) -> Path:
     """Persist a UAO validation receipt without executing actions."""
 
-    receipt_path.parent.mkdir(parents=True, exist_ok=True)
-    receipt_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return receipt_path
+    resolved_path = resolve_validation_receipt_path(receipt_path, workspace_root)
+    resolved_path.parent.mkdir(parents=True, exist_ok=True)
+    resolved_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return resolved_path
 
 
 def _receipt_path_label(path: Path) -> str:
@@ -884,7 +902,11 @@ def main(argv: list[str] | None = None) -> int:
     example_paths = tuple(args.example) if args.example else DEFAULT_EXAMPLE_PATHS
     report = build_validation_report(args.schema, example_paths, args.document)
     if args.receipt_path is not None:
-        write_validation_report(report, args.receipt_path)
+        try:
+            write_validation_report(report, args.receipt_path)
+        except ValueError as exc:
+            sys.stderr.write(f"[FAIL] receipt-path: {exc}\nSTATUS: failed\n")
+            return 1
     if args.json:
         sys.stdout.write(json.dumps(report, indent=2, sort_keys=True) + "\n")
         return 0 if report["valid"] else 1
