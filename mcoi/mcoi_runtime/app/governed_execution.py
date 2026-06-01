@@ -86,6 +86,28 @@ _UAO_CLOSURE_BY_DECISION = {
     "escalate": "closed_escalated",
     "simulate": "closed_simulated",
 }
+_UAO_RECEIPT_KINDS = frozenset(
+    {
+        "admission",
+        "trace",
+        "execution",
+        "provider",
+        "reconciliation",
+        "closure",
+        "simulation",
+    }
+)
+_UAO_BASE_REQUIRED_RECEIPT_KINDS = frozenset({"trace", "admission", "closure"})
+_UAO_ALLOW_REQUIRED_RECEIPT_KINDS = _UAO_BASE_REQUIRED_RECEIPT_KINDS | frozenset(
+    {"execution", "reconciliation"}
+)
+_UAO_RECEIPT_TIER_BY_KIND = {
+    "trace": frozenset({"R1"}),
+    "admission": frozenset({"R1"}),
+    "execution": frozenset({"R2"}),
+    "reconciliation": frozenset({"R2", "R3"}),
+    "closure": frozenset({"R1", "R3"}),
+}
 _PROHIBITED_UAO_PRIVATE_REASONING_FIELDS = frozenset(
     {
         "chain_of_thought",
@@ -516,25 +538,142 @@ def _is_replayable_universal_action_orchestration_record(
     closure = value.get("closure")
     if not isinstance(closure, Mapping) or closure.get("status") != closure_state:
         return False
+    stages_by_kind = _uao_stage_records_by_kind(value.get("pipeline_stages"))
+    if stages_by_kind is None:
+        return False
     receipts = value.get("receipts")
-    if not isinstance(receipts, list):
+    receipts_by_kind = _uao_receipt_records_by_kind(receipts)
+    if receipts_by_kind is None:
         return False
-    receipt_ids = {
-        receipt.get("receipt_id")
-        for receipt in receipts
-        if isinstance(receipt, Mapping) and _non_empty_text(receipt.get("receipt_id"))
-    }
-    if value.get("admission_receipt_ref") not in receipt_ids:
+    required_receipt_kinds = (
+        _UAO_ALLOW_REQUIRED_RECEIPT_KINDS
+        if decision_status == "allow"
+        else _UAO_BASE_REQUIRED_RECEIPT_KINDS
+    )
+    if not required_receipt_kinds.issubset(receipts_by_kind):
         return False
-    if closure.get("closure_receipt_ref") not in receipt_ids:
+    if not _uao_receipt_binds_stage(
+        receipts_by_kind=receipts_by_kind,
+        stages_by_kind=stages_by_kind,
+        kind="trace",
+        expected_receipt_id=None,
+        expected_output_ref=value.get("trace_ref"),
+    ):
+        return False
+    if not _uao_receipt_binds_stage(
+        receipts_by_kind=receipts_by_kind,
+        stages_by_kind=stages_by_kind,
+        kind="admission",
+        expected_receipt_id=value.get("admission_receipt_ref"),
+    ):
+        return False
+    if not _uao_receipt_binds_stage(
+        receipts_by_kind=receipts_by_kind,
+        stages_by_kind=stages_by_kind,
+        kind="closure",
+        expected_receipt_id=closure.get("closure_receipt_ref"),
+    ):
         return False
     execution_receipt_ref = value.get("execution_receipt_ref")
     if decision_status == "allow":
         return (
             _non_empty_text(execution_receipt_ref)
-            and execution_receipt_ref in receipt_ids
+            and _uao_receipt_binds_stage(
+                receipts_by_kind=receipts_by_kind,
+                stages_by_kind=stages_by_kind,
+                kind="execution",
+                expected_receipt_id=execution_receipt_ref,
+            )
+            and _uao_receipt_binds_stage(
+                receipts_by_kind=receipts_by_kind,
+                stages_by_kind=stages_by_kind,
+                kind="reconciliation",
+                expected_receipt_id=None,
+            )
         )
-    return execution_receipt_ref is None
+    if execution_receipt_ref is not None:
+        return False
+    for skipped_kind in ("execution", "reconciliation"):
+        stage = stages_by_kind.get(skipped_kind)
+        if isinstance(stage, Mapping) and stage.get("receipt_ref") is not None:
+            return False
+        if skipped_kind in receipts_by_kind:
+            return False
+    return True
+
+
+def _uao_stage_records_by_kind(value: Any) -> dict[str, Mapping[str, Any]] | None:
+    if not isinstance(value, list):
+        return None
+    stages_by_kind: dict[str, Mapping[str, Any]] = {}
+    for stage in value:
+        if not isinstance(stage, Mapping):
+            return None
+        stage_kind = stage.get("stage_kind")
+        stage_id = stage.get("stage_id")
+        if not _non_empty_text(stage_kind) or not _non_empty_text(stage_id):
+            return None
+        if stage_kind in stages_by_kind:
+            return None
+        receipt_ref = stage.get("receipt_ref")
+        if receipt_ref is not None and not _non_empty_text(receipt_ref):
+            return None
+        stages_by_kind[str(stage_kind)] = stage
+    return stages_by_kind
+
+
+def _uao_receipt_records_by_kind(value: Any) -> dict[str, Mapping[str, Any]] | None:
+    if not isinstance(value, list):
+        return None
+    receipts_by_kind: dict[str, Mapping[str, Any]] = {}
+    for receipt in value:
+        if not isinstance(receipt, Mapping):
+            return None
+        receipt_id = receipt.get("receipt_id")
+        kind = receipt.get("kind")
+        stage_id = receipt.get("stage_id")
+        if not _non_empty_text(receipt_id):
+            return None
+        if kind not in _UAO_RECEIPT_KINDS or not _non_empty_text(stage_id):
+            return None
+        if kind in receipts_by_kind:
+            return None
+        if not _non_empty_text(receipt.get("tier")):
+            return None
+        if not _non_empty_text(receipt.get("confirms")):
+            return None
+        if not isinstance(receipt.get("external_state_confirmed"), bool):
+            return None
+        receipts_by_kind[str(kind)] = receipt
+    return receipts_by_kind
+
+
+def _uao_receipt_binds_stage(
+    *,
+    receipts_by_kind: Mapping[str, Mapping[str, Any]],
+    stages_by_kind: Mapping[str, Mapping[str, Any]],
+    kind: str,
+    expected_receipt_id: str | None,
+    expected_output_ref: str | None = None,
+) -> bool:
+    receipt = receipts_by_kind.get(kind)
+    stage = stages_by_kind.get(kind)
+    if receipt is None or stage is None:
+        return False
+    receipt_id = receipt.get("receipt_id")
+    if expected_receipt_id is not None and receipt_id != expected_receipt_id:
+        return False
+    if receipt.get("stage_id") != stage.get("stage_id"):
+        return False
+    if stage.get("receipt_ref") != receipt_id:
+        return False
+    if receipt.get("tier") not in _UAO_RECEIPT_TIER_BY_KIND.get(kind, frozenset()):
+        return False
+    if expected_output_ref is not None:
+        output_refs = stage.get("output_refs")
+        if not isinstance(output_refs, list) or expected_output_ref not in output_refs:
+            return False
+    return True
 
 
 def _has_private_reasoning_field(value: Any) -> bool:
