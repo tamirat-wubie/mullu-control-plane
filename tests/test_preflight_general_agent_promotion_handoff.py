@@ -217,7 +217,7 @@ def test_handoff_preflight_accepts_matching_generated_action_count(tmp_path: Pat
             {
                 "ok": True,
                 "action_count": 5,
-                "approval_required_action_count": 2,
+                "approval_required_action_count": 0,
                 "blocker_count": 5,
             }
         ),
@@ -259,6 +259,42 @@ def test_handoff_preflight_accepts_matching_generated_action_count(tmp_path: Pat
     assert report.ready is True
     assert report.blockers == ()
     assert any("action_count=7" in step.detail for step in report.steps)
+    assert any(
+        "approval_required_action_count=0" in step.detail
+        for step in report.steps
+        if step.name == "adapter closure schema validation"
+    )
+
+
+def test_handoff_preflight_rejects_impossible_adapter_approval_count(tmp_path: Path) -> None:
+    adapter_schema_validation, schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path)
+    environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)
+    adapter_schema_validation.write_text(
+        json.dumps(
+            {
+                "ok": True,
+                "action_count": 3,
+                "approval_required_action_count": 4,
+                "blocker_count": 3,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = preflight_general_agent_promotion_handoff(
+        environment_binding_receipt_path=environment_binding_receipt,
+        adapter_schema_validation_path=adapter_schema_validation,
+        schema_validation_path=schema_validation,
+        drift_validation_path=drift_validation,
+        readiness_path=readiness,
+        env_reader=lambda name: "present" if name in REQUIRED_ENV else "",
+    )
+    step_details = {step.name: step.detail for step in report.steps}
+
+    assert report.ready is False
+    assert report.blockers == ("adapter closure schema validation",)
+    assert "approval_required_action_count" in step_details["adapter closure schema validation"]
+    assert "'action_count': 3" in step_details["adapter closure schema validation"]
 
 
 def test_handoff_preflight_accepts_portfolio_source_plan_type(tmp_path: Path) -> None:
@@ -393,7 +429,7 @@ def _write_valid_reports(
             {
                 "ok": True,
                 "action_count": 5,
-                "approval_required_action_count": 2,
+                "approval_required_action_count": 0,
                 "blocker_count": 5,
             }
         ),

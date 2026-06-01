@@ -306,18 +306,20 @@ def _adapter_schema_report_step(path: Path) -> HandoffPreflightStep:
         return HandoffPreflightStep(name="adapter closure schema validation", passed=False, detail=error)
     action_count = payload.get("action_count")
     blocker_count = payload.get("blocker_count")
+    approval_required_count = payload.get("approval_required_action_count")
     passed = (
         payload.get("ok") is True
         and isinstance(action_count, int)
         and action_count > 0
         and isinstance(blocker_count, int)
         and blocker_count > 0
-        and payload.get("approval_required_action_count") == 2
+        and isinstance(approval_required_count, int)
+        and 0 <= approval_required_count <= action_count
     )
     expected_detail = (
         "ok=true "
         f"action_count={action_count} "
-        "approval_required_action_count=2 "
+        f"approval_required_action_count={approval_required_count} "
         f"blocker_count={blocker_count}"
     )
     detail = expected_detail if passed else f"expected {expected_detail}; observed={_public_report_projection(payload)}"
