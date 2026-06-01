@@ -2468,6 +2468,52 @@ class TestGatewayStatus:
             command.trace_id
         )
 
+    def test_command_universal_action_orchestration_incomplete_pipeline_returns_404(
+        self, gateway_app, client
+    ):
+        record = json.loads(
+            (
+                _ROOT
+                / "examples"
+                / "universal_action_orchestration.allowed_status_publish.json"
+            ).read_text(encoding="utf-8")
+        )
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="tenant_ops_demo",
+            actor_id="service:status_page_worker",
+            source="web",
+            conversation_id="conversation-orchestration-incomplete-pipeline",
+            idempotency_key="universal-orchestration-incomplete-pipeline",
+            intent="refresh_public_status_page",
+            payload={"body": "incomplete-pipeline status page replay"},
+        )
+        record["action_envelope"]["intent"] = command.command_id
+        universal_detail = _bind_uao_fixture_to_universal_action_detail(record)
+        record["pipeline_stages"] = [
+            stage
+            for stage in record["pipeline_stages"]
+            if stage["stage_kind"] != "memory"
+        ]
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.DISPATCHED,
+            detail={
+                "cause": "universal_action_kernel_dispatched",
+                "universal_action": universal_detail,
+                "universal_action_orchestration": record,
+            },
+        )
+
+        resp = client.get(
+            f"/commands/{command.command_id}/universal-action-orchestration"
+        )
+
+        assert resp.status_code == 404
+        assert (
+            resp.json()["detail"] == "universal action orchestration record not found"
+        )
+        assert gateway_app.state.command_ledger.get(command.command_id) is not None
+
     def test_command_universal_action_orchestration_cross_command_returns_404(
         self, gateway_app, client
     ):

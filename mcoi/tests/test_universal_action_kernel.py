@@ -815,6 +815,60 @@ def test_universal_command_orchestration_record_rejects_command_trace_tamper() -
     )
 
 
+def test_universal_command_orchestration_record_rejects_incomplete_pipeline() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-record-incomplete-pipeline",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+    )
+    target_index = next(
+        index
+        for index, event in enumerate(store._events)
+        if event.command_id == command.command_id
+        and event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    tampered_detail = copy.deepcopy(store._events[target_index].detail)
+    tampered_record = tampered_detail["universal_action_orchestration"]
+    tampered_record["pipeline_stages"] = [
+        stage
+        for stage in tampered_record["pipeline_stages"]
+        if stage["stage_kind"] != "memory"
+    ]
+    store._events[target_index] = _replace_command_event_with_recomputed_hash(
+        store._events[target_index],
+        detail=tampered_detail,
+    )
+    reloaded_ledger = CommandLedger(clock=_clock, store=store)
+
+    replayed_record = universal_command_orchestration_record_view(
+        reloaded_ledger, command.command_id
+    )
+
+    assert replayed_record is None
+    assert reloaded_ledger.get(command.command_id) is not None
+    assert (
+        _recompute_event_hash(store._events[target_index])
+        == store._events[target_index].event_hash
+    )
+
+
 def test_universal_command_orchestration_record_rejects_cross_command_candidate() -> (
     None
 ):
