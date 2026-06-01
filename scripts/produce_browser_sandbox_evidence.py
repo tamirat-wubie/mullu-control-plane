@@ -134,7 +134,7 @@ def produce_browser_sandbox_evidence(
     return BrowserSandboxEvidenceResult(
         evidence_id=evidence_id,
         status=status,
-        output_path=str(output_path),
+        output_path=_path_label(output_path),
         receipt_id=str(receipt_payload["receipt_id"]),
         verification_status=str(receipt_payload["verification_status"]),
         blockers=blockers,
@@ -165,6 +165,15 @@ def _evidence_id(receipt_payload: dict[str, Any]) -> str:
 
 def _sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8", errors="replace")).hexdigest()
+
+
+def _path_label(path: Path) -> str:
+    """Return an evidence path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> Path:
