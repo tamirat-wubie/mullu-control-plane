@@ -3,16 +3,22 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers.musia_auth import require_admin
 
 router = APIRouter()
 
 
 @router.post("/api/v1/ops/benchmarks")
-def run_benchmarks():
-    """Run governance performance benchmarks and return results."""
+def run_benchmarks(_: str = Depends(require_admin)):
+    """Run governance performance benchmarks and return results.
+
+    Operator-gated: the suite exercises every governance subsystem (multiple
+    seconds of CPU per call), so an ungated endpoint is a denial-of-service
+    amplifier. require_admin is a no-op in dev mode.
+    """
     from mcoi_runtime.core.governance_bench import run_governance_benchmarks
     suite = run_governance_benchmarks()
     return {"governed": True, **suite.summary()}
