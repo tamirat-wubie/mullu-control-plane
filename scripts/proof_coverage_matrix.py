@@ -65,6 +65,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
         "terminal_closure_requires_evidence_refs",
         "successful_response_is_bound_to_response_evidence_closure",
         "universal_action_proof_replays_from_command_events",
+        "universal_action_runtime_record_exports_contract_shape",
         "operator_universal_action_read_model_filters_command_proofs",
         "operator_universal_action_console_renders_replay_state",
     ]
@@ -97,6 +98,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/app/governed_execution.py",
                 "mcoi/mcoi_runtime/core/command_capability_admission.py",
                 "mcoi/mcoi_runtime/core/domain_capsule_compiler.py",
+                "mcoi/mcoi_runtime/core/universal_action_kernel.py",
+                "mcoi/tests/test_universal_action_kernel.py",
                 "tests/test_gateway/test_capability_capsule_installer.py",
                 "tests/test_gateway/test_webhooks.py",
                 "tests/test_governed_capability_fabric.py",
@@ -118,6 +121,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "successful_response_is_bound_to_response_evidence_closure": ["command_closure_read_model"],
                 "universal_action_proof_replays_from_command_events": [
                     "command_universal_action_proof_read_model",
+                ],
+                "universal_action_runtime_record_exports_contract_shape": [
+                    "universal_action_result_exports_valid_allowed_uao_record",
+                    "universal_action_result_exports_valid_blocked_uao_record",
                 ],
                 "operator_universal_action_read_model_filters_command_proofs": [
                     "operator_universal_actions_read_model_filters_proofs",

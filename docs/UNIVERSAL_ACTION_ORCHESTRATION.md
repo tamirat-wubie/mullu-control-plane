@@ -2,7 +2,7 @@
 
 Purpose: define the governed v1 action-shape contract for effect-bearing control-plane actions.
 Governance scope: OCE action envelope completeness, RAG trace-to-receipt linkage, CDCV no-execution-by-claim causality, CQTE decidable admission shape, UWMA fixture witness anchoring, and PRS terminal closure state.
-Dependencies: `schemas/universal_action_orchestration.schema.json`, `scripts/validate_universal_action_orchestration.py`, and examples in `examples/`.
+Dependencies: `schemas/universal_action_orchestration.schema.json`, `scripts/validate_universal_action_orchestration.py`, `mcoi/mcoi_runtime/core/universal_action_kernel.py`, and examples in `examples/`.
 Invariants: UAO v1 validates existence and shape only; it does not execute actions, dispatch workers, call external systems, send messages, move money, mutate schedules, or write memory.
 
 ## Architecture
@@ -30,6 +30,14 @@ UniversalActionOrchestration :=
 | `execution_receipt_ref` | Receipt reference proving execution only when execution is admitted; otherwise null. |
 | `closure_state` | Terminal closure state mirrored from `closure.status`. |
 
+The runtime export path is:
+
+```text
+UniversalActionRequest + UniversalActionResult -> build_universal_action_orchestration_record -> UAO v1 record
+```
+
+The export is pure and does not dispatch work. It materializes the already-issued kernel certificates, receipts, closure state, memory decision, and lineage delta into the same schema validated for static examples.
+
 ## Algorithm
 
 The validator applies these rules deterministically:
@@ -44,6 +52,7 @@ The validator applies these rules deterministically:
 8. No raw private reasoning field may exist anywhere in the record.
 9. No high-risk `allow` action may pass without approval, evidence, and capability references.
 10. Every example must include `closure_state`.
+11. Every runtime-exported UAO record must pass the same schema and semantic validator as static fixtures.
 
 The core invariant is:
 
@@ -74,9 +83,11 @@ Run:
 ```powershell
 python scripts/validate_universal_action_orchestration.py
 python scripts/validate_universal_action_orchestration.py --json --receipt-path .tmp/uao-validation-receipt.json
+python -m pytest mcoi/tests/test_universal_action_kernel.py -q
 python -m unittest discover -s tests -p "test_validate_universal_action_orchestration.py"
 python scripts/run_workspace_governance_checks.py
 ```
 
 The workspace preflight includes the validator, so UAO drift blocks repository closure.
 The optional JSON receipt is read-only and records validity, check names, workspace-relative example path labels, error counts, and bounded errors for autonomous preflight consumers.
+The kernel export tests cover both allowed execution and blocked admission records with schema and semantic validation.
