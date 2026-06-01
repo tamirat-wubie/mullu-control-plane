@@ -1331,6 +1331,185 @@ def _organization_department_registry(kernel: OrganizationKernel, org_id: str) -
     }
 
 
+def _escalation_path(
+    department: DepartmentPack,
+    departments_by_id: dict[str, DepartmentPack],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "department_id": escalation_department_id,
+            "name": departments_by_id[escalation_department_id].name
+            if escalation_department_id in departments_by_id
+            else None,
+            "known": escalation_department_id in departments_by_id,
+        }
+        for escalation_department_id in department.escalation_departments
+    ]
+
+
+def _organization_authority_map(kernel: OrganizationKernel, org_id: str) -> dict[str, Any]:
+    organization = _organization_or_404(kernel, org_id)
+    state = kernel.snapshot_state()
+    departments = tuple(item for item in state.departments if item.org_id == org_id)
+    departments_by_id = {department.department_id: department for department in departments}
+    roles_by_department: dict[str, list[Any]] = {}
+    authority_by_department: dict[str, list[Any]] = {}
+    authority_by_role: dict[str, list[Any]] = {}
+    capabilities_by_department: dict[str, list[Any]] = {}
+    capabilities_by_id: dict[str, list[Any]] = {}
+    evidence_by_department: dict[str, list[Any]] = {}
+    attention_items: list[dict[str, object]] = []
+
+    for role in state.roles:
+        if role.org_id == org_id:
+            roles_by_department.setdefault(role.department_id, []).append(role)
+    for rule in state.authority_rules:
+        if rule.org_id == org_id:
+            authority_by_department.setdefault(rule.department_id, []).append(rule)
+            authority_by_role.setdefault(rule.role_id, []).append(rule)
+    for capability in state.capabilities:
+        if capability.org_id == org_id:
+            capabilities_by_department.setdefault(capability.department_id, []).append(capability)
+            capabilities_by_id.setdefault(capability.capability_id, []).append(capability)
+    for requirement in state.evidence_requirements:
+        if requirement.org_id == org_id:
+            evidence_by_department.setdefault(requirement.department_id, []).append(requirement)
+
+    department_rows: list[dict[str, Any]] = []
+    for department in sorted(departments, key=lambda item: item.department_id):
+        department_roles = sorted(
+            roles_by_department.get(department.department_id, []),
+            key=lambda item: item.role_id,
+        )
+        department_authority = sorted(
+            authority_by_department.get(department.department_id, []),
+            key=lambda item: item.rule_id,
+        )
+        department_capabilities = sorted(
+            capabilities_by_department.get(department.department_id, []),
+            key=lambda item: item.capability_id,
+        )
+        department_evidence = sorted(
+            evidence_by_department.get(department.department_id, []),
+            key=lambda item: item.requirement_id,
+        )
+        department_role_ids = {role.role_id for role in department_roles}
+        capability_ids = {capability.capability_id for capability in department_capabilities}
+        evidence_ids = {requirement.requirement_id for requirement in department_evidence}
+        role_authority_chains: list[dict[str, Any]] = []
+        department_gaps: list[str] = []
+
+        if not any(role.is_human_accountable and "own_case" in role.permissions for role in department_roles):
+            department_gaps.append("missing_owner_role")
+        for rule in department_authority:
+            if rule.role_id not in department_role_ids:
+                department_gaps.append(f"authority_role_gap:{rule.rule_id}")
+        for capability_id in department.allowed_capabilities:
+            if capability_id not in capability_ids:
+                department_gaps.append(f"missing_capability:{capability_id}")
+        for capability in department_capabilities:
+            if not capability.certified:
+                department_gaps.append(f"uncertified_capability:{capability.capability_id}")
+        for requirement_id in department.required_evidence:
+            if requirement_id not in evidence_ids:
+                department_gaps.append(f"missing_evidence_rule:{requirement_id}")
+        for escalation_ref in _escalation_path(department, departments_by_id):
+            if not escalation_ref["known"]:
+                department_gaps.append(f"unknown_escalation_department:{escalation_ref['department_id']}")
+
+        for role in department_roles:
+            role_rules = sorted(
+                (
+                    rule for rule in authority_by_role.get(role.role_id, [])
+                    if rule.department_id == department.department_id
+                ),
+                key=lambda item: item.rule_id,
+            )
+            role_gaps: list[str] = []
+            if not role_rules:
+                role_gaps.append("role_has_no_authority_rule")
+            authority_chain: list[dict[str, Any]] = []
+            for rule in role_rules:
+                matching_capabilities = [
+                    capability
+                    for capability in capabilities_by_id.get(rule.resource_type, [])
+                    if capability.department_id == department.department_id
+                ]
+                matching_evidence = [
+                    requirement
+                    for requirement in department_evidence
+                    if requirement.requirement_id in department.required_evidence
+                ]
+                rule_gaps: list[str] = []
+                if not matching_capabilities:
+                    rule_gaps.append(f"missing_capability:{rule.resource_type}")
+                for capability in matching_capabilities:
+                    if not capability.certified:
+                        rule_gaps.append(f"uncertified_capability:{capability.capability_id}")
+                for requirement_id in department.required_evidence:
+                    if requirement_id not in evidence_ids:
+                        rule_gaps.append(f"missing_evidence_rule:{requirement_id}")
+                authority_chain.append({
+                    "authority_rule": _body(rule),
+                    "capabilities": [_body(capability) for capability in matching_capabilities],
+                    "capability_ids": sorted(capability.capability_id for capability in matching_capabilities),
+                    "evidence_requirements": [_body(requirement) for requirement in matching_evidence],
+                    "evidence_requirement_ids": sorted(
+                        requirement.requirement_id for requirement in matching_evidence
+                    ),
+                    "escalation_path": _escalation_path(department, departments_by_id),
+                    "gaps": rule_gaps,
+                })
+            role_authority_chains.append({
+                "role": _body(role),
+                "authority_chain": authority_chain,
+                "gaps": role_gaps,
+            })
+            department_gaps.extend(role_gaps)
+
+        if department_gaps:
+            attention_items.append({
+                "kind": "authority_map_gap",
+                "severity": "review",
+                "ref": department.department_id,
+                "message": "department authority map has unresolved bindings",
+                "gaps": sorted(set(department_gaps)),
+            })
+        department_rows.append({
+            "department": _body(department),
+            "map_status": "mapped" if not department_gaps else "needs_review",
+            "gaps": sorted(set(department_gaps)),
+            "role_authority_chains": role_authority_chains,
+            "role_ids": sorted(department_role_ids),
+            "authority_rule_ids": sorted(rule.rule_id for rule in department_authority),
+            "capability_ids": sorted(capability_ids),
+            "evidence_requirement_ids": sorted(evidence_ids),
+            "escalation_path": _escalation_path(department, departments_by_id),
+        })
+
+    mapped_count = sum(1 for item in department_rows if item["map_status"] == "mapped")
+    return {
+        "authority_map_id": f"authority-map:{org_id}",
+        "org_id": org_id,
+        "organization": _body(organization),
+        "read_only": True,
+        "summary": {
+            "department_count": len(department_rows),
+            "mapped_department_count": mapped_count,
+            "review_department_count": len(department_rows) - mapped_count,
+            "role_count": sum(len(item["role_ids"]) for item in department_rows),
+            "authority_rule_count": sum(len(item["authority_rule_ids"]) for item in department_rows),
+            "capability_count": sum(len(item["capability_ids"]) for item in department_rows),
+            "evidence_requirement_count": sum(len(item["evidence_requirement_ids"]) for item in department_rows),
+            "escalation_path_count": sum(len(item["escalation_path"]) for item in department_rows),
+            "map_gap_count": sum(len(item["gaps"]) for item in department_rows),
+        },
+        "departments": department_rows,
+        "attention_items": attention_items,
+        "governed": True,
+    }
+
+
 def _render_department_registry_html(payload: dict[str, Any]) -> str:
     raw_org_id = str(payload.get("org_id", ""))
     org_id = escape(raw_org_id)
@@ -1401,6 +1580,113 @@ def _render_department_registry_html(payload: dict[str, Any]) -> str:
     {_proof_explorer_table("Summary", ("metric", "value"), summary_rows)}
     {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
     {_proof_explorer_table("Departments", ("department_id", "name", "readiness", "owns", "case_types", "capabilities", "evidence", "escalation"), department_rows)}
+  </main>
+</body>
+</html>
+"""
+
+
+def _render_authority_map_html(payload: dict[str, Any]) -> str:
+    raw_org_id = str(payload.get("org_id", ""))
+    org_id = escape(raw_org_id)
+    organization = payload.get("organization", {})
+    org_name = escape(str(organization.get("name", ""))) if isinstance(organization, dict) else ""
+    summary = payload.get("summary", {})
+    summary_rows = [
+        {"metric": key, "value": value}
+        for key, value in sorted(summary.items())
+    ] if isinstance(summary, dict) else []
+    authority_rows: list[dict[str, object]] = []
+    for department_row in payload.get("departments", []):
+        if not isinstance(department_row, dict) or not isinstance(department_row.get("department"), dict):
+            continue
+        department = department_row["department"]
+        department_id = str(department.get("department_id", ""))
+        for role_chain in department_row.get("role_authority_chains", []):
+            if not isinstance(role_chain, dict) or not isinstance(role_chain.get("role"), dict):
+                continue
+            role = role_chain["role"]
+            authority_chain = role_chain.get("authority_chain", [])
+            if not authority_chain:
+                authority_rows.append({
+                    "department": department_id,
+                    "role": role.get("role_id", ""),
+                    "authority": "",
+                    "action": "",
+                    "capability": "",
+                    "evidence": "",
+                    "escalation": _text_list([
+                        item.get("department_id", "")
+                        for item in department_row.get("escalation_path", [])
+                        if isinstance(item, dict)
+                    ]),
+                    "gaps": _text_list(role_chain.get("gaps", [])),
+                })
+            for authority_binding in authority_chain:
+                if not isinstance(authority_binding, dict):
+                    continue
+                authority_rule = authority_binding.get("authority_rule", {})
+                authority_rule = authority_rule if isinstance(authority_rule, dict) else {}
+                authority_rows.append({
+                    "department": department_id,
+                    "role": role.get("role_id", ""),
+                    "authority": authority_rule.get("rule_id", ""),
+                    "action": authority_rule.get("action", ""),
+                    "capability": _text_list(authority_binding.get("capability_ids", [])),
+                    "evidence": _text_list(authority_binding.get("evidence_requirement_ids", [])),
+                    "escalation": _text_list([
+                        item.get("department_id", "")
+                        for item in authority_binding.get("escalation_path", [])
+                        if isinstance(item, dict)
+                    ]),
+                    "gaps": _text_list(authority_binding.get("gaps", [])),
+                })
+    attention_rows = [
+        {
+            "severity": item.get("severity", ""),
+            "kind": item.get("kind", ""),
+            "ref": item.get("ref", ""),
+            "message": item.get("message", ""),
+        }
+        for item in payload.get("attention_items", [])
+        if isinstance(item, dict)
+    ]
+    quoted_org_id = quote(raw_org_id, safe="")
+    json_url = f"/api/v1/orgs/{quoted_org_id}/authority-map"
+    registry_url = f"/api/v1/orgs/{quoted_org_id}/department-registry/view"
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mullu OrgOS Authority Map</title>
+  <style>
+    body {{ margin: 0; font-family: system-ui, sans-serif; color: #1f2937; background: #f7f7f4; }}
+    header {{ background: #243447; color: #ffffff; padding: 24px 28px; }}
+    main {{ max-width: 1240px; margin: 0 auto; padding: 22px; }}
+    nav {{ display: flex; gap: 14px; margin-top: 12px; flex-wrap: wrap; }}
+    nav a {{ color: #c9e4ff; }}
+    h1 {{ margin: 0; font-size: 28px; letter-spacing: 0; }}
+    h2 {{ margin: 28px 0 10px; font-size: 18px; letter-spacing: 0; }}
+    .status {{ margin-top: 8px; color: #e4edf6; }}
+    table {{ border-collapse: collapse; width: 100%; background: #ffffff; }}
+    th, td {{ border: 1px solid #d8dee4; padding: 8px; text-align: left; vertical-align: top; font-size: 14px; overflow-wrap: anywhere; }}
+    th {{ background: #edf0f5; color: #263041; }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mullu OrgOS Authority Map</h1>
+    <div class="status">Organization <strong>{org_id}</strong> | <strong>{org_name}</strong></div>
+    <nav>
+      <a href="{escape(json_url)}">json authority map</a>
+      <a href="{escape(registry_url)}">department registry</a>
+    </nav>
+  </header>
+  <main>
+    {_proof_explorer_table("Summary", ("metric", "value"), summary_rows)}
+    {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
+    {_proof_explorer_table("Authority Chain", ("department", "role", "authority", "action", "capability", "evidence", "escalation", "gaps"), authority_rows)}
   </main>
 </body>
 </html>
@@ -1891,6 +2177,24 @@ def get_organization_department_registry_view(org_id: str, request: Request):
     kernel = _kernel()
     _enforce_organization_tenant(request, kernel, org_id)
     return HTMLResponse(_render_department_registry_html(_organization_department_registry(kernel, org_id)))
+
+
+@router.get("/api/v1/orgs/{org_id}/authority-map")
+def get_organization_authority_map(org_id: str, request: Request):
+    """Return a read-only department, role, authority, capability, and evidence map."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_organization_tenant(request, kernel, org_id)
+    return _organization_authority_map(kernel, org_id)
+
+
+@router.get("/api/v1/orgs/{org_id}/authority-map/view")
+def get_organization_authority_map_view(org_id: str, request: Request):
+    """Return a browser-facing read-only organization authority map."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_organization_tenant(request, kernel, org_id)
+    return HTMLResponse(_render_authority_map_html(_organization_authority_map(kernel, org_id)))
 
 
 @router.post("/api/v1/cases/launch-gateway-pilot")

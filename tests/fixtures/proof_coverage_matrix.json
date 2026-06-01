@@ -871,11 +871,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 229,
+      "proven": 231,
       "unproven": 0,
       "witnessed": 149
     },
-    "route_count": 378,
+    "route_count": 380,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1915,6 +1915,16 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/orgs",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/orgs/{org_id}/authority-map",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/orgs/{org_id}/authority-map/view",
         "surface_id": "orgos_case_governance_lifecycle"
       },
       {
@@ -5780,9 +5790,11 @@
         "mcoi/tests/test_organization_kernel_router.py",
         "mcoi/tests/test_organization_kernel_store.py"
       ],
-      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, closure decisions, department registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, browser-facing proof views, and bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
+      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, closure decisions, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, browser-facing proof views, and bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
       "representative_paths": [
         "/api/v1/orgs",
+        "/api/v1/orgs/{org_id}/authority-map",
+        "/api/v1/orgs/{org_id}/authority-map/view",
         "/api/v1/orgs/{org_id}/bootstrap-minimum",
         "/api/v1/orgs/{org_id}/department-registry",
         "/api/v1/orgs/{org_id}/department-registry/view",
@@ -5828,6 +5840,7 @@
         "case_proof_explorer_reports_open_case_attention_without_mutation",
         "case_proof_explorer_reports_closed_verified_case",
         "case_proof_explorer_html_view_is_read_only_and_escaped",
+        "authority_map_view_is_read_only_escaped_and_chained",
         "case_audit_explorer_reports_open_case_without_mutation",
         "case_audit_explorer_view_is_read_only_and_escaped",
         "department_registry_view_is_read_only_and_escaped",
@@ -9302,8 +9315,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1142,
-    "runtime_witness_count": 1142,
+    "exact_test_anchor_count": 1143,
+    "runtime_witness_count": 1143,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -12971,6 +12984,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_authority_map_view_is_read_only_escaped_and_chained"
+            ],
+            "witness": "authority_map_view_is_read_only_escaped_and_chained"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_organization_kernel_router.py::test_case_audit_explorer_reports_open_case_without_mutation"
             ],
             "witness": "case_audit_explorer_reports_open_case_without_mutation"
@@ -13060,8 +13079,8 @@
             "witness": "worker_receipts_satisfy_engineering_gate_evidence"
           }
         ],
-        "exact_test_anchor_count": 28,
-        "runtime_witness_count": 28,
+        "exact_test_anchor_count": 29,
+        "runtime_witness_count": 29,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

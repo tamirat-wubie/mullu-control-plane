@@ -2856,6 +2856,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "orgos_case_governance_lifecycle",
             [
                 "/api/v1/orgs",
+                "/api/v1/orgs/{org_id}/authority-map",
+                "/api/v1/orgs/{org_id}/authority-map/view",
                 "/api/v1/orgs/{org_id}/bootstrap-minimum",
                 "/api/v1/orgs/{org_id}/department-registry",
                 "/api/v1/orgs/{org_id}/department-registry/view",
@@ -2902,7 +2904,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_organization_kernel_router.py",
                 "mcoi/tests/test_organization_kernel_store.py",
             ],
-            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, closure decisions, department registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, browser-facing proof views, and bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
+            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, closure decisions, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, browser-facing proof views, and bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
             [
                 "orgos_api_runs_launch_gateway_case_control_loop",
                 "orgos_api_denies_unbound_authority_gate",
@@ -2917,6 +2919,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "case_proof_explorer_reports_open_case_attention_without_mutation",
                 "case_proof_explorer_reports_closed_verified_case",
                 "case_proof_explorer_html_view_is_read_only_and_escaped",
+                "authority_map_view_is_read_only_escaped_and_chained",
                 "case_audit_explorer_reports_open_case_without_mutation",
                 "case_audit_explorer_view_is_read_only_and_escaped",
                 "department_registry_view_is_read_only_and_escaped",
