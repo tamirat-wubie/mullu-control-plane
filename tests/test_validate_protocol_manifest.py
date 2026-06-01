@@ -375,10 +375,13 @@ def test_protocol_manifest_indexes_sdlc_contract_schemas() -> None:
         "sdlc-requirement": "schemas/sdlc_requirement.schema.json",
         "sdlc-design-decision": "schemas/sdlc_design_decision.schema.json",
         "sdlc-work-plan": "schemas/sdlc_work_plan.schema.json",
+        "sdlc-implementation-receipt": "schemas/sdlc_implementation_receipt.schema.json",
+        "sdlc-transition-receipt": "schemas/sdlc_transition_receipt.schema.json",
         "sdlc-verification-receipt": "schemas/sdlc_verification_receipt.schema.json",
         "sdlc-security-review": "schemas/sdlc_security_review.schema.json",
         "sdlc-release-candidate": "schemas/sdlc_release_candidate.schema.json",
         "sdlc-deployment-candidate": "schemas/sdlc_deployment_candidate.schema.json",
+        "sdlc-recovery-handoff-receipt": "schemas/sdlc_recovery_handoff_receipt.schema.json",
         "sdlc-closure-receipt": "schemas/sdlc_closure_receipt.schema.json",
     }
 
@@ -387,6 +390,17 @@ def test_protocol_manifest_indexes_sdlc_contract_schemas() -> None:
         assert entries[schema_id]["path"] == schema_path
         assert entries[schema_id]["urn"].startswith("urn:mullusi:schema:sdlc-")
         assert entries[schema_id]["surface"] == "software_delivery"
+
+
+def test_protocol_manifest_indexes_workspace_governance_integrity_report_schema() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    integrity_entry = entries["workspace-governance-integrity-report"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert integrity_entry["path"] == "schemas/workspace_governance_integrity_report.schema.json"
+    assert integrity_entry["urn"] == "urn:mullusi:schema:workspace-governance-integrity-report:1"
+    assert integrity_entry["surface"] == "governance"
 
 
 def test_protocol_manifest_indexes_trust_ledger_bundle() -> None:
