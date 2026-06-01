@@ -2,7 +2,7 @@
 
 Purpose: define the governed software delivery lifecycle doctrine for Mullu software changes.
 Governance scope: OCE lifecycle field completeness, RAG artifact linkage, CDCV stage transition causality, CQTE decidable gates, UWMA receipt anchoring, and PRS closure evidence.
-Dependencies: `docs/SDLC_GOVERNANCE_POLICY.md`, `docs/SDLC_STATE_MACHINE.md`, `docs/SDLC_RELEASE_POLICY.md`, `docs/SDLC_SECURITY_REVIEW.md`, `docs/SDLC_PR_ENFORCEMENT.md`, `schemas/sdlc_*.schema.json`, `examples/sdlc/*.json`, and `scripts/validate_sdlc_*.py`.
+Dependencies: `docs/SDLC_GOVERNANCE_POLICY.md`, `docs/SDLC_STATE_MACHINE.md`, `docs/SDLC_RELEASE_POLICY.md`, `docs/SDLC_SECURITY_REVIEW.md`, `docs/SDLC_PR_ENFORCEMENT.md`, `docs/main-protection-ruleset-witness.json`, `schemas/sdlc_*.schema.json`, `examples/sdlc/*.json`, and `scripts/validate_sdlc_*.py`.
 Invariants: no software change, release, deployment, or production claim advances without evidence, validation, receipt, and closure.
 
 ## Architecture
@@ -70,6 +70,8 @@ Canonical inventory closure is named `sdlc_inventory_closure`. Design `schema_ch
 
 Workspace preflight closure is named `sdlc_workspace_preflight_closure`. Verification commands, validator outputs, verification `coverage_refs`, and terminal closure `receipts` must retain the workspace governance preflight receipt, so a closure cannot cite preflight doctrine without carrying the preflight witness.
 
+Branch protection witness closure is named `sdlc_branch_ruleset_witness`. Implementation `documentation_changes` and verification `coverage_refs` must retain `docs/main-protection-ruleset-witness.json`, so PR enforcement cannot claim default-branch protection without carrying the retained ruleset witness.
+
 | Artifact | Schema | Gate |
 | --- | --- | --- |
 | Change request | `schemas/sdlc_change_request.schema.json` | no intake without owner, source, scope, and target surface |
@@ -133,7 +135,7 @@ python scripts/validate_sdlc_security_review.py --strict
 python scripts/validate_sdlc_pr_enforcement.py
 python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json
 python -m pytest mcoi/tests/test_sdlc_dashboard.py -q
-python -m pytest tests/test_validate_sdlc_artifact.py tests/test_validate_sdlc_state_machine.py tests/test_validate_sdlc_release_readiness.py tests/test_sdlc_security_review.py -q
+python -m pytest tests/test_validate_sdlc_artifact.py tests/test_validate_sdlc_state_machine.py tests/test_validate_sdlc_release_readiness.py tests/test_sdlc_security_review.py tests/test_validate_sdlc_pr_enforcement.py -q
 python scripts/run_workspace_governance_checks.py
 ```
 
@@ -152,6 +154,7 @@ No deployment without witness.
 No claim without proof.
 No inventory drift between lifecycle schemas, examples, implementation receipts, and verification coverage.
 No terminal closure without workspace preflight receipt retention.
+No PR enforcement claim without branch protection witness retention.
 No closure without recovery handoff.
 No closure without learning.
 ```

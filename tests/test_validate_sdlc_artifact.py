@@ -36,6 +36,7 @@ def test_current_sdlc_contract_passes() -> None:
     assert "recovery_handoff" in validator.GATE_BOUND_ARTIFACT_KINDS
     assert "workspace_governance_preflight" in validator.REQUIRED_VERIFICATION_COMMANDS
     assert validator.WORKSPACE_PREFLIGHT_RECEIPT_PATH == ".tmp/workspace-governance-preflight-receipt.json"
+    assert validator.BRANCH_RULESET_WITNESS_PATH == "docs/main-protection-ruleset-witness.json"
 
 
 def test_schema_artifacts_have_expected_identity() -> None:
@@ -75,9 +76,14 @@ def test_example_chain_links_all_lifecycle_artifacts() -> None:
     assert set(validator.CANONICAL_INVENTORY_REFS).issubset(set(records["work_plan"]["expected_artifacts"]))
     assert set(validator.CANONICAL_EXAMPLE_REFS).issubset(set(records["verification_receipt"]["coverage_refs"]))
     assert validator.WORKSPACE_PREFLIGHT_RECEIPT_PATH in records["verification_receipt"]["coverage_refs"]
+    assert validator.BRANCH_RULESET_WITNESS_PATH in records["verification_receipt"]["coverage_refs"]
+    assert validator.BRANCH_RULESET_WITNESS_PATH in records["implementation_receipt"]["documentation_changes"]
     assert set(validator.CANONICAL_INVENTORY_REFS).issubset(
         {changed_file["path"] for changed_file in records["implementation_receipt"]["changed_files"]}
     )
+    assert validator.BRANCH_RULESET_WITNESS_PATH in {
+        changed_file["path"] for changed_file in records["implementation_receipt"]["changed_files"]
+    }
 
 
 def test_raw_private_reasoning_field_is_rejected() -> None:
@@ -316,6 +322,36 @@ def test_workspace_preflight_receipt_is_required_for_terminal_closure() -> None:
     assert len(verification_errors) + len(chain_errors) >= 4
 
 
+def test_branch_ruleset_witness_is_required_for_pr_enforcement_closure() -> None:
+    records = validator.load_example_records()
+    invalid_implementation = copy.deepcopy(records["implementation_receipt"])
+    invalid_verification = copy.deepcopy(records["verification_receipt"])
+    invalid_implementation["changed_files"] = [
+        changed_file
+        for changed_file in invalid_implementation["changed_files"]
+        if changed_file["path"] != validator.BRANCH_RULESET_WITNESS_PATH
+    ]
+    invalid_implementation["documentation_changes"].remove(validator.BRANCH_RULESET_WITNESS_PATH)
+    invalid_verification["coverage_refs"].remove(validator.BRANCH_RULESET_WITNESS_PATH)
+
+    implementation_errors = validator.validate_artifact_record(
+        "implementation_receipt",
+        invalid_implementation,
+    )
+    verification_errors = validator.validate_artifact_record(
+        "verification_receipt",
+        invalid_verification,
+    )
+
+    assert any("changed_files missing required branch ruleset witness refs" in error for error in implementation_errors)
+    assert any(
+        "documentation_changes missing required branch ruleset witness refs" in error
+        for error in implementation_errors
+    )
+    assert any("coverage_refs missing required branch ruleset witness refs" in error for error in verification_errors)
+    assert len(implementation_errors) + len(verification_errors) >= 3
+
+
 def test_cli_json_receipt_reports_passed_contract() -> None:
     stdout_buffer = io.StringIO()
 
@@ -330,11 +366,12 @@ def test_cli_json_receipt_reports_passed_contract() -> None:
     assert report["valid"] is True
     assert report["status"] == "passed"
     assert report["error_count"] == 0
-    assert report["check_count"] == 10
+    assert report["check_count"] == 11
     assert any(check["name"] == "sdlc_gate_decision_envelopes" for check in report["checks"])
     assert any(check["name"] == "sdlc_inventory_closure" for check in report["checks"])
     assert any(check["name"] == "sdlc_workspace_preflight_closure" for check in report["checks"])
     assert any(check["name"] == "sdlc_recovery_handoff_retention" for check in report["checks"])
+    assert any(check["name"] == "sdlc_branch_ruleset_witness_closure" for check in report["checks"])
 
 
 def test_cli_text_output_reports_all_receipt_checks() -> None:

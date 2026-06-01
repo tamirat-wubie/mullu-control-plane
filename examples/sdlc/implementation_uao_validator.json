@@ -26,6 +26,11 @@
       "surface": "docs"
     },
     {
+      "path": "docs/main-protection-ruleset-witness.json",
+      "change_type": "add",
+      "surface": "docs"
+    },
+    {
       "path": "schemas/sdlc_change_request.schema.json",
       "change_type": "add",
       "surface": "schemas"
@@ -216,6 +221,7 @@
   "documentation_changes": [
     "docs/SDLC.md",
     "docs/SDLC_PR_ENFORCEMENT.md",
+    "docs/main-protection-ruleset-witness.json",
     ".github/pull_request_template.md"
   ],
   "schema_changes": [
