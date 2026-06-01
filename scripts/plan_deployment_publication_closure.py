@@ -5,7 +5,7 @@ Purpose: convert deployment promotion blockers into deterministic operator
 actions without changing public deployment status.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: .change_assurance/general_agent_promotion_readiness.json,
-DEPLOYMENT_STATUS.md, optional upstream blocker receipt, and deployment witness
+DEPLOYMENT_STATUS.md, optional upstream/DNS receipts, and deployment witness
 publication scripts.
 Invariants:
   - Planning never flips DEPLOYMENT_STATUS.md to published.
@@ -28,6 +28,12 @@ DEFAULT_DEPLOYMENT_STATUS = REPO_ROOT / "DEPLOYMENT_STATUS.md"
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "deployment_publication_closure_plan.json"
 DEFAULT_UPSTREAM_BLOCKER_RECEIPT = (
     REPO_ROOT / ".change_assurance" / "deployment_upstream_blocker_receipt.json"
+)
+DEFAULT_DNS_TARGET_BINDING_RECEIPT = (
+    REPO_ROOT / ".change_assurance" / "gateway_dns_target_binding_receipt.json"
+)
+DEFAULT_DNS_RESOLUTION_RECEIPT = (
+    REPO_ROOT / ".change_assurance" / "gateway_dns_resolution_receipt.json"
 )
 
 
@@ -79,6 +85,8 @@ def plan_deployment_publication_closure(
     readiness_path: Path = DEFAULT_READINESS,
     deployment_status_path: Path = DEFAULT_DEPLOYMENT_STATUS,
     upstream_blocker_receipt_path: Path = DEFAULT_UPSTREAM_BLOCKER_RECEIPT,
+    dns_target_binding_receipt_path: Path = DEFAULT_DNS_TARGET_BINDING_RECEIPT,
+    dns_resolution_receipt_path: Path = DEFAULT_DNS_RESOLUTION_RECEIPT,
 ) -> DeploymentPublicationClosurePlan:
     """Build a deterministic plan for deployment publication blockers."""
     readiness = _load_json_object(readiness_path, "promotion readiness")
@@ -87,6 +95,8 @@ def plan_deployment_publication_closure(
             [
                 *_deployment_readiness_blockers(readiness),
                 *_deployment_upstream_blockers(upstream_blocker_receipt_path),
+                *_deployment_dns_target_binding_blockers(dns_target_binding_receipt_path),
+                *_deployment_dns_resolution_blockers(dns_resolution_receipt_path),
             ]
         )
     )
@@ -443,6 +453,30 @@ def _deployment_upstream_blockers(receipt_path: Path) -> tuple[str, ...]:
     return ()
 
 
+def _deployment_dns_target_binding_blockers(receipt_path: Path) -> tuple[str, ...]:
+    if not receipt_path.exists():
+        return ()
+    try:
+        receipt = _load_json_object(receipt_path, "gateway DNS target binding receipt")
+    except (FileNotFoundError, ValueError):
+        return ("deployment_dns_not_verified",)
+    if receipt.get("ready") is True and receipt.get("binding_state") == "bound":
+        return ()
+    return ("deployment_dns_not_verified",)
+
+
+def _deployment_dns_resolution_blockers(receipt_path: Path) -> tuple[str, ...]:
+    if not receipt_path.exists():
+        return ()
+    try:
+        receipt = _load_json_object(receipt_path, "gateway DNS resolution receipt")
+    except (FileNotFoundError, ValueError):
+        return ("deployment_dns_not_verified",)
+    if receipt.get("resolved") is True and receipt.get("addresses"):
+        return ()
+    return ("deployment_dns_not_verified",)
+
+
 def _blockers_for_failed_step(step: dict[str, Any]) -> tuple[str, ...]:
     name = str(step.get("name", "")).casefold()
     detail = str(step.get("detail", "")).casefold()
@@ -509,6 +543,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--readiness", default=str(DEFAULT_READINESS))
     parser.add_argument("--deployment-status", default=str(DEFAULT_DEPLOYMENT_STATUS))
     parser.add_argument("--upstream-blocker-receipt", default=str(DEFAULT_UPSTREAM_BLOCKER_RECEIPT))
+    parser.add_argument("--dns-target-binding-receipt", default=str(DEFAULT_DNS_TARGET_BINDING_RECEIPT))
+    parser.add_argument("--dns-resolution-receipt", default=str(DEFAULT_DNS_RESOLUTION_RECEIPT))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
@@ -521,6 +557,8 @@ def main(argv: list[str] | None = None) -> int:
         readiness_path=Path(args.readiness),
         deployment_status_path=Path(args.deployment_status),
         upstream_blocker_receipt_path=Path(args.upstream_blocker_receipt),
+        dns_target_binding_receipt_path=Path(args.dns_target_binding_receipt),
+        dns_resolution_receipt_path=Path(args.dns_resolution_receipt),
     )
     write_deployment_publication_closure_plan(plan, Path(args.output))
     if args.json:
