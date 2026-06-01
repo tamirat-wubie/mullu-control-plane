@@ -68,6 +68,18 @@ def test_impact_category_requires_mapped_check() -> None:
     assert len(errors) >= 1
 
 
+def test_duplicate_category_checks_preserve_required_control() -> None:
+    review = copy.deepcopy(validate_sdlc_artifact.load_example_records()["security_review"])
+
+    errors = validator.validate_required_security_checks(review, strict=True)
+    audit_checks = [check for check in review["required_checks"] if check["category"] == "audit"]
+
+    assert errors == []
+    assert len(audit_checks) >= 2
+    assert any("audit visibility" in check["check"] for check in audit_checks)
+    assert any("PR enforcement drift" in check["check"] for check in audit_checks)
+
+
 def test_security_review_cli_reports_passed() -> None:
     stdout_buffer = io.StringIO()
 

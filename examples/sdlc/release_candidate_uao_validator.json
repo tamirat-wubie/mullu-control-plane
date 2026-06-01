@@ -19,11 +19,11 @@
     "status": "passed"
   },
   "known_limitations": [
-    "runtime dashboard and GitHub PR template integration are outside this contract foundation phase"
+    "runtime dashboard integration is outside this contract foundation phase"
   ],
-  "release_notes": "Adds SDLC doctrine, schemas, examples, validators, tests, and preflight gates without runtime deployment.",
+  "release_notes": "Adds SDLC doctrine, schemas, examples, validators, tests, preflight gates, and PR enforcement gates without runtime deployment.",
   "deployment_status": "not_published",
-  "rollback_plan": "Revert SDLC files and remove SDLC checks from workspace preflight.",
+  "rollback_plan": "Revert SDLC files and remove SDLC checks from workspace preflight, CI, and PR template enforcement.",
   "release_receipt": "receipt://sdlc/release/uao-validator/001",
   "evidence_bound_claims": true
 }

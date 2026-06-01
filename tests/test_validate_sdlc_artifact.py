@@ -28,6 +28,7 @@ def test_current_sdlc_contract_passes() -> None:
     assert len(records) == 9
     assert all(spec.schema_path.exists() for spec in validator.ARTIFACT_SPECS)
     assert all(spec.example_path.exists() for spec in validator.ARTIFACT_SPECS)
+    assert "scripts/validate_sdlc_pr_enforcement.py" in validator.REQUIRED_VALIDATORS
 
 
 def test_schema_artifacts_have_expected_identity() -> None:
@@ -89,6 +90,35 @@ def test_work_plan_rejects_future_dependency_and_missing_validator() -> None:
     assert any("dependency 2 must be earlier" in error for error in errors)
     assert any("missing required validators" in error for error in errors)
     assert len(errors) >= 2
+
+
+def test_design_and_verification_require_pr_enforcement_validator() -> None:
+    records = validator.load_example_records()
+    invalid_design = copy.deepcopy(records["design_decision"])
+    invalid_verification = copy.deepcopy(records["verification_receipt"])
+    invalid_design["validator_changes"] = [
+        item
+        for item in invalid_design["validator_changes"]
+        if item != "scripts/validate_sdlc_pr_enforcement.py"
+    ]
+    invalid_verification["commands"] = [
+        item
+        for item in invalid_verification["commands"]
+        if item["name"] != "sdlc_pr_enforcement_validation"
+    ]
+    invalid_verification["validator_outputs"] = [
+        item
+        for item in invalid_verification["validator_outputs"]
+        if item["name"] != "sdlc_pr_enforcement_validation"
+    ]
+
+    design_errors = validator.validate_artifact_record("design_decision", invalid_design)
+    verification_errors = validator.validate_artifact_record("verification_receipt", invalid_verification)
+
+    assert any("design_decision: missing required validators" in error for error in design_errors)
+    assert any("verification_receipt: missing command sdlc_pr_enforcement_validation" in error for error in verification_errors)
+    assert any("verification_receipt: missing validator outputs" in error for error in verification_errors)
+    assert len(design_errors) + len(verification_errors) >= 3
 
 
 def test_cli_json_receipt_reports_passed_contract() -> None:

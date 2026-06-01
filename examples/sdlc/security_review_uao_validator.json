@@ -6,7 +6,7 @@
     "receipts",
     "audit"
   ],
-  "threat_model": "The change is read-only validation infrastructure. Main risks are raw private reasoning exposure, receipt overclaim, and preflight bypass.",
+  "threat_model": "The change is read-only validation infrastructure. Main risks are raw private reasoning exposure, receipt overclaim, preflight bypass, and PR evidence bypass.",
   "required_checks": [
     {
       "category": "policy",
@@ -25,13 +25,20 @@
       "check": "audit visibility test",
       "status": "passed",
       "evidence_ref": "tests/test_sdlc_security_review.py"
+    },
+    {
+      "category": "audit",
+      "check": "PR enforcement drift test",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_sdlc_pr_enforcement.py"
     }
   ],
   "findings": [],
   "mitigations": [
     "reject raw private reasoning fields",
     "require UAO, causal decision trace, and receipt references for gate decisions",
-    "bind validators into workspace preflight"
+    "bind validators into workspace preflight",
+    "require stable PR governance gate and pull request evidence"
   ],
   "residual_risk": "low",
   "release_blocked": false,

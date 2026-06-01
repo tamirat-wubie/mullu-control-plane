@@ -51,16 +51,17 @@ def validate_required_security_checks(record: dict[str, object], *, strict: bool
 
     errors: list[str] = []
     checks = record.get("required_checks", [])
-    check_text_by_category: dict[str, str] = {}
+    check_text_by_category: dict[str, list[str]] = {}
     if isinstance(checks, list):
         for check in checks:
             if isinstance(check, dict):
-                check_text_by_category[str(check.get("category"))] = str(check.get("check", "")).lower()
+                category = str(check.get("category"))
+                check_text_by_category.setdefault(category, []).append(str(check.get("check", "")).lower())
     for category, required_text in REQUIRED_CHECK_BY_CATEGORY.items():
         if category not in record.get("impact_categories", []):
             continue
-        observed_text = check_text_by_category.get(category, "")
-        if required_text.lower() not in observed_text:
+        observed_texts = check_text_by_category.get(category, [])
+        if not any(required_text.lower() in observed_text for observed_text in observed_texts):
             errors.append(f"security_review: impact {category} requires {required_text} check")
     if strict and "none" in record.get("impact_categories", []) and len(record.get("impact_categories", [])) > 1:
         errors.append("security_review: none impact category cannot be mixed with concrete impacts")
