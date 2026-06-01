@@ -190,6 +190,7 @@ REQUIRED_DOCUMENT_TERMS = (
     "Every command replay record must bind to the same event-local universal action proof detail, including action id, trace, receipts, closure state, orchestration id, and lineage delta before exposure.",
     "Every command replay record must come from a command event whose event hash recomputes from the persisted event payload before exposure.",
     "Every command replay record must come from a command event whose source channel, idempotency key, policy version, and trace id match the command envelope before exposure.",
+    "Every command replay record must carry the canonical ordered UAO pipeline stage sequence before exposure.",
 )
 
 

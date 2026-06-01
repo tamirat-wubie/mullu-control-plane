@@ -44,7 +44,7 @@ doctrine docs -> schema contracts -> example fixtures -> validators -> workspace
 3. Design binds affected modules, schema impact, security model, rollback plan, migration plan, and test plan.
 4. Work plan orders implementation steps, dependencies, validators, tests, expected artifacts, and owner.
 5. Transition receipt records each governed movement between lifecycle states with evidence, receipt refs, blockers, UAO ref, and causal trace.
-6. Implementation records constructive deltas, fracture deltas, changed files, test changes, and documentation changes.
+6. Implementation receipt records constructive deltas, fracture deltas, changed files, test changes, documentation changes, schema changes, validator changes, and rollback refs.
 7. Verification records commands, validator outputs, warnings, failed checks, and receipt references.
 8. Security review classifies impact categories, threat model, findings, mitigations, residual risk, and receipts.
 9. Release readiness binds version, change set, evidence-bound claims, migrations, known limitations, and rollback plan.
@@ -61,6 +61,7 @@ The canonical lifecycle example under `examples/sdlc/` represents the UAO valida
 | Requirement | `schemas/sdlc_requirement.schema.json` | no design without success criteria |
 | Design decision | `schemas/sdlc_design_decision.schema.json` | no implementation without rollback path and test plan |
 | Work plan | `schemas/sdlc_work_plan.schema.json` | no coding without ordered work plan for medium and high risk |
+| Implementation receipt | `schemas/sdlc_implementation_receipt.schema.json` | no verification without implementation deltas, changed files, tests, docs, and rollback refs |
 | Transition receipt | `schemas/sdlc_transition_receipt.schema.json` | no state movement without transition evidence, receipt refs, and blocker classification |
 | Verification receipt | `schemas/sdlc_verification_receipt.schema.json` | no readiness claim without validation receipt |
 | Security review | `schemas/sdlc_security_review.schema.json` | no release with unresolved critical or high findings |
@@ -83,6 +84,12 @@ receipt_ref
 ```
 
 This required triplet is the `sdlc_gate_decision_envelope`. Every non-terminal SDLC artifact carries exactly this envelope. Terminal closure carries retained arrays of every upstream `uao_ref`, `causal_decision_trace_ref`, and `receipt_ref`, so no stage can be closed with a dropped admission trace.
+
+Implementation deltas are first-class evidence:
+
+```text
+sdlc_implementation_receipt := <change_id, plan_id, constructive_deltas, fracture_deltas, changed_files, test_changes, documentation_changes, schema_changes, validator_changes, rollback_refs, uao_ref, causal_decision_trace_ref, receipt_ref>
+```
 
 Every state change also emits a transition receipt:
 
@@ -113,6 +120,7 @@ No idea without intake.
 No intake without requirement.
 No requirement without design.
 No design without rollback.
+No implementation without delta receipt.
 No implementation without tests.
 No test without receipt.
 No release without evidence.

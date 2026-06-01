@@ -689,6 +689,12 @@
       "surface": "software_delivery"
     },
     {
+      "schema_id": "sdlc-implementation-receipt",
+      "path": "schemas/sdlc_implementation_receipt.schema.json",
+      "urn": "urn:mullusi:schema:sdlc-implementation-receipt:1",
+      "surface": "software_delivery"
+    },
+    {
       "schema_id": "sdlc-transition-receipt",
       "path": "schemas/sdlc_transition_receipt.schema.json",
       "urn": "urn:mullusi:schema:sdlc-transition-receipt:1",

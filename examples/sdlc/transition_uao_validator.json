@@ -6,10 +6,12 @@
   "decision": "allowed",
   "transition_reason": "Verification receipts and validator outputs are present before entering security review.",
   "required_evidence_refs": [
+    "examples/sdlc/implementation_uao_validator.json",
     "examples/sdlc/verification_uao_validator.json",
     "tests/test_validate_sdlc_artifact.py"
   ],
   "required_receipt_refs": [
+    "receipt://sdlc/implementation/uao-validator/001",
     "receipt://sdlc/verification/uao-validator/001"
   ],
   "blockers": [],

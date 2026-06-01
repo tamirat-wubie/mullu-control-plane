@@ -22,33 +22,39 @@
     },
     {
       "order": 4,
-      "action": "add deterministic validators",
-      "expected_artifact": "scripts/validate_sdlc_artifact.py",
-      "depends_on": [2, 3]
+      "action": "record governed implementation deltas",
+      "expected_artifact": "examples/sdlc/implementation_uao_validator.json",
+      "depends_on": [3]
     },
     {
       "order": 5,
-      "action": "add focused validator tests",
-      "expected_artifact": "tests/test_validate_sdlc_artifact.py",
-      "depends_on": [4]
+      "action": "add deterministic validators",
+      "expected_artifact": "scripts/validate_sdlc_artifact.py",
+      "depends_on": [2, 3, 4]
     },
     {
       "order": 6,
-      "action": "bind validators to workspace preflight",
-      "expected_artifact": "scripts/run_workspace_governance_checks.py",
-      "depends_on": [4, 5]
+      "action": "add focused validator tests",
+      "expected_artifact": "tests/test_validate_sdlc_artifact.py",
+      "depends_on": [5]
     },
     {
       "order": 7,
-      "action": "bind PR evidence to CI and pull request review",
-      "expected_artifact": "docs/SDLC_PR_ENFORCEMENT.md",
-      "depends_on": [6]
+      "action": "bind validators to workspace preflight",
+      "expected_artifact": "scripts/run_workspace_governance_checks.py",
+      "depends_on": [5, 6]
     },
     {
       "order": 8,
+      "action": "bind PR evidence to CI and pull request review",
+      "expected_artifact": "docs/SDLC_PR_ENFORCEMENT.md",
+      "depends_on": [7]
+    },
+    {
+      "order": 9,
       "action": "run focused validation and preflight checks",
       "expected_artifact": ".tmp/workspace-governance-preflight-receipt.json",
-      "depends_on": [7]
+      "depends_on": [8]
     }
   ],
   "dependencies": [
@@ -81,7 +87,9 @@
     ".github/pull_request_template.md",
     ".github/workflows/ci.yml",
     "schemas/sdlc_change_request.schema.json",
+    "schemas/sdlc_implementation_receipt.schema.json",
     "examples/sdlc/change_request_uao_validator.json",
+    "examples/sdlc/implementation_uao_validator.json",
     "scripts/validate_sdlc_artifact.py",
     "tests/test_validate_sdlc_artifact.py"
   ],

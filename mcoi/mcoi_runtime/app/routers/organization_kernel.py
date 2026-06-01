@@ -726,6 +726,82 @@ def _case_proof_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, 
     }
 
 
+def _audit_layer(kind: object) -> str:
+    if kind == "case_event":
+        return "case"
+    if kind == "evidence":
+        return "evidence"
+    if kind in {"approval", "gate_decision"}:
+        return "authority"
+    if kind == "worker_receipt_binding":
+        return "execution"
+    if kind == "effect_reconciliation":
+        return "reconciliation"
+    if kind == "terminal_closure":
+        return "closure"
+    if kind == "learning_admission":
+        return "learning"
+    return "unknown"
+
+
+def _case_audit_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, Any]:
+    proof = _case_proof_timeline(kernel, case_id)
+    explorer = _case_proof_explorer(kernel, case_id)
+    audit_rows: list[dict[str, object]] = []
+    proof_timeline = proof["proof_timeline"]
+    for sequence, item in enumerate(proof_timeline, start=1):
+        payload = item.get("payload", {})
+        payload = payload if isinstance(payload, dict) else {}
+        audit_rows.append({
+            "sequence": sequence,
+            "occurred_at": item.get("occurred_at", ""),
+            "layer": _audit_layer(item.get("kind")),
+            "kind": item.get("kind", ""),
+            "ref": item.get("ref", ""),
+            "status": item.get("status", ""),
+            "actor": payload.get("submitted_by") or payload.get("approved_by") or "",
+            "department_id": payload.get("department_id", ""),
+            "step_id": payload.get("step_id", ""),
+            "evidence_ref": payload.get("admitted_evidence_ref", ""),
+            "reason": payload.get("reason", ""),
+        })
+
+    attention_items = explorer["attention_items"]
+    blocker_count = sum(1 for item in attention_items if item.get("severity") == "blocker")
+    review_count = sum(1 for item in attention_items if item.get("severity") == "review")
+    proof_sections = explorer["proof_sections"]
+    return {
+        "audit_id": f"case-audit:{case_id}",
+        "case_id": case_id,
+        "title": proof["case"]["goal"],
+        "terminal_status": explorer["terminal_status"],
+        "read_only": True,
+        "case": proof["case"],
+        "summary": {
+            "case_status": proof["summary"]["case_status"],
+            "timeline_count": len(audit_rows),
+            "case_event_count": len(proof_sections.get("case_event", [])),
+            "attention_count": len(attention_items),
+            "blocker_count": blocker_count,
+            "review_count": review_count,
+            "first_occurred_at": audit_rows[0]["occurred_at"] if audit_rows else "",
+            "last_occurred_at": audit_rows[-1]["occurred_at"] if audit_rows else "",
+            "has_terminal_closure": proof["summary"]["has_terminal_closure"],
+            "learning_binding_count": proof["summary"]["learning_binding_count"],
+        },
+        "attention_items": attention_items,
+        "audit_timeline": audit_rows,
+        "proof_section_counts": [
+            {"section": key, "count": len(value)}
+            for key, value in sorted(proof_sections.items())
+        ],
+        "source_timeline_url": f"/api/v1/cases/{quote(case_id, safe='')}/proof-timeline",
+        "source_explorer_url": f"/api/v1/cases/{quote(case_id, safe='')}/proof-explorer",
+        "closure_certificate_url": f"/api/v1/cases/{quote(case_id, safe='')}/closure-certificate",
+        "governed": True,
+    }
+
+
 def _proof_explorer_rows(rows: list[dict[str, object]], columns: tuple[str, ...]) -> str:
     if not rows:
         return f"<tr><td colspan=\"{len(columns)}\">No records</td></tr>"
@@ -861,6 +937,97 @@ def _render_case_proof_explorer_html(payload: dict[str, Any]) -> str:
     {_proof_explorer_table("Departments", ("department_id", "steps", "allowed", "blocked", "missing_evidence", "evidence_refs"), department_rows)}
     {_proof_explorer_table("Evidence", ("requirement_id", "present", "evidence_refs", "step_ids"), evidence_rows)}
     {_proof_explorer_table("Closure", ("field", "value"), closure_rows)}
+    {_proof_explorer_table("Proof Sections", ("section", "count"), section_rows)}
+  </main>
+</body>
+</html>
+"""
+
+
+def _render_case_audit_explorer_html(payload: dict[str, Any]) -> str:
+    raw_case_id = str(payload.get("case_id", ""))
+    case_id = escape(raw_case_id)
+    title = escape(str(payload.get("title", "")))
+    terminal_status = escape(str(payload.get("terminal_status", "")))
+    summary = payload.get("summary", {})
+    summary_rows = [
+        {"metric": key, "value": value}
+        for key, value in sorted(summary.items())
+    ] if isinstance(summary, dict) else []
+    attention_rows = [
+        {
+            "severity": item.get("severity", ""),
+            "kind": item.get("kind", ""),
+            "ref": item.get("ref", ""),
+            "message": item.get("message", ""),
+        }
+        for item in payload.get("attention_items", [])
+        if isinstance(item, dict)
+    ]
+    timeline_rows = [
+        {
+            "sequence": item.get("sequence", ""),
+            "occurred_at": item.get("occurred_at", ""),
+            "layer": item.get("layer", ""),
+            "kind": item.get("kind", ""),
+            "ref": item.get("ref", ""),
+            "status": item.get("status", ""),
+            "step_id": item.get("step_id", ""),
+            "reason": item.get("reason", ""),
+        }
+        for item in payload.get("audit_timeline", [])
+        if isinstance(item, dict)
+    ]
+    section_rows = [
+        {
+            "section": item.get("section", ""),
+            "count": item.get("count", 0),
+        }
+        for item in payload.get("proof_section_counts", [])
+        if isinstance(item, dict)
+    ]
+    json_url = f"/api/v1/cases/{quote(raw_case_id, safe='')}/audit-explorer"
+    case_url = f"/api/v1/cases/{quote(raw_case_id, safe='')}"
+    proof_timeline_url = escape(str(payload.get("source_timeline_url", "")))
+    proof_explorer_url = escape(str(payload.get("source_explorer_url", "")))
+    closure_certificate_url = escape(str(payload.get("closure_certificate_url", "")))
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mullu OrgOS Case Audit Explorer</title>
+  <style>
+    body {{ margin: 0; font-family: system-ui, sans-serif; color: #1f2937; background: #f7f7f4; }}
+    header {{ background: #263238; color: #ffffff; padding: 24px 28px; }}
+    main {{ max-width: 1240px; margin: 0 auto; padding: 22px; }}
+    nav {{ display: flex; gap: 14px; margin-top: 12px; flex-wrap: wrap; }}
+    nav a {{ color: #cde8ff; }}
+    h1 {{ margin: 0; font-size: 28px; letter-spacing: 0; }}
+    h2 {{ margin: 28px 0 10px; font-size: 18px; letter-spacing: 0; }}
+    .status {{ margin-top: 8px; color: #e0edf2; }}
+    table {{ border-collapse: collapse; width: 100%; background: #ffffff; }}
+    th, td {{ border: 1px solid #d8dee4; padding: 8px; text-align: left; vertical-align: top; font-size: 14px; overflow-wrap: anywhere; }}
+    th {{ background: #edf2f5; color: #253238; }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mullu OrgOS Case Audit Explorer</h1>
+    <div class="status">Case <strong>{case_id}</strong> | Status <strong>{terminal_status}</strong></div>
+    <nav>
+      <a href="{escape(json_url)}">json audit</a>
+      <a href="{escape(case_url)}">case bundle</a>
+      <a href="{proof_timeline_url}">proof timeline</a>
+      <a href="{proof_explorer_url}">proof explorer</a>
+      <a href="{closure_certificate_url}">closure certificate</a>
+    </nav>
+  </header>
+  <main>
+    <h2>{title}</h2>
+    {_proof_explorer_table("Summary", ("metric", "value"), summary_rows)}
+    {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
+    {_proof_explorer_table("Audit Timeline", ("sequence", "occurred_at", "layer", "kind", "ref", "status", "step_id", "reason"), timeline_rows)}
     {_proof_explorer_table("Proof Sections", ("section", "count"), section_rows)}
   </main>
 </body>
@@ -2287,6 +2454,24 @@ def get_case_proof_explorer_view(case_id: str, request: Request):
     kernel = _kernel()
     _enforce_case_tenant(request, kernel, case_id)
     return HTMLResponse(_render_case_proof_explorer_html(_case_proof_explorer(kernel, case_id)))
+
+
+@router.get("/api/v1/cases/{case_id}/audit-explorer")
+def get_case_audit_explorer(case_id: str, request: Request):
+    """Return a read-only causal audit explorer projection for a case."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    return _case_audit_explorer(kernel, case_id)
+
+
+@router.get("/api/v1/cases/{case_id}/audit-explorer/view")
+def get_case_audit_explorer_view(case_id: str, request: Request):
+    """Return a browser-facing read-only case audit explorer view."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    return HTMLResponse(_render_case_audit_explorer_html(_case_audit_explorer(kernel, case_id)))
 
 
 @router.get("/api/v1/cases/{case_id}/closure-certificate")

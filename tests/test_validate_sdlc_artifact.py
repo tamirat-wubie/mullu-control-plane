@@ -25,10 +25,11 @@ def test_current_sdlc_contract_passes() -> None:
     records = validator.load_example_records()
 
     assert errors == []
-    assert len(records) == 10
+    assert len(records) == 11
     assert all(spec.schema_path.exists() for spec in validator.ARTIFACT_SPECS)
     assert all(spec.example_path.exists() for spec in validator.ARTIFACT_SPECS)
     assert "scripts/validate_sdlc_pr_enforcement.py" in validator.REQUIRED_VALIDATORS
+    assert "implementation_receipt" in validator.GATE_BOUND_ARTIFACT_KINDS
     assert "change_request" in validator.GATE_BOUND_ARTIFACT_KINDS
 
 
@@ -54,9 +55,11 @@ def test_example_chain_links_all_lifecycle_artifacts() -> None:
     assert errors == []
     assert records["requirement"]["request_id"] == records["change_request"]["request_id"]
     assert records["work_plan"]["design_id"] == records["design_decision"]["design_id"]
+    assert records["implementation_receipt"]["plan_id"] == records["work_plan"]["plan_id"]
     assert records["transition_receipt"]["change_id"] == records["change_request"]["request_id"]
     assert records["deployment_candidate"]["release_id"] == records["release_candidate"]["release_id"]
     assert records["change_request"]["receipt_ref"] in records["closure_receipt"]["receipts"]
+    assert records["implementation_receipt"]["receipt_ref"] in records["closure_receipt"]["receipts"]
     assert records["transition_receipt"]["receipt_ref"] in records["closure_receipt"]["receipts"]
     assert records["deployment_candidate"]["uao_ref"] in records["closure_receipt"]["uao_refs"]
 
@@ -96,12 +99,15 @@ def test_closure_must_retain_upstream_gate_refs() -> None:
     invalid_records["closure_receipt"]["causal_decision_trace_refs"].remove(
         records["deployment_candidate"]["causal_decision_trace_ref"]
     )
+    invalid_records["closure_receipt"]["receipts"].remove(records["implementation_receipt"]["receipt_ref"])
     invalid_records["closure_receipt"]["receipts"].remove(records["transition_receipt"]["receipt_ref"])
 
     errors = validator.validate_example_chain(invalid_records)
 
     assert "example_chain: closure must include change_request receipt_ref" in errors
     assert "example_chain: closure must include requirement uao_ref" in errors
+    assert "example_chain: closure must include implementation_receipt receipt_ref" in errors
+    assert "example_chain: closure must include implementation receipt" in errors
     assert "example_chain: closure must include transition_receipt receipt_ref" in errors
     assert "example_chain: closure must include deployment_candidate causal_decision_trace_ref" in errors
 
@@ -161,6 +167,36 @@ def test_design_and_verification_require_pr_enforcement_validator() -> None:
     assert any("verification_receipt: missing command sdlc_pr_enforcement_validation" in error for error in verification_errors)
     assert any("verification_receipt: missing validator outputs" in error for error in verification_errors)
     assert len(design_errors) + len(verification_errors) >= 3
+
+
+def test_implementation_receipt_rejects_path_escape_and_unlisted_refs() -> None:
+    implementation = copy.deepcopy(validator.load_example_records()["implementation_receipt"])
+    implementation["changed_files"][0]["path"] = "../outside.py"
+    implementation["validator_changes"].append("scripts/not_listed_validator.py")
+    implementation["rollback_refs"] = []
+
+    errors = validator.validate_artifact_record("implementation_receipt", implementation)
+
+    assert any("changed file path must stay workspace-relative" in error for error in errors)
+    assert any("validator_changes ref is not listed in changed_files" in error for error in errors)
+    assert "implementation_receipt: rollback_refs are required" in errors
+
+
+def test_transition_and_verification_must_reference_implementation_receipt() -> None:
+    records = validator.load_example_records()
+    invalid_records = copy.deepcopy(records)
+    invalid_records["transition_receipt"]["required_receipt_refs"].remove(
+        records["implementation_receipt"]["receipt_ref"]
+    )
+    invalid_records["verification_receipt"]["coverage_refs"].remove(
+        "examples/sdlc/implementation_uao_validator.json"
+    )
+
+    errors = validator.validate_example_chain(invalid_records)
+
+    assert "example_chain: transition must require implementation receipt" in errors
+    assert "example_chain: verification coverage must include implementation receipt artifact" in errors
+    assert len(errors) >= 2
 
 
 def test_cli_json_receipt_reports_passed_contract() -> None:
