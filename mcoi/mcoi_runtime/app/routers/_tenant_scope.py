@@ -22,6 +22,41 @@ from typing import Any
 from fastapi import HTTPException, Request
 
 
+# Fail-closed strict mode. Default False preserves the historical dev/test no-op
+# (unit suites and local_dev build apps without auth). The server bootstrap calls
+# configure_tenant_scope_strict(True) for non-dev environments, so a request that
+# reaches a tenant-scoped handler WITHOUT an authenticated tenant is rejected with
+# 401 instead of being treated as a trusted dev request -- closing the gap where
+# the opt-in (require_auth=False) middleware guard chain lets an unauthenticated
+# caller through and these helpers would otherwise no-op.
+_STRICT_TENANT_SCOPE: bool = False
+
+
+def configure_tenant_scope_strict(enabled: bool) -> None:
+    """Enable/disable fail-closed tenant scoping (pilot/production = enabled)."""
+    global _STRICT_TENANT_SCOPE
+    _STRICT_TENANT_SCOPE = bool(enabled)
+
+
+def tenant_scope_strict() -> bool:
+    """Inspect the strict flag. Test/diagnostics only."""
+    return _STRICT_TENANT_SCOPE
+
+
+def _require_authenticated_tenant() -> None:
+    """Reject an unauthenticated tenant-scoped request when strict mode is on."""
+    if _STRICT_TENANT_SCOPE:
+        raise HTTPException(
+            status_code=401,
+            detail={
+                "error": "authentication required for tenant-scoped resource",
+                "code": "authentication_required",
+                "governed": True,
+            },
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
 def enforce_tenant_scope(request: Request, claimed_tenant: str) -> None:
     """Reject a path/body tenant that differs from the authenticated tenant.
 
@@ -31,6 +66,7 @@ def enforce_tenant_scope(request: Request, claimed_tenant: str) -> None:
     context: dict[str, Any] = getattr(request.state, "governance_context", None) or {}
     authenticated_tenant = str(context.get("authenticated_tenant_id") or "").strip()
     if not authenticated_tenant:
+        _require_authenticated_tenant()
         return  # unauthenticated request — nothing authenticated to violate
     scopes = context.get("jwt_scopes") or frozenset()
     if "*" in scopes:
@@ -59,6 +95,7 @@ def scoped_listing_tenant(request: Request, claimed_tenant: str | None) -> str |
     context: dict[str, Any] = getattr(request.state, "governance_context", None) or {}
     authenticated_tenant = str(context.get("authenticated_tenant_id") or "").strip()
     if not authenticated_tenant:
+        _require_authenticated_tenant()
         return claimed_tenant
     scopes = context.get("jwt_scopes") or frozenset()
     if "*" in scopes:
