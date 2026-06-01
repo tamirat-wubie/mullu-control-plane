@@ -4,6 +4,7 @@ Dependencies: scripts.run_workspace_governance_checks.
 Invariants:
   - Check names are stable and map to repository-local scripts.
   - Result receipts derive status from return codes.
+  - Saved canonical receipts require a full unsharded preflight.
   - Receipt writes cannot escape the workspace root.
 """
 
@@ -110,3 +111,38 @@ def test_main_json_emits_machine_readable_receipt() -> None:
     assert exit_code == 0
     assert runner.requires_full_preflight_lock((), 1) is True
     assert runner.requires_full_preflight_lock(("protocol_manifest",), 1) is False
+    assert runner.allows_saved_canonical_receipt((), 1) is True
+    assert runner.allows_saved_canonical_receipt(("protocol_manifest",), 1) is False
+
+
+def test_main_rejects_saved_receipt_for_selected_or_sharded_runs(capsys: pytest.CaptureFixture[str]) -> None:
+    selected_receipt_path = runner.WORKSPACE_ROOT / ".tmp" / "partial-selected-preflight-receipt.json"
+    sharded_receipt_path = runner.WORKSPACE_ROOT / ".tmp" / "partial-sharded-preflight-receipt.json"
+
+    selected_exit_code = runner.main(
+        [
+            "--check",
+            "protocol_manifest",
+            "--receipt-path",
+            str(selected_receipt_path.relative_to(runner.WORKSPACE_ROOT)),
+        ]
+    )
+    selected_streams = capsys.readouterr()
+    sharded_exit_code = runner.main(
+        [
+            "--shard-count",
+            "2",
+            "--shard-index",
+            "0",
+            "--receipt-path",
+            str(sharded_receipt_path.relative_to(runner.WORKSPACE_ROOT)),
+        ]
+    )
+    sharded_streams = capsys.readouterr()
+
+    assert selected_exit_code == 1
+    assert sharded_exit_code == 1
+    assert "full unsharded preflight run" in selected_streams.err
+    assert "full unsharded preflight run" in sharded_streams.err
+    assert not selected_receipt_path.exists()
+    assert not sharded_receipt_path.exists()
