@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from json import JSONDecodeError
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -63,10 +64,15 @@ def load_sdlc_dashboard_records(
     for spec in STAGE_SPECS:
         artifact_path = example_dir / spec.example_name
         if not artifact_path.exists():
-            raise FileNotFoundError(f"missing SDLC dashboard artifact: {artifact_path}")
+            raise SdlcDashboardError(f"missing SDLC dashboard artifact: {spec.example_name}")
         if not artifact_path.is_file():
-            raise IsADirectoryError(f"SDLC dashboard artifact path is not a file: {artifact_path}")
-        payload = json.loads(artifact_path.read_text(encoding="utf-8"))
+            raise SdlcDashboardError(f"SDLC dashboard artifact is not a file: {spec.example_name}")
+        try:
+            payload = json.loads(artifact_path.read_text(encoding="utf-8"))
+        except JSONDecodeError as exc:
+            raise SdlcDashboardError(f"invalid SDLC dashboard artifact JSON: {spec.example_name}") from exc
+        except OSError as exc:
+            raise SdlcDashboardError(f"unreadable SDLC dashboard artifact: {spec.example_name}") from exc
         if not isinstance(payload, dict):
             raise SdlcDashboardError(f"SDLC dashboard artifact must be a JSON object: {spec.example_name}")
         records[spec.key] = payload
@@ -204,7 +210,10 @@ def _stage_status(
         return "blocked"
     if stage_key == "transition_receipt" and record.get("decision") != "allowed":
         return "blocked"
-    if stage_key == "verification_receipt" and int(record.get("tests_failed", 0)) != 0:
+    if stage_key == "verification_receipt" and _non_negative_int(
+        record.get("tests_failed", 0),
+        "verification_receipt.tests_failed",
+    ) != 0:
         return "blocked"
     if stage_key == "security_review" and record.get("release_blocked") is True:
         return "blocked"
@@ -371,9 +380,15 @@ def _release_blockers(record: Mapping[str, Any]) -> list[dict[str, str]]:
     if record.get("tests_passed") is not True:
         blockers.append(_blocker("release_candidate", "tests_not_passing", "release tests are not passing"))
     if isinstance(security_status, Mapping):
-        if int(security_status.get("critical_open", 0)) > 0:
+        if _non_negative_int(
+            security_status.get("critical_open", 0),
+            "release_candidate.security_status.critical_open",
+        ) > 0:
             blockers.append(_blocker("release_candidate", "critical_security_open", "critical security finding is open"))
-        if int(security_status.get("high_open", 0)) > 0:
+        if _non_negative_int(
+            security_status.get("high_open", 0),
+            "release_candidate.security_status.high_open",
+        ) > 0:
             blockers.append(_blocker("release_candidate", "high_security_open", "high security finding is open"))
         if security_status.get("status") == "blocked":
             blockers.append(_blocker("release_candidate", "security_status_blocked", "security status blocks release"))
@@ -497,3 +512,9 @@ def _mapping_list(value: Any) -> list[Mapping[str, Any]]:
     if not isinstance(value, (list, tuple)):
         return []
     return [item for item in value if isinstance(item, Mapping)]
+
+
+def _non_negative_int(value: Any, field_name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise SdlcDashboardError(f"SDLC dashboard numeric field invalid: {field_name}")
+    return value

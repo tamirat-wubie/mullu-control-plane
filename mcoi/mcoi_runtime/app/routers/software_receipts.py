@@ -19,7 +19,10 @@ from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.routers.auth_context import bind_claimed_actor
 from mcoi_runtime.app.routers.musia_auth import require_read, require_write
 from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
-from mcoi_runtime.core.sdlc_dashboard import build_sdlc_dashboard_summary
+from mcoi_runtime.core.sdlc_dashboard import (
+    SdlcDashboardError,
+    build_sdlc_dashboard_summary,
+)
 from mcoi_runtime.contracts.review import ReviewDecision, ReviewRequest
 from mcoi_runtime.contracts.software_dev_loop import (
     SoftwareChangeReceipt,
@@ -317,7 +320,13 @@ def sdlc_dashboard_summary(
 ) -> SdlcDashboardEnvelope:
     """Return the read-only SDLC change-to-closure dashboard summary."""
 
-    dashboard = build_sdlc_dashboard_summary()
+    try:
+        dashboard = build_sdlc_dashboard_summary()
+    except SdlcDashboardError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=_bounded_http_error("sdlc dashboard unavailable", exc),
+        ) from exc
     return SdlcDashboardEnvelope(
         operation="sdlc_dashboard",
         tenant_id=tenant_id,

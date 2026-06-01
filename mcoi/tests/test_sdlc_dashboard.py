@@ -14,9 +14,11 @@ from __future__ import annotations
 
 from copy import deepcopy
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from mcoi_runtime.app.routers import software_receipts
 from mcoi_runtime.app.routers.musia_auth import (
     configure_musia_auth,
     configure_musia_dev_mode,
@@ -24,6 +26,7 @@ from mcoi_runtime.app.routers.musia_auth import (
 )
 from mcoi_runtime.app.routers.software_receipts import router
 from mcoi_runtime.core.sdlc_dashboard import (
+    SdlcDashboardError,
     build_sdlc_dashboard_summary,
     load_sdlc_dashboard_records,
 )
@@ -87,6 +90,28 @@ def test_sdlc_dashboard_projects_security_blockers_explicitly() -> None:
     assert all(blocker["stage_key"] == "security_review" for blocker in security_stage["blockers"])
 
 
+def test_sdlc_dashboard_rejects_malformed_numeric_fields() -> None:
+    records = deepcopy(load_sdlc_dashboard_records())
+    records["verification_receipt"]["tests_failed"] = "0"
+
+    with pytest.raises(SdlcDashboardError) as exc_info:
+        build_sdlc_dashboard_summary(records)
+
+    assert "verification_receipt.tests_failed" in str(exc_info.value)
+    assert "0" not in str(exc_info.value)
+    assert "examples" not in str(exc_info.value)
+
+
+def test_sdlc_dashboard_loader_bounds_missing_artifact_paths(tmp_path) -> None:
+    with pytest.raises(SdlcDashboardError) as exc_info:
+        load_sdlc_dashboard_records(tmp_path)
+
+    message = str(exc_info.value)
+    assert "change_request_uao_validator.json" in message
+    assert str(tmp_path) not in message
+    assert "missing SDLC dashboard artifact" in message
+
+
 def test_sdlc_dashboard_route_returns_read_only_summary() -> None:
     client = _client()
 
@@ -105,3 +130,25 @@ def test_sdlc_dashboard_route_returns_read_only_summary() -> None:
     assert body["dashboard"]["read_only"] is True
     assert body["dashboard"]["change"]["request_id"] == "sdlc_req_uao_validator_001"
     assert body["dashboard"]["stages"][0]["stage_key"] == "change_request"
+
+
+def test_sdlc_dashboard_route_bounds_projection_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    def reject_dashboard_projection() -> dict[str, object]:
+        raise SdlcDashboardError("missing SDLC dashboard artifact: closure_uao_validator.json")
+
+    monkeypatch.setattr(
+        software_receipts,
+        "build_sdlc_dashboard_summary",
+        reject_dashboard_projection,
+    )
+    client = _client()
+
+    response = client.get(
+        "/software/receipts/sdlc/dashboard",
+        headers={"X-Tenant-ID": "tenant-dashboard"},
+    )
+    detail = response.json()["detail"]
+
+    assert response.status_code == 503
+    assert detail == {"error": "sdlc dashboard unavailable", "type": "SdlcDashboardError"}
+    assert "closure_uao_validator" not in str(detail)
