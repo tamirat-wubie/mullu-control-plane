@@ -148,6 +148,7 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             "canonical ordered UAO pipeline stage sequence",
             document_text,
         )
+        self.assertIn("independent recomputation", document_text)
         self.assertIn("Runtime bypass detection scans", document_text)
 
     def test_effect_bearing_action_requires_causal_trace(self) -> None:
