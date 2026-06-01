@@ -303,13 +303,14 @@ def get_finance_approval_packet(case_id: str, request: Request):
 
 
 @router.post("/api/v1/finance/approval-packets/{case_id}/approval")
-def approve_finance_approval_packet(case_id: str, req: FinancePacketApprovalRequest):
+def approve_finance_approval_packet(case_id: str, req: FinancePacketApprovalRequest, request: Request):
     """Record an explicit approval decision and close a prepared/sent packet."""
     deps.metrics.inc("requests_governed")
     store = _store()
     case = store.get_case(case_id)
     if case is None:
         raise HTTPException(404, detail=_error_detail("packet not found", "packet_not_found"))
+    enforce_tenant_scope(request, case.tenant_id)
     effects: list[FinanceEffectReceipt] = []
     try:
         now = _clock_now()

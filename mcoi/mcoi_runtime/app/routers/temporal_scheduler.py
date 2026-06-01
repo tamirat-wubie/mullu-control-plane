@@ -175,9 +175,13 @@ def get_temporal_schedule(schedule_id: str, request: Request):
 
 
 @router.post("/api/v1/temporal/schedules/{schedule_id}/cancel")
-def cancel_temporal_schedule(schedule_id: str, worker_id: str = "temporal-api"):
+def cancel_temporal_schedule(schedule_id: str, request: Request, worker_id: str = "temporal-api"):
     """Cancel a temporal schedule and persist a cancellation receipt."""
     deps.metrics.inc("requests_governed")
+    schedule = deps.temporal_scheduler_store.get_action(schedule_id)
+    if schedule is None:
+        raise HTTPException(404, detail=_temporal_error_detail("schedule not found", "schedule_not_found"))
+    enforce_tenant_scope(request, schedule.tenant_id)
     try:
         receipt = deps.temporal_scheduler.mark_cancelled(schedule_id, worker_id=worker_id)
         schedule = deps.temporal_scheduler.get(schedule_id)
