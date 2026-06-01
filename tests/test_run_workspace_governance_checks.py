@@ -24,10 +24,11 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     args_by_name = {command.name: command.args for command in commands}
 
     assert names[:3] == ["local_assurance_plan", "protocol_manifest", "logic_governance_application"]
-    assert names[-3:] == [
+    assert names[-4:] == [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
         "universal_action_orchestration_contract",
+        "universal_action_orchestration_validation_receipt_contract",
     ]
     assert args_by_name["local_assurance_plan"][1:] == (
         "scripts/refresh_local_assurance.py",

@@ -79,6 +79,9 @@ def test_protocol_manifest_is_valid() -> None:
     livelock_entry = entries["livelock-record"]
     workflow_mining_entry = entries["workflow-mining-report"]
     universal_action_orchestration_entry = entries["universal-action-orchestration"]
+    universal_action_orchestration_validation_receipt_entry = entries[
+        "universal-action-orchestration-validation-receipt"
+    ]
     worker_mesh_entry = entries["worker-mesh"]
     world_state_entry = entries["world-state"]
     reflex_entry = entries["reflex-deployment-witness-envelope"]
@@ -256,6 +259,13 @@ def test_protocol_manifest_is_valid() -> None:
     assert universal_action_orchestration_entry["path"] == "schemas/universal_action_orchestration.schema.json"
     assert universal_action_orchestration_entry["urn"] == "urn:mullusi:schema:universal-action-orchestration:1"
     assert universal_action_orchestration_entry["surface"] == "orchestration"
+    assert universal_action_orchestration_validation_receipt_entry["path"] == (
+        "schemas/universal_action_orchestration_validation_receipt.schema.json"
+    )
+    assert universal_action_orchestration_validation_receipt_entry["urn"] == (
+        "urn:mullusi:schema:universal-action-orchestration-validation-receipt:1"
+    )
+    assert universal_action_orchestration_validation_receipt_entry["surface"] == "orchestration"
     assert worker_mesh_entry["path"] == "schemas/worker_mesh.schema.json"
     assert worker_mesh_entry["urn"] == "urn:mullusi:schema:worker-mesh:1"
     assert worker_mesh_entry["surface"] == "worker"
