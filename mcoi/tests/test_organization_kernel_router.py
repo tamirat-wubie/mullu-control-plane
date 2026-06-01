@@ -500,6 +500,68 @@ def test_case_proof_timeline_reports_closure_certificate_and_learning(tmp_path: 
     }.issubset(timeline_kinds)
 
 
+def test_case_closure_certificate_view_is_read_only_and_escaped(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    approval = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/approvals",
+        json={
+            "approval_id": "approval:security-dual-control",
+            "role_id": "executive.owner",
+            "approval_scope": "security_approval",
+            "approved_by": "human-executive",
+        },
+    )
+    _allow_all_plan_steps(client)
+    closure = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/close",
+        json={
+            "reconciliation_id": "reconciliation:gateway-pilot",
+            "expected_effect": "gateway_pilot_ready",
+            "observed_effect": "gateway_pilot_ready",
+            "reconciliation_status": "match",
+            "forbidden_effects_checked": True,
+            "evidence_refs": ["evidence:closure:gateway-pilot"],
+            "terminal_disposition": "committed",
+            "terminal_certificate_id": "<script>alert('terminal')</script>",
+        },
+    )
+    learning = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/learning-admissions",
+        json={
+            "binding_id": "learning:gateway-pilot",
+            "closure_id": closure.json()["closure"]["closure_id"],
+            "decision_id": "learning-admission:gateway-pilot",
+            "admitted": True,
+        },
+    )
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    certificate = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-certificate")
+    view = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-certificate/view")
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert approval.status_code == 200
+    assert closure.status_code == 200
+    assert learning.status_code == 200
+    assert certificate.status_code == 200
+    assert certificate.json()["terminal_status"] == "closed_verified"
+    assert certificate.json()["closure_certificate"]["effect_reconciled"] is True
+    assert certificate.json()["closure_certificate"]["learning_admitted"] is True
+    assert certificate.json()["attention_items"] == []
+    assert view.status_code == 200
+    assert "text/html" in view.headers["content-type"]
+    assert "Mullu OrgOS Terminal Closure Certificate" in view.text
+    assert "json certificate" in view.text
+    assert "proof timeline" in view.text
+    assert "proof explorer" in view.text
+    assert "<script>alert('terminal')</script>" not in view.text
+    assert "&lt;script&gt;alert(&#x27;terminal&#x27;)&lt;/script&gt;" in view.text
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"]
+
+
 def test_case_proof_explorer_reports_closed_verified_case(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     _bootstrap_and_open_pilot(client)
@@ -865,6 +927,8 @@ def test_default_routers_include_organization_kernel_paths() -> None:
 
     assert "/api/v1/orgs" in paths
     assert "/api/v1/cases" in paths
+    assert "/api/v1/cases/{case_id}/closure-certificate" in paths
+    assert "/api/v1/cases/{case_id}/closure-certificate/view" in paths
     assert "/api/v1/cases/{case_id}/proof-timeline" in paths
     assert "/api/v1/cases/{case_id}/proof-explorer" in paths
     assert "/api/v1/cases/{case_id}/proof-explorer/view" in paths

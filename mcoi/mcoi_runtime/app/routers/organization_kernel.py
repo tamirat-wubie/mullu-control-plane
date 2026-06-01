@@ -847,6 +847,176 @@ def _render_case_proof_explorer_html(payload: dict[str, Any]) -> str:
 """
 
 
+def _closure_status(closure_certificate: dict[str, Any] | None) -> str:
+    if closure_certificate is None:
+        return "awaiting_closure"
+    if closure_certificate["effect_reconciled"] and closure_certificate["learning_admitted"]:
+        return "closed_verified"
+    if closure_certificate["effect_reconciled"]:
+        return "closed_awaiting_learning"
+    return "closed_requires_review"
+
+
+def _case_closure_certificate(kernel: OrganizationKernel, case_id: str) -> dict[str, Any]:
+    proof = _case_proof_timeline(kernel, case_id)
+    closure_certificate = proof["closure_certificate"]
+    status = _closure_status(closure_certificate)
+    attention_items: list[dict[str, object]] = []
+    reconciliation: dict[str, Any] | None = None
+    learning_admissions: list[dict[str, Any]] = []
+    evidence_refs: list[str] = []
+
+    if closure_certificate is None:
+        attention_items.append({
+            "kind": "missing_terminal_closure",
+            "severity": "review",
+            "ref": case_id,
+            "message": "case has no terminal closure certificate",
+        })
+    else:
+        reconciliation_value = closure_certificate.get("reconciliation")
+        if isinstance(reconciliation_value, dict):
+            reconciliation = reconciliation_value
+        learning_value = closure_certificate.get("learning_admissions")
+        if isinstance(learning_value, list):
+            learning_admissions = [item for item in learning_value if isinstance(item, dict)]
+        evidence_value = closure_certificate.get("evidence_refs")
+        if isinstance(evidence_value, list):
+            evidence_refs = [str(item) for item in evidence_value]
+        if reconciliation is None:
+            attention_items.append({
+                "kind": "missing_reconciliation",
+                "severity": "blocker",
+                "ref": closure_certificate["closure_id"],
+                "message": "terminal closure is not bound to an effect reconciliation record",
+            })
+        elif not closure_certificate["effect_reconciled"]:
+            attention_items.append({
+                "kind": "effect_not_reconciled",
+                "severity": "blocker",
+                "ref": closure_certificate["closure_id"],
+                "message": "expected effect and observed effect are not closure-matched",
+            })
+        if not closure_certificate["learning_admitted"]:
+            attention_items.append({
+                "kind": "learning_not_admitted",
+                "severity": "review",
+                "ref": closure_certificate["closure_id"],
+                "message": "closure has not been admitted into reusable learning",
+            })
+
+    return {
+        "certificate_view_id": f"closure-certificate:{case_id}",
+        "case_id": case_id,
+        "title": proof["case"]["goal"],
+        "terminal_status": status,
+        "read_only": True,
+        "case": proof["case"],
+        "summary": proof["summary"],
+        "closure_certificate": closure_certificate,
+        "reconciliation": reconciliation,
+        "learning_admissions": learning_admissions,
+        "evidence_refs": evidence_refs,
+        "attention_items": attention_items,
+        "source_timeline_url": f"/api/v1/cases/{quote(case_id, safe='')}/proof-timeline",
+        "source_explorer_url": f"/api/v1/cases/{quote(case_id, safe='')}/proof-explorer",
+        "governed": True,
+    }
+
+
+def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
+    raw_case_id = str(payload.get("case_id", ""))
+    case_id = escape(raw_case_id)
+    title = escape(str(payload.get("title", "")))
+    terminal_status = escape(str(payload.get("terminal_status", "")))
+    closure_certificate = payload.get("closure_certificate")
+    certificate_rows: list[dict[str, object]] = []
+    if isinstance(closure_certificate, dict):
+        certificate_rows = [
+            {"field": "closure_id", "value": closure_certificate.get("closure_id", "")},
+            {"field": "terminal_certificate_id", "value": closure_certificate.get("terminal_certificate_id", "")},
+            {"field": "terminal_disposition", "value": closure_certificate.get("terminal_disposition", "")},
+            {"field": "closed_at", "value": closure_certificate.get("closed_at", "")},
+            {"field": "effect_reconciled", "value": closure_certificate.get("effect_reconciled", False)},
+            {"field": "learning_admitted", "value": closure_certificate.get("learning_admitted", False)},
+        ]
+    attention_rows = [
+        {
+            "severity": item.get("severity", ""),
+            "kind": item.get("kind", ""),
+            "ref": item.get("ref", ""),
+            "message": item.get("message", ""),
+        }
+        for item in payload.get("attention_items", [])
+        if isinstance(item, dict)
+    ]
+    reconciliation = payload.get("reconciliation")
+    reconciliation_rows: list[dict[str, object]] = []
+    if isinstance(reconciliation, dict):
+        reconciliation_rows = [
+            {"field": "reconciliation_id", "value": reconciliation.get("reconciliation_id", "")},
+            {"field": "status", "value": reconciliation.get("status", "")},
+            {"field": "expected_effect", "value": reconciliation.get("expected_effect", "")},
+            {"field": "observed_effect", "value": reconciliation.get("observed_effect", "")},
+            {"field": "forbidden_effects_checked", "value": reconciliation.get("forbidden_effects_checked", False)},
+        ]
+    evidence_rows = [{"evidence_ref": ref} for ref in payload.get("evidence_refs", []) if isinstance(ref, str)]
+    learning_rows = [
+        {
+            "binding_id": item.get("binding_id", ""),
+            "decision_id": item.get("decision_id", ""),
+            "admitted": item.get("admitted", False),
+            "created_at": item.get("created_at", ""),
+        }
+        for item in payload.get("learning_admissions", [])
+        if isinstance(item, dict)
+    ]
+    proof_timeline_url = escape(str(payload.get("source_timeline_url", "")))
+    proof_explorer_url = escape(str(payload.get("source_explorer_url", "")))
+    json_url = f"/api/v1/cases/{quote(raw_case_id, safe='')}/closure-certificate"
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mullu OrgOS Terminal Closure Certificate</title>
+  <style>
+    body {{ margin: 0; font-family: system-ui, sans-serif; color: #1f2937; background: #f8f7f2; }}
+    header {{ background: #293326; color: #ffffff; padding: 24px 28px; }}
+    main {{ max-width: 1120px; margin: 0 auto; padding: 22px; }}
+    nav {{ display: flex; gap: 14px; margin-top: 12px; flex-wrap: wrap; }}
+    nav a {{ color: #c9f1c9; }}
+    h1 {{ margin: 0; font-size: 28px; letter-spacing: 0; }}
+    h2 {{ margin: 28px 0 10px; font-size: 18px; letter-spacing: 0; }}
+    .status {{ margin-top: 8px; color: #dfeadd; }}
+    table {{ border-collapse: collapse; width: 100%; background: #ffffff; }}
+    th, td {{ border: 1px solid #d9ded7; padding: 8px; text-align: left; vertical-align: top; font-size: 14px; overflow-wrap: anywhere; }}
+    th {{ background: #edf0e9; color: #263126; }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mullu OrgOS Terminal Closure Certificate</h1>
+    <div class="status">Case <strong>{case_id}</strong> | Status <strong>{terminal_status}</strong></div>
+    <nav>
+      <a href="{escape(json_url)}">json certificate</a>
+      <a href="{proof_timeline_url}">proof timeline</a>
+      <a href="{proof_explorer_url}">proof explorer</a>
+    </nav>
+  </header>
+  <main>
+    <h2>{title}</h2>
+    {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
+    {_proof_explorer_table("Certificate", ("field", "value"), certificate_rows)}
+    {_proof_explorer_table("Reconciliation", ("field", "value"), reconciliation_rows)}
+    {_proof_explorer_table("Evidence Refs", ("evidence_ref",), evidence_rows)}
+    {_proof_explorer_table("Learning Admissions", ("binding_id", "decision_id", "admitted", "created_at"), learning_rows)}
+  </main>
+</body>
+</html>
+"""
+
+
 def _validate_gateway_base_url(gateway_url: str) -> str:
     parsed = urlparse(gateway_url.strip())
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
@@ -1557,6 +1727,24 @@ def get_case_proof_explorer_view(case_id: str, request: Request):
     kernel = _kernel()
     _enforce_case_tenant(request, kernel, case_id)
     return HTMLResponse(_render_case_proof_explorer_html(_case_proof_explorer(kernel, case_id)))
+
+
+@router.get("/api/v1/cases/{case_id}/closure-certificate")
+def get_case_closure_certificate(case_id: str, request: Request):
+    """Return a read-only terminal closure certificate projection."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    return _case_closure_certificate(kernel, case_id)
+
+
+@router.get("/api/v1/cases/{case_id}/closure-certificate/view")
+def get_case_closure_certificate_view(case_id: str, request: Request):
+    """Return a browser-facing read-only terminal closure certificate view."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    return HTMLResponse(_render_case_closure_certificate_html(_case_closure_certificate(kernel, case_id)))
 
 
 @router.post("/api/v1/cases/{case_id}/plan")
