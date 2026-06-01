@@ -18,6 +18,7 @@ if str(_ROOT) not in sys.path:
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
+from gateway.audit_trace_verifier import _recompute_event_hash  # noqa: E402
 from gateway.authority_obligation_mesh import (  # noqa: E402
     ApprovalChain,
     ApprovalChainStatus,
@@ -42,6 +43,12 @@ from scripts.validate_schemas import _load_schema, _validate_schema_instance  # 
 
 
 LATEST_ANCHOR_SCHEMA = _ROOT / "schemas" / "latest_anchor_read_model.schema.json"
+
+
+def _replace_command_event_with_recomputed_hash(event, **changes):
+    tampered = replace(event, **changes)
+    event_hash = _recompute_event_hash(tampered)
+    return replace(tampered, event_hash=event_hash, event_id=f"evt-{event_hash[:16]}")
 
 
 class StubPlatform:
@@ -2405,6 +2412,61 @@ class TestGatewayStatus:
             resp.json()["detail"] == "universal action orchestration record not found"
         )
         assert gateway_app.state.command_ledger.get(command.command_id) is not None
+
+    def test_command_universal_action_orchestration_trace_tamper_returns_404(
+        self, gateway_app, client
+    ):
+        record = json.loads(
+            (
+                _ROOT
+                / "examples"
+                / "universal_action_orchestration.allowed_status_publish.json"
+            ).read_text(encoding="utf-8")
+        )
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="tenant_ops_demo",
+            actor_id="service:status_page_worker",
+            source="web",
+            conversation_id="conversation-orchestration-trace-tamper",
+            idempotency_key="universal-orchestration-trace-tamper",
+            intent="refresh_public_status_page",
+            payload={"body": "trace-tampered status page replay"},
+        )
+        record["action_envelope"]["intent"] = command.command_id
+        universal_detail = _bind_uao_fixture_to_universal_action_detail(record)
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.DISPATCHED,
+            detail={
+                "cause": "universal_action_kernel_dispatched",
+                "universal_action": universal_detail,
+                "universal_action_orchestration": record,
+            },
+        )
+        target_index = next(
+            index
+            for index, event in enumerate(gateway_app.state.command_ledger._events)
+            if event.command_id == command.command_id
+            and event.detail.get("cause") == "universal_action_kernel_dispatched"
+        )
+        gateway_app.state.command_ledger._events[target_index] = (
+            _replace_command_event_with_recomputed_hash(
+                gateway_app.state.command_ledger._events[target_index],
+                trace_id="trc-command-envelope-spoofed",
+            )
+        )
+
+        resp = client.get(
+            f"/commands/{command.command_id}/universal-action-orchestration"
+        )
+
+        assert resp.status_code == 404
+        assert (
+            resp.json()["detail"] == "universal action orchestration record not found"
+        )
+        assert gateway_app.state.command_ledger.get(command.command_id).trace_id == (
+            command.trace_id
+        )
 
     def test_command_universal_action_orchestration_cross_command_returns_404(
         self, gateway_app, client

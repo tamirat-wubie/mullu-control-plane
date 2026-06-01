@@ -73,6 +73,17 @@ class UniversalCommandProofView:
     state_sequence: tuple[str, ...]
 
 
+@dataclass(frozen=True, slots=True)
+class _CommandReplayBinding:
+    command_id: str
+    tenant_id: str
+    actor_id: str
+    source_channel: str
+    idempotency_key: str
+    policy_version: str
+    trace_id: str
+
+
 _UAO_REPLAY_EVENT_CAUSES = frozenset(
     {
         "universal_action_kernel_dispatched",
@@ -401,14 +412,11 @@ def universal_command_orchestration_record_view(
     command_binding = _command_replay_binding(command_ledger, command_id)
     if command_binding is None:
         return None
-    bound_command_id, bound_tenant_id, bound_actor_id = command_binding
     events = command_ledger.events_for(command_id)
     for event in reversed(events):
         if not _event_binds_command_replay(
             event,
-            command_id=bound_command_id,
-            tenant_id=bound_tenant_id,
-            actor_id=bound_actor_id,
+            binding=command_binding,
         ):
             continue
         if not _event_hash_binds_payload(event):
@@ -423,9 +431,9 @@ def universal_command_orchestration_record_view(
         if _is_replayable_universal_action_orchestration_record(
             candidate,
             universal_detail=universal_detail,
-            command_id=bound_command_id,
-            tenant_id=bound_tenant_id,
-            actor_id=bound_actor_id,
+            command_id=command_binding.command_id,
+            tenant_id=command_binding.tenant_id,
+            actor_id=command_binding.actor_id,
         ):
             return deepcopy(dict(candidate))
     return None
@@ -434,7 +442,7 @@ def universal_command_orchestration_record_view(
 def _command_replay_binding(
     command_ledger: object,
     command_id: str,
-) -> tuple[str, str, str] | None:
+) -> _CommandReplayBinding | None:
     if not _non_empty_text(command_id):
         return None
     get_command = getattr(command_ledger, "get", None)
@@ -446,24 +454,46 @@ def _command_replay_binding(
     bound_command_id = getattr(command, "command_id", "")
     tenant_id = getattr(command, "tenant_id", "")
     actor_id = getattr(command, "actor_id", "")
+    source_channel = getattr(command, "source", "")
+    idempotency_key = getattr(command, "idempotency_key", "")
+    policy_version = getattr(command, "policy_version", "")
+    trace_id = getattr(command, "trace_id", "")
     if bound_command_id != command_id:
         return None
-    if not _non_empty_text(tenant_id) or not _non_empty_text(actor_id):
-        return None
-    return command_id, tenant_id, actor_id
+    for value in (
+        tenant_id,
+        actor_id,
+        source_channel,
+        idempotency_key,
+        policy_version,
+        trace_id,
+    ):
+        if not _non_empty_text(value):
+            return None
+    return _CommandReplayBinding(
+        command_id=command_id,
+        tenant_id=tenant_id,
+        actor_id=actor_id,
+        source_channel=source_channel,
+        idempotency_key=idempotency_key,
+        policy_version=policy_version,
+        trace_id=trace_id,
+    )
 
 
 def _event_binds_command_replay(
     event: Any,
     *,
-    command_id: str,
-    tenant_id: str,
-    actor_id: str,
+    binding: _CommandReplayBinding,
 ) -> bool:
     return (
-        getattr(event, "command_id", "") == command_id
-        and getattr(event, "tenant_id", "") == tenant_id
-        and getattr(event, "actor_id", "") == actor_id
+        getattr(event, "command_id", "") == binding.command_id
+        and getattr(event, "tenant_id", "") == binding.tenant_id
+        and getattr(event, "actor_id", "") == binding.actor_id
+        and getattr(event, "source_channel", "") == binding.source_channel
+        and getattr(event, "idempotency_key", "") == binding.idempotency_key
+        and getattr(event, "policy_version", "") == binding.policy_version
+        and getattr(event, "trace_id", "") == binding.trace_id
     )
 
 
