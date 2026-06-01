@@ -87,3 +87,7 @@ def test_package_readme_documents_simple_platform_surface() -> None:
     assert "MULLU_DASHBOARD_ENABLED" in text
     assert "GET /api/v1/dashboard/home" in text
     assert "GET /api/v1/dashboard/state" in text
+    assert "GET /api/v1/dashboard/sdlc/receipts" in text
+    assert "sdlc_receipt_summaries" in text
+    assert "sdlc_passed_receipt_refs" in text
+    assert "sdlc_failed_receipt_refs" in text

@@ -7,16 +7,17 @@ Governance scope: projection-only display, constructive/fracture separation,
 readiness gating, repair visibility, and no execution authority.
 Dependencies: dataclasses, Concept Boxes, projection, repair queue, compiled
 actions, interrogation queue, simple platform checks, simple workflow plans,
-simple onboarding guide, and runtime invariant helpers.
+simple onboarding guide, SDLC validation receipts, and runtime invariant
+helpers.
 Invariants: dashboard state is derived from receipts and candidates; it never
-promotes truth, executes actions, or hides blockers.
+promotes truth, executes actions, claims terminal closure, or hides blockers.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Sequence
+from typing import Any, Mapping, Sequence
 
 from mcoi_runtime.core.concept_box_ledger import ConceptBox
 from mcoi_runtime.core.inceptadive_interrogation_queue import InterrogationTask
@@ -270,6 +271,64 @@ class DashboardSimpleHomeSummary:
 
 
 @dataclass(frozen=True)
+class DashboardSdlcReceiptSummary:
+    """Read-only dashboard projection for one SDLC validation receipt."""
+
+    receipt_ref: str
+    receipt_id: str
+    status: str
+    valid: bool
+    check_count: int
+    passed_check_names: tuple[str, ...]
+    failed_check_names: tuple[str, ...]
+    error_count: int
+    terminal_closure_required: bool
+    receipt_is_not_terminal_closure: bool
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if self.execution_allowed:
+            raise RuntimeCoreInvariantError("dashboard SDLC receipt cannot allow execution")
+        if self.status not in {"passed", "failed"}:
+            raise RuntimeCoreInvariantError("dashboard SDLC receipt status is unsupported")
+        if min(self.check_count, self.error_count) < 0:
+            raise RuntimeCoreInvariantError("dashboard SDLC receipt counts cannot be negative")
+        if self.check_count != len(self.passed_check_names) + len(self.failed_check_names):
+            raise RuntimeCoreInvariantError("dashboard SDLC receipt check count must match check names")
+        if self.valid and (self.status != "passed" or self.error_count):
+            raise RuntimeCoreInvariantError("dashboard SDLC receipt valid state contradicts errors")
+        if self.valid and self.failed_check_names:
+            raise RuntimeCoreInvariantError("dashboard SDLC receipt valid state contradicts failed checks")
+        if not self.valid and self.status != "failed":
+            raise RuntimeCoreInvariantError("dashboard SDLC receipt invalid state contradicts status")
+        if self.failed_check_names and self.status != "failed":
+            raise RuntimeCoreInvariantError("dashboard SDLC receipt failed checks contradict status")
+        if self.status == "failed" and self.valid:
+            raise RuntimeCoreInvariantError("dashboard SDLC receipt failed status contradicts valid state")
+        if not self.terminal_closure_required:
+            raise RuntimeCoreInvariantError("dashboard SDLC receipt must require terminal closure")
+        if not self.receipt_is_not_terminal_closure:
+            raise RuntimeCoreInvariantError("dashboard SDLC receipt cannot claim terminal closure")
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible SDLC receipt summary."""
+
+        return {
+            "receipt_ref": self.receipt_ref,
+            "receipt_id": self.receipt_id,
+            "status": self.status,
+            "valid": self.valid,
+            "check_count": self.check_count,
+            "passed_check_names": list(self.passed_check_names),
+            "failed_check_names": list(self.failed_check_names),
+            "error_count": self.error_count,
+            "terminal_closure_required": self.terminal_closure_required,
+            "receipt_is_not_terminal_closure": self.receipt_is_not_terminal_closure,
+            "execution_allowed": self.execution_allowed,
+        }
+
+
+@dataclass(frozen=True)
 class OperationalDashboardState:
     """Read-only operational dashboard model."""
 
@@ -299,6 +358,9 @@ class OperationalDashboardState:
     simple_ready_workflow_refs: tuple[str, ...] = ()
     simple_review_workflow_refs: tuple[str, ...] = ()
     simple_blocked_workflow_refs: tuple[str, ...] = ()
+    sdlc_receipt_summaries: tuple[DashboardSdlcReceiptSummary, ...] = ()
+    sdlc_passed_receipt_refs: tuple[str, ...] = ()
+    sdlc_failed_receipt_refs: tuple[str, ...] = ()
     execution_allowed: bool = False
 
     def __post_init__(self) -> None:
@@ -306,6 +368,8 @@ class OperationalDashboardState:
             raise RuntimeCoreInvariantError("dashboard state cannot allow execution")
         if not 0.0 <= self.memory_confidence_trend <= 1.0:
             raise RuntimeCoreInvariantError("memory_confidence_trend must be in [0,1]")
+        if any(summary.execution_allowed for summary in self.sdlc_receipt_summaries):
+            raise RuntimeCoreInvariantError("dashboard state cannot expose executable SDLC receipt")
 
     def to_dict(self) -> dict[str, object]:
         """Return a JSON-compatible dashboard state."""
@@ -337,6 +401,9 @@ class OperationalDashboardState:
             "simple_ready_workflow_refs": list(self.simple_ready_workflow_refs),
             "simple_review_workflow_refs": list(self.simple_review_workflow_refs),
             "simple_blocked_workflow_refs": list(self.simple_blocked_workflow_refs),
+            "sdlc_receipt_summaries": [summary.to_dict() for summary in self.sdlc_receipt_summaries],
+            "sdlc_passed_receipt_refs": list(self.sdlc_passed_receipt_refs),
+            "sdlc_failed_receipt_refs": list(self.sdlc_failed_receipt_refs),
             "execution_allowed": self.execution_allowed,
         }
 
@@ -351,6 +418,7 @@ def build_operational_dashboard_state(
     simple_action_checks: Sequence[SimpleActionCheck] = (),
     simple_workflow_plans: Sequence[SimpleWorkflowPlan] = (),
     simple_start_guide: SimpleOnboardingGuide | None = None,
+    sdlc_validation_receipts: Sequence[Mapping[str, Any]] = (),
 ) -> OperationalDashboardState:
     """Build a read-only dashboard state from projection and candidates."""
 
@@ -377,6 +445,7 @@ def build_operational_dashboard_state(
     simple_action_summaries = tuple(_simple_action_summary(check) for check in simple_action_checks)
     simple_workflow_summaries = tuple(_simple_workflow_summary(plan) for plan in simple_workflow_plans)
     simple_start_guide_summary = _simple_start_guide_summary(simple_start_guide) if simple_start_guide else None
+    sdlc_receipt_summaries = tuple(_sdlc_receipt_summary(receipt) for receipt in sdlc_validation_receipts)
     simple_home_summary = _simple_home_summary(
         simple_workflow_summaries=simple_workflow_summaries,
         simple_start_guide=simple_start_guide_summary,
@@ -394,6 +463,7 @@ def build_operational_dashboard_state(
             "simple_workflow_refs": tuple(summary.workflow_ref for summary in simple_workflow_summaries),
             "simple_start_guide": simple_start_guide_summary.to_dict() if simple_start_guide_summary else None,
             "simple_home_summary": simple_home_summary.to_dict() if simple_home_summary else None,
+            "sdlc_receipt_refs": tuple(summary.receipt_ref for summary in sdlc_receipt_summaries),
         },
     )
     return OperationalDashboardState(
@@ -438,6 +508,13 @@ def build_operational_dashboard_state(
         ),
         simple_blocked_workflow_refs=tuple(
             summary.workflow_ref for summary in simple_workflow_summaries if summary.outcome == "blocked"
+        ),
+        sdlc_receipt_summaries=sdlc_receipt_summaries,
+        sdlc_passed_receipt_refs=tuple(
+            summary.receipt_ref for summary in sdlc_receipt_summaries if summary.status == "passed"
+        ),
+        sdlc_failed_receipt_refs=tuple(
+            summary.receipt_ref for summary in sdlc_receipt_summaries if summary.status == "failed"
         ),
     )
 
@@ -493,6 +570,65 @@ def _simple_start_guide_summary(guide: SimpleOnboardingGuide) -> DashboardSimple
         message=guide.message,
         recommended_commands=tuple(step.command for step in guide.recommended_path),
         outcomes=guide.outcomes,
+    )
+
+
+def _sdlc_receipt_summary(receipt: Mapping[str, Any]) -> DashboardSdlcReceiptSummary:
+    """Project one SDLC validation receipt into dashboard display state."""
+
+    if not isinstance(receipt, Mapping):
+        raise RuntimeCoreInvariantError("dashboard SDLC receipt must be a mapping")
+    receipt_id = _required_text(receipt, "receipt_id")
+    status = _required_text(receipt, "status")
+    valid = _required_bool(receipt, "valid")
+    check_count = _required_int(receipt, "check_count")
+    error_count = _required_int(receipt, "error_count")
+    terminal_closure_required = _required_bool(receipt, "terminal_closure_required")
+    receipt_is_not_terminal_closure = _required_bool(receipt, "receipt_is_not_terminal_closure")
+    checks = receipt.get("checks")
+    if not isinstance(checks, Sequence) or isinstance(checks, (str, bytes)):
+        raise RuntimeCoreInvariantError("dashboard SDLC receipt checks must be a sequence")
+    errors = receipt.get("errors")
+    if not isinstance(errors, Sequence) or isinstance(errors, (str, bytes)):
+        raise RuntimeCoreInvariantError("dashboard SDLC receipt errors must be a sequence")
+    if error_count != len(errors):
+        raise RuntimeCoreInvariantError("dashboard SDLC receipt error count must match errors")
+    passed_check_names: list[str] = []
+    failed_check_names: list[str] = []
+    for index, check in enumerate(checks):
+        if not isinstance(check, Mapping):
+            raise RuntimeCoreInvariantError("dashboard SDLC receipt check must be a mapping")
+        check_name = _required_text(check, "name")
+        check_passed = _required_bool(check, "passed")
+        if check_passed:
+            passed_check_names.append(check_name)
+        else:
+            failed_check_names.append(check_name)
+        if check_name.strip() != check_name:
+            raise RuntimeCoreInvariantError(f"dashboard SDLC receipt check {index} name must be trimmed")
+    receipt_ref = stable_identifier(
+        "dashboard-sdlc-receipt",
+        {
+            "receipt_id": receipt_id,
+            "status": status,
+            "valid": valid,
+            "check_count": check_count,
+            "error_count": error_count,
+            "passed_check_names": tuple(passed_check_names),
+            "failed_check_names": tuple(failed_check_names),
+        },
+    )
+    return DashboardSdlcReceiptSummary(
+        receipt_ref=receipt_ref,
+        receipt_id=receipt_id,
+        status=status,
+        valid=valid,
+        check_count=check_count,
+        passed_check_names=tuple(passed_check_names),
+        failed_check_names=tuple(failed_check_names),
+        error_count=error_count,
+        terminal_closure_required=terminal_closure_required,
+        receipt_is_not_terminal_closure=receipt_is_not_terminal_closure,
     )
 
 
@@ -706,6 +842,29 @@ def _execution_readiness(
     if ready_action_ids and not blocked_action_ids:
         return "candidate_ready_for_mullu_governance_verdict"
     return "no_action_candidate_ready"
+
+
+def _required_text(record: Mapping[str, Any], field_name: str) -> str:
+    value = record.get(field_name)
+    if not isinstance(value, str) or not value.strip():
+        raise RuntimeCoreInvariantError(f"dashboard SDLC receipt {field_name} must be a non-empty string")
+    if value.strip() != value:
+        raise RuntimeCoreInvariantError(f"dashboard SDLC receipt {field_name} must be trimmed")
+    return value
+
+
+def _required_bool(record: Mapping[str, Any], field_name: str) -> bool:
+    value = record.get(field_name)
+    if not isinstance(value, bool):
+        raise RuntimeCoreInvariantError(f"dashboard SDLC receipt {field_name} must be a boolean")
+    return value
+
+
+def _required_int(record: Mapping[str, Any], field_name: str) -> int:
+    value = record.get(field_name)
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise RuntimeCoreInvariantError(f"dashboard SDLC receipt {field_name} must be an integer")
+    return value
 
 
 def _active_note_ids(projection: NoteMemoryProjection) -> set[str]:

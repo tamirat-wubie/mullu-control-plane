@@ -74,6 +74,23 @@ class OperationalDashboardRuntime:
         except (RuntimeCoreInvariantError, TypeError, ValueError) as exc:
             return _rejected(exc)
 
+    def sdlc_receipts(self) -> OperationalDashboardEnvelope:
+        """Return read-only SDLC validation receipt summaries."""
+
+        try:
+            state = self._load_state()
+            receipts = [summary.to_dict() for summary in state.sdlc_receipt_summaries]
+            return _ok(
+                "ready" if receipts else "empty",
+                {
+                    "sdlc_receipts": receipts,
+                    "passed_receipt_refs": list(state.sdlc_passed_receipt_refs),
+                    "failed_receipt_refs": list(state.sdlc_failed_receipt_refs),
+                },
+            )
+        except (RuntimeCoreInvariantError, TypeError, ValueError) as exc:
+            return _rejected(exc)
+
     def _load_state(self) -> OperationalDashboardState:
         state = self._state_provider()
         if not isinstance(state, OperationalDashboardState):

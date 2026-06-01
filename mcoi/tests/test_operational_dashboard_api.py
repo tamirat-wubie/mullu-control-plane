@@ -18,6 +18,7 @@ from mcoi_runtime.core.operational_dashboard_fastapi_router import (
 )
 from mcoi_runtime.core.operational_dashboard_intelligence import (
     DashboardSimpleHomeSummary,
+    DashboardSdlcReceiptSummary,
     OperationalDashboardState,
     WorkflowHealth,
 )
@@ -49,6 +50,21 @@ def _dashboard_state() -> OperationalDashboardState:
             review_workflow_count=0,
             blocked_workflow_count=0,
         ),
+        sdlc_receipt_summaries=(
+            DashboardSdlcReceiptSummary(
+                receipt_ref="dashboard-sdlc-receipt-test",
+                receipt_id="sdlc_artifact_validation_receipt",
+                status="passed",
+                valid=True,
+                check_count=1,
+                passed_check_names=("sdlc_schema_contracts",),
+                failed_check_names=(),
+                error_count=0,
+                terminal_closure_required=True,
+                receipt_is_not_terminal_closure=True,
+            ),
+        ),
+        sdlc_passed_receipt_refs=("dashboard-sdlc-receipt-test",),
     )
 
 
@@ -80,7 +96,21 @@ def test_operational_dashboard_runtime_returns_full_state_envelope() -> None:
     assert envelope["ok"] is True
     assert envelope["payload"]["dashboard"]["dashboard_id"] == "dashboard-test"
     assert envelope["payload"]["dashboard"]["simple_home_summary"]["ready_workflow_count"] == 1
+    assert envelope["payload"]["dashboard"]["sdlc_receipt_summaries"][0]["receipt_id"] == "sdlc_artifact_validation_receipt"
     assert envelope["payload"]["dashboard"]["execution_allowed"] is False
+
+
+def test_operational_dashboard_runtime_returns_sdlc_receipts_envelope() -> None:
+    runtime = OperationalDashboardRuntime.from_state(_dashboard_state())
+    envelope = runtime.sdlc_receipts().to_dict()
+
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "ready"
+    assert envelope["payload"]["sdlc_receipts"][0]["receipt_id"] == "sdlc_artifact_validation_receipt"
+    assert envelope["payload"]["sdlc_receipts"][0]["execution_allowed"] is False
+    assert envelope["payload"]["passed_receipt_refs"] == ["dashboard-sdlc-receipt-test"]
+    assert envelope["payload"]["failed_receipt_refs"] == []
 
 
 def test_operational_dashboard_runtime_rejects_invalid_provider() -> None:
@@ -99,6 +129,7 @@ def test_operational_dashboard_fastapi_adapter_route_specs_are_stable() -> None:
     assert [(spec.method, spec.path, spec.handler_name) for spec in specs] == [
         ("GET", "/api/v1/dashboard/home", "simple_home"),
         ("GET", "/api/v1/dashboard/state", "state"),
+        ("GET", "/api/v1/dashboard/sdlc/receipts", "sdlc_receipts"),
     ]
     assert all(spec.purpose for spec in specs)
 
@@ -108,10 +139,12 @@ def test_operational_dashboard_fastapi_adapter_preserves_runtime_envelopes() -> 
 
     home = adapter.simple_home()
     state = adapter.state()
+    receipts = adapter.sdlc_receipts()
 
     assert home["governed"] is True
     assert home["payload"]["home"]["primary_command"] == "mullu workflows"
     assert state["payload"]["dashboard"]["simple_home_summary"]["execution_allowed"] is False
+    assert receipts["payload"]["sdlc_receipts"][0]["execution_allowed"] is False
 
 
 def test_create_operational_dashboard_fastapi_router_reports_missing_dependency() -> None:

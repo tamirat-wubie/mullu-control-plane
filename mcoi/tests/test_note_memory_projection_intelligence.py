@@ -45,6 +45,7 @@ from mcoi_runtime.core.operational_dashboard_intelligence import (
     DashboardSimpleHomeSummary,
     DashboardSimpleStartGuideSummary,
     DashboardSimpleWorkflowSummary,
+    DashboardSdlcReceiptSummary,
     WorkflowHealth,
     build_operational_dashboard_state,
 )
@@ -472,6 +473,68 @@ def test_dashboard_projects_simple_workflows_and_start_guide_without_execution_a
     assert payload["execution_allowed"] is False
 
 
+def test_dashboard_projects_sdlc_receipts_without_execution_authority(tmp_path) -> None:
+    mesh, deploy_note, blocker_note = _capture_projection_notes(tmp_path)
+    boxes = tuple(build_note_concept_box(event) for event in (deploy_note, blocker_note))
+    findings = tuple(finding for box in boxes for finding in traverse_concept_box(box).findings)
+    projection = project_note_memory(
+        mesh.list_events(),
+        concept_boxes=boxes,
+        axis_findings=findings,
+        assessed_at="2026-05-31T12:05:00+00:00",
+    )
+    sdlc_receipt = {
+        "receipt_id": "sdlc_artifact_validation_receipt",
+        "status": "passed",
+        "valid": True,
+        "check_count": 2,
+        "checks": [
+            {"name": "sdlc_schema_contracts", "passed": True},
+            {"name": "sdlc_no_overclaim", "passed": True},
+        ],
+        "error_count": 0,
+        "errors": [],
+        "terminal_closure_required": True,
+        "receipt_is_not_terminal_closure": True,
+    }
+    failed_sdlc_receipt = {
+        "receipt_id": "sdlc_pr_enforcement_validation_receipt",
+        "status": "failed",
+        "valid": False,
+        "check_count": 2,
+        "checks": [
+            {"name": "sdlc_pr_template_evidence", "passed": True},
+            {"name": "sdlc_ci_governance_gate", "passed": False},
+        ],
+        "error_count": 1,
+        "errors": ["ci_workflow missing SDLC Governance Gate"],
+        "terminal_closure_required": True,
+        "receipt_is_not_terminal_closure": True,
+    }
+
+    dashboard = build_operational_dashboard_state(
+        projection=projection,
+        boxes=boxes,
+        sdlc_validation_receipts=(sdlc_receipt, failed_sdlc_receipt),
+    )
+    payload = dashboard.to_dict()
+
+    assert len(dashboard.sdlc_receipt_summaries) == 2
+    assert dashboard.sdlc_passed_receipt_refs == (dashboard.sdlc_receipt_summaries[0].receipt_ref,)
+    assert dashboard.sdlc_failed_receipt_refs == (dashboard.sdlc_receipt_summaries[1].receipt_ref,)
+    assert payload["sdlc_receipt_summaries"][0]["receipt_id"] == "sdlc_artifact_validation_receipt"
+    assert payload["sdlc_receipt_summaries"][0]["passed_check_names"] == [
+        "sdlc_schema_contracts",
+        "sdlc_no_overclaim",
+    ]
+    assert payload["sdlc_receipt_summaries"][1]["failed_check_names"] == ["sdlc_ci_governance_gate"]
+    assert payload["sdlc_receipt_summaries"][1]["valid"] is False
+    assert payload["sdlc_receipt_summaries"][0]["terminal_closure_required"] is True
+    assert payload["sdlc_receipt_summaries"][0]["receipt_is_not_terminal_closure"] is True
+    assert payload["sdlc_receipt_summaries"][0]["execution_allowed"] is False
+    assert payload["execution_allowed"] is False
+
+
 def test_dashboard_simple_action_summary_rejects_execution_authority() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="dashboard simple action cannot allow execution"):
         DashboardSimpleActionSummary(
@@ -486,6 +549,56 @@ def test_dashboard_simple_action_summary_rejects_execution_authority() -> None:
             review_reasons=(),
             execution_allowed=True,
         )
+
+
+def test_dashboard_sdlc_receipt_summary_rejects_execution_authority() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="dashboard SDLC receipt cannot allow execution"):
+        DashboardSdlcReceiptSummary(
+            receipt_ref="dashboard-sdlc-receipt-test",
+            receipt_id="sdlc_artifact_validation_receipt",
+            status="passed",
+            valid=True,
+            check_count=1,
+            passed_check_names=("sdlc_schema_contracts",),
+            failed_check_names=(),
+            error_count=0,
+            terminal_closure_required=True,
+            receipt_is_not_terminal_closure=True,
+            execution_allowed=True,
+        )
+
+
+def test_dashboard_sdlc_receipt_rejects_terminal_closure_claim(tmp_path) -> None:
+    mesh, deploy_note, blocker_note = _capture_projection_notes(tmp_path)
+    boxes = tuple(build_note_concept_box(event) for event in (deploy_note, blocker_note))
+    findings = tuple(finding for box in boxes for finding in traverse_concept_box(box).findings)
+    projection = project_note_memory(
+        mesh.list_events(),
+        concept_boxes=boxes,
+        axis_findings=findings,
+        assessed_at="2026-05-31T12:05:00+00:00",
+    )
+    invalid_receipt = {
+        "receipt_id": "sdlc_artifact_validation_receipt",
+        "status": "passed",
+        "valid": True,
+        "check_count": 1,
+        "checks": [{"name": "sdlc_schema_contracts", "passed": True}],
+        "error_count": 0,
+        "errors": [],
+        "terminal_closure_required": True,
+        "receipt_is_not_terminal_closure": False,
+    }
+
+    with pytest.raises(RuntimeCoreInvariantError, match="cannot claim terminal closure"):
+        build_operational_dashboard_state(
+            projection=projection,
+            boxes=boxes,
+            sdlc_validation_receipts=(invalid_receipt,),
+        )
+
+    assert invalid_receipt["receipt_is_not_terminal_closure"] is False
+    assert invalid_receipt["terminal_closure_required"] is True
 
 
 def test_dashboard_simple_workflow_summary_rejects_execution_authority() -> None:
