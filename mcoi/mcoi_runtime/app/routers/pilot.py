@@ -13,11 +13,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.pilot_init import PilotInitRequest, PilotProvisionRegistry, build_pilot_scaffold
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers._tenant_scope import scoped_listing_tenant
 from mcoi_runtime.app.routers.musia_auth import require_admin
 
 
@@ -78,12 +79,14 @@ def provision_pilot(req: PilotProvisionRequest, _: str = Depends(require_admin))
 
 @router.get("/api/v1/pilots/provisions")
 def list_pilot_provisions(
+    request: Request,
     tenant_id: str = "",
     limit: int = 50,
     offset: int = 0,
 ) -> dict[str, Any]:
     """List accepted hosted pilot provisioning records."""
     deps.metrics.inc("requests_governed")
+    tenant_id = scoped_listing_tenant(request, tenant_id)
     records = _provision_registry.list_records(tenant_id=tenant_id, limit=limit, offset=offset)
     return {
         "records": [record.to_dict() for record in records],

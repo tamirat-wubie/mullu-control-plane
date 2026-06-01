@@ -7,10 +7,11 @@ from __future__ import annotations
 
 from hashlib import sha256
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers._tenant_scope import scoped_listing_tenant
 from mcoi_runtime.app.routers.musia_auth import require_admin
 
 router = APIRouter()
@@ -77,9 +78,10 @@ def create_identity(req: CreateIdentityRequest, _: str = Depends(require_admin))
 
 
 @router.get("/api/v1/rbac/identities")
-def list_identities(tenant_id: str = ""):
+def list_identities(request: Request, tenant_id: str = ""):
     """List governed identities."""
     deps.metrics.inc("requests_governed")
+    tenant_id = scoped_listing_tenant(request, tenant_id)
     if tenant_id:
         identities = deps.access_runtime.identities_for_tenant(tenant_id)
     else:
