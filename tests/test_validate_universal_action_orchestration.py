@@ -12,7 +12,7 @@ Dependencies:
 
 Invariants:
   The validator is read-only, blocks execution bypass, and rejects raw private
-  reasoning exposure.
+  reasoning exposure. Persisted validation receipts stay under the workspace root.
 """
 
 from __future__ import annotations
@@ -284,7 +284,8 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary_directory:
             temporary_path = Path(temporary_directory)
             invalid_path = temporary_path / "invalid_uao.json"
-            receipt_path = temporary_path / "receipt.json"
+            receipt_path = WORKSPACE_ROOT / ".tmp" / "uao-validation-failed-receipt.json"
+            receipt_path.unlink(missing_ok=True)
             invalid_path.write_text(json.dumps(invalid_record), encoding="utf-8")
             stdout_buffer = io.StringIO()
 
@@ -317,6 +318,44 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             self.assertNotIn(str(temporary_path), serialized_report)
             self.assertNotIn(str(invalid_path), serialized_report)
             self.assertTrue(receipt_path.exists())
+            receipt_path.unlink()
+
+    def test_receipt_path_rejects_workspace_escape_and_non_json_suffix(self) -> None:
+        report = VALIDATOR.build_validation_report()
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            workspace_root = Path(temporary_directory) / "workspace"
+            workspace_root.mkdir()
+            receipt_path = VALIDATOR.write_validation_report(report, Path(".tmp/uao-receipt.json"), workspace_root)
+
+            self.assertEqual("uao-receipt.json", receipt_path.name)
+            self.assertTrue(receipt_path.exists())
+            self.assertEqual(workspace_root.resolve(), receipt_path.parents[1].resolve())
+            with self.assertRaises(ValueError):
+                VALIDATOR.resolve_validation_receipt_path(Path("../uao-receipt.json"), workspace_root)
+            with self.assertRaises(ValueError):
+                VALIDATOR.resolve_validation_receipt_path(Path(".tmp/uao-receipt.txt"), workspace_root)
+
+    def test_cli_rejects_receipt_path_escape_without_writing(self) -> None:
+        escaped_receipt_path = WORKSPACE_ROOT.parent / "uao-validation-escaped-receipt.json"
+        escaped_receipt_path.unlink(missing_ok=True)
+
+        exit_code = VALIDATOR.main(
+            [
+                "--schema",
+                str(SCHEMA_PATH),
+                "--document",
+                str(DOCUMENT_PATH),
+                "--example",
+                str(ALLOWED_EXAMPLE_PATH),
+                "--json",
+                "--receipt-path",
+                str(escaped_receipt_path),
+            ]
+        )
+
+        self.assertEqual(1, exit_code)
+        self.assertFalse(escaped_receipt_path.exists())
 
     def test_cli_json_receipt_sanitizes_load_error_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
