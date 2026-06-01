@@ -36,6 +36,7 @@ DOC_REQUIREMENTS: dict[Path, tuple[str, ...]] = {
     WORKSPACE_ROOT / "docs" / "SDLC.md": (
         "SDLC = UAO for software changes",
         "Effect-bearing SDLC action -> UAO required.",
+        "scripts/validate_sdlc_pr_enforcement.py",
         "No closure without learning.",
     ),
     WORKSPACE_ROOT / "docs" / "SDLC_GOVERNANCE_POLICY.md": (
@@ -49,10 +50,15 @@ DOC_REQUIREMENTS: dict[Path, tuple[str, ...]] = {
     WORKSPACE_ROOT / "docs" / "SDLC_RELEASE_POLICY.md": (
         "Production claim is allowed when:",
         "deployment_witness = published",
+        "incident_recovery_path_if_rollback_fails",
     ),
     WORKSPACE_ROOT / "docs" / "SDLC_SECURITY_REVIEW.md": (
         "unresolved_finding.severity in {critical, high} -> block_release",
         "receipt integrity test",
+    ),
+    WORKSPACE_ROOT / "docs" / "SDLC_PR_ENFORCEMENT.md": (
+        "SDLC Governance Gate",
+        "rollback_or_incident_handoff",
     ),
 }
 

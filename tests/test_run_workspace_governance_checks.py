@@ -30,7 +30,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "protocol_manifest",
         "logic_governance_application",
     ]
-    assert names[-9:] == [
+    assert names[-10:] == [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
         "universal_action_orchestration_contract",
@@ -40,6 +40,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "sdlc_state_machine_validation",
         "sdlc_release_readiness_validation",
         "sdlc_security_review_validation",
+        "sdlc_pr_enforcement_validation",
     ]
     assert args_by_name["local_assurance_plan"][1:] == (
         "scripts/refresh_local_assurance.py",
@@ -54,6 +55,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert args_by_name["sdlc_security_review_validation"][1:] == (
         "scripts/validate_sdlc_security_review.py",
         "--strict",
+    )
+    assert args_by_name["sdlc_pr_enforcement_validation"][1:] == (
+        "scripts/validate_sdlc_pr_enforcement.py",
     )
 
 

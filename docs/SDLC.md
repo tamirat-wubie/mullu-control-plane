@@ -2,7 +2,7 @@
 
 Purpose: define the governed software delivery lifecycle doctrine for Mullu software changes.
 Governance scope: OCE lifecycle field completeness, RAG artifact linkage, CDCV stage transition causality, CQTE decidable gates, UWMA receipt anchoring, and PRS closure evidence.
-Dependencies: `docs/SDLC_GOVERNANCE_POLICY.md`, `docs/SDLC_STATE_MACHINE.md`, `docs/SDLC_RELEASE_POLICY.md`, `docs/SDLC_SECURITY_REVIEW.md`, `schemas/sdlc_*.schema.json`, `examples/sdlc/*.json`, and `scripts/validate_sdlc_*.py`.
+Dependencies: `docs/SDLC_GOVERNANCE_POLICY.md`, `docs/SDLC_STATE_MACHINE.md`, `docs/SDLC_RELEASE_POLICY.md`, `docs/SDLC_SECURITY_REVIEW.md`, `docs/SDLC_PR_ENFORCEMENT.md`, `schemas/sdlc_*.schema.json`, `examples/sdlc/*.json`, and `scripts/validate_sdlc_*.py`.
 Invariants: no software change, release, deployment, or production claim advances without evidence, validation, receipt, and closure.
 
 ## Architecture
@@ -91,6 +91,7 @@ python scripts/validate_sdlc_artifact.py
 python scripts/validate_sdlc_state_machine.py
 python scripts/validate_sdlc_release_readiness.py --strict
 python scripts/validate_sdlc_security_review.py --strict
+python scripts/validate_sdlc_pr_enforcement.py
 python -m pytest tests/test_validate_sdlc_artifact.py tests/test_validate_sdlc_state_machine.py tests/test_validate_sdlc_release_readiness.py tests/test_sdlc_security_review.py -q
 python scripts/run_workspace_governance_checks.py
 ```

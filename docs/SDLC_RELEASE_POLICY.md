@@ -66,3 +66,16 @@ and audit_verify_endpoint = reachable
 ```
 
 Pilot, staging, or not-published candidates may remain `not_published` when the artifact explicitly records the claim boundary and keeps public production health undeclared.
+
+## Rollback And Incident Linkage
+
+Effect-bearing release and deployment candidates must state the rollback or incident handoff path before publication.
+
+```text
+release_or_deployment_effect
+-> rollback_plan
+-> incident_recovery_path_if_rollback_fails
+-> terminal_closure_certificate_or_sdlc_closure_receipt
+```
+
+Rollback evidence may reference `rollback_plan`, `rollback_command`, deployment witness receipts, incident recovery plans, terminal closure certificates, or SDLC closure receipts. Incident handoff is required when rollback is partial, blocked, or leaves an accepted residual risk.
