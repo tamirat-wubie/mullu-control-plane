@@ -7,10 +7,11 @@ from __future__ import annotations
 
 from hashlib import sha256
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers.musia_auth import require_admin
 
 router = APIRouter()
 
@@ -37,7 +38,7 @@ class BindRoleRequest(BaseModel):
 
 
 @router.post("/api/v1/rbac/identities")
-def create_identity(req: CreateIdentityRequest):
+def create_identity(req: CreateIdentityRequest, _: str = Depends(require_admin)):
     """Register a governed identity (user, service, or agent)."""
     from mcoi_runtime.contracts.access_runtime import IdentityKind
     deps.metrics.inc("requests_governed")

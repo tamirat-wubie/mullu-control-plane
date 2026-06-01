@@ -14,12 +14,8 @@
 # whose intended access model (operator-only vs tenant-self) should be confirmed
 # before scoping.
 #
+# Confirmed not-tenant-scoped: compile/preview endpoints that echo the request
+# (tenant_id labels the returned plan; no stored-tenant-state read and no side
+# effect), so there is no cross-tenant data to scope.
 mcoi/mcoi_runtime/app/routers/assistant.py::compile_finance_ops_assistant_plan
 mcoi/mcoi_runtime/app/routers/explain.py::explain_action
-mcoi/mcoi_runtime/app/routers/god_mode.py::issue_ticket
-mcoi/mcoi_runtime/app/routers/organization_kernel.py::bootstrap_minimum_org
-mcoi/mcoi_runtime/app/routers/organization_kernel.py::create_organization
-mcoi/mcoi_runtime/app/routers/pilot.py::provision_pilot
-mcoi/mcoi_runtime/app/routers/rbac.py::create_identity
-mcoi/mcoi_runtime/app/routers/tenant.py::create_tenant_budget
-mcoi/mcoi_runtime/app/routers/tenant.py::register_tenant

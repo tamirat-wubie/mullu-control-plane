@@ -7,12 +7,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from mcoi_runtime.governance.guards.budget import TenantBudgetPolicy, TenantBudgetReport
 from mcoi_runtime.governance.guards.tenant_gating import TenantGatingError, TenantStatus
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers.musia_auth import require_admin
 from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 
 router = APIRouter()
@@ -91,7 +92,7 @@ def _certify_action_proof(
 
 
 @router.post("/api/v1/tenant/budget")
-def create_tenant_budget(req: TenantBudgetRequest):
+def create_tenant_budget(req: TenantBudgetRequest, _: str = Depends(require_admin)):
     """Create or update a tenant's budget policy."""
     deps.tenant_budget_mgr.set_policy(TenantBudgetPolicy(
         tenant_id=req.tenant_id, max_cost=req.max_cost, max_calls=req.max_calls,
@@ -294,7 +295,7 @@ def _require_gating():
 
 
 @router.post("/api/v1/tenant/register")
-def register_tenant(req: TenantRegisterRequest):
+def register_tenant(req: TenantRegisterRequest, _: str = Depends(require_admin)):
     """Register a new tenant with initial lifecycle status."""
     gating = _require_gating()
     try:

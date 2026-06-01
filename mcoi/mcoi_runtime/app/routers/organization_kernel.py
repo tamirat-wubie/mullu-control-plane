@@ -16,8 +16,10 @@ from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+
+from mcoi_runtime.app.routers.musia_auth import require_admin
 
 from scripts.collect_deployment_witness import (
     DeploymentWitness,
@@ -883,7 +885,7 @@ def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) ->
 
 
 @router.post("/api/v1/orgs")
-def create_organization(req: OrganizationCreateRequest):
+def create_organization(req: OrganizationCreateRequest, _: str = Depends(require_admin)):
     """Create an organization profile in the Organization Kernel."""
     _inc_metric("requests_governed")
     kernel = _kernel()
@@ -907,7 +909,7 @@ def create_organization(req: OrganizationCreateRequest):
 
 
 @router.post("/api/v1/orgs/{org_id}/bootstrap-minimum")
-def bootstrap_minimum_org(org_id: str, req: OrganizationBootstrapRequest):
+def bootstrap_minimum_org(org_id: str, req: OrganizationBootstrapRequest, _: str = Depends(require_admin)):
     """Create the five-department minimum Organization Kernel v0 surface."""
     _inc_metric("requests_governed")
     kernel = _kernel()
