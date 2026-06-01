@@ -75,6 +75,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _agentic_control_resource_governor_skill(),
         _agentic_control_temporal_governor_skill(),
         _agentic_control_memory_governor_skill(),
+        _agentic_control_evidence_governor_skill(),
         _agentic_control_math_governor_skill(),
         _agentic_control_algorithm_governor_skill(),
         _agentic_control_security_governor_skill(),
@@ -1132,6 +1133,134 @@ def _agentic_control_memory_governor_skill() -> SkillDescriptor:
                 "redaction_plan_ref",
                 "forget_path_ref",
                 "retention_policy_ref",
+            ),
+        },
+    )
+
+
+def _agentic_control_evidence_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.evidence_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic evidence governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_evidence_mission",
+                name="Define evidence mission",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "claim_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_evidence_requirements",
+                name="Rank evidence requirements",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_evidence_mission",),
+                input_bindings={"mission_contract_ref": "define_evidence_mission.mission_contract_ref"},
+                output_keys=("evidence_requirement_order_ref", "dependency_blockers", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_evidence_governance",
+                name="Evaluate evidence governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_evidence_requirements",),
+                input_bindings={"priority_order_ref": "rank_evidence_requirements.evidence_requirement_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_actions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_evidence_budget",
+                name="Bound evidence budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_evidence_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_evidence_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "halt_thresholds", "resource_floor"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_claim_verification",
+                name="Plan claim verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("bound_evidence_budget",),
+                input_bindings={
+                    "claim_boundary_ref": "define_evidence_mission.claim_boundary_ref",
+                    "budget_envelope_ref": "bound_evidence_budget.budget_envelope_ref",
+                },
+                output_keys=(
+                    "claim_verification_plan_ref",
+                    "source_requirement_refs",
+                    "contradiction_check_ref",
+                    "independent_support_rule",
+                    "closure_rule",
+                ),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_evidence_interrogation",
+                name="Plan evidence interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_claim_verification",),
+                input_bindings={"verification_plan_ref": "plan_claim_verification.claim_verification_plan_ref"},
+                output_keys=("evidence_interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_evidence_gaps",
+                name="Refine evidence gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_evidence_interrogation",),
+                input_bindings={
+                    "verification_plan_ref": "plan_claim_verification.claim_verification_plan_ref",
+                    "interrogation_plan_ref": "plan_evidence_interrogation.evidence_interrogation_plan_ref",
+                    "contradiction_check_ref": "plan_claim_verification.contradiction_check_ref",
+                    "source_requirement_refs": "plan_claim_verification.source_requirement_refs",
+                },
+                output_keys=("evidence_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_evidence_memory_admission",
+                name="Plan evidence memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_evidence_gaps",),
+                input_bindings={
+                    "refinement_plan_ref": "refine_evidence_gaps.evidence_refinement_plan_ref",
+                    "verification_plan_ref": "plan_claim_verification.claim_verification_plan_ref",
+                    "interrogation_plan_ref": "plan_evidence_interrogation.evidence_interrogation_plan_ref",
+                },
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes read-only evidence discipline by linking claim boundary, "
+            "source requirements, governance gate, budget, claim verification, "
+            "contradiction checks, independent-support rules, interrogation, "
+            "gap refinement, and memory-admission planning before a claim is "
+            "reused by autonomous execution."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "evidence_governor": True,
+            "evidence_surfaces": (
+                "claim_boundary_ref",
+                "source_requirement_refs",
+                "contradiction_check_ref",
+                "independent_support_rule",
+                "proof_state",
+                "evidence_requests",
             ),
         },
     )
