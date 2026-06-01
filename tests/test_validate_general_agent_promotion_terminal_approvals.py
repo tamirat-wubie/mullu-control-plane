@@ -39,6 +39,8 @@ def test_terminal_approvals_validator_accepts_schema_valid_refs(tmp_path: Path) 
 
     assert result.valid is True
     assert result.present is True
+    assert result.receipt_path == "general_agent_promotion_terminal_approvals.json"
+    assert result.schema_path == "schemas/general_agent_promotion_terminal_approvals.schema.json"
     assert result.approval_count == 2
     assert result.approved_count == 2
     assert result.approved_refs_by_action["deploy-publish"] == "approval://deployment/publish"
@@ -60,6 +62,7 @@ def test_terminal_approvals_validator_rejects_serialized_values(tmp_path: Path) 
     assert result.approved_count == 0
     assert result.approved_refs_by_action == {}
     assert "approval_receipt_entry_1_value_serialized_must_be_false" in result.errors
+    assert str(tmp_path) not in json.dumps(result.as_dict())
 
 
 def test_terminal_approvals_validator_rejects_duplicate_action_ids(tmp_path: Path) -> None:
@@ -98,8 +101,26 @@ def test_terminal_approvals_cli_reports_missing_with_allow_missing(tmp_path: Pat
     assert exit_code == 0
     assert payload["present"] is False
     assert payload["valid"] is False
+    assert payload["receipt_path"] == "missing-terminal-approvals.json"
+    assert payload["schema_path"] == "schemas/general_agent_promotion_terminal_approvals.schema.json"
     assert payload["approval_count"] == 0
     assert payload["errors"] == []
+    assert str(tmp_path) not in json.dumps(payload)
+
+
+def test_terminal_approvals_malformed_receipt_uses_bounded_path_labels(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "bad-terminal-approvals.json"
+    receipt_path.write_text('{"receipt_id": "secret-approval-token"', encoding="utf-8")
+
+    result = validate_general_agent_promotion_terminal_approvals(receipt_path=receipt_path)
+    payload = result.as_dict()
+
+    assert result.valid is False
+    assert result.present is True
+    assert result.receipt_path == "bad-terminal-approvals.json"
+    assert result.schema_path == "schemas/general_agent_promotion_terminal_approvals.schema.json"
+    assert result.errors == ("approval_receipt_invalid",)
+    assert str(tmp_path) not in json.dumps(payload)
 
 
 def _write_receipt(

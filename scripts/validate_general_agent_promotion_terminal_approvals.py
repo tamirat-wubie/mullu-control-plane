@@ -69,8 +69,8 @@ def validate_general_agent_promotion_terminal_approvals(
         return TerminalApprovalReceiptValidation(
             valid=False,
             present=False,
-            receipt_path=str(receipt_path),
-            schema_path=str(schema_path),
+            receipt_path=_path_label(receipt_path),
+            schema_path=_path_label(schema_path),
             receipt_id="",
             approval_count=0,
             approved_count=0,
@@ -84,8 +84,8 @@ def validate_general_agent_promotion_terminal_approvals(
         return TerminalApprovalReceiptValidation(
             valid=False,
             present=True,
-            receipt_path=str(receipt_path),
-            schema_path=str(schema_path),
+            receipt_path=_path_label(receipt_path),
+            schema_path=_path_label(schema_path),
             receipt_id="",
             approval_count=0,
             approved_count=0,
@@ -105,8 +105,8 @@ def validate_general_agent_promotion_terminal_approvals(
     return TerminalApprovalReceiptValidation(
         valid=not errors,
         present=True,
-        receipt_path=str(receipt_path),
-        schema_path=str(schema_path),
+        receipt_path=_path_label(receipt_path),
+        schema_path=_path_label(schema_path),
         receipt_id=str(payload.get("receipt_id", "")),
         approval_count=_approval_count(payload),
         approved_count=len(approved_refs),
@@ -178,6 +178,15 @@ def _semantic_validation(payload: dict[str, Any]) -> tuple[tuple[str, ...], dict
 def _approval_count(payload: dict[str, Any]) -> int:
     approvals = payload.get("approvals", ())
     return len(approvals) if isinstance(approvals, list) else 0
+
+
+def _path_label(path: Path) -> str:
+    """Return a validation report path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _load_json_object(path: Path) -> dict[str, Any] | None:
