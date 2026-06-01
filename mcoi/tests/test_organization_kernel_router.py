@@ -626,6 +626,97 @@ def test_case_plan_step_admission_preview_allows_receipt_binding_without_dispatc
     assert len(after["gate_decisions"]) == 1
 
 
+def test_organization_action_queue_reports_deferred_handoff_actions_without_mutation(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.get("/api/v1/orgs/org-mullu/action-queue")
+    payload = response.json()
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["read_only"] is True
+    assert payload["summary"]["open_case_count"] == 1
+    assert payload["summary"]["action_count"] == 5
+    assert payload["summary"]["ready_action_count"] == 0
+    assert payload["summary"]["review_action_count"] == 5
+    assert payload["summary"]["defer_count"] == 5
+    assert payload["summary"]["execution_authority_granted"] is False
+    assert payload["summary"]["dispatch_authority_granted"] is False
+    assert {item["next_action"] for item in payload["actions"]} == {"collect_required_evidence"}
+    assert {item["admission_decision"] for item in payload["actions"]} == {"defer"}
+    assert all(item["dispatch_authority_granted"] is False for item in payload["actions"])
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
+def test_organization_action_queue_reports_receipt_ready_step_without_dispatch(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    gate = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.get("/api/v1/orgs/org-mullu/action-queue")
+    payload = response.json()
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+    engineering = next(
+        item for item in payload["actions"]
+        if item["step_id"] == "engineering_runtime_witness"
+    )
+
+    assert gate.status_code == 200
+    assert response.status_code == 200
+    assert engineering["next_action"] == "bind_worker_receipt"
+    assert engineering["handoff_status"] == "ready_for_worker_receipt"
+    assert engineering["admission_decision"] == "allow"
+    assert engineering["queue_severity"] == "ready"
+    assert engineering["receipt_binding_authority_granted"] is True
+    assert engineering["execution_authority_granted"] is False
+    assert engineering["dispatch_authority_granted"] is False
+    assert payload["summary"]["ready_action_count"] >= 1
+    assert payload["summary"]["allow_count"] >= 1
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"]
+
+
+def test_organization_action_queue_view_is_read_only_and_escaped(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    bootstrap = client.post(
+        "/api/v1/orgs/org-mullu/bootstrap-minimum",
+        json={"tenant_id": "tenant-mullu", "name": "<script>alert('queue')</script>"},
+    )
+    pilot = client.post(
+        "/api/v1/cases/launch-gateway-pilot",
+        json={"org_id": "org-mullu", "case_id": "case.launch_gateway_pilot"},
+    )
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    queue = client.get("/api/v1/orgs/org-mullu/action-queue")
+    view = client.get("/api/v1/orgs/org-mullu/action-queue/view")
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert bootstrap.status_code == 200
+    assert pilot.status_code == 200
+    assert queue.status_code == 200
+    assert view.status_code == 200
+    assert "text/html" in view.headers["content-type"]
+    assert "Mullu OrgOS Action Queue" in view.text
+    assert "json queue" in view.text
+    assert "case portfolio" in view.text
+    assert "authority map" in view.text
+    assert "collect_required_evidence" in view.text
+    assert "<script>alert('queue')</script>" not in view.text
+    assert "&lt;script&gt;alert(&#x27;queue&#x27;)&lt;/script&gt;" in view.text
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
 def test_department_registry_view_is_read_only_and_escaped(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     organization = client.post(
@@ -1435,6 +1526,8 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/orgs/{org_id}/authority-map/view" in paths
     assert "/api/v1/orgs/{org_id}/case-portfolio" in paths
     assert "/api/v1/orgs/{org_id}/case-portfolio/view" in paths
+    assert "/api/v1/orgs/{org_id}/action-queue" in paths
+    assert "/api/v1/orgs/{org_id}/action-queue/view" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate/view" in paths
     assert "/api/v1/cases/{case_id}/audit-explorer" in paths
