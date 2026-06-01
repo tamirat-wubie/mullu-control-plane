@@ -6,7 +6,7 @@ Invariants: execution stays fail-closed, uses governed entry paths only, and nev
 
 from __future__ import annotations
 
-from typing import Any, Mapping, TYPE_CHECKING
+from typing import Any, Mapping, TYPE_CHECKING, cast
 
 from mcoi_runtime.adapters.executor_base import ExecutionAdapterError
 from mcoi_runtime.contracts.autonomy import ActionClass, AutonomyDecisionStatus
@@ -32,6 +32,29 @@ if TYPE_CHECKING:
     from .operator_loop import OperatorLoop
 
 
+_TEMPLATE_ENVELOPE_KEY = "template"
+_BINDINGS_ENVELOPE_KEY = "bindings"
+
+
+def _dispatch_material_from_step_input(
+    action_type: str,
+    input_bindings: Mapping[str, Any],
+) -> tuple[Mapping[str, Any], Mapping[str, str]]:
+    """Split canonical template envelopes from legacy flat bindings."""
+    if _TEMPLATE_ENVELOPE_KEY in input_bindings or _BINDINGS_ENVELOPE_KEY in input_bindings:
+        template = input_bindings.get(_TEMPLATE_ENVELOPE_KEY)
+        if not isinstance(template, Mapping):
+            raise TemplateValidationError("malformed_template", "template must be a mapping")
+        bindings = input_bindings.get(_BINDINGS_ENVELOPE_KEY, {})
+        if not isinstance(bindings, Mapping):
+            raise TemplateValidationError("malformed_bindings", "bindings must be a mapping")
+        return template, cast(Mapping[str, str], bindings)
+
+    template = {"action_type": action_type, **{k: v for k, v in input_bindings.items()}}
+    bindings = {k: str(v) for k, v in input_bindings.items() if isinstance(v, str)}
+    return template, bindings
+
+
 class _GovernedStepExecutor:
     """Step executor that dispatches through the governed runtime path."""
 
@@ -45,10 +68,8 @@ class _GovernedStepExecutor:
         input_bindings: Mapping[str, Any],
     ) -> SkillStepOutcome:
         """Execute one skill step through the dispatcher."""
-        template = {"action_type": action_type, **{k: v for k, v in input_bindings.items()}}
-        bindings = {k: str(v) for k, v in input_bindings.items() if isinstance(v, str)}
-
         try:
+            template, bindings = _dispatch_material_from_step_input(action_type, input_bindings)
             self._runtime.template_validator.validate(template, bindings)
         except TemplateValidationError as exc:
             return SkillStepOutcome(

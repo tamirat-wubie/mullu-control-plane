@@ -27,8 +27,10 @@ class _DispatcherStub:
             status=ExecutionOutcome.SUCCEEDED,
             execution_id="exec-1",
         )
+        self.requests = []
 
     def dispatch(self, request):
+        self.requests.append(request)
         if self._exc is not None:
             raise self._exc
         return self._result
@@ -84,3 +86,24 @@ class TestGovernedStepExecutorFailures:
         assert outcome.status is SkillOutcomeStatus.FAILED
         assert outcome.error_message == "dispatch_error:RuntimeError"
         assert "secret dispatch token" not in outcome.error_message
+
+    def test_governed_step_executor_accepts_template_binding_envelope(self):
+        runtime = _runtime()
+        template = {
+            "template_id": "tpl-step-envelope-1",
+            "action_type": "shell_command",
+            "command_argv": ("echo", "{msg}"),
+            "required_parameters": ("msg",),
+        }
+
+        outcome = _GovernedStepExecutor(runtime=runtime).execute_step(
+            step_id="step-4",
+            action_type="shell_command",
+            input_bindings={"template": template, "bindings": {"msg": "hello"}},
+        )
+
+        assert outcome.status is SkillOutcomeStatus.SUCCEEDED
+        assert outcome.execution_id == "exec-1"
+        assert len(runtime.dispatcher.requests) == 1
+        assert runtime.dispatcher.requests[0].template == template
+        assert runtime.dispatcher.requests[0].bindings == {"msg": "hello"}

@@ -11,7 +11,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from unittest.mock import MagicMock
 
-import pytest
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
 from mcoi_runtime.app.bootstrap import bootstrap_runtime
 from mcoi_runtime.app.config import AppConfig
@@ -19,6 +18,7 @@ from mcoi_runtime.app.governed_execution import governed_operator_dispatch, gove
 from mcoi_runtime.app.operator_loop import OperatorLoop, OperatorRequest
 from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
 from mcoi_runtime.contracts.policy import DecisionReason, PolicyDecision, PolicyDecisionStatus
+from mcoi_runtime.contracts.skill import SkillOutcomeStatus
 from mcoi_runtime.core.dispatcher import DispatchRequest, Dispatcher
 from mcoi_runtime.core.governed_dispatcher import (
     GovernedDispatchContext,
@@ -245,7 +245,6 @@ def test_intent_id_auto_generated() -> None:
 
 
 # --- Test 5: operator_executors uses governed when available (Phase 195C: field now exists) ---
-@pytest.mark.skip(reason="Step executor validates template before dispatch — needs matching template fixture from operator test surface")
 def test_operator_executors_uses_governed_when_available() -> None:
     """Integration test: _GovernedStepExecutor uses governed dispatch when runtime has governed_dispatcher."""
     from mcoi_runtime.app.operator_executors import _GovernedStepExecutor
@@ -260,14 +259,16 @@ def test_operator_executors_uses_governed_when_available() -> None:
     assert runtime.governed_dispatcher is not None, "bootstrap_runtime should create governed_dispatcher"
 
     step_executor = _GovernedStepExecutor(runtime=runtime)
-    step_executor.execute_step(
+    outcome = step_executor.execute_step(
         step_id="step-gov-1",
         action_type="shell_command",
-        input_bindings={"msg": "governed-hello"},
+        input_bindings={"template": VALID_TEMPLATE, "bindings": {"msg": "governed-hello"}},
     )
 
-    # The governed path routes through the same dispatcher — template validation
-    # may reject based on field rules. What matters is governance was entered.
+    # The governed envelope reaches dispatch and records a ledger entry.
+    assert outcome.status is SkillOutcomeStatus.SUCCEEDED
+    assert outcome.execution_id is not None
+    assert executor.calls == 1
     assert runtime.governed_dispatcher.ledger_count >= 1, "governed dispatcher should have ledger entries"
 
 
