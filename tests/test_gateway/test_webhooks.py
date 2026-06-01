@@ -2138,6 +2138,7 @@ class TestGatewayStatus:
             intent="refresh_public_status_page",
             payload={"body": "refresh status page"},
         )
+        record["action_envelope"]["intent"] = command.command_id
         gateway_app.state.command_ledger.transition(
             command.command_id,
             CommandState.DISPATCHED,
@@ -2202,6 +2203,7 @@ class TestGatewayStatus:
             intent="refresh_public_status_page",
             payload={"body": "malformed status page replay"},
         )
+        malformed_record["action_envelope"]["intent"] = command.command_id
         gateway_app.state.command_ledger.transition(
             command.command_id,
             CommandState.DISPATCHED,
@@ -2220,6 +2222,56 @@ class TestGatewayStatus:
             resp.json()["detail"] == "universal action orchestration record not found"
         )
         assert gateway_app.state.command_ledger.get(command.command_id) is not None
+
+    def test_command_universal_action_orchestration_cross_command_returns_404(
+        self, gateway_app, client
+    ):
+        record = json.loads(
+            (
+                _ROOT
+                / "examples"
+                / "universal_action_orchestration.allowed_status_publish.json"
+            ).read_text(encoding="utf-8")
+        )
+        source_command = gateway_app.state.command_ledger.create_command(
+            tenant_id="tenant_ops_demo",
+            actor_id="service:status_page_worker",
+            source="web",
+            conversation_id="conversation-orchestration-source",
+            idempotency_key="universal-orchestration-source",
+            intent="refresh_public_status_page",
+            payload={"body": "source status page replay"},
+        )
+        target_command = gateway_app.state.command_ledger.create_command(
+            tenant_id="tenant_ops_demo",
+            actor_id="service:status_page_worker",
+            source="web",
+            conversation_id="conversation-orchestration-target",
+            idempotency_key="universal-orchestration-target",
+            intent="refresh_public_status_page",
+            payload={"body": "target status page replay"},
+        )
+        record["action_envelope"]["intent"] = source_command.command_id
+        gateway_app.state.command_ledger.transition(
+            target_command.command_id,
+            CommandState.DISPATCHED,
+            detail={
+                "cause": "universal_action_kernel_dispatched",
+                "universal_action_orchestration": record,
+            },
+        )
+
+        resp = client.get(
+            f"/commands/{target_command.command_id}/universal-action-orchestration"
+        )
+
+        assert resp.status_code == 404
+        assert (
+            resp.json()["detail"] == "universal action orchestration record not found"
+        )
+        assert (
+            gateway_app.state.command_ledger.get(target_command.command_id) is not None
+        )
 
     def test_operator_universal_actions_read_model_filters_proofs(
         self, gateway_app, client

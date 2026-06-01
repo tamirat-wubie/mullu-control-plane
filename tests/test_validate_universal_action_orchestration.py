@@ -134,6 +134,7 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             "Canonical validation receipts require the default schema", document_text
         )
         self.assertIn("Every command replay record must fail closed", document_text)
+        self.assertIn("Every command replay record must bind", document_text)
 
     def test_effect_bearing_action_requires_causal_trace(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
