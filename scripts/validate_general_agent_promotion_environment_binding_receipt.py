@@ -175,11 +175,20 @@ def _validation_result(
         valid=not errors,
         ready=receipt.get("ready") is True,
         receipt_id=str(receipt.get("receipt_id", "")),
-        receipt_path=str(receipt_path),
+        receipt_path=_path_label(receipt_path),
         binding_count=int(receipt.get("binding_count", 0)) if isinstance(receipt.get("binding_count", 0), int) else 0,
         missing_bindings=tuple(str(name) for name in missing_bindings) if isinstance(missing_bindings, list) else (),
         errors=tuple(errors),
     )
+
+
+def _path_label(path: Path) -> str:
+    """Return a validation report path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:
