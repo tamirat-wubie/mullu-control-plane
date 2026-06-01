@@ -1,0 +1,49 @@
+{
+  "witness_id": "main-protection-ruleset-witness-001",
+  "observed_at": "2026-06-01T18:10:00Z",
+  "source_ref": "github://tamirat-wubie/mullu-control-plane/rulesets/14360971",
+  "ruleset_id": 14360971,
+  "ruleset_name": "main-protection",
+  "target": "branch",
+  "enforcement": "active",
+  "ref_includes": [
+    "~DEFAULT_BRANCH"
+  ],
+  "bypass_actors": [],
+  "current_user_can_bypass": "never",
+  "rules": [
+    {
+      "type": "deletion"
+    },
+    {
+      "type": "non_fast_forward"
+    },
+    {
+      "type": "pull_request",
+      "required_review_thread_resolution": true,
+      "allowed_merge_methods": [
+        "squash",
+        "rebase",
+        "merge"
+      ]
+    },
+    {
+      "type": "required_status_checks",
+      "strict_required_status_checks_policy": false,
+      "required_status_checks": [
+        {
+          "context": "Rust Tests"
+        },
+        {
+          "context": "Schema Validation"
+        },
+        {
+          "context": "Python Tests (ubuntu-latest, Python 3.13)"
+        },
+        {
+          "context": "SDLC Governance Gate"
+        }
+      ]
+    }
+  ]
+}
