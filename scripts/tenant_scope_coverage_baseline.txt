@@ -30,8 +30,6 @@ mcoi/mcoi_runtime/app/routers/data/tools.py::invoke_tool
 mcoi/mcoi_runtime/app/routers/explain.py::explain_action
 mcoi/mcoi_runtime/app/routers/finance_approval.py::create_finance_approval_packet
 mcoi/mcoi_runtime/app/routers/god_mode.py::issue_ticket
-mcoi/mcoi_runtime/app/routers/llm/costs.py::cost_projection
-mcoi/mcoi_runtime/app/routers/llm/costs.py::tenant_costs
 mcoi/mcoi_runtime/app/routers/organization_kernel.py::bootstrap_minimum_org
 mcoi/mcoi_runtime/app/routers/organization_kernel.py::create_organization
 mcoi/mcoi_runtime/app/routers/pilot.py::provision_pilot

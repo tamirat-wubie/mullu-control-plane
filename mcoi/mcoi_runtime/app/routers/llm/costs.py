@@ -1,8 +1,9 @@
 """LLM cost analytics endpoints."""
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.app.routers.llm._common import deps
 
 router = APIRouter()
@@ -32,8 +33,9 @@ def costs_by_model():
 
 
 @router.get("/api/v1/costs/{tenant_id}")
-def tenant_costs(tenant_id: str):
+def tenant_costs(tenant_id: str, request: Request):
     """Cost breakdown for a specific tenant."""
+    enforce_tenant_scope(request, tenant_id)
     breakdown = deps.cost_analytics.tenant_breakdown(tenant_id)
     return {
         "tenant_id": breakdown.tenant_id,
@@ -47,8 +49,9 @@ def tenant_costs(tenant_id: str):
 
 
 @router.get("/api/v1/costs/{tenant_id}/projection")
-def cost_projection(tenant_id: str, budget: float = 0.0, days_elapsed: float = 1.0):
+def cost_projection(tenant_id: str, request: Request, budget: float = 0.0, days_elapsed: float = 1.0):
     """Cost projection for a tenant."""
+    enforce_tenant_scope(request, tenant_id)
     proj = deps.cost_analytics.project(tenant_id, budget=budget, days_elapsed=days_elapsed)
     return {
         "tenant_id": proj.tenant_id,
