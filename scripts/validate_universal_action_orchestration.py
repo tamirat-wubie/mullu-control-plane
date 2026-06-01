@@ -22,11 +22,17 @@ from typing import Any
 
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SCHEMA_PATH = WORKSPACE_ROOT / "schemas" / "universal_action_orchestration.schema.json"
+DEFAULT_SCHEMA_PATH = (
+    WORKSPACE_ROOT / "schemas" / "universal_action_orchestration.schema.json"
+)
 DEFAULT_DOCUMENT_PATH = WORKSPACE_ROOT / "docs" / "UNIVERSAL_ACTION_ORCHESTRATION.md"
 DEFAULT_EXAMPLE_PATHS = (
-    WORKSPACE_ROOT / "examples" / "universal_action_orchestration.allowed_status_publish.json",
-    WORKSPACE_ROOT / "examples" / "universal_action_orchestration.blocked_invoice_payment.json",
+    WORKSPACE_ROOT
+    / "examples"
+    / "universal_action_orchestration.allowed_status_publish.json",
+    WORKSPACE_ROOT
+    / "examples"
+    / "universal_action_orchestration.blocked_invoice_payment.json",
     WORKSPACE_ROOT / "examples" / "uao" / "blocked_missing_approval.json",
     WORKSPACE_ROOT / "examples" / "uao" / "deferred_stale_evidence.json",
     WORKSPACE_ROOT / "examples" / "uao" / "simulated_low_risk_readonly.json",
@@ -123,7 +129,11 @@ REQUIRED_SCHEMA_DEFS = {
         "evidence_refs",
         "capability_refs",
     ),
-    "exposure_boundary": ("redaction_level", "allowed_audiences", "blocked_payload_classes"),
+    "exposure_boundary": (
+        "redaction_level",
+        "allowed_audiences",
+        "blocked_payload_classes",
+    ),
     "pipeline_stage": (
         "stage_id",
         "stage_order",
@@ -134,10 +144,35 @@ REQUIRED_SCHEMA_DEFS = {
         "receipt_ref",
         "failure_reason",
     ),
-    "admission_guard": ("guard", "verdict", "proof_state", "reason_code", "evidence_refs"),
-    "decision": ("status", "reason_code", "proof_state", "solver_outcome", "next_action", "execution_allowed"),
-    "receipt": ("receipt_id", "tier", "kind", "stage_id", "confirms", "external_state_confirmed"),
-    "reconciliation": ("status", "observed_outcome_ref", "required_for_closure", "mismatch_reason"),
+    "admission_guard": (
+        "guard",
+        "verdict",
+        "proof_state",
+        "reason_code",
+        "evidence_refs",
+    ),
+    "decision": (
+        "status",
+        "reason_code",
+        "proof_state",
+        "solver_outcome",
+        "next_action",
+        "execution_allowed",
+    ),
+    "receipt": (
+        "receipt_id",
+        "tier",
+        "kind",
+        "stage_id",
+        "confirms",
+        "external_state_confirmed",
+    ),
+    "reconciliation": (
+        "status",
+        "observed_outcome_ref",
+        "required_for_closure",
+        "mismatch_reason",
+    ),
     "memory_update": ("status", "memory_ref", "learning_allowed"),
     "closure": ("status", "terminal", "closure_receipt_ref", "next_action"),
     "lineage": ("delta_ref", "logged_in_lineage", "accepted_deltas", "rejected_deltas"),
@@ -149,6 +184,7 @@ REQUIRED_DOCUMENT_TERMS = (
     "does not execute actions",
     "raw private reasoning",
     "Canonical validation receipts require the default schema, doctrine, and fixture set.",
+    "Every command replay record must fail closed when the persisted candidate is malformed or exposes private reasoning fields.",
 )
 
 
@@ -173,9 +209,13 @@ def load_document_text(document_path: Path) -> str:
     """Load the human-readable Universal Action Orchestration doctrine."""
 
     if not document_path.exists():
-        raise FileNotFoundError(f"missing Universal Action Orchestration document: {document_path}")
+        raise FileNotFoundError(
+            f"missing Universal Action Orchestration document: {document_path}"
+        )
     if not document_path.is_file():
-        raise IsADirectoryError(f"Universal Action Orchestration document path is not a file: {document_path}")
+        raise IsADirectoryError(
+            f"Universal Action Orchestration document path is not a file: {document_path}"
+        )
     return document_path.read_text(encoding="utf-8")
 
 
@@ -191,13 +231,19 @@ def validate_schema_artifact(schema: dict[str, Any]) -> list[str]:
         errors.append("schema root type must be object")
     if schema.get("additionalProperties") is not False:
         errors.append("schema root must close additional properties")
-    errors.extend(_validate_required_properties("schema", schema, "root", REQUIRED_ROOT_FIELDS))
+    errors.extend(
+        _validate_required_properties("schema", schema, "root", REQUIRED_ROOT_FIELDS)
+    )
     defs = schema.get("$defs")
     if not isinstance(defs, dict):
         errors.append("schema $defs must be an object")
         return errors
     for definition_name, required_fields in REQUIRED_SCHEMA_DEFS.items():
-        errors.extend(_validate_required_properties("schema", defs.get(definition_name), definition_name, required_fields))
+        errors.extend(
+            _validate_required_properties(
+                "schema", defs.get(definition_name), definition_name, required_fields
+            )
+        )
     return errors
 
 
@@ -219,7 +265,13 @@ def validate_orchestration(record: dict[str, Any]) -> list[str]:
         return errors
     errors.extend(_validate_no_private_reasoning_fields(record))
 
-    for field_name in ("orchestration_id", "action_id", "tenant_id", "actor_id", "created_at"):
+    for field_name in (
+        "orchestration_id",
+        "action_id",
+        "tenant_id",
+        "actor_id",
+        "created_at",
+    ):
         if not isinstance(record[field_name], str) or not record[field_name]:
             errors.append(f"orchestration.{field_name} must be a non-empty string")
     if record["uao_schema_version"] != EXPECTED_SCHEMA_VERSION:
@@ -230,26 +282,56 @@ def validate_orchestration(record: dict[str, Any]) -> list[str]:
         errors.append("orchestration.effect_bearing must be boolean")
     errors.extend(_validate_action_envelope(record["action_envelope"], record))
 
-    errors.extend(_validate_string_array("orchestration.effect_classes", record["effect_classes"]))
-    errors.extend(_validate_string_array("orchestration.input_refs", record["input_refs"], min_count=1))
-    errors.extend(_validate_string_array("orchestration.policy_refs", record["policy_refs"], min_count=1))
-    errors.extend(_validate_string_array("orchestration.capability_refs", record["capability_refs"], min_count=1))
-    errors.extend(_validate_string_array("orchestration.temporal_refs", record["temporal_refs"], min_count=1))
+    errors.extend(
+        _validate_string_array("orchestration.effect_classes", record["effect_classes"])
+    )
+    errors.extend(
+        _validate_string_array(
+            "orchestration.input_refs", record["input_refs"], min_count=1
+        )
+    )
+    errors.extend(
+        _validate_string_array(
+            "orchestration.policy_refs", record["policy_refs"], min_count=1
+        )
+    )
+    errors.extend(
+        _validate_string_array(
+            "orchestration.capability_refs", record["capability_refs"], min_count=1
+        )
+    )
+    errors.extend(
+        _validate_string_array(
+            "orchestration.temporal_refs", record["temporal_refs"], min_count=1
+        )
+    )
     errors.extend(_validate_exposure_boundary(record["exposure_boundary"]))
 
     stages_by_kind: dict[str, dict[str, Any]] = {}
     stages_by_id: dict[str, dict[str, Any]] = {}
-    errors.extend(_validate_pipeline_stages(record["pipeline_stages"], stages_by_kind, stages_by_id))
+    errors.extend(
+        _validate_pipeline_stages(
+            record["pipeline_stages"], stages_by_kind, stages_by_id
+        )
+    )
 
     guards_by_name: dict[str, dict[str, Any]] = {}
-    errors.extend(_validate_admission_guards(record["admission_guards"], guards_by_name))
-    errors.extend(_validate_decision(record["decision"], guards_by_name, stages_by_kind))
+    errors.extend(
+        _validate_admission_guards(record["admission_guards"], guards_by_name)
+    )
+    errors.extend(
+        _validate_decision(record["decision"], guards_by_name, stages_by_kind)
+    )
     errors.extend(_validate_trace_binding(record, stages_by_kind))
 
     receipt_ids: set[str] = set()
     receipt_kinds: set[str] = set()
-    errors.extend(_validate_receipts(record["receipts"], stages_by_id, receipt_ids, receipt_kinds))
-    errors.extend(_validate_reconciliation(record["reconciliation"], record["decision"]))
+    errors.extend(
+        _validate_receipts(record["receipts"], stages_by_id, receipt_ids, receipt_kinds)
+    )
+    errors.extend(
+        _validate_reconciliation(record["reconciliation"], record["decision"])
+    )
     errors.extend(_validate_memory_update(record["memory_update"]))
     errors.extend(_validate_closure(record["closure"], record["decision"], receipt_ids))
     errors.extend(_validate_lineage(record["lineage"], record["decision"]))
@@ -271,8 +353,12 @@ def validate_contract(
     errors = validate_schema_artifact(schema)
     errors.extend(validate_document_contract(load_document_text(document_path)))
     for example_path in example_paths:
-        record = load_json_object(example_path, f"Universal Action Orchestration example {example_path.name}")
-        errors.extend(f"{example_path.name}: {error}" for error in validate_orchestration(record))
+        record = load_json_object(
+            example_path, f"Universal Action Orchestration example {example_path.name}"
+        )
+        errors.extend(
+            f"{example_path.name}: {error}" for error in validate_orchestration(record)
+        )
     return errors
 
 
@@ -293,7 +379,9 @@ def build_validation_report(
     try:
         errors = validate_contract(schema_path, example_paths, document_path)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
-        errors = [f"load-universal-action-orchestration: {_sanitize_receipt_error(exc, schema_path, example_paths, document_path)}"]
+        errors = [
+            f"load-universal-action-orchestration: {_sanitize_receipt_error(exc, schema_path, example_paths, document_path)}"
+        ]
     valid = not errors
     return {
         "receipt_id": "universal_action_orchestration_validation_receipt",
@@ -303,7 +391,9 @@ def build_validation_report(
         "status": "passed" if valid else "failed",
         "schema_path": _receipt_path_label(schema_path),
         "document_path": _receipt_path_label(document_path),
-        "example_paths": [_receipt_path_label(example_path) for example_path in example_paths],
+        "example_paths": [
+            _receipt_path_label(example_path) for example_path in example_paths
+        ],
         "example_count": len(example_paths),
         "checks": [
             {
@@ -330,10 +420,16 @@ def validate_validation_receipt_scope(
         errors.append("receipt scope schema_path must be the canonical UAO schema")
     if _resolve_scope_path(document_path) != DEFAULT_DOCUMENT_PATH.resolve():
         errors.append("receipt scope document_path must be the canonical UAO doctrine")
-    observed_examples = tuple(_resolve_scope_path(example_path) for example_path in example_paths)
-    expected_examples = tuple(example_path.resolve() for example_path in DEFAULT_EXAMPLE_PATHS)
+    observed_examples = tuple(
+        _resolve_scope_path(example_path) for example_path in example_paths
+    )
+    expected_examples = tuple(
+        example_path.resolve() for example_path in DEFAULT_EXAMPLE_PATHS
+    )
     if observed_examples != expected_examples:
-        errors.append("receipt scope example_paths must preserve the canonical UAO fixture set and order")
+        errors.append(
+            "receipt scope example_paths must preserve the canonical UAO fixture set and order"
+        )
     return errors
 
 
@@ -344,24 +440,40 @@ def validate_validation_receipt_report_scope(report: dict[str, Any]) -> list[str
     if report.get("schema_path") != _receipt_path_label(DEFAULT_SCHEMA_PATH):
         errors.append("receipt report schema_path must bind the canonical UAO schema")
     if report.get("document_path") != _receipt_path_label(DEFAULT_DOCUMENT_PATH):
-        errors.append("receipt report document_path must bind the canonical UAO doctrine")
-    expected_example_labels = tuple(_receipt_path_label(example_path) for example_path in DEFAULT_EXAMPLE_PATHS)
+        errors.append(
+            "receipt report document_path must bind the canonical UAO doctrine"
+        )
+    expected_example_labels = tuple(
+        _receipt_path_label(example_path) for example_path in DEFAULT_EXAMPLE_PATHS
+    )
     if tuple(report.get("example_paths", ())) != expected_example_labels:
-        errors.append("receipt report example_paths must bind the canonical UAO fixture set and order")
+        errors.append(
+            "receipt report example_paths must bind the canonical UAO fixture set and order"
+        )
     if report.get("example_count") != len(DEFAULT_EXAMPLE_PATHS):
-        errors.append("receipt report example_count must match the canonical UAO fixture count")
+        errors.append(
+            "receipt report example_count must match the canonical UAO fixture count"
+        )
     return errors
 
 
-def resolve_validation_receipt_path(receipt_path: Path, workspace_root: Path = WORKSPACE_ROOT) -> Path:
+def resolve_validation_receipt_path(
+    receipt_path: Path, workspace_root: Path = WORKSPACE_ROOT
+) -> Path:
     """Resolve a workspace-local JSON receipt path and reject path escapes."""
 
     if receipt_path.suffix.lower() != ".json":
         raise ValueError("UAO validation receipt path must use .json suffix")
     resolved_root = workspace_root.resolve()
-    resolved_path = (workspace_root / receipt_path).resolve() if not receipt_path.is_absolute() else receipt_path.resolve()
+    resolved_path = (
+        (workspace_root / receipt_path).resolve()
+        if not receipt_path.is_absolute()
+        else receipt_path.resolve()
+    )
     if resolved_path != resolved_root and resolved_root not in resolved_path.parents:
-        raise ValueError(f"UAO validation receipt path must stay under workspace root: {receipt_path}")
+        raise ValueError(
+            f"UAO validation receipt path must stay under workspace root: {receipt_path}"
+        )
     return resolved_path
 
 
@@ -377,7 +489,9 @@ def write_validation_report(
         raise ValueError("; ".join(receipt_scope_errors))
     resolved_path = resolve_validation_receipt_path(receipt_path, workspace_root)
     resolved_path.parent.mkdir(parents=True, exist_ok=True)
-    resolved_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    resolved_path.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     return resolved_path
 
 
@@ -437,16 +551,26 @@ def _validate_required_properties(
         return errors
     for field_name in required_fields:
         if field_name not in required:
-            errors.append(f"{contract_name}: {fragment_name} missing required field: {field_name}")
+            errors.append(
+                f"{contract_name}: {fragment_name} missing required field: {field_name}"
+            )
         if field_name not in properties:
-            errors.append(f"{contract_name}: {fragment_name} missing property: {field_name}")
+            errors.append(
+                f"{contract_name}: {fragment_name} missing property: {field_name}"
+            )
     return errors
 
 
-def _validate_required_fields(label: str, record: Any, fields: tuple[str, ...]) -> list[str]:
+def _validate_required_fields(
+    label: str, record: Any, fields: tuple[str, ...]
+) -> list[str]:
     if not isinstance(record, dict):
         return [f"{label} must be an object"]
-    return [f"{label} missing field: {field_name}" for field_name in fields if field_name not in record]
+    return [
+        f"{label} missing field: {field_name}"
+        for field_name in fields
+        if field_name not in record
+    ]
 
 
 def _validate_string_array(label: str, value: Any, min_count: int = 0) -> list[str]:
@@ -471,9 +595,21 @@ def _validate_exposure_boundary(exposure_boundary: Any) -> list[str]:
     )
     if errors:
         return errors
-    if exposure_boundary["redaction_level"] not in {"internal", "operator", "user_safe", "audit", "external"}:
+    if exposure_boundary["redaction_level"] not in {
+        "internal",
+        "operator",
+        "user_safe",
+        "audit",
+        "external",
+    }:
         errors.append("exposure_boundary.redaction_level is invalid")
-    errors.extend(_validate_string_array("exposure_boundary.allowed_audiences", exposure_boundary["allowed_audiences"], 1))
+    errors.extend(
+        _validate_string_array(
+            "exposure_boundary.allowed_audiences",
+            exposure_boundary["allowed_audiences"],
+            1,
+        )
+    )
     errors.extend(
         _validate_string_array(
             "exposure_boundary.blocked_payload_classes",
@@ -482,11 +618,15 @@ def _validate_exposure_boundary(exposure_boundary: Any) -> list[str]:
         )
     )
     if "raw_private_reasoning" not in exposure_boundary["blocked_payload_classes"]:
-        errors.append("exposure_boundary.blocked_payload_classes must include raw_private_reasoning")
+        errors.append(
+            "exposure_boundary.blocked_payload_classes must include raw_private_reasoning"
+        )
     return errors
 
 
-def _validate_action_envelope(action_envelope: Any, record: dict[str, Any]) -> list[str]:
+def _validate_action_envelope(
+    action_envelope: Any, record: dict[str, Any]
+) -> list[str]:
     errors = _validate_required_fields(
         "action_envelope",
         action_envelope,
@@ -506,16 +646,28 @@ def _validate_action_envelope(action_envelope: Any, record: dict[str, Any]) -> l
     if errors:
         return errors
     for field_name in ("source", "actor", "tenant", "intent", "target", "requested_at"):
-        if not isinstance(action_envelope[field_name], str) or not action_envelope[field_name]:
+        if (
+            not isinstance(action_envelope[field_name], str)
+            or not action_envelope[field_name]
+        ):
             errors.append(f"action_envelope.{field_name} must be a non-empty string")
     if action_envelope["risk"] not in {"low", "H1", "H2", "H3", "H4"}:
         errors.append("action_envelope.risk is invalid")
     if action_envelope["approval_ref"] is not None and (
-        not isinstance(action_envelope["approval_ref"], str) or not action_envelope["approval_ref"]
+        not isinstance(action_envelope["approval_ref"], str)
+        or not action_envelope["approval_ref"]
     ):
         errors.append("action_envelope.approval_ref must be null or a non-empty string")
-    errors.extend(_validate_string_array("action_envelope.evidence_refs", action_envelope["evidence_refs"]))
-    errors.extend(_validate_string_array("action_envelope.capability_refs", action_envelope["capability_refs"]))
+    errors.extend(
+        _validate_string_array(
+            "action_envelope.evidence_refs", action_envelope["evidence_refs"]
+        )
+    )
+    errors.extend(
+        _validate_string_array(
+            "action_envelope.capability_refs", action_envelope["capability_refs"]
+        )
+    )
     if action_envelope["actor"] != record["actor_id"]:
         errors.append("action_envelope.actor must match actor_id")
     if action_envelope["tenant"] != record["tenant_id"]:
@@ -543,12 +695,30 @@ def _validate_pipeline_stages(
             _validate_required_fields(
                 label,
                 stage,
-                ("stage_id", "stage_order", "stage_kind", "status", "input_refs", "output_refs", "receipt_ref", "failure_reason"),
+                (
+                    "stage_id",
+                    "stage_order",
+                    "stage_kind",
+                    "status",
+                    "input_refs",
+                    "output_refs",
+                    "receipt_ref",
+                    "failure_reason",
+                ),
             )
         )
         if not isinstance(stage, dict) or any(
             field not in stage
-            for field in ("stage_id", "stage_order", "stage_kind", "status", "input_refs", "output_refs", "receipt_ref", "failure_reason")
+            for field in (
+                "stage_id",
+                "stage_order",
+                "stage_kind",
+                "status",
+                "input_refs",
+                "output_refs",
+                "receipt_ref",
+                "failure_reason",
+            )
         ):
             continue
         stage_id = stage["stage_id"]
@@ -566,36 +736,73 @@ def _validate_pipeline_stages(
         else:
             stages_by_kind[stage_kind] = stage
             observed_kinds.append(stage_kind)
-        if not isinstance(stage["stage_order"], int) or isinstance(stage["stage_order"], bool):
+        if not isinstance(stage["stage_order"], int) or isinstance(
+            stage["stage_order"], bool
+        ):
             errors.append(f"{label}.stage_order must be an integer")
         else:
             observed_orders.append(stage["stage_order"])
-        if stage["status"] not in {"completed", "blocked", "skipped", "deferred", "escalated", "simulated"}:
+        if stage["status"] not in {
+            "completed",
+            "blocked",
+            "skipped",
+            "deferred",
+            "escalated",
+            "simulated",
+        }:
             errors.append(f"{label}.status is invalid")
-        if stage["status"] in {"blocked", "skipped", "deferred", "escalated"} and not stage["failure_reason"]:
+        if (
+            stage["status"] in {"blocked", "skipped", "deferred", "escalated"}
+            and not stage["failure_reason"]
+        ):
             errors.append(f"{label}: non-completed stage requires failure_reason")
-        if stage["receipt_ref"] is not None and (not isinstance(stage["receipt_ref"], str) or not stage["receipt_ref"]):
+        if stage["receipt_ref"] is not None and (
+            not isinstance(stage["receipt_ref"], str) or not stage["receipt_ref"]
+        ):
             errors.append(f"{label}.receipt_ref must be null or a non-empty string")
-        if stage["failure_reason"] is not None and (not isinstance(stage["failure_reason"], str) or not stage["failure_reason"]):
+        if stage["failure_reason"] is not None and (
+            not isinstance(stage["failure_reason"], str) or not stage["failure_reason"]
+        ):
             errors.append(f"{label}.failure_reason must be null or a non-empty string")
-        errors.extend(_validate_string_array(f"{label}.input_refs", stage["input_refs"]))
-        errors.extend(_validate_string_array(f"{label}.output_refs", stage["output_refs"]))
+        errors.extend(
+            _validate_string_array(f"{label}.input_refs", stage["input_refs"])
+        )
+        errors.extend(
+            _validate_string_array(f"{label}.output_refs", stage["output_refs"])
+        )
     if tuple(observed_kinds) != PIPELINE_STAGE_KINDS:
         errors.append("pipeline_stages must contain canonical UAO stage kinds in order")
     if observed_orders != list(range(1, len(observed_orders) + 1)):
-        errors.append("pipeline_stages must use contiguous stage_order values starting at 1")
+        errors.append(
+            "pipeline_stages must use contiguous stage_order values starting at 1"
+        )
     return errors
 
 
-def _validate_admission_guards(guards: Any, guards_by_name: dict[str, dict[str, Any]]) -> list[str]:
+def _validate_admission_guards(
+    guards: Any, guards_by_name: dict[str, dict[str, Any]]
+) -> list[str]:
     if not isinstance(guards, list):
         return ["admission_guards must be a list"]
     errors: list[str] = []
     for index, guard in enumerate(guards):
         label = f"admission_guards[{index}]"
-        errors.extend(_validate_required_fields(label, guard, ("guard", "verdict", "proof_state", "reason_code", "evidence_refs")))
+        errors.extend(
+            _validate_required_fields(
+                label,
+                guard,
+                ("guard", "verdict", "proof_state", "reason_code", "evidence_refs"),
+            )
+        )
         if not isinstance(guard, dict) or any(
-            field not in guard for field in ("guard", "verdict", "proof_state", "reason_code", "evidence_refs")
+            field not in guard
+            for field in (
+                "guard",
+                "verdict",
+                "proof_state",
+                "reason_code",
+                "evidence_refs",
+            )
         ):
             continue
         guard_name = guard["guard"]
@@ -615,7 +822,9 @@ def _validate_admission_guards(guards: Any, guards_by_name: dict[str, dict[str, 
             errors.append(f"{label}: blocked guard cannot carry Pass proof_state")
         if not isinstance(guard["reason_code"], str) or not guard["reason_code"]:
             errors.append(f"{label}.reason_code must be a non-empty string")
-        errors.extend(_validate_string_array(f"{label}.evidence_refs", guard["evidence_refs"]))
+        errors.extend(
+            _validate_string_array(f"{label}.evidence_refs", guard["evidence_refs"])
+        )
     for guard_name in REQUIRED_GUARDS:
         if guard_name not in guards_by_name:
             errors.append(f"missing required admission guard: {guard_name}")
@@ -630,7 +839,14 @@ def _validate_decision(
     errors = _validate_required_fields(
         "decision",
         decision,
-        ("status", "reason_code", "proof_state", "solver_outcome", "next_action", "execution_allowed"),
+        (
+            "status",
+            "reason_code",
+            "proof_state",
+            "solver_outcome",
+            "next_action",
+            "execution_allowed",
+        ),
     )
     if errors:
         return errors
@@ -665,36 +881,52 @@ def _validate_decision(
         if execution_stage.get("status") == "completed":
             errors.append("decision: non-allow status cannot complete execution stage")
         if decision["solver_outcome"] in PASSING_OUTCOMES:
-            errors.append("decision: non-allow status cannot use a passing solver outcome")
+            errors.append(
+                "decision: non-allow status cannot use a passing solver outcome"
+            )
     if decision["status"] == "block" and "blocked" not in guard_verdicts:
         errors.append("decision: block requires at least one blocked admission guard")
     if decision["status"] == "defer" and "deferred" not in guard_verdicts:
         errors.append("decision: defer requires at least one deferred admission guard")
     if decision["status"] == "escalate" and "escalated" not in guard_verdicts:
-        errors.append("decision: escalate requires at least one escalated admission guard")
+        errors.append(
+            "decision: escalate requires at least one escalated admission guard"
+        )
     if decision["status"] == "simulate" and "simulated" not in guard_verdicts:
-        errors.append("decision: simulate requires at least one simulated admission guard")
+        errors.append(
+            "decision: simulate requires at least one simulated admission guard"
+        )
     return errors
 
 
-def _validate_trace_binding(record: dict[str, Any], stages_by_kind: dict[str, dict[str, Any]]) -> list[str]:
+def _validate_trace_binding(
+    record: dict[str, Any], stages_by_kind: dict[str, dict[str, Any]]
+) -> list[str]:
     errors: list[str] = []
     trace_ref = record["trace_ref"]
     causal_trace_ref = record["causal_decision_trace_ref"]
     if not isinstance(trace_ref, str) or not trace_ref:
         errors.append("orchestration.trace_ref must be a non-empty string")
     if not isinstance(causal_trace_ref, str) or not causal_trace_ref:
-        errors.append("orchestration.causal_decision_trace_ref must be a non-empty string")
+        errors.append(
+            "orchestration.causal_decision_trace_ref must be a non-empty string"
+        )
     if trace_ref != causal_trace_ref:
         errors.append("trace_ref must match causal_decision_trace_ref")
     if record["effect_bearing"]:
         if not record["effect_classes"]:
             errors.append("effect-bearing action requires effect_classes")
         if not trace_ref or not causal_trace_ref:
-            errors.append("effect-bearing action requires trace_ref and causal_decision_trace_ref")
+            errors.append(
+                "effect-bearing action requires trace_ref and causal_decision_trace_ref"
+            )
     trace_stage = stages_by_kind.get("trace", {})
     output_refs = trace_stage.get("output_refs", [])
-    if causal_trace_ref and isinstance(output_refs, list) and causal_trace_ref not in output_refs:
+    if (
+        causal_trace_ref
+        and isinstance(output_refs, list)
+        and causal_trace_ref not in output_refs
+    ):
         errors.append("causal_decision_trace_ref must be emitted by trace stage")
     return errors
 
@@ -714,11 +946,26 @@ def _validate_receipts(
             _validate_required_fields(
                 label,
                 receipt,
-                ("receipt_id", "tier", "kind", "stage_id", "confirms", "external_state_confirmed"),
+                (
+                    "receipt_id",
+                    "tier",
+                    "kind",
+                    "stage_id",
+                    "confirms",
+                    "external_state_confirmed",
+                ),
             )
         )
         if not isinstance(receipt, dict) or any(
-            field not in receipt for field in ("receipt_id", "tier", "kind", "stage_id", "confirms", "external_state_confirmed")
+            field not in receipt
+            for field in (
+                "receipt_id",
+                "tier",
+                "kind",
+                "stage_id",
+                "confirms",
+                "external_state_confirmed",
+            )
         ):
             continue
         receipt_id = receipt["receipt_id"]
@@ -730,7 +977,15 @@ def _validate_receipts(
             receipt_ids.add(receipt_id)
         if receipt["tier"] not in {"R0", "R1", "R2", "R3", "R4"}:
             errors.append(f"{label}.tier is invalid")
-        if receipt["kind"] not in {"admission", "trace", "execution", "provider", "reconciliation", "closure", "simulation"}:
+        if receipt["kind"] not in {
+            "admission",
+            "trace",
+            "execution",
+            "provider",
+            "reconciliation",
+            "closure",
+            "simulation",
+        }:
             errors.append(f"{label}.kind is invalid")
         else:
             receipt_kinds.add(receipt["kind"])
@@ -743,7 +998,9 @@ def _validate_receipts(
     return errors
 
 
-def _validate_reconciliation(reconciliation: Any, decision: dict[str, Any]) -> list[str]:
+def _validate_reconciliation(
+    reconciliation: Any, decision: dict[str, Any]
+) -> list[str]:
     errors = _validate_required_fields(
         "reconciliation",
         reconciliation,
@@ -751,34 +1008,57 @@ def _validate_reconciliation(reconciliation: Any, decision: dict[str, Any]) -> l
     )
     if errors:
         return errors
-    if reconciliation["status"] not in {"not_required", "pending", "matched", "mismatched", "blocked"}:
+    if reconciliation["status"] not in {
+        "not_required",
+        "pending",
+        "matched",
+        "mismatched",
+        "blocked",
+    }:
         errors.append("reconciliation.status is invalid")
     if not isinstance(reconciliation["required_for_closure"], bool):
         errors.append("reconciliation.required_for_closure must be boolean")
     if reconciliation["observed_outcome_ref"] is not None and (
-        not isinstance(reconciliation["observed_outcome_ref"], str) or not reconciliation["observed_outcome_ref"]
+        not isinstance(reconciliation["observed_outcome_ref"], str)
+        or not reconciliation["observed_outcome_ref"]
     ):
-        errors.append("reconciliation.observed_outcome_ref must be null or a non-empty string")
+        errors.append(
+            "reconciliation.observed_outcome_ref must be null or a non-empty string"
+        )
     if reconciliation["mismatch_reason"] is not None and (
-        not isinstance(reconciliation["mismatch_reason"], str) or not reconciliation["mismatch_reason"]
+        not isinstance(reconciliation["mismatch_reason"], str)
+        or not reconciliation["mismatch_reason"]
     ):
-        errors.append("reconciliation.mismatch_reason must be null or a non-empty string")
+        errors.append(
+            "reconciliation.mismatch_reason must be null or a non-empty string"
+        )
     if decision["status"] == "allow":
         if reconciliation["status"] != "matched":
             errors.append("reconciliation: allow requires matched reconciliation")
         if reconciliation["required_for_closure"] is not True:
-            errors.append("reconciliation: allow requires reconciliation before closure")
+            errors.append(
+                "reconciliation: allow requires reconciliation before closure"
+            )
     return errors
 
 
 def _validate_memory_update(memory_update: Any) -> list[str]:
-    errors = _validate_required_fields("memory_update", memory_update, ("status", "memory_ref", "learning_allowed"))
+    errors = _validate_required_fields(
+        "memory_update", memory_update, ("status", "memory_ref", "learning_allowed")
+    )
     if errors:
         return errors
-    if memory_update["status"] not in {"not_allowed", "not_required", "recorded", "blocked", "deferred"}:
+    if memory_update["status"] not in {
+        "not_allowed",
+        "not_required",
+        "recorded",
+        "blocked",
+        "deferred",
+    }:
         errors.append("memory_update.status is invalid")
     if memory_update["memory_ref"] is not None and (
-        not isinstance(memory_update["memory_ref"], str) or not memory_update["memory_ref"]
+        not isinstance(memory_update["memory_ref"], str)
+        or not memory_update["memory_ref"]
     ):
         errors.append("memory_update.memory_ref must be null or a non-empty string")
     if not isinstance(memory_update["learning_allowed"], bool):
@@ -788,8 +1068,12 @@ def _validate_memory_update(memory_update: Any) -> list[str]:
     return errors
 
 
-def _validate_closure(closure: Any, decision: dict[str, Any], receipt_ids: set[str]) -> list[str]:
-    errors = _validate_required_fields("closure", closure, ("status", "terminal", "closure_receipt_ref", "next_action"))
+def _validate_closure(
+    closure: Any, decision: dict[str, Any], receipt_ids: set[str]
+) -> list[str]:
+    errors = _validate_required_fields(
+        "closure", closure, ("status", "terminal", "closure_receipt_ref", "next_action")
+    )
     if errors:
         return errors
     expected_status = {
@@ -800,7 +1084,9 @@ def _validate_closure(closure: Any, decision: dict[str, Any], receipt_ids: set[s
         "simulate": "closed_simulated",
     }.get(decision["status"])
     if closure["status"] != expected_status:
-        errors.append(f"closure.status must be {expected_status} for decision {decision['status']}")
+        errors.append(
+            f"closure.status must be {expected_status} for decision {decision['status']}"
+        )
     if closure["terminal"] is not True:
         errors.append("closure.terminal must be true")
     if closure["closure_receipt_ref"] not in receipt_ids:
@@ -822,8 +1108,12 @@ def _validate_lineage(lineage: Any, decision: dict[str, Any]) -> list[str]:
         errors.append("lineage.delta_ref must be a non-empty string")
     if lineage["logged_in_lineage"] is not True:
         errors.append("lineage.logged_in_lineage must be true")
-    errors.extend(_validate_delta_records("lineage.accepted_deltas", lineage["accepted_deltas"]))
-    errors.extend(_validate_delta_records("lineage.rejected_deltas", lineage["rejected_deltas"]))
+    errors.extend(
+        _validate_delta_records("lineage.accepted_deltas", lineage["accepted_deltas"])
+    )
+    errors.extend(
+        _validate_delta_records("lineage.rejected_deltas", lineage["rejected_deltas"])
+    )
     if decision["status"] == "allow" and not lineage["accepted_deltas"]:
         errors.append("lineage: allow requires accepted_deltas")
     if decision["status"] != "allow" and not lineage["rejected_deltas"]:
@@ -837,8 +1127,14 @@ def _validate_delta_records(label: str, records: Any) -> list[str]:
     errors: list[str] = []
     for index, record in enumerate(records):
         record_label = f"{label}[{index}]"
-        errors.extend(_validate_required_fields(record_label, record, ("delta_id", "reason", "logged_in_lineage")))
-        if not isinstance(record, dict) or any(field not in record for field in ("delta_id", "reason", "logged_in_lineage")):
+        errors.extend(
+            _validate_required_fields(
+                record_label, record, ("delta_id", "reason", "logged_in_lineage")
+            )
+        )
+        if not isinstance(record, dict) or any(
+            field not in record for field in ("delta_id", "reason", "logged_in_lineage")
+        ):
             continue
         if not isinstance(record["delta_id"], str) or not record["delta_id"]:
             errors.append(f"{record_label}.delta_id must be a non-empty string")
@@ -849,7 +1145,9 @@ def _validate_delta_records(label: str, records: Any) -> list[str]:
     return errors
 
 
-def _validate_receipt_requirements(decision: dict[str, Any], receipt_kinds: set[str]) -> list[str]:
+def _validate_receipt_requirements(
+    decision: dict[str, Any], receipt_kinds: set[str]
+) -> list[str]:
     errors: list[str] = []
     required_kinds = {"admission", "trace", "closure"}
     if decision["status"] == "allow":
@@ -860,7 +1158,9 @@ def _validate_receipt_requirements(decision: dict[str, Any], receipt_kinds: set[
     return errors
 
 
-def _validate_root_receipt_refs(record: dict[str, Any], receipt_ids: set[str], receipt_kinds: set[str]) -> list[str]:
+def _validate_root_receipt_refs(
+    record: dict[str, Any], receipt_ids: set[str], receipt_kinds: set[str]
+) -> list[str]:
     errors: list[str] = []
     admission_receipt_ref = record["admission_receipt_ref"]
     execution_receipt_ref = record["execution_receipt_ref"]
@@ -869,11 +1169,15 @@ def _validate_root_receipt_refs(record: dict[str, Any], receipt_ids: set[str], r
         errors.append("admission_receipt_ref must be a non-empty string")
     elif admission_receipt_ref not in receipt_ids:
         errors.append("admission_receipt_ref must reference an emitted receipt")
-    if execution_receipt_ref is not None and (not isinstance(execution_receipt_ref, str) or not execution_receipt_ref):
+    if execution_receipt_ref is not None and (
+        not isinstance(execution_receipt_ref, str) or not execution_receipt_ref
+    ):
         errors.append("execution_receipt_ref must be null or a non-empty string")
     if record["decision"]["status"] == "allow":
         if execution_receipt_ref not in receipt_ids:
-            errors.append("allow decision requires execution_receipt_ref to reference an emitted receipt")
+            errors.append(
+                "allow decision requires execution_receipt_ref to reference an emitted receipt"
+            )
         if "execution" not in receipt_kinds:
             errors.append("allow decision requires an execution receipt")
     else:
@@ -902,7 +1206,10 @@ def _validate_high_risk_allow_controls(record: dict[str, Any]) -> list[str]:
     action_envelope = record["action_envelope"]
     if not isinstance(action_envelope, dict):
         return []
-    if record["decision"]["status"] != "allow" or action_envelope.get("risk") not in HIGH_RISK_CLASSES:
+    if (
+        record["decision"]["status"] != "allow"
+        or action_envelope.get("risk") not in HIGH_RISK_CLASSES
+    ):
         return []
     errors: list[str] = []
     if not action_envelope.get("approval_ref"):
@@ -914,7 +1221,9 @@ def _validate_high_risk_allow_controls(record: dict[str, Any]) -> list[str]:
     return errors
 
 
-def _validate_no_private_reasoning_fields(value: Any, path: str = "orchestration") -> list[str]:
+def _validate_no_private_reasoning_fields(
+    value: Any, path: str = "orchestration"
+) -> list[str]:
     errors: list[str] = []
     if isinstance(value, dict):
         for key, child in value.items():
@@ -923,16 +1232,30 @@ def _validate_no_private_reasoning_fields(value: Any, path: str = "orchestration
             errors.extend(_validate_no_private_reasoning_fields(child, f"{path}.{key}"))
     elif isinstance(value, list):
         for index, child in enumerate(value):
-            errors.extend(_validate_no_private_reasoning_fields(child, f"{path}[{index}]"))
+            errors.extend(
+                _validate_no_private_reasoning_fields(child, f"{path}[{index}]")
+            )
     return errors
 
 
 def main(argv: list[str] | None = None) -> int:
     """Validate the Universal Action Orchestration contract."""
 
-    parser = argparse.ArgumentParser(description="Validate Universal Action Orchestration contract.")
-    parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA_PATH, help="path to UAO schema JSON")
-    parser.add_argument("--document", type=Path, default=DEFAULT_DOCUMENT_PATH, help="path to UAO doctrine Markdown")
+    parser = argparse.ArgumentParser(
+        description="Validate Universal Action Orchestration contract."
+    )
+    parser.add_argument(
+        "--schema",
+        type=Path,
+        default=DEFAULT_SCHEMA_PATH,
+        help="path to UAO schema JSON",
+    )
+    parser.add_argument(
+        "--document",
+        type=Path,
+        default=DEFAULT_DOCUMENT_PATH,
+        help="path to UAO doctrine Markdown",
+    )
     parser.add_argument(
         "--example",
         action="append",
@@ -940,13 +1263,23 @@ def main(argv: list[str] | None = None) -> int:
         default=[],
         help="UAO example JSON path; may be provided more than once",
     )
-    parser.add_argument("--json", action="store_true", help="emit a machine-readable UAO validation receipt")
-    parser.add_argument("--receipt-path", type=Path, help="optional path to persist the UAO validation receipt")
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="emit a machine-readable UAO validation receipt",
+    )
+    parser.add_argument(
+        "--receipt-path",
+        type=Path,
+        help="optional path to persist the UAO validation receipt",
+    )
     args = parser.parse_args(argv)
 
     example_paths = tuple(args.example) if args.example else DEFAULT_EXAMPLE_PATHS
     if args.json or args.receipt_path is not None:
-        receipt_scope_errors = validate_validation_receipt_scope(args.schema, example_paths, args.document)
+        receipt_scope_errors = validate_validation_receipt_scope(
+            args.schema, example_paths, args.document
+        )
         if receipt_scope_errors:
             for error in receipt_scope_errors:
                 sys.stderr.write(f"[FAIL] receipt-scope: {error}\n")

@@ -8,13 +8,17 @@ Dependencies: governed_dispatcher, dispatcher, universal action kernel, MIL
 Invariants: all operator dispatches flow through governed spine or the universal
     action kernel when a configured kernel is supplied.
 """
+
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 from mcoi_runtime.core.dispatcher import DispatchRequest
-from mcoi_runtime.core.command_capability_admission import CommandCapabilityAdmissionGate
+from mcoi_runtime.core.command_capability_admission import (
+    CommandCapabilityAdmissionGate,
+)
 from mcoi_runtime.core.governed_dispatcher import (
-    GovernedDispatcher, GovernedDispatchContext,
+    GovernedDispatcher,
+    GovernedDispatchContext,
 )
 from mcoi_runtime.contracts.execution import ExecutionResult
 from mcoi_runtime.contracts.mil import MILProgram
@@ -67,6 +71,31 @@ class UniversalCommandProofView:
     state_sequence: tuple[str, ...]
 
 
+_UAO_REPLAY_EVENT_CAUSES = frozenset(
+    {
+        "universal_action_kernel_dispatched",
+        "universal_action_kernel_blocked",
+    }
+)
+_UAO_DECISION_STATUSES = frozenset({"allow", "block", "defer", "escalate", "simulate"})
+_UAO_CLOSURE_BY_DECISION = {
+    "allow": "closed_allowed",
+    "block": "closed_blocked",
+    "defer": "closed_deferred",
+    "escalate": "closed_escalated",
+    "simulate": "closed_simulated",
+}
+_PROHIBITED_UAO_PRIVATE_REASONING_FIELDS = frozenset(
+    {
+        "chain_of_thought",
+        "raw_chain_of_thought",
+        "private_reasoning",
+        "hidden_reasoning",
+        "scratchpad",
+    }
+)
+
+
 def governed_operator_dispatch(
     governed: GovernedDispatcher,
     request: DispatchRequest,
@@ -101,7 +130,12 @@ def governed_operator_dispatch(
 
     if result.blocked:
         # Return a failure result that matches operator expectations
-        from mcoi_runtime.adapters.executor_base import build_failure_result, ExecutionFailure, utc_now_text
+        from mcoi_runtime.adapters.executor_base import (
+            build_failure_result,
+            ExecutionFailure,
+            utc_now_text,
+        )
+
         now = utc_now_text()
         return build_failure_result(
             execution_id=f"gov-blocked-{intent_id}",
@@ -223,7 +257,9 @@ def universal_command_dispatch(
         tool_name=action.capability,
         output={"universal_action_proof": result.proof_hash},
         detail={
-            "cause": "universal_action_kernel_dispatched" if result.dispatched else "universal_action_kernel_blocked",
+            "cause": "universal_action_kernel_dispatched"
+            if result.dispatched
+            else "universal_action_kernel_blocked",
             "universal_action": _universal_action_transition_detail(result),
             "universal_action_orchestration": orchestration_record,
         },
@@ -234,7 +270,9 @@ def universal_command_dispatch(
             CommandState.TERMINALLY_CERTIFIED,
             risk_tier=action.risk_tier,
             tool_name=action.capability,
-            output={"terminal_certificate_id": result.terminal_certificate.certificate_id},
+            output={
+                "terminal_certificate_id": result.terminal_certificate.certificate_id
+            },
             detail={
                 "cause": "universal_action_terminal_certificate",
                 "terminal_certificate_id": result.terminal_certificate.certificate_id,
@@ -313,7 +351,9 @@ def universal_command_proof_view(
         action_envelope=_mapping_detail(universal_detail.get("action_envelope")),
         trace_ref=str(universal_detail.get("trace_ref", "")),
         admission_receipt_ref=str(universal_detail.get("admission_receipt_ref", "")),
-        execution_receipt_ref=_optional_text_detail(universal_detail.get("execution_receipt_ref")),
+        execution_receipt_ref=_optional_text_detail(
+            universal_detail.get("execution_receipt_ref")
+        ),
         closure_state=str(universal_detail.get("closure_state", "")),
         proof_hash=str(universal_detail.get("proof_hash", "")),
         capability_id=str(universal_detail.get("capability_id", "")),
@@ -333,16 +373,119 @@ def universal_command_orchestration_record_view(
     command_ledger: object,
     command_id: str,
 ) -> Mapping[str, Any] | None:
-    """Replay the persisted UAO v1 orchestration record for one command."""
+    """Replay one validated persisted UAO v1 orchestration record for a command."""
     events = command_ledger.events_for(command_id)
     for event in reversed(events):
         detail = getattr(event, "detail", {})
         if not isinstance(detail, Mapping):
             continue
+        if detail.get("cause") not in _UAO_REPLAY_EVENT_CAUSES:
+            continue
         candidate = detail.get("universal_action_orchestration")
-        if isinstance(candidate, Mapping):
+        if _is_replayable_universal_action_orchestration_record(candidate):
             return dict(candidate)
     return None
+
+
+def _is_replayable_universal_action_orchestration_record(value: Any) -> bool:
+    """Return true when a persisted UAO record is safe for read-model replay."""
+
+    if not isinstance(value, Mapping):
+        return False
+    if _has_private_reasoning_field(value):
+        return False
+    if value.get("uao_schema_version") != "uao.v1":
+        return False
+    if value.get("raw_reasoning_included") is not False:
+        return False
+    for field_name in (
+        "orchestration_id",
+        "action_id",
+        "tenant_id",
+        "actor_id",
+        "created_at",
+        "trace_ref",
+        "causal_decision_trace_ref",
+        "admission_receipt_ref",
+        "closure_state",
+    ):
+        if not _non_empty_text(value.get(field_name)):
+            return False
+    if value.get("trace_ref") != value.get("causal_decision_trace_ref"):
+        return False
+    action_envelope = value.get("action_envelope")
+    if not isinstance(action_envelope, Mapping):
+        return False
+    if action_envelope.get("actor") != value.get("actor_id"):
+        return False
+    if action_envelope.get("tenant") != value.get("tenant_id"):
+        return False
+    if action_envelope.get("requested_at") != value.get("created_at"):
+        return False
+    for field_name in (
+        "source",
+        "actor",
+        "tenant",
+        "intent",
+        "target",
+        "risk",
+        "requested_at",
+    ):
+        if not _non_empty_text(action_envelope.get(field_name)):
+            return False
+    decision = value.get("decision")
+    if not isinstance(decision, Mapping):
+        return False
+    decision_status = decision.get("status")
+    if decision_status not in _UAO_DECISION_STATUSES:
+        return False
+    if not isinstance(decision.get("execution_allowed"), bool):
+        return False
+    if decision_status == "allow" and decision.get("execution_allowed") is not True:
+        return False
+    if decision_status != "allow" and decision.get("execution_allowed") is not False:
+        return False
+    closure_state = value.get("closure_state")
+    if closure_state != _UAO_CLOSURE_BY_DECISION.get(str(decision_status)):
+        return False
+    closure = value.get("closure")
+    if not isinstance(closure, Mapping) or closure.get("status") != closure_state:
+        return False
+    receipts = value.get("receipts")
+    if not isinstance(receipts, list):
+        return False
+    receipt_ids = {
+        receipt.get("receipt_id")
+        for receipt in receipts
+        if isinstance(receipt, Mapping) and _non_empty_text(receipt.get("receipt_id"))
+    }
+    if value.get("admission_receipt_ref") not in receipt_ids:
+        return False
+    if closure.get("closure_receipt_ref") not in receipt_ids:
+        return False
+    execution_receipt_ref = value.get("execution_receipt_ref")
+    if decision_status == "allow":
+        return (
+            _non_empty_text(execution_receipt_ref)
+            and execution_receipt_ref in receipt_ids
+        )
+    return execution_receipt_ref is None
+
+
+def _has_private_reasoning_field(value: Any) -> bool:
+    if isinstance(value, Mapping):
+        for key, child in value.items():
+            if key in _PROHIBITED_UAO_PRIVATE_REASONING_FIELDS:
+                return True
+            if _has_private_reasoning_field(child):
+                return True
+    elif isinstance(value, list):
+        return any(_has_private_reasoning_field(child) for child in value)
+    return False
+
+
+def _non_empty_text(value: Any) -> bool:
+    return isinstance(value, str) and bool(value)
 
 
 def build_universal_operator_kernel(
@@ -377,9 +520,7 @@ def build_universal_operator_kernel(
         operational_graph = OperationalGraph(clock=clock)
     simulator = SimulationEngine(graph=operational_graph, clock=clock)
     terminal_closure = (
-        TerminalClosureCertifier(clock=clock)
-        if terminal_closure_enabled
-        else None
+        TerminalClosureCertifier(clock=clock) if terminal_closure_enabled else None
     )
     learning_admission = (
         ClosureLearningAdmissionGate(clock=clock)
@@ -445,7 +586,9 @@ def _risk_level_from_tier(risk_tier: str) -> RiskLevel:
     return RiskLevel.LOW
 
 
-def _universal_action_transition_detail(result: UniversalActionResult) -> dict[str, Any]:
+def _universal_action_transition_detail(
+    result: UniversalActionResult,
+) -> dict[str, Any]:
     return {
         "action_id": result.action_id,
         "blocked": result.blocked,
@@ -458,18 +601,34 @@ def _universal_action_transition_detail(result: UniversalActionResult) -> dict[s
         "proof_hash": result.proof_hash,
         "goal_certificate_id": result.goal_certificate.certificate_id,
         "world_certificate_id": result.world_certificate.certificate_id,
-        "plan_certificate_id": result.plan_certificate.certificate_id if result.plan_certificate else "",
+        "plan_certificate_id": result.plan_certificate.certificate_id
+        if result.plan_certificate
+        else "",
         "simulation_certificate_id": (
-            result.simulation_certificate.certificate_id if result.simulation_certificate else ""
+            result.simulation_certificate.certificate_id
+            if result.simulation_certificate
+            else ""
         ),
-        "capability_status": result.capability_decision.status.value if result.capability_decision else "",
-        "capability_id": result.capability_decision.capability_id if result.capability_decision else "",
-        "governed_action_id": result.governed_action.governed_action_id if result.governed_action else "",
-        "dispatch_ledger_hash": result.dispatch_result.ledger_hash if result.dispatch_result else "",
+        "capability_status": result.capability_decision.status.value
+        if result.capability_decision
+        else "",
+        "capability_id": result.capability_decision.capability_id
+        if result.capability_decision
+        else "",
+        "governed_action_id": result.governed_action.governed_action_id
+        if result.governed_action
+        else "",
+        "dispatch_ledger_hash": result.dispatch_result.ledger_hash
+        if result.dispatch_result
+        else "",
         "terminal_certificate_id": (
-            result.terminal_certificate.certificate_id if result.terminal_certificate else ""
+            result.terminal_certificate.certificate_id
+            if result.terminal_certificate
+            else ""
         ),
-        "learning_admission_id": result.learning_decision.admission_id if result.learning_decision else "",
+        "learning_admission_id": result.learning_decision.admission_id
+        if result.learning_decision
+        else "",
     }
 
 
@@ -549,7 +708,9 @@ def governed_operator_mil_dispatch_with_trace(
             message=str(exc),
             gates_failed=("mil_static_verification",),
         )
-        return OperatorMILDispatchResult(execution_result, program, verification, instruction_trace)
+        return OperatorMILDispatchResult(
+            execution_result, program, verification, instruction_trace
+        )
     if result.blocked:
         execution_result = _blocked_execution_result(
             request,
@@ -558,8 +719,12 @@ def governed_operator_mil_dispatch_with_trace(
             message=result.block_reason,
             gates_failed=tuple(gate.gate_name for gate in result.gates_failed),
         )
-        return OperatorMILDispatchResult(execution_result, program, verification, instruction_trace)
-    return OperatorMILDispatchResult(result.execution_result, program, verification, instruction_trace)
+        return OperatorMILDispatchResult(
+            execution_result, program, verification, instruction_trace
+        )
+    return OperatorMILDispatchResult(
+        result.execution_result, program, verification, instruction_trace
+    )
 
 
 def _derive_intent_id(actor_id: str, request: DispatchRequest) -> str:
@@ -579,7 +744,11 @@ def _blocked_execution_result(
     message: str,
     gates_failed: tuple[str, ...],
 ) -> ExecutionResult:
-    from mcoi_runtime.adapters.executor_base import build_failure_result, ExecutionFailure, utc_now_text
+    from mcoi_runtime.adapters.executor_base import (
+        build_failure_result,
+        ExecutionFailure,
+        utc_now_text,
+    )
 
     now = utc_now_text()
     return build_failure_result(

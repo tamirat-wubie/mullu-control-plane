@@ -54,7 +54,11 @@ class StubSession:
         self._response = response
 
     def llm(self, prompt, **kwargs):
-        return type("R", (), {"content": self._response, "succeeded": True, "error": "", "cost": 0.0})()
+        return type(
+            "R",
+            (),
+            {"content": self._response, "succeeded": True, "error": "", "cost": 0.0},
+        )()
 
     def close(self):
         pass
@@ -85,11 +89,14 @@ def _assert_gateway_request_receipt(
 
 
 def _slack_signature(*, secret: str, timestamp: str, body: str) -> str:
-    return "v0=" + hmac.new(
-        secret.encode(),
-        f"v0:{timestamp}:{body}".encode(),
-        hashlib.sha256,
-    ).hexdigest()
+    return (
+        "v0="
+        + hmac.new(
+            secret.encode(),
+            f"v0:{timestamp}:{body}".encode(),
+            hashlib.sha256,
+        ).hexdigest()
+    )
 
 
 def _fabric_capability_payload(capability_id: str) -> dict:
@@ -139,7 +146,9 @@ def _fabric_capability_payload(capability_id: str) -> dict:
 
 
 def _fabric_capsule_payload(capability_refs: str | list[str]) -> dict:
-    refs = [capability_refs] if isinstance(capability_refs, str) else list(capability_refs)
+    refs = (
+        [capability_refs] if isinstance(capability_refs, str) else list(capability_refs)
+    )
     return {
         "capsule_id": "gateway.web_chat",
         "domain": "gateway",
@@ -169,35 +178,55 @@ def _configure_fabric_env(
     use_pack: bool,
 ) -> None:
     capsule_path = tmp_path / "domain_capsule.json"
-    capsule_path.write_text(json.dumps(_fabric_capsule_payload(capability_refs)), encoding="utf-8")
+    capsule_path.write_text(
+        json.dumps(_fabric_capsule_payload(capability_refs)), encoding="utf-8"
+    )
     monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_ADMISSION_ENABLED", "true")
     monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_CAPSULE_PATH", str(capsule_path))
     if use_pack:
         pack_path = tmp_path / "capability_pack.json"
-        pack_path.write_text(json.dumps({"capabilities": capability_payloads}), encoding="utf-8")
-        monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_CAPABILITY_PACK_PATH", str(pack_path))
+        pack_path.write_text(
+            json.dumps({"capabilities": capability_payloads}), encoding="utf-8"
+        )
+        monkeypatch.setenv(
+            "MULLU_CAPABILITY_FABRIC_CAPABILITY_PACK_PATH", str(pack_path)
+        )
     else:
         capability_path = tmp_path / "capability.json"
         capability_path.write_text(json.dumps(capability_payloads[0]), encoding="utf-8")
-        monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_CAPABILITY_PATH", str(capability_path))
+        monkeypatch.setenv(
+            "MULLU_CAPABILITY_FABRIC_CAPABILITY_PATH", str(capability_path)
+        )
 
 
 @pytest.fixture
 def gateway_app():
     app = create_gateway_app(platform=StubPlatform())
     # Register a test tenant
-    app.state.router.register_tenant_mapping(TenantMapping(
-        channel="whatsapp", sender_id="+1234567890",
-        tenant_id="t1", identity_id="u1",
-    ))
-    app.state.router.register_tenant_mapping(TenantMapping(
-        channel="telegram", sender_id="98765",
-        tenant_id="t1", identity_id="u1",
-    ))
-    app.state.router.register_tenant_mapping(TenantMapping(
-        channel="web", sender_id="web-user",
-        tenant_id="t1", identity_id="u1",
-    ))
+    app.state.router.register_tenant_mapping(
+        TenantMapping(
+            channel="whatsapp",
+            sender_id="+1234567890",
+            tenant_id="t1",
+            identity_id="u1",
+        )
+    )
+    app.state.router.register_tenant_mapping(
+        TenantMapping(
+            channel="telegram",
+            sender_id="98765",
+            tenant_id="t1",
+            identity_id="u1",
+        )
+    )
+    app.state.router.register_tenant_mapping(
+        TenantMapping(
+            channel="web",
+            sender_id="web-user",
+            tenant_id="t1",
+            identity_id="u1",
+        )
+    )
     return app
 
 
@@ -224,11 +253,13 @@ class TestHealth:
 class TestWhatsAppWebhook:
     def test_verify_not_configured(self, client):
         # WhatsApp not configured (no env var) — 503
-        resp = client.get("/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=t&hub.challenge=c")
+        resp = client.get(
+            "/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=t&hub.challenge=c"
+        )
         assert resp.status_code == 503
 
     def test_receive_not_configured(self, client):
-        resp = client.post("/webhook/whatsapp", content=b'{}')
+        resp = client.post("/webhook/whatsapp", content=b"{}")
         assert resp.status_code == 503
 
 
@@ -242,36 +273,50 @@ class TestWhatsAppConfigured:
     def test_verify_valid(self):
         app = create_gateway_app(platform=StubPlatform())
         client = TestClient(app)
-        resp = client.get("/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=verify_me&hub.challenge=test123")
+        resp = client.get(
+            "/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=verify_me&hub.challenge=test123"
+        )
         assert resp.status_code == 200
         assert resp.text == "test123"
 
     def test_verify_invalid_token(self):
         app = create_gateway_app(platform=StubPlatform())
         client = TestClient(app)
-        resp = client.get("/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=wrong&hub.challenge=c")
+        resp = client.get(
+            "/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=wrong&hub.challenge=c"
+        )
         assert resp.status_code == 403
 
     def test_receive_with_message_returns_request_receipt(self):
         app = create_gateway_app(platform=StubPlatform(response="WA reply"))
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="whatsapp", sender_id="+1234567890",
-            tenant_id="t1", identity_id="u1",
-        ))
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="whatsapp",
+                sender_id="+1234567890",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
         client = TestClient(app)
         payload = {
-            "entry": [{
-                "changes": [{
-                    "value": {
-                        "messages": [{
-                            "from": "+1234567890",
-                            "id": "wamid.1",
-                            "type": "text",
-                            "text": {"body": "Hello"},
-                        }]
-                    }
-                }]
-            }]
+            "entry": [
+                {
+                    "changes": [
+                        {
+                            "value": {
+                                "messages": [
+                                    {
+                                        "from": "+1234567890",
+                                        "id": "wamid.1",
+                                        "type": "text",
+                                        "text": {"body": "Hello"},
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
         }
         resp = client.post("/webhook/whatsapp", content=json.dumps(payload))
         assert resp.status_code == 200
@@ -290,16 +335,20 @@ class TestWhatsAppConfigured:
 
 class TestTelegramWebhook:
     def test_receive_not_configured(self, client):
-        resp = client.post("/webhook/telegram", content=b'{}')
+        resp = client.post("/webhook/telegram", content=b"{}")
         assert resp.status_code == 503
 
     def test_receive_with_message(self, monkeypatch):
         monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "123:ABC")
         app = create_gateway_app(platform=StubPlatform(response="TG reply"))
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="telegram", sender_id="98765",
-            tenant_id="t1", identity_id="u1",
-        ))
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="telegram",
+                sender_id="98765",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
         client = TestClient(app)
         payload = {
             "update_id": 1,
@@ -308,7 +357,7 @@ class TestTelegramWebhook:
                 "from": {"id": 98765},
                 "chat": {"id": 98765},
                 "text": "Hello",
-            }
+            },
         }
         resp = client.post("/webhook/telegram", content=json.dumps(payload))
         assert resp.status_code == 200
@@ -342,7 +391,7 @@ class TestTelegramWebhook:
 
 class TestSlackWebhook:
     def test_receive_not_configured(self, client):
-        resp = client.post("/webhook/slack", content=b'{}')
+        resp = client.post("/webhook/slack", content=b"{}")
         assert resp.status_code == 503
 
     def test_url_verification(self, monkeypatch):
@@ -359,10 +408,14 @@ class TestSlackWebhook:
         monkeypatch.setenv("SLACK_BOT_TOKEN", "xoxb-123")
         monkeypatch.setenv("SLACK_SIGNING_SECRET", "secret")
         app = create_gateway_app(platform=StubPlatform(response="Slack reply"))
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="slack", sender_id="U123",
-            tenant_id="t1", identity_id="u1",
-        ))
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="slack",
+                sender_id="U123",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
         client = TestClient(app)
         payload = {
             "type": "event_callback",
@@ -405,7 +458,7 @@ class TestSlackWebhook:
 
 class TestDiscordWebhook:
     def test_receive_not_configured(self, client):
-        resp = client.post("/webhook/discord", content=b'{}')
+        resp = client.post("/webhook/discord", content=b"{}")
         assert resp.status_code == 503
 
     def test_ping_response(self, monkeypatch):
@@ -419,10 +472,14 @@ class TestDiscordWebhook:
     def test_receive_with_command_returns_request_receipt(self, monkeypatch):
         monkeypatch.setenv("DISCORD_BOT_TOKEN", "bot-123")
         app = create_gateway_app(platform=StubPlatform(response="Discord reply"))
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="discord", sender_id="D123",
-            tenant_id="t1", identity_id="u1",
-        ))
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="discord",
+                sender_id="D123",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
         client = TestClient(app)
         payload = {
             "type": 2,
@@ -473,12 +530,15 @@ class TestWebChatWebhook:
 
     def test_empty_message_rejected(self, client):
         resp = client.post(
-            "/webhook/web", content=json.dumps({}),
+            "/webhook/web",
+            content=json.dumps({}),
             headers={"X-Session-Token": "test-token"},
         )
         assert resp.status_code == 400
 
-    def test_fabric_admission_accepts_single_capability_source(self, monkeypatch, tmp_path):
+    def test_fabric_admission_accepts_single_capability_source(
+        self, monkeypatch, tmp_path
+    ):
         _configure_fabric_env(
             monkeypatch,
             tmp_path,
@@ -486,11 +546,17 @@ class TestWebChatWebhook:
             capability_payloads=[_fabric_capability_payload("llm_completion")],
             use_pack=False,
         )
-        app = create_gateway_app(platform=StubPlatform(response="Fabric governed response"))
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="web", sender_id="web-user",
-            tenant_id="t1", identity_id="u1",
-        ))
+        app = create_gateway_app(
+            platform=StubPlatform(response="Fabric governed response")
+        )
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="web-user",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
         client = TestClient(app)
 
         resp = client.post(
@@ -504,7 +570,9 @@ class TestWebChatWebhook:
         assert resp.json()["body"] == "Fabric governed response"
         command_id = resp.json()["message_id"].removeprefix("resp-")
         audit_resp = client.get(f"/commands/{command_id}/capability-admission")
-        audits_resp = client.get("/capability-fabric/admission-audits?tenant_id=t1&status=accepted")
+        audits_resp = client.get(
+            "/capability-fabric/admission-audits?tenant_id=t1&status=accepted"
+        )
 
         assert audit_resp.status_code == 200
         assert audit_resp.json()["status"] == "accepted"
@@ -523,7 +591,9 @@ class TestWebChatWebhook:
         assert data["capsule_count"] == 0
         assert data["capability_count"] == 0
 
-    def test_fabric_admission_accepts_capability_pack_source(self, monkeypatch, tmp_path):
+    def test_fabric_admission_accepts_capability_pack_source(
+        self, monkeypatch, tmp_path
+    ):
         _configure_fabric_env(
             monkeypatch,
             tmp_path,
@@ -534,11 +604,17 @@ class TestWebChatWebhook:
             ],
             use_pack=True,
         )
-        app = create_gateway_app(platform=StubPlatform(response="Pack governed response"))
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="web", sender_id="web-user",
-            tenant_id="t1", identity_id="u1",
-        ))
+        app = create_gateway_app(
+            platform=StubPlatform(response="Pack governed response")
+        )
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="web-user",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
         client = TestClient(app)
 
         resp = client.post(
@@ -555,11 +631,17 @@ class TestWebChatWebhook:
         monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_ADMISSION_ENABLED", "true")
         monkeypatch.setenv("MULLU_CAPABILITY_FABRIC_USE_DEFAULT_PACKS", "true")
 
-        gate = build_capability_admission_gate_from_env(clock=lambda: "2026-04-29T00:00:00Z")
+        gate = build_capability_admission_gate_from_env(
+            clock=lambda: "2026-04-29T00:00:00Z"
+        )
         assert gate is not None
         read_model = gate.read_model()
-        accepted = gate.admit(command_id="cmd-default-creative", intent_name="creative.document_generate")
-        rejected = gate.admit(command_id="cmd-default-missing", intent_name="creative.missing")
+        accepted = gate.admit(
+            command_id="cmd-default-creative", intent_name="creative.document_generate"
+        )
+        rejected = gate.admit(
+            command_id="cmd-default-missing", intent_name="creative.missing"
+        )
 
         assert read_model["capsule_count"] == 13
         assert read_model["capability_count"] == 80
@@ -577,7 +659,9 @@ class TestWebChatWebhook:
         assert rejected.capability_id == ""
         assert "no installed capability" in rejected.reason
 
-    def test_command_capability_admission_read_model_reports_accepted_witness(self, monkeypatch, tmp_path):
+    def test_command_capability_admission_read_model_reports_accepted_witness(
+        self, monkeypatch, tmp_path
+    ):
         _configure_fabric_env(
             monkeypatch,
             tmp_path,
@@ -585,11 +669,17 @@ class TestWebChatWebhook:
             capability_payloads=[_fabric_capability_payload("llm_completion")],
             use_pack=True,
         )
-        app = create_gateway_app(platform=StubPlatform(response="Audit governed response"))
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="web", sender_id="web-user",
-            tenant_id="t1", identity_id="u1",
-        ))
+        app = create_gateway_app(
+            platform=StubPlatform(response="Audit governed response")
+        )
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="web-user",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
         client = TestClient(app)
 
         msg_resp = client.post(
@@ -599,7 +689,9 @@ class TestWebChatWebhook:
         )
         certificate = app.state.command_ledger.latest_terminal_certificate()
         assert certificate is not None
-        audit_resp = client.get(f"/commands/{certificate.command_id}/capability-admission")
+        audit_resp = client.get(
+            f"/commands/{certificate.command_id}/capability-admission"
+        )
 
         assert msg_resp.status_code == 200
         assert audit_resp.status_code == 200
@@ -612,7 +704,9 @@ class TestWebChatWebhook:
         assert audit["admission_event_hash"]
         assert audit["registry_event_hash"]
 
-    def test_fabric_admission_rejects_missing_pack_capability(self, monkeypatch, tmp_path):
+    def test_fabric_admission_rejects_missing_pack_capability(
+        self, monkeypatch, tmp_path
+    ):
         _configure_fabric_env(
             monkeypatch,
             tmp_path,
@@ -624,7 +718,9 @@ class TestWebChatWebhook:
         with pytest.raises(ValueError, match="missing capabilities"):
             create_gateway_app(platform=StubPlatform())
 
-    def test_fabric_admission_blocks_uninstalled_runtime_intent(self, monkeypatch, tmp_path):
+    def test_fabric_admission_blocks_uninstalled_runtime_intent(
+        self, monkeypatch, tmp_path
+    ):
         _configure_fabric_env(
             monkeypatch,
             tmp_path,
@@ -633,10 +729,14 @@ class TestWebChatWebhook:
             use_pack=True,
         )
         app = create_gateway_app(platform=StubPlatform(response="should not execute"))
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="web", sender_id="web-user",
-            tenant_id="t1", identity_id="u1",
-        ))
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="web-user",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
         client = TestClient(app)
 
         resp = client.post(
@@ -644,52 +744,65 @@ class TestWebChatWebhook:
             content=json.dumps({"body": "Hello from web", "user_id": "web-user"}),
             headers={"X-Session-Token": "fabric-runtime-reject"},
         )
-        audits_resp = client.get("/capability-fabric/admission-audits?tenant_id=t1&status=rejected")
+        audits_resp = client.get(
+            "/capability-fabric/admission-audits?tenant_id=t1&status=rejected"
+        )
 
         assert resp.status_code == 200
         assert resp.json()["metadata"]["error"] == "capability_admission_rejected"
-        assert resp.json()["body"] == "This command requires capability review before execution."
+        assert (
+            resp.json()["body"]
+            == "This command requires capability review before execution."
+        )
         assert "llm_completion" in resp.json()["metadata"]["reason"]
         assert audits_resp.status_code == 200
         assert audits_resp.json()["count"] == 1
         assert audits_resp.json()["admission_audits"][0]["status"] == "rejected"
 
-
-# ═══ Approval Callback ═══
-
+    # ═══ Approval Callback ═══
 
     def test_capability_plan_read_model_reports_terminal_certificate(self):
         app = create_gateway_app(platform=StubPlatform(response="unused fallback"))
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="web", sender_id="web-user",
-            tenant_id="t1", identity_id="u1",
-        ))
-        app.state.router._skills.register(FunctionCapabilityHandler(
-            "enterprise.knowledge_search",
-            lambda context, params: {
-                "response": "Knowledge searched.",
-                "chunks": ["policy"],
-                "scores": [1.0],
-                "total_chunks_searched": 1,
-                "receipt_status": "searched",
-            },
-        ))
-        app.state.router._skills.register(FunctionCapabilityHandler(
-            "enterprise.task_schedule",
-            lambda context, params: {
-                "response": "Task scheduled: task-1",
-                "task_id": "task-1",
-                "receipt_status": "scheduled",
-            },
-        ))
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="web-user",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
+        app.state.router._skills.register(
+            FunctionCapabilityHandler(
+                "enterprise.knowledge_search",
+                lambda context, params: {
+                    "response": "Knowledge searched.",
+                    "chunks": ["policy"],
+                    "scores": [1.0],
+                    "total_chunks_searched": 1,
+                    "receipt_status": "searched",
+                },
+            )
+        )
+        app.state.router._skills.register(
+            FunctionCapabilityHandler(
+                "enterprise.task_schedule",
+                lambda context, params: {
+                    "response": "Task scheduled: task-1",
+                    "task_id": "task-1",
+                    "receipt_status": "scheduled",
+                },
+            )
+        )
         client = TestClient(app)
 
         msg_resp = client.post(
             "/webhook/web",
-            content=json.dumps({
-                "body": "search knowledge docs and search knowledge policy",
-                "user_id": "web-user",
-            }),
+            content=json.dumps(
+                {
+                    "body": "search knowledge docs and search knowledge policy",
+                    "user_id": "web-user",
+                }
+            ),
             headers={"X-Session-Token": "plan-read-model-token"},
         )
         plan_id = msg_resp.json()["metadata"]["plan_id"]
@@ -698,7 +811,9 @@ class TestWebChatWebhook:
         missing_resp = client.get("/capability-plans/missing-plan/closure")
 
         assert msg_resp.status_code == 200
-        assert msg_resp.json()["metadata"]["plan_terminal_certificate_id"].startswith("plan-cert-")
+        assert msg_resp.json()["metadata"]["plan_terminal_certificate_id"].startswith(
+            "plan-cert-"
+        )
         assert read_model_resp.status_code == 200
         assert read_model_resp.json()["enabled"] is True
         assert read_model_resp.json()["plan_certificate_count"] == 1
@@ -709,19 +824,31 @@ class TestWebChatWebhook:
         assert closure_resp.json()["plan_id"] == plan_id
         assert closure_resp.json()["plan_terminal_certificate"]["plan_id"] == plan_id
         assert closure_resp.json()["plan_terminal_certificate"]["step_count"] == 2
-        assert closure_resp.json()["plan_evidence_bundle"]["bundle_id"].startswith("plan-evidence-bundle-")
+        assert closure_resp.json()["plan_evidence_bundle"]["bundle_id"].startswith(
+            "plan-evidence-bundle-"
+        )
         assert closure_resp.json()["plan_evidence_bundle"]["plan_id"] == plan_id
         assert (
             closure_resp.json()["plan_evidence_bundle"]["certificate_id"]
             == closure_resp.json()["plan_terminal_certificate"]["certificate_id"]
         )
         assert len(closure_resp.json()["plan_evidence_bundle"]["step_command_ids"]) == 2
-        assert len(closure_resp.json()["plan_evidence_bundle"]["step_terminal_certificate_ids"]) == 2
+        assert (
+            len(
+                closure_resp.json()["plan_evidence_bundle"][
+                    "step_terminal_certificate_ids"
+                ]
+            )
+            == 2
+        )
         assert closure_resp.json()["plan_evidence_bundle"]["evidence_refs"]
         assert closure_resp.json()["witness_count"] == 1
         assert closure_resp.json()["recovery_attempt_count"] == 0
         assert closure_resp.json()["plan_recovery_attempts"] == []
-        assert closure_resp.json()["plan_witnesses"][0]["detail"]["cause"] == "plan_terminal_certificate_issued"
+        assert (
+            closure_resp.json()["plan_witnesses"][0]["detail"]["cause"]
+            == "plan_terminal_certificate_issued"
+        )
         assert missing_resp.status_code == 404
         assert missing_resp.json()["detail"] == "plan terminal certificate not found"
 
@@ -761,11 +888,19 @@ class TestWebChatWebhook:
                 error="analysis_failed",
             )
         ).execute(retry_plan)
-        retry_witness = app.state.plan_ledger.record_failure(plan=retry_plan, execution=retry_execution)
+        retry_witness = app.state.plan_ledger.record_failure(
+            plan=retry_plan, execution=retry_execution
+        )
 
-        filtered_resp = client.get("/capability-plans/read-model?recovery_action=wait_for_approval")
-        paged_resp = client.get("/capability-plans/read-model?failed_witness_limit=1&failed_witness_offset=1")
-        empty_resp = client.get("/capability-plans/read-model?recovery_action=compensate_or_review")
+        filtered_resp = client.get(
+            "/capability-plans/read-model?recovery_action=wait_for_approval"
+        )
+        paged_resp = client.get(
+            "/capability-plans/read-model?failed_witness_limit=1&failed_witness_offset=1"
+        )
+        empty_resp = client.get(
+            "/capability-plans/read-model?recovery_action=compensate_or_review"
+        )
 
         assert filtered_resp.status_code == 200
         assert filtered_resp.json()["recovery_action_filter"] == "wait_for_approval"
@@ -782,8 +917,13 @@ class TestWebChatWebhook:
         }
         assert filtered_resp.json()["recovery_attempt_count"] == 0
         assert filtered_resp.json()["recovery_attempt_status_counts"] == {}
-        assert filtered_resp.json()["failed_plan_witnesses"][0]["witness_id"] == witness.witness_id
-        assert filtered_resp.json()["failed_plan_witnesses"][0]["detail"]["recovery_decision"]["approval_required"]
+        assert (
+            filtered_resp.json()["failed_plan_witnesses"][0]["witness_id"]
+            == witness.witness_id
+        )
+        assert filtered_resp.json()["failed_plan_witnesses"][0]["detail"][
+            "recovery_decision"
+        ]["approval_required"]
         assert paged_resp.status_code == 200
         assert paged_resp.json()["failed_plan_witness_page"] == {
             "total": 2,
@@ -792,7 +932,10 @@ class TestWebChatWebhook:
             "next_offset": None,
         }
         assert len(paged_resp.json()["failed_plan_witnesses"]) == 1
-        assert paged_resp.json()["failed_plan_witnesses"][0]["witness_id"] == retry_witness.witness_id
+        assert (
+            paged_resp.json()["failed_plan_witnesses"][0]["witness_id"]
+            == retry_witness.witness_id
+        )
         assert empty_resp.status_code == 200
         assert empty_resp.json()["recovery_action_filter"] == "compensate_or_review"
         assert empty_resp.json()["failed_plan_witness_page"] == {
@@ -805,38 +948,52 @@ class TestWebChatWebhook:
 
     def test_capability_plan_recover_endpoint_resumes_after_approval(self):
         app = create_gateway_app(platform=StubPlatform(response="schedule approved"))
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="web", sender_id="web-user",
-            tenant_id="t1", identity_id="u1",
-        ))
-        app.state.router._skills.register(FunctionCapabilityHandler(
-            "enterprise.knowledge_search",
-            lambda context, params: {
-                "response": "Knowledge searched.",
-                "chunks": ["policy"],
-                "scores": [1.0],
-                "total_chunks_searched": 1,
-                "receipt_status": "searched",
-            },
-        ))
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="web-user",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
+        app.state.router._skills.register(
+            FunctionCapabilityHandler(
+                "enterprise.knowledge_search",
+                lambda context, params: {
+                    "response": "Knowledge searched.",
+                    "chunks": ["policy"],
+                    "scores": [1.0],
+                    "total_chunks_searched": 1,
+                    "receipt_status": "searched",
+                },
+            )
+        )
         client = TestClient(app)
 
         blocked_resp = client.post(
             "/webhook/web",
-            content=json.dumps({
-                "body": "search knowledge docs and schedule review",
-                "user_id": "web-user",
-            }),
+            content=json.dumps(
+                {
+                    "body": "search knowledge docs and schedule review",
+                    "user_id": "web-user",
+                }
+            ),
             headers={"X-Session-Token": "plan-recover-token"},
         )
         plan_id = blocked_resp.json()["metadata"]["plan_id"]
-        request_id = blocked_resp.json()["metadata"]["plan_error"].split("approval_required:", 1)[1]
-        approval_resp = app.state.router.handle_approval_callback(request_id, approved=True, resolved_by="operator-1")
+        request_id = blocked_resp.json()["metadata"]["plan_error"].split(
+            "approval_required:", 1
+        )[1]
+        approval_resp = app.state.router.handle_approval_callback(
+            request_id, approved=True, resolved_by="operator-1"
+        )
         recover_resp = client.post(f"/capability-plans/{plan_id}/recover")
         repeat_recover_resp = client.post(f"/capability-plans/{plan_id}/recover")
         second_recover_resp = client.post("/capability-plans/missing-plan/recover")
         read_model_resp = client.get("/capability-plans/read-model")
-        rejected_read_model_resp = client.get("/capability-plans/read-model?recovery_attempt_status=rejected")
+        rejected_read_model_resp = client.get(
+            "/capability-plans/read-model?recovery_attempt_status=rejected"
+        )
         paged_read_model_resp = client.get(
             "/capability-plans/read-model?recovery_attempt_limit=1&recovery_attempt_offset=1"
         )
@@ -849,9 +1006,14 @@ class TestWebChatWebhook:
         assert recover_resp.status_code == 200
         assert recover_resp.json()["status"] == "recovered"
         assert recover_resp.json()["plan_id"] == plan_id
-        assert recover_resp.json()["plan_terminal_certificate_id"].startswith("plan-cert-")
+        assert recover_resp.json()["plan_terminal_certificate_id"].startswith(
+            "plan-cert-"
+        )
         assert repeat_recover_resp.status_code == 409
-        assert repeat_recover_resp.json()["detail"] == "plan already has terminal certificate"
+        assert (
+            repeat_recover_resp.json()["detail"]
+            == "plan already has terminal certificate"
+        )
         assert second_recover_resp.status_code == 404
         assert second_recover_resp.json()["detail"] == "failed plan witness not found"
         assert read_model_resp.status_code == 200
@@ -863,8 +1025,14 @@ class TestWebChatWebhook:
         assert read_model_resp.json()["recovery_attempt_status_filter"] == ""
         assert rejected_read_model_resp.status_code == 200
         assert rejected_read_model_resp.json()["recovery_attempt_count"] == 3
-        assert rejected_read_model_resp.json()["recovery_attempt_status_filter"] == "rejected"
-        assert [attempt["status"] for attempt in rejected_read_model_resp.json()["recovery_attempts"]] == [
+        assert (
+            rejected_read_model_resp.json()["recovery_attempt_status_filter"]
+            == "rejected"
+        )
+        assert [
+            attempt["status"]
+            for attempt in rejected_read_model_resp.json()["recovery_attempts"]
+        ] == [
             "rejected",
             "rejected",
         ]
@@ -879,33 +1047,48 @@ class TestWebChatWebhook:
         assert len(paged_read_model_resp.json()["recovery_attempts"]) == 1
         assert closure_resp.status_code == 200
         assert closure_resp.json()["recovery_attempt_count"] == 2
-        assert [attempt["status"] for attempt in closure_resp.json()["plan_recovery_attempts"]] == [
+        assert [
+            attempt["status"]
+            for attempt in closure_resp.json()["plan_recovery_attempts"]
+        ] == [
             "succeeded",
             "rejected",
         ]
-        assert closure_resp.json()["plan_recovery_attempts"][0]["reason"] == "plan_recovered"
-        assert closure_resp.json()["plan_recovery_attempts"][1]["reason"] == "plan_already_certified"
+        assert (
+            closure_resp.json()["plan_recovery_attempts"][0]["reason"]
+            == "plan_recovered"
+        )
+        assert (
+            closure_resp.json()["plan_recovery_attempts"][1]["reason"]
+            == "plan_already_certified"
+        )
 
 
 class TestApprovalWebhook:
     def test_approve_unknown_request(self, client):
         resp = client.post(
             "/webhook/approve/nonexistent",
-            content=json.dumps({
-                "approved": True,
-                "resolver_channel": "web",
-                "resolver_sender_id": "web-user",
-            }),
+            content=json.dumps(
+                {
+                    "approved": True,
+                    "resolver_channel": "web",
+                    "resolver_sender_id": "web-user",
+                }
+            ),
         )
         assert resp.status_code == 404
 
     def test_approve_valid_request(self, client):
         # First trigger a high-risk message to create pending approval
         app = client.app
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="web", sender_id="risk-user",
-            tenant_id="t1", identity_id="u1",
-        ))
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="risk-user",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
         msg_resp = client.post(
             "/webhook/web",
             content=json.dumps({"body": "delete all files", "user_id": "risk-user"}),
@@ -933,15 +1116,23 @@ class TestApprovalWebhook:
         monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
         monkeypatch.setenv("MULLU_GATEWAY_APPROVAL_SECRET", "approve-secret")
         app = create_gateway_app(platform=StubPlatform())
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="web", sender_id="risk-user",
-            tenant_id="t1", identity_id="u1",
-        ))
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="web", sender_id="operator",
-            tenant_id="t1", identity_id="operator-1",
-            approval_authority=True,
-        ))
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="risk-user",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="operator",
+                tenant_id="t1",
+                identity_id="operator-1",
+                approval_authority=True,
+            )
+        )
         client = TestClient(app)
 
         msg_resp = client.post(
@@ -953,11 +1144,13 @@ class TestApprovalWebhook:
 
         resp = client.post(
             f"/webhook/approve/{request_id}",
-            content=json.dumps({
-                "approved": True,
-                "resolver_channel": "web",
-                "resolver_sender_id": "operator",
-            }),
+            content=json.dumps(
+                {
+                    "approved": True,
+                    "resolver_channel": "web",
+                    "resolver_sender_id": "operator",
+                }
+            ),
             headers={"X-Mullu-Approval-Secret": "approve-secret"},
         )
         assert resp.status_code == 200
@@ -968,10 +1161,14 @@ class TestApprovalWebhook:
 
     def test_approval_callback_requires_resolver_identity(self):
         app = create_gateway_app(platform=StubPlatform())
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="web", sender_id="risk-user",
-            tenant_id="t1", identity_id="u1",
-        ))
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="risk-user",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
         client = TestClient(app)
         msg_resp = client.post(
             "/webhook/web",
@@ -986,18 +1183,29 @@ class TestApprovalWebhook:
         )
 
         assert resp.status_code == 400
-        assert resp.json()["detail"] == "resolver_channel and resolver_sender_id are required"
+        assert (
+            resp.json()["detail"]
+            == "resolver_channel and resolver_sender_id are required"
+        )
 
     def test_approval_callback_denies_unauthorized_resolver(self):
         app = create_gateway_app(platform=StubPlatform())
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="web", sender_id="risk-user",
-            tenant_id="t1", identity_id="u1",
-        ))
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="web", sender_id="viewer",
-            tenant_id="t1", identity_id="viewer-1",
-        ))
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="risk-user",
+                tenant_id="t1",
+                identity_id="u1",
+            )
+        )
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="viewer",
+                tenant_id="t1",
+                identity_id="viewer-1",
+            )
+        )
         client = TestClient(app)
         msg_resp = client.post(
             "/webhook/web",
@@ -1008,11 +1216,13 @@ class TestApprovalWebhook:
 
         resp = client.post(
             f"/webhook/approve/{request_id}",
-            content=json.dumps({
-                "approved": True,
-                "resolver_channel": "web",
-                "resolver_sender_id": "viewer",
-            }),
+            content=json.dumps(
+                {
+                    "approved": True,
+                    "resolver_channel": "web",
+                    "resolver_sender_id": "viewer",
+                }
+            ),
         )
 
         assert resp.status_code == 403
@@ -1161,7 +1371,10 @@ class TestGatewayStatus:
         assert "Mullu Authority Operator Console" in console_allowed.text
         assert audit_allowed.status_code == 200
         assert audit_allowed.json()["count"] == 1
-        assert audit_allowed.json()["operator_audit_events"][0]["path"] == "/authority/witness"
+        assert (
+            audit_allowed.json()["operator_audit_events"][0]["path"]
+            == "/authority/witness"
+        )
         assert audit_allowed.json()["operator_audit_events"][0]["authorized"] is False
         assert "authority-secret" not in json.dumps(audit_allowed.json())
 
@@ -1170,11 +1383,15 @@ class TestGatewayStatus:
         monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
         monkeypatch.delenv("MULLU_AUTHORITY_OPERATOR_SECRET", raising=False)
         app = create_gateway_app(platform=StubPlatform())
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="web", sender_id="authority-user",
-            tenant_id="t1", identity_id="authority-1",
-            roles=("authority_operator",),
-        ))
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="authority-user",
+                tenant_id="t1",
+                identity_id="authority-1",
+                roles=("authority_operator",),
+            )
+        )
         local_client = TestClient(app)
 
         allowed = local_client.get(
@@ -1197,18 +1414,25 @@ class TestGatewayStatus:
         assert allowed.status_code == 200
         assert allowed.json()["open_obligation_count"] == 0
         assert denied_wrong_tenant.status_code == 403
-        assert denied_wrong_tenant.json()["detail"] == "Authority operator access not authorized"
+        assert (
+            denied_wrong_tenant.json()["detail"]
+            == "Authority operator access not authorized"
+        )
 
     def test_authority_operator_identity_role_denied_in_production(self, monkeypatch):
         monkeypatch.setenv("MULLU_ENV", "production")
         monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
         monkeypatch.delenv("MULLU_AUTHORITY_OPERATOR_SECRET", raising=False)
         app = create_gateway_app(platform=StubPlatform())
-        app.state.router.register_tenant_mapping(TenantMapping(
-            channel="web", sender_id="member-user",
-            tenant_id="t1", identity_id="member-1",
-            roles=("tenant_member",),
-        ))
+        app.state.router.register_tenant_mapping(
+            TenantMapping(
+                channel="web",
+                sender_id="member-user",
+                tenant_id="t1",
+                identity_id="member-1",
+                roles=("tenant_member",),
+            )
+        )
         local_client = TestClient(app)
 
         denied = local_client.get(
@@ -1223,28 +1447,38 @@ class TestGatewayStatus:
         assert denied.status_code == 403
         assert denied.json()["detail"] == "Authority operator access not authorized"
 
-    def test_authority_ownership_read_model_filters_owner_records(self, gateway_app, client):
-        gateway_app.state.authority_mesh_store.save_ownership(TeamOwnership(
-            tenant_id="t1",
-            resource_ref="financial.send_payment",
-            owner_team="finance_ops",
-            primary_owner_id="finance-manager-1",
-            fallback_owner_id="tenant-owner-1",
-            escalation_team="executive_ops",
-        ))
-        gateway_app.state.authority_mesh_store.save_ownership(TeamOwnership(
-            tenant_id="t1",
-            resource_ref="deploy.production",
-            owner_team="platform_security",
-            primary_owner_id="security-admin-1",
-            fallback_owner_id="engineering-lead-1",
-            escalation_team="engineering_ops",
-        ))
+    def test_authority_ownership_read_model_filters_owner_records(
+        self, gateway_app, client
+    ):
+        gateway_app.state.authority_mesh_store.save_ownership(
+            TeamOwnership(
+                tenant_id="t1",
+                resource_ref="financial.send_payment",
+                owner_team="finance_ops",
+                primary_owner_id="finance-manager-1",
+                fallback_owner_id="tenant-owner-1",
+                escalation_team="executive_ops",
+            )
+        )
+        gateway_app.state.authority_mesh_store.save_ownership(
+            TeamOwnership(
+                tenant_id="t1",
+                resource_ref="deploy.production",
+                owner_team="platform_security",
+                primary_owner_id="security-admin-1",
+                fallback_owner_id="engineering-lead-1",
+                escalation_team="engineering_ops",
+            )
+        )
 
         list_resp = client.get("/authority/ownership?tenant_id=t1&limit=1")
         team_resp = client.get("/authority/ownership?owner_team=finance_ops")
-        resource_resp = client.get("/authority/ownership?resource_ref=deploy.production")
-        owner_resp = client.get("/authority/ownership?primary_owner_id=security-admin-1")
+        resource_resp = client.get(
+            "/authority/ownership?resource_ref=deploy.production"
+        )
+        owner_resp = client.get(
+            "/authority/ownership?primary_owner_id=security-admin-1"
+        )
         missing_resp = client.get("/authority/ownership?owner_team=missing-team")
 
         assert list_resp.status_code == 200
@@ -1255,47 +1489,61 @@ class TestGatewayStatus:
         assert team_resp.json()["count"] == 1
         assert team_resp.json()["ownership"][0]["owner_team"] == "finance_ops"
         assert resource_resp.status_code == 200
-        assert resource_resp.json()["ownership"][0]["resource_ref"] == "deploy.production"
+        assert (
+            resource_resp.json()["ownership"][0]["resource_ref"] == "deploy.production"
+        )
         assert owner_resp.status_code == 200
-        assert owner_resp.json()["ownership"][0]["primary_owner_id"] == "security-admin-1"
+        assert (
+            owner_resp.json()["ownership"][0]["primary_owner_id"] == "security-admin-1"
+        )
         assert missing_resp.status_code == 200
         assert missing_resp.json()["count"] == 0
 
-    def test_authority_policy_read_model_filters_approval_and_escalation_policies(self, gateway_app, client):
-        gateway_app.state.authority_mesh_store.save_approval_policy(ApprovalPolicy(
-            policy_id="payment-high-risk-policy",
-            tenant_id="t1",
-            capability="financial.send_payment",
-            risk_tier="high",
-            required_roles=("financial_admin",),
-            required_approver_count=2,
-            separation_of_duty=True,
-            timeout_seconds=300,
-            escalation_policy_id="finance-escalation",
-        ))
-        gateway_app.state.authority_mesh_store.save_approval_policy(ApprovalPolicy(
-            policy_id="deploy-high-risk-policy",
-            tenant_id="t1",
-            capability="deploy.production",
-            risk_tier="high",
-            required_roles=("security_admin",),
-            required_approver_count=2,
-            separation_of_duty=True,
-            timeout_seconds=600,
-            escalation_policy_id="platform-escalation",
-        ))
-        gateway_app.state.authority_mesh_store.save_escalation_policy(EscalationPolicy(
-            policy_id="finance-escalation",
-            tenant_id="t1",
-            notify_after_seconds=300,
-            escalate_after_seconds=900,
-            incident_after_seconds=3600,
-            fallback_owner_id="tenant-owner-1",
-            escalation_team="executive_ops",
-        ))
+    def test_authority_policy_read_model_filters_approval_and_escalation_policies(
+        self, gateway_app, client
+    ):
+        gateway_app.state.authority_mesh_store.save_approval_policy(
+            ApprovalPolicy(
+                policy_id="payment-high-risk-policy",
+                tenant_id="t1",
+                capability="financial.send_payment",
+                risk_tier="high",
+                required_roles=("financial_admin",),
+                required_approver_count=2,
+                separation_of_duty=True,
+                timeout_seconds=300,
+                escalation_policy_id="finance-escalation",
+            )
+        )
+        gateway_app.state.authority_mesh_store.save_approval_policy(
+            ApprovalPolicy(
+                policy_id="deploy-high-risk-policy",
+                tenant_id="t1",
+                capability="deploy.production",
+                risk_tier="high",
+                required_roles=("security_admin",),
+                required_approver_count=2,
+                separation_of_duty=True,
+                timeout_seconds=600,
+                escalation_policy_id="platform-escalation",
+            )
+        )
+        gateway_app.state.authority_mesh_store.save_escalation_policy(
+            EscalationPolicy(
+                policy_id="finance-escalation",
+                tenant_id="t1",
+                notify_after_seconds=300,
+                escalate_after_seconds=900,
+                incident_after_seconds=3600,
+                fallback_owner_id="tenant-owner-1",
+                escalation_team="executive_ops",
+            )
+        )
 
         list_resp = client.get("/authority/policies?tenant_id=t1&limit=1")
-        capability_resp = client.get("/authority/policies?capability=financial.send_payment")
+        capability_resp = client.get(
+            "/authority/policies?capability=financial.send_payment"
+        )
         role_resp = client.get("/authority/policies?required_role=security_admin")
         escalation_resp = client.get("/authority/policies?policy_id=finance-escalation")
         missing_resp = client.get("/authority/policies?required_role=missing-role")
@@ -1307,13 +1555,21 @@ class TestGatewayStatus:
         assert list_resp.json()["escalation_count"] == 1
         assert capability_resp.status_code == 200
         assert capability_resp.json()["approval_count"] == 1
-        assert capability_resp.json()["approval_policies"][0]["capability"] == "financial.send_payment"
+        assert (
+            capability_resp.json()["approval_policies"][0]["capability"]
+            == "financial.send_payment"
+        )
         assert role_resp.status_code == 200
-        assert role_resp.json()["approval_policies"][0]["required_roles"] == ["security_admin"]
+        assert role_resp.json()["approval_policies"][0]["required_roles"] == [
+            "security_admin"
+        ]
         assert escalation_resp.status_code == 200
         assert escalation_resp.json()["approval_count"] == 0
         assert escalation_resp.json()["escalation_count"] == 1
-        assert escalation_resp.json()["escalation_policies"][0]["escalation_team"] == "executive_ops"
+        assert (
+            escalation_resp.json()["escalation_policies"][0]["escalation_team"]
+            == "executive_ops"
+        )
         assert missing_resp.status_code == 200
         assert missing_resp.json()["approval_count"] == 0
         assert missing_resp.json()["escalation_count"] == 0
@@ -1321,13 +1577,17 @@ class TestGatewayStatus:
     def test_authority_approval_chain_read_model(self, gateway_app, client):
         msg_resp = client.post(
             "/webhook/web",
-            content=json.dumps({"body": "make a payment of $50", "user_id": "web-user"}),
+            content=json.dumps(
+                {"body": "make a payment of $50", "user_id": "web-user"}
+            ),
             headers={"X-Session-Token": "authority-chain-token"},
         )
         assert msg_resp.status_code == 200
 
         list_resp = client.get("/authority/approval-chains?status=pending")
-        paged_resp = client.get("/authority/approval-chains?status=pending&limit=1&offset=0")
+        paged_resp = client.get(
+            "/authority/approval-chains?status=pending&limit=1&offset=0"
+        )
         assert list_resp.status_code == 200
         assert paged_resp.status_code == 200
         chains = list_resp.json()["approval_chains"]
@@ -1335,24 +1595,36 @@ class TestGatewayStatus:
         command_id = chains[0]["command_id"]
         policy_id = chains[0]["policy_id"]
         required_role = chains[0]["required_roles"][0]
-        chain = gateway_app.state.authority_obligation_mesh.approval_chain_for(command_id)
+        chain = gateway_app.state.authority_obligation_mesh.approval_chain_for(
+            command_id
+        )
         assert chain is not None
-        gateway_app.state.authority_mesh_store.save_approval_chain(ApprovalChain(
-            chain_id=chain.chain_id,
-            command_id=chain.command_id,
-            tenant_id=chain.tenant_id,
-            policy_id=chain.policy_id,
-            required_roles=chain.required_roles,
-            required_approver_count=chain.required_approver_count,
-            approvals_received=chain.approvals_received,
-            status=chain.status,
-            due_at="2026-04-24T12:00:00+00:00",
-        ))
+        gateway_app.state.authority_mesh_store.save_approval_chain(
+            ApprovalChain(
+                chain_id=chain.chain_id,
+                command_id=chain.command_id,
+                tenant_id=chain.tenant_id,
+                policy_id=chain.policy_id,
+                required_roles=chain.required_roles,
+                required_approver_count=chain.required_approver_count,
+                approvals_received=chain.approvals_received,
+                status=chain.status,
+                due_at="2026-04-24T12:00:00+00:00",
+            )
+        )
         policy_resp = client.get(f"/authority/approval-chains?policy_id={policy_id}")
-        role_resp = client.get(f"/authority/approval-chains?required_role={required_role}")
-        missing_role_resp = client.get("/authority/approval-chains?required_role=security_admin")
-        overdue_resp = client.get("/authority/approval-chains?status=pending&overdue=true")
-        not_overdue_resp = client.get(f"/authority/approval-chains?command_id={command_id}&overdue=false")
+        role_resp = client.get(
+            f"/authority/approval-chains?required_role={required_role}"
+        )
+        missing_role_resp = client.get(
+            "/authority/approval-chains?required_role=security_admin"
+        )
+        overdue_resp = client.get(
+            "/authority/approval-chains?status=pending&overdue=true"
+        )
+        not_overdue_resp = client.get(
+            f"/authority/approval-chains?command_id={command_id}&overdue=false"
+        )
         invalid_overdue_resp = client.get("/authority/approval-chains?overdue=maybe")
         command_resp = client.get(f"/commands/{command_id}/authority")
         witness_resp = client.get("/authority/witness")
@@ -1364,13 +1636,22 @@ class TestGatewayStatus:
         assert paged_resp.json()["limit"] == 1
         assert paged_resp.json()["offset"] == 0
         assert policy_resp.status_code == 200
-        assert any(chain["command_id"] == command_id for chain in policy_resp.json()["approval_chains"])
+        assert any(
+            chain["command_id"] == command_id
+            for chain in policy_resp.json()["approval_chains"]
+        )
         assert role_resp.status_code == 200
-        assert any(chain["command_id"] == command_id for chain in role_resp.json()["approval_chains"])
+        assert any(
+            chain["command_id"] == command_id
+            for chain in role_resp.json()["approval_chains"]
+        )
         assert missing_role_resp.status_code == 200
         assert missing_role_resp.json()["count"] == 0
         assert overdue_resp.status_code == 200
-        assert any(chain["command_id"] == command_id for chain in overdue_resp.json()["approval_chains"])
+        assert any(
+            chain["command_id"] == command_id
+            for chain in overdue_resp.json()["approval_chains"]
+        )
         assert not_overdue_resp.status_code == 200
         assert not_overdue_resp.json()["count"] == 0
         assert invalid_overdue_resp.status_code == 400
@@ -1388,7 +1669,9 @@ class TestGatewayStatus:
         witness_resp = client.get("/authority/witness")
         obligations_resp = client.get("/authority/obligations?limit=1")
         audit_resp = client.get("/authority/operator-audit?limit=2&offset=0")
-        filtered_resp = client.get("/authority/operator-audit?path=/authority/witness&authorized=true")
+        filtered_resp = client.get(
+            "/authority/operator-audit?path=/authority/witness&authorized=true"
+        )
         invalid_resp = client.get("/authority/operator-audit?authorized=maybe")
         console_resp = client.get("/authority/operator")
 
@@ -1404,7 +1687,10 @@ class TestGatewayStatus:
             event["path"] == "/authority/witness" and event["authorized"] is True
             for event in filtered_resp.json()["operator_audit_events"]
         )
-        assert all("sender_id" not in event for event in audit_resp.json()["operator_audit_events"])
+        assert all(
+            "sender_id" not in event
+            for event in audit_resp.json()["operator_audit_events"]
+        )
         assert invalid_resp.status_code == 400
         assert invalid_resp.json()["detail"] == "authorized must be true or false"
         assert console_resp.status_code == 200
@@ -1433,15 +1719,17 @@ class TestGatewayStatus:
             terminal_certificate_id="terminal-test-read-model",
         )
         gateway_app.state.authority_mesh_store.save_obligation(obligation)
-        gateway_app.state.authority_mesh_store.append_escalation_event({
-            "event_id": "obl-escalation-test-read-model",
-            "obligation_id": obligation.obligation_id,
-            "command_id": obligation.command_id,
-            "tenant_id": obligation.tenant_id,
-            "owner_id": obligation.owner_id,
-            "owner_team": obligation.owner_team,
-            "escalated_at": "2026-04-24T13:00:00+00:00",
-        })
+        gateway_app.state.authority_mesh_store.append_escalation_event(
+            {
+                "event_id": "obl-escalation-test-read-model",
+                "obligation_id": obligation.obligation_id,
+                "command_id": obligation.command_id,
+                "tenant_id": obligation.tenant_id,
+                "owner_id": obligation.owner_id,
+                "owner_team": obligation.owner_team,
+                "escalated_at": "2026-04-24T13:00:00+00:00",
+            }
+        )
         second_obligation = Obligation(
             obligation_id="obligation-test-read-model-second",
             command_id=certificate.command_id,
@@ -1465,29 +1753,44 @@ class TestGatewayStatus:
             obligation_type="compensation_review",
             due_at="2099-04-26T12:00:00+00:00",
             status=ObligationStatus.OPEN,
-            evidence_required=("compensation_receipt", "compensation_reviewer_attestation"),
+            evidence_required=(
+                "compensation_receipt",
+                "compensation_reviewer_attestation",
+            ),
             escalation_policy_id="default",
             terminal_certificate_id="terminal-test-read-model",
         )
         gateway_app.state.authority_mesh_store.save_obligation(compensation_obligation)
-        gateway_app.state.authority_mesh_store.append_escalation_event({
-            "event_id": "obl-escalation-test-read-model-second",
-            "obligation_id": second_obligation.obligation_id,
-            "command_id": second_obligation.command_id,
-            "tenant_id": second_obligation.tenant_id,
-            "owner_id": second_obligation.owner_id,
-            "owner_team": second_obligation.owner_team,
-            "escalated_at": "2026-04-25T13:00:00+00:00",
-        })
+        gateway_app.state.authority_mesh_store.append_escalation_event(
+            {
+                "event_id": "obl-escalation-test-read-model-second",
+                "obligation_id": second_obligation.obligation_id,
+                "command_id": second_obligation.command_id,
+                "tenant_id": second_obligation.tenant_id,
+                "owner_id": second_obligation.owner_id,
+                "owner_team": second_obligation.owner_team,
+                "escalated_at": "2026-04-25T13:00:00+00:00",
+            }
+        )
 
-        obligations_resp = client.get("/authority/obligations?tenant_id=t1&status=open&limit=1")
-        case_obligations_resp = client.get("/authority/obligations?tenant_id=t1&obligation_type=case_review")
+        obligations_resp = client.get(
+            "/authority/obligations?tenant_id=t1&status=open&limit=1"
+        )
+        case_obligations_resp = client.get(
+            "/authority/obligations?tenant_id=t1&obligation_type=case_review"
+        )
         compensation_obligations_resp = client.get(
             "/authority/obligations?tenant_id=t1&obligation_type=compensation_review"
         )
-        overdue_obligations_resp = client.get("/authority/obligations?tenant_id=t1&status=open&overdue=true")
-        not_overdue_obligations_resp = client.get("/authority/obligations?tenant_id=t1&overdue=false")
-        invalid_overdue_obligations_resp = client.get("/authority/obligations?overdue=maybe")
+        overdue_obligations_resp = client.get(
+            "/authority/obligations?tenant_id=t1&status=open&overdue=true"
+        )
+        not_overdue_obligations_resp = client.get(
+            "/authority/obligations?tenant_id=t1&overdue=false"
+        )
+        invalid_overdue_obligations_resp = client.get(
+            "/authority/obligations?overdue=maybe"
+        )
         missing_evidence_resp = client.post(
             f"/authority/obligations/{obligation.obligation_id}/satisfy",
             json={"evidence_refs": []},
@@ -1497,9 +1800,15 @@ class TestGatewayStatus:
             json={"evidence_refs": ["case_disposition:read-model-closed"]},
         )
         command_resp = client.get(f"/commands/{obligation.command_id}/authority")
-        escalations_resp = client.get(f"/authority/escalations?command_id={obligation.command_id}&limit=1")
-        responsibility_resp = client.get("/authority/responsibility?tenant_id=t1&limit=2")
-        satisfied_resp = client.get("/authority/obligations?tenant_id=t1&status=satisfied")
+        escalations_resp = client.get(
+            f"/authority/escalations?command_id={obligation.command_id}&limit=1"
+        )
+        responsibility_resp = client.get(
+            "/authority/responsibility?tenant_id=t1&limit=2"
+        )
+        satisfied_resp = client.get(
+            "/authority/obligations?tenant_id=t1&status=satisfied"
+        )
         witness_resp = client.get("/authority/witness")
         console_resp = client.get("/authority/operator")
 
@@ -1509,21 +1818,30 @@ class TestGatewayStatus:
         assert obligations_resp.json()["limit"] == 1
         assert obligations_resp.json()["offset"] == 0
         assert obligations_resp.json()["next_offset"] == 1
-        assert obligations_resp.json()["obligations"][0]["obligation_id"] == obligation.obligation_id
+        assert (
+            obligations_resp.json()["obligations"][0]["obligation_id"]
+            == obligation.obligation_id
+        )
         assert case_obligations_resp.status_code == 200
         assert case_obligations_resp.json()["count"] == 1
-        assert case_obligations_resp.json()["obligations"][0]["obligation_type"] == "case_review"
+        assert (
+            case_obligations_resp.json()["obligations"][0]["obligation_type"]
+            == "case_review"
+        )
         assert compensation_obligations_resp.status_code == 200
         assert compensation_obligations_resp.json()["count"] == 1
-        assert compensation_obligations_resp.json()["obligations"][0]["owner_team"] == "finance_ops"
         assert (
-            compensation_obligations_resp.json()["obligations"][0]["evidence_required"]
-            == ["compensation_receipt", "compensation_reviewer_attestation"]
+            compensation_obligations_resp.json()["obligations"][0]["owner_team"]
+            == "finance_ops"
         )
+        assert compensation_obligations_resp.json()["obligations"][0][
+            "evidence_required"
+        ] == ["compensation_receipt", "compensation_reviewer_attestation"]
         assert overdue_obligations_resp.status_code == 200
         assert overdue_obligations_resp.json()["count"] == 2
         assert {
-            item["obligation_id"] for item in overdue_obligations_resp.json()["obligations"]
+            item["obligation_id"]
+            for item in overdue_obligations_resp.json()["obligations"]
         } == {obligation.obligation_id, second_obligation.obligation_id}
         assert not_overdue_obligations_resp.status_code == 200
         assert not_overdue_obligations_resp.json()["count"] == 1
@@ -1532,17 +1850,25 @@ class TestGatewayStatus:
             == compensation_obligation.obligation_id
         )
         assert invalid_overdue_obligations_resp.status_code == 400
-        assert invalid_overdue_obligations_resp.json()["detail"] == "overdue must be true or false"
+        assert (
+            invalid_overdue_obligations_resp.json()["detail"]
+            == "overdue must be true or false"
+        )
         assert missing_evidence_resp.status_code == 400
         assert satisfy_resp.status_code == 200
         assert satisfy_resp.json()["status"] == "satisfied"
         assert satisfy_resp.json()["obligation"]["status"] == "satisfied"
-        assert satisfy_resp.json()["evidence_refs"] == ["case_disposition:read-model-closed"]
+        assert satisfy_resp.json()["evidence_refs"] == [
+            "case_disposition:read-model-closed"
+        ]
         assert command_resp.status_code == 200
         assert command_resp.json()["obligations"][0]["owner_team"] == "ops"
         assert command_resp.json()["obligations"][0]["status"] == "satisfied"
         assert escalations_resp.status_code == 200
-        assert escalations_resp.json()["escalation_events"][0]["obligation_id"] == obligation.obligation_id
+        assert (
+            escalations_resp.json()["escalation_events"][0]["obligation_id"]
+            == obligation.obligation_id
+        )
         assert escalations_resp.json()["count"] == 1
         assert escalations_resp.json()["total"] == 2
         assert escalations_resp.json()["next_offset"] == 1
@@ -1552,10 +1878,22 @@ class TestGatewayStatus:
         assert responsibility_payload["responsibility_debt_clear"] is False
         assert responsibility_payload["unresolved_obligation_count"] == 2
         assert responsibility_payload["escalation_event_count"] == 2
-        assert responsibility_payload["priority_obligations"][0]["obligation_id"] == second_obligation.obligation_id
-        assert responsibility_payload["priority_obligations"][1]["obligation_id"] == compensation_obligation.obligation_id
-        assert responsibility_payload["priority_escalation_events"][0]["event_id"] == "obl-escalation-test-read-model-second"
-        assert "authority:obligations_read_model" in responsibility_payload["evidence_refs"]
+        assert (
+            responsibility_payload["priority_obligations"][0]["obligation_id"]
+            == second_obligation.obligation_id
+        )
+        assert (
+            responsibility_payload["priority_obligations"][1]["obligation_id"]
+            == compensation_obligation.obligation_id
+        )
+        assert (
+            responsibility_payload["priority_escalation_events"][0]["event_id"]
+            == "obl-escalation-test-read-model-second"
+        )
+        assert (
+            "authority:obligations_read_model"
+            in responsibility_payload["evidence_refs"]
+        )
         assert satisfied_resp.json()["count"] == 1
         assert witness_resp.json()["requires_review_count"] == 0
         assert witness_resp.json()["responsibility_debt_clear"] is False
@@ -1573,7 +1911,9 @@ class TestGatewayStatus:
         assert resp.status_code == 404
         assert resp.json()["detail"] == "obligation not found"
 
-    def test_escalate_overdue_authority_obligations_records_transition(self, gateway_app, client):
+    def test_escalate_overdue_authority_obligations_records_transition(
+        self, gateway_app, client
+    ):
         msg_resp = client.post(
             "/webhook/web",
             content=json.dumps({"body": "Hello from web", "user_id": "web-user"}),
@@ -1598,26 +1938,37 @@ class TestGatewayStatus:
         gateway_app.state.authority_mesh_store.save_obligation(obligation)
 
         resp = client.post("/authority/obligations/escalate-overdue")
-        updated = gateway_app.state.authority_mesh_store.load_obligation(obligation.obligation_id)
+        updated = gateway_app.state.authority_mesh_store.load_obligation(
+            obligation.obligation_id
+        )
         events = gateway_app.state.command_ledger.events_for(certificate.command_id)
 
         assert resp.status_code == 200
         assert resp.json()["status"] == "escalated"
-        assert any(item["obligation_id"] == obligation.obligation_id for item in resp.json()["obligations"])
+        assert any(
+            item["obligation_id"] == obligation.obligation_id
+            for item in resp.json()["obligations"]
+        )
         assert resp.json()["authority_witness"]["escalated_obligation_count"] >= 1
         assert updated is not None
         assert updated.status is ObligationStatus.ESCALATED
         assert events[-1].next_state is CommandState.OBLIGATIONS_ESCALATED
         assert gateway_app.state.authority_mesh_store.list_escalation_events()
 
-    def test_expire_overdue_authority_approval_chains_records_transition(self, gateway_app, client):
+    def test_expire_overdue_authority_approval_chains_records_transition(
+        self, gateway_app, client
+    ):
         msg_resp = client.post(
             "/webhook/web",
-            content=json.dumps({"body": "make a payment of $50", "user_id": "web-user"}),
+            content=json.dumps(
+                {"body": "make a payment of $50", "user_id": "web-user"}
+            ),
             headers={"X-Session-Token": "authority-expire-chain-token"},
         )
         command_id = msg_resp.json()["metadata"]["command_id"]
-        chain = gateway_app.state.authority_obligation_mesh.approval_chain_for(command_id)
+        chain = gateway_app.state.authority_obligation_mesh.approval_chain_for(
+            command_id
+        )
         assert chain is not None
         expired_chain = ApprovalChain(
             chain_id=chain.chain_id,
@@ -1633,7 +1984,9 @@ class TestGatewayStatus:
         gateway_app.state.authority_mesh_store.save_approval_chain(expired_chain)
 
         resp = client.post("/authority/approval-chains/expire-overdue")
-        updated = gateway_app.state.authority_obligation_mesh.approval_chain_for(command_id)
+        updated = gateway_app.state.authority_obligation_mesh.approval_chain_for(
+            command_id
+        )
         events = gateway_app.state.command_ledger.events_for(command_id)
 
         assert resp.status_code == 200
@@ -1667,10 +2020,18 @@ class TestGatewayStatus:
         invariant_ids = {witness["invariant_id"] for witness in witnesses}
         assert "command_lifecycle_events_are_hash_linked" in invariant_ids
         assert "terminal_closure_requires_evidence_refs" in invariant_ids
-        assert "successful_response_is_bound_to_response_evidence_closure" in invariant_ids
-        assert all(witness["matrix_surface_id"] == "gateway_capability_fabric" for witness in witnesses)
+        assert (
+            "successful_response_is_bound_to_response_evidence_closure" in invariant_ids
+        )
+        assert all(
+            witness["matrix_surface_id"] == "gateway_capability_fabric"
+            for witness in witnesses
+        )
         assert witnesses[0]["witness_refs"]
-        assert witnesses[1]["evidence_refs"] == data["terminal_certificate"]["evidence_refs"]
+        assert (
+            witnesses[1]["evidence_refs"]
+            == data["terminal_certificate"]["evidence_refs"]
+        )
         assert data["terminal_certificate"]["response_evidence_closure_id"]
 
     def test_command_universal_action_proof_read_model(self, gateway_app, client):
@@ -1740,7 +2101,9 @@ class TestGatewayStatus:
         assert CommandState.DISPATCHED.value in data["state_sequence"]
         assert CommandState.LEARNING_DECIDED.value in data["state_sequence"]
 
-    def test_command_universal_action_proof_missing_returns_404(self, gateway_app, client):
+    def test_command_universal_action_proof_missing_returns_404(
+        self, gateway_app, client
+    ):
         command = gateway_app.state.command_ledger.create_command(
             tenant_id="t1",
             actor_id="u1",
@@ -1756,11 +2119,15 @@ class TestGatewayStatus:
         assert resp.status_code == 404
         assert resp.json()["detail"] == "universal action proof not found"
 
-    def test_command_universal_action_orchestration_read_model(self, gateway_app, client):
+    def test_command_universal_action_orchestration_read_model(
+        self, gateway_app, client
+    ):
         record = json.loads(
-            (_ROOT / "examples" / "universal_action_orchestration.allowed_status_publish.json").read_text(
-                encoding="utf-8"
-            )
+            (
+                _ROOT
+                / "examples"
+                / "universal_action_orchestration.allowed_status_publish.json"
+            ).read_text(encoding="utf-8")
         )
         command = gateway_app.state.command_ledger.create_command(
             tenant_id="tenant_ops_demo",
@@ -1780,7 +2147,9 @@ class TestGatewayStatus:
             },
         )
 
-        resp = client.get(f"/commands/{command.command_id}/universal-action-orchestration")
+        resp = client.get(
+            f"/commands/{command.command_id}/universal-action-orchestration"
+        )
 
         assert resp.status_code == 200
         data = resp.json()
@@ -1790,7 +2159,9 @@ class TestGatewayStatus:
         assert data["closure_state"] == "closed_allowed"
         assert data["universal_action_orchestration"]["raw_reasoning_included"] is False
 
-    def test_command_universal_action_orchestration_missing_returns_404(self, gateway_app, client):
+    def test_command_universal_action_orchestration_missing_returns_404(
+        self, gateway_app, client
+    ):
         command = gateway_app.state.command_ledger.create_command(
             tenant_id="t1",
             actor_id="u1",
@@ -1801,12 +2172,58 @@ class TestGatewayStatus:
             payload={"body": "no universal orchestration record"},
         )
 
-        resp = client.get(f"/commands/{command.command_id}/universal-action-orchestration")
+        resp = client.get(
+            f"/commands/{command.command_id}/universal-action-orchestration"
+        )
 
         assert resp.status_code == 404
-        assert resp.json()["detail"] == "universal action orchestration record not found"
+        assert (
+            resp.json()["detail"] == "universal action orchestration record not found"
+        )
 
-    def test_operator_universal_actions_read_model_filters_proofs(self, gateway_app, client):
+    def test_command_universal_action_orchestration_malformed_record_returns_404(
+        self, gateway_app, client
+    ):
+        malformed_record = json.loads(
+            (
+                _ROOT
+                / "examples"
+                / "universal_action_orchestration.allowed_status_publish.json"
+            ).read_text(encoding="utf-8")
+        )
+        malformed_record["raw_reasoning_included"] = True
+        malformed_record["chain_of_thought"] = "private reasoning must not replay"
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="tenant_ops_demo",
+            actor_id="service:status_page_worker",
+            source="web",
+            conversation_id="conversation-orchestration-malformed",
+            idempotency_key="universal-orchestration-malformed",
+            intent="refresh_public_status_page",
+            payload={"body": "malformed status page replay"},
+        )
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.DISPATCHED,
+            detail={
+                "cause": "universal_action_kernel_dispatched",
+                "universal_action_orchestration": malformed_record,
+            },
+        )
+
+        resp = client.get(
+            f"/commands/{command.command_id}/universal-action-orchestration"
+        )
+
+        assert resp.status_code == 404
+        assert (
+            resp.json()["detail"] == "universal action orchestration record not found"
+        )
+        assert gateway_app.state.command_ledger.get(command.command_id) is not None
+
+    def test_operator_universal_actions_read_model_filters_proofs(
+        self, gateway_app, client
+    ):
         committed = gateway_app.state.command_ledger.create_command(
             tenant_id="t1",
             actor_id="u1",
@@ -1859,25 +2276,34 @@ class TestGatewayStatus:
         all_resp = client.get("/operator/universal-actions/read-model")
         blocked_resp = client.get("/operator/universal-actions/read-model?blocked=true")
         tenant_resp = client.get("/operator/universal-actions/read-model?tenant_id=t1")
-        invalid_resp = client.get("/operator/universal-actions/read-model?blocked=maybe")
+        invalid_resp = client.get(
+            "/operator/universal-actions/read-model?blocked=maybe"
+        )
 
         assert all_resp.status_code == 200
         assert all_resp.json()["total"] == 2
-        assert {item["proof_hash"] for item in all_resp.json()["universal_action_proofs"]} == {
+        assert {
+            item["proof_hash"] for item in all_resp.json()["universal_action_proofs"]
+        } == {
             "proof-hash-committed",
             "proof-hash-blocked",
         }
         assert blocked_resp.status_code == 200
         assert blocked_resp.json()["count"] == 1
         assert blocked_resp.json()["universal_action_proofs"][0]["blocked"] is True
-        assert blocked_resp.json()["universal_action_proofs"][0]["block_reason"] == "open_world_contradictions"
+        assert (
+            blocked_resp.json()["universal_action_proofs"][0]["block_reason"]
+            == "open_world_contradictions"
+        )
         assert tenant_resp.status_code == 200
         assert tenant_resp.json()["count"] == 1
         assert tenant_resp.json()["universal_action_proofs"][0]["tenant_id"] == "t1"
         assert invalid_resp.status_code == 400
         assert invalid_resp.json()["detail"] == "blocked must be true or false"
 
-    def test_operator_universal_actions_console_renders_proof_table(self, gateway_app, client):
+    def test_operator_universal_actions_console_renders_proof_table(
+        self, gateway_app, client
+    ):
         command = gateway_app.state.command_ledger.create_command(
             tenant_id="t1",
             actor_id="u1",
