@@ -274,6 +274,52 @@ def validate_contract(
     return errors
 
 
+def build_validation_report(
+    schema_path: Path = DEFAULT_SCHEMA_PATH,
+    example_paths: tuple[Path, ...] = DEFAULT_EXAMPLE_PATHS,
+    document_path: Path = DEFAULT_DOCUMENT_PATH,
+) -> dict[str, Any]:
+    """Build a machine-readable UAO validation receipt."""
+
+    checks = (
+        "universal_action_orchestration_schema",
+        "universal_action_orchestration_examples",
+        "universal_action_orchestration_document",
+        "universal_action_orchestration_no_bypass",
+        "universal_action_orchestration_receipts",
+    )
+    try:
+        errors = validate_contract(schema_path, example_paths, document_path)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        errors = [f"load-universal-action-orchestration: {exc}"]
+    valid = not errors
+    return {
+        "valid": valid,
+        "status": "passed" if valid else "failed",
+        "schema_path": str(schema_path),
+        "document_path": str(document_path),
+        "example_paths": [str(example_path) for example_path in example_paths],
+        "example_count": len(example_paths),
+        "checks": [
+            {
+                "name": check_name,
+                "passed": valid,
+            }
+            for check_name in checks
+        ],
+        "check_count": len(checks),
+        "errors": errors,
+    }
+
+
+def write_validation_report(report: dict[str, Any], receipt_path: Path) -> Path:
+    """Persist a UAO validation receipt without executing actions."""
+
+    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    receipt_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return receipt_path
+
+
 def _validate_required_properties(
     contract_name: str,
     schema_fragment: Any,
@@ -800,18 +846,20 @@ def main(argv: list[str] | None = None) -> int:
         default=[],
         help="UAO example JSON path; may be provided more than once",
     )
+    parser.add_argument("--json", action="store_true", help="emit a machine-readable UAO validation receipt")
+    parser.add_argument("--receipt-path", type=Path, help="optional path to persist the UAO validation receipt")
     args = parser.parse_args(argv)
 
     example_paths = tuple(args.example) if args.example else DEFAULT_EXAMPLE_PATHS
-    try:
-        errors = validate_contract(args.schema, example_paths, args.document)
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
-        sys.stderr.write(f"[FAIL] load-universal-action-orchestration: {exc}\n")
-        sys.stderr.write("STATUS: failed\n")
-        return 1
+    report = build_validation_report(args.schema, example_paths, args.document)
+    if args.receipt_path is not None:
+        write_validation_report(report, args.receipt_path)
+    if args.json:
+        sys.stdout.write(json.dumps(report, indent=2, sort_keys=True) + "\n")
+        return 0 if report["valid"] else 1
 
-    if errors:
-        for error in errors:
+    if not report["valid"]:
+        for error in report["errors"]:
             sys.stderr.write(f"[FAIL] universal-action-orchestration: {error}\n")
         sys.stderr.write("STATUS: failed\n")
         return 1

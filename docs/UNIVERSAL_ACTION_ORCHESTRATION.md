@@ -73,8 +73,10 @@ Run:
 
 ```powershell
 python scripts/validate_universal_action_orchestration.py
+python scripts/validate_universal_action_orchestration.py --json --receipt-path .tmp/uao-validation-receipt.json
 python -m unittest discover -s tests -p "test_validate_universal_action_orchestration.py"
 python scripts/run_workspace_governance_checks.py
 ```
 
 The workspace preflight includes the validator, so UAO drift blocks repository closure.
+The optional JSON receipt is read-only and records validity, check names, example paths, and bounded errors for autonomous preflight consumers.
