@@ -1,5 +1,5 @@
 {
-  "artifact_count": 37,
+  "artifact_count": 39,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -80,6 +80,16 @@
       "name": "protocol_manifest_validator",
       "path": "scripts/validate_protocol_manifest.py",
       "purpose": "Read-only validator for public schema manifest closure."
+    },
+    {
+      "name": "mullu_governance_protocol_manifest",
+      "path": "schemas/mullu_governance_protocol.manifest.json",
+      "purpose": "Canonical Mullu Governance Protocol schema index and compatibility boundary."
+    },
+    {
+      "name": "mullu_governance_protocol_document",
+      "path": "docs/52_mullu_governance_protocol.md",
+      "purpose": "Public Mullu Governance Protocol open schema surface and closed runtime boundary contract."
     },
     {
       "name": "logic_governance_application_validator",
