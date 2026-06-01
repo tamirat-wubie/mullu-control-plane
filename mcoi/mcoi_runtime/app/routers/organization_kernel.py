@@ -17,6 +17,8 @@ from html import escape
 from typing import Any
 from urllib.parse import quote, urlparse
 
+from mcoi_runtime.governance.network.ssrf import is_private_host
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
@@ -1033,6 +1035,18 @@ def _validate_gateway_base_url(gateway_url: str) -> str:
         raise HTTPException(
             400,
             detail=_error_detail("gateway URL must be an origin without path/query/fragment", "gateway_url_scope_rejected"),
+        )
+    # SSRF: the deployment-witness collector fetches this origin, so reject
+    # private/loopback/link-local/metadata destinations. Unresolvable hosts are
+    # permitted (the collector's own connect fails closed on them) so that a
+    # legitimate-but-currently-unresolvable gateway is not hard-rejected.
+    if is_private_host(parsed.hostname or "", block_unresolvable=False):
+        raise HTTPException(
+            400,
+            detail=_error_detail(
+                "gateway URL must resolve to a public address",
+                "gateway_url_private_address_rejected",
+            ),
         )
     return f"{parsed.scheme}://{parsed.netloc}"
 

@@ -117,7 +117,7 @@ def _normalize_host(host: str) -> str:
     return host.lower().strip("[]")
 
 
-def is_private_host(host: str) -> bool:
+def is_private_host(host: str, *, block_unresolvable: bool = True) -> bool:
     """Return True if the host points to a non-public address.
 
     Steps:
@@ -126,7 +126,15 @@ def is_private_host(host: str) -> bool:
        metadata DNS) → blocked
     3. Hostname matches a blocked literal-IP prefix → blocked
     4. DNS-resolve the hostname; if any resolved IP is non-public →
-       blocked. If resolve fails → blocked (fail-closed).
+       blocked. If resolve fails -> ``block_unresolvable``.
+
+    ``block_unresolvable`` (default True) makes an unresolvable host fail
+    closed -- the right posture for webhook destinations, where a host that
+    cannot be resolved now might resolve to private space at delivery time.
+    Callers whose own connect already fails closed on unresolvable hosts, and
+    who must not reject a legitimate-but-currently-unresolvable destination,
+    may pass ``block_unresolvable=False``; the private-literal, blocked-prefix,
+    metadata, and resolves-to-private vectors are still blocked.
 
     Defends against:
     - Direct private-IP URLs
@@ -144,9 +152,9 @@ def is_private_host(host: str) -> bool:
     try:
         addr_infos = socket.getaddrinfo(lower, None, proto=socket.IPPROTO_TCP)
     except (socket.gaierror, OSError):
-        return True
+        return block_unresolvable
     if not addr_infos:
-        return True
+        return block_unresolvable
     for _family, _type, _proto, _canonname, sockaddr in addr_infos:
         ip_str = sockaddr[0]
         if is_private_ip(ip_str):
