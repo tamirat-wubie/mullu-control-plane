@@ -228,7 +228,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["proof_route_gap_triage"]["unanchored_witness_count"] == 0
     assert surfaces["tool_registry_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["gateway_capability_fabric"]["unanchored_witness_count"] == 0
-    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 14
+    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 15
     assert surfaces["capability_worker_execution"]["unanchored_witness_count"] == 0
     assert surfaces["capability_worker_execution"]["exact_test_anchor_count"] == 7
     assert surfaces["capability_plan_evidence_bundle"]["unanchored_witness_count"] == 0
@@ -977,6 +977,7 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "/commands/{command_id}/closure" in gateway_surface["representative_paths"]
     assert "/commands/{command_id}/capability-admission" in gateway_surface["representative_paths"]
     assert "/commands/{command_id}/universal-action-proof" in gateway_surface["representative_paths"]
+    assert "/commands/{command_id}/universal-action-orchestration" in gateway_surface["representative_paths"]
     assert "/operator/universal-actions/read-model" in gateway_surface["representative_paths"]
     assert "/operator/universal-actions" in gateway_surface["representative_paths"]
     assert "DomainCapsuleCompiler.compile" in gateway_surface["representative_paths"]
@@ -992,6 +993,7 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "terminal_closure_requires_evidence_refs" in witnesses
     assert "successful_response_is_bound_to_response_evidence_closure" in witnesses
     assert "universal_action_proof_replays_from_command_events" in witnesses
+    assert "universal_action_orchestration_replays_from_command_events" in witnesses
     assert "operator_universal_action_read_model_filters_command_proofs" in witnesses
     assert "operator_universal_action_console_renders_replay_state" in witnesses
     assert "capability_admission_audits_filter_status" in witnesses

@@ -37,6 +37,7 @@ UniversalActionRequest + UniversalActionResult -> build_universal_action_orchest
 ```
 
 The export is pure and does not dispatch work. It materializes the already-issued kernel certificates, receipts, closure state, memory decision, and lineage delta into the same schema validated for static examples.
+Command-ledger dispatch persists this record under `universal_action_orchestration`, and the gateway exposes it through `/commands/{command_id}/universal-action-orchestration` as a read-only replay surface.
 
 ## Algorithm
 
@@ -53,6 +54,7 @@ The validator applies these rules deterministically:
 9. No high-risk `allow` action may pass without approval, evidence, and capability references.
 10. Every example must include `closure_state`.
 11. Every runtime-exported UAO record must pass the same schema and semantic validator as static fixtures.
+12. Every command replay record must come from persisted command events, not from an in-memory kernel result.
 
 The core invariant is:
 
@@ -85,11 +87,12 @@ python scripts/validate_universal_action_orchestration.py
 python scripts/validate_universal_action_orchestration.py --json --receipt-path .tmp/uao-validation-receipt.json
 python -m pytest mcoi/tests/test_universal_action_kernel.py -q
 python scripts/validate_universal_action_orchestration_receipt_contract.py
+python -m pytest tests/test_gateway/test_webhooks.py -q
 python -m unittest discover -s tests -p "test_validate_universal_action_orchestration.py"
 python scripts/run_workspace_governance_checks.py
 ```
 
 The workspace preflight includes the validator, so UAO drift blocks repository closure.
 The optional JSON receipt is read-only and records validity, check names, workspace-relative example path labels, error counts, and bounded errors for autonomous preflight consumers.
-The kernel export tests cover both allowed execution and blocked admission records with schema and semantic validation.
 The validation receipt has its own schema contract and remains non-terminal closure evidence: `terminal_closure_required = true` and `receipt_is_not_terminal_closure = true`.
+The kernel export and gateway replay tests cover allowed execution, blocked admission, missing-record 404 behavior, and schema plus semantic validation.

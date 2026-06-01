@@ -66,6 +66,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
         "successful_response_is_bound_to_response_evidence_closure",
         "universal_action_proof_replays_from_command_events",
         "universal_action_runtime_record_exports_contract_shape",
+        "universal_action_orchestration_replays_from_command_events",
         "operator_universal_action_read_model_filters_command_proofs",
         "operator_universal_action_console_renders_replay_state",
     ]
@@ -81,6 +82,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/commands/{command_id}/closure",
                 "/commands/{command_id}/capability-admission",
                 "/commands/{command_id}/universal-action-proof",
+                "/commands/{command_id}/universal-action-orchestration",
                 "/operator/universal-actions/read-model",
                 "/operator/universal-actions",
                 "DomainCapsuleCompiler.compile",
@@ -125,6 +127,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "universal_action_runtime_record_exports_contract_shape": [
                     "universal_action_result_exports_valid_allowed_uao_record",
                     "universal_action_result_exports_valid_blocked_uao_record",
+                ],
+                "universal_action_orchestration_replays_from_command_events": [
+                    "universal_command_orchestration_record_replays_success_events",
+                    "universal_command_orchestration_record_replays_blocked_events",
+                    "command_universal_action_orchestration_read_model",
                 ],
                 "operator_universal_action_read_model_filters_command_proofs": [
                     "operator_universal_actions_read_model_filters_proofs",

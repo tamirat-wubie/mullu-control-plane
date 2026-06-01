@@ -1756,6 +1756,56 @@ class TestGatewayStatus:
         assert resp.status_code == 404
         assert resp.json()["detail"] == "universal action proof not found"
 
+    def test_command_universal_action_orchestration_read_model(self, gateway_app, client):
+        record = json.loads(
+            (_ROOT / "examples" / "universal_action_orchestration.allowed_status_publish.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="tenant_ops_demo",
+            actor_id="service:status_page_worker",
+            source="web",
+            conversation_id="conversation-orchestration",
+            idempotency_key="universal-orchestration-read",
+            intent="refresh_public_status_page",
+            payload={"body": "refresh status page"},
+        )
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.DISPATCHED,
+            detail={
+                "cause": "universal_action_kernel_dispatched",
+                "universal_action_orchestration": record,
+            },
+        )
+
+        resp = client.get(f"/commands/{command.command_id}/universal-action-orchestration")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["command_id"] == command.command_id
+        assert data["orchestration_id"] == record["orchestration_id"]
+        assert data["decision_status"] == "allow"
+        assert data["closure_state"] == "closed_allowed"
+        assert data["universal_action_orchestration"]["raw_reasoning_included"] is False
+
+    def test_command_universal_action_orchestration_missing_returns_404(self, gateway_app, client):
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-orchestration-missing",
+            idempotency_key="universal-orchestration-missing",
+            intent="llm_completion",
+            payload={"body": "no universal orchestration record"},
+        )
+
+        resp = client.get(f"/commands/{command.command_id}/universal-action-orchestration")
+
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "universal action orchestration record not found"
+
     def test_operator_universal_actions_read_model_filters_proofs(self, gateway_app, client):
         committed = gateway_app.state.command_ledger.create_command(
             tenant_id="t1",
