@@ -16,12 +16,13 @@ Every governed software delivery PR must either attach the lifecycle artifacts o
 - [ ] Requirement is linked or included.
 - [ ] Design decision includes rollback path and test plan.
 - [ ] Work plan orders implementation and verification steps.
+- [ ] Transition receipt records state movement, evidence, receipt refs, and blockers.
 - [ ] Verification receipt records commands, warnings, and failures.
 - [ ] Security review records impact categories, required checks, findings, and residual risk.
 - [ ] Release or deployment candidate does not claim more than evidence supports.
 - [ ] Gate decision envelope is present on each non-terminal artifact: `uao_ref`, `causal_decision_trace_ref`, and `receipt_ref`.
 - [ ] Closure receipt records outcome, receipts, remaining blockers, learning, and next action.
-- [ ] Closure receipt retains every upstream UAO, causal trace, and receipt reference.
+- [ ] Closure receipt retains every upstream UAO, causal trace, transition receipt, and receipt reference.
 - [ ] Rollback or incident handoff path is stated for effect-bearing changes.
 
 ## Schema surface boundary
