@@ -40,6 +40,7 @@ def test_produce_payment_closure_receipt_emits_ready_sandbox_receipt(tmp_path: P
 
     assert write.passed is True
     assert write.ready is True
+    assert write.output_path == "finance-payment-closure-receipt.json"
     assert write.blockers == ()
     assert write.validation_errors == ()
     assert validation.valid is True
@@ -92,8 +93,10 @@ def test_produce_payment_closure_receipt_derives_binding_ref_from_ready_receipt(
     assert binding_errors == ()
     assert write.passed is True
     assert write.provider_binding_ref == binding_receipt.provider_binding_ref
-    assert write.provider_binding_receipt_path == str(binding_path)
+    assert write.output_path == "finance-payment-closure-receipt.json"
+    assert write.provider_binding_receipt_path == "finance-payment-provider-binding.json"
     assert write.binding_validation_errors == ()
+    assert str(tmp_path) not in json.dumps(write.as_dict(), sort_keys=True)
     assert validation.valid is True
     assert validation.ready is True
     assert binding_receipt.provider_binding_ref in payload["evidence_refs"]
@@ -120,6 +123,7 @@ def test_produce_payment_closure_receipt_blocks_unready_binding_receipt(tmp_path
     assert binding_errors == ()
     assert write.passed is False
     assert write.ready is False
+    assert write.provider_binding_receipt_path == "finance-payment-provider-binding.json"
     assert write.blockers == ("provider_binding_receipt_required",)
     assert "finance payment provider binding receipt ready must be true" in write.binding_validation_errors
     assert validation.valid is True
@@ -149,6 +153,7 @@ def test_produce_payment_closure_receipt_blocks_binding_receipt_provider_drift(t
     assert write.passed is False
     assert write.ready is False
     assert write.provider_binding_ref == binding_receipt.provider_binding_ref
+    assert write.provider_binding_receipt_path == "finance-payment-provider-binding.json"
     assert write.blockers == ("provider_binding_receipt_mismatch",)
     assert write.binding_validation_errors == ()
     assert validation.valid is True
@@ -285,7 +290,9 @@ def test_produce_payment_closure_receipt_cli_outputs_json(tmp_path: Path, capsys
     assert exit_code == 0
     assert payload["status"] == "passed"
     assert payload["ready"] is True
+    assert payload["output_path"] == "finance-payment-closure-receipt.json"
     assert payload["payment_provider_receipt_ref"].startswith("provider:payment:")
+    assert str(tmp_path) not in json.dumps(payload, sort_keys=True)
 
 
 def test_produce_payment_closure_receipt_cli_accepts_provider_binding_receipt(
@@ -319,6 +326,9 @@ def test_produce_payment_closure_receipt_cli_accepts_provider_binding_receipt(
     assert binding_errors == ()
     assert exit_code == 0
     assert stdout_payload["ready"] is True
+    assert stdout_payload["output_path"] == "finance-payment-closure-receipt.json"
+    assert stdout_payload["provider_binding_receipt_path"] == "finance-payment-provider-binding.json"
     assert stdout_payload["provider_binding_ref"] == binding_receipt.provider_binding_ref
+    assert str(tmp_path) not in json.dumps(stdout_payload, sort_keys=True)
     assert payload["status"] == "passed"
     assert binding_receipt.provider_binding_ref in payload["evidence_refs"]
