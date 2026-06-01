@@ -591,7 +591,7 @@ def test_cli_expire_and_rebuild_report_governed_receipts(tmp_path, capsys) -> No
             "--trust-zone",
             "workspace",
             "--expires-at",
-            "2026-06-01T01:00:00+00:00",
+            "2099-06-01T01:00:00+00:00",
             "--evidence-ref",
             "test_expire",
         ]
@@ -604,7 +604,7 @@ def test_cli_expire_and_rebuild_report_governed_receipts(tmp_path, capsys) -> No
             str(note_store),
             "expire",
             "--now",
-            "2026-06-02T00:00:00+00:00",
+            "2099-06-02T00:00:00+00:00",
         ]
     )
     expire_envelope = _last_json(capsys)
