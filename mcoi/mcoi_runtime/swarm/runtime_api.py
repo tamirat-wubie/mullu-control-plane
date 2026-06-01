@@ -85,11 +85,16 @@ class InvoiceSwarmRuntime:
                 error=str(exc),
             )
 
-    def get_run(self, run_id: str) -> RuntimeEnvelope:
-        """Read one persisted swarm run by id."""
+    def get_run(self, run_id: str, *, scope_tenant: str | None = None) -> RuntimeEnvelope:
+        """Read one persisted swarm run by id.
+
+        When ``scope_tenant`` is set, a run owned by a different tenant is
+        reported as not_found, so a caller cannot read (or probe the existence
+        of) another tenant's run.
+        """
 
         record = self.audit_store.get(run_id)
-        if record is None:
+        if record is None or (scope_tenant is not None and record.tenant_id != scope_tenant):
             return RuntimeEnvelope(
                 governed=True,
                 ok=False,
@@ -104,10 +109,18 @@ class InvoiceSwarmRuntime:
             payload={"record": record.to_dict()},
         )
 
-    def list_runs(self) -> RuntimeEnvelope:
-        """Read all persisted swarm runs in append order."""
+    def list_runs(self, *, scope_tenant: str | None = None) -> RuntimeEnvelope:
+        """Read persisted swarm runs in append order.
 
-        records = [record.to_dict() for record in self.audit_store.list_records()]
+        When ``scope_tenant`` is set, only that tenant's runs are returned so a
+        listing cannot disclose other tenants' runs.
+        """
+
+        records = [
+            record.to_dict()
+            for record in self.audit_store.list_records()
+            if scope_tenant is None or record.tenant_id == scope_tenant
+        ]
         return RuntimeEnvelope(
             governed=True,
             ok=True,

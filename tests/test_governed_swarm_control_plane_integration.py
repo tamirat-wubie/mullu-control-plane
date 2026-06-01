@@ -201,6 +201,7 @@ def test_enabled_integration_mounts_bundled_swarm_router_with_fake_fastapi(
     fake_fastapi = ModuleType("fastapi")
     fake_fastapi.APIRouter = FakeAPIRouter
     fake_fastapi.Body = lambda default: default
+    fake_fastapi.Request = object
     monkeypatch.setitem(sys.modules, "fastapi", fake_fastapi)
     app = FakeApp()
 
@@ -233,6 +234,7 @@ def test_enabled_integration_mounts_external_swarm_router_with_fake_fastapi(
     fake_fastapi = ModuleType("fastapi")
     fake_fastapi.APIRouter = FakeAPIRouter
     fake_fastapi.Body = lambda default: default
+    fake_fastapi.Request = object
     monkeypatch.setitem(sys.modules, "fastapi", fake_fastapi)
     app = FakeApp()
 
