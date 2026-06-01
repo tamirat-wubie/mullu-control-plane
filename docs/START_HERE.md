@@ -102,7 +102,7 @@ Cross-project maps live one level up in
 
 ## 6. If you are going to change the code
 
-1. Read [`../AGENTS.md`](../../AGENTS.md) — the governance laws every change must
+1. Read [`../AGENTS.md`](../AGENTS.md) — the governance laws every change must
    satisfy.
 2. Read [01_shared_invariants.md](01_shared_invariants.md) — what you must never
    break.

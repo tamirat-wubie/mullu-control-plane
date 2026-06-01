@@ -117,6 +117,7 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             "local_assurance_plan",
             (python_executable, "scripts/refresh_local_assurance.py", "--dry-run", "--json"),
         ),
+        CheckCommand("agents_policy", (python_executable, "scripts/validate_agents_governance.py")),
         CheckCommand("protocol_manifest", (python_executable, "scripts/validate_protocol_manifest.py")),
         CheckCommand(
             "logic_governance_application",

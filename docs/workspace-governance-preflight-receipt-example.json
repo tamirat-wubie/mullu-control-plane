@@ -1,178 +1,189 @@
 {
-  "receipt_id": "workspace_governance_preflight_receipt",
-  "terminal_closure_required": true,
-  "receipt_is_not_terminal_closure": true,
-  "status": "passed",
-  "check_count": 15,
+  "check_count": 16,
   "checks": [
     {
-      "name": "local_assurance_plan",
       "args": [
         "python",
         "scripts/refresh_local_assurance.py",
         "--dry-run",
         "--json"
       ],
-      "return_code": 0,
+      "name": "local_assurance_plan",
       "passed": true,
-      "stdout": "STATUS: passed\n",
-      "stderr": ""
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
     },
     {
-      "name": "protocol_manifest",
+      "args": [
+        "python",
+        "scripts/validate_agents_governance.py"
+      ],
+      "name": "agents_policy",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
       "args": [
         "python",
         "scripts/validate_protocol_manifest.py"
       ],
-      "return_code": 0,
+      "name": "protocol_manifest",
       "passed": true,
-      "stdout": "STATUS: passed\n",
-      "stderr": ""
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
     },
     {
-      "name": "logic_governance_application",
       "args": [
         "python",
         "scripts/validate_logic_governance_application.py"
       ],
-      "return_code": 0,
+      "name": "logic_governance_application",
       "passed": true,
-      "stdout": "STATUS: passed\n",
-      "stderr": ""
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
     },
     {
-      "name": "public_repository_surface",
       "args": [
         "python",
         "scripts/validate_public_repository_surface.py"
       ],
-      "return_code": 0,
+      "name": "public_repository_surface",
       "passed": true,
-      "stdout": "STATUS: passed\n",
-      "stderr": ""
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
     },
     {
-      "name": "proprietary_boundary",
       "args": [
         "python",
         "scripts/validate_proprietary_boundary.py"
       ],
-      "return_code": 0,
+      "name": "proprietary_boundary",
       "passed": true,
-      "stdout": "STATUS: passed\n",
-      "stderr": ""
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
     },
     {
-      "name": "release_status",
       "args": [
         "python",
         "scripts/validate_release_status.py"
       ],
-      "return_code": 0,
+      "name": "release_status",
       "passed": true,
-      "stdout": "STATUS: passed\n",
-      "stderr": ""
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
     },
     {
-      "name": "workspace_governance_preflight_receipt_contract",
       "args": [
         "python",
         "scripts/validate_workspace_governance_preflight_receipt_contract.py"
       ],
-      "return_code": 0,
+      "name": "workspace_governance_preflight_receipt_contract",
       "passed": true,
-      "stdout": "STATUS: passed\n",
-      "stderr": ""
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
     },
     {
-      "name": "workspace_governance_preflight_receipt_example",
       "args": [
         "python",
         "scripts/validate_workspace_governance_preflight_receipt.py"
       ],
-      "return_code": 0,
+      "name": "workspace_governance_preflight_receipt_example",
       "passed": true,
-      "stdout": "STATUS: passed\n",
-      "stderr": ""
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
     },
     {
-      "name": "universal_action_orchestration_contract",
       "args": [
         "python",
         "scripts/validate_universal_action_orchestration.py"
       ],
-      "return_code": 0,
+      "name": "universal_action_orchestration_contract",
       "passed": true,
-      "stdout": "STATUS: passed\n",
-      "stderr": ""
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
     },
     {
-      "name": "universal_action_orchestration_validation_receipt_contract",
       "args": [
         "python",
         "scripts/validate_universal_action_orchestration_receipt_contract.py"
       ],
-      "return_code": 0,
+      "name": "universal_action_orchestration_validation_receipt_contract",
       "passed": true,
-      "stdout": "STATUS: passed\n",
-      "stderr": ""
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
     },
     {
-      "name": "universal_action_orchestration_validation_receipt_example",
       "args": [
         "python",
         "scripts/validate_universal_action_orchestration_receipt.py"
       ],
-      "return_code": 0,
+      "name": "universal_action_orchestration_validation_receipt_example",
       "passed": true,
-      "stdout": "STATUS: passed\n",
-      "stderr": ""
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
     },
     {
-      "name": "sdlc_artifact_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_artifact.py"
       ],
-      "return_code": 0,
+      "name": "sdlc_artifact_validation",
       "passed": true,
-      "stdout": "STATUS: passed\n",
-      "stderr": ""
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
     },
     {
-      "name": "sdlc_state_machine_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_state_machine.py"
       ],
-      "return_code": 0,
+      "name": "sdlc_state_machine_validation",
       "passed": true,
-      "stdout": "STATUS: passed\n",
-      "stderr": ""
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
     },
     {
-      "name": "sdlc_release_readiness_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_release_readiness.py",
         "--strict"
       ],
-      "return_code": 0,
+      "name": "sdlc_release_readiness_validation",
       "passed": true,
-      "stdout": "STATUS: passed\n",
-      "stderr": ""
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
     },
     {
-      "name": "sdlc_security_review_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_security_review.py",
         "--strict"
       ],
-      "return_code": 0,
+      "name": "sdlc_security_review_validation",
       "passed": true,
-      "stdout": "STATUS: passed\n",
-      "stderr": ""
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
     }
-  ]
+  ],
+  "receipt_id": "workspace_governance_preflight_receipt",
+  "receipt_is_not_terminal_closure": true,
+  "status": "passed",
+  "terminal_closure_required": true
 }
