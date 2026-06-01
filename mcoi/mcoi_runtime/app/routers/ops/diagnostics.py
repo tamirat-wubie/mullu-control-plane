@@ -1,6 +1,8 @@
 """Operational diagnostics: benchmarks, import analysis, proof bridge status."""
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter
 
 from mcoi_runtime.app.routers.deps import deps
@@ -16,13 +18,10 @@ def run_benchmarks():
     return {"governed": True, **suite.summary()}
 
 
-@router.get("/api/v1/ops/imports")
-def analyze_imports():
-    """Analyze import dependencies and check for cycles.
+_import_analysis_cache: dict[str, Any] | None = None
 
-    Note: This endpoint performs full AST analysis of all Python files.
-    May take 500ms-2s on large codebases. Use sparingly.
-    """
+
+def _compute_import_analysis() -> dict[str, Any]:
     import os as _os
     from mcoi_runtime.core.import_analyzer import ImportAnalyzer
     import mcoi_runtime
@@ -30,8 +29,22 @@ def analyze_imports():
     mcoi_dir = _os.path.join(runtime_dir, "mcoi_runtime")
     analyzer = ImportAnalyzer(root_package="mcoi_runtime")
     result = analyzer.analyze_directory(mcoi_dir)
-    summary = analyzer.dependency_summary(result)
-    return {"governed": True, **summary}
+    return analyzer.dependency_summary(result)
+
+
+@router.get("/api/v1/ops/imports")
+def analyze_imports():
+    """Analyze import dependencies and check for cycles.
+
+    Performs a full AST analysis of the mcoi_runtime tree. The source tree is
+    immutable for the process lifetime, so the result is computed once and
+    cached -- without this, each call re-parsed thousands of files (seconds of
+    CPU), making the endpoint a trivial denial-of-service amplifier.
+    """
+    global _import_analysis_cache
+    if _import_analysis_cache is None:
+        _import_analysis_cache = _compute_import_analysis()
+    return {"governed": True, **_import_analysis_cache}
 
 
 @router.get("/api/v1/ops/proof-bridge")

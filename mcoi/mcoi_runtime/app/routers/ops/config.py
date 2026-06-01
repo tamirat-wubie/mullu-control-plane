@@ -36,6 +36,7 @@ def get_config():
 @router.get("/api/v1/config/history")
 def config_history(limit: int = 10):
     """Configuration change history."""
+    limit = max(0, limit)  # negative limit would raise in config_manager.history -> 500
     return {
         "versions": [
             {"version": v.version, "hash": v.config_hash[:16], "by": v.applied_by, "at": v.applied_at, "desc": v.description}
