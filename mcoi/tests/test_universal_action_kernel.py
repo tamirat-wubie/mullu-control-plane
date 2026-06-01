@@ -111,6 +111,15 @@ def test_universal_action_kernel_dispatches_after_all_certificates_pass() -> Non
     assert result.learning_decision is not None
     assert result.learning_decision.status is LearningAdmissionStatus.ADMIT
     assert executor.calls == 1
+    assert result.action_envelope["actor"] == "actor-1"
+    assert result.action_envelope["tenant"] == "tenant-1"
+    assert result.action_envelope["intent"] == "intent-1"
+    assert result.action_envelope["target"] == "shell_command"
+    assert result.action_envelope["capability_refs"] == ("shell_command",)
+    assert result.trace_ref.startswith("causal-decision-trace-")
+    assert result.admission_receipt_ref.startswith("universal-action-admission-receipt-")
+    assert result.execution_receipt_ref.startswith("universal-action-execution-receipt-")
+    assert result.closure_state == TerminalClosureDisposition.COMMITTED.value
     assert result.proof_hash.startswith("universal-action-proof-")
 
 
@@ -131,6 +140,9 @@ def test_universal_action_kernel_blocks_missing_authority_before_plan() -> None:
     assert result.plan_certificate is None
     assert result.dispatch_result is None
     assert executor.calls == 0
+    assert result.admission_receipt_ref.startswith("universal-action-admission-receipt-")
+    assert result.execution_receipt_ref == ""
+    assert result.closure_state == "blocked"
     assert result.proof_hash.startswith("universal-action-proof-")
 
 
@@ -344,6 +356,12 @@ def test_universal_command_proof_view_replays_persisted_success_events() -> None
     assert proof is not None
     assert proof.command_id == command.command_id
     assert proof.blocked is False
+    assert proof.action_envelope["actor"] == "actor-1"
+    assert proof.action_envelope["tenant"] == "tenant-1"
+    assert proof.trace_ref == result.trace_ref
+    assert proof.admission_receipt_ref == result.admission_receipt_ref
+    assert proof.execution_receipt_ref == result.execution_receipt_ref
+    assert proof.closure_state == TerminalClosureDisposition.COMMITTED.value
     assert proof.proof_hash == result.proof_hash
     assert proof.capability_id == "shell_command"
     assert proof.dispatch_ledger_hash == result.dispatch_result.ledger_hash
@@ -444,6 +462,11 @@ def test_universal_command_proof_view_replays_blocked_result() -> None:
     assert proof is not None
     assert proof.blocked is True
     assert proof.block_reason == "open_world_contradictions"
+    assert proof.action_envelope["tenant"] == "tenant-1"
+    assert proof.trace_ref == result.trace_ref
+    assert proof.admission_receipt_ref == result.admission_receipt_ref
+    assert proof.execution_receipt_ref == ""
+    assert proof.closure_state == "blocked"
     assert proof.proof_hash == result.proof_hash
     assert proof.dispatch_ledger_hash == ""
     assert proof.terminal_certificate_id == ""

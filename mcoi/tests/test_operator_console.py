@@ -18,7 +18,7 @@ def _console_working_note(**overrides: object) -> dict[str, object]:
         "source_ref": "test:operator-console",
         "proof_state": "Pass",
         "trust_zone": "workspace",
-        "expires_at": "2026-06-02T00:00:00+00:00",
+        "expires_at": "2999-01-01T00:00:00+00:00",
         "evidence_refs": ["test_operator_console"],
     }
     value.update(overrides)

@@ -174,7 +174,7 @@ def test_enabled_note_memory_integration_mounts_real_router(tmp_path: Path) -> N
             "source_ref": "test:control-plane-router",
             "proof_state": "Pass",
             "trust_zone": "workspace",
-            "expires_at": "2026-06-02T00:00:00+00:00",
+            "expires_at": "2999-01-01T00:00:00+00:00",
             "evidence_refs": ["test_note_memory_control_plane_integration"],
         },
     )
