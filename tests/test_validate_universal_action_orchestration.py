@@ -12,7 +12,7 @@ Dependencies:
 
 Invariants:
   The validator is read-only, blocks execution bypass, and rejects raw private
-  reasoning exposure. Persisted validation receipts stay under the workspace root.
+  reasoning exposure. Validation receipts stay canonical and under the workspace root.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ import json
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 
@@ -112,6 +112,7 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn("not UAO_valid(action) -> preflight_fail", document_text)
         self.assertIn("does not execute actions", document_text)
         self.assertIn("raw private reasoning", document_text)
+        self.assertIn("Canonical validation receipts require the default schema", document_text)
 
     def test_effect_bearing_action_requires_causal_trace(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
@@ -254,8 +255,6 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
                     str(SCHEMA_PATH),
                     "--document",
                     str(DOCUMENT_PATH),
-                    "--example",
-                    str(ALLOWED_EXAMPLE_PATH),
                     "--json",
                 ]
             )
@@ -269,27 +268,55 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertEqual("passed", report["status"])
         self.assertEqual("schemas/universal_action_orchestration.schema.json", report["schema_path"])
         self.assertEqual("docs/UNIVERSAL_ACTION_ORCHESTRATION.md", report["document_path"])
-        self.assertEqual(["examples/universal_action_orchestration.allowed_status_publish.json"], report["example_paths"])
-        self.assertEqual(1, report["example_count"])
+        self.assertEqual(
+            [
+                "examples/universal_action_orchestration.allowed_status_publish.json",
+                "examples/universal_action_orchestration.blocked_invoice_payment.json",
+                "examples/uao/blocked_missing_approval.json",
+                "examples/uao/deferred_stale_evidence.json",
+                "examples/uao/simulated_low_risk_readonly.json",
+            ],
+            report["example_paths"],
+        )
+        self.assertEqual(5, report["example_count"])
         self.assertEqual(5, report["check_count"])
         self.assertEqual(0, report["error_count"])
         self.assertEqual([], report["errors"])
         self.assertTrue(all(check["passed"] for check in report["checks"]))
 
-    def test_cli_json_receipt_persists_failed_contract_without_secret_path_leakage(self) -> None:
+    def test_build_validation_report_sanitizes_load_error_paths_without_receipt_claim(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            temporary_path = Path(temporary_directory)
+            missing_schema_path = temporary_path / "secret" / "missing.schema.json"
+
+            report = VALIDATOR.build_validation_report(
+                missing_schema_path,
+                (ALLOWED_EXAMPLE_PATH,),
+                DOCUMENT_PATH,
+            )
+
+            serialized_report = json.dumps(report, sort_keys=True)
+            self.assertFalse(report["valid"])
+            self.assertEqual("missing.schema.json", report["schema_path"])
+            self.assertEqual(1, report["error_count"])
+            self.assertTrue(any("missing.schema.json" in error for error in report["errors"]))
+            self.assertNotIn(str(temporary_path), serialized_report)
+            self.assertNotIn(str(missing_schema_path), serialized_report)
+
+    def test_cli_json_receipt_rejects_noncanonical_example_scope_without_writing(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
         invalid_record = copy.deepcopy(record)
         invalid_record["chain_of_thought"] = "private reasoning must not be serialized"
 
         with tempfile.TemporaryDirectory() as temporary_directory:
-            temporary_path = Path(temporary_directory)
-            invalid_path = temporary_path / "invalid_uao.json"
+            invalid_path = Path(temporary_directory) / "invalid_uao.json"
             receipt_path = WORKSPACE_ROOT / ".tmp" / "uao-validation-failed-receipt.json"
             receipt_path.unlink(missing_ok=True)
             invalid_path.write_text(json.dumps(invalid_record), encoding="utf-8")
             stdout_buffer = io.StringIO()
+            stderr_buffer = io.StringIO()
 
-            with redirect_stdout(stdout_buffer):
+            with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
                 exit_code = VALIDATOR.main(
                     [
                         "--schema",
@@ -304,21 +331,12 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
                     ]
                 )
 
-            report = json.loads(stdout_buffer.getvalue())
-            persisted_report = json.loads(receipt_path.read_text(encoding="utf-8"))
             self.assertEqual(1, exit_code)
-            self.assertFalse(report["valid"])
-            self.assertEqual("failed", report["status"])
-            self.assertEqual(report, persisted_report)
-            self.assertTrue(report["terminal_closure_required"])
-            self.assertEqual(["invalid_uao.json"], report["example_paths"])
-            self.assertGreaterEqual(report["error_count"], 1)
-            self.assertTrue(any("chain_of_thought is prohibited" in error for error in report["errors"]))
-            serialized_report = json.dumps(report, sort_keys=True)
-            self.assertNotIn(str(temporary_path), serialized_report)
-            self.assertNotIn(str(invalid_path), serialized_report)
-            self.assertTrue(receipt_path.exists())
-            receipt_path.unlink()
+            self.assertEqual("", stdout_buffer.getvalue())
+            self.assertIn("receipt-scope", stderr_buffer.getvalue())
+            self.assertIn("canonical UAO fixture set and order", stderr_buffer.getvalue())
+            self.assertFalse(receipt_path.exists())
+            self.assertTrue(invalid_path.exists())
 
     def test_receipt_path_rejects_workspace_escape_and_non_json_suffix(self) -> None:
         report = VALIDATOR.build_validation_report()
@@ -336,6 +354,19 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 VALIDATOR.resolve_validation_receipt_path(Path(".tmp/uao-receipt.txt"), workspace_root)
 
+    def test_write_validation_report_rejects_noncanonical_report_scope(self) -> None:
+        report = VALIDATOR.build_validation_report(SCHEMA_PATH, (ALLOWED_EXAMPLE_PATH,), DOCUMENT_PATH)
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            workspace_root = Path(temporary_directory) / "workspace"
+            workspace_root.mkdir()
+
+            with self.assertRaises(ValueError) as raised:
+                VALIDATOR.write_validation_report(report, Path(".tmp/uao-receipt.json"), workspace_root)
+
+            self.assertIn("canonical UAO fixture set and order", str(raised.exception))
+            self.assertFalse((workspace_root / ".tmp" / "uao-receipt.json").exists())
+
     def test_cli_rejects_receipt_path_escape_without_writing(self) -> None:
         escaped_receipt_path = WORKSPACE_ROOT.parent / "uao-validation-escaped-receipt.json"
         escaped_receipt_path.unlink(missing_ok=True)
@@ -346,8 +377,6 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
                 str(SCHEMA_PATH),
                 "--document",
                 str(DOCUMENT_PATH),
-                "--example",
-                str(ALLOWED_EXAMPLE_PATH),
                 "--json",
                 "--receipt-path",
                 str(escaped_receipt_path),
@@ -357,13 +386,14 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertEqual(1, exit_code)
         self.assertFalse(escaped_receipt_path.exists())
 
-    def test_cli_json_receipt_sanitizes_load_error_paths(self) -> None:
+    def test_cli_json_receipt_rejects_noncanonical_schema_scope(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             temporary_path = Path(temporary_directory)
             missing_schema_path = temporary_path / "secret" / "missing.schema.json"
             stdout_buffer = io.StringIO()
+            stderr_buffer = io.StringIO()
 
-            with redirect_stdout(stdout_buffer):
+            with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
                 exit_code = VALIDATOR.main(
                     [
                         "--schema",
@@ -376,15 +406,11 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
                     ]
                 )
 
-            report = json.loads(stdout_buffer.getvalue())
-            serialized_report = json.dumps(report, sort_keys=True)
             self.assertEqual(1, exit_code)
-            self.assertFalse(report["valid"])
-            self.assertEqual("missing.schema.json", report["schema_path"])
-            self.assertEqual(1, report["error_count"])
-            self.assertTrue(any("missing.schema.json" in error for error in report["errors"]))
-            self.assertNotIn(str(temporary_path), serialized_report)
-            self.assertNotIn(str(missing_schema_path), serialized_report)
+            self.assertEqual("", stdout_buffer.getvalue())
+            self.assertIn("receipt-scope", stderr_buffer.getvalue())
+            self.assertIn("canonical UAO schema", stderr_buffer.getvalue())
+            self.assertNotIn(str(temporary_path), stderr_buffer.getvalue())
 
     def test_load_json_object_rejects_non_object_json(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:

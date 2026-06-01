@@ -9,7 +9,7 @@ PRS closure receipts.
 Dependencies: Python standard library only.
 Invariants: validation is read-only, rejects raw private reasoning exposure,
 blocks execution for non-allow decisions, requires receipt-bound closure, and
-keeps persisted validation receipts under the workspace root.
+keeps validation receipts canonical and under the workspace root.
 """
 
 from __future__ import annotations
@@ -148,6 +148,7 @@ REQUIRED_DOCUMENT_TERMS = (
     "not UAO_valid(action) -> preflight_fail",
     "does not execute actions",
     "raw private reasoning",
+    "Canonical validation receipts require the default schema, doctrine, and fixture set.",
 )
 
 
@@ -317,6 +318,41 @@ def build_validation_report(
     }
 
 
+def validate_validation_receipt_scope(
+    schema_path: Path = DEFAULT_SCHEMA_PATH,
+    example_paths: tuple[Path, ...] = DEFAULT_EXAMPLE_PATHS,
+    document_path: Path = DEFAULT_DOCUMENT_PATH,
+) -> list[str]:
+    """Return deterministic errors for non-canonical validation receipt scope."""
+
+    errors: list[str] = []
+    if _resolve_scope_path(schema_path) != DEFAULT_SCHEMA_PATH.resolve():
+        errors.append("receipt scope schema_path must be the canonical UAO schema")
+    if _resolve_scope_path(document_path) != DEFAULT_DOCUMENT_PATH.resolve():
+        errors.append("receipt scope document_path must be the canonical UAO doctrine")
+    observed_examples = tuple(_resolve_scope_path(example_path) for example_path in example_paths)
+    expected_examples = tuple(example_path.resolve() for example_path in DEFAULT_EXAMPLE_PATHS)
+    if observed_examples != expected_examples:
+        errors.append("receipt scope example_paths must preserve the canonical UAO fixture set and order")
+    return errors
+
+
+def validate_validation_receipt_report_scope(report: dict[str, Any]) -> list[str]:
+    """Return deterministic errors when a report cannot be persisted as a receipt."""
+
+    errors: list[str] = []
+    if report.get("schema_path") != _receipt_path_label(DEFAULT_SCHEMA_PATH):
+        errors.append("receipt report schema_path must bind the canonical UAO schema")
+    if report.get("document_path") != _receipt_path_label(DEFAULT_DOCUMENT_PATH):
+        errors.append("receipt report document_path must bind the canonical UAO doctrine")
+    expected_example_labels = tuple(_receipt_path_label(example_path) for example_path in DEFAULT_EXAMPLE_PATHS)
+    if tuple(report.get("example_paths", ())) != expected_example_labels:
+        errors.append("receipt report example_paths must bind the canonical UAO fixture set and order")
+    if report.get("example_count") != len(DEFAULT_EXAMPLE_PATHS):
+        errors.append("receipt report example_count must match the canonical UAO fixture count")
+    return errors
+
+
 def resolve_validation_receipt_path(receipt_path: Path, workspace_root: Path = WORKSPACE_ROOT) -> Path:
     """Resolve a workspace-local JSON receipt path and reject path escapes."""
 
@@ -336,10 +372,19 @@ def write_validation_report(
 ) -> Path:
     """Persist a UAO validation receipt without executing actions."""
 
+    receipt_scope_errors = validate_validation_receipt_report_scope(report)
+    if receipt_scope_errors:
+        raise ValueError("; ".join(receipt_scope_errors))
     resolved_path = resolve_validation_receipt_path(receipt_path, workspace_root)
     resolved_path.parent.mkdir(parents=True, exist_ok=True)
     resolved_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return resolved_path
+
+
+def _resolve_scope_path(path: Path) -> Path:
+    """Resolve a path for receipt-scope comparison without requiring existence."""
+
+    return path.resolve(strict=False)
 
 
 def _receipt_path_label(path: Path) -> str:
@@ -900,6 +945,13 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     example_paths = tuple(args.example) if args.example else DEFAULT_EXAMPLE_PATHS
+    if args.json or args.receipt_path is not None:
+        receipt_scope_errors = validate_validation_receipt_scope(args.schema, example_paths, args.document)
+        if receipt_scope_errors:
+            for error in receipt_scope_errors:
+                sys.stderr.write(f"[FAIL] receipt-scope: {error}\n")
+            sys.stderr.write("STATUS: failed\n")
+            return 1
     report = build_validation_report(args.schema, example_paths, args.document)
     if args.receipt_path is not None:
         try:
