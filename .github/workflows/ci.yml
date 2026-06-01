@@ -52,10 +52,10 @@ jobs:
       run:
         working-directory: mcoi
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -86,10 +86,10 @@ jobs:
       run:
         working-directory: mcoi
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -110,10 +110,10 @@ jobs:
       run:
         working-directory: mcoi
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -147,10 +147,10 @@ jobs:
       run:
         working-directory: sdk/typescript
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Node.js 24
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "24"
 
@@ -165,13 +165,13 @@ jobs:
       run:
         working-directory: maf/rust
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
       - name: Cache cargo
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -193,10 +193,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -242,7 +242,7 @@ jobs:
           python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json
 
       - name: Upload deployment publication closure validation
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: deployment-publication-closure-validation
           path: .change_assurance/deployment_publication_closure_validation.json
@@ -255,7 +255,7 @@ jobs:
           python scripts/emit_reflex_deployment_witness_validator_receipt.py --junit .change_assurance/reflex_deployment_witness_validator_junit.xml --output .change_assurance/reflex_deployment_witness_validator_receipt.json --json
 
       - name: Upload Reflex deployment witness validator receipt
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: reflex-deployment-witness-validator-receipt
           path: |
@@ -306,10 +306,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -333,10 +333,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -348,10 +348,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -362,7 +362,7 @@ jobs:
         run: python scripts/run_red_team_harness.py --output .change_assurance/red_team_harness.json --min-pass-rate 1.0
 
       - name: Upload red-team harness witness
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: red-team-harness-witness
           path: .change_assurance/red_team_harness.json
@@ -373,12 +373,12 @@ jobs:
     timeout-minutes: 20
     needs: [python-required-status, typescript-sdk, rust-tests, schema-validation, gateway-closure, reflective-contract-guard, red-team-release-gate]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -425,7 +425,7 @@ jobs:
           python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json
 
       - name: Upload build verification deployment publication closure validation
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-verification-deployment-publication-closure-validation
           path: .change_assurance/deployment_publication_closure_validation.json

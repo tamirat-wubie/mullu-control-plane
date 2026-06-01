@@ -337,7 +337,7 @@ DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS: tuple[str, ...] = (
     "--output .change_assurance/governed_swarm_production_readiness.json",
     "governed-swarm-production-readiness",
     ".change_assurance/governed_swarm_production_readiness.json",
-    "actions/upload-artifact@v4",
+    "actions/upload-artifact@v6",
 )
 
 GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS: tuple[str, ...] = (
@@ -359,7 +359,7 @@ GATEWAY_PUBLICATION_WORKFLOW_REQUIRED_LITERALS: tuple[str, ...] = (
     "--accept-runtime-secret-env",
     "--accept-conformance-secret-env",
     "--accept-deployment-witness-secret-env",
-    "actions/upload-artifact@v4",
+    "actions/upload-artifact@v6",
 )
 
 PLACEHOLDER_WORKFLOW_FILENAMES: tuple[str, ...] = (

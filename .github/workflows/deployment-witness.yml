@@ -36,10 +36,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -75,7 +75,7 @@ jobs:
 
       - name: Upload runtime conformance collection
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: runtime-conformance-collection
           path: .change_assurance/runtime_conformance_certificate.json
@@ -118,7 +118,7 @@ jobs:
 
       - name: Upload deployment witness preflight
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: deployment-witness-preflight
           path: .change_assurance/deployment_witness_preflight.json
@@ -126,7 +126,7 @@ jobs:
 
       - name: Upload deployment witness
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: deployment-witness
           path: .change_assurance/deployment_witness.json
@@ -134,7 +134,7 @@ jobs:
 
       - name: Upload public production health declaration
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: public-production-health-declaration
           path: |
@@ -144,7 +144,7 @@ jobs:
 
       - name: Upload governed swarm production readiness
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: governed-swarm-production-readiness
           path: .change_assurance/governed_swarm_production_readiness.json

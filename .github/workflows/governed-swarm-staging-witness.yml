@@ -50,10 +50,10 @@ jobs:
     runs-on: ${{ inputs.runner_label }}
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -79,7 +79,7 @@ jobs:
 
       - name: Upload governed swarm staging runner preflight
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: governed-swarm-staging-runner-preflight
           path: .change_assurance/governed_swarm_staging_runner_preflight.json
@@ -139,7 +139,7 @@ jobs:
 
       - name: Upload governed swarm staging activation witness
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: governed-swarm-staging-activation-witness
           path: .change_assurance/governed_swarm_staging_activation_witness.json
@@ -147,7 +147,7 @@ jobs:
 
       - name: Upload governed swarm staging evidence bundle
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: governed-swarm-staging-evidence-bundle
           path: .change_assurance/governed_swarm_staging_evidence_bundle.json
@@ -155,7 +155,7 @@ jobs:
 
       - name: Upload governed swarm pilot promotion readiness
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: governed-swarm-pilot-promotion-readiness
           path: .change_assurance/governed_swarm_promotion_readiness.json
