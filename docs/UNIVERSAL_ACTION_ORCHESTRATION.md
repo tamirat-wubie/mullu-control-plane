@@ -79,4 +79,4 @@ python scripts/run_workspace_governance_checks.py
 ```
 
 The workspace preflight includes the validator, so UAO drift blocks repository closure.
-The optional JSON receipt is read-only and records validity, check names, example paths, and bounded errors for autonomous preflight consumers.
+The optional JSON receipt is read-only and records validity, check names, workspace-relative example path labels, error counts, and bounded errors for autonomous preflight consumers.
