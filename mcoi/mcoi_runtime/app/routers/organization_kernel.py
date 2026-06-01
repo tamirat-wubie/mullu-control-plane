@@ -1119,7 +1119,8 @@ def _organization_department_registry(kernel: OrganizationKernel, org_id: str) -
                 "kind": "department_readiness_gap",
                 "severity": "review",
                 "ref": department.department_id,
-                "message": "; ".join(readiness_gaps),
+                "message": "department readiness gaps require review",
+                "gaps": readiness_gaps,
             })
         department_rows.append({
             "department": _body(department),
