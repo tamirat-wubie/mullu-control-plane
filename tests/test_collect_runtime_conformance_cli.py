@@ -1,12 +1,12 @@
 """Runtime conformance collector script-invocation tests.
 
-Guards that ``python scripts/collect_runtime_conformance.py`` -- the exact
-invocation used by ``.github/workflows/deployment-witness.yml`` -- can import
-its sibling ``scripts.*`` dependencies. Running a file places that file's own
-directory on ``sys.path`` rather than the repository root, so without a sys.path
-bootstrap the ``from scripts.validate_schemas`` import regresses to
-ModuleNotFoundError. The module-level pytest imports elsewhere do not catch this
-because pytest already puts the repo root on ``sys.path``.
+Purpose: guard that ``python scripts/collect_runtime_conformance.py`` can import
+its sibling ``scripts.*`` dependencies from workflow-style invocation paths.
+Governance scope: deployment witness collection, runtime conformance evidence,
+and script entrypoint import boundaries.
+Dependencies: subprocess, Python executable, and collect_runtime_conformance.py.
+Invariants: script help exits deterministically, emits no import failure, and is
+independent of the caller's current working directory.
 """
 
 from __future__ import annotations
@@ -25,6 +25,7 @@ def test_script_help_invocation_imports_cleanly() -> None:
         cwd=str(_REPO_ROOT),
         capture_output=True,
         text=True,
+        timeout=30,
     )
     assert result.returncode == 0, result.stderr
     assert "ModuleNotFoundError" not in result.stderr
@@ -39,6 +40,7 @@ def test_script_invocation_from_unrelated_cwd_imports_cleanly(tmp_path: Path) ->
         cwd=str(tmp_path),
         capture_output=True,
         text=True,
+        timeout=30,
     )
     assert result.returncode == 0, result.stderr
     assert "ModuleNotFoundError" not in result.stderr
