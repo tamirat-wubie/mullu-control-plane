@@ -15,6 +15,7 @@ Invariants:
 from __future__ import annotations
 
 import argparse
+from copy import deepcopy
 import json
 import re
 import sys
@@ -22,9 +23,19 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from validate_universal_action_orchestration import build_validation_report
+    from validate_universal_action_orchestration import (
+        DEFAULT_DOCUMENT_PATH as UAO_DOCUMENT_PATH,
+        DEFAULT_EXAMPLE_PATHS as UAO_EXAMPLE_PATHS,
+        DEFAULT_SCHEMA_PATH as UAO_SCHEMA_PATH,
+        build_validation_report,
+    )
 except ModuleNotFoundError:  # pragma: no cover - exercised when imported as package.
-    from scripts.validate_universal_action_orchestration import build_validation_report
+    from scripts.validate_universal_action_orchestration import (
+        DEFAULT_DOCUMENT_PATH as UAO_DOCUMENT_PATH,
+        DEFAULT_EXAMPLE_PATHS as UAO_EXAMPLE_PATHS,
+        DEFAULT_SCHEMA_PATH as UAO_SCHEMA_PATH,
+        build_validation_report,
+    )
 
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
@@ -57,6 +68,11 @@ EXPECTED_CHECK_NAMES = (
 )
 ALLOWED_STATUSES = ("passed", "failed")
 WINDOWS_ABSOLUTE_PATH_PATTERN = re.compile(r"[A-Za-z]:[/\\]")
+CANONICAL_UAO_SCHEMA_PATH_LABEL = UAO_SCHEMA_PATH.resolve().relative_to(WORKSPACE_ROOT).as_posix()
+CANONICAL_UAO_DOCUMENT_PATH_LABEL = UAO_DOCUMENT_PATH.resolve().relative_to(WORKSPACE_ROOT).as_posix()
+CANONICAL_UAO_EXAMPLE_PATH_LABELS = tuple(
+    example_path.resolve().relative_to(WORKSPACE_ROOT).as_posix() for example_path in UAO_EXAMPLE_PATHS
+)
 
 
 class UaoValidationReceiptContractError(ValueError):
@@ -101,6 +117,9 @@ def validate_schema_artifact(schema: dict[str, Any]) -> list[str]:
                 errors.append(f"schema missing required receipt field: {field_name}")
             if field_name not in properties:
                 errors.append(f"schema missing receipt property: {field_name}")
+        errors.extend(_validate_schema_const_property(properties, "schema_path", CANONICAL_UAO_SCHEMA_PATH_LABEL))
+        errors.extend(_validate_schema_const_property(properties, "document_path", CANONICAL_UAO_DOCUMENT_PATH_LABEL))
+        errors.extend(_validate_schema_example_paths_property(properties.get("example_paths")))
 
     check_result = schema.get("$defs", {}).get("check_result")
     if not isinstance(check_result, dict):
@@ -120,6 +139,11 @@ def validate_schema_artifact(schema: dict[str, Any]) -> list[str]:
                 errors.append(f"schema missing required check field: {field_name}")
             if field_name not in check_properties:
                 errors.append(f"schema missing check property: {field_name}")
+        check_name = check_properties.get("name")
+        if not isinstance(check_name, dict):
+            errors.append("schema check_result.name must be an object")
+        elif tuple(check_name.get("enum", ())) != EXPECTED_CHECK_NAMES:
+            errors.append("schema check_result.name.enum must match canonical UAO validation check order")
     return errors
 
 
@@ -154,6 +178,7 @@ def validate_receipt(receipt: dict[str, Any]) -> list[str]:
     errors.extend(_validate_safe_path_label("schema_path", receipt["schema_path"]))
     errors.extend(_validate_safe_path_label("document_path", receipt["document_path"]))
     errors.extend(_validate_path_label_array("example_paths", receipt["example_paths"]))
+    errors.extend(_validate_canonical_artifact_paths(receipt))
     errors.extend(_validate_checks(receipt["checks"]))
     errors.extend(_validate_errors(receipt["errors"]))
 
@@ -185,7 +210,12 @@ def build_sample_receipts() -> tuple[dict[str, Any], dict[str, Any]]:
     """Build synthetic pass and fail receipts without executing UAO actions."""
 
     passed_receipt = build_validation_report()
-    failed_receipt = build_validation_report(schema_path=WORKSPACE_ROOT / "missing.schema.json")
+    failed_receipt = deepcopy(passed_receipt)
+    failed_receipt["valid"] = False
+    failed_receipt["status"] = "failed"
+    failed_receipt["checks"][1]["passed"] = False
+    failed_receipt["errors"] = ["canonical UAO validation fixture failure"]
+    failed_receipt["error_count"] = 1
     return passed_receipt, failed_receipt
 
 
@@ -234,6 +264,48 @@ def _validate_safe_path_label(label: str, value: Any) -> list[str]:
         errors.append(f"{label} must not contain a host-local absolute path")
     if any(segment == ".." for segment in value.split("/")):
         errors.append(f"{label} must not contain parent-directory traversal")
+    return errors
+
+
+def _validate_canonical_artifact_paths(receipt: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if isinstance(receipt.get("schema_path"), str) and receipt["schema_path"] != CANONICAL_UAO_SCHEMA_PATH_LABEL:
+        errors.append("schema_path must reference canonical UAO schema artifact")
+    if isinstance(receipt.get("document_path"), str) and receipt["document_path"] != CANONICAL_UAO_DOCUMENT_PATH_LABEL:
+        errors.append("document_path must reference canonical UAO doctrine artifact")
+    if isinstance(receipt.get("example_paths"), list) and tuple(receipt["example_paths"]) != CANONICAL_UAO_EXAMPLE_PATH_LABELS:
+        errors.append("example_paths must preserve canonical UAO example fixture order")
+    return errors
+
+
+def _validate_schema_const_property(
+    properties: dict[str, Any],
+    field_name: str,
+    expected_value: str,
+) -> list[str]:
+    property_schema = properties.get(field_name)
+    if not isinstance(property_schema, dict):
+        return []
+    if property_schema.get("const") != expected_value:
+        return [f"schema {field_name}.const must bind the canonical UAO artifact label"]
+    return []
+
+
+def _validate_schema_example_paths_property(property_schema: Any) -> list[str]:
+    if not isinstance(property_schema, dict):
+        return []
+    errors: list[str] = []
+    prefix_items = property_schema.get("prefixItems")
+    if not isinstance(prefix_items, list):
+        errors.append("schema example_paths.prefixItems must bind canonical UAO example labels")
+        return errors
+    observed_labels = tuple(item.get("const") for item in prefix_items if isinstance(item, dict))
+    if observed_labels != CANONICAL_UAO_EXAMPLE_PATH_LABELS:
+        errors.append("schema example_paths.prefixItems must preserve canonical UAO example fixture order")
+    if property_schema.get("minItems") != len(CANONICAL_UAO_EXAMPLE_PATH_LABELS):
+        errors.append("schema example_paths.minItems must match canonical UAO example count")
+    if property_schema.get("maxItems") != len(CANONICAL_UAO_EXAMPLE_PATH_LABELS):
+        errors.append("schema example_paths.maxItems must match canonical UAO example count")
     return errors
 
 

@@ -41,16 +41,39 @@
       "enum": ["passed", "failed"]
     },
     "schema_path": {
-      "$ref": "#/$defs/safe_path_label"
+      "type": "string",
+      "const": "schemas/universal_action_orchestration.schema.json"
     },
     "document_path": {
-      "$ref": "#/$defs/safe_path_label"
+      "type": "string",
+      "const": "docs/UNIVERSAL_ACTION_ORCHESTRATION.md"
     },
     "example_paths": {
       "type": "array",
-      "items": {
-        "$ref": "#/$defs/safe_path_label"
-      }
+      "prefixItems": [
+        {
+          "type": "string",
+          "const": "examples/universal_action_orchestration.allowed_status_publish.json"
+        },
+        {
+          "type": "string",
+          "const": "examples/universal_action_orchestration.blocked_invoice_payment.json"
+        },
+        {
+          "type": "string",
+          "const": "examples/uao/blocked_missing_approval.json"
+        },
+        {
+          "type": "string",
+          "const": "examples/uao/deferred_stale_evidence.json"
+        },
+        {
+          "type": "string",
+          "const": "examples/uao/simulated_low_risk_readonly.json"
+        }
+      ],
+      "minItems": 5,
+      "maxItems": 5
     },
     "example_count": {
       "type": "integer",

@@ -25,6 +25,11 @@ def test_universal_action_orchestration_validation_receipt_contract_passes() -> 
     assert schema["title"] == "Universal Action Orchestration Validation Receipt"
     assert "safe_path_label" in schema["$defs"]
     assert "check_result" in schema["$defs"]
+    assert schema["properties"]["schema_path"]["const"] == validator.CANONICAL_UAO_SCHEMA_PATH_LABEL
+    assert schema["properties"]["document_path"]["const"] == validator.CANONICAL_UAO_DOCUMENT_PATH_LABEL
+    assert tuple(
+        item["const"] for item in schema["properties"]["example_paths"]["prefixItems"]
+    ) == validator.CANONICAL_UAO_EXAMPLE_PATH_LABELS
 
 
 def test_sample_receipts_are_non_terminal_and_count_consistent() -> None:
@@ -36,7 +41,8 @@ def test_sample_receipts_are_non_terminal_and_count_consistent() -> None:
     assert passed_receipt["receipt_is_not_terminal_closure"] is True
     assert passed_receipt["check_count"] == len(passed_receipt["checks"])
     assert failed_receipt["error_count"] == len(failed_receipt["errors"])
-    assert failed_receipt["schema_path"] == "missing.schema.json"
+    assert failed_receipt["schema_path"] == validator.CANONICAL_UAO_SCHEMA_PATH_LABEL
+    assert tuple(failed_receipt["example_paths"]) == validator.CANONICAL_UAO_EXAMPLE_PATH_LABELS
 
 
 def test_receipt_contract_rejects_identity_and_status_drift() -> None:
@@ -74,6 +80,21 @@ def test_receipt_contract_rejects_host_local_path_labels() -> None:
     assert "schema_path must not contain a host-local absolute path" in errors
     assert "example_paths[0] must not contain parent-directory traversal" in errors
     assert "errors[0] must not contain a host-local absolute path" in errors
+
+
+def test_receipt_contract_rejects_canonical_artifact_drift() -> None:
+    passed_receipt, _ = validator.build_sample_receipts()
+    invalid_receipt = copy.deepcopy(passed_receipt)
+    invalid_receipt["schema_path"] = "schemas/alternate_universal_action_orchestration.schema.json"
+    invalid_receipt["document_path"] = "docs/alternate-universal-action-orchestration.md"
+    invalid_receipt["example_paths"] = list(reversed(invalid_receipt["example_paths"]))
+
+    errors = validator.validate_receipt(invalid_receipt)
+
+    assert "schema_path must reference canonical UAO schema artifact" in errors
+    assert "document_path must reference canonical UAO doctrine artifact" in errors
+    assert "example_paths must preserve canonical UAO example fixture order" in errors
+    assert len(errors) >= 3
 
 
 def test_receipt_contract_cli_reports_passed() -> None:
