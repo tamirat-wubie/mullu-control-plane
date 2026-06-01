@@ -387,6 +387,74 @@ def test_case_proof_explorer_html_view_is_read_only_and_escaped(tmp_path: Path) 
     assert before["gate_decisions"] == after["gate_decisions"] == []
 
 
+def test_case_audit_explorer_reports_open_case_without_mutation(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.get("/api/v1/cases/case.launch_gateway_pilot/audit-explorer")
+    payload = response.json()
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["read_only"] is True
+    assert payload["terminal_status"] == "blocked_by_plan_gate"
+    assert payload["summary"]["timeline_count"] == 2
+    assert payload["summary"]["case_event_count"] == 2
+    assert payload["summary"]["blocker_count"] == 8
+    assert payload["summary"]["review_count"] == 6
+    assert [item["sequence"] for item in payload["audit_timeline"]] == [1, 2]
+    assert {item["layer"] for item in payload["audit_timeline"]} == {"case"}
+    assert {item["kind"] for item in payload["attention_items"]} == {
+        "blocked_plan_step",
+        "missing_evidence",
+        "missing_terminal_closure",
+    }
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
+def test_case_audit_explorer_view_is_read_only_and_escaped(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    created = client.post(
+        "/api/v1/cases",
+        json={
+            "case_id": "case.audit_escape",
+            "org_id": "org-mullu",
+            "department_id": "executive",
+            "case_type": "launch_gateway_pilot",
+            "goal": "<script>alert('audit')</script>",
+            "risk": "low",
+            "owner_role_id": "executive.owner",
+            "assigned_department_ids": ["executive"],
+        },
+    )
+    before = client.get("/api/v1/cases/case.audit_escape").json()
+
+    audit = client.get("/api/v1/cases/case.audit_escape/audit-explorer")
+    view = client.get("/api/v1/cases/case.audit_escape/audit-explorer/view")
+    after = client.get("/api/v1/cases/case.audit_escape").json()
+
+    assert created.status_code == 200
+    assert audit.status_code == 200
+    assert audit.json()["audit_id"] == "case-audit:case.audit_escape"
+    assert audit.json()["summary"]["timeline_count"] == 1
+    assert view.status_code == 200
+    assert "text/html" in view.headers["content-type"]
+    assert "Mullu OrgOS Case Audit Explorer" in view.text
+    assert "json audit" in view.text
+    assert "case bundle" in view.text
+    assert "proof timeline" in view.text
+    assert "proof explorer" in view.text
+    assert "closure certificate" in view.text
+    assert "<script>alert('audit')</script>" not in view.text
+    assert "&lt;script&gt;alert(&#x27;audit&#x27;)&lt;/script&gt;" in view.text
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
 def test_department_registry_view_is_read_only_and_escaped(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     organization = client.post(
@@ -980,6 +1048,8 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/orgs/{org_id}/department-registry/view" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate/view" in paths
+    assert "/api/v1/cases/{case_id}/audit-explorer" in paths
+    assert "/api/v1/cases/{case_id}/audit-explorer/view" in paths
     assert "/api/v1/cases/{case_id}/proof-timeline" in paths
     assert "/api/v1/cases/{case_id}/proof-explorer" in paths
     assert "/api/v1/cases/{case_id}/proof-explorer/view" in paths
