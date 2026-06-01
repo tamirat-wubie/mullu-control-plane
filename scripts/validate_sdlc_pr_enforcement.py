@@ -38,6 +38,7 @@ SDLC_COMMANDS = (
     "python scripts/validate_sdlc_release_readiness.py --strict",
     "python scripts/validate_sdlc_security_review.py --strict",
     "python scripts/validate_sdlc_pr_enforcement.py",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json",
 )
 SDLC_ARTIFACT_TERMS = (
     "Change request",
@@ -94,6 +95,7 @@ def validate_pr_template(template_text: str) -> list[str]:
         "documentation-only or read-only",
         "Gate decision envelope",
         "Inventory closure",
+        "Workspace preflight receipt",
         "Closure receipt retains every upstream UAO, causal trace, implementation receipt, transition receipt, recovery handoff receipt, and receipt reference",
         "Rollback or incident handoff path",
     )
@@ -134,6 +136,7 @@ def validate_enforcement_document(document_text: str) -> list[str]:
         "merge_ready",
         "gate_decision_envelopes are retained through terminal closure",
         "sdlc_inventory_closure proves canonical schema and example coverage",
+        "sdlc_workspace_preflight_closure proves workspace preflight command, receipt artifact, validator output, and closure retention",
         "implementation deltas have `sdlc_implementation_receipt` evidence",
         "state transitions have `sdlc_transition_receipt` evidence",
         "recovery handoff has `sdlc_recovery_handoff_receipt` evidence",
