@@ -21,6 +21,33 @@ from scripts.export_openapi import export_openapi
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+OPENAPI_SOURCE_SPEC = REPO_ROOT / "sdk" / "openapi" / "mullu.openapi.json"
+
+
+def _assert_openapi_section_matches(
+    checked_in_spec: dict[str, object],
+    exported_spec: dict[str, object],
+    section_name: str,
+) -> None:
+    checked_in_section = checked_in_spec[section_name]
+    exported_section = exported_spec[section_name]
+    if not isinstance(checked_in_section, dict) or not isinstance(exported_section, dict):
+        assert checked_in_section == exported_section
+        return
+
+    checked_in_keys = set(checked_in_section)
+    exported_keys = set(exported_section)
+    missing = sorted(exported_keys - checked_in_keys)
+    extra = sorted(checked_in_keys - exported_keys)
+
+    assert missing == [], f"{section_name} missing from checked-in OpenAPI spec: {missing[:10]}"
+    assert extra == [], f"{section_name} extra in checked-in OpenAPI spec: {extra[:10]}"
+    if checked_in_section != exported_section:
+        first_changed = next(
+            key for key in sorted(checked_in_keys)
+            if checked_in_section[key] != exported_section[key]
+        )
+        raise AssertionError(f"{section_name} entry drifted in checked-in OpenAPI spec: {first_changed}")
 
 
 def test_sdk_generation_manifest_declares_python_and_typescript() -> None:
@@ -55,11 +82,12 @@ def test_sdk_generator_configs_exist() -> None:
 
 
 def test_openapi_source_spec_is_exported_for_sdk_generation() -> None:
-    spec = json.loads((REPO_ROOT / "sdk" / "openapi" / "mullu.openapi.json").read_text(encoding="utf-8"))
+    spec = json.loads(OPENAPI_SOURCE_SPEC.read_text(encoding="utf-8"))
 
     assert spec["info"]["title"] == "Mullu Platform"
     assert spec["info"]["version"] == "3.13.0"
     assert "/api/v1/replay/{trace_id}/determinism" in spec["paths"]
+    assert "/api/v1/cases/{case_id}/step-handoffs/view" in spec["paths"]
     assert "/software/receipts/dashboard" in spec["paths"]
     assert "/software/receipts/sdlc/dashboard" in spec["paths"]
     assert len(spec["paths"]) >= 200
@@ -86,6 +114,20 @@ def test_openapi_exporter_writes_deterministic_spec(tmp_path: Path) -> None:
     assert "/software/receipts/dashboard" in payload["paths"]
     assert "/software/receipts/sdlc/dashboard" in payload["paths"]
     assert len(payload["paths"]) >= 50
+
+
+def test_checked_in_openapi_source_matches_runtime_export(tmp_path: Path) -> None:
+    output_path = tmp_path / "mullu.openapi.json"
+    exported_spec = export_openapi(output_path)
+    checked_in_spec = json.loads(OPENAPI_SOURCE_SPEC.read_text(encoding="utf-8"))
+
+    assert checked_in_spec["info"] == exported_spec["info"]
+    _assert_openapi_section_matches(checked_in_spec, exported_spec, "paths")
+    _assert_openapi_section_matches(
+        checked_in_spec["components"],
+        exported_spec["components"],
+        "schemas",
+    )
 
 
 def test_openapi_exporter_cli_writes_software_receipt_paths(tmp_path: Path) -> None:

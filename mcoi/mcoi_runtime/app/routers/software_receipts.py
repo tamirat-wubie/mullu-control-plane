@@ -19,6 +19,14 @@ from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.routers.auth_context import bind_claimed_actor
 from mcoi_runtime.app.routers.musia_auth import require_read, require_write
 from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
+from mcoi_runtime.core.private_pilot_story import (
+    DEFAULT_PRIVATE_PILOT_ACTOR_ID,
+    DEFAULT_PRIVATE_PILOT_CASE_ID,
+    DEFAULT_PRIVATE_PILOT_ORG_ID,
+    PrivatePilotStoryError,
+    PrivatePilotStoryRequest,
+    build_private_pilot_story,
+)
 from mcoi_runtime.core.sdlc_dashboard import (
     SdlcDashboardError,
     build_sdlc_dashboard_summary,
@@ -94,6 +102,18 @@ class SdlcDashboardEnvelope(BaseModel):
     stage_count: int
     blocker_count: int
     evidence_count: int
+    receipt_count: int
+    governed: bool = True
+
+
+class PrivatePilotStoryEnvelope(BaseModel):
+    """HTTP response envelope for the read-only private pilot story."""
+
+    operation: str
+    tenant_id: str
+    story: dict[str, Any]
+    stage_count: int
+    uao_branch_count: int
     receipt_count: int
     governed: bool = True
 
@@ -376,6 +396,39 @@ def sdlc_dashboard_summary(
         blocker_count=int(dashboard["blocker_count"]),
         evidence_count=int(dashboard["evidence_count"]),
         receipt_count=int(dashboard["receipt_count"]),
+    )
+
+
+@router.get("/private-pilot/story", response_model=PrivatePilotStoryEnvelope)
+def private_pilot_story_summary(
+    org_id: str = Query(default=DEFAULT_PRIVATE_PILOT_ORG_ID, min_length=1),
+    case_id: str = Query(default=DEFAULT_PRIVATE_PILOT_CASE_ID, min_length=1),
+    actor_id: str = Query(default=DEFAULT_PRIVATE_PILOT_ACTOR_ID, min_length=1),
+    tenant_id: str = Depends(require_read),
+) -> PrivatePilotStoryEnvelope:
+    """Return the read-only OrgOS-to-dashboard private pilot story."""
+
+    try:
+        story = build_private_pilot_story(
+            PrivatePilotStoryRequest(
+                tenant_id=tenant_id,
+                org_id=org_id,
+                case_id=case_id,
+                actor_id=actor_id,
+            )
+        )
+    except PrivatePilotStoryError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=_bounded_http_error("private pilot story unavailable", exc),
+        ) from exc
+    return PrivatePilotStoryEnvelope(
+        operation="private_pilot_story",
+        tenant_id=tenant_id,
+        story=story,
+        stage_count=int(story["stage_count"]),
+        uao_branch_count=int(story["uao_branch_count"]),
+        receipt_count=int(story["receipt_count"]),
     )
 
 
