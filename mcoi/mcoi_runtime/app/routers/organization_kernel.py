@@ -530,6 +530,165 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
     }
 
 
+def _proof_status_card(label: str, value: object, status: str) -> dict[str, object]:
+    return {"label": label, "value": value, "status": status}
+
+
+def _case_proof_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, Any]:
+    proof = _case_proof_timeline(kernel, case_id)
+    organization_case = proof["case"]
+    summary = proof["summary"]
+    plan_step_proof = proof["plan_step_proof"]
+    closure_certificate = proof["closure_certificate"]
+    evidence_timeline_by_ref = {
+        item["ref"]: item
+        for item in proof["proof_timeline"]
+        if item["kind"] == "evidence"
+    }
+    evidence_requirements: dict[str, dict[str, Any]] = {}
+    department_lanes: dict[str, dict[str, Any]] = {}
+    attention_items: list[dict[str, object]] = []
+
+    for step in plan_step_proof:
+        department_id = step["department_id"]
+        lane = department_lanes.setdefault(
+            department_id,
+            {
+                "department_id": department_id,
+                "step_ids": [],
+                "allowed_step_count": 0,
+                "blocked_step_count": 0,
+                "missing_evidence_count": 0,
+                "evidence_ref_count": 0,
+            },
+        )
+        lane["step_ids"].append(step["step_id"])
+        lane["evidence_ref_count"] += len(step["evidence_refs"])
+        lane["missing_evidence_count"] += len(step["missing_evidence"])
+        if step["gate_status"] == PlanStepGateStatus.ALLOWED.value:
+            lane["allowed_step_count"] += 1
+        else:
+            lane["blocked_step_count"] += 1
+            attention_items.append({
+                "kind": "blocked_plan_step",
+                "severity": "review",
+                "ref": step["step_id"],
+                "message": "plan step is not allowed by the latest gate decision",
+            })
+        for requirement_id in step["missing_evidence"]:
+            evidence_row = evidence_requirements.setdefault(
+                requirement_id,
+                {
+                    "requirement_id": requirement_id,
+                    "present": False,
+                    "evidence_refs": [],
+                    "step_ids": [],
+                },
+            )
+            evidence_row["step_ids"].append(step["step_id"])
+            attention_items.append({
+                "kind": "missing_evidence",
+                "severity": "blocker",
+                "ref": requirement_id,
+                "message": "required evidence is not admitted for this case",
+            })
+        for evidence_ref in step["evidence_refs"]:
+            timeline_item = evidence_timeline_by_ref.get(evidence_ref)
+            if timeline_item is None:
+                continue
+            requirement_id = timeline_item["payload"]["requirement_id"]
+            evidence_row = evidence_requirements.setdefault(
+                requirement_id,
+                {
+                    "requirement_id": requirement_id,
+                    "present": True,
+                    "evidence_refs": [],
+                    "step_ids": [],
+                },
+            )
+            evidence_row["present"] = True
+            evidence_row["evidence_refs"].append(evidence_ref)
+            evidence_row["step_ids"].append(step["step_id"])
+
+    if not summary["has_terminal_closure"]:
+        attention_items.append({
+            "kind": "missing_terminal_closure",
+            "severity": "review",
+            "ref": case_id,
+            "message": "case has no terminal closure certificate",
+        })
+    elif closure_certificate is not None and not closure_certificate["effect_reconciled"]:
+        attention_items.append({
+            "kind": "effect_not_reconciled",
+            "severity": "blocker",
+            "ref": closure_certificate["closure_id"],
+            "message": "terminal closure does not have a reconciled external effect",
+        })
+    elif closure_certificate is not None and not closure_certificate["learning_admitted"]:
+        attention_items.append({
+            "kind": "learning_not_admitted",
+            "severity": "review",
+            "ref": closure_certificate["closure_id"],
+            "message": "closure has not been admitted into reusable learning",
+        })
+
+    proof_sections: dict[str, list[dict[str, Any]]] = {}
+    for item in proof["proof_timeline"]:
+        proof_sections.setdefault(item["kind"], []).append(item)
+
+    terminal_status = "awaiting_closure"
+    if closure_certificate is not None:
+        if closure_certificate["effect_reconciled"] and closure_certificate["learning_admitted"]:
+            terminal_status = "closed_verified"
+        elif closure_certificate["effect_reconciled"]:
+            terminal_status = "closed_awaiting_learning"
+        else:
+            terminal_status = "closed_requires_review"
+    elif summary["blocked_steps"]:
+        terminal_status = "blocked_by_plan_gate"
+    elif summary["has_plan"]:
+        terminal_status = "awaiting_evidence"
+
+    return {
+        "explorer_id": f"proof-explorer:{case_id}",
+        "case_id": case_id,
+        "title": organization_case["goal"],
+        "terminal_status": terminal_status,
+        "read_only": True,
+        "status_cards": [
+            _proof_status_card(
+                "case_status",
+                summary["case_status"],
+                "closed" if summary["case_status"] == "closed" else "open",
+            ),
+            _proof_status_card("plan_steps", len(plan_step_proof), "ready" if plan_step_proof else "missing"),
+            _proof_status_card("evidence", summary["evidence_count"], "ready" if summary["evidence_count"] else "missing"),
+            _proof_status_card(
+                "gate_decisions",
+                summary["gate_decision_count"],
+                "ready" if summary["all_plan_steps_allowed"] else "blocked",
+            ),
+            _proof_status_card(
+                "closure",
+                summary["has_terminal_closure"],
+                "ready" if summary["has_terminal_closure"] else "missing",
+            ),
+            _proof_status_card(
+                "learning",
+                summary["learning_binding_count"],
+                "ready" if summary["learning_binding_count"] else "missing",
+            ),
+        ],
+        "attention_items": attention_items,
+        "department_lanes": sorted(department_lanes.values(), key=lambda item: item["department_id"]),
+        "evidence_matrix": sorted(evidence_requirements.values(), key=lambda item: item["requirement_id"]),
+        "proof_sections": {key: proof_sections[key] for key in sorted(proof_sections)},
+        "closure_panel": closure_certificate,
+        "source_timeline": proof,
+        "governed": True,
+    }
+
+
 def _validate_gateway_base_url(gateway_url: str) -> str:
     parsed = urlparse(gateway_url.strip())
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
@@ -1210,6 +1369,13 @@ def get_case_proof_timeline(case_id: str):
     """Return a non-mutating proof timeline and closure certificate read model."""
     _inc_metric("requests_governed")
     return _case_proof_timeline(_kernel(), case_id)
+
+
+@router.get("/api/v1/cases/{case_id}/proof-explorer")
+def get_case_proof_explorer(case_id: str):
+    """Return an operator proof explorer projection without mutating case state."""
+    _inc_metric("requests_governed")
+    return _case_proof_explorer(_kernel(), case_id)
 
 
 @router.post("/api/v1/cases/{case_id}/plan")
