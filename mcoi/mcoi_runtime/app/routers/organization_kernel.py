@@ -1405,10 +1405,11 @@ def get_case_proof_explorer(case_id: str):
 
 
 @router.post("/api/v1/cases/{case_id}/plan")
-def create_case_plan(case_id: str, req: OrganizationPlanCreateRequest):
+def create_case_plan(case_id: str, req: OrganizationPlanCreateRequest, request: Request):
     """Create a governed plan DAG for a case."""
     _inc_metric("requests_governed")
     kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
     try:
         plan = OrganizationPlan(
             plan_id=req.plan_id,
@@ -1444,10 +1445,11 @@ def create_case_plan(case_id: str, req: OrganizationPlanCreateRequest):
 
 
 @router.post("/api/v1/cases/{case_id}/evidence")
-def admit_case_evidence(case_id: str, req: EvidenceAdmitRequest):
+def admit_case_evidence(case_id: str, req: EvidenceAdmitRequest, request: Request):
     """Admit evidence against a case requirement."""
     _inc_metric("requests_governed")
     kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
     try:
         evidence = kernel.admit_case_evidence(
             CaseEvidence(
@@ -1469,10 +1471,11 @@ def admit_case_evidence(case_id: str, req: EvidenceAdmitRequest):
 
 
 @router.post("/api/v1/cases/{case_id}/approvals")
-def record_case_approval(case_id: str, req: ApprovalRecordRequest):
+def record_case_approval(case_id: str, req: ApprovalRecordRequest, request: Request):
     """Record an explicit case approval receipt."""
     _inc_metric("requests_governed")
     kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
     try:
         approval = kernel.record_approval(
             ApprovalRecord(
@@ -1492,10 +1495,11 @@ def record_case_approval(case_id: str, req: ApprovalRecordRequest):
 
 
 @router.post("/api/v1/cases/{case_id}/plan-steps/{step_id}/gate")
-def evaluate_case_plan_step(case_id: str, step_id: str, req: PlanStepGateRequest):
+def evaluate_case_plan_step(case_id: str, step_id: str, req: PlanStepGateRequest, request: Request):
     """Evaluate one plan step gate with checked preconditions."""
     _inc_metric("requests_governed")
     kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
     try:
         decision = kernel.evaluate_plan_step(
             case_id=case_id,
@@ -1509,7 +1513,7 @@ def evaluate_case_plan_step(case_id: str, step_id: str, req: PlanStepGateRequest
 
 
 @router.post("/api/v1/cases/{case_id}/plan-steps/{step_id}/worker-receipt")
-def bind_plan_step_worker_receipt(case_id: str, step_id: str, req: WorkerReceiptBindRequest):
+def bind_plan_step_worker_receipt(case_id: str, step_id: str, req: WorkerReceiptBindRequest, request: Request):
     """Admit a bounded worker dispatch receipt as evidence for a plan step.
 
     The receipt is produced by the governed worker mesh under its own lease and
@@ -1518,6 +1522,7 @@ def bind_plan_step_worker_receipt(case_id: str, step_id: str, req: WorkerReceipt
     """
     _inc_metric("requests_governed")
     kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
     try:
         binding = kernel.bind_worker_receipt_evidence(
             PlanStepWorkerReceiptBinding(
@@ -1545,10 +1550,11 @@ def bind_plan_step_worker_receipt(case_id: str, step_id: str, req: WorkerReceipt
 
 
 @router.post("/api/v1/cases/{case_id}/close")
-def close_case(case_id: str, req: OrganizationCaseCloseRequest):
+def close_case(case_id: str, req: OrganizationCaseCloseRequest, request: Request):
     """Close a case through explicit effect reconciliation and disposition."""
     _inc_metric("requests_governed")
     kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
     try:
         closure = kernel.close_case(
             reconciliation=OrganizationEffectReconciliation(
@@ -1573,10 +1579,11 @@ def close_case(case_id: str, req: OrganizationCaseCloseRequest):
 
 
 @router.post("/api/v1/cases/{case_id}/learning-admissions")
-def bind_case_learning_admission(case_id: str, req: LearningAdmissionRequest):
+def bind_case_learning_admission(case_id: str, req: LearningAdmissionRequest, request: Request):
     """Bind a closure-derived learning admission decision to the case."""
     _inc_metric("requests_governed")
     kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
     try:
         binding = kernel.bind_learning_admission(
             LearningAdmissionBinding(
