@@ -2129,6 +2129,7 @@ def test_agentic_control_capability_pack_surface_binds_default_authority() -> No
     assert "agentic_control.code_change.plan" in agentic_surface["representative_paths"]
     assert "agentic_control.release_handoff.plan" in agentic_surface["representative_paths"]
     assert "agentic_control.evidence.append" in agentic_surface["representative_paths"]
+    assert "agentic_control.project_discipline_mesh.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.autonomous_operations.v1" in agentic_surface["representative_paths"]
     assert "capsules/agentic_control.json" in agentic_surface["evidence_files"]
     assert "capabilities/agentic_control/capability_pack.json" in agentic_surface["evidence_files"]

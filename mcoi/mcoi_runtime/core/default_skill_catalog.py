@@ -71,6 +71,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _incident_rollback_recovery_skill(),
         _release_handoff_pr_closure_skill(),
         _telemetry_monitoring_triage_skill(),
+        _agentic_control_project_discipline_mesh_skill(),
         _agentic_control_autonomous_operations_skill(),
     )
 
@@ -637,6 +638,114 @@ def _telemetry_monitoring_triage_skill() -> SkillDescriptor:
         ),
         confidence=0.25,
         metadata={**_NO_NEW_AUTHORITY, "risk_floor": "medium"},
+    )
+
+
+def _agentic_control_project_discipline_mesh_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.project_discipline_mesh.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Project discipline mesh scan",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_project_boundary",
+                name="Define project boundary",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_discipline_questions",
+                name="Rank discipline questions",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_project_boundary",),
+                input_bindings={"mission_contract_ref": "define_project_boundary.mission_contract_ref"},
+                output_keys=("discipline_question_order_ref", "critical_gap_refs", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="scan_strategy_product",
+                name="Scan strategy and product",
+                action_type="agentic_control.product_management.plan",
+                depends_on=("rank_discipline_questions",),
+                input_bindings={
+                    "priority_order_ref": "rank_discipline_questions.discipline_question_order_ref"
+                },
+                output_keys=("strategy_delta_ref", "success_metrics", "business_handoff_risks"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_quality_verification",
+                name="Plan quality verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("scan_strategy_product",),
+                input_bindings={"product_plan_ref": "scan_strategy_product.strategy_delta_ref"},
+                output_keys=("quality_verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="interrogate_unknowns",
+                name="Interrogate discipline unknowns",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_quality_verification",),
+                input_bindings={
+                    "verification_plan_ref": "plan_quality_verification.quality_verification_plan_ref"
+                },
+                output_keys=("interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_cross_discipline_gaps",
+                name="Refine cross-discipline gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("interrogate_unknowns",),
+                input_bindings={
+                    "verification_plan_ref": "plan_quality_verification.quality_verification_plan_ref",
+                    "interrogation_plan_ref": "interrogate_unknowns.interrogation_plan_ref",
+                },
+                output_keys=("discipline_mesh_ref", "handoff_gap_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_learning_admission",
+                name="Plan learning admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_cross_discipline_gaps",),
+                input_bindings={
+                    "refinement_plan_ref": "refine_cross_discipline_gaps.discipline_mesh_ref"
+                },
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes a read-only Project Discipline Mesh scan across strategy, "
+            "design, engineering, quality, operations, and business handoff risks "
+            "before autonomous execution planning."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "project_discipline_mesh": True,
+            "disciplines": (
+                "strategy_product",
+                "design_research",
+                "engineering",
+                "quality_security",
+                "operations",
+                "business_gtm",
+            ),
+        },
     )
 
 
