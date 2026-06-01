@@ -8,6 +8,20 @@
 - [ ] New write or mutation paths are explicit and gated.
 - [ ] Runtime-only contracts are not presented as public protocol surface.
 
+## SDLC / SDLD evidence
+
+Every governed software delivery PR must either attach the lifecycle artifacts or explain why the change is documentation-only or read-only.
+
+- [ ] Change request is linked or included.
+- [ ] Requirement is linked or included.
+- [ ] Design decision includes rollback path and test plan.
+- [ ] Work plan orders implementation and verification steps.
+- [ ] Verification receipt records commands, warnings, and failures.
+- [ ] Security review records impact categories, required checks, findings, and residual risk.
+- [ ] Release or deployment candidate does not claim more than evidence supports.
+- [ ] Closure receipt records outcome, receipts, remaining blockers, learning, and next action.
+- [ ] Rollback or incident handoff path is stated for effect-bearing changes.
+
 ## Schema surface boundary
 
 If this PR adds or changes `schemas/*.schema.json`:
@@ -29,6 +43,11 @@ If this PR adds runtime-only contracts:
 ```bash
 python scripts/validate_protocol_manifest.py
 python scripts/validate_release_status.py --strict
+python scripts/validate_sdlc_artifact.py
+python scripts/validate_sdlc_state_machine.py
+python scripts/validate_sdlc_release_readiness.py --strict
+python scripts/validate_sdlc_security_review.py --strict
+python scripts/validate_sdlc_pr_enforcement.py
 ```
 
 Additional targeted checks:

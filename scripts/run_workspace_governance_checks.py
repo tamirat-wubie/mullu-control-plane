@@ -159,6 +159,7 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             "sdlc_security_review_validation",
             (python_executable, "scripts/validate_sdlc_security_review.py", "--strict"),
         ),
+        CheckCommand("sdlc_pr_enforcement_validation", (python_executable, "scripts/validate_sdlc_pr_enforcement.py")),
     )
 
 

@@ -1,5 +1,5 @@
 {
-  "check_count": 16,
+  "check_count": 17,
   "checks": [
     {
       "args": [
@@ -176,6 +176,17 @@
         "--strict"
       ],
       "name": "sdlc_security_review_validation",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_sdlc_pr_enforcement.py"
+      ],
+      "name": "sdlc_pr_enforcement_validation",
       "passed": true,
       "return_code": 0,
       "stderr": "",
