@@ -19,6 +19,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_listing_tenant
+from mcoi_runtime.app.routers.auth_context import bind_claimed_actor
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.contracts.finance_approval_packet import (
     ApprovalStatus,
@@ -311,6 +312,7 @@ def approve_finance_approval_packet(case_id: str, req: FinancePacketApprovalRequ
     if case is None:
         raise HTTPException(404, detail=_error_detail("packet not found", "packet_not_found"))
     enforce_tenant_scope(request, case.tenant_id)
+    approver_id = bind_claimed_actor(request, req.approver_id)
     effects: list[FinanceEffectReceipt] = []
     try:
         now = _clock_now()
@@ -328,11 +330,11 @@ def approve_finance_approval_packet(case_id: str, req: FinancePacketApprovalRequ
         approval = FinanceApprovalReceipt(
             approval_id=stable_identifier(
                 "fin-approval",
-                {"case_id": case_id, "approver_id": req.approver_id, "decided_at": now},
+                {"case_id": case_id, "approver_id": approver_id, "decided_at": now},
             ),
             case_id=case.case_id,
             tenant_id=case.tenant_id,
-            approver_id=req.approver_id,
+            approver_id=approver_id,
             approver_role=req.approver_role,
             status=approval_status,
             decided_at=now,

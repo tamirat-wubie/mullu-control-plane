@@ -12,10 +12,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers.auth_context import bind_claimed_actor
 from mcoi_runtime.app.routers.musia_auth import require_read, require_write
 from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
 from mcoi_runtime.contracts.review import ReviewDecision, ReviewRequest
@@ -237,14 +238,16 @@ def list_software_receipt_review_requests(
 def decide_software_receipt_review_request(
     request_id: str,
     body: SoftwareReceiptReviewDecisionBody,
+    request: Request,
     tenant_id: str = Depends(require_write),
 ) -> SoftwareReceiptEnvelope:
     """Approve or reject a software receipt review request."""
+    reviewer_id = bind_claimed_actor(request, body.reviewer_id)
     queue = _review_queue()
     try:
         decision = queue.decide(
             request_id=request_id,
-            reviewer_id=body.reviewer_id,
+            reviewer_id=reviewer_id,
             approved=body.approved,
             comment=body.comment,
         )
