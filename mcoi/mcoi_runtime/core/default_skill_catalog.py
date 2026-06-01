@@ -73,6 +73,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _telemetry_monitoring_triage_skill(),
         _agentic_control_project_discipline_mesh_skill(),
         _agentic_control_strategy_governor_skill(),
+        _agentic_control_decision_governor_skill(),
         _agentic_control_product_governor_skill(),
         _agentic_control_management_governor_skill(),
         _agentic_control_resource_governor_skill(),
@@ -897,6 +898,146 @@ def _agentic_control_strategy_governor_skill() -> SkillDescriptor:
                 "strategy_plan_ref",
                 "success_metrics",
                 "stop_conditions",
+                "decision_horizon",
+                "closure_rule",
+            ),
+        },
+    )
+
+
+def _agentic_control_decision_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.decision_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic decision governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_decision_boundary",
+                name="Define decision boundary",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "decision_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_decision_options",
+                name="Rank decision options",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_decision_boundary",),
+                input_bindings={"mission_contract_ref": "define_decision_boundary.mission_contract_ref"},
+                output_keys=("decision_option_order_ref", "tradeoff_weights", "dependency_blockers"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_decision_governance",
+                name="Evaluate decision governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_decision_options",),
+                input_bindings={"priority_order_ref": "rank_decision_options.decision_option_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_options"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_decision_budget",
+                name="Bound decision budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_decision_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_decision_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "option_evaluation_budget", "halt_thresholds"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_decision_record",
+                name="Plan decision record",
+                action_type="agentic_control.product_management.plan",
+                depends_on=("bound_decision_budget",),
+                input_bindings={
+                    "decision_boundary_ref": "define_decision_boundary.decision_boundary_ref",
+                    "option_order_ref": "rank_decision_options.decision_option_order_ref",
+                    "gate_decision_ref": "evaluate_decision_governance.gate_decision_ref",
+                    "budget_envelope_ref": "bound_decision_budget.budget_envelope_ref",
+                },
+                output_keys=(
+                    "decision_record_ref",
+                    "selected_option_ref",
+                    "rejection_rationale_refs",
+                    "decision_horizon",
+                ),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_decision_verification",
+                name="Plan decision verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("plan_decision_record",),
+                input_bindings={"decision_record_ref": "plan_decision_record.decision_record_ref"},
+                output_keys=("decision_verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_decision_interrogation",
+                name="Plan decision interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_decision_verification",),
+                input_bindings={
+                    "verification_plan_ref": "plan_decision_verification.decision_verification_plan_ref"
+                },
+                output_keys=("decision_interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_decision_gaps",
+                name="Refine decision gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_decision_interrogation",),
+                input_bindings={
+                    "decision_record_ref": "plan_decision_record.decision_record_ref",
+                    "verification_plan_ref": "plan_decision_verification.decision_verification_plan_ref",
+                    "interrogation_plan_ref": (
+                        "plan_decision_interrogation.decision_interrogation_plan_ref"
+                    ),
+                },
+                output_keys=("decision_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_decision_memory_admission",
+                name="Plan decision memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_decision_gaps",),
+                input_bindings={
+                    "refinement_plan_ref": "refine_decision_gaps.decision_refinement_plan_ref"
+                },
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes decision boundary definition, option ranking, governance "
+            "gating, decision budget bounding, decision-record planning, selected "
+            "option witness, rejected-option rationale, decision horizon, "
+            "verification, interrogation, decision-gap refinement, and "
+            "memory-admission planning before implementation, release, or "
+            "evidence authority is selected."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "decision_governor": True,
+            "decision_surfaces": (
+                "decision_boundary_ref",
+                "decision_record_ref",
+                "selected_option_ref",
+                "rejection_rationale_refs",
                 "decision_horizon",
                 "closure_rule",
             ),
