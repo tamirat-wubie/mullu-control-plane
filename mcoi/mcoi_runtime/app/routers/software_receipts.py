@@ -70,6 +70,21 @@ class SoftwareReceiptReviewDecisionBody(BaseModel):
     comment: str | None = None
 
 
+class SoftwareReceiptDashboardEnvelope(BaseModel):
+    """HTTP response envelope for live software receipt dashboard counts."""
+
+    operation: str
+    tenant_id: str
+    dashboard: dict[str, Any]
+    total_receipts: int
+    request_count: int
+    terminal_request_count: int
+    open_request_count: int
+    requires_operator_review: bool
+    review_signal_count: int
+    governed: bool = True
+
+
 class SdlcDashboardEnvelope(BaseModel):
     """HTTP response envelope for the read-only SDLC dashboard summary."""
 
@@ -311,6 +326,32 @@ def review_software_receipts(
         requires_operator_review=bool(receipts),
         review_signal_count=len(receipts),
         review_signals=_review_signals(receipts),
+    )
+
+
+@router.get("/dashboard", response_model=SoftwareReceiptDashboardEnvelope)
+def software_receipt_dashboard(
+    tenant_id: str = Depends(require_read),
+) -> SoftwareReceiptDashboardEnvelope:
+    """Return live software receipt lifecycle counts without mutating state."""
+
+    try:
+        dashboard = _receipt_store().summary()
+    except PersistenceError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=_bounded_http_error("receipt dashboard query rejected", exc),
+        ) from exc
+    return SoftwareReceiptDashboardEnvelope(
+        operation="dashboard",
+        tenant_id=tenant_id,
+        dashboard=dashboard,
+        total_receipts=int(dashboard["total_receipts"]),
+        request_count=int(dashboard["request_count"]),
+        terminal_request_count=int(dashboard["terminal_request_count"]),
+        open_request_count=int(dashboard["open_request_count"]),
+        requires_operator_review=bool(dashboard["requires_operator_review"]),
+        review_signal_count=int(dashboard["review_signal_count"]),
     )
 
 
