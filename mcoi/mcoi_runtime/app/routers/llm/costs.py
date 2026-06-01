@@ -1,10 +1,11 @@
 """LLM cost analytics endpoints."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 
 from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.app.routers.llm._common import deps
+from mcoi_runtime.app.routers.musia_auth import require_admin
 
 router = APIRouter()
 
@@ -16,7 +17,7 @@ def cost_summary():
 
 
 @router.get("/api/v1/costs/top-spenders")
-def top_spenders(limit: int = 10):
+def top_spenders(limit: int = 10, _: str = Depends(require_admin)):
     """Top spending tenants."""
     return {
         "spenders": [

@@ -156,7 +156,7 @@ def get_tenant_summary(tenant_id: str, request: Request):
 
 
 @router.get("/api/v1/tenants")
-def list_tenants():
+def list_tenants(_: str = Depends(require_admin)):
     """List all tenants with budgets and ledger activity."""
     deps.metrics.inc("requests_governed")
     return {
