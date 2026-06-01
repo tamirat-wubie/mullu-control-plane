@@ -6,6 +6,7 @@ Tests: HTTP webhook endpoints for all channels using FastAPI TestClient.
 import hashlib
 import hmac
 import json
+import copy
 import sys
 import time
 from pathlib import Path
@@ -35,6 +36,7 @@ from gateway.skill_dispatch import FunctionCapabilityHandler  # noqa: E402
 from mcoi_runtime.contracts.governed_capability_fabric import (  # noqa: E402
     CommandCapabilityAdmissionStatus,
 )
+from mcoi_runtime.core.invariants import stable_identifier  # noqa: E402
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
 
@@ -86,6 +88,47 @@ def _assert_gateway_request_receipt(
         assert receipt["sender_id_hash"]
     else:
         assert receipt["sender_id_hash"] == ""
+
+
+def _bind_uao_fixture_to_universal_action_detail(
+    record: dict,
+    *,
+    proof_hash: str = "universal-action-proof-test",
+) -> dict:
+    record["orchestration_id"] = stable_identifier(
+        "universal-action-orchestration",
+        {
+            "action_id": record["action_id"],
+            "proof_hash": proof_hash,
+            "trace_ref": record["trace_ref"],
+        },
+    )
+    delta_ref = stable_identifier(
+        "universal-action-delta",
+        {
+            "action_id": record["action_id"],
+            "proof_hash": proof_hash,
+            "closure_state": record["closure_state"],
+        },
+    )
+    record["lineage"]["delta_ref"] = delta_ref
+    for delta in (
+        record["lineage"]["accepted_deltas"] + record["lineage"]["rejected_deltas"]
+    ):
+        delta["delta_id"] = delta_ref
+    return {
+        "action_id": record["action_id"],
+        "blocked": record["decision"]["status"] != "allow",
+        "block_reason": ""
+        if record["decision"]["status"] == "allow"
+        else record["decision"]["reason_code"],
+        "action_envelope": copy.deepcopy(record["action_envelope"]),
+        "trace_ref": record["trace_ref"],
+        "admission_receipt_ref": record["admission_receipt_ref"],
+        "execution_receipt_ref": record["execution_receipt_ref"],
+        "closure_state": record["closure_state"],
+        "proof_hash": proof_hash,
+    }
 
 
 def _slack_signature(*, secret: str, timestamp: str, body: str) -> str:
@@ -2139,11 +2182,13 @@ class TestGatewayStatus:
             payload={"body": "refresh status page"},
         )
         record["action_envelope"]["intent"] = command.command_id
+        universal_detail = _bind_uao_fixture_to_universal_action_detail(record)
         gateway_app.state.command_ledger.transition(
             command.command_id,
             CommandState.DISPATCHED,
             detail={
                 "cause": "universal_action_kernel_dispatched",
+                "universal_action": universal_detail,
                 "universal_action_orchestration": record,
             },
         )
@@ -2243,6 +2288,7 @@ class TestGatewayStatus:
             payload={"body": "receipt-spoofed status page replay"},
         )
         record["action_envelope"]["intent"] = command.command_id
+        universal_detail = _bind_uao_fixture_to_universal_action_detail(record)
         for stage in record["pipeline_stages"]:
             if stage["stage_kind"] == "closure":
                 stage["receipt_ref"] = "receipt://spoofed-closure"
@@ -2251,6 +2297,49 @@ class TestGatewayStatus:
             CommandState.DISPATCHED,
             detail={
                 "cause": "universal_action_kernel_dispatched",
+                "universal_action": universal_detail,
+                "universal_action_orchestration": record,
+            },
+        )
+
+        resp = client.get(
+            f"/commands/{command.command_id}/universal-action-orchestration"
+        )
+
+        assert resp.status_code == 404
+        assert (
+            resp.json()["detail"] == "universal action orchestration record not found"
+        )
+        assert gateway_app.state.command_ledger.get(command.command_id) is not None
+
+    def test_command_universal_action_orchestration_proof_spoof_returns_404(
+        self, gateway_app, client
+    ):
+        record = json.loads(
+            (
+                _ROOT
+                / "examples"
+                / "universal_action_orchestration.allowed_status_publish.json"
+            ).read_text(encoding="utf-8")
+        )
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="tenant_ops_demo",
+            actor_id="service:status_page_worker",
+            source="web",
+            conversation_id="conversation-orchestration-proof-spoof",
+            idempotency_key="universal-orchestration-proof-spoof",
+            intent="refresh_public_status_page",
+            payload={"body": "proof-spoofed status page replay"},
+        )
+        record["action_envelope"]["intent"] = command.command_id
+        universal_detail = _bind_uao_fixture_to_universal_action_detail(record)
+        record["orchestration_id"] = "universal-action-orchestration-spoofed"
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.DISPATCHED,
+            detail={
+                "cause": "universal_action_kernel_dispatched",
+                "universal_action": universal_detail,
                 "universal_action_orchestration": record,
             },
         )
@@ -2294,11 +2383,13 @@ class TestGatewayStatus:
             payload={"body": "target status page replay"},
         )
         record["action_envelope"]["intent"] = source_command.command_id
+        universal_detail = _bind_uao_fixture_to_universal_action_detail(record)
         gateway_app.state.command_ledger.transition(
             target_command.command_id,
             CommandState.DISPATCHED,
             detail={
                 "cause": "universal_action_kernel_dispatched",
+                "universal_action": universal_detail,
                 "universal_action_orchestration": record,
             },
         )

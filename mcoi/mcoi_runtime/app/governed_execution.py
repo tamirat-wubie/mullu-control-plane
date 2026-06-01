@@ -21,6 +21,7 @@ from mcoi_runtime.core.governed_dispatcher import (
     GovernedDispatcher,
     GovernedDispatchContext,
 )
+from mcoi_runtime.core.invariants import stable_identifier
 from mcoi_runtime.contracts.execution import ExecutionResult
 from mcoi_runtime.contracts.mil import MILProgram
 from mcoi_runtime.contracts.policy import PolicyDecision
@@ -415,9 +416,11 @@ def universal_command_orchestration_record_view(
             continue
         if detail.get("cause") not in _UAO_REPLAY_EVENT_CAUSES:
             continue
+        universal_detail = detail.get("universal_action")
         candidate = detail.get("universal_action_orchestration")
         if _is_replayable_universal_action_orchestration_record(
             candidate,
+            universal_detail=universal_detail,
             command_id=bound_command_id,
             tenant_id=bound_tenant_id,
             actor_id=bound_actor_id,
@@ -465,6 +468,7 @@ def _event_binds_command_replay(
 def _is_replayable_universal_action_orchestration_record(
     value: Any,
     *,
+    universal_detail: Any,
     command_id: str,
     tenant_id: str,
     actor_id: str,
@@ -538,6 +542,8 @@ def _is_replayable_universal_action_orchestration_record(
     closure = value.get("closure")
     if not isinstance(closure, Mapping) or closure.get("status") != closure_state:
         return False
+    if not _uao_record_binds_universal_detail(value, universal_detail):
+        return False
     stages_by_kind = _uao_stage_records_by_kind(value.get("pipeline_stages"))
     if stages_by_kind is None:
         return False
@@ -598,6 +604,93 @@ def _is_replayable_universal_action_orchestration_record(
         if isinstance(stage, Mapping) and stage.get("receipt_ref") is not None:
             return False
         if skipped_kind in receipts_by_kind:
+            return False
+    return True
+
+
+def _uao_record_binds_universal_detail(
+    record: Mapping[str, Any], universal_detail: Any
+) -> bool:
+    if not isinstance(universal_detail, Mapping):
+        return False
+    for field_name in (
+        "action_id",
+        "trace_ref",
+        "admission_receipt_ref",
+        "execution_receipt_ref",
+        "closure_state",
+    ):
+        if record.get(field_name) != universal_detail.get(field_name):
+            return False
+    universal_envelope = universal_detail.get("action_envelope")
+    record_envelope = record.get("action_envelope")
+    if not isinstance(universal_envelope, Mapping) or not isinstance(
+        record_envelope, Mapping
+    ):
+        return False
+    for field_name in (
+        "source",
+        "actor",
+        "tenant",
+        "intent",
+        "target",
+        "risk",
+        "requested_at",
+        "approval_ref",
+    ):
+        if record_envelope.get(field_name) != universal_envelope.get(field_name):
+            return False
+    if _text_tuple(record_envelope.get("evidence_refs")) != _text_tuple(
+        universal_envelope.get("evidence_refs")
+    ):
+        return False
+    universal_capability_refs = set(
+        _text_tuple(universal_envelope.get("capability_refs"))
+    )
+    record_capability_refs = set(_text_tuple(record_envelope.get("capability_refs")))
+    if not universal_capability_refs.issubset(record_capability_refs):
+        return False
+    proof_hash = universal_detail.get("proof_hash")
+    if not _non_empty_text(proof_hash):
+        return False
+    expected_orchestration_id = stable_identifier(
+        "universal-action-orchestration",
+        {
+            "action_id": record.get("action_id"),
+            "proof_hash": proof_hash,
+            "trace_ref": record.get("trace_ref"),
+        },
+    )
+    if record.get("orchestration_id") != expected_orchestration_id:
+        return False
+    lineage = record.get("lineage")
+    if not isinstance(lineage, Mapping):
+        return False
+    expected_delta_ref = stable_identifier(
+        "universal-action-delta",
+        {
+            "action_id": record.get("action_id"),
+            "proof_hash": proof_hash,
+            "closure_state": record.get("closure_state"),
+        },
+    )
+    if lineage.get("delta_ref") != expected_delta_ref:
+        return False
+    accepted_deltas = lineage.get("accepted_deltas")
+    rejected_deltas = lineage.get("rejected_deltas")
+    if not isinstance(accepted_deltas, list) or not isinstance(rejected_deltas, list):
+        return False
+    decision = record.get("decision")
+    decision_status = decision.get("status") if isinstance(decision, Mapping) else ""
+    if decision_status == "allow" and not accepted_deltas:
+        return False
+    if decision_status != "allow" and not rejected_deltas:
+        return False
+    for delta in [*accepted_deltas, *rejected_deltas]:
+        if (
+            not isinstance(delta, Mapping)
+            or delta.get("delta_id") != expected_delta_ref
+        ):
             return False
     return True
 
@@ -690,6 +783,17 @@ def _has_private_reasoning_field(value: Any) -> bool:
 
 def _non_empty_text(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
+
+
+def _text_tuple(value: Any) -> tuple[str, ...]:
+    if isinstance(value, str):
+        stripped = value.strip()
+        return (stripped,) if stripped else ()
+    if not isinstance(value, (list, tuple)):
+        return ()
+    return tuple(
+        item.strip() for item in value if isinstance(item, str) and item.strip()
+    )
 
 
 def build_universal_operator_kernel(
