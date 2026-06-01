@@ -3,6 +3,7 @@
     "voice_dependency_missing:OPENAI_API_KEY",
     "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
     "deployment_witness_not_published",
+    "deployment_dns_not_verified",
     "production_health_not_declared"
   ],
   "blocking_gap_ids": [
@@ -18,6 +19,7 @@
     "voice_dependency_missing:OPENAI_API_KEY",
     "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
     "deployment_witness_not_published",
+    "deployment_dns_not_verified",
     "production_health_not_declared"
   ],
   "required_commands": [
@@ -46,7 +48,7 @@
       "command": "python scripts\\plan_capability_adapter_closure.py --output .change_assurance\\capability_adapter_closure_plan.json && python scripts\\plan_deployment_publication_closure.py --output .change_assurance\\deployment_publication_closure_plan.json",
       "required_evidence": [
         "capability_adapter_closure_plan.json action_count=5",
-        "deployment_publication_closure_plan.json action_count=2",
+        "deployment_publication_closure_plan.json action_count=3",
         "credential actions approval_required=true",
         "deployment actions approval_required=true"
       ],
@@ -65,7 +67,7 @@
     {
       "command": "python scripts\\run_general_agent_promotion_closure_chain.py --json --strict",
       "required_evidence": [
-        "general_agent_promotion_closure_plan.json total_action_count=13",
+        "general_agent_promotion_closure_plan.json total_action_count=14",
         "general_agent_promotion_closure_plan_schema_validation.json ok=true",
         "general_agent_promotion_closure_plan_validation.json ok=true",
         "capability_improvement_portfolio.json plan_count=5",
@@ -80,7 +82,7 @@
         "terminal_evidence_reconciliation ready_for_terminal_certificate_minting=false",
         "general_agent_promotion_terminal_minting_gate.json schema_valid=true",
         "terminal_minting_gate ready_for_terminal_certificate_minting=false",
-        "approval_required_action_count=9",
+        "approval_required_action_count=10",
         "source_plan_type includes adapter, deployment, and portfolio",
         "closure_chain status=passed_blocked",
         "closure_chain artifact_valid=true"

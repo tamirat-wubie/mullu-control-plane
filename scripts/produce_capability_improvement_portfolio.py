@@ -42,6 +42,13 @@ from scripts.validate_schemas import _load_schema, _validate_schema_instance  # 
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "capability_improvement_portfolio.json"
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "capability_improvement_portfolio.schema.json"
 DEFAULT_GENERATED_AT = "2026-05-01T12:00:00+00:00"
+DEFAULT_CANDIDATE_LIMIT = 5
+PROFILE_DEFAULTS: dict[str, dict[str, str | int]] = {
+    "agentic-control-core": {
+        "domain": "agentic_control",
+        "candidate_limit": 12,
+    },
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,6 +57,7 @@ class CapabilityImprovementPortfolioRun:
 
     status: str
     output_path: str
+    profile: str
     portfolio_id: str
     plan_count: int
     prioritized_capability_ids: tuple[str, ...]
@@ -73,7 +81,8 @@ def produce_capability_improvement_portfolio(
     generated_at: str = DEFAULT_GENERATED_AT,
     domain: str = "",
     risk_level: str = "",
-    candidate_limit: int = 5,
+    candidate_limit: int | None = DEFAULT_CANDIDATE_LIMIT,
+    profile: str = "",
     clock: Callable[[], str] | None = None,
 ) -> CapabilityImprovementPortfolioRun:
     """Produce a schema-valid portfolio from governed capability records.
@@ -83,24 +92,45 @@ def produce_capability_improvement_portfolio(
     Output contract: on pass, output_path contains the schema-valid portfolio.
     Error contract: source, filter, and schema failures are returned as blockers.
     """
-    if candidate_limit <= 0:
+    profile_name = profile.strip()
+    if profile_name and profile_name not in PROFILE_DEFAULTS:
         return _failed_run(
             output_path=output_path,
+            profile=profile_name,
+            blockers=("portfolio_profile_unknown",),
+        )
+    profile_defaults = _profile_defaults(profile_name)
+    effective_domain = domain.strip() or str(profile_defaults.get("domain", ""))
+    effective_risk_level = risk_level.strip() or str(profile_defaults.get("risk_level", ""))
+    effective_candidate_limit = (
+        int(profile_defaults.get("candidate_limit", DEFAULT_CANDIDATE_LIMIT))
+        if candidate_limit is None
+        else candidate_limit
+    )
+
+    if effective_candidate_limit <= 0:
+        return _failed_run(
+            output_path=output_path,
+            profile=profile_name,
             blockers=("candidate_limit_positive_required",),
         )
 
     observed_at = generated_at.strip()
     if not observed_at:
-        return _failed_run(output_path=output_path, blockers=("generated_at_required",))
+        return _failed_run(output_path=output_path, profile=profile_name, blockers=("generated_at_required",))
 
     records = _governed_capability_records(clock=clock or (lambda: observed_at))
     filtered_records = tuple(
         record
         for record in records
-        if _matches_filter(record, domain=domain, risk_level=risk_level)
+        if _matches_filter(record, domain=effective_domain, risk_level=effective_risk_level)
     )
     if not filtered_records:
-        return _failed_run(output_path=output_path, blockers=("governed_capability_records_required",))
+        return _failed_run(
+            output_path=output_path,
+            profile=profile_name,
+            blockers=("governed_capability_records_required",),
+        )
 
     try:
         signals = tuple(
@@ -110,18 +140,23 @@ def produce_capability_improvement_portfolio(
         portfolio = AutonomousCapabilityUpgradeLoop().propose_portfolio(
             signals,
             generated_at=observed_at,
-            max_candidates=candidate_limit,
+            max_candidates=effective_candidate_limit,
         )
         payload = portfolio.to_json_dict()
         schema = _load_schema(schema_path)
         validation_errors = tuple(_validate_schema_instance(schema, payload))
     except (OSError, ValueError, TypeError, KeyError) as exc:
-        return _failed_run(output_path=output_path, blockers=(f"portfolio_production_failed:{exc}",))
+        return _failed_run(
+            output_path=output_path,
+            profile=profile_name,
+            blockers=(f"portfolio_production_failed:{exc}",),
+        )
 
     if validation_errors:
         return CapabilityImprovementPortfolioRun(
             status="failed",
             output_path=str(output_path),
+            profile=profile_name,
             portfolio_id=str(payload.get("portfolio_id", "")),
             plan_count=len(payload.get("plans", ())) if isinstance(payload.get("plans"), list) else 0,
             prioritized_capability_ids=tuple(
@@ -137,6 +172,7 @@ def produce_capability_improvement_portfolio(
     return CapabilityImprovementPortfolioRun(
         status="passed",
         output_path=str(output_path),
+        profile=profile_name,
         portfolio_id=str(payload["portfolio_id"]),
         plan_count=len(payload["plans"]),
         prioritized_capability_ids=tuple(str(capability_id) for capability_id in payload["prioritized_capability_ids"]),
@@ -160,6 +196,12 @@ def _matches_filter(record: Mapping[str, Any], *, domain: str, risk_level: str) 
     if risk_filter and str(record.get("risk_level", "")).strip() != risk_filter:
         return False
     return True
+
+
+def _profile_defaults(profile: str) -> Mapping[str, str | int]:
+    if not profile:
+        return {}
+    return PROFILE_DEFAULTS[profile]
 
 
 def _health_signal_from_record(record: Mapping[str, Any], *, observed_at: str) -> CapabilityHealthSignal:
@@ -217,10 +259,11 @@ def _evidence_refs(record: Mapping[str, Any], *, capability_id: str) -> tuple[st
     return tuple(refs)
 
 
-def _failed_run(*, output_path: Path, blockers: tuple[str, ...]) -> CapabilityImprovementPortfolioRun:
+def _failed_run(*, output_path: Path, profile: str, blockers: tuple[str, ...]) -> CapabilityImprovementPortfolioRun:
     return CapabilityImprovementPortfolioRun(
         status="failed",
         output_path=str(output_path),
+        profile=profile,
         portfolio_id="",
         plan_count=0,
         prioritized_capability_ids=(),
@@ -253,7 +296,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--generated-at", default=DEFAULT_GENERATED_AT)
     parser.add_argument("--domain", default="")
     parser.add_argument("--risk-level", default="")
-    parser.add_argument("--candidate-limit", type=int, default=5)
+    parser.add_argument("--candidate-limit", type=int, default=None)
+    parser.add_argument(
+        "--profile",
+        choices=tuple(sorted(PROFILE_DEFAULTS)),
+        default="",
+        help="Apply a governed portfolio profile such as agentic-control-core.",
+    )
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--strict", action="store_true")
     return parser.parse_args(argv)
@@ -269,6 +318,7 @@ def main(argv: list[str] | None = None) -> int:
         domain=args.domain,
         risk_level=args.risk_level,
         candidate_limit=args.candidate_limit,
+        profile=args.profile,
     )
     if args.json:
         print(json.dumps(run.as_dict(), indent=2, sort_keys=True))
