@@ -24,7 +24,12 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     names = [command.name for command in commands]
     args_by_name = {command.name: command.args for command in commands}
 
-    assert names[:3] == ["local_assurance_plan", "protocol_manifest", "logic_governance_application"]
+    assert names[:4] == [
+        "local_assurance_plan",
+        "agents_policy",
+        "protocol_manifest",
+        "logic_governance_application",
+    ]
     assert names[-9:] == [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
@@ -41,6 +46,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "--dry-run",
         "--json",
     )
+    assert args_by_name["agents_policy"][1:] == ("scripts/validate_agents_governance.py",)
     assert args_by_name["sdlc_release_readiness_validation"][1:] == (
         "scripts/validate_sdlc_release_readiness.py",
         "--strict",

@@ -81,7 +81,7 @@ Seven hard rules every piece of work must satisfy — roughly: define everything
 make relationships explicit, trace every cause, keep constraints decidable,
 record decisions, keep recursion terminating, and stamp completed work with
 proof. *(If one can't be met, the system halts instead of producing an unsafe
-result.)* → [`../AGENTS.md`](../../AGENTS.md)
+result.)* → [`../AGENTS.md`](../AGENTS.md)
 
 ### Governed swarm
 A mode where multiple worker agents collaborate on a task, still under all the
@@ -147,7 +147,7 @@ description".)* → [19_skill_system.md](19_skill_system.md)
 ### Symbolic intelligence
 This project's term for its approach: meaning is built from explicit, atomic
 symbols and explicit relationships, rather than left implicit. *(It's the design
-philosophy behind the governance laws.)* → [`../AGENTS.md`](../../AGENTS.md)
+philosophy behind the governance laws.)* → [`../AGENTS.md`](../AGENTS.md)
 
 ### Trust ledger
 An append-only record of trust-relevant outcomes that can be independently

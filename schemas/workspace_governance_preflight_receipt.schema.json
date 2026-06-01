@@ -58,6 +58,7 @@
           "type": "string",
           "enum": [
             "local_assurance_plan",
+            "agents_policy",
             "protocol_manifest",
             "logic_governance_application",
             "public_repository_surface",

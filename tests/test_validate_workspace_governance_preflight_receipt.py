@@ -16,6 +16,7 @@ from pathlib import Path
 
 import pytest
 
+from scripts.run_workspace_governance_checks import build_check_commands
 from scripts import validate_workspace_governance_preflight_receipt as validator
 
 
@@ -28,7 +29,7 @@ def test_example_receipt_passes() -> None:
     assert receipt["terminal_closure_required"] is True
     assert receipt["receipt_is_not_terminal_closure"] is True
     assert receipt["status"] == "passed"
-    assert receipt["check_count"] == 15
+    assert receipt["check_count"] == len(build_check_commands("python"))
 
 
 def test_saved_receipt_status_mismatch_is_reported(tmp_path: Path) -> None:
