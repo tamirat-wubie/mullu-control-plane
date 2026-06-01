@@ -356,6 +356,66 @@ def test_cli_writes_report_and_returns_nonzero_when_gate_fails(
     assert not any(command[:3] == ["gh", "workflow", "run"] for command in fake_runner.commands)
 
 
+def test_cli_json_emits_machine_readable_report(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    output_path = tmp_path / "readiness.json"
+    fake_runner = FakeRunner()
+    monkeypatch.setattr(
+        "scripts.report_gateway_publication_readiness.subprocess.run",
+        fake_runner,
+    )
+    monkeypatch.setattr(
+        "scripts.report_gateway_publication_readiness._resolve_host",
+        _resolve_ok,
+    )
+
+    exit_code = main(
+        [
+            "--gateway-host",
+            "gateway.mullusi.com",
+            "--expected-environment",
+            "pilot",
+            "--output",
+            str(output_path),
+            "--json",
+        ]
+    )
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert payload["ready"] is True
+    assert payload["readiness_report"] == str(output_path)
+    assert payload["next_command"].startswith("python scripts/dispatch_gateway_publication.py")
+    assert any(step["name"] == "dns resolution" for step in payload["steps"])
+    assert output_path.exists()
+
+
+def test_cli_json_bounds_command_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    fake_runner = FailingRunner()
+    monkeypatch.setattr(
+        "scripts.report_gateway_publication_readiness.subprocess.run",
+        fake_runner,
+    )
+
+    exit_code = main(["--expected-environment", "pilot", "--json"])
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 1
+    assert payload["ready"] is False
+    assert payload["status"] == "failed"
+    assert payload["error"] == "command failed: gh variable list: exit_code=7"
+    assert "stdout-secret-token" not in captured.out
+    assert "stderr-secret-token" not in captured.out
+
+
 def _resolve_ok(host: str) -> tuple[str, ...]:
     assert host == "gateway.mullusi.com"
     return ("203.0.113.10",)

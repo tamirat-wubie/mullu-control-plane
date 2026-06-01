@@ -552,6 +552,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--deployment-witness-secret-name", default=DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME)
     parser.add_argument("--kubeconfig-secret-name", default=DEFAULT_KUBECONFIG_SECRET_NAME)
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit the readiness report as machine-readable JSON.",
+    )
     return parser.parse_args(argv)
 
 
@@ -574,11 +579,30 @@ def main(argv: list[str] | None = None) -> int:
             deployment_witness_secret_name=args.deployment_witness_secret_name,
             kubeconfig_secret_name=args.kubeconfig_secret_name,
         )
-    except RuntimeError:
+    except RuntimeError as exc:
+        if args.json:
+            print(
+                json.dumps(
+                    {
+                        "error": str(exc),
+                        "ready": False,
+                        "status": "failed",
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+            return 1
         print("gateway publication readiness failed")
         return 1
 
     output_path = write_gateway_publication_readiness(report, Path(args.output))
+    if args.json:
+        payload = report.to_json_dict()
+        payload["readiness_report"] = str(output_path)
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return 0 if report.ready else 1
+
     print(f"readiness_report: {output_path}")
     print(f"gateway_host: {report.gateway_host}")
     print(f"gateway_url: {report.gateway_url}")
