@@ -116,6 +116,10 @@ def _bind_uao_fixture_to_universal_action_detail(
         "world_certificate_id": f"world-certificate://{record['action_id']}",
         "plan_certificate_id": f"plan-certificate://{record['action_id']}",
         "simulation_certificate_id": f"simulation-certificate://{record['action_id']}",
+        "effect_prediction_certificate_id": (
+            f"effect-prediction-certificate://{record['action_id']}"
+        ),
+        "effect_plan_id": f"effect-plan://{record['action_id']}",
         "intent_certificate_id": f"intent-certificate://{record['action_id']}",
         "intent_hash": f"typed-intent://{record['action_id']}",
         "capability_status": "accepted",
@@ -167,6 +171,10 @@ def _uao_fixture_proof_hash(universal_detail: dict) -> str:
         "world_certificate_id": universal_detail["world_certificate_id"],
         "plan_certificate_id": universal_detail["plan_certificate_id"],
         "simulation_certificate_id": universal_detail["simulation_certificate_id"],
+        "effect_prediction_certificate_id": universal_detail[
+            "effect_prediction_certificate_id"
+        ],
+        "effect_plan_id": universal_detail["effect_plan_id"],
         "intent_certificate_id": universal_detail["intent_certificate_id"],
         "intent_hash": universal_detail["intent_hash"],
         "capability_status": universal_detail["capability_status"],

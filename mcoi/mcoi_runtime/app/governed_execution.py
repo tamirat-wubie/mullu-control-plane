@@ -622,6 +622,7 @@ def _is_replayable_universal_action_orchestration_record(
     closure_state = value.get("closure_state")
     if closure_state != _UAO_CLOSURE_BY_DECISION.get(str(decision_status)):
         return False
+    effect_mismatch_escalation = _uao_record_is_effect_mismatch_escalation(value)
     closure = value.get("closure")
     if not isinstance(closure, Mapping) or closure.get("status") != closure_state:
         return False
@@ -636,7 +637,7 @@ def _is_replayable_universal_action_orchestration_record(
         return False
     required_receipt_kinds = (
         _UAO_ALLOW_REQUIRED_RECEIPT_KINDS
-        if decision_status == "allow"
+        if decision_status == "allow" or effect_mismatch_escalation
         else _UAO_BASE_REQUIRED_RECEIPT_KINDS
     )
     if not required_receipt_kinds.issubset(receipts_by_kind):
@@ -671,7 +672,7 @@ def _is_replayable_universal_action_orchestration_record(
     ):
         return False
     execution_receipt_ref = value.get("execution_receipt_ref")
-    if decision_status == "allow":
+    if decision_status == "allow" or effect_mismatch_escalation:
         return (
             _non_empty_text(execution_receipt_ref)
             and _uao_receipt_binds_stage(
@@ -932,6 +933,23 @@ def _uao_record_binds_closure_refs(
             else ()
         ):
             return False
+    elif _uao_record_is_effect_mismatch_escalation(record):
+        if reconciliation_ref is None:
+            return False
+        if reconciliation.get("status") != "mismatched":
+            return False
+        if reconciliation.get("required_for_closure") is not True:
+            return False
+        observed_outcome_ref = reconciliation.get("observed_outcome_ref")
+        if not _non_empty_text(observed_outcome_ref):
+            return False
+        execution_stage = stages_by_kind.get("execution")
+        if observed_outcome_ref not in _text_tuple(
+            execution_stage.get("output_refs")
+            if isinstance(execution_stage, Mapping)
+            else ()
+        ):
+            return False
     elif reconciliation.get("required_for_closure") is not False:
         return False
     closure_receipt = receipts_by_kind.get("closure")
@@ -941,6 +959,22 @@ def _uao_record_binds_closure_refs(
         closure_state=str(record.get("closure_state", "")),
         reconciliation_ref=reconciliation_ref,
         memory_ref=memory_ref,
+    )
+
+
+def _uao_record_is_effect_mismatch_escalation(record: Mapping[str, Any]) -> bool:
+    decision = record.get("decision")
+    reconciliation = record.get("reconciliation")
+    if not isinstance(decision, Mapping) or not isinstance(reconciliation, Mapping):
+        return False
+    return (
+        decision.get("status") == "escalate"
+        and decision.get("reason_code") == "effect_reconciliation_mismatch"
+        and decision.get("execution_allowed") is False
+        and record.get("closure_state") == "closed_escalated"
+        and reconciliation.get("status") == "mismatched"
+        and reconciliation.get("required_for_closure") is True
+        and _non_empty_text(reconciliation.get("observed_outcome_ref"))
     )
 
 

@@ -111,6 +111,15 @@ class CausalSimulator:
         would_execute = all(result.would_execute for result in step_results)
         reason = "simulation_passed" if would_execute else _first_blocking_reason(step_results)
         compensation_path = _join_compensation_paths(step_results)
+        metadata = {"simulator": "causal_simulator"}
+        if world_state is not None:
+            metadata["observed_world_state_hash"] = world_state.state_hash
+        if world_state and compiled_plan.plan_dag.state_hash != world_state.state_hash:
+            would_execute = False
+            if reason == "simulation_passed":
+                reason = "world_state_mismatch"
+            required_controls = _dedupe((*required_controls, "refresh_world_state_projection"))
+            failure_modes = _dedupe((*failure_modes, "world_state_mismatch"))
         if world_state and world_state.open_contradiction_count > 0:
             would_execute = False
             reason = "open_world_contradictions"
@@ -130,7 +139,7 @@ class CausalSimulator:
             step_results=step_results,
             plan_certificate_id=compiled_plan.certificate.certificate_id,
             state_hash=compiled_plan.plan_dag.state_hash,
-            metadata={"simulator": "causal_simulator"},
+            metadata=metadata,
         )
 
 

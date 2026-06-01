@@ -46,9 +46,13 @@ def test_deployment_closure_plan_maps_publication_blockers(tmp_path: Path) -> No
     assert plan.deployment_status_path == "DEPLOYMENT_STATUS.md"
     assert plan.plan_id.startswith("deployment-publication-closure-plan-")
     assert plan.plan_id != "deployment-publication-closure-plan-02"
-    assert plan.action_count == 2
+    assert plan.action_count == 3
     assert str(tmp_path) not in json.dumps(plan.as_dict(), sort_keys=True)
-    assert plan.blockers == ("deployment_witness_not_published", "production_health_not_declared")
+    assert plan.blockers == (
+        "deployment_witness_not_published",
+        "production_health_not_declared",
+        "deployment_dns_not_verified",
+    )
     assert actions_by_blocker["deployment_witness_not_published"].approval_required is True
     assert actions_by_blocker["deployment_witness_not_published"].risk_level == "high"
     assert "publish_gateway_publication.py" in actions_by_blocker["deployment_witness_not_published"].command
@@ -67,12 +71,12 @@ def test_deployment_closure_plan_preserves_unknown_deployment_blocker(tmp_path: 
         readiness_path,
         **_missing_receipt_paths(tmp_path),
     )
-    action = plan.actions[0]
+    actions_by_blocker = {action.blocker: action for action in plan.actions}
 
-    assert plan.action_count == 1
-    assert action.blocker == "deployment_custom_unknown"
-    assert action.action_type == "manual-review"
-    assert action.approval_required is True
+    assert plan.action_count == 2
+    assert actions_by_blocker["deployment_custom_unknown"].action_type == "manual-review"
+    assert actions_by_blocker["deployment_custom_unknown"].approval_required is True
+    assert actions_by_blocker["deployment_dns_not_verified"].action_type == "dns-verification"
 
 
 def test_deployment_closure_plan_maps_gateway_readiness_steps(tmp_path: Path) -> None:
@@ -164,7 +168,7 @@ def test_deployment_closure_plan_maps_responsibility_debt_blockers(tmp_path: Pat
     )
     actions_by_blocker = {action.blocker: action for action in plan.actions}
 
-    assert plan.action_count == 2
+    assert plan.action_count == 3
     assert actions_by_blocker[
         "deployment_runtime_responsibility_debt_present"
     ].action_type == "responsibility-debt-closure"
@@ -174,6 +178,7 @@ def test_deployment_closure_plan_maps_responsibility_debt_blockers(tmp_path: Pat
     assert "/authority/responsibility" in actions_by_blocker[
         "deployment_authority_responsibility_debt_present"
     ].command
+    assert actions_by_blocker["deployment_dns_not_verified"].approval_required is True
 
 
 def test_deployment_closure_plan_maps_kubeconfig_secret_step(tmp_path: Path) -> None:
@@ -198,10 +203,14 @@ def test_deployment_closure_plan_maps_kubeconfig_secret_step(tmp_path: Path) -> 
         readiness_path,
         **_missing_receipt_paths(tmp_path),
     )
-    action = plan.actions[0]
+    actions_by_blocker = {action.blocker: action for action in plan.actions}
+    action = actions_by_blocker["deployment_kubeconfig_secret_missing"]
 
-    assert plan.action_count == 1
-    assert plan.blockers == ("deployment_kubeconfig_secret_missing",)
+    assert plan.action_count == 2
+    assert plan.blockers == (
+        "deployment_kubeconfig_secret_missing",
+        "deployment_dns_not_verified",
+    )
     assert action.action_id == "provision-gateway-publication-kubeconfig"
     assert action.action_type == "secret-binding"
     assert action.approval_required is True
@@ -242,10 +251,14 @@ def test_deployment_closure_plan_maps_upstream_blocker_receipt(tmp_path: Path) -
         dns_target_binding_receipt_path=tmp_path / "missing_dns_target_binding_receipt.json",
         dns_resolution_receipt_path=tmp_path / "missing_dns_resolution_receipt.json",
     )
-    action = plan.actions[0]
+    actions_by_blocker = {action.blocker: action for action in plan.actions}
+    action = actions_by_blocker["deployment_upstream_api_gate_not_ready"]
 
-    assert plan.action_count == 1
-    assert plan.blockers == ("deployment_upstream_api_gate_not_ready",)
+    assert plan.action_count == 2
+    assert plan.blockers == (
+        "deployment_upstream_api_gate_not_ready",
+        "deployment_dns_not_verified",
+    )
     assert action.action_id == "close-upstream-api-readiness-gate"
     assert action.action_type == "upstream-gate-closure"
     assert action.approval_required is True
@@ -287,7 +300,7 @@ def test_deployment_closure_plan_writer_and_cli_emit_json(tmp_path: Path, capsys
 
     assert written == output_path
     assert exit_code == 0
-    assert payload["action_count"] == 2
+    assert payload["action_count"] == 3
     assert stdout_payload["plan_id"] == payload["plan_id"]
     assert "production_health_not_declared" in payload["blockers"]
 

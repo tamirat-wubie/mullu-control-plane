@@ -8,7 +8,7 @@ Invariants:
     and accepted capability admission.
   - Open world-state contradictions block execution before simulation output is
     treated as actionable.
-  - Abort, escalation, and missing capability decisions fail closed.
+  - Abort, escalation, approval-required, and missing capability decisions fail closed.
   - Successful dispatch can be closed and admitted to learning only through
     explicit verification, reconciliation, certificate, and memory binding.
 """
@@ -87,7 +87,9 @@ from mcoi_runtime.core.terminal_closure import TerminalClosureCertifier
 from mcoi_runtime.core.world_state import WorldStateEngine
 
 
-_BLOCKING_SIMULATION_VERDICTS = frozenset({VerdictType.ABORT, VerdictType.ESCALATE})
+_BLOCKING_SIMULATION_VERDICTS = frozenset(
+    {VerdictType.ABORT, VerdictType.APPROVAL_REQUIRED, VerdictType.ESCALATE}
+)
 
 
 @dataclass(frozen=True, slots=True)

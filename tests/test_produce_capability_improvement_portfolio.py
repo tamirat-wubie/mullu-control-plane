@@ -118,6 +118,46 @@ def test_produce_capability_improvement_portfolio_cli_outputs_json(tmp_path: Pat
     assert len(payload["prioritized_capability_ids"]) == 2
 
 
+def test_agentic_control_core_profile_prioritizes_governed_agentic_skills(tmp_path: Path) -> None:
+    output_path = tmp_path / "agentic_control_core_portfolio.json"
+
+    result = produce_capability_improvement_portfolio(
+        output_path=output_path,
+        generated_at=DEFAULT_GENERATED_AT,
+        profile="agentic-control-core",
+        candidate_limit=None,
+    )
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    prioritized_ids = payload["prioritized_capability_ids"]
+
+    assert result.passed is True
+    assert result.profile == "agentic-control-core"
+    assert result.plan_count == 12
+    assert prioritized_ids == list(result.prioritized_capability_ids)
+    assert "agentic_control.math_algorithm.analyze" in prioritized_ids
+    assert "agentic_control.product_management.plan" in prioritized_ids
+    assert "agentic_control.code_change.plan" in prioritized_ids
+    assert "agentic_control.resource_budget.bound" in prioritized_ids
+    assert all(plan["activation_blocked"] is True for plan in payload["plans"])
+    assert all(plan["operator_review_required"] is True for plan in payload["plans"])
+
+
+def test_unknown_capability_improvement_profile_returns_bounded_failure(tmp_path: Path) -> None:
+    output_path = tmp_path / "unknown_profile_portfolio.json"
+
+    result = produce_capability_improvement_portfolio(
+        output_path=output_path,
+        generated_at=DEFAULT_GENERATED_AT,
+        profile="unknown-profile",
+    )
+
+    assert result.passed is False
+    assert result.profile == "unknown-profile"
+    assert result.blockers == ("portfolio_profile_unknown",)
+    assert result.validation_errors == ()
+    assert not output_path.exists()
+
+
 def _write_source_plans(tmp_path: Path) -> tuple[Path, Path, Path]:
     readiness_path = tmp_path / "readiness.json"
     adapter_plan_path = tmp_path / "adapter_closure_plan.json"
