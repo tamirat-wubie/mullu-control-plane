@@ -117,6 +117,10 @@ def test_agentic_control_skill_plans_telemetry_triage_before_code_release_and_ev
 
     assert "agentic_control.code_change.plan" in action_order
     assert "agentic_control.telemetry_triage.plan" in action_order
+    assert "agentic_control.interrogation.plan" in action_order
+    assert "agentic_control.self_audit.refine" in action_order
+    assert "agentic_control.memory_admission.plan" in action_order
+    assert "agentic_control.incident_recovery.plan" in action_order
     assert "agentic_control.release_handoff.plan" in action_order
     assert all(
         step_order.index(dependency) < step_order.index(step.step_id)
@@ -124,6 +128,18 @@ def test_agentic_control_skill_plans_telemetry_triage_before_code_release_and_ev
         for dependency in step.depends_on
     )
     assert action_order.index("agentic_control.verification.plan") < action_order.index(
+        "agentic_control.interrogation.plan"
+    )
+    assert action_order.index("agentic_control.interrogation.plan") < action_order.index(
+        "agentic_control.self_audit.refine"
+    )
+    assert action_order.index("agentic_control.self_audit.refine") < action_order.index(
+        "agentic_control.memory_admission.plan"
+    )
+    assert action_order.index("agentic_control.memory_admission.plan") < action_order.index(
+        "agentic_control.incident_recovery.plan"
+    )
+    assert action_order.index("agentic_control.incident_recovery.plan") < action_order.index(
         "agentic_control.telemetry_triage.plan"
     )
     assert action_order.index("agentic_control.telemetry_triage.plan") < action_order.index(
@@ -135,12 +151,44 @@ def test_agentic_control_skill_plans_telemetry_triage_before_code_release_and_ev
     assert action_order.index("agentic_control.release_handoff.plan") < action_order.index(
         "agentic_control.evidence.append"
     )
-    assert steps["plan_telemetry_triage"].depends_on == ("plan_verification",)
+    assert steps["plan_interrogation"].depends_on == ("plan_verification",)
+    assert steps["refine_weakness_gaps"].depends_on == ("plan_interrogation",)
+    assert steps["plan_memory_admission"].depends_on == ("refine_weakness_gaps",)
+    assert steps["plan_incident_recovery"].depends_on == ("refine_weakness_gaps", "plan_memory_admission")
+    assert steps["plan_telemetry_triage"].depends_on == (
+        "plan_verification",
+        "refine_weakness_gaps",
+        "plan_incident_recovery",
+    )
     assert steps["plan_code_change"].depends_on == ("plan_verification", "plan_telemetry_triage")
     assert steps["plan_release_handoff"].depends_on == ("plan_code_change",)
     assert steps["append_evidence"].depends_on == ("plan_release_handoff",)
+    assert steps["plan_interrogation"].input_bindings["verification_plan_ref"] == (
+        "plan_verification.verification_plan_ref"
+    )
+    assert steps["refine_weakness_gaps"].input_bindings["verification_plan_ref"] == (
+        "plan_verification.verification_plan_ref"
+    )
+    assert steps["refine_weakness_gaps"].input_bindings["interrogation_plan_ref"] == (
+        "plan_interrogation.interrogation_plan_ref"
+    )
+    assert steps["plan_memory_admission"].input_bindings["refinement_plan_ref"] == (
+        "refine_weakness_gaps.refinement_plan_ref"
+    )
+    assert steps["plan_incident_recovery"].input_bindings["refinement_plan_ref"] == (
+        "refine_weakness_gaps.refinement_plan_ref"
+    )
+    assert steps["plan_incident_recovery"].input_bindings["memory_admission_plan_ref"] == (
+        "plan_memory_admission.memory_admission_plan_ref"
+    )
     assert steps["plan_telemetry_triage"].input_bindings["verification_plan_ref"] == (
         "plan_verification.verification_plan_ref"
+    )
+    assert steps["plan_telemetry_triage"].input_bindings["refinement_plan_ref"] == (
+        "refine_weakness_gaps.refinement_plan_ref"
+    )
+    assert steps["plan_telemetry_triage"].input_bindings["incident_recovery_plan_ref"] == (
+        "plan_incident_recovery.incident_recovery_plan_ref"
     )
     assert steps["plan_code_change"].input_bindings["telemetry_triage_plan_ref"] == (
         "plan_telemetry_triage.telemetry_triage_plan_ref"
@@ -150,6 +198,18 @@ def test_agentic_control_skill_plans_telemetry_triage_before_code_release_and_ev
     )
     assert steps["append_evidence"].input_bindings["code_change_plan_ref"] == (
         "plan_code_change.code_change_plan_ref"
+    )
+    assert steps["append_evidence"].input_bindings["interrogation_plan_ref"] == (
+        "plan_interrogation.interrogation_plan_ref"
+    )
+    assert steps["append_evidence"].input_bindings["refinement_plan_ref"] == (
+        "refine_weakness_gaps.refinement_plan_ref"
+    )
+    assert steps["append_evidence"].input_bindings["memory_admission_plan_ref"] == (
+        "plan_memory_admission.memory_admission_plan_ref"
+    )
+    assert steps["append_evidence"].input_bindings["incident_recovery_plan_ref"] == (
+        "plan_incident_recovery.incident_recovery_plan_ref"
     )
     assert steps["append_evidence"].input_bindings["telemetry_triage_plan_ref"] == (
         "plan_telemetry_triage.telemetry_triage_plan_ref"

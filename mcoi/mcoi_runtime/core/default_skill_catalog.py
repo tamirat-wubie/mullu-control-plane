@@ -734,11 +734,57 @@ def _agentic_control_autonomous_operations_skill() -> SkillDescriptor:
                 provider_class_required="agentic_control_plane",
             ),
             SkillStep(
+                step_id="plan_interrogation",
+                name="Plan evidence interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_verification",),
+                input_bindings={"verification_plan_ref": "plan_verification.verification_plan_ref"},
+                output_keys=("interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_weakness_gaps",
+                name="Refine weakness and gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_interrogation",),
+                input_bindings={
+                    "verification_plan_ref": "plan_verification.verification_plan_ref",
+                    "interrogation_plan_ref": "plan_interrogation.interrogation_plan_ref",
+                },
+                output_keys=("refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_memory_admission",
+                name="Plan memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_weakness_gaps",),
+                input_bindings={"refinement_plan_ref": "refine_weakness_gaps.refinement_plan_ref"},
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_incident_recovery",
+                name="Plan incident recovery",
+                action_type="agentic_control.incident_recovery.plan",
+                depends_on=("refine_weakness_gaps", "plan_memory_admission"),
+                input_bindings={
+                    "refinement_plan_ref": "refine_weakness_gaps.refinement_plan_ref",
+                    "memory_admission_plan_ref": "plan_memory_admission.memory_admission_plan_ref",
+                },
+                output_keys=("incident_recovery_plan_ref", "containment_actions", "verification_steps"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
                 step_id="plan_telemetry_triage",
                 name="Plan telemetry triage",
                 action_type="agentic_control.telemetry_triage.plan",
-                depends_on=("plan_verification",),
-                input_bindings={"verification_plan_ref": "plan_verification.verification_plan_ref"},
+                depends_on=("plan_verification", "refine_weakness_gaps", "plan_incident_recovery"),
+                input_bindings={
+                    "verification_plan_ref": "plan_verification.verification_plan_ref",
+                    "refinement_plan_ref": "refine_weakness_gaps.refinement_plan_ref",
+                    "incident_recovery_plan_ref": "plan_incident_recovery.incident_recovery_plan_ref",
+                },
                 output_keys=(
                     "telemetry_triage_plan_ref",
                     "monitored_surfaces",
@@ -775,6 +821,10 @@ def _agentic_control_autonomous_operations_skill() -> SkillDescriptor:
                 depends_on=("plan_release_handoff",),
                 input_bindings={
                     "verification_plan_ref": "plan_verification.verification_plan_ref",
+                    "interrogation_plan_ref": "plan_interrogation.interrogation_plan_ref",
+                    "refinement_plan_ref": "refine_weakness_gaps.refinement_plan_ref",
+                    "memory_admission_plan_ref": "plan_memory_admission.memory_admission_plan_ref",
+                    "incident_recovery_plan_ref": "plan_incident_recovery.incident_recovery_plan_ref",
                     "telemetry_triage_plan_ref": "plan_telemetry_triage.telemetry_triage_plan_ref",
                     "code_change_plan_ref": "plan_code_change.code_change_plan_ref",
                     "release_handoff_plan_ref": "plan_release_handoff.release_handoff_plan_ref",
@@ -787,8 +837,10 @@ def _agentic_control_autonomous_operations_skill() -> SkillDescriptor:
         description=(
             "Composes mission control, prioritization, governance gating, resource "
             "bounds, algorithm review, threat modeling, swarm coordination, product "
-            "planning, verification planning, telemetry-triage planning, code-change "
-            "planning, release-handoff planning, and evidence ledger closure."
+            "planning, verification planning, evidence interrogation, weakness "
+            "refinement, memory-admission planning, incident-recovery planning, "
+            "telemetry-triage planning, code-change planning, release-handoff "
+            "planning, and evidence ledger closure."
         ),
         confidence=0.25,
         metadata={**_NO_NEW_AUTHORITY, "risk_floor": "high", "approval_expected": True},
