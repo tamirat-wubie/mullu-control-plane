@@ -23,7 +23,7 @@ def _working_note(**overrides: object) -> dict[str, object]:
         "source_ref": "test:runtime",
         "proof_state": "Pass",
         "trust_zone": "workspace",
-        "expires_at": "2026-06-02T00:00:00+00:00",
+        "expires_at": "2126-06-02T00:00:00+00:00",
         "evidence_refs": ["test_note_memory_api"],
     }
     value.update(overrides)
@@ -245,7 +245,7 @@ def test_runtime_rejects_non_text_retrieval_now(tmp_path) -> None:
 
 def test_runtime_rejected_delta_expiry_and_rebuild_emit_receipts(tmp_path) -> None:
     runtime = NoteMemoryRuntime.from_path(tmp_path / "notes")
-    runtime.capture_note(_working_note(expires_at="2026-06-01T00:00:00+00:00"))
+    runtime.capture_note(_working_note(expires_at="2126-06-01T00:00:00+00:00"))
 
     rejected_delta = runtime.record_rejected_delta(
         {
@@ -254,7 +254,7 @@ def test_runtime_rejected_delta_expiry_and_rebuild_emit_receipts(tmp_path) -> No
             "evidence_refs": ["blocked"],
         }
     ).to_dict()
-    expired = runtime.expire_temporary_notes({"now": "2026-06-02T00:00:00+00:00"}).to_dict()
+    expired = runtime.expire_temporary_notes({"now": "2126-06-02T00:00:00+00:00"}).to_dict()
     rebuilt = runtime.rebuild_index().to_dict()
 
     assert rejected_delta["ok"] is True
