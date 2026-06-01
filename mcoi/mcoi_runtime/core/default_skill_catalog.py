@@ -73,6 +73,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _telemetry_monitoring_triage_skill(),
         _agentic_control_project_discipline_mesh_skill(),
         _agentic_control_product_governor_skill(),
+        _agentic_control_management_governor_skill(),
         _agentic_control_resource_governor_skill(),
         _agentic_control_policy_governor_skill(),
         _agentic_control_temporal_governor_skill(),
@@ -881,6 +882,139 @@ def _agentic_control_product_governor_skill() -> SkillDescriptor:
                 "product_boundary_ref",
                 "product_plan_ref",
                 "success_metrics",
+                "handoff_risks",
+                "closure_rule",
+            ),
+        },
+    )
+
+
+def _agentic_control_management_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.management_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic management governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_management_boundary",
+                name="Define management boundary",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "management_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_management_controls",
+                name="Rank management controls",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_management_boundary",),
+                input_bindings={"mission_contract_ref": "define_management_boundary.mission_contract_ref"},
+                output_keys=("management_control_order_ref", "delegation_blockers", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_management_governance",
+                name="Evaluate management governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_management_controls",),
+                input_bindings={"priority_order_ref": "rank_management_controls.management_control_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_actions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_management_budget",
+                name="Bound management budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_management_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_management_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "halt_thresholds", "resource_floor"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_management_cadence",
+                name="Plan management cadence",
+                action_type="agentic_control.product_management.plan",
+                depends_on=("bound_management_budget",),
+                input_bindings={
+                    "management_boundary_ref": "define_management_boundary.management_boundary_ref",
+                    "gate_decision_ref": "evaluate_management_governance.gate_decision_ref",
+                    "budget_envelope_ref": "bound_management_budget.budget_envelope_ref",
+                },
+                output_keys=("management_plan_ref", "owner_map_ref", "status_cadence", "handoff_risks"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_management_verification",
+                name="Plan management verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("plan_management_cadence",),
+                input_bindings={"management_plan_ref": "plan_management_cadence.management_plan_ref"},
+                output_keys=("management_verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_management_interrogation",
+                name="Plan management interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_management_verification",),
+                input_bindings={
+                    "verification_plan_ref": "plan_management_verification.management_verification_plan_ref"
+                },
+                output_keys=("management_interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_management_gaps",
+                name="Refine management gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_management_interrogation",),
+                input_bindings={
+                    "management_plan_ref": "plan_management_cadence.management_plan_ref",
+                    "verification_plan_ref": "plan_management_verification.management_verification_plan_ref",
+                    "interrogation_plan_ref": (
+                        "plan_management_interrogation.management_interrogation_plan_ref"
+                    ),
+                },
+                output_keys=("management_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_management_memory_admission",
+                name="Plan management memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_management_gaps",),
+                input_bindings={
+                    "refinement_plan_ref": "refine_management_gaps.management_refinement_plan_ref"
+                },
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes management boundary definition, delegation and cadence "
+            "ranking, governance gating, budget bounding, owner-map planning, "
+            "status cadence planning, verification, interrogation, management-gap "
+            "refinement, and memory-admission planning before autonomous work is "
+            "delegated."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "management_governor": True,
+            "management_surfaces": (
+                "management_boundary_ref",
+                "management_plan_ref",
+                "owner_map_ref",
+                "status_cadence",
                 "handoff_risks",
                 "closure_rule",
             ),

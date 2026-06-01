@@ -38,6 +38,7 @@ EXPECTED_SKILL_IDS = (
     "telemetry.monitoring_triage.v1",
     "agentic_control.project_discipline_mesh.v1",
     "agentic_control.product_governor.v1",
+    "agentic_control.management_governor.v1",
     "agentic_control.resource_governor.v1",
     "agentic_control.policy_governor.v1",
     "agentic_control.temporal_governor.v1",
@@ -89,6 +90,7 @@ def test_default_skill_effect_classes_match_strongest_workflow_effect() -> None:
     assert descriptors["telemetry.monitoring_triage.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.project_discipline_mesh.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.product_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
+    assert descriptors["agentic_control.management_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.resource_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.policy_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.temporal_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
@@ -312,6 +314,78 @@ def test_agentic_product_governor_plans_management_without_effects() -> None:
     )
     assert steps["plan_product_memory_admission"].input_bindings["refinement_plan_ref"] == (
         "refine_product_gaps.product_refinement_plan_ref"
+    )
+
+
+def test_agentic_management_governor_plans_delegation_without_effects() -> None:
+    descriptor = next(
+        descriptor
+        for descriptor in default_skill_descriptors()
+        if descriptor.skill_id == "agentic_control.management_governor.v1"
+    )
+    steps = {step.step_id: step for step in descriptor.steps}
+    action_order = tuple(step.action_type for step in descriptor.steps)
+    step_order = tuple(step.step_id for step in descriptor.steps)
+
+    assert descriptor.effect_class is EffectClass.EXTERNAL_READ
+    assert descriptor.metadata["management_governor"] is True
+    assert descriptor.metadata["grants_new_capability_authority"] is False
+    assert descriptor.metadata["management_surfaces"] == (
+        "management_boundary_ref",
+        "management_plan_ref",
+        "owner_map_ref",
+        "status_cadence",
+        "handoff_risks",
+        "closure_rule",
+    )
+    assert action_order == (
+        "agentic_control.mission.define",
+        "agentic_control.priority.rank",
+        "agentic_control.governance_gate.evaluate",
+        "agentic_control.resource_budget.bound",
+        "agentic_control.product_management.plan",
+        "agentic_control.verification.plan",
+        "agentic_control.interrogation.plan",
+        "agentic_control.self_audit.refine",
+        "agentic_control.memory_admission.plan",
+    )
+    assert "agentic_control.code_change.plan" not in action_order
+    assert "agentic_control.release_handoff.plan" not in action_order
+    assert "agentic_control.evidence.append" not in action_order
+    assert all(
+        step_order.index(dependency) < step_order.index(step.step_id)
+        for step in descriptor.steps
+        for dependency in step.depends_on
+    )
+    assert steps["rank_management_controls"].input_bindings["mission_contract_ref"] == (
+        "define_management_boundary.mission_contract_ref"
+    )
+    assert steps["evaluate_management_governance"].input_bindings["priority_order_ref"] == (
+        "rank_management_controls.management_control_order_ref"
+    )
+    assert steps["bound_management_budget"].input_bindings["gate_decision_ref"] == (
+        "evaluate_management_governance.gate_decision_ref"
+    )
+    assert steps["plan_management_cadence"].input_bindings["management_boundary_ref"] == (
+        "define_management_boundary.management_boundary_ref"
+    )
+    assert steps["plan_management_cadence"].input_bindings["gate_decision_ref"] == (
+        "evaluate_management_governance.gate_decision_ref"
+    )
+    assert steps["plan_management_cadence"].input_bindings["budget_envelope_ref"] == (
+        "bound_management_budget.budget_envelope_ref"
+    )
+    assert steps["plan_management_verification"].input_bindings["management_plan_ref"] == (
+        "plan_management_cadence.management_plan_ref"
+    )
+    assert steps["plan_management_interrogation"].input_bindings["verification_plan_ref"] == (
+        "plan_management_verification.management_verification_plan_ref"
+    )
+    assert steps["refine_management_gaps"].input_bindings["management_plan_ref"] == (
+        "plan_management_cadence.management_plan_ref"
+    )
+    assert steps["plan_management_memory_admission"].input_bindings["refinement_plan_ref"] == (
+        "refine_management_gaps.management_refinement_plan_ref"
     )
 
 
@@ -1437,6 +1511,8 @@ def test_bootstrap_installs_default_skill_catalog() -> None:
     assert runtime.skill_registry.get("agentic_control.project_discipline_mesh.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.product_governor.v1").metadata["risk_floor"] == "medium"
     assert runtime.skill_registry.get("agentic_control.product_governor.v1").effect_class is EffectClass.EXTERNAL_READ
+    assert runtime.skill_registry.get("agentic_control.management_governor.v1").metadata["risk_floor"] == "medium"
+    assert runtime.skill_registry.get("agentic_control.management_governor.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.resource_governor.v1").metadata["risk_floor"] == "medium"
     assert runtime.skill_registry.get("agentic_control.resource_governor.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.policy_governor.v1").metadata["risk_floor"] == "medium"
