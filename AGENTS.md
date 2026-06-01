@@ -261,3 +261,21 @@ The preflight receipt contract is validated with:
 ```powershell
 python scripts/validate_workspace_governance_preflight_receipt_contract.py
 ```
+
+Governance artifacts can be inventoried with:
+
+```powershell
+python scripts/report_workspace_governance_inventory.py
+```
+
+Governance artifact hashes can be reported with:
+
+```powershell
+python scripts/report_workspace_governance_integrity.py
+```
+
+The governance artifact integrity report contract is validated with:
+
+```powershell
+python scripts/validate_workspace_governance_integrity_report_contract.py
+```

@@ -1,5 +1,5 @@
 {
-  "check_count": 17,
+  "check_count": 20,
   "generated_at_epoch": 1780272000.0,
   "checks": [
     {
@@ -98,6 +98,39 @@
         "scripts/validate_workspace_governance_preflight_receipt.py"
       ],
       "name": "workspace_governance_preflight_receipt_example",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/report_workspace_governance_inventory.py"
+      ],
+      "name": "workspace_governance_inventory_report",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/report_workspace_governance_integrity.py"
+      ],
+      "name": "workspace_governance_integrity_report",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_workspace_governance_integrity_report_contract.py"
+      ],
+      "name": "workspace_governance_integrity_report_contract",
       "passed": true,
       "return_code": 0,
       "stderr": "",

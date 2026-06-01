@@ -1049,6 +1049,12 @@
       "surface": "governance"
     },
     {
+      "schema_id": "workspace-governance-integrity-report",
+      "path": "schemas/workspace_governance_integrity_report.schema.json",
+      "urn": "urn:mullusi:schema:workspace-governance-integrity-report:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "finding-receipt",
       "path": "schemas/finding_receipt.schema.json",
       "urn": "urn:mullusi:schema:finding-receipt:1",

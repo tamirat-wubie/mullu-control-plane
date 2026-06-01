@@ -1,0 +1,21 @@
+{
+  "artifact_count": 1,
+  "artifacts": [
+    {
+      "exists": true,
+      "issue": null,
+      "name": "synthetic_governance_artifact",
+      "path": "docs/workspace-governance-integrity-report-example.json",
+      "purpose": "Synthetic integrity report example for contract validation.",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "size_bytes": 1
+    }
+  ],
+  "hashed_count": 1,
+  "issue_count": 0,
+  "missing_count": 0,
+  "report_id": "workspace_governance_integrity",
+  "report_is_not_terminal_closure": true,
+  "status": "passed",
+  "terminal_closure_required": true
+}

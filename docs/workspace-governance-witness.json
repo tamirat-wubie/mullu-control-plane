@@ -1,0 +1,208 @@
+{
+  "artifact_count": 37,
+  "artifacts": [
+    {
+      "name": "agents_policy",
+      "path": "AGENTS.md",
+      "purpose": "Repository-local instruction surface for Mullusi symbolic intelligence governance."
+    },
+    {
+      "name": "pull_request_template",
+      "path": ".github/pull_request_template.md",
+      "purpose": "Pull request evidence surface for SDLC and governance closure."
+    },
+    {
+      "name": "ci_workflow",
+      "path": ".github/workflows/ci.yml",
+      "purpose": "Continuous integration workflow containing the SDLC governance gate."
+    },
+    {
+      "name": "workspace_governance_witness",
+      "path": "docs/workspace-governance-witness.json",
+      "purpose": "Machine-readable artifact inventory for repository-local governance checks."
+    },
+    {
+      "name": "workspace_governance_inventory_reporter",
+      "path": "scripts/report_workspace_governance_inventory.py",
+      "purpose": "Read-only reporter for governance witness artifact presence."
+    },
+    {
+      "name": "workspace_governance_integrity_reporter",
+      "path": "scripts/report_workspace_governance_integrity.py",
+      "purpose": "Read-only reporter for governance witness artifact SHA-256 digests."
+    },
+    {
+      "name": "workspace_governance_integrity_report_schema",
+      "path": "schemas/workspace_governance_integrity_report.schema.json",
+      "purpose": "JSON schema for machine-readable governance artifact integrity reports."
+    },
+    {
+      "name": "workspace_governance_integrity_report_example",
+      "path": "docs/workspace-governance-integrity-report-example.json",
+      "purpose": "Stable saved integrity report example for contract validation."
+    },
+    {
+      "name": "workspace_governance_integrity_report_contract_validator",
+      "path": "scripts/validate_workspace_governance_integrity_report_contract.py",
+      "purpose": "Read-only validator for integrity report schema, example, and current output."
+    },
+    {
+      "name": "workspace_governance_preflight_runner",
+      "path": "scripts/run_workspace_governance_checks.py",
+      "purpose": "Repository-local governance preflight orchestration runner."
+    },
+    {
+      "name": "workspace_governance_preflight_receipt_schema",
+      "path": "schemas/workspace_governance_preflight_receipt.schema.json",
+      "purpose": "JSON schema for machine-readable workspace preflight receipts."
+    },
+    {
+      "name": "workspace_governance_preflight_receipt_example",
+      "path": "docs/workspace-governance-preflight-receipt-example.json",
+      "purpose": "Stable saved preflight receipt example for file-level validation."
+    },
+    {
+      "name": "workspace_governance_preflight_receipt_contract_validator",
+      "path": "scripts/validate_workspace_governance_preflight_receipt_contract.py",
+      "purpose": "Read-only validator for synthetic pass and fail preflight receipt contracts."
+    },
+    {
+      "name": "workspace_governance_preflight_receipt_validator",
+      "path": "scripts/validate_workspace_governance_preflight_receipt.py",
+      "purpose": "Read-only validator for saved preflight receipt JSON files."
+    },
+    {
+      "name": "agents_policy_validator",
+      "path": "scripts/validate_agents_governance.py",
+      "purpose": "Read-only validator for the AGENTS.md governance policy surface."
+    },
+    {
+      "name": "protocol_manifest_validator",
+      "path": "scripts/validate_protocol_manifest.py",
+      "purpose": "Read-only validator for public schema manifest closure."
+    },
+    {
+      "name": "logic_governance_application_validator",
+      "path": "scripts/validate_logic_governance_application.py",
+      "purpose": "Read-only validator for logic governance application claims."
+    },
+    {
+      "name": "public_repository_surface_validator",
+      "path": "scripts/validate_public_repository_surface.py",
+      "purpose": "Read-only validator for public repository surface boundaries."
+    },
+    {
+      "name": "proprietary_boundary_validator",
+      "path": "scripts/validate_proprietary_boundary.py",
+      "purpose": "Read-only validator for proprietary boundary invariants."
+    },
+    {
+      "name": "release_status_validator",
+      "path": "scripts/validate_release_status.py",
+      "purpose": "Read-only validator for repository release status claims."
+    },
+    {
+      "name": "universal_action_orchestration_schema",
+      "path": "schemas/universal_action_orchestration.schema.json",
+      "purpose": "JSON schema for Universal Action Orchestration records."
+    },
+    {
+      "name": "universal_action_orchestration_validator",
+      "path": "scripts/validate_universal_action_orchestration.py",
+      "purpose": "Read-only validator for Universal Action Orchestration schema and examples."
+    },
+    {
+      "name": "universal_action_orchestration_receipt_contract_validator",
+      "path": "scripts/validate_universal_action_orchestration_receipt_contract.py",
+      "purpose": "Read-only validator for Universal Action Orchestration validation receipts."
+    },
+    {
+      "name": "universal_action_orchestration_receipt_validator",
+      "path": "scripts/validate_universal_action_orchestration_receipt.py",
+      "purpose": "Read-only validator for saved Universal Action Orchestration validation receipts."
+    },
+    {
+      "name": "sdlc_contract_document",
+      "path": "docs/SDLC.md",
+      "purpose": "Canonical SDLC doctrine and lifecycle artifact contract."
+    },
+    {
+      "name": "sdlc_pr_enforcement_document",
+      "path": "docs/SDLC_PR_ENFORCEMENT.md",
+      "purpose": "Pull request enforcement doctrine for SDLC and SDLD evidence."
+    },
+    {
+      "name": "sdlc_branch_ruleset_witness",
+      "path": "docs/main-protection-ruleset-witness.json",
+      "purpose": "Machine-readable witness for main branch protection ruleset status contexts."
+    },
+    {
+      "name": "sdlc_artifact_validator",
+      "path": "scripts/validate_sdlc_artifact.py",
+      "purpose": "Read-only validator for canonical SDLC artifact-chain closure."
+    },
+    {
+      "name": "sdlc_state_machine_validator",
+      "path": "scripts/validate_sdlc_state_machine.py",
+      "purpose": "Read-only validator for SDLC state transition evidence."
+    },
+    {
+      "name": "sdlc_release_readiness_validator",
+      "path": "scripts/validate_sdlc_release_readiness.py",
+      "purpose": "Read-only validator for strict SDLC release readiness closure."
+    },
+    {
+      "name": "sdlc_security_review_validator",
+      "path": "scripts/validate_sdlc_security_review.py",
+      "purpose": "Read-only validator for SDLC security review evidence."
+    },
+    {
+      "name": "sdlc_pr_enforcement_validator",
+      "path": "scripts/validate_sdlc_pr_enforcement.py",
+      "purpose": "Read-only validator for SDLC PR enforcement surfaces."
+    },
+    {
+      "name": "workspace_governance_inventory_tests",
+      "path": "tests/test_report_workspace_governance_inventory.py",
+      "purpose": "Regression tests for governance inventory reporting."
+    },
+    {
+      "name": "workspace_governance_integrity_tests",
+      "path": "tests/test_report_workspace_governance_integrity.py",
+      "purpose": "Regression tests for governance integrity reporting."
+    },
+    {
+      "name": "workspace_governance_integrity_report_contract_tests",
+      "path": "tests/test_validate_workspace_governance_integrity_report_contract.py",
+      "purpose": "Regression tests for integrity report contract validation."
+    },
+    {
+      "name": "workspace_governance_preflight_tests",
+      "path": "tests/test_run_workspace_governance_checks.py",
+      "purpose": "Regression tests for governance preflight orchestration."
+    },
+    {
+      "name": "sdlc_artifact_tests",
+      "path": "tests/test_validate_sdlc_artifact.py",
+      "purpose": "Regression tests for canonical SDLC artifact-chain closure."
+    }
+  ],
+  "block_conditions": [
+    "witness references a missing artifact",
+    "witness artifact path escapes the repository",
+    "governance integrity report omits a digest for an existing artifact",
+    "governance integrity report counts contradict artifact records",
+    "workspace governance preflight omits inventory or integrity validation"
+  ],
+  "capability": "repository_local_workspace_governance_surface",
+  "created_at": "2026-06-01T00:00:00Z",
+  "governance_scope": [
+    "agents_policy_surface",
+    "workspace_governance_preflight",
+    "governance_artifact_inventory",
+    "governance_artifact_integrity",
+    "sdlc_pr_enforcement"
+  ],
+  "release_status": "ready_for_repository_preflight_use",
+  "witness_id": "control_plane_workspace_governance_witness_001"
+}
