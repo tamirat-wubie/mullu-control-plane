@@ -817,6 +817,8 @@ def _recomputed_universal_action_proof_hash(
         "world_certificate_id",
         "plan_certificate_id",
         "simulation_certificate_id",
+        "effect_prediction_certificate_id",
+        "effect_plan_id",
         "intent_certificate_id",
         "intent_hash",
         "capability_status",
@@ -846,6 +848,10 @@ def _recomputed_universal_action_proof_hash(
         "world_certificate_id": universal_detail["world_certificate_id"],
         "plan_certificate_id": universal_detail["plan_certificate_id"],
         "simulation_certificate_id": universal_detail["simulation_certificate_id"],
+        "effect_prediction_certificate_id": universal_detail[
+            "effect_prediction_certificate_id"
+        ],
+        "effect_plan_id": universal_detail["effect_plan_id"],
         "intent_certificate_id": universal_detail["intent_certificate_id"],
         "intent_hash": universal_detail["intent_hash"],
         "capability_status": universal_detail["capability_status"],
@@ -1205,6 +1211,16 @@ def _universal_action_transition_detail(
         "simulation_certificate_id": (
             result.simulation_certificate.certificate_id
             if result.simulation_certificate
+            else ""
+        ),
+        "effect_prediction_certificate_id": (
+            result.effect_prediction_certificate.certificate_id
+            if result.effect_prediction_certificate
+            else ""
+        ),
+        "effect_plan_id": (
+            result.effect_prediction_certificate.plan.effect_plan_id
+            if result.effect_prediction_certificate
             else ""
         ),
         "intent_certificate_id": result.intent_certificate.certificate_id

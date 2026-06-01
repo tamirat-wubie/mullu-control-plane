@@ -915,6 +915,11 @@ def _validate_decision(
 
     guard_verdicts = {guard.get("verdict") for guard in guards_by_name.values()}
     execution_stage = stages_by_kind.get("execution", {})
+    post_dispatch_escalation = (
+        decision["status"] == "escalate"
+        and execution_stage.get("status") == "completed"
+        and decision["reason_code"] == "effect_reconciliation_mismatch"
+    )
     if decision["status"] == "allow":
         if decision["execution_allowed"] is not True:
             errors.append("decision: allow requires execution_allowed true")
@@ -929,7 +934,7 @@ def _validate_decision(
     else:
         if decision["execution_allowed"] is not False:
             errors.append("decision: non-allow status requires execution_allowed false")
-        if execution_stage.get("status") == "completed":
+        if execution_stage.get("status") == "completed" and not post_dispatch_escalation:
             errors.append("decision: non-allow status cannot complete execution stage")
         if decision["solver_outcome"] in PASSING_OUTCOMES:
             errors.append(
@@ -1090,6 +1095,18 @@ def _validate_reconciliation(
             errors.append(
                 "reconciliation: allow requires reconciliation before closure"
             )
+    if (
+        decision["status"] == "escalate"
+        and decision["reason_code"] == "effect_reconciliation_mismatch"
+    ):
+        if reconciliation["status"] != "mismatched":
+            errors.append(
+                "reconciliation: effect mismatch escalation requires mismatched reconciliation"
+            )
+        if reconciliation["required_for_closure"] is not True:
+            errors.append(
+                "reconciliation: effect mismatch escalation requires reconciliation before closure"
+            )
     return errors
 
 
@@ -1190,7 +1207,13 @@ def _validate_closure(
                 errors.append(
                     "reconciliation.observed_outcome_ref must bind the execution stage output"
                 )
-        elif reconciliation.get("required_for_closure") is not False:
+        elif (
+            not (
+                decision["status"] == "escalate"
+                and decision["reason_code"] == "effect_reconciliation_mismatch"
+            )
+            and reconciliation.get("required_for_closure") is not False
+        ):
             errors.append("non-allow closure must not require reconciliation")
     closure_receipt = _receipt_by_id(receipts, closure["closure_receipt_ref"])
     if closure_receipt is not None:
@@ -1310,7 +1333,10 @@ def _validate_receipt_requirements(
 ) -> list[str]:
     errors: list[str] = []
     required_kinds = {"admission", "trace", "closure"}
-    if decision["status"] == "allow":
+    if decision["status"] == "allow" or (
+        decision["status"] == "escalate"
+        and decision["reason_code"] == "effect_reconciliation_mismatch"
+    ):
         required_kinds |= {"execution", "reconciliation"}
     missing = sorted(required_kinds - receipt_kinds)
     if missing:
@@ -1333,13 +1359,17 @@ def _validate_root_receipt_refs(
         not isinstance(execution_receipt_ref, str) or not execution_receipt_ref
     ):
         errors.append("execution_receipt_ref must be null or a non-empty string")
-    if record["decision"]["status"] == "allow":
+    execution_receipt_required = record["decision"]["status"] == "allow" or (
+        record["decision"]["status"] == "escalate"
+        and record["decision"]["reason_code"] == "effect_reconciliation_mismatch"
+    )
+    if execution_receipt_required:
         if execution_receipt_ref not in receipt_ids:
             errors.append(
-                "allow decision requires execution_receipt_ref to reference an emitted receipt"
+                "execution decision requires execution_receipt_ref to reference an emitted receipt"
             )
         if "execution" not in receipt_kinds:
-            errors.append("allow decision requires an execution receipt")
+            errors.append("execution decision requires an execution receipt")
     else:
         if execution_receipt_ref is not None:
             errors.append("non-allow decision must not carry execution_receipt_ref")
