@@ -37,6 +37,8 @@ def test_deployment_upstream_blocker_receipt_matches_public_schema(tmp_path: Pat
 
     assert validation.valid is True
     assert validation.ready is False
+    assert validation.receipt_path == "deployment_upstream_blocker_receipt.json"
+    assert validation.schema_path == "schemas/deployment_upstream_blocker_receipt.schema.json"
     assert validation.errors == ()
     assert validation.next_action == "complete private recovery inventory outside Git"
 
@@ -105,7 +107,44 @@ def test_deployment_upstream_blocker_validation_report_writes_json(tmp_path: Pat
     assert written == validation_path
     assert payload["valid"] is True
     assert payload["ready"] is False
+    assert payload["receipt_path"] == "deployment_upstream_blocker_receipt.json"
+    assert payload["schema_path"] == "schemas/deployment_upstream_blocker_receipt.schema.json"
     assert payload["errors"] == []
+    assert str(tmp_path) not in json.dumps(payload, sort_keys=True)
+
+
+def test_deployment_upstream_blocker_missing_receipt_path_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "secret-upstream-receipt-path.json"
+
+    validation = validate_deployment_upstream_blocker_receipt(receipt_path=receipt_path)
+    serialized_report = json.dumps(validation.as_dict(), sort_keys=True)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.valid is False
+    assert validation.ready is False
+    assert validation.receipt_path == "secret-upstream-receipt-path.json"
+    assert "deployment upstream blocker receipt file missing" in validation.errors
+    assert str(tmp_path) not in serialized_report
+    assert "secret-upstream-receipt-path" not in serialized_errors
+
+
+def test_deployment_upstream_blocker_missing_schema_path_is_bounded(tmp_path: Path) -> None:
+    receipt_path = _write_blocked_receipt(tmp_path)
+    schema_path = tmp_path / "secret-upstream-schema-path.json"
+
+    validation = validate_deployment_upstream_blocker_receipt(
+        receipt_path=receipt_path,
+        schema_path=schema_path,
+    )
+    serialized_report = json.dumps(validation.as_dict(), sort_keys=True)
+    serialized_errors = json.dumps(validation.errors, sort_keys=True)
+
+    assert validation.valid is False
+    assert validation.receipt_path == "deployment_upstream_blocker_receipt.json"
+    assert validation.schema_path == "secret-upstream-schema-path.json"
+    assert "deployment upstream blocker receipt schema file missing" in validation.errors
+    assert str(tmp_path) not in serialized_report
+    assert "secret-upstream-schema-path" not in serialized_errors
 
 
 def _write_blocked_receipt(tmp_path: Path) -> Path:

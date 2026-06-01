@@ -73,8 +73,8 @@ def validate_deployment_upstream_blocker_receipt(
     return DeploymentUpstreamBlockerValidation(
         valid=not errors,
         ready=ready,
-        receipt_path=str(receipt_path),
-        schema_path=str(schema_path),
+        receipt_path=_path_label(receipt_path),
+        schema_path=_path_label(schema_path),
         errors=tuple(errors),
         next_action=next_action,
     )
@@ -129,7 +129,7 @@ def _next_action(receipt: dict[str, Any]) -> str:
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:
     if not path.exists():
-        errors.append(f"{label} file missing: {path}")
+        errors.append(f"{label} file missing")
         return {}
     try:
         payload = _loads_strict_json(path.read_text(encoding="utf-8"))
@@ -140,6 +140,15 @@ def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, An
         errors.append(f"{label} JSON root must be an object")
         return {}
     return payload
+
+
+def _path_label(path: Path) -> str:
+    """Return a validation report path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _loads_strict_json(raw: str) -> Any:
