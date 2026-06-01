@@ -7,9 +7,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.governance.network.webhook import WebhookSubscription
 
@@ -288,8 +289,9 @@ def queue_result(task_id: str):
 
 
 @router.post("/api/v1/memory/store")
-def store_memory(req: MemoryStoreRequest):
+def store_memory(req: MemoryStoreRequest, request: Request):
     """Store a long-term memory for an agent."""
+    enforce_tenant_scope(request, req.tenant_id)
     deps.metrics.inc("requests_governed")
     entry = deps.agent_memory.store(
         req.agent_id, req.tenant_id, req.category,
@@ -299,8 +301,9 @@ def store_memory(req: MemoryStoreRequest):
 
 
 @router.post("/api/v1/memory/search")
-def search_memory(req: MemorySearchRequest):
+def search_memory(req: MemorySearchRequest, request: Request):
     """Search agent memories by relevance."""
+    enforce_tenant_scope(request, req.tenant_id)
     results = deps.agent_memory.search(req.agent_id, req.tenant_id, req.query, limit=req.limit)
     return {
         "results": [
