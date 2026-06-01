@@ -244,6 +244,67 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn("universal_action_orchestration_schema", output)
         self.assertIn("STATUS: passed", output)
 
+    def test_cli_json_receipt_reports_passed_contract(self) -> None:
+        stdout_buffer = io.StringIO()
+
+        with redirect_stdout(stdout_buffer):
+            exit_code = VALIDATOR.main(
+                [
+                    "--schema",
+                    str(SCHEMA_PATH),
+                    "--document",
+                    str(DOCUMENT_PATH),
+                    "--example",
+                    str(ALLOWED_EXAMPLE_PATH),
+                    "--json",
+                ]
+            )
+
+        report = json.loads(stdout_buffer.getvalue())
+        self.assertEqual(0, exit_code)
+        self.assertTrue(report["valid"])
+        self.assertEqual("passed", report["status"])
+        self.assertEqual(1, report["example_count"])
+        self.assertEqual(5, report["check_count"])
+        self.assertEqual([], report["errors"])
+        self.assertTrue(all(check["passed"] for check in report["checks"]))
+
+    def test_cli_json_receipt_persists_failed_contract_without_secret_path_leakage(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["chain_of_thought"] = "private reasoning must not be serialized"
+
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            temporary_path = Path(temporary_directory)
+            invalid_path = temporary_path / "invalid_uao.json"
+            receipt_path = temporary_path / "receipt.json"
+            invalid_path.write_text(json.dumps(invalid_record), encoding="utf-8")
+            stdout_buffer = io.StringIO()
+
+            with redirect_stdout(stdout_buffer):
+                exit_code = VALIDATOR.main(
+                    [
+                        "--schema",
+                        str(SCHEMA_PATH),
+                        "--document",
+                        str(DOCUMENT_PATH),
+                        "--example",
+                        str(invalid_path),
+                        "--json",
+                        "--receipt-path",
+                        str(receipt_path),
+                    ]
+                )
+
+            report = json.loads(stdout_buffer.getvalue())
+            persisted_report = json.loads(receipt_path.read_text(encoding="utf-8"))
+            self.assertEqual(1, exit_code)
+            self.assertFalse(report["valid"])
+            self.assertEqual("failed", report["status"])
+            self.assertEqual(report, persisted_report)
+            self.assertTrue(any("chain_of_thought is prohibited" in error for error in report["errors"]))
+            self.assertTrue(receipt_path.exists())
+
     def test_load_json_object_rejects_non_object_json(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             payload_path = Path(temporary_directory) / "payload.json"
