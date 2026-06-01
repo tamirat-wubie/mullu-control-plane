@@ -73,6 +73,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _telemetry_monitoring_triage_skill(),
         _agentic_control_project_discipline_mesh_skill(),
         _agentic_control_resource_governor_skill(),
+        _agentic_control_math_governor_skill(),
         _agentic_control_algorithm_governor_skill(),
         _agentic_control_security_governor_skill(),
         _agentic_control_swarm_governor_skill(),
@@ -850,6 +851,137 @@ def _agentic_control_resource_governor_skill() -> SkillDescriptor:
                 "halt_thresholds",
                 "budget_envelope_ref",
                 "proof_state",
+            ),
+        },
+    )
+
+
+def _agentic_control_math_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.math_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic math governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_math_problem",
+                name="Define math problem",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "proof_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_math_constraints",
+                name="Rank math constraints",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_math_problem",),
+                input_bindings={"mission_contract_ref": "define_math_problem.mission_contract_ref"},
+                output_keys=("math_constraint_order_ref", "dependency_blockers", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_math_governance",
+                name="Evaluate math governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_math_constraints",),
+                input_bindings={"priority_order_ref": "rank_math_constraints.math_constraint_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_actions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_math_budget",
+                name="Bound math budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_math_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_math_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "halt_thresholds", "resource_floor"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="analyze_math_structure",
+                name="Analyze math structure",
+                action_type="agentic_control.math_algorithm.analyze",
+                depends_on=("bound_math_budget",),
+                input_bindings={
+                    "proof_boundary_ref": "define_math_problem.proof_boundary_ref",
+                    "budget_envelope_ref": "bound_math_budget.budget_envelope_ref",
+                },
+                output_keys=("mathematical_model_ref", "proof_obligation_refs", "counterexample_search_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_math_verification",
+                name="Plan math verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("analyze_math_structure",),
+                input_bindings={
+                    "mathematical_model_ref": "analyze_math_structure.mathematical_model_ref",
+                    "proof_obligation_refs": "analyze_math_structure.proof_obligation_refs",
+                    "counterexample_search_ref": "analyze_math_structure.counterexample_search_ref",
+                },
+                output_keys=("math_verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_math_interrogation",
+                name="Plan math interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_math_verification",),
+                input_bindings={"verification_plan_ref": "plan_math_verification.math_verification_plan_ref"},
+                output_keys=("math_interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_math_gaps",
+                name="Refine math gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_math_interrogation",),
+                input_bindings={
+                    "mathematical_model_ref": "analyze_math_structure.mathematical_model_ref",
+                    "proof_obligation_refs": "analyze_math_structure.proof_obligation_refs",
+                    "counterexample_search_ref": "analyze_math_structure.counterexample_search_ref",
+                    "verification_plan_ref": "plan_math_verification.math_verification_plan_ref",
+                    "interrogation_plan_ref": "plan_math_interrogation.math_interrogation_plan_ref",
+                },
+                output_keys=("math_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_math_memory_admission",
+                name="Plan math memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_math_gaps",),
+                input_bindings={"refinement_plan_ref": "refine_math_gaps.math_refinement_plan_ref"},
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes read-only mathematical proof planning by linking problem "
+            "boundary, ranked constraints, governance gate, resource budget, "
+            "symbolic structure analysis, proof obligations, counterexample "
+            "search, verification, interrogation, refinement, and memory "
+            "admission before downstream algorithm or code work."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "math_governor": True,
+            "proof_surfaces": (
+                "proof_boundary_ref",
+                "mathematical_model_ref",
+                "proof_obligation_refs",
+                "counterexample_search_ref",
+                "closure_rule",
             ),
         },
     )
