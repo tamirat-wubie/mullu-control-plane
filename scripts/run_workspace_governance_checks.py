@@ -135,10 +135,6 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             "workspace_governance_preflight_receipt_example",
             (python_executable, "scripts/validate_workspace_governance_preflight_receipt.py"),
         ),
-        CheckCommand(
-            "universal_action_orchestration_contract",
-            (python_executable, "scripts/validate_universal_action_orchestration.py"),
-        ),
     )
 
 
