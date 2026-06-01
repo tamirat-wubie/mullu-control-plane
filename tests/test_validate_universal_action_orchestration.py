@@ -144,6 +144,10 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             "source channel, idempotency key, policy version, and trace id",
             document_text,
         )
+        self.assertIn(
+            "canonical ordered UAO pipeline stage sequence",
+            document_text,
+        )
 
     def test_effect_bearing_action_requires_causal_trace(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")

@@ -120,6 +120,18 @@ _UAO_RECEIPT_TIER_BY_KIND = {
     "reconciliation": frozenset({"R2", "R3"}),
     "closure": frozenset({"R1", "R3"}),
 }
+_UAO_CANONICAL_PIPELINE_STAGE_KINDS = (
+    "action",
+    "evidence",
+    "trace",
+    "admission",
+    "capability",
+    "execution",
+    "receipt",
+    "reconciliation",
+    "memory",
+    "closure",
+)
 _PROHIBITED_UAO_PRIVATE_REASONING_FIELDS = frozenset(
     {
         "chain_of_thought",
@@ -764,14 +776,27 @@ def _uao_record_binds_universal_detail(
 def _uao_stage_records_by_kind(value: Any) -> dict[str, Mapping[str, Any]] | None:
     if not isinstance(value, list):
         return None
+    if len(value) != len(_UAO_CANONICAL_PIPELINE_STAGE_KINDS):
+        return None
     stages_by_kind: dict[str, Mapping[str, Any]] = {}
-    for stage in value:
+    stage_ids: set[str] = set()
+    for expected_order, (expected_kind, stage) in enumerate(
+        zip(_UAO_CANONICAL_PIPELINE_STAGE_KINDS, value, strict=True),
+        start=1,
+    ):
         if not isinstance(stage, Mapping):
             return None
         stage_kind = stage.get("stage_kind")
         stage_id = stage.get("stage_id")
-        if not _non_empty_text(stage_kind) or not _non_empty_text(stage_id):
+        if not _non_empty_text(stage_kind) or stage_kind != expected_kind:
             return None
+        if not _non_empty_text(stage_id):
+            return None
+        if stage.get("stage_order") != expected_order:
+            return None
+        if str(stage_id) in stage_ids:
+            return None
+        stage_ids.add(str(stage_id))
         if stage_kind in stages_by_kind:
             return None
         receipt_ref = stage.get("receipt_ref")
