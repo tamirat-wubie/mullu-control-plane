@@ -504,6 +504,105 @@ def test_department_registry_view_is_read_only_and_escaped(tmp_path: Path) -> No
     assert before == after
 
 
+def test_authority_map_view_is_read_only_escaped_and_chained(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    bootstrap = client.post(
+        "/api/v1/orgs/org-map/bootstrap-minimum",
+        json={"tenant_id": "tenant-map", "name": "<script>alert('map')</script>"},
+    )
+    before = client.get("/api/v1/orgs/org-map/departments").json()
+
+    authority_map = client.get("/api/v1/orgs/org-map/authority-map")
+    view = client.get("/api/v1/orgs/org-map/authority-map/view")
+    after = client.get("/api/v1/orgs/org-map/departments").json()
+    payload = authority_map.json()
+    departments = {
+        item["department"]["department_id"]: item
+        for item in payload["departments"]
+    }
+    executive_chain = departments["executive"]["role_authority_chains"][0]
+    executive_authority = executive_chain["authority_chain"][0]
+
+    assert bootstrap.status_code == 200
+    assert authority_map.status_code == 200
+    assert payload["read_only"] is True
+    assert payload["summary"]["department_count"] == 5
+    assert payload["summary"]["mapped_department_count"] == 5
+    assert payload["summary"]["map_gap_count"] == 0
+    assert departments["executive"]["map_status"] == "mapped"
+    assert executive_chain["role"]["role_id"] == "executive.owner"
+    assert executive_authority["authority_rule"]["rule_id"] == "authority.executive.objective.freeze"
+    assert executive_authority["capability_ids"] == ["executive.objective.freeze"]
+    assert executive_authority["evidence_requirement_ids"] == ["executive_objective"]
+    assert executive_authority["escalation_path"][0]["department_id"] == "security_compliance"
+    assert view.status_code == 200
+    assert "text/html" in view.headers["content-type"]
+    assert "Mullu OrgOS Authority Map" in view.text
+    assert "json authority map" in view.text
+    assert "department registry" in view.text
+    assert "<script>alert('map')</script>" not in view.text
+    assert "&lt;script&gt;alert(&#x27;map&#x27;)&lt;/script&gt;" in view.text
+    assert before == after
+
+
+def test_authority_map_reports_unresolved_department_bindings(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    organization = client.post(
+        "/api/v1/orgs",
+        json={"org_id": "org-map-gap", "tenant_id": "tenant-map-gap", "name": "Gap Map"},
+    )
+    department = client.post(
+        "/api/v1/departments",
+        json={
+            "department_id": "research_ops",
+            "org_id": "org-map-gap",
+            "name": "Research Ops",
+            "mission": "Control research case intake and proof boundaries.",
+            "owns": ["research_cases"],
+            "allowed_case_types": ["launch_gateway_pilot"],
+            "allowed_capabilities": ["research.case.review"],
+            "required_evidence": ["research_case_receipt"],
+            "escalation_departments": ["missing_escalation"],
+            "metrics": ["unreviewed_case_count"],
+            "failure_modes": ["unbounded_research_claim"],
+        },
+    )
+    before = client.get("/api/v1/orgs/org-map-gap/departments").json()
+
+    authority_map = client.get("/api/v1/orgs/org-map-gap/authority-map")
+    after = client.get("/api/v1/orgs/org-map-gap/departments").json()
+    payload = authority_map.json()
+    row = payload["departments"][0]
+
+    assert organization.status_code == 200
+    assert department.status_code == 200
+    assert authority_map.status_code == 200
+    assert payload["summary"]["department_count"] == 1
+    assert payload["summary"]["mapped_department_count"] == 0
+    assert payload["summary"]["review_department_count"] == 1
+    assert payload["summary"]["map_gap_count"] == 4
+    assert row["map_status"] == "needs_review"
+    assert row["gaps"] == [
+        "missing_capability:research.case.review",
+        "missing_evidence_rule:research_case_receipt",
+        "missing_owner_role",
+        "unknown_escalation_department:missing_escalation",
+    ]
+    assert row["escalation_path"] == [
+        {"department_id": "missing_escalation", "name": None, "known": False}
+    ]
+    assert payload["attention_items"] == [
+        {
+            "kind": "authority_map_gap",
+            "severity": "review",
+            "ref": "research_ops",
+            "message": "department authority map has unresolved bindings",
+            "gaps": row["gaps"],
+        }
+    ]
+    assert before == after
+
+
 def test_gateway_pilot_can_close_and_bind_learning(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     _bootstrap_and_open_pilot(client)
@@ -1046,6 +1145,8 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/cases" in paths
     assert "/api/v1/orgs/{org_id}/department-registry" in paths
     assert "/api/v1/orgs/{org_id}/department-registry/view" in paths
+    assert "/api/v1/orgs/{org_id}/authority-map" in paths
+    assert "/api/v1/orgs/{org_id}/authority-map/view" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate/view" in paths
     assert "/api/v1/cases/{case_id}/audit-explorer" in paths
