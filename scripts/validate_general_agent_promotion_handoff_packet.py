@@ -321,6 +321,10 @@ def _derive_current_closure_plan() -> dict[str, Any]:
         _write_json_payload(
             adapter_evidence_path,
             collect_capability_adapter_evidence(
+                browser_receipt_path=tmp_dir / "browser_live_receipt.absent.json",
+                document_receipt_path=tmp_dir / "document_live_receipt.absent.json",
+                voice_receipt_path=tmp_dir / "voice_live_receipt.absent.json",
+                email_calendar_receipt_path=tmp_dir / "email_calendar_live_receipt.absent.json",
                 clock=lambda: "2026-05-01T12:00:00+00:00",
                 env_reader=lambda _name: None,
             ).as_dict(),
@@ -338,7 +342,10 @@ def _derive_current_closure_plan() -> dict[str, Any]:
         )
         _write_json_payload(
             deployment_plan_path,
-            plan_deployment_publication_closure(readiness_path=readiness_path).as_dict(),
+            plan_deployment_publication_closure(
+                readiness_path=readiness_path,
+                upstream_blocker_receipt_path=tmp_dir / "deployment_upstream_blocker_receipt.absent.json",
+            ).as_dict(),
         )
         portfolio_run = produce_capability_improvement_portfolio(output_path=portfolio_path)
         if not portfolio_run.passed:

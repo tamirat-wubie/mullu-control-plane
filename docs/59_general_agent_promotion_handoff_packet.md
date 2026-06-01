@@ -21,7 +21,7 @@ This packet is the operator entry point for the remaining promotion work. It bin
 | Capability capsules | 13 |
 | Governed capabilities | 80 |
 | Aggregate closure actions | 13 |
-| Approval-required actions | 10 |
+| Approval-required actions | 9 |
 | Closure plan schema validation | `ok=true` |
 | Closure plan drift validation | `ok=true` |
 | Production promotion | blocked |
@@ -92,7 +92,6 @@ voice_dependency_missing:OPENAI_API_KEY
 email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN
 deployment_witness_not_published
 production_health_not_declared
-deployment_upstream_api_gate_not_ready
 capability_improvement_required:financial.refund
 capability_improvement_required:agentic_control.evidence.append
 capability_improvement_required:agentic_control.governance_gate.evaluate
