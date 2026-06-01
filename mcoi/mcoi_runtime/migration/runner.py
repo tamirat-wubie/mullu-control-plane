@@ -29,7 +29,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Iterator
+from typing import Any
 
 from mcoi_runtime.migration.v1_to_v2_mapping import map_action_to_construct
 
@@ -395,6 +395,17 @@ class MigrationRunner:
 
             if not self.dry_run:
                 target = self.v2_dir / tenant_id / f"{v1.proof_id}.json"
+                # proof_id is read verbatim from v1 records (V1Proof applies no
+                # format guard), so a crafted proof_id could escape v2_dir via
+                # path separators or "..". Skip records whose resolved target
+                # leaves the migration output directory.
+                if not target.resolve().is_relative_to(self.v2_dir.resolve()):
+                    _log.error(
+                        "tenant %s proof %s: unsafe proof_id path; skipping",
+                        tenant_id, v1.proof_id,
+                    )
+                    stats.failed += 1
+                    continue
                 _atomic_write_json(target, _v2_proof_to_dict(v2))
 
             already_migrated[v1.proof_id] = v2.proof_id
