@@ -1,0 +1,361 @@
+{
+  "orchestration_id": "uao_deferred_stale_evidence_001",
+  "uao_schema_version": "uao.v1",
+  "action_id": "act_refresh_partner_inventory",
+  "tenant_id": "tenant_ops_demo",
+  "actor_id": "service:inventory_sync_worker",
+  "created_at": "2026-05-31T00:15:00Z",
+  "action_envelope": {
+    "source": "action://refresh-partner-inventory",
+    "actor": "service:inventory_sync_worker",
+    "tenant": "tenant_ops_demo",
+    "intent": "refresh_partner_inventory",
+    "target": "target://partner/inventory-feed",
+    "risk": "H2",
+    "requested_at": "2026-05-31T00:15:00Z",
+    "approval_ref": null,
+    "evidence_refs": [
+      "evidence://partner/inventory-feed-stale"
+    ],
+    "capability_refs": [
+      "capability://partner/inventory/read-write/v1"
+    ]
+  },
+  "effect_bearing": true,
+  "effect_classes": [
+    "external_capability",
+    "world_state"
+  ],
+  "input_refs": [
+    "action://refresh-partner-inventory",
+    "evidence://partner/inventory-feed-stale"
+  ],
+  "policy_refs": [
+    "policy://partner-sync/evidence-freshness"
+  ],
+  "capability_refs": [
+    "capability://partner/inventory/read-write/v1"
+  ],
+  "temporal_refs": [
+    "temporal://partner-sync/freshness-window"
+  ],
+  "exposure_boundary": {
+    "redaction_level": "operator",
+    "allowed_audiences": [
+      "operator",
+      "auditor"
+    ],
+    "blocked_payload_classes": [
+      "raw_private_reasoning",
+      "secrets",
+      "partner_credentials",
+      "cross_tenant_data"
+    ]
+  },
+  "pipeline_stages": [
+    {
+      "stage_id": "stage_action",
+      "stage_order": 1,
+      "stage_kind": "action",
+      "status": "completed",
+      "input_refs": [
+        "action://refresh-partner-inventory"
+      ],
+      "output_refs": [
+        "envelope://act_refresh_partner_inventory"
+      ],
+      "receipt_ref": null,
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_evidence",
+      "stage_order": 2,
+      "stage_kind": "evidence",
+      "status": "deferred",
+      "input_refs": [
+        "evidence://partner/inventory-feed-stale"
+      ],
+      "output_refs": [],
+      "receipt_ref": null,
+      "failure_reason": "stale_evidence"
+    },
+    {
+      "stage_id": "stage_trace",
+      "stage_order": 3,
+      "stage_kind": "trace",
+      "status": "completed",
+      "input_refs": [
+        "action://refresh-partner-inventory"
+      ],
+      "output_refs": [
+        "trace://cdt_deferred_stale_evidence_001"
+      ],
+      "receipt_ref": "receipt://uao_trace_stale_evidence",
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_admission",
+      "stage_order": 4,
+      "stage_kind": "admission",
+      "status": "deferred",
+      "input_refs": [
+        "trace://cdt_deferred_stale_evidence_001"
+      ],
+      "output_refs": [
+        "decision://uao_deferred_stale_evidence_001"
+      ],
+      "receipt_ref": "receipt://uao_admission_stale_evidence",
+      "failure_reason": "stale_evidence"
+    },
+    {
+      "stage_id": "stage_capability",
+      "stage_order": 5,
+      "stage_kind": "capability",
+      "status": "skipped",
+      "input_refs": [
+        "capability://partner/inventory/read-write/v1"
+      ],
+      "output_refs": [],
+      "receipt_ref": null,
+      "failure_reason": "admission_deferred"
+    },
+    {
+      "stage_id": "stage_execution",
+      "stage_order": 6,
+      "stage_kind": "execution",
+      "status": "skipped",
+      "input_refs": [
+        "capability://partner/inventory/read-write/v1"
+      ],
+      "output_refs": [],
+      "receipt_ref": null,
+      "failure_reason": "stale_evidence"
+    },
+    {
+      "stage_id": "stage_receipt",
+      "stage_order": 7,
+      "stage_kind": "receipt",
+      "status": "completed",
+      "input_refs": [
+        "decision://uao_deferred_stale_evidence_001"
+      ],
+      "output_refs": [
+        "receipt-set://uao_stale_evidence"
+      ],
+      "receipt_ref": "receipt://uao_admission_stale_evidence",
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_reconciliation",
+      "stage_order": 8,
+      "stage_kind": "reconciliation",
+      "status": "deferred",
+      "input_refs": [
+        "receipt-set://uao_stale_evidence"
+      ],
+      "output_refs": [
+        "reconciliation://uao_stale_evidence"
+      ],
+      "receipt_ref": null,
+      "failure_reason": "awaiting_fresh_evidence"
+    },
+    {
+      "stage_id": "stage_memory",
+      "stage_order": 9,
+      "stage_kind": "memory",
+      "status": "completed",
+      "input_refs": [
+        "decision://uao_deferred_stale_evidence_001"
+      ],
+      "output_refs": [
+        "memory://partner/inventory-deferred"
+      ],
+      "receipt_ref": null,
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_closure",
+      "stage_order": 10,
+      "stage_kind": "closure",
+      "status": "completed",
+      "input_refs": [
+        "memory://partner/inventory-deferred"
+      ],
+      "output_refs": [
+        "closure://uao_stale_evidence"
+      ],
+      "receipt_ref": "receipt://uao_closure_stale_evidence",
+      "failure_reason": null
+    }
+  ],
+  "admission_guards": [
+    {
+      "guard": "identity_valid",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "known_service_identity",
+      "evidence_refs": [
+        "actor://service/inventory-sync-worker"
+      ]
+    },
+    {
+      "guard": "tenant_valid",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "tenant_scope_resolved",
+      "evidence_refs": [
+        "tenant://tenant_ops_demo"
+      ]
+    },
+    {
+      "guard": "authority_valid",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "sync_authority_valid",
+      "evidence_refs": [
+        "authority://inventory-sync/partner-feed"
+      ]
+    },
+    {
+      "guard": "policy_allows",
+      "verdict": "deferred",
+      "proof_state": "Unknown",
+      "reason_code": "fresh_evidence_required",
+      "evidence_refs": [
+        "policy://partner-sync/evidence-freshness"
+      ]
+    },
+    {
+      "guard": "risk_acceptable",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "risk_class_requires_fresh_evidence",
+      "evidence_refs": [
+        "policy://partner-sync/evidence-freshness"
+      ]
+    },
+    {
+      "guard": "budget_available",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "sync_budget_available",
+      "evidence_refs": [
+        "budget://partner-sync/daily"
+      ]
+    },
+    {
+      "guard": "evidence_sufficient",
+      "verdict": "deferred",
+      "proof_state": "Unknown",
+      "reason_code": "stale_evidence",
+      "evidence_refs": [
+        "evidence://partner/inventory-feed-stale"
+      ]
+    },
+    {
+      "guard": "temporal_window_valid",
+      "verdict": "deferred",
+      "proof_state": "Unknown",
+      "reason_code": "freshness_window_unknown",
+      "evidence_refs": [
+        "temporal://partner-sync/freshness-window"
+      ]
+    },
+    {
+      "guard": "capability_certified",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "partner_sync_capability_registered",
+      "evidence_refs": [
+        "capability://partner/inventory/read-write/v1"
+      ]
+    },
+    {
+      "guard": "recovery_available",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "no_execution_no_rollback_needed",
+      "evidence_refs": [
+        "recovery://partner-sync/no-op-before-provider-call"
+      ]
+    },
+    {
+      "guard": "receipt_emittable",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "deferred_receipt_channel_available",
+      "evidence_refs": [
+        "receipt-policy://partner-sync/deferred-admission"
+      ]
+    }
+  ],
+  "decision": {
+    "status": "defer",
+    "reason_code": "stale_evidence",
+    "proof_state": "Unknown",
+    "solver_outcome": "AwaitingEvidence",
+    "next_action": "refresh_evidence_before_admission",
+    "execution_allowed": false
+  },
+  "trace_ref": "trace://cdt_deferred_stale_evidence_001",
+  "causal_decision_trace_ref": "trace://cdt_deferred_stale_evidence_001",
+  "admission_receipt_ref": "receipt://uao_admission_stale_evidence",
+  "execution_receipt_ref": null,
+  "receipts": [
+    {
+      "receipt_id": "receipt://uao_admission_stale_evidence",
+      "tier": "R1",
+      "kind": "admission",
+      "stage_id": "stage_admission",
+      "confirms": "admission deferred before execution",
+      "external_state_confirmed": false
+    },
+    {
+      "receipt_id": "receipt://uao_trace_stale_evidence",
+      "tier": "R1",
+      "kind": "trace",
+      "stage_id": "stage_trace",
+      "confirms": "causal decision trace linked",
+      "external_state_confirmed": false
+    },
+    {
+      "receipt_id": "receipt://uao_closure_stale_evidence",
+      "tier": "R1",
+      "kind": "closure",
+      "stage_id": "stage_closure",
+      "confirms": "deferred action closed without execution",
+      "external_state_confirmed": false
+    }
+  ],
+  "reconciliation": {
+    "status": "pending",
+    "observed_outcome_ref": null,
+    "required_for_closure": false,
+    "mismatch_reason": null
+  },
+  "memory_update": {
+    "status": "deferred",
+    "memory_ref": "memory://partner/inventory-deferred",
+    "learning_allowed": false
+  },
+  "closure_state": "closed_deferred",
+  "closure": {
+    "status": "closed_deferred",
+    "terminal": true,
+    "closure_receipt_ref": "receipt://uao_closure_stale_evidence",
+    "next_action": "refresh_evidence_before_admission"
+  },
+  "raw_reasoning_included": false,
+  "lineage": {
+    "delta_ref": "delta://uao/stale-evidence",
+    "logged_in_lineage": true,
+    "accepted_deltas": [],
+    "rejected_deltas": [
+      {
+        "delta_id": "delta_refresh_partner_inventory_execute",
+        "reason": "stale_evidence",
+        "logged_in_lineage": true
+      }
+    ]
+  }
+}

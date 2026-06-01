@@ -124,6 +124,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `marketplace_sdk_catalog.schema.json` | Canonical governed marketplace and SDK catalog snapshot |
 | `memory_lattice.schema.json` | Canonical memory planning and execution admission claim |
 | `p3_memory_topology_read_model.schema.json` | Canonical P3 memory topology operator read model |
+| `universal_action_orchestration.schema.json` | Canonical non-executing Universal Action Orchestration v1 envelope contract |
 | `multimodal_operation_receipt.schema.json` | Canonical governed multimodal operation admission receipt |
 | `environment_fingerprint.schema.json` | Canonical environment fingerprint |
 | `lineage_query.schema.json` | Canonical lineage query response document |

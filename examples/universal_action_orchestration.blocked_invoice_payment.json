@@ -1,0 +1,368 @@
+{
+  "orchestration_id": "uao_blocked_invoice_payment_001",
+  "uao_schema_version": "uao.v1",
+  "action_id": "act_pay_invoice_123",
+  "tenant_id": "tenant_finance_demo",
+  "actor_id": "operator:finance_approver_001",
+  "created_at": "2026-05-31T00:00:00Z",
+  "action_envelope": {
+    "source": "action://pay-invoice-123",
+    "actor": "operator:finance_approver_001",
+    "tenant": "tenant_finance_demo",
+    "intent": "pay_invoice",
+    "target": "target://invoice/123/payment",
+    "risk": "H3",
+    "requested_at": "2026-05-31T00:00:00Z",
+    "approval_ref": "approval://invoice/123/approval-456",
+    "evidence_refs": [
+      "evidence://invoice/123",
+      "approval://invoice/123/approval-456"
+    ],
+    "capability_refs": [
+      "capability://payments/pay-invoice/v1"
+    ]
+  },
+  "effect_bearing": true,
+  "effect_classes": [
+    "money",
+    "external_capability",
+    "world_state"
+  ],
+  "input_refs": [
+    "action://pay-invoice-123",
+    "evidence://invoice/123",
+    "approval://invoice/123/approval-456"
+  ],
+  "policy_refs": [
+    "policy://budget/monthly-ap",
+    "policy://payments/approval-freshness"
+  ],
+  "capability_refs": [
+    "capability://payments/pay-invoice/v1"
+  ],
+  "temporal_refs": [
+    "temporal://payments/approval-window"
+  ],
+  "exposure_boundary": {
+    "redaction_level": "user_safe",
+    "allowed_audiences": [
+      "operator",
+      "auditor"
+    ],
+    "blocked_payload_classes": [
+      "raw_private_reasoning",
+      "secrets",
+      "payment_instrument_details",
+      "cross_tenant_data"
+    ]
+  },
+  "pipeline_stages": [
+    {
+      "stage_id": "stage_action",
+      "stage_order": 1,
+      "stage_kind": "action",
+      "status": "completed",
+      "input_refs": [
+        "action://pay-invoice-123"
+      ],
+      "output_refs": [
+        "envelope://act_pay_invoice_123"
+      ],
+      "receipt_ref": null,
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_evidence",
+      "stage_order": 2,
+      "stage_kind": "evidence",
+      "status": "completed",
+      "input_refs": [
+        "evidence://invoice/123",
+        "approval://invoice/123/approval-456"
+      ],
+      "output_refs": [
+        "evidence-set://invoice-123-payment"
+      ],
+      "receipt_ref": null,
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_trace",
+      "stage_order": 3,
+      "stage_kind": "trace",
+      "status": "completed",
+      "input_refs": [
+        "evidence-set://invoice-123-payment"
+      ],
+      "output_refs": [
+        "trace://cdt_blocked_approval_expired_001"
+      ],
+      "receipt_ref": "receipt://uao_trace_invoice_payment_blocked",
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_admission",
+      "stage_order": 4,
+      "stage_kind": "admission",
+      "status": "blocked",
+      "input_refs": [
+        "trace://cdt_blocked_approval_expired_001"
+      ],
+      "output_refs": [
+        "decision://uao_blocked_invoice_payment_001"
+      ],
+      "receipt_ref": "receipt://uao_admission_invoice_payment_blocked",
+      "failure_reason": "approval_expired"
+    },
+    {
+      "stage_id": "stage_capability",
+      "stage_order": 5,
+      "stage_kind": "capability",
+      "status": "skipped",
+      "input_refs": [
+        "capability://payments/pay-invoice/v1"
+      ],
+      "output_refs": [],
+      "receipt_ref": null,
+      "failure_reason": "admission_blocked"
+    },
+    {
+      "stage_id": "stage_execution",
+      "stage_order": 6,
+      "stage_kind": "execution",
+      "status": "skipped",
+      "input_refs": [
+        "capability://payments/pay-invoice/v1"
+      ],
+      "output_refs": [],
+      "receipt_ref": null,
+      "failure_reason": "approval_expired"
+    },
+    {
+      "stage_id": "stage_receipt",
+      "stage_order": 7,
+      "stage_kind": "receipt",
+      "status": "completed",
+      "input_refs": [
+        "decision://uao_blocked_invoice_payment_001"
+      ],
+      "output_refs": [
+        "receipt-set://uao_invoice_payment_blocked"
+      ],
+      "receipt_ref": "receipt://uao_admission_invoice_payment_blocked",
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_reconciliation",
+      "stage_order": 8,
+      "stage_kind": "reconciliation",
+      "status": "blocked",
+      "input_refs": [
+        "receipt-set://uao_invoice_payment_blocked"
+      ],
+      "output_refs": [
+        "reconciliation://uao_invoice_payment_blocked"
+      ],
+      "receipt_ref": null,
+      "failure_reason": "execution_did_not_run"
+    },
+    {
+      "stage_id": "stage_memory",
+      "stage_order": 9,
+      "stage_kind": "memory",
+      "status": "completed",
+      "input_refs": [
+        "decision://uao_blocked_invoice_payment_001"
+      ],
+      "output_refs": [
+        "memory://invoice-123/payment-blocked"
+      ],
+      "receipt_ref": null,
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_closure",
+      "stage_order": 10,
+      "stage_kind": "closure",
+      "status": "completed",
+      "input_refs": [
+        "memory://invoice-123/payment-blocked"
+      ],
+      "output_refs": [
+        "closure://uao_invoice_payment_blocked"
+      ],
+      "receipt_ref": "receipt://uao_closure_invoice_payment_blocked",
+      "failure_reason": null
+    }
+  ],
+  "admission_guards": [
+    {
+      "guard": "identity_valid",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "known_operator_identity",
+      "evidence_refs": [
+        "actor://operator/finance-approver-001"
+      ]
+    },
+    {
+      "guard": "tenant_valid",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "tenant_scope_resolved",
+      "evidence_refs": [
+        "tenant://tenant_finance_demo"
+      ]
+    },
+    {
+      "guard": "authority_valid",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "payment_review_authority_valid",
+      "evidence_refs": [
+        "authority://finance-approver/payment-review"
+      ]
+    },
+    {
+      "guard": "policy_allows",
+      "verdict": "blocked",
+      "proof_state": "Fail",
+      "reason_code": "approval_expired",
+      "evidence_refs": [
+        "approval://invoice/123/approval-456"
+      ]
+    },
+    {
+      "guard": "risk_acceptable",
+      "verdict": "blocked",
+      "proof_state": "Fail",
+      "reason_code": "stale_approval_risk",
+      "evidence_refs": [
+        "policy://payments/approval-freshness"
+      ]
+    },
+    {
+      "guard": "budget_available",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "within_limit",
+      "evidence_refs": [
+        "policy://budget/monthly-ap"
+      ]
+    },
+    {
+      "guard": "evidence_sufficient",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "invoice_evidence_present",
+      "evidence_refs": [
+        "evidence://invoice/123"
+      ]
+    },
+    {
+      "guard": "temporal_window_valid",
+      "verdict": "blocked",
+      "proof_state": "Fail",
+      "reason_code": "execution_window_invalid",
+      "evidence_refs": [
+        "temporal://payments/approval-window"
+      ]
+    },
+    {
+      "guard": "capability_certified",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "payment_capability_registered",
+      "evidence_refs": [
+        "capability://payments/pay-invoice/v1"
+      ]
+    },
+    {
+      "guard": "recovery_available",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "no_execution_no_rollback_needed",
+      "evidence_refs": [
+        "recovery://payments/no-op-before-provider-call"
+      ]
+    },
+    {
+      "guard": "receipt_emittable",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "blocked_receipt_channel_available",
+      "evidence_refs": [
+        "receipt-policy://payments/blocked-admission"
+      ]
+    }
+  ],
+  "decision": {
+    "status": "block",
+    "reason_code": "approval_expired",
+    "proof_state": "Fail",
+    "solver_outcome": "GovernanceBlocked",
+    "next_action": "request_fresh_approval",
+    "execution_allowed": false
+  },
+  "trace_ref": "trace://cdt_blocked_approval_expired_001",
+  "causal_decision_trace_ref": "trace://cdt_blocked_approval_expired_001",
+  "admission_receipt_ref": "receipt://uao_admission_invoice_payment_blocked",
+  "execution_receipt_ref": null,
+  "receipts": [
+    {
+      "receipt_id": "receipt://uao_admission_invoice_payment_blocked",
+      "tier": "R1",
+      "kind": "admission",
+      "stage_id": "stage_admission",
+      "confirms": "payment admission blocked before execution",
+      "external_state_confirmed": false
+    },
+    {
+      "receipt_id": "receipt://uao_trace_invoice_payment_blocked",
+      "tier": "R1",
+      "kind": "trace",
+      "stage_id": "stage_trace",
+      "confirms": "causal decision trace linked",
+      "external_state_confirmed": false
+    },
+    {
+      "receipt_id": "receipt://uao_closure_invoice_payment_blocked",
+      "tier": "R1",
+      "kind": "closure",
+      "stage_id": "stage_closure",
+      "confirms": "blocked action closed without provider call",
+      "external_state_confirmed": false
+    }
+  ],
+  "reconciliation": {
+    "status": "blocked",
+    "observed_outcome_ref": null,
+    "required_for_closure": false,
+    "mismatch_reason": "execution_did_not_run"
+  },
+  "memory_update": {
+    "status": "recorded",
+    "memory_ref": "memory://invoice-123/payment-blocked",
+    "learning_allowed": true
+  },
+  "closure_state": "closed_blocked",
+  "closure": {
+    "status": "closed_blocked",
+    "terminal": true,
+    "closure_receipt_ref": "receipt://uao_closure_invoice_payment_blocked",
+    "next_action": "request_fresh_approval"
+  },
+  "raw_reasoning_included": false,
+  "lineage": {
+    "delta_ref": "delta://uao/invoice-123-payment",
+    "logged_in_lineage": true,
+    "accepted_deltas": [],
+    "rejected_deltas": [
+      {
+        "delta_id": "delta_pay_invoice_123_execute",
+        "reason": "approval_expired",
+        "logged_in_lineage": true
+      }
+    ]
+  }
+}

@@ -893,6 +893,12 @@
       "surface": "construct"
     },
     {
+      "schema_id": "universal-action-orchestration",
+      "path": "schemas/universal_action_orchestration.schema.json",
+      "urn": "urn:mullusi:schema:universal-action-orchestration:1",
+      "surface": "orchestration"
+    },
+    {
       "schema_id": "verification-result",
       "path": "schemas/verification_result.schema.json",
       "urn": "urn:mullusi:schema:verification-result:1",
