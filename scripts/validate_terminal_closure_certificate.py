@@ -106,12 +106,21 @@ def _validation_result(
     return TerminalClosureCertificateValidation(
         valid=not errors,
         certificate_id=str(certificate.get("certificate_id", "")),
-        certificate_path=str(certificate_path),
-        schema_path=str(schema_path),
+        certificate_path=_path_label(certificate_path),
+        schema_path=_path_label(schema_path),
         disposition=str(certificate.get("disposition", "")),
         evidence_ref_count=len(evidence_refs) if isinstance(evidence_refs, list) else 0,
         errors=tuple(errors),
     )
+
+
+def _path_label(path: Path) -> str:
+    """Return a validation report path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:

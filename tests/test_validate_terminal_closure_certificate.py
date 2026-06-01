@@ -30,6 +30,8 @@ def test_terminal_closure_certificate_example_validates() -> None:
 
     assert result.valid is True
     assert result.disposition == "committed"
+    assert result.certificate_path == "examples/terminal_closure_certificate.json"
+    assert result.schema_path == "schemas/terminal_closure_certificate.schema.json"
     assert result.evidence_ref_count == 2
     assert result.errors == ()
 
@@ -90,8 +92,10 @@ def test_terminal_closure_certificate_reports_evidence_refs_by_count_only(
     serialized_payload = json.dumps(payload, sort_keys=True)
 
     assert result.valid is True
+    assert result.certificate_path == "terminal_closure_certificate.json"
     assert payload["evidence_ref_count"] == 2
     assert "evidence_refs" not in payload
+    assert str(tmp_path) not in serialized_payload
     assert "sensitive-token-1" not in serialized_payload
     assert "private-proof-bucket" not in serialized_payload
 
@@ -125,8 +129,10 @@ def test_terminal_closure_certificate_missing_file_error_is_bounded(
     serialized_errors = json.dumps(result.errors, sort_keys=True)
 
     assert result.valid is False
+    assert result.certificate_path == "secret-path-token.json"
     assert result.errors == ("terminal closure certificate could not be read",)
     assert result.evidence_ref_count == 0
+    assert str(tmp_path) not in json.dumps(result.as_dict(), sort_keys=True)
     assert "secret-path-token" not in serialized_errors
 
 
@@ -140,8 +146,10 @@ def test_terminal_closure_certificate_json_parse_error_is_bounded(
     serialized_errors = json.dumps(result.errors, sort_keys=True)
 
     assert result.valid is False
+    assert result.certificate_path == "secret-json-path.json"
     assert result.errors == ("terminal closure certificate must be JSON",)
     assert result.evidence_ref_count == 0
+    assert str(tmp_path) not in json.dumps(result.as_dict(), sort_keys=True)
     assert "secret-json-path" not in serialized_errors
     assert "secret-json-value" not in serialized_errors
 
