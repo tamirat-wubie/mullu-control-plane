@@ -120,6 +120,13 @@ def bootstrap_server_lifecycle(
     configure_musia_dev_mode(
         not musia_auth_wired and env in ("local_dev", "test")
     )
+    # Fail-closed tenant scoping. enforce_tenant_scope / scoped_listing_tenant
+    # otherwise no-op when a request carries no authenticated tenant, and the
+    # HTTP guard chain is opt-in (require_auth=False), so an unauthenticated
+    # caller could reach a tenant-scoped handler and bypass the check. In non-dev
+    # environments that path now returns 401 instead. Mirrors the dev-mode gate.
+    from mcoi_runtime.app.routers._tenant_scope import configure_tenant_scope_strict
+    configure_tenant_scope_strict(env not in ("local_dev", "test"))
 
     include_default_routers_fn(app)
     startup_restored = restore_state_on_startup()
