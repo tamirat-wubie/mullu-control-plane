@@ -8112,6 +8112,82 @@
         "summary": "Get Case Proof Timeline"
       }
     },
+    "/api/v1/cases/{case_id}/step-handoffs": {
+      "get": {
+        "description": "Return read-only plan-step handoff status and worker receipt bindings.",
+        "operationId": "get_case_step_handoffs_api_v1_cases__case_id__step_handoffs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Case Step Handoffs"
+      }
+    },
+    "/api/v1/cases/{case_id}/step-handoffs/view": {
+      "get": {
+        "description": "Return a browser-facing read-only step handoff view.",
+        "operationId": "get_case_step_handoffs_view_api_v1_cases__case_id__step_handoffs_view_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Case Step Handoffs View"
+      }
+    },
     "/api/v1/certify": {
       "post": {
         "description": "Run full live-path certification: API -> DB -> LLM -> Ledger -> Restart.",
