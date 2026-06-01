@@ -262,10 +262,16 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
 
         report = json.loads(stdout_buffer.getvalue())
         self.assertEqual(0, exit_code)
+        self.assertEqual("universal_action_orchestration_validation_receipt", report["receipt_id"])
+        self.assertTrue(report["receipt_is_not_terminal_closure"])
         self.assertTrue(report["valid"])
         self.assertEqual("passed", report["status"])
+        self.assertEqual("schemas/universal_action_orchestration.schema.json", report["schema_path"])
+        self.assertEqual("docs/UNIVERSAL_ACTION_ORCHESTRATION.md", report["document_path"])
+        self.assertEqual(["examples/universal_action_orchestration.allowed_status_publish.json"], report["example_paths"])
         self.assertEqual(1, report["example_count"])
         self.assertEqual(5, report["check_count"])
+        self.assertEqual(0, report["error_count"])
         self.assertEqual([], report["errors"])
         self.assertTrue(all(check["passed"] for check in report["checks"]))
 
@@ -302,8 +308,42 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             self.assertFalse(report["valid"])
             self.assertEqual("failed", report["status"])
             self.assertEqual(report, persisted_report)
+            self.assertEqual(["invalid_uao.json"], report["example_paths"])
+            self.assertGreaterEqual(report["error_count"], 1)
             self.assertTrue(any("chain_of_thought is prohibited" in error for error in report["errors"]))
+            serialized_report = json.dumps(report, sort_keys=True)
+            self.assertNotIn(str(temporary_path), serialized_report)
+            self.assertNotIn(str(invalid_path), serialized_report)
             self.assertTrue(receipt_path.exists())
+
+    def test_cli_json_receipt_sanitizes_load_error_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            temporary_path = Path(temporary_directory)
+            missing_schema_path = temporary_path / "secret" / "missing.schema.json"
+            stdout_buffer = io.StringIO()
+
+            with redirect_stdout(stdout_buffer):
+                exit_code = VALIDATOR.main(
+                    [
+                        "--schema",
+                        str(missing_schema_path),
+                        "--document",
+                        str(DOCUMENT_PATH),
+                        "--example",
+                        str(ALLOWED_EXAMPLE_PATH),
+                        "--json",
+                    ]
+                )
+
+            report = json.loads(stdout_buffer.getvalue())
+            serialized_report = json.dumps(report, sort_keys=True)
+            self.assertEqual(1, exit_code)
+            self.assertFalse(report["valid"])
+            self.assertEqual("missing.schema.json", report["schema_path"])
+            self.assertEqual(1, report["error_count"])
+            self.assertTrue(any("missing.schema.json" in error for error in report["errors"]))
+            self.assertNotIn(str(temporary_path), serialized_report)
+            self.assertNotIn(str(missing_schema_path), serialized_report)
 
     def test_load_json_object_rejects_non_object_json(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:

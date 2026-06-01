@@ -291,14 +291,16 @@ def build_validation_report(
     try:
         errors = validate_contract(schema_path, example_paths, document_path)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
-        errors = [f"load-universal-action-orchestration: {exc}"]
+        errors = [f"load-universal-action-orchestration: {_sanitize_receipt_error(exc, schema_path, example_paths, document_path)}"]
     valid = not errors
     return {
+        "receipt_id": "universal_action_orchestration_validation_receipt",
+        "receipt_is_not_terminal_closure": True,
         "valid": valid,
         "status": "passed" if valid else "failed",
-        "schema_path": str(schema_path),
-        "document_path": str(document_path),
-        "example_paths": [str(example_path) for example_path in example_paths],
+        "schema_path": _receipt_path_label(schema_path),
+        "document_path": _receipt_path_label(document_path),
+        "example_paths": [_receipt_path_label(example_path) for example_path in example_paths],
         "example_count": len(example_paths),
         "checks": [
             {
@@ -308,6 +310,7 @@ def build_validation_report(
             for check_name in checks
         ],
         "check_count": len(checks),
+        "error_count": len(errors),
         "errors": errors,
     }
 
@@ -318,6 +321,33 @@ def write_validation_report(report: dict[str, Any], receipt_path: Path) -> Path:
     receipt_path.parent.mkdir(parents=True, exist_ok=True)
     receipt_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return receipt_path
+
+
+def _receipt_path_label(path: Path) -> str:
+    """Return a receipt-safe path label without host-local absolute ancestry."""
+
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(WORKSPACE_ROOT).as_posix()
+    except ValueError:
+        return path.name
+
+
+def _sanitize_receipt_error(
+    exc: BaseException,
+    schema_path: Path,
+    example_paths: tuple[Path, ...],
+    document_path: Path,
+) -> str:
+    """Bound load errors so receipts do not leak machine-local directories."""
+
+    message = str(exc)
+    for path in (schema_path, document_path, *example_paths):
+        safe_label = _receipt_path_label(path)
+        for path_text in {str(path), str(path.resolve(strict=False))}:
+            if path_text:
+                message = message.replace(path_text, safe_label)
+    return message
 
 
 def _validate_required_properties(
