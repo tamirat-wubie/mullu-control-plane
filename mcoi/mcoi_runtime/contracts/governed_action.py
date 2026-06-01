@@ -221,6 +221,8 @@ class AuthorityProofRecord(ContractRecord):
         if self.separation_of_duty:
             if not self.approval_actor_ids:
                 raise ValueError("separation of duty requires approval actor ids")
+            if self.approval_refs and len(self.approval_actor_ids) < len(self.approval_refs):
+                raise ValueError("separation of duty requires approval actor id for each approval ref")
             if self.actor_id in self.approval_actor_ids:
                 raise ValueError("separation of duty forbids self approval")
 

@@ -157,6 +157,24 @@ def test_authority_proof_rejects_missing_approval_refs() -> None:
     assert "missing approval refs" in str(excinfo.value)
 
 
+def test_authority_proof_requires_actor_id_for_each_sod_approval_ref() -> None:
+    with pytest.raises(ValueError, match=r"actor id for each approval ref") as excinfo:
+        AuthorityProofRecord(
+            actor_id="actor-1",
+            tenant_id="tenant-1",
+            required_roles=("customer_ops_manager",),
+            actor_roles=("customer_ops_manager",),
+            approval_chain=("customer_ops_manager", "security_reviewer"),
+            approval_refs=("approval-1", "approval-2"),
+            approval_actor_ids=("manager-1",),
+            separation_of_duty=True,
+        )
+
+    assert "approval-1" not in str(excinfo.value)
+    assert "manager-1" not in str(excinfo.value)
+    assert "actor id for each approval ref" in str(excinfo.value)
+
+
 def test_authority_proof_rejects_scalar_approval_refs() -> None:
     with pytest.raises(ValueError, match=r"must be an array") as excinfo:
         AuthorityProofRecord(
