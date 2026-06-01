@@ -41,7 +41,10 @@ DOC_REQUIREMENTS: dict[Path, tuple[str, ...]] = {
         "sdlc_recovery_handoff_receipt",
         "sdlc_inventory_closure",
         "sdlc_workspace_preflight_closure",
+        "sdlc_branch_ruleset_witness",
+        "docs/main-protection-ruleset-witness.json",
         "scripts/validate_sdlc_pr_enforcement.py",
+        "tests/test_validate_sdlc_pr_enforcement.py",
         "No closure without learning.",
     ),
     WORKSPACE_ROOT / "docs" / "SDLC_GOVERNANCE_POLICY.md": (
@@ -66,6 +69,9 @@ DOC_REQUIREMENTS: dict[Path, tuple[str, ...]] = {
     ),
     WORKSPACE_ROOT / "docs" / "SDLC_PR_ENFORCEMENT.md": (
         "SDLC Governance Gate",
+        "sdlc_branch_ruleset_witness",
+        "docs/main-protection-ruleset-witness.json",
+        "sdlc_workspace_preflight_closure",
         "rollback_or_incident_handoff",
     ),
 }
@@ -95,6 +101,7 @@ REQUIRED_VERIFICATION_COMMANDS = (
 )
 WORKSPACE_PREFLIGHT_RECEIPT_REF = "receipt://workspace/governance-preflight/001"
 WORKSPACE_PREFLIGHT_RECEIPT_PATH = ".tmp/workspace-governance-preflight-receipt.json"
+BRANCH_RULESET_WITNESS_PATH = "docs/main-protection-ruleset-witness.json"
 GATE_BOUND_ARTIFACT_KINDS = (
     "change_request",
     "requirement",
@@ -232,6 +239,7 @@ ARTIFACT_SPEC_BY_KIND = {spec.kind: spec for spec in ARTIFACT_SPECS}
 CANONICAL_SCHEMA_REFS = tuple(f"schemas/{spec.schema_name}" for spec in ARTIFACT_SPECS)
 CANONICAL_EXAMPLE_REFS = tuple(f"examples/sdlc/{spec.example_name}" for spec in ARTIFACT_SPECS)
 CANONICAL_INVENTORY_REFS = CANONICAL_SCHEMA_REFS + CANONICAL_EXAMPLE_REFS
+REQUIRED_BRANCH_WITNESS_REFS = (BRANCH_RULESET_WITNESS_PATH,)
 
 
 class SdlcArtifactError(ValueError):
@@ -539,6 +547,7 @@ def build_validation_report() -> dict[str, Any]:
         "sdlc_gate_decision_envelopes",
         "sdlc_closure_ref_retention",
         "sdlc_recovery_handoff_retention",
+        "sdlc_branch_ruleset_witness_closure",
         "sdlc_no_overclaim",
     )
     return {
@@ -656,9 +665,27 @@ def _validate_implementation_receipt(record: dict[str, Any]) -> list[str]:
     errors.extend(
         _validate_ref_inventory(
             "implementation_receipt",
+            "changed_files",
+            changed_file_paths,
+            REQUIRED_BRANCH_WITNESS_REFS,
+            requirement_label="required branch ruleset witness refs",
+        )
+    )
+    errors.extend(
+        _validate_ref_inventory(
+            "implementation_receipt",
             "schema_changes",
             record.get("schema_changes", []),
             CANONICAL_SCHEMA_REFS,
+        )
+    )
+    errors.extend(
+        _validate_ref_inventory(
+            "implementation_receipt",
+            "documentation_changes",
+            record.get("documentation_changes", []),
+            REQUIRED_BRANCH_WITNESS_REFS,
+            requirement_label="required branch ruleset witness refs",
         )
     )
     for field_name in ("schema_changes", "validator_changes", "test_changes", "documentation_changes"):
@@ -709,6 +736,15 @@ def _validate_verification_receipt(record: dict[str, Any]) -> list[str]:
             CANONICAL_EXAMPLE_REFS,
         )
     )
+    errors.extend(
+        _validate_ref_inventory(
+            "verification_receipt",
+            "coverage_refs",
+            record.get("coverage_refs", []),
+            REQUIRED_BRANCH_WITNESS_REFS,
+            requirement_label="required branch ruleset witness refs",
+        )
+    )
     return errors
 
 
@@ -756,6 +792,8 @@ def _validate_ref_inventory(
     field_name: str,
     observed_refs: Any,
     required_refs: tuple[str, ...],
+    *,
+    requirement_label: str = "canonical SDLC inventory refs",
 ) -> list[str]:
     if not isinstance(observed_refs, list):
         return []
@@ -763,7 +801,7 @@ def _validate_ref_inventory(
     missing_refs = sorted(set(required_refs) - observed_ref_set)
     if not missing_refs:
         return []
-    return [f"{kind}: {field_name} missing canonical SDLC inventory refs: {missing_refs}"]
+    return [f"{kind}: {field_name} missing {requirement_label}: {missing_refs}"]
 
 
 def _validate_no_private_reasoning_fields(value: Any, path: str) -> list[str]:
