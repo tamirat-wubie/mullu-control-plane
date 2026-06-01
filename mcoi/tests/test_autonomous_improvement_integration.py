@@ -21,13 +21,10 @@ from mcoi_runtime.contracts.autonomous_improvement import (
     ImprovementDisposition,
     AutonomyLevel,
     ImprovementOutcomeVerdict,
-    LearningWindowStatus,
     SuppressionReason,
 )
 from mcoi_runtime.contracts.change_runtime import (
     ChangeType,
-    ChangeScope,
-    RolloutMode,
 )
 from mcoi_runtime.contracts.memory_mesh import MemoryRecord
 
@@ -394,6 +391,7 @@ class TestMonitorAndRollback:
         assert result["metric_name"] == "latency_ms"
         assert result["triggered"] is True
         assert result["rolled_back"] is True
+        assert result["rollback_error"] == ""
         assert result["degradation_pct"] == pytest.approx(20.0)
         assert result["tolerance_pct"] == pytest.approx(5.0)
 
@@ -421,6 +419,7 @@ class TestMonitorAndRollback:
 
         assert result["triggered"] is False
         assert result["rolled_back"] is False
+        assert result["rollback_error"] == ""
         assert result["degradation_pct"] == 0.0
         assert result["tolerance_pct"] == 0.0
 
@@ -448,8 +447,41 @@ class TestMonitorAndRollback:
 
         assert result["triggered"] is True
         assert result["rolled_back"] is True
+        assert result["rollback_error"] == ""
         assert result["degradation_pct"] == pytest.approx(2.0)
         assert result["tolerance_pct"] == pytest.approx(1.0)
+
+    def test_trigger_reports_bounded_rollback_error(self, integration_with_engines):
+        bridge, es, imp, chg, mem = integration_with_engines
+        _register_default_policy(imp, "optimization")
+
+        bridge.evaluate_from_optimization(
+            "cand-rb-4", "rec-rb-4", "Rollback error test",
+            change_type="optimization",
+            confidence=0.9,
+            risk_score=0.1,
+        )
+        imp.start_session("sess-rb-4", "cand-rb-4", "missing-change")
+
+        result = bridge.monitor_and_rollback(
+            change_id="missing-change",
+            session_id="sess-rb-4",
+            metric_name="latency_ms",
+            baseline_value=100.0,
+            observed_value=80.0,
+        )
+
+        assert result["triggered"] is True
+        assert result["rolled_back"] is False
+        assert result["rollback_error"] == "rollback error (RuntimeCoreInvariantError)"
+        assert "missing-change" not in result["rollback_error"]
+
+        monitor_events = tuple(
+            event for event in es.list_events(correlation_id="missing-change")
+            if event.payload.get("action") == "monitor_and_rollback"
+        )
+        assert len(monitor_events) == 1
+        assert monitor_events[0].payload["rollback_error"] == result["rollback_error"]
 
 
 # ===================================================================

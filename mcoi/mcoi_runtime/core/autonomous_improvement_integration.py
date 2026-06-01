@@ -15,10 +15,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from ..contracts.autonomous_improvement import (
-    AutonomyLevel,
     ImprovementDisposition,
-    ImprovementOutcomeVerdict,
-    LearningWindowStatus,
     SuppressionReason,
 )
 from ..contracts.event import EventRecord, EventSource, EventType
@@ -216,17 +213,17 @@ class AutonomousImprovementIntegration:
     ) -> dict[str, Any]:
         """Run a complete improvement lifecycle: session → window → outcome."""
         # Start session
-        session = self._improvement.start_session(session_id, candidate_id, change_id)
+        self._improvement.start_session(session_id, candidate_id, change_id)
 
         # Open and close learning window
         window_id = f"{session_id}-win"
-        window = self._improvement.open_learning_window(
+        self._improvement.open_learning_window(
             window_id, change_id, metric_name, baseline_value,
             candidate_id=candidate_id,
             duration_seconds=window_duration_seconds,
         )
-        window = self._improvement.record_observation(window_id, final_value)
-        window = self._improvement.close_learning_window(window_id)
+        self._improvement.record_observation(window_id, final_value)
+        self._improvement.close_learning_window(window_id)
 
         # Assess outcome
         outcome_id = f"{session_id}-out"
@@ -277,17 +274,19 @@ class AutonomousImprovementIntegration:
             tolerance_pct=tolerance_pct,
         )
         rolled_back = False
+        rollback_error = ""
         if trigger is not None:
             try:
                 self._change.rollback_change(change_id)
                 rolled_back = True
-            except (ValueError, RuntimeError):
-                pass  # Change may not be in rollback-eligible state
+            except (ValueError, RuntimeError) as exc:
+                rollback_error = f"rollback error ({type(exc).__name__})"
 
         _emit(self._events, "monitor_and_rollback", {
             "change_id": change_id,
             "triggered": trigger is not None,
             "rolled_back": rolled_back,
+            "rollback_error": rollback_error,
         }, change_id)
         return {
             "change_id": change_id,
@@ -295,6 +294,7 @@ class AutonomousImprovementIntegration:
             "metric_name": metric_name,
             "triggered": trigger is not None,
             "rolled_back": rolled_back,
+            "rollback_error": rollback_error,
             "degradation_pct": trigger.degradation_pct if trigger else 0.0,
             "tolerance_pct": trigger.tolerance_pct if trigger else 0.0,
         }

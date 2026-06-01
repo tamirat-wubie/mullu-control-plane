@@ -4,15 +4,12 @@ Tests: PII detection, redaction modes, dict scanning, built-in patterns,
     custom patterns, edge cases.
 """
 
-import pytest
 from mcoi_runtime.core.pii_scanner import (
     BUILTIN_PATTERNS,
     PIICategory,
-    PIIMatch,
     PIIPattern,
     PIIScanner,
     RedactionMode,
-    ScanResult,
     _apply_redaction,
 )
 
@@ -203,6 +200,19 @@ class TestScannerBehavior:
         result = scanner.scan("Account: ACME-123456")
         assert result.pii_detected
         assert "[REDACTED:custom]" in result.redacted_text
+
+    def test_invalid_custom_pattern_reason_is_bounded(self):
+        custom = (PIIPattern(
+            category=PIICategory.CUSTOM,
+            pattern=r"[invalid",
+            redaction_mode=RedactionMode.FULL,
+        ),)
+        scanner = PIIScanner(patterns=custom)
+
+        assert scanner.pattern_count == 0
+        assert scanner.invalid_pattern_count == 1
+        assert scanner.invalid_pattern_reasons == ("custom:invalid_regex",)
+        assert "[invalid" not in str(scanner.invalid_pattern_reasons)
 
     def test_scan_preserves_ethiopic_runs_during_normalization(self, monkeypatch):
         import mcoi_runtime.core.pii_scanner as pii_scanner
