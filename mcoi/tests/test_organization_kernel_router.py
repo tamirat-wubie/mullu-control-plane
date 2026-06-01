@@ -387,6 +387,55 @@ def test_case_proof_explorer_html_view_is_read_only_and_escaped(tmp_path: Path) 
     assert before["gate_decisions"] == after["gate_decisions"] == []
 
 
+def test_department_registry_view_is_read_only_and_escaped(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    organization = client.post(
+        "/api/v1/orgs",
+        json={"org_id": "org-dept", "tenant_id": "tenant-dept", "name": "Department Test"},
+    )
+    created = client.post(
+        "/api/v1/departments",
+        json={
+            "department_id": "research_ops",
+            "org_id": "org-dept",
+            "name": "<script>alert('dept')</script>",
+            "mission": "Control research case intake and proof boundaries.",
+            "owns": ["research_cases"],
+            "allowed_case_types": ["launch_gateway_pilot"],
+            "allowed_capabilities": ["research.case.review"],
+            "required_evidence": ["research_case_receipt"],
+            "escalation_departments": ["executive"],
+            "metrics": ["unreviewed_case_count"],
+            "failure_modes": ["unbounded_research_claim"],
+        },
+    )
+    before = client.get("/api/v1/orgs/org-dept/departments").json()
+
+    registry = client.get("/api/v1/orgs/org-dept/department-registry")
+    view = client.get("/api/v1/orgs/org-dept/department-registry/view")
+    after = client.get("/api/v1/orgs/org-dept/departments").json()
+
+    assert organization.status_code == 200
+    assert created.status_code == 200
+    assert registry.status_code == 200
+    assert registry.json()["summary"]["department_count"] == 1
+    assert registry.json()["summary"]["review_department_count"] == 1
+    assert registry.json()["departments"][0]["readiness"] == "needs_review"
+    assert registry.json()["departments"][0]["readiness_gaps"] == [
+        "missing_owner_role",
+        "missing_capability:research.case.review",
+        "missing_evidence_rule:research_case_receipt",
+    ]
+    assert view.status_code == 200
+    assert "text/html" in view.headers["content-type"]
+    assert "Mullu OrgOS Department Registry" in view.text
+    assert "json registry" in view.text
+    assert "department list" in view.text
+    assert "<script>alert('dept')</script>" not in view.text
+    assert "&lt;script&gt;alert(&#x27;dept&#x27;)&lt;/script&gt;" in view.text
+    assert before == after
+
+
 def test_gateway_pilot_can_close_and_bind_learning(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     _bootstrap_and_open_pilot(client)
@@ -927,6 +976,8 @@ def test_default_routers_include_organization_kernel_paths() -> None:
 
     assert "/api/v1/orgs" in paths
     assert "/api/v1/cases" in paths
+    assert "/api/v1/orgs/{org_id}/department-registry" in paths
+    assert "/api/v1/orgs/{org_id}/department-registry/view" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate/view" in paths
     assert "/api/v1/cases/{case_id}/proof-timeline" in paths
