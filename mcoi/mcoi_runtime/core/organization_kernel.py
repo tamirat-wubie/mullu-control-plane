@@ -186,6 +186,11 @@ class OrganizationKernel:
     def organization_count(self) -> int:
         return len(self._organizations)
 
+    def organization_tenant(self, org_id: str) -> str | None:
+        """Return the tenant that owns an organization, or None if unknown."""
+        organization = self._organizations.get(org_id)
+        return organization.tenant_id if organization is not None else None
+
     @property
     def department_count(self) -> int:
         return len(self._departments)
