@@ -13,6 +13,7 @@ except ImportError:  # pragma: no cover - environment-dependent
 
 from mcoi_runtime.app.middleware import (
     GovernanceMiddleware,
+    MAX_BODY_PARSE_SIZE,
     _extract_content_safety_fields,
     _extract_temporal_action_field,
 )
@@ -62,16 +63,28 @@ def test_guard_exception_is_sanitized_at_http_boundary() -> None:
     assert "guard-secret-detail" not in str(body)
 
 
-def test_middleware_skips_malformed_json_content_extraction() -> None:
+def test_middleware_rejects_malformed_json_before_guards_and_endpoint() -> None:
+    if not FASTAPI_AVAILABLE:
+        pytest.skip("FastAPI not installed")
+
     chain = GovernanceGuardChain()
+    guard_calls: list[dict[str, object]] = []
+    endpoint_calls: list[str] = []
 
     def verify_context(context: dict[str, object]) -> GuardResult:
-        assert context.get("prompt") is None
-        assert context.get("content") is None
+        guard_calls.append(context)
         return GuardResult(allowed=True, guard_name="verify")
 
     chain.add(GovernanceGuard("verify", verify_context))
-    client = _client_with_chain(chain)
+    app = FastAPI()
+
+    @app.post("/api/v1/echo")
+    def echo() -> dict[str, bool]:
+        endpoint_calls.append("executed")
+        return {"ok": True}
+
+    app.add_middleware(GovernanceMiddleware, guard_chain=chain)
+    client = TestClient(app)
 
     resp = client.post(
         "/api/v1/echo",
@@ -79,8 +92,37 @@ def test_middleware_skips_malformed_json_content_extraction() -> None:
         headers={"content-type": "application/json"},
     )
 
-    assert resp.status_code == 200
-    assert resp.json()["ok"] is True
+    assert resp.status_code == 403
+    assert resp.json()["error"] == "malformed json body"
+    assert resp.json()["guard"] == "request_body"
+    assert resp.json()["governed"] is True
+    assert guard_calls == []
+    assert endpoint_calls == []
+
+
+def test_middleware_rejects_oversized_json_before_guard_chain() -> None:
+    chain = GovernanceGuardChain()
+    guard_calls: list[dict[str, object]] = []
+
+    def verify_context(context: dict[str, object]) -> GuardResult:
+        guard_calls.append(context)
+        return GuardResult(allowed=True, guard_name="verify")
+
+    chain.add(GovernanceGuard("verify", verify_context))
+    client = _client_with_chain(chain)
+
+    oversized_body = b'{"prompt":"' + (b"x" * MAX_BODY_PARSE_SIZE) + b'"}'
+    resp = client.post(
+        "/api/v1/echo",
+        content=oversized_body,
+        headers={"content-type": "application/json"},
+    )
+
+    assert resp.status_code == 403
+    assert resp.json()["error"] == "request body exceeds governance scan limit"
+    assert resp.json()["guard"] == "request_body"
+    assert resp.json()["governed"] is True
+    assert guard_calls == []
 
 
 def test_extract_content_safety_fields_rejects_malformed_json() -> None:

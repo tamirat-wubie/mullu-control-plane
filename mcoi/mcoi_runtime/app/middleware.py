@@ -7,7 +7,7 @@ Dependencies: governance_guard, metrics, audit_trail.
 Invariants:
   - Middleware runs on all /api/v1/* paths.
   - Non-governed paths (/health, /ready) are exempt.
-  - Rejected requests get 429/403 with structured error.
+  - Rejected requests get bounded structured errors before endpoint execution.
   - All guard evaluations are metricked.
 """
 
@@ -29,6 +29,8 @@ from mcoi_runtime.governance.guards.content_safety import (
     create_input_safety_guard,
 )
 from mcoi_runtime.governance.guards.chain import (
+    GuardChainResult,
+    GuardResult,
     GovernanceGuardChain,
     create_api_key_guard,
     create_budget_guard,
@@ -48,23 +50,23 @@ EXEMPT_PATHS = frozenset({"/health", "/ready", "/docs", "/openapi.json", "/redoc
 MAX_BODY_PARSE_SIZE = 1_048_576
 
 
-def _extract_content_safety_fields(body: bytes) -> dict[str, str]:
-    """Extract governed free-text fields for safety checks from a JSON body.
-
-    Surfaces every field in ``CONTENT_SAFETY_TEXT_FIELDS`` (prompt, content,
-    query, goal, initial_input, message, system_prompt, text, proposed_goal)
-    so the input safety guard scans all user-controlled text the API accepts,
-    not just ``prompt``/``content``.
-    """
-    if not body or len(body) > MAX_BODY_PARSE_SIZE:
-        return {}
+def _parse_governed_json_body(body: bytes) -> tuple[dict[str, Any] | None, str]:
+    """Parse a bounded JSON object body or return a governed rejection reason."""
+    if not body:
+        return {}, ""
+    if len(body) > MAX_BODY_PARSE_SIZE:
+        return None, "request body exceeds governance scan limit"
     try:
         parsed = json.loads(body)
     except (UnicodeDecodeError, json.JSONDecodeError):
-        return {}
+        return None, "malformed json body"
     if not isinstance(parsed, dict):
-        return {}
+        return {}, ""
+    return parsed, ""
 
+
+def _extract_content_safety_fields_from_parsed(parsed: dict[str, Any]) -> dict[str, str]:
+    """Extract governed free-text fields from a parsed JSON object."""
     extracted: dict[str, str] = {}
     for field_name in CONTENT_SAFETY_TEXT_FIELDS:
         value = parsed.get(field_name)
@@ -73,15 +75,23 @@ def _extract_content_safety_fields(body: bytes) -> dict[str, str]:
     return extracted
 
 
-def _extract_temporal_action_field(body: bytes) -> dict[str, Any]:
-    """Extract a governed temporal action contract from a JSON body."""
-    if not body or len(body) > MAX_BODY_PARSE_SIZE:
+def _extract_content_safety_fields(body: bytes) -> dict[str, str]:
+    """Extract governed free-text fields for safety checks from a JSON body.
+
+    Surfaces every field in ``CONTENT_SAFETY_TEXT_FIELDS`` (prompt, content,
+    query, goal, initial_input, message, system_prompt, text, proposed_goal)
+    so the input safety guard scans all user-controlled text the API accepts,
+    not just ``prompt``/``content``.
+    """
+    parsed, error = _parse_governed_json_body(body)
+    if error or parsed is None:
         return {}
-    try:
-        parsed = json.loads(body)
-    except (UnicodeDecodeError, json.JSONDecodeError):
-        return {}
-    if not isinstance(parsed, dict) or "temporal_action" not in parsed:
+    return _extract_content_safety_fields_from_parsed(parsed)
+
+
+def _extract_temporal_action_field_from_parsed(parsed: dict[str, Any]) -> dict[str, Any]:
+    """Extract a governed temporal action contract from a parsed JSON object."""
+    if "temporal_action" not in parsed:
         return {}
 
     action = parsed["temporal_action"]
@@ -119,6 +129,30 @@ def _extract_temporal_action_field(body: bytes) -> dict[str, Any]:
         return {"temporal_action": TemporalActionRequest(**candidate)}
     except (TypeError, ValueError):
         return {"temporal_action": action}
+
+
+def _extract_temporal_action_field(body: bytes) -> dict[str, Any]:
+    """Extract a governed temporal action contract from a JSON body."""
+    parsed, error = _parse_governed_json_body(body)
+    if error or parsed is None:
+        return {}
+    return _extract_temporal_action_field_from_parsed(parsed)
+
+
+def _request_body_guard_result(reason: str) -> GuardChainResult:
+    """Build a fail-closed guard result for request-body governance failures."""
+    result = GuardResult(
+        allowed=False,
+        guard_name="request_body",
+        reason=reason,
+        detail={"stage": "governance_body_scan"},
+    )
+    return GuardChainResult(
+        allowed=False,
+        results=(result,),
+        blocking_guard=result.guard_name,
+        reason=result.reason,
+    )
 
 
 class GovernanceMiddleware(BaseHTTPMiddleware):
@@ -186,17 +220,28 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
         # Extract prompt/content from request body for content safety guard.
         # Starlette caches body after first read, so downstream handlers can re-read.
         content_type = request.headers.get("content-type", "")
+        request_body_rejection = ""
         if "json" in content_type and request.method in ("POST", "PUT", "PATCH"):
             try:
                 body = await request.body()
-                context.update(_extract_content_safety_fields(body))
-                context.update(_extract_temporal_action_field(body))
-            except (RuntimeError, UnicodeDecodeError, json.JSONDecodeError):
-                pass  # Non-JSON or malformed body - skip content extraction
+            except RuntimeError:
+                request_body_rejection = "request body unavailable"
+            else:
+                parsed_body, parse_error = _parse_governed_json_body(body)
+                if parse_error:
+                    request_body_rejection = parse_error
+                elif parsed_body is not None:
+                    context.update(_extract_content_safety_fields_from_parsed(parsed_body))
+                    context.update(_extract_temporal_action_field_from_parsed(parsed_body))
+        if request_body_rejection:
+            context["request_body_error"] = request_body_rejection
 
         # Evaluate guard chain
         start = time.monotonic()
-        result = self._chain.evaluate(context)
+        if request_body_rejection:
+            result = _request_body_guard_result(request_body_rejection)
+        else:
+            result = self._chain.evaluate(context)
         latency_ms = (time.monotonic() - start) * 1000
         request.state.governance_context = dict(context)
         request.state.governance_decision_allowed = result.allowed
