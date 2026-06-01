@@ -79,7 +79,7 @@ jobs:
           - os: ubuntu-latest
             python-version: "3.12"
             mcoi-shard: n
-          - os: windows-latest
+          - os: windows-2025-vs2026
             python-version: "3.13"
             mcoi-shard: n
     defaults:
