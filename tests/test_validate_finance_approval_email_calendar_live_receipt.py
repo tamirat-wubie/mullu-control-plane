@@ -30,6 +30,7 @@ def test_validate_finance_email_calendar_live_receipt_accepts_read_only_pass(tmp
 
     assert result.valid is True
     assert result.ready is True
+    assert result.receipt_path == "email-calendar-live-receipt.json"
     assert result.adapter_id == "communication.email_calendar_worker"
     assert result.status == "passed"
     assert result.verification_status == "passed"
@@ -127,7 +128,37 @@ def test_validate_finance_email_calendar_live_receipt_cli_outputs_json(tmp_path:
     assert exit_code == 0
     assert payload["valid"] is True
     assert payload["ready"] is True
+    assert payload["receipt_path"] == "email-calendar-live-receipt.json"
+    assert str(tmp_path) not in json.dumps(payload, sort_keys=True)
     assert payload["provider_operation"] == "email.search"
+
+
+def test_validate_finance_email_calendar_live_receipt_missing_file_path_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "secret-live-receipt-path.json"
+
+    result = validate_finance_approval_email_calendar_live_receipt(receipt_path=receipt_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert result.receipt_path == "secret-live-receipt-path.json"
+    assert result.errors == ("finance email/calendar live receipt could not be read",)
+    assert str(tmp_path) not in json.dumps(result.as_dict(), sort_keys=True)
+    assert "secret-live-receipt-path" not in serialized_errors
+
+
+def test_validate_finance_email_calendar_live_receipt_json_parse_path_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "secret-live-json-path.json"
+    receipt_path.write_text('{"receipt_id": "secret-live-json-value"', encoding="utf-8")
+
+    result = validate_finance_approval_email_calendar_live_receipt(receipt_path=receipt_path)
+    serialized_errors = json.dumps(result.errors, sort_keys=True)
+
+    assert result.valid is False
+    assert result.receipt_path == "secret-live-json-path.json"
+    assert result.errors == ("finance email/calendar live receipt must be JSON",)
+    assert str(tmp_path) not in json.dumps(result.as_dict(), sort_keys=True)
+    assert "secret-live-json-path" not in serialized_errors
+    assert "secret-live-json-value" not in serialized_errors
 
 
 def _ready_receipt() -> dict[str, object]:

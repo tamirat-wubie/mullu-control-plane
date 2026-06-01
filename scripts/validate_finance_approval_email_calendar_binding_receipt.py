@@ -189,12 +189,11 @@ def _validation_result(
     receipt: dict[str, Any],
     errors: list[str],
 ) -> FinanceEmailCalendarBindingReceiptValidation:
-    present_names = receipt.get("present_binding_names", ())
     return FinanceEmailCalendarBindingReceiptValidation(
         valid=not errors,
         ready=receipt.get("ready") is True,
         receipt_id=str(receipt.get("receipt_id", "")),
-        receipt_path=str(receipt_path),
+        receipt_path=_path_label(receipt_path),
         binding_count=int(receipt.get("binding_count", 0)) if isinstance(receipt.get("binding_count", 0), int) else 0,
         present_binding_names=_string_tuple(receipt, "present_binding_names"),
         required_binding_groups=_string_tuple(receipt, "required_binding_groups"),
@@ -204,6 +203,15 @@ def _validation_result(
         readiness_blockers=_string_tuple(receipt, "readiness_blockers"),
         errors=tuple(errors),
     )
+
+
+def _path_label(path: Path) -> str:
+    """Return a validation report path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _string_tuple(receipt: dict[str, Any], field_name: str) -> tuple[str, ...]:
