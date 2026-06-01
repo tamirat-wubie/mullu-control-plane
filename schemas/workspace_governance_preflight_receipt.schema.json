@@ -67,7 +67,11 @@
             "workspace_governance_preflight_receipt_example",
             "universal_action_orchestration_contract",
             "universal_action_orchestration_validation_receipt_contract",
-            "universal_action_orchestration_validation_receipt_example"
+            "universal_action_orchestration_validation_receipt_example",
+            "sdlc_artifact_validation",
+            "sdlc_state_machine_validation",
+            "sdlc_release_readiness_validation",
+            "sdlc_security_review_validation"
           ]
         },
         "args": {

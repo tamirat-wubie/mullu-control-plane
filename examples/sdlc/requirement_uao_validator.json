@@ -1,0 +1,42 @@
+{
+  "requirement_id": "sdlc_reqspec_uao_validator_001",
+  "request_id": "sdlc_req_uao_validator_001",
+  "problem_statement": "The software delivery lifecycle doctrine must be enforceable instead of only described in prose.",
+  "success_criteria": [
+    "valid SDLC examples pass schema and semantic validation",
+    "invalid SDLC examples fail with explicit errors",
+    "workspace preflight includes SDLC artifact, state machine, release readiness, and security review checks"
+  ],
+  "non_goals": [
+    "no runtime deployment",
+    "no external API calls",
+    "no branch merge or release publication"
+  ],
+  "constraints": [
+    "no raw private reasoning fields",
+    "effect-bearing SDLC decisions require UAO, causal decision trace, and receipt references",
+    "production claims require deployment witness evidence"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "docs",
+    "schemas",
+    "examples",
+    "scripts",
+    "tests",
+    "preflight"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_state_machine.py",
+    "python scripts/validate_sdlc_release_readiness.py --strict",
+    "python scripts/validate_sdlc_security_review.py --strict"
+  ],
+  "evidence_required": [
+    "schema validation receipt",
+    "state machine validation receipt",
+    "release readiness validation receipt",
+    "security review validation receipt",
+    "workspace preflight receipt"
+  ]
+}

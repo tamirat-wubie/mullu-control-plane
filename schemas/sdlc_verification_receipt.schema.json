@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:sdlc-verification-receipt:1",
+  "title": "SDLC Verification Receipt",
+  "description": "Governed verification receipt for a software change.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "verification_id",
+    "change_id",
+    "commands",
+    "tests_passed",
+    "tests_failed",
+    "warnings",
+    "coverage_refs",
+    "validator_outputs",
+    "failed_checks",
+    "receipt_ref"
+  ],
+  "properties": {
+    "verification_id": { "type": "string", "minLength": 1 },
+    "change_id": { "type": "string", "minLength": 1 },
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/command_result" }
+    },
+    "tests_passed": { "type": "integer", "minimum": 0 },
+    "tests_failed": { "type": "integer", "minimum": 0 },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "coverage_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "validator_outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/validator_output" }
+    },
+    "failed_checks": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "receipt_ref": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "command_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "command", "status"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "command": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["passed", "failed", "skipped"] }
+      }
+    },
+    "validator_output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "status", "output_ref"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["passed", "failed", "skipped"] },
+        "output_ref": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

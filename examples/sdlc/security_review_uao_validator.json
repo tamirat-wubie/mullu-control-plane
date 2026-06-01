@@ -1,0 +1,41 @@
+{
+  "security_review_id": "sdlc_security_uao_validator_001",
+  "change_id": "sdlc_req_uao_validator_001",
+  "impact_categories": [
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "The change is read-only validation infrastructure. Main risks are raw private reasoning exposure, receipt overclaim, and preflight bypass.",
+  "required_checks": [
+    {
+      "category": "policy",
+      "check": "policy bypass test",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_sdlc_artifact.py"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity test",
+      "status": "passed",
+      "evidence_ref": "tests/test_validate_sdlc_artifact.py"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility test",
+      "status": "passed",
+      "evidence_ref": "tests/test_sdlc_security_review.py"
+    }
+  ],
+  "findings": [],
+  "mitigations": [
+    "reject raw private reasoning fields",
+    "require UAO, causal decision trace, and receipt references for gate decisions",
+    "bind validators into workspace preflight"
+  ],
+  "residual_risk": "low",
+  "release_blocked": false,
+  "security_receipts": [
+    "receipt://sdlc/security-review/uao-validator/001"
+  ]
+}

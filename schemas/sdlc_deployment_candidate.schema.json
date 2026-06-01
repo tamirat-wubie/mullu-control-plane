@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:sdlc-deployment-candidate:1",
+  "title": "SDLC Deployment Candidate",
+  "description": "Governed deployment readiness artifact for a software change.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "deployment_id",
+    "release_id",
+    "environment",
+    "runtime_host",
+    "secrets_ready",
+    "database_ready",
+    "health_check",
+    "runtime_conformance",
+    "deployment_witness",
+    "public_health",
+    "rollback_ready",
+    "rollback_command",
+    "operator",
+    "approved_at",
+    "public_production_claim",
+    "proof_verify_endpoint",
+    "audit_verify_endpoint"
+  ],
+  "properties": {
+    "deployment_id": { "type": "string", "minLength": 1 },
+    "release_id": { "type": "string", "minLength": 1 },
+    "environment": { "type": "string", "enum": ["local", "staging", "pilot", "production"] },
+    "runtime_host": { "type": "string", "minLength": 1 },
+    "secrets_ready": { "type": "boolean" },
+    "database_ready": { "type": "boolean" },
+    "health_check": { "$ref": "#/$defs/readiness_probe" },
+    "runtime_conformance": { "$ref": "#/$defs/readiness_probe" },
+    "deployment_witness": { "$ref": "#/$defs/readiness_probe" },
+    "public_health": { "$ref": "#/$defs/readiness_probe" },
+    "rollback_ready": { "type": "boolean" },
+    "rollback_command": { "type": "string", "minLength": 1 },
+    "operator": { "type": "string", "minLength": 1 },
+    "approved_at": { "type": "string", "format": "date-time" },
+    "public_production_claim": { "type": "boolean" },
+    "proof_verify_endpoint": { "$ref": "#/$defs/readiness_probe" },
+    "audit_verify_endpoint": { "$ref": "#/$defs/readiness_probe" }
+  },
+  "$defs": {
+    "readiness_probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "status"],
+      "properties": {
+        "ref": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": [
+            "passing",
+            "failing",
+            "unknown",
+            "not_required",
+            "not_declared",
+            "not_published",
+            "published",
+            "declared",
+            "reachable"
+          ]
+        }
+      }
+    }
+  }
+}

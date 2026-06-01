@@ -3,7 +3,7 @@
   "terminal_closure_required": true,
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
-  "check_count": 11,
+  "check_count": 15,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -122,6 +122,52 @@
       "args": [
         "python",
         "scripts/validate_universal_action_orchestration_receipt.py"
+      ],
+      "return_code": 0,
+      "passed": true,
+      "stdout": "STATUS: passed\n",
+      "stderr": ""
+    },
+    {
+      "name": "sdlc_artifact_validation",
+      "args": [
+        "python",
+        "scripts/validate_sdlc_artifact.py"
+      ],
+      "return_code": 0,
+      "passed": true,
+      "stdout": "STATUS: passed\n",
+      "stderr": ""
+    },
+    {
+      "name": "sdlc_state_machine_validation",
+      "args": [
+        "python",
+        "scripts/validate_sdlc_state_machine.py"
+      ],
+      "return_code": 0,
+      "passed": true,
+      "stdout": "STATUS: passed\n",
+      "stderr": ""
+    },
+    {
+      "name": "sdlc_release_readiness_validation",
+      "args": [
+        "python",
+        "scripts/validate_sdlc_release_readiness.py",
+        "--strict"
+      ],
+      "return_code": 0,
+      "passed": true,
+      "stdout": "STATUS: passed\n",
+      "stderr": ""
+    },
+    {
+      "name": "sdlc_security_review_validation",
+      "args": [
+        "python",
+        "scripts/validate_sdlc_security_review.py",
+        "--strict"
       ],
       "return_code": 0,
       "passed": true,

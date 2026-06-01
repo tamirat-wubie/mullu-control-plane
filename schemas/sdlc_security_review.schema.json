@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:sdlc-security-review:1",
+  "title": "SDLC Security Review",
+  "description": "Governed security review artifact for a software change.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "security_review_id",
+    "change_id",
+    "impact_categories",
+    "threat_model",
+    "required_checks",
+    "findings",
+    "mitigations",
+    "residual_risk",
+    "release_blocked",
+    "security_receipts"
+  ],
+  "properties": {
+    "security_review_id": { "type": "string", "minLength": 1 },
+    "change_id": { "type": "string", "minLength": 1 },
+    "impact_categories": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/security_impact" },
+      "uniqueItems": true
+    },
+    "threat_model": { "type": "string", "minLength": 1 },
+    "required_checks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/security_check" }
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    },
+    "mitigations": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "residual_risk": { "$ref": "#/$defs/severity" },
+    "release_blocked": { "type": "boolean" },
+    "security_receipts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "security_impact": {
+      "type": "string",
+      "enum": [
+        "none",
+        "auth",
+        "tenant_scope",
+        "budget",
+        "filesystem",
+        "network",
+        "external_api",
+        "secrets",
+        "policy",
+        "deployment",
+        "memory",
+        "receipts",
+        "audit"
+      ]
+    },
+    "severity": { "type": "string", "enum": ["none", "low", "medium", "high", "critical"] },
+    "security_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "check", "status", "evidence_ref"],
+      "properties": {
+        "category": { "$ref": "#/$defs/security_impact" },
+        "check": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["passed", "failed", "not_applicable"] },
+        "evidence_ref": { "type": "string", "minLength": 1 }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["finding_id", "severity", "status", "mitigation", "evidence_refs", "residual_risk"],
+      "properties": {
+        "finding_id": { "type": "string", "minLength": 1 },
+        "severity": { "$ref": "#/$defs/severity" },
+        "status": { "type": "string", "enum": ["open", "resolved", "accepted", "false_positive"] },
+        "mitigation": { "type": "string", "minLength": 1 },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "residual_risk": { "$ref": "#/$defs/severity" }
+      }
+    }
+  }
+}

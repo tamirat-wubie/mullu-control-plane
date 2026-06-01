@@ -83,6 +83,15 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `runtime_conformance_collection.schema.json` | Canonical live runtime conformance collection envelope |
 | `runtime_witness.schema.json` | Canonical signed runtime witness for gateway closure and anchor state |
 | `simulation_receipt.schema.json` | Canonical causal simulation dry-run receipt |
+| `sdlc_change_request.schema.json` | Canonical governed software-delivery intake artifact |
+| `sdlc_requirement.schema.json` | Canonical governed software-delivery requirement artifact |
+| `sdlc_design_decision.schema.json` | Canonical governed software-delivery design decision artifact |
+| `sdlc_work_plan.schema.json` | Canonical governed software-delivery ordered work plan artifact |
+| `sdlc_verification_receipt.schema.json` | Canonical governed software-delivery verification receipt |
+| `sdlc_security_review.schema.json` | Canonical governed software-delivery security review artifact |
+| `sdlc_release_candidate.schema.json` | Canonical governed software-delivery release readiness artifact |
+| `sdlc_deployment_candidate.schema.json` | Canonical governed software-delivery deployment readiness artifact |
+| `sdlc_closure_receipt.schema.json` | Canonical governed software-delivery terminal closure receipt |
 | `software_dev/capability_manifest.schema.json` | Governed manifest contract for admitting dynamic software-development capabilities |
 | `software_dev/*.input.schema.json` | Governed input contracts for repository mapping, context building, gate planning, sandboxed software changes, app task graph planning, and PR candidate preparation |
 | `software_dev/*.output.schema.json` | Governed output and receipt contracts for repository maps, context bundles, gate plans, software-change receipts, app task graphs, and PR candidates |

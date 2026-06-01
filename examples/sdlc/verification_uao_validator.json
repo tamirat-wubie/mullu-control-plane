@@ -1,0 +1,59 @@
+{
+  "verification_id": "sdlc_verify_uao_validator_001",
+  "change_id": "sdlc_req_uao_validator_001",
+  "commands": [
+    {
+      "name": "sdlc_artifact_validation",
+      "command": "python scripts/validate_sdlc_artifact.py",
+      "status": "passed"
+    },
+    {
+      "name": "sdlc_state_machine_validation",
+      "command": "python scripts/validate_sdlc_state_machine.py",
+      "status": "passed"
+    },
+    {
+      "name": "sdlc_release_readiness_validation",
+      "command": "python scripts/validate_sdlc_release_readiness.py --strict",
+      "status": "passed"
+    },
+    {
+      "name": "sdlc_security_review_validation",
+      "command": "python scripts/validate_sdlc_security_review.py --strict",
+      "status": "passed"
+    }
+  ],
+  "tests_passed": 4,
+  "tests_failed": 0,
+  "warnings": [],
+  "coverage_refs": [
+    "tests/test_validate_sdlc_artifact.py",
+    "tests/test_validate_sdlc_state_machine.py",
+    "tests/test_validate_sdlc_release_readiness.py",
+    "tests/test_sdlc_security_review.py"
+  ],
+  "validator_outputs": [
+    {
+      "name": "sdlc_artifact_validation",
+      "status": "passed",
+      "output_ref": "receipt://sdlc/artifact-validation/001"
+    },
+    {
+      "name": "sdlc_state_machine_validation",
+      "status": "passed",
+      "output_ref": "receipt://sdlc/state-machine-validation/001"
+    },
+    {
+      "name": "sdlc_release_readiness_validation",
+      "status": "passed",
+      "output_ref": "receipt://sdlc/release-readiness-validation/001"
+    },
+    {
+      "name": "sdlc_security_review_validation",
+      "status": "passed",
+      "output_ref": "receipt://sdlc/security-review-validation/001"
+    }
+  ],
+  "failed_checks": [],
+  "receipt_ref": "receipt://sdlc/verification/uao-validator/001"
+}

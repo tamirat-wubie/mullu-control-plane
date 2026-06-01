@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:sdlc-requirement:1",
+  "title": "SDLC Requirement",
+  "description": "Governed requirement artifact for a software change.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "requirement_id",
+    "request_id",
+    "problem_statement",
+    "success_criteria",
+    "non_goals",
+    "constraints",
+    "risk_class",
+    "affected_surfaces",
+    "acceptance_tests",
+    "evidence_required"
+  ],
+  "properties": {
+    "requirement_id": { "type": "string", "minLength": 1 },
+    "request_id": { "type": "string", "minLength": 1 },
+    "problem_statement": { "type": "string", "minLength": 1 },
+    "success_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "non_goals": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "constraints": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "risk_class": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
+    "affected_surfaces": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "acceptance_tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "evidence_required": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  }
+}

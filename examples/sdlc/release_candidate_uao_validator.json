@@ -1,0 +1,29 @@
+{
+  "release_id": "sdlc_release_uao_validator_001",
+  "version": "sdlc-foundation-20260601",
+  "commit_range": "working-tree",
+  "change_set": [
+    "sdlc_req_uao_validator_001"
+  ],
+  "breaking_changes": [],
+  "migration_required": false,
+  "schemas_changed": true,
+  "validators_changed": true,
+  "security_fixes": [],
+  "docs_updated": true,
+  "tests_passed": true,
+  "security_status": {
+    "review_ref": "sdlc_security_uao_validator_001",
+    "critical_open": 0,
+    "high_open": 0,
+    "status": "passed"
+  },
+  "known_limitations": [
+    "runtime dashboard and GitHub PR template integration are outside this contract foundation phase"
+  ],
+  "release_notes": "Adds SDLC doctrine, schemas, examples, validators, tests, and preflight gates without runtime deployment.",
+  "deployment_status": "not_published",
+  "rollback_plan": "Revert SDLC files and remove SDLC checks from workspace preflight.",
+  "release_receipt": "receipt://sdlc/release/uao-validator/001",
+  "evidence_bound_claims": true
+}

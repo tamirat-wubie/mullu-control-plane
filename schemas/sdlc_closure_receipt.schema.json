@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:sdlc-closure-receipt:1",
+  "title": "SDLC Closure Receipt",
+  "description": "Governed terminal closure receipt for a software change.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "closure_id",
+    "change_id",
+    "terminal_state",
+    "outcome",
+    "receipts",
+    "known_remaining_blockers",
+    "learning_notes",
+    "constructive_deltas",
+    "fracture_deltas",
+    "uao_refs",
+    "causal_decision_trace_refs",
+    "closed_at",
+    "next_action"
+  ],
+  "properties": {
+    "closure_id": { "type": "string", "minLength": 1 },
+    "change_id": { "type": "string", "minLength": 1 },
+    "terminal_state": {
+      "type": "string",
+      "enum": [
+        "closed_success",
+        "closed_rejected",
+        "closed_superseded",
+        "closed_rolled_back",
+        "closed_failed_with_receipt"
+      ]
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "SolvedVerified",
+        "SolvedUnverified",
+        "AwaitingEvidence",
+        "SafeHalt",
+        "GovernanceBlocked",
+        "BudgetExhausted",
+        "ImpossibleProved",
+        "ModelInvalidated"
+      ]
+    },
+    "receipts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "known_remaining_blockers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/blocker" }
+    },
+    "learning_notes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "constructive_deltas": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "fracture_deltas": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "uao_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "causal_decision_trace_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "closed_at": { "type": "string", "format": "date-time" },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blocker_id", "status", "reason"],
+      "properties": {
+        "blocker_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["open", "closed", "accepted", "deferred"] },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
