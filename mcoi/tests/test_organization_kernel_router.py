@@ -603,6 +603,121 @@ def test_authority_map_reports_unresolved_department_bindings(tmp_path: Path) ->
     assert before == after
 
 
+def test_case_portfolio_view_is_read_only_escaped_and_grouped(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    created = client.post(
+        "/api/v1/cases",
+        json={
+            "case_id": "case.portfolio_escape",
+            "org_id": "org-mullu",
+            "department_id": "executive",
+            "case_type": "launch_gateway_pilot",
+            "goal": "<script>alert('portfolio')</script>",
+            "risk": "low",
+            "owner_role_id": "executive.owner",
+            "assigned_department_ids": ["executive"],
+        },
+    )
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    portfolio = client.get("/api/v1/orgs/org-mullu/case-portfolio")
+    view = client.get("/api/v1/orgs/org-mullu/case-portfolio/view")
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+    payload = portfolio.json()
+    cases = {
+        item["case"]["case_id"]: item
+        for item in payload["cases"]
+    }
+    departments = {
+        item["department_id"]: item
+        for item in payload["department_lanes"]
+    }
+
+    assert created.status_code == 200
+    assert portfolio.status_code == 200
+    assert payload["read_only"] is True
+    assert payload["summary"]["case_count"] == 2
+    assert payload["summary"]["open_case_count"] == 2
+    assert payload["summary"]["closed_case_count"] == 0
+    assert payload["summary"]["blocked_case_count"] == 1
+    assert payload["summary"]["review_case_count"] == 2
+    assert payload["summary"]["attention_count"] == 4
+    assert cases["case.launch_gateway_pilot"]["terminal_status"] == "blocked_by_plan_gate"
+    assert cases["case.launch_gateway_pilot"]["blocked_step_count"] == 5
+    assert cases["case.portfolio_escape"]["terminal_status"] == "awaiting_plan"
+    assert departments["executive"]["primary_case_count"] == 2
+    assert departments["executive"]["assigned_case_count"] == 2
+    assert view.status_code == 200
+    assert "text/html" in view.headers["content-type"]
+    assert "Mullu OrgOS Case Portfolio" in view.text
+    assert "json portfolio" in view.text
+    assert "department registry" in view.text
+    assert "authority map" in view.text
+    assert "<script>alert('portfolio')</script>" not in view.text
+    assert "&lt;script&gt;alert(&#x27;portfolio&#x27;)&lt;/script&gt;" in view.text
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"]
+
+
+def test_case_portfolio_reports_closed_verified_case(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    approval = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/approvals",
+        json={
+            "approval_id": "approval:security-dual-control",
+            "role_id": "executive.owner",
+            "approval_scope": "security_approval",
+            "approved_by": "human-executive",
+        },
+    )
+    _allow_all_plan_steps(client)
+    closure = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/close",
+        json={
+            "reconciliation_id": "reconciliation:gateway-pilot",
+            "expected_effect": "gateway_pilot_ready",
+            "observed_effect": "gateway_pilot_ready",
+            "reconciliation_status": "match",
+            "forbidden_effects_checked": True,
+            "evidence_refs": ["evidence:closure:gateway-pilot"],
+            "terminal_disposition": "committed",
+            "terminal_certificate_id": "terminal:gateway-pilot",
+        },
+    )
+    learning = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/learning-admissions",
+        json={
+            "binding_id": "learning:gateway-pilot",
+            "closure_id": closure.json()["closure"]["closure_id"],
+            "decision_id": "learning-admission:gateway-pilot",
+            "admitted": True,
+        },
+    )
+
+    response = client.get("/api/v1/orgs/org-mullu/case-portfolio")
+    payload = response.json()
+
+    assert approval.status_code == 200
+    assert closure.status_code == 200
+    assert learning.status_code == 200
+    assert response.status_code == 200
+    assert payload["summary"]["case_count"] == 1
+    assert payload["summary"]["open_case_count"] == 0
+    assert payload["summary"]["closed_case_count"] == 1
+    assert payload["summary"]["blocked_case_count"] == 0
+    assert payload["summary"]["review_case_count"] == 0
+    assert payload["summary"]["terminal_closure_count"] == 1
+    assert payload["summary"]["learning_admitted_count"] == 1
+    assert payload["attention_items"] == []
+    assert payload["cases"][0]["terminal_status"] == "closed_verified"
+    assert payload["cases"][0]["has_terminal_closure"] is True
+    assert payload["cases"][0]["effect_reconciled"] is True
+    assert payload["cases"][0]["learning_admitted"] is True
+
+
 def test_gateway_pilot_can_close_and_bind_learning(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     _bootstrap_and_open_pilot(client)
@@ -1147,6 +1262,8 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/orgs/{org_id}/department-registry/view" in paths
     assert "/api/v1/orgs/{org_id}/authority-map" in paths
     assert "/api/v1/orgs/{org_id}/authority-map/view" in paths
+    assert "/api/v1/orgs/{org_id}/case-portfolio" in paths
+    assert "/api/v1/orgs/{org_id}/case-portfolio/view" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate/view" in paths
     assert "/api/v1/cases/{case_id}/audit-explorer" in paths

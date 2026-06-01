@@ -1510,6 +1510,198 @@ def _organization_authority_map(kernel: OrganizationKernel, org_id: str) -> dict
     }
 
 
+def _open_case_terminal_status(proof: dict[str, Any]) -> str:
+    summary = proof["summary"]
+    if summary["blocked_steps"]:
+        return "blocked_by_plan_gate"
+    if summary["has_plan"]:
+        return "awaiting_evidence"
+    return "awaiting_plan"
+
+
+def _case_portfolio_terminal_status(proof: dict[str, Any]) -> str:
+    closure_certificate = proof["closure_certificate"]
+    if closure_certificate is not None:
+        return _closure_status(closure_certificate)
+    return _open_case_terminal_status(proof)
+
+
+def _case_portfolio_attention(case_id: str, proof: dict[str, Any]) -> list[dict[str, object]]:
+    summary = proof["summary"]
+    closure_certificate = proof["closure_certificate"]
+    attention_items: list[dict[str, object]] = []
+    if not summary["has_plan"]:
+        attention_items.append({
+            "kind": "missing_plan",
+            "severity": "review",
+            "ref": case_id,
+            "message": "case has no governed plan",
+        })
+    if summary["blocked_steps"]:
+        attention_items.append({
+            "kind": "blocked_plan_steps",
+            "severity": "blocker",
+            "ref": case_id,
+            "message": "case has blocked or unevaluated plan steps",
+            "step_ids": summary["blocked_steps"],
+        })
+    if closure_certificate is None:
+        attention_items.append({
+            "kind": "missing_terminal_closure",
+            "severity": "review",
+            "ref": case_id,
+            "message": "case has no terminal closure certificate",
+        })
+    elif not closure_certificate["effect_reconciled"]:
+        attention_items.append({
+            "kind": "effect_not_reconciled",
+            "severity": "blocker",
+            "ref": closure_certificate["closure_id"],
+            "message": "terminal closure does not have a reconciled external effect",
+        })
+    elif not closure_certificate["learning_admitted"]:
+        attention_items.append({
+            "kind": "learning_not_admitted",
+            "severity": "review",
+            "ref": closure_certificate["closure_id"],
+            "message": "closure has not been admitted into reusable learning",
+        })
+    return attention_items
+
+
+def _organization_case_portfolio(kernel: OrganizationKernel, org_id: str) -> dict[str, Any]:
+    organization = _organization_or_404(kernel, org_id)
+    state = kernel.snapshot_state()
+    departments = tuple(item for item in state.departments if item.org_id == org_id)
+    departments_by_id = {department.department_id: department for department in departments}
+    cases = tuple(
+        sorted(
+            (item for item in state.cases if item.org_id == org_id),
+            key=lambda item: item.case_id,
+        )
+    )
+    department_lanes: dict[str, dict[str, object]] = {
+        department.department_id: {
+            "department_id": department.department_id,
+            "name": department.name,
+            "primary_case_count": 0,
+            "assigned_case_count": 0,
+            "open_case_count": 0,
+            "closed_case_count": 0,
+            "blocked_case_count": 0,
+            "review_case_count": 0,
+            "case_ids": [],
+        }
+        for department in departments
+    }
+    case_rows: list[dict[str, Any]] = []
+    attention_items: list[dict[str, object]] = []
+
+    for organization_case in cases:
+        proof = _case_proof_timeline(kernel, organization_case.case_id)
+        closure_certificate = proof["closure_certificate"]
+        terminal_status = _case_portfolio_terminal_status(proof)
+        case_attention = _case_portfolio_attention(organization_case.case_id, proof)
+        blocker_count = sum(1 for item in case_attention if item.get("severity") == "blocker")
+        review_count = sum(1 for item in case_attention if item.get("severity") == "review")
+        primary_lane = department_lanes.setdefault(
+            organization_case.department_id,
+            {
+                "department_id": organization_case.department_id,
+                "name": departments_by_id.get(organization_case.department_id).name
+                if organization_case.department_id in departments_by_id
+                else "",
+                "primary_case_count": 0,
+                "assigned_case_count": 0,
+                "open_case_count": 0,
+                "closed_case_count": 0,
+                "blocked_case_count": 0,
+                "review_case_count": 0,
+                "case_ids": [],
+            },
+        )
+        primary_lane["primary_case_count"] = int(primary_lane["primary_case_count"]) + 1
+        primary_lane["case_ids"].append(organization_case.case_id)
+        if organization_case.status is OrganizationCaseStatus.CLOSED:
+            primary_lane["closed_case_count"] = int(primary_lane["closed_case_count"]) + 1
+        else:
+            primary_lane["open_case_count"] = int(primary_lane["open_case_count"]) + 1
+        if blocker_count:
+            primary_lane["blocked_case_count"] = int(primary_lane["blocked_case_count"]) + 1
+        if review_count:
+            primary_lane["review_case_count"] = int(primary_lane["review_case_count"]) + 1
+        for department_id in organization_case.assigned_department_ids:
+            assigned_lane = department_lanes.setdefault(
+                department_id,
+                {
+                    "department_id": department_id,
+                    "name": departments_by_id.get(department_id).name if department_id in departments_by_id else "",
+                    "primary_case_count": 0,
+                    "assigned_case_count": 0,
+                    "open_case_count": 0,
+                    "closed_case_count": 0,
+                    "blocked_case_count": 0,
+                    "review_case_count": 0,
+                    "case_ids": [],
+                },
+            )
+            assigned_lane["assigned_case_count"] = int(assigned_lane["assigned_case_count"]) + 1
+        attention_items.extend(case_attention)
+        case_rows.append({
+            "case": _body(organization_case),
+            "terminal_status": terminal_status,
+            "attention_count": len(case_attention),
+            "blocker_count": blocker_count,
+            "review_count": review_count,
+            "plan_id": proof["plan_id"],
+            "blocked_step_count": len(proof["summary"]["blocked_steps"]),
+            "evidence_count": proof["summary"]["evidence_count"],
+            "approval_count": proof["summary"]["approval_count"],
+            "gate_decision_count": proof["summary"]["gate_decision_count"],
+            "worker_receipt_count": proof["summary"]["worker_receipt_count"],
+            "has_terminal_closure": closure_certificate is not None,
+            "effect_reconciled": bool(closure_certificate and closure_certificate["effect_reconciled"]),
+            "learning_admitted": bool(closure_certificate and closure_certificate["learning_admitted"]),
+            "links": {
+                "case": f"/api/v1/cases/{quote(organization_case.case_id, safe='')}",
+                "audit": f"/api/v1/cases/{quote(organization_case.case_id, safe='')}/audit-explorer/view",
+                "proof": f"/api/v1/cases/{quote(organization_case.case_id, safe='')}/proof-explorer/view",
+                "closure": f"/api/v1/cases/{quote(organization_case.case_id, safe='')}/closure-certificate/view",
+            },
+        })
+
+    open_count = sum(1 for item in cases if item.status is not OrganizationCaseStatus.CLOSED)
+    closed_count = len(cases) - open_count
+    high_risk_count = sum(
+        1 for item in cases
+        if item.risk in {OrganizationRisk.HIGH, OrganizationRisk.CRITICAL}
+    )
+    blocked_case_count = sum(1 for item in case_rows if item["blocker_count"])
+    review_case_count = sum(1 for item in case_rows if item["review_count"])
+    return {
+        "portfolio_id": f"case-portfolio:{org_id}",
+        "org_id": org_id,
+        "organization": _body(organization),
+        "read_only": True,
+        "summary": {
+            "case_count": len(case_rows),
+            "open_case_count": open_count,
+            "closed_case_count": closed_count,
+            "high_risk_case_count": high_risk_count,
+            "blocked_case_count": blocked_case_count,
+            "review_case_count": review_case_count,
+            "department_count": len(department_lanes),
+            "terminal_closure_count": sum(1 for item in case_rows if item["has_terminal_closure"]),
+            "learning_admitted_count": sum(1 for item in case_rows if item["learning_admitted"]),
+            "attention_count": len(attention_items),
+        },
+        "department_lanes": sorted(department_lanes.values(), key=lambda item: str(item["department_id"])),
+        "cases": case_rows,
+        "attention_items": attention_items,
+        "governed": True,
+    }
+
+
 def _render_department_registry_html(payload: dict[str, Any]) -> str:
     raw_org_id = str(payload.get("org_id", ""))
     org_id = escape(raw_org_id)
@@ -1687,6 +1879,100 @@ def _render_authority_map_html(payload: dict[str, Any]) -> str:
     {_proof_explorer_table("Summary", ("metric", "value"), summary_rows)}
     {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
     {_proof_explorer_table("Authority Chain", ("department", "role", "authority", "action", "capability", "evidence", "escalation", "gaps"), authority_rows)}
+  </main>
+</body>
+</html>
+"""
+
+
+def _render_case_portfolio_html(payload: dict[str, Any]) -> str:
+    raw_org_id = str(payload.get("org_id", ""))
+    org_id = escape(raw_org_id)
+    organization = payload.get("organization", {})
+    org_name = escape(str(organization.get("name", ""))) if isinstance(organization, dict) else ""
+    summary = payload.get("summary", {})
+    summary_rows = [
+        {"metric": key, "value": value}
+        for key, value in sorted(summary.items())
+    ] if isinstance(summary, dict) else []
+    attention_rows = [
+        {
+            "severity": item.get("severity", ""),
+            "kind": item.get("kind", ""),
+            "ref": item.get("ref", ""),
+            "message": item.get("message", ""),
+        }
+        for item in payload.get("attention_items", [])
+        if isinstance(item, dict)
+    ]
+    department_rows = [
+        {
+            "department_id": item.get("department_id", ""),
+            "name": item.get("name", ""),
+            "primary_cases": item.get("primary_case_count", 0),
+            "assigned_cases": item.get("assigned_case_count", 0),
+            "open_cases": item.get("open_case_count", 0),
+            "closed_cases": item.get("closed_case_count", 0),
+            "blocked_cases": item.get("blocked_case_count", 0),
+            "review_cases": item.get("review_case_count", 0),
+        }
+        for item in payload.get("department_lanes", [])
+        if isinstance(item, dict)
+    ]
+    case_rows = [
+        {
+            "case_id": item.get("case", {}).get("case_id", ""),
+            "goal": item.get("case", {}).get("goal", ""),
+            "department": item.get("case", {}).get("department_id", ""),
+            "status": item.get("case", {}).get("status", ""),
+            "risk": item.get("case", {}).get("risk", ""),
+            "terminal_status": item.get("terminal_status", ""),
+            "blocked_steps": item.get("blocked_step_count", 0),
+            "evidence": item.get("evidence_count", 0),
+            "attention": item.get("attention_count", 0),
+        }
+        for item in payload.get("cases", [])
+        if isinstance(item, dict) and isinstance(item.get("case"), dict)
+    ]
+    quoted_org_id = quote(raw_org_id, safe="")
+    json_url = f"/api/v1/orgs/{quoted_org_id}/case-portfolio"
+    registry_url = f"/api/v1/orgs/{quoted_org_id}/department-registry/view"
+    authority_url = f"/api/v1/orgs/{quoted_org_id}/authority-map/view"
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mullu OrgOS Case Portfolio</title>
+  <style>
+    body {{ margin: 0; font-family: system-ui, sans-serif; color: #1f2937; background: #f7f7f4; }}
+    header {{ background: #2f3a35; color: #ffffff; padding: 24px 28px; }}
+    main {{ max-width: 1240px; margin: 0 auto; padding: 22px; }}
+    nav {{ display: flex; gap: 14px; margin-top: 12px; flex-wrap: wrap; }}
+    nav a {{ color: #d4f4e8; }}
+    h1 {{ margin: 0; font-size: 28px; letter-spacing: 0; }}
+    h2 {{ margin: 28px 0 10px; font-size: 18px; letter-spacing: 0; }}
+    .status {{ margin-top: 8px; color: #e4eee9; }}
+    table {{ border-collapse: collapse; width: 100%; background: #ffffff; }}
+    th, td {{ border: 1px solid #d8dee4; padding: 8px; text-align: left; vertical-align: top; font-size: 14px; overflow-wrap: anywhere; }}
+    th {{ background: #eef2ef; color: #29342f; }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mullu OrgOS Case Portfolio</h1>
+    <div class="status">Organization <strong>{org_id}</strong> | <strong>{org_name}</strong></div>
+    <nav>
+      <a href="{escape(json_url)}">json portfolio</a>
+      <a href="{escape(registry_url)}">department registry</a>
+      <a href="{escape(authority_url)}">authority map</a>
+    </nav>
+  </header>
+  <main>
+    {_proof_explorer_table("Summary", ("metric", "value"), summary_rows)}
+    {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
+    {_proof_explorer_table("Departments", ("department_id", "name", "primary_cases", "assigned_cases", "open_cases", "closed_cases", "blocked_cases", "review_cases"), department_rows)}
+    {_proof_explorer_table("Cases", ("case_id", "goal", "department", "status", "risk", "terminal_status", "blocked_steps", "evidence", "attention"), case_rows)}
   </main>
 </body>
 </html>
@@ -2195,6 +2481,24 @@ def get_organization_authority_map_view(org_id: str, request: Request):
     kernel = _kernel()
     _enforce_organization_tenant(request, kernel, org_id)
     return HTMLResponse(_render_authority_map_html(_organization_authority_map(kernel, org_id)))
+
+
+@router.get("/api/v1/orgs/{org_id}/case-portfolio")
+def get_organization_case_portfolio(org_id: str, request: Request):
+    """Return a read-only organization case portfolio and department lane projection."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_organization_tenant(request, kernel, org_id)
+    return _organization_case_portfolio(kernel, org_id)
+
+
+@router.get("/api/v1/orgs/{org_id}/case-portfolio/view")
+def get_organization_case_portfolio_view(org_id: str, request: Request):
+    """Return a browser-facing read-only organization case portfolio view."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_organization_tenant(request, kernel, org_id)
+    return HTMLResponse(_render_case_portfolio_html(_organization_case_portfolio(kernel, org_id)))
 
 
 @router.post("/api/v1/cases/launch-gateway-pilot")
