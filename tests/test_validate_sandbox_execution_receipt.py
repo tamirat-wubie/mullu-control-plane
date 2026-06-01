@@ -35,6 +35,7 @@ def test_validate_sandbox_execution_receipt_accepts_runner_receipt(tmp_path: Pat
 
     assert result.status == "succeeded"
     assert validation.valid is True
+    assert validation.receipt_path == "sandbox-receipt.json"
     assert validation.receipt_id.startswith("sandbox-receipt-")
     assert validation.capability_id == "computer.command.run"
     assert validation.verification_status == "passed"
@@ -50,6 +51,7 @@ def test_validate_sandbox_execution_receipt_accepts_nested_evidence_envelope(tmp
 
     assert result.receipt.network_disabled is True
     assert validation.valid is True
+    assert validation.receipt_path == "sandbox-envelope.json"
     assert validation.receipt_id == result.receipt.receipt_id
     assert validation.blockers == ()
 
@@ -87,11 +89,14 @@ def test_validate_sandbox_execution_receipt_rejects_weak_isolation(tmp_path: Pat
     receipt_path.write_text(json.dumps(payload), encoding="utf-8")
 
     validation = validate_sandbox_execution_receipt(receipt_path)
+    serialized = json.dumps(validation.as_dict(), sort_keys=True)
 
     assert validation.valid is False
+    assert validation.receipt_path == "weak-receipt.json"
     assert validation.blockers == ("sandbox_receipt_invalid",)
     assert "network_disabled_not_true" in validation.detail
     assert "read_only_rootfs_not_true" in validation.detail
+    assert str(tmp_path) not in serialized
 
 
 def test_validate_sandbox_execution_receipt_rejects_nonzero_passed_receipt(
@@ -201,10 +206,12 @@ def test_validate_sandbox_execution_receipt_cli_outputs_json(tmp_path: Path, cap
 
     assert exit_code == 0
     assert payload["valid"] is True
+    assert payload["receipt_path"] == "sandbox-receipt.json"
     assert payload["status"] == "passed"
     assert payload["receipt_id"].startswith("sandbox-receipt-")
     assert payload["capability_id"] == "computer.command.run"
     assert payload["blockers"] == []
+    assert str(tmp_path) not in json.dumps(payload, sort_keys=True)
 
 
 def _write_runner_receipt(

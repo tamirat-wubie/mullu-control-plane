@@ -98,7 +98,7 @@ def validate_sandbox_execution_receipt(
     if errors:
         return SandboxReceiptValidation(
             valid=False,
-            receipt_path=str(receipt_path),
+            receipt_path=_path_label(receipt_path),
             status="failed",
             receipt_id=receipt_id,
             capability_id=capability_id,
@@ -108,7 +108,7 @@ def validate_sandbox_execution_receipt(
         )
     return SandboxReceiptValidation(
         valid=True,
-        receipt_path=str(receipt_path),
+        receipt_path=_path_label(receipt_path),
         status="passed",
         receipt_id=receipt_id,
         capability_id=capability_id,
@@ -198,6 +198,15 @@ def _receipt_errors(
 
 def _is_hex_64(value: Any) -> bool:
     return isinstance(value, str) and HEX_64.match(value) is not None
+
+
+def _path_label(path: Path) -> str:
+    """Return a validation report path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _invalid(
