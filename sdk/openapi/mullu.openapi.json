@@ -13487,7 +13487,7 @@
     },
     "/api/v1/ops/imports": {
       "get": {
-        "description": "Analyze import dependencies and check for cycles.\n\nNote: This endpoint performs full AST analysis of all Python files.\nMay take 500ms-2s on large codebases. Use sparingly.",
+        "description": "Analyze import dependencies and check for cycles.\n\nPerforms a full AST analysis of the mcoi_runtime tree. The source tree is\nimmutable for the process lifetime, so the result is computed once and\ncached -- without this, each call re-parsed thousands of files (seconds of\nCPU), making the endpoint a trivial denial-of-service amplifier.",
         "operationId": "analyze_imports_api_v1_ops_imports_get",
         "responses": {
           "200": {
