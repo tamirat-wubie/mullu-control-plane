@@ -102,6 +102,25 @@ def test_adapter_evidence_uses_worker_dependency_contract_before_host_imports(tm
     assert "browser_live_evidence_missing" in report.blockers
 
 
+def test_adapter_evidence_bounds_filesystem_path_labels(tmp_path: Path) -> None:
+    report = collect_capability_adapter_evidence(
+        repo_root=_ROOT,
+        browser_receipt_path=tmp_path / "missing-browser.json",
+        document_receipt_path=tmp_path / "missing-document.json",
+        voice_receipt_path=tmp_path / "missing-voice.json",
+        email_calendar_receipt_path=tmp_path / "missing-email-calendar.json",
+        module_available=lambda name: False,
+        env_reader=lambda name: "",
+    )
+    payload_text = json.dumps(report.as_dict(), sort_keys=True)
+    browser_evidence = next(adapter for adapter in report.adapters if adapter.adapter_id == "browser.playwright")
+
+    assert str(_ROOT) not in payload_text
+    assert str(tmp_path) not in payload_text
+    assert browser_evidence.receipt_check.receipt_path == "missing-browser.json"
+    assert "gateway/browser_worker.py" in browser_evidence.evidence_refs
+
+
 def test_email_calendar_dependency_accepts_governed_connector_token(tmp_path: Path) -> None:
     report = collect_capability_adapter_evidence(
         repo_root=_ROOT,

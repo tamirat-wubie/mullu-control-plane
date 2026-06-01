@@ -185,6 +185,15 @@ def validate_general_agent_promotion_terminal_evidence_reconciliation(
     return tuple(_validate_schema_instance(schema, payload))
 
 
+def _path_label(path: Path) -> str:
+    """Return a terminal-evidence path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
+
+
 def _reconcile_candidate(
     candidate: dict[str, Any],
     receipt_index: ReceiptEvidenceIndex,
@@ -220,12 +229,12 @@ def _receipt_evidence_index(receipt_paths: tuple[Path, ...]) -> ReceiptEvidenceI
     missing_paths: list[str] = []
     for path in receipt_paths:
         if not path.exists():
-            missing_paths.append(str(path))
+            missing_paths.append(_path_label(path))
             continue
         receipt = _load_json_object(path, "live receipt")
         if not _receipt_passed(receipt):
             continue
-        receipt_ref = str(path)
+        receipt_ref = _path_label(path)
         basename = path.name
         matched[basename] = receipt_ref
         adapter_id = str(receipt.get("adapter_id", ""))
@@ -272,7 +281,7 @@ def _reconciliation_plan(
         schema_version=1,
         reconciliation_id=f"general-agent-promotion-terminal-evidence-reconciliation-{digest[:16]}",
         generated_at=generated_at,
-        source_candidate_path=str(candidate_path),
+        source_candidate_path=_path_label(candidate_path),
         source_candidate_set_id=_field_text(candidates, "candidate_set_id", "invalid-terminal-candidate-set"),
         ready_for_terminal_certificate_minting=bool(results) and blocked_count == 0,
         candidate_count=len(results),

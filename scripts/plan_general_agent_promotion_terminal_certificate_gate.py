@@ -202,6 +202,15 @@ def validate_general_agent_promotion_terminal_certificate_gate(
     return tuple(_validate_schema_instance(schema, payload))
 
 
+def _path_label(path: Path) -> str:
+    """Return a terminal-gate path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
+
+
 def _gate_action(
     *,
     index: int,
@@ -309,7 +318,7 @@ def _gate_plan(
     gate_material = {
         "generated_at": generated_at,
         "queue_hash": queue_hash,
-        "approval_receipt_path": str(approval_receipt_path),
+        "approval_receipt_path": _path_label(approval_receipt_path),
         "actions": [action.as_dict() for action in actions],
     }
     gate_digest = _stable_hash(gate_material)
@@ -317,8 +326,8 @@ def _gate_plan(
         schema_version=1,
         gate_id=f"general-agent-promotion-terminal-certificate-gate-{gate_digest[:16]}",
         generated_at=generated_at,
-        source_queue_path=str(queue_path),
-        approval_receipt_path=str(approval_receipt_path),
+        source_queue_path=_path_label(queue_path),
+        approval_receipt_path=_path_label(approval_receipt_path),
         ready_for_terminal_certificate=blocked_count == 0,
         action_count=len(actions),
         admitted_action_count=admitted_count,

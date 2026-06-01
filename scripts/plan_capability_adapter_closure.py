@@ -103,7 +103,7 @@ def plan_capability_adapter_closure(evidence_path: Path = DEFAULT_EVIDENCE) -> A
     ).hexdigest()
     return AdapterClosurePlan(
         plan_id=f"capability-adapter-closure-plan-{plan_digest[:16]}",
-        source_evidence_path=str(evidence_path),
+        source_evidence_path=_path_label(evidence_path),
         source_ready=payload.get("ready") is True,
         action_count=len(unique_actions),
         blockers=unique_blockers,
@@ -321,6 +321,15 @@ def _load_evidence(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError("adapter evidence root must be an object")
     return payload
+
+
+def _path_label(path: Path) -> str:
+    """Return a closure-plan path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _loads_strict_json(raw: str) -> Any:

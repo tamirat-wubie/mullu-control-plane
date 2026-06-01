@@ -179,6 +179,15 @@ def validate_general_agent_promotion_terminal_certificate_candidates(
     return tuple(_validate_schema_instance(schema, payload))
 
 
+def _path_label(path: Path) -> str:
+    """Return a terminal-candidate path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
+
+
 def _candidate_from_gate_action(action: dict[str, Any]) -> TerminalCertificateCandidate:
     candidate_id = _field_text(action, "certificate_candidate_id", "")
     if not candidate_id:
@@ -218,7 +227,7 @@ def _candidate_plan(
         schema_version=1,
         candidate_set_id=f"general-agent-promotion-terminal-certificate-candidates-{candidate_digest[:16]}",
         generated_at=generated_at,
-        source_gate_path=str(gate_path),
+        source_gate_path=_path_label(gate_path),
         source_gate_id=_field_text(gate, "gate_id", "invalid-terminal-certificate-gate"),
         ready_for_candidate_review=bool(candidates),
         ready_for_terminal_certificate_minting=False,

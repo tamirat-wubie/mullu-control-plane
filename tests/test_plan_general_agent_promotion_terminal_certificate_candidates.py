@@ -40,6 +40,7 @@ def test_terminal_certificate_candidates_include_only_admitted_gate_items(tmp_pa
     assert plan.candidate_count == 2
     assert plan.skipped_gate_action_count == 1
     assert plan.blocked_gate_action_count == 1
+    assert plan.source_gate_path == "general_agent_promotion_terminal_certificate_gate.json"
     assert set(candidates) == {"document-live", "deploy-publish"}
     assert "voice-live" not in candidates
     assert candidates["document-live"].approval_ref is None
@@ -47,6 +48,7 @@ def test_terminal_certificate_candidates_include_only_admitted_gate_items(tmp_pa
     assert "terminal_certificate_minting_not_performed" in plan.blocked_reasons
     assert plan.metadata["candidate_plan_is_not_execution"] is True
     assert plan.metadata["terminal_certificates_minted"] is False
+    assert tmp_path.name not in json.dumps(plan.as_dict(), sort_keys=True)
     assert validate_general_agent_promotion_terminal_certificate_candidates(plan) == ()
 
 

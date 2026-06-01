@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-action-orchestration-validation-receipt:1",
+  "title": "Universal Action Orchestration Validation Receipt",
+  "description": "Machine-readable non-terminal receipt for one Universal Action Orchestration validation run.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "terminal_closure_required",
+    "receipt_is_not_terminal_closure",
+    "valid",
+    "status",
+    "schema_path",
+    "document_path",
+    "example_paths",
+    "example_count",
+    "checks",
+    "check_count",
+    "error_count",
+    "errors"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "const": "universal_action_orchestration_validation_receipt"
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "receipt_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true
+    },
+    "valid": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["passed", "failed"]
+    },
+    "schema_path": {
+      "$ref": "#/$defs/safe_path_label"
+    },
+    "document_path": {
+      "$ref": "#/$defs/safe_path_label"
+    },
+    "example_paths": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/safe_path_label"
+      }
+    },
+    "example_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/check_result"
+      }
+    },
+    "check_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "error_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "safe_path_label": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[^:\\\\]+$"
+    },
+    "check_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "passed"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "universal_action_orchestration_schema",
+            "universal_action_orchestration_examples",
+            "universal_action_orchestration_document",
+            "universal_action_orchestration_no_bypass",
+            "universal_action_orchestration_receipts"
+          ]
+        },
+        "passed": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

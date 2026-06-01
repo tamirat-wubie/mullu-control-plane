@@ -228,7 +228,7 @@ def _browser_evidence(
     worker_dependency_contract: dict[str, bool],
 ) -> AdapterEvidence:
     dependencies = (_dependency("playwright", module_available, worker_dependency_contract),)
-    receipt = _browser_receipt_check(receipt_path)
+    receipt = _browser_receipt_check(receipt_path, repo_root=repo_root)
     blockers = [
         f"browser_dependency_missing:{check.name}"
         for check in dependencies
@@ -258,7 +258,7 @@ def _document_evidence(
         _dependency(module_name, module_available, worker_dependency_contract)
         for module_name in ("pypdf", "docx", "openpyxl", "pptx")
     )
-    receipt = _document_receipt_check(receipt_path)
+    receipt = _document_receipt_check(receipt_path, repo_root=repo_root)
     blockers = [
         f"document_dependency_missing:{check.name}"
         for check in dependencies
@@ -294,7 +294,7 @@ def _voice_evidence(
         detail="configured" if credential_present else "missing",
     )
     dependencies = (openai_dependency, credential_check)
-    receipt = _voice_receipt_check(receipt_path)
+    receipt = _voice_receipt_check(receipt_path, repo_root=repo_root)
     blockers = [
         f"voice_dependency_missing:{check.name}"
         for check in dependencies
@@ -335,7 +335,7 @@ def _email_calendar_evidence(
         detail="configured" if credential_present else "missing",
     )
     dependencies = (credential_check,)
-    receipt = _email_calendar_receipt_check(receipt_path)
+    receipt = _email_calendar_receipt_check(receipt_path, repo_root=repo_root)
     blockers = [
         f"email_calendar_dependency_missing:{check.name}"
         for check in dependencies
@@ -364,11 +364,14 @@ def _adapter_evidence(
     receipt: ReceiptCheck,
     blockers: tuple[str, ...],
 ) -> AdapterEvidence:
-    module_refs = tuple(dict.fromkeys(_module_ref(repo_root, module_name) for module_name in (worker_module, adapter_module)))
-    missing_modules = tuple(ref for ref in module_refs if not Path(ref).exists())
+    module_paths = tuple(
+        dict.fromkeys(_module_path(repo_root, module_name) for module_name in (worker_module, adapter_module))
+    )
+    module_refs = tuple(_path_label(path, repo_root=repo_root) for path in module_paths)
+    missing_modules = tuple(path for path in module_paths if not path.exists())
     all_blockers = (
         *blockers,
-        *(f"adapter_module_missing:{Path(ref).name}" for ref in missing_modules),
+        *(f"adapter_module_missing:{path.name}" for path in missing_modules),
     )
     return AdapterEvidence(
         adapter_id=adapter_id,
@@ -467,10 +470,11 @@ def _read_text(path: Path) -> str:
         return ""
 
 
-def _browser_receipt_check(path: Path) -> ReceiptCheck:
+def _browser_receipt_check(path: Path, *, repo_root: Path = REPO_ROOT) -> ReceiptCheck:
     payload, error = _load_receipt(path)
+    receipt_path = _path_label(path, repo_root=repo_root)
     if error:
-        return ReceiptCheck("browser live receipt", False, error, str(path), ())
+        return ReceiptCheck("browser live receipt", False, error, receipt_path, ())
     sandbox_evidence_id = str(payload.get("sandbox_evidence_id", "")).strip()
     sandbox_receipt_id = str(payload.get("sandbox_receipt_id", "")).strip()
     worker_receipt = payload.get("worker_receipt") if isinstance(payload.get("worker_receipt"), dict) else {}
@@ -501,13 +505,14 @@ def _browser_receipt_check(path: Path) -> ReceiptCheck:
         )
     )
     evidence_refs = tuple(ref for ref in (sandbox_evidence_id, sandbox_receipt_id) if ref)
-    return ReceiptCheck("browser live receipt", passed, detail, str(path), evidence_refs)
+    return ReceiptCheck("browser live receipt", passed, detail, receipt_path, evidence_refs)
 
 
-def _document_receipt_check(path: Path) -> ReceiptCheck:
+def _document_receipt_check(path: Path, *, repo_root: Path = REPO_ROOT) -> ReceiptCheck:
     payload, error = _load_receipt(path)
+    receipt_path = _path_label(path, repo_root=repo_root)
     if error:
-        return ReceiptCheck("document live receipt", False, error, str(path), ())
+        return ReceiptCheck("document live receipt", False, error, receipt_path, ())
     parser_ids = {
         str(parser_id)
         for parser_id in payload.get("parser_ids", payload.get("production_parser_ids", ()))
@@ -529,13 +534,14 @@ def _document_receipt_check(path: Path) -> ReceiptCheck:
             f"and parser_ids={sorted(REQUIRED_DOCUMENT_PARSERS)}"
         )
     )
-    return ReceiptCheck("document live receipt", passed, detail, str(path), tuple(sorted(parser_ids)))
+    return ReceiptCheck("document live receipt", passed, detail, receipt_path, tuple(sorted(parser_ids)))
 
 
-def _voice_receipt_check(path: Path) -> ReceiptCheck:
+def _voice_receipt_check(path: Path, *, repo_root: Path = REPO_ROOT) -> ReceiptCheck:
     payload, error = _load_receipt(path)
+    receipt_path = _path_label(path, repo_root=repo_root)
     if error:
-        return ReceiptCheck("voice live receipt", False, error, str(path), ())
+        return ReceiptCheck("voice live receipt", False, error, receipt_path, ())
     speech_receipt = payload.get("speech_receipt") if isinstance(payload.get("speech_receipt"), dict) else {}
     synthesis_receipt = payload.get("synthesis_receipt") if isinstance(payload.get("synthesis_receipt"), dict) else {}
     blockers = payload.get("blockers", ())
@@ -574,13 +580,14 @@ def _voice_receipt_check(path: Path) -> ReceiptCheck:
             "synthesis audio ref/hash, no forbidden effects, no confirmation requirement, and empty blockers"
         )
     )
-    return ReceiptCheck("voice live receipt", passed, detail, str(path), evidence_refs)
+    return ReceiptCheck("voice live receipt", passed, detail, receipt_path, evidence_refs)
 
 
-def _email_calendar_receipt_check(path: Path) -> ReceiptCheck:
+def _email_calendar_receipt_check(path: Path, *, repo_root: Path = REPO_ROOT) -> ReceiptCheck:
     payload, error = _load_receipt(path)
+    receipt_path = _path_label(path, repo_root=repo_root)
     if error:
-        return ReceiptCheck("email/calendar live receipt", False, error, str(path), ())
+        return ReceiptCheck("email/calendar live receipt", False, error, receipt_path, ())
     worker_receipt = payload.get("worker_receipt") if isinstance(payload.get("worker_receipt"), dict) else {}
     blockers = payload.get("blockers", ())
     passed = (
@@ -619,7 +626,7 @@ def _email_calendar_receipt_check(path: Path) -> ReceiptCheck:
             "read-only worker receipt, connector/resource/digest match, no forbidden effects, and empty blockers"
         )
     )
-    return ReceiptCheck("email/calendar live receipt", passed, detail, str(path), evidence_refs)
+    return ReceiptCheck("email/calendar live receipt", passed, detail, receipt_path, evidence_refs)
 
 
 def _load_receipt(path: Path) -> tuple[dict[str, Any], str]:
@@ -648,8 +655,18 @@ def _passed_status(payload: dict[str, Any]) -> bool:
     return payload.get("status") == "passed" or payload.get("verification_status") == "passed"
 
 
-def _module_ref(repo_root: Path, module_name: str) -> str:
-    return str(repo_root / Path(*module_name.split(".")).with_suffix(".py"))
+def _module_path(repo_root: Path, module_name: str) -> Path:
+    return repo_root / Path(*module_name.split(".")).with_suffix(".py")
+
+
+def _path_label(path: Path, *, repo_root: Path = REPO_ROOT) -> str:
+    """Return a public evidence path label without host-local ancestry."""
+    resolved_root = repo_root.resolve(strict=False)
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(resolved_root).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _module_available(name: str) -> bool:

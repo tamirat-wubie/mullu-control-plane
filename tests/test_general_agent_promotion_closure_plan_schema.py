@@ -41,9 +41,12 @@ def test_promotion_closure_plan_schema_accepts_valid_plan(tmp_path: Path) -> Non
 
     assert validation.ok is True
     assert validation.errors == ()
+    assert validation.plan_path == "general_agent_promotion_closure_plan.json"
+    assert validation.schema_path == "schemas/general_agent_promotion_closure_plan.schema.json"
     assert validation.action_count == 2
     assert validation.approval_required_action_count == 1
     assert validation.source_plan_types == ("adapter", "deployment")
+    assert tmp_path.name not in json.dumps(validation.as_dict(), sort_keys=True)
 
 
 def test_promotion_closure_plan_schema_accepts_portfolio_source_actions(tmp_path: Path) -> None:

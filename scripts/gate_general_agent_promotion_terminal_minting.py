@@ -172,6 +172,15 @@ def validate_general_agent_promotion_terminal_minting_gate(
     return tuple(_validate_schema_instance(schema, payload))
 
 
+def _path_label(path: Path) -> str:
+    """Return a terminal-minting path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
+
+
 def _gate_candidate(candidate: dict[str, Any], *, authority_ref: str | None) -> TerminalMintingGateCandidate:
     candidate_id = _field_text(candidate, "candidate_id", "unknown-candidate")
     source_action_id = _field_text(candidate, "source_action_id", "unknown-action")
@@ -227,7 +236,7 @@ def _minting_gate(
         schema_version=1,
         minting_gate_id=f"general-agent-promotion-terminal-minting-gate-{digest[:16]}",
         generated_at=generated_at,
-        source_reconciliation_path=str(reconciliation_path),
+        source_reconciliation_path=_path_label(reconciliation_path),
         source_reconciliation_id=_field_text(
             reconciliation,
             "reconciliation_id",

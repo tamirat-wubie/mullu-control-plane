@@ -297,12 +297,21 @@ def _validation_result(
     return ClosurePlanValidation(
         ok=not errors,
         errors=tuple(errors),
-        plan_path=str(promotion_plan_path),
+        plan_path=_path_label(promotion_plan_path),
         expected_action_count=len(expected_actions),
         observed_action_count=len(observed_actions),
         expected_approval_required_count=_approval_count(expected_actions),
         observed_approval_required_count=_approval_count(observed_actions),
     )
+
+
+def _path_label(path: Path) -> str:
+    """Return a closure-plan validation path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:

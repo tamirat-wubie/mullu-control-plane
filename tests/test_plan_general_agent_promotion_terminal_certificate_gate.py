@@ -49,6 +49,8 @@ def test_terminal_certificate_gate_admits_only_runnable_and_approved_items(tmp_p
     assert gate.admitted_action_count == 3
     assert gate.blocked_action_count == 3
     assert gate.approval_bound_admitted_count == 2
+    assert gate.source_queue_path == "general_agent_promotion_live_evidence_queue.json"
+    assert gate.approval_receipt_path == "general_agent_promotion_terminal_approvals.json"
     assert actions["document-live"].terminal_gate_status == "admitted_runnable"
     assert actions["deploy-publish"].terminal_gate_status == "admitted_approved"
     assert actions["portfolio-review"].terminal_gate_status == "admitted_approved"
@@ -59,6 +61,7 @@ def test_terminal_certificate_gate_admits_only_runnable_and_approved_items(tmp_p
     assert actions["deploy-blocked"].terminal_gate_status == "blocked_approval_and_environment"
     assert actions["deploy-blocked"].approval_ref_present is False
     assert "explicit_approval_ref_missing" in actions["deploy-blocked"].blocked_reasons
+    assert tmp_path.name not in json.dumps(gate.as_dict(), sort_keys=True)
     assert validate_general_agent_promotion_terminal_certificate_gate(gate) == ()
 
 
@@ -73,6 +76,7 @@ def test_terminal_certificate_gate_blocks_approval_classes_without_receipt(tmp_p
     actions = {action.source_action_id: action for action in gate.actions}
 
     assert gate.metadata["approval_receipt_present"] is False
+    assert gate.approval_receipt_path == "missing-approvals.json"
     assert gate.admitted_action_count == 1
     assert gate.missing_approval_count == 3
     assert actions["deploy-publish"].terminal_gate_status == "blocked_approval"

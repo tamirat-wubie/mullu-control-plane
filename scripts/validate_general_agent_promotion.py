@@ -312,8 +312,8 @@ def evaluate_deployment_publication(
             passed=witness_published,
             detail=witness_detail,
             evidence_refs=(
-                str(deployment_status_path),
-                str(deployment_witness_path),
+                _path_label(deployment_status_path),
+                _path_label(deployment_witness_path),
             ),
             blocker_id="" if witness_published else "deployment_witness_not_published",
         ),
@@ -325,7 +325,7 @@ def evaluate_deployment_publication(
                 if runtime_debt_clear
                 else "deployment witness has runtime_responsibility_debt_clear=false"
             ),
-            evidence_refs=(str(deployment_witness_path),),
+            evidence_refs=(_path_label(deployment_witness_path),),
             blocker_id=(
                 "" if runtime_debt_clear else "deployment_runtime_responsibility_debt_present"
             ),
@@ -338,7 +338,7 @@ def evaluate_deployment_publication(
                 if authority_debt_clear
                 else "deployment witness has authority_responsibility_debt_clear=false"
             ),
-            evidence_refs=(str(deployment_witness_path),),
+            evidence_refs=(_path_label(deployment_witness_path),),
             blocker_id=(
                 "" if authority_debt_clear else "deployment_authority_responsibility_debt_present"
             ),
@@ -347,7 +347,7 @@ def evaluate_deployment_publication(
             name="public production health endpoint",
             passed=public_health_published,
             detail=public_health_detail,
-            evidence_refs=(str(deployment_status_path),),
+            evidence_refs=(_path_label(deployment_status_path),),
             blocker_id="" if public_health_published else "production_health_not_declared",
         ),
     )
@@ -488,7 +488,7 @@ def _check_mcp_manifest(manifest_path: Path) -> PromotionCheck:
         name="MCP governed import manifest",
         passed=passed,
         detail=detail,
-        evidence_refs=(str(manifest_path),),
+        evidence_refs=(_path_label(manifest_path),),
         blocker_id="" if passed else "mcp_manifest_not_closed",
     )
 
@@ -516,7 +516,7 @@ def _check_sandbox_contract(repo_root: Path) -> PromotionCheck:
         name="sandboxed computer/code runner contract",
         passed=passed,
         detail=detail,
-        evidence_refs=(str(sandbox_path),),
+        evidence_refs=(_path_label(sandbox_path),),
         blocker_id="" if passed else "sandbox_runner_not_closed",
     )
 
@@ -527,7 +527,7 @@ def _check_capability_adapter_evidence(adapter_evidence_path: Path) -> Promotion
             name="capability adapter closure evidence",
             passed=False,
             detail="capability adapter evidence report is missing",
-            evidence_refs=(str(adapter_evidence_path),),
+            evidence_refs=(_path_label(adapter_evidence_path),),
             blocker_id="adapter_evidence_not_closed",
         )
     try:
@@ -537,7 +537,7 @@ def _check_capability_adapter_evidence(adapter_evidence_path: Path) -> Promotion
             name="capability adapter closure evidence",
             passed=False,
             detail="capability adapter evidence JSON parse failed",
-            evidence_refs=(str(adapter_evidence_path),),
+            evidence_refs=(_path_label(adapter_evidence_path),),
             blocker_id="adapter_evidence_not_closed",
         )
     if not isinstance(payload, dict):
@@ -545,7 +545,7 @@ def _check_capability_adapter_evidence(adapter_evidence_path: Path) -> Promotion
             name="capability adapter closure evidence",
             passed=False,
             detail="capability adapter evidence root must be an object",
-            evidence_refs=(str(adapter_evidence_path),),
+            evidence_refs=(_path_label(adapter_evidence_path),),
             blocker_id="adapter_evidence_not_closed",
         )
     adapters = payload.get("adapters", ())
@@ -579,9 +579,18 @@ def _check_capability_adapter_evidence(adapter_evidence_path: Path) -> Promotion
         name="capability adapter closure evidence",
         passed=passed,
         detail=detail,
-        evidence_refs=(str(adapter_evidence_path),),
+        evidence_refs=(_path_label(adapter_evidence_path),),
         blocker_id="" if passed else "adapter_evidence_not_closed",
     )
+
+
+def _path_label(path: Path) -> str:
+    """Return a readiness evidence label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _loads_strict_json(raw: str) -> Any:
@@ -629,7 +638,11 @@ def _check_browser_adapter_closure(
         name="real browser adapter closure",
         passed=passed,
         detail=detail,
-        evidence_refs=(str(worker_path), str(adapter_path), str(DEFAULT_KNOWN_LIMITATIONS_PATH)),
+        evidence_refs=(
+            _path_label(worker_path),
+            _path_label(adapter_path),
+            _path_label(DEFAULT_KNOWN_LIMITATIONS_PATH),
+        ),
         blocker_id="" if passed else "browser_adapter_not_closed",
     )
 
@@ -684,7 +697,11 @@ def _check_document_adapter_closure(
         name="real document adapter closure",
         passed=passed,
         detail=detail,
-        evidence_refs=(str(worker_path), str(adapter_path), str(DEFAULT_KNOWN_LIMITATIONS_PATH)),
+        evidence_refs=(
+            _path_label(worker_path),
+            _path_label(adapter_path),
+            _path_label(DEFAULT_KNOWN_LIMITATIONS_PATH),
+        ),
         blocker_id="" if passed else "document_adapter_not_closed",
     )
 
@@ -731,7 +748,11 @@ def _check_voice_adapter_closure(
         name="real voice adapter closure",
         passed=passed,
         detail=detail,
-        evidence_refs=(str(worker_path), str(adapter_path), str(DEFAULT_KNOWN_LIMITATIONS_PATH)),
+        evidence_refs=(
+            _path_label(worker_path),
+            _path_label(adapter_path),
+            _path_label(DEFAULT_KNOWN_LIMITATIONS_PATH),
+        ),
         blocker_id="" if passed else "voice_adapter_not_closed",
     )
 
@@ -770,7 +791,11 @@ def _check_email_calendar_adapter_closure(
         name="real email/calendar adapter closure",
         passed=passed,
         detail=detail,
-        evidence_refs=(str(worker_path), str(adapter_path), str(DEFAULT_KNOWN_LIMITATIONS_PATH)),
+        evidence_refs=(
+            _path_label(worker_path),
+            _path_label(adapter_path),
+            _path_label(DEFAULT_KNOWN_LIMITATIONS_PATH),
+        ),
         blocker_id="" if passed else "email_calendar_adapter_not_closed",
     )
 

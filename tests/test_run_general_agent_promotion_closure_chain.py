@@ -82,7 +82,13 @@ def test_promotion_closure_chain_writes_valid_portfolio_backed_artifacts(tmp_pat
     assert terminal_minting_gate["metadata"]["terminal_certificates_minted"] is False
     assert terminal_minting_gate["authority_ref_present"] is False
     assert portfolio["metadata"]["selected_candidate_count"] == 2
-    assert all(Path(path).exists() for path in run.artifacts.values())
+    assert run.output_dir == "chain"
+    assert str(tmp_path) not in json.dumps(run.as_dict(), sort_keys=True)
+    assert tmp_path.name not in json.dumps(run.as_dict(), sort_keys=True)
+    assert all((output_dir / path).exists() for path in run.artifacts.values())
+    generated_payloads = "\n".join(path.read_text(encoding="utf-8") for path in output_dir.glob("*.json"))
+    assert str(tmp_path) not in generated_payloads
+    assert tmp_path.name not in generated_payloads
 
 
 def test_promotion_closure_chain_can_skip_portfolio(tmp_path: Path) -> None:
