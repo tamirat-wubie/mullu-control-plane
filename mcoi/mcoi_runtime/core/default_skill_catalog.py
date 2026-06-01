@@ -73,6 +73,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _telemetry_monitoring_triage_skill(),
         _agentic_control_project_discipline_mesh_skill(),
         _agentic_control_resource_governor_skill(),
+        _agentic_control_policy_governor_skill(),
         _agentic_control_temporal_governor_skill(),
         _agentic_control_memory_governor_skill(),
         _agentic_control_evidence_governor_skill(),
@@ -857,6 +858,124 @@ def _agentic_control_resource_governor_skill() -> SkillDescriptor:
                 "halt_thresholds",
                 "budget_envelope_ref",
                 "proof_state",
+            ),
+        },
+    )
+
+
+def _agentic_control_policy_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.policy_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic policy governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_authority_boundary",
+                name="Define authority boundary",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "authority_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_policy_constraints",
+                name="Rank policy constraints",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_authority_boundary",),
+                input_bindings={"mission_contract_ref": "define_authority_boundary.mission_contract_ref"},
+                output_keys=("policy_constraint_order_ref", "dependency_blockers", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_authority_governance",
+                name="Evaluate authority governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_policy_constraints",),
+                input_bindings={"priority_order_ref": "rank_policy_constraints.policy_constraint_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_actions", "approval_requirements"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_policy_budget",
+                name="Bound policy budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_authority_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_authority_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "halt_thresholds", "resource_floor"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_policy_verification",
+                name="Plan policy verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("bound_policy_budget",),
+                input_bindings={
+                    "authority_boundary_ref": "define_authority_boundary.authority_boundary_ref",
+                    "gate_decision_ref": "evaluate_authority_governance.gate_decision_ref",
+                    "budget_envelope_ref": "bound_policy_budget.budget_envelope_ref",
+                },
+                output_keys=("policy_verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_policy_interrogation",
+                name="Plan policy interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_policy_verification",),
+                input_bindings={"verification_plan_ref": "plan_policy_verification.policy_verification_plan_ref"},
+                output_keys=("policy_interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_policy_gaps",
+                name="Refine policy gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_policy_interrogation",),
+                input_bindings={
+                    "authority_boundary_ref": "define_authority_boundary.authority_boundary_ref",
+                    "gate_decision_ref": "evaluate_authority_governance.gate_decision_ref",
+                    "verification_plan_ref": "plan_policy_verification.policy_verification_plan_ref",
+                    "interrogation_plan_ref": "plan_policy_interrogation.policy_interrogation_plan_ref",
+                },
+                output_keys=("policy_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_policy_memory_admission",
+                name="Plan policy memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_policy_gaps",),
+                input_bindings={"refinement_plan_ref": "refine_policy_gaps.policy_refinement_plan_ref"},
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes read-only policy and authority governance by linking "
+            "authority boundary, ranked policy constraints, governance gate, "
+            "approval requirements, budget, verification, interrogation, "
+            "refinement, and memory-admission planning before any effect-bearing "
+            "autonomous action is considered."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "policy_governor": True,
+            "authority_surfaces": (
+                "authority_boundary_ref",
+                "gate_decision_ref",
+                "proof_state",
+                "blocked_actions",
+                "approval_requirements",
             ),
         },
     )
