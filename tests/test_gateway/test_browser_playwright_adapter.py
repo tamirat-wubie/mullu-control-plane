@@ -24,8 +24,54 @@ if str(_ROOT) not in sys.path:
 from gateway.browser_playwright_adapter import (  # noqa: E402
     PlaywrightAdapterProfile,
     PlaywrightBrowserAdapter,
+    _safe_evidence_stem,
 )
 from gateway.browser_worker import BrowserActionRequest  # noqa: E402
+
+
+def test_safe_evidence_stem_neutralizes_traversal() -> None:
+    # Safe identifiers are preserved unchanged.
+    assert _safe_evidence_stem("browser-playwright-1") == "browser-playwright-1"
+    # Path separators, parent references, and absolute paths cannot survive.
+    for hostile in ("../../etc/passwd", "/etc/cron.d/evil", "..\\..\\win", "a/b/c"):
+        stem = _safe_evidence_stem(hostile)
+        assert "/" not in stem
+        assert "\\" not in stem
+    # A stem of only dots/separators is replaced with a fixed fallback.
+    assert _safe_evidence_stem("..") == "evidence"
+    assert _safe_evidence_stem("/") == "evidence"
+    # Length is bounded.
+    assert len(_safe_evidence_stem("a" * 500)) <= 128
+
+
+def test_playwright_adapter_screenshot_cannot_escape_evidence_dir(tmp_path: Path) -> None:
+    # A caller-controlled request_id must not steer screenshot writes outside
+    # the evidence directory (path traversal / arbitrary file write).
+    evidence_dir = tmp_path / "evidence"
+    runtime = FakePlaywrightRuntime()
+    adapter = PlaywrightBrowserAdapter(
+        profile=PlaywrightAdapterProfile(evidence_dir=evidence_dir),
+        runtime_factory=lambda: runtime,
+    )
+    request = BrowserActionRequest(
+        request_id="../escaped-traversal",
+        tenant_id="tenant-1",
+        capability_id="browser.extract_text",
+        action="browser.extract_text",
+        url="https://docs.mullusi.com/reference",
+    )
+
+    observation = adapter.perform(request)
+
+    assert observation.succeeded is True
+    # Nothing escaped to the tmp_path root (the parent of evidence_dir).
+    assert list(tmp_path.glob("*.png")) == []
+    # Both screenshots landed inside the evidence directory with a safe name.
+    inside = sorted(p.name for p in evidence_dir.glob("*.png"))
+    assert len(inside) == 2
+    for name in inside:
+        assert "/" not in name and "\\" not in name
+    assert "/" not in observation.screenshot_before_ref.split(":")[-1]
 
 
 def test_playwright_adapter_extracts_text_and_writes_screenshots(tmp_path: Path) -> None:
