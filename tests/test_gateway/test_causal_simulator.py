@@ -82,6 +82,27 @@ def test_causal_simulator_blocks_open_world_contradictions() -> None:
     assert receipt.state_hash == "world-state-hash-1"
 
 
+def test_causal_simulator_blocks_stale_world_state_projection() -> None:
+    compiled = GoalCompiler().compile(
+        message="search knowledge docs",
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+        world_state=_world_state(state_hash="world-state-hash-1"),
+    )
+
+    receipt = CausalSimulator().simulate(
+        compiled,
+        world_state=_world_state(state_hash="world-state-hash-2"),
+    )
+
+    assert receipt.would_execute is False
+    assert receipt.reason == "world_state_mismatch"
+    assert "refresh_world_state_projection" in receipt.required_controls
+    assert "world_state_mismatch" in receipt.failure_modes
+    assert receipt.state_hash == "world-state-hash-1"
+    assert receipt.metadata["observed_world_state_hash"] == "world-state-hash-2"
+
+
 def test_simulation_receipt_schema_accepts_dry_run_receipt() -> None:
     schema = _load_schema(SCHEMA_PATH)
     compiled = GoalCompiler().compile(
@@ -102,7 +123,11 @@ def test_simulation_receipt_schema_accepts_dry_run_receipt() -> None:
     assert payload["step_results"][0]["step_id"] == "step-1"
 
 
-def _world_state(*, open_contradiction_count: int = 0) -> WorldState:
+def _world_state(
+    *,
+    open_contradiction_count: int = 0,
+    state_hash: str = "world-state-hash-1",
+) -> WorldState:
     return WorldState(
         tenant_id="tenant-1",
         state_id="world-state-1",
@@ -113,7 +138,7 @@ def _world_state(*, open_contradiction_count: int = 0) -> WorldState:
         contradiction_count=open_contradiction_count,
         open_contradiction_count=open_contradiction_count,
         projected_at="2026-05-04T12:00:00Z",
-        state_hash="world-state-hash-1",
+        state_hash=state_hash,
     )
 
 

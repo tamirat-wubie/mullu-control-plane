@@ -137,6 +137,10 @@ def _rebind_orchestration_record_to_proof_hash(
 class FakeExecutor:
     calls: int = 0
     last_request: ExecutionRequest | None = None
+    effect_names: tuple[str, ...] = (
+        "customer_address_updated",
+        "crm_audit_record_created",
+    )
 
     def execute(self, request: ExecutionRequest) -> ExecutionResult:
         self.calls += 1
@@ -145,10 +149,9 @@ class FakeExecutor:
             execution_id=request.execution_id,
             goal_id=request.goal_id,
             status=ExecutionOutcome.SUCCEEDED,
-            actual_effects=(
-                EffectRecord(
-                    name="process_completed", details={"argv": list(request.argv)}
-                ),
+            actual_effects=tuple(
+                EffectRecord(name=effect_name, details={"argv": list(request.argv)})
+                for effect_name in self.effect_names
             ),
             assumed_effects=(),
             started_at=NOW,
@@ -216,6 +219,23 @@ def test_universal_action_kernel_dispatches_after_all_certificates_pass() -> Non
     assert passport.review_required_on_failure is True
     assert passport.budget_class == "customer_ops_mutation"
     assert passport.max_estimated_cost == 0.25
+    assert result.effect_prediction_certificate is not None
+    effect_plan = result.effect_prediction_certificate.plan
+    assert effect_plan.command_id == "intent-1"
+    assert effect_plan.capability_id == "shell_command"
+    assert tuple(effect.name for effect in effect_plan.expected_effects) == (
+        "customer_address_updated",
+        "crm_audit_record_created",
+    )
+    assert effect_plan.forbidden_effects == (
+        "billing_account_modified",
+        "unrelated_customer_modified",
+    )
+    assert effect_plan.rollback_plan_id == "crm.restore_customer_address"
+    assert (
+        effect_plan.compensation_plan_id
+        == "customer_ops.notify_address_update_review"
+    )
     assert result.governed_action.authority_proof.actor_roles == (REQUIRED_ROLE,)
     assert result.governed_action.authority_proof.approval_chain == (REQUIRED_ROLE,)
     assert result.governed_action.authority_proof.approval_refs == ("approval-1",)
@@ -265,6 +285,36 @@ def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
     assert record["raw_reasoning_included"] is False
     assert record["lineage"]["accepted_deltas"]
     assert record["lineage"]["rejected_deltas"] == []
+
+
+def test_universal_action_kernel_escalates_effect_prediction_mismatch() -> None:
+    kernel, executor = _kernel_with_capability(
+        effect_names=("customer_address_updated", "billing_account_modified")
+    )
+    request = _action_request(intent_id="intent-effect-mismatch")
+
+    result = kernel.run(request)
+    record = build_universal_action_orchestration_record(request=request, result=result)
+    validation_errors = _validate_uao_record(record)
+
+    assert validation_errors == []
+    assert result.blocked is False
+    assert result.dispatched is True
+    assert result.effect_prediction_certificate is not None
+    assert result.terminal_certificate is not None
+    assert (
+        result.terminal_certificate.disposition
+        is TerminalClosureDisposition.REQUIRES_REVIEW
+    )
+    assert result.learning_decision is None
+    assert executor.calls == 1
+    assert result.closure_state == "closed_escalated"
+    assert record["decision"]["status"] == "escalate"
+    assert record["decision"]["reason_code"] == "effect_reconciliation_mismatch"
+    assert record["reconciliation"]["status"] == "mismatched"
+    assert record["memory_update"]["learning_allowed"] is False
+    assert record["lineage"]["accepted_deltas"] == []
+    assert record["lineage"]["rejected_deltas"]
 
 
 def test_universal_action_kernel_blocks_missing_authority_before_plan() -> None:
@@ -486,6 +536,32 @@ def test_universal_action_kernel_blocks_escalating_simulation_before_dispatch() 
     assert executor.calls == 0
     assert result.action_envelope["risk"] == "H3"
     assert result.closure_state == "closed_blocked"
+    assert result.proof_hash.startswith("universal-action-proof-")
+
+
+def test_universal_action_kernel_blocks_approval_required_simulation_before_dispatch() -> None:
+    kernel, executor = _kernel_with_capability()
+
+    result = kernel.run(
+        _action_request(
+            intent_id="intent-sim-approval-block",
+            success_probability=0.55,
+        )
+    )
+
+    assert result.blocked is True
+    assert result.block_reason == "simulation_approval_required"
+    assert result.plan_certificate is not None
+    assert result.simulation_certificate is not None
+    assert (
+        result.simulation_certificate.verdict.verdict_type
+        is VerdictType.APPROVAL_REQUIRED
+    )
+    assert result.governed_action is not None
+    assert result.dispatch_result is None
+    assert executor.calls == 0
+    assert result.closure_state == "closed_blocked"
+    assert result.execution_receipt_ref is None
     assert result.proof_hash.startswith("universal-action-proof-")
 
 
@@ -1459,10 +1535,12 @@ def _kernel_with_capability(
     *,
     world_state: WorldStateEngine | None = None,
     authority_policy: CapabilityAuthorityPolicy | None = None,
+    effect_names: tuple[str, ...] | None = None,
 ) -> tuple[UniversalActionKernel, FakeExecutor]:
     return _kernel(
         gate=_capability_admission_gate(authority_policy=authority_policy),
         world_state=world_state,
+        effect_names=effect_names,
     )
 
 
@@ -1476,8 +1554,11 @@ def _kernel(
     *,
     gate: CommandCapabilityAdmissionGate,
     world_state: WorldStateEngine | None = None,
+    effect_names: tuple[str, ...] | None = None,
 ) -> tuple[UniversalActionKernel, FakeExecutor]:
     executor = FakeExecutor()
+    if effect_names is not None:
+        executor.effect_names = effect_names
     dispatcher = Dispatcher(
         template_validator=TemplateValidator(),
         executors={"shell_command": executor},
@@ -1509,6 +1590,7 @@ def _action_request(
     *,
     intent_id: str = "intent-1",
     risk_level: RiskLevel = RiskLevel.LOW,
+    success_probability: float = 0.9,
     dispatch_request: DispatchRequest | None = None,
     metadata: dict | None = None,
 ) -> UniversalActionRequest:
@@ -1526,6 +1608,7 @@ def _action_request(
         objective="Run a bounded shell command through the universal action kernel.",
         dispatch_request=dispatch_request or _dispatch_request(),
         risk_level=risk_level,
+        success_probability=success_probability,
         metadata=request_metadata,
     )
 
