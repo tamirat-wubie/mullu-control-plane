@@ -575,6 +575,63 @@ def test_universal_command_orchestration_record_ignores_invalid_latest_event() -
     assert "chain_of_thought" not in replayed_record
 
 
+def test_universal_command_orchestration_record_rejects_cross_command_candidate() -> (
+    None
+):
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    source_command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-record-source",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+    target_command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-record-target",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+    universal_command_dispatch(
+        ledger,
+        kernel,
+        source_command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+    )
+    source_record = universal_command_orchestration_record_view(
+        ledger, source_command.command_id
+    )
+    assert source_record is not None
+
+    ledger.transition(
+        target_command.command_id,
+        CommandState.DISPATCHED,
+        detail={
+            "cause": "universal_action_kernel_dispatched",
+            "universal_action_orchestration": source_record,
+        },
+    )
+    reloaded_ledger = CommandLedger(clock=_clock, store=store)
+
+    replayed_record = universal_command_orchestration_record_view(
+        reloaded_ledger, target_command.command_id
+    )
+
+    assert replayed_record is None
+    assert reloaded_ledger.get(target_command.command_id) is not None
+    assert len(reloaded_ledger.events_for(target_command.command_id)) == 2
+
+
 def test_universal_command_orchestration_record_rejects_malformed_only_event() -> None:
     store = InMemoryCommandLedgerStore()
     ledger = CommandLedger(clock=_clock, store=store)

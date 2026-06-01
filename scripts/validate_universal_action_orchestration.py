@@ -185,6 +185,7 @@ REQUIRED_DOCUMENT_TERMS = (
     "raw private reasoning",
     "Canonical validation receipts require the default schema, doctrine, and fixture set.",
     "Every command replay record must fail closed when the persisted candidate is malformed or exposes private reasoning fields.",
+    "Every command replay record must bind to the command id, tenant, actor, and persisted event identity before exposure.",
 )
 
 

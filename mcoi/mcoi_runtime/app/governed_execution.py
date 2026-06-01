@@ -10,6 +10,7 @@ Invariants: all operator dispatches flow through governed spine or the universal
 """
 
 from __future__ import annotations
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Mapping
 from mcoi_runtime.core.dispatcher import DispatchRequest
@@ -374,20 +375,78 @@ def universal_command_orchestration_record_view(
     command_id: str,
 ) -> Mapping[str, Any] | None:
     """Replay one validated persisted UAO v1 orchestration record for a command."""
+    command_binding = _command_replay_binding(command_ledger, command_id)
+    if command_binding is None:
+        return None
+    bound_command_id, bound_tenant_id, bound_actor_id = command_binding
     events = command_ledger.events_for(command_id)
     for event in reversed(events):
+        if not _event_binds_command_replay(
+            event,
+            command_id=bound_command_id,
+            tenant_id=bound_tenant_id,
+            actor_id=bound_actor_id,
+        ):
+            continue
         detail = getattr(event, "detail", {})
         if not isinstance(detail, Mapping):
             continue
         if detail.get("cause") not in _UAO_REPLAY_EVENT_CAUSES:
             continue
         candidate = detail.get("universal_action_orchestration")
-        if _is_replayable_universal_action_orchestration_record(candidate):
-            return dict(candidate)
+        if _is_replayable_universal_action_orchestration_record(
+            candidate,
+            command_id=bound_command_id,
+            tenant_id=bound_tenant_id,
+            actor_id=bound_actor_id,
+        ):
+            return deepcopy(dict(candidate))
     return None
 
 
-def _is_replayable_universal_action_orchestration_record(value: Any) -> bool:
+def _command_replay_binding(
+    command_ledger: object,
+    command_id: str,
+) -> tuple[str, str, str] | None:
+    if not _non_empty_text(command_id):
+        return None
+    get_command = getattr(command_ledger, "get", None)
+    if not callable(get_command):
+        return None
+    command = get_command(command_id)
+    if command is None:
+        return None
+    bound_command_id = getattr(command, "command_id", "")
+    tenant_id = getattr(command, "tenant_id", "")
+    actor_id = getattr(command, "actor_id", "")
+    if bound_command_id != command_id:
+        return None
+    if not _non_empty_text(tenant_id) or not _non_empty_text(actor_id):
+        return None
+    return command_id, tenant_id, actor_id
+
+
+def _event_binds_command_replay(
+    event: Any,
+    *,
+    command_id: str,
+    tenant_id: str,
+    actor_id: str,
+) -> bool:
+    return (
+        getattr(event, "command_id", "") == command_id
+        and getattr(event, "tenant_id", "") == tenant_id
+        and getattr(event, "actor_id", "") == actor_id
+    )
+
+
+def _is_replayable_universal_action_orchestration_record(
+    value: Any,
+    *,
+    command_id: str,
+    tenant_id: str,
+    actor_id: str,
+) -> bool:
     """Return true when a persisted UAO record is safe for read-model replay."""
 
     if not isinstance(value, Mapping):
@@ -397,6 +456,10 @@ def _is_replayable_universal_action_orchestration_record(value: Any) -> bool:
     if value.get("uao_schema_version") != "uao.v1":
         return False
     if value.get("raw_reasoning_included") is not False:
+        return False
+    if value.get("tenant_id") != tenant_id:
+        return False
+    if value.get("actor_id") != actor_id:
         return False
     for field_name in (
         "orchestration_id",
@@ -419,6 +482,8 @@ def _is_replayable_universal_action_orchestration_record(value: Any) -> bool:
     if action_envelope.get("actor") != value.get("actor_id"):
         return False
     if action_envelope.get("tenant") != value.get("tenant_id"):
+        return False
+    if action_envelope.get("intent") != command_id:
         return False
     if action_envelope.get("requested_at") != value.get("created_at"):
         return False
@@ -485,7 +550,7 @@ def _has_private_reasoning_field(value: Any) -> bool:
 
 
 def _non_empty_text(value: Any) -> bool:
-    return isinstance(value, str) and bool(value)
+    return isinstance(value, str) and bool(value.strip())
 
 
 def build_universal_operator_kernel(
