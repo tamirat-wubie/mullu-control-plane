@@ -246,11 +246,20 @@
     "closure": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "terminal", "closure_receipt_ref", "next_action"],
+      "required": [
+        "status",
+        "terminal",
+        "closure_receipt_ref",
+        "reconciliation_ref",
+        "memory_ref",
+        "next_action"
+      ],
       "properties": {
         "status": { "type": "string", "enum": ["closed_allowed", "closed_blocked", "closed_deferred", "closed_escalated", "closed_simulated"] },
         "terminal": { "type": "boolean" },
         "closure_receipt_ref": { "type": "string", "minLength": 1 },
+        "reconciliation_ref": { "type": ["string", "null"] },
+        "memory_ref": { "type": ["string", "null"] },
         "next_action": { "type": "string", "minLength": 1 }
       }
     },

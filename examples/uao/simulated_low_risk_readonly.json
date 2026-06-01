@@ -330,7 +330,7 @@
       "tier": "R1",
       "kind": "closure",
       "stage_id": "stage_closure",
-      "confirms": "simulation closed without execution",
+      "confirms": "universal-action-closure-confirmation-17152f10d660",
       "external_state_confirmed": false
     }
   ],
@@ -350,6 +350,8 @@
     "status": "closed_simulated",
     "terminal": true,
     "closure_receipt_ref": "receipt://uao_closure_status_preview",
+    "reconciliation_ref": null,
+    "memory_ref": null,
     "next_action": "inspect_simulation_receipt"
   },
   "raw_reasoning_included": false,

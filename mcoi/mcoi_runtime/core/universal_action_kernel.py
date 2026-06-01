@@ -19,7 +19,10 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
 
-from mcoi_runtime.contracts.effect_assurance import EffectReconciliation, ReconciliationStatus
+from mcoi_runtime.contracts.effect_assurance import (
+    EffectReconciliation,
+    ReconciliationStatus,
+)
 from mcoi_runtime.contracts.evidence import EvidenceRecord
 from mcoi_runtime.contracts.execution import ExecutionOutcome, ExecutionResult
 from mcoi_runtime.contracts.governed_action import (
@@ -33,7 +36,10 @@ from mcoi_runtime.contracts.governed_capability_fabric import (
     CommandCapabilityAdmissionDecision,
     CommandCapabilityAdmissionStatus,
 )
-from mcoi_runtime.contracts.learning import LearningAdmissionDecision, LearningAdmissionStatus
+from mcoi_runtime.contracts.learning import (
+    LearningAdmissionDecision,
+    LearningAdmissionStatus,
+)
 from mcoi_runtime.contracts.plan import Plan, PlanItem
 from mcoi_runtime.contracts.simulation import (
     RiskLevel,
@@ -43,11 +49,20 @@ from mcoi_runtime.contracts.simulation import (
     SimulationVerdict,
     VerdictType,
 )
-from mcoi_runtime.contracts.terminal_closure import TerminalClosureCertificate, TerminalClosureDisposition
-from mcoi_runtime.contracts.verification import VerificationCheck, VerificationResult, VerificationStatus
+from mcoi_runtime.contracts.terminal_closure import (
+    TerminalClosureCertificate,
+    TerminalClosureDisposition,
+)
+from mcoi_runtime.contracts.verification import (
+    VerificationCheck,
+    VerificationResult,
+    VerificationStatus,
+)
 from mcoi_runtime.contracts.world_state import WorldStateSnapshot
 from mcoi_runtime.core.closure_learning import ClosureLearningAdmissionGate
-from mcoi_runtime.core.command_capability_admission import CommandCapabilityAdmissionGate
+from mcoi_runtime.core.command_capability_admission import (
+    CommandCapabilityAdmissionGate,
+)
 from mcoi_runtime.core.dispatcher import DispatchRequest
 from mcoi_runtime.core.governed_dispatcher import (
     GovernedDispatchContext,
@@ -59,7 +74,11 @@ from mcoi_runtime.core.intent_ir import (
     IntentCompilationError,
     IntentIRCompiler,
 )
-from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
+from mcoi_runtime.core.invariants import (
+    RuntimeCoreInvariantError,
+    ensure_non_empty_text,
+    stable_identifier,
+)
 from mcoi_runtime.core.memory import MemoryEntry, MemoryTier
 from mcoi_runtime.core.simulation import SimulationEngine
 from mcoi_runtime.core.terminal_closure import TerminalClosureCertifier
@@ -87,7 +106,11 @@ class UniversalActionRequest:
 
     def __post_init__(self) -> None:
         for field_name in ("actor_id", "tenant_id", "intent_id", "objective", "mode"):
-            object.__setattr__(self, field_name, ensure_non_empty_text(field_name, getattr(self, field_name)))
+            object.__setattr__(
+                self,
+                field_name,
+                ensure_non_empty_text(field_name, getattr(self, field_name)),
+            )
         if not isinstance(self.risk_level, RiskLevel):
             raise ValueError("risk_level must be a RiskLevel value")
         if self.estimated_cost < 0:
@@ -337,7 +360,9 @@ class UniversalActionKernel:
         )
         return self._with_proof_hash(result)
 
-    def _build_goal_certificate(self, request: UniversalActionRequest, issued_at: str) -> GoalCertificate:
+    def _build_goal_certificate(
+        self, request: UniversalActionRequest, issued_at: str
+    ) -> GoalCertificate:
         priority = (
             GoalPriority.HIGH
             if request.risk_level in {RiskLevel.HIGH, RiskLevel.CRITICAL}
@@ -355,15 +380,23 @@ class UniversalActionKernel:
             },
         )
         return GoalCertificate(
-            certificate_id=stable_identifier("goal-cert", {"goal_id": goal.goal_id, "issued_at": issued_at}),
+            certificate_id=stable_identifier(
+                "goal-cert", {"goal_id": goal.goal_id, "issued_at": issued_at}
+            ),
             goal=goal,
             issued_at=issued_at,
         )
 
-    def _build_world_certificate(self, request: UniversalActionRequest, issued_at: str) -> WorldSupportCertificate:
+    def _build_world_certificate(
+        self, request: UniversalActionRequest, issued_at: str
+    ) -> WorldSupportCertificate:
         snapshot = self._world_state.assemble_snapshot()
         allows_execution = len(snapshot.unresolved_contradictions) == 0
-        reason = "world_state_supports_execution" if allows_execution else "open_world_contradictions"
+        reason = (
+            "world_state_supports_execution"
+            if allows_execution
+            else "open_world_contradictions"
+        )
         return WorldSupportCertificate(
             certificate_id=stable_identifier(
                 "world-support-cert",
@@ -394,7 +427,9 @@ class UniversalActionKernel:
             order=0,
         )
         plan = Plan(
-            plan_id=stable_identifier("plan", {"intent_id": request.intent_id, "issued_at": issued_at}),
+            plan_id=stable_identifier(
+                "plan", {"intent_id": request.intent_id, "issued_at": issued_at}
+            ),
             goal_id=request.dispatch_request.goal_id,
             state_hash=world_certificate.snapshot.state_hash,
             registry_hash=stable_identifier(
@@ -418,7 +453,9 @@ class UniversalActionKernel:
             },
         )
         return PlanCertificate(
-            certificate_id=stable_identifier("plan-cert", {"plan_id": plan.plan_id, "issued_at": issued_at}),
+            certificate_id=stable_identifier(
+                "plan-cert", {"plan_id": plan.plan_id, "issued_at": issued_at}
+            ),
             plan=plan,
             issued_at=issued_at,
         )
@@ -439,7 +476,9 @@ class UniversalActionKernel:
             success_probability=request.success_probability,
         )
         simulation_request = SimulationRequest(
-            request_id=stable_identifier("sim-request", {"plan_id": plan_certificate.plan.plan_id}),
+            request_id=stable_identifier(
+                "sim-request", {"plan_id": plan_certificate.plan.plan_id}
+            ),
             context_type="plan",
             context_id=plan_certificate.plan.plan_id,
             description="Dry-run governed action plan",
@@ -561,7 +600,9 @@ class UniversalActionKernel:
             actor_roles=_text_tuple_from_metadata(request.metadata, "actor_roles"),
             approval_chain=capability_passport.approval_chain,
             approval_refs=_text_tuple_from_metadata(request.metadata, "approval_refs"),
-            approval_actor_ids=_text_tuple_from_metadata(request.metadata, "approval_actor_ids"),
+            approval_actor_ids=_text_tuple_from_metadata(
+                request.metadata, "approval_actor_ids"
+            ),
             separation_of_duty=capability_passport.separation_of_duty,
         )
         return GovernedAction(
@@ -632,7 +673,10 @@ class UniversalActionKernel:
             execution_result=execution_result,
             verification_result=verification_result,
             reconciliation=reconciliation,
-            evidence_refs=tuple(evidence.uri or evidence.description for evidence in verification_result.evidence),
+            evidence_refs=tuple(
+                evidence.uri or evidence.description
+                for evidence in verification_result.evidence
+            ),
             memory_entry=memory_entry,
             graph_refs=(request.dispatch_request.goal_id,),
         )
@@ -658,22 +702,46 @@ class UniversalActionKernel:
             "closure_state": result.closure_state,
             "goal_certificate_id": result.goal_certificate.certificate_id,
             "world_certificate_id": result.world_certificate.certificate_id,
-            "plan_certificate_id": result.plan_certificate.certificate_id if result.plan_certificate else "",
+            "plan_certificate_id": result.plan_certificate.certificate_id
+            if result.plan_certificate
+            else "",
             "simulation_certificate_id": (
-                result.simulation_certificate.certificate_id if result.simulation_certificate else ""
+                result.simulation_certificate.certificate_id
+                if result.simulation_certificate
+                else ""
             ),
-            "intent_certificate_id": result.intent_certificate.certificate_id if result.intent_certificate else "",
-            "intent_hash": result.intent_certificate.intent_hash if result.intent_certificate else "",
-            "capability_status": result.capability_decision.status.value if result.capability_decision else "",
-            "capability_id": result.capability_decision.capability_id if result.capability_decision else "",
-            "governed_action_id": result.governed_action.governed_action_id if result.governed_action else "",
-            "dispatch_ledger_hash": result.dispatch_result.ledger_hash if result.dispatch_result else "",
+            "intent_certificate_id": result.intent_certificate.certificate_id
+            if result.intent_certificate
+            else "",
+            "intent_hash": result.intent_certificate.intent_hash
+            if result.intent_certificate
+            else "",
+            "capability_status": result.capability_decision.status.value
+            if result.capability_decision
+            else "",
+            "capability_id": result.capability_decision.capability_id
+            if result.capability_decision
+            else "",
+            "governed_action_id": result.governed_action.governed_action_id
+            if result.governed_action
+            else "",
+            "dispatch_ledger_hash": result.dispatch_result.ledger_hash
+            if result.dispatch_result
+            else "",
             "terminal_certificate_id": (
-                result.terminal_certificate.certificate_id if result.terminal_certificate else ""
+                result.terminal_certificate.certificate_id
+                if result.terminal_certificate
+                else ""
             ),
-            "learning_admission_id": result.learning_decision.admission_id if result.learning_decision else "",
+            "learning_admission_id": result.learning_decision.admission_id
+            if result.learning_decision
+            else "",
+            "reconciliation_ref": _uao_record_reconciliation_ref(result) or "",
+            "memory_ref": _uao_record_memory_ref(result) or "",
         }
-        encoded = json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+        encoded = json.dumps(
+            payload, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+        )
         proof_hash = stable_identifier("universal-action-proof", {"payload": encoded})
         return UniversalActionResult(
             action_id=result.action_id,
@@ -714,9 +782,13 @@ def build_universal_action_kernel(
     if not isinstance(simulator, SimulationEngine):
         raise RuntimeCoreInvariantError("simulator must be a SimulationEngine")
     if not isinstance(capability_admission, CommandCapabilityAdmissionGate):
-        raise RuntimeCoreInvariantError("capability_admission must be a CommandCapabilityAdmissionGate")
+        raise RuntimeCoreInvariantError(
+            "capability_admission must be a CommandCapabilityAdmissionGate"
+        )
     if not isinstance(governed_dispatcher, GovernedDispatcher):
-        raise RuntimeCoreInvariantError("governed_dispatcher must be a GovernedDispatcher")
+        raise RuntimeCoreInvariantError(
+            "governed_dispatcher must be a GovernedDispatcher"
+        )
     return UniversalActionKernel(
         world_state=world_state,
         simulator=simulator,
@@ -743,17 +815,27 @@ def build_universal_action_orchestration_record(
     identity binding is inconsistent.
     """
     action_envelope = _uao_record_action_envelope(request=request, result=result)
-    _ensure_record_identity_binding(request=request, result=result, action_envelope=action_envelope)
+    _ensure_record_identity_binding(
+        request=request, result=result, action_envelope=action_envelope
+    )
     created_at = action_envelope["requested_at"]
     decision = _uao_record_decision(result)
-    receipt_refs = _uao_record_receipt_refs(result=result, decision_status=decision["status"])
     capability_refs = _uao_record_capability_refs(request=request, result=result)
-    evidence_refs = _uao_record_evidence_refs(result=result, action_envelope=action_envelope)
+    evidence_refs = _uao_record_evidence_refs(
+        result=result, action_envelope=action_envelope
+    )
     input_refs = _unique_text_list((action_envelope["source"], *evidence_refs))
     policy_refs = _uao_record_policy_refs(request=request, result=result)
     temporal_refs = _uao_record_temporal_refs(result=result, created_at=created_at)
     outcome_ref = _uao_record_outcome_ref(result)
+    reconciliation_ref = _uao_record_reconciliation_ref(result)
     memory_ref = _uao_record_memory_ref(result)
+    receipt_refs = _uao_record_receipt_refs(
+        result=result,
+        decision_status=decision["status"],
+        reconciliation_ref=reconciliation_ref,
+        memory_ref=memory_ref,
+    )
     return {
         "orchestration_id": stable_identifier(
             "universal-action-orchestration",
@@ -792,6 +874,7 @@ def build_universal_action_orchestration_record(
             input_refs=input_refs,
             receipt_refs=receipt_refs,
             outcome_ref=outcome_ref,
+            reconciliation_ref=reconciliation_ref,
             memory_ref=memory_ref,
         ),
         "admission_guards": _uao_record_admission_guards(
@@ -811,15 +894,25 @@ def build_universal_action_orchestration_record(
             result=result,
             receipt_refs=receipt_refs,
             outcome_ref=outcome_ref,
+            reconciliation_ref=reconciliation_ref,
+            memory_ref=memory_ref,
         ),
-        "reconciliation": _uao_record_reconciliation(result=result, outcome_ref=outcome_ref),
-        "memory_update": _uao_record_memory_update(result=result, memory_ref=memory_ref),
+        "reconciliation": _uao_record_reconciliation(
+            result=result, outcome_ref=outcome_ref
+        ),
+        "memory_update": _uao_record_memory_update(
+            result=result, memory_ref=memory_ref
+        ),
         "closure_state": result.closure_state,
         "closure": {
             "status": result.closure_state,
             "terminal": True,
             "closure_receipt_ref": receipt_refs["closure"],
-            "next_action": "retain_receipts" if not result.blocked else "operator_review",
+            "reconciliation_ref": reconciliation_ref,
+            "memory_ref": memory_ref,
+            "next_action": "retain_receipts"
+            if not result.blocked
+            else "operator_review",
         },
         "raw_reasoning_included": False,
         "lineage": _uao_record_lineage(result),
@@ -899,7 +992,9 @@ def _build_trace_ref(*, request: UniversalActionRequest, action_id: str) -> str:
     )
 
 
-def _build_admission_receipt_ref(*, action_id: str, trace_ref: str, decision_status: str) -> str:
+def _build_admission_receipt_ref(
+    *, action_id: str, trace_ref: str, decision_status: str
+) -> str:
     return stable_identifier(
         "universal-action-admission-receipt",
         {
@@ -987,7 +1082,11 @@ def _build_verification_result(
             ),
         ),
         closed_at=issued_at,
-        metadata={"kernel": "universal_action", "intent_id": request.intent_id, "goal_id": execution_result.goal_id},
+        metadata={
+            "kernel": "universal_action",
+            "intent_id": request.intent_id,
+            "goal_id": execution_result.goal_id,
+        },
     )
 
 
@@ -1069,13 +1168,21 @@ def _ensure_record_identity_binding(
     action_envelope: Mapping[str, Any],
 ) -> None:
     if action_envelope["actor"] != request.actor_id:
-        raise RuntimeCoreInvariantError("UAO record actor binding does not match request")
+        raise RuntimeCoreInvariantError(
+            "UAO record actor binding does not match request"
+        )
     if action_envelope["tenant"] != request.tenant_id:
-        raise RuntimeCoreInvariantError("UAO record tenant binding does not match request")
+        raise RuntimeCoreInvariantError(
+            "UAO record tenant binding does not match request"
+        )
     if action_envelope["intent"] != request.intent_id:
-        raise RuntimeCoreInvariantError("UAO record intent binding does not match request")
+        raise RuntimeCoreInvariantError(
+            "UAO record intent binding does not match request"
+        )
     if result.goal_certificate.goal.metadata.get("intent_id") != request.intent_id:
-        raise RuntimeCoreInvariantError("UAO record goal certificate does not match request intent")
+        raise RuntimeCoreInvariantError(
+            "UAO record goal certificate does not match request intent"
+        )
 
 
 def _uao_record_action_envelope(
@@ -1084,15 +1191,28 @@ def _uao_record_action_envelope(
     result: UniversalActionResult,
 ) -> dict[str, Any]:
     return {
-        "source": str(result.action_envelope.get("source") or _action_source_ref(request)),
+        "source": str(
+            result.action_envelope.get("source") or _action_source_ref(request)
+        ),
         "actor": str(result.action_envelope.get("actor") or request.actor_id),
         "tenant": str(result.action_envelope.get("tenant") or request.tenant_id),
         "intent": str(result.action_envelope.get("intent") or request.intent_id),
-        "target": str(result.action_envelope.get("target") or request.dispatch_request.route),
-        "risk": str(result.action_envelope.get("risk") or _uao_risk_class(request.risk_level)),
-        "requested_at": str(result.action_envelope.get("requested_at") or result.goal_certificate.issued_at),
-        "approval_ref": _optional_text_value(result.action_envelope.get("approval_ref")),
-        "evidence_refs": _unique_text_list(result.action_envelope.get("evidence_refs", ())),
+        "target": str(
+            result.action_envelope.get("target") or request.dispatch_request.route
+        ),
+        "risk": str(
+            result.action_envelope.get("risk") or _uao_risk_class(request.risk_level)
+        ),
+        "requested_at": str(
+            result.action_envelope.get("requested_at")
+            or result.goal_certificate.issued_at
+        ),
+        "approval_ref": _optional_text_value(
+            result.action_envelope.get("approval_ref")
+        ),
+        "evidence_refs": _unique_text_list(
+            result.action_envelope.get("evidence_refs", ())
+        ),
         "capability_refs": _uao_record_capability_refs(request=request, result=result),
     }
 
@@ -1104,7 +1224,10 @@ def _uao_record_capability_refs(
 ) -> list[str]:
     refs: list[str] = []
     refs.extend(_text_iterable(result.action_envelope.get("capability_refs", ())))
-    if result.capability_decision is not None and result.capability_decision.capability_id:
+    if (
+        result.capability_decision is not None
+        and result.capability_decision.capability_id
+    ):
         refs.append(result.capability_decision.capability_id)
     refs.append(request.dispatch_request.route)
     return _unique_text_list(refs)
@@ -1142,13 +1265,18 @@ def _uao_record_temporal_refs(
 ) -> list[str]:
     refs = [f"temporal://universal-action/{created_at}"]
     if result.terminal_certificate is not None:
-        refs.append(f"temporal://terminal-closure/{result.terminal_certificate.closed_at}")
+        refs.append(
+            f"temporal://terminal-closure/{result.terminal_certificate.closed_at}"
+        )
     return _unique_text_list(refs)
 
 
 def _uao_record_effect_classes(result: UniversalActionResult) -> list[str]:
     classes = ["external_capability", "world_state"]
-    if result.dispatch_result is not None and result.dispatch_result.execution_result is not None:
+    if (
+        result.dispatch_result is not None
+        and result.dispatch_result.execution_result is not None
+    ):
         for effect in result.dispatch_result.execution_result.actual_effects:
             classes.append(effect.name)
     if result.learning_decision is not None:
@@ -1162,7 +1290,9 @@ def _uao_record_decision(result: UniversalActionResult) -> dict[str, Any]:
             "status": "allow",
             "reason_code": "execution_completed",
             "proof_state": "Pass",
-            "solver_outcome": "SolvedVerified" if result.terminal_certificate is not None else "SolvedUnverified",
+            "solver_outcome": "SolvedVerified"
+            if result.terminal_certificate is not None
+            else "SolvedUnverified",
             "next_action": "retain_receipts",
             "execution_allowed": True,
         }
@@ -1180,6 +1310,8 @@ def _uao_record_receipt_refs(
     *,
     result: UniversalActionResult,
     decision_status: str,
+    reconciliation_ref: str | None,
+    memory_ref: str | None,
 ) -> dict[str, str]:
     refs = {
         "trace": stable_identifier(
@@ -1194,6 +1326,8 @@ def _uao_record_receipt_refs(
                 "trace_ref": result.trace_ref,
                 "closure_state": result.closure_state,
                 "decision_status": decision_status,
+                "reconciliation_ref": reconciliation_ref or "",
+                "memory_ref": memory_ref or "",
             },
         ),
         "reconciliation": stable_identifier(
@@ -1211,13 +1345,25 @@ def _uao_record_receipt_refs(
 
 
 def _uao_record_outcome_ref(result: UniversalActionResult) -> str | None:
-    if result.dispatch_result is None or result.dispatch_result.execution_result is None:
+    if (
+        result.dispatch_result is None
+        or result.dispatch_result.execution_result is None
+    ):
         return None
     return f"outcome://{result.dispatch_result.execution_result.execution_id}"
 
 
+def _uao_record_reconciliation_ref(result: UniversalActionResult) -> str | None:
+    if not result.dispatched:
+        return None
+    return f"reconciliation://{result.action_id}"
+
+
 def _uao_record_memory_ref(result: UniversalActionResult) -> str | None:
-    if result.terminal_certificate is not None and result.terminal_certificate.memory_entry_id is not None:
+    if (
+        result.terminal_certificate is not None
+        and result.terminal_certificate.memory_entry_id is not None
+    ):
         return f"memory://{result.terminal_certificate.memory_entry_id}"
     if result.learning_decision is not None:
         return f"memory://{result.learning_decision.knowledge_id}"
@@ -1232,6 +1378,7 @@ def _uao_record_pipeline_stages(
     input_refs: list[str],
     receipt_refs: Mapping[str, str],
     outcome_ref: str | None,
+    reconciliation_ref: str | None,
     memory_ref: str | None,
 ) -> list[dict[str, Any]]:
     blocked = result.blocked
@@ -1295,7 +1442,9 @@ def _uao_record_pipeline_stages(
             6,
             "execution",
             "completed" if execution_completed else "skipped",
-            [f"capability-binding://{result.action_id}"] if capability_bound else capability_refs,
+            [f"capability-binding://{result.action_id}"]
+            if capability_bound
+            else capability_refs,
             [outcome_ref] if outcome_ref is not None else [],
             receipt_refs.get("execution"),
             None if execution_completed else failure_reason,
@@ -1305,7 +1454,9 @@ def _uao_record_pipeline_stages(
             7,
             "receipt",
             "completed",
-            [outcome_ref] if outcome_ref is not None else [f"decision://{result.action_id}"],
+            [outcome_ref]
+            if outcome_ref is not None
+            else [f"decision://{result.action_id}"],
             [receipt_set_ref],
             receipt_refs.get("execution", receipt_refs["admission"]),
         ),
@@ -1315,7 +1466,7 @@ def _uao_record_pipeline_stages(
             "reconciliation",
             "completed" if reconciliation_completed else "skipped",
             [receipt_set_ref],
-            [f"reconciliation://{result.action_id}"] if reconciliation_completed else [],
+            [reconciliation_ref] if reconciliation_ref is not None else [],
             receipt_refs.get("reconciliation") if reconciliation_completed else None,
             None if reconciliation_completed else failure_reason,
         ),
@@ -1324,7 +1475,9 @@ def _uao_record_pipeline_stages(
             9,
             "memory",
             "completed",
-            [f"reconciliation://{result.action_id}"] if reconciliation_completed else [f"decision://{result.action_id}"],
+            [f"reconciliation://{result.action_id}"]
+            if reconciliation_completed
+            else [f"decision://{result.action_id}"],
             [memory_output_ref],
         ),
         _uao_stage(
@@ -1377,11 +1530,19 @@ def _uao_record_admission_guards(
         ("authority_valid", "authority_proof_valid", capability_refs),
         ("policy_allows", "policy_allows_action", policy_refs),
         ("risk_acceptable", "risk_within_governed_threshold", policy_refs),
-        ("budget_available", "estimated_budget_available", [f"budget://{request.tenant_id}/universal-action"]),
+        (
+            "budget_available",
+            "estimated_budget_available",
+            [f"budget://{request.tenant_id}/universal-action"],
+        ),
         ("evidence_sufficient", "evidence_surface_available", evidence_refs),
         ("temporal_window_valid", "temporal_context_valid", temporal_refs),
         ("capability_certified", "capability_admitted", capability_refs),
-        ("recovery_available", "rollback_or_review_path_available", [f"recovery://{request.dispatch_request.route}"]),
+        (
+            "recovery_available",
+            "rollback_or_review_path_available",
+            [f"recovery://{request.dispatch_request.route}"],
+        ),
         ("receipt_emittable", "receipt_refs_emitted", [result.admission_receipt_ref]),
     )
     guards: list[dict[str, Any]] = []
@@ -1430,19 +1591,29 @@ def _uao_record_receipts(
     result: UniversalActionResult,
     receipt_refs: Mapping[str, str],
     outcome_ref: str | None,
+    reconciliation_ref: str | None,
+    memory_ref: str | None,
 ) -> list[dict[str, Any]]:
     receipts = [
-        _uao_receipt(receipt_refs["trace"], "R1", "trace", "stage_trace", result.trace_ref, False),
+        _uao_receipt(
+            receipt_refs["trace"], "R1", "trace", "stage_trace", result.trace_ref, False
+        ),
         _uao_receipt(
             receipt_refs["admission"],
             "R1",
             "admission",
             "stage_admission",
-            "allow" if result.dispatched else result.block_reason or "execution_blocked",
+            "allow"
+            if result.dispatched
+            else result.block_reason or "execution_blocked",
             False,
         ),
     ]
-    if result.dispatched and result.execution_receipt_ref is not None and outcome_ref is not None:
+    if (
+        result.dispatched
+        and result.execution_receipt_ref is not None
+        and outcome_ref is not None
+    ):
         receipts.append(
             _uao_receipt(
                 result.execution_receipt_ref,
@@ -1459,9 +1630,7 @@ def _uao_record_receipts(
                 "R2",
                 "reconciliation",
                 "stage_reconciliation",
-                result.terminal_certificate.effect_reconciliation_id
-                if result.terminal_certificate is not None
-                else outcome_ref,
+                reconciliation_ref or outcome_ref,
                 True,
             )
         )
@@ -1471,7 +1640,11 @@ def _uao_record_receipts(
             "R3",
             "closure",
             "stage_closure",
-            result.closure_state,
+            _uao_closure_confirmation(
+                closure_state=result.closure_state,
+                reconciliation_ref=reconciliation_ref,
+                memory_ref=memory_ref,
+            ),
             result.dispatched,
         )
     )
@@ -1544,6 +1717,22 @@ def _uao_record_memory_update(
     }
 
 
+def _uao_closure_confirmation(
+    *,
+    closure_state: str,
+    reconciliation_ref: str | None,
+    memory_ref: str | None,
+) -> str:
+    return stable_identifier(
+        "universal-action-closure-confirmation",
+        {
+            "closure_state": closure_state,
+            "reconciliation_ref": reconciliation_ref or "",
+            "memory_ref": memory_ref or "",
+        },
+    )
+
+
 def _uao_record_lineage(result: UniversalActionResult) -> dict[str, Any]:
     delta_ref = stable_identifier(
         "universal-action-delta",
@@ -1555,7 +1744,9 @@ def _uao_record_lineage(result: UniversalActionResult) -> dict[str, Any]:
     )
     delta = {
         "delta_id": delta_ref,
-        "reason": "execution_allowed" if result.dispatched else result.block_reason or "execution_blocked",
+        "reason": "execution_allowed"
+        if result.dispatched
+        else result.block_reason or "execution_blocked",
         "logged_in_lineage": True,
     }
     return {
@@ -1581,7 +1772,9 @@ def _text_iterable(value: Any) -> tuple[str, ...]:
         return (stripped,) if stripped else ()
     if not isinstance(value, (tuple, list)):
         return ()
-    return tuple(item.strip() for item in value if isinstance(item, str) and item.strip())
+    return tuple(
+        item.strip() for item in value if isinstance(item, str) and item.strip()
+    )
 
 
 def _unique_text_list(values: Any) -> list[str]:

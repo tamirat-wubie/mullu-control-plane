@@ -30,6 +30,8 @@ UniversalActionOrchestration :=
 | `admission_receipt_ref` | Receipt reference proving admission was recorded. |
 | `execution_receipt_ref` | Receipt reference proving execution only when execution is admitted; otherwise null. |
 | `closure_state` | Terminal closure state mirrored from `closure.status`. |
+| `closure.reconciliation_ref` | Reconciliation stage output retained in the closure receipt boundary. |
+| `closure.memory_ref` | Admitted memory update reference retained in the closure receipt boundary, or null when no memory update is admitted. |
 
 The runtime export path is:
 
@@ -66,6 +68,7 @@ The validator applies these rules deterministically:
 19. Every command replay record must carry the canonical ordered UAO pipeline stage sequence before exposure.
 20. Runtime bypass detection scans effect-bearing dispatch and execute call sites for UAO or governed binding before closure.
 21. Every command replay record must bind proof hash to an independent recomputation of the persisted event-local universal action proof detail before exposure.
+22. Every closure receipt must bind closure state to reconciliation and memory references before exposure.
 
 The core invariant is:
 

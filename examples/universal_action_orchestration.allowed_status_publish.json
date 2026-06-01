@@ -346,7 +346,7 @@
       "tier": "R3",
       "kind": "closure",
       "stage_id": "stage_closure",
-      "confirms": "action closed with reconciliation",
+      "confirms": "universal-action-closure-confirmation-d25da54975bc",
       "external_state_confirmed": true
     }
   ],
@@ -366,6 +366,8 @@
     "status": "closed_allowed",
     "terminal": true,
     "closure_receipt_ref": "receipt://uao_closure_public_status_refresh",
+    "reconciliation_ref": "reconciliation://uao_public_status_refresh",
+    "memory_ref": "memory://status-page/public-status-refresh",
     "next_action": "none"
   },
   "raw_reasoning_included": false,

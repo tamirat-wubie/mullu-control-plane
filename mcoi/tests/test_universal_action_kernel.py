@@ -699,6 +699,33 @@ def test_universal_command_orchestration_record_replays_success_events() -> None
     assert record["decision"]["status"] == "allow"
     assert record["execution_receipt_ref"] == result.execution_receipt_ref
     assert record["closure_state"] == "closed_allowed"
+    assert (
+        record["closure"]["reconciliation_ref"]
+        == f"reconciliation://{result.action_id}"
+    )
+    assert (
+        record["closure"]["memory_ref"]
+        == f"memory://{result.terminal_certificate.memory_entry_id}"
+    )
+    assert record["closure"]["memory_ref"] == record["memory_update"]["memory_ref"]
+    assert (
+        record["closure"]["reconciliation_ref"]
+        in record["pipeline_stages"][7]["output_refs"]
+    )
+    assert (
+        record["closure"]["memory_ref"] in record["pipeline_stages"][8]["output_refs"]
+    )
+    closure_receipt = next(
+        receipt for receipt in record["receipts"] if receipt["kind"] == "closure"
+    )
+    assert closure_receipt["confirms"] == stable_identifier(
+        "universal-action-closure-confirmation",
+        {
+            "closure_state": record["closure_state"],
+            "reconciliation_ref": record["closure"]["reconciliation_ref"],
+            "memory_ref": record["closure"]["memory_ref"],
+        },
+    )
     assert record["lineage"]["accepted_deltas"]
 
 
@@ -903,6 +930,72 @@ def test_universal_command_orchestration_record_rejects_rehashed_proof_spoof() -
         tampered_detail["universal_action_orchestration"],
         spoofed_proof_hash,
     )
+    store._events[target_index] = _replace_command_event_with_recomputed_hash(
+        store._events[target_index],
+        detail=tampered_detail,
+    )
+    reloaded_ledger = CommandLedger(clock=_clock, store=store)
+
+    replayed_record = universal_command_orchestration_record_view(
+        reloaded_ledger, command.command_id
+    )
+
+    assert replayed_record is None
+    assert reloaded_ledger.get(command.command_id) is not None
+    assert (
+        _recompute_event_hash(store._events[target_index])
+        == store._events[target_index].event_hash
+    )
+
+
+def test_universal_command_orchestration_record_rejects_closure_memory_ref_spoof() -> (
+    None
+):
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-record-closure-memory-spoof",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+    )
+    target_index = next(
+        index
+        for index, event in enumerate(store._events)
+        if event.command_id == command.command_id
+        and event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    spoofed_memory_ref = "memory://spoofed-closure-memory"
+    tampered_detail = copy.deepcopy(store._events[target_index].detail)
+    record = tampered_detail["universal_action_orchestration"]
+    record["memory_update"]["memory_ref"] = spoofed_memory_ref
+    record["closure"]["memory_ref"] = spoofed_memory_ref
+    record["pipeline_stages"][8]["output_refs"] = [spoofed_memory_ref]
+    record["pipeline_stages"][9]["input_refs"] = [spoofed_memory_ref]
+    for receipt in record["receipts"]:
+        if receipt["kind"] == "closure":
+            receipt["confirms"] = stable_identifier(
+                "universal-action-closure-confirmation",
+                {
+                    "closure_state": record["closure_state"],
+                    "reconciliation_ref": record["closure"]["reconciliation_ref"],
+                    "memory_ref": spoofed_memory_ref,
+                },
+            )
     store._events[target_index] = _replace_command_event_with_recomputed_hash(
         store._events[target_index],
         detail=tampered_detail,

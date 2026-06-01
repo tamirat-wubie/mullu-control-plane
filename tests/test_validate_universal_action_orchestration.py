@@ -100,6 +100,8 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn("admission_guards", schema["required"])
         self.assertIn("closure_state", schema["required"])
         self.assertIn("raw_reasoning_included", schema["required"])
+        self.assertIn("reconciliation_ref", schema["$defs"]["closure"]["required"])
+        self.assertIn("memory_ref", schema["$defs"]["closure"]["required"])
 
     def test_recommended_v1_examples_are_non_executing_shapes(self) -> None:
         fixture_paths = (
@@ -118,6 +120,8 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             self.assertFalse(record["decision"]["execution_allowed"])
             self.assertIsNone(record["execution_receipt_ref"])
             self.assertEqual(record["closure_state"], record["closure"]["status"])
+            self.assertIn("reconciliation_ref", record["closure"])
+            self.assertIn("memory_ref", record["closure"])
 
         self.assertEqual({"block", "defer", "simulate"}, observed_decisions)
 
@@ -149,6 +153,7 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             document_text,
         )
         self.assertIn("independent recomputation", document_text)
+        self.assertIn("closure receipt must bind closure state", document_text)
         self.assertIn("Runtime bypass detection scans", document_text)
 
     def test_effect_bearing_action_requires_causal_trace(self) -> None:

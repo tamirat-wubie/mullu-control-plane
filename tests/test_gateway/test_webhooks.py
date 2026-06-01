@@ -124,6 +124,8 @@ def _bind_uao_fixture_to_universal_action_detail(
         "dispatch_ledger_hash": f"dispatch-ledger://{record['action_id']}",
         "terminal_certificate_id": f"terminal-certificate://{record['action_id']}",
         "learning_admission_id": f"learning-admission://{record['action_id']}",
+        "reconciliation_ref": record["closure"]["reconciliation_ref"] or "",
+        "memory_ref": record["closure"]["memory_ref"] or "",
     }
     proof_hash = _uao_fixture_proof_hash(universal_detail)
     universal_detail["proof_hash"] = proof_hash
@@ -173,6 +175,8 @@ def _uao_fixture_proof_hash(universal_detail: dict) -> str:
         "dispatch_ledger_hash": universal_detail["dispatch_ledger_hash"],
         "terminal_certificate_id": universal_detail["terminal_certificate_id"],
         "learning_admission_id": universal_detail["learning_admission_id"],
+        "reconciliation_ref": universal_detail["reconciliation_ref"],
+        "memory_ref": universal_detail["memory_ref"],
     }
     encoded = json.dumps(
         payload, sort_keys=True, ensure_ascii=True, separators=(",", ":")
@@ -202,6 +206,22 @@ def _rebind_uao_fixture_record_to_proof_hash(record: dict, proof_hash: str) -> N
         record["lineage"]["accepted_deltas"] + record["lineage"]["rejected_deltas"]
     ):
         delta["delta_id"] = delta_ref
+
+
+def _uao_closure_confirmation(
+    *,
+    closure_state: str,
+    reconciliation_ref: str | None,
+    memory_ref: str | None,
+) -> str:
+    return stable_identifier(
+        "universal-action-closure-confirmation",
+        {
+            "closure_state": closure_state,
+            "reconciliation_ref": reconciliation_ref or "",
+            "memory_ref": memory_ref or "",
+        },
+    )
 
 
 def _slack_signature(*, secret: str, timestamp: str, body: str) -> str:
@@ -2451,6 +2471,59 @@ class TestGatewayStatus:
         spoofed_proof_hash = "universal-action-proof-spoofed"
         universal_detail["proof_hash"] = spoofed_proof_hash
         _rebind_uao_fixture_record_to_proof_hash(record, spoofed_proof_hash)
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.DISPATCHED,
+            detail={
+                "cause": "universal_action_kernel_dispatched",
+                "universal_action": universal_detail,
+                "universal_action_orchestration": record,
+            },
+        )
+
+        resp = client.get(
+            f"/commands/{command.command_id}/universal-action-orchestration"
+        )
+
+        assert resp.status_code == 404
+        assert (
+            resp.json()["detail"] == "universal action orchestration record not found"
+        )
+        assert gateway_app.state.command_ledger.get(command.command_id) is not None
+
+    def test_command_universal_action_orchestration_closure_memory_tamper_returns_404(
+        self, gateway_app, client
+    ):
+        record = json.loads(
+            (
+                _ROOT
+                / "examples"
+                / "universal_action_orchestration.allowed_status_publish.json"
+            ).read_text(encoding="utf-8")
+        )
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="tenant_ops_demo",
+            actor_id="service:status_page_worker",
+            source="web",
+            conversation_id="conversation-orchestration-closure-memory-tamper",
+            idempotency_key="universal-orchestration-closure-memory-tamper",
+            intent="refresh_public_status_page",
+            payload={"body": "closure-memory-tampered status page replay"},
+        )
+        record["action_envelope"]["intent"] = command.command_id
+        universal_detail = _bind_uao_fixture_to_universal_action_detail(record)
+        spoofed_memory_ref = "memory://spoofed-gateway-closure-memory"
+        record["memory_update"]["memory_ref"] = spoofed_memory_ref
+        record["closure"]["memory_ref"] = spoofed_memory_ref
+        record["pipeline_stages"][8]["output_refs"] = [spoofed_memory_ref]
+        record["pipeline_stages"][9]["input_refs"] = [spoofed_memory_ref]
+        for receipt in record["receipts"]:
+            if receipt["kind"] == "closure":
+                receipt["confirms"] = _uao_closure_confirmation(
+                    closure_state=record["closure_state"],
+                    reconciliation_ref=record["closure"]["reconciliation_ref"],
+                    memory_ref=spoofed_memory_ref,
+                )
         gateway_app.state.command_ledger.transition(
             command.command_id,
             CommandState.DISPATCHED,

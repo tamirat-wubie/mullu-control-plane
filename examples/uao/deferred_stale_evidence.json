@@ -323,7 +323,7 @@
       "tier": "R1",
       "kind": "closure",
       "stage_id": "stage_closure",
-      "confirms": "deferred action closed without execution",
+      "confirms": "universal-action-closure-confirmation-ec2d7ca707b2",
       "external_state_confirmed": false
     }
   ],
@@ -343,6 +343,8 @@
     "status": "closed_deferred",
     "terminal": true,
     "closure_receipt_ref": "receipt://uao_closure_stale_evidence",
+    "reconciliation_ref": "reconciliation://uao_stale_evidence",
+    "memory_ref": "memory://partner/inventory-deferred",
     "next_action": "refresh_evidence_before_admission"
   },
   "raw_reasoning_included": false,
