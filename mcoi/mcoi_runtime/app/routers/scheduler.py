@@ -10,7 +10,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_listing_tenant
 from mcoi_runtime.app.routers.deps import deps
 
 router = APIRouter()
@@ -18,6 +18,19 @@ router = APIRouter()
 
 def _scheduler_error_detail(error: str, error_code: str) -> dict[str, object]:
     return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _enforce_job_tenant(request: Request, job_id: str) -> None:
+    """Reject access to a scheduled job owned by another tenant.
+
+    Jobs are addressed by job_id (not a tenant_id parameter), so the linter
+    cannot see these handlers; the owning tenant is read off the job. A no-op for
+    operators (wildcard scope) and unauthenticated dev requests.
+    """
+    job = deps.scheduler.get_job(job_id)
+    if job is None:
+        raise HTTPException(404, detail=_scheduler_error_detail("job not found", "job_not_found"))
+    enforce_tenant_scope(request, job.tenant_id)
 
 
 class ScheduleJobRequest(BaseModel):
@@ -75,9 +88,10 @@ def schedule_job(req: ScheduleJobRequest, request: Request):
 
 
 @router.post("/api/v1/scheduler/execute")
-def execute_job(req: ExecuteJobRequest):
+def execute_job(req: ExecuteJobRequest, request: Request):
     """Execute a scheduled job immediately through the governed pipeline."""
     deps.metrics.inc("requests_governed")
+    _enforce_job_tenant(request, req.job_id)
     try:
         execution = deps.scheduler.execute_job(req.job_id)
     except ValueError:
@@ -92,10 +106,13 @@ def execute_job(req: ExecuteJobRequest):
 
 
 @router.get("/api/v1/scheduler/jobs")
-def list_jobs():
+def list_jobs(request: Request):
     """List all scheduled jobs."""
     deps.metrics.inc("requests_governed")
+    scoped = scoped_listing_tenant(request, None)
     jobs = deps.scheduler.list_jobs()
+    if scoped is not None:
+        jobs = [job for job in jobs if job.tenant_id == scoped]
     return {
         "jobs": [
             {
@@ -114,27 +131,30 @@ def list_jobs():
 
 
 @router.post("/api/v1/scheduler/jobs/{job_id}/disable")
-def disable_job(job_id: str):
+def disable_job(job_id: str, request: Request):
     """Disable a scheduled job."""
     deps.metrics.inc("requests_governed")
+    _enforce_job_tenant(request, job_id)
     if not deps.scheduler.disable(job_id):
         raise HTTPException(404, detail=_scheduler_error_detail("job not found", "job_not_found"))
     return {"job_id": job_id, "enabled": False, "governed": True}
 
 
 @router.post("/api/v1/scheduler/jobs/{job_id}/enable")
-def enable_job(job_id: str):
+def enable_job(job_id: str, request: Request):
     """Enable a previously disabled job."""
     deps.metrics.inc("requests_governed")
+    _enforce_job_tenant(request, job_id)
     if not deps.scheduler.enable(job_id):
         raise HTTPException(404, detail=_scheduler_error_detail("job not found", "job_not_found"))
     return {"job_id": job_id, "enabled": True, "governed": True}
 
 
 @router.delete("/api/v1/scheduler/jobs/{job_id}")
-def unschedule_job(job_id: str):
+def unschedule_job(job_id: str, request: Request):
     """Remove a scheduled job."""
     deps.metrics.inc("requests_governed")
+    _enforce_job_tenant(request, job_id)
     if not deps.scheduler.unschedule(job_id):
         raise HTTPException(404, detail=_scheduler_error_detail("job not found", "job_not_found"))
     return {"job_id": job_id, "removed": True, "governed": True}
