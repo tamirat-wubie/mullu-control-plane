@@ -19,6 +19,7 @@ from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.routers.auth_context import bind_claimed_actor
 from mcoi_runtime.app.routers.musia_auth import require_read, require_write
 from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
+from mcoi_runtime.core.sdlc_dashboard import build_sdlc_dashboard_summary
 from mcoi_runtime.contracts.review import ReviewDecision, ReviewRequest
 from mcoi_runtime.contracts.software_dev_loop import (
     SoftwareChangeReceipt,
@@ -64,6 +65,19 @@ class SoftwareReceiptReviewDecisionBody(BaseModel):
     reviewer_id: str = Field(..., min_length=1)
     approved: bool
     comment: str | None = None
+
+
+class SdlcDashboardEnvelope(BaseModel):
+    """HTTP response envelope for the read-only SDLC dashboard summary."""
+
+    operation: str
+    tenant_id: str
+    dashboard: dict[str, Any]
+    stage_count: int
+    blocker_count: int
+    evidence_count: int
+    receipt_count: int
+    governed: bool = True
 
 
 def _bounded_http_error(summary: str, exc: Exception) -> dict[str, str]:
@@ -294,6 +308,24 @@ def review_software_receipts(
         requires_operator_review=bool(receipts),
         review_signal_count=len(receipts),
         review_signals=_review_signals(receipts),
+    )
+
+
+@router.get("/sdlc/dashboard", response_model=SdlcDashboardEnvelope)
+def sdlc_dashboard_summary(
+    tenant_id: str = Depends(require_read),
+) -> SdlcDashboardEnvelope:
+    """Return the read-only SDLC change-to-closure dashboard summary."""
+
+    dashboard = build_sdlc_dashboard_summary()
+    return SdlcDashboardEnvelope(
+        operation="sdlc_dashboard",
+        tenant_id=tenant_id,
+        dashboard=dashboard,
+        stage_count=int(dashboard["stage_count"]),
+        blocker_count=int(dashboard["blocker_count"]),
+        evidence_count=int(dashboard["evidence_count"]),
+        receipt_count=int(dashboard["receipt_count"]),
     )
 
 
