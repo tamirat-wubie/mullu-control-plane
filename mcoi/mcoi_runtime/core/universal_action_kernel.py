@@ -559,7 +559,10 @@ class UniversalActionKernel:
             tenant_id=request.tenant_id,
             required_roles=capability_passport.required_roles,
             actor_roles=_text_tuple_from_metadata(request.metadata, "actor_roles"),
+            approval_chain=capability_passport.approval_chain,
             approval_refs=_text_tuple_from_metadata(request.metadata, "approval_refs"),
+            approval_actor_ids=_text_tuple_from_metadata(request.metadata, "approval_actor_ids"),
+            separation_of_duty=capability_passport.separation_of_duty,
         )
         return GovernedAction(
             governed_action_id=stable_identifier(

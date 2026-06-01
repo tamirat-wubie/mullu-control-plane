@@ -30,10 +30,10 @@ from gateway.command_spine import (
 from gateway.audit_trace_verifier import _recompute_event_hash
 from mcoi_runtime.app.governed_execution import (
     build_universal_operator_kernel,
-    universal_command_dispatch,
+    universal_command_dispatch as _app_universal_command_dispatch,
     universal_command_orchestration_record_view,
     universal_command_proof_view,
-    universal_operator_dispatch,
+    universal_operator_dispatch as _app_universal_operator_dispatch,
 )
 from mcoi_runtime.contracts.execution import (
     EffectRecord,
@@ -77,6 +77,8 @@ from mcoi_runtime.core.world_state import WorldStateEngine
 
 NOW = "2026-05-06T12:00:00+00:00"
 REQUIRED_ROLE = "customer_ops_manager"
+APPROVAL_REFS = ("approval-1",)
+APPROVAL_ACTOR_IDS = ("manager-1",)
 REPO_ROOT = Path(__file__).resolve().parents[2]
 FABRIC_FIXTURE_DIR = (
     REPO_ROOT / "integration" / "governed_capability_fabric" / "fixtures"
@@ -154,6 +156,18 @@ class FakeExecutor:
         )
 
 
+def universal_operator_dispatch(*args, **kwargs):
+    kwargs.setdefault("approval_refs", APPROVAL_REFS)
+    kwargs.setdefault("approval_actor_ids", APPROVAL_ACTOR_IDS)
+    return _app_universal_operator_dispatch(*args, **kwargs)
+
+
+def universal_command_dispatch(*args, **kwargs):
+    kwargs.setdefault("approval_refs", APPROVAL_REFS)
+    kwargs.setdefault("approval_actor_ids", APPROVAL_ACTOR_IDS)
+    return _app_universal_command_dispatch(*args, **kwargs)
+
+
 def test_universal_action_kernel_dispatches_after_all_certificates_pass() -> None:
     kernel, executor = _kernel_with_capability()
 
@@ -202,6 +216,10 @@ def test_universal_action_kernel_dispatches_after_all_certificates_pass() -> Non
     assert passport.budget_class == "customer_ops_mutation"
     assert passport.max_estimated_cost == 0.25
     assert result.governed_action.authority_proof.actor_roles == (REQUIRED_ROLE,)
+    assert result.governed_action.authority_proof.approval_chain == (REQUIRED_ROLE,)
+    assert result.governed_action.authority_proof.approval_refs == ("approval-1",)
+    assert result.governed_action.authority_proof.approval_actor_ids == ("manager-1",)
+    assert result.governed_action.authority_proof.separation_of_duty is True
     assert result.terminal_certificate is not None
     assert (
         result.terminal_certificate.disposition is TerminalClosureDisposition.COMMITTED
@@ -217,7 +235,7 @@ def test_universal_action_kernel_dispatches_after_all_certificates_pass() -> Non
         "action://universal-action-source-"
     )
     assert result.action_envelope["risk"] == "low"
-    assert result.action_envelope["approval_ref"] is None
+    assert result.action_envelope["approval_ref"] == "approval-1"
     assert "approval_refs" not in result.action_envelope
     assert result.action_envelope["capability_refs"] == ("shell_command",)
     assert result.trace_ref.startswith("causal-decision-trace-")
@@ -269,6 +287,51 @@ def test_universal_action_kernel_blocks_missing_authority_before_plan() -> None:
         "universal-action-admission-receipt-"
     )
     assert result.execution_receipt_ref is None
+    assert result.closure_state == "closed_blocked"
+    assert result.proof_hash.startswith("universal-action-proof-")
+
+
+def test_universal_action_kernel_blocks_missing_approval_before_plan() -> None:
+    kernel, executor = _kernel_with_capability()
+
+    result = kernel.run(
+        _action_request(
+            intent_id="intent-approval-block",
+            metadata={"approval_refs": (), "approval_actor_ids": ()},
+        )
+    )
+
+    assert result.blocked is True
+    assert result.block_reason == "governed_action_admission_rejected"
+    assert result.capability_decision is not None
+    assert result.governed_action is None
+    assert result.plan_certificate is None
+    assert result.dispatch_result is None
+    assert executor.calls == 0
+    assert result.closure_state == "closed_blocked"
+    assert result.proof_hash.startswith("universal-action-proof-")
+
+
+def test_universal_action_kernel_blocks_self_approval_before_plan() -> None:
+    kernel, executor = _kernel_with_capability()
+
+    result = kernel.run(
+        _action_request(
+            intent_id="intent-self-approval-block",
+            metadata={
+                "approval_refs": ("approval-self",),
+                "approval_actor_ids": ("actor-1",),
+            },
+        )
+    )
+
+    assert result.blocked is True
+    assert result.block_reason == "governed_action_admission_rejected"
+    assert result.capability_decision is not None
+    assert result.governed_action is None
+    assert result.plan_certificate is None
+    assert result.dispatch_result is None
+    assert executor.calls == 0
     assert result.closure_state == "closed_blocked"
     assert result.proof_hash.startswith("universal-action-proof-")
 
@@ -405,6 +468,8 @@ def test_universal_operator_dispatch_exposes_kernel_entry_point() -> None:
         intent_id="intent-operator-entry",
         objective="Exercise the app-layer universal action entry point.",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
 
     assert result.blocked is False
@@ -428,6 +493,8 @@ def test_universal_operator_dispatch_derives_objective_and_intent_when_absent() 
         actor_id="operator-auto",
         tenant_id="tenant-1",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
 
     assert result.blocked is False
@@ -458,6 +525,8 @@ def test_build_universal_operator_kernel_composes_bootstrapped_runtime() -> None
         tenant_id="tenant-1",
         intent_id="intent-bootstrap-kernel",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
 
     assert result.blocked is False
@@ -504,6 +573,8 @@ def test_universal_command_dispatch_binds_command_spine_transitions() -> None:
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
     current = ledger.get(command.command_id)
     events = ledger.events_for(command.command_id)
@@ -562,6 +633,8 @@ def test_universal_command_proof_view_replays_persisted_success_events() -> None
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
     reloaded_ledger = CommandLedger(clock=_clock, store=store)
 
@@ -610,6 +683,8 @@ def test_universal_command_orchestration_record_replays_success_events() -> None
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
     reloaded_ledger = CommandLedger(clock=_clock, store=store)
 
@@ -649,6 +724,8 @@ def test_universal_command_orchestration_record_ignores_invalid_latest_event() -
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
     valid_record = universal_command_orchestration_record_view(
         ledger, command.command_id
@@ -700,6 +777,8 @@ def test_universal_command_orchestration_record_ignores_receipt_spoof_event() ->
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
     valid_record = universal_command_orchestration_record_view(
         ledger, command.command_id
@@ -751,6 +830,8 @@ def test_universal_command_orchestration_record_ignores_proof_spoof_event() -> N
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
     valid_record = universal_command_orchestration_record_view(
         ledger, command.command_id
@@ -806,6 +887,8 @@ def test_universal_command_orchestration_record_rejects_rehashed_proof_spoof() -
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
     target_index = next(
         index
@@ -860,6 +943,8 @@ def test_universal_command_orchestration_record_rejects_event_hash_tamper() -> N
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
     target_index = next(
         index
@@ -903,6 +988,8 @@ def test_universal_command_orchestration_record_rejects_command_trace_tamper() -
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
     target_index = next(
         index
@@ -950,6 +1037,8 @@ def test_universal_command_orchestration_record_rejects_incomplete_pipeline() ->
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
     target_index = next(
         index
@@ -1014,6 +1103,8 @@ def test_universal_command_orchestration_record_rejects_cross_command_candidate(
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
     source_record = universal_command_orchestration_record_view(
         ledger, source_command.command_id
@@ -1106,6 +1197,8 @@ def test_universal_command_dispatch_records_blocked_kernel_result() -> None:
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
     current = ledger.get(command.command_id)
     events = ledger.events_for(command.command_id)
@@ -1161,6 +1254,8 @@ def test_universal_command_proof_view_replays_blocked_result() -> None:
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
     reloaded_ledger = CommandLedger(clock=_clock, store=store)
 
@@ -1216,6 +1311,8 @@ def test_universal_command_orchestration_record_replays_blocked_events() -> None
         bindings={"msg": "hello"},
         dispatch_route="shell_command",
         actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
     )
     reloaded_ledger = CommandLedger(clock=_clock, store=store)
 
@@ -1286,7 +1383,11 @@ def _action_request(
     dispatch_request: DispatchRequest | None = None,
     metadata: dict | None = None,
 ) -> UniversalActionRequest:
-    request_metadata = {"actor_roles": (REQUIRED_ROLE,)}
+    request_metadata = {
+        "actor_roles": (REQUIRED_ROLE,),
+        "approval_refs": APPROVAL_REFS,
+        "approval_actor_ids": APPROVAL_ACTOR_IDS,
+    }
     if metadata is not None:
         request_metadata.update(metadata)
     return UniversalActionRequest(

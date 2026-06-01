@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 
 from mcoi_runtime.contracts.governed_action import (
+    AuthorityProofRecord,
     CapabilityPassportRecord,
     build_capability_passport,
 )
@@ -91,6 +92,15 @@ def test_capability_passport_rejects_malformed_optional_tuple_values() -> None:
     assert "non-empty string" in str(excinfo.value)
 
 
+def test_capability_passport_rejects_scalar_optional_tuple_values() -> None:
+    with pytest.raises(ValueError, match=r"must be an array") as excinfo:
+        _passport(network_allowlist="crm.internal.mullusi.com")
+
+    assert "crm.internal.mullusi.com" not in str(excinfo.value)
+    assert "capability-passport-fixture" not in str(excinfo.value)
+    assert "must be an array" in str(excinfo.value)
+
+
 def test_build_capability_passport_projects_registry_obligations() -> None:
     passport = build_capability_passport(
         _registry_entry(),
@@ -112,3 +122,70 @@ def test_capability_passport_json_includes_hardened_fields() -> None:
     assert payload["max_estimated_cost"] == 0.25
     assert payload["terminal_certificate_required"] is True
     assert payload["review_required_on_failure"] is True
+
+
+def test_authority_proof_accepts_approval_chain_and_separation_of_duty() -> None:
+    proof = AuthorityProofRecord(
+        actor_id="actor-1",
+        tenant_id="tenant-1",
+        required_roles=("customer_ops_manager",),
+        actor_roles=("customer_ops_manager",),
+        approval_chain=("customer_ops_manager",),
+        approval_refs=("approval-1",),
+        approval_actor_ids=("manager-1",),
+        separation_of_duty=True,
+    )
+
+    assert proof.approval_chain == ("customer_ops_manager",)
+    assert proof.approval_refs == ("approval-1",)
+    assert proof.approval_actor_ids == ("manager-1",)
+    assert proof.separation_of_duty is True
+
+
+def test_authority_proof_rejects_missing_approval_refs() -> None:
+    with pytest.raises(ValueError, match=r"missing approval refs") as excinfo:
+        AuthorityProofRecord(
+            actor_id="actor-1",
+            tenant_id="tenant-1",
+            required_roles=("customer_ops_manager",),
+            actor_roles=("customer_ops_manager",),
+            approval_chain=("customer_ops_manager",),
+        )
+
+    assert "customer_ops_manager" not in str(excinfo.value)
+    assert "actor-1" not in str(excinfo.value)
+    assert "missing approval refs" in str(excinfo.value)
+
+
+def test_authority_proof_rejects_scalar_approval_refs() -> None:
+    with pytest.raises(ValueError, match=r"must be an array") as excinfo:
+        AuthorityProofRecord(
+            actor_id="actor-1",
+            tenant_id="tenant-1",
+            required_roles=("customer_ops_manager",),
+            actor_roles=("customer_ops_manager",),
+            approval_chain=("customer_ops_manager",),
+            approval_refs="approval-1",  # type: ignore[arg-type]
+        )
+
+    assert "approval-1" not in str(excinfo.value)
+    assert "actor-1" not in str(excinfo.value)
+    assert "must be an array" in str(excinfo.value)
+
+
+def test_authority_proof_rejects_self_approval() -> None:
+    with pytest.raises(ValueError, match=r"forbids self approval") as excinfo:
+        AuthorityProofRecord(
+            actor_id="actor-1",
+            tenant_id="tenant-1",
+            required_roles=("customer_ops_manager",),
+            actor_roles=("customer_ops_manager",),
+            approval_chain=("customer_ops_manager",),
+            approval_refs=("approval-1",),
+            approval_actor_ids=("actor-1",),
+            separation_of_duty=True,
+        )
+
+    assert "approval-1" not in str(excinfo.value)
+    assert "actor-1" not in str(excinfo.value)
+    assert "forbids self approval" in str(excinfo.value)

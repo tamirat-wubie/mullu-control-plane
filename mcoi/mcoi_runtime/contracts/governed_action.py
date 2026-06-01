@@ -28,6 +28,24 @@ from .governed_capability_fabric import (
 )
 
 
+def _require_text_tuple(
+    values: object,
+    field_name: str,
+    *,
+    allow_empty: bool,
+) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    frozen = freeze_value(list(values))
+    if not isinstance(frozen, tuple):
+        raise ValueError(f"{field_name} must be an array")
+    if not frozen and not allow_empty:
+        raise ValueError(f"{field_name} must contain at least one item")
+    for index, value in enumerate(frozen):
+        require_non_empty_text(value, f"{field_name}[{index}]")
+    return frozen
+
+
 class GovernedActionState(StrEnum):
     """Lifecycle state for the admitted governed action unit."""
 
@@ -116,20 +134,18 @@ class CapabilityPassportRecord(ContractRecord):
             "network_allowlist",
         ):
             raw_values = getattr(self, field_name)
-            values = (
-                require_non_empty_tuple(raw_values, field_name)
-                if field_name
-                in {
+            values = _require_text_tuple(
+                raw_values,
+                field_name,
+                allow_empty=field_name
+                not in {
                     "required_roles",
                     "evidence_required",
                     "expected_effects",
                     "forbidden_effects",
-                }
-                else freeze_value(list(raw_values))
+                },
             )
             object.__setattr__(self, field_name, values)
-            for index, value in enumerate(values):
-                require_non_empty_text(value, f"{field_name}[{index}]")
         for field_name in ("rollback_capability", "compensation_capability"):
             value = getattr(self, field_name)
             if value:
@@ -163,7 +179,10 @@ class AuthorityProofRecord(ContractRecord):
     tenant_id: str
     required_roles: tuple[str, ...]
     actor_roles: tuple[str, ...]
+    approval_chain: tuple[str, ...] = ()
     approval_refs: tuple[str, ...] = ()
+    approval_actor_ids: tuple[str, ...] = ()
+    separation_of_duty: bool = False
 
     def __post_init__(self) -> None:
         for field_name in ("actor_id", "tenant_id"):
@@ -177,12 +196,33 @@ class AuthorityProofRecord(ContractRecord):
             object.__setattr__(self, field_name, values)
             for index, value in enumerate(values):
                 require_non_empty_text(value, f"{field_name}[{index}]")
-        object.__setattr__(self, "approval_refs", freeze_value(list(self.approval_refs)))
-        for index, value in enumerate(self.approval_refs):
-            require_non_empty_text(value, f"approval_refs[{index}]")
+        object.__setattr__(
+            self,
+            "approval_refs",
+            _require_text_tuple(self.approval_refs, "approval_refs", allow_empty=True),
+        )
+        object.__setattr__(
+            self,
+            "approval_chain",
+            _require_text_tuple(self.approval_chain, "approval_chain", allow_empty=True),
+        )
+        object.__setattr__(
+            self,
+            "approval_actor_ids",
+            _require_text_tuple(self.approval_actor_ids, "approval_actor_ids", allow_empty=True),
+        )
+        if not isinstance(self.separation_of_duty, bool):
+            raise ValueError("separation_of_duty must be a boolean")
         missing_roles = tuple(role for role in self.required_roles if role not in self.actor_roles)
         if missing_roles:
             raise ValueError("authority proof missing required roles")
+        if self.approval_chain and len(self.approval_refs) < len(self.approval_chain):
+            raise ValueError("authority proof missing approval refs")
+        if self.separation_of_duty:
+            if not self.approval_actor_ids:
+                raise ValueError("separation of duty requires approval actor ids")
+            if self.actor_id in self.approval_actor_ids:
+                raise ValueError("separation of duty forbids self approval")
 
 
 @dataclass(frozen=True, slots=True)
