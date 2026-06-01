@@ -37,6 +37,7 @@ DOC_REQUIREMENTS: dict[Path, tuple[str, ...]] = {
         "SDLC = UAO for software changes",
         "Effect-bearing SDLC action -> UAO required.",
         "sdlc_gate_decision_envelope",
+        "sdlc_implementation_receipt",
         "scripts/validate_sdlc_pr_enforcement.py",
         "No closure without learning.",
     ),
@@ -92,6 +93,7 @@ GATE_BOUND_ARTIFACT_KINDS = (
     "requirement",
     "design_decision",
     "work_plan",
+    "implementation_receipt",
     "transition_receipt",
     "verification_receipt",
     "security_review",
@@ -160,6 +162,13 @@ ARTIFACT_SPECS: tuple[ArtifactSpec, ...] = (
         "work_plan_uao_validator.json",
         "urn:mullusi:schema:sdlc-work-plan:1",
         "SDLC Work Plan",
+    ),
+    ArtifactSpec(
+        "implementation_receipt",
+        "sdlc_implementation_receipt.schema.json",
+        "implementation_uao_validator.json",
+        "urn:mullusi:schema:sdlc-implementation-receipt:1",
+        "SDLC Implementation Receipt",
     ),
     ArtifactSpec(
         "transition_receipt",
@@ -294,6 +303,8 @@ def validate_artifact_record(kind: str, record: dict[str, Any]) -> list[str]:
         errors.extend(_validate_design_decision(record))
     elif kind == "work_plan":
         errors.extend(_validate_work_plan(record))
+    elif kind == "implementation_receipt":
+        errors.extend(_validate_implementation_receipt(record))
     elif kind == "verification_receipt":
         errors.extend(_validate_verification_receipt(record))
     elif kind == "security_review":
@@ -403,6 +414,7 @@ def validate_example_chain(records: dict[str, dict[str, Any]] | None = None) -> 
     requirement = loaded_records["requirement"]
     design = loaded_records["design_decision"]
     work_plan = loaded_records["work_plan"]
+    implementation = loaded_records["implementation_receipt"]
     transition = loaded_records["transition_receipt"]
     verification = loaded_records["verification_receipt"]
     security_review = loaded_records["security_review"]
@@ -417,6 +429,16 @@ def validate_example_chain(records: dict[str, dict[str, Any]] | None = None) -> 
         errors.append("example_chain: design.requirement_id must match requirement")
     if work_plan.get("design_id") != design.get("design_id"):
         errors.append("example_chain: work_plan.design_id must match design")
+    if implementation.get("plan_id") != work_plan.get("plan_id"):
+        errors.append("example_chain: implementation.plan_id must match work plan")
+    if implementation.get("change_id") != request_id:
+        errors.append("example_chain: implementation.change_id must match change request")
+    if implementation.get("receipt_ref") not in transition.get("required_receipt_refs", []):
+        errors.append("example_chain: transition must require implementation receipt")
+    if implementation.get("receipt_ref") not in closure.get("receipts", []):
+        errors.append("example_chain: closure must include implementation receipt")
+    if "examples/sdlc/implementation_uao_validator.json" not in verification.get("coverage_refs", []):
+        errors.append("example_chain: verification coverage must include implementation receipt artifact")
     if verification.get("change_id") != request_id:
         errors.append("example_chain: verification.change_id must match change request")
     if transition.get("change_id") != request_id:
@@ -550,6 +572,42 @@ def _validate_work_plan(record: dict[str, Any]) -> list[str]:
     missing_validators = set(REQUIRED_VALIDATORS) - set(record.get("required_validators", []))
     if missing_validators:
         errors.append(f"work_plan: missing required validators: {sorted(missing_validators)}")
+    return errors
+
+
+def _validate_implementation_receipt(record: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    changed_files = record.get("changed_files", [])
+    if not isinstance(changed_files, list):
+        return ["implementation_receipt: changed_files must be a list"]
+    changed_file_paths = [
+        changed_file.get("path")
+        for changed_file in changed_files
+        if isinstance(changed_file, dict) and isinstance(changed_file.get("path"), str)
+    ]
+    if len(changed_file_paths) != len(set(changed_file_paths)):
+        errors.append("implementation_receipt: changed_files paths must be unique")
+    for path_text in changed_file_paths:
+        file_path = Path(path_text)
+        if file_path.is_absolute() or ".." in file_path.parts:
+            errors.append(f"implementation_receipt: changed file path must stay workspace-relative: {path_text}")
+
+    changed_file_path_set = set(changed_file_paths)
+    for field_name in ("schema_changes", "validator_changes", "test_changes", "documentation_changes"):
+        for ref in record.get(field_name, []):
+            if isinstance(ref, str) and ref not in changed_file_path_set:
+                errors.append(f"implementation_receipt: {field_name} ref is not listed in changed_files: {ref}")
+
+    if any(path.startswith("schemas/") for path in changed_file_paths) and not record.get("validator_changes"):
+        errors.append("implementation_receipt: schema file changes require validator_changes")
+    if any(path.startswith("tests/") for path in changed_file_paths) and not record.get("test_changes"):
+        errors.append("implementation_receipt: test file changes require test_changes")
+    if any(path.startswith("docs/") or path.startswith(".github/") for path in changed_file_paths) and not record.get(
+        "documentation_changes",
+    ):
+        errors.append("implementation_receipt: documentation surface changes require documentation_changes")
+    if not record.get("rollback_refs"):
+        errors.append("implementation_receipt: rollback_refs are required")
     return errors
 
 

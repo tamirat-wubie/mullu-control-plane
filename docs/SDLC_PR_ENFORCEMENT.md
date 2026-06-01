@@ -13,13 +13,14 @@ Every effect-bearing software delivery PR must state or link:
 2. Requirement.
 3. Design decision with rollback path and test plan.
 4. Work plan.
-5. Transition receipt for lifecycle state movement.
-6. Verification receipt.
-7. Security review.
-8. Release or deployment candidate when release or deployment claims are made.
-9. Gate decision envelope on each non-terminal artifact: `uao_ref`, `causal_decision_trace_ref`, and `receipt_ref`.
-10. Closure receipt with retained upstream UAO, causal trace, transition receipt, and receipt references.
-11. Rollback or incident handoff path.
+5. Implementation receipt with constructive deltas, fracture deltas, changed files, test changes, documentation changes, schema changes, validator changes, and rollback refs.
+6. Transition receipt for lifecycle state movement.
+7. Verification receipt.
+8. Security review.
+9. Release or deployment candidate when release or deployment claims are made.
+10. Gate decision envelope on each non-terminal artifact: `uao_ref`, `causal_decision_trace_ref`, and `receipt_ref`.
+11. Closure receipt with retained upstream UAO, causal trace, implementation receipt, transition receipt, and receipt references.
+12. Rollback or incident handoff path.
 
 Documentation-only and read-only PRs may mark SDLC artifacts not applicable, but the PR must state why no effect-bearing software delivery action is present.
 
@@ -52,6 +53,7 @@ merge_ready
 and SDLC Governance Gate passed
 and workspace governance preflight passed
 and gate_decision_envelopes are retained through terminal closure
+and implementation deltas have `sdlc_implementation_receipt` evidence
 and state transitions have `sdlc_transition_receipt` evidence
 and release claims are evidence-bound
 and rollback_or_incident_handoff exists for effect-bearing changes

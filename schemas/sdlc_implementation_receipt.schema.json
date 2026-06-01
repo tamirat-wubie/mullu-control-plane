@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:sdlc-implementation-receipt:1",
+  "title": "SDLC Implementation Receipt",
+  "description": "Governed implementation receipt for software-change deltas.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "implementation_id",
+    "change_id",
+    "plan_id",
+    "constructive_deltas",
+    "fracture_deltas",
+    "changed_files",
+    "test_changes",
+    "documentation_changes",
+    "schema_changes",
+    "validator_changes",
+    "rollback_refs",
+    "implemented_at",
+    "uao_ref",
+    "causal_decision_trace_ref",
+    "receipt_ref"
+  ],
+  "properties": {
+    "implementation_id": { "type": "string", "minLength": 1 },
+    "change_id": { "type": "string", "minLength": 1 },
+    "plan_id": { "type": "string", "minLength": 1 },
+    "constructive_deltas": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "fracture_deltas": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "changed_files": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/changed_file" },
+      "uniqueItems": true
+    },
+    "test_changes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "documentation_changes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "schema_changes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "validator_changes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "rollback_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "implemented_at": { "type": "string", "format": "date-time" },
+    "uao_ref": { "type": "string", "minLength": 1 },
+    "causal_decision_trace_ref": { "type": "string", "minLength": 1 },
+    "receipt_ref": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "changed_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "change_type", "surface"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "change_type": {
+          "type": "string",
+          "enum": ["add", "modify", "delete", "rename"]
+        },
+        "surface": {
+          "type": "string",
+          "enum": ["docs", "schemas", "examples", "scripts", "tests", "ci", "runtime", "config", "other"]
+        }
+      }
+    }
+  }
+}
