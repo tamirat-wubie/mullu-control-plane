@@ -1,0 +1,81 @@
+{
+  "plan_id": "sdlc_plan_uao_validator_001",
+  "design_id": "sdlc_design_uao_validator_001",
+  "steps": [
+    {
+      "order": 1,
+      "action": "add lifecycle doctrine documents",
+      "expected_artifact": "docs/SDLC.md",
+      "depends_on": []
+    },
+    {
+      "order": 2,
+      "action": "add strict lifecycle schemas",
+      "expected_artifact": "schemas/sdlc_change_request.schema.json",
+      "depends_on": [1]
+    },
+    {
+      "order": 3,
+      "action": "add canonical lifecycle example chain",
+      "expected_artifact": "examples/sdlc/change_request_uao_validator.json",
+      "depends_on": [2]
+    },
+    {
+      "order": 4,
+      "action": "add deterministic validators",
+      "expected_artifact": "scripts/validate_sdlc_artifact.py",
+      "depends_on": [2, 3]
+    },
+    {
+      "order": 5,
+      "action": "add focused validator tests",
+      "expected_artifact": "tests/test_validate_sdlc_artifact.py",
+      "depends_on": [4]
+    },
+    {
+      "order": 6,
+      "action": "bind validators to workspace preflight",
+      "expected_artifact": "scripts/run_workspace_governance_checks.py",
+      "depends_on": [4, 5]
+    },
+    {
+      "order": 7,
+      "action": "run focused validation and preflight checks",
+      "expected_artifact": ".tmp/workspace-governance-preflight-receipt.json",
+      "depends_on": [6]
+    }
+  ],
+  "dependencies": [
+    "scripts/validate_schemas.py"
+  ],
+  "risk_order": [
+    "schemas",
+    "validators",
+    "preflight",
+    "tests",
+    "docs"
+  ],
+  "required_validators": [
+    "scripts/validate_sdlc_artifact.py",
+    "scripts/validate_sdlc_state_machine.py",
+    "scripts/validate_sdlc_release_readiness.py",
+    "scripts/validate_sdlc_security_review.py"
+  ],
+  "required_tests": [
+    "tests/test_validate_sdlc_artifact.py",
+    "tests/test_validate_sdlc_state_machine.py",
+    "tests/test_validate_sdlc_release_readiness.py",
+    "tests/test_sdlc_security_review.py"
+  ],
+  "expected_artifacts": [
+    "docs/SDLC.md",
+    "schemas/sdlc_change_request.schema.json",
+    "examples/sdlc/change_request_uao_validator.json",
+    "scripts/validate_sdlc_artifact.py",
+    "tests/test_validate_sdlc_artifact.py"
+  ],
+  "owner": "actor_operator",
+  "uao_ref": "uao://sdlc/plan/uao-validator/001",
+  "causal_decision_trace_ref": "trace://sdlc/plan/uao-validator/001",
+  "receipt_ref": "receipt://sdlc/plan/uao-validator/001"
+}

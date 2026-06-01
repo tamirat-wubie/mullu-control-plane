@@ -367,6 +367,28 @@ def test_protocol_manifest_indexes_domain_operating_pack() -> None:
     assert domain_entry["surface"] == "domain"
 
 
+def test_protocol_manifest_indexes_sdlc_contract_schemas() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    expected_paths_by_id = {
+        "sdlc-change-request": "schemas/sdlc_change_request.schema.json",
+        "sdlc-requirement": "schemas/sdlc_requirement.schema.json",
+        "sdlc-design-decision": "schemas/sdlc_design_decision.schema.json",
+        "sdlc-work-plan": "schemas/sdlc_work_plan.schema.json",
+        "sdlc-verification-receipt": "schemas/sdlc_verification_receipt.schema.json",
+        "sdlc-security-review": "schemas/sdlc_security_review.schema.json",
+        "sdlc-release-candidate": "schemas/sdlc_release_candidate.schema.json",
+        "sdlc-deployment-candidate": "schemas/sdlc_deployment_candidate.schema.json",
+        "sdlc-closure-receipt": "schemas/sdlc_closure_receipt.schema.json",
+    }
+
+    assert validate_protocol_manifest(manifest) == []
+    for schema_id, schema_path in expected_paths_by_id.items():
+        assert entries[schema_id]["path"] == schema_path
+        assert entries[schema_id]["urn"].startswith("urn:mullusi:schema:sdlc-")
+        assert entries[schema_id]["surface"] == "software_delivery"
+
+
 def test_protocol_manifest_indexes_trust_ledger_bundle() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

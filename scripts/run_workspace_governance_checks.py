@@ -148,6 +148,16 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             "universal_action_orchestration_validation_receipt_example",
             (python_executable, "scripts/validate_universal_action_orchestration_receipt.py"),
         ),
+        CheckCommand("sdlc_artifact_validation", (python_executable, "scripts/validate_sdlc_artifact.py")),
+        CheckCommand("sdlc_state_machine_validation", (python_executable, "scripts/validate_sdlc_state_machine.py")),
+        CheckCommand(
+            "sdlc_release_readiness_validation",
+            (python_executable, "scripts/validate_sdlc_release_readiness.py", "--strict"),
+        ),
+        CheckCommand(
+            "sdlc_security_review_validation",
+            (python_executable, "scripts/validate_sdlc_security_review.py", "--strict"),
+        ),
     )
 
 

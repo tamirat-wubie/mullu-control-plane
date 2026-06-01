@@ -1,0 +1,37 @@
+{
+  "deployment_id": "sdlc_deploy_uao_validator_001",
+  "release_id": "sdlc_release_uao_validator_001",
+  "environment": "local",
+  "runtime_host": "not-deployed",
+  "secrets_ready": true,
+  "database_ready": true,
+  "health_check": {
+    "ref": "health://not-required/read-only-contract",
+    "status": "not_required"
+  },
+  "runtime_conformance": {
+    "ref": "conformance://not-required/read-only-contract",
+    "status": "not_required"
+  },
+  "deployment_witness": {
+    "ref": "witness://not-published/sdlc-foundation",
+    "status": "not_published"
+  },
+  "public_health": {
+    "ref": "public-health://not-declared/sdlc-foundation",
+    "status": "not_declared"
+  },
+  "rollback_ready": true,
+  "rollback_command": "git revert <sdlc-foundation-commit>",
+  "operator": "actor_operator",
+  "approved_at": "2026-06-01T00:00:00Z",
+  "public_production_claim": false,
+  "proof_verify_endpoint": {
+    "ref": "proof://not-required/read-only-contract",
+    "status": "not_required"
+  },
+  "audit_verify_endpoint": {
+    "ref": "audit://not-required/read-only-contract",
+    "status": "not_required"
+  }
+}

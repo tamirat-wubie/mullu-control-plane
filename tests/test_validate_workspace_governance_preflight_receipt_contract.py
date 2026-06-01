@@ -102,13 +102,18 @@ def test_missing_required_preflight_gate_is_reported() -> None:
 def test_receipt_command_tail_drift_is_reported() -> None:
     passed_receipt, _failed_receipt = validator.build_sample_receipts()
     invalid_receipt = copy.deepcopy(passed_receipt)
-    invalid_receipt["checks"][-1]["args"] = ["python", "scripts/validate_universal_action_orchestration.py"]
+    target_index = next(
+        index
+        for index, check in enumerate(invalid_receipt["checks"])
+        if check["name"] == "universal_action_orchestration_validation_receipt_example"
+    )
+    invalid_receipt["checks"][target_index]["args"] = ["python", "scripts/validate_universal_action_orchestration.py"]
 
     errors = validator.validate_receipt(invalid_receipt)
 
     assert any("args do not match canonical preflight command" in error for error in errors)
-    assert invalid_receipt["checks"][-1]["name"] == "universal_action_orchestration_validation_receipt_example"
-    assert invalid_receipt["checks"][-1]["return_code"] == 0
+    assert invalid_receipt["checks"][target_index]["name"] == "universal_action_orchestration_validation_receipt_example"
+    assert invalid_receipt["checks"][target_index]["return_code"] == 0
 
 
 def test_load_schema_rejects_non_object_json(tmp_path: Path) -> None:

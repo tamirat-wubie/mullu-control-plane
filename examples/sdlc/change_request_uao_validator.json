@@ -1,0 +1,23 @@
+{
+  "request_id": "sdlc_req_uao_validator_001",
+  "source": "operator_request",
+  "actor_id": "actor_operator",
+  "tenant_id": "mullusi_internal",
+  "title": "Add SDLC validator contract",
+  "summary": "Make the software delivery lifecycle enforceable with schemas, examples, validators, and preflight checks.",
+  "change_type": "governance",
+  "risk_hint": "medium",
+  "target_surfaces": [
+    "docs",
+    "schemas",
+    "examples",
+    "scripts",
+    "tests",
+    "preflight"
+  ],
+  "created_at": "2026-06-01T00:00:00Z",
+  "evidence_refs": [
+    "docs/SDLC.md",
+    "docs/SDLC_GOVERNANCE_POLICY.md"
+  ]
+}

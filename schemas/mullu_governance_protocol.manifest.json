@@ -665,6 +665,60 @@
       "surface": "simulation"
     },
     {
+      "schema_id": "sdlc-change-request",
+      "path": "schemas/sdlc_change_request.schema.json",
+      "urn": "urn:mullusi:schema:sdlc-change-request:1",
+      "surface": "software_delivery"
+    },
+    {
+      "schema_id": "sdlc-requirement",
+      "path": "schemas/sdlc_requirement.schema.json",
+      "urn": "urn:mullusi:schema:sdlc-requirement:1",
+      "surface": "software_delivery"
+    },
+    {
+      "schema_id": "sdlc-design-decision",
+      "path": "schemas/sdlc_design_decision.schema.json",
+      "urn": "urn:mullusi:schema:sdlc-design-decision:1",
+      "surface": "software_delivery"
+    },
+    {
+      "schema_id": "sdlc-work-plan",
+      "path": "schemas/sdlc_work_plan.schema.json",
+      "urn": "urn:mullusi:schema:sdlc-work-plan:1",
+      "surface": "software_delivery"
+    },
+    {
+      "schema_id": "sdlc-verification-receipt",
+      "path": "schemas/sdlc_verification_receipt.schema.json",
+      "urn": "urn:mullusi:schema:sdlc-verification-receipt:1",
+      "surface": "software_delivery"
+    },
+    {
+      "schema_id": "sdlc-security-review",
+      "path": "schemas/sdlc_security_review.schema.json",
+      "urn": "urn:mullusi:schema:sdlc-security-review:1",
+      "surface": "software_delivery"
+    },
+    {
+      "schema_id": "sdlc-release-candidate",
+      "path": "schemas/sdlc_release_candidate.schema.json",
+      "urn": "urn:mullusi:schema:sdlc-release-candidate:1",
+      "surface": "software_delivery"
+    },
+    {
+      "schema_id": "sdlc-deployment-candidate",
+      "path": "schemas/sdlc_deployment_candidate.schema.json",
+      "urn": "urn:mullusi:schema:sdlc-deployment-candidate:1",
+      "surface": "software_delivery"
+    },
+    {
+      "schema_id": "sdlc-closure-receipt",
+      "path": "schemas/sdlc_closure_receipt.schema.json",
+      "urn": "urn:mullusi:schema:sdlc-closure-receipt:1",
+      "surface": "software_delivery"
+    },
+    {
       "schema_id": "supervisor-tick",
       "path": "schemas/supervisor_tick.schema.json",
       "urn": "urn:mullusi:schema:supervisor-tick:1",

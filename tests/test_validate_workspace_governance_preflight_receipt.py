@@ -28,7 +28,7 @@ def test_example_receipt_passes() -> None:
     assert receipt["terminal_closure_required"] is True
     assert receipt["receipt_is_not_terminal_closure"] is True
     assert receipt["status"] == "passed"
-    assert receipt["check_count"] == 11
+    assert receipt["check_count"] == 15
 
 
 def test_saved_receipt_status_mismatch_is_reported(tmp_path: Path) -> None:
@@ -63,10 +63,15 @@ def test_saved_failed_receipt_is_not_admitted_as_replay_witness(tmp_path: Path) 
     receipt = validator.load_receipt(validator.DEFAULT_RECEIPT_PATH)
     failed_receipt = copy.deepcopy(receipt)
     failed_receipt["status"] = "failed"
-    failed_receipt["checks"][-1]["return_code"] = 2
-    failed_receipt["checks"][-1]["passed"] = False
-    failed_receipt["checks"][-1]["stdout"] = ""
-    failed_receipt["checks"][-1]["stderr"] = "STATUS: failed\n"
+    target_index = next(
+        index
+        for index, check in enumerate(failed_receipt["checks"])
+        if check["name"] == "universal_action_orchestration_validation_receipt_example"
+    )
+    failed_receipt["checks"][target_index]["return_code"] = 2
+    failed_receipt["checks"][target_index]["passed"] = False
+    failed_receipt["checks"][target_index]["stdout"] = ""
+    failed_receipt["checks"][target_index]["stderr"] = "STATUS: failed\n"
     receipt_path = tmp_path / "receipt.json"
     receipt_path.write_text(json.dumps(failed_receipt), encoding="utf-8")
 
@@ -74,7 +79,7 @@ def test_saved_failed_receipt_is_not_admitted_as_replay_witness(tmp_path: Path) 
 
     assert errors == ["receipt status must be passed for replay witness"]
     assert failed_receipt["status"] == "failed"
-    assert failed_receipt["checks"][-1]["name"] == "universal_action_orchestration_validation_receipt_example"
+    assert failed_receipt["checks"][target_index]["name"] == "universal_action_orchestration_validation_receipt_example"
     assert receipt_path.exists()
 
 
