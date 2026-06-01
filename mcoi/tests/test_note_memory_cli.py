@@ -42,7 +42,7 @@ def test_cli_capture_retrieve_dashboard_and_list_events_redacts_before_write(tmp
             "--trust-zone",
             "workspace",
             "--expires-at",
-            "2026-06-02T00:00:00+00:00",
+            "2999-01-01T00:00:00+00:00",
             "--evidence-ref",
             "test_cli_capture",
         ]
