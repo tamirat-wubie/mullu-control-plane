@@ -39,6 +39,7 @@ from scripts.submit_trust_ledger_anchor_export import (  # noqa: E402
     _build_remote_submission_payload,
     _first_read_error,
     _operator_id_allowed,
+    _path_label,
     _read_json_object,
     _remote_preflight_receipt_id,
     _validate_remote_submit_url,
@@ -295,6 +296,7 @@ def preflight_trust_ledger_remote_submission(
     ready = not blockers
     outcome = _outcome(ready=ready, hard_blockers=tuple(hard_blockers))
     remote_submit_host = _remote_submit_host(remote_submit_url) if remote_url_valid else ""
+    ledger_path_label = _path_label(ledger_path)
     metadata = {
         "preflight_only": True,
         "remote_submit_executed": False,
@@ -315,7 +317,7 @@ def preflight_trust_ledger_remote_submission(
         "verification_secret_present": verification_secret_present,
         "submission_secret_present": submission_secret_present,
         "signature_key_id_present": signature_key_id_present,
-        "ledger_path": str(ledger_path),
+        "ledger_path": ledger_path_label,
         "next_ledger_sequence": int(projection["next_ledger_sequence"]),
         "previous_submission_hash": str(projection["previous_submission_hash"]),
         "expected_remote_submission_payload_hash": str(projection["expected_remote_submission_payload_hash"]),
@@ -345,7 +347,7 @@ def preflight_trust_ledger_remote_submission(
         verification_secret_present=verification_secret_present,
         submission_secret_present=submission_secret_present,
         signature_key_id_present=signature_key_id_present,
-        ledger_path=str(ledger_path),
+        ledger_path=ledger_path_label,
         next_ledger_sequence=int(projection["next_ledger_sequence"]),
         previous_submission_hash=str(projection["previous_submission_hash"]),
         expected_remote_submission_payload_hash=str(projection["expected_remote_submission_payload_hash"]),

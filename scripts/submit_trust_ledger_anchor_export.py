@@ -681,7 +681,7 @@ def _verify_remote_preflight_receipt(
         ("verification_secret_present", preflight["verification_secret_present"], True),
         ("submission_secret_present", preflight["submission_secret_present"], True),
         ("signature_key_id_present", preflight["signature_key_id_present"], True),
-        ("ledger_path", preflight["ledger_path"], str(ledger_path)),
+        ("ledger_path", preflight["ledger_path"], _path_label(ledger_path)),
         ("next_ledger_sequence", int(preflight["next_ledger_sequence"]), ledger_sequence),
         ("previous_submission_hash", preflight["previous_submission_hash"], previous_submission_hash),
         ("expected_remote_submission_payload_hash", expected_hash, actual_hash),

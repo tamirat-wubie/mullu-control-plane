@@ -61,12 +61,15 @@ def test_trust_ledger_remote_submission_preflight_accepts_ready_export(tmp_path:
     assert report.anchor_verification["valid"] is True
     assert report.ledger_state["valid"] is True
     assert report.remote_submit_host == "transparency.example"
+    assert report.ledger_path == ledger_path.name
     assert report.next_ledger_sequence == 1
     assert report.previous_submission_hash == "0" * 64
     assert len(report.expected_remote_submission_payload_hash) == 64
     assert report.expected_remote_idempotency_key == report.expected_remote_submission_payload_hash
+    assert payload["ledger_path"] == ledger_path.name
     assert payload["metadata"]["remote_submit_executed"] is False
     assert payload["metadata"]["ledger_append_executed"] is False
+    assert str(tmp_path) not in payload["ledger_path"]
     assert not ledger_path.exists()
     assert _validate_schema_instance(_load_schema(PREFLIGHT_SCHEMA_PATH), payload) == []
 
@@ -272,8 +275,10 @@ def test_trust_ledger_remote_submission_preflight_cli_writes_schema_checked_rece
     assert stdout_payload["ready"] is False
     assert written_payload == stdout_payload
     assert written_payload["outcome"] == "AwaitingEvidence"
+    assert written_payload["ledger_path"] == ledger_path.name
     assert written_payload["blockers"] == ["remote_api_token"]
     assert len(written_payload["expected_remote_submission_payload_hash"]) == 64
+    assert str(tmp_path) not in written_payload["ledger_path"]
     assert _validate_schema_instance(_load_schema(PREFLIGHT_SCHEMA_PATH), written_payload) == []
     assert not ledger_path.exists()
 
