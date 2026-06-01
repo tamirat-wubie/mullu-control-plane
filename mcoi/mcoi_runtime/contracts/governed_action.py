@@ -20,6 +20,7 @@ from ._base import (
     require_datetime_text,
     require_non_empty_text,
     require_non_empty_tuple,
+    require_non_negative_float,
 )
 from .governed_capability_fabric import (
     CapabilityRegistryEntry,
@@ -117,7 +118,13 @@ class CapabilityPassportRecord(ContractRecord):
             raw_values = getattr(self, field_name)
             values = (
                 require_non_empty_tuple(raw_values, field_name)
-                if field_name in {"required_roles", "evidence_required", "expected_effects", "forbidden_effects"}
+                if field_name
+                in {
+                    "required_roles",
+                    "evidence_required",
+                    "expected_effects",
+                    "forbidden_effects",
+                }
                 else freeze_value(list(raw_values))
             )
             object.__setattr__(self, field_name, values)
@@ -136,8 +143,11 @@ class CapabilityPassportRecord(ContractRecord):
         ):
             if not isinstance(getattr(self, field_name), bool):
                 raise ValueError(f"{field_name} must be a boolean")
-        if self.max_estimated_cost < 0:
-            raise ValueError("max_estimated_cost must be non-negative")
+        object.__setattr__(
+            self,
+            "max_estimated_cost",
+            require_non_negative_float(self.max_estimated_cost, "max_estimated_cost"),
+        )
 
     @property
     def has_recovery_path(self) -> bool:
