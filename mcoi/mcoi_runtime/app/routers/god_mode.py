@@ -9,10 +9,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.auth_context import bind_claimed_actor
+from mcoi_runtime.app.routers.musia_auth import require_admin
 from mcoi_runtime.contracts.god_mode import GodReceiptOutcome
 from mcoi_runtime.core.god_mode_engine import (
     GodModeEngineError,
@@ -275,7 +276,8 @@ def resume_capability(module: str, name: str) -> dict[str, Any]:
 
 @router.post("/api/v1/god-mode/capabilities/{module}/{name}/issue-ticket")
 def issue_ticket(
-    module: str, name: str, req: IssueTicketRequest, request: Request
+    module: str, name: str, req: IssueTicketRequest, request: Request,
+    _: str = Depends(require_admin),
 ) -> dict[str, Any]:
     _ensure_seeded()
     actor_id = bind_claimed_actor(request, req.actor_id)

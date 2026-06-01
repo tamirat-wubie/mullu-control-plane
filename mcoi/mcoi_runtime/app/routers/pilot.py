@@ -13,11 +13,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.pilot_init import PilotInitRequest, PilotProvisionRegistry, build_pilot_scaffold
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers.musia_auth import require_admin
 
 
 router = APIRouter()
@@ -34,7 +35,7 @@ class PilotProvisionRequest(BaseModel):
 
 
 @router.post("/api/v1/pilots/provision")
-def provision_pilot(req: PilotProvisionRequest) -> dict[str, Any]:
+def provision_pilot(req: PilotProvisionRequest, _: str = Depends(require_admin)) -> dict[str, Any]:
     """Return a deterministic pilot scaffold bundle for hosted provisioning."""
     deps.metrics.inc("requests_governed")
     try:
