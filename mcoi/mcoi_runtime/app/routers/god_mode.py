@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.auth_context import bind_claimed_actor
 from mcoi_runtime.app.routers.musia_auth import require_admin
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.contracts.god_mode import GodReceiptOutcome
 from mcoi_runtime.core.god_mode_engine import (
     GodModeEngineError,
@@ -342,7 +343,7 @@ def get_ticket(ticket_id: str, _: str = Depends(require_admin)) -> dict[str, Any
 
 
 @router.post("/api/v1/god-mode/tickets/{ticket_id}/consume")
-def consume_ticket(ticket_id: str, req: ConsumeTicketRequest) -> dict[str, Any]:
+def consume_ticket(ticket_id: str, req: ConsumeTicketRequest, request: Request) -> dict[str, Any]:
     try:
         outcome = GodReceiptOutcome(req.outcome)
     except ValueError as exc:
@@ -350,6 +351,14 @@ def consume_ticket(ticket_id: str, req: ConsumeTicketRequest) -> dict[str, Any]:
             status_code=400,
             detail=_god_mode_error_detail("invalid outcome", "invalid_outcome"),
         ) from exc
+    try:
+        consumed_ticket = get_engine().get_ticket(ticket_id)
+    except GodModeEngineError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=_god_mode_error_detail("ticket not found", "ticket_not_found"),
+        ) from exc
+    enforce_tenant_scope(request, consumed_ticket.tenant_id)
     try:
         receipt = get_engine().consume(
             ticket_id=ticket_id,
@@ -374,6 +383,14 @@ def consume_ticket(ticket_id: str, req: ConsumeTicketRequest) -> dict[str, Any]:
 @router.post("/api/v1/god-mode/tickets/{ticket_id}/revoke")
 def revoke_ticket(ticket_id: str, req: RevokeTicketRequest, request: Request) -> dict[str, Any]:
     actor_id = bind_claimed_actor(request, req.actor_id)
+    try:
+        revoked_target = get_engine().get_ticket(ticket_id)
+    except GodModeEngineError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=_god_mode_error_detail("ticket not found", "ticket_not_found"),
+        ) from exc
+    enforce_tenant_scope(request, revoked_target.tenant_id)
     try:
         ticket = get_engine().revoke(
             ticket_id=ticket_id,
