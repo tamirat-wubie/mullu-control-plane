@@ -4,6 +4,7 @@ Dependencies: scripts.validate_workspace_governance_preflight_receipt.
 Invariants:
   - Example receipt evidence is accepted.
   - Malformed or contradictory receipt evidence is rejected.
+  - Failed preflight receipts are not admitted as replay witness evidence.
   - The validator is read-only.
 """
 
@@ -27,6 +28,7 @@ def test_example_receipt_passes() -> None:
     assert receipt["terminal_closure_required"] is True
     assert receipt["receipt_is_not_terminal_closure"] is True
     assert receipt["status"] == "passed"
+    assert receipt["check_count"] == 11
 
 
 def test_saved_receipt_status_mismatch_is_reported(tmp_path: Path) -> None:
@@ -53,7 +55,26 @@ def test_saved_receipt_missing_check_field_is_reported(tmp_path: Path) -> None:
     errors = validator.validate_receipt_file(receipt_path)
 
     assert any("missing field: stdout" in error for error in errors)
-    assert invalid_receipt["check_count"] == 1
+    assert invalid_receipt["check_count"] == len(invalid_receipt["checks"])
+    assert receipt_path.exists()
+
+
+def test_saved_failed_receipt_is_not_admitted_as_replay_witness(tmp_path: Path) -> None:
+    receipt = validator.load_receipt(validator.DEFAULT_RECEIPT_PATH)
+    failed_receipt = copy.deepcopy(receipt)
+    failed_receipt["status"] = "failed"
+    failed_receipt["checks"][-1]["return_code"] = 2
+    failed_receipt["checks"][-1]["passed"] = False
+    failed_receipt["checks"][-1]["stdout"] = ""
+    failed_receipt["checks"][-1]["stderr"] = "STATUS: failed\n"
+    receipt_path = tmp_path / "receipt.json"
+    receipt_path.write_text(json.dumps(failed_receipt), encoding="utf-8")
+
+    errors = validator.validate_receipt_file(receipt_path)
+
+    assert errors == ["receipt status must be passed for replay witness"]
+    assert failed_receipt["status"] == "failed"
+    assert failed_receipt["checks"][-1]["name"] == "universal_action_orchestration_validation_receipt_example"
     assert receipt_path.exists()
 
 

@@ -56,7 +56,19 @@
       "properties": {
         "name": {
           "type": "string",
-          "minLength": 1
+          "enum": [
+            "local_assurance_plan",
+            "protocol_manifest",
+            "logic_governance_application",
+            "public_repository_surface",
+            "proprietary_boundary",
+            "release_status",
+            "workspace_governance_preflight_receipt_contract",
+            "workspace_governance_preflight_receipt_example",
+            "universal_action_orchestration_contract",
+            "universal_action_orchestration_validation_receipt_contract",
+            "universal_action_orchestration_validation_receipt_example"
+          ]
         },
         "args": {
           "type": "array",
