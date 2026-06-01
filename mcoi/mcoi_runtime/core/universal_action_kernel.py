@@ -44,7 +44,7 @@ from mcoi_runtime.contracts.simulation import (
     SimulationVerdict,
     VerdictType,
 )
-from mcoi_runtime.contracts.terminal_closure import TerminalClosureCertificate
+from mcoi_runtime.contracts.terminal_closure import TerminalClosureCertificate, TerminalClosureDisposition
 from mcoi_runtime.contracts.verification import VerificationCheck, VerificationResult, VerificationStatus
 from mcoi_runtime.contracts.world_state import WorldStateSnapshot
 from mcoi_runtime.core.closure_learning import ClosureLearningAdmissionGate
@@ -136,7 +136,7 @@ class UniversalActionResult:
     action_envelope: Mapping[str, Any]
     trace_ref: str
     admission_receipt_ref: str
-    execution_receipt_ref: str
+    execution_receipt_ref: str | None
     closure_state: str
     goal_certificate: GoalCertificate
     world_certificate: WorldSupportCertificate
@@ -469,8 +469,12 @@ class UniversalActionKernel:
                 trace_ref=trace_ref,
                 decision_status="block",
             ),
-            execution_receipt_ref="",
-            closure_state="blocked",
+            execution_receipt_ref=None,
+            closure_state=_build_closure_state(
+                blocked=True,
+                dispatch_result=None,
+                terminal_certificate=None,
+            ),
             goal_certificate=goal_certificate,
             world_certificate=world_certificate,
             plan_certificate=plan_certificate,
@@ -699,22 +703,50 @@ def _build_action_envelope(
     issued_at: str,
     capability_decision: CommandCapabilityAdmissionDecision | None,
 ) -> Mapping[str, Any]:
+    approval_refs = _text_tuple_from_metadata(request.metadata, "approval_refs")
+    evidence_refs = _text_tuple_from_metadata(request.metadata, "evidence_refs")
     capability_refs = (
         (capability_decision.capability_id,)
         if capability_decision is not None and capability_decision.capability_id
         else ()
     )
     return {
+        "source": _action_source_ref(request),
         "actor": request.actor_id,
         "tenant": request.tenant_id,
         "intent": request.intent_id,
         "target": request.dispatch_request.route,
-        "risk": request.risk_level.value,
+        "risk": _uao_risk_class(request.risk_level),
         "requested_at": issued_at,
-        "approval_refs": _text_tuple_from_metadata(request.metadata, "approval_refs"),
-        "evidence_refs": _text_tuple_from_metadata(request.metadata, "evidence_refs"),
+        "approval_ref": approval_refs[0] if approval_refs else None,
+        "evidence_refs": evidence_refs,
         "capability_refs": capability_refs,
     }
+
+
+def _action_source_ref(request: UniversalActionRequest) -> str:
+    source_ref = request.metadata.get("source_ref", request.metadata.get("source"))
+    if isinstance(source_ref, str) and source_ref.strip():
+        return source_ref.strip()
+    source_id = stable_identifier(
+        "universal-action-source",
+        {
+            "tenant_id": request.tenant_id,
+            "intent_id": request.intent_id,
+            "route": request.dispatch_request.route,
+        },
+    )
+    return f"action://{source_id}"
+
+
+def _uao_risk_class(risk_level: RiskLevel) -> str:
+    if risk_level in {RiskLevel.MINIMAL, RiskLevel.LOW}:
+        return "low"
+    if risk_level is RiskLevel.MODERATE:
+        return "H2"
+    if risk_level is RiskLevel.HIGH:
+        return "H3"
+    return "H4"
 
 
 def _build_trace_ref(*, request: UniversalActionRequest, action_id: str) -> str:
@@ -745,9 +777,9 @@ def _build_execution_receipt_ref(
     request: UniversalActionRequest,
     trace_ref: str,
     dispatch_result: GovernedDispatchResult,
-) -> str:
+) -> str | None:
     if dispatch_result.blocked or dispatch_result.execution_result is None:
-        return ""
+        return None
     return stable_identifier(
         "universal-action-execution-receipt",
         {
@@ -767,12 +799,18 @@ def _build_closure_state(
     terminal_certificate: TerminalClosureCertificate | None,
 ) -> str:
     if terminal_certificate is not None:
-        return terminal_certificate.disposition.value
+        return _uao_closure_state_from_terminal(terminal_certificate.disposition)
     if blocked:
-        return "blocked"
+        return "closed_blocked"
     if dispatch_result is not None:
-        return "dispatched"
-    return "pending"
+        return "closed_allowed"
+    return "closed_deferred"
+
+
+def _uao_closure_state_from_terminal(disposition: TerminalClosureDisposition) -> str:
+    if disposition is TerminalClosureDisposition.REQUIRES_REVIEW:
+        return "closed_escalated"
+    return "closed_allowed"
 
 
 def _build_verification_result(
