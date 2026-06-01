@@ -5,6 +5,7 @@ Invariants:
   - UAO validation receipts are schema-backed non-terminal witnesses.
   - Pass and fail receipt shapes remain causally consistent.
   - Host-local path ancestry is rejected from receipt path labels.
+  - The UAO validation receipt writer path boundary is preflight-enforced.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ from __future__ import annotations
 import copy
 import io
 from contextlib import redirect_stdout
+from pathlib import Path
 
 from scripts import validate_universal_action_orchestration_receipt_contract as validator
 
@@ -30,6 +32,7 @@ def test_universal_action_orchestration_validation_receipt_contract_passes() -> 
     assert tuple(
         item["const"] for item in schema["properties"]["example_paths"]["prefixItems"]
     ) == validator.CANONICAL_UAO_EXAMPLE_PATH_LABELS
+    assert validator.validate_receipt_writer_boundary() == []
 
 
 def test_sample_receipts_are_non_terminal_and_count_consistent() -> None:
@@ -97,6 +100,14 @@ def test_receipt_contract_rejects_canonical_artifact_drift() -> None:
     assert len(errors) >= 3
 
 
+def test_receipt_writer_boundary_rejects_escape_and_non_json() -> None:
+    workspace_receipt_path = validator.resolve_validation_receipt_path(Path(".tmp/uao-validation-receipt.json"))
+
+    assert workspace_receipt_path.suffix == ".json"
+    assert validator.WORKSPACE_ROOT.resolve() in workspace_receipt_path.parents
+    assert validator.validate_receipt_writer_boundary() == []
+
+
 def test_receipt_contract_cli_reports_passed() -> None:
     stdout_buffer = io.StringIO()
 
@@ -106,4 +117,5 @@ def test_receipt_contract_cli_reports_passed() -> None:
     output = stdout_buffer.getvalue()
     assert exit_code == 0
     assert "universal_action_orchestration_validation_receipt_schema" in output
+    assert "universal_action_orchestration_validation_receipt_writer_boundary" in output
     assert "STATUS: passed" in output

@@ -10,6 +10,7 @@ Invariants:
   - The receipt is not terminal closure evidence.
   - Receipt paths are workspace-relative labels or external basenames only.
   - Receipt status, counts, and check outcomes remain causally consistent.
+  - Persisted UAO validation receipt paths stay under the workspace root.
 """
 
 from __future__ import annotations
@@ -28,6 +29,7 @@ try:
         DEFAULT_EXAMPLE_PATHS as UAO_EXAMPLE_PATHS,
         DEFAULT_SCHEMA_PATH as UAO_SCHEMA_PATH,
         build_validation_report,
+        resolve_validation_receipt_path,
     )
 except ModuleNotFoundError:  # pragma: no cover - exercised when imported as package.
     from scripts.validate_universal_action_orchestration import (
@@ -35,6 +37,7 @@ except ModuleNotFoundError:  # pragma: no cover - exercised when imported as pac
         DEFAULT_EXAMPLE_PATHS as UAO_EXAMPLE_PATHS,
         DEFAULT_SCHEMA_PATH as UAO_SCHEMA_PATH,
         build_validation_report,
+        resolve_validation_receipt_path,
     )
 
 
@@ -227,6 +230,33 @@ def validate_contract(schema_path: Path = DEFAULT_SCHEMA_PATH) -> list[str]:
     passed_receipt, failed_receipt = build_sample_receipts()
     errors.extend(f"passed receipt: {error}" for error in validate_receipt(passed_receipt))
     errors.extend(f"failed receipt: {error}" for error in validate_receipt(failed_receipt))
+    errors.extend(validate_receipt_writer_boundary())
+    return errors
+
+
+def validate_receipt_writer_boundary() -> list[str]:
+    """Return deterministic errors for the UAO receipt writer path boundary."""
+
+    errors: list[str] = []
+    try:
+        workspace_receipt_path = resolve_validation_receipt_path(Path(".tmp/uao-validation-receipt.json"))
+    except ValueError as exc:
+        errors.append(f"workspace-local receipt path was rejected: {exc}")
+    else:
+        resolved_root = WORKSPACE_ROOT.resolve()
+        if workspace_receipt_path != resolved_root and resolved_root not in workspace_receipt_path.parents:
+            errors.append("workspace-local receipt path escaped the workspace root")
+
+    rejected_paths = (
+        (Path("../uao-validation-receipt.json"), "parent-directory receipt path"),
+        (Path(".tmp/uao-validation-receipt.txt"), "non-json receipt path"),
+    )
+    for receipt_path, label in rejected_paths:
+        try:
+            resolve_validation_receipt_path(receipt_path)
+        except ValueError:
+            continue
+        errors.append(f"{label} was not rejected")
     return errors
 
 
@@ -252,6 +282,7 @@ def main(argv: list[str] | None = None) -> int:
     sys.stdout.write("[PASS] universal_action_orchestration_validation_receipt_schema\n")
     sys.stdout.write("[PASS] universal_action_orchestration_validation_receipt_pass_shape\n")
     sys.stdout.write("[PASS] universal_action_orchestration_validation_receipt_fail_shape\n")
+    sys.stdout.write("[PASS] universal_action_orchestration_validation_receipt_writer_boundary\n")
     sys.stdout.write("STATUS: passed\n")
     return 0
 
