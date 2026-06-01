@@ -53,7 +53,7 @@ class UniversalCommandProofView:
     action_envelope: Mapping[str, Any]
     trace_ref: str
     admission_receipt_ref: str
-    execution_receipt_ref: str
+    execution_receipt_ref: str | None
     closure_state: str
     proof_hash: str
     capability_id: str
@@ -133,6 +133,7 @@ def universal_operator_dispatch(
     mode: str = "simulation",
     actor_roles: tuple[str, ...] = (),
     approval_refs: tuple[str, ...] = (),
+    evidence_refs: tuple[str, ...] = (),
 ) -> UniversalActionResult:
     """Dispatch an operator request through the universal governed action path.
 
@@ -159,6 +160,7 @@ def universal_operator_dispatch(
             metadata={
                 "actor_roles": actor_roles,
                 "approval_refs": approval_refs,
+                "evidence_refs": evidence_refs,
             },
         )
     )
@@ -175,6 +177,7 @@ def universal_command_dispatch(
     mode: str = "simulation",
     actor_roles: tuple[str, ...] = (),
     approval_refs: tuple[str, ...] = (),
+    evidence_refs: tuple[str, ...] = (),
 ) -> UniversalActionResult:
     """Dispatch a command-ledger command through the universal action kernel.
 
@@ -209,6 +212,7 @@ def universal_command_dispatch(
         mode=mode,
         actor_roles=actor_roles,
         approval_refs=approval_refs,
+        evidence_refs=evidence_refs,
     )
     command_ledger.transition(
         command.command_id,
@@ -306,7 +310,7 @@ def universal_command_proof_view(
         action_envelope=_mapping_detail(universal_detail.get("action_envelope")),
         trace_ref=str(universal_detail.get("trace_ref", "")),
         admission_receipt_ref=str(universal_detail.get("admission_receipt_ref", "")),
-        execution_receipt_ref=str(universal_detail.get("execution_receipt_ref", "")),
+        execution_receipt_ref=_optional_text_detail(universal_detail.get("execution_receipt_ref")),
         closure_state=str(universal_detail.get("closure_state", "")),
         proof_hash=str(universal_detail.get("proof_hash", "")),
         capability_id=str(universal_detail.get("capability_id", "")),
@@ -419,6 +423,14 @@ def _mapping_detail(value: Any) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         return {}
     return dict(value)
+
+
+def _optional_text_detail(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return value
+    return str(value)
 
 
 def governed_operator_mil_dispatch(

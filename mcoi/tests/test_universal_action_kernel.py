@@ -115,11 +115,15 @@ def test_universal_action_kernel_dispatches_after_all_certificates_pass() -> Non
     assert result.action_envelope["tenant"] == "tenant-1"
     assert result.action_envelope["intent"] == "intent-1"
     assert result.action_envelope["target"] == "shell_command"
+    assert result.action_envelope["source"].startswith("action://universal-action-source-")
+    assert result.action_envelope["risk"] == "low"
+    assert result.action_envelope["approval_ref"] is None
+    assert "approval_refs" not in result.action_envelope
     assert result.action_envelope["capability_refs"] == ("shell_command",)
     assert result.trace_ref.startswith("causal-decision-trace-")
     assert result.admission_receipt_ref.startswith("universal-action-admission-receipt-")
     assert result.execution_receipt_ref.startswith("universal-action-execution-receipt-")
-    assert result.closure_state == TerminalClosureDisposition.COMMITTED.value
+    assert result.closure_state == "closed_allowed"
     assert result.proof_hash.startswith("universal-action-proof-")
 
 
@@ -141,8 +145,8 @@ def test_universal_action_kernel_blocks_missing_authority_before_plan() -> None:
     assert result.dispatch_result is None
     assert executor.calls == 0
     assert result.admission_receipt_ref.startswith("universal-action-admission-receipt-")
-    assert result.execution_receipt_ref == ""
-    assert result.closure_state == "blocked"
+    assert result.execution_receipt_ref is None
+    assert result.closure_state == "closed_blocked"
     assert result.proof_hash.startswith("universal-action-proof-")
 
 
@@ -199,6 +203,8 @@ def test_universal_action_kernel_blocks_escalating_simulation_before_dispatch() 
     assert result.simulation_certificate.verdict.verdict_type is VerdictType.ESCALATE
     assert result.dispatch_result is None
     assert executor.calls == 0
+    assert result.action_envelope["risk"] == "H3"
+    assert result.closure_state == "closed_blocked"
     assert result.proof_hash.startswith("universal-action-proof-")
 
 
@@ -361,7 +367,7 @@ def test_universal_command_proof_view_replays_persisted_success_events() -> None
     assert proof.trace_ref == result.trace_ref
     assert proof.admission_receipt_ref == result.admission_receipt_ref
     assert proof.execution_receipt_ref == result.execution_receipt_ref
-    assert proof.closure_state == TerminalClosureDisposition.COMMITTED.value
+    assert proof.closure_state == "closed_allowed"
     assert proof.proof_hash == result.proof_hash
     assert proof.capability_id == "shell_command"
     assert proof.dispatch_ledger_hash == result.dispatch_result.ledger_hash
@@ -465,8 +471,8 @@ def test_universal_command_proof_view_replays_blocked_result() -> None:
     assert proof.action_envelope["tenant"] == "tenant-1"
     assert proof.trace_ref == result.trace_ref
     assert proof.admission_receipt_ref == result.admission_receipt_ref
-    assert proof.execution_receipt_ref == ""
-    assert proof.closure_state == "blocked"
+    assert proof.execution_receipt_ref is None
+    assert proof.closure_state == "closed_blocked"
     assert proof.proof_hash == result.proof_hash
     assert proof.dispatch_ledger_hash == ""
     assert proof.terminal_certificate_id == ""
