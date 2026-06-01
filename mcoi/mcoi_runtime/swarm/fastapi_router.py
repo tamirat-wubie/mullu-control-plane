@@ -9,12 +9,28 @@ Invariants: importing this module does not require FastAPI, route handlers do
 not bypass runtime envelopes, and missing FastAPI is reported explicitly.
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Any, Mapping
 
 from .runtime_api import InvoiceSwarmRuntime
+
+
+def _request_scope_tenant(request: Any) -> str | None:
+    """Return the tenant a request is confined to, or None to see all runs.
+
+    Mirrors ``app.routers._tenant_scope`` semantics without importing it, so the
+    swarm package stays usable outside the FastAPI app. The GovernanceMiddleware
+    populates ``request.state.governance_context``. Authenticated non-operator
+    callers are confined to their own tenant; operators (wildcard ``*`` scope)
+    and unauthenticated/dev requests are unconfined.
+    """
+    context = getattr(getattr(request, "state", None), "governance_context", None) or {}
+    authenticated = str(context.get("authenticated_tenant_id") or "").strip()
+    if not authenticated:
+        return None
+    if "*" in (context.get("jwt_scopes") or frozenset()):
+        return None
+    return authenticated
 
 
 @dataclass(frozen=True)
@@ -38,15 +54,15 @@ class SwarmFastAPIAdapter:
 
         return self.runtime.run_invoice(request_body).to_dict()
 
-    def get_run(self, run_id: str) -> dict[str, Any]:
+    def get_run(self, run_id: str, *, scope_tenant: str | None = None) -> dict[str, Any]:
         """Handle GET /runs/{run_id}."""
 
-        return self.runtime.get_run(run_id).to_dict()
+        return self.runtime.get_run(run_id, scope_tenant=scope_tenant).to_dict()
 
-    def list_runs(self) -> dict[str, Any]:
+    def list_runs(self, *, scope_tenant: str | None = None) -> dict[str, Any]:
         """Handle GET /runs."""
 
-        return self.runtime.list_runs().to_dict()
+        return self.runtime.list_runs(scope_tenant=scope_tenant).to_dict()
 
     @staticmethod
     def route_specs(prefix: str = "/api/v1/swarm") -> tuple[SwarmRouteSpec, ...]:
@@ -83,7 +99,7 @@ def create_fastapi_router(runtime: InvoiceSwarmRuntime, prefix: str = "/api/v1/s
     """
 
     try:
-        from fastapi import APIRouter, Body
+        from fastapi import APIRouter, Body, Request
     except ImportError as exc:
         raise RuntimeError("FastAPI is required to create the swarm router") from exc
 
@@ -95,11 +111,11 @@ def create_fastapi_router(runtime: InvoiceSwarmRuntime, prefix: str = "/api/v1/s
         return adapter.run_invoice(request_body)
 
     @router.get("/runs/{run_id}")
-    def get_run(run_id: str):
-        return adapter.get_run(run_id)
+    def get_run(run_id: str, request: Request):
+        return adapter.get_run(run_id, scope_tenant=_request_scope_tenant(request))
 
     @router.get("/runs")
-    def list_runs():
-        return adapter.list_runs()
+    def list_runs(request: Request):
+        return adapter.list_runs(scope_tenant=_request_scope_tenant(request))
 
     return router
