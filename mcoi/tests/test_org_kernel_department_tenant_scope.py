@@ -122,6 +122,18 @@ def test_case_portfolio_view_rejects_cross_tenant(cross_tenant_kernel):
     assert exc.value.status_code == 403
 
 
+def test_action_queue_rejects_cross_tenant(cross_tenant_kernel):
+    with pytest.raises(HTTPException) as exc:
+        ok.get_organization_action_queue("org-x", _authed("tenant-a"))
+    assert exc.value.status_code == 403
+
+
+def test_action_queue_view_rejects_cross_tenant(cross_tenant_kernel):
+    with pytest.raises(HTTPException) as exc:
+        ok.get_organization_action_queue_view("org-x", _authed("tenant-a"))
+    assert exc.value.status_code == 403
+
+
 def test_create_department_rejects_cross_tenant(cross_tenant_kernel):
     with pytest.raises(HTTPException) as exc:
         ok.create_department(_Body(), _authed("tenant-a"))
@@ -148,4 +160,12 @@ def test_case_portfolio_operator_passes_tenant_gate(cross_tenant_kernel):
     assert result["org_id"] == "org-x"
     assert result["summary"]["case_count"] == 0
     assert result["summary"]["attention_count"] == 0
+    assert result["governed"] is True
+
+
+def test_action_queue_operator_passes_tenant_gate(cross_tenant_kernel):
+    result = ok.get_organization_action_queue("org-x", _authed("tenant-a", operator=True))
+    assert result["org_id"] == "org-x"
+    assert result["summary"]["action_count"] == 0
+    assert result["summary"]["dispatch_authority_granted"] is False
     assert result["governed"] is True
