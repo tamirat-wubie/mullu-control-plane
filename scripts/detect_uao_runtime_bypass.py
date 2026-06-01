@@ -250,9 +250,9 @@ class _EffectCallVisitor(ast.NodeVisitor):
     def _classify_call(
         self, node: ast.Call, call_name: str
     ) -> RuntimeBypassFinding | None:
-        segment = self._current_segment(node)
+        scope_terms = _scope_search_text(self._current_scope(node))
         symbol = self._symbol_name()
-        if any(term in segment for term in EXEMPTION_TERMS):
+        if any(term in scope_terms for term in EXEMPTION_TERMS):
             return RuntimeBypassFinding(
                 path=self._relative_path,
                 line=int(getattr(node, "lineno", 0)),
@@ -261,7 +261,7 @@ class _EffectCallVisitor(ast.NodeVisitor):
                 classification="exempted",
                 reason="local source segment declares a bounded bypass detector exemption",
             )
-        if any(term in segment for term in UAO_BINDING_TERMS):
+        if any(term in scope_terms for term in UAO_BINDING_TERMS):
             return RuntimeBypassFinding(
                 path=self._relative_path,
                 line=int(getattr(node, "lineno", 0)),
@@ -271,7 +271,7 @@ class _EffectCallVisitor(ast.NodeVisitor):
                 reason="source segment carries Universal Action Orchestration envelope or receipt binding",
             )
         if call_name.endswith(".governed_dispatch") or any(
-            term in segment for term in GOVERNED_BINDING_TERMS
+            term in scope_terms for term in GOVERNED_BINDING_TERMS
         ):
             return RuntimeBypassFinding(
                 path=self._relative_path,
@@ -300,12 +300,10 @@ class _EffectCallVisitor(ast.NodeVisitor):
             reason="effect-bearing runtime call has no UAO/governed binding and no bounded exemption",
         )
 
-    def _current_segment(self, node: ast.AST) -> str:
+    def _current_scope(self, node: ast.AST) -> ast.AST:
         for ancestor in reversed(self._stack):
-            segment = ast.get_source_segment(self._source_text, ancestor)
-            if segment:
-                return segment
-        return ast.get_source_segment(self._source_text, node) or ""
+            return ancestor
+        return node
 
     def _symbol_name(self) -> str:
         names: list[str] = []
@@ -477,6 +475,20 @@ def _call_name(func: ast.AST) -> str | None:
     if isinstance(func, ast.Call):
         return _call_name(func.func)
     return None
+
+
+def _scope_search_text(node: ast.AST) -> str:
+    values: list[str] = []
+    for child in ast.walk(node):
+        if isinstance(child, ast.Name):
+            values.append(child.id)
+        elif isinstance(child, ast.Attribute):
+            values.append(child.attr)
+        elif isinstance(child, ast.keyword) and child.arg:
+            values.append(child.arg)
+        elif isinstance(child, ast.Constant) and isinstance(child.value, str):
+            values.append(child.value)
+    return "\n".join(values)
 
 
 def _path_looks_runtime_effectful(path_text: str, basename: str) -> bool:
