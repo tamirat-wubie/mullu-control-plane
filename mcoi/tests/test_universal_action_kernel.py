@@ -539,6 +539,32 @@ def test_universal_action_kernel_blocks_escalating_simulation_before_dispatch() 
     assert result.proof_hash.startswith("universal-action-proof-")
 
 
+def test_universal_action_kernel_blocks_approval_required_simulation_before_dispatch() -> None:
+    kernel, executor = _kernel_with_capability()
+
+    result = kernel.run(
+        _action_request(
+            intent_id="intent-sim-approval-block",
+            success_probability=0.55,
+        )
+    )
+
+    assert result.blocked is True
+    assert result.block_reason == "simulation_approval_required"
+    assert result.plan_certificate is not None
+    assert result.simulation_certificate is not None
+    assert (
+        result.simulation_certificate.verdict.verdict_type
+        is VerdictType.APPROVAL_REQUIRED
+    )
+    assert result.governed_action is not None
+    assert result.dispatch_result is None
+    assert executor.calls == 0
+    assert result.closure_state == "closed_blocked"
+    assert result.execution_receipt_ref is None
+    assert result.proof_hash.startswith("universal-action-proof-")
+
+
 def test_universal_operator_dispatch_exposes_kernel_entry_point() -> None:
     kernel, executor = _kernel_with_capability()
 
@@ -1564,6 +1590,7 @@ def _action_request(
     *,
     intent_id: str = "intent-1",
     risk_level: RiskLevel = RiskLevel.LOW,
+    success_probability: float = 0.9,
     dispatch_request: DispatchRequest | None = None,
     metadata: dict | None = None,
 ) -> UniversalActionRequest:
@@ -1581,6 +1608,7 @@ def _action_request(
         objective="Run a bounded shell command through the universal action kernel.",
         dispatch_request=dispatch_request or _dispatch_request(),
         risk_level=risk_level,
+        success_probability=success_probability,
         metadata=request_metadata,
     )
 
