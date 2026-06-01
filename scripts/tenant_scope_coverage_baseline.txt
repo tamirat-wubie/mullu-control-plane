@@ -14,19 +14,13 @@
 # whose intended access model (operator-only vs tenant-self) should be confirmed
 # before scoping.
 #
-mcoi/mcoi_runtime/app/routers/adapter.py::request_action
-mcoi/mcoi_runtime/app/routers/agent.py::execute_chain
-mcoi/mcoi_runtime/app/routers/agent.py::queue_submit
 mcoi/mcoi_runtime/app/routers/assistant.py::compile_finance_ops_assistant_plan
-mcoi/mcoi_runtime/app/routers/data/tools.py::invoke_tool
 mcoi/mcoi_runtime/app/routers/explain.py::explain_action
 mcoi/mcoi_runtime/app/routers/god_mode.py::issue_ticket
 mcoi/mcoi_runtime/app/routers/organization_kernel.py::bootstrap_minimum_org
 mcoi/mcoi_runtime/app/routers/organization_kernel.py::create_organization
 mcoi/mcoi_runtime/app/routers/pilot.py::provision_pilot
 mcoi/mcoi_runtime/app/routers/rbac.py::create_identity
-mcoi/mcoi_runtime/app/routers/scheduler.py::schedule_job
-mcoi/mcoi_runtime/app/routers/temporal_scheduler.py::create_temporal_schedule
 mcoi/mcoi_runtime/app/routers/tenant.py::create_tenant_budget
 mcoi/mcoi_runtime/app/routers/tenant.py::register_tenant
 mcoi/mcoi_runtime/app/routers/workflow.py::execute
