@@ -74,6 +74,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _agentic_control_project_discipline_mesh_skill(),
         _agentic_control_resource_governor_skill(),
         _agentic_control_temporal_governor_skill(),
+        _agentic_control_memory_governor_skill(),
         _agentic_control_math_governor_skill(),
         _agentic_control_algorithm_governor_skill(),
         _agentic_control_security_governor_skill(),
@@ -996,6 +997,141 @@ def _agentic_control_temporal_governor_skill() -> SkillDescriptor:
                 "lease_window_ref",
                 "retry_window_ref",
                 "stale_evidence_blockers",
+            ),
+        },
+    )
+
+
+def _agentic_control_memory_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.memory_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic memory governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_memory_mission",
+                name="Define memory mission",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "memory_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_memory_constraints",
+                name="Rank memory constraints",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_memory_mission",),
+                input_bindings={"mission_contract_ref": "define_memory_mission.mission_contract_ref"},
+                output_keys=("memory_constraint_order_ref", "dependency_blockers", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_memory_governance",
+                name="Evaluate memory governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_memory_constraints",),
+                input_bindings={"priority_order_ref": "rank_memory_constraints.memory_constraint_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_actions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_memory_budget",
+                name="Bound memory budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_memory_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_memory_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "halt_thresholds", "resource_floor"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_memory_verification",
+                name="Plan memory verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("bound_memory_budget",),
+                input_bindings={
+                    "memory_boundary_ref": "define_memory_mission.memory_boundary_ref",
+                    "budget_envelope_ref": "bound_memory_budget.budget_envelope_ref",
+                },
+                output_keys=(
+                    "memory_verification_plan_ref",
+                    "memory_scope_ref",
+                    "retention_window_ref",
+                    "recall_guard_ref",
+                    "closure_rule",
+                ),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_memory_interrogation",
+                name="Plan memory interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_memory_verification",),
+                input_bindings={"verification_plan_ref": "plan_memory_verification.memory_verification_plan_ref"},
+                output_keys=("memory_interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_memory_gaps",
+                name="Refine memory gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_memory_interrogation",),
+                input_bindings={
+                    "memory_scope_ref": "plan_memory_verification.memory_scope_ref",
+                    "recall_guard_ref": "plan_memory_verification.recall_guard_ref",
+                    "verification_plan_ref": "plan_memory_verification.memory_verification_plan_ref",
+                    "interrogation_plan_ref": "plan_memory_interrogation.memory_interrogation_plan_ref",
+                },
+                output_keys=("memory_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_governed_memory_admission",
+                name="Plan governed memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_memory_gaps",),
+                input_bindings={
+                    "refinement_plan_ref": "refine_memory_gaps.memory_refinement_plan_ref",
+                    "memory_scope_ref": "plan_memory_verification.memory_scope_ref",
+                    "retention_window_ref": "plan_memory_verification.retention_window_ref",
+                    "recall_guard_ref": "plan_memory_verification.recall_guard_ref",
+                },
+                output_keys=(
+                    "memory_admission_plan_ref",
+                    "redaction_plan_ref",
+                    "forget_path_ref",
+                    "retention_policy_ref",
+                ),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes read-only memory discipline by linking mission boundary, "
+            "memory constraints, governance gate, resource budget, verification, "
+            "interrogation, refinement, scoped memory admission, redaction, "
+            "retention, recall guards, and forget-path planning before learned "
+            "state is reused."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "memory_governor": True,
+            "memory_surfaces": (
+                "memory_boundary_ref",
+                "memory_scope_ref",
+                "retention_window_ref",
+                "recall_guard_ref",
+                "redaction_plan_ref",
+                "forget_path_ref",
+                "retention_policy_ref",
             ),
         },
     )

@@ -39,6 +39,7 @@ EXPECTED_SKILL_IDS = (
     "agentic_control.project_discipline_mesh.v1",
     "agentic_control.resource_governor.v1",
     "agentic_control.temporal_governor.v1",
+    "agentic_control.memory_governor.v1",
     "agentic_control.math_governor.v1",
     "agentic_control.algorithm_governor.v1",
     "agentic_control.security_governor.v1",
@@ -83,6 +84,7 @@ def test_default_skill_effect_classes_match_strongest_workflow_effect() -> None:
     assert descriptors["agentic_control.project_discipline_mesh.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.resource_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.temporal_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
+    assert descriptors["agentic_control.memory_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.math_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.algorithm_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.security_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
@@ -305,6 +307,87 @@ def test_agentic_temporal_governor_blocks_stale_time_windows_without_effects() -
     )
     assert steps["plan_temporal_memory_admission"].input_bindings["refinement_plan_ref"] == (
         "refine_temporal_gaps.temporal_refinement_plan_ref"
+    )
+
+
+def test_agentic_memory_governor_scopes_recall_and_forget_paths_without_effects() -> None:
+    descriptor = next(
+        descriptor
+        for descriptor in default_skill_descriptors()
+        if descriptor.skill_id == "agentic_control.memory_governor.v1"
+    )
+    steps = {step.step_id: step for step in descriptor.steps}
+    action_order = tuple(step.action_type for step in descriptor.steps)
+    step_order = tuple(step.step_id for step in descriptor.steps)
+
+    assert descriptor.effect_class is EffectClass.EXTERNAL_READ
+    assert descriptor.metadata["memory_governor"] is True
+    assert descriptor.metadata["grants_new_capability_authority"] is False
+    assert descriptor.metadata["memory_surfaces"] == (
+        "memory_boundary_ref",
+        "memory_scope_ref",
+        "retention_window_ref",
+        "recall_guard_ref",
+        "redaction_plan_ref",
+        "forget_path_ref",
+        "retention_policy_ref",
+    )
+    assert action_order == (
+        "agentic_control.mission.define",
+        "agentic_control.priority.rank",
+        "agentic_control.governance_gate.evaluate",
+        "agentic_control.resource_budget.bound",
+        "agentic_control.verification.plan",
+        "agentic_control.interrogation.plan",
+        "agentic_control.self_audit.refine",
+        "agentic_control.memory_admission.plan",
+    )
+    assert "agentic_control.code_change.plan" not in action_order
+    assert "agentic_control.release_handoff.plan" not in action_order
+    assert "agentic_control.evidence.append" not in action_order
+    assert all(
+        step_order.index(dependency) < step_order.index(step.step_id)
+        for step in descriptor.steps
+        for dependency in step.depends_on
+    )
+    assert steps["rank_memory_constraints"].input_bindings["mission_contract_ref"] == (
+        "define_memory_mission.mission_contract_ref"
+    )
+    assert steps["evaluate_memory_governance"].input_bindings["priority_order_ref"] == (
+        "rank_memory_constraints.memory_constraint_order_ref"
+    )
+    assert steps["bound_memory_budget"].input_bindings["gate_decision_ref"] == (
+        "evaluate_memory_governance.gate_decision_ref"
+    )
+    assert steps["plan_memory_verification"].input_bindings["memory_boundary_ref"] == (
+        "define_memory_mission.memory_boundary_ref"
+    )
+    assert steps["plan_memory_verification"].input_bindings["budget_envelope_ref"] == (
+        "bound_memory_budget.budget_envelope_ref"
+    )
+    assert steps["plan_memory_interrogation"].input_bindings["verification_plan_ref"] == (
+        "plan_memory_verification.memory_verification_plan_ref"
+    )
+    assert steps["refine_memory_gaps"].input_bindings["memory_scope_ref"] == (
+        "plan_memory_verification.memory_scope_ref"
+    )
+    assert steps["refine_memory_gaps"].input_bindings["recall_guard_ref"] == (
+        "plan_memory_verification.recall_guard_ref"
+    )
+    assert steps["refine_memory_gaps"].input_bindings["interrogation_plan_ref"] == (
+        "plan_memory_interrogation.memory_interrogation_plan_ref"
+    )
+    assert steps["plan_governed_memory_admission"].input_bindings["refinement_plan_ref"] == (
+        "refine_memory_gaps.memory_refinement_plan_ref"
+    )
+    assert steps["plan_governed_memory_admission"].input_bindings["memory_scope_ref"] == (
+        "plan_memory_verification.memory_scope_ref"
+    )
+    assert steps["plan_governed_memory_admission"].input_bindings["retention_window_ref"] == (
+        "plan_memory_verification.retention_window_ref"
+    )
+    assert steps["plan_governed_memory_admission"].input_bindings["recall_guard_ref"] == (
+        "plan_memory_verification.recall_guard_ref"
     )
 
 
@@ -902,6 +985,8 @@ def test_bootstrap_installs_default_skill_catalog() -> None:
     assert runtime.skill_registry.get("agentic_control.resource_governor.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.temporal_governor.v1").metadata["risk_floor"] == "medium"
     assert runtime.skill_registry.get("agentic_control.temporal_governor.v1").effect_class is EffectClass.EXTERNAL_READ
+    assert runtime.skill_registry.get("agentic_control.memory_governor.v1").metadata["risk_floor"] == "medium"
+    assert runtime.skill_registry.get("agentic_control.memory_governor.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.math_governor.v1").metadata["risk_floor"] == "medium"
     assert runtime.skill_registry.get("agentic_control.math_governor.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.algorithm_governor.v1").metadata["risk_floor"] == "medium"
