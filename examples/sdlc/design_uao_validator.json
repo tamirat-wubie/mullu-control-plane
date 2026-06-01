@@ -11,17 +11,20 @@
     "tests"
   ],
   "data_model_changes": [
-    "introduce SDLC change request, requirement, design, work plan, verification, security, release, deployment, and closure artifacts"
+    "introduce SDLC change request, requirement, design, work plan, implementation, transition, verification, security, release, deployment, recovery handoff, and closure artifacts"
   ],
   "schema_changes": [
     "schemas/sdlc_change_request.schema.json",
     "schemas/sdlc_requirement.schema.json",
     "schemas/sdlc_design_decision.schema.json",
     "schemas/sdlc_work_plan.schema.json",
+    "schemas/sdlc_implementation_receipt.schema.json",
+    "schemas/sdlc_transition_receipt.schema.json",
     "schemas/sdlc_verification_receipt.schema.json",
     "schemas/sdlc_security_review.schema.json",
     "schemas/sdlc_release_candidate.schema.json",
     "schemas/sdlc_deployment_candidate.schema.json",
+    "schemas/sdlc_recovery_handoff_receipt.schema.json",
     "schemas/sdlc_closure_receipt.schema.json"
   ],
   "validator_changes": [

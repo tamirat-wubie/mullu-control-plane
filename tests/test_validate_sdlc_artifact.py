@@ -28,6 +28,8 @@ def test_current_sdlc_contract_passes() -> None:
     assert len(records) == 12
     assert all(spec.schema_path.exists() for spec in validator.ARTIFACT_SPECS)
     assert all(spec.example_path.exists() for spec in validator.ARTIFACT_SPECS)
+    assert len(validator.CANONICAL_SCHEMA_REFS) == len(records)
+    assert len(validator.CANONICAL_EXAMPLE_REFS) == len(records)
     assert "scripts/validate_sdlc_pr_enforcement.py" in validator.REQUIRED_VALIDATORS
     assert "implementation_receipt" in validator.GATE_BOUND_ARTIFACT_KINDS
     assert "change_request" in validator.GATE_BOUND_ARTIFACT_KINDS
@@ -66,6 +68,12 @@ def test_example_chain_links_all_lifecycle_artifacts() -> None:
     assert records["transition_receipt"]["receipt_ref"] in records["closure_receipt"]["receipts"]
     assert records["recovery_handoff"]["receipt_ref"] in records["closure_receipt"]["receipts"]
     assert records["deployment_candidate"]["uao_ref"] in records["closure_receipt"]["uao_refs"]
+    assert set(validator.CANONICAL_SCHEMA_REFS).issubset(set(records["design_decision"]["schema_changes"]))
+    assert set(validator.CANONICAL_INVENTORY_REFS).issubset(set(records["work_plan"]["expected_artifacts"]))
+    assert set(validator.CANONICAL_EXAMPLE_REFS).issubset(set(records["verification_receipt"]["coverage_refs"]))
+    assert set(validator.CANONICAL_INVENTORY_REFS).issubset(
+        {changed_file["path"] for changed_file in records["implementation_receipt"]["changed_files"]}
+    )
 
 
 def test_raw_private_reasoning_field_is_rejected() -> None:
@@ -151,6 +159,35 @@ def test_work_plan_rejects_future_dependency_and_missing_validator() -> None:
     assert any("dependency 2 must be earlier" in error for error in errors)
     assert any("missing required validators" in error for error in errors)
     assert len(errors) >= 2
+
+
+def test_inventory_closure_rejects_missing_canonical_refs() -> None:
+    records = validator.load_example_records()
+    invalid_design = copy.deepcopy(records["design_decision"])
+    invalid_work_plan = copy.deepcopy(records["work_plan"])
+    invalid_implementation = copy.deepcopy(records["implementation_receipt"])
+    invalid_verification = copy.deepcopy(records["verification_receipt"])
+    invalid_design["schema_changes"].remove("schemas/sdlc_recovery_handoff_receipt.schema.json")
+    invalid_work_plan["expected_artifacts"].remove("examples/sdlc/closure_uao_validator.json")
+    invalid_implementation["schema_changes"].remove("schemas/sdlc_transition_receipt.schema.json")
+    invalid_implementation["changed_files"] = [
+        changed_file
+        for changed_file in invalid_implementation["changed_files"]
+        if changed_file["path"] != "examples/sdlc/deployment_candidate_uao_validator.json"
+    ]
+    invalid_verification["coverage_refs"].remove("examples/sdlc/security_review_uao_validator.json")
+
+    design_errors = validator.validate_artifact_record("design_decision", invalid_design)
+    work_plan_errors = validator.validate_artifact_record("work_plan", invalid_work_plan)
+    implementation_errors = validator.validate_artifact_record("implementation_receipt", invalid_implementation)
+    verification_errors = validator.validate_artifact_record("verification_receipt", invalid_verification)
+
+    assert any("design_decision: schema_changes missing canonical SDLC inventory refs" in error for error in design_errors)
+    assert any("work_plan: expected_artifacts missing canonical SDLC inventory refs" in error for error in work_plan_errors)
+    assert any("implementation_receipt: schema_changes missing canonical SDLC inventory refs" in error for error in implementation_errors)
+    assert any("implementation_receipt: changed_files missing canonical SDLC inventory refs" in error for error in implementation_errors)
+    assert any("verification_receipt: coverage_refs missing canonical SDLC inventory refs" in error for error in verification_errors)
+    assert len(design_errors) + len(work_plan_errors) + len(implementation_errors) + len(verification_errors) >= 5
 
 
 def test_design_and_verification_require_pr_enforcement_validator() -> None:
@@ -257,8 +294,9 @@ def test_cli_json_receipt_reports_passed_contract() -> None:
     assert report["valid"] is True
     assert report["status"] == "passed"
     assert report["error_count"] == 0
-    assert report["check_count"] == 8
+    assert report["check_count"] == 9
     assert any(check["name"] == "sdlc_gate_decision_envelopes" for check in report["checks"])
+    assert any(check["name"] == "sdlc_inventory_closure" for check in report["checks"])
     assert any(check["name"] == "sdlc_recovery_handoff_retention" for check in report["checks"])
 
 

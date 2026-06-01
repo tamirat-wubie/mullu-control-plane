@@ -66,6 +66,8 @@ change -> stage -> blockers -> evidence -> receipt -> closure
 
 The canonical lifecycle example under `examples/sdlc/` represents the UAO validator change from intake through closure. Each artifact validates against a strict schema and is cross-checked by `scripts/validate_sdlc_artifact.py`.
 
+Canonical inventory closure is named `sdlc_inventory_closure`. Design `schema_changes`, work-plan `expected_artifacts`, implementation `changed_files` and `schema_changes`, and verification `coverage_refs` must include every schema and example in the canonical SDLC artifact inventory, so added lifecycle artifacts cannot drift outside the proof chain.
+
 | Artifact | Schema | Gate |
 | --- | --- | --- |
 | Change request | `schemas/sdlc_change_request.schema.json` | no intake without owner, source, scope, and target surface |
@@ -145,6 +147,7 @@ No test without receipt.
 No release without evidence.
 No deployment without witness.
 No claim without proof.
+No inventory drift between lifecycle schemas, examples, implementation receipts, and verification coverage.
 No closure without recovery handoff.
 No closure without learning.
 ```
