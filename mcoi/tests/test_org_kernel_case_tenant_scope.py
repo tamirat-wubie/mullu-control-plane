@@ -124,6 +124,13 @@ def test_get_case_step_handoffs_view_rejects_cross_tenant(cross_tenant_kernel):
     assert exc.value.status_code == 403
 
 
+def test_preview_case_plan_step_action_admission_rejects_cross_tenant(cross_tenant_kernel):
+    request_body = ok.PlanStepActionAdmissionPreviewRequest(checked_preconditions=[])
+    with pytest.raises(HTTPException) as exc:
+        ok.preview_case_plan_step_action_admission("case-1", "step-1", request_body, _authed("tenant-a"))
+    assert exc.value.status_code == 403
+
+
 def test_list_case_events_rejects_cross_tenant(cross_tenant_kernel):
     with pytest.raises(HTTPException) as exc:
         ok.list_case_events("case-1", _authed("tenant-a"))

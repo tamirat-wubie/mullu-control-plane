@@ -551,6 +551,81 @@ def test_case_step_handoffs_view_is_read_only_and_escaped(tmp_path: Path) -> Non
     assert before["gate_decisions"] == after["gate_decisions"] == []
 
 
+def test_case_plan_step_admission_preview_defers_missing_evidence_without_mutation(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/admission-preview",
+        json={
+            "checked_preconditions": ["launch_boundary_defined"],
+            "proposed_action": "bind_worker_receipt",
+            "requested_by_role_id": "engineering.owner",
+        },
+    )
+    payload = response.json()
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["read_only"] is True
+    assert payload["decision"] == "defer"
+    assert payload["reason_code"] == "evidence_missing"
+    assert payload["decision_set"] == ["allow", "block", "defer", "escalate", "simulate"]
+    assert payload["execution_authority_granted"] is False
+    assert payload["dispatch_authority_granted"] is False
+    assert payload["receipt_binding_authority_granted"] is False
+    assert payload["gate_preview"]["status"] == "blocked"
+    assert payload["gate_preview"]["reason"] == "evidence_missing"
+    assert payload["handoff"]["handoff_status"] == "awaiting_evidence"
+    assert payload["causal_decision_trace"]["decision"] == "defer"
+    assert payload["causal_decision_trace"]["guard_verdicts"]["evidence_sufficient"] == "Fail(evidence_missing)"
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
+def test_case_plan_step_admission_preview_allows_receipt_binding_without_dispatch(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    gate = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert gate.status_code == 200
+    assert gate.json()["decision"]["status"] == "allowed"
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/admission-preview",
+        json={
+            "checked_preconditions": ["launch_boundary_defined"],
+            "proposed_action": "bind_worker_receipt",
+            "requested_by_role_id": "engineering.owner",
+        },
+    )
+    payload = response.json()
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 200
+    assert payload["decision"] == "allow"
+    assert payload["reason_code"] == "plan_step_gate_allowed"
+    assert payload["execution_authority_granted"] is False
+    assert payload["dispatch_authority_granted"] is False
+    assert payload["receipt_binding_authority_granted"] is True
+    assert payload["gate_preview"]["status"] == "allowed"
+    assert payload["gate_preview"]["reason"] == "allowed"
+    assert payload["handoff"]["handoff_status"] == "ready_for_worker_receipt"
+    assert payload["causal_decision_trace"]["decision"] == "allow"
+    assert payload["causal_decision_trace"]["guard_verdicts"]["authority_valid"] == "Pass"
+    assert payload["causal_decision_trace"]["guard_verdicts"]["capability_certified"] == "Pass"
+    assert payload["causal_decision_trace"]["guard_verdicts"]["receipt_emittable"] == "Pass"
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"]
+    assert len(after["gate_decisions"]) == 1
+
+
 def test_department_registry_view_is_read_only_and_escaped(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     organization = client.post(
@@ -1374,6 +1449,7 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness" in paths
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness-closure" in paths
     assert "/api/v1/cases/{case_id}/close" in paths
+    assert "/api/v1/cases/{case_id}/plan-steps/{step_id}/admission-preview" in paths
     assert "/api/v1/cases/{case_id}/plan-steps/{step_id}/worker-receipt" in paths
 
 

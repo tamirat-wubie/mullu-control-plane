@@ -871,11 +871,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 235,
+      "proven": 236,
       "unproven": 0,
       "witnessed": 149
     },
-    "route_count": 384,
+    "route_count": 385,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1105,6 +1105,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/cases/{case_id}/plan",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/cases/{case_id}/plan-steps/{step_id}/admission-preview",
         "surface_id": "orgos_case_governance_lifecycle"
       },
       {
@@ -5810,7 +5815,7 @@
         "mcoi/tests/test_organization_kernel_router.py",
         "mcoi/tests/test_organization_kernel_store.py"
       ],
-      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, closure decisions, case portfolio, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
+      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, closure decisions, case portfolio, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
       "representative_paths": [
         "/api/v1/orgs",
         "/api/v1/orgs/{org_id}/authority-map",
@@ -5843,6 +5848,7 @@
         "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness",
         "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness-closure",
         "/api/v1/cases/{case_id}/plan",
+        "/api/v1/cases/{case_id}/plan-steps/{step_id}/admission-preview",
         "/api/v1/cases/{case_id}/plan-steps/{step_id}/gate",
         "/api/v1/cases/{case_id}/plan-steps/{step_id}/worker-receipt",
         "/api/v1/cases/{case_id}/close",
@@ -5871,6 +5877,8 @@
         "case_portfolio_reports_closed_verified_case",
         "case_step_handoffs_report_worker_receipt_binding_without_mutation",
         "case_step_handoffs_view_is_read_only_and_escaped",
+        "case_plan_step_admission_preview_defers_missing_evidence_without_mutation",
+        "case_plan_step_admission_preview_allows_receipt_binding_without_dispatch",
         "department_registry_view_is_read_only_and_escaped",
         "case_closure_certificate_view_is_read_only_and_escaped",
         "case_proof_timeline_reports_open_case_without_closure",
@@ -9344,8 +9352,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1147,
-    "runtime_witness_count": 1147,
+    "exact_test_anchor_count": 1149,
+    "runtime_witness_count": 1149,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -13055,6 +13063,18 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_case_plan_step_admission_preview_defers_missing_evidence_without_mutation"
+            ],
+            "witness": "case_plan_step_admission_preview_defers_missing_evidence_without_mutation"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_case_plan_step_admission_preview_allows_receipt_binding_without_dispatch"
+            ],
+            "witness": "case_plan_step_admission_preview_allows_receipt_binding_without_dispatch"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_organization_kernel_router.py::test_department_registry_view_is_read_only_and_escaped"
             ],
             "witness": "department_registry_view_is_read_only_and_escaped"
@@ -13132,8 +13152,8 @@
             "witness": "worker_receipts_satisfy_engineering_gate_evidence"
           }
         ],
-        "exact_test_anchor_count": 33,
-        "runtime_witness_count": 33,
+        "exact_test_anchor_count": 35,
+        "runtime_witness_count": 35,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

@@ -3758,6 +3758,48 @@
         "title": "PipelineStepRequest",
         "type": "object"
       },
+      "PlanStepActionAdmissionPreviewRequest": {
+        "properties": {
+          "allow_simulation_when_blocked": {
+            "default": false,
+            "title": "Allow Simulation When Blocked",
+            "type": "boolean"
+          },
+          "checked_preconditions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Checked Preconditions",
+            "type": "array"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "proposed_action": {
+            "default": "bind_worker_receipt",
+            "title": "Proposed Action",
+            "type": "string"
+          },
+          "requested_by_role_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested By Role Id"
+          }
+        },
+        "required": [
+          "checked_preconditions"
+        ],
+        "title": "PlanStepActionAdmissionPreviewRequest",
+        "type": "object"
+      },
       "PlanStepGateRequest": {
         "properties": {
           "checked_preconditions": {
@@ -7882,6 +7924,63 @@
           }
         },
         "summary": "Create Case Plan"
+      }
+    },
+    "/api/v1/cases/{case_id}/plan-steps/{step_id}/admission-preview": {
+      "post": {
+        "description": "Preview handoff action admission without executing or mutating case state.",
+        "operationId": "preview_case_plan_step_action_admission_api_v1_cases__case_id__plan_steps__step_id__admission_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "step_id",
+            "required": true,
+            "schema": {
+              "title": "Step Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanStepActionAdmissionPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Case Plan Step Action Admission"
       }
     },
     "/api/v1/cases/{case_id}/plan-steps/{step_id}/gate": {
