@@ -1,0 +1,384 @@
+{
+  "orchestration_id": "uao_allowed_public_status_refresh_001",
+  "uao_schema_version": "uao.v1",
+  "action_id": "act_refresh_public_status_page",
+  "tenant_id": "tenant_ops_demo",
+  "actor_id": "service:status_page_worker",
+  "created_at": "2026-05-31T00:05:00Z",
+  "action_envelope": {
+    "source": "action://refresh-public-status-page",
+    "actor": "service:status_page_worker",
+    "tenant": "tenant_ops_demo",
+    "intent": "refresh_public_status_page",
+    "target": "target://status-page/public",
+    "risk": "low",
+    "requested_at": "2026-05-31T00:05:00Z",
+    "approval_ref": null,
+    "evidence_refs": [
+      "evidence://status/service-health-rollup-001"
+    ],
+    "capability_refs": [
+      "capability://status-page/publish/v1"
+    ]
+  },
+  "effect_bearing": true,
+  "effect_classes": [
+    "external_capability",
+    "world_state"
+  ],
+  "input_refs": [
+    "action://refresh-public-status-page",
+    "evidence://status/service-health-rollup-001"
+  ],
+  "policy_refs": [
+    "policy://public-status-page/update-window"
+  ],
+  "capability_refs": [
+    "capability://status-page/publish/v1"
+  ],
+  "temporal_refs": [
+    "temporal://status-page/publication-window"
+  ],
+  "exposure_boundary": {
+    "redaction_level": "user_safe",
+    "allowed_audiences": [
+      "operator",
+      "auditor",
+      "end_user"
+    ],
+    "blocked_payload_classes": [
+      "raw_private_reasoning",
+      "secrets",
+      "internal_provider_payloads",
+      "cross_tenant_data"
+    ]
+  },
+  "pipeline_stages": [
+    {
+      "stage_id": "stage_action",
+      "stage_order": 1,
+      "stage_kind": "action",
+      "status": "completed",
+      "input_refs": [
+        "action://refresh-public-status-page"
+      ],
+      "output_refs": [
+        "envelope://act_refresh_public_status_page"
+      ],
+      "receipt_ref": null,
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_evidence",
+      "stage_order": 2,
+      "stage_kind": "evidence",
+      "status": "completed",
+      "input_refs": [
+        "evidence://status/service-health-rollup-001"
+      ],
+      "output_refs": [
+        "evidence-set://status-page-refresh"
+      ],
+      "receipt_ref": null,
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_trace",
+      "stage_order": 3,
+      "stage_kind": "trace",
+      "status": "completed",
+      "input_refs": [
+        "evidence-set://status-page-refresh"
+      ],
+      "output_refs": [
+        "trace://cdt_allowed_low_risk_action_001"
+      ],
+      "receipt_ref": "receipt://uao_trace_public_status_refresh",
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_admission",
+      "stage_order": 4,
+      "stage_kind": "admission",
+      "status": "completed",
+      "input_refs": [
+        "trace://cdt_allowed_low_risk_action_001"
+      ],
+      "output_refs": [
+        "decision://uao_allowed_public_status_refresh_001"
+      ],
+      "receipt_ref": "receipt://uao_admission_public_status_refresh",
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_capability",
+      "stage_order": 5,
+      "stage_kind": "capability",
+      "status": "completed",
+      "input_refs": [
+        "capability://status-page/publish/v1"
+      ],
+      "output_refs": [
+        "capability-binding://status-page/publish/v1/public-status-refresh"
+      ],
+      "receipt_ref": null,
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_execution",
+      "stage_order": 6,
+      "stage_kind": "execution",
+      "status": "completed",
+      "input_refs": [
+        "capability-binding://status-page/publish/v1/public-status-refresh"
+      ],
+      "output_refs": [
+        "outcome://status-page/public-status-refresh"
+      ],
+      "receipt_ref": "receipt://uao_execution_public_status_refresh",
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_receipt",
+      "stage_order": 7,
+      "stage_kind": "receipt",
+      "status": "completed",
+      "input_refs": [
+        "outcome://status-page/public-status-refresh"
+      ],
+      "output_refs": [
+        "receipt-set://uao_public_status_refresh"
+      ],
+      "receipt_ref": "receipt://uao_execution_public_status_refresh",
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_reconciliation",
+      "stage_order": 8,
+      "stage_kind": "reconciliation",
+      "status": "completed",
+      "input_refs": [
+        "receipt-set://uao_public_status_refresh"
+      ],
+      "output_refs": [
+        "reconciliation://uao_public_status_refresh"
+      ],
+      "receipt_ref": "receipt://uao_reconciliation_public_status_refresh",
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_memory",
+      "stage_order": 9,
+      "stage_kind": "memory",
+      "status": "completed",
+      "input_refs": [
+        "reconciliation://uao_public_status_refresh"
+      ],
+      "output_refs": [
+        "memory://status-page/public-status-refresh"
+      ],
+      "receipt_ref": null,
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_closure",
+      "stage_order": 10,
+      "stage_kind": "closure",
+      "status": "completed",
+      "input_refs": [
+        "memory://status-page/public-status-refresh"
+      ],
+      "output_refs": [
+        "closure://uao_public_status_refresh"
+      ],
+      "receipt_ref": "receipt://uao_closure_public_status_refresh",
+      "failure_reason": null
+    }
+  ],
+  "admission_guards": [
+    {
+      "guard": "identity_valid",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "known_service_identity",
+      "evidence_refs": [
+        "actor://service/status-page-worker"
+      ]
+    },
+    {
+      "guard": "tenant_valid",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "tenant_scope_resolved",
+      "evidence_refs": [
+        "tenant://tenant_ops_demo"
+      ]
+    },
+    {
+      "guard": "authority_valid",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "scoped_authority_valid",
+      "evidence_refs": [
+        "capability://status-page/publish/v1"
+      ]
+    },
+    {
+      "guard": "policy_allows",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "policy_window_allows_publish",
+      "evidence_refs": [
+        "policy://public-status-page/update-window"
+      ]
+    },
+    {
+      "guard": "risk_acceptable",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "low_risk_public_status_update",
+      "evidence_refs": [
+        "policy://public-status-page/update-window"
+      ]
+    },
+    {
+      "guard": "budget_available",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "within_publication_budget",
+      "evidence_refs": [
+        "budget://status-page/publication"
+      ]
+    },
+    {
+      "guard": "evidence_sufficient",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "fresh_evidence_available",
+      "evidence_refs": [
+        "evidence://status/service-health-rollup-001"
+      ]
+    },
+    {
+      "guard": "temporal_window_valid",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "publication_window_open",
+      "evidence_refs": [
+        "temporal://status-page/publication-window"
+      ]
+    },
+    {
+      "guard": "capability_certified",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "certified_low_risk_capability",
+      "evidence_refs": [
+        "capability://status-page/publish/v1"
+      ]
+    },
+    {
+      "guard": "recovery_available",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "status_page_previous_value_available",
+      "evidence_refs": [
+        "recovery://status-page/previous-public-value"
+      ]
+    },
+    {
+      "guard": "receipt_emittable",
+      "verdict": "passed",
+      "proof_state": "Pass",
+      "reason_code": "receipt_channel_available",
+      "evidence_refs": [
+        "receipt-policy://status-page/publication"
+      ]
+    }
+  ],
+  "decision": {
+    "status": "allow",
+    "reason_code": "low_risk_controls_satisfied",
+    "proof_state": "Pass",
+    "solver_outcome": "SolvedVerified",
+    "next_action": "execute_with_receipt",
+    "execution_allowed": true
+  },
+  "trace_ref": "trace://cdt_allowed_low_risk_action_001",
+  "causal_decision_trace_ref": "trace://cdt_allowed_low_risk_action_001",
+  "admission_receipt_ref": "receipt://uao_admission_public_status_refresh",
+  "execution_receipt_ref": "receipt://uao_execution_public_status_refresh",
+  "receipts": [
+    {
+      "receipt_id": "receipt://uao_admission_public_status_refresh",
+      "tier": "R1",
+      "kind": "admission",
+      "stage_id": "stage_admission",
+      "confirms": "all admission guards passed",
+      "external_state_confirmed": false
+    },
+    {
+      "receipt_id": "receipt://uao_trace_public_status_refresh",
+      "tier": "R1",
+      "kind": "trace",
+      "stage_id": "stage_trace",
+      "confirms": "causal decision trace linked",
+      "external_state_confirmed": false
+    },
+    {
+      "receipt_id": "receipt://uao_execution_public_status_refresh",
+      "tier": "R2",
+      "kind": "execution",
+      "stage_id": "stage_execution",
+      "confirms": "public status page refresh executed",
+      "external_state_confirmed": true
+    },
+    {
+      "receipt_id": "receipt://uao_reconciliation_public_status_refresh",
+      "tier": "R3",
+      "kind": "reconciliation",
+      "stage_id": "stage_reconciliation",
+      "confirms": "published state reconciled",
+      "external_state_confirmed": true
+    },
+    {
+      "receipt_id": "receipt://uao_closure_public_status_refresh",
+      "tier": "R3",
+      "kind": "closure",
+      "stage_id": "stage_closure",
+      "confirms": "action closed with reconciliation",
+      "external_state_confirmed": true
+    }
+  ],
+  "reconciliation": {
+    "status": "matched",
+    "observed_outcome_ref": "outcome://status-page/public-status-refresh",
+    "required_for_closure": true,
+    "mismatch_reason": null
+  },
+  "memory_update": {
+    "status": "recorded",
+    "memory_ref": "memory://status-page/public-status-refresh",
+    "learning_allowed": true
+  },
+  "closure_state": "closed_allowed",
+  "closure": {
+    "status": "closed_allowed",
+    "terminal": true,
+    "closure_receipt_ref": "receipt://uao_closure_public_status_refresh",
+    "next_action": "none"
+  },
+  "raw_reasoning_included": false,
+  "lineage": {
+    "delta_ref": "delta://uao/public-status-refresh",
+    "logged_in_lineage": true,
+    "accepted_deltas": [
+      {
+        "delta_id": "delta_public_status_refresh_execute",
+        "reason": "low_risk_controls_satisfied",
+        "logged_in_lineage": true
+      }
+    ],
+    "rejected_deltas": []
+  }
+}
