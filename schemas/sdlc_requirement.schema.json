@@ -15,7 +15,10 @@
     "risk_class",
     "affected_surfaces",
     "acceptance_tests",
-    "evidence_required"
+    "evidence_required",
+    "uao_ref",
+    "causal_decision_trace_ref",
+    "receipt_ref"
   ],
   "properties": {
     "requirement_id": { "type": "string", "minLength": 1 },
@@ -57,6 +60,9 @@
       "minItems": 1,
       "items": { "type": "string", "minLength": 1 },
       "uniqueItems": true
-    }
+    },
+    "uao_ref": { "type": "string", "minLength": 1 },
+    "causal_decision_trace_ref": { "type": "string", "minLength": 1 },
+    "receipt_ref": { "type": "string", "minLength": 1 }
   }
 }

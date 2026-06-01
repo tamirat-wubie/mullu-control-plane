@@ -44,5 +44,8 @@
   "release_blocked": false,
   "security_receipts": [
     "receipt://sdlc/security-review/uao-validator/001"
-  ]
+  ],
+  "uao_ref": "uao://sdlc/security-review/uao-validator/001",
+  "causal_decision_trace_ref": "trace://sdlc/security-review/uao-validator/001",
+  "receipt_ref": "receipt://sdlc/security-review/uao-validator/001"
 }

@@ -25,5 +25,8 @@
   "deployment_status": "not_published",
   "rollback_plan": "Revert SDLC files and remove SDLC checks from workspace preflight, CI, and PR template enforcement.",
   "release_receipt": "receipt://sdlc/release/uao-validator/001",
+  "uao_ref": "uao://sdlc/release/uao-validator/001",
+  "causal_decision_trace_ref": "trace://sdlc/release/uao-validator/001",
+  "receipt_ref": "receipt://sdlc/release/uao-validator/001",
   "evidence_bound_claims": true
 }

@@ -80,6 +80,8 @@ causal_decision_trace_ref
 receipt_ref
 ```
 
+This required triplet is the `sdlc_gate_decision_envelope`. Every non-terminal SDLC artifact carries exactly this envelope. Terminal closure carries retained arrays of every upstream `uao_ref`, `causal_decision_trace_ref`, and `receipt_ref`, so no stage can be closed with a dropped admission trace.
+
 No raw private reasoning field may appear in an SDLC artifact.
 
 ## Verification

@@ -15,6 +15,8 @@
     "coverage_refs",
     "validator_outputs",
     "failed_checks",
+    "uao_ref",
+    "causal_decision_trace_ref",
     "receipt_ref"
   ],
   "properties": {
@@ -47,6 +49,8 @@
       "items": { "type": "string", "minLength": 1 },
       "uniqueItems": true
     },
+    "uao_ref": { "type": "string", "minLength": 1 },
+    "causal_decision_trace_ref": { "type": "string", "minLength": 1 },
     "receipt_ref": { "type": "string", "minLength": 1 }
   },
   "$defs": {

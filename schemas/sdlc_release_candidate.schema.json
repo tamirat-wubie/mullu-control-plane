@@ -23,6 +23,9 @@
     "deployment_status",
     "rollback_plan",
     "release_receipt",
+    "uao_ref",
+    "causal_decision_trace_ref",
+    "receipt_ref",
     "evidence_bound_claims"
   ],
   "properties": {
@@ -73,6 +76,9 @@
     },
     "rollback_plan": { "type": "string", "minLength": 1 },
     "release_receipt": { "type": "string", "minLength": 1 },
+    "uao_ref": { "type": "string", "minLength": 1 },
+    "causal_decision_trace_ref": { "type": "string", "minLength": 1 },
+    "receipt_ref": { "type": "string", "minLength": 1 },
     "evidence_bound_claims": { "type": "boolean", "const": true }
   }
 }

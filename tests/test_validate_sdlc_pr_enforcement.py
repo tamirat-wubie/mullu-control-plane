@@ -27,6 +27,7 @@ def test_current_sdlc_pr_enforcement_contract_passes() -> None:
     assert errors == []
     assert "## SDLC / SDLD evidence" in texts.pr_template
     assert "name: SDLC Governance Gate" in texts.ci_workflow
+    assert "Gate decision envelope" in texts.pr_template
     assert "rollback_or_incident_handoff" in texts.enforcement_doc
 
 
@@ -60,6 +61,22 @@ def test_missing_pr_template_evidence_is_rejected() -> None:
     assert "pull_request_template missing required term: Verification receipt" in errors
     assert len(errors) >= 1
     assert "## SDLC / SDLD evidence" in invalid_template
+
+
+def test_missing_gate_decision_envelope_evidence_is_rejected() -> None:
+    texts = validator.load_enforcement_texts()
+    invalid_template = texts.pr_template.replace("Gate decision envelope", "Gate refs")
+    invalid_doc = texts.enforcement_doc.replace(
+        "gate_decision_envelopes are retained through terminal closure",
+        "gate refs exist",
+    )
+
+    template_errors = validator.validate_pr_template(invalid_template)
+    doc_errors = validator.validate_enforcement_document(invalid_doc)
+
+    assert "pull_request_template missing required term: Gate decision envelope" in template_errors
+    assert any("gate_decision_envelopes are retained" in error for error in doc_errors)
+    assert len(template_errors) + len(doc_errors) >= 2
 
 
 def test_release_policy_without_incident_linkage_is_rejected() -> None:

@@ -16,7 +16,10 @@
     "risk_hint",
     "target_surfaces",
     "created_at",
-    "evidence_refs"
+    "evidence_refs",
+    "uao_ref",
+    "causal_decision_trace_ref",
+    "receipt_ref"
   ],
   "properties": {
     "request_id": { "type": "string", "minLength": 1 },
@@ -53,6 +56,9 @@
       "type": "array",
       "items": { "type": "string", "minLength": 1 },
       "uniqueItems": true
-    }
+    },
+    "uao_ref": { "type": "string", "minLength": 1 },
+    "causal_decision_trace_ref": { "type": "string", "minLength": 1 },
+    "receipt_ref": { "type": "string", "minLength": 1 }
   }
 }
