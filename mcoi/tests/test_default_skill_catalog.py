@@ -105,7 +105,7 @@ def test_default_skill_provider_requirements_match_step_boundaries() -> None:
     )
 
 
-def test_agentic_control_skill_plans_release_handoff_before_evidence_append() -> None:
+def test_agentic_control_skill_plans_telemetry_triage_before_code_release_and_evidence() -> None:
     descriptor = next(
         descriptor
         for descriptor in default_skill_descriptors()
@@ -113,10 +113,20 @@ def test_agentic_control_skill_plans_release_handoff_before_evidence_append() ->
     )
     steps = {step.step_id: step for step in descriptor.steps}
     action_order = tuple(step.action_type for step in descriptor.steps)
+    step_order = tuple(step.step_id for step in descriptor.steps)
 
     assert "agentic_control.code_change.plan" in action_order
+    assert "agentic_control.telemetry_triage.plan" in action_order
     assert "agentic_control.release_handoff.plan" in action_order
+    assert all(
+        step_order.index(dependency) < step_order.index(step.step_id)
+        for step in descriptor.steps
+        for dependency in step.depends_on
+    )
     assert action_order.index("agentic_control.verification.plan") < action_order.index(
+        "agentic_control.telemetry_triage.plan"
+    )
+    assert action_order.index("agentic_control.telemetry_triage.plan") < action_order.index(
         "agentic_control.code_change.plan"
     )
     assert action_order.index("agentic_control.code_change.plan") < action_order.index(
@@ -125,14 +135,24 @@ def test_agentic_control_skill_plans_release_handoff_before_evidence_append() ->
     assert action_order.index("agentic_control.release_handoff.plan") < action_order.index(
         "agentic_control.evidence.append"
     )
-    assert steps["plan_code_change"].depends_on == ("plan_verification",)
+    assert steps["plan_telemetry_triage"].depends_on == ("plan_verification",)
+    assert steps["plan_code_change"].depends_on == ("plan_verification", "plan_telemetry_triage")
     assert steps["plan_release_handoff"].depends_on == ("plan_code_change",)
     assert steps["append_evidence"].depends_on == ("plan_release_handoff",)
+    assert steps["plan_telemetry_triage"].input_bindings["verification_plan_ref"] == (
+        "plan_verification.verification_plan_ref"
+    )
+    assert steps["plan_code_change"].input_bindings["telemetry_triage_plan_ref"] == (
+        "plan_telemetry_triage.telemetry_triage_plan_ref"
+    )
     assert steps["plan_release_handoff"].input_bindings["code_change_plan_ref"] == (
         "plan_code_change.code_change_plan_ref"
     )
     assert steps["append_evidence"].input_bindings["code_change_plan_ref"] == (
         "plan_code_change.code_change_plan_ref"
+    )
+    assert steps["append_evidence"].input_bindings["telemetry_triage_plan_ref"] == (
+        "plan_telemetry_triage.telemetry_triage_plan_ref"
     )
     assert steps["append_evidence"].input_bindings["release_handoff_plan_ref"] == (
         "plan_release_handoff.release_handoff_plan_ref"
