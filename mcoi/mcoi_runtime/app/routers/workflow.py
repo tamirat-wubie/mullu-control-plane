@@ -7,9 +7,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Header, Request
 from pydantic import BaseModel, Field
 
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.agent_protocol import AgentCapability
 from mcoi_runtime.core.batch_pipeline import PipelineStep
@@ -110,7 +111,8 @@ class TemplateExecuteRequest(BaseModel):
 
 
 @router.post("/api/v1/execute")
-def execute(req: ExecuteRequest, session_id: str = Header(default="")):
+def execute(req: ExecuteRequest, request: Request, session_id: str = Header(default="")):
+    enforce_tenant_scope(request, req.tenant_id)
     api_req = deps.surface.make_api_request(
         request_id=f"http-{id(req)}",
         method="POST",
@@ -154,8 +156,9 @@ def get_ledger(tenant_id: str = "system", limit: int = 50):
 
 
 @router.post("/api/v1/workflow/execute")
-def execute_workflow(req: WorkflowRequest):
+def execute_workflow(req: WorkflowRequest, request: Request):
     """Execute a governed multi-agent workflow."""
+    enforce_tenant_scope(request, req.tenant_id)
     deps.metrics.inc("requests_governed")
     try:
         cap = AgentCapability(req.capability)
@@ -202,8 +205,9 @@ def workflow_history(limit: int = 50):
 
 
 @router.post("/api/v1/workflow/traced")
-def execute_traced_workflow(req: WorkflowRequest):
+def execute_traced_workflow(req: WorkflowRequest, request: Request):
     """Execute a workflow with automatic replay trace recording."""
+    enforce_tenant_scope(request, req.tenant_id)
     deps.metrics.inc("requests_governed")
     try:
         cap = AgentCapability(req.capability)
@@ -237,8 +241,9 @@ def execute_traced_workflow(req: WorkflowRequest):
 
 
 @router.post("/api/v1/workflow/tools")
-def tool_augmented_workflow(req: ToolWorkflowRequest):
+def tool_augmented_workflow(req: ToolWorkflowRequest, request: Request):
     """Execute a tool-augmented workflow -- LLM + tool invocations (feature-gated)."""
+    enforce_tenant_scope(request, req.tenant_id)
     deps.metrics.inc("requests_governed")
     if not deps.feature_flags.is_enabled("tool_augmentation", tenant_id=req.tenant_id):
         raise HTTPException(403, detail={
@@ -280,8 +285,9 @@ def tool_augmented_workflow(req: ToolWorkflowRequest):
 
 
 @router.post("/api/v1/pipeline/execute")
-def execute_pipeline(req: PipelineRequest):
+def execute_pipeline(req: PipelineRequest, request: Request):
     """Execute a multi-step governed LLM pipeline."""
+    enforce_tenant_scope(request, req.tenant_id)
     deps.metrics.inc("requests_governed")
     steps = [
         PipelineStep(
@@ -350,8 +356,9 @@ def list_workflow_templates(category: str | None = None):
 
 
 @router.post("/api/v1/templates/execute")
-def execute_workflow_template(req: TemplateExecuteRequest):
+def execute_workflow_template(req: TemplateExecuteRequest, request: Request):
     """Instantiate and execute a workflow template."""
+    enforce_tenant_scope(request, req.tenant_id)
     deps.metrics.inc("requests_governed")
     try:
         steps = deps.wf_templates.instantiate(req.template_id, req.params)

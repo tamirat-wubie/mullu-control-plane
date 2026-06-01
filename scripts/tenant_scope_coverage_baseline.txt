@@ -23,9 +23,3 @@ mcoi/mcoi_runtime/app/routers/pilot.py::provision_pilot
 mcoi/mcoi_runtime/app/routers/rbac.py::create_identity
 mcoi/mcoi_runtime/app/routers/tenant.py::create_tenant_budget
 mcoi/mcoi_runtime/app/routers/tenant.py::register_tenant
-mcoi/mcoi_runtime/app/routers/workflow.py::execute
-mcoi/mcoi_runtime/app/routers/workflow.py::execute_pipeline
-mcoi/mcoi_runtime/app/routers/workflow.py::execute_traced_workflow
-mcoi/mcoi_runtime/app/routers/workflow.py::execute_workflow
-mcoi/mcoi_runtime/app/routers/workflow.py::execute_workflow_template
-mcoi/mcoi_runtime/app/routers/workflow.py::tool_augmented_workflow

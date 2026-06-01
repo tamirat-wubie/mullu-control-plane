@@ -9,6 +9,7 @@ Invariants:
   - Default checks are read-only and deterministic.
   - Every check emits an explicit command receipt.
   - Full unsharded preflights use a workspace-local lock.
+  - Saved canonical receipts require full unsharded preflight execution.
   - The process returns nonzero when any required check fails.
 """
 
@@ -239,6 +240,12 @@ def requires_full_preflight_lock(selected_names: tuple[str, ...], shard_count: i
     return not selected_names and shard_count == 1
 
 
+def allows_saved_canonical_receipt(selected_names: tuple[str, ...], shard_count: int) -> bool:
+    """Return whether this run can persist a canonical preflight receipt."""
+
+    return not selected_names and shard_count == 1
+
+
 @contextmanager
 def maybe_full_preflight_lock(lock_required: bool, lock_path: Path = DEFAULT_PREFLIGHT_LOCK_PATH):
     """Acquire the full-preflight lock only when a full preflight is requested."""
@@ -324,19 +331,27 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     selected_names = tuple(str(name) for name in args.check)
+    shard_count = int(args.shard_count)
+    shard_index = int(args.shard_index)
     try:
         commands = select_check_commands(
             build_check_commands(),
             selected_names=selected_names,
-            shard_count=int(args.shard_count),
-            shard_index=int(args.shard_index),
+            shard_count=shard_count,
+            shard_index=shard_index,
         )
     except ValueError as exc:
         sys.stderr.write(f"[FAIL] check-selection: {exc}\nSTATUS: failed\n")
         return 1
+    if args.receipt_path is not None and not allows_saved_canonical_receipt(selected_names, shard_count):
+        sys.stderr.write(
+            "[FAIL] receipt-path: saved workspace governance preflight receipts require "
+            "a full unsharded preflight run\nSTATUS: failed\n"
+        )
+        return 1
 
     try:
-        with maybe_full_preflight_lock(requires_full_preflight_lock(selected_names, int(args.shard_count))):
+        with maybe_full_preflight_lock(requires_full_preflight_lock(selected_names, shard_count)):
             results = run_checks(
                 commands,
                 WORKSPACE_ROOT,

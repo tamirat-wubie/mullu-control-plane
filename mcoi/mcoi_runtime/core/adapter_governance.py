@@ -1,4 +1,4 @@
-"""Phase 195D — Adapter & Connector Governance.
+"""Phase 195D - Adapter and connector governance.
 
 Purpose: Ensures no external side effect occurs without governed execution authority.
 Governance scope: all effectful adapters and connectors.
@@ -6,9 +6,11 @@ Dependencies: execution_authority.
 Invariants: fail-closed on missing authority, all effects audited.
 """
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Any
+
+from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Any
+
 
 @dataclass(frozen=True, slots=True)
 class AdapterAuthority:
@@ -19,9 +21,12 @@ class AdapterAuthority:
     operation: str
     issued_at: str
 
+
 class AdapterAuthorityError(Exception):
     """Raised when an adapter is called without valid authority."""
+
     pass
+
 
 @dataclass
 class AdapterAuditEntry:
@@ -30,15 +35,20 @@ class AdapterAuditEntry:
     authorized: bool
     actor_id: str
     timestamp: str
+    reason: str | None = None
+
 
 class AdapterGovernanceGuard:
     """Guards all effectful adapter calls. Tracks authorized vs unauthorized attempts."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._audit: list[AdapterAuditEntry] = []
         self._blocked: int = 0
 
     def authorize(self, adapter_type: str, operation: str, actor_id: str) -> AdapterAuthority:
+        _validate_label(adapter_type, "adapter_type")
+        _validate_label(operation, "operation")
+        _validate_label(actor_id, "actor_id")
         now = datetime.now(timezone.utc).isoformat()
         self._audit.append(AdapterAuditEntry(adapter_type, operation, True, actor_id, now))
         return AdapterAuthority(
@@ -49,18 +59,34 @@ class AdapterGovernanceGuard:
             issued_at=now,
         )
 
-    def deny(self, adapter_type: str, operation: str, reason: str = "no_authority") -> None:
+    def deny(
+        self,
+        adapter_type: str,
+        operation: str,
+        reason: str = "no_authority",
+        *,
+        actor_id: str = "unknown",
+    ) -> None:
+        _validate_label(adapter_type, "adapter_type")
+        _validate_label(operation, "operation")
+        _validate_label(reason, "reason")
+        _validate_label(actor_id, "actor_id")
         now = datetime.now(timezone.utc).isoformat()
-        self._audit.append(AdapterAuditEntry(adapter_type, operation, False, "unknown", now))
+        self._audit.append(AdapterAuditEntry(adapter_type, operation, False, actor_id, now, reason))
         self._blocked += 1
 
     def require_authority(self, authority: AdapterAuthority | None, adapter_type: str, operation: str) -> None:
+        _validate_label(adapter_type, "adapter_type")
+        _validate_label(operation, "operation")
         if authority is None:
             self.deny(adapter_type, operation)
             raise AdapterAuthorityError("No authority for adapter operation")
         if authority.adapter_type != adapter_type:
-            self.deny(adapter_type, operation, "type_mismatch")
+            self.deny(adapter_type, operation, "type_mismatch", actor_id=authority.actor_id)
             raise AdapterAuthorityError("Authority type mismatch")
+        if authority.operation != operation:
+            self.deny(adapter_type, operation, "operation_mismatch", actor_id=authority.actor_id)
+            raise AdapterAuthorityError("Authority operation mismatch")
 
     @property
     def total_calls(self) -> int:
@@ -77,26 +103,37 @@ class AdapterGovernanceGuard:
     def governance_ratio(self) -> float:
         return self.authorized_calls / self.total_calls if self.total_calls else 1.0
 
+    def audit_entries(self) -> tuple[AdapterAuditEntry, ...]:
+        return tuple(self._audit)
+
     def audit_report(self) -> dict[str, Any]:
         return {
             "total": self.total_calls,
             "authorized": self.authorized_calls,
             "blocked": self.blocked_calls,
             "ratio": round(self.governance_ratio(), 3),
-            "adapters_used": list(set(a.adapter_type for a in self._audit)),
+            "adapters_used": sorted({a.adapter_type for a in self._audit}),
         }
 
-# Registry of all effectful adapters that require governance
-EFFECTFUL_ADAPTERS = frozenset({
-    "shell_executor",
-    "http_connector",
-    "smtp_communication",
-    "browser_adapter",
-    "stub_model",
-    "filesystem_observer",
-    "process_observer",
-    "external_connector",
-})
+# Registry of all effectful adapters that require governance.
+EFFECTFUL_ADAPTERS = frozenset(
+    {
+        "shell_executor",
+        "http_connector",
+        "smtp_communication",
+        "browser_adapter",
+        "stub_model",
+        "filesystem_observer",
+        "process_observer",
+        "external_connector",
+    }
+)
+
 
 def is_effectful(adapter_type: str) -> bool:
     return adapter_type in EFFECTFUL_ADAPTERS
+
+
+def _validate_label(value: str, field_name: str) -> None:
+    if not isinstance(value, str) or not value or value.strip() != value:
+        raise AdapterAuthorityError(f"{field_name} must be a non-empty unpadded string")

@@ -38,6 +38,7 @@ EXPECTED_SKILL_IDS = (
     "telemetry.monitoring_triage.v1",
     "agentic_control.project_discipline_mesh.v1",
     "agentic_control.resource_governor.v1",
+    "agentic_control.temporal_governor.v1",
     "agentic_control.math_governor.v1",
     "agentic_control.algorithm_governor.v1",
     "agentic_control.security_governor.v1",
@@ -81,6 +82,7 @@ def test_default_skill_effect_classes_match_strongest_workflow_effect() -> None:
     assert descriptors["telemetry.monitoring_triage.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.project_discipline_mesh.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.resource_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
+    assert descriptors["agentic_control.temporal_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.math_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.algorithm_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.security_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
@@ -225,6 +227,84 @@ def test_agentic_resource_governor_bounds_budget_before_effect_bearing_work() ->
     )
     assert steps["plan_budget_memory_admission"].input_bindings["refinement_plan_ref"] == (
         "refine_resource_gaps.resource_refinement_plan_ref"
+    )
+
+
+def test_agentic_temporal_governor_blocks_stale_time_windows_without_effects() -> None:
+    descriptor = next(
+        descriptor
+        for descriptor in default_skill_descriptors()
+        if descriptor.skill_id == "agentic_control.temporal_governor.v1"
+    )
+    steps = {step.step_id: step for step in descriptor.steps}
+    action_order = tuple(step.action_type for step in descriptor.steps)
+    step_order = tuple(step.step_id for step in descriptor.steps)
+
+    assert descriptor.effect_class is EffectClass.EXTERNAL_READ
+    assert descriptor.metadata["temporal_governor"] is True
+    assert descriptor.metadata["grants_new_capability_authority"] is False
+    assert descriptor.metadata["time_surfaces"] == (
+        "temporal_boundary_ref",
+        "time_budget_ref",
+        "freshness_window_ref",
+        "lease_window_ref",
+        "retry_window_ref",
+        "stale_evidence_blockers",
+    )
+    assert action_order == (
+        "agentic_control.mission.define",
+        "agentic_control.priority.rank",
+        "agentic_control.governance_gate.evaluate",
+        "agentic_control.resource_budget.bound",
+        "agentic_control.verification.plan",
+        "agentic_control.interrogation.plan",
+        "agentic_control.telemetry_triage.plan",
+        "agentic_control.self_audit.refine",
+        "agentic_control.memory_admission.plan",
+    )
+    assert "agentic_control.code_change.plan" not in action_order
+    assert "agentic_control.release_handoff.plan" not in action_order
+    assert "agentic_control.evidence.append" not in action_order
+    assert all(
+        step_order.index(dependency) < step_order.index(step.step_id)
+        for step in descriptor.steps
+        for dependency in step.depends_on
+    )
+    assert steps["rank_temporal_constraints"].input_bindings["mission_contract_ref"] == (
+        "define_temporal_mission.mission_contract_ref"
+    )
+    assert steps["evaluate_temporal_governance"].input_bindings["priority_order_ref"] == (
+        "rank_temporal_constraints.temporal_constraint_order_ref"
+    )
+    assert steps["bound_temporal_budget"].input_bindings["gate_decision_ref"] == (
+        "evaluate_temporal_governance.gate_decision_ref"
+    )
+    assert steps["plan_temporal_verification"].input_bindings["temporal_boundary_ref"] == (
+        "define_temporal_mission.temporal_boundary_ref"
+    )
+    assert steps["plan_temporal_verification"].input_bindings["budget_envelope_ref"] == (
+        "bound_temporal_budget.budget_envelope_ref"
+    )
+    assert steps["plan_temporal_verification"].input_bindings["time_budget_ref"] == (
+        "bound_temporal_budget.time_budget_ref"
+    )
+    assert steps["plan_temporal_interrogation"].input_bindings["verification_plan_ref"] == (
+        "plan_temporal_verification.temporal_verification_plan_ref"
+    )
+    assert steps["plan_temporal_triage"].input_bindings["verification_plan_ref"] == (
+        "plan_temporal_verification.temporal_verification_plan_ref"
+    )
+    assert steps["plan_temporal_triage"].input_bindings["interrogation_plan_ref"] == (
+        "plan_temporal_interrogation.temporal_interrogation_plan_ref"
+    )
+    assert steps["plan_temporal_triage"].input_bindings["time_budget_ref"] == (
+        "bound_temporal_budget.time_budget_ref"
+    )
+    assert steps["refine_temporal_gaps"].input_bindings["temporal_triage_plan_ref"] == (
+        "plan_temporal_triage.temporal_triage_plan_ref"
+    )
+    assert steps["plan_temporal_memory_admission"].input_bindings["refinement_plan_ref"] == (
+        "refine_temporal_gaps.temporal_refinement_plan_ref"
     )
 
 
@@ -820,6 +900,8 @@ def test_bootstrap_installs_default_skill_catalog() -> None:
     assert runtime.skill_registry.get("agentic_control.project_discipline_mesh.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.resource_governor.v1").metadata["risk_floor"] == "medium"
     assert runtime.skill_registry.get("agentic_control.resource_governor.v1").effect_class is EffectClass.EXTERNAL_READ
+    assert runtime.skill_registry.get("agentic_control.temporal_governor.v1").metadata["risk_floor"] == "medium"
+    assert runtime.skill_registry.get("agentic_control.temporal_governor.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.math_governor.v1").metadata["risk_floor"] == "medium"
     assert runtime.skill_registry.get("agentic_control.math_governor.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.algorithm_governor.v1").metadata["risk_floor"] == "medium"
