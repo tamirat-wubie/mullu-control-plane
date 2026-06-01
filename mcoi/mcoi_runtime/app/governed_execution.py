@@ -216,6 +216,7 @@ def universal_operator_dispatch(
     mode: str = "simulation",
     actor_roles: tuple[str, ...] = (),
     approval_refs: tuple[str, ...] = (),
+    approval_actor_ids: tuple[str, ...] = (),
     evidence_refs: tuple[str, ...] = (),
 ) -> UniversalActionResult:
     """Dispatch an operator request through the universal governed action path.
@@ -241,6 +242,7 @@ def universal_operator_dispatch(
         mode=mode,
         actor_roles=actor_roles,
         approval_refs=approval_refs,
+        approval_actor_ids=approval_actor_ids,
         evidence_refs=evidence_refs,
     )
     return kernel.run(action_request)
@@ -257,6 +259,7 @@ def universal_command_dispatch(
     mode: str = "simulation",
     actor_roles: tuple[str, ...] = (),
     approval_refs: tuple[str, ...] = (),
+    approval_actor_ids: tuple[str, ...] = (),
     evidence_refs: tuple[str, ...] = (),
 ) -> UniversalActionResult:
     """Dispatch a command-ledger command through the universal action kernel.
@@ -291,6 +294,7 @@ def universal_command_dispatch(
         mode=mode,
         actor_roles=actor_roles,
         approval_refs=approval_refs,
+        approval_actor_ids=approval_actor_ids,
         evidence_refs=evidence_refs,
     )
     result = kernel.run(action_request)
@@ -1025,6 +1029,7 @@ def _build_universal_action_request(
     mode: str = "simulation",
     actor_roles: tuple[str, ...] = (),
     approval_refs: tuple[str, ...] = (),
+    approval_actor_ids: tuple[str, ...] = (),
     evidence_refs: tuple[str, ...] = (),
 ) -> UniversalActionRequest:
     return UniversalActionRequest(
@@ -1041,6 +1046,7 @@ def _build_universal_action_request(
         metadata={
             "actor_roles": actor_roles,
             "approval_refs": approval_refs,
+            "approval_actor_ids": approval_actor_ids,
             "evidence_refs": evidence_refs,
         },
     )
