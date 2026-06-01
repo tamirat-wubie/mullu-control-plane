@@ -42,9 +42,12 @@ def test_deployment_closure_plan_maps_publication_blockers(tmp_path: Path) -> No
     actions_by_blocker = {action.blocker: action for action in plan.actions}
 
     assert plan.source_ready is False
+    assert plan.source_readiness_path == "general_agent_promotion_readiness.json"
+    assert plan.deployment_status_path == "DEPLOYMENT_STATUS.md"
     assert plan.plan_id.startswith("deployment-publication-closure-plan-")
     assert plan.plan_id != "deployment-publication-closure-plan-02"
     assert plan.action_count == 2
+    assert str(tmp_path) not in json.dumps(plan.as_dict(), sort_keys=True)
     assert plan.blockers == ("deployment_witness_not_published", "production_health_not_declared")
     assert actions_by_blocker["deployment_witness_not_published"].approval_required is True
     assert actions_by_blocker["deployment_witness_not_published"].risk_level == "high"

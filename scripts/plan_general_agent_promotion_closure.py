@@ -102,10 +102,10 @@ def plan_general_agent_promotion_closure(
         str(adapter_plan.get("plan_id", "")),
         str(deployment_plan.get("plan_id", "")),
     ]
-    source_plan_paths = [str(adapter_plan_path), str(deployment_plan_path)]
+    source_plan_paths = [_path_label(adapter_plan_path), _path_label(deployment_plan_path)]
     if portfolio_plan_path is not None:
         source_plan_ids.append(str((portfolio_plan or {}).get("portfolio_id", "")))
-        source_plan_paths.append(str(portfolio_plan_path))
+        source_plan_paths.append(_path_label(portfolio_plan_path))
     approval_required_count = sum(1 for action in actions if action.get("approval_required") is True)
     plan_material = {
         "readiness_level": str(readiness.get("readiness_level", "unknown")),
@@ -251,6 +251,15 @@ def _load_json_object(path: Path, label: str) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"{label} JSON root must be an object")
     return payload
+
+
+def _path_label(path: Path) -> str:
+    """Return a promotion-plan path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _loads_strict_json(raw: str) -> Any:

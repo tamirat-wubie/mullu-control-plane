@@ -50,6 +50,9 @@ def test_live_evidence_queue_classifies_bindings_and_approvals(tmp_path: Path) -
     assert queue.runnable_action_count == 1
     assert queue.blocked_action_count == 3
     assert queue.metadata["secret_values_serialized"] is False
+    assert queue.source_plan_path == "general_agent_promotion_closure_plan.json"
+    assert queue.environment_contract_path == "general_agent_promotion_environment_bindings.json"
+    assert queue.environment_binding_receipt_path == "general_agent_promotion_environment_binding_receipt.json"
     assert actions["browser-live"].execution_class == "runnable_local"
     assert actions["voice-live"].execution_class == "requires_environment_binding"
     assert "MULLU_VOICE_PROBE_AUDIO" in actions["voice-live"].missing_bindings
@@ -58,6 +61,7 @@ def test_live_evidence_queue_classifies_bindings_and_approvals(tmp_path: Path) -
     assert actions["portfolio-review"].execution_class == "approval_and_environment_blocked"
     assert "MULLU_AUTHORITY_OPERATOR_SECRET" in actions["portfolio-review"].missing_bindings
     assert "environment_binding_missing:MULLU_AUTHORITY_OPERATOR_SECRET" in queue.blocked_reasons
+    assert tmp_path.name not in json.dumps(queue.as_dict(), sort_keys=True)
     assert validate_general_agent_promotion_live_evidence_queue(queue) == ()
 
 
@@ -74,6 +78,7 @@ def test_live_evidence_queue_exposes_missing_receipt_and_uncontracted_bindings(t
     actions = {action.source_action_id: action for action in queue.actions}
 
     assert queue.metadata["environment_receipt_present"] is False
+    assert queue.environment_binding_receipt_path == "missing-receipt.json"
     assert queue.ready_to_execute is False
     assert "environment_binding_receipt_missing" in queue.blocked_reasons
     assert "OPENAI_API_KEY" in actions["voice-secret"].uncontracted_bindings

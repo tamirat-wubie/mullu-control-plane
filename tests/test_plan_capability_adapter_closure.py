@@ -38,9 +38,11 @@ def test_adapter_closure_plan_maps_blockers_to_actions(tmp_path: Path) -> None:
     actions_by_blocker = {action.blocker: action for action in plan.actions}
 
     assert plan.source_ready is False
+    assert plan.source_evidence_path == "capability_adapter_evidence.json"
     assert plan.plan_id.startswith("capability-adapter-closure-plan-")
     assert plan.plan_id != "capability-adapter-closure-plan-04"
     assert plan.action_count == 4
+    assert str(tmp_path) not in json.dumps(plan.as_dict(), sort_keys=True)
     assert "browser_dependency_missing:playwright" in plan.blockers
     assert actions_by_blocker["browser_live_evidence_missing"].action_type == "live-receipt"
     assert "produce_capability_adapter_live_receipts.py --target browser" in actions_by_blocker[

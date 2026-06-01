@@ -42,9 +42,12 @@ def test_adapter_closure_plan_schema_accepts_valid_plan(tmp_path: Path) -> None:
 
     assert validation.ok is True
     assert validation.errors == ()
+    assert validation.plan_path == "capability_adapter_closure_plan.json"
+    assert validation.schema_path == "schemas/capability_adapter_closure_plan.schema.json"
     assert validation.action_count == 2
     assert validation.approval_required_action_count == 1
     assert validation.blocker_count == 2
+    assert str(tmp_path) not in json.dumps(validation.as_dict(), sort_keys=True)
 
 
 def test_adapter_closure_plan_schema_rejects_count_drift(tmp_path: Path) -> None:

@@ -102,8 +102,8 @@ def plan_deployment_publication_closure(
     ).hexdigest()
     return DeploymentPublicationClosurePlan(
         plan_id=f"deployment-publication-closure-plan-{plan_digest[:16]}",
-        source_readiness_path=str(readiness_path),
-        deployment_status_path=str(deployment_status_path),
+        source_readiness_path=_path_label(readiness_path),
+        deployment_status_path=_path_label(deployment_status_path),
         source_ready=readiness.get("ready") is True,
         action_count=len(actions),
         blockers=blockers,
@@ -484,6 +484,15 @@ def _load_json_object(path: Path, label: str) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"{label} JSON root must be an object")
     return payload
+
+
+def _path_label(path: Path) -> str:
+    """Return a deployment-plan path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _loads_strict_json(raw: str) -> Any:

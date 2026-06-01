@@ -228,14 +228,23 @@ def _validation_result(
     return DeploymentClosurePlanSchemaValidation(
         ok=not errors,
         errors=tuple(errors),
-        plan_path=str(plan_path),
-        schema_path=str(schema_path),
+        plan_path=_path_label(plan_path),
+        schema_path=_path_label(schema_path),
         action_count=len(actions),
         approval_required_action_count=sum(
             1 for action in actions if action.get("approval_required") is True
         ),
         blocker_count=len(blockers),
     )
+
+
+def _path_label(path: Path) -> str:
+    """Return a schema-validation path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _actions(plan: dict[str, Any], errors: list[str]) -> tuple[dict[str, Any], ...]:

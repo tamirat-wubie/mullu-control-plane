@@ -213,7 +213,7 @@ def plan_general_agent_promotion_live_evidence_queue(
     queue_material = {
         "generated_at": generated_at,
         "source_plan_hash": source_plan_hash,
-        "receipt_path": str(environment_binding_receipt_path),
+        "receipt_path": _path_label(environment_binding_receipt_path),
         "actions": [action.as_dict() for action in actions],
     }
     queue_digest = _stable_hash(queue_material)
@@ -221,9 +221,9 @@ def plan_general_agent_promotion_live_evidence_queue(
         schema_version=1,
         queue_id=f"general-agent-promotion-live-evidence-queue-{queue_digest[:16]}",
         generated_at=generated_at,
-        source_plan_path=str(promotion_plan_path),
-        environment_contract_path=str(environment_bindings_path),
-        environment_binding_receipt_path=str(environment_binding_receipt_path),
+        source_plan_path=_path_label(promotion_plan_path),
+        environment_contract_path=_path_label(environment_bindings_path),
+        environment_binding_receipt_path=_path_label(environment_binding_receipt_path),
         ready_to_execute=blocked_count == 0,
         action_count=len(actions),
         runnable_action_count=runnable_count,
@@ -253,6 +253,15 @@ def write_general_agent_promotion_live_evidence_queue(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(queue.as_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return output_path
+
+
+def _path_label(path: Path) -> str:
+    """Return a live-evidence queue path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def validate_general_agent_promotion_live_evidence_queue(

@@ -317,7 +317,7 @@ def run_general_agent_promotion_closure_chain(
         status = "passed_blocked"
     return GeneralAgentPromotionClosureChainRun(
         status=status,
-        output_dir=str(output_dir),
+        output_dir=_path_label(output_dir),
         artifact_valid=artifact_valid,
         promotion_ready=readiness.ready,
         readiness_level=readiness.readiness_level,
@@ -338,7 +338,7 @@ def run_general_agent_promotion_closure_chain(
         terminal_minting_gate_admitted_candidate_count=terminal_minting_gate.admitted_candidate_count,
         terminal_minting_gate_blocked_candidate_count=terminal_minting_gate.blocked_candidate_count,
         artifacts={
-            name: str(path)
+            name: _path_label(path, output_dir=output_dir)
             for name, path in paths.items()
             if name not in {"environment_binding_receipt", "terminal_approval_receipt"}
             and (include_portfolio or name != "portfolio")
@@ -346,6 +346,19 @@ def run_general_agent_promotion_closure_chain(
         promotion_blockers=readiness.blockers,
         validation_errors=tuple(dict.fromkeys(validation_errors)),
     )
+
+
+def _path_label(path: Path, *, output_dir: Path | None = None) -> str:
+    """Return a closure-chain path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    for base_path in (REPO_ROOT, output_dir):
+        if base_path is None:
+            continue
+        try:
+            return resolved_path.relative_to(base_path.resolve(strict=False)).as_posix()
+        except ValueError:
+            continue
+    return path.name
 
 
 def _artifact_paths(output_dir: Path) -> dict[str, Path]:

@@ -45,6 +45,11 @@ def test_promotion_closure_plan_combines_adapter_and_deployment_actions(tmp_path
     assert plan.readiness_level == "pilot-governed-core"
     assert plan.total_action_count == 3
     assert plan.approval_required_action_count == 2
+    assert plan.source_plans == (
+        "capability_adapter_closure_plan.json",
+        "deployment_publication_closure_plan.json",
+    )
+    assert str(tmp_path) not in json.dumps(plan.as_dict(), sort_keys=True)
     assert source_types == {"adapter", "deployment"}
     assert "adapter_evidence_not_closed" in plan.blockers
     assert "production_health_not_declared" in plan.blockers

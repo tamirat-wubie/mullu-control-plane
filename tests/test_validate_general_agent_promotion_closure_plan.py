@@ -42,10 +42,12 @@ def test_validate_promotion_closure_plan_accepts_matching_sources(tmp_path: Path
 
     assert validation.ok is True
     assert validation.errors == ()
+    assert validation.plan_path == "general_agent_promotion_closure_plan.json"
     assert validation.expected_action_count == 3
     assert validation.observed_action_count == 3
     assert validation.expected_approval_required_count == 2
     assert validation.observed_approval_required_count == 2
+    assert tmp_path.name not in json.dumps(validation.as_dict(), sort_keys=True)
 
 
 def test_validate_promotion_closure_plan_accepts_matching_portfolio_source(tmp_path: Path) -> None:

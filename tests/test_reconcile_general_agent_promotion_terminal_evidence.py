@@ -43,12 +43,14 @@ def test_terminal_evidence_reconciliation_accepts_matching_document_receipt(tmp_
     assert reconciliation.reconciled_candidate_count == 1
     assert reconciliation.blocked_candidate_count == 0
     assert reconciliation.missing_evidence_count == 0
+    assert reconciliation.source_candidate_path == "general_agent_promotion_terminal_certificate_candidates.json"
     assert candidate.reconciliation_status == "reconciled"
     assert set(candidate.evidence_matched) == {"document_live_receipt.json", "production_parser_registry_receipt"}
     assert candidate.missing_evidence == ()
-    assert candidate.receipt_refs == (str(receipt_path),)
+    assert candidate.receipt_refs == ("document_live_receipt.json",)
     assert reconciliation.metadata["reconciliation_is_not_execution"] is True
     assert reconciliation.metadata["terminal_certificates_minted"] is False
+    assert tmp_path.name not in json.dumps(reconciliation.as_dict(), sort_keys=True)
     assert validate_general_agent_promotion_terminal_evidence_reconciliation(reconciliation) == ()
 
 

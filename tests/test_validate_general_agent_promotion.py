@@ -92,8 +92,10 @@ def test_promotion_consumes_closed_adapter_evidence(tmp_path: Path) -> None:
 
     assert adapter_evidence.passed is True
     assert adapter_evidence.blocker_id == ""
+    assert adapter_evidence.evidence_refs == ("capability_adapter_evidence.json",)
     assert "browser, document, voice, and communication" in adapter_evidence.detail
     assert "adapter_evidence_not_closed" not in readiness.blockers
+    assert str(tmp_path) not in json.dumps(readiness.as_dict(), sort_keys=True)
 
 
 def test_promotion_bounds_malformed_adapter_evidence_detail(tmp_path: Path) -> None:
@@ -149,14 +151,19 @@ def test_deployment_publication_checks_accept_published_witness(tmp_path: Path) 
 
     assert witness_check.passed is True
     assert witness_check.blocker_id == ""
+    assert witness_check.evidence_refs == ("DEPLOYMENT_STATUS.md", "deployment_witness.json")
     assert "published" in witness_check.detail
     assert runtime_debt_check.passed is True
     assert runtime_debt_check.blocker_id == ""
+    assert runtime_debt_check.evidence_refs == ("deployment_witness.json",)
     assert authority_debt_check.passed is True
     assert authority_debt_check.blocker_id == ""
+    assert authority_debt_check.evidence_refs == ("deployment_witness.json",)
     assert health_check.passed is True
     assert health_check.blocker_id == ""
+    assert health_check.evidence_refs == ("DEPLOYMENT_STATUS.md",)
     assert "https://gateway.example/health" in health_check.detail
+    assert str(tmp_path) not in json.dumps([check.as_dict() for check in checks], sort_keys=True)
 
 
 def test_deployment_publication_health_requires_validated_witness(tmp_path: Path) -> None:

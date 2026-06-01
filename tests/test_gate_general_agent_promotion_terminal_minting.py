@@ -41,12 +41,14 @@ def test_terminal_minting_gate_admits_ready_reconciliation_with_authority(tmp_pa
     assert gate.authority_ref_present is True
     assert gate.admitted_candidate_count == 1
     assert gate.blocked_candidate_count == 0
+    assert gate.source_reconciliation_path == "general_agent_promotion_terminal_evidence_reconciliation.json"
     assert candidate.minting_gate_status == "admitted_for_terminal_certificate_minting"
     assert candidate.ready_for_terminal_certificate_minting is True
     assert candidate.blocked_reasons == ()
     assert candidate.prospective_certificate_id.startswith("terminal-closure-certificate-")
     assert gate.metadata["minting_gate_is_not_execution"] is True
     assert gate.metadata["terminal_certificates_minted"] is False
+    assert tmp_path.name not in json.dumps(gate.as_dict(), sort_keys=True)
     assert validate_general_agent_promotion_terminal_minting_gate(gate) == ()
 
 
