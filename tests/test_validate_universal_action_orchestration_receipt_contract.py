@@ -6,6 +6,7 @@ Invariants:
   - Pass and fail receipt shapes remain causally consistent.
   - Host-local path ancestry is rejected from receipt path labels.
   - The UAO validation receipt writer path boundary is preflight-enforced.
+  - The UAO validation receipt artifact-scope boundary is preflight-enforced.
 """
 
 from __future__ import annotations
@@ -33,6 +34,7 @@ def test_universal_action_orchestration_validation_receipt_contract_passes() -> 
         item["const"] for item in schema["properties"]["example_paths"]["prefixItems"]
     ) == validator.CANONICAL_UAO_EXAMPLE_PATH_LABELS
     assert validator.validate_receipt_writer_boundary() == []
+    assert validator.validate_receipt_canonical_scope_boundary() == []
 
 
 def test_sample_receipts_are_non_terminal_and_count_consistent() -> None:
@@ -108,6 +110,25 @@ def test_receipt_writer_boundary_rejects_escape_and_non_json() -> None:
     assert validator.validate_receipt_writer_boundary() == []
 
 
+def test_receipt_scope_boundary_rejects_noncanonical_example_set() -> None:
+    noncanonical_report = validator.build_validation_report(
+        validator.UAO_SCHEMA_PATH,
+        (validator.UAO_EXAMPLE_PATHS[0],),
+        validator.UAO_DOCUMENT_PATH,
+    )
+
+    assert validator.validate_receipt_canonical_scope_boundary() == []
+    assert validator.validate_validation_receipt_scope(
+        validator.UAO_SCHEMA_PATH,
+        (validator.UAO_EXAMPLE_PATHS[0],),
+        validator.UAO_DOCUMENT_PATH,
+    ) == ["receipt scope example_paths must preserve the canonical UAO fixture set and order"]
+    assert validator.validate_validation_receipt_report_scope(noncanonical_report) == [
+        "receipt report example_paths must bind the canonical UAO fixture set and order",
+        "receipt report example_count must match the canonical UAO fixture count",
+    ]
+
+
 def test_receipt_contract_cli_reports_passed() -> None:
     stdout_buffer = io.StringIO()
 
@@ -118,4 +139,5 @@ def test_receipt_contract_cli_reports_passed() -> None:
     assert exit_code == 0
     assert "universal_action_orchestration_validation_receipt_schema" in output
     assert "universal_action_orchestration_validation_receipt_writer_boundary" in output
+    assert "universal_action_orchestration_validation_receipt_scope_boundary" in output
     assert "STATUS: passed" in output

@@ -11,6 +11,7 @@ Invariants:
   - Receipt paths are workspace-relative labels or external basenames only.
   - Receipt status, counts, and check outcomes remain causally consistent.
   - Persisted UAO validation receipt paths stay under the workspace root.
+  - UAO validation receipts bind the canonical schema, doctrine, and fixtures.
 """
 
 from __future__ import annotations
@@ -30,6 +31,8 @@ try:
         DEFAULT_SCHEMA_PATH as UAO_SCHEMA_PATH,
         build_validation_report,
         resolve_validation_receipt_path,
+        validate_validation_receipt_report_scope,
+        validate_validation_receipt_scope,
     )
 except ModuleNotFoundError:  # pragma: no cover - exercised when imported as package.
     from scripts.validate_universal_action_orchestration import (
@@ -38,6 +41,8 @@ except ModuleNotFoundError:  # pragma: no cover - exercised when imported as pac
         DEFAULT_SCHEMA_PATH as UAO_SCHEMA_PATH,
         build_validation_report,
         resolve_validation_receipt_path,
+        validate_validation_receipt_report_scope,
+        validate_validation_receipt_scope,
     )
 
 
@@ -231,6 +236,7 @@ def validate_contract(schema_path: Path = DEFAULT_SCHEMA_PATH) -> list[str]:
     errors.extend(f"passed receipt: {error}" for error in validate_receipt(passed_receipt))
     errors.extend(f"failed receipt: {error}" for error in validate_receipt(failed_receipt))
     errors.extend(validate_receipt_writer_boundary())
+    errors.extend(validate_receipt_canonical_scope_boundary())
     return errors
 
 
@@ -260,6 +266,29 @@ def validate_receipt_writer_boundary() -> list[str]:
     return errors
 
 
+def validate_receipt_canonical_scope_boundary() -> list[str]:
+    """Return deterministic errors for the UAO receipt artifact-scope boundary."""
+
+    errors: list[str] = []
+    canonical_scope_errors = validate_validation_receipt_scope(UAO_SCHEMA_PATH, UAO_EXAMPLE_PATHS, UAO_DOCUMENT_PATH)
+    if canonical_scope_errors:
+        errors.append(f"canonical receipt scope was rejected: {'; '.join(canonical_scope_errors)}")
+
+    noncanonical_scope_errors = validate_validation_receipt_scope(
+        UAO_SCHEMA_PATH,
+        (UAO_EXAMPLE_PATHS[0],),
+        UAO_DOCUMENT_PATH,
+    )
+    if not noncanonical_scope_errors:
+        errors.append("non-canonical receipt example scope was not rejected")
+
+    noncanonical_report = build_validation_report(UAO_SCHEMA_PATH, (UAO_EXAMPLE_PATHS[0],), UAO_DOCUMENT_PATH)
+    noncanonical_report_errors = validate_validation_receipt_report_scope(noncanonical_report)
+    if not noncanonical_report_errors:
+        errors.append("non-canonical receipt report scope was not rejected")
+    return errors
+
+
 def main(argv: list[str] | None = None) -> int:
     """Validate the UAO validation receipt contract."""
 
@@ -283,6 +312,7 @@ def main(argv: list[str] | None = None) -> int:
     sys.stdout.write("[PASS] universal_action_orchestration_validation_receipt_pass_shape\n")
     sys.stdout.write("[PASS] universal_action_orchestration_validation_receipt_fail_shape\n")
     sys.stdout.write("[PASS] universal_action_orchestration_validation_receipt_writer_boundary\n")
+    sys.stdout.write("[PASS] universal_action_orchestration_validation_receipt_scope_boundary\n")
     sys.stdout.write("STATUS: passed\n")
     return 0
 
