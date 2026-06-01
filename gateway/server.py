@@ -2591,12 +2591,19 @@ def create_gateway_app(
             raise HTTPException(404, detail="universal action orchestration record not found")
         decision = record.get("decision", {})
         decision_status = decision.get("status", "") if isinstance(decision, Mapping) else ""
+        closure = record.get("closure", {})
+        reconciliation_ref = (
+            closure.get("reconciliation_ref") if isinstance(closure, Mapping) else None
+        )
+        memory_ref = closure.get("memory_ref") if isinstance(closure, Mapping) else None
         return {
             "command_id": command_id,
             "universal_action_orchestration": record,
             "orchestration_id": record.get("orchestration_id", ""),
             "decision_status": decision_status,
             "closure_state": record.get("closure_state", ""),
+            "reconciliation_ref": reconciliation_ref,
+            "memory_ref": memory_ref,
         }
 
     def _operator_universal_actions_payload(
@@ -3601,6 +3608,9 @@ def _universal_actions_console_html(read_model: Mapping[str, Any]) -> str:
         "blocked",
         "block_reason",
         "capability_id",
+        "closure_state",
+        "reconciliation_ref",
+        "memory_ref",
         "proof_hash",
         "terminal_certificate_id",
         "learning_status",

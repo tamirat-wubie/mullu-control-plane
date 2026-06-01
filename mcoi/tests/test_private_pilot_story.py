@@ -221,10 +221,22 @@ def test_private_pilot_story_links_orgos_uao_governors_sdlc_and_dashboards() -> 
     assert story["orgos"]["authority_map_view_ref"] == "/api/v1/orgs/org-demo/authority-map/view"
     assert branches["approved"]["decision_status"] == "allow"
     assert branches["approved"]["execution_allowed"] is True
+    assert branches["approved"]["reconciliation_ref"] == (
+        "reconciliation://uao_public_status_refresh"
+    )
+    assert branches["approved"]["memory_ref"] == (
+        "memory://status-page/public-status-refresh"
+    )
     assert branches["blocked"]["decision_status"] == "block"
     assert branches["blocked"]["execution_allowed"] is False
+    assert branches["blocked"]["reconciliation_ref"] == (
+        "reconciliation://uao_invoice_payment_blocked"
+    )
+    assert branches["blocked"]["memory_ref"] == "memory://invoice-123/payment-blocked"
     assert branches["rehearsal"]["decision_status"] == "simulate"
     assert branches["rehearsal"]["execution_allowed"] is False
+    assert branches["rehearsal"]["reconciliation_ref"] == ""
+    assert branches["rehearsal"]["memory_ref"] == ""
     assert story["governor_chain"]["valid"] is True
     assert story["governor_chain"]["stage_count"] == 7
     assert story["sdlc_dashboard"]["read_only"] is True

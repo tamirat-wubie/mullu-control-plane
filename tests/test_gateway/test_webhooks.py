@@ -2200,6 +2200,9 @@ class TestGatewayStatus:
                     "proof_hash": "proof-hash-1",
                     "capability_id": "shell_command",
                     "dispatch_ledger_hash": "dispatch-ledger-1",
+                    "closure_state": "closed_allowed",
+                    "reconciliation_ref": "reconciliation://uact-1",
+                    "memory_ref": "memory://uact-1",
                     "terminal_certificate_id": "",
                     "learning_admission_id": "",
                 },
@@ -2238,6 +2241,9 @@ class TestGatewayStatus:
         assert proof["action_id"] == "uact-1"
         assert proof["capability_id"] == "shell_command"
         assert proof["dispatch_ledger_hash"] == "dispatch-ledger-1"
+        assert proof["closure_state"] == "closed_allowed"
+        assert proof["reconciliation_ref"] == "reconciliation://uact-1"
+        assert proof["memory_ref"] == "memory://uact-1"
         assert proof["terminal_certificate_id"] == "terminal-1"
         assert proof["terminal_disposition"] == "committed"
         assert proof["learning_admission_id"] == "learn-1"
@@ -2304,6 +2310,8 @@ class TestGatewayStatus:
         assert data["orchestration_id"] == record["orchestration_id"]
         assert data["decision_status"] == "allow"
         assert data["closure_state"] == "closed_allowed"
+        assert data["reconciliation_ref"] == record["closure"]["reconciliation_ref"]
+        assert data["memory_ref"] == record["closure"]["memory_ref"]
         assert data["universal_action_orchestration"]["raw_reasoning_included"] is False
 
     def test_command_universal_action_orchestration_missing_returns_404(
@@ -2789,6 +2797,9 @@ class TestGatewayStatus:
                     "proof_hash": "proof-hash-committed",
                     "capability_id": "shell_command",
                     "dispatch_ledger_hash": "dispatch-ledger-committed",
+                    "closure_state": "closed_allowed",
+                    "reconciliation_ref": "reconciliation://uact-committed",
+                    "memory_ref": "memory://uact-committed",
                 },
             },
         )
@@ -2804,6 +2815,9 @@ class TestGatewayStatus:
                     "proof_hash": "proof-hash-blocked",
                     "capability_id": "shell_command",
                     "dispatch_ledger_hash": "",
+                    "closure_state": "closed_blocked",
+                    "reconciliation_ref": "",
+                    "memory_ref": "",
                 },
             },
         )
@@ -2832,7 +2846,11 @@ class TestGatewayStatus:
         )
         assert tenant_resp.status_code == 200
         assert tenant_resp.json()["count"] == 1
-        assert tenant_resp.json()["universal_action_proofs"][0]["tenant_id"] == "t1"
+        committed_row = tenant_resp.json()["universal_action_proofs"][0]
+        assert committed_row["tenant_id"] == "t1"
+        assert committed_row["closure_state"] == "closed_allowed"
+        assert committed_row["reconciliation_ref"] == "reconciliation://uact-committed"
+        assert committed_row["memory_ref"] == "memory://uact-committed"
         assert invalid_resp.status_code == 400
         assert invalid_resp.json()["detail"] == "blocked must be true or false"
 
@@ -2860,6 +2878,9 @@ class TestGatewayStatus:
                     "proof_hash": "proof-hash-console",
                     "capability_id": "shell_command",
                     "dispatch_ledger_hash": "",
+                    "closure_state": "closed_blocked",
+                    "reconciliation_ref": "reconciliation://uact-console",
+                    "memory_ref": "memory://uact-console",
                 },
             },
         )
@@ -2874,6 +2895,9 @@ class TestGatewayStatus:
         assert "proof-hash-console" in resp.text
         assert "open_world_contradictions" in resp.text
         assert "shell_command" in resp.text
+        assert "closed_blocked" in resp.text
+        assert "reconciliation://uact-console" in resp.text
+        assert "memory://uact-console" in resp.text
 
     def test_latest_anchor_read_model(self, gateway_app, client):
         msg_resp = client.post(
