@@ -40,6 +40,7 @@ EXPECTED_SKILL_IDS = (
     "agentic_control.resource_governor.v1",
     "agentic_control.algorithm_governor.v1",
     "agentic_control.security_governor.v1",
+    "agentic_control.swarm_governor.v1",
     "agentic_control.autonomous_operations.v1",
 )
 
@@ -80,6 +81,7 @@ def test_default_skill_effect_classes_match_strongest_workflow_effect() -> None:
     assert descriptors["agentic_control.resource_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.algorithm_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.security_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
+    assert descriptors["agentic_control.swarm_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.autonomous_operations.v1"].effect_class is EffectClass.EXTERNAL_WRITE
     assert all(
         descriptor.metadata["approval_expected"] is True
@@ -362,6 +364,80 @@ def test_agentic_security_governor_plans_threat_recovery_without_effects() -> No
     )
 
 
+def test_agentic_swarm_governor_coordinates_without_spawning_agents() -> None:
+    descriptor = next(
+        descriptor
+        for descriptor in default_skill_descriptors()
+        if descriptor.skill_id == "agentic_control.swarm_governor.v1"
+    )
+    steps = {step.step_id: step for step in descriptor.steps}
+    action_order = tuple(step.action_type for step in descriptor.steps)
+    step_order = tuple(step.step_id for step in descriptor.steps)
+
+    assert descriptor.effect_class is EffectClass.EXTERNAL_READ
+    assert descriptor.metadata["swarm_governor"] is True
+    assert descriptor.metadata["grants_new_capability_authority"] is False
+    assert descriptor.metadata["coordination_surfaces"] == (
+        "swarm_boundary_ref",
+        "swarm_plan_ref",
+        "role_assignment_hash",
+        "shard_boundaries",
+        "consensus_rule",
+    )
+    assert action_order == (
+        "agentic_control.mission.define",
+        "agentic_control.priority.rank",
+        "agentic_control.governance_gate.evaluate",
+        "agentic_control.resource_budget.bound",
+        "agentic_control.security_threat_model.build",
+        "agentic_control.swarm.coordinate",
+        "agentic_control.verification.plan",
+        "agentic_control.interrogation.plan",
+        "agentic_control.self_audit.refine",
+        "agentic_control.memory_admission.plan",
+    )
+    assert "agentic_control.code_change.plan" not in action_order
+    assert "agentic_control.evidence.append" not in action_order
+    assert all(
+        step_order.index(dependency) < step_order.index(step.step_id)
+        for step in descriptor.steps
+        for dependency in step.depends_on
+    )
+    assert steps["rank_swarm_work"].input_bindings["mission_contract_ref"] == (
+        "define_swarm_mission.mission_contract_ref"
+    )
+    assert steps["evaluate_swarm_governance"].input_bindings["priority_order_ref"] == (
+        "rank_swarm_work.swarm_priority_order_ref"
+    )
+    assert steps["bound_swarm_budget"].input_bindings["gate_decision_ref"] == (
+        "evaluate_swarm_governance.gate_decision_ref"
+    )
+    assert steps["build_swarm_threat_model"].input_bindings["swarm_boundary_ref"] == (
+        "define_swarm_mission.swarm_boundary_ref"
+    )
+    assert steps["build_swarm_threat_model"].input_bindings["budget_envelope_ref"] == (
+        "bound_swarm_budget.budget_envelope_ref"
+    )
+    assert steps["coordinate_swarm_plan"].input_bindings["threat_model_ref"] == (
+        "build_swarm_threat_model.threat_model_ref"
+    )
+    assert steps["coordinate_swarm_plan"].input_bindings["budget_envelope_ref"] == (
+        "bound_swarm_budget.budget_envelope_ref"
+    )
+    assert steps["plan_swarm_verification"].input_bindings["swarm_plan_ref"] == (
+        "coordinate_swarm_plan.swarm_plan_ref"
+    )
+    assert steps["plan_swarm_interrogation"].input_bindings["verification_plan_ref"] == (
+        "plan_swarm_verification.swarm_verification_plan_ref"
+    )
+    assert steps["refine_swarm_gaps"].input_bindings["swarm_plan_ref"] == (
+        "coordinate_swarm_plan.swarm_plan_ref"
+    )
+    assert steps["plan_swarm_memory_admission"].input_bindings["refinement_plan_ref"] == (
+        "refine_swarm_gaps.swarm_refinement_plan_ref"
+    )
+
+
 def test_agentic_control_skill_plans_telemetry_triage_before_code_release_and_evidence() -> None:
     descriptor = next(
         descriptor
@@ -579,4 +655,6 @@ def test_bootstrap_installs_default_skill_catalog() -> None:
     assert runtime.skill_registry.get("agentic_control.algorithm_governor.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.security_governor.v1").metadata["risk_floor"] == "medium"
     assert runtime.skill_registry.get("agentic_control.security_governor.v1").effect_class is EffectClass.EXTERNAL_READ
+    assert runtime.skill_registry.get("agentic_control.swarm_governor.v1").metadata["risk_floor"] == "medium"
+    assert runtime.skill_registry.get("agentic_control.swarm_governor.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.autonomous_operations.v1").metadata["risk_floor"] == "high"
