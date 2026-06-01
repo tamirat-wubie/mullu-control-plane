@@ -133,6 +133,11 @@ class UniversalActionResult:
     action_id: str
     blocked: bool
     block_reason: str
+    action_envelope: Mapping[str, Any]
+    trace_ref: str
+    admission_receipt_ref: str
+    execution_receipt_ref: str
+    closure_state: str
     goal_certificate: GoalCertificate
     world_certificate: WorldSupportCertificate
     plan_certificate: PlanCertificate | None = None
@@ -182,11 +187,15 @@ class UniversalActionKernel:
                 "route": request.dispatch_request.route,
             },
         )
+        trace_ref = _build_trace_ref(request=request, action_id=action_id)
         goal_certificate = self._build_goal_certificate(request, now)
         world_certificate = self._build_world_certificate(request, now)
         if not world_certificate.allows_execution:
             return self._blocked(
                 action_id=action_id,
+                request=request,
+                issued_at=now,
+                trace_ref=trace_ref,
                 block_reason=world_certificate.reason,
                 goal_certificate=goal_certificate,
                 world_certificate=world_certificate,
@@ -199,6 +208,9 @@ class UniversalActionKernel:
         if capability_decision.status is not CommandCapabilityAdmissionStatus.ACCEPTED:
             return self._blocked(
                 action_id=action_id,
+                request=request,
+                issued_at=now,
+                trace_ref=trace_ref,
                 block_reason="capability_admission_rejected",
                 goal_certificate=goal_certificate,
                 world_certificate=world_certificate,
@@ -214,6 +226,9 @@ class UniversalActionKernel:
         except (RuntimeCoreInvariantError, ValueError):
             return self._blocked(
                 action_id=action_id,
+                request=request,
+                issued_at=now,
+                trace_ref=trace_ref,
                 block_reason="governed_action_admission_rejected",
                 goal_certificate=goal_certificate,
                 world_certificate=world_certificate,
@@ -235,6 +250,9 @@ class UniversalActionKernel:
         if simulation_certificate.verdict.verdict_type in _BLOCKING_SIMULATION_VERDICTS:
             return self._blocked(
                 action_id=action_id,
+                request=request,
+                issued_at=now,
+                trace_ref=trace_ref,
                 block_reason=f"simulation_{simulation_certificate.verdict.verdict_type.value}",
                 goal_certificate=goal_certificate,
                 world_certificate=world_certificate,
@@ -261,6 +279,27 @@ class UniversalActionKernel:
             action_id=action_id,
             blocked=dispatch_result.blocked,
             block_reason=dispatch_result.block_reason,
+            action_envelope=_build_action_envelope(
+                request=request,
+                issued_at=now,
+                capability_decision=capability_decision,
+            ),
+            trace_ref=trace_ref,
+            admission_receipt_ref=_build_admission_receipt_ref(
+                action_id=action_id,
+                trace_ref=trace_ref,
+                decision_status="block" if dispatch_result.blocked else "allow",
+            ),
+            execution_receipt_ref=_build_execution_receipt_ref(
+                request=request,
+                trace_ref=trace_ref,
+                dispatch_result=dispatch_result,
+            ),
+            closure_state=_build_closure_state(
+                blocked=dispatch_result.blocked,
+                dispatch_result=dispatch_result,
+                terminal_certificate=terminal_certificate,
+            ),
             goal_certificate=goal_certificate,
             world_certificate=world_certificate,
             plan_certificate=plan_certificate,
@@ -404,6 +443,9 @@ class UniversalActionKernel:
         self,
         *,
         action_id: str,
+        request: UniversalActionRequest,
+        issued_at: str,
+        trace_ref: str,
         block_reason: str,
         goal_certificate: GoalCertificate,
         world_certificate: WorldSupportCertificate,
@@ -416,6 +458,19 @@ class UniversalActionKernel:
             action_id=action_id,
             blocked=True,
             block_reason=block_reason,
+            action_envelope=_build_action_envelope(
+                request=request,
+                issued_at=issued_at,
+                capability_decision=capability_decision,
+            ),
+            trace_ref=trace_ref,
+            admission_receipt_ref=_build_admission_receipt_ref(
+                action_id=action_id,
+                trace_ref=trace_ref,
+                decision_status="block",
+            ),
+            execution_receipt_ref="",
+            closure_state="blocked",
             goal_certificate=goal_certificate,
             world_certificate=world_certificate,
             plan_certificate=plan_certificate,
@@ -555,6 +610,11 @@ class UniversalActionKernel:
             "action_id": result.action_id,
             "blocked": result.blocked,
             "block_reason": result.block_reason,
+            "action_envelope": dict(result.action_envelope),
+            "trace_ref": result.trace_ref,
+            "admission_receipt_ref": result.admission_receipt_ref,
+            "execution_receipt_ref": result.execution_receipt_ref,
+            "closure_state": result.closure_state,
             "goal_certificate_id": result.goal_certificate.certificate_id,
             "world_certificate_id": result.world_certificate.certificate_id,
             "plan_certificate_id": result.plan_certificate.certificate_id if result.plan_certificate else "",
@@ -576,6 +636,11 @@ class UniversalActionKernel:
             action_id=result.action_id,
             blocked=result.blocked,
             block_reason=result.block_reason,
+            action_envelope=result.action_envelope,
+            trace_ref=result.trace_ref,
+            admission_receipt_ref=result.admission_receipt_ref,
+            execution_receipt_ref=result.execution_receipt_ref,
+            closure_state=result.closure_state,
             goal_certificate=result.goal_certificate,
             world_certificate=result.world_certificate,
             plan_certificate=result.plan_certificate,
@@ -626,6 +691,88 @@ def _text_tuple_from_metadata(metadata: Mapping[str, Any], key: str) -> tuple[st
     if not isinstance(value, (tuple, list)):
         return ()
     return tuple(item for item in value if isinstance(item, str) and item.strip())
+
+
+def _build_action_envelope(
+    *,
+    request: UniversalActionRequest,
+    issued_at: str,
+    capability_decision: CommandCapabilityAdmissionDecision | None,
+) -> Mapping[str, Any]:
+    capability_refs = (
+        (capability_decision.capability_id,)
+        if capability_decision is not None and capability_decision.capability_id
+        else ()
+    )
+    return {
+        "actor": request.actor_id,
+        "tenant": request.tenant_id,
+        "intent": request.intent_id,
+        "target": request.dispatch_request.route,
+        "risk": request.risk_level.value,
+        "requested_at": issued_at,
+        "approval_refs": _text_tuple_from_metadata(request.metadata, "approval_refs"),
+        "evidence_refs": _text_tuple_from_metadata(request.metadata, "evidence_refs"),
+        "capability_refs": capability_refs,
+    }
+
+
+def _build_trace_ref(*, request: UniversalActionRequest, action_id: str) -> str:
+    return stable_identifier(
+        "causal-decision-trace",
+        {
+            "action_id": action_id,
+            "tenant_id": request.tenant_id,
+            "intent_id": request.intent_id,
+            "route": request.dispatch_request.route,
+        },
+    )
+
+
+def _build_admission_receipt_ref(*, action_id: str, trace_ref: str, decision_status: str) -> str:
+    return stable_identifier(
+        "universal-action-admission-receipt",
+        {
+            "action_id": action_id,
+            "trace_ref": trace_ref,
+            "decision_status": decision_status,
+        },
+    )
+
+
+def _build_execution_receipt_ref(
+    *,
+    request: UniversalActionRequest,
+    trace_ref: str,
+    dispatch_result: GovernedDispatchResult,
+) -> str:
+    if dispatch_result.blocked or dispatch_result.execution_result is None:
+        return ""
+    return stable_identifier(
+        "universal-action-execution-receipt",
+        {
+            "tenant_id": request.tenant_id,
+            "intent_id": request.intent_id,
+            "trace_ref": trace_ref,
+            "execution_id": dispatch_result.execution_result.execution_id,
+            "ledger_hash": dispatch_result.ledger_hash,
+        },
+    )
+
+
+def _build_closure_state(
+    *,
+    blocked: bool,
+    dispatch_result: GovernedDispatchResult | None,
+    terminal_certificate: TerminalClosureCertificate | None,
+) -> str:
+    if terminal_certificate is not None:
+        return terminal_certificate.disposition.value
+    if blocked:
+        return "blocked"
+    if dispatch_result is not None:
+        return "dispatched"
+    return "pending"
 
 
 def _build_verification_result(

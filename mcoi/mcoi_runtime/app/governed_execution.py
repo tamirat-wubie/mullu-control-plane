@@ -50,6 +50,11 @@ class UniversalCommandProofView:
     action_id: str
     blocked: bool
     block_reason: str
+    action_envelope: Mapping[str, Any]
+    trace_ref: str
+    admission_receipt_ref: str
+    execution_receipt_ref: str
+    closure_state: str
     proof_hash: str
     capability_id: str
     dispatch_ledger_hash: str
@@ -298,6 +303,11 @@ def universal_command_proof_view(
         action_id=str(universal_detail.get("action_id", "")),
         blocked=bool(universal_detail.get("blocked", False)),
         block_reason=str(universal_detail.get("block_reason", "")),
+        action_envelope=_mapping_detail(universal_detail.get("action_envelope")),
+        trace_ref=str(universal_detail.get("trace_ref", "")),
+        admission_receipt_ref=str(universal_detail.get("admission_receipt_ref", "")),
+        execution_receipt_ref=str(universal_detail.get("execution_receipt_ref", "")),
+        closure_state=str(universal_detail.get("closure_state", "")),
         proof_hash=str(universal_detail.get("proof_hash", "")),
         capability_id=str(universal_detail.get("capability_id", "")),
         dispatch_ledger_hash=str(universal_detail.get("dispatch_ledger_hash", "")),
@@ -382,6 +392,11 @@ def _universal_action_transition_detail(result: UniversalActionResult) -> dict[s
         "action_id": result.action_id,
         "blocked": result.blocked,
         "block_reason": result.block_reason,
+        "action_envelope": dict(result.action_envelope),
+        "trace_ref": result.trace_ref,
+        "admission_receipt_ref": result.admission_receipt_ref,
+        "execution_receipt_ref": result.execution_receipt_ref,
+        "closure_state": result.closure_state,
         "proof_hash": result.proof_hash,
         "goal_certificate_id": result.goal_certificate.certificate_id,
         "world_certificate_id": result.world_certificate.certificate_id,
@@ -398,6 +413,12 @@ def _universal_action_transition_detail(result: UniversalActionResult) -> dict[s
         ),
         "learning_admission_id": result.learning_decision.admission_id if result.learning_decision else "",
     }
+
+
+def _mapping_detail(value: Any) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        return {}
+    return dict(value)
 
 
 def governed_operator_mil_dispatch(
