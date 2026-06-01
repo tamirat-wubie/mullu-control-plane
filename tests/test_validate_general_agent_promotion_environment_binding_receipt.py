@@ -40,6 +40,7 @@ def test_validate_environment_binding_receipt_accepts_ready_receipt(tmp_path: Pa
     assert emit_errors == ()
     assert result.valid is True
     assert result.ready is True
+    assert result.receipt_path == "binding-receipt.json"
     assert result.binding_count == 9
     assert result.missing_bindings == ()
 
@@ -112,7 +113,9 @@ def test_validate_environment_binding_receipt_cli_outputs_json(tmp_path: Path, c
     assert exit_code == 0
     assert payload["valid"] is True
     assert payload["ready"] is True
+    assert payload["receipt_path"] == "binding-receipt.json"
     assert payload["binding_count"] == 9
+    assert str(tmp_path) not in json.dumps(payload, sort_keys=True)
 
 
 def test_validate_environment_binding_receipt_missing_file_error_is_bounded(tmp_path: Path) -> None:
@@ -122,7 +125,9 @@ def test_validate_environment_binding_receipt_missing_file_error_is_bounded(tmp_
     serialized_errors = json.dumps(result.errors, sort_keys=True)
 
     assert result.valid is False
+    assert result.receipt_path == "secret-receipt-path.json"
     assert "environment binding receipt could not be read" in result.errors
+    assert str(tmp_path) not in json.dumps(result.as_dict(), sort_keys=True)
     assert "secret-receipt-path" not in serialized_errors
 
 
@@ -134,7 +139,9 @@ def test_validate_environment_binding_receipt_json_parse_error_is_bounded(tmp_pa
     serialized_errors = json.dumps(result.errors, sort_keys=True)
 
     assert result.valid is False
+    assert result.receipt_path == "binding-receipt.json"
     assert "environment binding receipt must be JSON" in result.errors
+    assert str(tmp_path) not in json.dumps(result.as_dict(), sort_keys=True)
     assert "secret-json-token" not in serialized_errors
 
 
