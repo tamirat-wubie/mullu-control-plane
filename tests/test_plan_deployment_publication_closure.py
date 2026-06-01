@@ -37,7 +37,7 @@ def test_deployment_closure_plan_maps_publication_blockers(tmp_path: Path) -> No
     plan = plan_deployment_publication_closure(
         readiness_path,
         deployment_status_path,
-        upstream_blocker_receipt_path=tmp_path / "missing_upstream_receipt.json",
+        **_missing_receipt_paths(tmp_path),
     )
     actions_by_blocker = {action.blocker: action for action in plan.actions}
 
@@ -65,7 +65,7 @@ def test_deployment_closure_plan_preserves_unknown_deployment_blocker(tmp_path: 
 
     plan = plan_deployment_publication_closure(
         readiness_path,
-        upstream_blocker_receipt_path=tmp_path / "missing_upstream_receipt.json",
+        **_missing_receipt_paths(tmp_path),
     )
     action = plan.actions[0]
 
@@ -105,7 +105,7 @@ def test_deployment_closure_plan_maps_gateway_readiness_steps(tmp_path: Path) ->
 
     plan = plan_deployment_publication_closure(
         readiness_path,
-        upstream_blocker_receipt_path=tmp_path / "missing_upstream_receipt.json",
+        **_missing_receipt_paths(tmp_path),
     )
     actions_by_blocker = {action.blocker: action for action in plan.actions}
 
@@ -160,7 +160,7 @@ def test_deployment_closure_plan_maps_responsibility_debt_blockers(tmp_path: Pat
 
     plan = plan_deployment_publication_closure(
         readiness_path,
-        upstream_blocker_receipt_path=tmp_path / "missing_upstream_receipt.json",
+        **_missing_receipt_paths(tmp_path),
     )
     actions_by_blocker = {action.blocker: action for action in plan.actions}
 
@@ -196,7 +196,7 @@ def test_deployment_closure_plan_maps_kubeconfig_secret_step(tmp_path: Path) -> 
 
     plan = plan_deployment_publication_closure(
         readiness_path,
-        upstream_blocker_receipt_path=tmp_path / "missing_upstream_receipt.json",
+        **_missing_receipt_paths(tmp_path),
     )
     action = plan.actions[0]
 
@@ -239,6 +239,8 @@ def test_deployment_closure_plan_maps_upstream_blocker_receipt(tmp_path: Path) -
     plan = plan_deployment_publication_closure(
         readiness_path,
         upstream_blocker_receipt_path=upstream_receipt_path,
+        dns_target_binding_receipt_path=tmp_path / "missing_dns_target_binding_receipt.json",
+        dns_resolution_receipt_path=tmp_path / "missing_dns_resolution_receipt.json",
     )
     action = plan.actions[0]
 
@@ -260,7 +262,7 @@ def test_deployment_closure_plan_writer_and_cli_emit_json(tmp_path: Path, capsys
     missing_upstream_receipt_path = tmp_path / "missing_upstream_receipt.json"
     plan = plan_deployment_publication_closure(
         readiness_path,
-        upstream_blocker_receipt_path=missing_upstream_receipt_path,
+        **_missing_receipt_paths(tmp_path),
     )
 
     written = write_deployment_publication_closure_plan(plan, output_path)
@@ -270,6 +272,10 @@ def test_deployment_closure_plan_writer_and_cli_emit_json(tmp_path: Path, capsys
             str(readiness_path),
             "--upstream-blocker-receipt",
             str(missing_upstream_receipt_path),
+            "--dns-target-binding-receipt",
+            str(tmp_path / "missing_dns_target_binding_receipt.json"),
+            "--dns-resolution-receipt",
+            str(tmp_path / "missing_dns_resolution_receipt.json"),
             "--output",
             str(output_path),
             "--json",
@@ -284,6 +290,55 @@ def test_deployment_closure_plan_writer_and_cli_emit_json(tmp_path: Path, capsys
     assert payload["action_count"] == 2
     assert stdout_payload["plan_id"] == payload["plan_id"]
     assert "production_health_not_declared" in payload["blockers"]
+
+
+def test_deployment_closure_plan_maps_not_ready_dns_receipts(tmp_path: Path) -> None:
+    readiness_path = tmp_path / "general_agent_promotion_readiness.json"
+    dns_target_receipt_path = tmp_path / "gateway_dns_target_binding_receipt.json"
+    dns_resolution_receipt_path = tmp_path / "gateway_dns_resolution_receipt.json"
+    readiness_path.write_text(json.dumps({"ready": False, "blockers": []}), encoding="utf-8")
+    dns_target_receipt_path.write_text(json.dumps(_dns_target_receipt(ready=False)), encoding="utf-8")
+    dns_resolution_receipt_path.write_text(
+        json.dumps(_dns_resolution_receipt(resolved=False)),
+        encoding="utf-8",
+    )
+
+    plan = plan_deployment_publication_closure(
+        readiness_path,
+        upstream_blocker_receipt_path=tmp_path / "missing_upstream_receipt.json",
+        dns_target_binding_receipt_path=dns_target_receipt_path,
+        dns_resolution_receipt_path=dns_resolution_receipt_path,
+    )
+    action = plan.actions[0]
+
+    assert plan.action_count == 1
+    assert plan.blockers == ("deployment_dns_not_verified",)
+    assert action.action_id == "verify-gateway-dns"
+    assert action.action_type == "dns-verification"
+    assert action.approval_required is True
+    assert "gateway_dns_target_binding_receipt" in action.evidence_required
+    assert "dns_resolution_receipt_validation" in action.evidence_required
+
+
+def test_deployment_closure_plan_skips_ready_dns_receipts(tmp_path: Path) -> None:
+    readiness_path = tmp_path / "general_agent_promotion_readiness.json"
+    dns_target_receipt_path = tmp_path / "gateway_dns_target_binding_receipt.json"
+    dns_resolution_receipt_path = tmp_path / "gateway_dns_resolution_receipt.json"
+    readiness_path.write_text(json.dumps({"ready": False, "blockers": []}), encoding="utf-8")
+    dns_target_receipt_path.write_text(json.dumps(_dns_target_receipt(ready=True)), encoding="utf-8")
+    dns_resolution_receipt_path.write_text(json.dumps(_dns_resolution_receipt(resolved=True)), encoding="utf-8")
+
+    plan = plan_deployment_publication_closure(
+        readiness_path,
+        upstream_blocker_receipt_path=tmp_path / "missing_upstream_receipt.json",
+        dns_target_binding_receipt_path=dns_target_receipt_path,
+        dns_resolution_receipt_path=dns_resolution_receipt_path,
+    )
+
+    assert plan.action_count == 0
+    assert plan.blockers == ()
+    assert plan.source_ready is False
+    assert str(tmp_path) not in json.dumps(plan.as_dict(), sort_keys=True)
 
 
 def test_deployment_closure_plan_rejects_nonfinite_readiness_json(tmp_path: Path) -> None:
@@ -306,4 +361,49 @@ def _blocked_readiness() -> dict[str, object]:
             "deployment_witness_not_published",
             "production_health_not_declared",
         ],
+    }
+
+
+def _missing_receipt_paths(tmp_path: Path) -> dict[str, Path]:
+    return {
+        "upstream_blocker_receipt_path": tmp_path / "missing_upstream_receipt.json",
+        "dns_target_binding_receipt_path": tmp_path / "missing_dns_target_binding_receipt.json",
+        "dns_resolution_receipt_path": tmp_path / "missing_dns_resolution_receipt.json",
+    }
+
+
+def _dns_target_receipt(*, ready: bool) -> dict[str, object]:
+    return {
+        "receipt_id": "gateway-dns-target-binding-0123456789abcdef",
+        "gateway_host": "api.mullusi.com",
+        "gateway_url": "https://api.mullusi.com",
+        "expected_environment": "pilot",
+        "record_type": "CNAME" if ready else "",
+        "target": "gateway-origin.example.net" if ready else "",
+        "target_kind": "hostname" if ready else "missing",
+        "provider": "example-dns" if ready else "",
+        "binding_state": "bound" if ready else "missing-target",
+        "ready": ready,
+        "checked_at_utc": "2026-06-01T00:00:00Z",
+        "next_action": (
+            "publish DNS record and rerun gateway DNS resolution receipt"
+            if ready
+            else "select gateway origin target before DNS publication"
+        ),
+    }
+
+
+def _dns_resolution_receipt(*, resolved: bool) -> dict[str, object]:
+    return {
+        "receipt_id": "gateway-dns-resolution-0123456789abcdef",
+        "host": "api.mullusi.com",
+        "checked_at_utc": "2026-06-01T00:00:00Z",
+        "resolved": resolved,
+        "addresses": ["203.0.113.10"] if resolved else [],
+        "error": None if resolved else "resolution_error",
+        "next_action": (
+            "rerun deployment witness preflight with endpoint probes enabled"
+            if resolved
+            else "publish a DNS A, AAAA, or CNAME record for the gateway host, then rerun this receipt"
+        ),
     }
