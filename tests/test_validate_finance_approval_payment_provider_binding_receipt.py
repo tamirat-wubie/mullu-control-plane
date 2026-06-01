@@ -40,6 +40,7 @@ def test_validate_payment_provider_binding_receipt_accepts_ready_receipt(tmp_pat
     assert result.valid is True
     assert result.ready is True
     assert result.provider == "stripe"
+    assert result.receipt_path == "finance-payment-provider-binding.json"
     assert result.provider_binding_ref.startswith("provider-binding:stripe:")
     assert result.present_binding_names == ("STRIPE_API_KEY",)
 
@@ -162,6 +163,8 @@ def test_validate_payment_provider_binding_receipt_missing_file_error_is_bounded
 
     assert result.valid is False
     assert "finance payment provider binding receipt could not be read" in result.errors
+    assert result.receipt_path == "secret-receipt-path.json"
+    assert str(tmp_path) not in json.dumps(result.as_dict(), sort_keys=True)
     assert "secret-receipt-path" not in serialized_errors
 
 
@@ -174,4 +177,6 @@ def test_validate_payment_provider_binding_receipt_json_parse_error_is_bounded(t
 
     assert result.valid is False
     assert "finance payment provider binding receipt must be JSON" in result.errors
+    assert result.receipt_path == "finance-payment-provider-binding.json"
+    assert str(tmp_path) not in json.dumps(result.as_dict(), sort_keys=True)
     assert "secret-json-token" not in serialized_errors

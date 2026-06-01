@@ -38,6 +38,7 @@ def test_validate_finance_binding_receipt_accepts_ready_receipt(tmp_path: Path) 
     assert emit_errors == ()
     assert result.valid is True
     assert result.ready is True
+    assert result.receipt_path == "finance-email-calendar-binding.json"
     assert result.binding_count == 10
     assert result.present_binding_names == (
         "MULLU_EMAIL_CALENDAR_WORKER_URL",
@@ -191,6 +192,8 @@ def test_validate_finance_binding_receipt_missing_file_error_is_bounded(tmp_path
 
     assert result.valid is False
     assert "finance email/calendar binding receipt could not be read" in result.errors
+    assert result.receipt_path == "secret-receipt-path.json"
+    assert str(tmp_path) not in json.dumps(result.as_dict(), sort_keys=True)
     assert "secret-receipt-path" not in serialized_errors
 
 
@@ -203,6 +206,8 @@ def test_validate_finance_binding_receipt_json_parse_error_is_bounded(tmp_path: 
 
     assert result.valid is False
     assert "finance email/calendar binding receipt must be JSON" in result.errors
+    assert result.receipt_path == "finance-email-calendar-binding.json"
+    assert str(tmp_path) not in json.dumps(result.as_dict(), sort_keys=True)
     assert "secret-json-token" not in serialized_errors
 
 
