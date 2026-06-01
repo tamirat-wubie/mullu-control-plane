@@ -143,6 +143,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             "universal_action_orchestration_validation_receipt_contract",
             (python_executable, "scripts/validate_universal_action_orchestration_receipt_contract.py"),
         ),
+        CheckCommand(
+            "universal_action_orchestration_validation_receipt_example",
+            (python_executable, "scripts/validate_universal_action_orchestration_receipt.py"),
+        ),
     )
 
 

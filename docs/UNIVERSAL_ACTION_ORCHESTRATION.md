@@ -2,7 +2,7 @@
 
 Purpose: define the governed v1 action-shape contract for effect-bearing control-plane actions.
 Governance scope: OCE action envelope completeness, RAG trace-to-receipt linkage, CDCV no-execution-by-claim causality, CQTE decidable admission shape, UWMA fixture witness anchoring, and PRS terminal closure state.
-Dependencies: `schemas/universal_action_orchestration.schema.json`, `schemas/universal_action_orchestration_validation_receipt.schema.json`, `scripts/validate_universal_action_orchestration.py`, `scripts/validate_universal_action_orchestration_receipt_contract.py`, `mcoi/mcoi_runtime/core/universal_action_kernel.py`, and examples in `examples/`.
+Dependencies: `schemas/universal_action_orchestration.schema.json`, `schemas/universal_action_orchestration_validation_receipt.schema.json`, `scripts/validate_universal_action_orchestration.py`, `scripts/validate_universal_action_orchestration_receipt_contract.py`, `scripts/validate_universal_action_orchestration_receipt.py`, `docs/universal-action-orchestration-validation-receipt-example.json`, `mcoi/mcoi_runtime/core/universal_action_kernel.py`, and examples in `examples/`.
 Invariants: UAO v1 validates existence and shape only; it does not execute actions, dispatch workers, call external systems, send messages, move money, mutate schedules, or write memory.
 
 ## Architecture
@@ -11,6 +11,7 @@ UAO v1 hardens a core idea into repository law:
 
 ```text
 passive doc -> schema contract -> example fixtures -> validator -> workspace preflight required gate
+validator -> validation receipt -> receipt replay -> workspace preflight required gate
 ```
 
 The v1 record is a non-executing Universal Action Envelope plus admission, trace, receipt, and closure references:
@@ -85,8 +86,10 @@ Run:
 ```powershell
 python scripts/validate_universal_action_orchestration.py
 python scripts/validate_universal_action_orchestration.py --json --receipt-path .tmp/uao-validation-receipt.json
+python scripts/validate_universal_action_orchestration_receipt.py --receipt .tmp/uao-validation-receipt.json
 python -m pytest mcoi/tests/test_universal_action_kernel.py -q
 python scripts/validate_universal_action_orchestration_receipt_contract.py
+python scripts/validate_universal_action_orchestration_receipt.py
 python -m pytest tests/test_gateway/test_webhooks.py -q
 python -m unittest discover -s tests -p "test_validate_universal_action_orchestration.py"
 python scripts/run_workspace_governance_checks.py
@@ -96,3 +99,4 @@ The workspace preflight includes the validator, so UAO drift blocks repository c
 The optional JSON receipt is read-only and records validity, check names, workspace-relative example path labels, error counts, and bounded errors for autonomous preflight consumers.
 The validation receipt has its own schema contract and remains non-terminal closure evidence: `terminal_closure_required = true` and `receipt_is_not_terminal_closure = true`.
 The kernel export and gateway replay tests cover allowed execution, blocked admission, missing-record 404 behavior, and schema plus semantic validation.
+The saved receipt replay validator admits persisted UAO validation receipts only when the recorded status is passed and the check order, counts, path labels, and non-terminal closure flags still satisfy the same contract.
