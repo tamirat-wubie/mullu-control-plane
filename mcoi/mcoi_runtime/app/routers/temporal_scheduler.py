@@ -13,9 +13,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.contracts.temporal_runtime import TemporalActionRequest, TemporalRiskLevel
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
@@ -91,8 +92,9 @@ def _receipt_to_body(receipt: Any) -> dict[str, Any]:
 
 
 @router.post("/api/v1/temporal/schedules")
-def create_temporal_schedule(req: TemporalScheduleRequest):
+def create_temporal_schedule(req: TemporalScheduleRequest, request: Request):
     """Create a governed temporal action schedule."""
+    enforce_tenant_scope(request, req.tenant_id)
     deps.metrics.inc("requests_governed")
     try:
         risk = TemporalRiskLevel(req.risk)

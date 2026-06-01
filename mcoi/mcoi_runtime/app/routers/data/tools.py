@@ -3,9 +3,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.app.routers.data._common import _certify_action_proof, deps
 from mcoi_runtime.core.tool_use import certify_tool_capability_policy_receipt
 
@@ -34,8 +35,9 @@ def list_tools(category: str | None = None):
 
 
 @router.post("/api/v1/tools/invoke")
-def invoke_tool(req: ToolInvokeRequest):
+def invoke_tool(req: ToolInvokeRequest, request: Request):
     """Invoke a registered tool."""
+    enforce_tenant_scope(request, req.tenant_id)
     deps.metrics.inc("requests_governed")
     tool = deps.tool_registry.get(req.tool_id)
     result = deps.tool_registry.invoke(req.tool_id, req.arguments, tenant_id=req.tenant_id)

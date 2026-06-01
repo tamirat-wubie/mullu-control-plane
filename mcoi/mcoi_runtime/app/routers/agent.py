@@ -202,8 +202,9 @@ def list_traces(limit: int = 50):
 
 
 @router.post("/api/v1/chain/execute")
-def execute_chain(req: ChainRequest):
+def execute_chain(req: ChainRequest, request: Request):
     """Execute a multi-agent chain."""
+    enforce_tenant_scope(request, req.tenant_id)
     from mcoi_runtime.core.agent_chain import ChainStep
     deps.metrics.inc("requests_governed")
     steps = [ChainStep(step_id=s.step_id, name=s.name, prompt_template=s.prompt_template, on_failure=s.on_failure) for s in req.steps]
@@ -232,8 +233,9 @@ def chain_history(limit: int = 50):
 
 
 @router.post("/api/v1/queue/submit")
-def queue_submit(req: QueueSubmitRequest):
+def queue_submit(req: QueueSubmitRequest, request: Request):
     """Submit a task to the async queue."""
+    enforce_tenant_scope(request, req.tenant_id)
     deps.metrics.inc("requests_governed")
     task = deps.task_queue.submit(req.task_id, req.payload, priority=req.priority, tenant_id=req.tenant_id)
     receipt = deps.task_queue.mutation_receipts(limit=1)[-1]

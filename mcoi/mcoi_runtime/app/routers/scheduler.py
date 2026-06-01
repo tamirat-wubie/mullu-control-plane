@@ -7,9 +7,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.app.routers.deps import deps
 
 router = APIRouter()
@@ -40,8 +41,9 @@ class ExecuteJobRequest(BaseModel):
 
 
 @router.post("/api/v1/scheduler/jobs")
-def schedule_job(req: ScheduleJobRequest):
+def schedule_job(req: ScheduleJobRequest, request: Request):
     """Schedule a new governed background job."""
+    enforce_tenant_scope(request, req.tenant_id)
     from mcoi_runtime.core.scheduler import JobSchedule, ScheduledJob
     deps.metrics.inc("requests_governed")
     try:

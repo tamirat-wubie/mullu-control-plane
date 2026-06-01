@@ -15,9 +15,10 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.app.routers.deps import deps
 
 router = APIRouter()
@@ -184,8 +185,9 @@ def agent_heartbeat(req: AgentHeartbeatRequest):
 
 
 @router.post("/api/v1/agent/action-request")
-def request_action(req: ActionRequest):
+def request_action(req: ActionRequest, request: Request):
     """Request permission to perform an action. Goes through full guard chain."""
+    enforce_tenant_scope(request, req.tenant_id)
     deps.metrics.inc("requests_governed")
 
     # Verify agent exists
