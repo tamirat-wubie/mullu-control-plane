@@ -41,6 +41,7 @@ from mcoi_runtime.contracts.execution import (
     ExecutionResult,
 )
 from mcoi_runtime.contracts.governed_capability_fabric import (
+    CapabilityAuthorityPolicy,
     CapabilityCertificationStatus,
     CapabilityRegistryEntry,
     DomainCapsule,
@@ -321,6 +322,35 @@ def test_universal_action_kernel_blocks_self_approval_before_plan() -> None:
             metadata={
                 "approval_refs": ("approval-self",),
                 "approval_actor_ids": ("actor-1",),
+            },
+        )
+    )
+
+    assert result.blocked is True
+    assert result.block_reason == "governed_action_admission_rejected"
+    assert result.capability_decision is not None
+    assert result.governed_action is None
+    assert result.plan_certificate is None
+    assert result.dispatch_result is None
+    assert executor.calls == 0
+    assert result.closure_state == "closed_blocked"
+    assert result.proof_hash.startswith("universal-action-proof-")
+
+
+def test_universal_action_kernel_blocks_unattributed_sod_approval_refs_before_plan() -> None:
+    authority_policy = CapabilityAuthorityPolicy(
+        required_roles=(REQUIRED_ROLE,),
+        approval_chain=(REQUIRED_ROLE, "security_reviewer"),
+        separation_of_duty=True,
+    )
+    kernel, executor = _kernel_with_capability(authority_policy=authority_policy)
+
+    result = kernel.run(
+        _action_request(
+            intent_id="intent-unattributed-approval-block",
+            metadata={
+                "approval_refs": ("approval-1", "approval-2"),
+                "approval_actor_ids": ("manager-1",),
             },
         )
     )
@@ -1333,8 +1363,12 @@ def test_universal_command_orchestration_record_replays_blocked_events() -> None
 def _kernel_with_capability(
     *,
     world_state: WorldStateEngine | None = None,
+    authority_policy: CapabilityAuthorityPolicy | None = None,
 ) -> tuple[UniversalActionKernel, FakeExecutor]:
-    return _kernel(gate=_capability_admission_gate(), world_state=world_state)
+    return _kernel(
+        gate=_capability_admission_gate(authority_policy=authority_policy),
+        world_state=world_state,
+    )
 
 
 def _kernel_without_capability() -> tuple[UniversalActionKernel, FakeExecutor]:
@@ -1410,10 +1444,13 @@ def _dispatch_request(goal_id: str = "goal-1") -> DispatchRequest:
     )
 
 
-def _capability_admission_gate() -> CommandCapabilityAdmissionGate:
+def _capability_admission_gate(
+    *,
+    authority_policy: CapabilityAuthorityPolicy | None = None,
+) -> CommandCapabilityAdmissionGate:
     registry = GovernedCapabilityRegistry(clock=_clock)
     compiler = DomainCapsuleCompiler(clock=_clock)
-    entry = _certified_entry("shell_command")
+    entry = _certified_entry("shell_command", authority_policy=authority_policy)
     capsule = _certified_capsule("shell_command")
     compilation = compiler.compile(capsule=capsule, registry_entries=(entry,))
     installation = registry.install(compilation, (entry,))
@@ -1421,7 +1458,11 @@ def _capability_admission_gate() -> CommandCapabilityAdmissionGate:
     return CommandCapabilityAdmissionGate(registry=registry, clock=_clock)
 
 
-def _certified_entry(capability_id: str) -> CapabilityRegistryEntry:
+def _certified_entry(
+    capability_id: str,
+    *,
+    authority_policy: CapabilityAuthorityPolicy | None = None,
+) -> CapabilityRegistryEntry:
     entry = CapabilityRegistryEntry.from_mapping(
         _fixture("capability_registry_entry.json")
     )
@@ -1433,7 +1474,7 @@ def _certified_entry(capability_id: str) -> CapabilityRegistryEntry:
         output_schema_ref=entry.output_schema_ref,
         effect_model=entry.effect_model,
         evidence_model=entry.evidence_model,
-        authority_policy=entry.authority_policy,
+        authority_policy=authority_policy or entry.authority_policy,
         isolation_profile=entry.isolation_profile,
         recovery_plan=entry.recovery_plan,
         cost_model=entry.cost_model,
