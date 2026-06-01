@@ -7,11 +7,13 @@ Governance scope: OCE PR evidence completeness, RAG PR-to-artifact linkage,
 CDCV merge gate causality, CQTE decidable CI contexts, UWMA CI receipt
 anchoring, and PRS closure evidence.
 Dependencies: Python standard library, .github/pull_request_template.md,
-.github/workflows/ci.yml, docs/SDLC_PR_ENFORCEMENT.md, and SDLC validators.
+.github/workflows/ci.yml, docs/SDLC_PR_ENFORCEMENT.md, branch ruleset
+witness, and SDLC validators.
 Invariants:
   - Validation is read-only and deterministic.
   - SDLC governance has a stable CI context.
   - Build Verification depends on the SDLC governance gate.
+  - Branch protection witness retains required status contexts.
   - PR evidence includes rollback or incident handoff for effect-bearing work.
   - Validation receipt writes cannot escape the workspace root.
 """
@@ -31,6 +33,7 @@ PR_TEMPLATE_PATH = WORKSPACE_ROOT / ".github" / "pull_request_template.md"
 CI_WORKFLOW_PATH = WORKSPACE_ROOT / ".github" / "workflows" / "ci.yml"
 ENFORCEMENT_DOC_PATH = WORKSPACE_ROOT / "docs" / "SDLC_PR_ENFORCEMENT.md"
 RELEASE_POLICY_PATH = WORKSPACE_ROOT / "docs" / "SDLC_RELEASE_POLICY.md"
+RULESET_WITNESS_PATH = WORKSPACE_ROOT / "docs" / "main-protection-ruleset-witness.json"
 
 SDLC_COMMANDS = (
     "python scripts/validate_sdlc_artifact.py",
@@ -40,6 +43,13 @@ SDLC_COMMANDS = (
     "python scripts/validate_sdlc_pr_enforcement.py",
     "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json",
 )
+REQUIRED_RULESET_STATUS_CONTEXTS = (
+    "Rust Tests",
+    "Schema Validation",
+    "Python Tests (ubuntu-latest, Python 3.13)",
+    "SDLC Governance Gate",
+)
+REQUIRED_RULESET_TYPES = ("deletion", "non_fast_forward", "pull_request", "required_status_checks")
 SDLC_ARTIFACT_TERMS = (
     "Change request",
     "Requirement",
@@ -63,6 +73,7 @@ class EnforcementTexts:
     ci_workflow: str
     enforcement_doc: str
     release_policy: str
+    ruleset_witness: dict[str, Any]
 
 
 def load_text_file(path: Path) -> str:
@@ -75,6 +86,19 @@ def load_text_file(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def load_json_object(path: Path) -> dict[str, Any]:
+    """Load one UTF-8 JSON object file."""
+
+    if not path.exists():
+        raise FileNotFoundError(f"missing SDLC enforcement file: {_label_path(path)}")
+    if not path.is_file():
+        raise IsADirectoryError(f"SDLC enforcement path is not a file: {_label_path(path)}")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"SDLC enforcement JSON must be an object: {_label_path(path)}")
+    return payload
+
+
 def load_enforcement_texts() -> EnforcementTexts:
     """Load repository SDLC PR enforcement surfaces."""
 
@@ -83,6 +107,7 @@ def load_enforcement_texts() -> EnforcementTexts:
         ci_workflow=load_text_file(CI_WORKFLOW_PATH),
         enforcement_doc=load_text_file(ENFORCEMENT_DOC_PATH),
         release_policy=load_text_file(RELEASE_POLICY_PATH),
+        ruleset_witness=load_json_object(RULESET_WITNESS_PATH),
     )
 
 
@@ -96,6 +121,7 @@ def validate_pr_template(template_text: str) -> list[str]:
         "Gate decision envelope",
         "Inventory closure",
         "Workspace preflight receipt",
+        "Branch protection witness",
         "Closure receipt retains every upstream UAO, causal trace, implementation receipt, transition receipt, recovery handoff receipt, and receipt reference",
         "Rollback or incident handoff path",
     )
@@ -117,6 +143,7 @@ def validate_ci_workflow(workflow_text: str) -> list[str]:
         "tests/test_validate_sdlc_pr_enforcement.py",
     )
     required_terms += SDLC_COMMANDS
+    required_terms += REQUIRED_RULESET_STATUS_CONTEXTS
     errors.extend(_missing_terms("ci_workflow", workflow_text, required_terms))
     if "needs: [python-required-status, typescript-sdk, rust-tests, schema-validation, sdlc-governance-gate" not in workflow_text:
         errors.append("ci_workflow missing Build Verification dependency on sdlc-governance-gate")
@@ -134,6 +161,7 @@ def validate_enforcement_document(document_text: str) -> list[str]:
         "main-protection",
         "branch protection",
         "merge_ready",
+        "sdlc_branch_ruleset_witness proves `main-protection` requires SDLC-critical status contexts",
         "gate_decision_envelopes are retained through terminal closure",
         "sdlc_inventory_closure proves canonical schema and example coverage",
         "sdlc_workspace_preflight_closure proves workspace preflight command, receipt artifact, validator output, and closure retention",
@@ -145,6 +173,7 @@ def validate_enforcement_document(document_text: str) -> list[str]:
         "GovernanceBlocked",
     )
     required_terms += SDLC_COMMANDS
+    required_terms += REQUIRED_RULESET_STATUS_CONTEXTS
     return _missing_terms("sdlc_pr_enforcement_doc", document_text, required_terms)
 
 
@@ -163,6 +192,54 @@ def validate_release_policy_links(release_policy_text: str) -> list[str]:
     return _missing_terms("sdlc_release_policy", release_policy_text, required_terms)
 
 
+def validate_ruleset_witness(witness: dict[str, Any]) -> list[str]:
+    """Validate the local main-protection branch ruleset witness."""
+
+    errors: list[str] = []
+    if witness.get("ruleset_name") != "main-protection":
+        errors.append("sdlc_ruleset_witness: ruleset_name must be main-protection")
+    if witness.get("target") != "branch":
+        errors.append("sdlc_ruleset_witness: target must be branch")
+    if witness.get("enforcement") != "active":
+        errors.append("sdlc_ruleset_witness: enforcement must be active")
+    if "~DEFAULT_BRANCH" not in witness.get("ref_includes", []):
+        errors.append("sdlc_ruleset_witness: ref_includes must include ~DEFAULT_BRANCH")
+    if witness.get("bypass_actors") != []:
+        errors.append("sdlc_ruleset_witness: bypass_actors must be empty")
+    if witness.get("current_user_can_bypass") != "never":
+        errors.append("sdlc_ruleset_witness: current_user_can_bypass must be never")
+
+    rules = witness.get("rules", [])
+    if not isinstance(rules, list):
+        return errors + ["sdlc_ruleset_witness: rules must be a list"]
+    rules_by_type = {rule.get("type"): rule for rule in rules if isinstance(rule, dict)}
+    missing_rule_types = set(REQUIRED_RULESET_TYPES) - set(rules_by_type)
+    if missing_rule_types:
+        errors.append(f"sdlc_ruleset_witness: missing required rule types: {sorted(missing_rule_types)}")
+
+    pull_request_rule = rules_by_type.get("pull_request", {})
+    if pull_request_rule.get("required_review_thread_resolution") is not True:
+        errors.append("sdlc_ruleset_witness: pull_request rule must require review thread resolution")
+
+    status_rule = rules_by_type.get("required_status_checks", {})
+    status_checks = status_rule.get("required_status_checks", [])
+    if not isinstance(status_checks, list):
+        errors.append("sdlc_ruleset_witness: required_status_checks must be a list")
+    else:
+        observed_contexts = tuple(
+            check.get("context") for check in status_checks if isinstance(check, dict) and isinstance(check.get("context"), str)
+        )
+        missing_contexts = set(REQUIRED_RULESET_STATUS_CONTEXTS) - set(observed_contexts)
+        unexpected_contexts = set(observed_contexts) - set(REQUIRED_RULESET_STATUS_CONTEXTS)
+        if missing_contexts:
+            errors.append(f"sdlc_ruleset_witness: missing required status contexts: {sorted(missing_contexts)}")
+        if unexpected_contexts:
+            errors.append(f"sdlc_ruleset_witness: unexpected required status contexts: {sorted(unexpected_contexts)}")
+        if len(observed_contexts) != len(set(observed_contexts)):
+            errors.append("sdlc_ruleset_witness: required status contexts must be unique")
+    return errors
+
+
 def validate_contract(texts: EnforcementTexts | None = None) -> list[str]:
     """Validate all SDLC PR enforcement surfaces."""
 
@@ -172,6 +249,7 @@ def validate_contract(texts: EnforcementTexts | None = None) -> list[str]:
     errors.extend(validate_ci_workflow(loaded_texts.ci_workflow))
     errors.extend(validate_enforcement_document(loaded_texts.enforcement_doc))
     errors.extend(validate_release_policy_links(loaded_texts.release_policy))
+    errors.extend(validate_ruleset_witness(loaded_texts.ruleset_witness))
     return errors
 
 
@@ -188,6 +266,7 @@ def build_validation_report() -> dict[str, Any]:
         "sdlc_ci_governance_gate",
         "sdlc_pr_enforcement_document",
         "sdlc_release_rollback_incident_linkage",
+        "sdlc_branch_ruleset_witness",
     )
     return {
         "receipt_id": "sdlc_pr_enforcement_validation_receipt",
@@ -200,6 +279,7 @@ def build_validation_report() -> dict[str, Any]:
             _label_path(CI_WORKFLOW_PATH),
             _label_path(ENFORCEMENT_DOC_PATH),
             _label_path(RELEASE_POLICY_PATH),
+            _label_path(RULESET_WITNESS_PATH),
         ],
         "checks": [{"name": check_name, "passed": valid} for check_name in checks],
         "check_count": len(checks),
@@ -243,7 +323,7 @@ def _label_path(path: Path) -> str:
 
 def _sanitize_error(exc: BaseException) -> str:
     message = str(exc)
-    for path in (PR_TEMPLATE_PATH, CI_WORKFLOW_PATH, ENFORCEMENT_DOC_PATH, RELEASE_POLICY_PATH):
+    for path in (PR_TEMPLATE_PATH, CI_WORKFLOW_PATH, ENFORCEMENT_DOC_PATH, RELEASE_POLICY_PATH, RULESET_WITNESS_PATH):
         message = message.replace(str(path), _label_path(path))
         message = message.replace(str(path.resolve(strict=False)), _label_path(path))
     return message
@@ -274,10 +354,8 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.write("STATUS: failed\n")
         return 1
 
-    sys.stdout.write("[PASS] sdlc_pr_template_evidence\n")
-    sys.stdout.write("[PASS] sdlc_ci_governance_gate\n")
-    sys.stdout.write("[PASS] sdlc_pr_enforcement_document\n")
-    sys.stdout.write("[PASS] sdlc_release_rollback_incident_linkage\n")
+    for check in report["checks"]:
+        sys.stdout.write(f"[PASS] {check['name']}\n")
     sys.stdout.write("STATUS: passed\n")
     return 0
 

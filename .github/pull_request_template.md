@@ -25,6 +25,7 @@ Every governed software delivery PR must either attach the lifecycle artifacts o
 - [ ] Gate decision envelope is present on each non-terminal artifact: `uao_ref`, `causal_decision_trace_ref`, and `receipt_ref`.
 - [ ] Inventory closure proves design, work plan, implementation receipt, and verification receipt retain canonical schema and example coverage.
 - [ ] Workspace preflight receipt is retained through verification output, verification coverage, and terminal closure.
+- [ ] Branch protection witness confirms `main-protection` required status contexts.
 - [ ] Closure receipt records outcome, receipts, remaining blockers, learning, and next action.
 - [ ] Closure receipt retains every upstream UAO, causal trace, implementation receipt, transition receipt, recovery handoff receipt, and receipt reference.
 - [ ] Rollback or incident handoff path is stated for effect-bearing changes.
