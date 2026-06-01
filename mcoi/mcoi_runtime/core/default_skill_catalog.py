@@ -72,6 +72,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _release_handoff_pr_closure_skill(),
         _telemetry_monitoring_triage_skill(),
         _agentic_control_project_discipline_mesh_skill(),
+        _agentic_control_resource_governor_skill(),
         _agentic_control_autonomous_operations_skill(),
     )
 
@@ -744,6 +745,107 @@ def _agentic_control_project_discipline_mesh_skill() -> SkillDescriptor:
                 "quality_security",
                 "operations",
                 "business_gtm",
+            ),
+        },
+    )
+
+
+def _agentic_control_resource_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.resource_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic resource governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_governed_mission",
+                name="Define governed mission",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "mission_contract_hash", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_resource_pressures",
+                name="Rank resource pressures",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_governed_mission",),
+                input_bindings={"mission_contract_ref": "define_governed_mission.mission_contract_ref"},
+                output_keys=("resource_pressure_order_ref", "dependency_blockers", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_budget_governance",
+                name="Evaluate budget governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_resource_pressures",),
+                input_bindings={"priority_order_ref": "rank_resource_pressures.resource_pressure_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_actions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_execution_budget",
+                name="Bound execution budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_budget_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_budget_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "halt_thresholds", "resource_floor"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_budget_verification",
+                name="Plan budget verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("bound_execution_budget",),
+                input_bindings={"budget_envelope_ref": "bound_execution_budget.budget_envelope_ref"},
+                output_keys=("budget_verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_resource_gaps",
+                name="Refine resource gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_budget_verification",),
+                input_bindings={
+                    "budget_envelope_ref": "bound_execution_budget.budget_envelope_ref",
+                    "verification_plan_ref": "plan_budget_verification.budget_verification_plan_ref",
+                },
+                output_keys=("resource_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_budget_memory_admission",
+                name="Plan budget memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_resource_gaps",),
+                input_bindings={"refinement_plan_ref": "refine_resource_gaps.resource_refinement_plan_ref"},
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes mission definition, priority ranking, governance gating, "
+            "resource budget bounding, verification planning, resource-gap "
+            "refinement, and memory-admission planning for autonomous execution "
+            "before effect-bearing work is selected."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "resource_governor": True,
+            "protected_variables": (
+                "resource_floor",
+                "halt_thresholds",
+                "budget_envelope_ref",
+                "proof_state",
             ),
         },
     )
