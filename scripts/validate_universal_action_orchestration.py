@@ -197,6 +197,7 @@ REQUIRED_DOCUMENT_TERMS = (
     "Every command replay record must come from a command event whose source channel, idempotency key, policy version, and trace id match the command envelope before exposure.",
     "Every command replay record must carry the canonical ordered UAO pipeline stage sequence before exposure.",
     "Runtime bypass detection scans effect-bearing dispatch and execute call sites for UAO or governed binding before closure.",
+    "Every command replay record must bind proof hash to an independent recomputation of the persisted event-local universal action proof detail before exposure.",
 )
 
 

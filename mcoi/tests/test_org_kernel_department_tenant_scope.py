@@ -110,6 +110,18 @@ def test_authority_map_view_rejects_cross_tenant(cross_tenant_kernel):
     assert exc.value.status_code == 403
 
 
+def test_case_portfolio_rejects_cross_tenant(cross_tenant_kernel):
+    with pytest.raises(HTTPException) as exc:
+        ok.get_organization_case_portfolio("org-x", _authed("tenant-a"))
+    assert exc.value.status_code == 403
+
+
+def test_case_portfolio_view_rejects_cross_tenant(cross_tenant_kernel):
+    with pytest.raises(HTTPException) as exc:
+        ok.get_organization_case_portfolio_view("org-x", _authed("tenant-a"))
+    assert exc.value.status_code == 403
+
+
 def test_create_department_rejects_cross_tenant(cross_tenant_kernel):
     with pytest.raises(HTTPException) as exc:
         ok.create_department(_Body(), _authed("tenant-a"))
@@ -128,4 +140,12 @@ def test_authority_map_operator_passes_tenant_gate(cross_tenant_kernel):
     assert result["org_id"] == "org-x"
     assert result["summary"]["department_count"] == 0
     assert result["summary"]["map_gap_count"] == 0
+    assert result["governed"] is True
+
+
+def test_case_portfolio_operator_passes_tenant_gate(cross_tenant_kernel):
+    result = ok.get_organization_case_portfolio("org-x", _authed("tenant-a", operator=True))
+    assert result["org_id"] == "org-x"
+    assert result["summary"]["case_count"] == 0
+    assert result["summary"]["attention_count"] == 0
     assert result["governed"] is True

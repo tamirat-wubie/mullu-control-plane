@@ -45,6 +45,7 @@ EXPECTED_SKILL_IDS = (
     "agentic_control.management_governor.v1",
     "agentic_control.resource_governor.v1",
     "agentic_control.policy_governor.v1",
+    "agentic_control.approval_governor.v1",
     "agentic_control.temporal_governor.v1",
     "agentic_control.memory_governor.v1",
     "agentic_control.evidence_governor.v1",
@@ -102,6 +103,7 @@ def test_default_skill_effect_classes_match_strongest_workflow_effect() -> None:
     assert descriptors["agentic_control.management_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.resource_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.policy_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
+    assert descriptors["agentic_control.approval_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.temporal_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.memory_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.evidence_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
@@ -754,6 +756,76 @@ def test_agentic_policy_governor_blocks_missing_authority_without_effects() -> N
     )
     assert steps["plan_policy_memory_admission"].input_bindings["refinement_plan_ref"] == (
         "refine_policy_gaps.policy_refinement_plan_ref"
+    )
+
+
+def test_agentic_approval_governor_binds_role_requirements_without_effects() -> None:
+    descriptor = next(
+        descriptor
+        for descriptor in default_skill_descriptors()
+        if descriptor.skill_id == "agentic_control.approval_governor.v1"
+    )
+    steps = {step.step_id: step for step in descriptor.steps}
+    action_order = tuple(step.action_type for step in descriptor.steps)
+    step_order = tuple(step.step_id for step in descriptor.steps)
+
+    assert descriptor.effect_class is EffectClass.EXTERNAL_READ
+    assert descriptor.metadata["approval_governor"] is True
+    assert descriptor.metadata["grants_new_capability_authority"] is False
+    assert descriptor.metadata["approval_surfaces"] == (
+        "approval_boundary_ref",
+        "approval_requirements",
+        "required_roles",
+        "closure_rule",
+        "blocked_actions",
+    )
+    assert action_order == (
+        "agentic_control.mission.define",
+        "agentic_control.priority.rank",
+        "agentic_control.governance_gate.evaluate",
+        "agentic_control.resource_budget.bound",
+        "agentic_control.verification.plan",
+        "agentic_control.interrogation.plan",
+        "agentic_control.self_audit.refine",
+        "agentic_control.memory_admission.plan",
+    )
+    assert "agentic_control.code_change.plan" not in action_order
+    assert "agentic_control.release_handoff.plan" not in action_order
+    assert "agentic_control.evidence.append" not in action_order
+    assert all(
+        step_order.index(dependency) < step_order.index(step.step_id)
+        for step in descriptor.steps
+        for dependency in step.depends_on
+    )
+    assert steps["rank_approval_constraints"].input_bindings["mission_contract_ref"] == (
+        "define_approval_boundary.mission_contract_ref"
+    )
+    assert steps["evaluate_approval_governance"].input_bindings["priority_order_ref"] == (
+        "rank_approval_constraints.approval_constraint_order_ref"
+    )
+    assert steps["bound_approval_budget"].input_bindings["gate_decision_ref"] == (
+        "evaluate_approval_governance.gate_decision_ref"
+    )
+    assert steps["plan_approval_verification"].input_bindings["approval_boundary_ref"] == (
+        "define_approval_boundary.approval_boundary_ref"
+    )
+    assert steps["plan_approval_verification"].input_bindings["approval_requirements"] == (
+        "evaluate_approval_governance.approval_requirements"
+    )
+    assert steps["plan_approval_verification"].input_bindings["budget_envelope_ref"] == (
+        "bound_approval_budget.budget_envelope_ref"
+    )
+    assert steps["plan_approval_interrogation"].input_bindings["verification_plan_ref"] == (
+        "plan_approval_verification.approval_verification_plan_ref"
+    )
+    assert steps["refine_approval_gaps"].input_bindings["approval_boundary_ref"] == (
+        "define_approval_boundary.approval_boundary_ref"
+    )
+    assert steps["refine_approval_gaps"].input_bindings["approval_requirements"] == (
+        "evaluate_approval_governance.approval_requirements"
+    )
+    assert steps["plan_approval_memory_admission"].input_bindings["refinement_plan_ref"] == (
+        "refine_approval_gaps.approval_refinement_plan_ref"
     )
 
 
@@ -1909,6 +1981,8 @@ def test_bootstrap_installs_default_skill_catalog() -> None:
     assert runtime.skill_registry.get("agentic_control.resource_governor.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.policy_governor.v1").metadata["risk_floor"] == "medium"
     assert runtime.skill_registry.get("agentic_control.policy_governor.v1").effect_class is EffectClass.EXTERNAL_READ
+    assert runtime.skill_registry.get("agentic_control.approval_governor.v1").metadata["risk_floor"] == "medium"
+    assert runtime.skill_registry.get("agentic_control.approval_governor.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.temporal_governor.v1").metadata["risk_floor"] == "medium"
     assert runtime.skill_registry.get("agentic_control.temporal_governor.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.memory_governor.v1").metadata["risk_floor"] == "medium"

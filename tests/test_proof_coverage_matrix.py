@@ -595,6 +595,8 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
     assert "authority_map_view_is_read_only_escaped_and_chained" in witnesses
     assert "case_audit_explorer_reports_open_case_without_mutation" in witnesses
     assert "case_audit_explorer_view_is_read_only_and_escaped" in witnesses
+    assert "case_portfolio_view_is_read_only_escaped_and_grouped" in witnesses
+    assert "case_portfolio_reports_closed_verified_case" in witnesses
     assert "department_registry_view_is_read_only_and_escaped" in witnesses
     assert "case_closure_certificate_view_is_read_only_and_escaped" in witnesses
     assert "case_closure_requires_effect_reconciliation_match_for_committed" in witnesses
@@ -605,6 +607,14 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
     )
     assert (
         route_records["/api/v1/orgs/{org_id}/authority-map/view"]["surface_id"]
+        == "orgos_case_governance_lifecycle"
+    )
+    assert (
+        route_records["/api/v1/orgs/{org_id}/case-portfolio"]["surface_id"]
+        == "orgos_case_governance_lifecycle"
+    )
+    assert (
+        route_records["/api/v1/orgs/{org_id}/case-portfolio/view"]["surface_id"]
         == "orgos_case_governance_lifecycle"
     )
     assert (
@@ -660,7 +670,7 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
         == "orgos_case_governance_lifecycle"
     )
     assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "proven"
-    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 29
+    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 31
 
 
 def test_webhooks_proof_surface_is_witnessed() -> None:
@@ -2186,6 +2196,7 @@ def test_agentic_control_capability_pack_surface_binds_default_authority() -> No
     assert "agentic_control.management_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.resource_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.policy_governor.v1" in agentic_surface["representative_paths"]
+    assert "agentic_control.approval_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.temporal_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.memory_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.evidence_governor.v1" in agentic_surface["representative_paths"]

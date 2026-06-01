@@ -1,0 +1,28 @@
+{
+  "recovery_handoff_id": "sdlc_recovery_handoff_uao_validator_001",
+  "change_id": "sdlc_req_uao_validator_001",
+  "rollback_state": "ready",
+  "rollback_refs": [
+    "docs/SDLC_RELEASE_POLICY.md",
+    "RELEASE_CHECKLIST_v0.1.md",
+    "receipt://sdlc/implementation/uao-validator/001"
+  ],
+  "incident_handoff_required": false,
+  "incident_handoff_reason": "Rollback path is ready and no open accepted residual risk is present in the canonical SDLC validation pass.",
+  "incident_recovery_refs": [
+    "docs/SDLC_RELEASE_POLICY.md",
+    "docs/34_accepted_risk_closure.md"
+  ],
+  "accepted_risk_refs": [],
+  "effect_boundary_refs": [
+    "schema changes",
+    "validator changes",
+    "CI and PR enforcement changes"
+  ],
+  "terminal_closure_ref": "sdlc_closure_uao_validator_001",
+  "evaluated_at": "2026-06-01T00:00:00Z",
+  "uao_ref": "uao://sdlc/recovery-handoff/uao-validator/001",
+  "causal_decision_trace_ref": "trace://sdlc/recovery-handoff/uao-validator/001",
+  "receipt_ref": "receipt://sdlc/recovery-handoff/uao-validator/001",
+  "next_action": "Proceed to terminal SDLC closure after retaining recovery handoff evidence."
+}

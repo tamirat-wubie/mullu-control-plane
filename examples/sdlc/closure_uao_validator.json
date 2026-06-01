@@ -14,7 +14,8 @@
     "receipt://sdlc/security-review/uao-validator/001",
     "receipt://sdlc/pr-enforcement-validation/001",
     "receipt://sdlc/release/uao-validator/001",
-    "receipt://sdlc/deployment/uao-validator/001"
+    "receipt://sdlc/deployment/uao-validator/001",
+    "receipt://sdlc/recovery-handoff/uao-validator/001"
   ],
   "known_remaining_blockers": [],
   "learning_notes": [
@@ -27,6 +28,7 @@
     "added canonical lifecycle example chain",
     "added governed implementation receipt contract",
     "added governed state transition receipt contract",
+    "added governed rollback and incident recovery handoff receipt contract",
     "added deterministic lifecycle validators",
     "bound SDLC checks to workspace preflight",
     "bound PR evidence to CI, branch protection, and pull request review"
@@ -42,7 +44,8 @@
     "uao://sdlc/verification/uao-validator/001",
     "uao://sdlc/security-review/uao-validator/001",
     "uao://sdlc/release/uao-validator/001",
-    "uao://sdlc/deployment/uao-validator/001"
+    "uao://sdlc/deployment/uao-validator/001",
+    "uao://sdlc/recovery-handoff/uao-validator/001"
   ],
   "causal_decision_trace_refs": [
     "trace://sdlc/intake/uao-validator/001",
@@ -54,7 +57,8 @@
     "trace://sdlc/verification/uao-validator/001",
     "trace://sdlc/security-review/uao-validator/001",
     "trace://sdlc/release/uao-validator/001",
-    "trace://sdlc/deployment/uao-validator/001"
+    "trace://sdlc/deployment/uao-validator/001",
+    "trace://sdlc/recovery-handoff/uao-validator/001"
   ],
   "closed_at": "2026-06-01T00:00:00Z",
   "next_action": "Use SDLC validation receipts as read-only dashboard integration evidence."

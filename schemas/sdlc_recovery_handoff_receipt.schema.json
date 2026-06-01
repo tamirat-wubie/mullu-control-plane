@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:sdlc-recovery-handoff-receipt:1",
+  "title": "SDLC Recovery Handoff Receipt",
+  "description": "Governed rollback and incident handoff receipt for software-change closure.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "recovery_handoff_id",
+    "change_id",
+    "rollback_state",
+    "rollback_refs",
+    "incident_handoff_required",
+    "incident_handoff_reason",
+    "incident_recovery_refs",
+    "accepted_risk_refs",
+    "effect_boundary_refs",
+    "terminal_closure_ref",
+    "evaluated_at",
+    "uao_ref",
+    "causal_decision_trace_ref",
+    "receipt_ref",
+    "next_action"
+  ],
+  "properties": {
+    "recovery_handoff_id": { "type": "string", "minLength": 1 },
+    "change_id": { "type": "string", "minLength": 1 },
+    "rollback_state": {
+      "type": "string",
+      "enum": ["not_required", "ready", "partial", "blocked", "executed"]
+    },
+    "rollback_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "incident_handoff_required": { "type": "boolean" },
+    "incident_handoff_reason": { "type": "string", "minLength": 1 },
+    "incident_recovery_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "accepted_risk_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "effect_boundary_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "terminal_closure_ref": { "type": "string", "minLength": 1 },
+    "evaluated_at": { "type": "string", "format": "date-time" },
+    "uao_ref": { "type": "string", "minLength": 1 },
+    "causal_decision_trace_ref": { "type": "string", "minLength": 1 },
+    "receipt_ref": { "type": "string", "minLength": 1 },
+    "next_action": { "type": "string", "minLength": 1 }
+  }
+}

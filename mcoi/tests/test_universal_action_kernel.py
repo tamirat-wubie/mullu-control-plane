@@ -61,6 +61,7 @@ from mcoi_runtime.core.dispatcher import DispatchRequest, Dispatcher
 from mcoi_runtime.core.domain_capsule_compiler import DomainCapsuleCompiler
 from mcoi_runtime.core.governed_capability_registry import GovernedCapabilityRegistry
 from mcoi_runtime.core.governed_dispatcher import GovernedDispatcher
+from mcoi_runtime.core.invariants import stable_identifier
 from mcoi_runtime.core.operational_graph import OperationalGraph
 from mcoi_runtime.core.simulation import SimulationEngine
 from mcoi_runtime.core.system_stabilization import EquilibriumEngine
@@ -100,6 +101,33 @@ def _replace_command_event_with_recomputed_hash(event, **changes):
     tampered = replace(event, **changes)
     event_hash = _recompute_event_hash(tampered)
     return replace(tampered, event_hash=event_hash, event_id=f"evt-{event_hash[:16]}")
+
+
+def _rebind_orchestration_record_to_proof_hash(
+    record: dict,
+    proof_hash: str,
+) -> None:
+    record["orchestration_id"] = stable_identifier(
+        "universal-action-orchestration",
+        {
+            "action_id": record["action_id"],
+            "proof_hash": proof_hash,
+            "trace_ref": record["trace_ref"],
+        },
+    )
+    delta_ref = stable_identifier(
+        "universal-action-delta",
+        {
+            "action_id": record["action_id"],
+            "proof_hash": proof_hash,
+            "closure_state": record["closure_state"],
+        },
+    )
+    record["lineage"]["delta_ref"] = delta_ref
+    for delta in (
+        record["lineage"]["accepted_deltas"] + record["lineage"]["rejected_deltas"]
+    ):
+        delta["delta_id"] = delta_ref
 
 
 @dataclass
@@ -474,6 +502,19 @@ def test_universal_command_dispatch_binds_command_spine_transitions() -> None:
     assert CommandState.DISPATCHED in states
     assert CommandState.TERMINALLY_CERTIFIED in states
     assert CommandState.LEARNING_DECIDED in states
+    dispatch_detail = next(
+        event.detail
+        for event in events
+        if event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    assert (
+        dispatch_detail["universal_action"]["intent_certificate_id"]
+        == result.intent_certificate.certificate_id
+    )
+    assert (
+        dispatch_detail["universal_action"]["intent_hash"]
+        == result.intent_certificate.intent_hash
+    )
     assert (
         events[-1].detail["learning_admission_id"]
         == result.learning_decision.admission_id
@@ -723,6 +764,60 @@ def test_universal_command_orchestration_record_ignores_proof_spoof_event() -> N
     assert replayed_record["action_id"] == result.action_id
     assert replayed_record["orchestration_id"] == valid_record["orchestration_id"]
     assert replayed_record["orchestration_id"] != invalid_record["orchestration_id"]
+
+
+def test_universal_command_orchestration_record_rejects_rehashed_proof_spoof() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-record-proof-hash-spoof",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+    )
+    target_index = next(
+        index
+        for index, event in enumerate(store._events)
+        if event.command_id == command.command_id
+        and event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    spoofed_proof_hash = "universal-action-proof-spoofed"
+    tampered_detail = copy.deepcopy(store._events[target_index].detail)
+    tampered_detail["universal_action"]["proof_hash"] = spoofed_proof_hash
+    _rebind_orchestration_record_to_proof_hash(
+        tampered_detail["universal_action_orchestration"],
+        spoofed_proof_hash,
+    )
+    store._events[target_index] = _replace_command_event_with_recomputed_hash(
+        store._events[target_index],
+        detail=tampered_detail,
+    )
+    reloaded_ledger = CommandLedger(clock=_clock, store=store)
+
+    replayed_record = universal_command_orchestration_record_view(
+        reloaded_ledger, command.command_id
+    )
+
+    assert replayed_record is None
+    assert reloaded_ledger.get(command.command_id) is not None
+    assert (
+        _recompute_event_hash(store._events[target_index])
+        == store._events[target_index].event_hash
+    )
 
 
 def test_universal_command_orchestration_record_rejects_event_hash_tamper() -> None:

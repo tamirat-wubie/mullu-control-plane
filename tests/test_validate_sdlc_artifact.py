@@ -25,12 +25,13 @@ def test_current_sdlc_contract_passes() -> None:
     records = validator.load_example_records()
 
     assert errors == []
-    assert len(records) == 11
+    assert len(records) == 12
     assert all(spec.schema_path.exists() for spec in validator.ARTIFACT_SPECS)
     assert all(spec.example_path.exists() for spec in validator.ARTIFACT_SPECS)
     assert "scripts/validate_sdlc_pr_enforcement.py" in validator.REQUIRED_VALIDATORS
     assert "implementation_receipt" in validator.GATE_BOUND_ARTIFACT_KINDS
     assert "change_request" in validator.GATE_BOUND_ARTIFACT_KINDS
+    assert "recovery_handoff" in validator.GATE_BOUND_ARTIFACT_KINDS
 
 
 def test_schema_artifacts_have_expected_identity() -> None:
@@ -57,10 +58,13 @@ def test_example_chain_links_all_lifecycle_artifacts() -> None:
     assert records["work_plan"]["design_id"] == records["design_decision"]["design_id"]
     assert records["implementation_receipt"]["plan_id"] == records["work_plan"]["plan_id"]
     assert records["transition_receipt"]["change_id"] == records["change_request"]["request_id"]
+    assert records["recovery_handoff"]["change_id"] == records["change_request"]["request_id"]
+    assert records["recovery_handoff"]["terminal_closure_ref"] == records["closure_receipt"]["closure_id"]
     assert records["deployment_candidate"]["release_id"] == records["release_candidate"]["release_id"]
     assert records["change_request"]["receipt_ref"] in records["closure_receipt"]["receipts"]
     assert records["implementation_receipt"]["receipt_ref"] in records["closure_receipt"]["receipts"]
     assert records["transition_receipt"]["receipt_ref"] in records["closure_receipt"]["receipts"]
+    assert records["recovery_handoff"]["receipt_ref"] in records["closure_receipt"]["receipts"]
     assert records["deployment_candidate"]["uao_ref"] in records["closure_receipt"]["uao_refs"]
 
 
@@ -101,6 +105,11 @@ def test_closure_must_retain_upstream_gate_refs() -> None:
     )
     invalid_records["closure_receipt"]["receipts"].remove(records["implementation_receipt"]["receipt_ref"])
     invalid_records["closure_receipt"]["receipts"].remove(records["transition_receipt"]["receipt_ref"])
+    invalid_records["closure_receipt"]["receipts"].remove(records["recovery_handoff"]["receipt_ref"])
+    invalid_records["closure_receipt"]["uao_refs"].remove(records["recovery_handoff"]["uao_ref"])
+    invalid_records["closure_receipt"]["causal_decision_trace_refs"].remove(
+        records["recovery_handoff"]["causal_decision_trace_ref"]
+    )
 
     errors = validator.validate_example_chain(invalid_records)
 
@@ -109,6 +118,10 @@ def test_closure_must_retain_upstream_gate_refs() -> None:
     assert "example_chain: closure must include implementation_receipt receipt_ref" in errors
     assert "example_chain: closure must include implementation receipt" in errors
     assert "example_chain: closure must include transition_receipt receipt_ref" in errors
+    assert "example_chain: closure must include recovery_handoff receipt_ref" in errors
+    assert "example_chain: closure must include recovery handoff receipt" in errors
+    assert "example_chain: closure must include recovery_handoff uao_ref" in errors
+    assert "example_chain: closure must include recovery_handoff causal_decision_trace_ref" in errors
     assert "example_chain: closure must include deployment_candidate causal_decision_trace_ref" in errors
 
 
@@ -199,6 +212,37 @@ def test_transition_and_verification_must_reference_implementation_receipt() -> 
     assert len(errors) >= 2
 
 
+def test_recovery_handoff_rejects_unclosed_recovery_constraints() -> None:
+    recovery_handoff = copy.deepcopy(validator.load_example_records()["recovery_handoff"])
+    recovery_handoff["rollback_state"] = "partial"
+    recovery_handoff["incident_handoff_required"] = False
+    recovery_handoff["accepted_risk_refs"] = ["risk://sdlc/accepted/001"]
+    recovery_handoff["rollback_refs"] = []
+    recovery_handoff["effect_boundary_refs"].append(recovery_handoff["effect_boundary_refs"][0])
+
+    errors = validator.validate_artifact_record("recovery_handoff", recovery_handoff)
+
+    assert "recovery_handoff: partial or blocked rollback requires incident handoff" in errors
+    assert "recovery_handoff: accepted risks require incident handoff" in errors
+    assert "recovery_handoff: rollback refs are required unless rollback is not_required" in errors
+    assert "recovery_handoff: effect_boundary_refs must not contain duplicates" in errors
+    assert any("rollback_refs" in error for error in errors)
+
+
+def test_verification_must_reference_recovery_handoff_receipt() -> None:
+    records = validator.load_example_records()
+    invalid_records = copy.deepcopy(records)
+    invalid_records["verification_receipt"]["coverage_refs"].remove(
+        "examples/sdlc/recovery_handoff_uao_validator.json"
+    )
+
+    errors = validator.validate_example_chain(invalid_records)
+
+    assert "example_chain: verification coverage must include recovery handoff receipt artifact" in errors
+    assert len(errors) >= 1
+    assert invalid_records["recovery_handoff"]["receipt_ref"] in invalid_records["closure_receipt"]["receipts"]
+
+
 def test_cli_json_receipt_reports_passed_contract() -> None:
     stdout_buffer = io.StringIO()
 
@@ -213,8 +257,22 @@ def test_cli_json_receipt_reports_passed_contract() -> None:
     assert report["valid"] is True
     assert report["status"] == "passed"
     assert report["error_count"] == 0
-    assert report["check_count"] == 7
+    assert report["check_count"] == 8
     assert any(check["name"] == "sdlc_gate_decision_envelopes" for check in report["checks"])
+    assert any(check["name"] == "sdlc_recovery_handoff_retention" for check in report["checks"])
+
+
+def test_cli_text_output_reports_all_receipt_checks() -> None:
+    stdout_buffer = io.StringIO()
+
+    with redirect_stdout(stdout_buffer):
+        exit_code = validator.main([])
+
+    output = stdout_buffer.getvalue()
+    assert exit_code == 0
+    assert "[PASS] sdlc_recovery_handoff_retention" in output
+    assert output.count("[PASS]") == validator.build_validation_report()["check_count"]
+    assert output.endswith("STATUS: passed\n")
 
 
 def test_load_json_object_rejects_non_object_json(tmp_path: Path) -> None:

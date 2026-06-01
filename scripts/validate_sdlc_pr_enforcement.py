@@ -49,6 +49,7 @@ SDLC_ARTIFACT_TERMS = (
     "Verification receipt",
     "Security review",
     "Release or deployment candidate",
+    "Recovery handoff receipt",
     "Closure receipt",
 )
 
@@ -92,7 +93,7 @@ def validate_pr_template(template_text: str) -> list[str]:
         "## SDLC / SDLD evidence",
         "documentation-only or read-only",
         "Gate decision envelope",
-        "Closure receipt retains every upstream UAO, causal trace, implementation receipt, transition receipt, and receipt reference",
+        "Closure receipt retains every upstream UAO, causal trace, implementation receipt, transition receipt, recovery handoff receipt, and receipt reference",
         "Rollback or incident handoff path",
     )
     required_terms += SDLC_ARTIFACT_TERMS
@@ -133,6 +134,7 @@ def validate_enforcement_document(document_text: str) -> list[str]:
         "gate_decision_envelopes are retained through terminal closure",
         "implementation deltas have `sdlc_implementation_receipt` evidence",
         "state transitions have `sdlc_transition_receipt` evidence",
+        "recovery handoff has `sdlc_recovery_handoff_receipt` evidence",
         "rollback_or_incident_handoff",
         "AwaitingEvidence",
         "GovernanceBlocked",
@@ -148,6 +150,7 @@ def validate_release_policy_links(release_policy_text: str) -> list[str]:
         "## Rollback And Incident Linkage",
         "rollback or incident handoff path",
         "incident_recovery_path_if_rollback_fails",
+        "sdlc_recovery_handoff_receipt",
         "terminal_closure_certificate_or_sdlc_closure_receipt",
         "terminal closure certificates",
         "SDLC closure receipts",
