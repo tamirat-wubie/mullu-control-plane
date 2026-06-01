@@ -70,3 +70,26 @@ Three controlled pilot workflows that prove the platform works as a system.
 - Degraded capability appears in meta-reasoning
 - Escalation email carries correct correlation and goal IDs
 - Report includes all provider identity and autonomy fields
+
+---
+
+## Pilot 4: Governed Private Pilot Story
+
+**Purpose:** Prove the organization-to-dashboard governance path in read-only
+mode before a live tenant pilot is executed.
+
+**Steps:**
+1. OrgOS department request surfaces tenant-scoped department registry and authority map refs.
+2. UAO envelope binds approved, blocked, and simulated decision branches with traces.
+3. Governor chain links policy, decision, design, coding, quality, release, and runtime review.
+4. SDLC gate projects change, stage, blocker, evidence, receipt, and closure continuity.
+5. Receipt closure collects UAO, causal trace, SDLC, and closure receipt refs.
+6. Dashboard view exposes read-only OrgOS and SDLC operator surfaces.
+
+**Read model:** `/software/receipts/private-pilot/story`
+
+**Expected outcomes:**
+- The story grants no execution authority and invokes no live capability.
+- Approved, blocked, and read-only rehearsal UAO branches remain visible.
+- OrgOS, governor-chain, SDLC, receipt, trace, and dashboard refs are linked.
+- Live product claims remain blocked until a tenant-bound pilot rehearsal runs.
