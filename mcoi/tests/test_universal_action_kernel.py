@@ -27,6 +27,7 @@ from gateway.command_spine import (
     CommandState,
     InMemoryCommandLedgerStore,
 )
+from gateway.audit_trace_verifier import _recompute_event_hash
 from mcoi_runtime.app.governed_execution import (
     build_universal_operator_kernel,
     universal_command_dispatch,
@@ -93,6 +94,12 @@ VALID_TEMPLATE = {
 
 def _clock() -> str:
     return NOW
+
+
+def _replace_command_event_with_recomputed_hash(event, **changes):
+    tampered = replace(event, **changes)
+    event_hash = _recompute_event_hash(tampered)
+    return replace(tampered, event_hash=event_hash, event_id=f"evt-{event_hash[:16]}")
 
 
 @dataclass
@@ -722,6 +729,53 @@ def test_universal_command_orchestration_record_rejects_event_hash_tamper() -> N
     assert replayed_record is None
     assert reloaded_ledger.get(command.command_id) is not None
     assert len(reloaded_ledger.events_for(command.command_id)) >= 2
+
+
+def test_universal_command_orchestration_record_rejects_command_trace_tamper() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-record-trace-tamper",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+    )
+    target_index = next(
+        index
+        for index, event in enumerate(store._events)
+        if event.command_id == command.command_id
+        and event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    store._events[target_index] = _replace_command_event_with_recomputed_hash(
+        store._events[target_index],
+        trace_id="trc-command-envelope-spoofed",
+    )
+    reloaded_ledger = CommandLedger(clock=_clock, store=store)
+
+    replayed_record = universal_command_orchestration_record_view(
+        reloaded_ledger, command.command_id
+    )
+
+    assert replayed_record is None
+    assert reloaded_ledger.get(command.command_id).trace_id == command.trace_id
+    assert (
+        _recompute_event_hash(store._events[target_index])
+        == store._events[target_index].event_hash
+    )
 
 
 def test_universal_command_orchestration_record_rejects_cross_command_candidate() -> (
