@@ -802,6 +802,130 @@ def _case_audit_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, 
     }
 
 
+def _step_handoff_status(step_proof: dict[str, Any]) -> str:
+    missing_evidence = step_proof["missing_evidence"]
+    worker_receipts = step_proof["worker_receipt_bindings"]
+    gate_status = step_proof["gate_status"]
+    if worker_receipts and missing_evidence:
+        return "receipt_bound_awaiting_evidence"
+    if worker_receipts and gate_status == PlanStepGateStatus.ALLOWED.value:
+        return "worker_receipt_bound"
+    if worker_receipts:
+        return "receipt_bound_awaiting_gate"
+    if missing_evidence:
+        return "awaiting_evidence"
+    if gate_status != PlanStepGateStatus.ALLOWED.value:
+        return "awaiting_gate"
+    return "ready_for_worker_receipt"
+
+
+def _step_handoff_next_action(handoff_status: str) -> str:
+    if handoff_status in {"receipt_bound_awaiting_evidence", "awaiting_evidence"}:
+        return "collect_required_evidence"
+    if handoff_status in {"receipt_bound_awaiting_gate", "awaiting_gate"}:
+        return "evaluate_plan_step_gate"
+    if handoff_status == "ready_for_worker_receipt":
+        return "bind_worker_receipt"
+    if handoff_status == "worker_receipt_bound":
+        return "review_bound_receipt"
+    return "review_step_state"
+
+
+def _case_step_handoffs(kernel: OrganizationKernel, case_id: str) -> dict[str, Any]:
+    proof = _case_proof_timeline(kernel, case_id)
+    state = kernel.snapshot_state()
+    plan = next((item for item in state.plans if item.case_id == case_id), None)
+    steps_by_id = {step.step_id: step for step in plan.steps} if plan is not None else {}
+    attention_items: list[dict[str, object]] = []
+    handoff_rows: list[dict[str, Any]] = []
+
+    if plan is None:
+        attention_items.append({
+            "kind": "missing_plan",
+            "severity": "review",
+            "ref": case_id,
+            "message": "case has no governed plan",
+        })
+
+    for step_proof in proof["plan_step_proof"]:
+        step = steps_by_id.get(step_proof["step_id"])
+        handoff_status = _step_handoff_status(step_proof)
+        next_action = _step_handoff_next_action(handoff_status)
+        if step_proof["missing_evidence"]:
+            attention_items.append({
+                "kind": "handoff_missing_evidence",
+                "severity": "blocker",
+                "ref": step_proof["step_id"],
+                "message": "step handoff is missing required evidence",
+                "missing_evidence": step_proof["missing_evidence"],
+            })
+        elif step_proof["gate_status"] != PlanStepGateStatus.ALLOWED.value:
+            attention_items.append({
+                "kind": "handoff_gate_not_allowed",
+                "severity": "review",
+                "ref": step_proof["step_id"],
+                "message": "step handoff gate is not allowed",
+                "gate_status": step_proof["gate_status"],
+            })
+        elif not step_proof["worker_receipt_bindings"]:
+            attention_items.append({
+                "kind": "handoff_ready_for_receipt",
+                "severity": "review",
+                "ref": step_proof["step_id"],
+                "message": "step handoff is ready for worker receipt binding",
+            })
+        handoff_rows.append({
+            "step_id": step_proof["step_id"],
+            "department_id": step_proof["department_id"],
+            "responsible_role_id": step_proof["responsible_role_id"],
+            "capability_id": step_proof["capability_id"],
+            "action": step.action if step is not None else "",
+            "expected_effect": step.expected_effect if step is not None else "",
+            "preconditions": list(step.preconditions) if step is not None else [],
+            "postconditions": list(step.postconditions) if step is not None else [],
+            "approvals_required": list(step.approvals_required) if step is not None else [],
+            "predecessor_step_ids": list(step.predecessor_step_ids) if step is not None else [],
+            "rollback_plan_id": step.rollback_plan_id if step is not None else None,
+            "gate_status": step_proof["gate_status"],
+            "handoff_status": handoff_status,
+            "next_action": next_action,
+            "dispatch_authority": False,
+            "evidence_refs": step_proof["evidence_refs"],
+            "missing_evidence": step_proof["missing_evidence"],
+            "worker_receipt_count": len(step_proof["worker_receipt_bindings"]),
+            "worker_receipt_bindings": step_proof["worker_receipt_bindings"],
+            "worker_receipt_url": (
+                f"/api/v1/cases/{quote(case_id, safe='')}/plan-steps/"
+                f"{quote(str(step_proof['step_id']), safe='')}/worker-receipt"
+            ),
+        })
+
+    statuses = [row["handoff_status"] for row in handoff_rows]
+    return {
+        "handoff_id": f"step-handoffs:{case_id}",
+        "case_id": case_id,
+        "title": proof["case"]["goal"],
+        "read_only": True,
+        "case": proof["case"],
+        "summary": {
+            "step_count": len(handoff_rows),
+            "ready_for_worker_receipt_count": statuses.count("ready_for_worker_receipt"),
+            "worker_receipt_bound_count": statuses.count("worker_receipt_bound"),
+            "receipt_bound_awaiting_evidence_count": statuses.count("receipt_bound_awaiting_evidence"),
+            "receipt_bound_awaiting_gate_count": statuses.count("receipt_bound_awaiting_gate"),
+            "awaiting_evidence_count": statuses.count("awaiting_evidence"),
+            "awaiting_gate_count": statuses.count("awaiting_gate"),
+            "attention_count": len(attention_items),
+            "dispatch_authority_granted": False,
+        },
+        "handoffs": handoff_rows,
+        "attention_items": attention_items,
+        "source_timeline_url": f"/api/v1/cases/{quote(case_id, safe='')}/proof-timeline",
+        "source_audit_url": f"/api/v1/cases/{quote(case_id, safe='')}/audit-explorer",
+        "governed": True,
+    }
+
+
 def _proof_explorer_rows(rows: list[dict[str, object]], columns: tuple[str, ...]) -> str:
     if not rows:
         return f"<tr><td colspan=\"{len(columns)}\">No records</td></tr>"
@@ -1029,6 +1153,85 @@ def _render_case_audit_explorer_html(payload: dict[str, Any]) -> str:
     {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
     {_proof_explorer_table("Audit Timeline", ("sequence", "occurred_at", "layer", "kind", "ref", "status", "step_id", "reason"), timeline_rows)}
     {_proof_explorer_table("Proof Sections", ("section", "count"), section_rows)}
+  </main>
+</body>
+</html>
+"""
+
+
+def _render_case_step_handoffs_html(payload: dict[str, Any]) -> str:
+    raw_case_id = str(payload.get("case_id", ""))
+    case_id = escape(raw_case_id)
+    title = escape(str(payload.get("title", "")))
+    summary = payload.get("summary", {})
+    summary_rows = [
+        {"metric": key, "value": value}
+        for key, value in sorted(summary.items())
+    ] if isinstance(summary, dict) else []
+    attention_rows = [
+        {
+            "severity": item.get("severity", ""),
+            "kind": item.get("kind", ""),
+            "ref": item.get("ref", ""),
+            "message": item.get("message", ""),
+        }
+        for item in payload.get("attention_items", [])
+        if isinstance(item, dict)
+    ]
+    handoff_rows = [
+        {
+            "step_id": item.get("step_id", ""),
+            "department": item.get("department_id", ""),
+            "capability": item.get("capability_id", ""),
+            "action": item.get("action", ""),
+            "gate_status": item.get("gate_status", ""),
+            "handoff_status": item.get("handoff_status", ""),
+            "next_action": item.get("next_action", ""),
+            "worker_receipts": item.get("worker_receipt_count", 0),
+            "dispatch_authority": item.get("dispatch_authority", False),
+        }
+        for item in payload.get("handoffs", [])
+        if isinstance(item, dict)
+    ]
+    quoted_case_id = quote(raw_case_id, safe="")
+    json_url = f"/api/v1/cases/{quoted_case_id}/step-handoffs"
+    timeline_url = escape(str(payload.get("source_timeline_url", "")))
+    audit_url = escape(str(payload.get("source_audit_url", "")))
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mullu OrgOS Step Handoffs</title>
+  <style>
+    body {{ margin: 0; font-family: system-ui, sans-serif; color: #1f2937; background: #f7f7f4; }}
+    header {{ background: #2f353f; color: #ffffff; padding: 24px 28px; }}
+    main {{ max-width: 1240px; margin: 0 auto; padding: 22px; }}
+    nav {{ display: flex; gap: 14px; margin-top: 12px; flex-wrap: wrap; }}
+    nav a {{ color: #d2e8ff; }}
+    h1 {{ margin: 0; font-size: 28px; letter-spacing: 0; }}
+    h2 {{ margin: 28px 0 10px; font-size: 18px; letter-spacing: 0; }}
+    .status {{ margin-top: 8px; color: #e4edf6; }}
+    table {{ border-collapse: collapse; width: 100%; background: #ffffff; }}
+    th, td {{ border: 1px solid #d8dee4; padding: 8px; text-align: left; vertical-align: top; font-size: 14px; overflow-wrap: anywhere; }}
+    th {{ background: #edf0f5; color: #263041; }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mullu OrgOS Step Handoffs</h1>
+    <div class="status">Case <strong>{case_id}</strong></div>
+    <nav>
+      <a href="{escape(json_url)}">json handoffs</a>
+      <a href="{timeline_url}">proof timeline</a>
+      <a href="{audit_url}">case audit</a>
+    </nav>
+  </header>
+  <main>
+    <h2>{title}</h2>
+    {_proof_explorer_table("Summary", ("metric", "value"), summary_rows)}
+    {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
+    {_proof_explorer_table("Step Handoffs", ("step_id", "department", "capability", "action", "gate_status", "handoff_status", "next_action", "worker_receipts", "dispatch_authority"), handoff_rows)}
   </main>
 </body>
 </html>
@@ -2776,6 +2979,24 @@ def get_case_audit_explorer_view(case_id: str, request: Request):
     kernel = _kernel()
     _enforce_case_tenant(request, kernel, case_id)
     return HTMLResponse(_render_case_audit_explorer_html(_case_audit_explorer(kernel, case_id)))
+
+
+@router.get("/api/v1/cases/{case_id}/step-handoffs")
+def get_case_step_handoffs(case_id: str, request: Request):
+    """Return read-only plan-step handoff status and worker receipt bindings."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    return _case_step_handoffs(kernel, case_id)
+
+
+@router.get("/api/v1/cases/{case_id}/step-handoffs/view")
+def get_case_step_handoffs_view(case_id: str, request: Request):
+    """Return a browser-facing read-only step handoff view."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    return HTMLResponse(_render_case_step_handoffs_html(_case_step_handoffs(kernel, case_id)))
 
 
 @router.get("/api/v1/cases/{case_id}/closure-certificate")
