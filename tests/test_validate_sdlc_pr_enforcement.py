@@ -28,6 +28,7 @@ def test_current_sdlc_pr_enforcement_contract_passes() -> None:
     assert "## SDLC / SDLD evidence" in texts.pr_template
     assert "name: SDLC Governance Gate" in texts.ci_workflow
     assert "Gate decision envelope" in texts.pr_template
+    assert "Implementation receipt" in texts.pr_template
     assert "Transition receipt" in texts.pr_template
     assert "rollback_or_incident_handoff" in texts.enforcement_doc
 
@@ -93,6 +94,22 @@ def test_missing_transition_receipt_evidence_is_rejected() -> None:
 
     assert "pull_request_template missing required term: Transition receipt" in template_errors
     assert any("sdlc_transition_receipt" in error for error in doc_errors)
+    assert len(template_errors) + len(doc_errors) >= 2
+
+
+def test_missing_implementation_receipt_evidence_is_rejected() -> None:
+    texts = validator.load_enforcement_texts()
+    invalid_template = texts.pr_template.replace("Implementation receipt", "Delta note")
+    invalid_doc = texts.enforcement_doc.replace(
+        "implementation deltas have `sdlc_implementation_receipt` evidence",
+        "implementation deltas have notes",
+    )
+
+    template_errors = validator.validate_pr_template(invalid_template)
+    doc_errors = validator.validate_enforcement_document(invalid_doc)
+
+    assert "pull_request_template missing required term: Implementation receipt" in template_errors
+    assert any("sdlc_implementation_receipt" in error for error in doc_errors)
     assert len(template_errors) + len(doc_errors) >= 2
 
 

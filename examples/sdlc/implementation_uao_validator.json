@@ -1,0 +1,137 @@
+{
+  "implementation_id": "sdlc_implementation_uao_validator_001",
+  "change_id": "sdlc_req_uao_validator_001",
+  "plan_id": "sdlc_plan_uao_validator_001",
+  "constructive_deltas": [
+    "added SDLC doctrine documents",
+    "added strict lifecycle artifact schemas",
+    "added canonical lifecycle example chain",
+    "added deterministic lifecycle validators",
+    "bound SDLC checks to workspace preflight",
+    "bound PR evidence to CI and pull request review"
+  ],
+  "fracture_deltas": [],
+  "changed_files": [
+    {
+      "path": "docs/SDLC.md",
+      "change_type": "add",
+      "surface": "docs"
+    },
+    {
+      "path": "docs/SDLC_PR_ENFORCEMENT.md",
+      "change_type": "add",
+      "surface": "docs"
+    },
+    {
+      "path": "schemas/sdlc_change_request.schema.json",
+      "change_type": "add",
+      "surface": "schemas"
+    },
+    {
+      "path": "schemas/sdlc_implementation_receipt.schema.json",
+      "change_type": "add",
+      "surface": "schemas"
+    },
+    {
+      "path": "examples/sdlc/change_request_uao_validator.json",
+      "change_type": "add",
+      "surface": "examples"
+    },
+    {
+      "path": "examples/sdlc/implementation_uao_validator.json",
+      "change_type": "add",
+      "surface": "examples"
+    },
+    {
+      "path": "scripts/validate_sdlc_artifact.py",
+      "change_type": "add",
+      "surface": "scripts"
+    },
+    {
+      "path": "scripts/validate_sdlc_state_machine.py",
+      "change_type": "add",
+      "surface": "scripts"
+    },
+    {
+      "path": "scripts/validate_sdlc_release_readiness.py",
+      "change_type": "add",
+      "surface": "scripts"
+    },
+    {
+      "path": "scripts/validate_sdlc_security_review.py",
+      "change_type": "add",
+      "surface": "scripts"
+    },
+    {
+      "path": "scripts/validate_sdlc_pr_enforcement.py",
+      "change_type": "add",
+      "surface": "scripts"
+    },
+    {
+      "path": "tests/test_validate_sdlc_artifact.py",
+      "change_type": "add",
+      "surface": "tests"
+    },
+    {
+      "path": "tests/test_validate_sdlc_state_machine.py",
+      "change_type": "add",
+      "surface": "tests"
+    },
+    {
+      "path": "tests/test_validate_sdlc_release_readiness.py",
+      "change_type": "add",
+      "surface": "tests"
+    },
+    {
+      "path": "tests/test_sdlc_security_review.py",
+      "change_type": "add",
+      "surface": "tests"
+    },
+    {
+      "path": "tests/test_validate_sdlc_pr_enforcement.py",
+      "change_type": "add",
+      "surface": "tests"
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "change_type": "modify",
+      "surface": "ci"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "change_type": "modify",
+      "surface": "ci"
+    }
+  ],
+  "test_changes": [
+    "tests/test_validate_sdlc_artifact.py",
+    "tests/test_validate_sdlc_state_machine.py",
+    "tests/test_validate_sdlc_release_readiness.py",
+    "tests/test_sdlc_security_review.py",
+    "tests/test_validate_sdlc_pr_enforcement.py"
+  ],
+  "documentation_changes": [
+    "docs/SDLC.md",
+    "docs/SDLC_PR_ENFORCEMENT.md",
+    ".github/pull_request_template.md"
+  ],
+  "schema_changes": [
+    "schemas/sdlc_change_request.schema.json",
+    "schemas/sdlc_implementation_receipt.schema.json"
+  ],
+  "validator_changes": [
+    "scripts/validate_sdlc_artifact.py",
+    "scripts/validate_sdlc_state_machine.py",
+    "scripts/validate_sdlc_release_readiness.py",
+    "scripts/validate_sdlc_security_review.py",
+    "scripts/validate_sdlc_pr_enforcement.py"
+  ],
+  "rollback_refs": [
+    "docs/SDLC_RELEASE_POLICY.md",
+    "RELEASE_CHECKLIST_v0.1.md"
+  ],
+  "implemented_at": "2026-06-01T00:00:00Z",
+  "uao_ref": "uao://sdlc/implementation/uao-validator/001",
+  "causal_decision_trace_ref": "trace://sdlc/implementation/uao-validator/001",
+  "receipt_ref": "receipt://sdlc/implementation/uao-validator/001"
+}
