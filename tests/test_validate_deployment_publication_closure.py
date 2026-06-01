@@ -529,6 +529,33 @@ def test_cli_writes_optional_closure_validation_report(tmp_path: Path) -> None:
     assert '"valid": true' in output_path.read_text(encoding="utf-8")
 
 
+def test_cli_accepts_strict_interface_flag_for_not_published_status(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
+    deployment_status.write_text(
+        _deployment_status("not-published", "not-declared"),
+        encoding="utf-8",
+    )
+    witness_path = tmp_path / "deployment_witness.json"
+
+    exit_code = main(
+        [
+            "--deployment-status",
+            str(deployment_status),
+            "--witness",
+            str(witness_path),
+            "--strict",
+        ]
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "DEPLOYMENT PUBLICATION CLOSURE OK" in captured.out
+    assert not witness_path.exists()
+
+
 def _deployment_status(state: str, public_health_endpoint: str) -> str:
     return "\n".join(
         (

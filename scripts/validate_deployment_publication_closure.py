@@ -584,6 +584,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             f"Suggested: {DEFAULT_VALIDATION_OUTPUT}"
         ),
     )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help=(
+            "Accepted for validator interface consistency. Deployment "
+            "publication validation is always claim-strict; an explicitly "
+            "not-published status remains valid without live witness evidence."
+        ),
+    )
     return parser.parse_args(argv)
 
 
