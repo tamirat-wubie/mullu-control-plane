@@ -626,6 +626,61 @@ def test_universal_command_orchestration_record_ignores_receipt_spoof_event() ->
     assert replayed_record["receipts"] != invalid_record["receipts"]
 
 
+def test_universal_command_orchestration_record_ignores_proof_spoof_event() -> None:
+    kernel, _executor = _kernel_with_capability()
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-record-proof-spoof",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    result = universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+    )
+    valid_record = universal_command_orchestration_record_view(
+        ledger, command.command_id
+    )
+    invalid_record = copy.deepcopy(valid_record)
+    valid_event_detail = next(
+        event.detail
+        for event in ledger.events_for(command.command_id)
+        if event.detail.get("cause") == "universal_action_kernel_dispatched"
+    )
+    assert isinstance(invalid_record, dict)
+    invalid_record["orchestration_id"] = "universal-action-orchestration-spoofed"
+    ledger.transition(
+        command.command_id,
+        CommandState.DISPATCHED,
+        detail={
+            "cause": "universal_action_kernel_dispatched",
+            "universal_action": copy.deepcopy(valid_event_detail["universal_action"]),
+            "universal_action_orchestration": invalid_record,
+        },
+    )
+    reloaded_ledger = CommandLedger(clock=_clock, store=store)
+
+    replayed_record = universal_command_orchestration_record_view(
+        reloaded_ledger, command.command_id
+    )
+
+    assert replayed_record is not None
+    assert replayed_record["action_id"] == result.action_id
+    assert replayed_record["orchestration_id"] == valid_record["orchestration_id"]
+    assert replayed_record["orchestration_id"] != invalid_record["orchestration_id"]
+
+
 def test_universal_command_orchestration_record_rejects_cross_command_candidate() -> (
     None
 ):
