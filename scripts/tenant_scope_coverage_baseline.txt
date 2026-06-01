@@ -29,9 +29,3 @@ mcoi/mcoi_runtime/app/routers/scheduler.py::schedule_job
 mcoi/mcoi_runtime/app/routers/temporal_scheduler.py::create_temporal_schedule
 mcoi/mcoi_runtime/app/routers/tenant.py::create_tenant_budget
 mcoi/mcoi_runtime/app/routers/tenant.py::register_tenant
-mcoi/mcoi_runtime/app/routers/workflow.py::execute
-mcoi/mcoi_runtime/app/routers/workflow.py::execute_pipeline
-mcoi/mcoi_runtime/app/routers/workflow.py::execute_traced_workflow
-mcoi/mcoi_runtime/app/routers/workflow.py::execute_workflow
-mcoi/mcoi_runtime/app/routers/workflow.py::execute_workflow_template
-mcoi/mcoi_runtime/app/routers/workflow.py::tool_augmented_workflow
