@@ -295,6 +295,7 @@ def build_validation_report(
     valid = not errors
     return {
         "receipt_id": "universal_action_orchestration_validation_receipt",
+        "terminal_closure_required": True,
         "receipt_is_not_terminal_closure": True,
         "valid": valid,
         "status": "passed" if valid else "failed",

@@ -2,7 +2,7 @@
 
 Purpose: define the governed v1 action-shape contract for effect-bearing control-plane actions.
 Governance scope: OCE action envelope completeness, RAG trace-to-receipt linkage, CDCV no-execution-by-claim causality, CQTE decidable admission shape, UWMA fixture witness anchoring, and PRS terminal closure state.
-Dependencies: `schemas/universal_action_orchestration.schema.json`, `scripts/validate_universal_action_orchestration.py`, `mcoi/mcoi_runtime/core/universal_action_kernel.py`, and examples in `examples/`.
+Dependencies: `schemas/universal_action_orchestration.schema.json`, `schemas/universal_action_orchestration_validation_receipt.schema.json`, `scripts/validate_universal_action_orchestration.py`, `scripts/validate_universal_action_orchestration_receipt_contract.py`, `mcoi/mcoi_runtime/core/universal_action_kernel.py`, and examples in `examples/`.
 Invariants: UAO v1 validates existence and shape only; it does not execute actions, dispatch workers, call external systems, send messages, move money, mutate schedules, or write memory.
 
 ## Architecture
@@ -84,6 +84,7 @@ Run:
 python scripts/validate_universal_action_orchestration.py
 python scripts/validate_universal_action_orchestration.py --json --receipt-path .tmp/uao-validation-receipt.json
 python -m pytest mcoi/tests/test_universal_action_kernel.py -q
+python scripts/validate_universal_action_orchestration_receipt_contract.py
 python -m unittest discover -s tests -p "test_validate_universal_action_orchestration.py"
 python scripts/run_workspace_governance_checks.py
 ```
@@ -91,3 +92,4 @@ python scripts/run_workspace_governance_checks.py
 The workspace preflight includes the validator, so UAO drift blocks repository closure.
 The optional JSON receipt is read-only and records validity, check names, workspace-relative example path labels, error counts, and bounded errors for autonomous preflight consumers.
 The kernel export tests cover both allowed execution and blocked admission records with schema and semantic validation.
+The validation receipt has its own schema contract and remains non-terminal closure evidence: `terminal_closure_required = true` and `receipt_is_not_terminal_closure = true`.
