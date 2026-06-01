@@ -843,11 +843,15 @@ def test_protocol_manifest_indexes_gateway_publication_receipt_validation() -> N
 def test_protocol_manifest_indexes_operational_intelligence_contracts() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    action_orchestration_entry = entries["universal-action-orchestration"]
     goal_entry = entries["goal"]
     simulation_entry = entries["simulation-receipt"]
     world_state_entry = entries["world-state"]
 
     assert validate_protocol_manifest(manifest) == []
+    assert action_orchestration_entry["path"] == "schemas/universal_action_orchestration.schema.json"
+    assert action_orchestration_entry["urn"] == "urn:mullusi:schema:universal-action-orchestration:1"
+    assert action_orchestration_entry["surface"] == "orchestration"
     assert goal_entry["path"] == "schemas/goal.schema.json"
     assert goal_entry["urn"] == "urn:mullusi:schema:goal:1"
     assert goal_entry["surface"] == "planning"

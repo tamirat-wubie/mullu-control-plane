@@ -1,0 +1,302 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-action-orchestration:1",
+  "title": "Universal Action Orchestration",
+  "description": "Machine-readable one-path orchestration record for governed effect-bearing actions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "orchestration_id",
+    "uao_schema_version",
+    "action_id",
+    "tenant_id",
+    "actor_id",
+    "created_at",
+    "action_envelope",
+    "effect_bearing",
+    "effect_classes",
+    "input_refs",
+    "policy_refs",
+    "capability_refs",
+    "temporal_refs",
+    "exposure_boundary",
+    "pipeline_stages",
+    "admission_guards",
+    "decision",
+    "trace_ref",
+    "causal_decision_trace_ref",
+    "admission_receipt_ref",
+    "execution_receipt_ref",
+    "receipts",
+    "reconciliation",
+    "memory_update",
+    "closure_state",
+    "closure",
+    "raw_reasoning_included",
+    "lineage"
+  ],
+  "properties": {
+    "orchestration_id": { "type": "string", "minLength": 1 },
+    "uao_schema_version": { "type": "string", "const": "uao.v1" },
+    "action_id": { "type": "string", "minLength": 1 },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "actor_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "action_envelope": { "$ref": "#/$defs/action_envelope" },
+    "effect_bearing": { "type": "boolean" },
+    "effect_classes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "input_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "policy_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "capability_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "temporal_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "exposure_boundary": { "$ref": "#/$defs/exposure_boundary" },
+    "pipeline_stages": {
+      "type": "array",
+      "minItems": 10,
+      "items": { "$ref": "#/$defs/pipeline_stage" }
+    },
+    "admission_guards": {
+      "type": "array",
+      "minItems": 11,
+      "items": { "$ref": "#/$defs/admission_guard" }
+    },
+    "decision": { "$ref": "#/$defs/decision" },
+    "trace_ref": { "type": "string", "minLength": 1 },
+    "causal_decision_trace_ref": { "type": "string", "minLength": 1 },
+    "admission_receipt_ref": { "type": "string", "minLength": 1 },
+    "execution_receipt_ref": { "type": ["string", "null"] },
+    "receipts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/receipt" }
+    },
+    "reconciliation": { "$ref": "#/$defs/reconciliation" },
+    "memory_update": { "$ref": "#/$defs/memory_update" },
+    "closure_state": {
+      "type": "string",
+      "enum": ["closed_allowed", "closed_blocked", "closed_deferred", "closed_escalated", "closed_simulated"]
+    },
+    "closure": { "$ref": "#/$defs/closure" },
+    "raw_reasoning_included": { "type": "boolean", "const": false },
+    "lineage": { "$ref": "#/$defs/lineage" }
+  },
+  "$defs": {
+    "action_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "actor",
+        "tenant",
+        "intent",
+        "target",
+        "risk",
+        "requested_at",
+        "approval_ref",
+        "evidence_refs",
+        "capability_refs"
+      ],
+      "properties": {
+        "source": { "type": "string", "minLength": 1 },
+        "actor": { "type": "string", "minLength": 1 },
+        "tenant": { "type": "string", "minLength": 1 },
+        "intent": { "type": "string", "minLength": 1 },
+        "target": { "type": "string", "minLength": 1 },
+        "risk": { "type": "string", "enum": ["low", "H1", "H2", "H3", "H4"] },
+        "requested_at": { "type": "string", "minLength": 1 },
+        "approval_ref": { "type": ["string", "null"] },
+        "evidence_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "capability_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "exposure_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["redaction_level", "allowed_audiences", "blocked_payload_classes"],
+      "properties": {
+        "redaction_level": { "type": "string", "enum": ["internal", "operator", "user_safe", "audit", "external"] },
+        "allowed_audiences": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "blocked_payload_classes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "pipeline_stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage_id", "stage_order", "stage_kind", "status", "input_refs", "output_refs", "receipt_ref", "failure_reason"],
+      "properties": {
+        "stage_id": { "type": "string", "minLength": 1 },
+        "stage_order": { "type": "integer", "minimum": 1 },
+        "stage_kind": {
+          "type": "string",
+          "enum": ["action", "evidence", "trace", "admission", "capability", "execution", "receipt", "reconciliation", "memory", "closure"]
+        },
+        "status": { "type": "string", "enum": ["completed", "blocked", "skipped", "deferred", "escalated", "simulated"] },
+        "input_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "output_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "receipt_ref": { "type": ["string", "null"] },
+        "failure_reason": { "type": ["string", "null"] }
+      }
+    },
+    "admission_guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["guard", "verdict", "proof_state", "reason_code", "evidence_refs"],
+      "properties": {
+        "guard": { "type": "string", "minLength": 1 },
+        "verdict": { "type": "string", "enum": ["passed", "blocked", "deferred", "escalated", "simulated"] },
+        "proof_state": { "$ref": "#/$defs/proof_state" },
+        "reason_code": { "type": "string", "minLength": 1 },
+        "evidence_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reason_code", "proof_state", "solver_outcome", "next_action", "execution_allowed"],
+      "properties": {
+        "status": { "type": "string", "enum": ["allow", "block", "defer", "escalate", "simulate"] },
+        "reason_code": { "type": "string", "minLength": 1 },
+        "proof_state": { "$ref": "#/$defs/proof_state" },
+        "solver_outcome": { "$ref": "#/$defs/solver_outcome" },
+        "next_action": { "type": "string", "minLength": 1 },
+        "execution_allowed": { "type": "boolean" }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipt_id", "tier", "kind", "stage_id", "confirms", "external_state_confirmed"],
+      "properties": {
+        "receipt_id": { "type": "string", "minLength": 1 },
+        "tier": { "type": "string", "enum": ["R0", "R1", "R2", "R3", "R4"] },
+        "kind": { "type": "string", "enum": ["admission", "trace", "execution", "provider", "reconciliation", "closure", "simulation"] },
+        "stage_id": { "type": "string", "minLength": 1 },
+        "confirms": { "type": "string", "minLength": 1 },
+        "external_state_confirmed": { "type": "boolean" }
+      }
+    },
+    "reconciliation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "observed_outcome_ref", "required_for_closure", "mismatch_reason"],
+      "properties": {
+        "status": { "type": "string", "enum": ["not_required", "pending", "matched", "mismatched", "blocked"] },
+        "observed_outcome_ref": { "type": ["string", "null"] },
+        "required_for_closure": { "type": "boolean" },
+        "mismatch_reason": { "type": ["string", "null"] }
+      }
+    },
+    "memory_update": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "memory_ref", "learning_allowed"],
+      "properties": {
+        "status": { "type": "string", "enum": ["not_allowed", "not_required", "recorded", "blocked", "deferred"] },
+        "memory_ref": { "type": ["string", "null"] },
+        "learning_allowed": { "type": "boolean" }
+      }
+    },
+    "closure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "terminal", "closure_receipt_ref", "next_action"],
+      "properties": {
+        "status": { "type": "string", "enum": ["closed_allowed", "closed_blocked", "closed_deferred", "closed_escalated", "closed_simulated"] },
+        "terminal": { "type": "boolean" },
+        "closure_receipt_ref": { "type": "string", "minLength": 1 },
+        "next_action": { "type": "string", "minLength": 1 }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["delta_ref", "logged_in_lineage", "accepted_deltas", "rejected_deltas"],
+      "properties": {
+        "delta_ref": { "type": "string", "minLength": 1 },
+        "logged_in_lineage": { "type": "boolean", "const": true },
+        "accepted_deltas": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/delta_record" }
+        },
+        "rejected_deltas": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/delta_record" }
+        }
+      }
+    },
+    "delta_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["delta_id", "reason", "logged_in_lineage"],
+      "properties": {
+        "delta_id": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "logged_in_lineage": { "type": "boolean", "const": true }
+      }
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": ["Pass", "Fail", "Unknown", "BudgetUnknown"]
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": [
+        "SolvedVerified",
+        "SolvedUnverified",
+        "AwaitingEvidence",
+        "SafeHalt",
+        "GovernanceBlocked",
+        "BudgetExhausted",
+        "ImpossibleProved",
+        "ModelInvalidated"
+      ]
+    }
+  }
+}
