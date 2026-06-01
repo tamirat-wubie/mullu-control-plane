@@ -65,6 +65,9 @@ def test_finance_operator_summary_schema_accepts_current_summary(tmp_path: Path)
     assert errors == ()
     assert validation.ok is True
     assert validation.errors == ()
+    assert validation.summary_path == summary_path.name
+    assert validation.schema_path == "schemas/finance_approval_operator_summary.schema.json"
+    assert str(tmp_path) not in json.dumps(validation.as_dict())
     assert validation.packet_ready is False
     assert validation.chain_ready is False
     assert validation.readiness_blocker_count >= 1
@@ -238,7 +241,11 @@ def test_finance_operator_summary_schema_writer_and_cli_honor_strict(tmp_path: P
     assert written == output_path
     assert exit_code == 0
     assert payload["ok"] is True
+    assert payload["summary_path"] == summary_path.name
+    assert payload["schema_path"] == "schemas/finance_approval_operator_summary.schema.json"
     assert stdout_payload["readiness_blocker_count"] == validation.readiness_blocker_count
+    assert stdout_payload["summary_path"] == summary_path.name
+    assert str(tmp_path) not in captured.out
 
 
 def _summary(tmp_path: Path) -> tuple[dict[str, object], tuple[str, ...]]:

@@ -146,12 +146,21 @@ def _validation_result(
     return FinanceOperatorSummarySchemaValidation(
         ok=not errors,
         errors=tuple(errors),
-        summary_path=str(summary_path),
-        schema_path=str(schema_path),
+        summary_path=_path_label(summary_path),
+        schema_path=_path_label(schema_path),
         packet_ready=summary.get("packet_ready") is True,
         chain_ready=summary.get("chain_ready") is True,
         readiness_blocker_count=len(readiness_blockers) if isinstance(readiness_blockers, list) else 0,
     )
+
+
+def _path_label(path: Path) -> str:
+    """Return a schema-validation path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:
