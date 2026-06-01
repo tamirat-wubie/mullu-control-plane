@@ -10,7 +10,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_listing_tenant
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.governance.network.webhook import WebhookSubscription
 
@@ -129,8 +129,9 @@ def webhook_subscribe(req: WebhookSubscribeRequest, request: Request):
 
 
 @router.get("/api/v1/webhooks")
-def list_webhooks(tenant_id: str | None = None):
+def list_webhooks(request: Request, tenant_id: str | None = None):
     """List webhook subscriptions."""
+    tenant_id = scoped_listing_tenant(request, tenant_id)
     subs = deps.webhook_manager.list_subscriptions(tenant_id=tenant_id)
     return {
         "subscriptions": [

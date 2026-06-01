@@ -313,6 +313,7 @@ def list_tickets(
     name: str | None = None,
     tenant_id: str | None = None,
     active_only: bool = False,
+    _: str = Depends(require_admin),
 ) -> dict[str, Any]:
     tickets = get_engine().list_tickets(
         actor_id=actor_id,

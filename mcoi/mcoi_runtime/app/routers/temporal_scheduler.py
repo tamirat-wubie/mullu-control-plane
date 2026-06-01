@@ -16,7 +16,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_listing_tenant
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.contracts.temporal_runtime import TemporalActionRequest, TemporalRiskLevel
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
@@ -135,11 +135,13 @@ def create_temporal_schedule(req: TemporalScheduleRequest, request: Request):
 
 @router.get("/api/v1/temporal/schedules")
 def list_temporal_schedules(
+    request: Request,
     tenant_id: str = "",
     state: str = "",
 ):
     """List temporal schedules from the persistent store."""
     deps.metrics.inc("requests_governed")
+    tenant_id = scoped_listing_tenant(request, tenant_id)
     try:
         state_filter = ScheduledActionState(state) if state else None
     except ValueError:

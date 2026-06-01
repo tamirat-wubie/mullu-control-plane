@@ -15,10 +15,11 @@ from __future__ import annotations
 
 from html import escape
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers._tenant_scope import scoped_listing_tenant
 
 router = APIRouter()
 
@@ -64,12 +65,14 @@ def console_home():
 
 @router.get("/api/v1/console/runs")
 def console_runs(
+    request: Request,
     tenant_id: str | None = None,
     outcome: str | None = None,
     limit: int = 50,
 ):
     """Operator runs view — recent governed actions with status."""
     deps.metrics.inc("requests_governed")
+    tenant_id = scoped_listing_tenant(request, tenant_id)
     entries = deps.audit_trail.query(
         tenant_id=tenant_id,
         outcome=outcome,
@@ -100,6 +103,7 @@ def console_runs(
 
 @router.get("/api/v1/console/audit")
 def console_audit(
+    request: Request,
     tenant_id: str | None = None,
     action: str | None = None,
     outcome: str | None = None,
@@ -107,6 +111,7 @@ def console_audit(
 ):
     """Operator audit view — searchable event history."""
     deps.metrics.inc("requests_governed")
+    tenant_id = scoped_listing_tenant(request, tenant_id)
     entries = deps.audit_trail.query(
         tenant_id=tenant_id,
         action=action,

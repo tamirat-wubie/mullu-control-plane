@@ -1,9 +1,10 @@
 """Feature flag endpoints."""
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers._tenant_scope import scoped_listing_tenant
 
 router = APIRouter()
 
@@ -21,6 +22,7 @@ def list_feature_flags():
 
 
 @router.get("/api/v1/flags/{flag_id}")
-def check_flag(flag_id: str, tenant_id: str = ""):
+def check_flag(flag_id: str, request: Request, tenant_id: str = ""):
     """Check if a feature flag is enabled."""
+    tenant_id = scoped_listing_tenant(request, tenant_id)
     return {"flag_id": flag_id, "enabled": deps.feature_flags.is_enabled(flag_id, tenant_id=tenant_id)}
