@@ -2,7 +2,7 @@
 
 Purpose: define allowed software-delivery lifecycle states and transition evidence.
 Governance scope: OCE named states, RAG transition links, CDCV evidence-bound movement, CQTE decidable blockers, UWMA transition receipts, and PRS terminal closure.
-Dependencies: `docs/SDLC.md`, `schemas/sdlc_closure_receipt.schema.json`, and `scripts/validate_sdlc_state_machine.py`.
+Dependencies: `docs/SDLC.md`, `schemas/sdlc_transition_receipt.schema.json`, `schemas/sdlc_closure_receipt.schema.json`, and `scripts/validate_sdlc_state_machine.py`.
 Invariants: no transition is valid without required evidence and receipts; terminal states have no outgoing transitions.
 
 ## Active States
@@ -64,3 +64,16 @@ and unresolved_blockers(s2) = empty
 ```
 
 The validator rejects unknown states, missing required transitions, terminal outgoing transitions, blocked states without reason codes, and closure that lacks receipt evidence.
+
+## Transition Receipt
+
+Every lifecycle movement must produce `sdlc_transition_receipt`:
+
+```text
+sdlc_transition_receipt
+:= <transition_id, change_id, from_state, to_state, decision,
+    required_evidence_refs, required_receipt_refs, blockers,
+    uao_ref, causal_decision_trace_ref, receipt_ref>
+```
+
+Allowed transitions require a known transition edge, non-empty evidence refs, non-empty upstream receipt refs, and no blockers. Blocked or deferred transitions require blocker records. Terminal closure must retain the transition receipt.

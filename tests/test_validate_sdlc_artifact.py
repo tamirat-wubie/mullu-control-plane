@@ -25,7 +25,7 @@ def test_current_sdlc_contract_passes() -> None:
     records = validator.load_example_records()
 
     assert errors == []
-    assert len(records) == 9
+    assert len(records) == 10
     assert all(spec.schema_path.exists() for spec in validator.ARTIFACT_SPECS)
     assert all(spec.example_path.exists() for spec in validator.ARTIFACT_SPECS)
     assert "scripts/validate_sdlc_pr_enforcement.py" in validator.REQUIRED_VALIDATORS
@@ -54,8 +54,10 @@ def test_example_chain_links_all_lifecycle_artifacts() -> None:
     assert errors == []
     assert records["requirement"]["request_id"] == records["change_request"]["request_id"]
     assert records["work_plan"]["design_id"] == records["design_decision"]["design_id"]
+    assert records["transition_receipt"]["change_id"] == records["change_request"]["request_id"]
     assert records["deployment_candidate"]["release_id"] == records["release_candidate"]["release_id"]
     assert records["change_request"]["receipt_ref"] in records["closure_receipt"]["receipts"]
+    assert records["transition_receipt"]["receipt_ref"] in records["closure_receipt"]["receipts"]
     assert records["deployment_candidate"]["uao_ref"] in records["closure_receipt"]["uao_refs"]
 
 
@@ -94,11 +96,13 @@ def test_closure_must_retain_upstream_gate_refs() -> None:
     invalid_records["closure_receipt"]["causal_decision_trace_refs"].remove(
         records["deployment_candidate"]["causal_decision_trace_ref"]
     )
+    invalid_records["closure_receipt"]["receipts"].remove(records["transition_receipt"]["receipt_ref"])
 
     errors = validator.validate_example_chain(invalid_records)
 
     assert "example_chain: closure must include change_request receipt_ref" in errors
     assert "example_chain: closure must include requirement uao_ref" in errors
+    assert "example_chain: closure must include transition_receipt receipt_ref" in errors
     assert "example_chain: closure must include deployment_candidate causal_decision_trace_ref" in errors
 
 

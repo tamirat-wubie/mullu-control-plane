@@ -37,6 +37,7 @@
   "evidence_required": [
     "schema validation receipt",
     "state machine validation receipt",
+    "state transition receipt",
     "release readiness validation receipt",
     "security review validation receipt",
     "PR enforcement validation receipt",

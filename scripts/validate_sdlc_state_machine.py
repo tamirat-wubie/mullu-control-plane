@@ -10,6 +10,7 @@ Dependencies: Python standard library and scripts/validate_sdlc_artifact.py.
 Invariants:
   - Terminal states have no outgoing transitions.
   - Canonical progression remains ordered and explicit.
+  - Transition receipts bind state movement to evidence, receipts, and blockers.
   - Closure examples must use a terminal state and receipt evidence.
 """
 
@@ -82,6 +83,7 @@ DEFAULT_TRANSITIONS = CANONICAL_TRANSITIONS + (
 )
 ALL_STATES = set(ACTIVE_STATES) | set(BLOCKED_STATES) | set(TERMINAL_STATES)
 STATE_MACHINE_DOC = WORKSPACE_ROOT / "docs" / "SDLC_STATE_MACHINE.md"
+TRANSITION_RECEIPT_SPEC = ARTIFACT_SPEC_BY_KIND["transition_receipt"]
 
 
 def validate_state_machine_document(document_path: Path = STATE_MACHINE_DOC) -> list[str]:
@@ -99,6 +101,8 @@ def validate_state_machine_document(document_path: Path = STATE_MACHINE_DOC) -> 
             errors.append(f"state machine document missing transition: {transition_text}")
     if "transition_allowed(s1 -> s2)" not in document_text:
         errors.append("state machine document missing transition rule")
+    if "sdlc_transition_receipt" not in document_text:
+        errors.append("state machine document missing transition receipt contract")
     return errors
 
 
@@ -124,6 +128,41 @@ def validate_state_machine_graph(
     return errors
 
 
+def validate_transition_receipt(transition_path: Path | None = None) -> list[str]:
+    """Validate one SDLC state transition receipt."""
+
+    resolved_path = TRANSITION_RECEIPT_SPEC.example_path if transition_path is None else transition_path
+    transition = load_json_object(resolved_path, "SDLC transition receipt")
+    errors = validate_artifact_record("transition_receipt", transition)
+    source_state = transition.get("from_state")
+    target_state = transition.get("to_state")
+    decision = transition.get("decision")
+    transition_edge = (source_state, target_state)
+    blockers = transition.get("blockers", [])
+
+    if source_state not in ALL_STATES:
+        errors.append("transition_receipt: unknown from_state")
+    if target_state not in ALL_STATES:
+        errors.append("transition_receipt: unknown to_state")
+    if source_state in TERMINAL_STATES:
+        errors.append("transition_receipt: terminal from_state cannot transition")
+    if transition_edge not in DEFAULT_TRANSITIONS:
+        errors.append(f"transition_receipt: transition is not allowed: {source_state} -> {target_state}")
+    if target_state in BLOCKED_STATES and decision != "blocked":
+        errors.append("transition_receipt: blocked target state requires blocked decision")
+    if decision == "allowed":
+        if blockers:
+            errors.append("transition_receipt: allowed transition cannot carry blockers")
+        if target_state in BLOCKED_STATES:
+            errors.append("transition_receipt: allowed transition cannot target blocked state")
+    if decision in {"blocked", "deferred"} and not blockers:
+        errors.append("transition_receipt: blocked or deferred transition requires blockers")
+    for receipt_ref in transition.get("required_receipt_refs", []):
+        if not isinstance(receipt_ref, str) or not receipt_ref.startswith("receipt://"):
+            errors.append("transition_receipt: required_receipt_refs must use receipt:// prefix")
+    return errors
+
+
 def validate_closure_state(closure_path: Path | None = None) -> list[str]:
     """Validate closure example state and receipt evidence."""
 
@@ -131,11 +170,14 @@ def validate_closure_state(closure_path: Path | None = None) -> list[str]:
     resolved_path = spec.example_path if closure_path is None else closure_path
     closure = load_json_object(resolved_path, "SDLC closure receipt")
     errors = validate_artifact_record("closure_receipt", closure)
+    transition = load_json_object(TRANSITION_RECEIPT_SPEC.example_path, "SDLC transition receipt")
     terminal_state = closure.get("terminal_state")
     if terminal_state not in TERMINAL_STATES:
         errors.append("closure terminal_state is not terminal")
     if not closure.get("receipts"):
         errors.append("closure must carry receipt evidence")
+    if transition.get("receipt_ref") not in closure.get("receipts", []):
+        errors.append("closure must retain transition receipt")
     if terminal_state == "closed_success" and closure.get("known_remaining_blockers"):
         errors.append("closed_success cannot carry remaining blockers")
     return errors
@@ -146,6 +188,7 @@ def validate_contract() -> list[str]:
 
     errors = validate_state_machine_document()
     errors.extend(validate_state_machine_graph())
+    errors.extend(validate_transition_receipt())
     errors.extend(validate_closure_state())
     return errors
 
@@ -154,12 +197,14 @@ def main(argv: list[str] | None = None) -> int:
     """Validate SDLC state machine."""
 
     parser = argparse.ArgumentParser(description="Validate SDLC state machine.")
+    parser.add_argument("--transition", type=Path, help="optional transition receipt path")
     parser.add_argument("--closure", type=Path, help="optional closure receipt path")
     args = parser.parse_args(argv)
 
     try:
         errors = validate_state_machine_document()
         errors.extend(validate_state_machine_graph())
+        errors.extend(validate_transition_receipt(args.transition))
         errors.extend(validate_closure_state(args.closure))
     except (OSError, ValueError) as exc:
         sys.stderr.write(f"[FAIL] sdlc-state-machine-load: {exc}\nSTATUS: failed\n")
@@ -173,6 +218,7 @@ def main(argv: list[str] | None = None) -> int:
 
     sys.stdout.write("[PASS] sdlc_state_machine_document\n")
     sys.stdout.write("[PASS] sdlc_state_machine_topology\n")
+    sys.stdout.write("[PASS] sdlc_transition_receipt\n")
     sys.stdout.write("[PASS] sdlc_state_machine_closure\n")
     sys.stdout.write("STATUS: passed\n")
     return 0

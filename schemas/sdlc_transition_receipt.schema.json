@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:sdlc-transition-receipt:1",
+  "title": "SDLC Transition Receipt",
+  "description": "Governed state-machine transition receipt for one software-delivery lifecycle movement.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "transition_id",
+    "change_id",
+    "from_state",
+    "to_state",
+    "decision",
+    "transition_reason",
+    "required_evidence_refs",
+    "required_receipt_refs",
+    "blockers",
+    "uao_ref",
+    "causal_decision_trace_ref",
+    "receipt_ref",
+    "evaluated_at",
+    "next_action"
+  ],
+  "properties": {
+    "transition_id": { "type": "string", "minLength": 1 },
+    "change_id": { "type": "string", "minLength": 1 },
+    "from_state": { "$ref": "#/$defs/sdlc_state" },
+    "to_state": { "$ref": "#/$defs/sdlc_state" },
+    "decision": { "type": "string", "enum": ["allowed", "blocked", "deferred"] },
+    "transition_reason": { "type": "string", "minLength": 1 },
+    "required_evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "required_receipt_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "blockers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/transition_blocker" }
+    },
+    "uao_ref": { "type": "string", "minLength": 1 },
+    "causal_decision_trace_ref": { "type": "string", "minLength": 1 },
+    "receipt_ref": { "type": "string", "minLength": 1 },
+    "evaluated_at": { "type": "string", "format": "date-time" },
+    "next_action": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "sdlc_state": {
+      "type": "string",
+      "enum": [
+        "proposed",
+        "triaged",
+        "requirements_defined",
+        "design_ready",
+        "planned",
+        "implementation_active",
+        "verification_active",
+        "security_review",
+        "release_candidate",
+        "deployment_candidate",
+        "deployed",
+        "monitored",
+        "closed",
+        "blocked_requirements",
+        "blocked_design",
+        "blocked_verification",
+        "blocked_security",
+        "blocked_release",
+        "blocked_deployment",
+        "blocked_runtime",
+        "closed_success",
+        "closed_rejected",
+        "closed_superseded",
+        "closed_rolled_back",
+        "closed_failed_with_receipt"
+      ]
+    },
+    "transition_blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blocker_id", "reason", "evidence_ref"],
+      "properties": {
+        "blocker_id": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "evidence_ref": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

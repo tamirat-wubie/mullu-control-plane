@@ -1,0 +1,21 @@
+{
+  "transition_id": "sdlc_transition_uao_validator_001",
+  "change_id": "sdlc_req_uao_validator_001",
+  "from_state": "verification_active",
+  "to_state": "security_review",
+  "decision": "allowed",
+  "transition_reason": "Verification receipts and validator outputs are present before entering security review.",
+  "required_evidence_refs": [
+    "examples/sdlc/verification_uao_validator.json",
+    "tests/test_validate_sdlc_artifact.py"
+  ],
+  "required_receipt_refs": [
+    "receipt://sdlc/verification/uao-validator/001"
+  ],
+  "blockers": [],
+  "uao_ref": "uao://sdlc/transition/uao-validator/001",
+  "causal_decision_trace_ref": "trace://sdlc/transition/uao-validator/001",
+  "receipt_ref": "receipt://sdlc/transition/uao-validator/001",
+  "evaluated_at": "2026-06-01T00:00:00Z",
+  "next_action": "Run the governed security review gate."
+}

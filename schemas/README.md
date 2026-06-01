@@ -87,6 +87,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `sdlc_requirement.schema.json` | Canonical governed software-delivery requirement artifact |
 | `sdlc_design_decision.schema.json` | Canonical governed software-delivery design decision artifact |
 | `sdlc_work_plan.schema.json` | Canonical governed software-delivery ordered work plan artifact |
+| `sdlc_transition_receipt.schema.json` | Canonical governed software-delivery state transition receipt |
 | `sdlc_verification_receipt.schema.json` | Canonical governed software-delivery verification receipt |
 | `sdlc_security_review.schema.json` | Canonical governed software-delivery security review artifact |
 | `sdlc_release_candidate.schema.json` | Canonical governed software-delivery release readiness artifact |
