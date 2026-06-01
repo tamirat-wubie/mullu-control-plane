@@ -73,6 +73,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _telemetry_monitoring_triage_skill(),
         _agentic_control_project_discipline_mesh_skill(),
         _agentic_control_resource_governor_skill(),
+        _agentic_control_algorithm_governor_skill(),
         _agentic_control_autonomous_operations_skill(),
     )
 
@@ -846,6 +847,133 @@ def _agentic_control_resource_governor_skill() -> SkillDescriptor:
                 "halt_thresholds",
                 "budget_envelope_ref",
                 "proof_state",
+            ),
+        },
+    )
+
+
+def _agentic_control_algorithm_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.algorithm_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic algorithm governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_algorithm_problem",
+                name="Define algorithm problem",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "problem_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_algorithm_constraints",
+                name="Rank algorithm constraints",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_algorithm_problem",),
+                input_bindings={"mission_contract_ref": "define_algorithm_problem.mission_contract_ref"},
+                output_keys=("constraint_order_ref", "dependency_blockers", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_algorithm_governance",
+                name="Evaluate algorithm governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_algorithm_constraints",),
+                input_bindings={"priority_order_ref": "rank_algorithm_constraints.constraint_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_actions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_algorithm_budget",
+                name="Bound algorithm budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_algorithm_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_algorithm_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "halt_thresholds", "resource_floor"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="analyze_algorithm_design",
+                name="Analyze algorithm design",
+                action_type="agentic_control.math_algorithm.analyze",
+                depends_on=("bound_algorithm_budget",),
+                input_bindings={
+                    "problem_boundary_ref": "define_algorithm_problem.problem_boundary_ref",
+                    "budget_envelope_ref": "bound_algorithm_budget.budget_envelope_ref",
+                },
+                output_keys=("algorithm_analysis_ref", "complexity_bound", "failure_modes"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="build_algorithm_threat_model",
+                name="Build algorithm threat model",
+                action_type="agentic_control.security_threat_model.build",
+                depends_on=("analyze_algorithm_design",),
+                input_bindings={"algorithm_analysis_ref": "analyze_algorithm_design.algorithm_analysis_ref"},
+                output_keys=("threat_model_ref", "mitigation_refs", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_algorithm_verification",
+                name="Plan algorithm verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("analyze_algorithm_design", "build_algorithm_threat_model"),
+                input_bindings={
+                    "algorithm_analysis_ref": "analyze_algorithm_design.algorithm_analysis_ref",
+                    "threat_model_ref": "build_algorithm_threat_model.threat_model_ref",
+                },
+                output_keys=("algorithm_verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_algorithm_gaps",
+                name="Refine algorithm gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_algorithm_verification",),
+                input_bindings={
+                    "algorithm_analysis_ref": "analyze_algorithm_design.algorithm_analysis_ref",
+                    "verification_plan_ref": "plan_algorithm_verification.algorithm_verification_plan_ref",
+                    "threat_model_ref": "build_algorithm_threat_model.threat_model_ref",
+                },
+                output_keys=("algorithm_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_algorithm_memory_admission",
+                name="Plan algorithm memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_algorithm_gaps",),
+                input_bindings={"refinement_plan_ref": "refine_algorithm_gaps.algorithm_refinement_plan_ref"},
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes bounded algorithm design review before code planning by "
+            "linking mission boundary, priority constraints, governance gate, "
+            "resource budget, complexity analysis, threat model, verification "
+            "plan, refinement, and memory-admission planning."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "algorithm_governor": True,
+            "analysis_dimensions": (
+                "problem_boundary",
+                "complexity_bound",
+                "failure_modes",
+                "threat_model",
+                "verification_gates",
             ),
         },
     )
