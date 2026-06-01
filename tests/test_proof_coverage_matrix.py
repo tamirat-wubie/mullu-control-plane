@@ -2176,6 +2176,7 @@ def test_agentic_control_capability_pack_surface_binds_default_authority() -> No
     assert "agentic_control.swarm_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.coding_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.quality_governor.v1" in agentic_surface["representative_paths"]
+    assert "agentic_control.execution_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.runtime_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.release_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.autonomous_operations.v1" in agentic_surface["representative_paths"]
