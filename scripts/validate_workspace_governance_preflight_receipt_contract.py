@@ -34,6 +34,7 @@ REQUIRED_RECEIPT_FIELDS = (
     "terminal_closure_required",
     "receipt_is_not_terminal_closure",
     "status",
+    "generated_at_epoch",
     "check_count",
     "checks",
 )
@@ -139,6 +140,12 @@ def validate_receipt(receipt: dict[str, Any]) -> list[str]:
         errors.append("receipt_is_not_terminal_closure must be true")
     if receipt["status"] not in ALLOWED_STATUSES:
         errors.append(f"receipt status is invalid: {receipt['status']}")
+    if (
+        isinstance(receipt["generated_at_epoch"], bool)
+        or not isinstance(receipt["generated_at_epoch"], (int, float))
+        or receipt["generated_at_epoch"] <= 0
+    ):
+        errors.append("generated_at_epoch must be a positive epoch timestamp")
 
     checks = receipt["checks"]
     if not isinstance(checks, list):
