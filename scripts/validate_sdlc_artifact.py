@@ -75,6 +75,14 @@ REQUIRED_VALIDATORS = (
     "scripts/validate_sdlc_state_machine.py",
     "scripts/validate_sdlc_release_readiness.py",
     "scripts/validate_sdlc_security_review.py",
+    "scripts/validate_sdlc_pr_enforcement.py",
+)
+REQUIRED_VERIFICATION_COMMANDS = (
+    "sdlc_artifact_validation",
+    "sdlc_state_machine_validation",
+    "sdlc_release_readiness_validation",
+    "sdlc_security_review_validation",
+    "sdlc_pr_enforcement_validation",
 )
 PASSING_OUTCOMES = {"SolvedVerified", "SolvedUnverified"}
 PRODUCTION_REQUIRED_STATUSES = {
@@ -256,8 +264,7 @@ def validate_artifact_record(kind: str, record: dict[str, Any]) -> list[str]:
 
     if kind == "design_decision":
         errors.extend(_validate_effect_gate_refs(kind, record))
-        if record.get("schema_changes") and not record.get("validator_changes"):
-            errors.append("design_decision: schema changes require validator changes")
+        errors.extend(_validate_design_decision(record))
     elif kind == "work_plan":
         errors.extend(_validate_effect_gate_refs(kind, record))
         errors.extend(_validate_work_plan(record))
@@ -462,6 +469,16 @@ def _validate_effect_gate_refs(kind: str, record: dict[str, Any]) -> list[str]:
     return errors
 
 
+def _validate_design_decision(record: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if record.get("schema_changes") and not record.get("validator_changes"):
+        errors.append("design_decision: schema changes require validator changes")
+    missing_validators = set(REQUIRED_VALIDATORS) - set(record.get("validator_changes", []))
+    if missing_validators:
+        errors.append(f"design_decision: missing required validators: {sorted(missing_validators)}")
+    return errors
+
+
 def _validate_work_plan(record: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     steps = record.get("steps", [])
@@ -496,9 +513,18 @@ def _validate_verification_receipt(record: dict[str, Any]) -> list[str]:
     for command in commands:
         if isinstance(command, dict) and command.get("status") != "passed":
             errors.append(f"verification_receipt: command did not pass: {command.get('name')}")
-    for validator_name in ("sdlc_artifact_validation", "sdlc_state_machine_validation"):
+    observed_command_names = {item.get("name") for item in commands if isinstance(item, dict)}
+    for validator_name in REQUIRED_VERIFICATION_COMMANDS:
         if not any(isinstance(item, dict) and item.get("name") == validator_name for item in commands):
             errors.append(f"verification_receipt: missing command {validator_name}")
+    validator_outputs = record.get("validator_outputs", [])
+    observed_output_names = {item.get("name") for item in validator_outputs if isinstance(item, dict)}
+    missing_outputs = set(REQUIRED_VERIFICATION_COMMANDS) - observed_output_names
+    if missing_outputs:
+        errors.append(f"verification_receipt: missing validator outputs: {sorted(missing_outputs)}")
+    stale_outputs = observed_output_names - observed_command_names
+    if stale_outputs:
+        errors.append(f"verification_receipt: validator outputs without commands: {sorted(stale_outputs)}")
     return errors
 
 

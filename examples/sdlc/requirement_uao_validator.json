@@ -5,7 +5,7 @@
   "success_criteria": [
     "valid SDLC examples pass schema and semantic validation",
     "invalid SDLC examples fail with explicit errors",
-    "workspace preflight includes SDLC artifact, state machine, release readiness, and security review checks"
+    "workspace preflight includes SDLC artifact, state machine, release readiness, security review, and PR enforcement checks"
   ],
   "non_goals": [
     "no runtime deployment",
@@ -24,19 +24,22 @@
     "examples",
     "scripts",
     "tests",
+    ".github",
     "preflight"
   ],
   "acceptance_tests": [
     "python scripts/validate_sdlc_artifact.py",
     "python scripts/validate_sdlc_state_machine.py",
     "python scripts/validate_sdlc_release_readiness.py --strict",
-    "python scripts/validate_sdlc_security_review.py --strict"
+    "python scripts/validate_sdlc_security_review.py --strict",
+    "python scripts/validate_sdlc_pr_enforcement.py"
   ],
   "evidence_required": [
     "schema validation receipt",
     "state machine validation receipt",
     "release readiness validation receipt",
     "security review validation receipt",
+    "PR enforcement validation receipt",
     "workspace preflight receipt"
   ]
 }

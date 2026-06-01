@@ -21,16 +21,22 @@
       "name": "sdlc_security_review_validation",
       "command": "python scripts/validate_sdlc_security_review.py --strict",
       "status": "passed"
+    },
+    {
+      "name": "sdlc_pr_enforcement_validation",
+      "command": "python scripts/validate_sdlc_pr_enforcement.py",
+      "status": "passed"
     }
   ],
-  "tests_passed": 4,
+  "tests_passed": 5,
   "tests_failed": 0,
   "warnings": [],
   "coverage_refs": [
     "tests/test_validate_sdlc_artifact.py",
     "tests/test_validate_sdlc_state_machine.py",
     "tests/test_validate_sdlc_release_readiness.py",
-    "tests/test_sdlc_security_review.py"
+    "tests/test_sdlc_security_review.py",
+    "tests/test_validate_sdlc_pr_enforcement.py"
   ],
   "validator_outputs": [
     {
@@ -52,6 +58,11 @@
       "name": "sdlc_security_review_validation",
       "status": "passed",
       "output_ref": "receipt://sdlc/security-review-validation/001"
+    },
+    {
+      "name": "sdlc_pr_enforcement_validation",
+      "status": "passed",
+      "output_ref": "receipt://sdlc/pr-enforcement-validation/001"
     }
   ],
   "failed_checks": [],
