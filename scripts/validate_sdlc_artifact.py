@@ -38,6 +38,7 @@ DOC_REQUIREMENTS: dict[Path, tuple[str, ...]] = {
         "Effect-bearing SDLC action -> UAO required.",
         "sdlc_gate_decision_envelope",
         "sdlc_implementation_receipt",
+        "sdlc_recovery_handoff_receipt",
         "scripts/validate_sdlc_pr_enforcement.py",
         "No closure without learning.",
     ),
@@ -54,6 +55,7 @@ DOC_REQUIREMENTS: dict[Path, tuple[str, ...]] = {
     WORKSPACE_ROOT / "docs" / "SDLC_RELEASE_POLICY.md": (
         "Production claim is allowed when:",
         "deployment_witness = published",
+        "sdlc_recovery_handoff_receipt",
         "incident_recovery_path_if_rollback_fails",
     ),
     WORKSPACE_ROOT / "docs" / "SDLC_SECURITY_REVIEW.md": (
@@ -99,6 +101,7 @@ GATE_BOUND_ARTIFACT_KINDS = (
     "security_review",
     "release_candidate",
     "deployment_candidate",
+    "recovery_handoff",
 )
 GATE_REF_PREFIX_BY_FIELD = {
     "uao_ref": "uao://",
@@ -204,6 +207,13 @@ ARTIFACT_SPECS: tuple[ArtifactSpec, ...] = (
         "deployment_candidate_uao_validator.json",
         "urn:mullusi:schema:sdlc-deployment-candidate:1",
         "SDLC Deployment Candidate",
+    ),
+    ArtifactSpec(
+        "recovery_handoff",
+        "sdlc_recovery_handoff_receipt.schema.json",
+        "recovery_handoff_uao_validator.json",
+        "urn:mullusi:schema:sdlc-recovery-handoff-receipt:1",
+        "SDLC Recovery Handoff Receipt",
     ),
     ArtifactSpec(
         "closure_receipt",
@@ -313,6 +323,8 @@ def validate_artifact_record(kind: str, record: dict[str, Any]) -> list[str]:
         errors.extend(validate_release_candidate_record(record, strict=False))
     elif kind == "deployment_candidate":
         errors.extend(validate_deployment_candidate_record(record, strict=False))
+    elif kind == "recovery_handoff":
+        errors.extend(_validate_recovery_handoff(record))
     elif kind == "closure_receipt":
         errors.extend(_validate_closure_receipt(record))
     return errors
@@ -420,6 +432,7 @@ def validate_example_chain(records: dict[str, dict[str, Any]] | None = None) -> 
     security_review = loaded_records["security_review"]
     release = loaded_records["release_candidate"]
     deployment = loaded_records["deployment_candidate"]
+    recovery_handoff = loaded_records["recovery_handoff"]
     closure = loaded_records["closure_receipt"]
 
     request_id = change_request.get("request_id")
@@ -455,6 +468,14 @@ def validate_example_chain(records: dict[str, dict[str, Any]] | None = None) -> 
         errors.append("example_chain: release.security_status.review_ref must match security review")
     if deployment.get("release_id") != release.get("release_id"):
         errors.append("example_chain: deployment.release_id must match release")
+    if recovery_handoff.get("change_id") != request_id:
+        errors.append("example_chain: recovery_handoff.change_id must match change request")
+    if recovery_handoff.get("terminal_closure_ref") != closure.get("closure_id"):
+        errors.append("example_chain: recovery_handoff.terminal_closure_ref must match closure")
+    if recovery_handoff.get("receipt_ref") not in closure.get("receipts", []):
+        errors.append("example_chain: closure must include recovery handoff receipt")
+    if "examples/sdlc/recovery_handoff_uao_validator.json" not in verification.get("coverage_refs", []):
+        errors.append("example_chain: verification coverage must include recovery handoff receipt artifact")
     if closure.get("change_id") != request_id:
         errors.append("example_chain: closure.change_id must match change request")
     if verification.get("receipt_ref") not in closure.get("receipts", []):
@@ -503,6 +524,7 @@ def build_validation_report() -> dict[str, Any]:
         "sdlc_cross_artifact_links",
         "sdlc_gate_decision_envelopes",
         "sdlc_closure_ref_retention",
+        "sdlc_recovery_handoff_retention",
         "sdlc_no_overclaim",
     )
     return {
@@ -636,6 +658,27 @@ def _validate_verification_receipt(record: dict[str, Any]) -> list[str]:
     return errors
 
 
+def _validate_recovery_handoff(record: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    rollback_state = record.get("rollback_state")
+    incident_required = record.get("incident_handoff_required")
+    incident_refs = record.get("incident_recovery_refs", [])
+    accepted_risk_refs = record.get("accepted_risk_refs", [])
+    if rollback_state in {"partial", "blocked"} and incident_required is not True:
+        errors.append("recovery_handoff: partial or blocked rollback requires incident handoff")
+    if accepted_risk_refs and incident_required is not True:
+        errors.append("recovery_handoff: accepted risks require incident handoff")
+    if incident_required is True and not incident_refs:
+        errors.append("recovery_handoff: incident handoff requires incident recovery refs")
+    if rollback_state != "not_required" and not record.get("rollback_refs"):
+        errors.append("recovery_handoff: rollback refs are required unless rollback is not_required")
+    for field_name in ("rollback_refs", "incident_recovery_refs", "accepted_risk_refs", "effect_boundary_refs"):
+        values = record.get(field_name, [])
+        if isinstance(values, list) and len(values) != len(set(values)):
+            errors.append(f"recovery_handoff: {field_name} must not contain duplicates")
+    return errors
+
+
 def _validate_closure_receipt(record: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if record.get("terminal_state") == "closed_success" and record.get("outcome") not in PASSING_OUTCOMES:
@@ -708,13 +751,8 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.write("STATUS: failed\n")
         return 1
 
-    sys.stdout.write("[PASS] sdlc_schema_contracts\n")
-    sys.stdout.write("[PASS] sdlc_example_artifacts\n")
-    sys.stdout.write("[PASS] sdlc_document_contracts\n")
-    sys.stdout.write("[PASS] sdlc_cross_artifact_links\n")
-    sys.stdout.write("[PASS] sdlc_gate_decision_envelopes\n")
-    sys.stdout.write("[PASS] sdlc_closure_ref_retention\n")
-    sys.stdout.write("[PASS] sdlc_no_overclaim\n")
+    for check in report["checks"]:
+        sys.stdout.write(f"[PASS] {check['name']}\n")
     sys.stdout.write("STATUS: passed\n")
     return 0
 

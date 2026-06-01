@@ -93,6 +93,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `sdlc_security_review.schema.json` | Canonical governed software-delivery security review artifact |
 | `sdlc_release_candidate.schema.json` | Canonical governed software-delivery release readiness artifact |
 | `sdlc_deployment_candidate.schema.json` | Canonical governed software-delivery deployment readiness artifact |
+| `sdlc_recovery_handoff_receipt.schema.json` | Canonical governed software-delivery rollback and incident handoff receipt |
 | `sdlc_closure_receipt.schema.json` | Canonical governed software-delivery terminal closure receipt |
 | `software_dev/capability_manifest.schema.json` | Governed manifest contract for admitting dynamic software-development capabilities |
 | `software_dev/*.input.schema.json` | Governed input contracts for repository mapping, context building, gate planning, sandboxed software changes, app task graph planning, and PR candidate preparation |

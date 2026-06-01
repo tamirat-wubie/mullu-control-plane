@@ -41,6 +41,7 @@
     "state transition receipt",
     "release readiness validation receipt",
     "security review validation receipt",
+    "recovery handoff receipt",
     "PR enforcement validation receipt",
     "workspace preflight receipt"
   ],
