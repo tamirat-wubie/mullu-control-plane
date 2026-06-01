@@ -403,7 +403,7 @@ def _write_valid_reports(
             {
                 "ready": False,
                 "readiness_level": "pilot-governed-core",
-                "capability_count": 79,
+                "capability_count": 80,
                 "capsule_count": 13,
             }
         ),

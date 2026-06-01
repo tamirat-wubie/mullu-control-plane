@@ -734,11 +734,28 @@ def _agentic_control_autonomous_operations_skill() -> SkillDescriptor:
                 provider_class_required="agentic_control_plane",
             ),
             SkillStep(
+                step_id="plan_telemetry_triage",
+                name="Plan telemetry triage",
+                action_type="agentic_control.telemetry_triage.plan",
+                depends_on=("plan_verification",),
+                input_bindings={"verification_plan_ref": "plan_verification.verification_plan_ref"},
+                output_keys=(
+                    "telemetry_triage_plan_ref",
+                    "monitored_surfaces",
+                    "threshold_contracts",
+                    "remediation_order",
+                ),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
                 step_id="plan_code_change",
                 name="Plan code change boundary",
                 action_type="agentic_control.code_change.plan",
-                depends_on=("plan_verification",),
-                input_bindings={"verification_plan_ref": "plan_verification.verification_plan_ref"},
+                depends_on=("plan_verification", "plan_telemetry_triage"),
+                input_bindings={
+                    "verification_plan_ref": "plan_verification.verification_plan_ref",
+                    "telemetry_triage_plan_ref": "plan_telemetry_triage.telemetry_triage_plan_ref",
+                },
                 output_keys=("code_change_plan_ref", "change_boundary", "test_contract", "rollback_plan"),
                 provider_class_required="agentic_control_plane",
             ),
@@ -758,6 +775,7 @@ def _agentic_control_autonomous_operations_skill() -> SkillDescriptor:
                 depends_on=("plan_release_handoff",),
                 input_bindings={
                     "verification_plan_ref": "plan_verification.verification_plan_ref",
+                    "telemetry_triage_plan_ref": "plan_telemetry_triage.telemetry_triage_plan_ref",
                     "code_change_plan_ref": "plan_code_change.code_change_plan_ref",
                     "release_handoff_plan_ref": "plan_release_handoff.release_handoff_plan_ref",
                 },
@@ -769,8 +787,8 @@ def _agentic_control_autonomous_operations_skill() -> SkillDescriptor:
         description=(
             "Composes mission control, prioritization, governance gating, resource "
             "bounds, algorithm review, threat modeling, swarm coordination, product "
-            "planning, verification planning, code-change planning, release-handoff "
-            "planning, and evidence ledger closure."
+            "planning, verification planning, telemetry-triage planning, code-change "
+            "planning, release-handoff planning, and evidence ledger closure."
         ),
         confidence=0.25,
         metadata={**_NO_NEW_AUTHORITY, "risk_floor": "high", "approval_expected": True},
