@@ -247,7 +247,7 @@ def submit_trust_ledger_anchor_export(
             "remote_response_hash": remote_submission["remote_response_hash"],
             "remote_receipt_hash": remote_submission["remote_receipt_hash"],
             "remote_status_code": remote_submission["status_code"],
-            "remote_preflight_receipt_path": str(remote_preflight_receipt_path),
+            "remote_preflight_receipt_path": _path_label(remote_preflight_receipt_path),
             "remote_preflight_receipt_id": remote_preflight["receipt_id"],
             "remote_preflight_checked_at": remote_preflight["checked_at"],
             "remote_preflight_expected_payload_hash": remote_preflight[
@@ -618,12 +618,13 @@ def _verify_remote_preflight_receipt(
     if preflight_path is None:
         return _remote_preflight_report(valid=False, reason="remote_preflight_receipt_required")
 
+    preflight_path_label = _path_label(preflight_path)
     loaded = _read_json_object(preflight_path, "remote_preflight_receipt")
     if loaded.get("reason"):
         return _remote_preflight_report(
             valid=False,
             reason=str(loaded["reason"]),
-            receipt_path=str(preflight_path),
+            receipt_path=preflight_path_label,
         )
 
     preflight = loaded["payload"]
@@ -634,7 +635,7 @@ def _verify_remote_preflight_receipt(
             reason="remote_preflight_receipt_schema_validation_failed",
             schema_valid=False,
             schema_errors=schema_errors if strict else schema_errors[:10],
-            receipt_path=str(preflight_path),
+            receipt_path=preflight_path_label,
         )
 
     preflight_timeout_seconds = float(preflight["remote_timeout_seconds"])
@@ -644,7 +645,7 @@ def _verify_remote_preflight_receipt(
             valid=False,
             reason=timeout_error,
             schema_valid=True,
-            receipt_path=str(preflight_path),
+            receipt_path=preflight_path_label,
             receipt_id=str(preflight["receipt_id"]),
             checked_at=str(preflight["checked_at"]),
         )
@@ -657,7 +658,7 @@ def _verify_remote_preflight_receipt(
             valid=False,
             reason="receipt_id_mismatch",
             schema_valid=True,
-            receipt_path=str(preflight_path),
+            receipt_path=preflight_path_label,
             receipt_id=str(preflight["receipt_id"]),
             canonical_receipt_id=canonical_receipt_id,
             checked_at=str(preflight["checked_at"]),
@@ -692,7 +693,7 @@ def _verify_remote_preflight_receipt(
                 valid=False,
                 reason=f"{field_name}_mismatch",
                 schema_valid=True,
-                receipt_path=str(preflight_path),
+                receipt_path=preflight_path_label,
                 receipt_id=str(preflight["receipt_id"]),
                 checked_at=str(preflight["checked_at"]),
                 expected_remote_submission_payload_hash=expected_hash,
@@ -706,7 +707,7 @@ def _verify_remote_preflight_receipt(
             valid=False,
             reason="remote_preflight_receipt_has_blockers",
             schema_valid=True,
-            receipt_path=str(preflight_path),
+            receipt_path=preflight_path_label,
             receipt_id=str(preflight["receipt_id"]),
             checked_at=str(preflight["checked_at"]),
             expected_remote_submission_payload_hash=expected_hash,
@@ -728,7 +729,7 @@ def _verify_remote_preflight_receipt(
                 valid=False,
                 reason=f"metadata_{field_name}_mismatch",
                 schema_valid=True,
-                receipt_path=str(preflight_path),
+                receipt_path=preflight_path_label,
                 receipt_id=str(preflight["receipt_id"]),
                 checked_at=str(preflight["checked_at"]),
                 expected_remote_submission_payload_hash=expected_hash,
@@ -740,7 +741,7 @@ def _verify_remote_preflight_receipt(
     return _remote_preflight_report(
         valid=True,
         reason="remote_preflight_receipt_verified",
-        receipt_path=str(preflight_path),
+        receipt_path=preflight_path_label,
         receipt_id=str(preflight["receipt_id"]),
         canonical_receipt_id=canonical_receipt_id,
         checked_at=str(preflight["checked_at"]),
@@ -778,6 +779,15 @@ def _first_read_error(*loaded_payloads: dict[str, Any]) -> dict[str, Any] | None
                 "schema_errors": list(loaded.get("schema_errors", [])),
             }
     return None
+
+
+def _path_label(path: Path) -> str:
+    """Return an evidence path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _authority_ref_allowed(value: str) -> bool:

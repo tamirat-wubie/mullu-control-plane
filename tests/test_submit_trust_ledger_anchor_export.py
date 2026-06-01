@@ -319,15 +319,19 @@ def test_submit_trust_ledger_anchor_export_posts_remote_transparency_log(tmp_pat
         urlopen=transport,
     )
     receipt = report["submission_receipt"]
+    expected_preflight_path_label = preflight_path.name
 
     assert report["valid"] is True
     assert report["remote_preflight"]["reason"] == "remote_preflight_receipt_verified"
+    assert report["remote_preflight"]["receipt_path"] == expected_preflight_path_label
+    assert str(tmp_path) not in report["remote_preflight"]["receipt_path"]
     assert report["remote_submission"]["reason"] == "remote_submission_accepted"
     assert report["remote_submission"]["external_anchor_ref"] == "https://transparency.example/entries/1"
     assert report["remote_submission"]["status_code"] == 201
     assert receipt["external_anchor_ref"] == "https://transparency.example/entries/1"
     assert receipt["metadata"]["remote_submission_url"] == "https://transparency.example/anchors"
-    assert receipt["metadata"]["remote_preflight_receipt_path"] == str(preflight_path)
+    assert receipt["metadata"]["remote_preflight_receipt_path"] == expected_preflight_path_label
+    assert str(tmp_path) not in receipt["metadata"]["remote_preflight_receipt_path"]
     assert receipt["metadata"]["remote_preflight_receipt_id"].startswith(
         "trust-ledger-remote-submission-preflight-"
     )
@@ -394,6 +398,43 @@ def test_submit_trust_ledger_anchor_export_requires_remote_preflight_receipt(tmp
     assert report["submitted"] is False
     assert report["remote_preflight"] == {}
     assert transport.request is None
+    assert not ledger_path.exists()
+
+
+def test_submit_trust_ledger_anchor_export_bounds_remote_preflight_path_on_read_failure(tmp_path: Path) -> None:
+    export_paths = _write_anchor_export(tmp_path)
+    ledger_path = tmp_path / "submissions.jsonl"
+    preflight_path = tmp_path / "missing_remote_preflight.json"
+    transport = FakeTransparencyLogTransport()
+
+    report = submit_trust_ledger_anchor_export(
+        bundle_path=export_paths["bundle"],
+        receipt_path=export_paths["anchor_receipt"],
+        artifacts_path=export_paths["artifacts"],
+        package_path=export_paths["package"],
+        ledger_path=ledger_path,
+        operator_id="operator-1",
+        authority_ref="proof://approval-submit-anchor-1",
+        submitted_at="2026-05-05T12:20:00+00:00",
+        verification_secret="anchor-secret",
+        submission_secret="submission-secret",
+        signature_key_id="submission-key",
+        confirm_submit=True,
+        remote_submit_url="https://transparency.example/anchors",
+        allow_remote_submit=True,
+        remote_preflight_receipt_path=preflight_path,
+        remote_api_token="remote-token",
+        urlopen=transport,
+    )
+
+    assert report["valid"] is False
+    assert report["reason"] == "remote_preflight_receipt_failed:remote_preflight_receipt_read_failed"
+    assert report["remote_preflight"]["valid"] is False
+    assert report["remote_preflight"]["receipt_path"] == preflight_path.name
+    assert str(tmp_path) not in report["remote_preflight"]["receipt_path"]
+    assert report["remote_submission"]["reason"] == "remote_submission_blocked_by_preflight"
+    assert transport.request is None
+    assert report["submission_receipt"] == {}
     assert not ledger_path.exists()
 
 
