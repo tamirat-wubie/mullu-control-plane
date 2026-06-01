@@ -346,7 +346,7 @@ def approve_finance_approval_packet(case_id: str, req: FinancePacketApprovalRequ
                 FinancePacketTransition(
                     next_state=FinancePacketState.CLOSED_REJECTED,
                     cause="approval_not_granted",
-                    actor_id=req.approver_id,
+                    actor_id=approver_id,
                     occurred_at=now,
                     approval_ref=approval.approval_id,
                     closure_certificate_id=req.closure_certificate_id or f"closure:{case_id}:rejected",
@@ -360,7 +360,7 @@ def approve_finance_approval_packet(case_id: str, req: FinancePacketApprovalRequ
                     FinancePacketTransition(
                         next_state=FinancePacketState.APPROVED,
                         cause="approval_granted",
-                        actor_id=req.approver_id,
+                        actor_id=approver_id,
                         occurred_at=now,
                         approval_ref=approval.approval_id,
                     ),

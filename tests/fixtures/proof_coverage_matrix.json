@@ -6697,7 +6697,7 @@
         "tests/test_gateway/test_capability_fabric.py",
         "mcoi/tests/test_default_skill_catalog.py"
       ],
-      "notes": "Agentic-control capability pack admits bounded autonomous mission control, prioritization, governance gating, resource bounding, algorithm review, threat modeling, swarm coordination, product planning, verification planning, interrogation, recursive refinement, memory-admission planning, incident-recovery planning, telemetry-triage planning, code-change planning, release-handoff planning, evidence ledger append, Project Discipline Mesh scanning, strategy-governor planning, decision-governor planning, design-governor planning, product-governor planning, management-governor planning, resource-governor planning, policy-governor planning, temporal-governor planning, memory-governor planning, evidence-governor planning, math-governor planning, algorithm-governor planning, security-governor planning, swarm-governor planning, coding-governor planning, quality-governor planning, runtime-governor planning, release-governor planning, and autonomous operations behind governed default-pack admission; the evidence append path is world-mutating, approval-gated, receipt-bound, and blocked from production readiness without live evidence.",
+      "notes": "Agentic-control capability pack admits bounded autonomous mission control, prioritization, governance gating, resource bounding, algorithm review, threat modeling, swarm coordination, product planning, verification planning, interrogation, recursive refinement, memory-admission planning, incident-recovery planning, telemetry-triage planning, code-change planning, release-handoff planning, evidence ledger append, Project Discipline Mesh scanning, goal-governor planning, strategy-governor planning, decision-governor planning, design-governor planning, product-governor planning, management-governor planning, resource-governor planning, policy-governor planning, temporal-governor planning, memory-governor planning, evidence-governor planning, math-governor planning, algorithm-governor planning, security-governor planning, swarm-governor planning, coding-governor planning, quality-governor planning, execution-governor planning, runtime-governor planning, release-governor planning, and autonomous operations behind governed default-pack admission; the evidence append path is world-mutating, approval-gated, receipt-bound, and blocked from production readiness without live evidence.",
       "representative_paths": [
         "agentic_control.mission.define",
         "agentic_control.priority.rank",
@@ -6717,6 +6717,7 @@
         "agentic_control.release_handoff.plan",
         "agentic_control.evidence.append",
         "agentic_control.project_discipline_mesh.v1",
+        "agentic_control.goal_governor.v1",
         "agentic_control.strategy_governor.v1",
         "agentic_control.decision_governor.v1",
         "agentic_control.design_governor.v1",
@@ -6733,6 +6734,7 @@
         "agentic_control.swarm_governor.v1",
         "agentic_control.coding_governor.v1",
         "agentic_control.quality_governor.v1",
+        "agentic_control.execution_governor.v1",
         "agentic_control.runtime_governor.v1",
         "agentic_control.release_governor.v1",
         "agentic_control.autonomous_operations.v1"

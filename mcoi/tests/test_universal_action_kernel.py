@@ -144,8 +144,16 @@ def test_universal_action_kernel_dispatches_after_all_certificates_pass() -> Non
     assert result.simulation_certificate.verdict.verdict_type is VerdictType.PROCEED
     assert result.capability_decision is not None
     assert result.capability_decision.capability_id == "shell_command"
+    assert result.intent_certificate is not None
+    assert result.intent_certificate.intent_schema == "mullu.intent_ir.v1"
+    assert result.intent_certificate.typed_intent.intent_name == "shell_command"
+    assert result.intent_certificate.intent_hash.startswith("typed-intent-")
     assert result.governed_action is not None
     assert result.governed_action.typed_intent.intent_name == "shell_command"
+    assert (
+        result.governed_action.metadata["intent_compilation_certificate"]
+        == result.intent_certificate.certificate_id
+    )
     assert result.governed_action.capability_passport.capability_id == "shell_command"
     assert result.governed_action.authority_proof.actor_roles == (REQUIRED_ROLE,)
     assert result.terminal_certificate is not None
@@ -282,6 +290,8 @@ def test_universal_action_kernel_blocks_uninstalled_capability_before_plan() -> 
 
     assert result.blocked is True
     assert result.block_reason == "capability_admission_rejected"
+    assert result.intent_certificate is not None
+    assert result.intent_certificate.typed_intent.intent_name == "shell_command"
     assert result.capability_decision is not None
     assert (
         result.capability_decision.reason == "no installed capability for typed intent"
@@ -290,6 +300,33 @@ def test_universal_action_kernel_blocks_uninstalled_capability_before_plan() -> 
     assert result.dispatch_result is None
     assert executor.calls == 0
     assert result.proof_hash.startswith("universal-action-proof-")
+
+
+def test_universal_action_kernel_blocks_uncompiled_intent_before_capability() -> None:
+    kernel, executor = _kernel_with_capability()
+    mismatched_template = dict(VALID_TEMPLATE)
+    mismatched_template["action_type"] = "document_write"
+
+    result = kernel.run(
+        _action_request(
+            intent_id="intent-ir-block",
+            dispatch_request=DispatchRequest(
+                goal_id="goal-ir-block",
+                route="shell_command",
+                template=mismatched_template,
+                bindings={"msg": "hello"},
+            ),
+        )
+    )
+
+    assert result.blocked is True
+    assert result.block_reason == "intent_compilation_rejected"
+    assert result.intent_certificate is None
+    assert result.capability_decision is None
+    assert result.governed_action is None
+    assert result.plan_certificate is None
+    assert result.dispatch_result is None
+    assert executor.calls == 0
 
 
 def test_universal_action_kernel_blocks_escalating_simulation_before_dispatch() -> None:
@@ -1079,6 +1116,7 @@ def _action_request(
     *,
     intent_id: str = "intent-1",
     risk_level: RiskLevel = RiskLevel.LOW,
+    dispatch_request: DispatchRequest | None = None,
     metadata: dict | None = None,
 ) -> UniversalActionRequest:
     request_metadata = {"actor_roles": (REQUIRED_ROLE,)}
@@ -1089,7 +1127,7 @@ def _action_request(
         tenant_id="tenant-1",
         intent_id=intent_id,
         objective="Run a bounded shell command through the universal action kernel.",
-        dispatch_request=_dispatch_request(),
+        dispatch_request=dispatch_request or _dispatch_request(),
         risk_level=risk_level,
         metadata=request_metadata,
     )

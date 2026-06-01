@@ -47,6 +47,7 @@ DOC_REQUIREMENTS: dict[Path, tuple[str, ...]] = {
     ),
     WORKSPACE_ROOT / "docs" / "SDLC_STATE_MACHINE.md": (
         "transition_allowed(s1 -> s2)",
+        "sdlc_transition_receipt",
         "closed_failed_with_receipt",
     ),
     WORKSPACE_ROOT / "docs" / "SDLC_RELEASE_POLICY.md": (
@@ -91,6 +92,7 @@ GATE_BOUND_ARTIFACT_KINDS = (
     "requirement",
     "design_decision",
     "work_plan",
+    "transition_receipt",
     "verification_receipt",
     "security_review",
     "release_candidate",
@@ -158,6 +160,13 @@ ARTIFACT_SPECS: tuple[ArtifactSpec, ...] = (
         "work_plan_uao_validator.json",
         "urn:mullusi:schema:sdlc-work-plan:1",
         "SDLC Work Plan",
+    ),
+    ArtifactSpec(
+        "transition_receipt",
+        "sdlc_transition_receipt.schema.json",
+        "transition_uao_validator.json",
+        "urn:mullusi:schema:sdlc-transition-receipt:1",
+        "SDLC Transition Receipt",
     ),
     ArtifactSpec(
         "verification_receipt",
@@ -394,6 +403,7 @@ def validate_example_chain(records: dict[str, dict[str, Any]] | None = None) -> 
     requirement = loaded_records["requirement"]
     design = loaded_records["design_decision"]
     work_plan = loaded_records["work_plan"]
+    transition = loaded_records["transition_receipt"]
     verification = loaded_records["verification_receipt"]
     security_review = loaded_records["security_review"]
     release = loaded_records["release_candidate"]
@@ -409,6 +419,12 @@ def validate_example_chain(records: dict[str, dict[str, Any]] | None = None) -> 
         errors.append("example_chain: work_plan.design_id must match design")
     if verification.get("change_id") != request_id:
         errors.append("example_chain: verification.change_id must match change request")
+    if transition.get("change_id") != request_id:
+        errors.append("example_chain: transition.change_id must match change request")
+    if transition.get("required_receipt_refs"):
+        for receipt_ref in transition.get("required_receipt_refs", []):
+            if receipt_ref not in closure.get("receipts", []):
+                errors.append("example_chain: closure must include transition required receipt")
     if security_review.get("change_id") != request_id:
         errors.append("example_chain: security_review.change_id must match change request")
     if request_id not in release.get("change_set", []):
