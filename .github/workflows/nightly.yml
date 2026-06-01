@@ -12,7 +12,7 @@ env:
 jobs:
   infra-certification:
     name: Infrastructure Certification (PostgreSQL + SMTP)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     services:
@@ -66,7 +66,7 @@ jobs:
 
   governance-benchmarks:
     name: Governance Performance Benchmarks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:
@@ -120,7 +120,7 @@ jobs:
 
   provider-certification:
     name: LLM Provider Certification
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     if: github.event_name == 'workflow_dispatch'  # Manual only (costs money)
 

@@ -17,7 +17,7 @@ env:
 jobs:
   python-tests:
     name: Python Tests (MCOI shard ${{ matrix.mcoi-shard }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -76,7 +76,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             python-version: "3.12"
             mcoi-shard: n
           - os: windows-2025-vs2026
@@ -103,8 +103,8 @@ jobs:
         run: python ../scripts/run_mcoi_shards.py --shard "${{ matrix.mcoi-shard }}"
 
   python-soak-tests:
-    name: Python Soak Tests (ubuntu-latest, Python 3.13)
-    runs-on: ubuntu-latest
+    name: Python Soak Tests (ubuntu-24.04, Python 3.13)
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     defaults:
       run:
@@ -127,8 +127,9 @@ jobs:
         run: python ../scripts/run_mcoi_shards.py --soak-only
 
   python-required-status:
+    # Keep this context stable: ruleset `main-protection` requires it.
     name: Python Tests (ubuntu-latest, Python 3.13)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     needs: [python-tests, python-compatibility, python-soak-tests]
     if: always()
@@ -141,7 +142,7 @@ jobs:
 
   typescript-sdk:
     name: TypeScript SDK Verification
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     defaults:
       run:
@@ -159,7 +160,7 @@ jobs:
 
   rust-tests:
     name: Rust Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
       run:
@@ -190,7 +191,7 @@ jobs:
 
   schema-validation:
     name: Schema Validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
@@ -303,7 +304,7 @@ jobs:
 
   gateway-closure:
     name: Gateway Closure and Witness Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
@@ -330,7 +331,7 @@ jobs:
 
   reflective-contract-guard:
     name: Reflective Contract Guard
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
@@ -345,7 +346,7 @@ jobs:
 
   red-team-release-gate:
     name: Red-Team Release Gate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
@@ -369,7 +370,7 @@ jobs:
 
   build-verification:
     name: Build Verification
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     needs: [python-required-status, typescript-sdk, rust-tests, schema-validation, gateway-closure, reflective-contract-guard, red-team-release-gate]
     steps:
