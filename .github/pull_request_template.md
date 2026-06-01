@@ -24,6 +24,7 @@ Every governed software delivery PR must either attach the lifecycle artifacts o
 - [ ] Recovery handoff receipt records rollback state, rollback refs, incident recovery refs, accepted-risk refs, effect boundaries, and terminal closure linkage.
 - [ ] Gate decision envelope is present on each non-terminal artifact: `uao_ref`, `causal_decision_trace_ref`, and `receipt_ref`.
 - [ ] Inventory closure proves design, work plan, implementation receipt, and verification receipt retain canonical schema and example coverage.
+- [ ] Workspace preflight receipt is retained through verification output, verification coverage, and terminal closure.
 - [ ] Closure receipt records outcome, receipts, remaining blockers, learning, and next action.
 - [ ] Closure receipt retains every upstream UAO, causal trace, implementation receipt, transition receipt, recovery handoff receipt, and receipt reference.
 - [ ] Rollback or incident handoff path is stated for effect-bearing changes.
@@ -54,6 +55,7 @@ python scripts/validate_sdlc_state_machine.py
 python scripts/validate_sdlc_release_readiness.py --strict
 python scripts/validate_sdlc_security_review.py --strict
 python scripts/validate_sdlc_pr_enforcement.py
+python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json
 ```
 
 Additional targeted checks:

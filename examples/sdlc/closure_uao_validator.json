@@ -13,6 +13,7 @@
     "receipt://sdlc/verification/uao-validator/001",
     "receipt://sdlc/security-review/uao-validator/001",
     "receipt://sdlc/pr-enforcement-validation/001",
+    "receipt://workspace/governance-preflight/001",
     "receipt://sdlc/release/uao-validator/001",
     "receipt://sdlc/deployment/uao-validator/001",
     "receipt://sdlc/recovery-handoff/uao-validator/001"
@@ -31,6 +32,7 @@
     "added governed rollback and incident recovery handoff receipt contract",
     "added deterministic lifecycle validators",
     "bound SDLC checks to workspace preflight",
+    "retained workspace governance preflight receipt through terminal closure",
     "bound PR evidence to CI, branch protection, and pull request review"
   ],
   "fracture_deltas": [],

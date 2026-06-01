@@ -26,9 +26,14 @@
       "name": "sdlc_pr_enforcement_validation",
       "command": "python scripts/validate_sdlc_pr_enforcement.py",
       "status": "passed"
+    },
+    {
+      "name": "workspace_governance_preflight",
+      "command": "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json",
+      "status": "passed"
     }
   ],
-  "tests_passed": 5,
+  "tests_passed": 6,
   "tests_failed": 0,
   "warnings": [],
   "coverage_refs": [
@@ -44,6 +49,7 @@
     "examples/sdlc/deployment_candidate_uao_validator.json",
     "examples/sdlc/recovery_handoff_uao_validator.json",
     "examples/sdlc/closure_uao_validator.json",
+    ".tmp/workspace-governance-preflight-receipt.json",
     "tests/test_validate_sdlc_artifact.py",
     "tests/test_validate_sdlc_state_machine.py",
     "tests/test_validate_sdlc_release_readiness.py",
@@ -75,6 +81,11 @@
       "name": "sdlc_pr_enforcement_validation",
       "status": "passed",
       "output_ref": "receipt://sdlc/pr-enforcement-validation/001"
+    },
+    {
+      "name": "workspace_governance_preflight",
+      "status": "passed",
+      "output_ref": "receipt://workspace/governance-preflight/001"
     }
   ],
   "failed_checks": [],

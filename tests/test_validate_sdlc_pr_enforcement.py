@@ -32,8 +32,10 @@ def test_current_sdlc_pr_enforcement_contract_passes() -> None:
     assert "Transition receipt" in texts.pr_template
     assert "Recovery handoff receipt" in texts.pr_template
     assert "Inventory closure" in texts.pr_template
+    assert "Workspace preflight receipt" in texts.pr_template
     assert "rollback_or_incident_handoff" in texts.enforcement_doc
     assert "sdlc_inventory_closure proves canonical schema and example coverage" in texts.enforcement_doc
+    assert "sdlc_workspace_preflight_closure proves workspace preflight command" in texts.enforcement_doc
     assert "recovery handoff has `sdlc_recovery_handoff_receipt` evidence" in texts.enforcement_doc
 
 
@@ -45,6 +47,7 @@ def test_ci_workflow_requires_sdlc_gate_before_build_verification() -> None:
     assert texts.ci_workflow.find("sdlc-governance-gate:") < texts.ci_workflow.find("build-verification:")
     assert "sdlc-governance-gate" in texts.ci_workflow
     assert "tests/test_validate_sdlc_pr_enforcement.py" in texts.ci_workflow
+    assert "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json" in texts.ci_workflow
 
 
 def test_missing_build_verification_dependency_is_rejected() -> None:
@@ -146,6 +149,22 @@ def test_missing_inventory_closure_evidence_is_rejected() -> None:
 
     assert "pull_request_template missing required term: Inventory closure" in template_errors
     assert any("sdlc_inventory_closure" in error for error in doc_errors)
+    assert len(template_errors) + len(doc_errors) >= 2
+
+
+def test_missing_workspace_preflight_closure_evidence_is_rejected() -> None:
+    texts = validator.load_enforcement_texts()
+    invalid_template = texts.pr_template.replace("Workspace preflight receipt", "Workspace preflight note")
+    invalid_doc = texts.enforcement_doc.replace(
+        "sdlc_workspace_preflight_closure proves workspace preflight command, receipt artifact, validator output, and closure retention",
+        "workspace preflight is mentioned",
+    )
+
+    template_errors = validator.validate_pr_template(invalid_template)
+    doc_errors = validator.validate_enforcement_document(invalid_doc)
+
+    assert "pull_request_template missing required term: Workspace preflight receipt" in template_errors
+    assert any("sdlc_workspace_preflight_closure" in error for error in doc_errors)
     assert len(template_errors) + len(doc_errors) >= 2
 
 

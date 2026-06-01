@@ -40,6 +40,7 @@ DOC_REQUIREMENTS: dict[Path, tuple[str, ...]] = {
         "sdlc_implementation_receipt",
         "sdlc_recovery_handoff_receipt",
         "sdlc_inventory_closure",
+        "sdlc_workspace_preflight_closure",
         "scripts/validate_sdlc_pr_enforcement.py",
         "No closure without learning.",
     ),
@@ -90,7 +91,10 @@ REQUIRED_VERIFICATION_COMMANDS = (
     "sdlc_release_readiness_validation",
     "sdlc_security_review_validation",
     "sdlc_pr_enforcement_validation",
+    "workspace_governance_preflight",
 )
+WORKSPACE_PREFLIGHT_RECEIPT_REF = "receipt://workspace/governance-preflight/001"
+WORKSPACE_PREFLIGHT_RECEIPT_PATH = ".tmp/workspace-governance-preflight-receipt.json"
 GATE_BOUND_ARTIFACT_KINDS = (
     "change_request",
     "requirement",
@@ -480,6 +484,10 @@ def validate_example_chain(records: dict[str, dict[str, Any]] | None = None) -> 
         errors.append("example_chain: closure must include recovery handoff receipt")
     if "examples/sdlc/recovery_handoff_uao_validator.json" not in verification.get("coverage_refs", []):
         errors.append("example_chain: verification coverage must include recovery handoff receipt artifact")
+    if WORKSPACE_PREFLIGHT_RECEIPT_PATH not in verification.get("coverage_refs", []):
+        errors.append("example_chain: verification coverage must include workspace governance preflight receipt artifact")
+    if WORKSPACE_PREFLIGHT_RECEIPT_REF not in closure.get("receipts", []):
+        errors.append("example_chain: closure must include workspace governance preflight receipt")
     if closure.get("change_id") != request_id:
         errors.append("example_chain: closure.change_id must match change request")
     if verification.get("receipt_ref") not in closure.get("receipts", []):
@@ -527,6 +535,7 @@ def build_validation_report() -> dict[str, Any]:
         "sdlc_document_contracts",
         "sdlc_cross_artifact_links",
         "sdlc_inventory_closure",
+        "sdlc_workspace_preflight_closure",
         "sdlc_gate_decision_envelopes",
         "sdlc_closure_ref_retention",
         "sdlc_recovery_handoff_retention",

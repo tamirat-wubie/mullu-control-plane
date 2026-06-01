@@ -34,6 +34,8 @@ def test_current_sdlc_contract_passes() -> None:
     assert "implementation_receipt" in validator.GATE_BOUND_ARTIFACT_KINDS
     assert "change_request" in validator.GATE_BOUND_ARTIFACT_KINDS
     assert "recovery_handoff" in validator.GATE_BOUND_ARTIFACT_KINDS
+    assert "workspace_governance_preflight" in validator.REQUIRED_VERIFICATION_COMMANDS
+    assert validator.WORKSPACE_PREFLIGHT_RECEIPT_PATH == ".tmp/workspace-governance-preflight-receipt.json"
 
 
 def test_schema_artifacts_have_expected_identity() -> None:
@@ -67,10 +69,12 @@ def test_example_chain_links_all_lifecycle_artifacts() -> None:
     assert records["implementation_receipt"]["receipt_ref"] in records["closure_receipt"]["receipts"]
     assert records["transition_receipt"]["receipt_ref"] in records["closure_receipt"]["receipts"]
     assert records["recovery_handoff"]["receipt_ref"] in records["closure_receipt"]["receipts"]
+    assert validator.WORKSPACE_PREFLIGHT_RECEIPT_REF in records["closure_receipt"]["receipts"]
     assert records["deployment_candidate"]["uao_ref"] in records["closure_receipt"]["uao_refs"]
     assert set(validator.CANONICAL_SCHEMA_REFS).issubset(set(records["design_decision"]["schema_changes"]))
     assert set(validator.CANONICAL_INVENTORY_REFS).issubset(set(records["work_plan"]["expected_artifacts"]))
     assert set(validator.CANONICAL_EXAMPLE_REFS).issubset(set(records["verification_receipt"]["coverage_refs"]))
+    assert validator.WORKSPACE_PREFLIGHT_RECEIPT_PATH in records["verification_receipt"]["coverage_refs"]
     assert set(validator.CANONICAL_INVENTORY_REFS).issubset(
         {changed_file["path"] for changed_file in records["implementation_receipt"]["changed_files"]}
     )
@@ -280,6 +284,38 @@ def test_verification_must_reference_recovery_handoff_receipt() -> None:
     assert invalid_records["recovery_handoff"]["receipt_ref"] in invalid_records["closure_receipt"]["receipts"]
 
 
+def test_workspace_preflight_receipt_is_required_for_terminal_closure() -> None:
+    records = validator.load_example_records()
+    invalid_records = copy.deepcopy(records)
+    invalid_records["verification_receipt"]["commands"] = [
+        item
+        for item in invalid_records["verification_receipt"]["commands"]
+        if item["name"] != "workspace_governance_preflight"
+    ]
+    invalid_records["verification_receipt"]["validator_outputs"] = [
+        item
+        for item in invalid_records["verification_receipt"]["validator_outputs"]
+        if item["name"] != "workspace_governance_preflight"
+    ]
+    invalid_records["verification_receipt"]["coverage_refs"].remove(validator.WORKSPACE_PREFLIGHT_RECEIPT_PATH)
+    invalid_records["closure_receipt"]["receipts"].remove(validator.WORKSPACE_PREFLIGHT_RECEIPT_REF)
+
+    verification_errors = validator.validate_artifact_record(
+        "verification_receipt",
+        invalid_records["verification_receipt"],
+    )
+    chain_errors = validator.validate_example_chain(invalid_records)
+
+    assert "verification_receipt: missing command workspace_governance_preflight" in verification_errors
+    assert any("workspace_governance_preflight" in error for error in verification_errors)
+    assert (
+        "example_chain: verification coverage must include workspace governance preflight receipt artifact"
+        in chain_errors
+    )
+    assert "example_chain: closure must include workspace governance preflight receipt" in chain_errors
+    assert len(verification_errors) + len(chain_errors) >= 4
+
+
 def test_cli_json_receipt_reports_passed_contract() -> None:
     stdout_buffer = io.StringIO()
 
@@ -294,9 +330,10 @@ def test_cli_json_receipt_reports_passed_contract() -> None:
     assert report["valid"] is True
     assert report["status"] == "passed"
     assert report["error_count"] == 0
-    assert report["check_count"] == 9
+    assert report["check_count"] == 10
     assert any(check["name"] == "sdlc_gate_decision_envelopes" for check in report["checks"])
     assert any(check["name"] == "sdlc_inventory_closure" for check in report["checks"])
+    assert any(check["name"] == "sdlc_workspace_preflight_closure" for check in report["checks"])
     assert any(check["name"] == "sdlc_recovery_handoff_retention" for check in report["checks"])
 
 
@@ -308,6 +345,7 @@ def test_cli_text_output_reports_all_receipt_checks() -> None:
 
     output = stdout_buffer.getvalue()
     assert exit_code == 0
+    assert "[PASS] sdlc_workspace_preflight_closure" in output
     assert "[PASS] sdlc_recovery_handoff_retention" in output
     assert output.count("[PASS]") == validator.build_validation_report()["check_count"]
     assert output.endswith("STATUS: passed\n")
