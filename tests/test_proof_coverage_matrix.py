@@ -592,10 +592,19 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
     assert "case_proof_explorer_reports_open_case_attention_without_mutation" in witnesses
     assert "case_proof_explorer_reports_closed_verified_case" in witnesses
     assert "case_proof_explorer_html_view_is_read_only_and_escaped" in witnesses
+    assert "authority_map_view_is_read_only_escaped_and_chained" in witnesses
     assert "department_registry_view_is_read_only_and_escaped" in witnesses
     assert "case_closure_certificate_view_is_read_only_and_escaped" in witnesses
     assert "case_closure_requires_effect_reconciliation_match_for_committed" in witnesses
     assert route_records["/api/v1/cases"]["surface_id"] == "orgos_case_governance_lifecycle"
+    assert (
+        route_records["/api/v1/orgs/{org_id}/authority-map"]["surface_id"]
+        == "orgos_case_governance_lifecycle"
+    )
+    assert (
+        route_records["/api/v1/orgs/{org_id}/authority-map/view"]["surface_id"]
+        == "orgos_case_governance_lifecycle"
+    )
     assert (
         route_records["/api/v1/orgs/{org_id}/department-registry"]["surface_id"]
         == "orgos_case_governance_lifecycle"
@@ -641,7 +650,7 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
         == "orgos_case_governance_lifecycle"
     )
     assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "proven"
-    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 26
+    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 27
 
 
 def test_webhooks_proof_surface_is_witnessed() -> None:
