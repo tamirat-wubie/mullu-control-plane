@@ -99,4 +99,4 @@ The workspace preflight includes the validator, so UAO drift blocks repository c
 The optional JSON receipt is read-only and records validity, check names, workspace-relative example path labels, error counts, and bounded errors for autonomous preflight consumers.
 The validation receipt has its own schema contract and remains non-terminal closure evidence: `terminal_closure_required = true` and `receipt_is_not_terminal_closure = true`.
 The kernel export and gateway replay tests cover allowed execution, blocked admission, missing-record 404 behavior, and schema plus semantic validation.
-The saved receipt replay validator admits persisted UAO validation receipts only when the recorded status is passed and the check order, counts, path labels, and non-terminal closure flags still satisfy the same contract.
+The saved receipt replay validator admits persisted UAO validation receipts only when the recorded status is passed and the check order, counts, canonical schema/document/example artifact labels, and non-terminal closure flags still satisfy the same contract.
