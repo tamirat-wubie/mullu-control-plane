@@ -18,6 +18,12 @@ from fastapi import HTTPException
 
 from mcoi_runtime.app.routers import finance_approval, software_receipts
 from mcoi_runtime.app.routers.auth_context import bind_claimed_actor
+from mcoi_runtime.contracts.finance_approval_packet import (
+    FinancePacketRisk,
+    FinancePacketState,
+    InvoiceCase,
+    InvoiceMoney,
+)
 
 
 class _State:
@@ -68,6 +74,67 @@ def test_approve_finance_rejects_forged_approver(monkeypatch):
     with pytest.raises(HTTPException) as exc:
         finance_approval.approve_finance_approval_packet("c1", _ApproveReq(), _authed("attacker"))
     assert exc.value.status_code == 403
+
+
+class _PersistentFinStore:
+    def __init__(self) -> None:
+        self.case = InvoiceCase(
+            case_id="case-bind-empty",
+            tenant_id="tenant-x",
+            actor_id="requester",
+            vendor_id="vendor-a",
+            invoice_id="inv-1",
+            amount=InvoiceMoney(currency="USD", minor_units=100),
+            source_evidence_ref="evidence:invoice:inv-1",
+            state=FinancePacketState.APPROVAL_REQUIRED,
+            risk=FinancePacketRisk.MEDIUM,
+            created_at="2026-06-01T14:00:00+00:00",
+            updated_at="2026-06-01T14:00:00+00:00",
+        )
+        self.approvals = []
+        self.effects = []
+        self.saved_case = None
+
+    def get_case(self, case_id):
+        return self.case
+
+    def append_approval(self, approval):
+        self.approvals.append(approval)
+
+    def append_effect(self, effect):
+        self.effects.append(effect)
+
+    def save_case(self, invoice_case):
+        self.saved_case = invoice_case
+
+
+def test_approve_finance_binds_empty_approver_to_authenticated_transition(monkeypatch):
+    store = _PersistentFinStore()
+    transitions = []
+    real_transition = finance_approval.transition_invoice_case
+
+    def capture_transition(invoice_case, transition):
+        transitions.append(transition)
+        return real_transition(invoice_case, transition)
+
+    monkeypatch.setattr(finance_approval, "_store", lambda: store)
+    monkeypatch.setattr(finance_approval, "_clock_now", lambda: "2026-06-01T14:05:00+00:00")
+    monkeypatch.setattr(finance_approval, "transition_invoice_case", capture_transition)
+
+    result = finance_approval.approve_finance_approval_packet(
+        "case-bind-empty",
+        finance_approval.FinancePacketApprovalRequest(
+            approver_id="",
+            create_email_handoff=False,
+        ),
+        _authed("alice"),
+    )
+
+    assert result["approval"]["approver_id"] == "alice"
+    assert store.approvals[0].approver_id == "alice"
+    assert transitions[0].cause == "approval_granted"
+    assert transitions[0].actor_id == "alice"
+    assert store.saved_case.state == FinancePacketState.CLOSED_PREPARED
 
 
 # -- software receipt review: forged reviewer_id ---------------------------
