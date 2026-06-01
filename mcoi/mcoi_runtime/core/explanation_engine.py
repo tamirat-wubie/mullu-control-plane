@@ -98,9 +98,9 @@ class ExplanationEngine:
                 for guard_name in self._guard_chain.guard_names():
                     guard_path.append({"guard": guard_name, "result": "pass"})
             else:
-                reasons.append(f"Blocked by {result.guard_name}: {result.reason}")
+                reasons.append(f"Blocked by {result.blocking_guard}: {result.reason}")
                 for guard_name in self._guard_chain.guard_names():
-                    if guard_name == result.guard_name:
+                    if guard_name == result.blocking_guard:
                         guard_path.append({
                             "guard": guard_name,
                             "result": "deny",
