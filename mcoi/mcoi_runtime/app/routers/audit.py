@@ -61,9 +61,12 @@ def audit_summary():
 
 
 @router.get("/api/v1/events")
-def list_events(event_type: str | None = None, limit: int = 50):
+def list_events(request: Request, event_type: str | None = None, limit: int = 50):
     """Query governed event bus history."""
     events = deps.event_bus.history(event_type=event_type, limit=limit)
+    scoped = scoped_listing_tenant(request, None)
+    if scoped is not None:
+        events = [event for event in events if event.tenant_id == scoped]
     return {
         "events": [
             {"id": e.event_id, "type": e.event_type, "tenant": e.tenant_id,
