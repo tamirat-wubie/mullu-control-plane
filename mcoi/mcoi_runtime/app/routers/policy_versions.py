@@ -12,10 +12,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers.musia_auth import require_admin
 from mcoi_runtime.governance.policy.engine import PolicyInput
 from mcoi_runtime.governance.policy.versioning import (
     PolicyArtifact,
@@ -75,7 +76,7 @@ def _registry() -> Any:
 
 
 @router.post("/api/v1/policies/{policy_id}/versions")
-def register_policy_version(policy_id: str, req: PolicyArtifactRequest) -> dict[str, Any]:
+def register_policy_version(policy_id: str, req: PolicyArtifactRequest, _: str = Depends(require_admin)) -> dict[str, Any]:
     """Register an immutable policy version artifact."""
     deps.metrics.inc("requests_governed")
     if req.policy_id != policy_id:
@@ -133,7 +134,7 @@ def get_policy_version(policy_id: str, version: str) -> dict[str, Any]:
 
 
 @router.post("/api/v1/policies/{policy_id}/versions/{version}/promote")
-def promote_policy_version(policy_id: str, version: str) -> dict[str, Any]:
+def promote_policy_version(policy_id: str, version: str, _: str = Depends(require_admin)) -> dict[str, Any]:
     """Promote a registered policy version to active."""
     deps.metrics.inc("requests_governed")
     try:
@@ -155,7 +156,7 @@ def promote_policy_version(policy_id: str, version: str) -> dict[str, Any]:
 
 
 @router.post("/api/v1/policies/{policy_id}/rollback")
-def rollback_policy_version(policy_id: str) -> dict[str, Any]:
+def rollback_policy_version(policy_id: str, _: str = Depends(require_admin)) -> dict[str, Any]:
     """Rollback to the previous active registered policy version."""
     deps.metrics.inc("requests_governed")
     try:
