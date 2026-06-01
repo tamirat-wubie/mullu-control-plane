@@ -663,6 +663,13 @@ def _is_replayable_universal_action_orchestration_record(
         expected_receipt_id=closure.get("closure_receipt_ref"),
     ):
         return False
+    if not _uao_record_binds_closure_refs(
+        value,
+        stages_by_kind=stages_by_kind,
+        receipts_by_kind=receipts_by_kind,
+        decision_status=str(decision_status),
+    ):
+        return False
     execution_receipt_ref = value.get("execution_receipt_ref")
     if decision_status == "allow":
         return (
@@ -777,6 +784,15 @@ def _uao_record_binds_universal_detail(
             or delta.get("delta_id") != expected_delta_ref
         ):
             return False
+    closure = record.get("closure")
+    if not isinstance(closure, Mapping):
+        return False
+    if closure.get("reconciliation_ref") != (
+        universal_detail.get("reconciliation_ref") or None
+    ):
+        return False
+    if closure.get("memory_ref") != (universal_detail.get("memory_ref") or None):
+        return False
     return True
 
 
@@ -809,6 +825,8 @@ def _recomputed_universal_action_proof_hash(
         "dispatch_ledger_hash",
         "terminal_certificate_id",
         "learning_admission_id",
+        "reconciliation_ref",
+        "memory_ref",
     )
     if any(
         not isinstance(universal_detail.get(field_name), str)
@@ -836,6 +854,8 @@ def _recomputed_universal_action_proof_hash(
         "dispatch_ledger_hash": universal_detail["dispatch_ledger_hash"],
         "terminal_certificate_id": universal_detail["terminal_certificate_id"],
         "learning_admission_id": universal_detail["learning_admission_id"],
+        "reconciliation_ref": universal_detail["reconciliation_ref"],
+        "memory_ref": universal_detail["memory_ref"],
     }
     try:
         encoded = json.dumps(
@@ -844,6 +864,105 @@ def _recomputed_universal_action_proof_hash(
     except (TypeError, ValueError):
         return None
     return stable_identifier("universal-action-proof", {"payload": encoded})
+
+
+def _uao_record_binds_closure_refs(
+    record: Mapping[str, Any],
+    *,
+    stages_by_kind: Mapping[str, Mapping[str, Any]],
+    receipts_by_kind: Mapping[str, Mapping[str, Any]],
+    decision_status: str,
+) -> bool:
+    closure = record.get("closure")
+    reconciliation = record.get("reconciliation")
+    memory_update = record.get("memory_update")
+    if (
+        not isinstance(closure, Mapping)
+        or not isinstance(reconciliation, Mapping)
+        or not isinstance(memory_update, Mapping)
+    ):
+        return False
+    for field_name in ("reconciliation_ref", "memory_ref"):
+        if field_name not in closure:
+            return False
+        value = closure.get(field_name)
+        if value is not None and not _non_empty_text(value):
+            return False
+    memory_ref = memory_update.get("memory_ref")
+    if memory_ref is not None and not _non_empty_text(memory_ref):
+        return False
+    if closure.get("memory_ref") != memory_ref:
+        return False
+    reconciliation_ref = closure.get("reconciliation_ref")
+    stage_reconciliation_ref = _uao_stage_single_output_ref(
+        stages_by_kind.get("reconciliation")
+    )
+    if reconciliation_ref != stage_reconciliation_ref:
+        return False
+    if memory_ref is not None:
+        if memory_ref != _uao_stage_single_output_ref(stages_by_kind.get("memory")):
+            return False
+        closure_stage = stages_by_kind.get("closure")
+        if memory_ref not in _text_tuple(
+            closure_stage.get("input_refs")
+            if isinstance(closure_stage, Mapping)
+            else ()
+        ):
+            return False
+    if decision_status == "allow":
+        if reconciliation_ref is None:
+            return False
+        if reconciliation.get("status") != "matched":
+            return False
+        if reconciliation.get("required_for_closure") is not True:
+            return False
+        observed_outcome_ref = reconciliation.get("observed_outcome_ref")
+        if not _non_empty_text(observed_outcome_ref):
+            return False
+        execution_stage = stages_by_kind.get("execution")
+        if observed_outcome_ref not in _text_tuple(
+            execution_stage.get("output_refs")
+            if isinstance(execution_stage, Mapping)
+            else ()
+        ):
+            return False
+    elif reconciliation.get("required_for_closure") is not False:
+        return False
+    closure_receipt = receipts_by_kind.get("closure")
+    if not isinstance(closure_receipt, Mapping):
+        return False
+    return closure_receipt.get("confirms") == _uao_closure_confirmation(
+        closure_state=str(record.get("closure_state", "")),
+        reconciliation_ref=reconciliation_ref,
+        memory_ref=memory_ref,
+    )
+
+
+def _uao_stage_single_output_ref(stage: Mapping[str, Any] | None) -> str | None:
+    if not isinstance(stage, Mapping):
+        return None
+    output_refs = _text_tuple(stage.get("output_refs"))
+    if not output_refs:
+        return None
+    if len(output_refs) != 1:
+        return None
+    return output_refs[0]
+
+
+def _uao_closure_confirmation(
+    *,
+    closure_state: str,
+    reconciliation_ref: str | None,
+    memory_ref: str | None,
+) -> str:
+    return stable_identifier(
+        "universal-action-closure-confirmation",
+        {
+            "closure_state": closure_state,
+            "reconciliation_ref": reconciliation_ref or "",
+            "memory_ref": memory_ref or "",
+        },
+    )
 
 
 def _uao_stage_records_by_kind(value: Any) -> dict[str, Mapping[str, Any]] | None:
@@ -1114,7 +1233,26 @@ def _universal_action_transition_detail(
         "learning_admission_id": result.learning_decision.admission_id
         if result.learning_decision
         else "",
+        "reconciliation_ref": _universal_action_reconciliation_ref(result),
+        "memory_ref": _universal_action_memory_ref(result),
     }
+
+
+def _universal_action_reconciliation_ref(result: UniversalActionResult) -> str:
+    if not result.dispatched:
+        return ""
+    return f"reconciliation://{result.action_id}"
+
+
+def _universal_action_memory_ref(result: UniversalActionResult) -> str:
+    if (
+        result.terminal_certificate is not None
+        and result.terminal_certificate.memory_entry_id is not None
+    ):
+        return f"memory://{result.terminal_certificate.memory_entry_id}"
+    if result.learning_decision is not None:
+        return f"memory://{result.learning_decision.knowledge_id}"
+    return ""
 
 
 def _mapping_detail(value: Any) -> Mapping[str, Any]:

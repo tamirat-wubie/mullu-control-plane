@@ -15,6 +15,7 @@ keeps validation receipts canonical and under the workspace root.
 from __future__ import annotations
 
 import argparse
+from hashlib import sha256
 import json
 import sys
 from pathlib import Path
@@ -179,7 +180,14 @@ REQUIRED_SCHEMA_DEFS = {
         "mismatch_reason",
     ),
     "memory_update": ("status", "memory_ref", "learning_allowed"),
-    "closure": ("status", "terminal", "closure_receipt_ref", "next_action"),
+    "closure": (
+        "status",
+        "terminal",
+        "closure_receipt_ref",
+        "reconciliation_ref",
+        "memory_ref",
+        "next_action",
+    ),
     "lineage": ("delta_ref", "logged_in_lineage", "accepted_deltas", "rejected_deltas"),
 }
 REQUIRED_DOCUMENT_TERMS = (
@@ -198,6 +206,7 @@ REQUIRED_DOCUMENT_TERMS = (
     "Every command replay record must carry the canonical ordered UAO pipeline stage sequence before exposure.",
     "Runtime bypass detection scans effect-bearing dispatch and execute call sites for UAO or governed binding before closure.",
     "Every command replay record must bind proof hash to an independent recomputation of the persisted event-local universal action proof detail before exposure.",
+    "Every closure receipt must bind closure state to reconciliation and memory references before exposure.",
 )
 
 
@@ -346,7 +355,17 @@ def validate_orchestration(record: dict[str, Any]) -> list[str]:
         _validate_reconciliation(record["reconciliation"], record["decision"])
     )
     errors.extend(_validate_memory_update(record["memory_update"]))
-    errors.extend(_validate_closure(record["closure"], record["decision"], receipt_ids))
+    errors.extend(
+        _validate_closure(
+            record["closure"],
+            record["decision"],
+            receipt_ids,
+            stages_by_kind,
+            record["reconciliation"],
+            record["memory_update"],
+            record["receipts"],
+        )
+    )
     errors.extend(_validate_lineage(record["lineage"], record["decision"]))
     errors.extend(_validate_receipt_requirements(record["decision"], receipt_kinds))
     errors.extend(_validate_root_receipt_refs(record, receipt_ids, receipt_kinds))
@@ -1101,10 +1120,25 @@ def _validate_memory_update(memory_update: Any) -> list[str]:
 
 
 def _validate_closure(
-    closure: Any, decision: dict[str, Any], receipt_ids: set[str]
+    closure: Any,
+    decision: dict[str, Any],
+    receipt_ids: set[str],
+    stages_by_kind: dict[str, dict[str, Any]],
+    reconciliation: Any,
+    memory_update: Any,
+    receipts: Any,
 ) -> list[str]:
     errors = _validate_required_fields(
-        "closure", closure, ("status", "terminal", "closure_receipt_ref", "next_action")
+        "closure",
+        closure,
+        (
+            "status",
+            "terminal",
+            "closure_receipt_ref",
+            "reconciliation_ref",
+            "memory_ref",
+            "next_action",
+        ),
     )
     if errors:
         return errors
@@ -1123,9 +1157,103 @@ def _validate_closure(
         errors.append("closure.terminal must be true")
     if closure["closure_receipt_ref"] not in receipt_ids:
         errors.append("closure.closure_receipt_ref must reference an emitted receipt")
+    for ref_field in ("reconciliation_ref", "memory_ref"):
+        if closure[ref_field] is not None and (
+            not isinstance(closure[ref_field], str) or not closure[ref_field]
+        ):
+            errors.append(f"closure.{ref_field} must be null or a non-empty string")
+    expected_reconciliation_ref = _single_stage_output_ref(
+        stages_by_kind.get("reconciliation")
+    )
+    if closure["reconciliation_ref"] != expected_reconciliation_ref:
+        errors.append(
+            "closure.reconciliation_ref must bind the reconciliation stage output"
+        )
+    if isinstance(memory_update, dict):
+        if closure["memory_ref"] != memory_update.get("memory_ref"):
+            errors.append("closure.memory_ref must match memory_update.memory_ref")
+        if closure["memory_ref"] is not None:
+            if closure["memory_ref"] != _single_stage_output_ref(
+                stages_by_kind.get("memory")
+            ):
+                errors.append("closure.memory_ref must bind the memory stage output")
+            closure_stage = stages_by_kind.get("closure", {})
+            if closure["memory_ref"] not in closure_stage.get("input_refs", []):
+                errors.append("closure.memory_ref must feed the closure stage input")
+    if isinstance(reconciliation, dict):
+        if decision["status"] == "allow":
+            if closure["reconciliation_ref"] is None:
+                errors.append("allow closure requires reconciliation_ref")
+            if reconciliation.get("observed_outcome_ref") not in stages_by_kind.get(
+                "execution", {}
+            ).get("output_refs", []):
+                errors.append(
+                    "reconciliation.observed_outcome_ref must bind the execution stage output"
+                )
+        elif reconciliation.get("required_for_closure") is not False:
+            errors.append("non-allow closure must not require reconciliation")
+    closure_receipt = _receipt_by_id(receipts, closure["closure_receipt_ref"])
+    if closure_receipt is not None:
+        expected_confirms = _closure_confirmation(
+            closure_state=closure["status"],
+            reconciliation_ref=closure["reconciliation_ref"],
+            memory_ref=closure["memory_ref"],
+        )
+        if closure_receipt.get("confirms") != expected_confirms:
+            errors.append(
+                "closure receipt confirms must bind closure state, reconciliation_ref, and memory_ref"
+            )
     if not isinstance(closure["next_action"], str) or not closure["next_action"]:
         errors.append("closure.next_action must be a non-empty string")
     return errors
+
+
+def _single_stage_output_ref(stage: dict[str, Any] | None) -> str | None:
+    if not isinstance(stage, dict):
+        return None
+    output_refs = stage.get("output_refs")
+    if not isinstance(output_refs, list) or not output_refs:
+        return None
+    if len(output_refs) != 1:
+        return None
+    output_ref = output_refs[0]
+    return output_ref if isinstance(output_ref, str) and output_ref else None
+
+
+def _receipt_by_id(receipts: Any, receipt_id: str) -> dict[str, Any] | None:
+    if not isinstance(receipts, list):
+        return None
+    for receipt in receipts:
+        if isinstance(receipt, dict) and receipt.get("receipt_id") == receipt_id:
+            return receipt
+    return None
+
+
+def _closure_confirmation(
+    *,
+    closure_state: str,
+    reconciliation_ref: str | None,
+    memory_ref: str | None,
+) -> str:
+    return _stable_identifier(
+        "universal-action-closure-confirmation",
+        {
+            "closure_state": closure_state,
+            "reconciliation_ref": reconciliation_ref or "",
+            "memory_ref": memory_ref or "",
+        },
+    )
+
+
+def _stable_identifier(prefix: str, payload: dict[str, Any]) -> str:
+    encoded = json.dumps(
+        payload,
+        sort_keys=True,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
+    return f"{prefix}-{sha256(encoded.encode('utf-8')).hexdigest()[:12]}"
 
 
 def _validate_lineage(lineage: Any, decision: dict[str, Any]) -> list[str]:

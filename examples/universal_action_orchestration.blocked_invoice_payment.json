@@ -330,7 +330,7 @@
       "tier": "R1",
       "kind": "closure",
       "stage_id": "stage_closure",
-      "confirms": "blocked action closed without provider call",
+      "confirms": "universal-action-closure-confirmation-02194bf46679",
       "external_state_confirmed": false
     }
   ],
@@ -350,6 +350,8 @@
     "status": "closed_blocked",
     "terminal": true,
     "closure_receipt_ref": "receipt://uao_closure_invoice_payment_blocked",
+    "reconciliation_ref": "reconciliation://uao_invoice_payment_blocked",
+    "memory_ref": "memory://invoice-123/payment-blocked",
     "next_action": "request_fresh_approval"
   },
   "raw_reasoning_included": false,
