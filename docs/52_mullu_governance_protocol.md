@@ -115,7 +115,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 86. Gateway DNS target binding receipts are public contracts when they bind the intended gateway host, URL, environment, DNS record type, origin target, authoritative provider, readiness state, and next action before DNS publication.
 87. Evidence classification manifests are public contracts when they classify fixture, local, CI, staging, pilot, production, external, and historical evidence before public readiness or production claims.
 88. P3 memory topology read models are public contracts when they expose read-only nested-mind topology projections without raw topology metadata, raw memory metadata, live write authority, or execution authority.
-89. Workspace governance preflight receipts are public contracts when they bind repository-local validation commands, observed return codes, terminal-closure flags, and status derivation into replayable governance evidence.
+89. Workspace governance preflight receipts are public contracts when they bind canonical repository-local validation command names, command tails, observed return codes, terminal-closure flags, and status derivation into replayable governance evidence.
 
 ## Verification
 

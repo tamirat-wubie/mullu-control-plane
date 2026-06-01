@@ -8,6 +8,7 @@ Dependencies: Python standard library and receipt contract validator.
 Invariants:
   - Validation is read-only and deterministic.
   - Receipt status must match observed check metadata.
+  - Saved replay witness receipts must have status passed.
   - Malformed receipt evidence is rejected with explicit errors.
 """
 
@@ -49,7 +50,11 @@ def load_receipt(receipt_path: Path) -> dict[str, Any]:
 def validate_receipt_file(receipt_path: Path) -> list[str]:
     """Validate one saved preflight receipt file."""
 
-    return validate_receipt(load_receipt(receipt_path))
+    receipt = load_receipt(receipt_path)
+    errors = validate_receipt(receipt)
+    if not errors and receipt.get("status") != "passed":
+        errors.append("receipt status must be passed for replay witness")
+    return errors
 
 
 def main(argv: list[str] | None = None) -> int:

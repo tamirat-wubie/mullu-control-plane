@@ -9,6 +9,7 @@ Invariants:
   - Validation is read-only.
   - Synthetic receipts do not invoke subprocess checks.
   - Receipt status must match check return-code outcomes.
+  - Full preflight receipts carry the canonical required check order and command tails.
 """
 
 from __future__ import annotations
@@ -20,9 +21,9 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from run_workspace_governance_checks import CheckResult, build_receipt
+    from run_workspace_governance_checks import CheckResult, build_check_commands, build_receipt
 except ModuleNotFoundError:  # pragma: no cover - exercised when imported as package.
-    from scripts.run_workspace_governance_checks import CheckResult, build_receipt
+    from scripts.run_workspace_governance_checks import CheckResult, build_check_commands, build_receipt
 
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
@@ -37,6 +38,10 @@ REQUIRED_RECEIPT_FIELDS = (
 )
 REQUIRED_CHECK_FIELDS = ("name", "args", "return_code", "passed", "stdout", "stderr")
 ALLOWED_STATUSES = ("passed", "failed")
+REQUIRED_PREFLIGHT_CHECK_NAMES = tuple(command.name for command in build_check_commands("python"))
+REQUIRED_PREFLIGHT_COMMAND_TAILS_BY_NAME = {
+    command.name: tuple(command.args[1:]) for command in build_check_commands("python")
+}
 
 
 class PreflightReceiptContractError(ValueError):
@@ -81,13 +86,32 @@ def validate_schema_artifact(schema: dict[str, Any]) -> list[str]:
             if field_name not in properties:
                 errors.append(f"schema missing receipt property: {field_name}")
 
-    check_required = schema.get("$defs", {}).get("check_result", {}).get("required", [])
+    check_definition = schema.get("$defs", {}).get("check_result", {})
+    if not isinstance(check_definition, dict):
+        errors.append("schema check_result definition must be an object")
+        return errors
+
+    check_required = check_definition.get("required", [])
     if not isinstance(check_required, list):
         errors.append("schema check_result.required must be a list")
     else:
         for field_name in REQUIRED_CHECK_FIELDS:
             if field_name not in check_required:
                 errors.append(f"schema missing required check field: {field_name}")
+
+    check_properties = check_definition.get("properties")
+    if not isinstance(check_properties, dict):
+        errors.append("schema check_result.properties must be an object")
+        return errors
+    check_name = check_properties.get("name")
+    if not isinstance(check_name, dict):
+        errors.append("schema check_result.name must be an object")
+        return errors
+    check_name_enum = check_name.get("enum")
+    if not isinstance(check_name_enum, list):
+        errors.append("schema check_result.name.enum must be a list")
+    elif tuple(check_name_enum) != REQUIRED_PREFLIGHT_CHECK_NAMES:
+        errors.append("schema check_result.name.enum must match canonical preflight check order")
     return errors
 
 
@@ -118,10 +142,20 @@ def validate_receipt(receipt: dict[str, Any]) -> list[str]:
         errors.append("check_count does not match checks length")
 
     observed_all_passed = True
+    observed_names: list[str] = []
     for index, check in enumerate(checks):
         errors.extend(_validate_check_result(check, index))
+        if isinstance(check, dict) and isinstance(check.get("name"), str):
+            observed_names.append(check["name"])
         if isinstance(check, dict) and check.get("passed") is not True:
             observed_all_passed = False
+    if len(set(observed_names)) != len(observed_names):
+        errors.append("checks must not contain duplicate names")
+    if tuple(observed_names) != REQUIRED_PREFLIGHT_CHECK_NAMES:
+        errors.append("checks must preserve the canonical workspace governance check order")
+    missing_names = [name for name in REQUIRED_PREFLIGHT_CHECK_NAMES if name not in set(observed_names)]
+    if missing_names:
+        errors.append(f"receipt missing required preflight check(s): {', '.join(missing_names)}")
     expected_status = "passed" if observed_all_passed else "failed"
     if receipt["status"] != expected_status:
         errors.append(f"receipt status must be {expected_status} for observed check outcomes")
@@ -131,16 +165,9 @@ def validate_receipt(receipt: dict[str, Any]) -> list[str]:
 def build_sample_receipts() -> tuple[dict[str, Any], dict[str, Any]]:
     """Build synthetic pass and fail receipts without running subprocess checks."""
 
-    passed_receipt = build_receipt(
-        (
-            CheckResult("synthetic_pass", ("python", "synthetic.py"), 0, "STATUS: passed\n", ""),
-        )
-    )
+    passed_receipt = build_receipt(_build_synthetic_check_results())
     failed_receipt = build_receipt(
-        (
-            CheckResult("synthetic_pass", ("python", "synthetic.py"), 0, "STATUS: passed\n", ""),
-            CheckResult("synthetic_fail", ("python", "missing.py"), 2, "", "STATUS: failed\n"),
-        )
+        _build_synthetic_check_results(failing_check_name="universal_action_orchestration_validation_receipt_example")
     )
     return passed_receipt, failed_receipt
 
@@ -193,9 +220,16 @@ def _validate_check_result(check: Any, index: int) -> list[str]:
         return errors
     if not isinstance(check["name"], str) or not check["name"]:
         errors.append(f"check {index} name must be a non-empty string")
+    elif check["name"] not in REQUIRED_PREFLIGHT_CHECK_NAMES:
+        errors.append(f"check {index} name is not a canonical preflight check")
     if not isinstance(check["args"], list) or not all(isinstance(arg, str) and arg for arg in check["args"]):
         errors.append(f"check {index} args must be a list of non-empty strings")
-    if not isinstance(check["return_code"], int):
+    elif isinstance(check["name"], str) and check["name"] in REQUIRED_PREFLIGHT_COMMAND_TAILS_BY_NAME:
+        observed_command_tail = tuple(check["args"][1:])
+        expected_command_tail = REQUIRED_PREFLIGHT_COMMAND_TAILS_BY_NAME[check["name"]]
+        if observed_command_tail != expected_command_tail:
+            errors.append(f"check {index} args do not match canonical preflight command")
+    if isinstance(check["return_code"], bool) or not isinstance(check["return_code"], int):
         errors.append(f"check {index} return_code must be integer")
     if not isinstance(check["passed"], bool):
         errors.append(f"check {index} passed must be boolean")
@@ -208,6 +242,16 @@ def _validate_check_result(check: Any, index: int) -> list[str]:
         if check["passed"] != expected_passed:
             errors.append(f"check {index} passed does not match return_code")
     return errors
+
+
+def _build_synthetic_check_results(failing_check_name: str | None = None) -> tuple[CheckResult, ...]:
+    results: list[CheckResult] = []
+    for command in build_check_commands("python"):
+        if command.name == failing_check_name:
+            results.append(CheckResult(command.name, command.args, 2, "", "STATUS: failed\n"))
+        else:
+            results.append(CheckResult(command.name, command.args, 0, "STATUS: passed\n", ""))
+    return tuple(results)
 
 
 if __name__ == "__main__":
