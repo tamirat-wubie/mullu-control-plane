@@ -49,7 +49,7 @@ from mcoi_runtime.contracts.organization_kernel import (
     PlanStepWorkerReceiptBinding,
 )
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
-from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.core.organization_kernel import (
     LAUNCH_GATEWAY_PILOT_CASE_TYPE,
     OrganizationKernel,
@@ -159,6 +159,14 @@ class ApprovalRecordRequest(BaseModel):
 
 class PlanStepGateRequest(BaseModel):
     checked_preconditions: list[str]
+
+
+class PlanStepActionAdmissionPreviewRequest(BaseModel):
+    checked_preconditions: list[str]
+    proposed_action: str = "bind_worker_receipt"
+    requested_by_role_id: str | None = None
+    allow_simulation_when_blocked: bool = False
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class OrganizationCaseCloseRequest(BaseModel):
@@ -923,6 +931,177 @@ def _case_step_handoffs(kernel: OrganizationKernel, case_id: str) -> dict[str, A
         "source_timeline_url": f"/api/v1/cases/{quote(case_id, safe='')}/proof-timeline",
         "source_audit_url": f"/api/v1/cases/{quote(case_id, safe='')}/audit-explorer",
         "governed": True,
+    }
+
+
+def _gate_preview_to_admission_decision(
+    *,
+    gate_status: str,
+    gate_reason: str,
+    allow_simulation_when_blocked: bool,
+) -> tuple[str, str]:
+    if gate_status == PlanStepGateStatus.ALLOWED.value:
+        return "allow", "plan_step_gate_allowed"
+    if gate_reason in {"approval_missing", "dual_control_missing"}:
+        return "escalate", gate_reason
+    if gate_reason in {"preconditions_missing", "evidence_missing"}:
+        if allow_simulation_when_blocked:
+            return "simulate", f"{gate_reason}_simulation_available"
+        return "defer", gate_reason
+    return "block", gate_reason
+
+
+def _case_step_action_admission_preview(
+    kernel: OrganizationKernel,
+    case_id: str,
+    step_id: str,
+    req: PlanStepActionAdmissionPreviewRequest,
+) -> dict[str, Any]:
+    organization_case = _case_or_404(kernel, case_id)
+    state = kernel.snapshot_state()
+    organization = next(
+        (item for item in state.organizations if item.org_id == organization_case.org_id),
+        None,
+    )
+    plan = next((item for item in state.plans if item.case_id == case_id), None)
+    if plan is None:
+        raise RuntimeCoreInvariantError("case plan unavailable")
+    step = next((item for item in plan.steps if item.step_id == step_id), None)
+    if step is None:
+        raise RuntimeCoreInvariantError("plan step unavailable")
+
+    preview = kernel.preview_plan_step(
+        case_id=case_id,
+        step_id=step_id,
+        checked_preconditions=tuple(req.checked_preconditions),
+    )
+    preview_body = _body(preview)
+    handoff_projection = _case_step_handoffs(kernel, case_id)
+    handoff = next(
+        (item for item in handoff_projection["handoffs"] if item["step_id"] == step_id),
+        None,
+    )
+    if handoff is None:
+        raise RuntimeCoreInvariantError("step handoff unavailable")
+
+    decision, reason_code = _gate_preview_to_admission_decision(
+        gate_status=preview_body["status"],
+        gate_reason=preview_body["reason"],
+        allow_simulation_when_blocked=req.allow_simulation_when_blocked,
+    )
+    supported_actions = {
+        "bind_worker_receipt",
+        "collect_required_evidence",
+        "evaluate_plan_step_gate",
+        "review_bound_receipt",
+    }
+    if req.proposed_action not in supported_actions:
+        decision = "block"
+        reason_code = "unsupported_handoff_action"
+    elif decision == "allow" and req.proposed_action != handoff["next_action"]:
+        decision = "defer"
+        reason_code = f"handoff_next_action_required:{handoff['next_action']}"
+
+    actor_guard = "not_required_for_preview"
+    if req.requested_by_role_id is not None:
+        role = next((item for item in state.roles if item.role_id == req.requested_by_role_id), None)
+        if role is None or role.org_id != organization_case.org_id:
+            decision = "block"
+            reason_code = "actor_role_unavailable"
+            actor_guard = "Fail(actor_role_unavailable)"
+        else:
+            actor_guard = "Pass"
+
+    guard_verdicts = {
+        "identity_valid": actor_guard,
+        "tenant_valid": "Pass" if organization is not None else "Unknown",
+        "authority_valid": (
+            "Pass"
+            if preview_body["authority_rule_ids"]
+            else f"Fail({preview_body['reason']})"
+        ),
+        "policy_allows": (
+            "Pass"
+            if preview_body["status"] == PlanStepGateStatus.ALLOWED.value
+            else "blocked_by_gate"
+        ),
+        "risk_acceptable": (
+            "Pass"
+            if preview_body["reason"] != "capability_risk_exceeded"
+            else "Fail(capability_risk_exceeded)"
+        ),
+        "budget_available": "not_required_for_read_only_preview",
+        "evidence_sufficient": "Pass" if not handoff["missing_evidence"] else "Fail(evidence_missing)",
+        "temporal_window_valid": "not_required_for_read_only_preview",
+        "capability_certified": (
+            "Pass"
+            if preview_body["reason"] != "capability_not_certified"
+            else "Fail(capability_not_certified)"
+        ),
+        "recovery_available": "Pass" if handoff["rollback_plan_id"] else "not_required_for_read_only_preview",
+        "receipt_emittable": "Pass" if req.proposed_action == "bind_worker_receipt" else "not_requested",
+    }
+    admission_preview_id = stable_identifier(
+        "orgos-handoff-action-admission-preview",
+        {
+            "case_id": case_id,
+            "step_id": step_id,
+            "proposed_action": req.proposed_action,
+            "requested_by_role_id": req.requested_by_role_id,
+            "checked_preconditions": req.checked_preconditions,
+            "decision": decision,
+            "reason_code": reason_code,
+        },
+    )
+    return {
+        "admission_preview_id": admission_preview_id,
+        "case_id": case_id,
+        "step_id": step_id,
+        "read_only": True,
+        "governed": True,
+        "decision": decision,
+        "reason_code": reason_code,
+        "decision_set": ["allow", "block", "defer", "escalate", "simulate"],
+        "decision_scope": "handoff_action_preview",
+        "execution_authority_granted": False,
+        "dispatch_authority_granted": False,
+        "receipt_binding_authority_granted": decision == "allow" and req.proposed_action == "bind_worker_receipt",
+        "proposed_action": req.proposed_action,
+        "requested_by_role_id": req.requested_by_role_id,
+        "gate_preview": preview_body,
+        "handoff": handoff,
+        "causal_decision_trace": {
+            "intent": req.proposed_action,
+            "actor": req.requested_by_role_id or "operator.preview",
+            "tenant": organization.tenant_id if organization is not None else "",
+            "entities": {
+                "case_id": case_id,
+                "step_id": step_id,
+                "department_id": step.department_id,
+                "capability_id": step.capability_id,
+            },
+            "assumptions": [
+                "preview_only",
+                "no_worker_dispatch",
+                "no_case_state_mutation",
+            ],
+            "evidence_refs": preview_body["evidence_refs"],
+            "constraints": [
+                "checked_preconditions",
+                "capability_certification",
+                "authority_rule",
+                "required_evidence",
+                "required_approval",
+                "dual_control",
+            ],
+            "conflicts": [] if decision == "allow" else [reason_code],
+            "guard_verdicts": guard_verdicts,
+            "decision": decision,
+            "reason_code": reason_code,
+            "receipt_ref": None,
+            "closure_state": "preview_only",
+        },
+        "metadata": req.metadata,
     }
 
 
@@ -3123,6 +3302,29 @@ def evaluate_case_plan_step(case_id: str, step_id: str, req: PlanStepGateRequest
         raise HTTPException(400, detail=_error_detail("plan step gate rejected", "plan_step_gate_rejected")) from exc
     _persist_kernel(kernel)
     return {"decision": _body(decision), "governed": True}
+
+
+@router.post("/api/v1/cases/{case_id}/plan-steps/{step_id}/admission-preview")
+def preview_case_plan_step_action_admission(
+    case_id: str,
+    step_id: str,
+    req: PlanStepActionAdmissionPreviewRequest,
+    request: Request,
+):
+    """Preview handoff action admission without executing or mutating case state."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    try:
+        return _case_step_action_admission_preview(kernel, case_id, step_id, req)
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_error_detail(
+                "plan step action admission preview rejected",
+                "plan_step_admission_preview_rejected",
+            ),
+        ) from exc
 
 
 @router.post("/api/v1/cases/{case_id}/plan-steps/{step_id}/worker-receipt")
