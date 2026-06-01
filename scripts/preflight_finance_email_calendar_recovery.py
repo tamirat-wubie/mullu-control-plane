@@ -123,7 +123,7 @@ def preflight_finance_email_calendar_recovery(
         ok=not errors,
         ready_to_rerun_probe=ready_to_rerun_probe,
         checked_at=(clock or _validation_clock)(),
-        receipt_path=str(receipt_path),
+        receipt_path=_path_label(receipt_path),
         receipt_status=str(receipt.get("status", "")),
         failure_class=str(receipt.get("failure_class", "")),
         checks=checks,
@@ -259,6 +259,15 @@ def _load_json_object(path: Path, errors: list[str]) -> dict[str, Any]:
         errors.append("finance email/calendar live receipt root must be an object")
         return {}
     return parsed
+
+
+def _path_label(path: Path) -> str:
+    """Return a preflight report path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _env_present(env_reader: EnvReader, name: str) -> bool:
