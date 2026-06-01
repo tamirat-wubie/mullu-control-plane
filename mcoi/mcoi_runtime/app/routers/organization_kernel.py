@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.musia_auth import require_admin
@@ -27,6 +27,7 @@ from scripts.collect_deployment_witness import (
 )
 
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.contracts.effect_assurance import ReconciliationStatus
 from mcoi_runtime.contracts.organization_kernel import (
     ApprovalRecord,
@@ -271,6 +272,19 @@ def _case_or_404(kernel: OrganizationKernel, case_id: str) -> OrganizationCase:
     if organization_case is None:
         raise HTTPException(404, detail=_error_detail("case not found", "case_not_found"))
     return organization_case
+
+
+def _enforce_case_tenant(request: Request, kernel: OrganizationKernel, case_id: str) -> None:
+    """Reject access to a case owned by another tenant.
+
+    Organization cases carry an org_id, not a tenant_id; the owning tenant is
+    resolved through the organization. A no-op for operators (wildcard scope) and
+    unauthenticated dev requests, so existing suites are unaffected.
+    """
+    organization_case = _case_or_404(kernel, case_id)
+    tenant_id = kernel.organization_tenant(organization_case.org_id)
+    if tenant_id:
+        enforce_tenant_scope(request, tenant_id)
 
 
 def _require_launch_gateway_pilot_case(kernel: OrganizationKernel, case_id: str) -> OrganizationCase:
@@ -1167,10 +1181,12 @@ def create_launch_gateway_pilot(req: LaunchGatewayPilotRequest):
 def collect_launch_gateway_pilot_deployment_witness(
     case_id: str,
     req: LaunchGatewayPilotEvidenceCollectionRequest,
+    request: Request,
 ):
     """Collect deployment witness evidence and bind verified engineering proof."""
     _inc_metric("requests_governed")
     kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
     _require_launch_gateway_pilot_case(kernel, case_id)
     gateway_url = _validate_gateway_base_url(req.gateway_url)
     try:
@@ -1213,10 +1229,12 @@ def collect_launch_gateway_pilot_deployment_witness(
 
 
 @router.get("/api/v1/cases/{case_id}/launch-gateway-pilot/gate-preview")
-def get_launch_gateway_pilot_gate_preview(case_id: str):
+def get_launch_gateway_pilot_gate_preview(case_id: str, request: Request):
     """Return non-mutating plan-step gate previews for the Launch Gateway Pilot case."""
     _inc_metric("requests_governed")
-    previews = _launch_gateway_gate_preview(_kernel(), case_id)
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    previews = _launch_gateway_gate_preview(kernel, case_id)
     blocked_steps = [
         preview.step_id for preview in previews
         if preview.status is not PlanStepGateStatus.ALLOWED
@@ -1231,20 +1249,24 @@ def get_launch_gateway_pilot_gate_preview(case_id: str):
 
 
 @router.get("/api/v1/cases/{case_id}/launch-gateway-pilot/readiness")
-def get_launch_gateway_pilot_readiness(case_id: str):
+def get_launch_gateway_pilot_readiness(case_id: str, request: Request):
     """Return non-mutating readiness state for the Launch Gateway Pilot case."""
     _inc_metric("requests_governed")
-    return _launch_gateway_readiness_model(_kernel(), case_id)
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    return _launch_gateway_readiness_model(kernel, case_id)
 
 
 @router.post("/api/v1/cases/{case_id}/launch-gateway-pilot/readiness-closure")
 def close_launch_gateway_pilot_readiness(
     case_id: str,
     req: LaunchGatewayPilotReadinessClosureRequest,
+    request: Request,
 ):
     """Bind a five-department readiness packet and close only after all gates pass."""
     _inc_metric("requests_governed")
     kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
     _require_launch_gateway_pilot_case(kernel, case_id)
     try:
         _validate_launch_gateway_closure_request(req)
@@ -1358,17 +1380,21 @@ def create_case(req: OrganizationCaseCreateRequest):
 
 
 @router.get("/api/v1/cases/{case_id}")
-def get_case(case_id: str):
+def get_case(case_id: str, request: Request):
     """Return a case read model with plan, proof, and event surfaces."""
     _inc_metric("requests_governed")
-    return _state_case_bundle(_kernel(), case_id)
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    return _state_case_bundle(kernel, case_id)
 
 
 @router.get("/api/v1/cases/{case_id}/proof-timeline")
-def get_case_proof_timeline(case_id: str):
+def get_case_proof_timeline(case_id: str, request: Request):
     """Return a non-mutating proof timeline and closure certificate read model."""
     _inc_metric("requests_governed")
-    return _case_proof_timeline(_kernel(), case_id)
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    return _case_proof_timeline(kernel, case_id)
 
 
 @router.get("/api/v1/cases/{case_id}/proof-explorer")
@@ -1573,11 +1599,11 @@ def bind_case_learning_admission(case_id: str, req: LearningAdmissionRequest):
 
 
 @router.get("/api/v1/cases/{case_id}/events")
-def list_case_events(case_id: str):
+def list_case_events(case_id: str, request: Request):
     """List kernel-emitted case events."""
     _inc_metric("requests_governed")
     kernel = _kernel()
-    _case_or_404(kernel, case_id)
+    _enforce_case_tenant(request, kernel, case_id)
     events = kernel.list_case_events(case_id)
     return {
         "events": [_body(event) for event in events],
