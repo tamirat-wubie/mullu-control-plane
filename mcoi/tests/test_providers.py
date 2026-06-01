@@ -106,6 +106,34 @@ def test_file_communication_delivers(tmp_path: Path) -> None:
     assert result.metadata["file_path"] == str(file_path)
 
 
+def _outbox_message(message_id: str) -> CommunicationMessage:
+    return CommunicationMessage(
+        message_id=message_id,
+        sender_id="agent-1",
+        recipient_id="operator-1",
+        channel=CommunicationChannel.APPROVAL,
+        message_type="approval_request",
+        payload={"action": "noop"},
+        correlation_id="corr-1",
+        created_at=_CLOCK,
+    )
+
+
+def test_file_communication_rejects_message_id_path_traversal(tmp_path: Path) -> None:
+    outbox = tmp_path / "outbox"
+    adapter = FileCommunicationAdapter(outbox_path=outbox, clock=lambda: _CLOCK)
+
+    result = adapter.deliver(_outbox_message("../escaped-delivery"))
+
+    assert result.status is DeliveryStatus.FAILED
+    assert result.error_code == "unsafe_message_id_path"
+    # Nothing escaped to the outbox's parent directory.
+    assert list(tmp_path.glob("*.json")) == []
+    # A legitimate message in the same outbox still delivers.
+    assert adapter.deliver(_outbox_message("msg-safe")).status is DeliveryStatus.DELIVERED
+    assert (outbox / "msg-safe.json").exists()
+
+
 def test_file_communication_multiple_messages(tmp_path: Path) -> None:
     adapter = FileCommunicationAdapter(outbox_path=tmp_path / "outbox", clock=lambda: _CLOCK)
     for i in range(3):
