@@ -10,7 +10,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Header, Request
 from pydantic import BaseModel, Field
 
-from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_listing_tenant
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.agent_protocol import AgentCapability
 from mcoi_runtime.core.batch_pipeline import PipelineStep
@@ -137,7 +137,8 @@ def execute(req: ExecuteRequest, request: Request, session_id: str = Header(defa
 
 
 @router.post("/api/v1/session")
-def create_session(actor_id: str, tenant_id: str):
+def create_session(actor_id: str, tenant_id: str, request: Request):
+    enforce_tenant_scope(request, tenant_id)
     import time
     sid = hashlib.sha256(f"{actor_id}:{tenant_id}:{time.time()}".encode()).hexdigest()[:16]
     session = deps.surface.auth.create_session(f"sess-{sid}", actor_id, tenant_id)
@@ -147,7 +148,8 @@ def create_session(actor_id: str, tenant_id: str):
 
 
 @router.get("/api/v1/ledger")
-def get_ledger(tenant_id: str = "system", limit: int = 50):
+def get_ledger(request: Request, tenant_id: str = "system", limit: int = 50):
+    tenant_id = scoped_listing_tenant(request, tenant_id)
     entries = deps.store.query_ledger(tenant_id, limit=limit)
     return {"entries": entries, "count": len(entries), "governed": True}
 

@@ -18,7 +18,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_listing_tenant
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.contracts.finance_approval_packet import (
     ApprovalStatus,
@@ -209,12 +209,14 @@ def create_finance_approval_packet(req: FinancePacketCreateRequest, request: Req
 
 @router.get("/api/v1/finance/approval-packets/operator/read-model")
 def finance_approval_operator_read_model(
+    request: Request,
     tenant_id: str = "",
     state: str = "",
     limit: int = 50,
 ):
     """Return a bounded operator read model for finance approval packets."""
     deps.metrics.inc("requests_governed")
+    tenant_id = scoped_listing_tenant(request, tenant_id)
     if limit < 1 or limit > 200:
         raise HTTPException(400, detail=_error_detail("limit must be between 1 and 200", "invalid_limit"))
     try:
@@ -270,9 +272,10 @@ def finance_approval_operator_read_model(
 
 
 @router.get("/api/v1/finance/approval-packets")
-def list_finance_approval_packets(tenant_id: str = "", state: str = ""):
+def list_finance_approval_packets(request: Request, tenant_id: str = "", state: str = ""):
     """List governed finance approval packets from the in-memory pilot store."""
     deps.metrics.inc("requests_governed")
+    tenant_id = scoped_listing_tenant(request, tenant_id)
     try:
         state_filter = FinancePacketState(state) if state else None
     except ValueError:
@@ -282,13 +285,14 @@ def list_finance_approval_packets(tenant_id: str = "", state: str = ""):
 
 
 @router.get("/api/v1/finance/approval-packets/{case_id}")
-def get_finance_approval_packet(case_id: str):
+def get_finance_approval_packet(case_id: str, request: Request):
     """Return one finance approval packet and its policy decisions."""
     deps.metrics.inc("requests_governed")
     store = _store()
     case = store.get_case(case_id)
     if case is None:
         raise HTTPException(404, detail=_error_detail("packet not found", "packet_not_found"))
+    enforce_tenant_scope(request, case.tenant_id)
     return {
         "packet": _case_body(case),
         "policy_decisions": [_decision_body(decision) for decision in store.list_decisions(case_id=case_id)],

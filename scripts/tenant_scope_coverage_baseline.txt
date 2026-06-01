@@ -19,3 +19,21 @@
 # effect), so there is no cross-tenant data to scope.
 mcoi/mcoi_runtime/app/routers/assistant.py::compile_finance_ops_assistant_plan
 mcoi/mcoi_runtime/app/routers/explain.py::explain_action
+#
+# Newly surfaced by the scalar `tenant_id` query/path-parameter check (added to
+# the linter alongside the path/body checks). These take a caller-chosen
+# `tenant_id` query parameter and read stored state by it, so the linter now
+# tracks them. Scoping is deferred ONLY pending per-handler access-model review
+# (tenant-self listing -> scoped_listing_tenant, vs operator console ->
+# require_admin); none is a confirmed echo. Drain incrementally. The verified
+# high-severity financial reads (workflow.get_ledger, finance approval packet
+# list/read-model/by-id) and the session-creation write were scoped in the same
+# change that introduced this check, so they are intentionally absent here.
+mcoi/mcoi_runtime/app/routers/agent.py::list_webhooks
+mcoi/mcoi_runtime/app/routers/console.py::console_audit
+mcoi/mcoi_runtime/app/routers/console.py::console_runs
+mcoi/mcoi_runtime/app/routers/god_mode.py::list_tickets
+mcoi/mcoi_runtime/app/routers/ops/feature_flags.py::check_flag
+mcoi/mcoi_runtime/app/routers/pilot.py::list_pilot_provisions
+mcoi/mcoi_runtime/app/routers/rbac.py::list_identities
+mcoi/mcoi_runtime/app/routers/temporal_scheduler.py::list_temporal_schedules

@@ -4,9 +4,13 @@ Tenant-Scope Coverage — structural guard against cross-tenant IDORs.
 
 The data-plane HTTP handlers run behind ``GovernanceMiddleware``, which binds
 the request tenant from the query/header only. A handler that instead takes the
-tenant from the URL **path** (``{tenant_id}``) or the request **body** (a model
-with a ``tenant_id`` field) bypasses that binding — an authenticated caller for
-tenant A could read or mutate tenant B's data unless the handler re-checks it.
+tenant from the URL **path** (``{tenant_id}``), the request **body** (a model
+with a ``tenant_id`` field), or a scalar **query/path parameter** named
+``tenant_id`` bypasses that binding -- an authenticated caller for tenant A could
+read or mutate tenant B's data by naming B's id (or omitting it to read all
+tenants) unless the handler re-checks it. The middleware binds the *context*
+tenant, but it does not force a handler's own ``tenant_id`` argument to match the
+authenticated tenant.
 
 This linter requires every such handler to call one of the tenant-scope helpers
 (``enforce_tenant_scope`` / ``scoped_listing_tenant`` in
@@ -91,6 +95,21 @@ def _param_annotation_names(func: ast.FunctionDef) -> set[str]:
     return names
 
 
+def _has_tenant_id_param(func: ast.FunctionDef) -> bool:
+    """True if the handler declares a parameter literally named ``tenant_id``.
+
+    Catches the scalar query/path binding (``tenant_id: str = ""``) that the
+    body-model and ``{tenant_id}`` path checks miss. FastAPI binds such a
+    parameter from the request query string (or a same-named path segment), so
+    the caller chooses the tenant -- it must be re-scoped against the
+    authenticated tenant.
+    """
+    for arg in list(func.args.args) + list(func.args.kwonlyargs):
+        if arg.arg == "tenant_id":
+            return True
+    return False
+
+
 def _load_baseline() -> set[str]:
     if not BASELINE_PATH.exists():
         return set()
@@ -118,11 +137,17 @@ def scan() -> list[str]:
                 continue  # not an HTTP route handler
             needs_path = any("{tenant_id}" in p for p in paths)
             needs_body = bool(_param_annotation_names(node) & tenant_models)
-            if not (needs_path or needs_body):
+            needs_query = _has_tenant_id_param(node)
+            if not (needs_path or needs_body or needs_query):
                 continue
             if _is_scoped(node):
                 continue
-            reason = "path {tenant_id}" if needs_path else "body tenant_id model"
+            if needs_path:
+                reason = "path {tenant_id}"
+            elif needs_body:
+                reason = "body tenant_id model"
+            else:
+                reason = "tenant_id query/path parameter"
             findings.append(f"{relpath}::{node.name}  ({reason})")
     return findings
 
