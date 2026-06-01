@@ -76,6 +76,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _agentic_control_algorithm_governor_skill(),
         _agentic_control_security_governor_skill(),
         _agentic_control_swarm_governor_skill(),
+        _agentic_control_coding_governor_skill(),
         _agentic_control_autonomous_operations_skill(),
     )
 
@@ -1241,6 +1242,144 @@ def _agentic_control_swarm_governor_skill() -> SkillDescriptor:
                 "role_assignment_hash",
                 "shard_boundaries",
                 "consensus_rule",
+            ),
+        },
+    )
+
+
+def _agentic_control_coding_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.coding_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic coding governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_code_mission",
+                name="Define code mission",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "repo_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_code_constraints",
+                name="Rank code constraints",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_code_mission",),
+                input_bindings={"mission_contract_ref": "define_code_mission.mission_contract_ref"},
+                output_keys=("code_constraint_order_ref", "dependency_blockers", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_code_governance",
+                name="Evaluate code governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_code_constraints",),
+                input_bindings={"priority_order_ref": "rank_code_constraints.code_constraint_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_actions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_code_budget",
+                name="Bound code budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_code_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_code_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "halt_thresholds", "resource_floor"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="build_code_threat_model",
+                name="Build code threat model",
+                action_type="agentic_control.security_threat_model.build",
+                depends_on=("bound_code_budget",),
+                input_bindings={
+                    "repo_boundary_ref": "define_code_mission.repo_boundary_ref",
+                    "budget_envelope_ref": "bound_code_budget.budget_envelope_ref",
+                },
+                output_keys=("threat_model_ref", "mitigation_refs", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_code_change_boundary",
+                name="Plan code change boundary",
+                action_type="agentic_control.code_change.plan",
+                depends_on=("build_code_threat_model",),
+                input_bindings={
+                    "repo_boundary_ref": "define_code_mission.repo_boundary_ref",
+                    "threat_model_ref": "build_code_threat_model.threat_model_ref",
+                    "budget_envelope_ref": "bound_code_budget.budget_envelope_ref",
+                },
+                output_keys=("code_change_plan_ref", "change_boundary", "test_contract", "rollback_plan"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_code_verification",
+                name="Plan code verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("plan_code_change_boundary",),
+                input_bindings={"code_change_plan_ref": "plan_code_change_boundary.code_change_plan_ref"},
+                output_keys=("code_verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_code_interrogation",
+                name="Plan code interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_code_verification",),
+                input_bindings={"verification_plan_ref": "plan_code_verification.code_verification_plan_ref"},
+                output_keys=("code_interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_code_gaps",
+                name="Refine code gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_code_interrogation",),
+                input_bindings={
+                    "code_change_plan_ref": "plan_code_change_boundary.code_change_plan_ref",
+                    "verification_plan_ref": "plan_code_verification.code_verification_plan_ref",
+                    "interrogation_plan_ref": "plan_code_interrogation.code_interrogation_plan_ref",
+                    "threat_model_ref": "build_code_threat_model.threat_model_ref",
+                },
+                output_keys=("code_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_code_memory_admission",
+                name="Plan code memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_code_gaps",),
+                input_bindings={"refinement_plan_ref": "refine_code_gaps.code_refinement_plan_ref"},
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes read-only coding discipline by linking repository boundary, "
+            "constraint ranking, governance gate, resource budget, threat model, "
+            "code-change boundary, verification, interrogation, refinement, and "
+            "memory-admission planning before effect-bearing implementation work."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "coding_governor": True,
+            "code_surfaces": (
+                "repo_boundary_ref",
+                "code_change_plan_ref",
+                "change_boundary",
+                "test_contract",
+                "rollback_plan",
             ),
         },
     )
