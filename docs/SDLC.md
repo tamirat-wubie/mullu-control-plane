@@ -37,6 +37,14 @@ The repository implementation is intentionally non-runtime in this phase:
 doctrine docs -> schema contracts -> example fixtures -> validators -> workspace preflight required gates
 ```
 
+The read-only dashboard projection is:
+
+```text
+change -> stage -> blockers -> evidence -> receipt -> closure
+```
+
+`/software/receipts/sdlc/dashboard` exposes this projection for operator review without mutating lifecycle state.
+
 ## Algorithm
 
 1. Intake captures owner, source, scope, risk, target surfaces, and evidence.
@@ -117,6 +125,7 @@ python scripts/validate_sdlc_state_machine.py
 python scripts/validate_sdlc_release_readiness.py --strict
 python scripts/validate_sdlc_security_review.py --strict
 python scripts/validate_sdlc_pr_enforcement.py
+python -m pytest mcoi/tests/test_sdlc_dashboard.py -q
 python -m pytest tests/test_validate_sdlc_artifact.py tests/test_validate_sdlc_state_machine.py tests/test_validate_sdlc_release_readiness.py tests/test_sdlc_security_review.py -q
 python scripts/run_workspace_governance_checks.py
 ```
