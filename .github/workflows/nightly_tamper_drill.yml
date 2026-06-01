@@ -24,7 +24,7 @@ env:
 jobs:
   tamper-drill:
     name: Verify ledger tamper detection (10 scenarios)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
 
     steps:
