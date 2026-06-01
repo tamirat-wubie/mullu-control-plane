@@ -34,6 +34,7 @@ def test_validate_payment_closure_receipt_accepts_bound_provider_and_ledger(tmp_
 
     assert result.valid is True
     assert result.ready is True
+    assert result.receipt_path == "finance-payment-closure-receipt.json"
     assert result.adapter_id == "finance.payment_adapter"
     assert result.status == "passed"
     assert result.verification_status == "passed"
@@ -278,7 +279,9 @@ def test_validate_payment_closure_receipt_cli_outputs_json(tmp_path: Path, capsy
     assert exit_code == 0
     assert payload["valid"] is True
     assert payload["ready"] is True
+    assert payload["receipt_path"] == "finance-payment-closure-receipt.json"
     assert payload["payment_provider_receipt_ref"] == "provider:payment:receipt-001"
+    assert str(tmp_path) not in json.dumps(payload, sort_keys=True)
 
 
 def test_validate_payment_closure_receipt_cli_accepts_provider_binding_receipt(tmp_path: Path, capsys) -> None:
@@ -312,6 +315,35 @@ def test_validate_payment_closure_receipt_cli_accepts_provider_binding_receipt(t
     assert exit_code == 0
     assert stdout_payload["valid"] is True
     assert stdout_payload["ready"] is True
+    assert stdout_payload["receipt_path"] == "finance-payment-closure-receipt.json"
+    assert str(tmp_path) not in json.dumps(stdout_payload, sort_keys=True)
+
+
+def test_validate_payment_closure_receipt_missing_file_path_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "missing-payment-closure.json"
+
+    result = validate_finance_approval_payment_closure_receipt(receipt_path=receipt_path)
+
+    assert result.valid is False
+    assert result.ready is False
+    assert result.receipt_path == "missing-payment-closure.json"
+    assert result.receipt_id == ""
+    assert "finance payment closure receipt could not be read" in result.errors
+    assert str(tmp_path) not in json.dumps(result.as_dict(), sort_keys=True)
+
+
+def test_validate_payment_closure_receipt_json_parse_path_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "bad-payment-closure.json"
+    receipt_path.write_text('{"receipt_id": "secret-payment-token"', encoding="utf-8")
+
+    result = validate_finance_approval_payment_closure_receipt(receipt_path=receipt_path)
+
+    assert result.valid is False
+    assert result.ready is False
+    assert result.receipt_path == "bad-payment-closure.json"
+    assert result.receipt_id == ""
+    assert "finance payment closure receipt must be JSON" in result.errors
+    assert str(tmp_path) not in json.dumps(result.as_dict(), sort_keys=True)
 
 
 def _ready_receipt() -> dict[str, object]:
