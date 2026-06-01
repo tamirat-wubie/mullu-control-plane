@@ -39,6 +39,7 @@ UniversalActionRequest + UniversalActionResult -> build_universal_action_orchest
 
 The export is pure and does not dispatch work. It materializes the already-issued kernel certificates, receipts, closure state, memory decision, and lineage delta into the same schema validated for static examples.
 Command-ledger dispatch persists this record under `universal_action_orchestration`, and the gateway exposes it through `/commands/{command_id}/universal-action-orchestration` as a read-only replay surface.
+The replay surface fails closed unless the persisted command event came from a universal action kernel dispatch or block event and the embedded UAO v1 record preserves the expected identity, decision, receipt, closure, and no-private-reasoning shape.
 
 ## Algorithm
 
@@ -56,6 +57,7 @@ The validator applies these rules deterministically:
 10. Every example must include `closure_state`.
 11. Every runtime-exported UAO record must pass the same schema and semantic validator as static fixtures.
 12. Every command replay record must come from persisted command events, not from an in-memory kernel result.
+13. Every command replay record must fail closed when the persisted candidate is malformed or exposes private reasoning fields.
 
 The core invariant is:
 

@@ -29,18 +29,36 @@ from pathlib import Path
 
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
-VALIDATOR_PATH = WORKSPACE_ROOT / "scripts" / "validate_universal_action_orchestration.py"
+VALIDATOR_PATH = (
+    WORKSPACE_ROOT / "scripts" / "validate_universal_action_orchestration.py"
+)
 SCHEMA_PATH = WORKSPACE_ROOT / "schemas" / "universal_action_orchestration.schema.json"
 DOCUMENT_PATH = WORKSPACE_ROOT / "docs" / "UNIVERSAL_ACTION_ORCHESTRATION.md"
-ALLOWED_EXAMPLE_PATH = WORKSPACE_ROOT / "examples" / "universal_action_orchestration.allowed_status_publish.json"
-BLOCKED_EXAMPLE_PATH = WORKSPACE_ROOT / "examples" / "universal_action_orchestration.blocked_invoice_payment.json"
-BLOCKED_MISSING_APPROVAL_PATH = WORKSPACE_ROOT / "examples" / "uao" / "blocked_missing_approval.json"
-DEFERRED_STALE_EVIDENCE_PATH = WORKSPACE_ROOT / "examples" / "uao" / "deferred_stale_evidence.json"
-SIMULATED_LOW_RISK_READONLY_PATH = WORKSPACE_ROOT / "examples" / "uao" / "simulated_low_risk_readonly.json"
+ALLOWED_EXAMPLE_PATH = (
+    WORKSPACE_ROOT
+    / "examples"
+    / "universal_action_orchestration.allowed_status_publish.json"
+)
+BLOCKED_EXAMPLE_PATH = (
+    WORKSPACE_ROOT
+    / "examples"
+    / "universal_action_orchestration.blocked_invoice_payment.json"
+)
+BLOCKED_MISSING_APPROVAL_PATH = (
+    WORKSPACE_ROOT / "examples" / "uao" / "blocked_missing_approval.json"
+)
+DEFERRED_STALE_EVIDENCE_PATH = (
+    WORKSPACE_ROOT / "examples" / "uao" / "deferred_stale_evidence.json"
+)
+SIMULATED_LOW_RISK_READONLY_PATH = (
+    WORKSPACE_ROOT / "examples" / "uao" / "simulated_low_risk_readonly.json"
+)
 
 
 def _load_validator_module():
-    spec = importlib.util.spec_from_file_location("validate_universal_action_orchestration", VALIDATOR_PATH)
+    spec = importlib.util.spec_from_file_location(
+        "validate_universal_action_orchestration", VALIDATOR_PATH
+    )
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot load validator module: {VALIDATOR_PATH}")
     module = importlib.util.module_from_spec(spec)
@@ -112,7 +130,10 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn("not UAO_valid(action) -> preflight_fail", document_text)
         self.assertIn("does not execute actions", document_text)
         self.assertIn("raw private reasoning", document_text)
-        self.assertIn("Canonical validation receipts require the default schema", document_text)
+        self.assertIn(
+            "Canonical validation receipts require the default schema", document_text
+        )
+        self.assertIn("Every command replay record must fail closed", document_text)
 
     def test_effect_bearing_action_requires_causal_trace(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
@@ -126,7 +147,9 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertGreaterEqual(len(errors), 2)
         self.assertTrue(any("trace_ref" in error for error in errors))
         self.assertTrue(any("causal_decision_trace_ref" in error for error in errors))
-        self.assertTrue(any("effect-bearing action requires" in error for error in errors))
+        self.assertTrue(
+            any("effect-bearing action requires" in error for error in errors)
+        )
 
     def test_action_envelope_identity_drift_is_rejected(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
@@ -155,7 +178,9 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertGreaterEqual(len(errors), 3)
         self.assertIn("high-risk allow requires action_envelope.approval_ref", errors)
         self.assertIn("high-risk allow requires action_envelope.evidence_refs", errors)
-        self.assertIn("high-risk allow requires action_envelope.capability_refs", errors)
+        self.assertIn(
+            "high-risk allow requires action_envelope.capability_refs", errors
+        )
 
     def test_raw_chain_of_thought_field_is_rejected(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
@@ -165,7 +190,9 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         errors = VALIDATOR.validate_orchestration(invalid_record)
 
         self.assertGreaterEqual(len(errors), 1)
-        self.assertTrue(any("chain_of_thought is prohibited" in error for error in errors))
+        self.assertTrue(
+            any("chain_of_thought is prohibited" in error for error in errors)
+        )
 
     def test_allow_decision_rejects_blocked_guard(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
@@ -176,7 +203,12 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         errors = VALIDATOR.validate_orchestration(invalid_record)
 
         self.assertGreaterEqual(len(errors), 1)
-        self.assertTrue(any("allow requires every admission guard to pass" in error for error in errors))
+        self.assertTrue(
+            any(
+                "allow requires every admission guard to pass" in error
+                for error in errors
+            )
+        )
         self.assertEqual("blocked", invalid_record["admission_guards"][0]["verdict"])
 
     def test_blocked_decision_cannot_execute(self) -> None:
@@ -189,14 +221,26 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         errors = VALIDATOR.validate_orchestration(invalid_record)
 
         self.assertGreaterEqual(len(errors), 2)
-        self.assertTrue(any("non-allow status requires execution_allowed false" in error for error in errors))
-        self.assertTrue(any("non-allow status cannot complete execution stage" in error for error in errors))
+        self.assertTrue(
+            any(
+                "non-allow status requires execution_allowed false" in error
+                for error in errors
+            )
+        )
+        self.assertTrue(
+            any(
+                "non-allow status cannot complete execution stage" in error
+                for error in errors
+            )
+        )
 
     def test_missing_required_guard_is_rejected(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
         invalid_record = copy.deepcopy(record)
         invalid_record["admission_guards"] = [
-            guard for guard in invalid_record["admission_guards"] if guard["guard"] != "receipt_emittable"
+            guard
+            for guard in invalid_record["admission_guards"]
+            if guard["guard"] != "receipt_emittable"
         ]
 
         errors = VALIDATOR.validate_orchestration(invalid_record)
@@ -209,13 +253,22 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
         invalid_record = copy.deepcopy(record)
         invalid_record["raw_reasoning_included"] = True
-        invalid_record["exposure_boundary"]["blocked_payload_classes"].remove("raw_private_reasoning")
+        invalid_record["exposure_boundary"]["blocked_payload_classes"].remove(
+            "raw_private_reasoning"
+        )
 
         errors = VALIDATOR.validate_orchestration(invalid_record)
 
         self.assertGreaterEqual(len(errors), 2)
-        self.assertTrue(any("raw_reasoning_included must be false" in error for error in errors))
-        self.assertTrue(any("blocked_payload_classes must include raw_private_reasoning" in error for error in errors))
+        self.assertTrue(
+            any("raw_reasoning_included must be false" in error for error in errors)
+        )
+        self.assertTrue(
+            any(
+                "blocked_payload_classes must include raw_private_reasoning" in error
+                for error in errors
+            )
+        )
 
     def test_cli_reports_passed_for_current_contract(self) -> None:
         stdout_buffer = io.StringIO()
@@ -261,13 +314,19 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
 
         report = json.loads(stdout_buffer.getvalue())
         self.assertEqual(0, exit_code)
-        self.assertEqual("universal_action_orchestration_validation_receipt", report["receipt_id"])
+        self.assertEqual(
+            "universal_action_orchestration_validation_receipt", report["receipt_id"]
+        )
         self.assertTrue(report["terminal_closure_required"])
         self.assertTrue(report["receipt_is_not_terminal_closure"])
         self.assertTrue(report["valid"])
         self.assertEqual("passed", report["status"])
-        self.assertEqual("schemas/universal_action_orchestration.schema.json", report["schema_path"])
-        self.assertEqual("docs/UNIVERSAL_ACTION_ORCHESTRATION.md", report["document_path"])
+        self.assertEqual(
+            "schemas/universal_action_orchestration.schema.json", report["schema_path"]
+        )
+        self.assertEqual(
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md", report["document_path"]
+        )
         self.assertEqual(
             [
                 "examples/universal_action_orchestration.allowed_status_publish.json",
@@ -284,7 +343,9 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertEqual([], report["errors"])
         self.assertTrue(all(check["passed"] for check in report["checks"]))
 
-    def test_build_validation_report_sanitizes_load_error_paths_without_receipt_claim(self) -> None:
+    def test_build_validation_report_sanitizes_load_error_paths_without_receipt_claim(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             temporary_path = Path(temporary_directory)
             missing_schema_path = temporary_path / "secret" / "missing.schema.json"
@@ -299,18 +360,24 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             self.assertFalse(report["valid"])
             self.assertEqual("missing.schema.json", report["schema_path"])
             self.assertEqual(1, report["error_count"])
-            self.assertTrue(any("missing.schema.json" in error for error in report["errors"]))
+            self.assertTrue(
+                any("missing.schema.json" in error for error in report["errors"])
+            )
             self.assertNotIn(str(temporary_path), serialized_report)
             self.assertNotIn(str(missing_schema_path), serialized_report)
 
-    def test_cli_json_receipt_rejects_noncanonical_example_scope_without_writing(self) -> None:
+    def test_cli_json_receipt_rejects_noncanonical_example_scope_without_writing(
+        self,
+    ) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
         invalid_record = copy.deepcopy(record)
         invalid_record["chain_of_thought"] = "private reasoning must not be serialized"
 
         with tempfile.TemporaryDirectory() as temporary_directory:
             invalid_path = Path(temporary_directory) / "invalid_uao.json"
-            receipt_path = WORKSPACE_ROOT / ".tmp" / "uao-validation-failed-receipt.json"
+            receipt_path = (
+                WORKSPACE_ROOT / ".tmp" / "uao-validation-failed-receipt.json"
+            )
             receipt_path.unlink(missing_ok=True)
             invalid_path.write_text(json.dumps(invalid_record), encoding="utf-8")
             stdout_buffer = io.StringIO()
@@ -334,7 +401,9 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             self.assertEqual(1, exit_code)
             self.assertEqual("", stdout_buffer.getvalue())
             self.assertIn("receipt-scope", stderr_buffer.getvalue())
-            self.assertIn("canonical UAO fixture set and order", stderr_buffer.getvalue())
+            self.assertIn(
+                "canonical UAO fixture set and order", stderr_buffer.getvalue()
+            )
             self.assertFalse(receipt_path.exists())
             self.assertTrue(invalid_path.exists())
 
@@ -344,31 +413,45 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary_directory:
             workspace_root = Path(temporary_directory) / "workspace"
             workspace_root.mkdir()
-            receipt_path = VALIDATOR.write_validation_report(report, Path(".tmp/uao-receipt.json"), workspace_root)
+            receipt_path = VALIDATOR.write_validation_report(
+                report, Path(".tmp/uao-receipt.json"), workspace_root
+            )
 
             self.assertEqual("uao-receipt.json", receipt_path.name)
             self.assertTrue(receipt_path.exists())
-            self.assertEqual(workspace_root.resolve(), receipt_path.parents[1].resolve())
+            self.assertEqual(
+                workspace_root.resolve(), receipt_path.parents[1].resolve()
+            )
             with self.assertRaises(ValueError):
-                VALIDATOR.resolve_validation_receipt_path(Path("../uao-receipt.json"), workspace_root)
+                VALIDATOR.resolve_validation_receipt_path(
+                    Path("../uao-receipt.json"), workspace_root
+                )
             with self.assertRaises(ValueError):
-                VALIDATOR.resolve_validation_receipt_path(Path(".tmp/uao-receipt.txt"), workspace_root)
+                VALIDATOR.resolve_validation_receipt_path(
+                    Path(".tmp/uao-receipt.txt"), workspace_root
+                )
 
     def test_write_validation_report_rejects_noncanonical_report_scope(self) -> None:
-        report = VALIDATOR.build_validation_report(SCHEMA_PATH, (ALLOWED_EXAMPLE_PATH,), DOCUMENT_PATH)
+        report = VALIDATOR.build_validation_report(
+            SCHEMA_PATH, (ALLOWED_EXAMPLE_PATH,), DOCUMENT_PATH
+        )
 
         with tempfile.TemporaryDirectory() as temporary_directory:
             workspace_root = Path(temporary_directory) / "workspace"
             workspace_root.mkdir()
 
             with self.assertRaises(ValueError) as raised:
-                VALIDATOR.write_validation_report(report, Path(".tmp/uao-receipt.json"), workspace_root)
+                VALIDATOR.write_validation_report(
+                    report, Path(".tmp/uao-receipt.json"), workspace_root
+                )
 
             self.assertIn("canonical UAO fixture set and order", str(raised.exception))
             self.assertFalse((workspace_root / ".tmp" / "uao-receipt.json").exists())
 
     def test_cli_rejects_receipt_path_escape_without_writing(self) -> None:
-        escaped_receipt_path = WORKSPACE_ROOT.parent / "uao-validation-escaped-receipt.json"
+        escaped_receipt_path = (
+            WORKSPACE_ROOT.parent / "uao-validation-escaped-receipt.json"
+        )
         escaped_receipt_path.unlink(missing_ok=True)
 
         exit_code = VALIDATOR.main(
