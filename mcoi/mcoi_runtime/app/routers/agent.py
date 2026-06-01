@@ -107,8 +107,9 @@ def agent_tasks(agent_id: str):
 
 
 @router.post("/api/v1/webhooks/subscribe")
-def webhook_subscribe(req: WebhookSubscribeRequest):
+def webhook_subscribe(req: WebhookSubscribeRequest, request: Request):
     """Subscribe to webhook events."""
+    enforce_tenant_scope(request, req.tenant_id)
     deps.metrics.inc("requests_governed")
     sub = WebhookSubscription(
         subscription_id=req.subscription_id, tenant_id=req.tenant_id,
