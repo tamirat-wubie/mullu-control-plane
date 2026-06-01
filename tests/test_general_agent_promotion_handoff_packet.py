@@ -80,8 +80,8 @@ def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
     assert "deployment_upstream_api_gate_not_ready" in packet_text
     assert "capability_improvement_required:agentic_control.evidence.append" in packet_text
     assert "capability_improvement_required:agentic_control.governance_gate.evaluate" in packet_text
-    assert "capability_improvement_required:agentic_control.math_algorithm.analyze" in packet_text
-    assert "capability_improvement_required:agentic_control.mission.define" in packet_text
+    assert "capability_improvement_required:agentic_control.code_change.plan" in packet_text
+    assert "capability_improvement_required:agentic_control.incident_recovery.plan" in packet_text
     assert "Inspect the live-evidence queue before executing any closure command" in packet_text
     assert "Validate the terminal approval receipt when approval refs are supplied" in packet_text
     assert "Inspect the terminal certificate gate before executing any closure command" in packet_text

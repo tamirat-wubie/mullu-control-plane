@@ -18,8 +18,8 @@ This packet is the operator entry point for the remaining promotion work. It bin
 | Field | Current value |
 | --- | --- |
 | Readiness level | `pilot-governed-core` |
-| Capability capsules | 10 |
-| Governed capabilities | 52 |
+| Capability capsules | 13 |
+| Governed capabilities | 80 |
 | Aggregate closure actions | 13 |
 | Approval-required actions | 10 |
 | Closure plan schema validation | `ok=true` |
@@ -81,8 +81,8 @@ production_health_not_declared
 capability_improvement_required:financial.refund
 capability_improvement_required:agentic_control.evidence.append
 capability_improvement_required:agentic_control.governance_gate.evaluate
-capability_improvement_required:agentic_control.math_algorithm.analyze
-capability_improvement_required:agentic_control.mission.define
+capability_improvement_required:agentic_control.code_change.plan
+capability_improvement_required:agentic_control.incident_recovery.plan
 ```
 
 ## Approval-Required Actions
@@ -96,8 +96,8 @@ deployment_upstream_api_gate_not_ready
 capability_improvement_required:financial.refund
 capability_improvement_required:agentic_control.evidence.append
 capability_improvement_required:agentic_control.governance_gate.evaluate
-capability_improvement_required:agentic_control.math_algorithm.analyze
-capability_improvement_required:agentic_control.mission.define
+capability_improvement_required:agentic_control.code_change.plan
+capability_improvement_required:agentic_control.incident_recovery.plan
 ```
 
 ## Operator Sequence

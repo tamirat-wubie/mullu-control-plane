@@ -24,6 +24,17 @@ def test_validate_promotion_handoff_packet_accepts_example() -> None:
     assert result.errors == ()
 
 
+def test_validate_promotion_handoff_packet_derives_missing_closure_plan(tmp_path: Path) -> None:
+    result = validate_general_agent_promotion_handoff_packet(
+        closure_plan_path=tmp_path / "missing_general_agent_promotion_closure_plan.json",
+    )
+
+    assert result.valid is True
+    assert result.open_blocker_count == 6
+    assert result.approval_required_count == 10
+    assert result.errors == ()
+
+
 def test_validate_promotion_handoff_packet_rejects_missing_entry_point(tmp_path: Path) -> None:
     packet_path = tmp_path / "general_agent_promotion_handoff_packet.json"
     payload = json.loads(PACKET_PATH.read_text(encoding="utf-8"))
@@ -93,6 +104,45 @@ def test_validate_promotion_handoff_packet_rejects_aggregate_count_drift(tmp_pat
     assert result.open_blocker_count == 6
     assert any("aggregate_closure_actions must be" in error for error in result.errors)
     assert not any("approval_required_actions does not match" in error for error in result.errors)
+
+
+def test_validate_promotion_handoff_packet_rejects_capability_count_drift(tmp_path: Path) -> None:
+    packet_path = tmp_path / "general_agent_promotion_handoff_packet.json"
+    payload = json.loads(PACKET_PATH.read_text(encoding="utf-8"))
+    payload["capability_capsules"] = 10
+    payload["governed_capabilities"] = 52
+    packet_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_general_agent_promotion_handoff_packet(packet_path=packet_path)
+
+    assert result.valid is False
+    assert result.open_blocker_count == 6
+    assert any("capability_capsules must be 13" in error for error in result.errors)
+    assert any("governed_capabilities must be 80" in error for error in result.errors)
+
+
+def test_validate_promotion_handoff_packet_rejects_stale_portfolio_blockers(
+    tmp_path: Path,
+) -> None:
+    packet_path = tmp_path / "general_agent_promotion_handoff_packet.json"
+    payload = json.loads(PACKET_PATH.read_text(encoding="utf-8"))
+    blockers = payload["approval_required_blockers"]
+    blockers.remove("capability_improvement_required:agentic_control.code_change.plan")
+    blockers.remove("capability_improvement_required:agentic_control.incident_recovery.plan")
+    blockers.extend(
+        [
+            "capability_improvement_required:agentic_control.math_algorithm.analyze",
+            "capability_improvement_required:agentic_control.mission.define",
+        ]
+    )
+    packet_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    result = validate_general_agent_promotion_handoff_packet(packet_path=packet_path)
+
+    assert result.valid is False
+    assert result.approval_required_count == 10
+    assert any("approval_required_blockers missing" in error for error in result.errors)
+    assert any("approval_required_blockers has unexpected" in error for error in result.errors)
 
 
 def test_validate_promotion_handoff_packet_cli_outputs_json(capsys) -> None:

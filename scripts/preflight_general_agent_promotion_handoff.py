@@ -52,9 +52,9 @@ DEFAULT_ADAPTER_SCHEMA_VALIDATION = (
 DEFAULT_DRIFT_VALIDATION = REPO_ROOT / ".change_assurance" / "general_agent_promotion_closure_plan_validation.json"
 DEFAULT_READINESS = REPO_ROOT / ".change_assurance" / "general_agent_promotion_readiness.json"
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "general_agent_promotion_handoff_preflight.json"
+DEFAULT_CAPABILITY_ROOT = REPO_ROOT / "capabilities"
+DEFAULT_CAPSULE_ROOT = REPO_ROOT / "capsules"
 EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT = 4
-EXPECTED_CAPABILITY_COUNT = 80
-EXPECTED_CAPSULE_COUNT = 13
 EXPECTED_READINESS_LEVEL = "pilot-governed-core"
 EXPECTED_SOURCE_PLAN_TYPES = ("adapter", "deployment")
 OPTIONAL_SOURCE_PLAN_TYPES = ("portfolio",)
@@ -139,6 +139,8 @@ def preflight_general_agent_promotion_handoff(
     schema_validation_path: Path = DEFAULT_SCHEMA_VALIDATION,
     drift_validation_path: Path = DEFAULT_DRIFT_VALIDATION,
     readiness_path: Path = DEFAULT_READINESS,
+    capability_root: Path = DEFAULT_CAPABILITY_ROOT,
+    capsule_root: Path = DEFAULT_CAPSULE_ROOT,
     env_reader: EnvReader | None = None,
 ) -> HandoffPreflightReport:
     """Preflight the local handoff state without executing live effects."""
@@ -159,7 +161,11 @@ def preflight_general_agent_promotion_handoff(
         environment_bindings_path,
         missing_environment_variables=missing_environment_variables,
     )
-    readiness_step, readiness_level, production_ready = _readiness_report_step(readiness_path)
+    readiness_step, readiness_level, production_ready = _readiness_report_step(
+        readiness_path,
+        capability_root=capability_root,
+        capsule_root=capsule_root,
+    )
     steps = [
         HandoffPreflightStep(
             name="operator checklist validation",
@@ -392,7 +398,12 @@ def _source_plan_types_allowed(source_plan_types: tuple[Any, ...]) -> bool:
     return all(source_plan_type in allowed for source_plan_type in observed)
 
 
-def _readiness_report_step(path: Path) -> tuple[HandoffPreflightStep, str, bool]:
+def _readiness_report_step(
+    path: Path,
+    *,
+    capability_root: Path,
+    capsule_root: Path,
+) -> tuple[HandoffPreflightStep, str, bool]:
     payload, error = _load_report_payload(path)
     if error:
         return (
@@ -400,23 +411,78 @@ def _readiness_report_step(path: Path) -> tuple[HandoffPreflightStep, str, bool]
             "",
             False,
         )
+    expected_capability_count, expected_capsule_count, count_error = _default_fabric_counts(
+        capability_root=capability_root,
+        capsule_root=capsule_root,
+    )
+    if count_error:
+        return (
+            HandoffPreflightStep(name="promotion readiness report", passed=False, detail=count_error),
+            str(payload.get("readiness_level", "")),
+            payload.get("ready") is True,
+        )
     readiness_level = str(payload.get("readiness_level", ""))
     production_ready = payload.get("ready") is True
     passed = (
         readiness_level == EXPECTED_READINESS_LEVEL
-        and payload.get("capability_count") == EXPECTED_CAPABILITY_COUNT
-        and payload.get("capsule_count") == EXPECTED_CAPSULE_COUNT
+        and payload.get("capability_count") == expected_capability_count
+        and payload.get("capsule_count") == expected_capsule_count
+    )
+    expected_detail = (
+        f"readiness_level=pilot-governed-core capability_count={expected_capability_count} "
+        f"capsule_count={expected_capsule_count} production_ready=false"
     )
     detail = (
-        "readiness_level=pilot-governed-core capability_count=80 capsule_count=13 production_ready=false"
+        expected_detail
         if passed
-        else f"expected pilot-governed-core counts; observed={_public_report_projection(payload)}"
+        else (
+            "expected pilot-governed-core counts from checked-in capability fabric; "
+            f"expected_capability_count={expected_capability_count} "
+            f"expected_capsule_count={expected_capsule_count}; "
+            f"observed={_public_report_projection(payload)}"
+        )
     )
     return (
         HandoffPreflightStep(name="promotion readiness report", passed=passed, detail=detail),
         readiness_level,
         production_ready,
     )
+
+
+def _default_fabric_counts(*, capability_root: Path, capsule_root: Path) -> tuple[int, int, str]:
+    """Return checked-in capability and capsule counts for handoff drift checks."""
+    if _same_path(capability_root, DEFAULT_CAPABILITY_ROOT) and _same_path(capsule_root, DEFAULT_CAPSULE_ROOT):
+        try:
+            from gateway.capability_fabric import build_default_capability_admission_gate
+
+            read_model = build_default_capability_admission_gate(clock=_validation_clock).read_model()
+            return int(read_model.get("capability_count", 0)), int(read_model.get("capsule_count", 0)), ""
+        except (ImportError, TypeError, ValueError) as exc:
+            return 0, 0, f"default_fabric_count_error={exc.__class__.__name__}"
+    if not capability_root.exists():
+        return 0, 0, "missing_capability_root"
+    if not capsule_root.exists():
+        return 0, 0, "missing_capsule_root"
+    capability_count = 0
+    for pack_path in sorted(capability_root.glob("*/capability_pack.json")):
+        payload = _load_json_object(pack_path)
+        capabilities = payload.get("capabilities")
+        if not isinstance(capabilities, list):
+            return 0, 0, "invalid_capability_pack"
+        capability_count += len(capabilities)
+    capsule_count = len(tuple(capsule_root.glob("*.json")))
+    if capability_count <= 0:
+        return 0, 0, "empty_capability_root"
+    if capsule_count <= 0:
+        return 0, 0, "empty_capsule_root"
+    return capability_count, capsule_count, ""
+
+
+def _same_path(left: Path, right: Path) -> bool:
+    try:
+        return left.resolve() == right.resolve()
+    except OSError:
+        return left == right
 
 
 def _load_report_payload(path: Path) -> tuple[dict[str, Any], str]:
@@ -482,6 +548,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--schema-validation", default=str(DEFAULT_SCHEMA_VALIDATION))
     parser.add_argument("--drift-validation", default=str(DEFAULT_DRIFT_VALIDATION))
     parser.add_argument("--readiness", default=str(DEFAULT_READINESS))
+    parser.add_argument("--capabilities-dir", default=str(DEFAULT_CAPABILITY_ROOT))
+    parser.add_argument("--capsules-dir", default=str(DEFAULT_CAPSULE_ROOT))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--strict", action="store_true")
@@ -500,6 +568,8 @@ def main(argv: list[str] | None = None) -> int:
         schema_validation_path=Path(args.schema_validation),
         drift_validation_path=Path(args.drift_validation),
         readiness_path=Path(args.readiness),
+        capability_root=Path(args.capabilities_dir),
+        capsule_root=Path(args.capsules_dir),
     )
     write_handoff_preflight_report(report, Path(args.output))
     if args.json:
