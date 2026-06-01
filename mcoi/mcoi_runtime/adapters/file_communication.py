@@ -81,6 +81,19 @@ class FileCommunicationAdapter:
         self._outbox.mkdir(parents=True, exist_ok=True)
         file_path = self._outbox / f"{message.message_id}.json"
 
+        # message_id is only validated as non-empty text, so a value containing
+        # path separators ("../") or an absolute path would steer the write
+        # outside the outbox (arbitrary file write). Fail closed when the
+        # resolved destination escapes the outbox directory.
+        if not file_path.resolve().is_relative_to(self._outbox.resolve()):
+            return DeliveryResult(
+                delivery_id=delivery_id,
+                message_id=message.message_id,
+                status=DeliveryStatus.FAILED,
+                channel=message.channel,
+                error_code="unsafe_message_id_path",
+            )
+
         try:
             content = json.dumps(
                 message.to_dict(),
