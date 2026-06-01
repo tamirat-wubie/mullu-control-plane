@@ -337,7 +337,9 @@ def test_universal_action_kernel_blocks_self_approval_before_plan() -> None:
     assert result.proof_hash.startswith("universal-action-proof-")
 
 
-def test_universal_action_kernel_blocks_unattributed_sod_approval_refs_before_plan() -> None:
+def test_universal_action_kernel_blocks_unattributed_sod_approval_refs_before_plan() -> (
+    None
+):
     authority_policy = CapabilityAuthorityPolicy(
         required_roles=(REQUIRED_ROLE,),
         approval_chain=(REQUIRED_ROLE, "security_reviewer"),
