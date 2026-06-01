@@ -25,10 +25,19 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
+import sys
 import urllib.error
 import urllib.request
 
-from scripts.validate_schemas import _load_schema, _validate_schema_instance
+# Allow ``python scripts/collect_runtime_conformance.py`` (the invocation used by
+# .github/workflows/deployment-witness.yml) to import sibling ``scripts.*``
+# modules. Running a file puts its own directory on sys.path, not the repo root,
+# so the ``from scripts.validate_schemas`` import below fails without this.
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
 DEFAULT_GATEWAY_URL = "http://localhost:8001"
 DEFAULT_OUTPUT_PATH = Path(".change_assurance") / "runtime_conformance_certificate.json"
