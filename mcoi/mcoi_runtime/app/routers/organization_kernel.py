@@ -276,6 +276,25 @@ def _case_or_404(kernel: OrganizationKernel, case_id: str) -> OrganizationCase:
     return organization_case
 
 
+def _organization_or_404(kernel: OrganizationKernel, org_id: str) -> OrganizationProfile:
+    organization = next((item for item in kernel.snapshot_state().organizations if item.org_id == org_id), None)
+    if organization is None:
+        raise HTTPException(404, detail=_error_detail("organization not found", "organization_not_found"))
+    return organization
+
+
+def _enforce_known_organization_tenant(request: Request, kernel: OrganizationKernel, org_id: str) -> None:
+    tenant_id = kernel.organization_tenant(org_id)
+    if tenant_id:
+        enforce_tenant_scope(request, tenant_id)
+
+
+def _enforce_organization_tenant(request: Request, kernel: OrganizationKernel, org_id: str) -> OrganizationProfile:
+    organization = _organization_or_404(kernel, org_id)
+    enforce_tenant_scope(request, organization.tenant_id)
+    return organization
+
+
 def _enforce_case_tenant(request: Request, kernel: OrganizationKernel, case_id: str) -> None:
     """Reject access to a case owned by another tenant.
 
@@ -1017,6 +1036,207 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
 """
 
 
+def _text_list(value: object) -> str:
+    if isinstance(value, (list, tuple)):
+        return ", ".join(str(item) for item in value)
+    return ""
+
+
+def _organization_department_registry(kernel: OrganizationKernel, org_id: str) -> dict[str, Any]:
+    organization = _organization_or_404(kernel, org_id)
+    state = kernel.snapshot_state()
+    departments = tuple(item for item in state.departments if item.org_id == org_id)
+    roles_by_department: dict[str, list[dict[str, Any]]] = {}
+    authority_by_department: dict[str, list[dict[str, Any]]] = {}
+    capabilities_by_department: dict[str, list[dict[str, Any]]] = {}
+    evidence_by_department: dict[str, list[dict[str, Any]]] = {}
+    cases_by_primary_department: dict[str, int] = {}
+    cases_by_assigned_department: dict[str, int] = {}
+    attention_items: list[dict[str, object]] = []
+
+    for role in state.roles:
+        if role.org_id == org_id:
+            roles_by_department.setdefault(role.department_id, []).append(_body(role))
+    for rule in state.authority_rules:
+        if rule.org_id == org_id:
+            authority_by_department.setdefault(rule.department_id, []).append(_body(rule))
+    for capability in state.capabilities:
+        if capability.org_id == org_id:
+            capabilities_by_department.setdefault(capability.department_id, []).append(_body(capability))
+    for requirement in state.evidence_requirements:
+        if requirement.org_id == org_id:
+            evidence_by_department.setdefault(requirement.department_id, []).append(_body(requirement))
+    for organization_case in state.cases:
+        if organization_case.org_id != org_id:
+            continue
+        cases_by_primary_department[organization_case.department_id] = (
+            cases_by_primary_department.get(organization_case.department_id, 0) + 1
+        )
+        for department_id in organization_case.assigned_department_ids:
+            cases_by_assigned_department[department_id] = cases_by_assigned_department.get(department_id, 0) + 1
+
+    department_rows: list[dict[str, Any]] = []
+    for department in sorted(departments, key=lambda item: item.department_id):
+        roles = roles_by_department.get(department.department_id, [])
+        authority_rules = authority_by_department.get(department.department_id, [])
+        capabilities = capabilities_by_department.get(department.department_id, [])
+        evidence_requirements = evidence_by_department.get(department.department_id, [])
+        role_ids = {str(item.get("role_id", "")) for item in roles}
+        capability_ids = {str(item.get("capability_id", "")) for item in capabilities}
+        evidence_ids = {str(item.get("requirement_id", "")) for item in evidence_requirements}
+        missing_owner_roles = not any(
+            item.get("is_human_accountable") and "own_case" in item.get("permissions", ())
+            for item in roles
+        )
+        missing_capability_bindings = [
+            capability_id for capability_id in department.allowed_capabilities
+            if capability_id not in capability_ids
+        ]
+        uncertified_capabilities = [
+            str(item.get("capability_id", ""))
+            for item in capabilities
+            if not item.get("certified", False)
+        ]
+        missing_evidence_rules = [
+            requirement_id for requirement_id in department.required_evidence
+            if requirement_id not in evidence_ids
+        ]
+        authority_role_gaps = [
+            str(item.get("rule_id", ""))
+            for item in authority_rules
+            if str(item.get("role_id", "")) not in role_ids
+        ]
+        readiness_gaps = (
+            (["missing_owner_role"] if missing_owner_roles else [])
+            + [f"missing_capability:{item}" for item in missing_capability_bindings]
+            + [f"uncertified_capability:{item}" for item in uncertified_capabilities]
+            + [f"missing_evidence_rule:{item}" for item in missing_evidence_rules]
+            + [f"authority_role_gap:{item}" for item in authority_role_gaps]
+        )
+        readiness = "ready" if not readiness_gaps else "needs_review"
+        if readiness_gaps:
+            attention_items.append({
+                "kind": "department_readiness_gap",
+                "severity": "review",
+                "ref": department.department_id,
+                "message": "; ".join(readiness_gaps),
+            })
+        department_rows.append({
+            "department": _body(department),
+            "readiness": readiness,
+            "readiness_gaps": readiness_gaps,
+            "role_ids": sorted(role_ids),
+            "authority_rule_ids": sorted(str(item.get("rule_id", "")) for item in authority_rules),
+            "capability_ids": sorted(capability_ids),
+            "evidence_requirement_ids": sorted(evidence_ids),
+            "primary_case_count": cases_by_primary_department.get(department.department_id, 0),
+            "assigned_case_count": cases_by_assigned_department.get(department.department_id, 0),
+            "roles": sorted(roles, key=lambda item: str(item.get("role_id", ""))),
+            "authority_rules": sorted(authority_rules, key=lambda item: str(item.get("rule_id", ""))),
+            "capabilities": sorted(capabilities, key=lambda item: str(item.get("capability_id", ""))),
+            "evidence_requirements": sorted(
+                evidence_requirements,
+                key=lambda item: str(item.get("requirement_id", "")),
+            ),
+        })
+
+    ready_count = sum(1 for item in department_rows if item["readiness"] == "ready")
+    return {
+        "registry_id": f"department-registry:{org_id}",
+        "org_id": org_id,
+        "organization": _body(organization),
+        "read_only": True,
+        "summary": {
+            "department_count": len(department_rows),
+            "ready_department_count": ready_count,
+            "review_department_count": len(department_rows) - ready_count,
+            "role_count": sum(len(item["roles"]) for item in department_rows),
+            "authority_rule_count": sum(len(item["authority_rules"]) for item in department_rows),
+            "capability_count": sum(len(item["capabilities"]) for item in department_rows),
+            "evidence_requirement_count": sum(len(item["evidence_requirements"]) for item in department_rows),
+        },
+        "departments": department_rows,
+        "attention_items": attention_items,
+        "governed": True,
+    }
+
+
+def _render_department_registry_html(payload: dict[str, Any]) -> str:
+    raw_org_id = str(payload.get("org_id", ""))
+    org_id = escape(raw_org_id)
+    organization = payload.get("organization", {})
+    org_name = escape(str(organization.get("name", ""))) if isinstance(organization, dict) else ""
+    summary = payload.get("summary", {})
+    summary_rows = [
+        {"metric": key, "value": value}
+        for key, value in sorted(summary.items())
+    ] if isinstance(summary, dict) else []
+    department_rows = [
+        {
+            "department_id": item.get("department", {}).get("department_id", ""),
+            "name": item.get("department", {}).get("name", ""),
+            "readiness": item.get("readiness", ""),
+            "owns": _text_list(item.get("department", {}).get("owns", [])),
+            "case_types": _text_list(item.get("department", {}).get("allowed_case_types", [])),
+            "capabilities": _text_list(item.get("capability_ids", [])),
+            "evidence": _text_list(item.get("evidence_requirement_ids", [])),
+            "escalation": _text_list(item.get("department", {}).get("escalation_departments", [])),
+        }
+        for item in payload.get("departments", [])
+        if isinstance(item, dict) and isinstance(item.get("department"), dict)
+    ]
+    attention_rows = [
+        {
+            "severity": item.get("severity", ""),
+            "kind": item.get("kind", ""),
+            "ref": item.get("ref", ""),
+            "message": item.get("message", ""),
+        }
+        for item in payload.get("attention_items", [])
+        if isinstance(item, dict)
+    ]
+    quoted_org_id = quote(raw_org_id, safe="")
+    json_url = f"/api/v1/orgs/{quoted_org_id}/department-registry"
+    simple_url = f"/api/v1/orgs/{quoted_org_id}/departments"
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mullu OrgOS Department Registry</title>
+  <style>
+    body {{ margin: 0; font-family: system-ui, sans-serif; color: #1f2937; background: #f7f7f4; }}
+    header {{ background: #2d3342; color: #ffffff; padding: 24px 28px; }}
+    main {{ max-width: 1240px; margin: 0 auto; padding: 22px; }}
+    nav {{ display: flex; gap: 14px; margin-top: 12px; flex-wrap: wrap; }}
+    nav a {{ color: #c8dcff; }}
+    h1 {{ margin: 0; font-size: 28px; letter-spacing: 0; }}
+    h2 {{ margin: 28px 0 10px; font-size: 18px; letter-spacing: 0; }}
+    .status {{ margin-top: 8px; color: #e4e9f6; }}
+    table {{ border-collapse: collapse; width: 100%; background: #ffffff; }}
+    th, td {{ border: 1px solid #d8dee4; padding: 8px; text-align: left; vertical-align: top; font-size: 14px; overflow-wrap: anywhere; }}
+    th {{ background: #edf0f5; color: #263041; }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mullu OrgOS Department Registry</h1>
+    <div class="status">Organization <strong>{org_id}</strong> | <strong>{org_name}</strong></div>
+    <nav>
+      <a href="{escape(json_url)}">json registry</a>
+      <a href="{escape(simple_url)}">department list</a>
+    </nav>
+  </header>
+  <main>
+    {_proof_explorer_table("Summary", ("metric", "value"), summary_rows)}
+    {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
+    {_proof_explorer_table("Departments", ("department_id", "name", "readiness", "owns", "case_types", "capabilities", "evidence", "escalation"), department_rows)}
+  </main>
+</body>
+</html>
+"""
+
+
 def _validate_gateway_base_url(gateway_url: str) -> str:
     parsed = urlparse(gateway_url.strip())
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
@@ -1425,10 +1645,11 @@ def bootstrap_minimum_org(org_id: str, req: OrganizationBootstrapRequest, _: str
 
 
 @router.post("/api/v1/departments")
-def create_department(req: DepartmentCreateRequest):
+def create_department(req: DepartmentCreateRequest, request: Request):
     """Register a governed department pack."""
     _inc_metric("requests_governed")
     kernel = _kernel()
+    _enforce_known_organization_tenant(request, kernel, req.org_id)
     try:
         department = kernel.register_department(
             DepartmentPack(
@@ -1456,11 +1677,13 @@ def create_department(req: DepartmentCreateRequest):
 
 
 @router.get("/api/v1/orgs/{org_id}/departments")
-def list_organization_departments(org_id: str):
+def list_organization_departments(org_id: str, request: Request):
     """List departments for one organization."""
     _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_organization_tenant(request, kernel, org_id)
     departments = [
-        department for department in _kernel().list_departments()
+        department for department in kernel.list_departments()
         if department.org_id == org_id
     ]
     return {
@@ -1468,6 +1691,24 @@ def list_organization_departments(org_id: str):
         "count": len(departments),
         "governed": True,
     }
+
+
+@router.get("/api/v1/orgs/{org_id}/department-registry")
+def get_organization_department_registry(org_id: str, request: Request):
+    """Return a read-only department mandate, authority, evidence, and capability registry."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_organization_tenant(request, kernel, org_id)
+    return _organization_department_registry(kernel, org_id)
+
+
+@router.get("/api/v1/orgs/{org_id}/department-registry/view")
+def get_organization_department_registry_view(org_id: str, request: Request):
+    """Return a browser-facing read-only department registry view."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_organization_tenant(request, kernel, org_id)
+    return HTMLResponse(_render_department_registry_html(_organization_department_registry(kernel, org_id)))
 
 
 @router.post("/api/v1/cases/launch-gateway-pilot")
