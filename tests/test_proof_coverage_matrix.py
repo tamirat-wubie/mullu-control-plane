@@ -2131,6 +2131,7 @@ def test_agentic_control_capability_pack_surface_binds_default_authority() -> No
     assert "agentic_control.evidence.append" in agentic_surface["representative_paths"]
     assert "agentic_control.project_discipline_mesh.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.resource_governor.v1" in agentic_surface["representative_paths"]
+    assert "agentic_control.temporal_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.math_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.algorithm_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.security_governor.v1" in agentic_surface["representative_paths"]
