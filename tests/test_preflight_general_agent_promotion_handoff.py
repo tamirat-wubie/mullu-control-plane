@@ -92,6 +92,30 @@ def test_handoff_preflight_accepts_valid_local_state(tmp_path: Path) -> None:
     }
 
 
+def test_handoff_preflight_rejects_readiness_count_drift_from_capability_fabric(tmp_path: Path) -> None:
+    adapter_schema_validation, schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path)
+    environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)
+    capability_root, capsule_root = _write_minimal_fabric_roots(tmp_path)
+
+    report = preflight_general_agent_promotion_handoff(
+        environment_binding_receipt_path=environment_binding_receipt,
+        adapter_schema_validation_path=adapter_schema_validation,
+        schema_validation_path=schema_validation,
+        drift_validation_path=drift_validation,
+        readiness_path=readiness,
+        capability_root=capability_root,
+        capsule_root=capsule_root,
+        env_reader=lambda name: "present" if name in REQUIRED_ENV else "",
+    )
+    step_details = {step.name: step.detail for step in report.steps}
+
+    assert report.ready is False
+    assert report.blockers == ("promotion readiness report",)
+    assert "expected_capability_count=1" in step_details["promotion readiness report"]
+    assert "expected_capsule_count=1" in step_details["promotion readiness report"]
+    assert "'capability_count': 80" in step_details["promotion readiness report"]
+
+
 def test_handoff_preflight_accepts_report_derived_action_count(tmp_path: Path) -> None:
     adapter_schema_validation, schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path, action_count=12)
     environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)
@@ -421,3 +445,33 @@ def _write_valid_environment_binding_receipt(tmp_path: Path) -> Path:
     assert errors == ()
     assert receipt.ready is True
     return write_environment_binding_receipt(receipt, receipt_path)
+
+
+def _write_minimal_fabric_roots(tmp_path: Path) -> tuple[Path, Path]:
+    capability_root = tmp_path / "capabilities"
+    capsule_root = tmp_path / "capsules"
+    pack_dir = capability_root / "agentic_control"
+    pack_dir.mkdir(parents=True)
+    capsule_root.mkdir()
+    (pack_dir / "capability_pack.json").write_text(
+        json.dumps(
+            {
+                "capabilities": [
+                    {
+                        "capability_id": "agentic_control.test.plan",
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    (capsule_root / "agentic_control.json").write_text(
+        json.dumps(
+            {
+                "capsule_id": "agentic_control.test",
+                "capability_ids": ["agentic_control.test.plan"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return capability_root, capsule_root
