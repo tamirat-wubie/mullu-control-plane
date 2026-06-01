@@ -17,9 +17,10 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
+from mcoi_runtime.app.routers._tenant_scope import scoped_listing_tenant
 from mcoi_runtime.app.routers.deps import deps
 
 router = APIRouter()
@@ -217,16 +218,17 @@ def _summarize_outcomes(entries: list) -> dict[str, int]:
 
 
 @router.post("/api/v1/compliance/audit-package")
-def export_audit_package(req: AuditPackageRequest):
+def export_audit_package(req: AuditPackageRequest, request: Request):
     """Export a self-contained audit evidence package with chain verification."""
     deps.metrics.inc("requests_governed")
+    tenant = scoped_listing_tenant(request, req.tenant_id or None)
     package = _build_audit_package(
-        req.tenant_id, req.limit, req.include_chain_verification,
+        tenant, req.limit, req.include_chain_verification,
     )
     deps.audit_trail.record(
         action="compliance.export.audit_package",
         actor_id="api",
-        tenant_id=req.tenant_id or "system",
+        tenant_id=tenant or "system",
         target="audit_package",
         outcome="success",
         detail={"entry_count": package["entry_count"]},
@@ -235,14 +237,15 @@ def export_audit_package(req: AuditPackageRequest):
 
 
 @router.post("/api/v1/compliance/incident-package")
-def export_incident_package(req: IncidentPackageRequest):
+def export_incident_package(req: IncidentPackageRequest, request: Request):
     """Export blocked/failed action evidence for incident review."""
     deps.metrics.inc("requests_governed")
-    package = _build_incident_package(req.tenant_id, req.limit)
+    tenant = scoped_listing_tenant(request, req.tenant_id or None)
+    package = _build_incident_package(tenant, req.limit)
     deps.audit_trail.record(
         action="compliance.export.incident_package",
         actor_id="api",
-        tenant_id=req.tenant_id or "system",
+        tenant_id=tenant or "system",
         target="incident_package",
         outcome="success",
         detail={"incident_count": package["incident_count"]},
@@ -251,16 +254,17 @@ def export_incident_package(req: IncidentPackageRequest):
 
 
 @router.post("/api/v1/compliance/mapping")
-def export_compliance_mapping(req: ComplianceMappingRequest):
+def export_compliance_mapping(req: ComplianceMappingRequest, request: Request):
     """Export governance evidence mapped to compliance framework controls."""
     deps.metrics.inc("requests_governed")
+    tenant = scoped_listing_tenant(request, req.tenant_id or None)
     package = _build_compliance_mapping(
-        req.tenant_id, req.framework, req.limit,
+        tenant, req.framework, req.limit,
     )
     deps.audit_trail.record(
         action="compliance.export.mapping",
         actor_id="api",
-        tenant_id=req.tenant_id or "system",
+        tenant_id=tenant or "system",
         target=f"compliance_mapping:{req.framework}",
         outcome="success",
         detail={"framework": req.framework},

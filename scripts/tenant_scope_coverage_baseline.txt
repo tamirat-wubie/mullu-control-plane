@@ -22,9 +22,6 @@ mcoi/mcoi_runtime/app/routers/agent.py::store_memory
 mcoi/mcoi_runtime/app/routers/agent.py::webhook_subscribe
 mcoi/mcoi_runtime/app/routers/assistant.py::compile_finance_ops_assistant_plan
 mcoi/mcoi_runtime/app/routers/audit.py::publish_event
-mcoi/mcoi_runtime/app/routers/compliance.py::export_audit_package
-mcoi/mcoi_runtime/app/routers/compliance.py::export_compliance_mapping
-mcoi/mcoi_runtime/app/routers/compliance.py::export_incident_package
 mcoi/mcoi_runtime/app/routers/data/prompts.py::render_prompt
 mcoi/mcoi_runtime/app/routers/data/tools.py::invoke_tool
 mcoi/mcoi_runtime/app/routers/explain.py::explain_action
