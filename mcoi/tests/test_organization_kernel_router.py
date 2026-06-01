@@ -455,6 +455,102 @@ def test_case_audit_explorer_view_is_read_only_and_escaped(tmp_path: Path) -> No
     assert before["gate_decisions"] == after["gate_decisions"] == []
 
 
+def test_case_step_handoffs_report_worker_receipt_binding_without_mutation(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    bound = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/worker-receipt",
+        json={
+            "binding_id": "binding.eng.health",
+            "requirement_id": "engineering_health_endpoint",
+            "worker_lease_id": "lease.eng.gateway",
+            "dispatch_request_id": "req.eng.health",
+            "dispatch_receipt_id": "receipt.eng.health",
+            "worker_output_hash": "hash-health",
+            "receipt_evidence_refs": ["worker-evidence:/health"],
+            "admitted_evidence_ref": "evidence:engineering_health_endpoint",
+        },
+    )
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.get("/api/v1/cases/case.launch_gateway_pilot/step-handoffs")
+    payload = response.json()
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+    handoffs = {
+        item["step_id"]: item
+        for item in payload["handoffs"]
+    }
+    engineering = handoffs["engineering_runtime_witness"]
+
+    assert bound.status_code == 200
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["read_only"] is True
+    assert payload["summary"]["step_count"] == 5
+    assert payload["summary"]["dispatch_authority_granted"] is False
+    assert payload["summary"]["receipt_bound_awaiting_evidence_count"] == 1
+    assert payload["summary"]["awaiting_evidence_count"] == 4
+    assert engineering["handoff_status"] == "receipt_bound_awaiting_evidence"
+    assert engineering["next_action"] == "collect_required_evidence"
+    assert engineering["dispatch_authority"] is False
+    assert engineering["worker_receipt_count"] == 1
+    assert engineering["evidence_refs"] == ["evidence:engineering_health_endpoint"]
+    assert engineering["missing_evidence"] == [
+        "engineering_gateway_witness",
+        "engineering_runtime_conformance",
+    ]
+    assert all(item["dispatch_authority"] is False for item in payload["handoffs"])
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"]
+
+
+def test_case_step_handoffs_view_is_read_only_and_escaped(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    created = client.post(
+        "/api/v1/cases",
+        json={
+            "case_id": "case.handoff_escape",
+            "org_id": "org-mullu",
+            "department_id": "executive",
+            "case_type": "launch_gateway_pilot",
+            "goal": "<script>alert('handoff')</script>",
+            "risk": "low",
+            "owner_role_id": "executive.owner",
+            "assigned_department_ids": ["executive"],
+        },
+    )
+    before = client.get("/api/v1/cases/case.handoff_escape").json()
+
+    handoffs = client.get("/api/v1/cases/case.handoff_escape/step-handoffs")
+    view = client.get("/api/v1/cases/case.handoff_escape/step-handoffs/view")
+    after = client.get("/api/v1/cases/case.handoff_escape").json()
+
+    assert created.status_code == 200
+    assert handoffs.status_code == 200
+    assert handoffs.json()["summary"]["step_count"] == 0
+    assert handoffs.json()["summary"]["dispatch_authority_granted"] is False
+    assert handoffs.json()["attention_items"] == [
+        {
+            "kind": "missing_plan",
+            "severity": "review",
+            "ref": "case.handoff_escape",
+            "message": "case has no governed plan",
+        }
+    ]
+    assert view.status_code == 200
+    assert "text/html" in view.headers["content-type"]
+    assert "Mullu OrgOS Step Handoffs" in view.text
+    assert "json handoffs" in view.text
+    assert "proof timeline" in view.text
+    assert "case audit" in view.text
+    assert "No records" in view.text
+    assert "<script>alert('handoff')</script>" not in view.text
+    assert "&lt;script&gt;alert(&#x27;handoff&#x27;)&lt;/script&gt;" in view.text
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
 def test_department_registry_view_is_read_only_and_escaped(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     organization = client.post(
@@ -1268,6 +1364,8 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/cases/{case_id}/closure-certificate/view" in paths
     assert "/api/v1/cases/{case_id}/audit-explorer" in paths
     assert "/api/v1/cases/{case_id}/audit-explorer/view" in paths
+    assert "/api/v1/cases/{case_id}/step-handoffs" in paths
+    assert "/api/v1/cases/{case_id}/step-handoffs/view" in paths
     assert "/api/v1/cases/{case_id}/proof-timeline" in paths
     assert "/api/v1/cases/{case_id}/proof-explorer" in paths
     assert "/api/v1/cases/{case_id}/proof-explorer/view" in paths
