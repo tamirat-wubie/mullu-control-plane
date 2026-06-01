@@ -82,6 +82,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _agentic_control_swarm_governor_skill(),
         _agentic_control_coding_governor_skill(),
         _agentic_control_runtime_governor_skill(),
+        _agentic_control_release_governor_skill(),
         _agentic_control_autonomous_operations_skill(),
     )
 
@@ -2070,6 +2071,138 @@ def _agentic_control_runtime_governor_skill() -> SkillDescriptor:
                 "telemetry_triage_plan_ref",
                 "threshold_contracts",
                 "remediation_order",
+            ),
+        },
+    )
+
+
+def _agentic_control_release_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.release_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic release governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_release_boundary",
+                name="Define release boundary",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "release_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_release_constraints",
+                name="Rank release constraints",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_release_boundary",),
+                input_bindings={"mission_contract_ref": "define_release_boundary.mission_contract_ref"},
+                output_keys=("release_constraint_order_ref", "dependency_blockers", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_release_governance",
+                name="Evaluate release governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_release_constraints",),
+                input_bindings={"priority_order_ref": "rank_release_constraints.release_constraint_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_actions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_release_budget",
+                name="Bound release budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_release_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_release_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "halt_thresholds", "resource_floor"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_release_handoff_boundary",
+                name="Plan release handoff boundary",
+                action_type="agentic_control.release_handoff.plan",
+                depends_on=("bound_release_budget",),
+                input_bindings={
+                    "release_boundary_ref": "define_release_boundary.release_boundary_ref",
+                    "gate_decision_ref": "evaluate_release_governance.gate_decision_ref",
+                    "budget_envelope_ref": "bound_release_budget.budget_envelope_ref",
+                },
+                output_keys=("release_handoff_plan_ref", "commit_boundary", "ci_gate_plan", "rollback_path"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_release_verification",
+                name="Plan release verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("plan_release_handoff_boundary",),
+                input_bindings={
+                    "release_handoff_plan_ref": (
+                        "plan_release_handoff_boundary.release_handoff_plan_ref"
+                    )
+                },
+                output_keys=("release_verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_release_interrogation",
+                name="Plan release interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_release_verification",),
+                input_bindings={"verification_plan_ref": "plan_release_verification.release_verification_plan_ref"},
+                output_keys=("release_interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_release_gaps",
+                name="Refine release gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_release_interrogation",),
+                input_bindings={
+                    "release_handoff_plan_ref": (
+                        "plan_release_handoff_boundary.release_handoff_plan_ref"
+                    ),
+                    "verification_plan_ref": "plan_release_verification.release_verification_plan_ref",
+                    "interrogation_plan_ref": "plan_release_interrogation.release_interrogation_plan_ref",
+                },
+                output_keys=("release_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_release_memory_admission",
+                name="Plan release memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_release_gaps",),
+                input_bindings={"refinement_plan_ref": "refine_release_gaps.release_refinement_plan_ref"},
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes read-only release governance by linking release boundary, "
+            "constraint ranking, governance gate, resource budget, release-handoff "
+            "planning, CI gates, rollback path, verification, interrogation, "
+            "refinement, and memory-admission planning before evidence ledger "
+            "closure or write-capable release actions."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "release_governor": True,
+            "release_surfaces": (
+                "release_boundary_ref",
+                "release_handoff_plan_ref",
+                "commit_boundary",
+                "ci_gate_plan",
+                "rollback_path",
             ),
         },
     )
