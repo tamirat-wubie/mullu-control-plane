@@ -15,9 +15,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.contracts.finance_approval_packet import (
     ApprovalStatus,
@@ -139,8 +140,9 @@ def _proof_exportable_state(state: FinancePacketState) -> bool:
 
 
 @router.post("/api/v1/finance/approval-packets")
-def create_finance_approval_packet(req: FinancePacketCreateRequest):
+def create_finance_approval_packet(req: FinancePacketCreateRequest, request: Request):
     """Create and evaluate a governed finance approval packet."""
+    enforce_tenant_scope(request, req.tenant_id)
     deps.metrics.inc("requests_governed")
     store = _store()
     if store.get_case(req.case_id) is not None:

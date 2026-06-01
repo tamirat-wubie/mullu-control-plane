@@ -11,7 +11,7 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
-from mcoi_runtime.app.routers._tenant_scope import scoped_listing_tenant
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_listing_tenant
 from mcoi_runtime.core.structured_logging import LogLevel
 
 router = APIRouter()
@@ -88,8 +88,9 @@ class EventPublishRequest(BaseModel):
 
 
 @router.post("/api/v1/events/publish")
-def publish_event(req: EventPublishRequest):
+def publish_event(req: EventPublishRequest, request: Request):
     """Publish a governed event to the bus."""
+    enforce_tenant_scope(request, req.tenant_id)
     deps.metrics.inc("requests_governed")
     event = deps.event_bus.publish(
         req.event_type, tenant_id=req.tenant_id,
