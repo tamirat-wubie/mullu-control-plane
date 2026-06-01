@@ -837,6 +837,56 @@ def test_universal_command_orchestration_record_replays_success_events() -> None
     assert record["lineage"]["accepted_deltas"]
 
 
+def test_universal_command_orchestration_record_replays_effect_mismatch_escalation() -> None:
+    kernel, _executor = _kernel_with_capability(
+        effect_names=("customer_address_updated", "billing_account_modified")
+    )
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(clock=_clock, store=store)
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="actor-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-universal-record-effect-mismatch",
+        intent="llm_completion",
+        payload={"body": "run shell command"},
+    )
+
+    result = universal_command_dispatch(
+        ledger,
+        kernel,
+        command.command_id,
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hello"},
+        dispatch_route="shell_command",
+        actor_roles=(REQUIRED_ROLE,),
+        approval_refs=APPROVAL_REFS,
+        approval_actor_ids=APPROVAL_ACTOR_IDS,
+    )
+    reloaded_ledger = CommandLedger(clock=_clock, store=store)
+
+    record = universal_command_orchestration_record_view(
+        reloaded_ledger, command.command_id
+    )
+    validation_errors = _validate_uao_record(record)
+
+    assert validation_errors == []
+    assert record is not None
+    assert result.dispatched is True
+    assert result.closure_state == "closed_escalated"
+    assert record["action_id"] == result.action_id
+    assert record["decision"]["status"] == "escalate"
+    assert record["decision"]["reason_code"] == "effect_reconciliation_mismatch"
+    assert record["execution_receipt_ref"] == result.execution_receipt_ref
+    assert record["reconciliation"]["status"] == "mismatched"
+    assert record["reconciliation"]["required_for_closure"] is True
+    assert record["closure"]["reconciliation_ref"] == f"reconciliation://{result.action_id}"
+    assert record["closure"]["memory_ref"] is None
+    assert record["lineage"]["accepted_deltas"] == []
+    assert record["lineage"]["rejected_deltas"]
+
+
 def test_universal_command_orchestration_record_ignores_invalid_latest_event() -> None:
     kernel, _executor = _kernel_with_capability()
     store = InMemoryCommandLedgerStore()
