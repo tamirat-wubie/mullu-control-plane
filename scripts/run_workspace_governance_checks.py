@@ -285,9 +285,12 @@ def render_results(results: tuple[CheckResult, ...], output_stream: TextIO, erro
                 error_stream.write("\n")
 
 
-def build_receipt(results: tuple[CheckResult, ...]) -> dict[str, object]:
+def build_receipt(results: tuple[CheckResult, ...], generated_at_epoch: float | None = None) -> dict[str, object]:
     """Build a machine-readable governance preflight receipt."""
 
+    emitted_at = time.time() if generated_at_epoch is None else generated_at_epoch
+    if isinstance(emitted_at, bool) or not isinstance(emitted_at, (int, float)) or emitted_at <= 0:
+        raise ValueError("generated_at_epoch must be a positive epoch timestamp")
     checks: list[dict[str, object]] = []
     for result in results:
         payload = asdict(result)
@@ -299,6 +302,7 @@ def build_receipt(results: tuple[CheckResult, ...]) -> dict[str, object]:
         "terminal_closure_required": True,
         "receipt_is_not_terminal_closure": True,
         "status": "passed" if all(result.passed for result in results) else "failed",
+        "generated_at_epoch": emitted_at,
         "check_count": len(results),
         "checks": checks,
     }

@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -57,15 +58,49 @@ def validate_receipt_file(receipt_path: Path) -> list[str]:
     return errors
 
 
+def validate_receipt_freshness(
+    receipt: dict[str, Any],
+    max_age_seconds: float,
+    now_epoch: float | None = None,
+) -> list[str]:
+    """Validate that a receipt was generated within an explicit freshness window."""
+
+    if max_age_seconds <= 0:
+        raise ValueError("max_age_seconds must be positive")
+    generated_at_epoch = receipt.get("generated_at_epoch")
+    if isinstance(generated_at_epoch, bool) or not isinstance(generated_at_epoch, (int, float)):
+        return ["generated_at_epoch must be a positive epoch timestamp"]
+    observed_now = time.time() if now_epoch is None else now_epoch
+    if observed_now < generated_at_epoch:
+        return ["receipt generated_at_epoch is in the future"]
+    age_seconds = observed_now - generated_at_epoch
+    if age_seconds > max_age_seconds:
+        return [
+            "receipt generated_at_epoch is older than freshness window: "
+            f"{age_seconds:.3f}s > {max_age_seconds:.3f}s"
+        ]
+    return []
+
+
 def main(argv: list[str] | None = None) -> int:
     """Validate a saved workspace governance preflight receipt."""
 
     parser = argparse.ArgumentParser(description="Validate a saved workspace governance preflight receipt.")
     parser.add_argument("--receipt", type=Path, default=DEFAULT_RECEIPT_PATH)
+    parser.add_argument(
+        "--max-age-seconds",
+        type=float,
+        help="reject receipts older than this many seconds using generated_at_epoch",
+    )
     args = parser.parse_args(argv)
 
     try:
-        errors = validate_receipt_file(args.receipt)
+        receipt = load_receipt(args.receipt)
+        errors = validate_receipt(receipt)
+        if not errors and receipt.get("status") != "passed":
+            errors.append("receipt status must be passed for replay witness")
+        if not errors and args.max_age_seconds is not None:
+            errors.extend(validate_receipt_freshness(receipt, args.max_age_seconds))
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         sys.stderr.write(f"[FAIL] load-receipt: {exc}\nSTATUS: failed\n")
         return 1

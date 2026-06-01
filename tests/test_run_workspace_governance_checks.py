@@ -95,12 +95,13 @@ def test_build_receipt_records_pass_and_failure() -> None:
     pass_result = runner.CheckResult("pass_check", ("python", "--version"), 0, "ok\n", "")
     fail_result = runner.CheckResult("fail_check", ("python", "-c", "fail"), 1, "", "bad\n")
 
-    receipt = runner.build_receipt((pass_result, fail_result))
+    receipt = runner.build_receipt((pass_result, fail_result), generated_at_epoch=12345.5)
 
     assert receipt["receipt_id"] == "workspace_governance_preflight_receipt"
     assert receipt["terminal_closure_required"] is True
     assert receipt["receipt_is_not_terminal_closure"] is True
     assert receipt["status"] == "failed"
+    assert receipt["generated_at_epoch"] == 12345.5
     assert receipt["check_count"] == 2
     assert receipt["checks"][1]["passed"] is False
 

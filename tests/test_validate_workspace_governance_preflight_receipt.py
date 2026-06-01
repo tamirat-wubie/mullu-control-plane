@@ -29,6 +29,7 @@ def test_example_receipt_passes() -> None:
     assert receipt["terminal_closure_required"] is True
     assert receipt["receipt_is_not_terminal_closure"] is True
     assert receipt["status"] == "passed"
+    assert receipt["generated_at_epoch"] > 0
     assert receipt["check_count"] == len(build_check_commands("python"))
 
 
@@ -93,3 +94,25 @@ def test_load_receipt_rejects_non_object_json(tmp_path: Path) -> None:
 
     assert receipt_path.exists()
     assert receipt_path.name == "receipt.json"
+
+
+def test_receipt_freshness_accepts_current_receipt() -> None:
+    receipt = validator.load_receipt(validator.DEFAULT_RECEIPT_PATH)
+    receipt["generated_at_epoch"] = 100.0
+
+    errors = validator.validate_receipt_freshness(receipt, max_age_seconds=10.0, now_epoch=105.0)
+
+    assert errors == []
+    assert receipt["generated_at_epoch"] == 100.0
+    assert receipt["status"] == "passed"
+
+
+def test_receipt_freshness_rejects_stale_receipt() -> None:
+    receipt = validator.load_receipt(validator.DEFAULT_RECEIPT_PATH)
+    receipt["generated_at_epoch"] = 100.0
+
+    errors = validator.validate_receipt_freshness(receipt, max_age_seconds=10.0, now_epoch=111.0)
+
+    assert len(errors) == 1
+    assert "older than freshness window" in errors[0]
+    assert "11.000s > 10.000s" in errors[0]
