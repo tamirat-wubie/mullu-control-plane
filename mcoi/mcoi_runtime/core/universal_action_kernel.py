@@ -20,7 +20,9 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
 
 from mcoi_runtime.contracts.effect_assurance import (
+    EffectPlan,
     EffectReconciliation,
+    ExpectedEffect,
     ReconciliationStatus,
 )
 from mcoi_runtime.contracts.evidence import EvidenceRecord
@@ -154,6 +156,13 @@ class SimulationCertificate:
 
 
 @dataclass(frozen=True, slots=True)
+class EffectPredictionCertificate:
+    certificate_id: str
+    plan: EffectPlan
+    issued_at: str
+
+
+@dataclass(frozen=True, slots=True)
 class UniversalActionResult:
     """Terminal result for one universal governed action attempt."""
 
@@ -169,6 +178,7 @@ class UniversalActionResult:
     world_certificate: WorldSupportCertificate
     plan_certificate: PlanCertificate | None = None
     simulation_certificate: SimulationCertificate | None = None
+    effect_prediction_certificate: EffectPredictionCertificate | None = None
     intent_certificate: IntentCompilationCertificate | None = None
     capability_decision: CommandCapabilityAdmissionDecision | None = None
     governed_action: GovernedAction | None = None
@@ -288,6 +298,11 @@ class UniversalActionKernel:
             governed_action=governed_action,
             issued_at=now,
         )
+        effect_prediction_certificate = self._build_effect_prediction_certificate(
+            request=request,
+            governed_action=governed_action,
+            issued_at=now,
+        )
         simulation_certificate = self._build_simulation_certificate(
             request=request,
             plan_certificate=plan_certificate,
@@ -304,6 +319,7 @@ class UniversalActionKernel:
                 world_certificate=world_certificate,
                 plan_certificate=plan_certificate,
                 simulation_certificate=simulation_certificate,
+                effect_prediction_certificate=effect_prediction_certificate,
                 intent_certificate=intent_certificate,
                 capability_decision=capability_decision,
                 governed_action=governed_action,
@@ -321,6 +337,7 @@ class UniversalActionKernel:
             request=request,
             dispatch_result=dispatch_result,
             capability_decision=capability_decision,
+            effect_prediction_certificate=effect_prediction_certificate,
         )
         result = UniversalActionResult(
             action_id=action_id,
@@ -351,6 +368,7 @@ class UniversalActionKernel:
             world_certificate=world_certificate,
             plan_certificate=plan_certificate,
             simulation_certificate=simulation_certificate,
+            effect_prediction_certificate=effect_prediction_certificate,
             intent_certificate=intent_certificate,
             capability_decision=capability_decision,
             governed_action=governed_action,
@@ -515,6 +533,7 @@ class UniversalActionKernel:
         world_certificate: WorldSupportCertificate,
         plan_certificate: PlanCertificate | None = None,
         simulation_certificate: SimulationCertificate | None = None,
+        effect_prediction_certificate: EffectPredictionCertificate | None = None,
         capability_decision: CommandCapabilityAdmissionDecision | None = None,
         governed_action: GovernedAction | None = None,
         intent_certificate: IntentCompilationCertificate | None = None,
@@ -544,6 +563,7 @@ class UniversalActionKernel:
             world_certificate=world_certificate,
             plan_certificate=plan_certificate,
             simulation_certificate=simulation_certificate,
+            effect_prediction_certificate=effect_prediction_certificate,
             intent_certificate=intent_certificate,
             capability_decision=capability_decision,
             governed_action=governed_action,
@@ -635,12 +655,75 @@ class UniversalActionKernel:
             },
         )
 
+    def _build_effect_prediction_certificate(
+        self,
+        *,
+        request: UniversalActionRequest,
+        governed_action: GovernedAction,
+        issued_at: str,
+    ) -> EffectPredictionCertificate:
+        passport = governed_action.capability_passport
+        plan = EffectPlan(
+            effect_plan_id=stable_identifier(
+                "universal-effect-plan",
+                {
+                    "intent_id": request.intent_id,
+                    "capability_id": passport.capability_id,
+                    "passport_hash": passport.passport_hash,
+                },
+            ),
+            command_id=request.intent_id,
+            tenant_id=request.tenant_id,
+            capability_id=passport.capability_id,
+            expected_effects=tuple(
+                ExpectedEffect(
+                    effect_id=stable_identifier(
+                        "universal-expected-effect",
+                        {
+                            "intent_id": request.intent_id,
+                            "capability_id": passport.capability_id,
+                            "name": effect_name,
+                        },
+                    ),
+                    name=effect_name,
+                    target_ref=f"capability://{passport.capability_id}",
+                    required=True,
+                    verification_method="execution_receipt_reconciliation",
+                )
+                for effect_name in passport.expected_effects
+            ),
+            forbidden_effects=passport.forbidden_effects,
+            rollback_plan_id=passport.rollback_capability or None,
+            compensation_plan_id=passport.compensation_capability or None,
+            graph_node_refs=(
+                f"command://{request.intent_id}",
+                f"capability://{passport.capability_id}",
+            ),
+            graph_edge_refs=(
+                f"command://{request.intent_id}->capability://{passport.capability_id}",
+            ),
+            created_at=issued_at,
+        )
+        return EffectPredictionCertificate(
+            certificate_id=stable_identifier(
+                "effect-prediction-cert",
+                {
+                    "effect_plan_id": plan.effect_plan_id,
+                    "command_id": plan.command_id,
+                    "created_at": plan.created_at,
+                },
+            ),
+            plan=plan,
+            issued_at=issued_at,
+        )
+
     def _close_and_admit_learning(
         self,
         *,
         request: UniversalActionRequest,
         dispatch_result: GovernedDispatchResult,
         capability_decision: CommandCapabilityAdmissionDecision,
+        effect_prediction_certificate: EffectPredictionCertificate,
     ) -> tuple[TerminalClosureCertificate | None, LearningAdmissionDecision | None]:
         if self._terminal_closure is None:
             return None, None
@@ -661,8 +744,32 @@ class UniversalActionKernel:
             execution_result=execution_result,
             verification_result=verification_result,
             capability_decision=capability_decision,
+            effect_plan=effect_prediction_certificate.plan,
             issued_at=issued_at,
         )
+        evidence_refs = tuple(
+            evidence.uri or evidence.description for evidence in verification_result.evidence
+        )
+        if reconciliation.status is not ReconciliationStatus.MATCH:
+            terminal_certificate = self._terminal_closure.certify_requires_review(
+                execution_result=execution_result,
+                verification_result=verification_result,
+                reconciliation=reconciliation,
+                case_id=stable_identifier(
+                    "effect-reconciliation-case",
+                    {
+                        "intent_id": request.intent_id,
+                        "execution_id": execution_result.execution_id,
+                        "reconciliation_id": reconciliation.reconciliation_id,
+                    },
+                ),
+                evidence_refs=evidence_refs,
+                graph_refs=(
+                    request.dispatch_request.goal_id,
+                    effect_prediction_certificate.plan.effect_plan_id,
+                ),
+            )
+            return terminal_certificate, None
         memory_entry = _build_execution_success_memory(
             request=request,
             execution_result=execution_result,
@@ -673,12 +780,12 @@ class UniversalActionKernel:
             execution_result=execution_result,
             verification_result=verification_result,
             reconciliation=reconciliation,
-            evidence_refs=tuple(
-                evidence.uri or evidence.description
-                for evidence in verification_result.evidence
-            ),
+            evidence_refs=evidence_refs,
             memory_entry=memory_entry,
-            graph_refs=(request.dispatch_request.goal_id,),
+            graph_refs=(
+                request.dispatch_request.goal_id,
+                effect_prediction_certificate.plan.effect_plan_id,
+            ),
         )
         if self._learning_admission is None:
             return terminal_certificate, None
@@ -708,6 +815,16 @@ class UniversalActionKernel:
             "simulation_certificate_id": (
                 result.simulation_certificate.certificate_id
                 if result.simulation_certificate
+                else ""
+            ),
+            "effect_prediction_certificate_id": (
+                result.effect_prediction_certificate.certificate_id
+                if result.effect_prediction_certificate
+                else ""
+            ),
+            "effect_plan_id": (
+                result.effect_prediction_certificate.plan.effect_plan_id
+                if result.effect_prediction_certificate
                 else ""
             ),
             "intent_certificate_id": result.intent_certificate.certificate_id
@@ -756,6 +873,7 @@ class UniversalActionKernel:
             world_certificate=result.world_certificate,
             plan_certificate=result.plan_certificate,
             simulation_certificate=result.simulation_certificate,
+            effect_prediction_certificate=result.effect_prediction_certificate,
             intent_certificate=result.intent_certificate,
             capability_decision=result.capability_decision,
             governed_action=result.governed_action,
@@ -910,9 +1028,11 @@ def build_universal_action_orchestration_record(
             "closure_receipt_ref": receipt_refs["closure"],
             "reconciliation_ref": reconciliation_ref,
             "memory_ref": memory_ref,
-            "next_action": "retain_receipts"
-            if not result.blocked
-            else "operator_review",
+            "next_action": (
+                "operator_review"
+                if result.blocked or _result_requires_review(result)
+                else "retain_receipts"
+            ),
         },
         "raw_reasoning_included": False,
         "lineage": _uao_record_lineage(result),
@@ -1096,9 +1216,22 @@ def _build_reconciliation(
     execution_result: ExecutionResult,
     verification_result: VerificationResult,
     capability_decision: CommandCapabilityAdmissionDecision,
+    effect_plan: EffectPlan,
     issued_at: str,
 ) -> EffectReconciliation:
-    effect_names = tuple(effect.name for effect in execution_result.actual_effects)
+    actual_names = tuple(effect.name for effect in execution_result.actual_effects)
+    expected_names = tuple(effect.name for effect in effect_plan.expected_effects)
+    forbidden_names = set(effect_plan.forbidden_effects)
+    matched_effects = tuple(name for name in expected_names if name in actual_names)
+    missing_effects = tuple(name for name in expected_names if name not in actual_names)
+    unexpected_effects = tuple(
+        name for name in actual_names if name not in expected_names or name in forbidden_names
+    )
+    status = (
+        ReconciliationStatus.MATCH
+        if not missing_effects and not unexpected_effects
+        else ReconciliationStatus.MISMATCH
+    )
     return EffectReconciliation(
         reconciliation_id=stable_identifier(
             "universal-reconciliation",
@@ -1106,22 +1239,29 @@ def _build_reconciliation(
                 "intent_id": request.intent_id,
                 "execution_id": execution_result.execution_id,
                 "verification_id": verification_result.verification_id,
+                "effect_plan_id": effect_plan.effect_plan_id,
+                "status": status.value,
             },
         ),
         command_id=request.intent_id,
-        effect_plan_id=stable_identifier(
-            "universal-effect-plan",
-            {
-                "intent_id": request.intent_id,
-                "capability_id": capability_decision.capability_id,
-            },
-        ),
-        status=ReconciliationStatus.MATCH,
-        matched_effects=effect_names or ("execution_completed",),
-        missing_effects=(),
-        unexpected_effects=(),
+        effect_plan_id=effect_plan.effect_plan_id,
+        status=status,
+        matched_effects=matched_effects,
+        missing_effects=missing_effects,
+        unexpected_effects=unexpected_effects,
         verification_result_id=verification_result.verification_id,
-        case_id=None,
+        case_id=(
+            None
+            if status is ReconciliationStatus.MATCH
+            else stable_identifier(
+                "effect-reconciliation-case",
+                {
+                    "intent_id": request.intent_id,
+                    "capability_id": capability_decision.capability_id,
+                    "effect_plan_id": effect_plan.effect_plan_id,
+                },
+            )
+        ),
         decided_at=issued_at,
     )
 
@@ -1285,6 +1425,15 @@ def _uao_record_effect_classes(result: UniversalActionResult) -> list[str]:
 
 
 def _uao_record_decision(result: UniversalActionResult) -> dict[str, Any]:
+    if _result_requires_review(result):
+        return {
+            "status": "escalate",
+            "reason_code": "effect_reconciliation_mismatch",
+            "proof_state": "Fail",
+            "solver_outcome": "AwaitingEvidence",
+            "next_action": "operator_review",
+            "execution_allowed": False,
+        }
     if result.dispatched:
         return {
             "status": "allow",
@@ -1548,12 +1697,17 @@ def _uao_record_admission_guards(
     guards: list[dict[str, Any]] = []
     for guard_name, reason_code, refs in guard_specs:
         if guard_name == blocked_guard:
+            verdict = "escalated" if _result_requires_review(result) else "blocked"
             guards.append(
                 {
                     "guard": guard_name,
-                    "verdict": "blocked",
+                    "verdict": verdict,
                     "proof_state": "Fail",
-                    "reason_code": result.block_reason or "execution_blocked",
+                    "reason_code": (
+                        "effect_reconciliation_mismatch"
+                        if _result_requires_review(result)
+                        else result.block_reason or "execution_blocked"
+                    ),
                     "evidence_refs": _unique_text_list(refs),
                 }
             )
@@ -1571,6 +1725,8 @@ def _uao_record_admission_guards(
 
 
 def _uao_record_blocked_guard(result: UniversalActionResult) -> str | None:
+    if _result_requires_review(result):
+        return "risk_acceptable"
     if result.dispatched:
         return None
     if result.block_reason == "open_world_contradictions":
@@ -1674,6 +1830,13 @@ def _uao_record_reconciliation(
     result: UniversalActionResult,
     outcome_ref: str | None,
 ) -> dict[str, Any]:
+    if _result_requires_review(result):
+        return {
+            "status": "mismatched",
+            "observed_outcome_ref": outcome_ref,
+            "required_for_closure": True,
+            "mismatch_reason": "effect_reconciliation_mismatch",
+        }
     if result.dispatched:
         return {
             "status": "matched",
@@ -1694,6 +1857,12 @@ def _uao_record_memory_update(
     result: UniversalActionResult,
     memory_ref: str | None,
 ) -> dict[str, Any]:
+    if _result_requires_review(result):
+        return {
+            "status": "blocked",
+            "memory_ref": None,
+            "learning_allowed": False,
+        }
     if (
         result.learning_decision is not None
         and result.learning_decision.status is LearningAdmissionStatus.ADMIT
@@ -1744,17 +1913,32 @@ def _uao_record_lineage(result: UniversalActionResult) -> dict[str, Any]:
     )
     delta = {
         "delta_id": delta_ref,
-        "reason": "execution_allowed"
-        if result.dispatched
-        else result.block_reason or "execution_blocked",
+        "reason": _uao_lineage_reason(result),
         "logged_in_lineage": True,
     }
+    accepted = result.dispatched and not _result_requires_review(result)
     return {
         "delta_ref": delta_ref,
         "logged_in_lineage": True,
-        "accepted_deltas": [delta] if result.dispatched else [],
-        "rejected_deltas": [] if result.dispatched else [delta],
+        "accepted_deltas": [delta] if accepted else [],
+        "rejected_deltas": [] if accepted else [delta],
     }
+
+
+def _result_requires_review(result: UniversalActionResult) -> bool:
+    return (
+        result.terminal_certificate is not None
+        and result.terminal_certificate.disposition
+        is TerminalClosureDisposition.REQUIRES_REVIEW
+    )
+
+
+def _uao_lineage_reason(result: UniversalActionResult) -> str:
+    if _result_requires_review(result):
+        return "effect_reconciliation_mismatch"
+    if result.dispatched:
+        return "execution_allowed"
+    return result.block_reason or "execution_blocked"
 
 
 def _optional_text_value(value: Any) -> str | None:
