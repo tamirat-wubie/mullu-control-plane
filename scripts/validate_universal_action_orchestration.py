@@ -1095,11 +1095,18 @@ def _validate_reconciliation(
             errors.append(
                 "reconciliation: allow requires reconciliation before closure"
             )
-    if decision["status"] == "escalate" and decision["reason_code"] == "effect_reconciliation_mismatch":
+    if (
+        decision["status"] == "escalate"
+        and decision["reason_code"] == "effect_reconciliation_mismatch"
+    ):
         if reconciliation["status"] != "mismatched":
-            errors.append("reconciliation: effect mismatch escalation requires mismatched reconciliation")
+            errors.append(
+                "reconciliation: effect mismatch escalation requires mismatched reconciliation"
+            )
         if reconciliation["required_for_closure"] is not True:
-            errors.append("reconciliation: effect mismatch escalation requires reconciliation before closure")
+            errors.append(
+                "reconciliation: effect mismatch escalation requires reconciliation before closure"
+            )
     return errors
 
 

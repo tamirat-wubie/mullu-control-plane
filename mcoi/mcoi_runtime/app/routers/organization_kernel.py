@@ -56,6 +56,12 @@ from mcoi_runtime.core.organization_kernel import (
     bootstrap_minimum_organization,
     open_launch_gateway_pilot,
 )
+from mcoi_runtime.core.private_pilot_story import (
+    PrivatePilotStoryRequest,
+    build_private_pilot_live_rehearsal_uao_record,
+    build_private_pilot_story,
+    load_private_pilot_uao_records,
+)
 from mcoi_runtime.persistence.errors import PersistenceError
 
 router = APIRouter()
@@ -3534,6 +3540,68 @@ def preview_case_plan_step_action_admission(
                 "plan_step_admission_preview_rejected",
             ),
         ) from exc
+
+
+@router.post("/api/v1/cases/{case_id}/plan-steps/{step_id}/private-pilot/rehearsal")
+def preview_case_private_pilot_live_rehearsal(
+    case_id: str,
+    step_id: str,
+    req: PlanStepActionAdmissionPreviewRequest,
+    request: Request,
+):
+    """Project a tenant-bound private pilot story from a live OrgOS preview."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    try:
+        organization_case = _case_or_404(kernel, case_id)
+        state = kernel.snapshot_state()
+        organization = next(
+            (item for item in state.organizations if item.org_id == organization_case.org_id),
+            None,
+        )
+        if organization is None:
+            raise RuntimeCoreInvariantError("organization unavailable")
+        admission_preview = _case_step_action_admission_preview(kernel, case_id, step_id, req)
+        story_request = PrivatePilotStoryRequest(
+            tenant_id=organization.tenant_id,
+            org_id=organization_case.org_id,
+            case_id=case_id,
+            actor_id=req.requested_by_role_id or "operator.preview",
+        )
+        rehearsal_uao = build_private_pilot_live_rehearsal_uao_record(
+            story_request,
+            (admission_preview,),
+            created_at=_clock_now(),
+        )
+        uao_records = load_private_pilot_uao_records()
+        uao_records["rehearsal"] = rehearsal_uao
+        story = build_private_pilot_story(
+            story_request,
+            uao_records=uao_records,
+            created_at=_clock_now(),
+        )
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_error_detail(
+                "private pilot rehearsal rejected",
+                "private_pilot_rehearsal_rejected",
+            ),
+        ) from exc
+    return {
+        "operation": "private_pilot_live_rehearsal",
+        "case_id": case_id,
+        "step_id": step_id,
+        "read_only": True,
+        "governed": True,
+        "execution_authority_granted": False,
+        "dispatch_authority_granted": False,
+        "receipt_ref": rehearsal_uao["closure"]["closure_receipt_ref"],
+        "admission_preview": admission_preview,
+        "rehearsal_uao": rehearsal_uao,
+        "story": story,
+    }
 
 
 @router.post("/api/v1/cases/{case_id}/plan-steps/{step_id}/worker-receipt")

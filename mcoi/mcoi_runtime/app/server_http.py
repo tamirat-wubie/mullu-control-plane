@@ -57,7 +57,36 @@ def install_global_exception_handler(
     platform_logger: Any,
     log_levels: Any,
 ) -> None:
-    """Register the bounded global exception handler."""
+    """Register the bounded global exception handlers.
+
+    A ``RuntimeCoreInvariantError`` is the platform's explicit input/contract
+    violation type (a ``ValueError`` subclass raised pervasively by core
+    ``ensure_*`` / ``require_*`` guards). It almost always means the *request*
+    violated a contract, so it is mapped to a bounded 400 rather than falling
+    through to the generic 500 -- a 500 on bad input is both a reliability
+    signal-to-noise problem and an internal-detail leak. Plain ``ValueError`` and
+    everything else still map to 500 (Starlette routes to the most specific
+    handler, and a bare ValueError may be a server fault, not client input).
+    """
+    from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+
+    async def invariant_violation_handler(
+        request: StarletteRequest,
+        exc: Exception,
+    ) -> StarletteJSONResponse:
+        try:
+            metrics.inc("requests_rejected")
+        except Exception:
+            pass
+        return StarletteJSONResponse(
+            status_code=400,
+            content={
+                "error": "request violates a governance invariant",
+                "detail": str(exc)[:200],
+                "error_code": "invariant_violation",
+                "governed": True,
+            },
+        )
 
     async def global_exception_handler(
         request: StarletteRequest,
@@ -82,6 +111,7 @@ def install_global_exception_handler(
             },
         )
 
+    app.add_exception_handler(RuntimeCoreInvariantError, invariant_violation_handler)
     app.add_exception_handler(Exception, global_exception_handler)
 
 

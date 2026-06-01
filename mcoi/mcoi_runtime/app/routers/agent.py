@@ -115,7 +115,13 @@ def webhook_subscribe(req: WebhookSubscribeRequest, request: Request):
         subscription_id=req.subscription_id, tenant_id=req.tenant_id,
         url=req.url, events=tuple(req.events), secret=req.secret,
     )
-    deps.webhook_manager.subscribe(sub)
+    try:
+        deps.webhook_manager.subscribe(sub)
+    except ValueError as exc:
+        raise HTTPException(
+            400,
+            detail=_agent_error_detail(str(exc)[:200], "webhook_subscription_rejected"),
+        ) from exc
     deps.audit_trail.record(
         action="webhook.subscribe", actor_id="system",
         tenant_id=req.tenant_id, target=req.subscription_id, outcome="success",

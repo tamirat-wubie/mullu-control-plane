@@ -95,7 +95,7 @@ class DataHandlingEvaluationRequest(BaseModel):
     target_region: ResidencyRegion | None = None
 
 
-def _raise_data_governance_error(exc: RuntimeCoreInvariantError) -> NoReturn:
+def _raise_data_governance_error(exc: ValueError) -> NoReturn:
     """Map engine invariant failures to bounded HTTP errors."""
     message = str(exc)
     if "Duplicate" in message:
@@ -329,7 +329,7 @@ def register_residency_constraint(req: ResidencyConstraintRequest, request: Requ
             allowed_regions=req.allowed_regions,
             denied_regions=req.denied_regions,
         )
-    except RuntimeCoreInvariantError as exc:
+    except ValueError as exc:
         _raise_data_governance_error(exc)
     return {
         "constraint": _residency_response(constraint),
