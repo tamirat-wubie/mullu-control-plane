@@ -67,11 +67,17 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
   simple_start_guide=...)` projects simple workflows and the start guide into
   `simple_workflow_summaries`, `simple_start_guide`, and `simple_home_summary`
   for dashboard onboarding without granting execution authority.
+- `build_operational_dashboard_state(..., sdlc_validation_receipts=...)`
+  projects SDLC validation receipts into `sdlc_receipt_summaries`,
+  `sdlc_passed_receipt_refs`, and `sdlc_failed_receipt_refs` for read-only
+  software-delivery evidence displays without granting execution authority or
+  terminal closure.
 - `OperationalDashboardRuntime` and
   `create_operational_dashboard_fastapi_router(runtime)` expose read-only
   dashboard routes for apps:
   - `GET /api/v1/dashboard/home`
   - `GET /api/v1/dashboard/state`
+  - `GET /api/v1/dashboard/sdlc/receipts`
 - `mount_operational_dashboard_router_from_env(app, env, runtime=...)` mounts
   those dashboard routes only when `MULLU_DASHBOARD_ENABLED=1`, uses
   `MULLU_DASHBOARD_PREFIX` when provided, and requires an explicit dashboard

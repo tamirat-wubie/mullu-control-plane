@@ -44,6 +44,11 @@ class OperationalDashboardFastAPIAdapter:
 
         return self.runtime.state().to_dict()
 
+    def sdlc_receipts(self) -> dict[str, Any]:
+        """Handle GET /sdlc/receipts."""
+
+        return self.runtime.sdlc_receipts().to_dict()
+
     @staticmethod
     def route_specs(prefix: str = "/api/v1/dashboard") -> tuple[OperationalDashboardRouteSpec, ...]:
         """Return the stable HTTP route contracts."""
@@ -61,6 +66,12 @@ class OperationalDashboardFastAPIAdapter:
                 path=f"{normalized}/state",
                 handler_name="state",
                 purpose="return the full read-only operational dashboard state",
+            ),
+            OperationalDashboardRouteSpec(
+                method="GET",
+                path=f"{normalized}/sdlc/receipts",
+                handler_name="sdlc_receipts",
+                purpose="return read-only SDLC validation receipt summaries",
             ),
         )
 
@@ -86,5 +97,9 @@ def create_operational_dashboard_fastapi_router(
     @router.get("/state")
     def state():
         return adapter.state()
+
+    @router.get("/sdlc/receipts")
+    def sdlc_receipts():
+        return adapter.sdlc_receipts()
 
     return router
