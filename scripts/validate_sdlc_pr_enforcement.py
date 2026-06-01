@@ -89,6 +89,8 @@ def validate_pr_template(template_text: str) -> list[str]:
     required_terms = (
         "## SDLC / SDLD evidence",
         "documentation-only or read-only",
+        "Gate decision envelope",
+        "Closure receipt retains every upstream UAO, causal trace, and receipt reference",
         "Rollback or incident handoff path",
     )
     required_terms += SDLC_ARTIFACT_TERMS
@@ -126,6 +128,7 @@ def validate_enforcement_document(document_text: str) -> list[str]:
         "main-protection",
         "branch protection",
         "merge_ready",
+        "gate_decision_envelopes are retained through terminal closure",
         "rollback_or_incident_handoff",
         "AwaitingEvidence",
         "GovernanceBlocked",

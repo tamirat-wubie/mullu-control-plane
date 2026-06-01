@@ -19,5 +19,8 @@
   "evidence_refs": [
     "docs/SDLC.md",
     "docs/SDLC_GOVERNANCE_POLICY.md"
-  ]
+  ],
+  "uao_ref": "uao://sdlc/intake/uao-validator/001",
+  "causal_decision_trace_ref": "trace://sdlc/intake/uao-validator/001",
+  "receipt_ref": "receipt://sdlc/intake/uao-validator/001"
 }

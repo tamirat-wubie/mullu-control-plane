@@ -22,7 +22,10 @@
     "approved_at",
     "public_production_claim",
     "proof_verify_endpoint",
-    "audit_verify_endpoint"
+    "audit_verify_endpoint",
+    "uao_ref",
+    "causal_decision_trace_ref",
+    "receipt_ref"
   ],
   "properties": {
     "deployment_id": { "type": "string", "minLength": 1 },
@@ -41,7 +44,10 @@
     "approved_at": { "type": "string", "format": "date-time" },
     "public_production_claim": { "type": "boolean" },
     "proof_verify_endpoint": { "$ref": "#/$defs/readiness_probe" },
-    "audit_verify_endpoint": { "$ref": "#/$defs/readiness_probe" }
+    "audit_verify_endpoint": { "$ref": "#/$defs/readiness_probe" },
+    "uao_ref": { "type": "string", "minLength": 1 },
+    "causal_decision_trace_ref": { "type": "string", "minLength": 1 },
+    "receipt_ref": { "type": "string", "minLength": 1 }
   },
   "$defs": {
     "readiness_probe": {

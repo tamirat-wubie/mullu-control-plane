@@ -29,6 +29,7 @@ def test_current_sdlc_contract_passes() -> None:
     assert all(spec.schema_path.exists() for spec in validator.ARTIFACT_SPECS)
     assert all(spec.example_path.exists() for spec in validator.ARTIFACT_SPECS)
     assert "scripts/validate_sdlc_pr_enforcement.py" in validator.REQUIRED_VALIDATORS
+    assert "change_request" in validator.GATE_BOUND_ARTIFACT_KINDS
 
 
 def test_schema_artifacts_have_expected_identity() -> None:
@@ -40,6 +41,10 @@ def test_schema_artifacts_have_expected_identity() -> None:
         assert schema["$id"] == spec.schema_id
         assert schema["title"] == spec.title
         assert schema["additionalProperties"] is False
+        if spec.kind in validator.GATE_BOUND_ARTIFACT_KINDS:
+            assert "uao_ref" in schema["required"]
+            assert "causal_decision_trace_ref" in schema["required"]
+            assert "receipt_ref" in schema["required"]
 
 
 def test_example_chain_links_all_lifecycle_artifacts() -> None:
@@ -50,6 +55,8 @@ def test_example_chain_links_all_lifecycle_artifacts() -> None:
     assert records["requirement"]["request_id"] == records["change_request"]["request_id"]
     assert records["work_plan"]["design_id"] == records["design_decision"]["design_id"]
     assert records["deployment_candidate"]["release_id"] == records["release_candidate"]["release_id"]
+    assert records["change_request"]["receipt_ref"] in records["closure_receipt"]["receipts"]
+    assert records["deployment_candidate"]["uao_ref"] in records["closure_receipt"]["uao_refs"]
 
 
 def test_raw_private_reasoning_field_is_rejected() -> None:
@@ -62,6 +69,37 @@ def test_raw_private_reasoning_field_is_rejected() -> None:
     assert any("raw_chain_of_thought is prohibited" in error for error in errors)
     assert len(errors) >= 1
     assert invalid_design["design_id"] == "sdlc_design_uao_validator_001"
+
+
+def test_gate_decision_envelope_is_required_and_prefix_checked() -> None:
+    records = validator.load_example_records()
+    invalid_requirement = copy.deepcopy(records["requirement"])
+    invalid_release = copy.deepcopy(records["release_candidate"])
+    invalid_requirement.pop("uao_ref")
+    invalid_release["receipt_ref"] = "trace://wrong/release/receipt"
+
+    requirement_errors = validator.validate_artifact_record("requirement", invalid_requirement)
+    release_errors = validator.validate_artifact_record("release_candidate", invalid_release)
+
+    assert any("uao_ref" in error for error in requirement_errors)
+    assert "release_candidate: receipt_ref must use receipt:// prefix" in release_errors
+    assert "release_candidate: release_receipt must match receipt_ref" in release_errors
+
+
+def test_closure_must_retain_upstream_gate_refs() -> None:
+    records = validator.load_example_records()
+    invalid_records = copy.deepcopy(records)
+    invalid_records["closure_receipt"]["receipts"].remove(records["change_request"]["receipt_ref"])
+    invalid_records["closure_receipt"]["uao_refs"].remove(records["requirement"]["uao_ref"])
+    invalid_records["closure_receipt"]["causal_decision_trace_refs"].remove(
+        records["deployment_candidate"]["causal_decision_trace_ref"]
+    )
+
+    errors = validator.validate_example_chain(invalid_records)
+
+    assert "example_chain: closure must include change_request receipt_ref" in errors
+    assert "example_chain: closure must include requirement uao_ref" in errors
+    assert "example_chain: closure must include deployment_candidate causal_decision_trace_ref" in errors
 
 
 def test_cross_artifact_request_drift_is_rejected() -> None:
@@ -135,6 +173,8 @@ def test_cli_json_receipt_reports_passed_contract() -> None:
     assert report["valid"] is True
     assert report["status"] == "passed"
     assert report["error_count"] == 0
+    assert report["check_count"] == 7
+    assert any(check["name"] == "sdlc_gate_decision_envelopes" for check in report["checks"])
 
 
 def test_load_json_object_rejects_non_object_json(tmp_path: Path) -> None:

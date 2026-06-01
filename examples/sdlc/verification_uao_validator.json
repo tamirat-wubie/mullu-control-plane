@@ -66,5 +66,7 @@
     }
   ],
   "failed_checks": [],
+  "uao_ref": "uao://sdlc/verification/uao-validator/001",
+  "causal_decision_trace_ref": "trace://sdlc/verification/uao-validator/001",
   "receipt_ref": "receipt://sdlc/verification/uao-validator/001"
 }

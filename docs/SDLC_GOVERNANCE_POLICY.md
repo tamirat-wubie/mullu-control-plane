@@ -34,6 +34,17 @@ effect_bearing_sdlc_action
 -> closure_ref
 ```
 
+Admission continuity rule:
+
+```text
+sdlc_gate_decision_envelope := <uao_ref, causal_decision_trace_ref, receipt_ref>
+forall artifact in non_terminal_sdlc_artifacts:
+  artifact must carry sdlc_gate_decision_envelope
+closure.receipts must retain every upstream receipt_ref
+closure.uao_refs must retain every upstream uao_ref
+closure.causal_decision_trace_refs must retain every upstream causal_decision_trace_ref
+```
+
 ## Decision Outcomes
 
 Use the existing solver outcome taxonomy:

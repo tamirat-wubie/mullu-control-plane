@@ -41,5 +41,8 @@
     "security review validation receipt",
     "PR enforcement validation receipt",
     "workspace preflight receipt"
-  ]
+  ],
+  "uao_ref": "uao://sdlc/requirement/uao-validator/001",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/uao-validator/001",
+  "receipt_ref": "receipt://sdlc/requirement/uao-validator/001"
 }

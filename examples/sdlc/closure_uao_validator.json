@@ -4,12 +4,15 @@
   "terminal_state": "closed_success",
   "outcome": "SolvedVerified",
   "receipts": [
+    "receipt://sdlc/intake/uao-validator/001",
+    "receipt://sdlc/requirement/uao-validator/001",
     "receipt://sdlc/design/uao-validator/001",
     "receipt://sdlc/plan/uao-validator/001",
     "receipt://sdlc/verification/uao-validator/001",
     "receipt://sdlc/security-review/uao-validator/001",
     "receipt://sdlc/pr-enforcement-validation/001",
-    "receipt://sdlc/release/uao-validator/001"
+    "receipt://sdlc/release/uao-validator/001",
+    "receipt://sdlc/deployment/uao-validator/001"
   ],
   "known_remaining_blockers": [],
   "learning_notes": [
@@ -26,12 +29,24 @@
   ],
   "fracture_deltas": [],
   "uao_refs": [
+    "uao://sdlc/intake/uao-validator/001",
+    "uao://sdlc/requirement/uao-validator/001",
     "uao://sdlc/design/uao-validator/001",
-    "uao://sdlc/plan/uao-validator/001"
+    "uao://sdlc/plan/uao-validator/001",
+    "uao://sdlc/verification/uao-validator/001",
+    "uao://sdlc/security-review/uao-validator/001",
+    "uao://sdlc/release/uao-validator/001",
+    "uao://sdlc/deployment/uao-validator/001"
   ],
   "causal_decision_trace_refs": [
+    "trace://sdlc/intake/uao-validator/001",
+    "trace://sdlc/requirement/uao-validator/001",
     "trace://sdlc/design/uao-validator/001",
-    "trace://sdlc/plan/uao-validator/001"
+    "trace://sdlc/plan/uao-validator/001",
+    "trace://sdlc/verification/uao-validator/001",
+    "trace://sdlc/security-review/uao-validator/001",
+    "trace://sdlc/release/uao-validator/001",
+    "trace://sdlc/deployment/uao-validator/001"
   ],
   "closed_at": "2026-06-01T00:00:00Z",
   "next_action": "Use SDLC validation receipts as read-only dashboard integration evidence."

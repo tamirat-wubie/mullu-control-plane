@@ -36,11 +36,13 @@ DOC_REQUIREMENTS: dict[Path, tuple[str, ...]] = {
     WORKSPACE_ROOT / "docs" / "SDLC.md": (
         "SDLC = UAO for software changes",
         "Effect-bearing SDLC action -> UAO required.",
+        "sdlc_gate_decision_envelope",
         "scripts/validate_sdlc_pr_enforcement.py",
         "No closure without learning.",
     ),
     WORKSPACE_ROOT / "docs" / "SDLC_GOVERNANCE_POLICY.md": (
         "effect_bearing_sdlc_action",
+        "Admission continuity rule:",
         "GovernanceBlocked",
     ),
     WORKSPACE_ROOT / "docs" / "SDLC_STATE_MACHINE.md": (
@@ -84,6 +86,21 @@ REQUIRED_VERIFICATION_COMMANDS = (
     "sdlc_security_review_validation",
     "sdlc_pr_enforcement_validation",
 )
+GATE_BOUND_ARTIFACT_KINDS = (
+    "change_request",
+    "requirement",
+    "design_decision",
+    "work_plan",
+    "verification_receipt",
+    "security_review",
+    "release_candidate",
+    "deployment_candidate",
+)
+GATE_REF_PREFIX_BY_FIELD = {
+    "uao_ref": "uao://",
+    "causal_decision_trace_ref": "trace://",
+    "receipt_ref": "receipt://",
+}
 PASSING_OUTCOMES = {"SolvedVerified", "SolvedUnverified"}
 PRODUCTION_REQUIRED_STATUSES = {
     "deployment_witness": {"published"},
@@ -261,12 +278,12 @@ def validate_artifact_record(kind: str, record: dict[str, Any]) -> list[str]:
     schema = _load_schema(spec.schema_path)
     errors = [f"{kind}: {error}" for error in _validate_schema_instance(schema, record)]
     errors.extend(f"{kind}: {error}" for error in _validate_no_private_reasoning_fields(record, kind))
+    if kind in GATE_BOUND_ARTIFACT_KINDS:
+        errors.extend(_validate_effect_gate_refs(kind, record))
 
     if kind == "design_decision":
-        errors.extend(_validate_effect_gate_refs(kind, record))
         errors.extend(_validate_design_decision(record))
     elif kind == "work_plan":
-        errors.extend(_validate_effect_gate_refs(kind, record))
         errors.extend(_validate_work_plan(record))
     elif kind == "verification_receipt":
         errors.extend(_validate_verification_receipt(record))
@@ -307,6 +324,8 @@ def validate_security_review_record(record: dict[str, Any], *, strict: bool) -> 
         errors.append("security_review: failed required checks must be resolved before release")
     if strict and not record.get("security_receipts"):
         errors.append("security_review: strict mode requires security receipts")
+    if record.get("receipt_ref") and record.get("receipt_ref") not in record.get("security_receipts", []):
+        errors.append("security_review: receipt_ref must be included in security_receipts")
     return errors
 
 
@@ -328,6 +347,8 @@ def validate_release_candidate_record(record: dict[str, Any], *, strict: bool) -
         errors.append("release_candidate: evidence_bound_claims must be true")
     if not record.get("rollback_plan"):
         errors.append("release_candidate: rollback_plan is required")
+    if record.get("release_receipt") != record.get("receipt_ref"):
+        errors.append("release_candidate: release_receipt must match receipt_ref")
     release_notes = str(record.get("release_notes", "")).lower()
     if record.get("deployment_status") != "published" and "production" in release_notes:
         errors.append("release_candidate: non-published release notes must not claim production")
@@ -405,6 +426,14 @@ def validate_example_chain(records: dict[str, dict[str, Any]] | None = None) -> 
     for receipt_ref in security_review.get("security_receipts", []):
         if receipt_ref not in closure.get("receipts", []):
             errors.append("example_chain: closure must include security receipt")
+    for gate_kind in GATE_BOUND_ARTIFACT_KINDS:
+        gate_record = loaded_records[gate_kind]
+        if gate_record.get("receipt_ref") not in closure.get("receipts", []):
+            errors.append(f"example_chain: closure must include {gate_kind} receipt_ref")
+        if gate_record.get("uao_ref") not in closure.get("uao_refs", []):
+            errors.append(f"example_chain: closure must include {gate_kind} uao_ref")
+        if gate_record.get("causal_decision_trace_ref") not in closure.get("causal_decision_trace_refs", []):
+            errors.append(f"example_chain: closure must include {gate_kind} causal_decision_trace_ref")
     if release.get("deployment_status") == "not_published" and deployment.get("public_production_claim") is not False:
         errors.append("example_chain: not_published release cannot carry production claim")
     return errors
@@ -434,6 +463,8 @@ def build_validation_report() -> dict[str, Any]:
         "sdlc_example_artifacts",
         "sdlc_document_contracts",
         "sdlc_cross_artifact_links",
+        "sdlc_gate_decision_envelopes",
+        "sdlc_closure_ref_retention",
         "sdlc_no_overclaim",
     )
     return {
@@ -463,9 +494,12 @@ def write_validation_report(report: dict[str, Any], receipt_path: Path) -> Path:
 
 def _validate_effect_gate_refs(kind: str, record: dict[str, Any]) -> list[str]:
     errors: list[str] = []
-    for field_name in ("uao_ref", "causal_decision_trace_ref", "receipt_ref"):
-        if not isinstance(record.get(field_name), str) or not record[field_name]:
+    for field_name, expected_prefix in GATE_REF_PREFIX_BY_FIELD.items():
+        field_value = record.get(field_name)
+        if not isinstance(field_value, str) or not field_value:
             errors.append(f"{kind}: {field_name} must be a non-empty string")
+        elif not field_value.startswith(expected_prefix):
+            errors.append(f"{kind}: {field_name} must use {expected_prefix} prefix")
     return errors
 
 
@@ -604,6 +638,8 @@ def main(argv: list[str] | None = None) -> int:
     sys.stdout.write("[PASS] sdlc_example_artifacts\n")
     sys.stdout.write("[PASS] sdlc_document_contracts\n")
     sys.stdout.write("[PASS] sdlc_cross_artifact_links\n")
+    sys.stdout.write("[PASS] sdlc_gate_decision_envelopes\n")
+    sys.stdout.write("[PASS] sdlc_closure_ref_retention\n")
     sys.stdout.write("[PASS] sdlc_no_overclaim\n")
     sys.stdout.write("STATUS: passed\n")
     return 0
