@@ -37,6 +37,13 @@ class TestOpenAPISpec:
         spec = client.get("/openapi.json").json()
         assert "/health" in spec["paths"]
 
+    def test_software_receipt_dashboard_endpoints_documented(self, client):
+        spec = client.get("/openapi.json").json()
+        paths = spec["paths"]
+        assert "/software/receipts/dashboard" in paths
+        assert "/software/receipts/sdlc/dashboard" in paths
+        assert paths["/software/receipts/dashboard"]["get"]["tags"] == ["software-receipts"]
+
     def test_governed_endpoints_documented(self, client):
         spec = client.get("/openapi.json").json()
         governed = [p for p in spec["paths"] if p.startswith("/api/v1/")]
