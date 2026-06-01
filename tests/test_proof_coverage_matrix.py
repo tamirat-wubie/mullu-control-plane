@@ -604,6 +604,7 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
     assert "organization_action_queue_reports_deferred_handoff_actions_without_mutation" in witnesses
     assert "organization_action_queue_reports_receipt_ready_step_without_dispatch" in witnesses
     assert "organization_action_queue_view_is_read_only_and_escaped" in witnesses
+    assert "case_private_pilot_live_rehearsal_binds_preview_receipts_without_mutation" in witnesses
     assert "department_registry_view_is_read_only_and_escaped" in witnesses
     assert "case_closure_certificate_view_is_read_only_and_escaped" in witnesses
     assert "case_closure_requires_effect_reconciliation_match_for_committed" in witnesses
@@ -669,6 +670,10 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
         == "orgos_case_governance_lifecycle"
     )
     assert (
+        route_records["/api/v1/cases/{case_id}/plan-steps/{step_id}/private-pilot/rehearsal"]["surface_id"]
+        == "orgos_case_governance_lifecycle"
+    )
+    assert (
         route_records["/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness"]["surface_id"]
         == "orgos_case_governance_lifecycle"
     )
@@ -697,7 +702,7 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
         == "orgos_case_governance_lifecycle"
     )
     assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "proven"
-    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 38
+    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 39
 
 
 def test_webhooks_proof_surface_is_witnessed() -> None:

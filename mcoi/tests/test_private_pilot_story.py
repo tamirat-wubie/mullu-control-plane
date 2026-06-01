@@ -38,14 +38,17 @@ from mcoi_runtime.core.private_pilot_story import (
     PILOT_PACKET_INPUT_KEY,
     PILOT_PACKET_OUTPUT_KEY,
     PRIVATE_PILOT_WORKFLOW_ID,
+    LIVE_REHEARSAL_ACTION_SOURCE,
     PrivatePilotStoryError,
     PrivatePilotStoryRequest,
     build_private_pilot_descriptor,
+    build_private_pilot_live_rehearsal_uao_record,
     build_private_pilot_story,
     load_private_pilot_uao_records,
     validate_private_pilot_descriptor,
 )
 from mcoi_runtime.core.workflow import WorkflowEngine
+from scripts.validate_universal_action_orchestration import validate_orchestration
 
 
 NOW = "2026-06-01T00:00:00+00:00"
@@ -87,6 +90,94 @@ def _client() -> TestClient:
     app = FastAPI()
     app.include_router(router)
     return TestClient(app)
+
+
+def _live_admission_preview(*, decision: str = "defer") -> dict[str, object]:
+    return {
+        "admission_preview_id": "orgos-handoff-action-admission-preview-test",
+        "case_id": "case-demo",
+        "step_id": "engineering_runtime_witness",
+        "read_only": True,
+        "governed": True,
+        "decision": decision,
+        "reason_code": "evidence_missing" if decision != "allow" else "plan_step_gate_allowed",
+        "decision_set": ["allow", "block", "defer", "escalate", "simulate"],
+        "decision_scope": "handoff_action_preview",
+        "execution_authority_granted": False,
+        "dispatch_authority_granted": False,
+        "receipt_binding_authority_granted": decision == "allow",
+        "proposed_action": "bind_worker_receipt",
+        "requested_by_role_id": "engineering.owner",
+        "gate_preview": {
+            "preview_id": "org-step-gate-preview-test",
+            "case_id": "case-demo",
+            "step_id": "engineering_runtime_witness",
+            "status": "allowed" if decision == "allow" else "blocked",
+            "reason": "allowed" if decision == "allow" else "evidence_missing",
+            "checked_preconditions": ["launch_boundary_defined"],
+            "missing_preconditions": [],
+            "authority_rule_ids": ["authority.engineering.gateway_runtime.verify"],
+            "evidence_refs": ["evidence:engineering_gateway_witness"],
+            "approval_refs": [],
+            "previewed_at": NOW,
+            "metadata": {"mutates_state": False},
+        },
+        "handoff": {
+            "step_id": "engineering_runtime_witness",
+            "department_id": "engineering",
+            "responsible_role_id": "engineering.owner",
+            "capability_id": "engineering.gateway_runtime.verify",
+            "action": "verify_gateway_runtime",
+            "expected_effect": "gateway_runtime_witnessed",
+            "preconditions": ["launch_boundary_defined"],
+            "postconditions": ["runtime_witness_collected"],
+            "approvals_required": [],
+            "predecessor_step_ids": ["product_launch_boundary"],
+            "rollback_plan_id": "rollback.gateway_runtime_witness",
+            "gate_status": "allowed" if decision == "allow" else "blocked",
+            "handoff_status": "ready_for_worker_receipt" if decision == "allow" else "awaiting_evidence",
+            "next_action": "bind_worker_receipt" if decision == "allow" else "collect_required_evidence",
+            "dispatch_authority": False,
+            "evidence_refs": ["evidence:engineering_gateway_witness"],
+            "missing_evidence": [] if decision == "allow" else ["engineering_runtime_conformance"],
+            "worker_receipt_count": 0,
+            "worker_receipt_bindings": [],
+            "worker_receipt_url": "/api/v1/cases/case-demo/plan-steps/engineering_runtime_witness/worker-receipt",
+        },
+        "causal_decision_trace": {
+            "intent": "bind_worker_receipt",
+            "actor": "engineering.owner",
+            "tenant": "tenant-private",
+            "entities": {
+                "case_id": "case-demo",
+                "step_id": "engineering_runtime_witness",
+                "department_id": "engineering",
+                "capability_id": "engineering.gateway_runtime.verify",
+            },
+            "assumptions": ["preview_only", "no_worker_dispatch", "no_case_state_mutation"],
+            "evidence_refs": ["evidence:engineering_gateway_witness"],
+            "constraints": ["checked_preconditions", "capability_certification"],
+            "conflicts": [] if decision == "allow" else ["evidence_missing"],
+            "guard_verdicts": {
+                "identity_valid": "Pass",
+                "tenant_valid": "Pass",
+                "authority_valid": "Pass",
+                "policy_allows": "Pass" if decision == "allow" else "blocked_by_gate",
+                "risk_acceptable": "Pass",
+                "budget_available": "not_required_for_read_only_preview",
+                "evidence_sufficient": "Pass" if decision == "allow" else "Fail(evidence_missing)",
+                "temporal_window_valid": "not_required_for_read_only_preview",
+                "capability_certified": "Pass",
+                "recovery_available": "Pass",
+                "receipt_emittable": "Pass" if decision == "allow" else "not_requested",
+            },
+            "decision": decision,
+            "reason_code": "evidence_missing" if decision != "allow" else "plan_step_gate_allowed",
+            "receipt_ref": None,
+            "closure_state": "preview_only",
+        },
+        "metadata": {"test": True},
+    }
 
 
 def test_private_pilot_descriptor_links_expected_sequence_without_execution_power() -> None:
@@ -142,6 +233,57 @@ def test_private_pilot_story_links_orgos_uao_governors_sdlc_and_dashboards() -> 
     assert "/software/receipts/private-pilot/story" in story["dashboard_refs"]
     assert story["receipt_count"] >= 1
     assert story["causal_decision_trace_ref_count"] >= 3
+
+
+def test_private_pilot_live_rehearsal_record_validates_as_uao_simulation() -> None:
+    request = PrivatePilotStoryRequest(
+        tenant_id="tenant-private",
+        org_id="org-demo",
+        case_id="case-demo",
+        actor_id="engineering.owner",
+    )
+
+    record = build_private_pilot_live_rehearsal_uao_record(
+        request,
+        (_live_admission_preview(decision="defer"),),
+        created_at=NOW,
+    )
+    errors = validate_orchestration(record)
+    story = build_private_pilot_story(
+        request,
+        uao_records={
+            **load_private_pilot_uao_records(),
+            "rehearsal": record,
+        },
+        created_at=NOW,
+    )
+    branches = {branch["branch_id"]: branch for branch in story["uao_branches"]}
+
+    assert errors == []
+    assert record["decision"]["status"] == "simulate"
+    assert record["effect_bearing"] is False
+    assert record["execution_receipt_ref"] is None
+    assert record["action_envelope"]["source"] == LIVE_REHEARSAL_ACTION_SOURCE
+    assert record["action_envelope"]["tenant"] == "tenant-private"
+    assert record["pipeline_stages"][5]["status"] == "simulated"
+    assert branches["rehearsal"]["source_ref"] == LIVE_REHEARSAL_ACTION_SOURCE
+    assert branches["rehearsal"]["closure_state"] == "closed_simulated"
+
+
+def test_private_pilot_live_rehearsal_rejects_cross_tenant_preview() -> None:
+    request = PrivatePilotStoryRequest(
+        tenant_id="tenant-private",
+        org_id="org-demo",
+        case_id="case-demo",
+        actor_id="engineering.owner",
+    )
+    preview = _live_admission_preview(decision="allow")
+    preview["causal_decision_trace"]["tenant"] = "tenant-other"  # type: ignore[index]
+
+    with pytest.raises(PrivatePilotStoryError) as exc_info:
+        build_private_pilot_live_rehearsal_uao_record(request, (preview,), created_at=NOW)
+
+    assert "tenant binding changed" in str(exc_info.value)
 
 
 def test_private_pilot_validation_rejects_reordered_stage_graph() -> None:

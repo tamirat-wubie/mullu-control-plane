@@ -871,11 +871,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 238,
+      "proven": 239,
       "unproven": 0,
       "witnessed": 149
     },
-    "route_count": 387,
+    "route_count": 388,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1115,6 +1115,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/cases/{case_id}/plan-steps/{step_id}/gate",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/cases/{case_id}/plan-steps/{step_id}/private-pilot/rehearsal",
         "surface_id": "orgos_case_governance_lifecycle"
       },
       {
@@ -5825,7 +5830,7 @@
         "mcoi/tests/test_organization_kernel_router.py",
         "mcoi/tests/test_organization_kernel_store.py"
       ],
-      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, closure decisions, case portfolio, action queue, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
+      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, private pilot live rehearsal receipts, closure decisions, case portfolio, action queue, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
       "representative_paths": [
         "/api/v1/orgs",
         "/api/v1/orgs/{org_id}/action-queue",
@@ -5862,6 +5867,7 @@
         "/api/v1/cases/{case_id}/plan",
         "/api/v1/cases/{case_id}/plan-steps/{step_id}/admission-preview",
         "/api/v1/cases/{case_id}/plan-steps/{step_id}/gate",
+        "/api/v1/cases/{case_id}/plan-steps/{step_id}/private-pilot/rehearsal",
         "/api/v1/cases/{case_id}/plan-steps/{step_id}/worker-receipt",
         "/api/v1/cases/{case_id}/close",
         "/api/v1/orgos/read-model",
@@ -5894,6 +5900,7 @@
         "organization_action_queue_reports_deferred_handoff_actions_without_mutation",
         "organization_action_queue_reports_receipt_ready_step_without_dispatch",
         "organization_action_queue_view_is_read_only_and_escaped",
+        "case_private_pilot_live_rehearsal_binds_preview_receipts_without_mutation",
         "department_registry_view_is_read_only_and_escaped",
         "case_closure_certificate_view_is_read_only_and_escaped",
         "case_proof_timeline_reports_open_case_without_closure",
@@ -9367,8 +9374,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1152,
-    "runtime_witness_count": 1152,
+    "exact_test_anchor_count": 1153,
+    "runtime_witness_count": 1153,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -13108,6 +13115,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_case_private_pilot_live_rehearsal_binds_preview_receipts_without_mutation"
+            ],
+            "witness": "case_private_pilot_live_rehearsal_binds_preview_receipts_without_mutation"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_organization_kernel_router.py::test_department_registry_view_is_read_only_and_escaped"
             ],
             "witness": "department_registry_view_is_read_only_and_escaped"
@@ -13185,8 +13198,8 @@
             "witness": "worker_receipts_satisfy_engineering_gate_evidence"
           }
         ],
-        "exact_test_anchor_count": 38,
-        "runtime_witness_count": 38,
+        "exact_test_anchor_count": 39,
+        "runtime_witness_count": 39,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

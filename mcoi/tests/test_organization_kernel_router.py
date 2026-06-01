@@ -717,6 +717,48 @@ def test_organization_action_queue_view_is_read_only_and_escaped(tmp_path: Path)
     assert before["gate_decisions"] == after["gate_decisions"] == []
 
 
+def test_case_private_pilot_live_rehearsal_binds_preview_receipts_without_mutation(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/private-pilot/rehearsal",
+        json={
+            "checked_preconditions": ["launch_boundary_defined"],
+            "proposed_action": "bind_worker_receipt",
+            "requested_by_role_id": "engineering.owner",
+            "allow_simulation_when_blocked": True,
+        },
+    )
+    payload = response.json()
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+    branches = {
+        branch["branch_id"]: branch
+        for branch in payload["story"]["uao_branches"]
+    }
+
+    assert response.status_code == 200
+    assert payload["operation"] == "private_pilot_live_rehearsal"
+    assert payload["read_only"] is True
+    assert payload["governed"] is True
+    assert payload["execution_authority_granted"] is False
+    assert payload["dispatch_authority_granted"] is False
+    assert payload["admission_preview"]["decision"] == "simulate"
+    assert payload["admission_preview"]["gate_preview"]["reason"] == "evidence_missing"
+    assert payload["rehearsal_uao"]["decision"]["status"] == "simulate"
+    assert payload["rehearsal_uao"]["effect_bearing"] is False
+    assert payload["receipt_ref"] == payload["rehearsal_uao"]["closure"]["closure_receipt_ref"]
+    assert payload["story"]["request"]["tenant_id"] == "tenant-mullu"
+    assert payload["story"]["request"]["org_id"] == "org-mullu"
+    assert payload["story"]["request"]["case_id"] == "case.launch_gateway_pilot"
+    assert payload["story"]["authority_boundary"]["execution_authority_granted"] is False
+    assert branches["rehearsal"]["source_ref"] == "action://orgos-private-pilot-live-rehearsal"
+    assert branches["rehearsal"]["receipt_refs"]
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
 def test_department_registry_view_is_read_only_and_escaped(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     organization = client.post(
