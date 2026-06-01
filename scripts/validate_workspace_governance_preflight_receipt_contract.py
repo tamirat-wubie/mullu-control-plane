@@ -8,6 +8,7 @@ Dependencies: Python standard library and scripts/run_workspace_governance_check
 Invariants:
   - Validation is read-only.
   - Synthetic receipts do not invoke subprocess checks.
+  - Receipt replay rejects fields outside the schema surface.
   - Receipt status must match check return-code outcomes.
   - Full preflight receipts carry the canonical required check order and command tails.
 """
@@ -119,10 +120,15 @@ def validate_receipt(receipt: dict[str, Any]) -> list[str]:
     """Return deterministic validation errors for one preflight receipt."""
 
     errors: list[str] = []
+    missing_fields: list[str] = []
     for field_name in REQUIRED_RECEIPT_FIELDS:
         if field_name not in receipt:
-            errors.append(f"receipt missing field: {field_name}")
-    if errors:
+            missing_fields.append(f"receipt missing field: {field_name}")
+    errors.extend(missing_fields)
+    extra_fields = sorted(set(receipt) - set(REQUIRED_RECEIPT_FIELDS))
+    for field_name in extra_fields:
+        errors.append(f"receipt has unexpected field: {field_name}")
+    if missing_fields:
         return errors
 
     if receipt["receipt_id"] != "workspace_governance_preflight_receipt":
@@ -138,7 +144,9 @@ def validate_receipt(receipt: dict[str, Any]) -> list[str]:
     if not isinstance(checks, list):
         errors.append("checks must be a list")
         return errors
-    if receipt["check_count"] != len(checks):
+    if isinstance(receipt["check_count"], bool) or not isinstance(receipt["check_count"], int):
+        errors.append("check_count must be integer")
+    elif receipt["check_count"] != len(checks):
         errors.append("check_count does not match checks length")
 
     observed_all_passed = True
@@ -216,6 +224,9 @@ def _validate_check_result(check: Any, index: int) -> list[str]:
     for field_name in REQUIRED_CHECK_FIELDS:
         if field_name not in check:
             errors.append(f"check {index} missing field: {field_name}")
+    extra_fields = sorted(set(check) - set(REQUIRED_CHECK_FIELDS))
+    for field_name in extra_fields:
+        errors.append(f"check {index} has unexpected field: {field_name}")
     if errors:
         return errors
     if not isinstance(check["name"], str) or not check["name"]:
