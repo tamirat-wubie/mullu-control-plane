@@ -30,7 +30,9 @@ def test_current_sdlc_pr_enforcement_contract_passes() -> None:
     assert "Gate decision envelope" in texts.pr_template
     assert "Implementation receipt" in texts.pr_template
     assert "Transition receipt" in texts.pr_template
+    assert "Recovery handoff receipt" in texts.pr_template
     assert "rollback_or_incident_handoff" in texts.enforcement_doc
+    assert "recovery handoff has `sdlc_recovery_handoff_receipt` evidence" in texts.enforcement_doc
 
 
 def test_ci_workflow_requires_sdlc_gate_before_build_verification() -> None:
@@ -113,6 +115,22 @@ def test_missing_implementation_receipt_evidence_is_rejected() -> None:
     assert len(template_errors) + len(doc_errors) >= 2
 
 
+def test_missing_recovery_handoff_receipt_evidence_is_rejected() -> None:
+    texts = validator.load_enforcement_texts()
+    invalid_template = texts.pr_template.replace("Recovery handoff receipt", "Recovery note")
+    invalid_doc = texts.enforcement_doc.replace(
+        "recovery handoff has `sdlc_recovery_handoff_receipt` evidence",
+        "recovery handoff has notes",
+    )
+
+    template_errors = validator.validate_pr_template(invalid_template)
+    doc_errors = validator.validate_enforcement_document(invalid_doc)
+
+    assert "pull_request_template missing required term: Recovery handoff receipt" in template_errors
+    assert any("sdlc_recovery_handoff_receipt" in error for error in doc_errors)
+    assert len(template_errors) + len(doc_errors) >= 2
+
+
 def test_release_policy_without_incident_linkage_is_rejected() -> None:
     texts = validator.load_enforcement_texts()
     invalid_policy = texts.release_policy.replace("incident_recovery_path_if_rollback_fails", "fallback_path")
@@ -122,6 +140,17 @@ def test_release_policy_without_incident_linkage_is_rejected() -> None:
     assert "sdlc_release_policy missing required term: incident_recovery_path_if_rollback_fails" in errors
     assert len(errors) >= 1
     assert "## Rollback And Incident Linkage" in invalid_policy
+
+
+def test_release_policy_without_recovery_handoff_schema_is_rejected() -> None:
+    texts = validator.load_enforcement_texts()
+    invalid_policy = texts.release_policy.replace("sdlc_recovery_handoff_receipt", "recovery_handoff_note")
+
+    errors = validator.validate_release_policy_links(invalid_policy)
+
+    assert "sdlc_release_policy missing required term: sdlc_recovery_handoff_receipt" in errors
+    assert len(errors) >= 1
+    assert "incident_recovery_path_if_rollback_fails" in invalid_policy
 
 
 def test_cli_json_receipt_reports_passed_contract() -> None:

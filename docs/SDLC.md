@@ -49,7 +49,8 @@ doctrine docs -> schema contracts -> example fixtures -> validators -> workspace
 8. Security review classifies impact categories, threat model, findings, mitigations, residual risk, and receipts.
 9. Release readiness binds version, change set, evidence-bound claims, migrations, known limitations, and rollback plan.
 10. Deployment readiness binds environment, runtime host, health check, runtime conformance, witness status, and rollback command.
-11. Closure records terminal state, outcome, receipts, remaining blockers, learning notes, and next action.
+11. Recovery handoff records rollback state, rollback refs, incident recovery refs, accepted risk refs, effect boundaries, and terminal closure linkage.
+12. Closure records terminal state, outcome, receipts, remaining blockers, learning notes, and next action.
 
 ## Artifact Set
 
@@ -67,6 +68,7 @@ The canonical lifecycle example under `examples/sdlc/` represents the UAO valida
 | Security review | `schemas/sdlc_security_review.schema.json` | no release with unresolved critical or high findings |
 | Release candidate | `schemas/sdlc_release_candidate.schema.json` | no release note may claim more than evidence supports |
 | Deployment candidate | `schemas/sdlc_deployment_candidate.schema.json` | no production claim without deployment witness and public health evidence |
+| Recovery handoff receipt | `schemas/sdlc_recovery_handoff_receipt.schema.json` | no terminal closure without rollback state, incident path, accepted-risk refs, and effect boundaries |
 | Closure receipt | `schemas/sdlc_closure_receipt.schema.json` | no closure without receipt and learning |
 
 ## UAO Binding
@@ -95,6 +97,12 @@ Every state change also emits a transition receipt:
 
 ```text
 sdlc_transition_receipt := <from_state, to_state, decision, required_evidence_refs, required_receipt_refs, blockers, uao_ref, causal_decision_trace_ref, receipt_ref>
+```
+
+Recovery handoff is first-class terminal evidence:
+
+```text
+sdlc_recovery_handoff_receipt := <change_id, rollback_state, rollback_refs, incident_handoff_required, incident_recovery_refs, accepted_risk_refs, effect_boundary_refs, terminal_closure_ref, uao_ref, causal_decision_trace_ref, receipt_ref>
 ```
 
 No raw private reasoning field may appear in an SDLC artifact.
@@ -126,5 +134,6 @@ No test without receipt.
 No release without evidence.
 No deployment without witness.
 No claim without proof.
+No closure without recovery handoff.
 No closure without learning.
 ```

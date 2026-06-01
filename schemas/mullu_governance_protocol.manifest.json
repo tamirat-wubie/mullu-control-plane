@@ -725,6 +725,12 @@
       "surface": "software_delivery"
     },
     {
+      "schema_id": "sdlc-recovery-handoff-receipt",
+      "path": "schemas/sdlc_recovery_handoff_receipt.schema.json",
+      "urn": "urn:mullusi:schema:sdlc-recovery-handoff-receipt:1",
+      "surface": "software_delivery"
+    },
+    {
       "schema_id": "sdlc-closure-receipt",
       "path": "schemas/sdlc_closure_receipt.schema.json",
       "urn": "urn:mullusi:schema:sdlc-closure-receipt:1",

@@ -2,7 +2,7 @@
 
 Purpose: define release and deployment readiness rules for governed software changes.
 Governance scope: OCE release fields, RAG release-to-deployment linkage, CDCV evidence-bound claims, CQTE decidable readiness checks, UWMA release receipts, and PRS deployment closure.
-Dependencies: `docs/SDLC.md`, `schemas/sdlc_release_candidate.schema.json`, `schemas/sdlc_deployment_candidate.schema.json`, and `scripts/validate_sdlc_release_readiness.py`.
+Dependencies: `docs/SDLC.md`, `schemas/sdlc_release_candidate.schema.json`, `schemas/sdlc_deployment_candidate.schema.json`, `schemas/sdlc_recovery_handoff_receipt.schema.json`, and `scripts/validate_sdlc_release_readiness.py`.
 Invariants: no release claim may exceed evidence; no production claim may pass without deployment witness, public health evidence, runtime conformance, proof verification, and audit verification.
 
 ## Release Candidate
@@ -79,3 +79,14 @@ release_or_deployment_effect
 ```
 
 Rollback evidence may reference `rollback_plan`, `rollback_command`, deployment witness receipts, incident recovery plans, terminal closure certificates, or SDLC closure receipts. Incident handoff is required when rollback is partial, blocked, or leaves an accepted residual risk.
+
+Terminal closure must retain `sdlc_recovery_handoff_receipt` evidence:
+
+```text
+sdlc_recovery_handoff_receipt
+-> rollback_state
+-> rollback_refs
+-> incident_recovery_refs
+-> accepted_risk_refs
+-> terminal_closure_ref
+```
