@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import time
 from pathlib import Path
 from typing import Iterable
 
@@ -457,3 +456,39 @@ def test_cli_rejects_unsupported_version_combo(dirs):
         "--to", "v1",
     ])
     assert rc == 2
+
+
+def test_migration_skips_proof_id_path_traversal(tmp_path: Path) -> None:
+    # proof_id is read verbatim from v1 record content. A crafted proof_id that
+    # escapes v2_dir must be skipped, not written outside the output directory.
+    v1 = tmp_path / "v1"
+    v2 = tmp_path / "v2"
+    manifest = tmp_path / "manifest"
+    (v1 / "acme").mkdir(parents=True)
+    # Chain-valid genesis record (prev_hash empty) with a hostile proof_id;
+    # the file itself has a safe name, the hostile id lives in the content.
+    (v1 / "acme" / "record.json").write_text(
+        json.dumps(
+            {
+                "proof_id": "../../escaped-proof",
+                "tenant_id": "acme",
+                "action": "budget.consume",
+                "timestamp": "2026-04-26T00:00:00Z",
+                "verdict": "pass",
+                "reason": "",
+                "prev_hash": "",
+                "proof_hash": "deadbeef",
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+        encoding="utf-8",
+    )
+
+    stats = MigrationRunner(v1, v2, manifest).run()["acme"]
+
+    assert stats.failed == 1
+    assert stats.migrated == 0
+    # The escaped target (tmp_path/escaped-proof.json) was never written.
+    assert not (tmp_path / "escaped-proof.json").exists()
+    assert not list(v2.rglob("escaped-proof.json"))
