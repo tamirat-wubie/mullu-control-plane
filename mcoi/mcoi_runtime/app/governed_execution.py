@@ -12,6 +12,7 @@ Invariants: all operator dispatches flow through governed spine or the universal
 from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
+import json
 from typing import Any, Mapping
 from mcoi_runtime.core.dispatcher import DispatchRequest
 from mcoi_runtime.core.command_capability_admission import (
@@ -731,6 +732,8 @@ def _uao_record_binds_universal_detail(
     proof_hash = universal_detail.get("proof_hash")
     if not _non_empty_text(proof_hash):
         return False
+    if _recomputed_universal_action_proof_hash(universal_detail) != proof_hash:
+        return False
     expected_orchestration_id = stable_identifier(
         "universal-action-orchestration",
         {
@@ -771,6 +774,72 @@ def _uao_record_binds_universal_detail(
         ):
             return False
     return True
+
+
+def _recomputed_universal_action_proof_hash(
+    universal_detail: Mapping[str, Any],
+) -> str | None:
+    action_envelope = universal_detail.get("action_envelope")
+    if not isinstance(action_envelope, Mapping):
+        return None
+    if not isinstance(universal_detail.get("blocked"), bool):
+        return None
+    execution_receipt_ref = universal_detail.get("execution_receipt_ref")
+    if execution_receipt_ref is not None and not isinstance(execution_receipt_ref, str):
+        return None
+    text_fields = (
+        "action_id",
+        "block_reason",
+        "trace_ref",
+        "admission_receipt_ref",
+        "closure_state",
+        "goal_certificate_id",
+        "world_certificate_id",
+        "plan_certificate_id",
+        "simulation_certificate_id",
+        "intent_certificate_id",
+        "intent_hash",
+        "capability_status",
+        "capability_id",
+        "governed_action_id",
+        "dispatch_ledger_hash",
+        "terminal_certificate_id",
+        "learning_admission_id",
+    )
+    if any(
+        not isinstance(universal_detail.get(field_name), str)
+        for field_name in text_fields
+    ):
+        return None
+    payload = {
+        "action_id": universal_detail["action_id"],
+        "blocked": universal_detail["blocked"],
+        "block_reason": universal_detail["block_reason"],
+        "action_envelope": dict(action_envelope),
+        "trace_ref": universal_detail["trace_ref"],
+        "admission_receipt_ref": universal_detail["admission_receipt_ref"],
+        "execution_receipt_ref": execution_receipt_ref,
+        "closure_state": universal_detail["closure_state"],
+        "goal_certificate_id": universal_detail["goal_certificate_id"],
+        "world_certificate_id": universal_detail["world_certificate_id"],
+        "plan_certificate_id": universal_detail["plan_certificate_id"],
+        "simulation_certificate_id": universal_detail["simulation_certificate_id"],
+        "intent_certificate_id": universal_detail["intent_certificate_id"],
+        "intent_hash": universal_detail["intent_hash"],
+        "capability_status": universal_detail["capability_status"],
+        "capability_id": universal_detail["capability_id"],
+        "governed_action_id": universal_detail["governed_action_id"],
+        "dispatch_ledger_hash": universal_detail["dispatch_ledger_hash"],
+        "terminal_certificate_id": universal_detail["terminal_certificate_id"],
+        "learning_admission_id": universal_detail["learning_admission_id"],
+    }
+    try:
+        encoded = json.dumps(
+            payload, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+        )
+    except (TypeError, ValueError):
+        return None
+    return stable_identifier("universal-action-proof", {"payload": encoded})
 
 
 def _uao_stage_records_by_kind(value: Any) -> dict[str, Mapping[str, Any]] | None:
@@ -1013,6 +1082,12 @@ def _universal_action_transition_detail(
             if result.simulation_certificate
             else ""
         ),
+        "intent_certificate_id": result.intent_certificate.certificate_id
+        if result.intent_certificate
+        else "",
+        "intent_hash": result.intent_certificate.intent_hash
+        if result.intent_certificate
+        else "",
         "capability_status": result.capability_decision.status.value
         if result.capability_decision
         else "",

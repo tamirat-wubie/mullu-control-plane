@@ -100,9 +100,33 @@ def _assert_gateway_request_receipt(
 
 def _bind_uao_fixture_to_universal_action_detail(
     record: dict,
-    *,
-    proof_hash: str = "universal-action-proof-test",
 ) -> dict:
+    universal_detail = {
+        "action_id": record["action_id"],
+        "blocked": record["decision"]["status"] != "allow",
+        "block_reason": ""
+        if record["decision"]["status"] == "allow"
+        else record["decision"]["reason_code"],
+        "action_envelope": copy.deepcopy(record["action_envelope"]),
+        "trace_ref": record["trace_ref"],
+        "admission_receipt_ref": record["admission_receipt_ref"],
+        "execution_receipt_ref": record["execution_receipt_ref"],
+        "closure_state": record["closure_state"],
+        "goal_certificate_id": f"goal-certificate://{record['action_id']}",
+        "world_certificate_id": f"world-certificate://{record['action_id']}",
+        "plan_certificate_id": f"plan-certificate://{record['action_id']}",
+        "simulation_certificate_id": f"simulation-certificate://{record['action_id']}",
+        "intent_certificate_id": f"intent-certificate://{record['action_id']}",
+        "intent_hash": f"typed-intent://{record['action_id']}",
+        "capability_status": "accepted",
+        "capability_id": record["action_envelope"]["capability_refs"][0],
+        "governed_action_id": f"governed-action://{record['action_id']}",
+        "dispatch_ledger_hash": f"dispatch-ledger://{record['action_id']}",
+        "terminal_certificate_id": f"terminal-certificate://{record['action_id']}",
+        "learning_admission_id": f"learning-admission://{record['action_id']}",
+    }
+    proof_hash = _uao_fixture_proof_hash(universal_detail)
+    universal_detail["proof_hash"] = proof_hash
     record["orchestration_id"] = stable_identifier(
         "universal-action-orchestration",
         {
@@ -124,19 +148,60 @@ def _bind_uao_fixture_to_universal_action_detail(
         record["lineage"]["accepted_deltas"] + record["lineage"]["rejected_deltas"]
     ):
         delta["delta_id"] = delta_ref
-    return {
-        "action_id": record["action_id"],
-        "blocked": record["decision"]["status"] != "allow",
-        "block_reason": ""
-        if record["decision"]["status"] == "allow"
-        else record["decision"]["reason_code"],
-        "action_envelope": copy.deepcopy(record["action_envelope"]),
-        "trace_ref": record["trace_ref"],
-        "admission_receipt_ref": record["admission_receipt_ref"],
-        "execution_receipt_ref": record["execution_receipt_ref"],
-        "closure_state": record["closure_state"],
-        "proof_hash": proof_hash,
+    return universal_detail
+
+
+def _uao_fixture_proof_hash(universal_detail: dict) -> str:
+    payload = {
+        "action_id": universal_detail["action_id"],
+        "blocked": universal_detail["blocked"],
+        "block_reason": universal_detail["block_reason"],
+        "action_envelope": dict(universal_detail["action_envelope"]),
+        "trace_ref": universal_detail["trace_ref"],
+        "admission_receipt_ref": universal_detail["admission_receipt_ref"],
+        "execution_receipt_ref": universal_detail["execution_receipt_ref"],
+        "closure_state": universal_detail["closure_state"],
+        "goal_certificate_id": universal_detail["goal_certificate_id"],
+        "world_certificate_id": universal_detail["world_certificate_id"],
+        "plan_certificate_id": universal_detail["plan_certificate_id"],
+        "simulation_certificate_id": universal_detail["simulation_certificate_id"],
+        "intent_certificate_id": universal_detail["intent_certificate_id"],
+        "intent_hash": universal_detail["intent_hash"],
+        "capability_status": universal_detail["capability_status"],
+        "capability_id": universal_detail["capability_id"],
+        "governed_action_id": universal_detail["governed_action_id"],
+        "dispatch_ledger_hash": universal_detail["dispatch_ledger_hash"],
+        "terminal_certificate_id": universal_detail["terminal_certificate_id"],
+        "learning_admission_id": universal_detail["learning_admission_id"],
     }
+    encoded = json.dumps(
+        payload, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    )
+    return stable_identifier("universal-action-proof", {"payload": encoded})
+
+
+def _rebind_uao_fixture_record_to_proof_hash(record: dict, proof_hash: str) -> None:
+    record["orchestration_id"] = stable_identifier(
+        "universal-action-orchestration",
+        {
+            "action_id": record["action_id"],
+            "proof_hash": proof_hash,
+            "trace_ref": record["trace_ref"],
+        },
+    )
+    delta_ref = stable_identifier(
+        "universal-action-delta",
+        {
+            "action_id": record["action_id"],
+            "proof_hash": proof_hash,
+            "closure_state": record["closure_state"],
+        },
+    )
+    record["lineage"]["delta_ref"] = delta_ref
+    for delta in (
+        record["lineage"]["accepted_deltas"] + record["lineage"]["rejected_deltas"]
+    ):
+        delta["delta_id"] = delta_ref
 
 
 def _slack_signature(*, secret: str, timestamp: str, body: str) -> str:
@@ -2342,6 +2407,50 @@ class TestGatewayStatus:
         record["action_envelope"]["intent"] = command.command_id
         universal_detail = _bind_uao_fixture_to_universal_action_detail(record)
         record["orchestration_id"] = "universal-action-orchestration-spoofed"
+        gateway_app.state.command_ledger.transition(
+            command.command_id,
+            CommandState.DISPATCHED,
+            detail={
+                "cause": "universal_action_kernel_dispatched",
+                "universal_action": universal_detail,
+                "universal_action_orchestration": record,
+            },
+        )
+
+        resp = client.get(
+            f"/commands/{command.command_id}/universal-action-orchestration"
+        )
+
+        assert resp.status_code == 404
+        assert (
+            resp.json()["detail"] == "universal action orchestration record not found"
+        )
+        assert gateway_app.state.command_ledger.get(command.command_id) is not None
+
+    def test_command_universal_action_orchestration_proof_hash_tamper_returns_404(
+        self, gateway_app, client
+    ):
+        record = json.loads(
+            (
+                _ROOT
+                / "examples"
+                / "universal_action_orchestration.allowed_status_publish.json"
+            ).read_text(encoding="utf-8")
+        )
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="tenant_ops_demo",
+            actor_id="service:status_page_worker",
+            source="web",
+            conversation_id="conversation-orchestration-proof-hash-tamper",
+            idempotency_key="universal-orchestration-proof-hash-tamper",
+            intent="refresh_public_status_page",
+            payload={"body": "proof-hash-tampered status page replay"},
+        )
+        record["action_envelope"]["intent"] = command.command_id
+        universal_detail = _bind_uao_fixture_to_universal_action_detail(record)
+        spoofed_proof_hash = "universal-action-proof-spoofed"
+        universal_detail["proof_hash"] = spoofed_proof_hash
+        _rebind_uao_fixture_record_to_proof_hash(record, spoofed_proof_hash)
         gateway_app.state.command_ledger.transition(
             command.command_id,
             CommandState.DISPATCHED,

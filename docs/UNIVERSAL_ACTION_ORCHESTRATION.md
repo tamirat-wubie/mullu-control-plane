@@ -65,6 +65,7 @@ The validator applies these rules deterministically:
 18. Every command replay record must come from a command event whose source channel, idempotency key, policy version, and trace id match the command envelope before exposure.
 19. Every command replay record must carry the canonical ordered UAO pipeline stage sequence before exposure.
 20. Runtime bypass detection scans effect-bearing dispatch and execute call sites for UAO or governed binding before closure.
+21. Every command replay record must bind proof hash to an independent recomputation of the persisted event-local universal action proof detail before exposure.
 
 The core invariant is:
 
