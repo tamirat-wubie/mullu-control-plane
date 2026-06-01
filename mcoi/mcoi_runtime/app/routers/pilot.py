@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.pilot_init import PilotInitRequest, PilotProvisionRegistry, build_pilot_scaffold
 from mcoi_runtime.app.routers.deps import deps
-from mcoi_runtime.app.routers._tenant_scope import scoped_listing_tenant
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_listing_tenant
 from mcoi_runtime.app.routers.musia_auth import require_admin
 
 
@@ -98,7 +98,7 @@ def list_pilot_provisions(
 
 
 @router.get("/api/v1/pilots/provisions/{pilot_id}")
-def get_pilot_provision(pilot_id: str) -> dict[str, Any]:
+def get_pilot_provision(pilot_id: str, request: Request) -> dict[str, Any]:
     """Fetch one accepted hosted pilot provisioning record."""
     deps.metrics.inc("requests_governed")
     record = _provision_registry.get(pilot_id)
@@ -111,4 +111,5 @@ def get_pilot_provision(pilot_id: str) -> dict[str, Any]:
                 "governed": True,
             },
         )
+    enforce_tenant_scope(request, record.tenant_id)
     return {"record": record.to_dict(), "governed": True}

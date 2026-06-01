@@ -1,10 +1,11 @@
 """Explanation endpoints — why was this action allowed/denied?"""
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 
 router = APIRouter()
 
@@ -41,7 +42,7 @@ def explain_action(req: ExplainActionRequest):
 
 
 @router.get("/api/v1/explain/audit/{entry_index}")
-def explain_audit_entry(entry_index: int):
+def explain_audit_entry(entry_index: int, request: Request):
     """Explain a specific audit trail entry by index."""
     deps.metrics.inc("requests_governed")
     entries = deps.audit_trail.query(limit=entry_index + 1)
@@ -51,6 +52,7 @@ def explain_audit_entry(entry_index: int):
             "error_code": "entry_not_found",
             "governed": True,
         })
+    enforce_tenant_scope(request, entries[entry_index].tenant_id)
     explanation = deps.explanation_engine.explain_audit_entry(entries[entry_index])
     return {
         "explanation_id": explanation.explanation_id,

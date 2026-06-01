@@ -158,12 +158,13 @@ def list_temporal_schedules(
 
 
 @router.get("/api/v1/temporal/schedules/{schedule_id}")
-def get_temporal_schedule(schedule_id: str):
+def get_temporal_schedule(schedule_id: str, request: Request):
     """Return one temporal schedule and its receipts."""
     deps.metrics.inc("requests_governed")
     schedule = deps.temporal_scheduler_store.get_action(schedule_id)
     if schedule is None:
         raise HTTPException(404, detail=_temporal_error_detail("schedule not found", "schedule_not_found"))
+    enforce_tenant_scope(request, schedule.tenant_id)
     receipts = deps.temporal_scheduler_store.list_receipts(schedule_id=schedule_id)
     return {
         "schedule": _schedule_to_body(schedule),

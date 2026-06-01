@@ -330,7 +330,7 @@ def list_tickets(
 
 
 @router.get("/api/v1/god-mode/tickets/{ticket_id}")
-def get_ticket(ticket_id: str) -> dict[str, Any]:
+def get_ticket(ticket_id: str, _: str = Depends(require_admin)) -> dict[str, Any]:
     try:
         ticket = get_engine().get_ticket(ticket_id)
     except GodModeEngineError as exc:
