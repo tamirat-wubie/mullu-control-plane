@@ -81,6 +81,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _agentic_control_security_governor_skill(),
         _agentic_control_swarm_governor_skill(),
         _agentic_control_coding_governor_skill(),
+        _agentic_control_quality_governor_skill(),
         _agentic_control_runtime_governor_skill(),
         _agentic_control_release_governor_skill(),
         _agentic_control_autonomous_operations_skill(),
@@ -1924,6 +1925,121 @@ def _agentic_control_coding_governor_skill() -> SkillDescriptor:
                 "change_boundary",
                 "test_contract",
                 "rollback_plan",
+            ),
+        },
+    )
+
+
+def _agentic_control_quality_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.quality_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic quality governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_quality_boundary",
+                name="Define quality boundary",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "quality_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_quality_risks",
+                name="Rank quality risks",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_quality_boundary",),
+                input_bindings={"mission_contract_ref": "define_quality_boundary.mission_contract_ref"},
+                output_keys=("quality_risk_order_ref", "dependency_blockers", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_quality_governance",
+                name="Evaluate quality governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_quality_risks",),
+                input_bindings={"priority_order_ref": "rank_quality_risks.quality_risk_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_actions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_quality_budget",
+                name="Bound quality budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_quality_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_quality_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "halt_thresholds", "resource_floor"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_acceptance_verification",
+                name="Plan acceptance verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("bound_quality_budget",),
+                input_bindings={
+                    "quality_boundary_ref": "define_quality_boundary.quality_boundary_ref",
+                    "budget_envelope_ref": "bound_quality_budget.budget_envelope_ref",
+                },
+                output_keys=("quality_verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_quality_interrogation",
+                name="Plan quality interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_acceptance_verification",),
+                input_bindings={"verification_plan_ref": "plan_acceptance_verification.quality_verification_plan_ref"},
+                output_keys=("quality_interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_quality_gaps",
+                name="Refine quality gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_quality_interrogation",),
+                input_bindings={
+                    "quality_boundary_ref": "define_quality_boundary.quality_boundary_ref",
+                    "verification_plan_ref": "plan_acceptance_verification.quality_verification_plan_ref",
+                    "interrogation_plan_ref": "plan_quality_interrogation.quality_interrogation_plan_ref",
+                },
+                output_keys=("quality_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_quality_memory_admission",
+                name="Plan quality memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_quality_gaps",),
+                input_bindings={"refinement_plan_ref": "refine_quality_gaps.quality_refinement_plan_ref"},
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes read-only quality governance by linking quality boundary, "
+            "risk ranking, governance gate, resource budget, acceptance "
+            "verification, interrogation, refinement, and memory-admission "
+            "planning before implementation, release, or evidence-ledger work."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "quality_governor": True,
+            "quality_surfaces": (
+                "quality_boundary_ref",
+                "quality_verification_plan_ref",
+                "required_gates",
+                "closure_rule",
+                "residual_risk",
             ),
         },
     )

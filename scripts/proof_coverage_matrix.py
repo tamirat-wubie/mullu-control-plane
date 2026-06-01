@@ -3772,6 +3772,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "agentic_control.security_governor.v1",
                 "agentic_control.swarm_governor.v1",
                 "agentic_control.coding_governor.v1",
+                "agentic_control.quality_governor.v1",
                 "agentic_control.runtime_governor.v1",
                 "agentic_control.release_governor.v1",
                 "agentic_control.autonomous_operations.v1",
@@ -3791,7 +3792,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_capability_fabric.py",
                 "mcoi/tests/test_default_skill_catalog.py",
             ],
-            "Agentic-control capability pack admits bounded autonomous mission control, prioritization, governance gating, resource bounding, algorithm review, threat modeling, swarm coordination, product planning, verification planning, interrogation, recursive refinement, memory-admission planning, incident-recovery planning, telemetry-triage planning, code-change planning, release-handoff planning, evidence ledger append, Project Discipline Mesh scanning, resource-governor planning, temporal-governor planning, memory-governor planning, evidence-governor planning, math-governor planning, algorithm-governor planning, security-governor planning, swarm-governor planning, coding-governor planning, runtime-governor planning, release-governor planning, and autonomous operations behind governed default-pack admission; the evidence append path is world-mutating, approval-gated, receipt-bound, and blocked from production readiness without live evidence.",
+            "Agentic-control capability pack admits bounded autonomous mission control, prioritization, governance gating, resource bounding, algorithm review, threat modeling, swarm coordination, product planning, verification planning, interrogation, recursive refinement, memory-admission planning, incident-recovery planning, telemetry-triage planning, code-change planning, release-handoff planning, evidence ledger append, Project Discipline Mesh scanning, resource-governor planning, temporal-governor planning, memory-governor planning, evidence-governor planning, math-governor planning, algorithm-governor planning, security-governor planning, swarm-governor planning, coding-governor planning, quality-governor planning, runtime-governor planning, release-governor planning, and autonomous operations behind governed default-pack admission; the evidence append path is world-mutating, approval-gated, receipt-bound, and blocked from production readiness without live evidence.",
             [
                 "agentic_control_capability_entries_schema_valid",
                 "agentic_control_pack_projects_governed_authority_records",
