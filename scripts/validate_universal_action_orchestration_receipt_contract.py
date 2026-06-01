@@ -73,6 +73,7 @@ EXPECTED_CHECK_NAMES = (
     "universal_action_orchestration_document",
     "universal_action_orchestration_no_bypass",
     "universal_action_orchestration_receipts",
+    "universal_action_orchestration_runtime_bypass_detector",
 )
 ALLOWED_STATUSES = ("passed", "failed")
 WINDOWS_ABSOLUTE_PATH_PATTERN = re.compile(r"[A-Za-z]:[/\\]")

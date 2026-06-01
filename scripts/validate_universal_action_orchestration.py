@@ -20,6 +20,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
+try:
+    from detect_uao_runtime_bypass import build_detection_report
+except ModuleNotFoundError:  # pragma: no cover - exercised when imported as package.
+    from scripts.detect_uao_runtime_bypass import build_detection_report
+
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SCHEMA_PATH = (
@@ -191,6 +196,7 @@ REQUIRED_DOCUMENT_TERMS = (
     "Every command replay record must come from a command event whose event hash recomputes from the persisted event payload before exposure.",
     "Every command replay record must come from a command event whose source channel, idempotency key, policy version, and trace id match the command envelope before exposure.",
     "Every command replay record must carry the canonical ordered UAO pipeline stage sequence before exposure.",
+    "Runtime bypass detection scans effect-bearing dispatch and execute call sites for UAO or governed binding before closure.",
 )
 
 
@@ -365,6 +371,24 @@ def validate_contract(
         errors.extend(
             f"{example_path.name}: {error}" for error in validate_orchestration(record)
         )
+    errors.extend(validate_runtime_bypass_detector())
+    return errors
+
+
+def validate_runtime_bypass_detector() -> list[str]:
+    """Return deterministic errors for direct runtime bypass findings."""
+
+    report = build_detection_report()
+    errors: list[str] = []
+    for parse_error in report["parse_errors"]:
+        errors.append(f"runtime bypass detector parse error: {parse_error}")
+    for finding in report["findings"]:
+        if finding["classification"] == "violation":
+            errors.append(
+                "runtime bypass detector violation: "
+                f"{finding['path']}:{finding['line']} "
+                f"{finding['symbol']} {finding['call']} - {finding['reason']}"
+            )
     return errors
 
 
@@ -381,6 +405,7 @@ def build_validation_report(
         "universal_action_orchestration_document",
         "universal_action_orchestration_no_bypass",
         "universal_action_orchestration_receipts",
+        "universal_action_orchestration_runtime_bypass_detector",
     )
     try:
         errors = validate_contract(schema_path, example_paths, document_path)
@@ -1313,6 +1338,7 @@ def main(argv: list[str] | None = None) -> int:
     sys.stdout.write("[PASS] universal_action_orchestration_document\n")
     sys.stdout.write("[PASS] universal_action_orchestration_no_bypass\n")
     sys.stdout.write("[PASS] universal_action_orchestration_receipts\n")
+    sys.stdout.write("[PASS] universal_action_orchestration_runtime_bypass_detector\n")
     sys.stdout.write("STATUS: passed\n")
     return 0
 

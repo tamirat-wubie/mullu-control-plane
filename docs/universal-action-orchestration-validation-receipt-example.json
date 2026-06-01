@@ -1,5 +1,5 @@
 {
-  "check_count": 5,
+  "check_count": 6,
   "checks": [
     {
       "name": "universal_action_orchestration_schema",
@@ -19,6 +19,10 @@
     },
     {
       "name": "universal_action_orchestration_receipts",
+      "passed": true
+    },
+    {
+      "name": "universal_action_orchestration_runtime_bypass_detector",
       "passed": true
     }
   ],
