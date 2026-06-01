@@ -15,11 +15,30 @@ Invariants:
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
 from gateway.browser_worker import BrowserActionObservation, BrowserActionRequest
+
+# Characters permitted in a screenshot filename stem. Everything else (path
+# separators, parent references, NUL, control characters) is replaced so a
+# caller-controlled request_id cannot escape the evidence directory.
+_UNSAFE_EVIDENCE_CHARS = re.compile(r"[^A-Za-z0-9._-]")
+
+
+def _safe_evidence_stem(request_id: str, *, max_length: int = 128) -> str:
+    """Reduce a request identifier to a path-safe filename stem.
+
+    Prevents request_id from steering ``page.screenshot(path=...)`` outside the
+    evidence directory via path separators, ``..`` traversal, or absolute paths.
+    """
+    sanitized = _UNSAFE_EVIDENCE_CHARS.sub("_", request_id)[:max_length]
+    # A stem of only dots/separators could still read as a path reference.
+    if not sanitized.strip("._-"):
+        return "evidence"
+    return sanitized
 
 
 PlaywrightRuntimeFactory = Callable[[], Any]
@@ -147,7 +166,7 @@ class PlaywrightBrowserAdapter:
 
     def _screenshot_ref(self, *, page: Any, request: BrowserActionRequest, suffix: str) -> str:
         self._profile.evidence_dir.mkdir(parents=True, exist_ok=True)
-        filename = f"{request.request_id}-{suffix}.png"
+        filename = f"{_safe_evidence_stem(request.request_id)}-{suffix}.png"
         screenshot_path = self._profile.evidence_dir / filename
         page.screenshot(path=str(screenshot_path), full_page=True)
         return f"evidence:browser-screenshot:{filename}"
