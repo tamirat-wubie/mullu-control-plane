@@ -32,6 +32,7 @@ def test_recovery_preflight_blocks_missing_worker_and_token(tmp_path: Path) -> N
 
     assert result.ok is True
     assert result.ready_to_rerun_probe is False
+    assert result.receipt_path == "email-calendar-live-receipt.json"
     assert result.failure_class == "worker_probe_failed"
     assert "verify_email_calendar_worker_reachable" in result.blockers
     assert "verify_connector_token_present" in result.blockers
@@ -53,8 +54,10 @@ def test_recovery_preflight_accepts_redacted_ready_bindings(tmp_path: Path) -> N
     assert _check(result, "verify_email_calendar_worker_reachable").passed is True
     assert _check(result, "verify_connector_token_present").detail == "present accepted token bindings=1"
     assert _check(result, "verify_connector_scope_read_only").passed is True
+    assert result.receipt_path == "email-calendar-live-receipt.json"
     assert "secret-token-value" not in serialized
     assert "https://worker.internal/email-calendar" not in serialized
+    assert str(tmp_path) not in serialized
 
 
 def test_recovery_preflight_accepts_google_calendar_readonly_scope(tmp_path: Path) -> None:
@@ -135,10 +138,47 @@ def test_recovery_preflight_cli_outputs_redacted_json(tmp_path: Path, monkeypatc
 
     assert exit_code == 0
     assert payload["ready_to_rerun_probe"] is True
+    assert payload["receipt_path"] == "email-calendar-live-receipt.json"
     assert payload["blockers"] == []
     assert "secret-worker-value" not in serialized
     assert "secret-token-value" not in serialized
     assert "worker.internal" not in serialized
+    assert str(tmp_path) not in serialized
+
+
+def test_recovery_preflight_missing_receipt_path_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "missing-email-calendar-live-receipt.json"
+
+    result = preflight_finance_email_calendar_recovery(
+        receipt_path=receipt_path,
+        env_reader=lambda name: "",
+    )
+    serialized = json.dumps(result.as_dict(), sort_keys=True)
+
+    assert result.ok is False
+    assert result.ready_to_rerun_probe is False
+    assert result.receipt_path == "missing-email-calendar-live-receipt.json"
+    assert result.receipt_status == ""
+    assert result.errors == ("finance email/calendar live receipt could not be read",)
+    assert str(tmp_path) not in serialized
+
+
+def test_recovery_preflight_malformed_receipt_path_is_bounded(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "bad-email-calendar-live-receipt.json"
+    receipt_path.write_text('{"receipt_id": "secret-email-calendar-token"', encoding="utf-8")
+
+    result = preflight_finance_email_calendar_recovery(
+        receipt_path=receipt_path,
+        env_reader=lambda name: "",
+    )
+    serialized = json.dumps(result.as_dict(), sort_keys=True)
+
+    assert result.ok is False
+    assert result.ready_to_rerun_probe is False
+    assert result.receipt_path == "bad-email-calendar-live-receipt.json"
+    assert result.receipt_status == ""
+    assert result.errors == ("finance email/calendar live receipt must be JSON",)
+    assert str(tmp_path) not in serialized
 
 
 def _write_failed_receipt(tmp_path: Path) -> Path:
