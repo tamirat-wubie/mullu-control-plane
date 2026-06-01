@@ -14,7 +14,9 @@ import io
 import json
 from contextlib import redirect_stdout
 from dataclasses import replace
+from pathlib import Path
 
+import pytest
 from scripts import validate_sdlc_pr_enforcement as validator
 
 
@@ -83,6 +85,18 @@ def test_cli_json_receipt_reports_passed_contract() -> None:
     assert report["valid"] is True
     assert report["status"] == "passed"
     assert report["check_count"] == 4
+
+
+def test_receipt_path_rejects_escape_and_non_json() -> None:
+    with pytest.raises(ValueError):
+        validator.resolve_receipt_path(Path("../sdlc_pr_enforcement_receipt.json"))
+    with pytest.raises(ValueError):
+        validator.resolve_receipt_path(Path(".change_assurance/sdlc_pr_enforcement_receipt.txt"))
+    resolved_path = validator.resolve_receipt_path(Path(".change_assurance/sdlc_pr_enforcement_receipt.json"))
+
+    assert resolved_path.suffix == ".json"
+    assert validator.WORKSPACE_ROOT.resolve() in resolved_path.parents
+    assert resolved_path.name == "sdlc_pr_enforcement_receipt.json"
 
 
 def test_validate_contract_uses_injected_texts_for_drift_detection() -> None:
