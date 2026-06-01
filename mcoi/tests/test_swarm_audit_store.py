@@ -11,6 +11,7 @@ closure, and duplicate run ids are rejected.
 from __future__ import annotations
 
 import json
+import threading
 from decimal import Decimal
 
 import pytest
@@ -71,6 +72,47 @@ def test_audit_store_rejects_duplicate_run_id(tmp_path) -> None:
     assert store.get("run_invoice_duplicate") is not None
     with pytest.raises(SwarmInvariantViolation, match="duplicate swarm run_id"):
         store.append(record)
+
+
+def test_audit_store_serializes_concurrent_duplicate_run_id(tmp_path) -> None:
+    # The duplicate-run-id check and the append must be one atomic critical
+    # section. Without it, concurrent appends with the same run_id both pass
+    # the check and both persist, breaking the append-only-by-run-id invariant.
+    result = run_invoice_swarm(_request())
+    store = SwarmAuditStore(tmp_path / "swarm-runs.jsonl")
+
+    def _record():
+        return invoice_result_to_audit_record(
+            run_id="run_invoice_race",
+            tenant_id="tenant_a",
+            result=result,
+            created_at="2026-05-05T12:00:00Z",
+        )
+
+    workers = 16
+    ready = threading.Barrier(workers)
+    outcomes: list[str] = []
+    outcomes_lock = threading.Lock()
+
+    def worker() -> None:
+        ready.wait()
+        try:
+            store.append(_record())
+            outcome = "ok"
+        except SwarmInvariantViolation:
+            outcome = "rejected"
+        with outcomes_lock:
+            outcomes.append(outcome)
+
+    threads = [threading.Thread(target=worker) for _ in range(workers)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert outcomes.count("ok") == 1
+    assert outcomes.count("rejected") == workers - 1
+    assert store.count == 1
 
 
 def test_audit_record_preserves_escalated_not_closed_state(tmp_path) -> None:
