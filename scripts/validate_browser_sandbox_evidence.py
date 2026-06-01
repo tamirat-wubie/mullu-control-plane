@@ -57,13 +57,22 @@ def validate_browser_sandbox_evidence(
     blockers = tuple(str(blocker) for blocker in result["blockers"])
     return BrowserSandboxEvidenceValidation(
         valid=result["passed"] is True and not blockers,
-        evidence_path=str(evidence_path),
+        evidence_path=_path_label(evidence_path),
         status=str(result["status"]),
         detail=str(result["detail"]),
         evidence_id=str(result["evidence_id"]),
         receipt_id=str(result["receipt_id"]),
         blockers=blockers,
     )
+
+
+def _path_label(path: Path) -> str:
+    """Return a validation report path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:

@@ -46,6 +46,8 @@ def test_browser_sandbox_evidence_uses_rootless_runner_receipt(tmp_path: Path) -
     payload = json.loads(output_path.read_text(encoding="utf-8"))
 
     assert result.passed is True
+    assert result.output_path == output_path.name
+    assert str(tmp_path) not in result.output_path
     assert payload["status"] == "passed"
     assert payload["probe"]["capability_id"] == "browser.extract_text"
     assert payload["receipt"]["verification_status"] == "passed"
@@ -78,6 +80,8 @@ def test_browser_sandbox_evidence_blocks_on_non_linux_without_launch(tmp_path: P
 
     assert result.passed is False
     assert result.status == "failed"
+    assert result.output_path == output_path.name
+    assert str(tmp_path) not in result.output_path
     assert launched is False
     assert "browser_sandbox_runner_linux_only" in result.blockers
     assert payload["receipt"]["verification_status"] == "blocked"
@@ -100,7 +104,9 @@ def test_browser_sandbox_evidence_cli_outputs_json_for_blocked_probe(
 
     assert exit_code == 2
     assert stdout_payload["status"] == "failed"
+    assert stdout_payload["output_path"] == output_path.name
     assert stdout_payload["receipt_id"] == file_payload["receipt"]["receipt_id"]
+    assert str(tmp_path) not in stdout_payload["output_path"]
     assert "browser_sandbox_probe_blocked" in stdout_payload["blockers"]
     assert file_payload["receipt"]["verification_status"] == "blocked"
     assert file_payload["receipt"]["capability_id"] == "browser.extract_text"
