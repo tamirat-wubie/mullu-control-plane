@@ -74,6 +74,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _agentic_control_project_discipline_mesh_skill(),
         _agentic_control_strategy_governor_skill(),
         _agentic_control_decision_governor_skill(),
+        _agentic_control_design_governor_skill(),
         _agentic_control_product_governor_skill(),
         _agentic_control_management_governor_skill(),
         _agentic_control_resource_governor_skill(),
@@ -1039,6 +1040,144 @@ def _agentic_control_decision_governor_skill() -> SkillDescriptor:
                 "selected_option_ref",
                 "rejection_rationale_refs",
                 "decision_horizon",
+                "closure_rule",
+            ),
+        },
+    )
+
+
+def _agentic_control_design_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.design_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic design governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_design_boundary",
+                name="Define design boundary",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "design_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_design_research_questions",
+                name="Rank design research questions",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_design_boundary",),
+                input_bindings={"mission_contract_ref": "define_design_boundary.mission_contract_ref"},
+                output_keys=("research_question_order_ref", "assumption_risks", "grounding_gaps"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_design_governance",
+                name="Evaluate design governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_design_research_questions",),
+                input_bindings={"priority_order_ref": "rank_design_research_questions.research_question_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_assumptions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_design_research_budget",
+                name="Bound design research budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_design_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_design_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "prototype_budget", "halt_thresholds"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_design_validation",
+                name="Plan design validation",
+                action_type="agentic_control.product_management.plan",
+                depends_on=("bound_design_research_budget",),
+                input_bindings={
+                    "design_boundary_ref": "define_design_boundary.design_boundary_ref",
+                    "research_order_ref": "rank_design_research_questions.research_question_order_ref",
+                    "gate_decision_ref": "evaluate_design_governance.gate_decision_ref",
+                    "budget_envelope_ref": "bound_design_research_budget.budget_envelope_ref",
+                },
+                output_keys=(
+                    "design_validation_plan_ref",
+                    "prototype_scope_ref",
+                    "research_protocol_ref",
+                    "interaction_risk_register_ref",
+                ),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_design_verification",
+                name="Plan design verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("plan_design_validation",),
+                input_bindings={"design_validation_plan_ref": "plan_design_validation.design_validation_plan_ref"},
+                output_keys=("design_verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_design_interrogation",
+                name="Plan design interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_design_verification",),
+                input_bindings={
+                    "verification_plan_ref": "plan_design_verification.design_verification_plan_ref"
+                },
+                output_keys=("design_interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_design_gaps",
+                name="Refine design gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_design_interrogation",),
+                input_bindings={
+                    "design_validation_plan_ref": "plan_design_validation.design_validation_plan_ref",
+                    "verification_plan_ref": "plan_design_verification.design_verification_plan_ref",
+                    "interrogation_plan_ref": "plan_design_interrogation.design_interrogation_plan_ref",
+                },
+                output_keys=("design_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_design_memory_admission",
+                name="Plan design memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_design_gaps",),
+                input_bindings={
+                    "refinement_plan_ref": "refine_design_gaps.design_refinement_plan_ref"
+                },
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes design boundary definition, research-question ranking, "
+            "governance gating, prototype budget bounding, design-validation "
+            "planning, research protocol planning, interaction-risk registration, "
+            "verification, interrogation, design-gap refinement, and "
+            "memory-admission planning before implementation, release, or "
+            "evidence authority is selected."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "design_governor": True,
+            "design_surfaces": (
+                "design_boundary_ref",
+                "design_validation_plan_ref",
+                "prototype_scope_ref",
+                "research_protocol_ref",
+                "interaction_risk_register_ref",
                 "closure_rule",
             ),
         },
