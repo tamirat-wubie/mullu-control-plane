@@ -2856,6 +2856,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "orgos_case_governance_lifecycle",
             [
                 "/api/v1/orgs",
+                "/api/v1/orgs/{org_id}/action-queue",
+                "/api/v1/orgs/{org_id}/action-queue/view",
                 "/api/v1/orgs/{org_id}/authority-map",
                 "/api/v1/orgs/{org_id}/authority-map/view",
                 "/api/v1/orgs/{org_id}/bootstrap-minimum",
@@ -2909,7 +2911,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_organization_kernel_router.py",
                 "mcoi/tests/test_organization_kernel_store.py",
             ],
-            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, closure decisions, case portfolio, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
+            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, closure decisions, case portfolio, action queue, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
             [
                 "orgos_api_runs_launch_gateway_case_control_loop",
                 "orgos_api_denies_unbound_authority_gate",
@@ -2933,6 +2935,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "case_step_handoffs_view_is_read_only_and_escaped",
                 "case_plan_step_admission_preview_defers_missing_evidence_without_mutation",
                 "case_plan_step_admission_preview_allows_receipt_binding_without_dispatch",
+                "organization_action_queue_reports_deferred_handoff_actions_without_mutation",
+                "organization_action_queue_reports_receipt_ready_step_without_dispatch",
+                "organization_action_queue_view_is_read_only_and_escaped",
                 "department_registry_view_is_read_only_and_escaped",
                 "case_closure_certificate_view_is_read_only_and_escaped",
                 "case_proof_timeline_reports_open_case_without_closure",

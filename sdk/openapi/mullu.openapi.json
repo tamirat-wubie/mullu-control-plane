@@ -4010,6 +4010,51 @@
         "title": "PrivacyRuleRequest",
         "type": "object"
       },
+      "PrivatePilotStoryEnvelope": {
+        "description": "HTTP response envelope for the read-only private pilot story.",
+        "properties": {
+          "governed": {
+            "default": true,
+            "title": "Governed",
+            "type": "boolean"
+          },
+          "operation": {
+            "title": "Operation",
+            "type": "string"
+          },
+          "receipt_count": {
+            "title": "Receipt Count",
+            "type": "integer"
+          },
+          "stage_count": {
+            "title": "Stage Count",
+            "type": "integer"
+          },
+          "story": {
+            "additionalProperties": true,
+            "title": "Story",
+            "type": "object"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "uao_branch_count": {
+            "title": "Uao Branch Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "operation",
+          "tenant_id",
+          "story",
+          "stage_count",
+          "uao_branch_count",
+          "receipt_count"
+        ],
+        "title": "PrivatePilotStoryEnvelope",
+        "type": "object"
+      },
       "PromoteRunbookRequest": {
         "properties": {
           "description": {
@@ -13569,8 +13614,42 @@
     },
     "/api/v1/ops/benchmarks": {
       "post": {
-        "description": "Run governance performance benchmarks and return results.",
+        "description": "Run governance performance benchmarks and return results.\n\nOperator-gated: the suite exercises every governance subsystem (multiple\nseconds of CPU per call), so an ungated endpoint is a denial-of-service\namplifier. require_admin is a no-op in dev mode.",
         "operationId": "run_benchmarks_api_v1_ops_benchmarks_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -13579,6 +13658,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Run Benchmarks"
@@ -13816,6 +13905,82 @@
           }
         },
         "summary": "Create Organization"
+      }
+    },
+    "/api/v1/orgs/{org_id}/action-queue": {
+      "get": {
+        "description": "Return a read-only operator action queue for open case handoffs.",
+        "operationId": "get_organization_action_queue_api_v1_orgs__org_id__action_queue_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Organization Action Queue"
+      }
+    },
+    "/api/v1/orgs/{org_id}/action-queue/view": {
+      "get": {
+        "description": "Return a browser-facing read-only operator action queue.",
+        "operationId": "get_organization_action_queue_view_api_v1_orgs__org_id__action_queue_view_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Organization Action Queue View"
       }
     },
     "/api/v1/orgs/{org_id}/authority-map": {
@@ -21381,6 +21546,105 @@
           }
         },
         "summary": "Software Receipt Dashboard",
+        "tags": [
+          "software-receipts"
+        ]
+      }
+    },
+    "/software/receipts/private-pilot/story": {
+      "get": {
+        "description": "Return the read-only OrgOS-to-dashboard private pilot story.",
+        "operationId": "private_pilot_story_summary_software_receipts_private_pilot_story_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "org_id",
+            "required": false,
+            "schema": {
+              "default": "org-private-pilot",
+              "minLength": 1,
+              "title": "Org Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "case_id",
+            "required": false,
+            "schema": {
+              "default": "case-private-pilot",
+              "minLength": 1,
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actor_id",
+            "required": false,
+            "schema": {
+              "default": "operator:private-pilot",
+              "minLength": 1,
+              "title": "Actor Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivatePilotStoryEnvelope"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Private Pilot Story Summary",
         "tags": [
           "software-receipts"
         ]

@@ -2084,6 +2084,118 @@ def _organization_case_portfolio(kernel: OrganizationKernel, org_id: str) -> dic
     }
 
 
+def _organization_action_queue(kernel: OrganizationKernel, org_id: str) -> dict[str, Any]:
+    organization = _organization_or_404(kernel, org_id)
+    state = kernel.snapshot_state()
+    cases = tuple(
+        sorted(
+            (
+                item for item in state.cases
+                if item.org_id == org_id and item.status is not OrganizationCaseStatus.CLOSED
+            ),
+            key=lambda item: item.case_id,
+        )
+    )
+    action_rows: list[dict[str, Any]] = []
+    attention_items: list[dict[str, object]] = []
+
+    for organization_case in cases:
+        handoff_projection = _case_step_handoffs(kernel, organization_case.case_id)
+        for handoff in handoff_projection["handoffs"]:
+            next_action = str(handoff["next_action"])
+            admission_preview = _case_step_action_admission_preview(
+                kernel,
+                organization_case.case_id,
+                str(handoff["step_id"]),
+                PlanStepActionAdmissionPreviewRequest(
+                    checked_preconditions=list(handoff["preconditions"]),
+                    proposed_action=next_action,
+                    requested_by_role_id=str(handoff["responsible_role_id"]),
+                ),
+            )
+            queue_severity = "ready" if admission_preview["decision"] == "allow" else "review"
+            if admission_preview["decision"] in {"block", "escalate"}:
+                queue_severity = "blocker"
+            action_id = stable_identifier(
+                "orgos-operator-action-queue-item",
+                {
+                    "org_id": org_id,
+                    "case_id": organization_case.case_id,
+                    "step_id": handoff["step_id"],
+                    "next_action": next_action,
+                    "decision": admission_preview["decision"],
+                    "reason_code": admission_preview["reason_code"],
+                },
+            )
+            action_row = {
+                "action_id": action_id,
+                "org_id": org_id,
+                "case_id": organization_case.case_id,
+                "case_goal": organization_case.goal,
+                "case_status": organization_case.status.value,
+                "case_risk": organization_case.risk.value,
+                "department_id": handoff["department_id"],
+                "responsible_role_id": handoff["responsible_role_id"],
+                "step_id": handoff["step_id"],
+                "capability_id": handoff["capability_id"],
+                "next_action": next_action,
+                "handoff_status": handoff["handoff_status"],
+                "admission_decision": admission_preview["decision"],
+                "reason_code": admission_preview["reason_code"],
+                "queue_severity": queue_severity,
+                "missing_evidence": handoff["missing_evidence"],
+                "worker_receipt_count": handoff["worker_receipt_count"],
+                "execution_authority_granted": False,
+                "dispatch_authority_granted": False,
+                "receipt_binding_authority_granted": admission_preview["receipt_binding_authority_granted"],
+                "links": {
+                    "case": f"/api/v1/cases/{quote(organization_case.case_id, safe='')}",
+                    "handoffs": f"/api/v1/cases/{quote(organization_case.case_id, safe='')}/step-handoffs/view",
+                    "admission_preview": (
+                        f"/api/v1/cases/{quote(organization_case.case_id, safe='')}/plan-steps/"
+                        f"{quote(str(handoff['step_id']), safe='')}/admission-preview"
+                    ),
+                },
+            }
+            action_rows.append(action_row)
+            if queue_severity != "ready":
+                attention_items.append({
+                    "kind": "queued_action_requires_attention",
+                    "severity": queue_severity,
+                    "ref": action_id,
+                    "message": "queued handoff action is not currently allowed",
+                    "case_id": organization_case.case_id,
+                    "step_id": handoff["step_id"],
+                    "reason_code": admission_preview["reason_code"],
+                })
+
+    decisions = [row["admission_decision"] for row in action_rows]
+    severities = [row["queue_severity"] for row in action_rows]
+    return {
+        "queue_id": f"operator-action-queue:{org_id}",
+        "org_id": org_id,
+        "organization": _body(organization),
+        "read_only": True,
+        "governed": True,
+        "summary": {
+            "open_case_count": len(cases),
+            "action_count": len(action_rows),
+            "ready_action_count": severities.count("ready"),
+            "review_action_count": severities.count("review"),
+            "blocker_action_count": severities.count("blocker"),
+            "allow_count": decisions.count("allow"),
+            "block_count": decisions.count("block"),
+            "defer_count": decisions.count("defer"),
+            "escalate_count": decisions.count("escalate"),
+            "simulate_count": decisions.count("simulate"),
+            "execution_authority_granted": False,
+            "dispatch_authority_granted": False,
+        },
+        "actions": action_rows,
+        "attention_items": attention_items,
+    }
+
+
 def _render_department_registry_html(payload: dict[str, Any]) -> str:
     raw_org_id = str(payload.get("org_id", ""))
     org_id = escape(raw_org_id)
@@ -2355,6 +2467,85 @@ def _render_case_portfolio_html(payload: dict[str, Any]) -> str:
     {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
     {_proof_explorer_table("Departments", ("department_id", "name", "primary_cases", "assigned_cases", "open_cases", "closed_cases", "blocked_cases", "review_cases"), department_rows)}
     {_proof_explorer_table("Cases", ("case_id", "goal", "department", "status", "risk", "terminal_status", "blocked_steps", "evidence", "attention"), case_rows)}
+  </main>
+</body>
+</html>
+"""
+
+
+def _render_action_queue_html(payload: dict[str, Any]) -> str:
+    raw_org_id = str(payload.get("org_id", ""))
+    org_id = escape(raw_org_id)
+    organization = payload.get("organization", {})
+    org_name = escape(str(organization.get("name", ""))) if isinstance(organization, dict) else ""
+    summary = payload.get("summary", {})
+    summary_rows = [
+        {"metric": key, "value": value}
+        for key, value in sorted(summary.items())
+    ] if isinstance(summary, dict) else []
+    action_rows = [
+        {
+            "severity": item.get("queue_severity", ""),
+            "decision": item.get("admission_decision", ""),
+            "next_action": item.get("next_action", ""),
+            "case_id": item.get("case_id", ""),
+            "step_id": item.get("step_id", ""),
+            "department": item.get("department_id", ""),
+            "role": item.get("responsible_role_id", ""),
+            "reason": item.get("reason_code", ""),
+            "receipts": item.get("worker_receipt_count", 0),
+        }
+        for item in payload.get("actions", [])
+        if isinstance(item, dict)
+    ]
+    attention_rows = [
+        {
+            "severity": item.get("severity", ""),
+            "kind": item.get("kind", ""),
+            "ref": item.get("ref", ""),
+            "message": item.get("message", ""),
+        }
+        for item in payload.get("attention_items", [])
+        if isinstance(item, dict)
+    ]
+    quoted_org_id = quote(raw_org_id, safe="")
+    json_url = f"/api/v1/orgs/{quoted_org_id}/action-queue"
+    portfolio_url = f"/api/v1/orgs/{quoted_org_id}/case-portfolio/view"
+    authority_url = f"/api/v1/orgs/{quoted_org_id}/authority-map/view"
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mullu OrgOS Action Queue</title>
+  <style>
+    body {{ margin: 0; font-family: system-ui, sans-serif; color: #1f2937; background: #f7f7f4; }}
+    header {{ background: #26313d; color: #ffffff; padding: 24px 28px; }}
+    main {{ max-width: 1240px; margin: 0 auto; padding: 22px; }}
+    nav {{ display: flex; gap: 14px; margin-top: 12px; flex-wrap: wrap; }}
+    nav a {{ color: #d8ecff; }}
+    h1 {{ margin: 0; font-size: 28px; letter-spacing: 0; }}
+    h2 {{ margin: 28px 0 10px; font-size: 18px; letter-spacing: 0; }}
+    .status {{ margin-top: 8px; color: #e4edf6; }}
+    table {{ border-collapse: collapse; width: 100%; background: #ffffff; }}
+    th, td {{ border: 1px solid #d8dee4; padding: 8px; text-align: left; vertical-align: top; font-size: 14px; overflow-wrap: anywhere; }}
+    th {{ background: #edf1f5; color: #26313d; }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mullu OrgOS Action Queue</h1>
+    <div class="status">Organization <strong>{org_id}</strong> | <strong>{org_name}</strong></div>
+    <nav>
+      <a href="{escape(json_url)}">json queue</a>
+      <a href="{escape(portfolio_url)}">case portfolio</a>
+      <a href="{escape(authority_url)}">authority map</a>
+    </nav>
+  </header>
+  <main>
+    {_proof_explorer_table("Summary", ("metric", "value"), summary_rows)}
+    {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
+    {_proof_explorer_table("Actions", ("severity", "decision", "next_action", "case_id", "step_id", "department", "role", "reason", "receipts"), action_rows)}
   </main>
 </body>
 </html>
@@ -2881,6 +3072,24 @@ def get_organization_case_portfolio_view(org_id: str, request: Request):
     kernel = _kernel()
     _enforce_organization_tenant(request, kernel, org_id)
     return HTMLResponse(_render_case_portfolio_html(_organization_case_portfolio(kernel, org_id)))
+
+
+@router.get("/api/v1/orgs/{org_id}/action-queue")
+def get_organization_action_queue(org_id: str, request: Request):
+    """Return a read-only operator action queue for open case handoffs."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_organization_tenant(request, kernel, org_id)
+    return _organization_action_queue(kernel, org_id)
+
+
+@router.get("/api/v1/orgs/{org_id}/action-queue/view")
+def get_organization_action_queue_view(org_id: str, request: Request):
+    """Return a browser-facing read-only operator action queue."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_organization_tenant(request, kernel, org_id)
+    return HTMLResponse(_render_action_queue_html(_organization_action_queue(kernel, org_id)))
 
 
 @router.post("/api/v1/cases/launch-gateway-pilot")
