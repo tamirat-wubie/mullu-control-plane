@@ -455,7 +455,7 @@ def _deployment_upstream_blockers(receipt_path: Path) -> tuple[str, ...]:
 
 def _deployment_dns_target_binding_blockers(receipt_path: Path) -> tuple[str, ...]:
     if not receipt_path.exists():
-        return ()
+        return ("deployment_dns_not_verified",)
     try:
         receipt = _load_json_object(receipt_path, "gateway DNS target binding receipt")
     except (FileNotFoundError, ValueError):
@@ -467,7 +467,7 @@ def _deployment_dns_target_binding_blockers(receipt_path: Path) -> tuple[str, ..
 
 def _deployment_dns_resolution_blockers(receipt_path: Path) -> tuple[str, ...]:
     if not receipt_path.exists():
-        return ()
+        return ("deployment_dns_not_verified",)
     try:
         receipt = _load_json_object(receipt_path, "gateway DNS resolution receipt")
     except (FileNotFoundError, ValueError):
