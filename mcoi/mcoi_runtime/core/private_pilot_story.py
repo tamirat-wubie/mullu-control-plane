@@ -730,6 +730,14 @@ def _validate_uao_branch_record(spec: UaoBranchSpec, record: Mapping[str, Any]) 
         raise PrivatePilotStoryError(f"UAO branch {spec.branch_id} closure state changed")
     if record.get("raw_reasoning_included") is not False:
         raise PrivatePilotStoryError(f"UAO branch {spec.branch_id} exposes raw reasoning")
+    closure = record.get("closure")
+    if not isinstance(closure, Mapping):
+        raise PrivatePilotStoryError(f"UAO branch {spec.branch_id} closure must be an object")
+    for field_name in ("closure_receipt_ref", "reconciliation_ref", "memory_ref"):
+        if field_name not in closure:
+            raise PrivatePilotStoryError(
+                f"UAO branch {spec.branch_id} closure missing {field_name}"
+            )
     if not isinstance(record.get("receipts"), list) or not record["receipts"]:
         raise PrivatePilotStoryError(f"UAO branch {spec.branch_id} requires receipt records")
     if not _text(record.get("trace_ref")):
@@ -769,6 +777,8 @@ def _uao_branch_summaries(records: Mapping[str, Mapping[str, Any]]) -> list[dict
                 "admission_receipt_ref": _text(record.get("admission_receipt_ref")),
                 "closure_state": _text(record.get("closure_state")),
                 "closure_receipt_ref": _closure_receipt_ref(record),
+                "reconciliation_ref": _closure_reconciliation_ref(record),
+                "memory_ref": _closure_memory_ref(record),
                 "receipt_refs": receipt_refs,
             }
         )
@@ -1127,6 +1137,20 @@ def _closure_receipt_ref(record: Mapping[str, Any]) -> str:
     if not isinstance(closure, Mapping):
         return ""
     return _text(closure.get("closure_receipt_ref"))
+
+
+def _closure_reconciliation_ref(record: Mapping[str, Any]) -> str:
+    closure = record.get("closure")
+    if not isinstance(closure, Mapping):
+        return ""
+    return _text(closure.get("reconciliation_ref"))
+
+
+def _closure_memory_ref(record: Mapping[str, Any]) -> str:
+    closure = record.get("closure")
+    if not isinstance(closure, Mapping):
+        return ""
+    return _text(closure.get("memory_ref"))
 
 
 def _unique_text(values: Any) -> list[str]:

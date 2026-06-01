@@ -63,6 +63,8 @@ class UniversalCommandProofView:
     admission_receipt_ref: str
     execution_receipt_ref: str | None
     closure_state: str
+    reconciliation_ref: str
+    memory_ref: str
     proof_hash: str
     capability_id: str
     dispatch_ledger_hash: str
@@ -407,6 +409,8 @@ def universal_command_proof_view(
             universal_detail.get("execution_receipt_ref")
         ),
         closure_state=str(universal_detail.get("closure_state", "")),
+        reconciliation_ref=_text_detail(universal_detail.get("reconciliation_ref")),
+        memory_ref=_text_detail(universal_detail.get("memory_ref")),
         proof_hash=str(universal_detail.get("proof_hash", "")),
         capability_id=str(universal_detail.get("capability_id", "")),
         dispatch_ledger_hash=str(universal_detail.get("dispatch_ledger_hash", "")),
@@ -1309,6 +1313,14 @@ def _mapping_detail(value: Any) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         return {}
     return dict(value)
+
+
+def _text_detail(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    return str(value)
 
 
 def _optional_text_detail(value: Any) -> str | None:
