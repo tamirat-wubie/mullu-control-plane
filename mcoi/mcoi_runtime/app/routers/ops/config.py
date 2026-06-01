@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from mcoi_runtime.app.routers.auth_context import bind_claimed_actor
@@ -56,9 +56,15 @@ def update_config(req: ConfigUpdateRequest, request: Request):
         error_code="config_actor_identity_mismatch",
         error_message="applied_by does not match authenticated identity",
     )
-    result = deps.config_manager.update(
-        req.changes, applied_by=applied_by, description=req.description,
-    )
+    try:
+        result = deps.config_manager.update(
+            req.changes, applied_by=applied_by, description=req.description,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            400,
+            detail={"error": str(exc)[:200], "error_code": "invalid_config_request", "governed": True},
+        ) from exc
     deps.audit_trail.record(
         action="config.update", actor_id=applied_by,
         tenant_id="system", target="config",
@@ -89,7 +95,13 @@ def rollback_config(req: ConfigRollbackRequest, request: Request):
         error_code="config_actor_identity_mismatch",
         error_message="applied_by does not match authenticated identity",
     )
-    result = deps.config_manager.rollback(req.to_version, applied_by=applied_by)
+    try:
+        result = deps.config_manager.rollback(req.to_version, applied_by=applied_by)
+    except ValueError as exc:
+        raise HTTPException(
+            400,
+            detail={"error": str(exc)[:200], "error_code": "invalid_config_request", "governed": True},
+        ) from exc
     deps.audit_trail.record(
         action="config.rollback", actor_id=applied_by,
         tenant_id="system", target="config",
