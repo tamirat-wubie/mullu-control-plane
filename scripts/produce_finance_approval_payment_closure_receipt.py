@@ -151,12 +151,14 @@ def produce_finance_approval_payment_closure_receipt(
     return FinancePaymentClosureReceiptWrite(
         status=str(payload["status"]),
         ready=validation.ready,
-        output_path=str(output_path),
+        output_path=_path_label(output_path),
         receipt_id=str(payload["receipt_id"]),
         payment_provider_receipt_ref=payment_provider_receipt_ref,
         ledger_reconciliation_ref=ledger_reconciliation_ref,
         provider_binding_ref=resolved_provider_binding_ref,
-        provider_binding_receipt_path=str(provider_binding_receipt_path or ""),
+        provider_binding_receipt_path=(
+            _path_label(provider_binding_receipt_path) if provider_binding_receipt_path is not None else ""
+        ),
         blockers=tuple(blockers),
         binding_validation_errors=binding_errors,
         validation_errors=validation.errors,
@@ -392,6 +394,15 @@ def _write_json(path: Path, payload: dict[str, Any]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(_json_ready(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return path
+
+
+def _path_label(path: Path) -> str:
+    """Return a write-summary path label without host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    try:
+        return resolved_path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _json_ready(value: Any) -> Any:
