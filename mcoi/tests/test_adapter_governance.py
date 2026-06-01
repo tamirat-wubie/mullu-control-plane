@@ -1,5 +1,11 @@
-"""Tests for Phase 195D — Adapter & Connector Governance."""
+"""Purpose: test adapter and connector governance authority checks.
+Governance scope: adapter authority issuance, denial audit, and effectful registry binding.
+Dependencies: mcoi_runtime.core.adapter_governance.
+Invariants: adapter calls require matching type and operation authority; denials are auditable.
+"""
+
 import pytest
+
 from mcoi_runtime.core.adapter_governance import (
     AdapterAuthority,
     AdapterAuthorityError,
@@ -40,6 +46,27 @@ class TestAdapterGovernance:
             guard.require_authority(auth, "shell_executor", "run")
         assert "http_connector" not in str(exc_info.value)
         assert "shell_executor" not in str(exc_info.value)
+        assert guard.audit_entries()[-1].reason == "type_mismatch"
+        assert guard.audit_entries()[-1].actor_id == "actor-3"
+
+    def test_require_authority_operation_mismatch_raises(self):
+        guard = AdapterGovernanceGuard()
+        auth = guard.authorize("shell_executor", "read", "actor-4")
+        with pytest.raises(AdapterAuthorityError, match="operation mismatch") as exc_info:
+            guard.require_authority(auth, "shell_executor", "write")
+        assert "read" not in str(exc_info.value)
+        assert "write" not in str(exc_info.value)
+        assert guard.blocked_calls == 1
+        assert guard.audit_entries()[-1].reason == "operation_mismatch"
+        assert guard.audit_entries()[-1].actor_id == "actor-4"
+
+    def test_authority_labels_must_be_non_empty_and_unpadded(self):
+        guard = AdapterGovernanceGuard()
+        with pytest.raises(AdapterAuthorityError, match="adapter_type"):
+            guard.authorize("", "run", "actor-5")
+        with pytest.raises(AdapterAuthorityError, match="operation"):
+            guard.require_authority(None, "shell_executor", " run")
+        assert guard.total_calls == 0
 
     def test_deny_increments_blocked(self):
         guard = AdapterGovernanceGuard()
@@ -54,6 +81,18 @@ class TestAdapterGovernance:
         guard.authorize("shell_executor", "run", "a")
         report = guard.audit_report()
         assert set(report.keys()) == {"total", "authorized", "blocked", "ratio", "adapters_used"}
+        assert report["adapters_used"] == ["shell_executor"]
+        assert guard.audit_entries()[0].reason is None
+
+    def test_audit_report_orders_adapter_names_deterministically(self):
+        guard = AdapterGovernanceGuard()
+        guard.authorize("shell_executor", "run", "a")
+        guard.authorize("browser_adapter", "navigate", "b")
+        guard.deny("http_connector", "post", "no_authority")
+        report = guard.audit_report()
+        assert report["adapters_used"] == ["browser_adapter", "http_connector", "shell_executor"]
+        assert report["total"] == 3
+        assert report["blocked"] == 1
 
     def test_governance_ratio_all_authorized(self):
         guard = AdapterGovernanceGuard()
