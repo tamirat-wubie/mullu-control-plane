@@ -72,6 +72,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _release_handoff_pr_closure_skill(),
         _telemetry_monitoring_triage_skill(),
         _agentic_control_project_discipline_mesh_skill(),
+        _agentic_control_strategy_governor_skill(),
         _agentic_control_product_governor_skill(),
         _agentic_control_management_governor_skill(),
         _agentic_control_resource_governor_skill(),
@@ -759,6 +760,145 @@ def _agentic_control_project_discipline_mesh_skill() -> SkillDescriptor:
                 "quality_security",
                 "operations",
                 "business_gtm",
+            ),
+        },
+    )
+
+
+def _agentic_control_strategy_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.strategy_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic strategy governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_strategy_boundary",
+                name="Define strategy boundary",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "strategy_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_strategy_questions",
+                name="Rank strategy questions",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_strategy_boundary",),
+                input_bindings={"mission_contract_ref": "define_strategy_boundary.mission_contract_ref"},
+                output_keys=("strategy_question_order_ref", "dependency_blockers", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_strategy_governance",
+                name="Evaluate strategy governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_strategy_questions",),
+                input_bindings={"priority_order_ref": "rank_strategy_questions.strategy_question_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_actions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_strategy_budget",
+                name="Bound strategy budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_strategy_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_strategy_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "halt_thresholds", "resource_floor"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_strategy_direction",
+                name="Plan strategy direction",
+                action_type="agentic_control.product_management.plan",
+                depends_on=("bound_strategy_budget",),
+                input_bindings={
+                    "strategy_boundary_ref": "define_strategy_boundary.strategy_boundary_ref",
+                    "gate_decision_ref": "evaluate_strategy_governance.gate_decision_ref",
+                    "budget_envelope_ref": "bound_strategy_budget.budget_envelope_ref",
+                },
+                output_keys=(
+                    "strategy_plan_ref",
+                    "success_metrics",
+                    "stop_conditions",
+                    "decision_horizon",
+                ),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_strategy_verification",
+                name="Plan strategy verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("plan_strategy_direction",),
+                input_bindings={"strategy_plan_ref": "plan_strategy_direction.strategy_plan_ref"},
+                output_keys=("strategy_verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_strategy_interrogation",
+                name="Plan strategy interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_strategy_verification",),
+                input_bindings={
+                    "verification_plan_ref": "plan_strategy_verification.strategy_verification_plan_ref"
+                },
+                output_keys=("strategy_interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_strategy_gaps",
+                name="Refine strategy gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_strategy_interrogation",),
+                input_bindings={
+                    "strategy_plan_ref": "plan_strategy_direction.strategy_plan_ref",
+                    "verification_plan_ref": "plan_strategy_verification.strategy_verification_plan_ref",
+                    "interrogation_plan_ref": (
+                        "plan_strategy_interrogation.strategy_interrogation_plan_ref"
+                    ),
+                },
+                output_keys=("strategy_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_strategy_memory_admission",
+                name="Plan strategy memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_strategy_gaps",),
+                input_bindings={
+                    "refinement_plan_ref": "refine_strategy_gaps.strategy_refinement_plan_ref"
+                },
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes strategy boundary definition, strategy-question ranking, "
+            "governance gating, budget bounding, strategic direction planning, "
+            "success metrics, stop conditions, decision horizon, verification, "
+            "interrogation, strategy-gap refinement, and memory-admission "
+            "planning before product, management, resource, implementation, or "
+            "release authority is selected."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "strategy_governor": True,
+            "strategy_surfaces": (
+                "strategy_boundary_ref",
+                "strategy_plan_ref",
+                "success_metrics",
+                "stop_conditions",
+                "decision_horizon",
+                "closure_rule",
             ),
         },
     )
