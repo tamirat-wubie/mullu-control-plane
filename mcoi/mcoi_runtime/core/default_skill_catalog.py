@@ -72,6 +72,7 @@ def default_skill_descriptors() -> tuple[SkillDescriptor, ...]:
         _release_handoff_pr_closure_skill(),
         _telemetry_monitoring_triage_skill(),
         _agentic_control_project_discipline_mesh_skill(),
+        _agentic_control_goal_governor_skill(),
         _agentic_control_strategy_governor_skill(),
         _agentic_control_decision_governor_skill(),
         _agentic_control_design_governor_skill(),
@@ -762,6 +763,140 @@ def _agentic_control_project_discipline_mesh_skill() -> SkillDescriptor:
                 "quality_security",
                 "operations",
                 "business_gtm",
+            ),
+        },
+    )
+
+
+def _agentic_control_goal_governor_skill() -> SkillDescriptor:
+    skill_id = "agentic_control.goal_governor.v1"
+    return SkillDescriptor(
+        skill_id=skill_id,
+        name="Agentic goal governor",
+        skill_class=SkillClass.COMPOSITE,
+        effect_class=EffectClass.EXTERNAL_READ,
+        determinism_class=DeterminismClass.INPUT_BOUNDED,
+        trust_class=TrustClass.TRUSTED_INTERNAL,
+        verification_strength=VerificationStrength.MANDATORY,
+        lifecycle=SkillLifecycle.CANDIDATE,
+        preconditions=_policy_and_capability_preconditions(domain="agentic_control"),
+        postconditions=_verification_postcondition(skill_id=skill_id),
+        steps=(
+            SkillStep(
+                step_id="define_goal_boundary",
+                name="Define goal boundary",
+                action_type="agentic_control.mission.define",
+                output_keys=("mission_contract_ref", "goal_boundary_ref", "halt_conditions"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="rank_goal_objectives",
+                name="Rank goal objectives",
+                action_type="agentic_control.priority.rank",
+                depends_on=("define_goal_boundary",),
+                input_bindings={"mission_contract_ref": "define_goal_boundary.mission_contract_ref"},
+                output_keys=("goal_objective_order_ref", "goal_conflicts", "risk_weights"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="evaluate_goal_governance",
+                name="Evaluate goal governance",
+                action_type="agentic_control.governance_gate.evaluate",
+                depends_on=("rank_goal_objectives",),
+                input_bindings={"priority_order_ref": "rank_goal_objectives.goal_objective_order_ref"},
+                output_keys=("gate_decision_ref", "proof_state", "blocked_goals"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="bound_goal_budget",
+                name="Bound goal budget",
+                action_type="agentic_control.resource_budget.bound",
+                depends_on=("evaluate_goal_governance",),
+                input_bindings={"gate_decision_ref": "evaluate_goal_governance.gate_decision_ref"},
+                output_keys=("budget_envelope_ref", "goal_budget_ref", "halt_thresholds"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_goal_contract",
+                name="Plan goal contract",
+                action_type="agentic_control.product_management.plan",
+                depends_on=("bound_goal_budget",),
+                input_bindings={
+                    "goal_boundary_ref": "define_goal_boundary.goal_boundary_ref",
+                    "goal_order_ref": "rank_goal_objectives.goal_objective_order_ref",
+                    "gate_decision_ref": "evaluate_goal_governance.gate_decision_ref",
+                    "budget_envelope_ref": "bound_goal_budget.budget_envelope_ref",
+                },
+                output_keys=(
+                    "goal_contract_ref",
+                    "success_criteria",
+                    "anti_goals",
+                    "goal_conflict_resolution_ref",
+                ),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_goal_verification",
+                name="Plan goal verification",
+                action_type="agentic_control.verification.plan",
+                depends_on=("plan_goal_contract",),
+                input_bindings={"goal_contract_ref": "plan_goal_contract.goal_contract_ref"},
+                output_keys=("goal_verification_plan_ref", "required_gates", "closure_rule"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_goal_interrogation",
+                name="Plan goal interrogation",
+                action_type="agentic_control.interrogation.plan",
+                depends_on=("plan_goal_verification",),
+                input_bindings={"verification_plan_ref": "plan_goal_verification.goal_verification_plan_ref"},
+                output_keys=("goal_interrogation_plan_ref", "unknowns", "evidence_requests"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="refine_goal_gaps",
+                name="Refine goal gaps",
+                action_type="agentic_control.self_audit.refine",
+                depends_on=("plan_goal_interrogation",),
+                input_bindings={
+                    "goal_contract_ref": "plan_goal_contract.goal_contract_ref",
+                    "verification_plan_ref": "plan_goal_verification.goal_verification_plan_ref",
+                    "interrogation_plan_ref": "plan_goal_interrogation.goal_interrogation_plan_ref",
+                },
+                output_keys=("goal_refinement_plan_ref", "gap_closure_order", "residual_risk"),
+                provider_class_required="agentic_control_plane",
+            ),
+            SkillStep(
+                step_id="plan_goal_memory_admission",
+                name="Plan goal memory admission",
+                action_type="agentic_control.memory_admission.plan",
+                depends_on=("refine_goal_gaps",),
+                input_bindings={"refinement_plan_ref": "refine_goal_gaps.goal_refinement_plan_ref"},
+                output_keys=("memory_admission_plan_ref", "redaction_plan_ref", "forget_path_ref"),
+                provider_class_required="agentic_control_plane",
+            ),
+        ),
+        provider_requirements=("agentic_control_plane",),
+        description=(
+            "Composes goal boundary definition, objective ranking, governance "
+            "gating, goal budget bounding, goal-contract planning, success "
+            "criteria, anti-goal declaration, goal-conflict resolution, "
+            "verification, interrogation, goal-gap refinement, and "
+            "memory-admission planning before strategy, decision, product, or "
+            "implementation authority is selected."
+        ),
+        confidence=0.25,
+        metadata={
+            **_NO_NEW_AUTHORITY,
+            "risk_floor": "medium",
+            "goal_governor": True,
+            "goal_surfaces": (
+                "goal_boundary_ref",
+                "goal_contract_ref",
+                "success_criteria",
+                "anti_goals",
+                "goal_conflict_resolution_ref",
+                "closure_rule",
             ),
         },
     )
