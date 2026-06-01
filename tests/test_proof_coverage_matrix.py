@@ -589,6 +589,8 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
     assert "launch_gateway_pilot_readiness_packet_blocks_without_engineering_witness" in witnesses
     assert "case_proof_timeline_reports_open_case_without_closure" in witnesses
     assert "case_proof_timeline_reports_closure_certificate_and_learning" in witnesses
+    assert "case_proof_explorer_reports_open_case_attention_without_mutation" in witnesses
+    assert "case_proof_explorer_reports_closed_verified_case" in witnesses
     assert "case_closure_requires_effect_reconciliation_match_for_committed" in witnesses
     assert route_records["/api/v1/cases"]["surface_id"] == "orgos_case_governance_lifecycle"
     assert (
@@ -608,11 +610,15 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
         == "orgos_case_governance_lifecycle"
     )
     assert (
+        route_records["/api/v1/cases/{case_id}/proof-explorer"]["surface_id"]
+        == "orgos_case_governance_lifecycle"
+    )
+    assert (
         route_records["/api/v1/cases/{case_id}/proof-timeline"]["surface_id"]
         == "orgos_case_governance_lifecycle"
     )
     assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "proven"
-    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 21
+    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 23
 
 
 def test_webhooks_proof_surface_is_witnessed() -> None:
@@ -2130,6 +2136,7 @@ def test_agentic_control_capability_pack_surface_binds_default_authority() -> No
     assert "agentic_control.release_handoff.plan" in agentic_surface["representative_paths"]
     assert "agentic_control.evidence.append" in agentic_surface["representative_paths"]
     assert "agentic_control.project_discipline_mesh.v1" in agentic_surface["representative_paths"]
+    assert "agentic_control.product_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.resource_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.policy_governor.v1" in agentic_surface["representative_paths"]
     assert "agentic_control.temporal_governor.v1" in agentic_surface["representative_paths"]
