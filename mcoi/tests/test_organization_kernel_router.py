@@ -353,6 +353,40 @@ def test_case_proof_explorer_reports_open_case_attention_without_mutation(tmp_pa
     assert before["gate_decisions"] == after["gate_decisions"] == []
 
 
+def test_case_proof_explorer_html_view_is_read_only_and_escaped(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    created = client.post(
+        "/api/v1/cases",
+        json={
+            "case_id": "case.html_escape",
+            "org_id": "org-mullu",
+            "department_id": "executive",
+            "case_type": "launch_gateway_pilot",
+            "goal": "<script>alert('proof')</script>",
+            "risk": "low",
+            "owner_role_id": "executive.owner",
+            "assigned_department_ids": ["executive"],
+        },
+    )
+    before = client.get("/api/v1/cases/case.html_escape").json()
+
+    response = client.get("/api/v1/cases/case.html_escape/proof-explorer/view")
+    after = client.get("/api/v1/cases/case.html_escape").json()
+
+    assert created.status_code == 200
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "Mullu OrgOS Proof Explorer" in response.text
+    assert "json explorer" in response.text
+    assert "proof timeline" in response.text
+    assert "No records" in response.text
+    assert "<script>alert('proof')</script>" not in response.text
+    assert "&lt;script&gt;alert(&#x27;proof&#x27;)&lt;/script&gt;" in response.text
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
 def test_gateway_pilot_can_close_and_bind_learning(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     _bootstrap_and_open_pilot(client)
@@ -833,6 +867,7 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/cases" in paths
     assert "/api/v1/cases/{case_id}/proof-timeline" in paths
     assert "/api/v1/cases/{case_id}/proof-explorer" in paths
+    assert "/api/v1/cases/{case_id}/proof-explorer/view" in paths
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/deployment-witness" in paths
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/gate-preview" in paths
     assert "/api/v1/cases/{case_id}/launch-gateway-pilot/readiness" in paths

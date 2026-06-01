@@ -13,10 +13,12 @@ from __future__ import annotations
 
 import os
 from datetime import datetime, timezone
+from html import escape
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.musia_auth import require_admin
@@ -701,6 +703,148 @@ def _case_proof_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, 
         "source_timeline": proof,
         "governed": True,
     }
+
+
+def _proof_explorer_rows(rows: list[dict[str, object]], columns: tuple[str, ...]) -> str:
+    if not rows:
+        return f"<tr><td colspan=\"{len(columns)}\">No records</td></tr>"
+    return "\n".join(
+        "<tr>"
+        + "".join(f"<td>{escape(str(row.get(column, '')))}</td>" for column in columns)
+        + "</tr>"
+        for row in rows
+    )
+
+
+def _proof_explorer_table(title: str, columns: tuple[str, ...], rows: list[dict[str, object]]) -> str:
+    heading = "".join(f"<th>{escape(column)}</th>" for column in columns)
+    body = _proof_explorer_rows(rows, columns)
+    return f"""
+    <section>
+      <h2>{escape(title)}</h2>
+      <table>
+        <thead><tr>{heading}</tr></thead>
+        <tbody>{body}</tbody>
+      </table>
+    </section>
+    """
+
+
+def _proof_explorer_ref_list(value: object) -> str:
+    if isinstance(value, list):
+        return ", ".join(str(ref) for ref in value)
+    return ""
+
+
+def _render_case_proof_explorer_html(payload: dict[str, Any]) -> str:
+    title = escape(str(payload.get("title", "")))
+    raw_case_id = str(payload.get("case_id", ""))
+    case_id = escape(raw_case_id)
+    terminal_status = escape(str(payload.get("terminal_status", "")))
+    quoted_case_id = quote(raw_case_id, safe="")
+    json_url = f"/api/v1/cases/{quoted_case_id}/proof-explorer"
+    timeline_url = f"/api/v1/cases/{quoted_case_id}/proof-timeline"
+    status_cards = "\n".join(
+        "<li>"
+        f"<span>{escape(str(item.get('label', '')))}</span>"
+        f"<strong>{escape(str(item.get('value', '')))}</strong>"
+        f"<em>{escape(str(item.get('status', '')))}</em>"
+        "</li>"
+        for item in payload.get("status_cards", [])
+        if isinstance(item, dict)
+    )
+    attention_rows = [
+        {
+            "severity": item.get("severity", ""),
+            "kind": item.get("kind", ""),
+            "ref": item.get("ref", ""),
+            "message": item.get("message", ""),
+        }
+        for item in payload.get("attention_items", [])
+        if isinstance(item, dict)
+    ]
+    department_rows = [
+        {
+            "department_id": item.get("department_id", ""),
+            "steps": len(item.get("step_ids", [])) if isinstance(item.get("step_ids", []), list) else 0,
+            "allowed": item.get("allowed_step_count", 0),
+            "blocked": item.get("blocked_step_count", 0),
+            "missing_evidence": item.get("missing_evidence_count", 0),
+            "evidence_refs": item.get("evidence_ref_count", 0),
+        }
+        for item in payload.get("department_lanes", [])
+        if isinstance(item, dict)
+    ]
+    evidence_rows = [
+        {
+            "requirement_id": item.get("requirement_id", ""),
+            "present": item.get("present", False),
+            "evidence_refs": _proof_explorer_ref_list(item.get("evidence_refs", [])),
+            "step_ids": _proof_explorer_ref_list(item.get("step_ids", [])),
+        }
+        for item in payload.get("evidence_matrix", [])
+        if isinstance(item, dict)
+    ]
+    proof_sections = payload.get("proof_sections", {})
+    section_rows = [
+        {"section": key, "count": len(value) if isinstance(value, list) else 0}
+        for key, value in sorted(proof_sections.items())
+    ] if isinstance(proof_sections, dict) else []
+    closure_panel = payload.get("closure_panel")
+    closure_rows: list[dict[str, object]] = []
+    if isinstance(closure_panel, dict):
+        closure_rows = [
+            {"field": "closure_id", "value": closure_panel.get("closure_id", "")},
+            {"field": "terminal_certificate_id", "value": closure_panel.get("terminal_certificate_id", "")},
+            {"field": "terminal_disposition", "value": closure_panel.get("terminal_disposition", "")},
+            {"field": "effect_reconciled", "value": closure_panel.get("effect_reconciled", False)},
+            {"field": "learning_admitted", "value": closure_panel.get("learning_admitted", False)},
+        ]
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mullu OrgOS Proof Explorer</title>
+  <style>
+    body {{ margin: 0; font-family: system-ui, sans-serif; color: #1f2937; background: #f7f7f4; }}
+    header {{ background: #16372e; color: #ffffff; padding: 24px 28px; }}
+    main {{ max-width: 1180px; margin: 0 auto; padding: 22px; }}
+    nav {{ display: flex; gap: 14px; margin-top: 12px; flex-wrap: wrap; }}
+    nav a {{ color: #b8f3dc; }}
+    h1 {{ margin: 0; font-size: 28px; letter-spacing: 0; }}
+    h2 {{ margin: 28px 0 10px; font-size: 18px; letter-spacing: 0; }}
+    .status {{ margin-top: 8px; color: #d9efe6; }}
+    .metrics {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; padding: 0; margin: 18px 0; }}
+    .metrics li {{ list-style: none; border: 1px solid #cfd7d1; border-radius: 6px; padding: 10px; background: #ffffff; min-height: 76px; }}
+    .metrics span, .metrics em {{ display: block; color: #5b6470; font-size: 12px; font-style: normal; }}
+    .metrics strong {{ display: block; margin: 5px 0; font-size: 20px; overflow-wrap: anywhere; }}
+    table {{ border-collapse: collapse; width: 100%; background: #ffffff; }}
+    th, td {{ border: 1px solid #d8dee4; padding: 8px; text-align: left; vertical-align: top; font-size: 14px; overflow-wrap: anywhere; }}
+    th {{ background: #edf1ee; color: #26312d; }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mullu OrgOS Proof Explorer</h1>
+    <div class="status">Case <strong>{case_id}</strong> | Status <strong>{terminal_status}</strong></div>
+    <nav>
+      <a href="{escape(json_url)}">json explorer</a>
+      <a href="{escape(timeline_url)}">proof timeline</a>
+    </nav>
+  </header>
+  <main>
+    <h2>{title}</h2>
+    <ul class="metrics">{status_cards}</ul>
+    {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
+    {_proof_explorer_table("Departments", ("department_id", "steps", "allowed", "blocked", "missing_evidence", "evidence_refs"), department_rows)}
+    {_proof_explorer_table("Evidence", ("requirement_id", "present", "evidence_refs", "step_ids"), evidence_rows)}
+    {_proof_explorer_table("Closure", ("field", "value"), closure_rows)}
+    {_proof_explorer_table("Proof Sections", ("section", "count"), section_rows)}
+  </main>
+</body>
+</html>
+"""
 
 
 def _validate_gateway_base_url(gateway_url: str) -> str:
@@ -1398,10 +1542,21 @@ def get_case_proof_timeline(case_id: str, request: Request):
 
 
 @router.get("/api/v1/cases/{case_id}/proof-explorer")
-def get_case_proof_explorer(case_id: str):
+def get_case_proof_explorer(case_id: str, request: Request):
     """Return an operator proof explorer projection without mutating case state."""
     _inc_metric("requests_governed")
-    return _case_proof_explorer(_kernel(), case_id)
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    return _case_proof_explorer(kernel, case_id)
+
+
+@router.get("/api/v1/cases/{case_id}/proof-explorer/view")
+def get_case_proof_explorer_view(case_id: str, request: Request):
+    """Return a browser-facing read-only proof explorer view."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    return HTMLResponse(_render_case_proof_explorer_html(_case_proof_explorer(kernel, case_id)))
 
 
 @router.post("/api/v1/cases/{case_id}/plan")
