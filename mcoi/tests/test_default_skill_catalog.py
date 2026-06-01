@@ -37,6 +37,7 @@ EXPECTED_SKILL_IDS = (
     "release.pr_handoff_closure.v1",
     "telemetry.monitoring_triage.v1",
     "agentic_control.project_discipline_mesh.v1",
+    "agentic_control.resource_governor.v1",
     "agentic_control.autonomous_operations.v1",
 )
 
@@ -74,6 +75,7 @@ def test_default_skill_effect_classes_match_strongest_workflow_effect() -> None:
     assert descriptors["release.pr_handoff_closure.v1"].effect_class is EffectClass.EXTERNAL_WRITE
     assert descriptors["telemetry.monitoring_triage.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.project_discipline_mesh.v1"].effect_class is EffectClass.EXTERNAL_READ
+    assert descriptors["agentic_control.resource_governor.v1"].effect_class is EffectClass.EXTERNAL_READ
     assert descriptors["agentic_control.autonomous_operations.v1"].effect_class is EffectClass.EXTERNAL_WRITE
     assert all(
         descriptor.metadata["approval_expected"] is True
@@ -156,6 +158,63 @@ def test_project_discipline_mesh_skill_scans_management_surfaces_without_write_a
     )
     assert steps["plan_learning_admission"].input_bindings["refinement_plan_ref"] == (
         "refine_cross_discipline_gaps.discipline_mesh_ref"
+    )
+
+
+def test_agentic_resource_governor_bounds_budget_before_effect_bearing_work() -> None:
+    descriptor = next(
+        descriptor
+        for descriptor in default_skill_descriptors()
+        if descriptor.skill_id == "agentic_control.resource_governor.v1"
+    )
+    steps = {step.step_id: step for step in descriptor.steps}
+    action_order = tuple(step.action_type for step in descriptor.steps)
+    step_order = tuple(step.step_id for step in descriptor.steps)
+
+    assert descriptor.effect_class is EffectClass.EXTERNAL_READ
+    assert descriptor.metadata["resource_governor"] is True
+    assert descriptor.metadata["grants_new_capability_authority"] is False
+    assert descriptor.metadata["protected_variables"] == (
+        "resource_floor",
+        "halt_thresholds",
+        "budget_envelope_ref",
+        "proof_state",
+    )
+    assert action_order == (
+        "agentic_control.mission.define",
+        "agentic_control.priority.rank",
+        "agentic_control.governance_gate.evaluate",
+        "agentic_control.resource_budget.bound",
+        "agentic_control.verification.plan",
+        "agentic_control.self_audit.refine",
+        "agentic_control.memory_admission.plan",
+    )
+    assert "agentic_control.evidence.append" not in action_order
+    assert all(
+        step_order.index(dependency) < step_order.index(step.step_id)
+        for step in descriptor.steps
+        for dependency in step.depends_on
+    )
+    assert steps["rank_resource_pressures"].input_bindings["mission_contract_ref"] == (
+        "define_governed_mission.mission_contract_ref"
+    )
+    assert steps["evaluate_budget_governance"].input_bindings["priority_order_ref"] == (
+        "rank_resource_pressures.resource_pressure_order_ref"
+    )
+    assert steps["bound_execution_budget"].input_bindings["gate_decision_ref"] == (
+        "evaluate_budget_governance.gate_decision_ref"
+    )
+    assert steps["plan_budget_verification"].input_bindings["budget_envelope_ref"] == (
+        "bound_execution_budget.budget_envelope_ref"
+    )
+    assert steps["refine_resource_gaps"].input_bindings["budget_envelope_ref"] == (
+        "bound_execution_budget.budget_envelope_ref"
+    )
+    assert steps["refine_resource_gaps"].input_bindings["verification_plan_ref"] == (
+        "plan_budget_verification.budget_verification_plan_ref"
+    )
+    assert steps["plan_budget_memory_admission"].input_bindings["refinement_plan_ref"] == (
+        "refine_resource_gaps.resource_refinement_plan_ref"
     )
 
 
@@ -370,4 +429,6 @@ def test_bootstrap_installs_default_skill_catalog() -> None:
     assert runtime.skill_registry.get("telemetry.monitoring_triage.v1").metadata["risk_floor"] == "medium"
     assert runtime.skill_registry.get("agentic_control.project_discipline_mesh.v1").metadata["risk_floor"] == "medium"
     assert runtime.skill_registry.get("agentic_control.project_discipline_mesh.v1").effect_class is EffectClass.EXTERNAL_READ
+    assert runtime.skill_registry.get("agentic_control.resource_governor.v1").metadata["risk_floor"] == "medium"
+    assert runtime.skill_registry.get("agentic_control.resource_governor.v1").effect_class is EffectClass.EXTERNAL_READ
     assert runtime.skill_registry.get("agentic_control.autonomous_operations.v1").metadata["risk_floor"] == "high"
