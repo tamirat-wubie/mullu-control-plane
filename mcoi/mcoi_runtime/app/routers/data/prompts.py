@@ -3,9 +3,10 @@ from __future__ import annotations
 
 from typing import Any, NoReturn
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.app.routers.data._common import deps
 
 router = APIRouter()
@@ -64,8 +65,9 @@ def list_prompt_templates(category: str | None = None):
 
 
 @router.post("/api/v1/prompts/render")
-def render_prompt(req: PromptRenderRequest):
+def render_prompt(req: PromptRenderRequest, request: Request):
     """Render a prompt template with variables, optionally execute via LLM."""
+    enforce_tenant_scope(request, req.tenant_id)
     deps.metrics.inc("requests_governed")
     try:
         rendered = deps.prompt_engine.render(req.template_id, req.variables)

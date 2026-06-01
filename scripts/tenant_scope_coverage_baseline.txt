@@ -17,10 +17,8 @@
 mcoi/mcoi_runtime/app/routers/adapter.py::request_action
 mcoi/mcoi_runtime/app/routers/agent.py::execute_chain
 mcoi/mcoi_runtime/app/routers/agent.py::queue_submit
-mcoi/mcoi_runtime/app/routers/agent.py::webhook_subscribe
 mcoi/mcoi_runtime/app/routers/assistant.py::compile_finance_ops_assistant_plan
 mcoi/mcoi_runtime/app/routers/audit.py::publish_event
-mcoi/mcoi_runtime/app/routers/data/prompts.py::render_prompt
 mcoi/mcoi_runtime/app/routers/data/tools.py::invoke_tool
 mcoi/mcoi_runtime/app/routers/explain.py::explain_action
 mcoi/mcoi_runtime/app/routers/finance_approval.py::create_finance_approval_packet
