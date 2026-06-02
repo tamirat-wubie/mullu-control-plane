@@ -382,7 +382,24 @@
   "memory_update": {
     "status": "not_required",
     "memory_ref": null,
-    "learning_allowed": false
+    "learning_allowed": false,
+    "constitution": {
+      "constitution_ref": "memory-constitution://status-preview/not-required",
+      "source_refs": [
+        "trace://cdt_simulated_low_risk_readonly_001",
+        "receipt://uao_admission_status_preview"
+      ],
+      "owner_ref": "tenant://tenant_ops_demo",
+      "scope_ref": "tenant://tenant_ops_demo",
+      "confidence": 0.0,
+      "sensitivity": "operational",
+      "expires_at": null,
+      "allowed_uses": [],
+      "forbidden_uses": ["external_sharing", "model_training", "learning"],
+      "evidence_refs": [],
+      "last_verified_at": null,
+      "mutation_history_refs": []
+    }
   },
   "closure_state": "closed_simulated",
   "closure": {

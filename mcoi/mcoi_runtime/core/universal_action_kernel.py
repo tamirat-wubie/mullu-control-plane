@@ -1258,7 +1258,10 @@ def build_universal_action_orchestration_record(
             result=result, outcome_ref=outcome_ref
         ),
         "memory_update": _uao_record_memory_update(
-            result=result, memory_ref=memory_ref
+            request=request,
+            result=result,
+            action_envelope=action_envelope,
+            memory_ref=memory_ref,
         ),
         "closure_state": result.closure_state,
         "closure": {
@@ -2366,7 +2369,9 @@ def _uao_record_reconciliation(
 
 def _uao_record_memory_update(
     *,
+    request: UniversalActionRequest,
     result: UniversalActionResult,
+    action_envelope: Mapping[str, Any],
     memory_ref: str | None,
 ) -> dict[str, Any]:
     if _result_requires_review(result):
@@ -2374,6 +2379,14 @@ def _uao_record_memory_update(
             "status": "blocked",
             "memory_ref": None,
             "learning_allowed": False,
+            "constitution": _uao_record_memory_constitution(
+                request=request,
+                result=result,
+                action_envelope=action_envelope,
+                memory_ref=None,
+                status="blocked",
+                learning_allowed=False,
+            ),
         }
     if (
         result.learning_decision is not None
@@ -2384,17 +2397,107 @@ def _uao_record_memory_update(
             "status": "recorded",
             "memory_ref": memory_ref,
             "learning_allowed": True,
+            "constitution": _uao_record_memory_constitution(
+                request=request,
+                result=result,
+                action_envelope=action_envelope,
+                memory_ref=memory_ref,
+                status="recorded",
+                learning_allowed=True,
+            ),
         }
     if result.dispatched:
         return {
             "status": "not_required",
             "memory_ref": memory_ref,
             "learning_allowed": False,
+            "constitution": _uao_record_memory_constitution(
+                request=request,
+                result=result,
+                action_envelope=action_envelope,
+                memory_ref=memory_ref,
+                status="not_required",
+                learning_allowed=False,
+            ),
         }
     return {
         "status": "not_allowed",
         "memory_ref": None,
         "learning_allowed": False,
+        "constitution": _uao_record_memory_constitution(
+            request=request,
+            result=result,
+            action_envelope=action_envelope,
+            memory_ref=None,
+            status="not_allowed",
+            learning_allowed=False,
+        ),
+    }
+
+
+def _uao_record_memory_constitution(
+    *,
+    request: UniversalActionRequest,
+    result: UniversalActionResult,
+    action_envelope: Mapping[str, Any],
+    memory_ref: str | None,
+    status: str,
+    learning_allowed: bool,
+) -> dict[str, Any]:
+    source_refs = _unique_text_list(
+        (
+            memory_ref,
+            result.trace_ref,
+            result.admission_receipt_ref,
+            result.execution_receipt_ref,
+            result.terminal_certificate.certificate_id
+            if result.terminal_certificate is not None
+            else None,
+        )
+    )
+    if status == "recorded" and memory_ref is not None:
+        allowed_uses = ["closure_audit", "planning", "learning"]
+    elif memory_ref is not None:
+        allowed_uses = ["closure_audit"]
+    else:
+        allowed_uses = []
+    forbidden_uses = ["external_sharing", "model_training"]
+    if not learning_allowed:
+        forbidden_uses.append("learning")
+    requested_at = str(action_envelope.get("requested_at") or "")
+    sensitivity = request.metadata.get("memory_sensitivity", "operational")
+    if sensitivity not in {
+        "public",
+        "operational",
+        "tenant_confidential",
+        "financial",
+        "security",
+        "personal",
+        "regulated",
+    }:
+        sensitivity = "operational"
+    expires_at = request.metadata.get("memory_expires_at")
+    return {
+        "constitution_ref": "memory-constitution://"
+        + stable_identifier(
+            "memory-constitution",
+            {
+                "action_id": result.action_id,
+                "memory_ref": memory_ref or "none",
+                "status": status,
+            },
+        ),
+        "source_refs": source_refs,
+        "owner_ref": f"tenant://{request.tenant_id}",
+        "scope_ref": f"tenant://{request.tenant_id}",
+        "confidence": 1.0 if status == "recorded" else 0.0,
+        "sensitivity": sensitivity,
+        "expires_at": expires_at if isinstance(expires_at, str) and expires_at else None,
+        "allowed_uses": allowed_uses,
+        "forbidden_uses": _unique_text_list(forbidden_uses),
+        "evidence_refs": source_refs if status == "recorded" else [],
+        "last_verified_at": requested_at if status == "recorded" else None,
+        "mutation_history_refs": [result.trace_ref] if status == "recorded" else [],
     }
 
 

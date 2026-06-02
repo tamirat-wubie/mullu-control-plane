@@ -377,7 +377,29 @@
   "memory_update": {
     "status": "recorded",
     "memory_ref": "memory://invoice-456/payment-blocked",
-    "learning_allowed": true
+    "learning_allowed": true,
+    "constitution": {
+      "constitution_ref": "memory-constitution://invoice-456/payment-blocked",
+      "source_refs": [
+        "memory://invoice-456/payment-blocked",
+        "trace://cdt_blocked_missing_approval_001",
+        "receipt://uao_admission_missing_approval"
+      ],
+      "owner_ref": "tenant://tenant_finance_demo",
+      "scope_ref": "tenant://tenant_finance_demo",
+      "confidence": 1.0,
+      "sensitivity": "financial",
+      "expires_at": null,
+      "allowed_uses": ["closure_audit", "planning", "learning"],
+      "forbidden_uses": ["external_sharing", "model_training"],
+      "evidence_refs": [
+        "memory://invoice-456/payment-blocked",
+        "trace://cdt_blocked_missing_approval_001",
+        "receipt://uao_admission_missing_approval"
+      ],
+      "last_verified_at": "2026-05-31T00:10:00Z",
+      "mutation_history_refs": ["trace://cdt_blocked_missing_approval_001"]
+    }
   },
   "closure_state": "closed_blocked",
   "closure": {

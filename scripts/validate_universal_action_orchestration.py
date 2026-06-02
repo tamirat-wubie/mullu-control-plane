@@ -161,6 +161,20 @@ REQUIRED_SCHEMA_DEFS = {
         "confidence",
         "verified",
     ),
+    "memory_constitution": (
+        "constitution_ref",
+        "source_refs",
+        "owner_ref",
+        "scope_ref",
+        "confidence",
+        "sensitivity",
+        "expires_at",
+        "allowed_uses",
+        "forbidden_uses",
+        "evidence_refs",
+        "last_verified_at",
+        "mutation_history_refs",
+    ),
     "pipeline_stage": (
         "stage_id",
         "stage_order",
@@ -200,7 +214,7 @@ REQUIRED_SCHEMA_DEFS = {
         "required_for_closure",
         "mismatch_reason",
     ),
-    "memory_update": ("status", "memory_ref", "learning_allowed"),
+    "memory_update": ("status", "memory_ref", "learning_allowed", "constitution"),
     "closure": (
         "status",
         "terminal",
@@ -230,6 +244,7 @@ REQUIRED_DOCUMENT_TERMS = (
     "Every closure receipt must bind closure state to reconciliation and memory references before exposure.",
     "Every effect-bearing `allow` or post-dispatch review action must carry an available `recovery_plan` with rollback or compensation references before closure.",
     "Every UAO record must expose a `claim_ledger`; verified claims require evidence refs and evidence-free claims must be marked unverified.",
+    "Every memory update must expose a `constitution`; recorded memory requires evidence refs, owner, scope, source refs, allowed uses, and mutation history.",
 )
 
 
@@ -1359,7 +1374,9 @@ def _validate_reconciliation(
 
 def _validate_memory_update(memory_update: Any) -> list[str]:
     errors = _validate_required_fields(
-        "memory_update", memory_update, ("status", "memory_ref", "learning_allowed")
+        "memory_update",
+        memory_update,
+        ("status", "memory_ref", "learning_allowed", "constitution"),
     )
     if errors:
         return errors
@@ -1380,6 +1397,135 @@ def _validate_memory_update(memory_update: Any) -> list[str]:
         errors.append("memory_update.learning_allowed must be boolean")
     if memory_update["learning_allowed"] and memory_update["status"] != "recorded":
         errors.append("memory_update: learning_allowed requires recorded status")
+    if memory_update["status"] == "recorded" and memory_update["memory_ref"] is None:
+        errors.append("memory_update: recorded status requires memory_ref")
+    errors.extend(
+        _validate_memory_constitution(
+            memory_update["constitution"],
+            memory_update_status=memory_update["status"],
+            memory_ref=memory_update["memory_ref"],
+            learning_allowed=memory_update["learning_allowed"],
+        )
+    )
+    return errors
+
+
+def _validate_memory_constitution(
+    constitution: Any,
+    *,
+    memory_update_status: str,
+    memory_ref: str | None,
+    learning_allowed: bool,
+) -> list[str]:
+    errors = _validate_required_fields(
+        "memory_update.constitution",
+        constitution,
+        (
+            "constitution_ref",
+            "source_refs",
+            "owner_ref",
+            "scope_ref",
+            "confidence",
+            "sensitivity",
+            "expires_at",
+            "allowed_uses",
+            "forbidden_uses",
+            "evidence_refs",
+            "last_verified_at",
+            "mutation_history_refs",
+        ),
+    )
+    if errors:
+        return errors
+
+    for field_name in ("constitution_ref", "owner_ref", "scope_ref"):
+        if not isinstance(constitution[field_name], str) or not constitution[field_name]:
+            errors.append(f"memory_update.constitution.{field_name} must be a non-empty string")
+    confidence = constitution["confidence"]
+    if (
+        not isinstance(confidence, (int, float))
+        or isinstance(confidence, bool)
+        or not 0 <= confidence <= 1
+    ):
+        errors.append("memory_update.constitution.confidence must be a number in [0, 1]")
+    if constitution["sensitivity"] not in {
+        "public",
+        "operational",
+        "tenant_confidential",
+        "financial",
+        "security",
+        "personal",
+        "regulated",
+    }:
+        errors.append("memory_update.constitution.sensitivity is invalid")
+    for nullable_field in ("expires_at", "last_verified_at"):
+        if constitution[nullable_field] is not None and (
+            not isinstance(constitution[nullable_field], str)
+            or not constitution[nullable_field]
+        ):
+            errors.append(
+                f"memory_update.constitution.{nullable_field} must be null or a non-empty string"
+            )
+
+    errors.extend(
+        _validate_string_array(
+            "memory_update.constitution.source_refs",
+            constitution["source_refs"],
+            min_count=1 if memory_update_status == "recorded" else 0,
+        )
+    )
+    errors.extend(
+        _validate_string_array(
+            "memory_update.constitution.allowed_uses",
+            constitution["allowed_uses"],
+            min_count=1 if memory_update_status == "recorded" else 0,
+        )
+    )
+    errors.extend(
+        _validate_string_array(
+            "memory_update.constitution.forbidden_uses",
+            constitution["forbidden_uses"],
+        )
+    )
+    errors.extend(
+        _validate_string_array(
+            "memory_update.constitution.evidence_refs",
+            constitution["evidence_refs"],
+            min_count=1 if memory_update_status == "recorded" else 0,
+        )
+    )
+    errors.extend(
+        _validate_string_array(
+            "memory_update.constitution.mutation_history_refs",
+            constitution["mutation_history_refs"],
+            min_count=1 if memory_update_status == "recorded" else 0,
+        )
+    )
+
+    allowed_uses = set(constitution["allowed_uses"])
+    forbidden_uses = set(constitution["forbidden_uses"])
+    overlap = sorted(allowed_uses.intersection(forbidden_uses))
+    if overlap:
+        errors.append(
+            "memory_update.constitution allowed_uses and forbidden_uses overlap: "
+            + ", ".join(overlap)
+        )
+    if learning_allowed and "learning" not in allowed_uses:
+        errors.append(
+            "memory_update.constitution: learning_allowed requires learning allowed_use"
+        )
+    if not learning_allowed and "learning" not in forbidden_uses:
+        errors.append(
+            "memory_update.constitution: learning must be forbidden when learning_allowed is false"
+        )
+    if memory_update_status == "recorded" and memory_ref not in constitution["source_refs"]:
+        errors.append(
+            "memory_update.constitution.source_refs must include memory_ref for recorded memory"
+        )
+    if memory_update_status != "recorded" and learning_allowed:
+        errors.append(
+            "memory_update.constitution: non-recorded memory cannot allow learning"
+        )
     return errors
 
 
