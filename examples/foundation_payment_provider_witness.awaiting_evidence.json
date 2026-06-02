@@ -1,0 +1,111 @@
+{
+  "blocked_claims": [
+    "payment-provider activation",
+    "provider account binding",
+    "merchant onboarding completion",
+    "KYC readiness",
+    "tax readiness",
+    "payment-method collection",
+    "live charge processing",
+    "refund execution",
+    "payout settlement",
+    "webhook activation",
+    "checkout publication",
+    "money movement",
+    "customer payment access",
+    "external publication",
+    "deployment readiness"
+  ],
+  "checkout_publication_allowed": false,
+  "customer_payment_access_allowed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "kyc_readiness_claimed": false,
+  "live_charge_allowed": false,
+  "merchant_onboarding_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "continue local payment-provider question drafting without provider activation, account binding, payment-method collection, live charges, refunds, payouts, webhook activation, checkout publication, money movement, customer payment access, external publication, or deployment claims",
+  "payment_method_collection_allowed": false,
+  "payment_provider_activation_allowed": false,
+  "payment_provider_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft provider-selection questions without activating a provider account.",
+      "state": "AwaitingEvidence",
+      "surface_id": "provider_selection_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft account-binding prerequisites without binding provider accounts.",
+      "state": "AwaitingEvidence",
+      "surface_id": "account_binding_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft merchant-onboarding evidence questions without claiming onboarding completion.",
+      "state": "AwaitingEvidence",
+      "surface_id": "merchant_onboarding_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft KYC and tax review questions without claiming KYC or tax readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "kyc_tax_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft payment-method handling boundaries without collecting cards, banks, wallets, or tokens.",
+      "state": "AwaitingEvidence",
+      "surface_id": "payment_method_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft local checkout simulation shape without publishing checkout or payment links.",
+      "state": "AwaitingEvidence",
+      "surface_id": "checkout_flow_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft webhook evidence requirements without activating webhooks or storing webhook secrets.",
+      "state": "AwaitingEvidence",
+      "surface_id": "webhook_event_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft live-money stop rules without processing charges or refunds.",
+      "state": "AwaitingEvidence",
+      "surface_id": "charge_refund_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft settlement evidence questions without settling payouts.",
+      "state": "AwaitingEvidence",
+      "surface_id": "payout_settlement_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft receipt and ledger questions without claiming payment closure or money movement.",
+      "state": "AwaitingEvidence",
+      "surface_id": "reconciliation_receipt_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "provider_account_binding_allowed": false,
+  "payout_settlement_allowed": false,
+  "refund_execution_allowed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "tax_readiness_claimed": false,
+  "webhook_activation_allowed": false,
+  "witness_id": "foundation_payment_provider_witness.awaiting_evidence.v1"
+}

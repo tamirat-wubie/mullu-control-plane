@@ -83,6 +83,7 @@ deployment_allowed=false
 | Secrets/credentials | Local credential categories and access questions with real secret storage, credential activation, provider binding, external calls, and deployment blocked. |
 | Security baseline | Local security questions with scan-pass, dependency-audit pass, threat-model approval, access-control verification, compliance, customer-security, and deployment claims blocked. |
 | Cost/budget | Local cost categories and approval questions with spending, billing, payment methods, subscriptions, purchases, invoice payments, vendor commitments, and deployment blocked. |
+| Payment provider | Local provider-selection, account-binding, merchant-onboarding, KYC/tax, payment-method, checkout, webhook, charge/refund, payout, and reconciliation questions with provider activation, provider-account binding, merchant onboarding, KYC readiness, tax readiness, payment-method collection, live charge, refund, payout, webhook activation, checkout publication, money movement, customer payment access, external publication, and deployment claims blocked. |
 | Runtime/environment | Local command and toolchain questions with runtime verification, database activation, container activation, endpoint activation, migration execution, cloud runtime, and deployment blocked. |
 | Backup/export | Local backup/export questions with backup execution, cloud backup, external export, public archive, private path recording, secret export, personal-data export, deletion, restore-readiness, and deployment blocked. |
 | Deployment deferral | Local deployment prerequisite, cloud, endpoint, runtime health, rollback, cost, credential, customer/support, and publication questions with deployment-plan approval, cloud activation, public endpoints, production health, runtime readiness, customer access, spending, credential use, secret use, migration execution, DNS mutation, external publication, and deployment blocked. |
@@ -132,6 +133,7 @@ python scripts/validate_foundation_private_recovery_boundary.py
 python scripts/validate_foundation_secrets_credentials_boundary.py
 python scripts/validate_foundation_security_baseline_boundary.py
 python scripts/validate_foundation_cost_budget_boundary.py
+python scripts/validate_foundation_payment_provider_boundary.py
 python scripts/validate_foundation_runtime_environment_boundary.py
 python scripts/validate_foundation_backup_export_boundary.py
 python scripts/validate_foundation_deployment_deferral_boundary.py

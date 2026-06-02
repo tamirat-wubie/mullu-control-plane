@@ -62,6 +62,7 @@ EXPECTED_CHANGE_FAMILIES = (
     "secrets_credentials_boundary",
     "security_baseline_boundary",
     "cost_budget_boundary",
+    "payment_provider_boundary",
     "runtime_environment_boundary",
     "backup_export_boundary",
     "deployment_deferral_boundary",
@@ -107,6 +108,7 @@ EXPECTED_REQUIRED_CHECKS = (
     "python scripts/validate_foundation_secrets_credentials_boundary.py",
     "python scripts/validate_foundation_security_baseline_boundary.py",
     "python scripts/validate_foundation_cost_budget_boundary.py",
+    "python scripts/validate_foundation_payment_provider_boundary.py",
     "python scripts/validate_foundation_runtime_environment_boundary.py",
     "python scripts/validate_foundation_backup_export_boundary.py",
     "python scripts/validate_foundation_deployment_deferral_boundary.py",
@@ -164,6 +166,7 @@ REQUIRED_DOC_PHRASES = (
     "Change handoff | Local change-family",
     "Plain-language status | Local current-posture",
     "Test evidence | Local focused-validator",
+    "Payment provider | Local provider-selection",
     "python scripts/validate_foundation_source_control_boundary.py",
 )
 FORBIDDEN_PACKET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (

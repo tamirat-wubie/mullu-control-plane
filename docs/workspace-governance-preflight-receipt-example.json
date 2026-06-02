@@ -1,5 +1,5 @@
 {
-  "check_count": 64,
+  "check_count": 65,
   "generated_at_epoch": 1780272000.0,
   "checks": [
     {
@@ -362,6 +362,17 @@
         "scripts/validate_foundation_cost_budget_boundary.py"
       ],
       "name": "foundation_cost_budget_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_payment_provider_boundary.py"
+      ],
+      "name": "foundation_payment_provider_boundary",
       "passed": true,
       "return_code": 0,
       "stderr": "",

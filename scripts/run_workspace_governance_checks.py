@@ -240,6 +240,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_cost_budget_boundary.py"),
         ),
         CheckCommand(
+            "foundation_payment_provider_boundary",
+            (python_executable, "scripts/validate_foundation_payment_provider_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_runtime_environment_boundary",
             (python_executable, "scripts/validate_foundation_runtime_environment_boundary.py"),
         ),

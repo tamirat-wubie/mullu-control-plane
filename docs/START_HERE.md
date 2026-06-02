@@ -45,6 +45,7 @@ to the deep document if you want more.
 | "I need to prepare secrets and credentials without storing real values." | [Foundation Secrets Credentials Boundary](FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md) | 8 min read |
 | "I need to prepare security baseline questions without claiming readiness." | [Foundation Security Baseline Boundary](FOUNDATION_SECURITY_BASELINE_BOUNDARY.md) | 8 min read |
 | "I need to plan costs and budgets without spending money." | [Foundation Cost Budget Boundary](FOUNDATION_COST_BUDGET_BOUNDARY.md) | 8 min read |
+| "I need to prepare payment-provider questions without moving money." | [Foundation Payment Provider Boundary](FOUNDATION_PAYMENT_PROVIDER_BOUNDARY.md) | 8 min read |
 | "I need to prepare local runtime checks without deploying." | [Foundation Runtime Environment Boundary](FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md) | 8 min read |
 | "I need to prepare backup/export without moving data." | [Foundation Backup Export Boundary](FOUNDATION_BACKUP_EXPORT_BOUNDARY.md) | 8 min read |
 | "I need to keep deployment deferred without opening cloud, endpoints, or access." | [Foundation Deployment Deferral Boundary](FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md) | 8 min read |
@@ -229,54 +230,59 @@ in the wrong room. Use the table above to pick the right room.
 29. **[Foundation Cost Budget Boundary](FOUNDATION_COST_BUDGET_BOUNDARY.md)** --
    local cost and budget preparation without spending, payment methods, billing,
    subscriptions, purchases, or invoices.
-30. **[Foundation Runtime Environment Boundary](FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md)** --
+30. **[Foundation Payment Provider Boundary](FOUNDATION_PAYMENT_PROVIDER_BOUNDARY.md)** --
+   local payment-provider preparation without provider activation, account
+   binding, merchant onboarding, KYC/tax readiness, payment-method collection,
+   live charges, refunds, payouts, webhook activation, checkout publication,
+   money movement, customer payment access, publication, or deployment claims.
+31. **[Foundation Runtime Environment Boundary](FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md)** --
    local runtime and environment preparation without starting services, opening
    endpoints, running migrations, or deploying.
-31. **[Foundation Backup Export Boundary](FOUNDATION_BACKUP_EXPORT_BOUNDARY.md)** --
+32. **[Foundation Backup Export Boundary](FOUNDATION_BACKUP_EXPORT_BOUNDARY.md)** --
    local backup/export preparation without running backups, cloud sync,
    exports, public archives, deletion, or restore-readiness claims.
-32. **[Foundation Deployment Deferral Boundary](FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md)** --
+33. **[Foundation Deployment Deferral Boundary](FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md)** --
    local deployment deferral without deployment approval, cloud activation,
    public endpoints, production health, runtime readiness, customer access,
    spending, credentials, DNS mutation, publication, or deployment claims.
-33. **[Foundation External Infrastructure Boundary](FOUNDATION_EXTERNAL_INFRASTRUCTURE_BOUNDARY.md)** --
+34. **[Foundation External Infrastructure Boundary](FOUNDATION_EXTERNAL_INFRASTRUCTURE_BOUNDARY.md)** --
    local DNS authority, gateway target, runtime host, managed database,
    secret-manager, TLS, firewall, rollback, private runtime witness, repository
    variable, endpoint reachability, and workflow dispatch questions without DNS
    mutation, runtime provisioning, secret placement, workflow dispatch, paid
    infrastructure, customer access, publication, or deployment claims.
-34. **[Foundation Pilot Deferral Boundary](FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md)** --
+35. **[Foundation Pilot Deferral Boundary](FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md)** --
    local pilot deferral without participant invitation, access channels,
    waitlists, beta, personal data collection, market validation, support
    readiness, legal clearance, paid pilot, publication, or deployment claims.
-35. **[Foundation Local Proof Thread](FOUNDATION_LOCAL_PROOF_THREAD.md)** -- the
+36. **[Foundation Local Proof Thread](FOUNDATION_LOCAL_PROOF_THREAD.md)** -- the
    first harmless local workflow shape: approval, receipt, verification, and
    rollback.
-36. **[Foundation Private Recovery Boundary](FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md)** --
+37. **[Foundation Private Recovery Boundary](FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md)** --
    owner-only recovery preparation without private values in Git.
-37. **[Foundation Domain Email Boundary](FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md)** --
+38. **[Foundation Domain Email Boundary](FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md)** --
    public-safe domain and email labels without DNS mutation or readiness claims.
-38. **[Foundation Product Scope Boundary](FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md)** --
+39. **[Foundation Product Scope Boundary](FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md)** --
    one selected local learning lane without restricting the long-term platform.
-39. **[Foundation Support Readiness Boundary](FOUNDATION_SUPPORT_READINESS_BOUNDARY.md)** --
+40. **[Foundation Support Readiness Boundary](FOUNDATION_SUPPORT_READINESS_BOUNDARY.md)** --
    local support and incident-response shape without opening support service.
-40. **[Foundation Intake Onboarding Boundary](FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md)** --
+41. **[Foundation Intake Onboarding Boundary](FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md)** --
    local intake and onboarding shape without forms, waitlists, or signups.
-41. **[Foundation Privacy Data Boundary](FOUNDATION_PRIVACY_DATA_BOUNDARY.md)** --
+42. **[Foundation Privacy Data Boundary](FOUNDATION_PRIVACY_DATA_BOUNDARY.md)** --
    local privacy/data shape without collecting or storing people data.
-42. **[Foundation Legal Business Boundary](FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md)** --
+43. **[Foundation Legal Business Boundary](FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md)** --
    question-only legal and business preparation without readiness claims.
-43. **[Plain-English Overview](explain/PLAIN_ENGLISH.md)** -- what Mullu Govern is, in
+44. **[Plain-English Overview](explain/PLAIN_ENGLISH.md)** -- what Mullu Govern is, in
    everyday language, with an analogy. No setup, just reading.
-44. **[Tutorial 1: Your First Run](tutorials/01_first_governed_task.md)**
+45. **[Tutorial 1: Your First Run](tutorials/01_first_governed_task.md)**
    -- you install it and run it safely, every command explained, every term
    linked.
-45. **[Tutorial 2: Watch Mullu Govern Real Money](tutorials/02_a_real_governed_task.md)**
+46. **[Tutorial 2: Watch Mullu Govern Real Money](tutorials/02_a_real_governed_task.md)**
    -- you watch it *refuse* an over-limit payment and *prove* a valid one. This
    is where the safety stops being a claim and becomes something you've seen.
-46. **[Glossary](GLOSSARY.md)** -- skim it once so the special words stop being
+47. **[Glossary](GLOSSARY.md)** -- skim it once so the special words stop being
    scary.
-47. Now you can wander into [How-To Guides](how-to/) or the deep
+48. Now you can wander into [How-To Guides](how-to/) or the deep
    [Reference](#5-reference--deep-architecture) and it will make sense.
 
 That is the whole on-ramp. About 80 minutes, no prior knowledge assumed.

@@ -39,6 +39,7 @@ Invariants: this snapshot may not claim public production health, legal clearanc
 | Secrets/credentials | Local draft categories only | Does not store real secrets, activate credentials, bind provider accounts, enable external calls, or claim deployment readiness |
 | Security baseline | Local draft questions only | Does not claim scan pass, dependency audit pass, threat-model approval, access-control verification, compliance certification, customer-security readiness, or deployment readiness |
 | Cost/budget | Local draft categories only | Does not spend, enable billing, bind payment methods, create subscriptions, approve purchases, pay invoices, or claim deployment readiness |
+| Payment provider | Local simulation questions only | Does not activate payment providers, bind provider accounts, claim merchant onboarding, claim KYC/tax readiness, collect payment methods, process live charges, execute refunds, settle payouts, activate webhooks, publish checkout, move money, open customer payment access, publish externally, or claim deployment readiness |
 | Runtime/environment | Local draft checks only | Does not verify runtime readiness, activate databases, start containers, open endpoints, run migrations, connect cloud runtime, or claim deployment readiness |
 | Backup/export | Local draft plan only | Does not run backups, activate cloud sync, export files, publish archives, delete data, record private paths, move secrets, move personal data, claim restore readiness, or claim deployment readiness |
 | Deployment deferral | Delayed by design | Does not approve deployment plans, activate cloud resources, open public endpoints, claim production health, claim runtime readiness, open customer access, spend money, use credentials, mutate DNS, publish externally, or deploy |
@@ -107,6 +108,7 @@ Do not use these until the corresponding evidence exists:
 | Secrets/credentials boundary | `docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md` |
 | Security-baseline boundary | `docs/FOUNDATION_SECURITY_BASELINE_BOUNDARY.md` |
 | Cost/budget boundary | `docs/FOUNDATION_COST_BUDGET_BOUNDARY.md` |
+| Payment-provider boundary | `docs/FOUNDATION_PAYMENT_PROVIDER_BOUNDARY.md` |
 | Runtime/environment boundary | `docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md` |
 | Backup/export boundary | `docs/FOUNDATION_BACKUP_EXPORT_BOUNDARY.md` |
 | Deployment-deferral boundary | `docs/FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md` |

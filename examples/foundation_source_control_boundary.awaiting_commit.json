@@ -334,6 +334,17 @@
       "summary": "Cost/budget preparation drafts local categories without spending, paid infrastructure, provider billing, payment methods, subscriptions, purchases, invoice payments, vendor commitments, or deployment claims."
     },
     {
+      "family_id": "payment_provider_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_PAYMENT_PROVIDER_BOUNDARY.md",
+        "examples/foundation_payment_provider_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_payment_provider_boundary.py",
+        "tests/test_validate_foundation_payment_provider_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Payment-provider preparation drafts local provider-selection, account-binding, merchant-onboarding, KYC/tax, payment-method, checkout, webhook, charge/refund, payout, and reconciliation questions without provider activation, provider-account binding, merchant onboarding, KYC readiness, tax readiness, payment-method collection, live charges, refunds, payouts, webhook activation, checkout publication, money movement, customer payment access, external publication, or deployment claims."
+    },
+    {
       "family_id": "runtime_environment_boundary",
       "required_evidence": [
         "docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md",
@@ -518,6 +529,7 @@
     "python scripts/validate_foundation_secrets_credentials_boundary.py",
     "python scripts/validate_foundation_security_baseline_boundary.py",
     "python scripts/validate_foundation_cost_budget_boundary.py",
+    "python scripts/validate_foundation_payment_provider_boundary.py",
     "python scripts/validate_foundation_runtime_environment_boundary.py",
     "python scripts/validate_foundation_backup_export_boundary.py",
     "python scripts/validate_foundation_deployment_deferral_boundary.py",

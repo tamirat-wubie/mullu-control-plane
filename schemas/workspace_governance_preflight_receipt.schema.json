@@ -95,6 +95,7 @@
             "foundation_secrets_credentials_boundary",
             "foundation_security_baseline_boundary",
             "foundation_cost_budget_boundary",
+            "foundation_payment_provider_boundary",
             "foundation_runtime_environment_boundary",
             "foundation_backup_export_boundary",
             "foundation_deployment_deferral_boundary",

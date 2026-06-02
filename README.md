@@ -227,6 +227,14 @@ Cost and budget posture is bounded by
 which drafts cost categories, budget questions, billing questions, subscription
 questions, and purchase controls without spending, enabling paid infrastructure,
 binding payment methods, approving purchases, paying invoices, or deploying.
+Payment-provider preparation is bounded by
+[`docs/FOUNDATION_PAYMENT_PROVIDER_BOUNDARY.md`](docs/FOUNDATION_PAYMENT_PROVIDER_BOUNDARY.md),
+which drafts provider-selection, account-binding, merchant-onboarding, KYC/tax,
+payment-method, checkout, webhook, charge/refund, payout, and reconciliation
+questions without provider activation, provider-account binding, merchant
+onboarding, KYC readiness, tax readiness, payment-method collection, live
+charges, refunds, payouts, webhook activation, checkout publication, money
+movement, customer payment access, external publication, or deployment.
 Runtime and environment posture is bounded by
 [`docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md`](docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md),
 which drafts local command, toolchain, dependency, database, container,
