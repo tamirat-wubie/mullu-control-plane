@@ -22,12 +22,14 @@ def test_current_witness_contract_passes() -> None:
     witness = validator.load_json_object(validator.DEFAULT_WITNESS_PATH, "witness")
     schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
     errors = validator.validate_contract()
+    artifact_names = {artifact["name"] for artifact in witness["artifacts"]}
 
     assert errors == []
     assert schema["title"] == "Workspace Governance Witness"
     assert schema["$id"] == "urn:mullusi:schema:workspace-governance-witness:1"
     assert witness["artifact_count"] == len(witness["artifacts"])
-    assert "workspace_governance_witness_validator" in {artifact["name"] for artifact in witness["artifacts"]}
+    assert len(validator.REQUIRED_ARTIFACT_NAMES) == witness["artifact_count"]
+    assert validator.REQUIRED_ARTIFACT_NAMES == artifact_names
 
 
 def test_artifact_count_mismatch_is_reported() -> None:
@@ -93,6 +95,22 @@ def test_missing_required_artifact_name_is_reported() -> None:
 
     assert any("witness missing required artifact name" in error for error in errors)
     assert any("workspace_governance_witness_tests" in error for error in errors)
+    assert invalid_witness["artifact_count"] == witness["artifact_count"] - 1
+
+
+def test_missing_canonical_artifact_fails_with_adjusted_count() -> None:
+    witness = validator.load_json_object(validator.DEFAULT_WITNESS_PATH, "witness")
+    invalid_witness = copy.deepcopy(witness)
+    invalid_witness["artifacts"] = [
+        artifact for artifact in invalid_witness["artifacts"] if artifact["name"] != "agents_policy"
+    ]
+    invalid_witness["artifact_count"] = len(invalid_witness["artifacts"])
+
+    errors = validator.validate_witness(invalid_witness)
+
+    assert "artifact_count must match artifacts length" not in errors
+    assert any("witness missing required artifact name" in error for error in errors)
+    assert any("agents_policy" in error for error in errors)
     assert invalid_witness["artifact_count"] == witness["artifact_count"] - 1
 
 
