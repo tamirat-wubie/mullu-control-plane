@@ -165,6 +165,18 @@ class EffectPredictionCertificate:
 
 
 @dataclass(frozen=True, slots=True)
+class RecoveryPlanCertificate:
+    certificate_id: str
+    recovery_plan_id: str
+    effect_plan_id: str
+    rollback_plan_id: str
+    compensation_plan_id: str
+    recovery_kind: str
+    review_required_on_failure: bool
+    issued_at: str
+
+
+@dataclass(frozen=True, slots=True)
 class UniversalActionResult:
     """Terminal result for one universal governed action attempt."""
 
@@ -181,6 +193,7 @@ class UniversalActionResult:
     plan_certificate: PlanCertificate | None = None
     simulation_certificate: SimulationCertificate | None = None
     effect_prediction_certificate: EffectPredictionCertificate | None = None
+    recovery_plan_certificate: RecoveryPlanCertificate | None = None
     intent_certificate: IntentCompilationCertificate | None = None
     capability_decision: CommandCapabilityAdmissionDecision | None = None
     governed_action: GovernedAction | None = None
@@ -280,13 +293,17 @@ class UniversalActionKernel:
                 capability_decision=capability_decision,
                 issued_at=now,
             )
-        except (RuntimeCoreInvariantError, ValueError):
+        except (RuntimeCoreInvariantError, ValueError) as exc:
             return self._blocked(
                 action_id=action_id,
                 request=request,
                 issued_at=now,
                 trace_ref=trace_ref,
-                block_reason="governed_action_admission_rejected",
+                block_reason=(
+                    "recovery_plan_missing"
+                    if "requires rollback or compensation" in str(exc)
+                    else "governed_action_admission_rejected"
+                ),
                 goal_certificate=goal_certificate,
                 world_certificate=world_certificate,
                 intent_certificate=intent_certificate,
@@ -303,6 +320,11 @@ class UniversalActionKernel:
         effect_prediction_certificate = self._build_effect_prediction_certificate(
             request=request,
             governed_action=governed_action,
+            issued_at=now,
+        )
+        recovery_plan_certificate = self._build_recovery_plan_certificate(
+            governed_action=governed_action,
+            effect_prediction_certificate=effect_prediction_certificate,
             issued_at=now,
         )
         simulation_certificate = self._build_simulation_certificate(
@@ -322,6 +344,7 @@ class UniversalActionKernel:
                 plan_certificate=plan_certificate,
                 simulation_certificate=simulation_certificate,
                 effect_prediction_certificate=effect_prediction_certificate,
+                recovery_plan_certificate=recovery_plan_certificate,
                 intent_certificate=intent_certificate,
                 capability_decision=capability_decision,
                 governed_action=governed_action,
@@ -371,6 +394,7 @@ class UniversalActionKernel:
             plan_certificate=plan_certificate,
             simulation_certificate=simulation_certificate,
             effect_prediction_certificate=effect_prediction_certificate,
+            recovery_plan_certificate=recovery_plan_certificate,
             intent_certificate=intent_certificate,
             capability_decision=capability_decision,
             governed_action=governed_action,
@@ -536,6 +560,7 @@ class UniversalActionKernel:
         plan_certificate: PlanCertificate | None = None,
         simulation_certificate: SimulationCertificate | None = None,
         effect_prediction_certificate: EffectPredictionCertificate | None = None,
+        recovery_plan_certificate: RecoveryPlanCertificate | None = None,
         capability_decision: CommandCapabilityAdmissionDecision | None = None,
         governed_action: GovernedAction | None = None,
         intent_certificate: IntentCompilationCertificate | None = None,
@@ -566,6 +591,7 @@ class UniversalActionKernel:
             plan_certificate=plan_certificate,
             simulation_certificate=simulation_certificate,
             effect_prediction_certificate=effect_prediction_certificate,
+            recovery_plan_certificate=recovery_plan_certificate,
             intent_certificate=intent_certificate,
             capability_decision=capability_decision,
             governed_action=governed_action,
@@ -719,6 +745,49 @@ class UniversalActionKernel:
             issued_at=issued_at,
         )
 
+    def _build_recovery_plan_certificate(
+        self,
+        *,
+        governed_action: GovernedAction,
+        effect_prediction_certificate: EffectPredictionCertificate,
+        issued_at: str,
+    ) -> RecoveryPlanCertificate:
+        passport = governed_action.capability_passport
+        rollback_plan_id = passport.rollback_capability
+        compensation_plan_id = passport.compensation_capability
+        if rollback_plan_id and compensation_plan_id:
+            recovery_kind = "rollback_and_compensation"
+        elif rollback_plan_id:
+            recovery_kind = "rollback"
+        else:
+            recovery_kind = "compensation"
+        recovery_plan_id = stable_identifier(
+            "universal-recovery-plan",
+            {
+                "governed_action_id": governed_action.governed_action_id,
+                "effect_plan_id": effect_prediction_certificate.plan.effect_plan_id,
+                "rollback_plan_id": rollback_plan_id,
+                "compensation_plan_id": compensation_plan_id,
+            },
+        )
+        return RecoveryPlanCertificate(
+            certificate_id=stable_identifier(
+                "recovery-plan-cert",
+                {
+                    "recovery_plan_id": recovery_plan_id,
+                    "effect_plan_id": effect_prediction_certificate.plan.effect_plan_id,
+                    "issued_at": issued_at,
+                },
+            ),
+            recovery_plan_id=recovery_plan_id,
+            effect_plan_id=effect_prediction_certificate.plan.effect_plan_id,
+            rollback_plan_id=rollback_plan_id,
+            compensation_plan_id=compensation_plan_id,
+            recovery_kind=recovery_kind,
+            review_required_on_failure=passport.review_required_on_failure,
+            issued_at=issued_at,
+        )
+
     def _close_and_admit_learning(
         self,
         *,
@@ -829,6 +898,16 @@ class UniversalActionKernel:
                 if result.effect_prediction_certificate
                 else ""
             ),
+            "recovery_plan_certificate_id": (
+                result.recovery_plan_certificate.certificate_id
+                if result.recovery_plan_certificate
+                else ""
+            ),
+            "recovery_plan_id": (
+                result.recovery_plan_certificate.recovery_plan_id
+                if result.recovery_plan_certificate
+                else ""
+            ),
             "intent_certificate_id": result.intent_certificate.certificate_id
             if result.intent_certificate
             else "",
@@ -876,6 +955,7 @@ class UniversalActionKernel:
             plan_certificate=result.plan_certificate,
             simulation_certificate=result.simulation_certificate,
             effect_prediction_certificate=result.effect_prediction_certificate,
+            recovery_plan_certificate=result.recovery_plan_certificate,
             intent_certificate=result.intent_certificate,
             capability_decision=result.capability_decision,
             governed_action=result.governed_action,
@@ -947,6 +1027,7 @@ def build_universal_action_orchestration_record(
     input_refs = _unique_text_list((action_envelope["source"], *evidence_refs))
     policy_refs = _uao_record_policy_refs(request=request, result=result)
     temporal_refs = _uao_record_temporal_refs(result=result, created_at=created_at)
+    recovery_plan = _uao_record_recovery_plan(result)
     outcome_ref = _uao_record_outcome_ref(result)
     reconciliation_ref = _uao_record_reconciliation_ref(result)
     memory_ref = _uao_record_memory_ref(result)
@@ -977,6 +1058,7 @@ def build_universal_action_orchestration_record(
         "policy_refs": policy_refs,
         "capability_refs": capability_refs,
         "temporal_refs": temporal_refs,
+        "recovery_plan": recovery_plan,
         "exposure_boundary": {
             "redaction_level": "audit",
             "allowed_audiences": ["operator", "auditor"],
@@ -1004,6 +1086,7 @@ def build_universal_action_orchestration_record(
             evidence_refs=evidence_refs,
             policy_refs=policy_refs,
             temporal_refs=temporal_refs,
+            recovery_plan=recovery_plan,
         ),
         "decision": decision,
         "trace_ref": result.trace_ref,
@@ -1413,8 +1496,40 @@ def _uao_record_temporal_refs(
     return _unique_text_list(refs)
 
 
+def _uao_record_recovery_plan(result: UniversalActionResult) -> dict[str, Any]:
+    certificate = result.recovery_plan_certificate
+    if certificate is None:
+        effect_plan_ref = (
+            result.effect_prediction_certificate.plan.effect_plan_id
+            if result.effect_prediction_certificate is not None
+            else None
+        )
+        return {
+            "available": False,
+            "recovery_plan_ref": None,
+            "recovery_kind": "none",
+            "rollback_plan_ref": None,
+            "compensation_plan_ref": None,
+            "review_required_on_failure": True,
+            "certificate_ref": None,
+            "effect_plan_ref": effect_plan_ref,
+        }
+    return {
+        "available": True,
+        "recovery_plan_ref": certificate.recovery_plan_id,
+        "recovery_kind": certificate.recovery_kind,
+        "rollback_plan_ref": certificate.rollback_plan_id or None,
+        "compensation_plan_ref": certificate.compensation_plan_id or None,
+        "review_required_on_failure": certificate.review_required_on_failure,
+        "certificate_ref": certificate.certificate_id,
+        "effect_plan_ref": certificate.effect_plan_id,
+    }
+
+
 def _uao_record_effect_classes(result: UniversalActionResult) -> list[str]:
     classes = ["external_capability", "world_state"]
+    if result.recovery_plan_certificate is not None:
+        classes.append("recovery_plan")
     if (
         result.dispatch_result is not None
         and result.dispatch_result.execution_result is not None
@@ -1673,8 +1788,18 @@ def _uao_record_admission_guards(
     evidence_refs: list[str],
     policy_refs: list[str],
     temporal_refs: list[str],
+    recovery_plan: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
     blocked_guard = _uao_record_blocked_guard(result)
+    recovery_refs = _unique_text_list(
+        (
+            _optional_text_value(recovery_plan.get("recovery_plan_ref")) or "",
+            _optional_text_value(recovery_plan.get("rollback_plan_ref")) or "",
+            _optional_text_value(recovery_plan.get("compensation_plan_ref")) or "",
+        )
+    )
+    if not recovery_refs:
+        recovery_refs = [f"recovery://{request.dispatch_request.route}"]
     guard_specs = (
         ("identity_valid", "actor_identity_bound", [f"actor://{request.actor_id}"]),
         ("tenant_valid", "tenant_scope_resolved", [f"tenant://{request.tenant_id}"]),
@@ -1692,7 +1817,7 @@ def _uao_record_admission_guards(
         (
             "recovery_available",
             "rollback_or_review_path_available",
-            [f"recovery://{request.dispatch_request.route}"],
+            recovery_refs,
         ),
         ("receipt_emittable", "receipt_refs_emitted", [result.admission_receipt_ref]),
     )
@@ -1735,6 +1860,8 @@ def _uao_record_blocked_guard(result: UniversalActionResult) -> str | None:
         return "evidence_sufficient"
     if result.block_reason == "capability_admission_rejected":
         return "capability_certified"
+    if result.block_reason == "recovery_plan_missing":
+        return "recovery_available"
     if result.block_reason == "governed_action_admission_rejected":
         return "authority_valid"
     if result.block_reason.startswith("simulation_"):

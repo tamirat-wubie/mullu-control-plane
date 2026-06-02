@@ -39,6 +39,16 @@
   "temporal_refs": [
     "temporal://partner-sync/freshness-window"
   ],
+  "recovery_plan": {
+    "available": true,
+    "recovery_plan_ref": "recovery://partner/inventory-feed",
+    "recovery_kind": "compensation",
+    "rollback_plan_ref": null,
+    "compensation_plan_ref": "compensation://partner/inventory-resync-review",
+    "review_required_on_failure": true,
+    "certificate_ref": "certificate://recovery/partner-inventory-feed",
+    "effect_plan_ref": "effect-plan://partner/inventory-feed"
+  },
   "exposure_boundary": {
     "redaction_level": "operator",
     "allowed_audiences": [

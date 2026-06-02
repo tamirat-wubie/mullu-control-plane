@@ -120,6 +120,10 @@ def _bind_uao_fixture_to_universal_action_detail(
             f"effect-prediction-certificate://{record['action_id']}"
         ),
         "effect_plan_id": f"effect-plan://{record['action_id']}",
+        "recovery_plan_certificate_id": (
+            f"recovery-plan-certificate://{record['action_id']}"
+        ),
+        "recovery_plan_id": f"recovery-plan://{record['action_id']}",
         "intent_certificate_id": f"intent-certificate://{record['action_id']}",
         "intent_hash": f"typed-intent://{record['action_id']}",
         "capability_status": "accepted",
@@ -175,6 +179,10 @@ def _uao_fixture_proof_hash(universal_detail: dict) -> str:
             "effect_prediction_certificate_id"
         ],
         "effect_plan_id": universal_detail["effect_plan_id"],
+        "recovery_plan_certificate_id": universal_detail[
+            "recovery_plan_certificate_id"
+        ],
+        "recovery_plan_id": universal_detail["recovery_plan_id"],
         "intent_certificate_id": universal_detail["intent_certificate_id"],
         "intent_hash": universal_detail["intent_hash"],
         "capability_status": universal_detail["capability_status"],

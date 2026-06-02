@@ -43,6 +43,7 @@ from mcoi_runtime.contracts.execution import (
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CapabilityAuthorityPolicy,
     CapabilityCertificationStatus,
+    CapabilityRecoveryPlan,
     CapabilityRegistryEntry,
     DomainCapsule,
     DomainCapsuleCertificationStatus,
@@ -236,6 +237,17 @@ def test_universal_action_kernel_dispatches_after_all_certificates_pass() -> Non
         effect_plan.compensation_plan_id
         == "customer_ops.notify_address_update_review"
     )
+    assert result.recovery_plan_certificate is not None
+    assert result.recovery_plan_certificate.effect_plan_id == effect_plan.effect_plan_id
+    assert result.recovery_plan_certificate.recovery_kind == "rollback_and_compensation"
+    assert (
+        result.recovery_plan_certificate.rollback_plan_id
+        == "crm.restore_customer_address"
+    )
+    assert (
+        result.recovery_plan_certificate.compensation_plan_id
+        == "customer_ops.notify_address_update_review"
+    )
     assert result.governed_action.authority_proof.actor_roles == (REQUIRED_ROLE,)
     assert result.governed_action.authority_proof.approval_chain == (REQUIRED_ROLE,)
     assert result.governed_action.authority_proof.approval_refs == ("approval-1",)
@@ -282,6 +294,10 @@ def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
     assert record["uao_schema_version"] == "uao.v1"
     assert record["decision"]["status"] == "allow"
     assert record["execution_receipt_ref"] == result.execution_receipt_ref
+    assert record["recovery_plan"]["available"] is True
+    assert record["recovery_plan"]["recovery_kind"] == "rollback_and_compensation"
+    assert record["recovery_plan"]["recovery_plan_ref"]
+    assert record["recovery_plan"]["certificate_ref"]
     assert record["raw_reasoning_included"] is False
     assert record["lineage"]["accepted_deltas"]
     assert record["lineage"]["rejected_deltas"] == []
@@ -338,6 +354,39 @@ def test_universal_action_kernel_blocks_missing_authority_before_plan() -> None:
         "universal-action-admission-receipt-"
     )
     assert result.execution_receipt_ref is None
+
+
+def test_universal_action_kernel_blocks_world_mutation_without_recovery_path() -> None:
+    kernel, executor = _kernel_with_capability(
+        recovery_plan=CapabilityRecoveryPlan(
+            rollback_capability="",
+            compensation_capability="",
+            review_required_on_failure=True,
+        )
+    )
+    request = _action_request(intent_id="intent-missing-recovery")
+
+    result = kernel.run(request)
+    record = build_universal_action_orchestration_record(
+        request=request,
+        result=result,
+    )
+    validation_errors = _validate_uao_record(record)
+
+    assert validation_errors == []
+    assert result.blocked is True
+    assert result.block_reason == "recovery_plan_missing"
+    assert result.recovery_plan_certificate is None
+    assert result.dispatch_result is None
+    assert executor.calls == 0
+    assert record["decision"]["status"] == "block"
+    assert record["decision"]["reason_code"] == "recovery_plan_missing"
+    assert record["recovery_plan"]["available"] is False
+    assert record["recovery_plan"]["recovery_kind"] == "none"
+    assert any(
+        guard["guard"] == "recovery_available" and guard["verdict"] == "blocked"
+        for guard in record["admission_guards"]
+    )
     assert result.closure_state == "closed_blocked"
     assert result.proof_hash.startswith("universal-action-proof-")
 
@@ -1585,10 +1634,14 @@ def _kernel_with_capability(
     *,
     world_state: WorldStateEngine | None = None,
     authority_policy: CapabilityAuthorityPolicy | None = None,
+    recovery_plan: CapabilityRecoveryPlan | None = None,
     effect_names: tuple[str, ...] | None = None,
 ) -> tuple[UniversalActionKernel, FakeExecutor]:
     return _kernel(
-        gate=_capability_admission_gate(authority_policy=authority_policy),
+        gate=_capability_admission_gate(
+            authority_policy=authority_policy,
+            recovery_plan=recovery_plan,
+        ),
         world_state=world_state,
         effect_names=effect_names,
     )
@@ -1675,10 +1728,15 @@ def _dispatch_request(goal_id: str = "goal-1") -> DispatchRequest:
 def _capability_admission_gate(
     *,
     authority_policy: CapabilityAuthorityPolicy | None = None,
+    recovery_plan: CapabilityRecoveryPlan | None = None,
 ) -> CommandCapabilityAdmissionGate:
     registry = GovernedCapabilityRegistry(clock=_clock)
     compiler = DomainCapsuleCompiler(clock=_clock)
-    entry = _certified_entry("shell_command", authority_policy=authority_policy)
+    entry = _certified_entry(
+        "shell_command",
+        authority_policy=authority_policy,
+        recovery_plan=recovery_plan,
+    )
     capsule = _certified_capsule("shell_command")
     compilation = compiler.compile(capsule=capsule, registry_entries=(entry,))
     installation = registry.install(compilation, (entry,))
@@ -1690,6 +1748,7 @@ def _certified_entry(
     capability_id: str,
     *,
     authority_policy: CapabilityAuthorityPolicy | None = None,
+    recovery_plan: CapabilityRecoveryPlan | None = None,
 ) -> CapabilityRegistryEntry:
     entry = CapabilityRegistryEntry.from_mapping(
         _fixture("capability_registry_entry.json")
@@ -1704,7 +1763,7 @@ def _certified_entry(
         evidence_model=entry.evidence_model,
         authority_policy=authority_policy or entry.authority_policy,
         isolation_profile=entry.isolation_profile,
-        recovery_plan=entry.recovery_plan,
+        recovery_plan=recovery_plan or entry.recovery_plan,
         cost_model=entry.cost_model,
         obligation_model=entry.obligation_model,
         certification_status=CapabilityCertificationStatus.CERTIFIED,

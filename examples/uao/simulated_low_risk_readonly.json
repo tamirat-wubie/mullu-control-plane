@@ -36,6 +36,16 @@
   "temporal_refs": [
     "temporal://status-page/preview-window"
   ],
+  "recovery_plan": {
+    "available": false,
+    "recovery_plan_ref": null,
+    "recovery_kind": "none",
+    "rollback_plan_ref": null,
+    "compensation_plan_ref": null,
+    "review_required_on_failure": false,
+    "certificate_ref": null,
+    "effect_plan_ref": null
+  },
   "exposure_boundary": {
     "redaction_level": "user_safe",
     "allowed_audiences": [
