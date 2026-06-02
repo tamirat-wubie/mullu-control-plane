@@ -392,15 +392,19 @@ def test_protocol_manifest_indexes_sdlc_contract_schemas() -> None:
         assert entries[schema_id]["surface"] == "software_delivery"
 
 
-def test_protocol_manifest_indexes_workspace_governance_integrity_report_schema() -> None:
+def test_protocol_manifest_indexes_workspace_governance_schemas() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     integrity_entry = entries["workspace-governance-integrity-report"]
+    witness_entry = entries["workspace-governance-witness"]
 
     assert validate_protocol_manifest(manifest) == []
     assert integrity_entry["path"] == "schemas/workspace_governance_integrity_report.schema.json"
     assert integrity_entry["urn"] == "urn:mullusi:schema:workspace-governance-integrity-report:1"
     assert integrity_entry["surface"] == "governance"
+    assert witness_entry["path"] == "schemas/workspace_governance_witness.schema.json"
+    assert witness_entry["urn"] == "urn:mullusi:schema:workspace-governance-witness:1"
+    assert witness_entry["surface"] == "governance"
 
 
 def test_protocol_manifest_indexes_trust_ledger_bundle() -> None:

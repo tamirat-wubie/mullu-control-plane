@@ -30,15 +30,16 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "protocol_manifest",
         "logic_governance_application",
     ]
-    assert names[7:13] == [
+    assert names[7:14] == [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
+        "workspace_governance_witness_contract",
         "workspace_governance_inventory_report",
         "workspace_governance_integrity_report",
         "workspace_governance_integrity_report_contract",
         "universal_action_orchestration_contract",
     ]
-    assert len(names) == 20
+    assert len(names) == 21
     assert names[-8:] == [
         "universal_action_orchestration_contract",
         "universal_action_orchestration_validation_receipt_contract",
@@ -57,6 +58,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert args_by_name["agents_policy"][1:] == ("scripts/validate_agents_governance.py",)
     assert args_by_name["workspace_governance_inventory_report"][1:] == (
         "scripts/report_workspace_governance_inventory.py",
+    )
+    assert args_by_name["workspace_governance_witness_contract"][1:] == (
+        "scripts/validate_workspace_governance_witness.py",
     )
     assert args_by_name["workspace_governance_integrity_report"][1:] == (
         "scripts/report_workspace_governance_integrity.py",

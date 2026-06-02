@@ -1,5 +1,5 @@
 {
-  "check_count": 20,
+  "check_count": 21,
   "generated_at_epoch": 1780272000.0,
   "checks": [
     {
@@ -98,6 +98,17 @@
         "scripts/validate_workspace_governance_preflight_receipt.py"
       ],
       "name": "workspace_governance_preflight_receipt_example",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_workspace_governance_witness.py"
+      ],
+      "name": "workspace_governance_witness_contract",
       "passed": true,
       "return_code": 0,
       "stderr": "",

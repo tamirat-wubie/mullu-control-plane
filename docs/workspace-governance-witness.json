@@ -1,5 +1,5 @@
 {
-  "artifact_count": 39,
+  "artifact_count": 42,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -20,6 +20,16 @@
       "name": "workspace_governance_witness",
       "path": "docs/workspace-governance-witness.json",
       "purpose": "Machine-readable artifact inventory for repository-local governance checks."
+    },
+    {
+      "name": "workspace_governance_witness_schema",
+      "path": "schemas/workspace_governance_witness.schema.json",
+      "purpose": "JSON schema for the machine-readable workspace governance witness."
+    },
+    {
+      "name": "workspace_governance_witness_validator",
+      "path": "scripts/validate_workspace_governance_witness.py",
+      "purpose": "Read-only validator for workspace governance witness schema and artifact references."
     },
     {
       "name": "workspace_governance_inventory_reporter",
@@ -187,6 +197,11 @@
       "purpose": "Regression tests for integrity report contract validation."
     },
     {
+      "name": "workspace_governance_witness_tests",
+      "path": "tests/test_validate_workspace_governance_witness.py",
+      "purpose": "Regression tests for workspace governance witness contract validation."
+    },
+    {
       "name": "workspace_governance_preflight_tests",
       "path": "tests/test_run_workspace_governance_checks.py",
       "purpose": "Regression tests for governance preflight orchestration."
@@ -200,9 +215,10 @@
   "block_conditions": [
     "witness references a missing artifact",
     "witness artifact path escapes the repository",
+    "workspace governance witness schema absent or failing",
     "governance integrity report omits a digest for an existing artifact",
     "governance integrity report counts contradict artifact records",
-    "workspace governance preflight omits inventory or integrity validation"
+    "workspace governance preflight omits inventory, integrity, or witness validation"
   ],
   "capability": "repository_local_workspace_governance_surface",
   "created_at": "2026-06-01T00:00:00Z",
