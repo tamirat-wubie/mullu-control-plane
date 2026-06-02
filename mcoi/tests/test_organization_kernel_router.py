@@ -685,6 +685,54 @@ def test_organization_action_queue_reports_receipt_ready_step_without_dispatch(t
     assert before["gate_decisions"] == after["gate_decisions"]
 
 
+def test_organization_action_queue_filters_ready_receipt_actions_without_mutation(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    gate = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.get(
+        "/api/v1/orgs/org-mullu/action-queue"
+        "?decision=allow&severity=ready&department_id=engineering"
+        "&responsible_role_id=engineering.owner&next_action=bind_worker_receipt"
+    )
+    payload = response.json()
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert gate.status_code == 200
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["read_only"] is True
+    assert payload["filters"] == {
+        "decision": "allow",
+        "severity": "ready",
+        "department_id": "engineering",
+        "responsible_role_id": "engineering.owner",
+        "next_action": "bind_worker_receipt",
+    }
+    assert payload["summary"]["total_action_count"] == 5
+    assert payload["summary"]["action_count"] == 1
+    assert payload["summary"]["filter_count"] == 5
+    assert payload["summary"]["ready_action_count"] == 1
+    assert payload["summary"]["allow_count"] == 1
+    assert payload["summary"]["execution_authority_granted"] is False
+    assert payload["summary"]["dispatch_authority_granted"] is False
+    assert payload["attention_items"] == []
+    assert len(payload["actions"]) == 1
+    assert payload["actions"][0]["department_id"] == "engineering"
+    assert payload["actions"][0]["responsible_role_id"] == "engineering.owner"
+    assert payload["actions"][0]["next_action"] == "bind_worker_receipt"
+    assert payload["actions"][0]["admission_decision"] == "allow"
+    assert payload["actions"][0]["execution_authority_granted"] is False
+    assert payload["actions"][0]["dispatch_authority_granted"] is False
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"]
+
+
 def test_organization_action_queue_view_is_read_only_and_escaped(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     bootstrap = client.post(
@@ -715,7 +763,6 @@ def test_organization_action_queue_view_is_read_only_and_escaped(tmp_path: Path)
     assert "&lt;script&gt;alert(&#x27;queue&#x27;)&lt;/script&gt;" in view.text
     assert before["events"] == after["events"]
     assert before["gate_decisions"] == after["gate_decisions"] == []
-
 
 def test_case_private_pilot_live_rehearsal_binds_preview_receipts_without_mutation(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
@@ -755,6 +802,33 @@ def test_case_private_pilot_live_rehearsal_binds_preview_receipts_without_mutati
     assert payload["story"]["authority_boundary"]["execution_authority_granted"] is False
     assert branches["rehearsal"]["source_ref"] == "action://orgos-private-pilot-live-rehearsal"
     assert branches["rehearsal"]["receipt_refs"]
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
+def test_organization_action_queue_view_preserves_filters(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    view = client.get(
+        "/api/v1/orgs/org-mullu/action-queue/view"
+        "?department_id=engineering&next_action=collect_required_evidence"
+    )
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert view.status_code == 200
+    assert "text/html" in view.headers["content-type"]
+    assert "Mullu OrgOS Action Queue" in view.text
+    assert "Filters" in view.text
+    assert "department_id" in view.text
+    assert "engineering" in view.text
+    assert "next_action" in view.text
+    assert "collect_required_evidence" in view.text
+    assert "json queue" in view.text
+    assert "department_id=engineering&amp;next_action=collect_required_evidence" in view.text
+    assert "total_action_count" in view.text
+    assert "filter_count" in view.text
     assert before["events"] == after["events"]
     assert before["gate_decisions"] == after["gate_decisions"] == []
 
