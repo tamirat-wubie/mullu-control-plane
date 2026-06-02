@@ -4010,6 +4010,51 @@
         "title": "PrivacyRuleRequest",
         "type": "object"
       },
+      "PrivatePilotOperatorViewEnvelope": {
+        "description": "HTTP response envelope for the private pilot operator view.",
+        "properties": {
+          "governed": {
+            "default": true,
+            "title": "Governed",
+            "type": "boolean"
+          },
+          "operation": {
+            "title": "Operation",
+            "type": "string"
+          },
+          "operator_ready": {
+            "title": "Operator Ready",
+            "type": "boolean"
+          },
+          "operator_view": {
+            "additionalProperties": true,
+            "title": "Operator View",
+            "type": "object"
+          },
+          "receipt_count": {
+            "title": "Receipt Count",
+            "type": "integer"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "timeline_count": {
+            "title": "Timeline Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "operation",
+          "tenant_id",
+          "operator_view",
+          "timeline_count",
+          "receipt_count",
+          "operator_ready"
+        ],
+        "title": "PrivatePilotOperatorViewEnvelope",
+        "type": "object"
+      },
       "PrivatePilotStoryEnvelope": {
         "description": "HTTP response envelope for the read-only private pilot story.",
         "properties": {
@@ -8083,6 +8128,63 @@
           }
         },
         "summary": "Evaluate Case Plan Step"
+      }
+    },
+    "/api/v1/cases/{case_id}/plan-steps/{step_id}/private-pilot/rehearsal": {
+      "post": {
+        "description": "Project a tenant-bound private pilot story from a live OrgOS preview.",
+        "operationId": "preview_case_private_pilot_live_rehearsal_api_v1_cases__case_id__plan_steps__step_id__private_pilot_rehearsal_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "step_id",
+            "required": true,
+            "schema": {
+              "title": "Step Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlanStepActionAdmissionPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Case Private Pilot Live Rehearsal"
       }
     },
     "/api/v1/cases/{case_id}/plan-steps/{step_id}/worker-receipt": {
@@ -21546,6 +21648,204 @@
           }
         },
         "summary": "Software Receipt Dashboard",
+        "tags": [
+          "software-receipts"
+        ]
+      }
+    },
+    "/software/receipts/private-pilot/operator-view": {
+      "get": {
+        "description": "Return the read-only private pilot operator chain view.",
+        "operationId": "private_pilot_operator_view_software_receipts_private_pilot_operator_view_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "org_id",
+            "required": false,
+            "schema": {
+              "default": "org-private-pilot",
+              "minLength": 1,
+              "title": "Org Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "case_id",
+            "required": false,
+            "schema": {
+              "default": "case-private-pilot",
+              "minLength": 1,
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actor_id",
+            "required": false,
+            "schema": {
+              "default": "operator:private-pilot",
+              "minLength": 1,
+              "title": "Actor Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivatePilotOperatorViewEnvelope"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Private Pilot Operator View",
+        "tags": [
+          "software-receipts"
+        ]
+      }
+    },
+    "/software/receipts/private-pilot/operator-view/view": {
+      "get": {
+        "description": "Return an escaped read-only HTML private pilot operator view.",
+        "operationId": "private_pilot_operator_view_html_software_receipts_private_pilot_operator_view_view_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "org_id",
+            "required": false,
+            "schema": {
+              "default": "org-private-pilot",
+              "minLength": 1,
+              "title": "Org Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "case_id",
+            "required": false,
+            "schema": {
+              "default": "case-private-pilot",
+              "minLength": 1,
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actor_id",
+            "required": false,
+            "schema": {
+              "default": "operator:private-pilot",
+              "minLength": 1,
+              "title": "Actor Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Private Pilot Operator View Html",
         "tags": [
           "software-receipts"
         ]

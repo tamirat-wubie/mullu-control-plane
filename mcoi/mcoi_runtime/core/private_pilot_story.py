@@ -681,6 +681,215 @@ def build_private_pilot_story(
     }
 
 
+def build_private_pilot_operator_view(story: Mapping[str, Any]) -> dict[str, Any]:
+    """Build a compact read-only operator view from a private pilot story."""
+
+    if not isinstance(story, Mapping):
+        raise PrivatePilotStoryError("private pilot operator view requires a story object")
+    if story.get("read_only") is not True:
+        raise PrivatePilotStoryError("private pilot operator view requires a read-only story")
+    if story.get("governed") is not True:
+        raise PrivatePilotStoryError("private pilot operator view requires a governed story")
+
+    request = story.get("request")
+    if not isinstance(request, Mapping):
+        raise PrivatePilotStoryError("private pilot operator view requires request binding")
+    tenant_id = _text(request.get("tenant_id"))
+    org_id = _text(request.get("org_id"))
+    case_id = _text(request.get("case_id"))
+    actor_id = _text(request.get("actor_id"))
+    if not tenant_id or not org_id or not case_id or not actor_id:
+        raise PrivatePilotStoryError("private pilot operator view request binding is incomplete")
+
+    authority = story.get("authority_boundary")
+    if not isinstance(authority, Mapping):
+        raise PrivatePilotStoryError("private pilot operator view requires authority boundary")
+    uao_branches = [
+        branch for branch in story.get("uao_branches", [])
+        if isinstance(branch, Mapping)
+    ]
+    rehearsal_branch = next(
+        (branch for branch in uao_branches if branch.get("branch_id") == "rehearsal"),
+        None,
+    )
+    if rehearsal_branch is None:
+        raise PrivatePilotStoryError("private pilot operator view requires rehearsal branch")
+
+    governor_chain = story.get("governor_chain")
+    governor_chain = governor_chain if isinstance(governor_chain, Mapping) else {}
+    sdlc_dashboard = story.get("sdlc_dashboard")
+    sdlc_dashboard = sdlc_dashboard if isinstance(sdlc_dashboard, Mapping) else {}
+    closure = story.get("closure")
+    closure = closure if isinstance(closure, Mapping) else {}
+    orgos = story.get("orgos")
+    orgos = orgos if isinstance(orgos, Mapping) else {}
+    dashboard_refs = _unique_text([
+        *_text_list(story.get("dashboard_refs")),
+        "/software/receipts/private-pilot/operator-view",
+        "/software/receipts/private-pilot/operator-view/view",
+    ])
+
+    checks = [
+        _operator_check(
+            "story_read_only",
+            story.get("read_only") is True,
+            "private_pilot_story_read_only",
+            ["/software/receipts/private-pilot/story"],
+        ),
+        _operator_check(
+            "no_execution_authority",
+            authority.get("execution_authority_granted") is False,
+            "execution_authority_not_granted",
+            ["authority://private-pilot/no-execution"],
+        ),
+        _operator_check(
+            "no_external_mutation",
+            authority.get("external_mutation_allowed") is False,
+            "external_mutation_blocked",
+            ["authority://private-pilot/no-external-mutation"],
+        ),
+        _operator_check(
+            "uao_rehearsal_simulated",
+            rehearsal_branch.get("decision_status") == "simulate"
+            and rehearsal_branch.get("execution_allowed") is False,
+            "uao_rehearsal_is_simulation_only",
+            [_text(rehearsal_branch.get("closure_receipt_ref"))],
+        ),
+        _operator_check(
+            "governor_chain_valid",
+            governor_chain.get("valid") is True,
+            "governor_chain_read_model_valid",
+            [GOVERNOR_CHAIN_WORKFLOW_ID],
+        ),
+        _operator_check(
+            "sdlc_dashboard_read_only",
+            sdlc_dashboard.get("read_only") is True
+            and sdlc_dashboard.get("governed") is True,
+            "sdlc_dashboard_governed_read_only",
+            [_text(sdlc_dashboard.get("dashboard_ref"))],
+        ),
+        _operator_check(
+            "receipt_refs_bound",
+            int(story.get("receipt_count", 0)) > 0,
+            "receipt_refs_present",
+            _text_list(story.get("receipt_refs"))[:3],
+        ),
+    ]
+    operator_ready = all(check["passed"] for check in checks)
+    receipt_refs = _text_list(story.get("receipt_refs"))
+    uao_refs = _text_list(story.get("uao_refs"))
+    causal_trace_refs = _text_list(story.get("causal_decision_trace_refs"))
+    timeline = [
+        _operator_timeline_item(
+            1,
+            "request",
+            "OrgOS request",
+            "tenant_bound",
+            "request_scope_bound",
+            [
+                _text(orgos.get("department_registry_ref")),
+                _text(orgos.get("authority_map_ref")),
+                _text(orgos.get("case_proof_timeline_ref")),
+            ],
+        ),
+        _operator_timeline_item(
+            2,
+            "uao_rehearsal",
+            "UAO rehearsal",
+            _text(rehearsal_branch.get("decision_status")),
+            _text(rehearsal_branch.get("solver_outcome")),
+            [
+                _text(rehearsal_branch.get("source_ref")),
+                _text(rehearsal_branch.get("causal_decision_trace_ref")),
+                _text(rehearsal_branch.get("closure_receipt_ref")),
+            ],
+            receipt_refs=_text_list(rehearsal_branch.get("receipt_refs")),
+            execution_allowed=bool(rehearsal_branch.get("execution_allowed")),
+        ),
+        _operator_timeline_item(
+            3,
+            "governor_chain",
+            "Governor chain",
+            "valid" if governor_chain.get("valid") is True else "blocked",
+            _text(governor_chain.get("handoff")),
+            [
+                GOVERNOR_CHAIN_WORKFLOW_ID,
+                _text(governor_chain.get("dashboard_ref")),
+            ],
+            stage_count=int(governor_chain.get("stage_count", 0)),
+        ),
+        _operator_timeline_item(
+            4,
+            "sdlc_evidence",
+            "SDLC evidence",
+            "ready" if int(sdlc_dashboard.get("blocker_count", 0)) == 0 else "blocked",
+            _text(sdlc_dashboard.get("dashboard_id")),
+            [
+                _text(sdlc_dashboard.get("dashboard_ref")),
+                _text(sdlc_dashboard.get("closure", {}).get("closure_receipt_ref"))
+                if isinstance(sdlc_dashboard.get("closure"), Mapping)
+                else "",
+            ],
+            stage_count=int(sdlc_dashboard.get("stage_count", 0)),
+            receipt_refs=_text_list(sdlc_dashboard.get("closure", {}).get("receipt_refs"))
+            if isinstance(sdlc_dashboard.get("closure"), Mapping)
+            else [],
+        ),
+        _operator_timeline_item(
+            5,
+            "receipt_closure",
+            "Receipt closure",
+            _text(closure.get("status")),
+            _text(closure.get("next_action")),
+            receipt_refs,
+            receipt_refs=receipt_refs,
+        ),
+    ]
+    return {
+        "operator_view_id": f"private-pilot-operator-view:{tenant_id}:{org_id}:{case_id}",
+        "read_model_version": "private_pilot_operator_view.v1",
+        "read_only": True,
+        "governed": True,
+        "story_id": _text(story.get("story_id")),
+        "story_ref": "/software/receipts/private-pilot/story",
+        "html_view_ref": "/software/receipts/private-pilot/operator-view/view",
+        "request": {
+            "tenant_id": tenant_id,
+            "org_id": org_id,
+            "case_id": case_id,
+            "actor_id": actor_id,
+            "intent": _text(request.get("intent")),
+        },
+        "summary": {
+            "composition_outcome": _text(story.get("composition_outcome")),
+            "pilot_execution_outcome": _text(story.get("pilot_execution_outcome")),
+            "execution_state": _text(story.get("execution_state")),
+            "operator_outcome": "SolvedVerified" if operator_ready else "GovernanceBlocked",
+            "operator_ready": operator_ready,
+            "next_action": _text(closure.get("next_action")),
+        },
+        "authority_boundary": {
+            "execution_authority_granted": authority.get("execution_authority_granted") is True,
+            "dispatch_authority_granted": authority.get("dispatch_authority_granted") is True,
+            "external_mutation_allowed": authority.get("external_mutation_allowed") is True,
+            "live_capabilities_invoked": authority.get("live_capabilities_invoked") is True,
+        },
+        "operator_check_count": len(checks),
+        "operator_checks": checks,
+        "timeline_count": len(timeline),
+        "timeline": timeline,
+        "receipt_panel": {
+            "receipt_count": len(receipt_refs),
+            "receipts": _operator_ref_panel(receipt_refs, limit=16),
+            "uao_count": len(uao_refs),
+            "uao_refs": _operator_ref_panel(uao_refs, limit=12),
+            "causal_trace_count": len(causal_trace_refs),
+            "causal_trace_refs": _operator_ref_panel(causal_trace_refs, limit=12),
+        },
+        "dashboard_refs": dashboard_refs,
+    }
+
+
 def _validate_request(request: PrivatePilotStoryRequest) -> None:
     for field_name, value in (
         ("tenant_id", request.tenant_id),
@@ -1073,6 +1282,8 @@ def _dashboard_refs(request: PrivatePilotStoryRequest) -> list[str]:
         orgos["case_portfolio_view_ref"],
         "/software/receipts/sdlc/dashboard",
         "/software/receipts/private-pilot/story",
+        "/software/receipts/private-pilot/operator-view",
+        "/software/receipts/private-pilot/operator-view/view",
     ]
 
 
@@ -1080,6 +1291,56 @@ def _result_refs(uao_branches: list[dict[str, Any]]) -> dict[str, str]:
     return {
         f"{branch['branch_id']}_decision_ref": f"decision://{branch['orchestration_id']}"
         for branch in uao_branches
+    }
+
+
+def _operator_check(
+    check_id: str,
+    passed: bool,
+    reason_code: str,
+    evidence_refs: list[str],
+) -> dict[str, Any]:
+    return {
+        "check_id": check_id,
+        "passed": passed,
+        "proof_state": "Pass" if passed else f"Fail({reason_code})",
+        "reason_code": reason_code,
+        "evidence_refs": _unique_text(evidence_refs),
+    }
+
+
+def _operator_timeline_item(
+    order: int,
+    step_id: str,
+    label: str,
+    status: str,
+    outcome: str,
+    source_refs: list[str],
+    *,
+    receipt_refs: list[str] | None = None,
+    execution_allowed: bool = False,
+    stage_count: int = 0,
+) -> dict[str, Any]:
+    receipts = _unique_text(receipt_refs or [])
+    return {
+        "order": order,
+        "step_id": step_id,
+        "label": label,
+        "status": status,
+        "outcome": outcome,
+        "execution_allowed": execution_allowed,
+        "stage_count": stage_count,
+        "source_refs": _operator_ref_panel(source_refs, limit=6),
+        "receipt_refs": _operator_ref_panel(receipts, limit=6),
+    }
+
+
+def _operator_ref_panel(values: list[str], *, limit: int) -> dict[str, Any]:
+    refs = _unique_text(values)
+    return {
+        "ref_count": len(refs),
+        "refs": refs[:limit],
+        "truncated": len(refs) > limit,
     }
 
 
