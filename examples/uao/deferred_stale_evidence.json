@@ -49,6 +49,34 @@
     "certificate_ref": "certificate://recovery/partner-inventory-feed",
     "effect_plan_ref": "effect-plan://partner/inventory-feed"
   },
+  "claim_ledger": {
+    "ledger_ref": "claim-ledger://uao_stale_evidence",
+    "claims": [
+      {
+        "claim_id": "claim://uao_stale_evidence_decision",
+        "claim_type": "decision",
+        "statement": "Partner inventory refresh was deferred because evidence was stale.",
+        "evidence_refs": [
+          "trace://cdt_deferred_stale_evidence_001",
+          "receipt://uao_admission_stale_evidence"
+        ],
+        "confidence": 1.0,
+        "verified": true
+      },
+      {
+        "claim_id": "claim://uao_stale_evidence_closure",
+        "claim_type": "closure",
+        "statement": "Partner inventory refresh closed deferred without execution.",
+        "evidence_refs": [
+          "receipt://uao_closure_stale_evidence",
+          "closure://uao_stale_evidence"
+        ],
+        "confidence": 1.0,
+        "verified": true
+      }
+    ],
+    "unverified_claim_ids": []
+  },
   "exposure_boundary": {
     "redaction_level": "operator",
     "allowed_audiences": [

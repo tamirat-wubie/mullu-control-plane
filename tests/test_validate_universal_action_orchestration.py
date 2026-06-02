@@ -95,8 +95,11 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertEqual([], errors)
         self.assertEqual("Universal Action Orchestration", schema["title"])
         self.assertIn("action_envelope", schema["$defs"])
+        self.assertIn("claim_ledger", schema["$defs"])
+        self.assertIn("claim", schema["$defs"])
         self.assertIn("pipeline_stage", schema["$defs"])
         self.assertIn("action_envelope", schema["required"])
+        self.assertIn("claim_ledger", schema["required"])
         self.assertIn("admission_guards", schema["required"])
         self.assertIn("closure_state", schema["required"])
         self.assertIn("raw_reasoning_included", schema["required"])
@@ -155,6 +158,34 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn("independent recomputation", document_text)
         self.assertIn("closure receipt must bind closure state", document_text)
         self.assertIn("Runtime bypass detection scans", document_text)
+        self.assertIn("verified claims require evidence refs", document_text)
+
+    def test_claim_ledger_rejects_verified_claim_without_evidence(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["claim_ledger"]["claims"][0]["evidence_refs"] = []
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertIn(
+            "claim_ledger.claims[0]: verified claim requires evidence_refs",
+            errors,
+        )
+
+    def test_evidence_free_unverified_claim_requires_index_entry(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["claim_ledger"]["claims"][0]["evidence_refs"] = []
+        invalid_record["claim_ledger"]["claims"][0]["verified"] = False
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertIn(
+            "claim_ledger.claims[0]: evidence-free claim must appear in unverified_claim_ids",
+            errors,
+        )
 
     def test_effect_bearing_action_requires_causal_trace(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")

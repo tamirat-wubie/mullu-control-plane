@@ -305,6 +305,19 @@ def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
     assert record["recovery_plan"]["recovery_kind"] == "rollback_and_compensation"
     assert record["recovery_plan"]["recovery_plan_ref"]
     assert record["recovery_plan"]["certificate_ref"]
+    assert record["claim_ledger"]["ledger_ref"].startswith("claim-ledger://")
+    assert record["claim_ledger"]["unverified_claim_ids"] == []
+    assert {claim["claim_type"] for claim in record["claim_ledger"]["claims"]} >= {
+        "decision",
+        "execution",
+        "reconciliation",
+        "closure",
+        "recovery",
+    }
+    assert all(
+        claim["verified"] and claim["evidence_refs"]
+        for claim in record["claim_ledger"]["claims"]
+    )
     assert record["raw_reasoning_included"] is False
     assert record["lineage"]["accepted_deltas"]
     assert record["lineage"]["rejected_deltas"] == []
@@ -470,6 +483,12 @@ def test_universal_action_kernel_blocks_world_mutation_without_recovery_path() -
     assert record["decision"]["reason_code"] == "recovery_plan_missing"
     assert record["recovery_plan"]["available"] is False
     assert record["recovery_plan"]["recovery_kind"] == "none"
+    assert record["claim_ledger"]["claims"]
+    assert record["claim_ledger"]["unverified_claim_ids"] == []
+    assert all(
+        claim["verified"] and claim["evidence_refs"]
+        for claim in record["claim_ledger"]["claims"]
+    )
     assert any(
         guard["guard"] == "recovery_available" and guard["verdict"] == "blocked"
         for guard in record["admission_guards"]

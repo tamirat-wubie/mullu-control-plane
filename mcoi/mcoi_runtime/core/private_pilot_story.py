@@ -371,6 +371,28 @@ def build_private_pilot_live_rehearsal_uao_record(
             "certificate_ref": None,
             "effect_plan_ref": None,
         },
+        "claim_ledger": {
+            "ledger_ref": f"claim-ledger://{stable_identifier('private-pilot-rehearsal-claim-ledger', {'action_id': action_id})}",
+            "claims": [
+                {
+                    "claim_id": f"claim://{stable_identifier('private-pilot-rehearsal-claim', {'action_id': action_id, 'claim_type': 'decision'})}",
+                    "claim_type": "decision",
+                    "statement": "Private pilot live rehearsal was admitted as simulation-only.",
+                    "evidence_refs": [trace_ref, admission_receipt_ref],
+                    "confidence": 1.0,
+                    "verified": True,
+                },
+                {
+                    "claim_id": f"claim://{stable_identifier('private-pilot-rehearsal-claim', {'action_id': action_id, 'claim_type': 'closure'})}",
+                    "claim_type": "closure",
+                    "statement": "Private pilot live rehearsal closed without execution authority.",
+                    "evidence_refs": [simulation_receipt_ref, closure_receipt_ref, closure_ref],
+                    "confidence": 1.0,
+                    "verified": True,
+                },
+            ],
+            "unverified_claim_ids": [],
+        },
         "exposure_boundary": {
             "redaction_level": "user_safe",
             "allowed_audiences": ["operator", "auditor"],

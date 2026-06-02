@@ -49,6 +49,36 @@
     "certificate_ref": "certificate://recovery/status-page-publication-window",
     "effect_plan_ref": "effect-plan://status-page/publication"
   },
+  "claim_ledger": {
+    "ledger_ref": "claim-ledger://uao_public_status_refresh",
+    "claims": [
+      {
+        "claim_id": "claim://uao_public_status_refresh_decision",
+        "claim_type": "decision",
+        "statement": "Public status refresh was allowed after admission.",
+        "evidence_refs": [
+          "trace://cdt_allowed_low_risk_action_001",
+          "receipt://uao_admission_public_status_refresh"
+        ],
+        "confidence": 1.0,
+        "verified": true
+      },
+      {
+        "claim_id": "claim://uao_public_status_refresh_closure",
+        "claim_type": "closure",
+        "statement": "Public status refresh closed with execution and reconciliation receipts.",
+        "evidence_refs": [
+          "receipt://uao_execution_public_status_refresh",
+          "receipt://uao_reconciliation_public_status_refresh",
+          "receipt://uao_closure_public_status_refresh",
+          "closure://uao_public_status_refresh"
+        ],
+        "confidence": 1.0,
+        "verified": true
+      }
+    ],
+    "unverified_claim_ids": []
+  },
   "exposure_boundary": {
     "redaction_level": "user_safe",
     "allowed_audiences": [
