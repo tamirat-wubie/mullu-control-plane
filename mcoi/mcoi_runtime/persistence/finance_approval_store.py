@@ -17,6 +17,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from mcoi_runtime.core.request_tenant_guard import assert_owns
 from mcoi_runtime.contracts.finance_approval_packet import (
     ApprovalStatus,
     EffectReceiptType,
@@ -162,7 +163,14 @@ class FinanceApprovalPacketStore:
         return case
 
     def get_case(self, case_id: str) -> InvoiceCase | None:
-        return self._cases.get(case_id)
+        case = self._cases.get(case_id)
+        if case is not None:
+            # Defense-in-depth: refuse to hand a case to a different tenant even
+            # if a caller forgot to enforce_tenant_scope. No-op unless the
+            # middleware bound a non-operator authenticated tenant for this
+            # request (see request_tenant_guard).
+            assert_owns(case.tenant_id, resource="finance approval packet")
+        return case
 
     def list_cases(
         self,

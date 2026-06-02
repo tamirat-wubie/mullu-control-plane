@@ -23,6 +23,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from mcoi_runtime.contracts.temporal_runtime import TemporalActionRequest, TemporalRiskLevel
+from mcoi_runtime.core.request_tenant_guard import bind_request_tenant, reset_request_tenant
 from mcoi_runtime.governance.guards.content_safety import (
     CONTENT_SAFETY_TEXT_FIELDS,
     ContentSafetyChain,
@@ -361,28 +362,41 @@ class GovernanceMiddleware(BaseHTTPMiddleware):
                     type(exc).__name__,
                 )
 
-        # Guards passed - proceed to endpoint
-        response = await call_next(request)
+        # Guards passed - proceed to endpoint.
+        #
+        # Bind the AUTHENTICATED tenant for the persistence-layer defense-in-depth
+        # guard (request_tenant_guard.assert_owns). This is a no-op unless the
+        # guard chain resolved a concrete, non-operator authenticated tenant; it
+        # is reset in the finally below so the binding never leaks past this
+        # request (or into a pooled thread serving the next one).
+        tenant_token = bind_request_tenant(
+            context.get("authenticated_tenant_id"),
+            context.get("jwt_scopes"),
+        )
+        try:
+            response = await call_next(request)
 
-        # Record request analytics
-        if self._request_analytics is not None:
-            total_latency = (time.monotonic() - start) * 1000
-            status_code = getattr(response, "status_code", 200)
-            try:
-                self._request_analytics.record(
-                    path, latency_ms=total_latency,
-                    success=200 <= status_code < 400,
-                    status_code=status_code,
-                )
-            except Exception as exc:
-                if self._metrics_fn:
-                    self._metrics_fn("request_analytics_record_failures", 1)
-                _log.warning(
-                    "request analytics record failed (%s)",
-                    type(exc).__name__,
-                )
+            # Record request analytics
+            if self._request_analytics is not None:
+                total_latency = (time.monotonic() - start) * 1000
+                status_code = getattr(response, "status_code", 200)
+                try:
+                    self._request_analytics.record(
+                        path, latency_ms=total_latency,
+                        success=200 <= status_code < 400,
+                        status_code=status_code,
+                    )
+                except Exception as exc:
+                    if self._metrics_fn:
+                        self._metrics_fn("request_analytics_record_failures", 1)
+                    _log.warning(
+                        "request analytics record failed (%s)",
+                        type(exc).__name__,
+                    )
 
-        return response
+            return response
+        finally:
+            reset_request_tenant(tenant_token)
 
 
 def build_guard_chain(
