@@ -24,6 +24,7 @@ from mcoi_runtime.contracts.temporal_runtime import (
     TemporalSkillStage,
     TemporalSkillStageType,
 )
+from mcoi_runtime.core.request_tenant_guard import assert_owns
 from mcoi_runtime.core.temporal_scheduler import (
     ScheduledActionState,
     ScheduledTemporalAction,
@@ -273,7 +274,14 @@ class TemporalSchedulerStore:
         return tuple(saved)
 
     def get_action(self, schedule_id: str) -> ScheduledTemporalAction | None:
-        return self._actions.get(schedule_id)
+        action = self._actions.get(schedule_id)
+        if action is not None:
+            # Defense-in-depth (see request_tenant_guard): refuse to hand a
+            # schedule to a different tenant even if a caller forgot to
+            # enforce_tenant_scope. No-op unless the middleware bound a
+            # non-operator authenticated tenant for this request.
+            assert_owns(action.tenant_id, resource="temporal schedule")
+        return action
 
     def list_actions(
         self,
