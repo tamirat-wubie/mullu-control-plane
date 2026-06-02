@@ -15,7 +15,7 @@ import os
 from datetime import datetime, timezone
 from html import escape
 from typing import Any
-from urllib.parse import quote, urlparse
+from urllib.parse import quote, urlencode, urlparse
 
 from mcoi_runtime.governance.network.ssrf import is_private_host
 
@@ -2090,7 +2090,48 @@ def _organization_case_portfolio(kernel: OrganizationKernel, org_id: str) -> dic
     }
 
 
-def _organization_action_queue(kernel: OrganizationKernel, org_id: str) -> dict[str, Any]:
+def _action_queue_filter_params(
+    *,
+    decision: str | None = None,
+    severity: str | None = None,
+    department_id: str | None = None,
+    responsible_role_id: str | None = None,
+    case_id: str | None = None,
+    next_action: str | None = None,
+) -> dict[str, str]:
+    raw_filters = {
+        "decision": decision,
+        "severity": severity,
+        "department_id": department_id,
+        "responsible_role_id": responsible_role_id,
+        "case_id": case_id,
+        "next_action": next_action,
+    }
+    return {
+        key: value.strip()
+        for key, value in raw_filters.items()
+        if isinstance(value, str) and value.strip()
+    }
+
+
+def _action_queue_row_matches_filters(row: dict[str, Any], filters: dict[str, str]) -> bool:
+    row_fields = {
+        "decision": row.get("admission_decision"),
+        "severity": row.get("queue_severity"),
+        "department_id": row.get("department_id"),
+        "responsible_role_id": row.get("responsible_role_id"),
+        "case_id": row.get("case_id"),
+        "next_action": row.get("next_action"),
+    }
+    return all(str(row_fields.get(key, "")) == expected for key, expected in filters.items())
+
+
+def _organization_action_queue(
+    kernel: OrganizationKernel,
+    org_id: str,
+    *,
+    filters: dict[str, str] | None = None,
+) -> dict[str, Any]:
     organization = _organization_or_404(kernel, org_id)
     state = kernel.snapshot_state()
     cases = tuple(
@@ -2175,17 +2216,31 @@ def _organization_action_queue(kernel: OrganizationKernel, org_id: str) -> dict[
                     "reason_code": admission_preview["reason_code"],
                 })
 
-    decisions = [row["admission_decision"] for row in action_rows]
-    severities = [row["queue_severity"] for row in action_rows]
+    active_filters = dict(filters or {})
+    filtered_action_rows = [
+        row for row in action_rows
+        if _action_queue_row_matches_filters(row, active_filters)
+    ]
+    filtered_action_refs = {row["action_id"] for row in filtered_action_rows}
+    filtered_attention_items = [
+        item for item in attention_items
+        if str(item.get("ref", "")) in filtered_action_refs
+    ]
+
+    decisions = [row["admission_decision"] for row in filtered_action_rows]
+    severities = [row["queue_severity"] for row in filtered_action_rows]
     return {
         "queue_id": f"operator-action-queue:{org_id}",
         "org_id": org_id,
         "organization": _body(organization),
         "read_only": True,
         "governed": True,
+        "filters": active_filters,
         "summary": {
             "open_case_count": len(cases),
-            "action_count": len(action_rows),
+            "total_action_count": len(action_rows),
+            "action_count": len(filtered_action_rows),
+            "filter_count": len(active_filters),
             "ready_action_count": severities.count("ready"),
             "review_action_count": severities.count("review"),
             "blocker_action_count": severities.count("blocker"),
@@ -2197,8 +2252,8 @@ def _organization_action_queue(kernel: OrganizationKernel, org_id: str) -> dict[
             "execution_authority_granted": False,
             "dispatch_authority_granted": False,
         },
-        "actions": action_rows,
-        "attention_items": attention_items,
+        "actions": filtered_action_rows,
+        "attention_items": filtered_attention_items,
     }
 
 
@@ -2489,6 +2544,11 @@ def _render_action_queue_html(payload: dict[str, Any]) -> str:
         {"metric": key, "value": value}
         for key, value in sorted(summary.items())
     ] if isinstance(summary, dict) else []
+    filters = payload.get("filters", {})
+    filter_rows = [
+        {"filter": key, "value": value}
+        for key, value in sorted(filters.items())
+    ] if isinstance(filters, dict) else []
     action_rows = [
         {
             "severity": item.get("queue_severity", ""),
@@ -2515,7 +2575,10 @@ def _render_action_queue_html(payload: dict[str, Any]) -> str:
         if isinstance(item, dict)
     ]
     quoted_org_id = quote(raw_org_id, safe="")
+    filter_query = urlencode(filters) if isinstance(filters, dict) and filters else ""
     json_url = f"/api/v1/orgs/{quoted_org_id}/action-queue"
+    if filter_query:
+        json_url = f"{json_url}?{filter_query}"
     portfolio_url = f"/api/v1/orgs/{quoted_org_id}/case-portfolio/view"
     authority_url = f"/api/v1/orgs/{quoted_org_id}/authority-map/view"
     return f"""<!doctype html>
@@ -2550,6 +2613,7 @@ def _render_action_queue_html(payload: dict[str, Any]) -> str:
   </header>
   <main>
     {_proof_explorer_table("Summary", ("metric", "value"), summary_rows)}
+    {_proof_explorer_table("Filters", ("filter", "value"), filter_rows)}
     {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
     {_proof_explorer_table("Actions", ("severity", "decision", "next_action", "case_id", "step_id", "department", "role", "reason", "receipts"), action_rows)}
   </main>
@@ -3081,21 +3145,65 @@ def get_organization_case_portfolio_view(org_id: str, request: Request):
 
 
 @router.get("/api/v1/orgs/{org_id}/action-queue")
-def get_organization_action_queue(org_id: str, request: Request):
+def get_organization_action_queue(
+    org_id: str,
+    request: Request,
+    decision: str | None = None,
+    severity: str | None = None,
+    department_id: str | None = None,
+    responsible_role_id: str | None = None,
+    case_id: str | None = None,
+    next_action: str | None = None,
+):
     """Return a read-only operator action queue for open case handoffs."""
     _inc_metric("requests_governed")
     kernel = _kernel()
     _enforce_organization_tenant(request, kernel, org_id)
-    return _organization_action_queue(kernel, org_id)
+    return _organization_action_queue(
+        kernel,
+        org_id,
+        filters=_action_queue_filter_params(
+            decision=decision,
+            severity=severity,
+            department_id=department_id,
+            responsible_role_id=responsible_role_id,
+            case_id=case_id,
+            next_action=next_action,
+        ),
+    )
 
 
 @router.get("/api/v1/orgs/{org_id}/action-queue/view")
-def get_organization_action_queue_view(org_id: str, request: Request):
+def get_organization_action_queue_view(
+    org_id: str,
+    request: Request,
+    decision: str | None = None,
+    severity: str | None = None,
+    department_id: str | None = None,
+    responsible_role_id: str | None = None,
+    case_id: str | None = None,
+    next_action: str | None = None,
+):
     """Return a browser-facing read-only operator action queue."""
     _inc_metric("requests_governed")
     kernel = _kernel()
     _enforce_organization_tenant(request, kernel, org_id)
-    return HTMLResponse(_render_action_queue_html(_organization_action_queue(kernel, org_id)))
+    return HTMLResponse(
+        _render_action_queue_html(
+            _organization_action_queue(
+                kernel,
+                org_id,
+                filters=_action_queue_filter_params(
+                    decision=decision,
+                    severity=severity,
+                    department_id=department_id,
+                    responsible_role_id=responsible_role_id,
+                    case_id=case_id,
+                    next_action=next_action,
+                ),
+            )
+        )
+    )
 
 
 @router.post("/api/v1/cases/launch-gateway-pilot")

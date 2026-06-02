@@ -5899,8 +5899,10 @@
         "case_plan_step_admission_preview_allows_receipt_binding_without_dispatch",
         "organization_action_queue_reports_deferred_handoff_actions_without_mutation",
         "organization_action_queue_reports_receipt_ready_step_without_dispatch",
+        "organization_action_queue_filters_ready_receipt_actions_without_mutation",
         "organization_action_queue_view_is_read_only_and_escaped",
         "case_private_pilot_live_rehearsal_binds_preview_receipts_without_mutation",
+        "organization_action_queue_view_preserves_filters",
         "department_registry_view_is_read_only_and_escaped",
         "case_closure_certificate_view_is_read_only_and_escaped",
         "case_proof_timeline_reports_open_case_without_closure",
@@ -9374,8 +9376,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1153,
-    "runtime_witness_count": 1153,
+    "exact_test_anchor_count": 1155,
+    "runtime_witness_count": 1155,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -13109,6 +13111,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_organization_action_queue_filters_ready_receipt_actions_without_mutation"
+            ],
+            "witness": "organization_action_queue_filters_ready_receipt_actions_without_mutation"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_organization_kernel_router.py::test_organization_action_queue_view_is_read_only_and_escaped"
             ],
             "witness": "organization_action_queue_view_is_read_only_and_escaped"
@@ -13118,6 +13126,12 @@
               "mcoi/tests/test_organization_kernel_router.py::test_case_private_pilot_live_rehearsal_binds_preview_receipts_without_mutation"
             ],
             "witness": "case_private_pilot_live_rehearsal_binds_preview_receipts_without_mutation"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_organization_action_queue_view_preserves_filters"
+            ],
+            "witness": "organization_action_queue_view_preserves_filters"
           },
           {
             "anchors": [
@@ -13198,8 +13212,8 @@
             "witness": "worker_receipts_satisfy_engineering_gate_evidence"
           }
         ],
-        "exact_test_anchor_count": 39,
-        "runtime_witness_count": 39,
+        "exact_test_anchor_count": 41,
+        "runtime_witness_count": 41,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
