@@ -314,6 +314,15 @@ Legal and business uncertainty is bounded by
 which keeps legal, company, patent, tax, terms, compliance, payment, and launch
 questions in `AwaitingEvidence` until qualified review or signed witness
 evidence exists.
+Funding and team preparation is bounded by
+[`docs/FOUNDATION_FUNDING_TEAM_BOUNDARY.md`](docs/FOUNDATION_FUNDING_TEAM_BOUNDARY.md),
+which drafts funding-readiness, investor-boundary, grant, pitch, hiring,
+contractor, advisor, compensation/equity, payroll/budget, and recruiting
+questions without fundraising, investor outreach, grant applications, pitch
+publication, hiring, contractor engagement, advisor commitments, compensation
+commitments, equity promises, payroll setup, budget commitments, company
+formation claims, legal-clearance claims, money movement, external publication,
+or deployment.
 
 Users interact through messaging channels (WhatsApp, Telegram, Slack, Discord,
 Web). Mullu Govern executes bounded real-world tasks -- email, payments, document

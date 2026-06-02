@@ -75,6 +75,7 @@ def test_required_phrase_map_covers_current_guidance_surfaces() -> None:
     assert "docs/FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
+    assert "docs/FOUNDATION_FUNDING_TEAM_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/explain/PLAIN_ENGLISH.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/START_HERE.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/WEBSITE_UPDATE_CHECKLIST.md" in REQUIRED_PHRASES_BY_FILE

@@ -1,7 +1,7 @@
 <!--
 Purpose: define the current solo-founder foundation posture for Mullu Govern and Mullu Control Plane work.
 Governance scope: planning, documentation, local proof threads, prerequisite setup, claim boundaries, and public-site wording.
-Dependencies: README.md, docs/START_HERE.md, docs/CURRENT_READINESS_SNAPSHOT.md, docs/FOUNDATION_PREREQUISITES.md, docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md, docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md, docs/FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md, docs/FOUNDATION_SYSTEM_BOUNDARY_INVENTORY_BOUNDARY.md, docs/FOUNDATION_MODULE_INVENTORY_BOUNDARY.md, docs/FOUNDATION_LOCAL_WORKSTATION_BOUNDARY.md, docs/FOUNDATION_DOCUMENTATION_BOUNDARY.md, docs/FOUNDATION_CLAIM_BOUNDARY.md, docs/FOUNDATION_WEBSITE_POSTURE_BOUNDARY.md, docs/FOUNDATION_RESEARCH_NOTEBOOK_BOUNDARY.md, docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md, docs/FOUNDATION_DECISION_JOURNAL_BOUNDARY.md, docs/FOUNDATION_NEXT_ACTION_BOUNDARY.md, docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md, docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md, docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md, docs/FOUNDATION_SECURITY_BASELINE_BOUNDARY.md, docs/FOUNDATION_COST_BUDGET_BOUNDARY.md, docs/FOUNDATION_PAYMENT_PROVIDER_BOUNDARY.md, docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md, docs/FOUNDATION_BACKUP_EXPORT_BOUNDARY.md, docs/FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md, docs/FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md, docs/FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md, docs/FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md, docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md, docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md, docs/FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md, docs/FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md, docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md, docs/FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md, DEPLOYMENT_STATUS.md, AGENTS.md.
+Dependencies: README.md, docs/START_HERE.md, docs/CURRENT_READINESS_SNAPSHOT.md, docs/FOUNDATION_PREREQUISITES.md, docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md, docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md, docs/FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md, docs/FOUNDATION_SYSTEM_BOUNDARY_INVENTORY_BOUNDARY.md, docs/FOUNDATION_MODULE_INVENTORY_BOUNDARY.md, docs/FOUNDATION_LOCAL_WORKSTATION_BOUNDARY.md, docs/FOUNDATION_DOCUMENTATION_BOUNDARY.md, docs/FOUNDATION_CLAIM_BOUNDARY.md, docs/FOUNDATION_WEBSITE_POSTURE_BOUNDARY.md, docs/FOUNDATION_RESEARCH_NOTEBOOK_BOUNDARY.md, docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md, docs/FOUNDATION_DECISION_JOURNAL_BOUNDARY.md, docs/FOUNDATION_NEXT_ACTION_BOUNDARY.md, docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md, docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md, docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md, docs/FOUNDATION_SECURITY_BASELINE_BOUNDARY.md, docs/FOUNDATION_COST_BUDGET_BOUNDARY.md, docs/FOUNDATION_PAYMENT_PROVIDER_BOUNDARY.md, docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md, docs/FOUNDATION_BACKUP_EXPORT_BOUNDARY.md, docs/FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md, docs/FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md, docs/FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md, docs/FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md, docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md, docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md, docs/FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md, docs/FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md, docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md, docs/FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md, docs/FOUNDATION_FUNDING_TEAM_BOUNDARY.md, DEPLOYMENT_STATUS.md, AGENTS.md.
 Invariants: no public deployment claim, no public launch claim, no money movement, no external irreversible action, no legal or patent claim without qualified review.
 -->
 
@@ -64,6 +64,7 @@ setup work into small local evidence items.
 | Deployment-deferral posture | Delayed by design | Do not approve a deployment plan, activate cloud resources, open public endpoints, claim production health, claim runtime readiness, invite customers, spend money, use credentials, mutate DNS, publish externally, or deploy. |
 | Pilot-deferral posture | Delayed by design | Do not execute a pilot, invite participants, open access channels, open waitlists, open beta, collect personal data, claim market validation, promise support, claim legal clearance, accept payment, publish externally, or deploy. |
 | Customer-access posture | Local access questions only | Do not invite customers, create accounts, open access channels, claim onboarding readiness, make support commitments, claim terms/privacy readiness, collect personal data, accept paid access, open pilot/beta/waitlist access, publish externally, or deploy. |
+| Funding/team posture | Local questions only | Do not fundraise, contact investors, submit grants, publish pitches, hire, engage contractors, commit advisors, promise compensation or equity, set up payroll, commit budgets, claim company formation, claim legal clearance, move money, publish externally, or deploy. |
 | Proof posture | Repository and local evidence first | Public claims require named witness evidence before promotion. |
 | Prerequisite posture | Atomic prerequisite ledger | Prepare one small evidence item at a time; do not create launch pressure. |
 
@@ -95,7 +96,7 @@ These actions are intentionally not first-priority in Foundation Mode:
 | Paid infrastructure | Creates recurring cost before the local proof chain is stable. |
 | Company formation | Useful later, but not required for private local architecture hardening. |
 | Patent filing | Should wait until the invention boundary and claims are stable enough for qualified review. |
-| Fundraising or hiring | Requires clearer product proof, ownership boundary, roadmap, and risk packet. |
+| Fundraising or hiring | Requires clearer product proof, ownership boundary, roadmap, risk packet, and [Foundation Funding Team Boundary](FOUNDATION_FUNDING_TEAM_BOUNDARY.md). |
 
 ## First Local Proof Thread
 
@@ -167,6 +168,7 @@ Do not promote the project out of Foundation Mode until these are true:
 | Customer access | [Foundation Customer Access Boundary](FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md) keeps customer invitation, account creation, access channels, onboarding readiness, support commitments, terms/privacy readiness, personal-data collection, paid access, pilot access, beta access, waitlists, external publication, and deployment blocked. |
 | Privacy/data | [Foundation Privacy Data Boundary](FOUNDATION_PRIVACY_DATA_BOUNDARY.md) keeps personal-data collection, storage, consent capture, tracking, processor activation, privacy publication, legal clearance, customer access, and deployment blocked. |
 | Legal readiness | [Foundation Legal Business Boundary](FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md) keeps trademark, patent, company, tax, terms, compliance, and payment questions in `AwaitingEvidence`. |
+| Funding/team | [Foundation Funding Team Boundary](FOUNDATION_FUNDING_TEAM_BOUNDARY.md) keeps fundraising, investor outreach, grants, pitch publication, hiring, contractor engagement, advisor commitments, compensation commitments, equity promises, payroll setup, budget commitments, company-formation claims, legal-clearance claims, money movement, external publication, and deployment blocked. |
 | Deployment readiness | `DEPLOYMENT_STATUS.md` remains the authority for public-runtime claims. |
 | Prerequisite ledger | `FOUNDATION_PREREQUISITES.md` has no `Blocked` item without a named next evidence action. |
 
@@ -232,6 +234,7 @@ signed status witness says otherwise:
 | Prepare customer access without opening access | [Foundation Customer Access Boundary](FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md) |
 | Prepare privacy/data safely | [Foundation Privacy Data Boundary](FOUNDATION_PRIVACY_DATA_BOUNDARY.md) |
 | Prepare legal/business questions safely | [Foundation Legal Business Boundary](FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md) |
+| Prepare funding/team questions without obligations | [Foundation Funding Team Boundary](FOUNDATION_FUNDING_TEAM_BOUNDARY.md) |
 | See the current claim boundary | [Current Readiness Snapshot](CURRENT_READINESS_SNAPSHOT.md) |
 | Check deployment truth | [Deployment Status](../DEPLOYMENT_STATUS.md) |
 | Look up a confusing word | [Glossary](GLOSSARY.md) |
