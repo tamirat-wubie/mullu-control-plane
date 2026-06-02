@@ -1,5 +1,5 @@
 {
-  "artifact_count": 46,
+  "artifact_count": 62,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -137,14 +137,54 @@
       "purpose": "Read-only validator for repository release status claims."
     },
     {
+      "name": "universal_action_orchestration_document",
+      "path": "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+      "purpose": "Canonical Universal Action Orchestration doctrine for governed action shape and replay closure."
+    },
+    {
       "name": "universal_action_orchestration_schema",
       "path": "schemas/universal_action_orchestration.schema.json",
       "purpose": "JSON schema for Universal Action Orchestration records."
     },
     {
+      "name": "universal_action_orchestration_validation_receipt_schema",
+      "path": "schemas/universal_action_orchestration_validation_receipt.schema.json",
+      "purpose": "JSON schema for Universal Action Orchestration validation receipts."
+    },
+    {
+      "name": "universal_action_orchestration_allowed_example",
+      "path": "examples/universal_action_orchestration.allowed_status_publish.json",
+      "purpose": "Canonical allowed UAO fixture with execution, reconciliation, memory, and closure references."
+    },
+    {
+      "name": "universal_action_orchestration_blocked_example",
+      "path": "examples/universal_action_orchestration.blocked_invoice_payment.json",
+      "purpose": "Canonical blocked UAO fixture for hard admission denial and closure evidence."
+    },
+    {
+      "name": "universal_action_orchestration_blocked_missing_approval_example",
+      "path": "examples/uao/blocked_missing_approval.json",
+      "purpose": "Canonical UAO fixture proving missing approval blocks high-risk action admission."
+    },
+    {
+      "name": "universal_action_orchestration_deferred_stale_evidence_example",
+      "path": "examples/uao/deferred_stale_evidence.json",
+      "purpose": "Canonical UAO fixture proving stale evidence defers action admission."
+    },
+    {
+      "name": "universal_action_orchestration_simulated_low_risk_readonly_example",
+      "path": "examples/uao/simulated_low_risk_readonly.json",
+      "purpose": "Canonical UAO fixture proving read-only simulation remains non-effect-bearing."
+    },
+    {
       "name": "universal_action_orchestration_validator",
       "path": "scripts/validate_universal_action_orchestration.py",
       "purpose": "Read-only validator for Universal Action Orchestration schema and examples."
+    },
+    {
+      "name": "universal_action_orchestration_runtime_bypass_detector",
+      "path": "scripts/detect_uao_runtime_bypass.py",
+      "purpose": "Read-only detector for runtime effect-bearing call sites that bypass UAO or governed binding."
     },
     {
       "name": "universal_action_orchestration_receipt_contract_validator",
@@ -155,6 +195,11 @@
       "name": "universal_action_orchestration_receipt_validator",
       "path": "scripts/validate_universal_action_orchestration_receipt.py",
       "purpose": "Read-only validator for saved Universal Action Orchestration validation receipts."
+    },
+    {
+      "name": "universal_action_orchestration_validation_receipt_example",
+      "path": "docs/universal-action-orchestration-validation-receipt-example.json",
+      "purpose": "Stable saved UAO validation receipt example for replay validation."
     },
     {
       "name": "sdlc_contract_document",
@@ -195,6 +240,41 @@
       "name": "sdlc_pr_enforcement_validator",
       "path": "scripts/validate_sdlc_pr_enforcement.py",
       "purpose": "Read-only validator for SDLC PR enforcement surfaces."
+    },
+    {
+      "name": "universal_action_orchestration_validator_tests",
+      "path": "tests/test_validate_universal_action_orchestration.py",
+      "purpose": "Regression tests for UAO schema, fixture, doctrine, and semantic validation."
+    },
+    {
+      "name": "universal_action_orchestration_runtime_bypass_tests",
+      "path": "tests/test_detect_uao_runtime_bypass.py",
+      "purpose": "Regression tests for UAO runtime bypass detection."
+    },
+    {
+      "name": "universal_action_orchestration_receipt_contract_tests",
+      "path": "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+      "purpose": "Regression tests for UAO validation receipt contract validation."
+    },
+    {
+      "name": "universal_action_orchestration_receipt_tests",
+      "path": "tests/test_validate_universal_action_orchestration_receipt.py",
+      "purpose": "Regression tests for saved UAO validation receipt replay."
+    },
+    {
+      "name": "universal_action_orchestration_gateway_replay_tests",
+      "path": "tests/test_gateway/test_webhooks.py",
+      "purpose": "Regression tests for command-ledger UAO replay and operator read-model projections."
+    },
+    {
+      "name": "universal_action_kernel_tests",
+      "path": "mcoi/tests/test_universal_action_kernel.py",
+      "purpose": "Regression tests for UAO kernel decisions, exports, receipts, replay, and closure references."
+    },
+    {
+      "name": "private_pilot_uao_story_tests",
+      "path": "mcoi/tests/test_private_pilot_story.py",
+      "purpose": "Regression tests for private-pilot UAO branch witness projection."
     },
     {
       "name": "workspace_governance_inventory_tests",
@@ -239,7 +319,8 @@
     "governance inventory report counts contradict artifact records",
     "governance integrity report omits a digest for an existing artifact",
     "governance integrity report counts contradict artifact records",
-    "workspace governance preflight omits inventory, integrity, or witness validation"
+    "workspace governance preflight omits inventory, integrity, or witness validation",
+    "workspace governance witness omits Universal Action Orchestration artifacts"
   ],
   "capability": "repository_local_workspace_governance_surface",
   "created_at": "2026-06-01T00:00:00Z",
@@ -248,7 +329,8 @@
     "workspace_governance_preflight",
     "governance_artifact_inventory",
     "governance_artifact_integrity",
-    "sdlc_pr_enforcement"
+    "sdlc_pr_enforcement",
+    "universal_action_orchestration"
   ],
   "release_status": "ready_for_repository_preflight_use",
   "witness_id": "control_plane_workspace_governance_witness_001"

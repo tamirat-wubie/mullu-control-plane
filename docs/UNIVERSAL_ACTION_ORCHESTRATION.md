@@ -44,6 +44,7 @@ The export is pure and does not dispatch work. It materializes the already-issue
 Command-ledger dispatch persists this record under `universal_action_orchestration`, and the gateway exposes it through `/commands/{command_id}/universal-action-orchestration` as a read-only replay surface.
 The replay surface fails closed unless the persisted command event came from a universal action kernel dispatch or block event and the embedded UAO v1 record preserves the expected command identity, event identity, decision, receipt, closure, and no-private-reasoning shape.
 Operator read-model summaries must expose the replay-validated `reconciliation_ref` and `memory_ref` alongside `closure_state`; summaries may omit execution detail, but they must not reduce closure to status-only evidence.
+The workspace governance witness must retain UAO doctrine, fixtures, schemas, validators, receipt evidence, bypass detection, and replay tests so preflight can detect removal of the UAO law surface before repository closure.
 
 ## Algorithm
 

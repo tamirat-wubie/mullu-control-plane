@@ -30,6 +30,15 @@ def test_current_witness_contract_passes() -> None:
     assert witness["artifact_count"] == len(witness["artifacts"])
     assert len(validator.REQUIRED_ARTIFACT_NAMES) == witness["artifact_count"]
     assert validator.REQUIRED_ARTIFACT_NAMES == artifact_names
+    assert "workspace_governance_witness_validator" in artifact_names
+    assert "universal_action_orchestration_document" in artifact_names
+    assert "universal_action_orchestration_allowed_example" in artifact_names
+    assert "universal_action_orchestration_gateway_replay_tests" in artifact_names
+    assert "universal_action_orchestration" in witness["governance_scope"]
+    assert (
+        "workspace governance witness omits Universal Action Orchestration artifacts"
+        in witness["block_conditions"]
+    )
 
 
 def test_artifact_count_mismatch_is_reported() -> None:
@@ -83,6 +92,22 @@ def test_missing_required_scope_is_reported() -> None:
     assert len(invalid_witness["governance_scope"]) == len(witness["governance_scope"]) - 1
 
 
+def test_missing_universal_action_orchestration_scope_is_reported() -> None:
+    witness = validator.load_json_object(validator.DEFAULT_WITNESS_PATH, "witness")
+    invalid_witness = copy.deepcopy(witness)
+    invalid_witness["governance_scope"] = [
+        scope
+        for scope in invalid_witness["governance_scope"]
+        if scope != "universal_action_orchestration"
+    ]
+
+    errors = validator.validate_witness(invalid_witness)
+
+    assert any("governance_scope missing required value" in error for error in errors)
+    assert any("universal_action_orchestration" in error for error in errors)
+    assert len(invalid_witness["governance_scope"]) == len(witness["governance_scope"]) - 1
+
+
 def test_missing_required_artifact_name_is_reported() -> None:
     witness = validator.load_json_object(validator.DEFAULT_WITNESS_PATH, "witness")
     invalid_witness = copy.deepcopy(witness)
@@ -111,6 +136,23 @@ def test_missing_canonical_artifact_fails_with_adjusted_count() -> None:
     assert "artifact_count must match artifacts length" not in errors
     assert any("witness missing required artifact name" in error for error in errors)
     assert any("agents_policy" in error for error in errors)
+    assert invalid_witness["artifact_count"] == witness["artifact_count"] - 1
+
+
+def test_missing_universal_action_orchestration_artifact_name_is_reported() -> None:
+    witness = validator.load_json_object(validator.DEFAULT_WITNESS_PATH, "witness")
+    invalid_witness = copy.deepcopy(witness)
+    invalid_witness["artifacts"] = [
+        artifact
+        for artifact in invalid_witness["artifacts"]
+        if artifact["name"] != "universal_action_orchestration_document"
+    ]
+    invalid_witness["artifact_count"] = len(invalid_witness["artifacts"])
+
+    errors = validator.validate_witness(invalid_witness)
+
+    assert any("witness missing required artifact name" in error for error in errors)
+    assert any("universal_action_orchestration_document" in error for error in errors)
     assert invalid_witness["artifact_count"] == witness["artifact_count"] - 1
 
 
