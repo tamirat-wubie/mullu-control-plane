@@ -29,6 +29,7 @@ Invariants: this snapshot may not claim public production health, legal clearanc
 | Local workstation | Local draft questions only | Does not verify the workstation, install dependencies, mutate environment, start services, claim full-test pass, depend on cloud, record private paths, or claim deployment readiness |
 | Documentation | Local navigation draft only | Does not claim documentation completeness, canonical docs, public-launch copy, customer readiness, deployment readiness, legal clearance, commercial readiness, external publication, or deployment readiness |
 | Plain-language status | Local non-technical explanation only | Does not claim plain-language completeness, comprehension proof, product readiness, capability availability, real-task execution readiness, customer readiness, public launch, legal clearance, commercial readiness, paid-use readiness, money-movement readiness, canonical docs, external publication, or deployment readiness |
+| Accessibility/language | Local usability questions only | Does not claim accessibility compliance, WCAG conformance, screen-reader verification, keyboard-navigation verification, contrast compliance, mobile accessibility verification, translation readiness, localization readiness, Mfidel support, Amharic support, public accessibility statements, external user testing, personal-data collection, customer access, external publication, or deployment readiness |
 | Claim boundary | Local claim-separation draft only | Does not claim production health, endpoint readiness, customer readiness, pilot readiness, legal clearance, commercial readiness, public launch, compliance certification, external publication, or deployment readiness |
 | Website posture | Local website-copy review only | Does not mutate website files, publish routes, invite access, open waitlists, open beta, accept pilot signups, collect customer intake, claim production runtime, claim endpoint readiness, launch paid use, or deploy |
 | Research notebook | Local concept-organization draft only | Does not claim patent protection, trade-secret protection, scientific validation, physical-world validation, market validation, customer readiness, external publication, paid launch, secret evidence, or deployment readiness |
@@ -102,6 +103,7 @@ Do not use these until the corresponding evidence exists:
 | Local-workstation boundary | `docs/FOUNDATION_LOCAL_WORKSTATION_BOUNDARY.md` |
 | Documentation boundary | `docs/FOUNDATION_DOCUMENTATION_BOUNDARY.md` |
 | Plain-language status boundary | `docs/FOUNDATION_PLAIN_LANGUAGE_STATUS_BOUNDARY.md` |
+| Accessibility/language boundary | `docs/FOUNDATION_ACCESSIBILITY_LANGUAGE_BOUNDARY.md` |
 | Claim boundary | `docs/FOUNDATION_CLAIM_BOUNDARY.md` |
 | Website-posture boundary | `docs/FOUNDATION_WEBSITE_POSTURE_BOUNDARY.md` |
 | Research-notebook boundary | `docs/FOUNDATION_RESEARCH_NOTEBOOK_BOUNDARY.md` |

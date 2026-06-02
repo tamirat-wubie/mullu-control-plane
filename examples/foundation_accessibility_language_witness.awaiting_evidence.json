@@ -1,0 +1,113 @@
+{
+  "accessibility_compliance_claimed": false,
+  "accessibility_language_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft reading-level questions only; no non-technical comprehension proof, canonical docs, or public-readiness claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "reading_level_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft glossary-access questions only; no glossary completeness, terminology coverage, or public-doc readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "glossary_access_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft keyboard-navigation questions only; no focus-order verification, keyboard audit pass, or interactive readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "keyboard_navigation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft screen-reader questions only; no assistive-technology testing, compatibility, label audit, or heading audit is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "screen_reader_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft contrast and layout questions only; no contrast compliance, WCAG conformance, overflow audit, or visual readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "contrast_layout_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft mobile-responsiveness questions only; no mobile accessibility verification, device coverage, or touch-target readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "mobile_responsiveness_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft translation-scope questions only; no translated content, translation readiness, external language service, or public localization is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "translation_scope_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft localization-claim questions only; no language-support readiness, locale coverage, public localization, or regional compliance is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "localization_claim_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft Mfidel-atomicity questions only; no fidel decomposition, Unicode normalization, Amharic readiness, or complete Mfidel support is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "mfidel_atomicity_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft public-accessibility-statement questions only; no public statement, user testing, personal data collection, customer access, or deployment is authorized.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_accessibility_statement_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "amharic_support_claimed": false,
+  "blocked_claims": [
+    "accessibility compliance",
+    "WCAG conformance",
+    "screen-reader verification",
+    "keyboard-navigation verification",
+    "mobile-accessibility verification",
+    "contrast compliance",
+    "translation readiness",
+    "localization readiness",
+    "Mfidel support",
+    "Amharic support",
+    "public accessibility statement",
+    "external user testing",
+    "personal data collection",
+    "customer access",
+    "external publication",
+    "deployment readiness"
+  ],
+  "contrast_compliance_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "external_user_testing_allowed": false,
+  "keyboard_navigation_verified": false,
+  "localization_readiness_claimed": false,
+  "mfidel_support_claimed": false,
+  "mobile_accessibility_verified": false,
+  "next_action": "keep accessibility and language preparation local; do not claim accessibility compliance, WCAG conformance, screen-reader verification, keyboard verification, mobile accessibility, contrast compliance, translation readiness, localization readiness, Mfidel support, Amharic support, public accessibility statements, external user testing, personal data collection, customer access, external publication, or deployment without a later signed witness",
+  "personal_data_collection_allowed": false,
+  "public_accessibility_statement_allowed": false,
+  "schema_version": 1,
+  "screen_reader_verified": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "translation_readiness_claimed": false,
+  "wcag_conformance_claimed": false,
+  "witness_id": "foundation_accessibility_language_witness.awaiting_evidence.v1"
+}

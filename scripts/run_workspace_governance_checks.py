@@ -192,6 +192,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_plain_language_status_boundary.py"),
         ),
         CheckCommand(
+            "foundation_accessibility_language_boundary",
+            (python_executable, "scripts/validate_foundation_accessibility_language_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_claim_boundary",
             (python_executable, "scripts/validate_foundation_claim_boundary.py"),
         ),
