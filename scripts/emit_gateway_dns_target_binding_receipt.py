@@ -275,6 +275,20 @@ def main(
             now_utc=now_utc,
         )
     except RuntimeError as exc:
+        if args.json:
+            print(
+                json.dumps(
+                    {
+                        "error": str(exc),
+                        "receipt_written": False,
+                        "ready": False,
+                        "status": "failed",
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+            return 1
         print(f"gateway DNS target binding receipt emission failed: {exc}", file=sys.stderr)
         return 1
     output_path = write_gateway_dns_target_binding_receipt(receipt, Path(args.output))
