@@ -42,6 +42,27 @@ def _fake_response(body: bytes = b"ok"):
     return response
 
 
+def _body_digest(body: object) -> str:
+    encoded = json.dumps(
+        body,
+        sort_keys=True,
+        ensure_ascii=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _expected_request_hash(*, url: str, method: str, body_digest: str) -> str:
+    payload = {
+        "url": url,
+        "method": method,
+        "headers": [],
+        "body_digest": body_digest,
+    }
+    return hashlib.sha256(str(payload).encode("utf-8", errors="replace")).hexdigest()
+
+
 def _invoke_with_fake_opener(connector: HttpConnector, request: dict):
     fake_opener = mock.MagicMock()
     fake_opener.open = mock.MagicMock(return_value=_fake_response())
@@ -153,3 +174,68 @@ def test_json_body_must_be_deterministic_json() -> None:
 
     assert result.status is ConnectorStatus.FAILED
     assert result.error_code == "json_body must be deterministic JSON"
+
+
+def test_json_body_digest_is_bound_to_content_type_failure_receipt() -> None:
+    connector = HttpConnector(
+        clock=_clock,
+        config=HttpConnectorConfig(
+            allowed_methods=("POST",),
+            allowed_content_types=("application/json",),
+        ),
+    )
+    body = {"action": "submit", "amount": 42}
+
+    result, _fake_opener = _invoke_with_fake_opener(
+        connector,
+        {
+            "url": "https://example.com/submit",
+            "method": "POST",
+            "json_body": body,
+        },
+    )
+
+    digest = _body_digest(body)
+    receipt = result.metadata["connector_receipt"]
+
+    assert result.status is ConnectorStatus.FAILED
+    assert result.error_code == "content_type_not_allowed:text/plain"
+    assert receipt["request_hash"] == _expected_request_hash(
+        url="https://example.com/submit",
+        method="POST",
+        body_digest=digest,
+    )
+    assert "json_body" not in receipt
+
+
+def test_json_body_digest_is_bound_to_response_size_failure_receipt() -> None:
+    connector = HttpConnector(
+        clock=_clock,
+        config=HttpConnectorConfig(
+            allowed_methods=("POST",),
+            allowed_content_types=("text/plain",),
+            max_response_bytes=1,
+        ),
+    )
+    body = {"action": "submit", "amount": 42}
+
+    result, _fake_opener = _invoke_with_fake_opener(
+        connector,
+        {
+            "url": "https://example.com/submit",
+            "method": "POST",
+            "json_body": body,
+        },
+    )
+
+    digest = _body_digest(body)
+    receipt = result.metadata["connector_receipt"]
+
+    assert result.status is ConnectorStatus.FAILED
+    assert result.error_code == "response_too_large:2"
+    assert receipt["request_hash"] == _expected_request_hash(
+        url="https://example.com/submit",
+        method="POST",
+        body_digest=digest,
+    )
+    assert "json_body" not in receipt
