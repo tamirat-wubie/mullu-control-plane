@@ -47,6 +47,14 @@ readiness, training completion, certification, paid-course activation, mentor
 assignment, hiring readiness, delegation readiness, public tutorial
 publication, curriculum completion, production operation readiness,
 customer-support readiness, external account use, or deployment readiness.
+Community/network preparation is bounded by
+[`docs/FOUNDATION_COMMUNITY_NETWORK_BOUNDARY.md`](docs/FOUNDATION_COMMUNITY_NETWORK_BOUNDARY.md),
+which drafts local community, forum, social, collaborator, partner, mentor,
+feedback, event, and introduction questions without community outreach, public
+posts, direct messages, collaborator recruitment, partnership outreach, mentor
+requests, public feedback requests, event participation, contact lists,
+personal-data collection, external account use, customer access, external
+publication, or deployment readiness.
 Architecture-map preparation is bounded by
 [`docs/FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md`](docs/FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md),
 which maps system boundaries, modules, interfaces, dependencies, invariants,

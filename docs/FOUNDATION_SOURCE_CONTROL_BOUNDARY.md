@@ -97,6 +97,7 @@ deployment_allowed=false
 | Customer access | Local access-policy, eligibility, account-creation, invitation, support-duty, terms/privacy, data-handling, rollback/exit, payment-exposure, and public-claim questions with customer invitation, account creation, access channels, onboarding readiness, support commitments, terms/privacy readiness, personal-data collection, paid access, pilot access, beta access, waitlists, external publication, and deployment blocked. |
 | Privacy/data | Local privacy, consent, retention, deletion, processor, and tracking questions with personal-data handling and legal-clearance claims blocked. |
 | Funding/team | Local funding-readiness, investor-boundary, grant, pitch, hiring, contractor, advisor, compensation/equity, payroll/budget, and recruiting questions with fundraising, investor outreach, grant application, pitch publication, hiring, contractor engagement, advisor commitment, compensation commitment, equity promise, payroll setup, budget commitment, company-formation claim, legal-clearance claim, money movement, external publication, and deployment blocked. |
+| Community/network | Local relationship, community, forum, social, collaborator, partner, mentor, feedback, event, and referral questions with outreach, public posts, direct messages, recruiting, partnerships, mentor requests, public feedback, events, contact lists, personal-data collection, external accounts, customer access, external publication, and deployment blocked. |
 | Public claim alignment | Public-copy and naming checks remain foundation-stage. |
 | Governance preflight | Preflight command list, receipt schema, receipt example, and tests. |
 
@@ -149,6 +150,7 @@ python scripts/validate_foundation_intake_onboarding_boundary.py
 python scripts/validate_foundation_customer_access_boundary.py
 python scripts/validate_foundation_privacy_data_boundary.py
 python scripts/validate_foundation_funding_team_boundary.py
+python scripts/validate_foundation_community_network_boundary.py
 python scripts/validate_foundation_source_control_boundary.py
 python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json
 python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-receipt.json

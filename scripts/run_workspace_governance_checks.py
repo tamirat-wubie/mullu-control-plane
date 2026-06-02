@@ -295,6 +295,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             "foundation_funding_team_boundary",
             (python_executable, "scripts/validate_foundation_funding_team_boundary.py"),
         ),
+        CheckCommand(
+            "foundation_community_network_boundary",
+            (python_executable, "scripts/validate_foundation_community_network_boundary.py"),
+        ),
         CheckCommand("protocol_manifest", (python_executable, "scripts/validate_protocol_manifest.py")),
         CheckCommand(
             "logic_governance_application",

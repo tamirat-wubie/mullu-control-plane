@@ -61,6 +61,7 @@ to the deep document if you want more.
 | "I need to prepare privacy/data rules without handling people data." | [Foundation Privacy Data Boundary](FOUNDATION_PRIVACY_DATA_BOUNDARY.md) | 8 min read |
 | "I need to organize legal and business questions without claiming readiness." | [Foundation Legal Business Boundary](FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md) | 9 min read |
 | "I need to prepare funding or team questions without obligations." | [Foundation Funding Team Boundary](FOUNDATION_FUNDING_TEAM_BOUNDARY.md) | 8 min read |
+| "I need to prepare community or network questions without outreach." | [Foundation Community Network Boundary](FOUNDATION_COMMUNITY_NETWORK_BOUNDARY.md) | 8 min read |
 | "I have no idea what this thing even is. Explain it like I'm not technical." | [Plain-English Overview](explain/PLAIN_ENGLISH.md) | 5 min read |
 | "I want to actually run it and see it do something, step by step, holding my hand." | [Tutorial 1: Your First Run](tutorials/01_first_governed_task.md) | 20 min, hands-on |
 | "Show me it actually govern something real (refuse an overspend, prove a payment)." | [Tutorial 2: Watch Mullu Govern Real Money](tutorials/02_a_real_governed_task.md) | 25 min, hands-on |
@@ -285,17 +286,22 @@ in the wrong room. Use the table above to pick the right room.
    grants, pitch publication, hiring, contractor engagement, advisor
    commitments, compensation, equity, payroll, budget commitments, publication,
    money movement, or deployment claims.
-46. **[Plain-English Overview](explain/PLAIN_ENGLISH.md)** -- what Mullu Govern is, in
+46. **[Foundation Community Network Boundary](FOUNDATION_COMMUNITY_NETWORK_BOUNDARY.md)** --
+   local community and network preparation without public posts, messages,
+   collaborator recruitment, partnership outreach, mentor requests, feedback
+   requests, events, contact lists, personal data, external accounts,
+   publication, customer access, or deployment claims.
+47. **[Plain-English Overview](explain/PLAIN_ENGLISH.md)** -- what Mullu Govern is, in
    everyday language, with an analogy. No setup, just reading.
-47. **[Tutorial 1: Your First Run](tutorials/01_first_governed_task.md)**
+48. **[Tutorial 1: Your First Run](tutorials/01_first_governed_task.md)**
    -- you install it and run it safely, every command explained, every term
    linked.
-48. **[Tutorial 2: Watch Mullu Govern Real Money](tutorials/02_a_real_governed_task.md)**
+49. **[Tutorial 2: Watch Mullu Govern Real Money](tutorials/02_a_real_governed_task.md)**
    -- you watch it *refuse* an over-limit payment and *prove* a valid one. This
    is where the safety stops being a claim and becomes something you've seen.
-49. **[Glossary](GLOSSARY.md)** -- skim it once so the special words stop being
+50. **[Glossary](GLOSSARY.md)** -- skim it once so the special words stop being
    scary.
-50. Now you can wander into [How-To Guides](how-to/) or the deep
+51. Now you can wander into [How-To Guides](how-to/) or the deep
    [Reference](#5-reference--deep-architecture) and it will make sense.
 
 That is the whole on-ramp. About 80 minutes, no prior knowledge assumed.
