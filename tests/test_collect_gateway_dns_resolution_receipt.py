@@ -109,6 +109,50 @@ def test_gateway_dns_receipt_cli_writes_unresolved_receipt(tmp_path: Path, capsy
     assert captured.err == ""
 
 
+def test_gateway_dns_receipt_cli_json_bounds_missing_target(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    output_path = tmp_path / "dns_receipt.json"
+
+    exit_code = main(["--output", str(output_path), "--json"], now_utc=FIXED_NOW)
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 1
+    assert payload["resolved"] is False
+    assert payload["receipt_written"] is False
+    assert payload["status"] == "failed"
+    assert payload["error"] == "gateway URL must include http or https scheme and host"
+    assert "Traceback" not in captured.out
+    assert captured.err == ""
+    assert not output_path.exists()
+
+
+def test_gateway_dns_receipt_cli_human_bounds_invalid_host(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    output_path = tmp_path / "dns_receipt.json"
+
+    exit_code = main(
+        [
+            "--host",
+            "https://api.mullusi.com",
+            "--output",
+            str(output_path),
+        ],
+        now_utc=FIXED_NOW,
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert captured.out == "gateway DNS resolution receipt failed\n"
+    assert "Traceback" not in captured.out
+    assert captured.err == ""
+    assert not output_path.exists()
+
+
 def test_gateway_dns_receipt_rejects_placeholder_host() -> None:
     with pytest.raises(RuntimeError) as excinfo:
         collect_gateway_dns_resolution_receipt(host="gateway.example.com", now_utc=FIXED_NOW)
