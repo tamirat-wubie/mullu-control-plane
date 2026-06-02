@@ -1,0 +1,109 @@
+{
+  "blocked_claims": [
+    "capability inventory completeness",
+    "capability availability",
+    "roadmap commitment",
+    "delivery-date promise",
+    "final sequencing",
+    "dependency activation",
+    "public roadmap",
+    "customer commitment",
+    "pilot commitment",
+    "support commitment",
+    "pricing commitment",
+    "money movement",
+    "external publication",
+    "deployment readiness"
+  ],
+  "capability_availability_claimed": false,
+  "capability_inventory_complete_claimed": false,
+  "capability_roadmap_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft local capability-family questions only; no complete capability inventory claim.",
+      "state": "AwaitingEvidence",
+      "surface_id": "capability_family_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft local readiness evidence questions only; no capability availability claim.",
+      "state": "AwaitingEvidence",
+      "surface_id": "capability_readiness_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft local sequencing questions only; no final order or date promise.",
+      "state": "AwaitingEvidence",
+      "surface_id": "sequencing_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft local dependency questions only; no provider, account, service, or infrastructure activation.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dependency_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft local evidence-gate questions only; no availability promotion.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_gate_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft local user-value questions only; no customer validation or demand claim.",
+      "state": "AwaitingEvidence",
+      "surface_id": "user_value_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft local support-load questions only; no support readiness, SLA, or operations claim.",
+      "state": "AwaitingEvidence",
+      "surface_id": "support_load_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft local pricing-exposure questions only; no pricing readiness or money movement.",
+      "state": "AwaitingEvidence",
+      "surface_id": "pricing_exposure_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft local public-claim questions only; no public roadmap or availability claim.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_claim_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft local evolution-review questions only; no frozen roadmap or retained commitment.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evolution_review_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "customer_commitment_allowed": false,
+  "delivery_date_promised": false,
+  "dependency_activation_allowed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "money_movement_allowed": false,
+  "next_action": "keep capability-roadmap work local; do not promote roadmap preparation into availability, commitment, customer, pilot, support, pricing, money, publication, or deployment claims",
+  "pilot_commitment_allowed": false,
+  "pricing_commitment_allowed": false,
+  "public_roadmap_allowed": false,
+  "roadmap_commitment_claimed": false,
+  "schema_version": 1,
+  "sequencing_final_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "support_commitment_allowed": false,
+  "witness_id": "foundation_capability_roadmap_witness.awaiting_evidence.v1"
+}

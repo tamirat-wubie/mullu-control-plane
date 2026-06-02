@@ -1,5 +1,5 @@
 {
-  "check_count": 71,
+  "check_count": 73,
   "generated_at_epoch": 1780272000.0,
   "checks": [
     {
@@ -461,6 +461,28 @@
         "scripts/validate_foundation_product_scope_boundary.py"
       ],
       "name": "foundation_product_scope_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_capability_roadmap_boundary.py"
+      ],
+      "name": "foundation_capability_roadmap_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_operations_runbook_boundary.py"
+      ],
+      "name": "foundation_operations_runbook_boundary",
       "passed": true,
       "return_code": 0,
       "stderr": "",
