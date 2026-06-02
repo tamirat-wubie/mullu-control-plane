@@ -1,0 +1,113 @@
+{
+  "blocked_claims": [
+    "community outreach",
+    "social post publication",
+    "forum post publication",
+    "direct messaging",
+    "collaborator recruitment",
+    "partnership outreach",
+    "mentor request",
+    "public feedback request",
+    "event participation",
+    "contact list recording",
+    "personal data collection",
+    "external account use",
+    "public profile readiness",
+    "customer access",
+    "external publication",
+    "deployment readiness"
+  ],
+  "collaborator_recruitment_allowed": false,
+  "community_network_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local relationship-readiness questions only; no existing network, contact list, introduction path, or outside person is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "personal_network_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft community-fit questions only; no joined community, outreach, account readiness, or public channel is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "community_channel_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local help wording questions only; no sent request, assigned helper, private detail exposure, or outside response is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "help_request_draft_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft forum-post questions only; no published forum post, thread, reply, or public feedback request is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "forum_post_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft social-copy questions only; no published social post, public profile, engagement, or external account use is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "social_post_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local collaborator-risk questions only; no collaborator recruitment, commitment, role, or work expectation is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "collaborator_boundary_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local partner-fit questions only; no partnership outreach, agreement, integration, referral, or outside obligation is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "partnership_boundary_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local mentor-boundary questions only; no mentor request, assignment, commitment, or outside role is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "mentor_request_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft feedback-scope questions only; no public feedback request, survey, beta signal, or external response is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_feedback_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local event and introduction questions only; no event registration, attendance, referral, introduction, or contact path is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "event_referral_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "community_outreach_allowed": false,
+  "contact_list_recorded": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "direct_message_allowed": false,
+  "event_participation_allowed": false,
+  "external_account_use_allowed": false,
+  "external_publication_allowed": false,
+  "forum_post_publication_allowed": false,
+  "mentor_request_allowed": false,
+  "next_action": "keep community and network preparation local; do not post publicly, contact people, send messages, ask for feedback, recruit collaborators, approach partners, request mentors, register for events, store contact lists, collect personal data, use external accounts, open customer access, publish externally, or deploy without a later signed witness",
+  "partnership_outreach_allowed": false,
+  "personal_data_collection_allowed": false,
+  "public_feedback_request_allowed": false,
+  "public_profile_claimed": false,
+  "schema_version": 1,
+  "social_post_publication_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_community_network_witness.awaiting_evidence.v1"
+}

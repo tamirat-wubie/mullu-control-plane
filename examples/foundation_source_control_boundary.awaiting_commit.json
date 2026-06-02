@@ -488,6 +488,17 @@
       "summary": "Funding/team preparation drafts local funding-readiness, investor-boundary, grant, pitch, hiring, contractor, advisor, compensation/equity, payroll/budget, and recruiting questions without fundraising, investor outreach, grant applications, pitch publication, hiring, contractor engagement, advisor commitments, compensation commitments, equity promises, payroll setup, budget commitments, company-formation claims, legal-clearance claims, money movement, external publication, or deployment claims."
     },
     {
+      "family_id": "community_network_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_COMMUNITY_NETWORK_BOUNDARY.md",
+        "examples/foundation_community_network_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_community_network_boundary.py",
+        "tests/test_validate_foundation_community_network_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Community/network preparation drafts local relationship, community, forum, social, collaborator, partner, mentor, feedback, event, and referral questions without community outreach, public posts, direct messages, collaborator recruitment, partnership outreach, mentor requests, public feedback requests, event participation, contact lists, personal-data collection, external-account use, customer access, external publication, or deployment claims."
+    },
+    {
       "family_id": "public_claim_alignment",
       "required_evidence": [
         "docs/PUBLIC_NAMING_READINESS.md",
@@ -565,6 +576,7 @@
     "python scripts/validate_foundation_customer_access_boundary.py",
     "python scripts/validate_foundation_privacy_data_boundary.py",
     "python scripts/validate_foundation_funding_team_boundary.py",
+    "python scripts/validate_foundation_community_network_boundary.py",
     "python scripts/validate_foundation_source_control_boundary.py",
     "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json",
     "python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-receipt.json",
