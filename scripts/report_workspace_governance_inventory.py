@@ -93,6 +93,8 @@ def build_inventory_report(inventory: tuple[InventoryArtifact, ...]) -> dict[str
         "artifact_count": len(inventory),
         "missing_count": missing_count,
         "issue_count": issue_count,
+        "report_is_not_terminal_closure": True,
+        "terminal_closure_required": True,
         "artifacts": [asdict(artifact) for artifact in inventory],
     }
 

@@ -274,6 +274,12 @@ Governance artifacts can be inventoried with:
 python scripts/report_workspace_governance_inventory.py
 ```
 
+The governance artifact inventory report contract is validated with:
+
+```powershell
+python scripts/validate_workspace_governance_inventory_report_contract.py
+```
+
 Governance artifact hashes can be reported with:
 
 ```powershell

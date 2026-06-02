@@ -395,10 +395,14 @@ def test_protocol_manifest_indexes_sdlc_contract_schemas() -> None:
 def test_protocol_manifest_indexes_workspace_governance_schemas() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    inventory_entry = entries["workspace-governance-inventory-report"]
     integrity_entry = entries["workspace-governance-integrity-report"]
     witness_entry = entries["workspace-governance-witness"]
 
     assert validate_protocol_manifest(manifest) == []
+    assert inventory_entry["path"] == "schemas/workspace_governance_inventory_report.schema.json"
+    assert inventory_entry["urn"] == "urn:mullusi:schema:workspace-governance-inventory-report:1"
+    assert inventory_entry["surface"] == "governance"
     assert integrity_entry["path"] == "schemas/workspace_governance_integrity_report.schema.json"
     assert integrity_entry["urn"] == "urn:mullusi:schema:workspace-governance-integrity-report:1"
     assert integrity_entry["surface"] == "governance"

@@ -1,5 +1,5 @@
 {
-  "check_count": 21,
+  "check_count": 22,
   "generated_at_epoch": 1780272000.0,
   "checks": [
     {
@@ -120,6 +120,17 @@
         "scripts/report_workspace_governance_inventory.py"
       ],
       "name": "workspace_governance_inventory_report",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_workspace_governance_inventory_report_contract.py"
+      ],
+      "name": "workspace_governance_inventory_report_contract",
       "passed": true,
       "return_code": 0,
       "stderr": "",

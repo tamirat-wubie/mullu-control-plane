@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:workspace-governance-inventory-report:1",
+  "title": "Workspace Governance Inventory Report",
+  "description": "Machine-readable presence inventory report for workspace governance witness artifacts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "status",
+    "artifact_count",
+    "missing_count",
+    "issue_count",
+    "report_is_not_terminal_closure",
+    "terminal_closure_required",
+    "artifacts"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "const": "workspace_governance_inventory"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["passed", "failed"]
+    },
+    "artifact_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "missing_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "issue_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "report_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true,
+      "description": "Confirms this inventory report is presence evidence only and does not assert terminal closure."
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true,
+      "description": "Requires a separate terminal closure witness before any terminal closure claim."
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/inventory_artifact"
+      }
+    }
+  },
+  "$defs": {
+    "inventory_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "path",
+        "purpose",
+        "exists",
+        "size_bytes",
+        "issue"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exists": {
+          "type": "boolean"
+        },
+        "size_bytes": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "issue": {
+          "type": ["string", "null"],
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

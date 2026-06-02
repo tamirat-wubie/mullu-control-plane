@@ -73,6 +73,7 @@
             "workspace_governance_preflight_receipt_example",
             "workspace_governance_witness_contract",
             "workspace_governance_inventory_report",
+            "workspace_governance_inventory_report_contract",
             "workspace_governance_integrity_report",
             "workspace_governance_integrity_report_contract",
             "universal_action_orchestration_contract",

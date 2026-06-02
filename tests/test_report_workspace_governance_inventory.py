@@ -25,6 +25,8 @@ def test_current_inventory_passes() -> None:
     assert report["artifact_count"] >= 30
     assert report["missing_count"] == 0
     assert report["issue_count"] == 0
+    assert report["report_is_not_terminal_closure"] is True
+    assert report["terminal_closure_required"] is True
 
 
 def test_missing_artifact_is_reported() -> None:
@@ -78,4 +80,5 @@ def test_cli_json_reports_current_inventory(capsys) -> None:
     assert report["report_id"] == "workspace_governance_inventory"
     assert report["status"] == "passed"
     assert report["artifact_count"] >= 30
+    assert report["terminal_closure_required"] is True
     assert streams.err == ""
