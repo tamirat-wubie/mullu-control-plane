@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -537,6 +538,24 @@ def _reject_json_constant(raw_constant: str) -> None:
     raise ValueError("non-finite JSON constants are not permitted")
 
 
+def _bounded_cli_error(exc: FileNotFoundError | ValueError) -> str:
+    """Return an operator-safe error message without host-local paths."""
+    message = str(exc)
+    if isinstance(exc, FileNotFoundError) and " file missing:" in message:
+        return f"{message.split(' file missing:', 1)[0]} file missing"
+    return message
+
+
+def _cli_failure_payload(error: str) -> dict[str, Any]:
+    """Return a bounded JSON failure envelope for CLI automation."""
+    return {
+        "error": error,
+        "plan_written": False,
+        "source_ready": False,
+        "status": "failed",
+    }
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse deployment publication closure plan arguments."""
     parser = argparse.ArgumentParser(description="Plan deployment publication closure actions.")
@@ -553,13 +572,24 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     """CLI entry point for deployment publication closure planning."""
     args = parse_args(argv)
-    plan = plan_deployment_publication_closure(
-        readiness_path=Path(args.readiness),
-        deployment_status_path=Path(args.deployment_status),
-        upstream_blocker_receipt_path=Path(args.upstream_blocker_receipt),
-        dns_target_binding_receipt_path=Path(args.dns_target_binding_receipt),
-        dns_resolution_receipt_path=Path(args.dns_resolution_receipt),
-    )
+    try:
+        plan = plan_deployment_publication_closure(
+            readiness_path=Path(args.readiness),
+            deployment_status_path=Path(args.deployment_status),
+            upstream_blocker_receipt_path=Path(args.upstream_blocker_receipt),
+            dns_target_binding_receipt_path=Path(args.dns_target_binding_receipt),
+            dns_resolution_receipt_path=Path(args.dns_resolution_receipt),
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        error = _bounded_cli_error(exc)
+        if args.json:
+            print(json.dumps(_cli_failure_payload(error), indent=2, sort_keys=True))
+        else:
+            print(
+                f"deployment publication closure planning failed: {error}",
+                file=sys.stderr,
+            )
+        return 1
     write_deployment_publication_closure_plan(plan, Path(args.output))
     if args.json:
         print(json.dumps(plan.as_dict(), indent=2, sort_keys=True))

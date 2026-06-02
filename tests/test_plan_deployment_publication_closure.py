@@ -305,6 +305,94 @@ def test_deployment_closure_plan_writer_and_cli_emit_json(tmp_path: Path, capsys
     assert "production_health_not_declared" in payload["blockers"]
 
 
+def test_deployment_closure_plan_cli_json_bounds_missing_readiness(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    output_path = tmp_path / "deployment_publication_closure_plan.json"
+    missing_readiness_path = tmp_path / "missing_readiness.json"
+
+    exit_code = main(
+        [
+            "--readiness",
+            str(missing_readiness_path),
+            "--output",
+            str(output_path),
+            "--json",
+        ]
+    )
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 1
+    assert output_path.exists() is False
+    assert payload["status"] == "failed"
+    assert payload["plan_written"] is False
+    assert payload["source_ready"] is False
+    assert payload["error"] == "promotion readiness file missing"
+    assert str(tmp_path) not in captured.out
+    assert "Traceback" not in captured.out
+    assert captured.err == ""
+
+
+def test_deployment_closure_plan_cli_human_bounds_missing_readiness(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    output_path = tmp_path / "deployment_publication_closure_plan.json"
+    missing_readiness_path = tmp_path / "missing_readiness.json"
+
+    exit_code = main(
+        [
+            "--readiness",
+            str(missing_readiness_path),
+            "--output",
+            str(output_path),
+        ]
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert output_path.exists() is False
+    assert captured.out == ""
+    assert "deployment publication closure planning failed" in captured.err
+    assert "promotion readiness file missing" in captured.err
+    assert str(tmp_path) not in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_deployment_closure_plan_cli_json_bounds_nonfinite_readiness(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    readiness_path = tmp_path / "general_agent_promotion_readiness.json"
+    output_path = tmp_path / "deployment_publication_closure_plan.json"
+    readiness_path.write_text('{"ready": false, "score": Infinity}', encoding="utf-8")
+
+    exit_code = main(
+        [
+            "--readiness",
+            str(readiness_path),
+            "--output",
+            str(output_path),
+            "--json",
+        ]
+    )
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 1
+    assert output_path.exists() is False
+    assert payload["status"] == "failed"
+    assert payload["plan_written"] is False
+    assert payload["source_ready"] is False
+    assert payload["error"] == "promotion readiness JSON parse failed"
+    assert "Infinity" not in captured.out
+    assert str(tmp_path) not in captured.out
+    assert "Traceback" not in captured.out
+    assert captured.err == ""
+
+
 def test_deployment_closure_plan_maps_not_ready_dns_receipts(tmp_path: Path) -> None:
     readiness_path = tmp_path / "general_agent_promotion_readiness.json"
     dns_target_receipt_path = tmp_path / "gateway_dns_target_binding_receipt.json"
