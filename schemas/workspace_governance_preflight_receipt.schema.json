@@ -103,6 +103,7 @@
             "foundation_domain_email_boundary",
             "foundation_legal_business_boundary",
             "foundation_product_scope_boundary",
+            "foundation_market_research_boundary",
             "foundation_pilot_deferral_boundary",
             "foundation_support_readiness_boundary",
             "foundation_intake_onboarding_boundary",

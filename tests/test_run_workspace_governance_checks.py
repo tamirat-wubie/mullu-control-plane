@@ -24,7 +24,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     names = [command.name for command in commands]
     args_by_name = {command.name: command.args for command in commands}
 
-    assert names[:50] == [
+    assert names[:51] == [
         "local_assurance_plan",
         "agents_policy",
         "foundation_mode",
@@ -66,6 +66,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_domain_email_boundary",
         "foundation_legal_business_boundary",
         "foundation_product_scope_boundary",
+        "foundation_market_research_boundary",
         "foundation_pilot_deferral_boundary",
         "foundation_support_readiness_boundary",
         "foundation_intake_onboarding_boundary",
@@ -76,7 +77,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_community_network_boundary",
         "protocol_manifest",
     ]
-    assert names[54:62] == [
+    assert names[55:63] == [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
         "workspace_governance_witness_contract",
@@ -86,7 +87,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "workspace_governance_integrity_report_contract",
         "universal_action_orchestration_contract",
     ]
-    assert len(names) == 69
+    assert len(names) == 70
     assert names[-8:] == [
         "universal_action_orchestration_contract",
         "universal_action_orchestration_validation_receipt_contract",
@@ -217,6 +218,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["foundation_product_scope_boundary"][1:] == (
         "scripts/validate_foundation_product_scope_boundary.py",
+    )
+    assert args_by_name["foundation_market_research_boundary"][1:] == (
+        "scripts/validate_foundation_market_research_boundary.py",
     )
     assert args_by_name["foundation_pilot_deferral_boundary"][1:] == (
         "scripts/validate_foundation_pilot_deferral_boundary.py",
