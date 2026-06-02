@@ -94,6 +94,7 @@ deployment_allowed=false
 | Pilot deferral | Local pilot purpose, participant-boundary, access-channel, consent/privacy, support, rollback, success-metric, legal/terms, and public-claim questions with pilot execution, participant invitation, access channels, waitlists, beta, customer access, personal-data collection, market validation, support readiness, legal clearance, paid pilot, external publication, and deployment blocked. |
 | Support readiness | Local support and incident-response shape with support service, SLA, onboarding, paid support, and deployment claims blocked. |
 | Intake/onboarding | Local intake and onboarding shape with forms, waitlists, pilot signups, personal data collection, CRM import, outreach, paid access, and customer access blocked. |
+| Customer access | Local access-policy, eligibility, account-creation, invitation, support-duty, terms/privacy, data-handling, rollback/exit, payment-exposure, and public-claim questions with customer invitation, account creation, access channels, onboarding readiness, support commitments, terms/privacy readiness, personal-data collection, paid access, pilot access, beta access, waitlists, external publication, and deployment blocked. |
 | Privacy/data | Local privacy, consent, retention, deletion, processor, and tracking questions with personal-data handling and legal-clearance claims blocked. |
 | Public claim alignment | Public-copy and naming checks remain foundation-stage. |
 | Governance preflight | Preflight command list, receipt schema, receipt example, and tests. |
@@ -144,6 +145,7 @@ python scripts/validate_foundation_product_scope_boundary.py
 python scripts/validate_foundation_pilot_deferral_boundary.py
 python scripts/validate_foundation_support_readiness_boundary.py
 python scripts/validate_foundation_intake_onboarding_boundary.py
+python scripts/validate_foundation_customer_access_boundary.py
 python scripts/validate_foundation_privacy_data_boundary.py
 python scripts/validate_foundation_source_control_boundary.py
 python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json

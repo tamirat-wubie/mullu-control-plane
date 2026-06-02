@@ -288,6 +288,14 @@ Intake and onboarding are bounded by
 which drafts future intake shape without publishing forms, opening waitlists,
 accepting pilot signups, collecting personal data, importing CRM records,
 starting outreach, onboarding customers, or deploying.
+Customer access is bounded by
+[`docs/FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md`](docs/FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md),
+which drafts access-policy, eligibility, account-creation, invitation, support,
+terms/privacy, data-handling, rollback, payment-exposure, and public-claim
+questions without inviting customers, creating accounts, opening access
+channels, claiming onboarding readiness, making support commitments, claiming
+terms/privacy readiness, collecting personal data, accepting paid access,
+opening pilot/beta/waitlist access, publishing externally, or deploying.
 Privacy and data retention are bounded by
 [`docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md`](docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md),
 which drafts privacy, consent, retention, deletion, processor, and tracking

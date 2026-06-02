@@ -1,5 +1,5 @@
 {
-  "check_count": 65,
+  "check_count": 66,
   "generated_at_epoch": 1780272000.0,
   "checks": [
     {
@@ -483,6 +483,17 @@
         "scripts/validate_foundation_intake_onboarding_boundary.py"
       ],
       "name": "foundation_intake_onboarding_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_customer_access_boundary.py"
+      ],
+      "name": "foundation_customer_access_boundary",
       "passed": true,
       "return_code": 0,
       "stderr": "",

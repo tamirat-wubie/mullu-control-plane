@@ -1,0 +1,108 @@
+{
+  "access_channel_open_allowed": false,
+  "account_creation_allowed": false,
+  "beta_access_allowed": false,
+  "blocked_claims": [
+    "customer access opening",
+    "customer invitation",
+    "account creation",
+    "onboarding readiness",
+    "support commitment",
+    "terms/privacy readiness",
+    "personal data collection",
+    "paid access",
+    "pilot access",
+    "beta access",
+    "waitlist opening",
+    "external publication",
+    "deployment readiness"
+  ],
+  "customer_access_allowed": false,
+  "customer_access_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft entry and exit criteria only; no access approval, eligibility result, or customer admission is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "access_policy_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft eligibility boundary questions only; no accepted customers, qualification result, or account access is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "eligibility_boundary_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local account-shape questions only; no account creation, tenant setup, login readiness, or identity provider binding is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "account_creation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft invitation controls only; no sent invitation, invite link, access channel, or external contact path is stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "invitation_flow_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local support-duty questions only; no SLA, support readiness, incident coverage, or onboarding support is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "support_duty_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft legal and privacy review questions only; no terms readiness, privacy readiness, or legal clearance is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "terms_privacy_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local data-handling questions only; no personal-data collection, storage, consent capture, or processor activation is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "data_handling_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft recovery and exit questions only; no customer rollback readiness, recovery guarantee, or support commitment is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rollback_exit_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local paid-access questions only; no payment acceptance, paid pilot, subscription, invoice, or money movement is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "payment_exposure_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local wording review only; no public launch, customer readiness, publication, or deployment readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_claim_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "customer_invitation_allowed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "next_action": "keep customer access closed; do not invite customers, create accounts, open access channels, collect personal data, accept paid access, open pilot/beta/waitlist access, publish externally, or deploy without a later signed witness",
+  "onboarding_ready_claimed": false,
+  "paid_access_allowed": false,
+  "personal_data_collection_allowed": false,
+  "pilot_access_allowed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "support_commitment_allowed": false,
+  "terms_privacy_ready_claimed": false,
+  "waitlist_open": false,
+  "witness_id": "foundation_customer_access_witness.awaiting_evidence.v1"
+}

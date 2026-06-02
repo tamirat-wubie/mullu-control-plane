@@ -455,6 +455,17 @@
       "summary": "Intake and onboarding prepare local draft shape without publishing forms, opening waitlists, accepting signups, collecting personal data, importing CRM records, starting outreach, onboarding customers, paid access, or deployment claims."
     },
     {
+      "family_id": "customer_access_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md",
+        "examples/foundation_customer_access_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_customer_access_boundary.py",
+        "tests/test_validate_foundation_customer_access_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Customer-access preparation drafts local access-policy, eligibility, account-creation, invitation, support-duty, terms/privacy, data-handling, rollback/exit, payment-exposure, and public-claim questions without customer invitation, account creation, access channels, onboarding readiness, support commitments, terms/privacy readiness, personal-data collection, paid access, pilot access, beta access, waitlists, external publication, or deployment claims."
+    },
+    {
       "family_id": "privacy_data_boundary",
       "required_evidence": [
         "docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md",
@@ -540,6 +551,7 @@
     "python scripts/validate_foundation_pilot_deferral_boundary.py",
     "python scripts/validate_foundation_support_readiness_boundary.py",
     "python scripts/validate_foundation_intake_onboarding_boundary.py",
+    "python scripts/validate_foundation_customer_access_boundary.py",
     "python scripts/validate_foundation_privacy_data_boundary.py",
     "python scripts/validate_foundation_source_control_boundary.py",
     "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json",
