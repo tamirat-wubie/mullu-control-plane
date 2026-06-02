@@ -1,0 +1,137 @@
+{
+  "api_dns_publication_allowed": false,
+  "deployment_allowed": false,
+  "dns_mutation_allowed": false,
+  "email_deliverability_claimed": false,
+  "endpoint_readiness_claimed": false,
+  "next_action": "manually verify one public label at a time; do not store provider-private values in Git",
+  "private_dns_targets_stored_in_git": false,
+  "provider_account_ids_stored_in_git": false,
+  "public_surfaces": [
+    {
+      "evidence_ref": "manual_verification_pending",
+      "label": "mullusi.com",
+      "public_safe_note": "Apex public website label; no endpoint readiness or DNS target is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "apex_website_domain",
+      "surface_type": "domain"
+    },
+    {
+      "evidence_ref": "manual_verification_pending",
+      "label": "www.mullusi.io",
+      "public_safe_note": "Alternate public website label; no endpoint readiness or DNS target is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "alternate_website_domain",
+      "surface_type": "domain"
+    },
+    {
+      "evidence_ref": "manual_verification_pending",
+      "label": "api.mullusi.com",
+      "public_safe_note": "API label remains blocked until gateway DNS and runtime witnesses close.",
+      "state": "AwaitingEvidence",
+      "surface_id": "api_subdomain",
+      "surface_type": "subdomain"
+    },
+    {
+      "evidence_ref": "manual_verification_pending",
+      "label": "docs.mullusi.com",
+      "public_safe_note": "Documentation label needs public-safe verification before any readiness claim.",
+      "state": "AwaitingEvidence",
+      "surface_id": "docs_subdomain",
+      "surface_type": "subdomain"
+    },
+    {
+      "evidence_ref": "manual_verification_pending",
+      "label": "learn.mullusi.com",
+      "public_safe_note": "Learning label needs public-safe verification before any readiness claim.",
+      "state": "AwaitingEvidence",
+      "surface_id": "learn_subdomain",
+      "surface_type": "subdomain"
+    },
+    {
+      "evidence_ref": "manual_verification_pending",
+      "label": "dashboard.mullusi.com",
+      "public_safe_note": "Dashboard label is not a customer-access or admin-readiness claim.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dashboard_subdomain",
+      "surface_type": "subdomain"
+    },
+    {
+      "evidence_ref": "manual_verification_pending",
+      "label": "sandbox.mullusi.com",
+      "public_safe_note": "Sandbox label is not a public sandbox availability claim.",
+      "state": "AwaitingEvidence",
+      "surface_id": "sandbox_subdomain",
+      "surface_type": "subdomain"
+    },
+    {
+      "evidence_ref": "manual_verification_pending",
+      "label": "testbed.mullusi.com",
+      "public_safe_note": "Testbed label is not a deployed runtime claim.",
+      "state": "AwaitingEvidence",
+      "surface_id": "testbed_subdomain",
+      "surface_type": "subdomain"
+    },
+    {
+      "evidence_ref": "manual_verification_pending",
+      "label": "metrics.mullusi.com",
+      "public_safe_note": "Metrics label is not an observability-readiness claim.",
+      "state": "AwaitingEvidence",
+      "surface_id": "metrics_subdomain",
+      "surface_type": "subdomain"
+    },
+    {
+      "evidence_ref": "manual_verification_pending",
+      "label": "graphs.mullusi.com",
+      "public_safe_note": "Graphs label is not an analytics-readiness claim.",
+      "state": "AwaitingEvidence",
+      "surface_id": "graphs_subdomain",
+      "surface_type": "subdomain"
+    },
+    {
+      "evidence_ref": "manual_verification_pending",
+      "label": "mullusi.com",
+      "public_safe_note": "Email domain label only; MX, SPF, DKIM, DMARC, and admin readiness are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "email_domain",
+      "surface_type": "email_domain"
+    },
+    {
+      "evidence_ref": "manual_verification_pending",
+      "label": "tamirat@mullusi.com",
+      "public_safe_note": "Public mailbox label only; no inbox access, password, delegate, or recovery evidence is stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "mailbox_tamirat",
+      "surface_type": "mailbox"
+    },
+    {
+      "evidence_ref": "manual_verification_pending",
+      "label": "research@mullusi.com",
+      "public_safe_note": "Public mailbox label only; no inbox access, password, delegate, or recovery evidence is stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "mailbox_research",
+      "surface_type": "mailbox"
+    },
+    {
+      "evidence_ref": "manual_verification_pending",
+      "label": "hello@mullusi.com",
+      "public_safe_note": "Public mailbox label only; no inbox access, password, delegate, or recovery evidence is stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "mailbox_hello",
+      "surface_type": "mailbox"
+    },
+    {
+      "evidence_ref": "manual_verification_pending",
+      "label": "support@mullusi.com",
+      "public_safe_note": "Public mailbox label only; no inbox access, password, delegate, or recovery evidence is stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "mailbox_support",
+      "surface_type": "mailbox"
+    }
+  ],
+  "schema_version": 1,
+  "secret_values_stored_in_git": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_domain_email_witness.awaiting_evidence.v1"
+}

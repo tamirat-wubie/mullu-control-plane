@@ -1,0 +1,89 @@
+{
+  "analytics_tracking_allowed": false,
+  "blocked_claims": [
+    "personal-data collection",
+    "personal-data storage",
+    "retention policy approval",
+    "deletion policy approval",
+    "consent capture",
+    "analytics tracking",
+    "third-party processor activation",
+    "privacy notice publication",
+    "legal clearance",
+    "customer access",
+    "deployment readiness"
+  ],
+  "consent_capture_allowed": false,
+  "customer_access_allowed": false,
+  "deletion_policy_approved": false,
+  "deployment_allowed": false,
+  "legal_clearance_claimed": false,
+  "next_action": "keep privacy and data-retention materials as local drafts; do not collect, store, track, process, publish, or activate personal-data handling without qualified review and a later signed witness",
+  "personal_data_collection_allowed": false,
+  "personal_data_storage_allowed": false,
+  "privacy_notice_published": false,
+  "privacy_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Category questions only; no real people data, contact details, user records, or customer records are stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "data_classification_draft",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft consent review questions only; no active consent capture or legal approval is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "consent_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft lifecycle questions only; no approved retention schedule or deletion workflow is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "retention_deletion_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft notice questions only; no published privacy notice or legal clearance is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "privacy_notice_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Processor categories only; no vendor account IDs, contracts, live processors, or private routing values are stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "processor_inventory_draft",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Tracking-risk questions only; no analytics tags, cookies, pixels, or tracking activation is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "analytics_tracking_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft request-handling questions only; no active data request workflow or support promise is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "subject_request_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local minimization checklist only; no customer-data processing readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "data_minimization_checklist",
+      "surface_type": "local_draft"
+    }
+  ],
+  "retention_policy_approved": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "third_party_processor_allowed": false,
+  "witness_id": "foundation_privacy_data_witness.awaiting_evidence.v1"
+}

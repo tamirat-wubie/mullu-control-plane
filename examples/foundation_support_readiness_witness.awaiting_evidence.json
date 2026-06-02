@@ -1,0 +1,69 @@
+{
+  "blocked_claims": [
+    "customer support opening",
+    "support SLA",
+    "incident response readiness",
+    "support mailbox deliverability",
+    "customer onboarding",
+    "paid support",
+    "deployment readiness"
+  ],
+  "customer_access_allowed": false,
+  "customer_support_open": false,
+  "deployment_allowed": false,
+  "incident_response_ready_claimed": false,
+  "live_support_commitment_allowed": false,
+  "next_action": "keep support materials as local drafts; do not open support, onboarding, paid support, or response commitments without a later signed witness",
+  "onboarding_allowed": false,
+  "paid_support_allowed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "support_mailbox_deliverability_claimed": false,
+  "support_sla_claimed": false,
+  "support_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Public support mailbox label only; no inbox access, routing, deliverability, response-time, or staffing evidence is stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "support_mailbox_label",
+      "surface_type": "mailbox_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Public general contact label only; no staffed intake or response commitment is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "general_contact_label",
+      "surface_type": "mailbox_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft triage categories only; no active customer queue or intake workflow is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "support_triage_categories",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Incident response outline only; no live coverage, response time, or readiness evidence is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "incident_runbook_outline",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Rollback contact path draft only; no live escalation coverage is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rollback_contact_path",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Closure checklist draft only; no operational SLA or support duty is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "support_closure_criteria",
+      "surface_type": "local_draft"
+    }
+  ],
+  "witness_id": "foundation_support_readiness_witness.awaiting_evidence.v1"
+}

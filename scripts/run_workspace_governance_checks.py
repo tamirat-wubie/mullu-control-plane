@@ -118,6 +118,59 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/refresh_local_assurance.py", "--dry-run", "--json"),
         ),
         CheckCommand("agents_policy", (python_executable, "scripts/validate_agents_governance.py")),
+        CheckCommand("foundation_mode", (python_executable, "scripts/validate_foundation_mode.py")),
+        CheckCommand(
+            "foundation_source_control_boundary",
+            (python_executable, "scripts/validate_foundation_source_control_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_local_proof_thread",
+            (python_executable, "scripts/validate_foundation_local_proof_thread.py"),
+        ),
+        CheckCommand(
+            "foundation_private_recovery_boundary",
+            (python_executable, "scripts/validate_foundation_private_recovery_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_secrets_credentials_boundary",
+            (python_executable, "scripts/validate_foundation_secrets_credentials_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_cost_budget_boundary",
+            (python_executable, "scripts/validate_foundation_cost_budget_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_runtime_environment_boundary",
+            (python_executable, "scripts/validate_foundation_runtime_environment_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_backup_export_boundary",
+            (python_executable, "scripts/validate_foundation_backup_export_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_domain_email_boundary",
+            (python_executable, "scripts/validate_foundation_domain_email_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_legal_business_boundary",
+            (python_executable, "scripts/validate_foundation_legal_business_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_product_scope_boundary",
+            (python_executable, "scripts/validate_foundation_product_scope_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_support_readiness_boundary",
+            (python_executable, "scripts/validate_foundation_support_readiness_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_intake_onboarding_boundary",
+            (python_executable, "scripts/validate_foundation_intake_onboarding_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_privacy_data_boundary",
+            (python_executable, "scripts/validate_foundation_privacy_data_boundary.py"),
+        ),
         CheckCommand("protocol_manifest", (python_executable, "scripts/validate_protocol_manifest.py")),
         CheckCommand(
             "logic_governance_application",

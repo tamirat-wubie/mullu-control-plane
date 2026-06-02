@@ -13,7 +13,7 @@ Invariants: `Mullu Govern` is the public product; `Mullu` is the suite/family; `
 | Hero headline | `Mullu Govern` or the one-line public anchor |
 | Tagline | `Symbols are atomic. Meaning is relational. Traversal is governed. Judgment is earned.` |
 | Supporting copy | Governed symbolic execution for workflows, approvals, budgets, audit trails, lineage, deployment controls, and proof-backed actions |
-| Primary action | Waitlist, private beta, or request access until clearance closes |
+| Primary action | Foundation-stage proof-boundary action only until clearance and witness gates close |
 | Secondary action | Read the product architecture or research |
 
 ## Product Page Requirements
@@ -71,7 +71,7 @@ Mullusi
 
 ## Pre-Publish Checks
 
-1. Clearance gates closed or page marked private beta/waitlist.
+1. Clearance gates closed or page marked foundation-stage with no access, waitlist, or beta invitation.
 2. Product domain or fallback route verified.
 3. Public copy uses `Mullu Govern`.
 4. Company copy uses `Mullusi`.

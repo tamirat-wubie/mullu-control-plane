@@ -79,7 +79,7 @@ The name is approved for internal alignment and product planning only.
 | EUIPO/TMview search | Run official EU and participating-office searches and attach evidence |
 | Domain ownership | Acquire or verify product domain/subdomain and DNS ownership |
 | Legal review | Record qualified trademark/legal decision |
-| Homepage update | Apply approved copy only after clearance or mark private beta/waitlist |
+| Homepage update | Apply approved copy only after clearance or keep foundation-stage proof-boundary copy |
 | App title update | Use `Mullu Govern` after authorization where the surface is product-facing |
 | SDK/API stability review | Preserve `Mullu Platform` where technical contracts require it |
 

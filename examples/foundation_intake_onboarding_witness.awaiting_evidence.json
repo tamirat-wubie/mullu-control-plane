@@ -1,0 +1,72 @@
+{
+  "blocked_claims": [
+    "active intake",
+    "waitlist activation",
+    "pilot signup",
+    "customer onboarding",
+    "personal data collection",
+    "CRM import",
+    "outreach campaign",
+    "paid access",
+    "deployment readiness"
+  ],
+  "crm_import_allowed": false,
+  "customer_access_allowed": false,
+  "customer_onboarding_allowed": false,
+  "deployment_allowed": false,
+  "intake_open": false,
+  "intake_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft field categories only; no live form, link, submissions, contact details, or collection evidence is stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "future_interest_form_shape",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft eligibility questions only; no accepted users, qualification result, or pilot access is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "eligibility_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft consent questions only; no privacy compliance, legal clearance, or consent capture is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "consent_language_draft",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local onboarding checklist only; no customer onboarding readiness or active setup flow is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "onboarding_steps_draft",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft retention questions only; no approved privacy policy, retention system, or user data storage is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "data_retention_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft response wording only; no active support, outreach campaign, or customer communication workflow is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "decline_reply_template",
+      "surface_type": "local_draft"
+    }
+  ],
+  "next_action": "keep intake drafts local; do not publish forms, waitlists, pilot signups, outreach, onboarding, paid access, or personal data collection without a later signed witness",
+  "outreach_campaign_allowed": false,
+  "paid_access_allowed": false,
+  "pii_collection_allowed": false,
+  "pilot_signup_open": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "waitlist_open": false,
+  "witness_id": "foundation_intake_onboarding_witness.awaiting_evidence.v1"
+}

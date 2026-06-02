@@ -3,6 +3,12 @@
 from __future__ import annotations
 
 from mcoi_runtime.contracts.decision_learning import OutcomeQuality
+from mcoi_runtime.contracts.meta_reasoning import (
+    HealthStatus,
+    OperatingSubstrateSelfModelProjection,
+    SelfModelCapabilityProjection,
+    SubsystemHealth,
+)
 from mcoi_runtime.contracts.provider import (
     CredentialScope,
     ProviderClass,
@@ -12,6 +18,7 @@ from mcoi_runtime.contracts.provider_routing import (
     RoutingConstraints,
     RoutingStrategy,
 )
+from mcoi_runtime.contracts.solver_outcome import SolverOutcome
 from mcoi_runtime.contracts.simulation import RiskLevel, SimulationOption
 from mcoi_runtime.contracts.utility import (
     DecisionComparison,
@@ -121,6 +128,37 @@ def _note_memory_snapshot() -> dict[str, object]:
             "index_proof_state": "Pass",
         },
     }
+
+
+def _operating_substrate_projection() -> OperatingSubstrateSelfModelProjection:
+    capability = SelfModelCapabilityProjection(
+        capability_id="software_dev.repo_map.read",
+        maturity="C4",
+        risk="low",
+        admitted=True,
+        status=HealthStatus.HEALTHY,
+        reason="manifest_admitted",
+        evidence_refs=("proof://capability",),
+    )
+    return OperatingSubstrateSelfModelProjection(
+        projection_id="os-projection-bridge",
+        captured_at="2026-03-20T00:00:00Z",
+        capabilities=(capability,),
+        subsystem_health=(
+            SubsystemHealth(
+                subsystem="capability_fabric",
+                status=HealthStatus.HEALTHY,
+                details="manifest evidence available",
+            ),
+        ),
+        world_state_status=HealthStatus.HEALTHY,
+        evidence_refs=("receipt://preflight",),
+        capability_count=1,
+        admitted_capability_count=1,
+        degraded_capability_count=0,
+        unknown_capability_count=0,
+        solver_outcome=SolverOutcome.SOLVED_VERIFIED,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -248,6 +286,28 @@ class TestDashboardBridgeWithData:
         assert snap.note_memory.event_count == 2
         assert snap.note_memory.episode_capsule_count == 1
         assert snap.note_memory.pending_promotion_count == 1
+
+    def test_snapshot_accepts_operating_substrate_projection(self):
+        _reset()
+        dashboard = DashboardEngine(clock=_clock)
+        decision_engine = DecisionLearningEngine(clock=_clock)
+        router = ProviderCostRouter(clock=_clock)
+        registry = _make_registry()
+
+        snap = DashboardBridge.full_snapshot(
+            dashboard=dashboard,
+            decision_engine=decision_engine,
+            router=router,
+            registry=registry,
+            provider_ids=("prov-a",),
+            context_type="model",
+            operating_substrate_projection=_operating_substrate_projection(),
+        )
+
+        assert snap.operating_substrate is not None
+        assert snap.operating_substrate.capability_count == 1
+        assert snap.operating_substrate.solver_outcome == "SolvedVerified"
+        assert snap.operating_substrate.recommendation == "ready"
 
 
 class TestGoldenScenario:

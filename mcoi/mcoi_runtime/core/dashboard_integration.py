@@ -15,7 +15,7 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from mcoi_runtime.contracts.dashboard import DashboardSnapshot, WorldStateSummary
-from mcoi_runtime.contracts.meta_reasoning import MetaReasoningSnapshot
+from mcoi_runtime.contracts.meta_reasoning import MetaReasoningSnapshot, OperatingSubstrateSelfModelProjection
 from .dashboard import DashboardEngine
 from .decision_learning import DecisionLearningEngine
 from .provider_cost_routing import ProviderCostRouter
@@ -43,6 +43,7 @@ class DashboardBridge:
         meta_snapshot: MetaReasoningSnapshot | None = None,
         world_state_summary: WorldStateSummary | None = None,
         note_memory_snapshot: Mapping[str, Any] | None = None,
+        operating_substrate_projection: OperatingSubstrateSelfModelProjection | None = None,
     ) -> DashboardSnapshot:
         """Generate a complete dashboard snapshot from live engine state.
 
@@ -87,4 +88,5 @@ class DashboardBridge:
             meta_snapshot=meta_snapshot,
             world_state_summary=world_state_summary,
             note_memory_snapshot=note_memory_snapshot,
+            operating_substrate_projection=operating_substrate_projection,
         )

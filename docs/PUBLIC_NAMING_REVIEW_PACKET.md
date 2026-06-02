@@ -30,7 +30,7 @@ Invariants: `Mullu Govern` remains internally aligned only; `Mullu` remains the 
 | `docs/TSDR_EVIDENCE_TEMPLATE.md` | Capture official USPTO/TSDR status for each required `MULU` serial |
 | `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md` | Record registrar, DNS, renewal, and security evidence |
 | `docs/WEBSITE_DEPLOYMENT_EVIDENCE_TEMPLATE.md` | Record live route, HTTPS, copy, and site-not-found checks |
-| `docs/PUBLIC_LAUNCH_COPY.md` | Confirm copy remains waitlist/private beta/request-access until clearance closes |
+| `docs/PUBLIC_LAUNCH_COPY.md` | Confirm copy remains foundation-stage with no access, waitlist, or beta invitation until clearance closes |
 | `docs/public-naming-readiness.json` | Update only after evidence closes the matching gate |
 | `docs/PUBLIC_NAMING_ARTIFACT_MANIFEST.md` | Confirm all naming package artifacts are present |
 
@@ -51,7 +51,7 @@ Invariants: `Mullu Govern` remains internally aligned only; `Mullu` remains the 
 | --- | --- |
 | `website_deployment_verification` | `https://mullusi.com/mullu` returned HTTP 200 on 2026-05-15 and contained `Mullu, by Mullusi`, `Mullu CLI`, and `Mullu Control Plane`; future public copy should promote `Mullu Govern` |
 | `app_title_update` | `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md` records historical user-facing app titles using `Mullu`; product-facing titles should move to `Mullu Govern` in the next copy update |
-| `homepage_update` | `docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md` records the live private-beta product landing page |
+| `homepage_update` | `docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md` records the historical live private-beta product landing page; current route copy may remain earlier foundation-stage copy |
 | `sdk_api_stability_review` | `docs/SDK_API_STABILITY_REVIEW_2026-05-15.md` records OpenAPI/SDK contract stability for `Mullu Platform` |
 
 ## Required TSDR Serials

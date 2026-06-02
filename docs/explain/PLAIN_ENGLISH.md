@@ -11,6 +11,17 @@
 
 ---
 
+## Current foundation posture
+
+This page explains the product direction. The current repository posture is
+[Foundation Mode](../FOUNDATION_MODE.md): private, local-first, careful setup
+before deployment, customer access, company formation, paid infrastructure, or
+patent filing.
+
+In this phase, "real tasks" should be understood as future governed capability.
+The safe work now is local proof: one reversible workflow at a time, with
+receipts, tests, and audit evidence.
+
 ## The problem it solves
 
 A symbolic intelligence system that can *talk* is useful but limited. A symbolic intelligence system that can *act* — actually

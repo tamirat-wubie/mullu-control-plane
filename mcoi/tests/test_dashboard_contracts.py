@@ -10,6 +10,7 @@ from mcoi_runtime.contracts.dashboard import (
     LearningInsight,
     MetaReasoningSummary,
     NoteMemorySummary,
+    OperatingSubstrateSummary,
     ProviderRoutingSummary,
     ReliabilityPillarSummary,
 )
@@ -597,6 +598,70 @@ class TestAuditHardeningLearningInsight:
 _TS = "2026-03-20T00:00:00Z"
 
 
+def _operating_substrate_summary(
+    *,
+    summary_id: str = "os-summary-1",
+    overall_status: str = "healthy",
+    solver_outcome: str = "SolvedVerified",
+    capability_count: int = 2,
+    admitted_capability_count: int = 2,
+    degraded_capability_count: int = 0,
+    unknown_capability_count: int = 0,
+    unavailable_capability_count: int = 0,
+    subsystem_count: int = 3,
+    evidence_ref_count: int = 4,
+    open_incident_count: int = 0,
+    mutation_authorized: bool = False,
+    raw_private_reasoning_included: bool = False,
+    recommendation: str = "ready",
+    assessed_at: str = _TS,
+) -> OperatingSubstrateSummary:
+    return OperatingSubstrateSummary(
+        summary_id=summary_id,
+        overall_status=overall_status,
+        solver_outcome=solver_outcome,
+        capability_count=capability_count,
+        admitted_capability_count=admitted_capability_count,
+        degraded_capability_count=degraded_capability_count,
+        unknown_capability_count=unknown_capability_count,
+        unavailable_capability_count=unavailable_capability_count,
+        subsystem_count=subsystem_count,
+        evidence_ref_count=evidence_ref_count,
+        open_incident_count=open_incident_count,
+        mutation_authorized=mutation_authorized,
+        raw_private_reasoning_included=raw_private_reasoning_included,
+        recommendation=recommendation,
+        assessed_at=assessed_at,
+    )
+
+
+class TestOperatingSubstrateSummary:
+    def test_valid_summary_is_read_only_operator_projection(self) -> None:
+        summary = _operating_substrate_summary()
+
+        assert summary.overall_status == "healthy"
+        assert summary.solver_outcome == "SolvedVerified"
+        assert summary.capability_count == 2
+        assert summary.mutation_authorized is False
+
+    def test_rejects_mutation_authority(self) -> None:
+        with pytest.raises(ValueError, match="cannot authorize mutation"):
+            _operating_substrate_summary(mutation_authorized=True)
+
+    def test_rejects_raw_private_reasoning_exposure(self) -> None:
+        with pytest.raises(ValueError, match="cannot expose raw private reasoning"):
+            _operating_substrate_summary(raw_private_reasoning_included=True)
+
+    def test_rejects_status_counts_above_capability_count(self) -> None:
+        with pytest.raises(ValueError, match="status counts"):
+            _operating_substrate_summary(
+                capability_count=1,
+                admitted_capability_count=1,
+                degraded_capability_count=1,
+                unknown_capability_count=1,
+            )
+
+
 class TestReliabilityPillarSummary:
     def test_valid_pillar(self) -> None:
         p = ReliabilityPillarSummary(
@@ -797,4 +862,51 @@ class TestDashboardSnapshotNoteMemory:
                 provider_summaries=(),
                 learning_insights=(),
                 note_memory="not-a-summary",  # type: ignore[arg-type]
+            )
+
+
+# ---------------------------------------------------------------------------
+# DashboardSnapshot with operating_substrate
+# ---------------------------------------------------------------------------
+
+
+class TestDashboardSnapshotOperatingSubstrate:
+    def test_default_none(self) -> None:
+        snap = DashboardSnapshot(
+            snapshot_id="snap-no-os",
+            captured_at=_TS,
+            total_decisions=0,
+            total_routing_decisions=0,
+            recent_decisions=(),
+            provider_summaries=(),
+            learning_insights=(),
+        )
+        assert snap.operating_substrate is None
+
+    def test_with_operating_substrate(self) -> None:
+        snap = DashboardSnapshot(
+            snapshot_id="snap-os",
+            captured_at=_TS,
+            total_decisions=0,
+            total_routing_decisions=0,
+            recent_decisions=(),
+            provider_summaries=(),
+            learning_insights=(),
+            operating_substrate=_operating_substrate_summary(),
+        )
+        assert snap.operating_substrate is not None
+        assert snap.operating_substrate.recommendation == "ready"
+        assert snap.operating_substrate.mutation_authorized is False
+
+    def test_invalid_operating_substrate_type_raises(self) -> None:
+        with pytest.raises(ValueError, match="operating_substrate"):
+            DashboardSnapshot(
+                snapshot_id="snap-bad-os",
+                captured_at=_TS,
+                total_decisions=0,
+                total_routing_decisions=0,
+                recent_decisions=(),
+                provider_summaries=(),
+                learning_insights=(),
+                operating_substrate="not-a-summary",  # type: ignore[arg-type]
             )

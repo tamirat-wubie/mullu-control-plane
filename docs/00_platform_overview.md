@@ -8,9 +8,9 @@
 > *(Doc type: Reference.)*
 
 Purpose: define the repository boundary for Mullu Govern and the Mullu Control Plane.
-Governance scope: Milestone 0 shared foundation.
-Dependencies: `docs/PRODUCT_BOUNDARY.md`, `docs/01_shared_invariants.md`, `docs/02_shared_contracts.md`.
-Invariants: shared meaning is defined once; MAF Core and MCOI Runtime remain split; Mullu Govern remains the public product name; Mullu remains the suite/family name; Mullu Platform remains a developer and architecture term; Mullu Control Plane remains the admin/governance/deployment surface.
+Governance scope: Milestone 0 shared foundation and Foundation Mode claim boundary.
+Dependencies: `docs/FOUNDATION_MODE.md`, `docs/PRODUCT_BOUNDARY.md`, `docs/01_shared_invariants.md`, `docs/02_shared_contracts.md`.
+Invariants: shared meaning is defined once; Foundation Mode remains the current operating posture until promoted by witness; MAF Core and MCOI Runtime remain split; Mullu Govern remains the public product name; Mullu remains the suite/family name; Mullu Platform remains a developer and architecture term; Mullu Control Plane remains the admin/governance/deployment surface.
 
 ## Product Identity
 
@@ -19,6 +19,14 @@ suite/family name. Mullu Platform is reserved for developer, SDK, API,
 deployment, and architecture contexts. This repository defines the Mullu Control
 Plane surface for admin, governance, approval, trace, budget, lineage, and
 deployment operation.
+
+## Current Operating Posture
+
+The current repository posture is [Foundation Mode](FOUNDATION_MODE.md):
+private, local-first architecture hardening before deployment, customer access,
+company formation, paid infrastructure, or patent filing. Platform capability
+may be broad, but current proof work should remain narrow, local, reversible,
+and receipt-backed until a later status witness promotes the project.
 
 ## Structure
 

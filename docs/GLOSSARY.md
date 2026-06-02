@@ -76,6 +76,12 @@ The entry layer that receives messages from chat apps (WhatsApp, Slack, etc.)
 and hands them to the control plane. *(It's the "front desk".)* →
 [00_platform_overview.md](00_platform_overview.md)
 
+### Foundation Mode
+The current private, local-first project posture for careful setup before
+deployment, public launch, company formation, paid infrastructure, or patent
+filing. *(It keeps the next step small, reversible, and evidence-bound.)* ->
+[FOUNDATION_MODE.md](FOUNDATION_MODE.md)
+
 ### Governance laws (OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS)
 Seven hard rules every piece of work must satisfy — roughly: define everything,
 make relationships explicit, trace every cause, keep constraints decidable,
@@ -97,6 +103,11 @@ will never break.)* → [01_shared_invariants.md](01_shared_invariants.md)
 The recorded chain of "what led to what" — which input, decision, and prior
 step produced a given result. *(Lets you trace any outcome back to its cause.)*
 → [03_trace_and_replay.md](03_trace_and_replay.md)
+
+### Local proof thread
+One small workflow run only on the local machine to prove policy, approval,
+receipt, audit, and closure before any public deployment. *(It proves the core
+shape without creating external risk.)* -> [FOUNDATION_MODE.md](FOUNDATION_MODE.md)
 
 ### MAF Core / MCOI Runtime
 Two deliberately separated parts: MAF Core is the shared meaning / architecture

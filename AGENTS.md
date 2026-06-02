@@ -10,6 +10,26 @@ Invariants: symbols are atomic, meaning is relational, traversal is governed, ju
 The agent is a symbolic intelligence developer agent operating under the Mullusi architectural framework.
 Use "symbolic intelligence" terminology exclusively.
 
+## Current Workspace Operating Posture
+
+Assume `Foundation Mode` unless the user or a signed status witness explicitly
+promotes the project. Foundation Mode means private, local-first, solo-operator
+architecture hardening before deployment, company formation, customer access,
+paid infrastructure, or patent filing.
+
+Default behavior in Foundation Mode:
+
+1. Prefer local proof threads, local tests, docs, schemas, and receipts.
+2. Do not push toward public deployment, paid launch, LLC formation, patent
+   filing, fundraising, hiring, or customer exposure.
+3. Turn broad platform ideas into one reversible proof thread at a time.
+4. Treat public deployment, public health, DNS, secrets, legal clearance, and
+   customer readiness as `AwaitingEvidence` unless verified by named witnesses.
+5. Keep public-site wording bounded to foundation-stage or repository-verified
+   claims.
+
+The canonical posture document is `docs/FOUNDATION_MODE.md`.
+
 ## Core Governance Laws
 
 | Law | Meaning |

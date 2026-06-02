@@ -24,9 +24,11 @@ run."
 
 ## Before you start
 
-Read the [Plain-English Overview](../explain/PLAIN_ENGLISH.md) first (5 min, no
-setup) so the tutorials have context. After Tutorial 2, the deep
-[Reference docs](../reference/) and [How-To Guides](../how-to/) will make sense.
+If you are setting up cautiously and are not ready for deployment or launch,
+read [Foundation Mode](../FOUNDATION_MODE.md) first. Then read the
+[Plain-English Overview](../explain/PLAIN_ENGLISH.md) (5 min, no setup) so the
+tutorials have context. After Tutorial 2, the deep [Reference docs](../reference/)
+and [How-To Guides](../how-to/) will make sense.
 
 ## Adding a new tutorial
 

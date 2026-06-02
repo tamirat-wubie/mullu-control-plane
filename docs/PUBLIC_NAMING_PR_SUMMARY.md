@@ -85,7 +85,7 @@ technical preparation. Paid public launch remains blocked.
 | Domain ownership | Registrar/DNS ownership record |
 | Close-variant review | Official review of `MULU` software/service-adjacent records |
 | Legal review | Qualified trademark/legal decision |
-| Homepage update | Approved public copy applied after clearance or marked private beta/waitlist |
+| Homepage update | Approved public copy applied after clearance or kept foundation-stage with no access invitation |
 | Website deployment verification | `mullusi.com` and product routes verified live and not site-not-found |
 | App title update | User-facing app title uses `Mullu Govern` only after authorization where the surface is product-facing |
 | SDK/API stability review | Technical `Mullu Platform` contracts preserved intentionally |

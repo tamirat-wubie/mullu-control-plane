@@ -126,6 +126,19 @@ def _bind_uao_fixture_to_universal_action_detail(
         "recovery_plan_id": f"recovery-plan://{record['action_id']}",
         "intent_certificate_id": f"intent-certificate://{record['action_id']}",
         "intent_hash": f"typed-intent://{record['action_id']}",
+        "operating_substrate_certificate_id": (
+            f"operating-substrate-certificate://{record['action_id']}"
+        ),
+        "operating_substrate_projection_id": (
+            f"operating-substrate-projection://{record['action_id']}"
+        ),
+        "operating_substrate_reason": "projection_allows_execution",
+        "world_support_evidence_refs": tuple(
+            record["action_envelope"]["evidence_refs"]
+        ),
+        "operating_substrate_evidence_refs": (
+            f"operating-substrate-evidence://{record['action_id']}",
+        ),
         "capability_status": "accepted",
         "capability_id": record["action_envelope"]["capability_refs"][0],
         "governed_action_id": f"governed-action://{record['action_id']}",
@@ -185,6 +198,19 @@ def _uao_fixture_proof_hash(universal_detail: dict) -> str:
         "recovery_plan_id": universal_detail["recovery_plan_id"],
         "intent_certificate_id": universal_detail["intent_certificate_id"],
         "intent_hash": universal_detail["intent_hash"],
+        "operating_substrate_certificate_id": universal_detail[
+            "operating_substrate_certificate_id"
+        ],
+        "operating_substrate_projection_id": universal_detail[
+            "operating_substrate_projection_id"
+        ],
+        "operating_substrate_reason": universal_detail["operating_substrate_reason"],
+        "world_support_evidence_refs": tuple(
+            universal_detail["world_support_evidence_refs"]
+        ),
+        "operating_substrate_evidence_refs": tuple(
+            universal_detail["operating_substrate_evidence_refs"]
+        ),
         "capability_status": universal_detail["capability_status"],
         "capability_id": universal_detail["capability_id"],
         "governed_action_id": universal_detail["governed_action_id"],

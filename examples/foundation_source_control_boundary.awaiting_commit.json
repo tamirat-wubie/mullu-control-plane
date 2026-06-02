@@ -1,0 +1,207 @@
+{
+  "boundary_id": "foundation_source_control_boundary.awaiting_commit.v1",
+  "change_families": [
+    {
+      "family_id": "foundation_posture",
+      "required_evidence": [
+        "docs/FOUNDATION_MODE.md",
+        "docs/FOUNDATION_PREREQUISITES.md",
+        "scripts/validate_foundation_mode.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Foundation Mode and prerequisite ledger are prepared for local-first setup."
+    },
+    {
+      "family_id": "local_proof_thread",
+      "required_evidence": [
+        "docs/FOUNDATION_LOCAL_PROOF_THREAD.md",
+        "examples/foundation_local_proof_thread.workflow.json",
+        "scripts/run_foundation_local_proof_thread.py",
+        "scripts/validate_foundation_local_proof_thread.py",
+        "tests/test_run_foundation_local_proof_thread.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Harmless local proof thread is descriptor-backed, validator-backed, receipt-bound, and rollback-named."
+    },
+    {
+      "family_id": "private_recovery_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md",
+        "examples/foundation_private_recovery_inventory.redacted.json",
+        "examples/foundation_recovery_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_private_recovery_boundary.py",
+        "tests/test_validate_foundation_private_recovery_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Owner-only recovery preparation stays public-safe and outside Git."
+    },
+    {
+      "family_id": "secrets_credentials_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md",
+        "examples/foundation_secrets_credentials_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_secrets_credentials_boundary.py",
+        "tests/test_validate_foundation_secrets_credentials_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Secrets/credentials preparation drafts local categories without storing real secrets, activating credentials, binding provider accounts, enabling external calls, or deployment claims."
+    },
+    {
+      "family_id": "cost_budget_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_COST_BUDGET_BOUNDARY.md",
+        "examples/foundation_cost_budget_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_cost_budget_boundary.py",
+        "tests/test_validate_foundation_cost_budget_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Cost/budget preparation drafts local categories without spending, paid infrastructure, provider billing, payment methods, subscriptions, purchases, invoice payments, vendor commitments, or deployment claims."
+    },
+    {
+      "family_id": "runtime_environment_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md",
+        "examples/foundation_runtime_environment_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_runtime_environment_boundary.py",
+        "tests/test_validate_foundation_runtime_environment_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Runtime/environment preparation drafts local command and toolchain questions without runtime verification, database activation, container activation, endpoint activation, cloud runtime, migration execution, or deployment claims."
+    },
+    {
+      "family_id": "backup_export_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_BACKUP_EXPORT_BOUNDARY.md",
+        "examples/foundation_backup_export_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_backup_export_boundary.py",
+        "tests/test_validate_foundation_backup_export_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Backup/export preparation drafts local questions without backup execution, cloud backup, external export, public archive, private path recording, secret export, personal-data export, deletion, restore-readiness, or deployment claims."
+    },
+    {
+      "family_id": "domain_email_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md",
+        "examples/foundation_domain_email_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_domain_email_boundary.py",
+        "tests/test_validate_foundation_domain_email_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Domain and email public labels are recorded without DNS mutation, provider-private values, endpoint readiness, email deliverability, or deployment claims."
+    },
+    {
+      "family_id": "legal_business_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md",
+        "examples/foundation_legal_business_questions.awaiting_review.json",
+        "scripts/validate_foundation_legal_business_boundary.py",
+        "tests/test_validate_foundation_legal_business_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Legal and business readiness remains question-only until qualified review or signed witness evidence."
+    },
+    {
+      "family_id": "product_scope_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md",
+        "examples/foundation_product_scope_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_product_scope_boundary.py",
+        "tests/test_validate_foundation_product_scope_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Product scope selects one local learning lane without restricting the long-term platform or opening pilot, customer, market, paid-launch, or deployment claims."
+    },
+    {
+      "family_id": "support_readiness_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md",
+        "examples/foundation_support_readiness_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_support_readiness_boundary.py",
+        "tests/test_validate_foundation_support_readiness_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Support readiness prepares local support and incident-response shape without opening support service, SLA, onboarding, paid support, customer access, or deployment claims."
+    },
+    {
+      "family_id": "intake_onboarding_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md",
+        "examples/foundation_intake_onboarding_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_intake_onboarding_boundary.py",
+        "tests/test_validate_foundation_intake_onboarding_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Intake and onboarding prepare local draft shape without publishing forms, opening waitlists, accepting signups, collecting personal data, importing CRM records, starting outreach, onboarding customers, paid access, or deployment claims."
+    },
+    {
+      "family_id": "privacy_data_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md",
+        "examples/foundation_privacy_data_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_privacy_data_boundary.py",
+        "tests/test_validate_foundation_privacy_data_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Privacy/data preparation drafts local questions without personal-data collection, storage, consent capture, tracking, processor activation, privacy publication, legal-clearance, customer access, or deployment claims."
+    },
+    {
+      "family_id": "public_claim_alignment",
+      "required_evidence": [
+        "docs/PUBLIC_NAMING_READINESS.md",
+        "docs/WEBSITE_UPDATE_CHECKLIST.md",
+        "site/mullu/index.html",
+        "site/proof/index.html",
+        "scripts/validate_public_naming_readiness.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Public-copy claims stay foundation-stage with no access, waitlist, beta, deployment, or paid launch claim."
+    },
+    {
+      "family_id": "governance_preflight_wiring",
+      "required_evidence": [
+        "scripts/run_workspace_governance_checks.py",
+        "schemas/workspace_governance_preflight_receipt.schema.json",
+        "docs/workspace-governance-preflight-receipt-example.json",
+        "tests/test_run_workspace_governance_checks.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Foundation validators are wired into the repository governance preflight."
+    }
+  ],
+  "commit_allowed": false,
+  "commit_message_candidate": "docs(foundation): add local prerequisite boundaries",
+  "commit_state": "AwaitingCommit",
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "next_action": "review changed files and run required verification; stage and commit only after explicit user request",
+  "pull_request_allowed": false,
+  "push_allowed": false,
+  "release_allowed": false,
+  "required_checks": [
+    "python scripts/validate_foundation_mode.py",
+    "python scripts/validate_foundation_local_proof_thread.py",
+    "python scripts/validate_foundation_private_recovery_boundary.py",
+    "python scripts/validate_foundation_secrets_credentials_boundary.py",
+    "python scripts/validate_foundation_cost_budget_boundary.py",
+    "python scripts/validate_foundation_runtime_environment_boundary.py",
+    "python scripts/validate_foundation_backup_export_boundary.py",
+    "python scripts/validate_foundation_domain_email_boundary.py",
+    "python scripts/validate_foundation_legal_business_boundary.py",
+    "python scripts/validate_foundation_product_scope_boundary.py",
+    "python scripts/validate_foundation_support_readiness_boundary.py",
+    "python scripts/validate_foundation_intake_onboarding_boundary.py",
+    "python scripts/validate_foundation_privacy_data_boundary.py",
+    "python scripts/validate_foundation_source_control_boundary.py",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json",
+    "python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-receipt.json",
+    "git diff --check",
+    "git status --short"
+  ],
+  "rollback_note": "Before commit, rollback is file-level by not staging or by editing the local diff. After commit, rollback requires a later revert commit or explicit user-approved history operation.",
+  "schema_version": 1,
+  "secret_publication_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "staging_allowed": false,
+  "status": "AwaitingEvidence"
+}

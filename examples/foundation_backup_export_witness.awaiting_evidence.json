@@ -1,0 +1,87 @@
+{
+  "backup_execution_allowed": false,
+  "backup_export_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft category inventory only; no private location or copied material is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "backup_inventory_draft",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Future export scope is only a question list; no files or evidence bundles are moved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "export_scope_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Archive shape is a local planning question; no publication or sync is active.",
+      "state": "AwaitingEvidence",
+      "surface_id": "local_archive_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Restore drill remains a future test question with no readiness claim.",
+      "state": "AwaitingEvidence",
+      "surface_id": "restore_drill_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Redaction rules are drafted as categories only; no secret or personal values are present.",
+      "state": "AwaitingEvidence",
+      "surface_id": "redaction_checklist",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Retention timing is not approved; this is only a question surface.",
+      "state": "AwaitingEvidence",
+      "surface_id": "retention_snapshot_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deletion recovery is only a safeguard question; no deletion operation is authorized.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deletion_recovery_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Handoff bundle is only an outline question; no bundle is published or transferred.",
+      "state": "AwaitingEvidence",
+      "surface_id": "handoff_bundle_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "blocked_claims": [
+    "backup execution",
+    "cloud backup activation",
+    "external export",
+    "public archive publication",
+    "private path recording",
+    "secret export",
+    "personal data export",
+    "deletion operation",
+    "restore readiness",
+    "deployment readiness"
+  ],
+  "cloud_backup_allowed": false,
+  "deletion_operation_allowed": false,
+  "deployment_allowed": false,
+  "external_export_allowed": false,
+  "next_action": "continue drafting backup/export questions; do not run backups, activate cloud sync, export files, publish archives, delete data, or claim restore readiness",
+  "personal_data_export_allowed": false,
+  "private_path_recording_allowed": false,
+  "public_archive_allowed": false,
+  "restore_readiness_claimed": false,
+  "schema_version": 1,
+  "secret_export_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_backup_export_witness.awaiting_evidence.v1"
+}

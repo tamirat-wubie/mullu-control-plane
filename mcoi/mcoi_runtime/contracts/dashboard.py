@@ -28,6 +28,17 @@ from ._base import (
 # --- Helpers ---
 
 _VALID_DIRECTIONS = ("improving", "declining", "stable")
+_VALID_OPERATING_SUBSTRATE_STATUSES = ("healthy", "degraded", "unavailable", "unknown")
+_VALID_SOLVER_OUTCOMES = (
+    "SolvedVerified",
+    "SolvedUnverified",
+    "AwaitingEvidence",
+    "SafeHalt",
+    "GovernanceBlocked",
+    "BudgetExhausted",
+    "ImpossibleProved",
+    "ModelInvalidated",
+)
 
 
 # --- Contract types ---
@@ -372,6 +383,99 @@ class NoteMemorySummary(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class OperatingSubstrateSummary(ContractRecord):
+    """Read-only operating-substrate self-model summary for operator display."""
+
+    summary_id: str
+    overall_status: str
+    solver_outcome: str
+    capability_count: int
+    admitted_capability_count: int
+    degraded_capability_count: int
+    unknown_capability_count: int
+    unavailable_capability_count: int
+    subsystem_count: int
+    evidence_ref_count: int
+    open_incident_count: int
+    mutation_authorized: bool
+    raw_private_reasoning_included: bool
+    recommendation: str
+    assessed_at: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "summary_id", require_non_empty_text(self.summary_id, "summary_id"))
+        object.__setattr__(
+            self,
+            "overall_status",
+            require_non_empty_text(self.overall_status, "overall_status"),
+        )
+        if self.overall_status not in _VALID_OPERATING_SUBSTRATE_STATUSES:
+            raise ValueError("overall_status has unsupported value")
+        object.__setattr__(
+            self,
+            "solver_outcome",
+            require_non_empty_text(self.solver_outcome, "solver_outcome"),
+        )
+        if self.solver_outcome not in _VALID_SOLVER_OUTCOMES:
+            raise ValueError("solver_outcome has unsupported value")
+        object.__setattr__(
+            self,
+            "capability_count",
+            require_non_negative_int(self.capability_count, "capability_count"),
+        )
+        object.__setattr__(
+            self,
+            "admitted_capability_count",
+            require_non_negative_int(self.admitted_capability_count, "admitted_capability_count"),
+        )
+        object.__setattr__(
+            self,
+            "degraded_capability_count",
+            require_non_negative_int(self.degraded_capability_count, "degraded_capability_count"),
+        )
+        object.__setattr__(
+            self,
+            "unknown_capability_count",
+            require_non_negative_int(self.unknown_capability_count, "unknown_capability_count"),
+        )
+        object.__setattr__(
+            self,
+            "unavailable_capability_count",
+            require_non_negative_int(self.unavailable_capability_count, "unavailable_capability_count"),
+        )
+        object.__setattr__(self, "subsystem_count", require_non_negative_int(self.subsystem_count, "subsystem_count"))
+        object.__setattr__(
+            self,
+            "evidence_ref_count",
+            require_non_negative_int(self.evidence_ref_count, "evidence_ref_count"),
+        )
+        object.__setattr__(
+            self,
+            "open_incident_count",
+            require_non_negative_int(self.open_incident_count, "open_incident_count"),
+        )
+        if not isinstance(self.mutation_authorized, bool):
+            raise ValueError("mutation_authorized must be a boolean")
+        if self.mutation_authorized:
+            raise ValueError("operating substrate summary cannot authorize mutation")
+        if not isinstance(self.raw_private_reasoning_included, bool):
+            raise ValueError("raw_private_reasoning_included must be a boolean")
+        if self.raw_private_reasoning_included:
+            raise ValueError("operating substrate summary cannot expose raw private reasoning")
+        if self.admitted_capability_count > self.capability_count:
+            raise ValueError("admitted_capability_count must not exceed capability_count")
+        if (
+            self.degraded_capability_count
+            + self.unknown_capability_count
+            + self.unavailable_capability_count
+            > self.capability_count
+        ):
+            raise ValueError("capability status counts must not exceed capability_count")
+        object.__setattr__(self, "recommendation", require_non_empty_text(self.recommendation, "recommendation"))
+        object.__setattr__(self, "assessed_at", require_datetime_text(self.assessed_at, "assessed_at"))
+
+
+@dataclass(frozen=True, slots=True)
 class DashboardSnapshot(ContractRecord):
     """Full dashboard snapshot for operator visibility."""
 
@@ -385,6 +489,7 @@ class DashboardSnapshot(ContractRecord):
     meta_reasoning: MetaReasoningSummary | None = None
     world_state: WorldStateSummary | None = None
     note_memory: NoteMemorySummary | None = None
+    operating_substrate: OperatingSubstrateSummary | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "snapshot_id", require_non_empty_text(self.snapshot_id, "snapshot_id"))
@@ -412,3 +517,8 @@ class DashboardSnapshot(ContractRecord):
             raise ValueError("world_state must be a WorldStateSummary instance or None")
         if self.note_memory is not None and not isinstance(self.note_memory, NoteMemorySummary):
             raise ValueError("note_memory must be a NoteMemorySummary instance or None")
+        if self.operating_substrate is not None and not isinstance(
+            self.operating_substrate,
+            OperatingSubstrateSummary,
+        ):
+            raise ValueError("operating_substrate must be an OperatingSubstrateSummary instance or None")

@@ -17,7 +17,7 @@ For each public route, capture:
 6. HTTPS certificate status.
 7. Evidence screenshot or exported HTML path.
 8. Date, time, timezone, and reviewer.
-9. Decision: pass, private_beta_only, blocked, or not_deployed.
+9. Decision: pass, foundation_boundary_only, blocked, or not_deployed.
 
 This evidence must be collected from the live public route, not from local
 preview output alone.
@@ -53,7 +53,7 @@ preview output alone.
 | Screenshot/artifact | Path or storage reference |
 | Captured by | Reviewer name or system identity |
 | Captured at | Date, time, timezone |
-| Decision | pass, private_beta_only, blocked, or not_deployed |
+| Decision | pass, foundation_boundary_only, blocked, or not_deployed |
 | Notes | Review notes |
 
 ## Copy Verification
@@ -67,7 +67,7 @@ preview output alone.
 | Technical architecture uses `Mullu Platform` only where appropriate |  |
 | Admin surface uses `Mullu Control Plane` |  |
 | Blocked names are absent: `Mullusi Handler`, `Mullusi Work`, `Mullusi Operator`, `Mullu Generic` |  |
-| Page is private beta, waitlist, or request-access until clearance closes |  |
+| Page is foundation-stage without access, waitlist, or beta invitation until clearance closes |  |
 | No paid production availability claim appears before clearance |  |
 
 ## DNS And Security Verification
@@ -147,6 +147,6 @@ The `website_deployment_verification` gate may close only when:
 2. The selected route uses valid HTTPS.
 3. The selected route preserves the `Mullu Govern, by Mullusi` boundary.
 4. Blocked public names are absent.
-5. Any page visible before legal clearance is clearly waitlist, request-access, or private beta.
+5. Any page visible before legal clearance is clearly foundation-stage with no access, waitlist, or beta invitation.
 6. Domain ownership evidence exists for the selected route.
 7. The readiness witness is updated in the same change that closes the gate.

@@ -828,6 +828,9 @@ def _recomputed_universal_action_proof_hash(
         "recovery_plan_id",
         "intent_certificate_id",
         "intent_hash",
+        "operating_substrate_certificate_id",
+        "operating_substrate_projection_id",
+        "operating_substrate_reason",
         "capability_status",
         "capability_id",
         "governed_action_id",
@@ -840,6 +843,12 @@ def _recomputed_universal_action_proof_hash(
     if any(
         not isinstance(universal_detail.get(field_name), str)
         for field_name in text_fields
+    ):
+        return None
+    if not _string_tuple_like(universal_detail.get("world_support_evidence_refs")):
+        return None
+    if not _string_tuple_like(
+        universal_detail.get("operating_substrate_evidence_refs")
     ):
         return None
     payload = {
@@ -865,6 +874,19 @@ def _recomputed_universal_action_proof_hash(
         "recovery_plan_id": universal_detail["recovery_plan_id"],
         "intent_certificate_id": universal_detail["intent_certificate_id"],
         "intent_hash": universal_detail["intent_hash"],
+        "operating_substrate_certificate_id": universal_detail[
+            "operating_substrate_certificate_id"
+        ],
+        "operating_substrate_projection_id": universal_detail[
+            "operating_substrate_projection_id"
+        ],
+        "operating_substrate_reason": universal_detail["operating_substrate_reason"],
+        "world_support_evidence_refs": tuple(
+            universal_detail["world_support_evidence_refs"]
+        ),
+        "operating_substrate_evidence_refs": tuple(
+            universal_detail["operating_substrate_evidence_refs"]
+        ),
         "capability_status": universal_detail["capability_status"],
         "capability_id": universal_detail["capability_id"],
         "governed_action_id": universal_detail["governed_action_id"],
@@ -1129,6 +1151,12 @@ def _text_tuple(value: Any) -> tuple[str, ...]:
     )
 
 
+def _string_tuple_like(value: Any) -> bool:
+    if not isinstance(value, (list, tuple)):
+        return False
+    return all(isinstance(item, str) for item in value)
+
+
 def _state_text(value: Any) -> str:
     state_value = getattr(value, "value", value)
     return state_value if isinstance(state_value, str) else str(state_value)
@@ -1283,6 +1311,28 @@ def _universal_action_transition_detail(
         "intent_hash": result.intent_certificate.intent_hash
         if result.intent_certificate
         else "",
+        "operating_substrate_certificate_id": (
+            result.operating_substrate_certificate.certificate_id
+            if result.operating_substrate_certificate
+            else ""
+        ),
+        "operating_substrate_projection_id": (
+            result.operating_substrate_certificate.projection.projection_id
+            if result.operating_substrate_certificate is not None
+            and result.operating_substrate_certificate.projection is not None
+            else ""
+        ),
+        "operating_substrate_reason": (
+            result.operating_substrate_certificate.reason
+            if result.operating_substrate_certificate
+            else ""
+        ),
+        "world_support_evidence_refs": result.world_certificate.evidence_refs,
+        "operating_substrate_evidence_refs": (
+            result.operating_substrate_certificate.evidence_refs
+            if result.operating_substrate_certificate
+            else ()
+        ),
         "capability_status": result.capability_decision.status.value
         if result.capability_decision
         else "",

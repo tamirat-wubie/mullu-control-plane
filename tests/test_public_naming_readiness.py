@@ -542,6 +542,18 @@ def test_product_route_draft_passes_launch_boundary() -> None:
     validate_product_route_draft()
 
 
+def test_product_route_draft_rejects_missing_foundation_boundary(tmp_path: Path) -> None:
+    route_path = tmp_path / "index.html"
+    route_text = PRODUCT_ROUTE_DRAFT_PATH.read_text(encoding="utf-8").replace(
+        "foundation mode",
+        "public launch",
+    )
+    route_path.write_text(route_text, encoding="utf-8")
+
+    with pytest.raises(AssertionError, match="product route draft missing literals"):
+        validate_product_route_draft(route_path)
+
+
 def test_product_route_draft_rejects_blocked_public_name(tmp_path: Path) -> None:
     route_path = tmp_path / "index.html"
     route_text = PRODUCT_ROUTE_DRAFT_PATH.read_text(encoding="utf-8").replace(
@@ -976,6 +988,7 @@ def test_public_naming_review_packet_rejects_missing_serial(tmp_path: Path) -> N
                 "Paid public launch allowed | false",
                 "Final clearance decision | pending",
                 "Do Not Approve If",
+                "foundation-stage with no access, waitlist, or beta invitation",
                 *sorted(REQUIRED_OPEN_GATES),
                 *sorted(REQUIRED_DOMAIN_CANDIDATES),
                 *sorted(REQUIRED_WEBSITE_ROUTES),

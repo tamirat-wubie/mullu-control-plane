@@ -21,6 +21,7 @@ from ._base import (
     require_non_negative_int,
     require_unit_float,
 )
+from .solver_outcome import SolverOutcome
 
 
 class HealthStatus(StrEnum):
@@ -171,6 +172,129 @@ class SelfHealthSnapshot(ContractRecord):
         if HealthStatus.UNKNOWN in statuses:
             return HealthStatus.UNKNOWN
         return HealthStatus.HEALTHY
+
+
+@dataclass(frozen=True, slots=True)
+class SelfModelCapabilityProjection(ContractRecord):
+    """Read-only self-model view of one capability boundary."""
+
+    capability_id: str
+    maturity: str
+    risk: str
+    admitted: bool
+    status: HealthStatus
+    reason: str
+    evidence_refs: tuple[str, ...] = ()
+    open_incident_refs: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "capability_id", require_non_empty_text(self.capability_id, "capability_id"))
+        object.__setattr__(self, "maturity", require_non_empty_text(self.maturity, "maturity"))
+        object.__setattr__(self, "risk", require_non_empty_text(self.risk, "risk"))
+        if not isinstance(self.admitted, bool):
+            raise ValueError("admitted must be a boolean")
+        if not isinstance(self.status, HealthStatus):
+            raise ValueError("status must be a HealthStatus value")
+        object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
+        object.__setattr__(self, "evidence_refs", _freeze_text_tuple(self.evidence_refs, "evidence_refs"))
+        object.__setattr__(
+            self,
+            "open_incident_refs",
+            _freeze_text_tuple(self.open_incident_refs, "open_incident_refs"),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class OperatingSubstrateSelfModelProjection(ContractRecord):
+    """Read-only self-model projection for the operating substrate."""
+
+    projection_id: str
+    captured_at: str
+    capabilities: tuple[SelfModelCapabilityProjection, ...]
+    subsystem_health: tuple[SubsystemHealth, ...]
+    world_state_status: HealthStatus
+    evidence_refs: tuple[str, ...]
+    capability_count: int
+    admitted_capability_count: int
+    degraded_capability_count: int
+    unknown_capability_count: int
+    solver_outcome: SolverOutcome
+    mutation_authorized: bool = False
+    raw_private_reasoning_included: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "projection_id", require_non_empty_text(self.projection_id, "projection_id"))
+        object.__setattr__(self, "captured_at", require_datetime_text(self.captured_at, "captured_at"))
+        object.__setattr__(self, "capabilities", freeze_value(self.capabilities))
+        for capability in self.capabilities:
+            if not isinstance(capability, SelfModelCapabilityProjection):
+                raise ValueError("each capability must be a SelfModelCapabilityProjection")
+        object.__setattr__(self, "subsystem_health", freeze_value(self.subsystem_health))
+        for subsystem in self.subsystem_health:
+            if not isinstance(subsystem, SubsystemHealth):
+                raise ValueError("each subsystem_health item must be a SubsystemHealth")
+        if not isinstance(self.world_state_status, HealthStatus):
+            raise ValueError("world_state_status must be a HealthStatus value")
+        object.__setattr__(self, "evidence_refs", _freeze_text_tuple(self.evidence_refs, "evidence_refs"))
+        object.__setattr__(self, "capability_count", require_non_negative_int(self.capability_count, "capability_count"))
+        object.__setattr__(
+            self,
+            "admitted_capability_count",
+            require_non_negative_int(self.admitted_capability_count, "admitted_capability_count"),
+        )
+        object.__setattr__(
+            self,
+            "degraded_capability_count",
+            require_non_negative_int(self.degraded_capability_count, "degraded_capability_count"),
+        )
+        object.__setattr__(
+            self,
+            "unknown_capability_count",
+            require_non_negative_int(self.unknown_capability_count, "unknown_capability_count"),
+        )
+        if not isinstance(self.solver_outcome, SolverOutcome):
+            raise ValueError("solver_outcome must be a SolverOutcome value")
+        if self.mutation_authorized:
+            raise ValueError("self-model projection cannot authorize mutation")
+        if self.raw_private_reasoning_included:
+            raise ValueError("self-model projection cannot include raw private reasoning")
+        if self.capability_count != len(self.capabilities):
+            raise ValueError("capability_count must match capabilities length")
+        admitted_count = sum(1 for capability in self.capabilities if capability.admitted)
+        if self.admitted_capability_count != admitted_count:
+            raise ValueError("admitted_capability_count must match admitted capabilities")
+        degraded_count = sum(1 for capability in self.capabilities if capability.status is HealthStatus.DEGRADED)
+        if self.degraded_capability_count != degraded_count:
+            raise ValueError("degraded_capability_count must match degraded capabilities")
+        unknown_count = sum(1 for capability in self.capabilities if capability.status is HealthStatus.UNKNOWN)
+        if self.unknown_capability_count != unknown_count:
+            raise ValueError("unknown_capability_count must match unknown capabilities")
+        if self.solver_outcome is SolverOutcome.SOLVED_VERIFIED and self.overall_status is not HealthStatus.HEALTHY:
+            raise ValueError("SolvedVerified self-model projection requires healthy overall status")
+
+    @property
+    def overall_status(self) -> HealthStatus:
+        """Return deterministic aggregate health without granting authority."""
+        statuses = {self.world_state_status}
+        statuses.update(capability.status for capability in self.capabilities)
+        statuses.update(subsystem.status for subsystem in self.subsystem_health)
+        if HealthStatus.UNAVAILABLE in statuses:
+            return HealthStatus.UNAVAILABLE
+        if HealthStatus.DEGRADED in statuses:
+            return HealthStatus.DEGRADED
+        if HealthStatus.UNKNOWN in statuses:
+            return HealthStatus.UNKNOWN
+        return HealthStatus.HEALTHY
+
+
+def _freeze_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, ...]:
+    frozen = freeze_value(values)
+    if isinstance(frozen, str) or not isinstance(frozen, tuple):
+        raise ValueError(f"{field_name} must be an array")
+    normalized: list[str] = []
+    for value in frozen:
+        normalized.append(require_non_empty_text(str(value), field_name))
+    return tuple(normalized)
 
 
 # ---------------------------------------------------------------------------
