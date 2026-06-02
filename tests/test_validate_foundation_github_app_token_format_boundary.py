@@ -19,6 +19,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "github-app-token-format-boundary.yml"
+
 from scripts.validate_foundation_github_app_token_format_boundary import (  # noqa: E402
     DEFAULT_WITNESS_PATH,
     EXPECTED_WITNESS_ID,
@@ -31,6 +33,17 @@ from scripts.validate_foundation_github_app_token_format_boundary import (  # no
 
 def test_foundation_github_app_token_format_boundary_artifacts_pass() -> None:
     assert validate_foundation_github_app_token_format_boundary() == []
+
+
+def test_foundation_github_app_token_format_boundary_workflow_is_wired() -> None:
+    content = WORKFLOW_PATH.read_text(encoding="utf-8")
+
+    assert "GitHub App Token Format Boundary" in content
+    assert "scripts/validate_foundation_github_app_token_format_boundary.py" in content
+    assert "tests/test_validate_foundation_github_app_token_format_boundary.py" in content
+    assert "scripts/validate_github_app_token_format_boundary.py" not in content
+    assert "actions/checkout@v5" in content
+    assert "actions/setup-python@v6" in content
 
 
 def test_witness_has_expected_identity_and_opaque_token_contract() -> None:

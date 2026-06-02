@@ -1,0 +1,54 @@
+# Purpose: validate the GitHub App installation-token format boundary in CI.
+# Governance scope: opaque-token storage, parser assumptions, and fixture safety.
+# Dependencies: scripts/validate_foundation_github_app_token_format_boundary.py.
+# Invariants: no fixed token length, no JWT parsing, no committed live tokens.
+
+name: GitHub App Token Format Boundary
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/github-app-token-format-boundary.yml"
+      - "docs/FOUNDATION_GITHUB_APP_TOKEN_FORMAT_BOUNDARY.md"
+      - "examples/foundation_github_app_token_format_witness.awaiting_evidence.json"
+      - "scripts/validate_foundation_github_app_token_format_boundary.py"
+      - "tests/test_validate_foundation_github_app_token_format_boundary.py"
+      - "**/*.py"
+      - "**/*.json"
+      - "**/*.yaml"
+      - "**/*.yml"
+      - "**/*.toml"
+  push:
+    branches: [main, "codex/*"]
+    paths:
+      - ".github/workflows/github-app-token-format-boundary.yml"
+      - "docs/FOUNDATION_GITHUB_APP_TOKEN_FORMAT_BOUNDARY.md"
+      - "examples/foundation_github_app_token_format_witness.awaiting_evidence.json"
+      - "scripts/validate_foundation_github_app_token_format_boundary.py"
+      - "tests/test_validate_foundation_github_app_token_format_boundary.py"
+      - "**/*.py"
+      - "**/*.json"
+      - "**/*.yaml"
+      - "**/*.yml"
+      - "**/*.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-github-app-token-format:
+    name: Validate GitHub App token format boundary
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Validate boundary artifacts
+        run: python scripts/validate_foundation_github_app_token_format_boundary.py
