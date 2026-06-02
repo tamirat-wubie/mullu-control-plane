@@ -1,0 +1,119 @@
+{
+  "blocked_claims": [
+    "customer research",
+    "survey publication",
+    "waitlist opening",
+    "outreach",
+    "market validation",
+    "product-market fit",
+    "market category readiness",
+    "market size validation",
+    "competitor superiority",
+    "public benchmark",
+    "pricing readiness",
+    "public offer",
+    "paid research",
+    "investor material",
+    "personal data collection",
+    "customer access",
+    "money movement",
+    "external publication",
+    "deployment readiness"
+  ],
+  "competitor_superiority_claimed": false,
+  "customer_access_allowed": false,
+  "customer_research_allowed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "investor_material_allowed": false,
+  "market_category_claimed": false,
+  "market_research_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft problem-hypothesis questions only; no market validation, customer evidence, or product-market proof is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "problem_hypothesis_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft target-user questions only; no contact, personal data, customer research, or buyer evidence is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "target_user_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft market-category questions only; no category readiness, market-size proof, or market validation is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "market_category_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft similar-platform inventory questions only; no private profile, scraped data, benchmark, or superiority claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "competitor_inventory_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft differentiation questions only; no moat, leadership, benchmark win, legal protection, or market superiority is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "differentiation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft pricing-assumption questions only; no price, package, checkout, paid access, or published public-offer value is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "pricing_assumption_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft validation-plan questions only; no survey, interview, outreach, waitlist, beta, or customer access is opened.",
+      "state": "AwaitingEvidence",
+      "surface_id": "validation_plan_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft public-claim review questions only; no market, customer, investor, launch, or deployment claim is promoted.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_claim_review_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft risk-obligation questions only; no privacy, support, legal, cost, investor, or customer duty is treated as satisfied.",
+      "state": "AwaitingEvidence",
+      "surface_id": "risk_obligation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft evidence-promotion questions only; no market, customer, pricing, investor, publication, or deployment claim is promoted.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_promotion_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "market_size_claimed": false,
+  "market_validation_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "keep market research preparation local; do not publish surveys, open waitlists, contact people, claim market validation, claim product-market fit, claim competitor superiority, publish pricing or public offers, create investor materials, collect personal data, open customer access, move money, publish externally, or deploy without a later signed witness",
+  "outreach_allowed": false,
+  "paid_research_allowed": false,
+  "personal_data_collection_allowed": false,
+  "pricing_claim_allowed": false,
+  "product_market_fit_claimed": false,
+  "public_benchmark_claimed": false,
+  "public_offer_allowed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "survey_publication_allowed": false,
+  "waitlist_allowed": false,
+  "witness_id": "foundation_market_research_witness.awaiting_evidence.v1"
+}

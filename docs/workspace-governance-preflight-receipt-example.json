@@ -1,5 +1,5 @@
 {
-  "check_count": 69,
+  "check_count": 70,
   "generated_at_epoch": 1780272000.0,
   "checks": [
     {
@@ -450,6 +450,17 @@
         "scripts/validate_foundation_product_scope_boundary.py"
       ],
       "name": "foundation_product_scope_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_market_research_boundary.py"
+      ],
+      "name": "foundation_market_research_boundary",
       "passed": true,
       "return_code": 0,
       "stderr": "",

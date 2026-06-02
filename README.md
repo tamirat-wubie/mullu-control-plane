@@ -185,6 +185,15 @@ and public-claim language local without claiming patent protection,
 trade-secret protection, scientific validation, physical-world validation,
 market validation, customer readiness, external publication, paid launch,
 secret evidence, or deployment readiness.
+Market-research preparation is bounded by
+[`docs/FOUNDATION_MARKET_RESEARCH_BOUNDARY.md`](docs/FOUNDATION_MARKET_RESEARCH_BOUNDARY.md),
+which drafts problem-hypothesis, target-user, market-category,
+similar-platform, differentiation, pricing, validation-plan, public-claim,
+risk-obligation, and evidence-promotion questions without customer research,
+surveys, waitlists, outreach, market validation, product-market-fit,
+competitor-superiority, pricing-readiness, public-offer, investor-material,
+personal-data collection, customer access, money movement, external
+publication, or deployment claims.
 Evidence-ledger posture is bounded by
 [`docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md`](docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md),
 which keeps local evidence references, witness packets, validator references,

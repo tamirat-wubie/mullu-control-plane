@@ -32,6 +32,7 @@ Invariants: this snapshot may not claim public production health, legal clearanc
 | Claim boundary | Local claim-separation draft only | Does not claim production health, endpoint readiness, customer readiness, pilot readiness, legal clearance, commercial readiness, public launch, compliance certification, external publication, or deployment readiness |
 | Website posture | Local website-copy review only | Does not mutate website files, publish routes, invite access, open waitlists, open beta, accept pilot signups, collect customer intake, claim production runtime, claim endpoint readiness, launch paid use, or deploy |
 | Research notebook | Local concept-organization draft only | Does not claim patent protection, trade-secret protection, scientific validation, physical-world validation, market validation, customer readiness, external publication, paid launch, secret evidence, or deployment readiness |
+| Market research | Local comparison questions only | Does not run customer research, publish surveys, open waitlists, start outreach, claim market validation, claim product-market fit, claim category readiness, claim market size, claim competitor superiority, publish benchmarks, claim pricing readiness, publish public offers, create investor materials, collect personal data, open customer access, move money, publish externally, or claim deployment readiness |
 | Evidence ledger | Local evidence-reference draft only | Does not promote evidence, claim terminal closure, claim readiness, claim legal clearance, claim patent protection, claim customer readiness, launch paid use, record secret evidence, publish externally, or deploy |
 | Decision journal | Local decision-context draft only | Does not execute decisions, authorize irreversible action, commit to a roadmap, promise deadlines, delegate authority, make customer commitments, claim legal authority, form a company, file a patent, spend money, publish externally, or deploy |
 | Next action | Local continuation triage only | Does not authorize broad continuation, external action, deployment, publication, spending, customer action, legal/business action, claim promotion, secret use, credential use, service activation, source-control publication, roadmap commitment, or deadline promise |
@@ -104,6 +105,7 @@ Do not use these until the corresponding evidence exists:
 | Claim boundary | `docs/FOUNDATION_CLAIM_BOUNDARY.md` |
 | Website-posture boundary | `docs/FOUNDATION_WEBSITE_POSTURE_BOUNDARY.md` |
 | Research-notebook boundary | `docs/FOUNDATION_RESEARCH_NOTEBOOK_BOUNDARY.md` |
+| Market-research boundary | `docs/FOUNDATION_MARKET_RESEARCH_BOUNDARY.md` |
 | Evidence-ledger boundary | `docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md` |
 | Decision-journal boundary | `docs/FOUNDATION_DECISION_JOURNAL_BOUNDARY.md` |
 | Next-action boundary | `docs/FOUNDATION_NEXT_ACTION_BOUNDARY.md` |
