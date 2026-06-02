@@ -67,6 +67,11 @@ def install_global_exception_handler(
     signal-to-noise problem and an internal-detail leak. Plain ``ValueError`` and
     everything else still map to 500 (Starlette routes to the most specific
     handler, and a bare ValueError may be a server fault, not client input).
+
+    A ``RecursionError`` while handling a request means the request (or the
+    response it produced) was too deeply nested to encode -- e.g. a maliciously
+    deep JSON body. No legitimate request reaches the interpreter recursion
+    limit, so it is mapped to a bounded 400 instead of a 500.
     """
     from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 
@@ -84,6 +89,23 @@ def install_global_exception_handler(
                 "error": "request violates a governance invariant",
                 "detail": str(exc)[:200],
                 "error_code": "invariant_violation",
+                "governed": True,
+            },
+        )
+
+    async def recursion_limit_handler(
+        request: StarletteRequest,
+        exc: Exception,
+    ) -> StarletteJSONResponse:
+        try:
+            metrics.inc("requests_rejected")
+        except Exception:
+            pass
+        return StarletteJSONResponse(
+            status_code=400,
+            content={
+                "error": "request structure is too deeply nested",
+                "error_code": "request_too_deeply_nested",
                 "governed": True,
             },
         )
@@ -112,6 +134,7 @@ def install_global_exception_handler(
         )
 
     app.add_exception_handler(RuntimeCoreInvariantError, invariant_violation_handler)
+    app.add_exception_handler(RecursionError, recursion_limit_handler)
     app.add_exception_handler(Exception, global_exception_handler)
 
 
