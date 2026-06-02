@@ -1,4 +1,4 @@
-﻿"""Tests for the Foundation Mode research-notebook boundary validator.
+"""Tests for the Foundation Mode research-notebook boundary validator.
 
 Purpose: prove research-notebook preparation stays local and does not authorize
 patent-protection, trade-secret-protection, scientific-validation,

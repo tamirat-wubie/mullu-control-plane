@@ -1,4 +1,4 @@
-﻿"""Tests for the Foundation Mode evidence-ledger boundary validator.
+"""Tests for the Foundation Mode evidence-ledger boundary validator.
 
 Purpose: prove evidence-ledger preparation stays local and does not authorize
 evidence-promotion, terminal-closure, readiness, legal-clearance,

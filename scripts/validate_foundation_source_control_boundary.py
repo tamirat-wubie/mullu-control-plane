@@ -57,6 +57,7 @@ EXPECTED_CHANGE_FAMILIES = (
     "decision_journal_boundary",
     "next_action_boundary",
     "local_proof_thread",
+    "test_evidence_boundary",
     "private_recovery_boundary",
     "secrets_credentials_boundary",
     "security_baseline_boundary",
@@ -100,6 +101,7 @@ EXPECTED_REQUIRED_CHECKS = (
     "python scripts/validate_foundation_evidence_ledger_boundary.py",
     "python scripts/validate_foundation_decision_journal_boundary.py",
     "python scripts/validate_foundation_next_action_boundary.py",
+    "python scripts/validate_foundation_test_evidence_boundary.py",
     "python scripts/validate_foundation_local_proof_thread.py",
     "python scripts/validate_foundation_private_recovery_boundary.py",
     "python scripts/validate_foundation_secrets_credentials_boundary.py",
@@ -161,6 +163,7 @@ REQUIRED_DOC_PHRASES = (
     "pull_request_allowed=false",
     "Change handoff | Local change-family",
     "Plain-language status | Local current-posture",
+    "Test evidence | Local focused-validator",
     "python scripts/validate_foundation_source_control_boundary.py",
 )
 FORBIDDEN_PACKET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -195,7 +198,7 @@ def load_json_object(path: Path, label: str) -> dict[str, Any]:
         raise FileNotFoundError(f"missing {label}: {path}")
     if not path.is_file():
         raise IsADirectoryError(f"{label} path is not a file: {path}")
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = json.loads(path.read_text(encoding="utf-8-sig"))
     if not isinstance(payload, dict):
         raise ValueError(f"{label} must be a JSON object")
     return payload

@@ -1,0 +1,109 @@
+{
+  "blocked_claims": [
+    "full-test pass",
+    "complete coverage",
+    "CI parity",
+    "release readiness",
+    "deployment readiness",
+    "security clearance",
+    "secret clearance",
+    "customer readiness",
+    "legal clearance",
+    "performance readiness",
+    "flake-free guarantee",
+    "terminal closure",
+    "external publication",
+    "deployment readiness"
+  ],
+  "ci_parity_claimed": false,
+  "complete_coverage_claimed": false,
+  "customer_readiness_claimed": false,
+  "deployment_allowed": false,
+  "deployment_readiness_claimed": false,
+  "external_publication_allowed": false,
+  "flake_free_guarantee_claimed": false,
+  "full_test_pass_claimed": false,
+  "legal_clearance_claimed": false,
+  "next_action": "continue local test-evidence question drafting without full-test, coverage, CI, release, security, customer, legal, publication, or deployment claims",
+  "performance_readiness_claimed": false,
+  "release_readiness_claimed": false,
+  "schema_version": 1,
+  "secret_clearance_claimed": false,
+  "security_clearance_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "terminal_closure_claimed": false,
+  "test_evidence_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft focused-validator questions without claiming full-test pass.",
+      "state": "AwaitingEvidence",
+      "surface_id": "focused_validator_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft targeted-pytest questions without claiming complete coverage.",
+      "state": "AwaitingEvidence",
+      "surface_id": "targeted_pytest_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft full-preflight questions without claiming release readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "full_preflight_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft receipt-validation questions without claiming terminal closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "receipt_validation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft diff-hygiene questions without claiming secret clearance.",
+      "state": "AwaitingEvidence",
+      "surface_id": "diff_hygiene_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft failure-case questions without claiming flake-free behavior.",
+      "state": "AwaitingEvidence",
+      "surface_id": "failure_case_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft warning-triage questions without hiding warnings.",
+      "state": "AwaitingEvidence",
+      "surface_id": "warning_triage_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft coverage-gap questions without claiming complete coverage.",
+      "state": "AwaitingEvidence",
+      "surface_id": "coverage_gap_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft reproducibility questions without claiming CI parity.",
+      "state": "AwaitingEvidence",
+      "surface_id": "reproducibility_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft non-terminal-closure questions without claiming deployment, customer, legal, or commercial readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "non_terminal_closure_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "witness_id": "foundation_test_evidence_witness.awaiting_evidence.v1"
+}

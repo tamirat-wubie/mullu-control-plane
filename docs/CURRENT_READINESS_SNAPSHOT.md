@@ -35,6 +35,7 @@ Invariants: this snapshot may not claim public production health, legal clearanc
 | Evidence ledger | Local evidence-reference draft only | Does not promote evidence, claim terminal closure, claim readiness, claim legal clearance, claim patent protection, claim customer readiness, launch paid use, record secret evidence, publish externally, or deploy |
 | Decision journal | Local decision-context draft only | Does not execute decisions, authorize irreversible action, commit to a roadmap, promise deadlines, delegate authority, make customer commitments, claim legal authority, form a company, file a patent, spend money, publish externally, or deploy |
 | Next action | Local continuation triage only | Does not authorize broad continuation, external action, deployment, publication, spending, customer action, legal/business action, claim promotion, secret use, credential use, service activation, source-control publication, roadmap commitment, or deadline promise |
+| Test evidence | Local validation-scope recording only | Does not claim full-test pass, complete coverage, CI parity, release readiness, deployment readiness, security clearance, secret clearance, customer readiness, legal clearance, performance readiness, flake-free guarantees, terminal closure, external publication, or deployment readiness |
 | Secrets/credentials | Local draft categories only | Does not store real secrets, activate credentials, bind provider accounts, enable external calls, or claim deployment readiness |
 | Security baseline | Local draft questions only | Does not claim scan pass, dependency audit pass, threat-model approval, access-control verification, compliance certification, customer-security readiness, or deployment readiness |
 | Cost/budget | Local draft categories only | Does not spend, enable billing, bind payment methods, create subscriptions, approve purchases, pay invoices, or claim deployment readiness |
@@ -102,6 +103,7 @@ Do not use these until the corresponding evidence exists:
 | Evidence-ledger boundary | `docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md` |
 | Decision-journal boundary | `docs/FOUNDATION_DECISION_JOURNAL_BOUNDARY.md` |
 | Next-action boundary | `docs/FOUNDATION_NEXT_ACTION_BOUNDARY.md` |
+| Test-evidence boundary | `docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md` |
 | Secrets/credentials boundary | `docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md` |
 | Security-baseline boundary | `docs/FOUNDATION_SECURITY_BASELINE_BOUNDARY.md` |
 | Cost/budget boundary | `docs/FOUNDATION_COST_BUDGET_BOUNDARY.md` |

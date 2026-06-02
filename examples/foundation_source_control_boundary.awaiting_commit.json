@@ -278,6 +278,17 @@
       "summary": "Harmless local proof thread is descriptor-backed, validator-backed, receipt-bound, and rollback-named."
     },
     {
+      "family_id": "test_evidence_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md",
+        "examples/foundation_test_evidence_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_test_evidence_boundary.py",
+        "tests/test_validate_foundation_test_evidence_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Test-evidence preparation drafts focused-validator, targeted-pytest, full-preflight, receipt-validation, diff-hygiene, failure-case, warning-triage, coverage-gap, reproducibility, and non-terminal-closure questions without full-test-pass, complete-coverage, CI-parity, release-readiness, deployment-readiness, security-clearance, secret-clearance, customer-readiness, legal-clearance, performance-readiness, flake-free, terminal-closure, external-publication, or deployment claims."
+    },
+    {
       "family_id": "private_recovery_boundary",
       "required_evidence": [
         "docs/FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md",
@@ -501,6 +512,7 @@
     "python scripts/validate_foundation_evidence_ledger_boundary.py",
     "python scripts/validate_foundation_decision_journal_boundary.py",
     "python scripts/validate_foundation_next_action_boundary.py",
+    "python scripts/validate_foundation_test_evidence_boundary.py",
     "python scripts/validate_foundation_local_proof_thread.py",
     "python scripts/validate_foundation_private_recovery_boundary.py",
     "python scripts/validate_foundation_secrets_credentials_boundary.py",

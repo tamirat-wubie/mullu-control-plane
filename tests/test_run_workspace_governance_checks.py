@@ -24,7 +24,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     names = [command.name for command in commands]
     args_by_name = {command.name: command.args for command in commands}
 
-    assert names[:44] == [
+    assert names[:45] == [
         "local_assurance_plan",
         "agents_policy",
         "foundation_mode",
@@ -52,6 +52,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_evidence_ledger_boundary",
         "foundation_decision_journal_boundary",
         "foundation_next_action_boundary",
+        "foundation_test_evidence_boundary",
         "foundation_local_proof_thread",
         "foundation_private_recovery_boundary",
         "foundation_secrets_credentials_boundary",
@@ -70,7 +71,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_privacy_data_boundary",
         "protocol_manifest",
     ]
-    assert names[48:56] == [
+    assert names[49:57] == [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
         "workspace_governance_witness_contract",
@@ -80,7 +81,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "workspace_governance_integrity_report_contract",
         "universal_action_orchestration_contract",
     ]
-    assert len(names) == 63
+    assert len(names) == 64
     assert names[-8:] == [
         "universal_action_orchestration_contract",
         "universal_action_orchestration_validation_receipt_contract",
@@ -169,6 +170,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["foundation_next_action_boundary"][1:] == (
         "scripts/validate_foundation_next_action_boundary.py",
+    )
+    assert args_by_name["foundation_test_evidence_boundary"][1:] == (
+        "scripts/validate_foundation_test_evidence_boundary.py",
     )
     assert args_by_name["foundation_local_proof_thread"][1:] == (
         "scripts/validate_foundation_local_proof_thread.py",

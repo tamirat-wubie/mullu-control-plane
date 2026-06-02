@@ -89,6 +89,7 @@
             "foundation_evidence_ledger_boundary",
             "foundation_decision_journal_boundary",
             "foundation_next_action_boundary",
+            "foundation_test_evidence_boundary",
             "foundation_local_proof_thread",
             "foundation_private_recovery_boundary",
             "foundation_secrets_credentials_boundary",

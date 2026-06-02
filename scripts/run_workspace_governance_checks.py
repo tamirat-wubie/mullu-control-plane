@@ -216,6 +216,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_next_action_boundary.py"),
         ),
         CheckCommand(
+            "foundation_test_evidence_boundary",
+            (python_executable, "scripts/validate_foundation_test_evidence_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_local_proof_thread",
             (python_executable, "scripts/validate_foundation_local_proof_thread.py"),
         ),

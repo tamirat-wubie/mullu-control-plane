@@ -1,5 +1,5 @@
 {
-  "check_count": 63,
+  "check_count": 64,
   "generated_at_epoch": 1780272000.0,
   "checks": [
     {
@@ -296,6 +296,17 @@
         "scripts/validate_foundation_next_action_boundary.py"
       ],
       "name": "foundation_next_action_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_test_evidence_boundary.py"
+      ],
+      "name": "foundation_test_evidence_boundary",
       "passed": true,
       "return_code": 0,
       "stderr": "",

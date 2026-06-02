@@ -1,7 +1,7 @@
 <!--
 Purpose: define the atomic prerequisite ladder for solo-founder Foundation Mode.
 Governance scope: local setup, evidence readiness, claim boundaries, legal/business separation, deployment restraint, and reversible next actions.
-Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md, docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md, docs/FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md, docs/FOUNDATION_SYSTEM_BOUNDARY_INVENTORY_BOUNDARY.md, docs/FOUNDATION_MODULE_INVENTORY_BOUNDARY.md, docs/FOUNDATION_LOCAL_WORKSTATION_BOUNDARY.md, docs/FOUNDATION_DOCUMENTATION_BOUNDARY.md, docs/FOUNDATION_CLAIM_BOUNDARY.md, docs/FOUNDATION_WEBSITE_POSTURE_BOUNDARY.md, docs/FOUNDATION_RESEARCH_NOTEBOOK_BOUNDARY.md, docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md, docs/FOUNDATION_DECISION_JOURNAL_BOUNDARY.md, docs/FOUNDATION_NEXT_ACTION_BOUNDARY.md, docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md, docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md, docs/FOUNDATION_SECURITY_BASELINE_BOUNDARY.md, docs/FOUNDATION_COST_BUDGET_BOUNDARY.md, docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md, docs/FOUNDATION_BACKUP_EXPORT_BOUNDARY.md, docs/FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md, docs/FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md, docs/FOUNDATION_LOCAL_PROOF_THREAD.md, docs/FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md, docs/FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md, docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md, docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md, docs/FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md, docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md, docs/FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md, docs/START_HERE.md, docs/CURRENT_READINESS_SNAPSHOT.md, DEPLOYMENT_STATUS.md, AGENTS.md.
+Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md, docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md, docs/FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md, docs/FOUNDATION_SYSTEM_BOUNDARY_INVENTORY_BOUNDARY.md, docs/FOUNDATION_MODULE_INVENTORY_BOUNDARY.md, docs/FOUNDATION_LOCAL_WORKSTATION_BOUNDARY.md, docs/FOUNDATION_DOCUMENTATION_BOUNDARY.md, docs/FOUNDATION_CLAIM_BOUNDARY.md, docs/FOUNDATION_WEBSITE_POSTURE_BOUNDARY.md, docs/FOUNDATION_RESEARCH_NOTEBOOK_BOUNDARY.md, docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md, docs/FOUNDATION_DECISION_JOURNAL_BOUNDARY.md, docs/FOUNDATION_NEXT_ACTION_BOUNDARY.md, docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md, docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md, docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md, docs/FOUNDATION_SECURITY_BASELINE_BOUNDARY.md, docs/FOUNDATION_COST_BUDGET_BOUNDARY.md, docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md, docs/FOUNDATION_BACKUP_EXPORT_BOUNDARY.md, docs/FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md, docs/FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md, docs/FOUNDATION_LOCAL_PROOF_THREAD.md, docs/FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md, docs/FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md, docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md, docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md, docs/FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md, docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md, docs/FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md, docs/START_HERE.md, docs/CURRENT_READINESS_SNAPSHOT.md, DEPLOYMENT_STATUS.md, AGENTS.md.
 Invariants: no public deployment claim, no customer access claim, no paid infrastructure requirement, no legal conclusion, no irreversible external action by default.
 -->
 
@@ -59,6 +59,7 @@ Rule: No customer access or deployment claim.
 | Evidence ledger | Local evidence-reference organization only | Use [Foundation Evidence Ledger Boundary](FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md) to draft boundary-doc, witness-packet, validator, test, preflight-receipt, source-control-packet, readiness-snapshot, and public-copy-routing references locally. | Do not promote evidence, claim terminal closure, claim readiness, claim legal clearance, claim patent protection, claim customer readiness, launch paid use, record secret evidence, publish externally, or deploy. | Evidence-ledger witness and local draft checklist. |
 | Decision journal | Local decision-context organization only | Use [Foundation Decision Journal Boundary](FOUNDATION_DECISION_JOURNAL_BOUNDARY.md) to draft decision context, assumption snapshot, option set, constraint check, evidence references, risk stop rule, review cadence, and next-action selection locally. | Do not execute decisions, authorize irreversible action, commit to a roadmap, promise deadlines, delegate authority, make customer commitments, claim legal authority, form a company, file a patent, spend money, publish externally, or deploy. | Decision-journal witness and local draft checklist. |
 | Next action | Local continuation triage only | Use [Foundation Next Action Boundary](FOUNDATION_NEXT_ACTION_BOUNDARY.md) to keep `continue` work to one local-safe prerequisite, dependency check, verification plan, stop rule, receipt plan, and handoff summary. | Do not execute broad continuation, cross external boundaries, deploy, publish, spend, contact customers, take legal/business action, promote claims, use secrets or credentials, activate services, publish source control, commit to a roadmap, or promise deadlines. | Next-action witness and local draft checklist. |
+| Test evidence | Local validation-scope recording only | Use [Foundation Test Evidence Boundary](FOUNDATION_TEST_EVIDENCE_BOUNDARY.md) to record focused validators, targeted pytest, preflight, receipt validation, diff hygiene, failure cases, warnings, coverage gaps, reproducibility notes, and non-terminal closure locally. | Do not claim full-test pass, complete coverage, CI parity, release readiness, security clearance, customer readiness, legal clearance, external publication, or deployment. | Test-evidence witness and local draft checklist. |
 | Security basics | Draft questions only | Use [Foundation Security Baseline Boundary](FOUNDATION_SECURITY_BASELINE_BOUNDARY.md) to draft threat-model, dependency-audit, static-scan, access-control, data-exposure, supply-chain, and review-readiness questions locally. | Do not claim scan pass, dependency audit pass, threat-model approval, access-control verification, compliance certification, customer-security readiness, or deployment readiness. | Security-baseline witness and local draft checklist. |
 | Secrets/credentials | Draft categories only | Use [Foundation Secrets Credentials Boundary](FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md) to draft credential categories, environment-variable names, provider-access questions, key questions, and rotation questions locally. | Do not store real secrets, activate credentials, bind provider accounts, enable external calls, or commit environment files. | Secrets/credentials witness and local draft checklist. |
 | Cost/budget | No spend by default | Use [Foundation Cost Budget Boundary](FOUNDATION_COST_BUDGET_BOUNDARY.md) to draft cost categories, budget questions, billing questions, payment-method questions, subscription questions, and purchase controls locally. | Do not spend, enable billing, bind payment methods, create subscriptions, approve purchases, pay invoices, or activate paid infrastructure. | Cost/budget witness and local draft checklist. |
@@ -103,24 +104,25 @@ Rule: No customer access or deployment claim.
 22. Prepare evidence-ledger notes using [Foundation Evidence Ledger Boundary](FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md).
 23. Prepare decision-journal notes using [Foundation Decision Journal Boundary](FOUNDATION_DECISION_JOURNAL_BOUNDARY.md).
 24. Prepare next-action selection using [Foundation Next Action Boundary](FOUNDATION_NEXT_ACTION_BOUNDARY.md).
-25. Close source-control hygiene: commit boundary, branch boundary, and no secret drift using [Foundation Source Control Boundary](FOUNDATION_SOURCE_CONTROL_BOUNDARY.md).
-26. Prepare secrets/credentials notes using [Foundation Secrets Credentials Boundary](FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md).
-27. Prepare security-baseline notes using [Foundation Security Baseline Boundary](FOUNDATION_SECURITY_BASELINE_BOUNDARY.md).
-28. Prepare cost/budget notes using [Foundation Cost Budget Boundary](FOUNDATION_COST_BUDGET_BOUNDARY.md).
-29. Prepare runtime/environment notes using [Foundation Runtime Environment Boundary](FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md).
-30. Prepare backup/export notes using [Foundation Backup Export Boundary](FOUNDATION_BACKUP_EXPORT_BOUNDARY.md).
-31. Keep deployment deferred using [Foundation Deployment Deferral Boundary](FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md).
-32. Prepare external-infrastructure notes using [Foundation External Infrastructure Boundary](FOUNDATION_EXTERNAL_INFRASTRUCTURE_BOUNDARY.md).
-33. Close one local proof thread with a receipt and rollback note.
-34. Prepare private recovery inventory outside the repository using [Foundation Private Recovery Boundary](FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md).
-35. Prepare domain/email public-safe witness notes using [Foundation Domain Email Boundary](FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md).
-36. Prepare product-scope learning lane notes using [Foundation Product Scope Boundary](FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md).
-37. Prepare support-readiness notes using [Foundation Support Readiness Boundary](FOUNDATION_SUPPORT_READINESS_BOUNDARY.md).
-38. Prepare intake/onboarding notes using [Foundation Intake Onboarding Boundary](FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md).
-39. Prepare privacy/data notes using [Foundation Privacy Data Boundary](FOUNDATION_PRIVACY_DATA_BOUNDARY.md).
-40. Prepare legal/business questions without making legal claims using [Foundation Legal Business Boundary](FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md).
-41. Keep pilot deferred using [Foundation Pilot Deferral Boundary](FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md).
-42. Reassess whether deployment or pilot prerequisites should even start.
+25. Prepare test-evidence notes using [Foundation Test Evidence Boundary](FOUNDATION_TEST_EVIDENCE_BOUNDARY.md).
+26. Close source-control hygiene: commit boundary, branch boundary, and no secret drift using [Foundation Source Control Boundary](FOUNDATION_SOURCE_CONTROL_BOUNDARY.md).
+27. Prepare secrets/credentials notes using [Foundation Secrets Credentials Boundary](FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md).
+28. Prepare security-baseline notes using [Foundation Security Baseline Boundary](FOUNDATION_SECURITY_BASELINE_BOUNDARY.md).
+29. Prepare cost/budget notes using [Foundation Cost Budget Boundary](FOUNDATION_COST_BUDGET_BOUNDARY.md).
+30. Prepare runtime/environment notes using [Foundation Runtime Environment Boundary](FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md).
+31. Prepare backup/export notes using [Foundation Backup Export Boundary](FOUNDATION_BACKUP_EXPORT_BOUNDARY.md).
+32. Keep deployment deferred using [Foundation Deployment Deferral Boundary](FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md).
+33. Prepare external-infrastructure notes using [Foundation External Infrastructure Boundary](FOUNDATION_EXTERNAL_INFRASTRUCTURE_BOUNDARY.md).
+34. Close one local proof thread with a receipt and rollback note.
+35. Prepare private recovery inventory outside the repository using [Foundation Private Recovery Boundary](FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md).
+36. Prepare domain/email public-safe witness notes using [Foundation Domain Email Boundary](FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md).
+37. Prepare product-scope learning lane notes using [Foundation Product Scope Boundary](FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md).
+38. Prepare support-readiness notes using [Foundation Support Readiness Boundary](FOUNDATION_SUPPORT_READINESS_BOUNDARY.md).
+39. Prepare intake/onboarding notes using [Foundation Intake Onboarding Boundary](FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md).
+40. Prepare privacy/data notes using [Foundation Privacy Data Boundary](FOUNDATION_PRIVACY_DATA_BOUNDARY.md).
+41. Prepare legal/business questions without making legal claims using [Foundation Legal Business Boundary](FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md).
+42. Keep pilot deferred using [Foundation Pilot Deferral Boundary](FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md).
+43. Reassess whether deployment or pilot prerequisites should even start.
 
 ## Narrow Local Proof Thread Definition
 
@@ -206,6 +208,7 @@ different target:
 | Prepare evidence ledger without evidence promotion or closure claims | [Foundation Evidence Ledger Boundary](FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md) |
 | Prepare decision journal without commitments or external action | [Foundation Decision Journal Boundary](FOUNDATION_DECISION_JOURNAL_BOUNDARY.md) |
 | Choose one next local action without broad execution | [Foundation Next Action Boundary](FOUNDATION_NEXT_ACTION_BOUNDARY.md) |
+| Record test evidence without readiness or coverage claims | [Foundation Test Evidence Boundary](FOUNDATION_TEST_EVIDENCE_BOUNDARY.md) |
 | Prepare source-control commit boundary | [Foundation Source Control Boundary](FOUNDATION_SOURCE_CONTROL_BOUNDARY.md) |
 | Prepare secrets/credentials without live credentials | [Foundation Secrets Credentials Boundary](FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md) |
 | Prepare security baseline without readiness claims | [Foundation Security Baseline Boundary](FOUNDATION_SECURITY_BASELINE_BOUNDARY.md) |

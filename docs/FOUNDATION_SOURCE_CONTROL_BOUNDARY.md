@@ -77,6 +77,7 @@ deployment_allowed=false
 | Evidence ledger | Local evidence references, witness packets, validators, tests, receipts, source-control packet, readiness snapshot, and public-copy routing with evidence-promotion, terminal-closure, readiness, legal, patent, customer, paid-launch, secret-evidence, external-publication, and deployment claims blocked. |
 | Decision journal | Local decision context, assumption snapshot, option set, constraint check, evidence refs, risk stop rule, review cadence, and next-action selection with decision-execution, irreversible-action, roadmap, deadline, authority, customer, legal, company, patent, spending, external-publication, and deployment claims blocked. |
 | Next action | Local continuation triage, smallest prerequisite selection, dependency checks, local edit scope, verification plan, stop rule, receipt plan, and handoff summary with broad execution, external action, deployment, publication, spending, customer action, legal/business action, claim promotion, secret use, credential use, service activation, source-control publication, roadmap, and deadline claims blocked. |
+| Test evidence | Local focused-validator, targeted-pytest, full-preflight, receipt-validation, diff-hygiene, failure-case, warning-triage, coverage-gap, reproducibility, and non-terminal-closure questions with full-test pass, complete coverage, CI parity, release readiness, deployment readiness, security clearance, secret clearance, customer readiness, legal clearance, performance readiness, flake-free, terminal-closure, external-publication, and deployment claims blocked. |
 | Local proof thread | Local descriptor, runner, validator, tests, and ignored receipt. |
 | Private recovery | Public-safe recovery checklist and AwaitingEvidence witness. |
 | Secrets/credentials | Local credential categories and access questions with real secret storage, credential activation, provider binding, external calls, and deployment blocked. |
@@ -125,6 +126,7 @@ python scripts/validate_foundation_research_notebook_boundary.py
 python scripts/validate_foundation_evidence_ledger_boundary.py
 python scripts/validate_foundation_decision_journal_boundary.py
 python scripts/validate_foundation_next_action_boundary.py
+python scripts/validate_foundation_test_evidence_boundary.py
 python scripts/validate_foundation_local_proof_thread.py
 python scripts/validate_foundation_private_recovery_boundary.py
 python scripts/validate_foundation_secrets_credentials_boundary.py

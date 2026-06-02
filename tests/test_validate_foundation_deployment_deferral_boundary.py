@@ -1,4 +1,4 @@
-﻿"""Tests for the Foundation Mode deployment-deferral boundary validator.
+"""Tests for the Foundation Mode deployment-deferral boundary validator.
 
 Purpose: prove deployment deferral stays local and does not authorize
 deployment approval, cloud activation, public endpoints, production health,

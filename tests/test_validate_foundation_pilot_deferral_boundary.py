@@ -1,4 +1,4 @@
-﻿"""Tests for the Foundation Mode pilot-deferral boundary validator.
+"""Tests for the Foundation Mode pilot-deferral boundary validator.
 
 Purpose: prove pilot deferral stays local and does not authorize pilot
 execution, participant invitation, access channels, waitlists, beta, customer

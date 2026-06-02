@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Validate the Foundation Mode decision-journal boundary.
 
 Purpose: keep decision-journal preparation local and public-safe while
@@ -155,7 +155,7 @@ def load_json_object(path: Path, label: str) -> dict[str, Any]:
         raise FileNotFoundError(f"missing {label}: {path}")
     if not path.is_file():
         raise IsADirectoryError(f"{label} path is not a file: {path}")
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = json.loads(path.read_text(encoding="utf-8-sig"))
     if not isinstance(payload, dict):
         raise ValueError(f"{label} must be a JSON object")
     return payload

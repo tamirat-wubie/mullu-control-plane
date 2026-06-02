@@ -199,6 +199,13 @@ without broad execution, external action, deployment, publication, spending,
 customer action, legal/business action, claim promotion, secret use,
 credential use, service activation, source-control publication, roadmap
 commitment, or deadline promise.
+Test-evidence preparation is bounded by
+[`docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md`](docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md),
+which records focused validators, targeted pytest, preflight receipts, diff
+hygiene, failure cases, warnings, coverage gaps, reproducibility notes, and
+non-terminal closure without full-test-pass, complete-coverage, CI-parity,
+release-readiness, security-clearance, customer-readiness, legal-clearance,
+external-publication, or deployment claims.
 Source-control preparation is bounded by
 [`docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md`](docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md),
 which organizes commit readiness without staging, committing, pushing, opening a

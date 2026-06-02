@@ -1,4 +1,4 @@
-﻿"""Tests for the Foundation Mode decision-journal boundary validator.
+"""Tests for the Foundation Mode decision-journal boundary validator.
 
 Purpose: prove decision-journal preparation stays local and does not authorize
 decision-execution, irreversible-action, roadmap-commitment, deadline-promise,
