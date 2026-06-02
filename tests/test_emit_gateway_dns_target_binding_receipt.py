@@ -115,13 +115,68 @@ def test_gateway_dns_target_binding_cli_rejects_invalid_target_without_traceback
         now_utc=FIXED_NOW,
     )
     captured = capsys.readouterr()
+    stdout_payload = json.loads(captured.out)
+
+    assert exit_code == 1
+    assert not output_path.exists()
+    assert stdout_payload["status"] == "failed"
+    assert stdout_payload["ready"] is False
+    assert stdout_payload["receipt_written"] is False
+    assert stdout_payload["error"] == "A record target must be an IPv4 address"
+    assert "not-an-address.example" not in captured.out
+    assert "Traceback" not in captured.out
+    assert captured.err == ""
+
+
+def test_gateway_dns_target_binding_cli_json_bounds_missing_target_identity(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    exit_code = main(["--json"], now_utc=FIXED_NOW)
+    captured = capsys.readouterr()
+    stdout_payload = json.loads(captured.out)
+
+    assert exit_code == 1
+    assert stdout_payload["status"] == "failed"
+    assert stdout_payload["ready"] is False
+    assert stdout_payload["receipt_written"] is False
+    assert stdout_payload["error"] == "gateway host or gateway URL is required"
+    assert "Traceback" not in captured.out
+    assert captured.err == ""
+
+
+def test_gateway_dns_target_binding_cli_human_bounds_invalid_host(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    output_path = tmp_path / "target_binding.json"
+
+    exit_code = main(
+        [
+            "--gateway-host",
+            "https://api.mullusi.com",
+            "--gateway-url",
+            "https://api.mullusi.com",
+            "--expected-environment",
+            "pilot",
+            "--record-type",
+            "A",
+            "--target",
+            "203.0.113.10",
+            "--provider",
+            "Cloudflare",
+            "--output",
+            str(output_path),
+        ],
+        now_utc=FIXED_NOW,
+    )
+    captured = capsys.readouterr()
 
     assert exit_code == 1
     assert not output_path.exists()
     assert captured.out == ""
     assert "gateway DNS target binding receipt emission failed" in captured.err
-    assert "A record target must be an IPv4 address" in captured.err
-    assert "not-an-address.example" not in captured.err
+    assert "gateway host must not include URL scheme" in captured.err
+    assert "https://api.mullusi.com" not in captured.err
     assert "Traceback" not in captured.err
 
 
