@@ -824,6 +824,8 @@ def _recomputed_universal_action_proof_hash(
         "simulation_certificate_id",
         "effect_prediction_certificate_id",
         "effect_plan_id",
+        "recovery_plan_certificate_id",
+        "recovery_plan_id",
         "intent_certificate_id",
         "intent_hash",
         "capability_status",
@@ -857,6 +859,10 @@ def _recomputed_universal_action_proof_hash(
             "effect_prediction_certificate_id"
         ],
         "effect_plan_id": universal_detail["effect_plan_id"],
+        "recovery_plan_certificate_id": universal_detail[
+            "recovery_plan_certificate_id"
+        ],
+        "recovery_plan_id": universal_detail["recovery_plan_id"],
         "intent_certificate_id": universal_detail["intent_certificate_id"],
         "intent_hash": universal_detail["intent_hash"],
         "capability_status": universal_detail["capability_status"],
@@ -1259,6 +1265,16 @@ def _universal_action_transition_detail(
         "effect_plan_id": (
             result.effect_prediction_certificate.plan.effect_plan_id
             if result.effect_prediction_certificate
+            else ""
+        ),
+        "recovery_plan_certificate_id": (
+            result.recovery_plan_certificate.certificate_id
+            if result.recovery_plan_certificate
+            else ""
+        ),
+        "recovery_plan_id": (
+            result.recovery_plan_certificate.recovery_plan_id
+            if result.recovery_plan_certificate
             else ""
         ),
         "intent_certificate_id": result.intent_certificate.certificate_id

@@ -19,6 +19,7 @@
     "policy_refs",
     "capability_refs",
     "temporal_refs",
+    "recovery_plan",
     "exposure_boundary",
     "pipeline_stages",
     "admission_guards",
@@ -69,6 +70,7 @@
       "items": { "type": "string", "minLength": 1 },
       "uniqueItems": true
     },
+    "recovery_plan": { "$ref": "#/$defs/recovery_plan" },
     "exposure_boundary": { "$ref": "#/$defs/exposure_boundary" },
     "pipeline_stages": {
       "type": "array",
@@ -155,6 +157,33 @@
           "items": { "type": "string", "minLength": 1 },
           "uniqueItems": true
         }
+      }
+    },
+    "recovery_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "available",
+        "recovery_plan_ref",
+        "recovery_kind",
+        "rollback_plan_ref",
+        "compensation_plan_ref",
+        "review_required_on_failure",
+        "certificate_ref",
+        "effect_plan_ref"
+      ],
+      "properties": {
+        "available": { "type": "boolean" },
+        "recovery_plan_ref": { "type": ["string", "null"], "minLength": 1 },
+        "recovery_kind": {
+          "type": "string",
+          "enum": ["none", "rollback", "compensation", "rollback_and_compensation"]
+        },
+        "rollback_plan_ref": { "type": ["string", "null"], "minLength": 1 },
+        "compensation_plan_ref": { "type": ["string", "null"], "minLength": 1 },
+        "review_required_on_failure": { "type": "boolean" },
+        "certificate_ref": { "type": ["string", "null"], "minLength": 1 },
+        "effect_plan_ref": { "type": ["string", "null"], "minLength": 1 }
       }
     },
     "pipeline_stage": {

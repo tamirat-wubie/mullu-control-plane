@@ -39,6 +39,16 @@
   "temporal_refs": [
     "temporal://status-page/publication-window"
   ],
+  "recovery_plan": {
+    "available": true,
+    "recovery_plan_ref": "recovery://status-page/publish/revert-public-status",
+    "recovery_kind": "rollback_and_compensation",
+    "rollback_plan_ref": "rollback://status-page/restore-previous-public-status",
+    "compensation_plan_ref": "compensation://status-page/publish-correction",
+    "review_required_on_failure": true,
+    "certificate_ref": "certificate://recovery/status-page-publication-window",
+    "effect_plan_ref": "effect-plan://status-page/publication"
+  },
   "exposure_boundary": {
     "redaction_level": "user_safe",
     "allowed_audiences": [

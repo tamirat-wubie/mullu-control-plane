@@ -61,6 +61,7 @@ REQUIRED_ROOT_FIELDS = (
     "policy_refs",
     "capability_refs",
     "temporal_refs",
+    "recovery_plan",
     "exposure_boundary",
     "pipeline_stages",
     "admission_guards",
@@ -140,6 +141,16 @@ REQUIRED_SCHEMA_DEFS = {
         "allowed_audiences",
         "blocked_payload_classes",
     ),
+    "recovery_plan": (
+        "available",
+        "recovery_plan_ref",
+        "recovery_kind",
+        "rollback_plan_ref",
+        "compensation_plan_ref",
+        "review_required_on_failure",
+        "certificate_ref",
+        "effect_plan_ref",
+    ),
     "pipeline_stage": (
         "stage_id",
         "stage_order",
@@ -207,6 +218,7 @@ REQUIRED_DOCUMENT_TERMS = (
     "Runtime bypass detection scans effect-bearing dispatch and execute call sites for UAO or governed binding before closure.",
     "Every command replay record must bind proof hash to an independent recomputation of the persisted event-local universal action proof detail before exposure.",
     "Every closure receipt must bind closure state to reconciliation and memory references before exposure.",
+    "Every effect-bearing `allow` or post-dispatch review action must carry an available `recovery_plan` with rollback or compensation references before closure.",
 )
 
 
@@ -327,6 +339,7 @@ def validate_orchestration(record: dict[str, Any]) -> list[str]:
             "orchestration.temporal_refs", record["temporal_refs"], min_count=1
         )
     )
+    errors.extend(_validate_recovery_plan(record["recovery_plan"], record["decision"]))
     errors.extend(_validate_exposure_boundary(record["exposure_boundary"]))
 
     stages_by_kind: dict[str, dict[str, Any]] = {}
@@ -672,6 +685,75 @@ def _validate_exposure_boundary(exposure_boundary: Any) -> list[str]:
         errors.append(
             "exposure_boundary.blocked_payload_classes must include raw_private_reasoning"
         )
+    return errors
+
+
+def _validate_recovery_plan(
+    recovery_plan: Any,
+    decision: dict[str, Any],
+) -> list[str]:
+    errors = _validate_required_fields(
+        "recovery_plan",
+        recovery_plan,
+        (
+            "available",
+            "recovery_plan_ref",
+            "recovery_kind",
+            "rollback_plan_ref",
+            "compensation_plan_ref",
+            "review_required_on_failure",
+            "certificate_ref",
+            "effect_plan_ref",
+        ),
+    )
+    if errors:
+        return errors
+    if not isinstance(recovery_plan["available"], bool):
+        errors.append("recovery_plan.available must be boolean")
+    if recovery_plan["recovery_kind"] not in {
+        "none",
+        "rollback",
+        "compensation",
+        "rollback_and_compensation",
+    }:
+        errors.append("recovery_plan.recovery_kind is invalid")
+    for field_name in (
+        "recovery_plan_ref",
+        "rollback_plan_ref",
+        "compensation_plan_ref",
+        "certificate_ref",
+        "effect_plan_ref",
+    ):
+        value = recovery_plan[field_name]
+        if value is not None and (not isinstance(value, str) or not value):
+            errors.append(f"recovery_plan.{field_name} must be null or non-empty string")
+    if not isinstance(recovery_plan["review_required_on_failure"], bool):
+        errors.append("recovery_plan.review_required_on_failure must be boolean")
+    if recovery_plan["available"]:
+        if recovery_plan["recovery_kind"] == "none":
+            errors.append("recovery_plan.available requires a recovery kind")
+        if not recovery_plan["recovery_plan_ref"]:
+            errors.append("recovery_plan.available requires recovery_plan_ref")
+        if not recovery_plan["certificate_ref"]:
+            errors.append("recovery_plan.available requires certificate_ref")
+        if not recovery_plan["effect_plan_ref"]:
+            errors.append("recovery_plan.available requires effect_plan_ref")
+        if (
+            not recovery_plan["rollback_plan_ref"]
+            and not recovery_plan["compensation_plan_ref"]
+        ):
+            errors.append(
+                "recovery_plan.available requires rollback or compensation plan ref"
+            )
+    else:
+        if recovery_plan["recovery_kind"] != "none":
+            errors.append("recovery_plan unavailable must use recovery_kind none")
+        if decision.get("status") == "allow":
+            errors.append("allow decision requires available recovery_plan")
+    if decision.get("reason_code") == "recovery_plan_missing" and recovery_plan[
+        "available"
+    ]:
+        errors.append("recovery_plan_missing decision cannot carry available recovery_plan")
     return errors
 
 
@@ -1389,6 +1471,32 @@ def _validate_effect_bearing_invariant(record: dict[str, Any]) -> list[str]:
         errors.append("effect_bearing(action) requires admission_receipt_ref")
     if not record["closure_state"]:
         errors.append("effect_bearing(action) requires closure_state")
+    recovery_plan = record.get("recovery_plan")
+    decision = record.get("decision")
+    if isinstance(recovery_plan, dict) and isinstance(decision, dict):
+        post_dispatch_review = (
+            decision.get("status") == "escalate"
+            and decision.get("reason_code") == "effect_reconciliation_mismatch"
+        )
+        if decision.get("status") == "allow" or post_dispatch_review:
+            if recovery_plan.get("available") is not True:
+                errors.append(
+                    "effect_bearing(action) requires recovery_plan before execution closure"
+                )
+        if decision.get("reason_code") == "recovery_plan_missing":
+            recovery_guard = next(
+                (
+                    guard
+                    for guard in record.get("admission_guards", ())
+                    if isinstance(guard, dict)
+                    and guard.get("guard") == "recovery_available"
+                ),
+                {},
+            )
+            if recovery_guard.get("verdict") != "blocked":
+                errors.append(
+                    "recovery_plan_missing requires blocked recovery_available guard"
+                )
     return errors
 
 

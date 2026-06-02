@@ -43,6 +43,16 @@
   "temporal_refs": [
     "temporal://payments/approval-window"
   ],
+  "recovery_plan": {
+    "available": true,
+    "recovery_plan_ref": "recovery://payments/invoice-123",
+    "recovery_kind": "rollback_and_compensation",
+    "rollback_plan_ref": "rollback://payments/refund-invoice-123",
+    "compensation_plan_ref": "compensation://payments/ledger-reversal-invoice-123",
+    "review_required_on_failure": true,
+    "certificate_ref": "certificate://recovery/payments-invoice-123",
+    "effect_plan_ref": "effect-plan://payments/invoice-123"
+  },
   "exposure_boundary": {
     "redaction_level": "user_safe",
     "allowed_audiences": [

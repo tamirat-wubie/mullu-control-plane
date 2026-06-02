@@ -361,6 +361,16 @@ def build_private_pilot_live_rehearsal_uao_record(
         "policy_refs": policy_refs,
         "capability_refs": capability_refs,
         "temporal_refs": temporal_refs,
+        "recovery_plan": {
+            "available": False,
+            "recovery_plan_ref": None,
+            "recovery_kind": "none",
+            "rollback_plan_ref": None,
+            "compensation_plan_ref": None,
+            "review_required_on_failure": False,
+            "certificate_ref": None,
+            "effect_plan_ref": None,
+        },
         "exposure_boundary": {
             "redaction_level": "user_safe",
             "allowed_audiences": ["operator", "auditor"],
