@@ -1,0 +1,93 @@
+{
+  "blocked_claims": [
+    "solo operator capacity verification",
+    "schedule readiness",
+    "skill readiness",
+    "team readiness",
+    "hiring readiness",
+    "delegation readiness",
+    "incident coverage readiness",
+    "support coverage readiness",
+    "legal authority readiness",
+    "financial authority readiness",
+    "private schedule recording",
+    "private health recording",
+    "deployment readiness"
+  ],
+  "delegation_ready_claimed": false,
+  "deployment_allowed": false,
+  "financial_authority_ready_claimed": false,
+  "hiring_ready_claimed": false,
+  "incident_coverage_ready_claimed": false,
+  "legal_authority_ready_claimed": false,
+  "next_action": "continue drafting solo-operator questions; do not claim capacity, schedule, skill, team, hiring, delegation, coverage, authority, or deployment readiness",
+  "operator_capacity_verified": false,
+  "operator_readiness_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Capacity prompts only; no verified capacity or private personal detail is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "solo_capacity_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pacing prompts only; no private schedule or availability detail is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "time_budget_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Skill-gap prompts only; no skill-readiness or credential claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "skill_gap_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Learning-loop prompts only; no training completion or qualification claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "learning_plan_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Decision prompts only; no legal or financial authority readiness is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "decision_authority_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Escalation prompts only; no delegation, hiring, or team coverage is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "escalation_boundary_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Stop-rule prompts only; no private health detail is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "fatigue_stop_rules",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Review-cadence prompts only; no support or incident coverage claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "review_cadence_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "private_health_recording_allowed": false,
+  "private_schedule_recording_allowed": false,
+  "schedule_readiness_claimed": false,
+  "schema_version": 1,
+  "skill_readiness_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "support_coverage_ready_claimed": false,
+  "team_readiness_claimed": false,
+  "witness_id": "foundation_operator_readiness_witness.awaiting_evidence.v1"
+}

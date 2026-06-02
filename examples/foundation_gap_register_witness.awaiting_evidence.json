@@ -1,0 +1,107 @@
+{
+  "blocked_claims": [
+    "gap-register completeness",
+    "gap closure",
+    "priority closure",
+    "owner assignment",
+    "remediation readiness",
+    "roadmap commitment",
+    "evidence promotion",
+    "terminal closure",
+    "test pass",
+    "refactor approval",
+    "implementation approval",
+    "external publication",
+    "deployment readiness"
+  ],
+  "deployment_allowed": false,
+  "evidence_promotion_allowed": false,
+  "external_publication_allowed": false,
+  "gap_closure_claimed": false,
+  "gap_owner_assigned": false,
+  "gap_priority_closed_claimed": false,
+  "gap_register_complete_claimed": false,
+  "gap_register_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft architecture gap questions without architecture gap closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "architecture_gaps",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft module gap questions without owner assignment.",
+      "state": "AwaitingEvidence",
+      "surface_id": "module_gaps",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft interface gap questions without interface readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "interface_gaps",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft dependency gap questions without install or provider binding approval.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dependency_gaps",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft invariant gap questions without invariant closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "invariant_gaps",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft hazard gap questions without mitigation readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "hazard_gaps",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft proof-reference gap questions without proof coverage closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "proof_reference_gaps",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft runtime gap questions without runtime readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_gaps",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft rollback gap questions without rollback readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rollback_gaps",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft operator gap questions without owner approval or support readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_gaps",
+      "surface_type": "local_draft"
+    }
+  ],
+  "implementation_approval_allowed": false,
+  "next_action": "continue local gap register question drafting without readiness promotion",
+  "refactor_approval_allowed": false,
+  "remediation_ready_claimed": false,
+  "roadmap_commitment_allowed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "terminal_closure_claimed": false,
+  "test_pass_claimed": false,
+  "witness_id": "foundation_gap_register_witness.awaiting_evidence.v1"
+}

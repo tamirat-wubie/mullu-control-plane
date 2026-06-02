@@ -1,0 +1,98 @@
+{
+  "blocked_claims": [
+    "invariant-map completeness",
+    "invariant proof readiness",
+    "invariant enforcement readiness",
+    "invariant conflict resolution",
+    "invariant monitor readiness",
+    "runtime invariant readiness",
+    "owner approval assignment",
+    "test pass",
+    "refactor approval",
+    "implementation approval",
+    "external publication",
+    "deployment readiness"
+  ],
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "implementation_approval_allowed": false,
+  "invariant_conflict_resolved_claimed": false,
+  "invariant_enforcement_ready_claimed": false,
+  "invariant_map_complete_claimed": false,
+  "invariant_map_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft identity-preservation invariant questions without proof-readiness claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "identity_invariants",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft state-transition and write-safety invariant questions without enforcement-readiness claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "state_invariants",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft repository, product, runtime, and trust-boundary invariant questions without boundary-closure claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "boundary_invariants",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft input, output, and error-path invariant questions without interface invariant readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "interface_invariants",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft package, service, provider, and data dependency invariant questions without dependency invariant readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dependency_invariants",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft policy, approval, receipt, and rejection invariant questions without governance enforcement readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "governance_invariants",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft witness, receipt, and trace invariant questions without evidence-closure claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_invariants",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft rollback, recovery, replay, and reversibility questions without rollback-readiness claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rollback_invariants",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft solo-operator workflow and support invariant questions without ownership or support claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_invariants",
+      "surface_type": "local_draft"
+    }
+  ],
+  "invariant_monitor_ready_claimed": false,
+  "invariant_proof_ready_claimed": false,
+  "next_action": "continue local invariant map question drafting without readiness promotion",
+  "owner_approval_assigned": false,
+  "refactor_approval_allowed": false,
+  "runtime_invariant_ready_claimed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "test_pass_claimed": false,
+  "witness_id": "foundation_invariant_map_witness.awaiting_evidence.v1"
+}

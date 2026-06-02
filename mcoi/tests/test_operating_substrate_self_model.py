@@ -134,6 +134,83 @@ def test_self_model_projection_downgrades_degraded_world_state() -> None:
     assert projection.degraded_capability_count == 0
 
 
+def test_self_model_projection_consumes_gateway_manifest_coverage() -> None:
+    read_model = {
+        "manifest_count": 1,
+        "admission_count": 1,
+        "capability_manifest_coverage_status": "partial",
+        "capability_manifest_coverage": (
+            {
+                "capability_id": "software_dev.repo_map.read",
+                "coverage_status": "covered",
+                "manifest_admitted": True,
+                "reason": "manifest_admitted",
+                "maturity": "C4",
+                "risk": "low",
+                "source_ref": "capabilities/software_dev/manifests/software_dev_repo_map_read.capability.json",
+                "evidence_refs": ("tests/test_software_dev_capability_pack.py",),
+            },
+            {
+                "capability_id": "software_dev.change.run",
+                "coverage_status": "missing_manifest",
+                "manifest_admitted": False,
+                "reason": "capability manifest is not admitted for typed intent",
+                "maturity": "unknown",
+                "risk": "unknown",
+                "source_ref": "capability-manifest-registry",
+                "evidence_refs": (),
+            },
+        ),
+    }
+
+    projection = build_operating_substrate_self_model(
+        capability_manifest_read_model=read_model,
+        subsystem_health=_subsystems(),
+        world_state_status=HealthStatus.HEALTHY,
+        captured_at=_NOW,
+    )
+    capabilities = {capability.capability_id: capability for capability in projection.capabilities}
+
+    assert projection.capability_count == 2
+    assert capabilities["software_dev.repo_map.read"].status is HealthStatus.HEALTHY
+    assert capabilities["software_dev.change.run"].status is HealthStatus.UNKNOWN
+    assert projection.solver_outcome is SolverOutcome.AWAITING_EVIDENCE
+    assert "capability-manifest-coverage-status:partial" in projection.evidence_refs
+
+
+def test_self_model_projection_blocks_rejected_abi_coverage() -> None:
+    read_model = {
+        "manifest_count": 0,
+        "admission_count": 1,
+        "capability_abi_coverage_status": "blocked",
+        "capability_abi_coverage": (
+            {
+                "capability_id": "software_dev.change.run",
+                "coverage_status": "blocked",
+                "admission_status": "rejected",
+                "reason": "effect_bearing_capability_requires_rollback",
+                "maturity": "unknown",
+                "risk": "unknown",
+                "source_ref": "capabilities/software_dev/manifests/software_dev_change_run.capability.json",
+                "evidence_refs": ("admission-rejected",),
+            },
+        ),
+    }
+
+    projection = build_operating_substrate_self_model(
+        capability_manifest_read_model=read_model,
+        subsystem_health=_subsystems(),
+        world_state_status=HealthStatus.HEALTHY,
+        captured_at=_NOW,
+    )
+
+    assert projection.capability_count == 1
+    assert projection.capabilities[0].admitted is False
+    assert projection.capabilities[0].status is HealthStatus.UNAVAILABLE
+    assert projection.solver_outcome is SolverOutcome.GOVERNANCE_BLOCKED
+    assert "capability-abi-coverage-status:blocked" in projection.evidence_refs
+
+
 def test_self_model_projection_contract_rejects_mutation_authority() -> None:
     capability = SelfModelCapabilityProjection(
         capability_id="capability.read",

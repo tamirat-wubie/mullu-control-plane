@@ -1,0 +1,93 @@
+{
+  "blocked_claims": [
+    "system boundary inventory completeness",
+    "ownership boundary closure",
+    "trust boundary closure",
+    "tenant boundary readiness",
+    "data boundary classification closure",
+    "external endpoint readiness",
+    "service boundary binding",
+    "integration boundary readiness",
+    "runtime boundary readiness",
+    "exposure approval",
+    "implementation approval",
+    "external publication",
+    "deployment readiness"
+  ],
+  "data_boundary_classification_closed_claimed": false,
+  "deployment_allowed": false,
+  "external_endpoint_ready_claimed": false,
+  "external_publication_allowed": false,
+  "exposure_approval_allowed": false,
+  "implementation_approval_allowed": false,
+  "integration_boundary_ready_claimed": false,
+  "next_action": "continue local system-boundary inventory mapping; do not claim inventory completeness, ownership closure, trust closure, tenant readiness, data classification closure, endpoint readiness, service binding, integration readiness, runtime readiness, exposure approval, implementation approval, external publication, or deployment readiness",
+  "ownership_boundary_closed_claimed": false,
+  "runtime_boundary_ready_claimed": false,
+  "schema_version": 1,
+  "service_boundary_binding_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "system_boundary_inventory_complete_claimed": false,
+  "system_boundary_inventory_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Public product boundary questions only; ownership-boundary closure is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_product_boundary",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Control-plane boundary questions only; inventory completeness is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "control_plane_boundary",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Gateway boundary questions only; service boundary binding and endpoint readiness are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "gateway_boundary",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Runtime boundary questions only; runtime readiness is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_boundary",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Data boundary questions only; data classification closure is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "data_boundary",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Tenant boundary questions only; tenant readiness is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "tenant_boundary",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Trust boundary questions only; trust closure and exposure approval are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "trust_boundary",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "External dependency boundary questions only; provider, account, service, customer, publication, and deployment assignments are blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "external_dependency_boundary",
+      "surface_type": "local_draft"
+    }
+  ],
+  "tenant_boundary_ready_claimed": false,
+  "trust_boundary_closed_claimed": false,
+  "witness_id": "foundation_system_boundary_inventory_witness.awaiting_evidence.v1"
+}

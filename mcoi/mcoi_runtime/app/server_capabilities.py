@@ -1220,6 +1220,10 @@ def _empty_capability_manifest_registry_read_model() -> dict[str, Any]:
         "capability_ids": (),
         "manifests": (),
         "admissions": (),
+        "capability_abi_coverage_status": "empty",
+        "capability_abi_covered_count": 0,
+        "capability_abi_blocked_count": 0,
+        "capability_abi_coverage": (),
     }
 
 

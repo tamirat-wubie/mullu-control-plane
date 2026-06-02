@@ -120,6 +120,8 @@ def test_capability_fabric_env_loader_installs_checked_in_default_packs(
     ]
     assert read_model["capability_manifest_registry_configured"] is False
     assert read_model["capability_manifest_registry"]["manifest_count"] == 0
+    assert read_model["capability_manifest_coverage_status"] == "not_configured"
+    assert read_model["capability_manifest_coverage"] == ()
 
 
 def test_capability_fabric_env_loader_projects_local_manifest_registry(
@@ -143,8 +145,13 @@ def test_capability_fabric_env_loader_projects_local_manifest_registry(
     assert manifest_registry["admission_count"] == 6
     assert "software_dev.change.run" in manifest_registry["capability_ids"]
     assert read_model["capability_manifest_gated"] is True
+    assert read_model["capability_manifest_coverage_status"] == "complete"
     assert read_model["capability_manifest_covered_count"] == 6
     assert read_model["capability_manifest_missing_count"] == 0
+    coverage = {record["capability_id"]: record for record in read_model["capability_manifest_coverage"]}
+    assert coverage["software_dev.change.run"]["manifest_admitted"] is True
+    assert coverage["software_dev.change.run"]["rollback_required"] is True
+    assert "tests/test_software_dev_capability_pack.py" in coverage["software_dev.change.run"]["evidence_refs"]
     decision = gate.admit(command_id="cmd-software-dev-change", intent_name="software_dev.change.run")
     assert decision.status.value == "accepted"
     assert decision.capability_id == "software_dev.change.run"
@@ -172,8 +179,54 @@ def test_capability_fabric_manifest_gate_rejects_unmanifested_capability() -> No
     assert decision.capability_id == "software_dev.change.run"
     assert decision.reason == "capability manifest is not admitted for typed intent"
     assert read_model["capability_manifest_gated"] is True
+    assert read_model["capability_manifest_coverage_status"] == "partial"
     assert read_model["capability_manifest_covered_count"] == 1
     assert "software_dev.change.run" in read_model["capability_manifest_missing_capability_ids"]
+    coverage = {record["capability_id"]: record for record in read_model["capability_manifest_coverage"]}
+    assert coverage["software_dev.repo_map.read"]["coverage_status"] == "covered"
+    assert coverage["software_dev.change.run"]["coverage_status"] == "missing_manifest"
+    assert coverage["software_dev.change.run"]["manifest_admitted"] is False
+    assert coverage["software_dev.change.run"]["reason"] == "capability manifest is not admitted for typed intent"
+
+
+def test_capability_fabric_manifest_coverage_reports_rejected_manifest_as_blocked() -> None:
+    gate = build_capability_admission_gate(
+        capsules=(load_software_dev_domain_capsule(),),
+        capabilities=load_software_dev_capability_entries(),
+        require_certified=True,
+        capability_manifest_registry_read_model={
+            "manifest_count": 0,
+            "admission_count": 1,
+            "capability_ids": (),
+            "manifests": (),
+            "admissions": (),
+            "capability_abi_coverage": (
+                {
+                    "capability_id": "software_dev.change.run",
+                    "coverage_status": "blocked",
+                    "admission_status": "rejected",
+                    "reason": "effect_bearing_capability_requires_rollback",
+                    "maturity": "unknown",
+                    "risk": "unknown",
+                    "source_ref": "capabilities/software_dev/manifests/software_dev_change_run.capability.json",
+                    "evidence_refs": ("admission-rejected",),
+                    "errors": ("effect_bearing_capability_requires_rollback",),
+                },
+            ),
+        },
+        clock=_clock,
+    )
+
+    read_model = gate.read_model()
+    coverage = {
+        record["capability_id"]: record for record in read_model["capability_manifest_coverage"]
+    }["software_dev.change.run"]
+
+    assert read_model["capability_manifest_coverage_status"] == "blocked"
+    assert coverage["capability_id"] == "software_dev.change.run"
+    assert coverage["coverage_status"] == "blocked"
+    assert coverage["manifest_admitted"] is False
+    assert coverage["reason"] == "effect_bearing_capability_requires_rollback"
 
 
 def test_capability_fabric_env_loader_rejects_production_hot_reload_for_manifest_registry(

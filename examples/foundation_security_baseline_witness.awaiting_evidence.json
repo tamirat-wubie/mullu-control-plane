@@ -1,0 +1,89 @@
+{
+  "access_control_verified": false,
+  "blocked_claims": [
+    "security baseline verification",
+    "secret scan pass",
+    "vulnerability scan pass",
+    "dependency audit pass",
+    "approved threat model",
+    "access control verification",
+    "approved data exposure review",
+    "approved supply chain review",
+    "compliance certification",
+    "customer security readiness",
+    "deployment readiness"
+  ],
+  "compliance_certification_claimed": false,
+  "customer_security_ready_claimed": false,
+  "data_exposure_review_approved": false,
+  "dependency_audit_pass_claimed": false,
+  "deployment_allowed": false,
+  "next_action": "continue drafting security-baseline questions; do not claim scan pass, dependency audit pass, threat-model approval, compliance certification, customer-security readiness, or deployment readiness",
+  "schema_version": 1,
+  "secret_scan_pass_claimed": false,
+  "security_baseline_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Scope categories only; no verified baseline or private target is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "security_scope_inventory",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Threat-model prompts only; no approval or sensitive finding detail is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "threat_model_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Dependency-audit prompts only; no dependency target or pass claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dependency_audit_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Static-scan prompts only; no secret, vulnerability, or scan-pass claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "static_scan_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Access-control prompts only; no actor, role, tenant, or approval verification is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "access_control_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Data-exposure prompts only; no customer, personal, or private data value is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "data_exposure_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Supply-chain prompts only; no package target, tool target, or approval is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "supply_chain_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Future security-review entry criteria only; no compliance or customer-readiness claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "security_review_readiness_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "security_baseline_verified": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "supply_chain_review_approved": false,
+  "threat_model_approved": false,
+  "vulnerability_scan_pass_claimed": false,
+  "witness_id": "foundation_security_baseline_witness.awaiting_evidence.v1"
+}

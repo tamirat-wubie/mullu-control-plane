@@ -1,0 +1,97 @@
+{
+  "blocked_claims": [
+    "interface-map completeness",
+    "interface contract readiness",
+    "endpoint readiness",
+    "service binding",
+    "event/message readiness",
+    "data-flow readiness",
+    "trust boundary closure",
+    "integration readiness",
+    "runtime readiness",
+    "owner approval assignment",
+    "test pass",
+    "refactor approval",
+    "implementation approval",
+    "external publication",
+    "deployment readiness"
+  ],
+  "data_flow_ready_claimed": false,
+  "deployment_allowed": false,
+  "endpoint_ready_claimed": false,
+  "event_message_ready_claimed": false,
+  "external_publication_allowed": false,
+  "implementation_approval_allowed": false,
+  "interface_contract_ready_claimed": false,
+  "interface_map_complete_claimed": false,
+  "interface_map_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft component-to-component relationship questions without readiness promotion.",
+      "state": "AwaitingEvidence",
+      "surface_id": "component_interfaces",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft public product to control-plane questions without endpoint binding.",
+      "state": "AwaitingEvidence",
+      "surface_id": "product_control_plane_interfaces",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft routing and authority handoff questions without service binding.",
+      "state": "AwaitingEvidence",
+      "surface_id": "control_plane_gateway_interfaces",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft runtime dispatch and receipt questions without runtime readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "gateway_runtime_interfaces",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft approval and policy handoff questions without integration readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_governance_interfaces",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft witness and proof handoff questions without evidence closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "governance_evidence_interfaces",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft data boundary and retention questions without data-flow readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "data_flow_interfaces",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft operator summary and recovery questions without ownership or support claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_handoff_interfaces",
+      "surface_type": "local_draft"
+    }
+  ],
+  "integration_ready_claimed": false,
+  "next_action": "continue local interface map question drafting without readiness promotion",
+  "owner_approval_assigned": false,
+  "refactor_approval_allowed": false,
+  "runtime_ready_claimed": false,
+  "schema_version": 1,
+  "service_binding_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "test_pass_claimed": false,
+  "trust_boundary_closed_claimed": false,
+  "witness_id": "foundation_interface_map_witness.awaiting_evidence.v1"
+}

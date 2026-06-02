@@ -1,0 +1,87 @@
+{
+  "blocked_claims": [
+    "production health",
+    "endpoint readiness",
+    "customer readiness",
+    "pilot readiness",
+    "legal clearance",
+    "commercial readiness",
+    "public launch",
+    "compliance certification",
+    "external publication",
+    "deployment readiness"
+  ],
+  "claim_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Repository proof claims only; local validators, tests, receipts, and docs do not prove production health.",
+      "state": "AwaitingEvidence",
+      "surface_id": "repository_proof_claims",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Public-copy claim questions only; no access, waitlist, pilot, customer, paid-use, or launch invitation is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_copy_claims",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Runtime-proof questions only; no endpoint, uptime, public health, or deployment readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_proof_claims",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Legal/business questions only; no legal clearance, company readiness, patent protection, or commercial readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "legal_business_claims",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Customer/pilot questions only; no pilot readiness, customer readiness, intake opening, support opening, or paid access is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "customer_pilot_claims",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deployment-claim questions only; no deployment execution, endpoint publication, or deployment readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_claims",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Evidence-promotion questions only; no claim promotion is authorized without a later signed witness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_promotion_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Claim-review handoff draft only; no approval by future reviewers is implied.",
+      "state": "AwaitingEvidence",
+      "surface_id": "claim_review_handoff",
+      "surface_type": "local_draft"
+    }
+  ],
+  "commercial_readiness_claimed": false,
+  "compliance_certification_claimed": false,
+  "customer_readiness_claimed": false,
+  "deployment_allowed": false,
+  "endpoint_readiness_claimed": false,
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "next_action": "continue separating claim categories locally; do not claim production health, endpoint readiness, customer readiness, pilot readiness, legal clearance, commercial readiness, public launch, compliance certification, external publication, or deployment",
+  "pilot_readiness_claimed": false,
+  "production_health_claimed": false,
+  "public_launch_claimed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_claim_boundary_witness.awaiting_evidence.v1"
+}

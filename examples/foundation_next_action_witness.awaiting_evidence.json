@@ -1,0 +1,95 @@
+{
+  "blocked_claims": [
+    "broad continuation execution",
+    "external action",
+    "deployment readiness",
+    "external publication",
+    "spending",
+    "customer action",
+    "legal/business action",
+    "claim promotion",
+    "secret use",
+    "credential use",
+    "service activation",
+    "source-control publication",
+    "roadmap commitment",
+    "deadline promise"
+  ],
+  "broad_continuation_execution_allowed": false,
+  "claim_promotion_allowed": false,
+  "credential_use_allowed": false,
+  "customer_action_allowed": false,
+  "deadline_promise_claimed": false,
+  "deployment_allowed": false,
+  "external_action_allowed": false,
+  "external_publication_allowed": false,
+  "legal_business_action_allowed": false,
+  "next_action": "continue by choosing one local-safe prerequisite; do not execute broad continuation, cross external boundaries, deploy, publish, spend, contact customers, take legal or business action, promote claims, use secrets, use credentials, activate services, publish source control, commit to a roadmap, or promise deadlines",
+  "next_action_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Continue-request triage questions only; broad continuation execution is not authorized.",
+      "state": "AwaitingEvidence",
+      "surface_id": "continue_request_triage",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Smallest prerequisite selection questions only; deployment, customer, legal, money, and publication work remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "smallest_prerequisite_selection",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Dependency-check questions only; unknown hard constraints remain AwaitingEvidence.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dependency_check",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local edit scope questions only; external systems, website publication, DNS, accounts, and services remain untouched.",
+      "state": "AwaitingEvidence",
+      "surface_id": "local_edit_scope",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Verification-plan questions only; completion is not claimed without focused checks and preflight evidence.",
+      "state": "AwaitingEvidence",
+      "surface_id": "verification_plan",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Stop-rule questions only; continuation does not create roadmap commitment or deadline promise.",
+      "state": "AwaitingEvidence",
+      "surface_id": "stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Evidence receipt planning only; no secrets, credentials, customer data, provider accounts, or private paths are recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_receipt_plan",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Handoff-summary questions only; staging, committing, pushing, publishing, and deployment require explicit later request.",
+      "state": "AwaitingEvidence",
+      "surface_id": "handoff_summary",
+      "surface_type": "local_draft"
+    }
+  ],
+  "roadmap_commitment_claimed": false,
+  "schema_version": 1,
+  "secret_use_allowed": false,
+  "service_activation_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_publication_allowed": false,
+  "spending_allowed": false,
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_next_action_witness.awaiting_evidence.v1"
+}

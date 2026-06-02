@@ -1,0 +1,97 @@
+{
+  "blocked_claims": [
+    "dependency-graph completeness",
+    "dependency contract readiness",
+    "import boundary readiness",
+    "package install approval",
+    "version-lock readiness",
+    "service dependency binding",
+    "external provider binding",
+    "vulnerability scan pass",
+    "runtime dependency readiness",
+    "owner approval assignment",
+    "test pass",
+    "refactor approval",
+    "implementation approval",
+    "external publication",
+    "deployment readiness"
+  ],
+  "dependency_contract_ready_claimed": false,
+  "dependency_graph_complete_claimed": false,
+  "dependency_graph_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft module-to-module dependency questions without graph-completeness claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "module_dependencies",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft package and library questions without install or version-lock readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "package_dependencies",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft runtime and process questions without runtime dependency readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_dependencies",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft internal service dependency questions without service binding.",
+      "state": "AwaitingEvidence",
+      "surface_id": "service_dependencies",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft provider and account-boundary questions without provider binding.",
+      "state": "AwaitingEvidence",
+      "surface_id": "provider_dependencies",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft data store and retention dependency questions without data readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "data_dependencies",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft policy, approval, and receipt dependency questions without governance integration readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "governance_dependencies",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft operator workflow and support dependency questions without ownership or support claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_dependencies",
+      "surface_type": "local_draft"
+    }
+  ],
+  "deployment_allowed": false,
+  "external_provider_bound": false,
+  "external_publication_allowed": false,
+  "implementation_approval_allowed": false,
+  "import_boundary_ready_claimed": false,
+  "next_action": "continue local dependency graph question drafting without readiness promotion",
+  "owner_approval_assigned": false,
+  "package_install_allowed": false,
+  "refactor_approval_allowed": false,
+  "runtime_dependency_ready_claimed": false,
+  "schema_version": 1,
+  "service_dependency_bound": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "test_pass_claimed": false,
+  "version_lock_ready_claimed": false,
+  "vulnerability_scan_pass_claimed": false,
+  "witness_id": "foundation_dependency_graph_witness.awaiting_evidence.v1"
+}

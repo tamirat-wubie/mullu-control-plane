@@ -155,12 +155,21 @@ class CapabilityManifestRegistry:
             self._admissions[admission_id].to_json_dict()
             for admission_id in sorted(self._admissions)
         )
+        abi_coverage = _capability_abi_coverage_records(admissions)
         return {
             "manifest_count": len(manifests),
             "admission_count": len(admissions),
             "capability_ids": tuple(manifest["capability_id"] for manifest in manifests),
             "manifests": manifests,
             "admissions": admissions,
+            "capability_abi_coverage_status": _capability_abi_coverage_status(abi_coverage),
+            "capability_abi_covered_count": sum(
+                1 for record in abi_coverage if record["coverage_status"] == "covered"
+            ),
+            "capability_abi_blocked_count": sum(
+                1 for record in abi_coverage if record["coverage_status"] == "blocked"
+            ),
+            "capability_abi_coverage": abi_coverage,
         }
 
     def _validation_errors(
@@ -280,6 +289,93 @@ def _has_test_or_proof_evidence(evidence_refs: tuple[str, ...]) -> bool:
         ref.startswith(("tests/", "mcoi/tests/", "proof://"))
         for ref in evidence_refs
     )
+
+
+def _capability_abi_coverage_records(admissions: tuple[dict[str, Any], ...]) -> tuple[dict[str, Any], ...]:
+    records: list[dict[str, Any]] = []
+    for admission in admissions:
+        manifest = admission.get("manifest")
+        if isinstance(manifest, Mapping):
+            records.append(_admitted_capability_abi_record(admission, manifest))
+        else:
+            records.append(_rejected_capability_abi_record(admission))
+    return tuple(sorted(records, key=lambda record: (str(record["capability_id"]), str(record["source_ref"]))))
+
+
+def _admitted_capability_abi_record(
+    admission: Mapping[str, Any],
+    manifest: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "capability_id": _manifest_record_text(manifest.get("capability_id"), "capability:unknown"),
+        "source_ref": _manifest_record_text(admission.get("source_ref"), "source:unknown"),
+        "admission_status": "admitted",
+        "coverage_status": "covered",
+        "reason": "manifest_admitted",
+        "maturity": _manifest_record_text(manifest.get("maturity"), "unknown"),
+        "risk": _manifest_record_text(manifest.get("risk"), "unknown"),
+        "effect_bearing": manifest.get("effect_bearing") is True,
+        "sandbox_required": manifest.get("sandbox_required") is True,
+        "rollback_required": manifest.get("rollback_required") is True,
+        "input_schema_ref": _manifest_record_text(manifest.get("input_schema_ref"), "schema:unknown"),
+        "output_schema_ref": _manifest_record_text(manifest.get("output_schema_ref"), "schema:unknown"),
+        "receipt_contract_ref": _manifest_record_text(manifest.get("receipt_contract_ref"), "receipt:unknown"),
+        "required_gates": _manifest_record_tuple(manifest.get("required_gates", ())),
+        "policy_refs": _manifest_record_tuple(manifest.get("policy_refs", ())),
+        "evidence_refs": _manifest_record_tuple(manifest.get("evidence_refs", ())),
+        "errors": (),
+        "warnings": _manifest_record_tuple(admission.get("warnings", ())),
+    }
+
+
+def _rejected_capability_abi_record(admission: Mapping[str, Any]) -> dict[str, Any]:
+    errors = _manifest_record_tuple(admission.get("errors", ()))
+    return {
+        "capability_id": _manifest_record_text(admission.get("capability_id"), "capability:unknown"),
+        "source_ref": _manifest_record_text(admission.get("source_ref"), "source:unknown"),
+        "admission_status": "rejected",
+        "coverage_status": "blocked",
+        "reason": "manifest_rejected",
+        "maturity": "unknown",
+        "risk": "unknown",
+        "effect_bearing": False,
+        "sandbox_required": False,
+        "rollback_required": False,
+        "input_schema_ref": "schema:unknown",
+        "output_schema_ref": "schema:unknown",
+        "receipt_contract_ref": "receipt:unknown",
+        "required_gates": (),
+        "policy_refs": (),
+        "evidence_refs": _manifest_record_tuple((admission.get("source_ref", ""), admission.get("admission_id", ""))),
+        "errors": errors,
+        "warnings": _manifest_record_tuple(admission.get("warnings", ())),
+    }
+
+
+def _capability_abi_coverage_status(records: tuple[dict[str, Any], ...]) -> str:
+    if not records:
+        return "empty"
+    statuses = {str(record.get("coverage_status", "")) for record in records}
+    if statuses == {"covered"}:
+        return "complete"
+    if "covered" in statuses:
+        return "partial"
+    return "blocked"
+
+
+def _manifest_record_text(value: object, fallback: str) -> str:
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return fallback
+
+
+def _manifest_record_tuple(value: object) -> tuple[str, ...]:
+    if isinstance(value, str):
+        stripped = value.strip()
+        return (stripped,) if stripped else ()
+    if not isinstance(value, (tuple, list)):
+        return ()
+    return tuple(str(item).strip() for item in value if str(item).strip())
 
 
 def _hot_reload_metadata_errors(manifest: CapabilityManifest, *, environment: str) -> tuple[str, ...]:

@@ -79,6 +79,23 @@ def build_operating_substrate_self_model(
 
 
 def _capability_projections(read_model: Mapping[str, Any]) -> tuple[SelfModelCapabilityProjection, ...]:
+    coverage_records = _mapping_sequence(read_model.get("capability_manifest_coverage", ()))
+    if coverage_records:
+        return tuple(
+            sorted(
+                (_projection_from_gateway_coverage(record) for record in coverage_records),
+                key=lambda projection: projection.capability_id,
+            )
+        )
+    abi_coverage_records = _mapping_sequence(read_model.get("capability_abi_coverage", ()))
+    if abi_coverage_records:
+        return tuple(
+            sorted(
+                (_projection_from_abi_coverage(record) for record in abi_coverage_records),
+                key=lambda projection: projection.capability_id,
+            )
+        )
+
     projections: list[SelfModelCapabilityProjection] = []
     for manifest in _mapping_sequence(read_model.get("manifests", ())):
         projections.append(_projection_from_manifest(manifest))
@@ -131,6 +148,48 @@ def _projection_from_rejected_admission(admission: Mapping[str, Any]) -> SelfMod
     )
 
 
+def _projection_from_gateway_coverage(record: Mapping[str, Any]) -> SelfModelCapabilityProjection:
+    coverage_status = str(record.get("coverage_status", "")).strip()
+    manifest_admitted = record.get("manifest_admitted") is True
+    evidence_refs = _text_tuple(record.get("evidence_refs", ()))
+    if coverage_status == "covered" and manifest_admitted:
+        status = HealthStatus.HEALTHY if evidence_refs else HealthStatus.UNKNOWN
+    elif coverage_status == "missing_manifest":
+        status = HealthStatus.UNKNOWN
+    else:
+        status = HealthStatus.UNAVAILABLE
+    return SelfModelCapabilityProjection(
+        capability_id=_text_or_unknown(record.get("capability_id"), "capability:unknown"),
+        maturity=_text_or_unknown(record.get("maturity"), "unknown"),
+        risk=_text_or_unknown(record.get("risk"), "unknown"),
+        admitted=manifest_admitted,
+        status=status,
+        reason=_text_or_unknown(record.get("reason"), coverage_status or "manifest_coverage_unknown"),
+        evidence_refs=evidence_refs or _text_tuple((record.get("source_ref", ""),)),
+        open_incident_refs=(),
+    )
+
+
+def _projection_from_abi_coverage(record: Mapping[str, Any]) -> SelfModelCapabilityProjection:
+    coverage_status = str(record.get("coverage_status", "")).strip()
+    evidence_refs = _text_tuple(record.get("evidence_refs", ()))
+    admitted = coverage_status == "covered" and str(record.get("admission_status", "")) == "admitted"
+    if admitted:
+        status = HealthStatus.HEALTHY if evidence_refs else HealthStatus.UNKNOWN
+    else:
+        status = HealthStatus.UNAVAILABLE
+    return SelfModelCapabilityProjection(
+        capability_id=_text_or_unknown(record.get("capability_id"), "capability:unknown"),
+        maturity=_text_or_unknown(record.get("maturity"), "unknown"),
+        risk=_text_or_unknown(record.get("risk"), "unknown"),
+        admitted=admitted,
+        status=status,
+        reason=_text_or_unknown(record.get("reason"), coverage_status or "manifest_coverage_unknown"),
+        evidence_refs=evidence_refs or _text_tuple((record.get("source_ref", ""),)),
+        open_incident_refs=(),
+    )
+
+
 def _solver_outcome_for(
     *,
     capabilities: tuple[SelfModelCapabilityProjection, ...],
@@ -162,6 +221,12 @@ def _projection_evidence(
     admission_count = read_model.get("admission_count")
     refs.append(f"capability-manifest-count:{int(manifest_count or 0)}")
     refs.append(f"capability-admission-count:{int(admission_count or 0)}")
+    coverage_status = read_model.get("capability_manifest_coverage_status")
+    if isinstance(coverage_status, str) and coverage_status.strip():
+        refs.append(f"capability-manifest-coverage-status:{coverage_status.strip()}")
+    abi_coverage_status = read_model.get("capability_abi_coverage_status")
+    if isinstance(abi_coverage_status, str) and abi_coverage_status.strip():
+        refs.append(f"capability-abi-coverage-status:{abi_coverage_status.strip()}")
     return tuple(dict.fromkeys(refs))
 
 

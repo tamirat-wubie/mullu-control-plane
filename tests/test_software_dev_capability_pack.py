@@ -179,6 +179,8 @@ def test_software_dev_named_loader_installs_only_software_dev_domain() -> None:
     assert read_model["domains"] == ({"domain": "software_dev", "capability_ids": tuple(sorted(capsule.capability_refs))},)
     assert read_model["capability_manifest_registry_configured"] is False
     assert read_model["capability_manifest_registry"]["manifest_count"] == 0
+    assert read_model["capability_manifest_coverage_status"] == "not_configured"
+    assert read_model["capability_manifest_coverage"] == ()
 
 
 def test_software_dev_named_loader_projects_manifest_registry_when_configured() -> None:
@@ -195,8 +197,13 @@ def test_software_dev_named_loader_projects_manifest_registry_when_configured() 
     }
 
     assert read_model["capability_manifest_registry_configured"] is True
+    assert read_model["capability_manifest_coverage_status"] == "complete"
+    assert read_model["capability_manifest_covered_count"] == 6
+    assert read_model["capability_manifest_missing_count"] == 0
+    assert len(read_model["capability_manifest_coverage"]) == 6
     assert manifest_registry["manifest_count"] == 6
     assert manifest_registry["admission_count"] == 6
+    assert manifest_registry["capability_abi_coverage_status"] == "complete"
     assert set(manifest_registry["capability_ids"]) == {
         entry.capability_id for entry in load_software_dev_capability_entries()
     }

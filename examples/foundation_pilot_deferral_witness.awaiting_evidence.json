@@ -1,0 +1,100 @@
+{
+  "access_channel_allowed": false,
+  "beta_allowed": false,
+  "blocked_claims": [
+    "pilot execution",
+    "participant invitation",
+    "access channel opening",
+    "waitlist opening",
+    "beta opening",
+    "customer access",
+    "personal data collection",
+    "market validation",
+    "support readiness",
+    "legal clearance",
+    "paid pilot",
+    "external publication",
+    "deployment readiness"
+  ],
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "market_validation_claimed": false,
+  "next_action": "keep pilot deferred; do not invite participants, open access channels, open waitlists, open beta, collect personal data, claim market validation, promise support, claim legal clearance, accept payment, publish externally, or deploy without later governed witness evidence",
+  "paid_pilot_allowed": false,
+  "participant_invitation_allowed": false,
+  "personal_data_collection_allowed": false,
+  "pilot_deferral_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pilot purpose questions only; no pilot execution, schedule, participant selection, or launch claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "pilot_purpose_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Participant boundary questions only; no names, contact details, invitations, outreach, or enrollment is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "participant_boundary_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Access channel prerequisite questions only; no form, waitlist, beta, account, or invite channel is opened.",
+      "state": "AwaitingEvidence",
+      "surface_id": "access_channel_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Consent and privacy questions only; no personal data is collected or stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "consent_privacy_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Support coverage questions only; no support readiness, response time, or incident coverage is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "support_coverage_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Rollback and exit questions only; no recovery readiness or incident readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rollback_exit_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Success metric questions only; no market validation, product-market proof, or customer readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "success_metric_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Legal and terms questions only; no legal clearance, terms readiness, company authority, or paid pilot is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "legal_terms_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Public claim questions only; no external publication, pilot readiness, launch readiness, or deployment is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_claim_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "pilot_execution_allowed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "support_ready_claimed": false,
+  "waitlist_allowed": false,
+  "witness_id": "foundation_pilot_deferral_witness.awaiting_evidence.v1"
+}

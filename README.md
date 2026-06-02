@@ -34,6 +34,178 @@ agents, and website copy. Use
 [`docs/FOUNDATION_PREREQUISITES.md`](docs/FOUNDATION_PREREQUISITES.md) as the
 atomic setup ledger before touching deployment, customer access, company
 formation, patent filing, paid infrastructure, or other external obligations.
+Operator readiness is bounded by
+[`docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md`](docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md),
+which drafts solo-capacity, pacing, skill-gap, learning-loop,
+decision-authority, escalation, stop-rule, and review-cadence questions without
+claiming capacity, schedule, skill, team, hiring, delegation, coverage,
+authority, or deployment readiness.
+Learning-path preparation is bounded by
+[`docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md`](docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md),
+which turns skill gaps into local practice loops without claiming skill
+readiness, training completion, certification, paid-course activation, mentor
+assignment, hiring readiness, delegation readiness, public tutorial
+publication, curriculum completion, production operation readiness,
+customer-support readiness, external account use, or deployment readiness.
+Architecture-map preparation is bounded by
+[`docs/FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md`](docs/FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md),
+which maps system boundaries, modules, interfaces, dependencies, invariants,
+hazards, proof references, and gaps locally without claiming architecture
+completeness, integration readiness, runtime readiness, refactor approval,
+implementation approval, external publication, or deployment readiness.
+System-boundary inventory is bounded by
+[`docs/FOUNDATION_SYSTEM_BOUNDARY_INVENTORY_BOUNDARY.md`](docs/FOUNDATION_SYSTEM_BOUNDARY_INVENTORY_BOUNDARY.md),
+which drafts public product, control-plane, gateway, runtime, data, tenant,
+trust, and external-dependency boundary questions without claiming inventory
+completeness, ownership closure, trust closure, tenant readiness, data
+classification closure, endpoint readiness, service binding, integration
+readiness, runtime readiness, exposure approval, implementation approval,
+external publication, or deployment readiness.
+Module inventory is bounded by
+[`docs/FOUNDATION_MODULE_INVENTORY_BOUNDARY.md`](docs/FOUNDATION_MODULE_INVENTORY_BOUNDARY.md),
+which drafts product, control-plane, gateway, runtime, governance, evidence,
+data, and operator module questions without claiming module inventory
+completeness, ownership assignment, contract readiness, interface readiness,
+dependency readiness, integration readiness, runtime readiness, refactor
+approval, implementation approval, external publication, or deployment
+readiness.
+Component contracts are bounded by
+[`docs/FOUNDATION_COMPONENT_CONTRACT_BOUNDARY.md`](docs/FOUNDATION_COMPONENT_CONTRACT_BOUNDARY.md),
+which drafts module identity, input, output, error, evidence, state,
+dependency, and operator contract questions without claiming component
+contract readiness, owner approval, test pass, refactor approval,
+implementation approval, external publication, or deployment readiness.
+Interface maps are bounded by
+[`docs/FOUNDATION_INTERFACE_MAP_BOUNDARY.md`](docs/FOUNDATION_INTERFACE_MAP_BOUNDARY.md),
+which drafts component, product/control-plane, control-plane/gateway,
+gateway/runtime, runtime/governance, governance/evidence, data-flow, and
+operator handoff interface questions without claiming interface-map
+completeness, endpoint readiness, service binding, integration readiness,
+runtime readiness, implementation approval, external publication, or
+deployment readiness.
+Dependency graphs are bounded by
+[`docs/FOUNDATION_DEPENDENCY_GRAPH_BOUNDARY.md`](docs/FOUNDATION_DEPENDENCY_GRAPH_BOUNDARY.md),
+which drafts module, package, runtime, service, provider, data, governance,
+and operator dependency questions without claiming dependency-graph
+completeness, package install approval, version-lock readiness, provider
+binding, vulnerability scan pass, runtime dependency readiness, implementation
+approval, external publication, or deployment readiness.
+Invariant maps are bounded by
+[`docs/FOUNDATION_INVARIANT_MAP_BOUNDARY.md`](docs/FOUNDATION_INVARIANT_MAP_BOUNDARY.md),
+which drafts identity, state, boundary, interface, dependency, governance,
+evidence, rollback, and operator invariant questions without claiming
+invariant-map completeness, proof readiness, enforcement readiness, monitor
+readiness, runtime readiness, test pass, implementation approval, external
+publication, or deployment readiness.
+Hazard maps are bounded by
+[`docs/FOUNDATION_HAZARD_MAP_BOUNDARY.md`](docs/FOUNDATION_HAZARD_MAP_BOUNDARY.md),
+which drafts safety, runtime, data, dependency, interface, governance,
+evidence, rollback, and operator hazard questions without claiming hazard-map
+completeness, classification readiness, severity closure, mitigation
+readiness, safety review readiness, runtime readiness, implementation
+approval, external publication, or deployment readiness.
+Proof references are bounded by
+[`docs/FOUNDATION_PROOF_REFERENCE_BOUNDARY.md`](docs/FOUNDATION_PROOF_REFERENCE_BOUNDARY.md),
+which drafts architecture, module, interface, dependency, invariant, hazard,
+runtime, rollback, and operator proof questions without claiming
+proof-reference completeness, proof coverage closure, evidence promotion,
+terminal closure, verification pass, proof approval, runtime proof readiness,
+test pass, implementation approval, external publication, or deployment
+readiness.
+Gap registers are bounded by
+[`docs/FOUNDATION_GAP_REGISTER_BOUNDARY.md`](docs/FOUNDATION_GAP_REGISTER_BOUNDARY.md),
+which drafts architecture, module, interface, dependency, invariant, hazard,
+proof-reference, runtime, rollback, and operator gap questions without
+claiming gap-register completeness, gap closure, priority closure, owner
+assignment, remediation readiness, roadmap commitment, test pass,
+implementation approval, external publication, or deployment readiness.
+Diff review is bounded by
+[`docs/FOUNDATION_DIFF_REVIEW_BOUNDARY.md`](docs/FOUNDATION_DIFF_REVIEW_BOUNDARY.md),
+which drafts changed-file, untracked-file, unrelated-change, agent-scope,
+user-change-preservation, validation-summary, secret-drift, staging/commit,
+rollback/revert, and handoff-summary questions without staging, commit, push,
+pull request, release, revert, source-control publication, or deployment
+claims.
+Change handoff is bounded by
+[`docs/FOUNDATION_CHANGE_HANDOFF_BOUNDARY.md`](docs/FOUNDATION_CHANGE_HANDOFF_BOUNDARY.md),
+which drafts change-family, constructive-delta, fracture-delta,
+unrelated-change, user-change-preservation, validation-evidence,
+secret-drift, rollback/revert, next-action, and operator-handoff questions
+without review-completeness, validation-completeness, secret-clearance,
+staging, commit, push, pull request, publication, or deployment claims.
+Local workstation posture is bounded by
+[`docs/FOUNDATION_LOCAL_WORKSTATION_BOUNDARY.md`](docs/FOUNDATION_LOCAL_WORKSTATION_BOUNDARY.md),
+which drafts command, toolchain, shell/profile, dependency-install,
+test-command, environment-variable, permission, and local-receipt questions
+without verifying the workstation, installing dependencies, mutating the
+environment, starting services, claiming a full-test pass, depending on cloud,
+recording private paths, or deploying.
+Documentation posture is bounded by
+[`docs/FOUNDATION_DOCUMENTATION_BOUNDARY.md`](docs/FOUNDATION_DOCUMENTATION_BOUNDARY.md),
+which keeps source-of-truth mapping, plain-language status, glossary questions,
+cross-links, public-copy alignment, evidence indexing, update cadence, and
+reviewer handoff local without claiming documentation completeness, canonical
+docs, public-launch copy, customer readiness, deployment readiness, legal
+clearance, commercial readiness, external publication, or deployment.
+Plain-language status is bounded by
+[`docs/FOUNDATION_PLAIN_LANGUAGE_STATUS_BOUNDARY.md`](docs/FOUNDATION_PLAIN_LANGUAGE_STATUS_BOUNDARY.md),
+which keeps non-technical explanation Foundation-aware without claiming
+plain-language completeness, comprehension proof, product readiness, capability
+availability, real-task execution readiness, customer readiness, public launch,
+legal clearance, commercial readiness, paid-use readiness, money-movement
+readiness, canonical docs, external publication, or deployment.
+Claim posture is bounded by
+[`docs/FOUNDATION_CLAIM_BOUNDARY.md`](docs/FOUNDATION_CLAIM_BOUNDARY.md),
+which separates repository proof, public copy, runtime proof, legal/business
+claims, customer/pilot claims, deployment claims, evidence promotion, and
+review handoff without claiming production health, endpoint readiness, customer
+readiness, pilot readiness, legal clearance, commercial readiness, public
+launch, compliance certification, external publication, or deployment.
+Website posture is bounded by
+[`docs/FOUNDATION_WEBSITE_POSTURE_BOUNDARY.md`](docs/FOUNDATION_WEBSITE_POSTURE_BOUNDARY.md),
+which keeps homepage, product-route, proof-route, access-language,
+waitlist/beta-language, runtime/endpoint-language, public-naming, and website
+evidence review local without mutating the website, publishing routes, inviting
+access, opening waitlists or beta, accepting pilot signups, collecting customer
+intake, claiming production runtime, claiming endpoint readiness, launching
+paid use, or deploying.
+Research-notebook posture is bounded by
+[`docs/FOUNDATION_RESEARCH_NOTEBOOK_BOUNDARY.md`](docs/FOUNDATION_RESEARCH_NOTEBOOK_BOUNDARY.md),
+which keeps concept notes, assumptions, prior-art questions, proof status,
+experiment boundaries, evidence-promotion questions, authorship-lineage notes,
+and public-claim language local without claiming patent protection,
+trade-secret protection, scientific validation, physical-world validation,
+market validation, customer readiness, external publication, paid launch,
+secret evidence, or deployment readiness.
+Evidence-ledger posture is bounded by
+[`docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md`](docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md),
+which keeps local evidence references, witness packets, validator references,
+test references, receipt references, source-control packets, readiness
+snapshots, and public-copy routing organized without evidence promotion,
+terminal-closure, readiness, legal-clearance, patent-protection,
+customer-readiness, paid-launch, secret-evidence, external-publication, or
+deployment claims.
+Decision-journal posture is bounded by
+[`docs/FOUNDATION_DECISION_JOURNAL_BOUNDARY.md`](docs/FOUNDATION_DECISION_JOURNAL_BOUNDARY.md),
+which keeps decision context, assumptions, options, constraints, evidence
+references, risk stop rules, review cadence, and next-action selection local
+without decision execution, irreversible action, roadmap commitment, deadline
+promise, authority delegation, customer commitment, legal authority, company
+action, patent filing, spending, external publication, or deployment claims.
+Next-action preparation is bounded by
+[`docs/FOUNDATION_NEXT_ACTION_BOUNDARY.md`](docs/FOUNDATION_NEXT_ACTION_BOUNDARY.md),
+which keeps future `continue` work to one local-safe prerequisite at a time
+without broad execution, external action, deployment, publication, spending,
+customer action, legal/business action, claim promotion, secret use,
+credential use, service activation, source-control publication, roadmap
+commitment, or deadline promise.
+Test-evidence preparation is bounded by
+[`docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md`](docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md),
+which records focused validators, targeted pytest, preflight receipts, diff
+hygiene, failure cases, warnings, coverage gaps, reproducibility notes, and
+non-terminal closure without full-test-pass, complete-coverage, CI-parity,
+release-readiness, security-clearance, customer-readiness, legal-clearance,
+external-publication, or deployment claims.
 Source-control preparation is bounded by
 [`docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md`](docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md),
 which organizes commit readiness without staging, committing, pushing, opening a
@@ -44,11 +216,25 @@ which drafts credential categories, environment-variable names, provider-access
 questions, key questions, and rotation questions without storing real secrets,
 activating credentials, binding provider accounts, enabling external calls, or
 deploying.
+Security baseline posture is bounded by
+[`docs/FOUNDATION_SECURITY_BASELINE_BOUNDARY.md`](docs/FOUNDATION_SECURITY_BASELINE_BOUNDARY.md),
+which drafts threat-model, dependency-audit, static-scan, access-control,
+data-exposure, supply-chain, and review-readiness questions without claiming
+scan pass, dependency audit pass, threat-model approval, compliance
+certification, customer-security readiness, or deployment.
 Cost and budget posture is bounded by
 [`docs/FOUNDATION_COST_BUDGET_BOUNDARY.md`](docs/FOUNDATION_COST_BUDGET_BOUNDARY.md),
 which drafts cost categories, budget questions, billing questions, subscription
 questions, and purchase controls without spending, enabling paid infrastructure,
 binding payment methods, approving purchases, paying invoices, or deploying.
+Payment-provider preparation is bounded by
+[`docs/FOUNDATION_PAYMENT_PROVIDER_BOUNDARY.md`](docs/FOUNDATION_PAYMENT_PROVIDER_BOUNDARY.md),
+which drafts provider-selection, account-binding, merchant-onboarding, KYC/tax,
+payment-method, checkout, webhook, charge/refund, payout, and reconciliation
+questions without provider activation, provider-account binding, merchant
+onboarding, KYC readiness, tax readiness, payment-method collection, live
+charges, refunds, payouts, webhook activation, checkout publication, money
+movement, customer payment access, external publication, or deployment.
 Runtime and environment posture is bounded by
 [`docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md`](docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md),
 which drafts local command, toolchain, dependency, database, container,
@@ -62,6 +248,21 @@ retention, deletion, and handoff questions without running backups, activating
 cloud sync, exporting files, publishing archives, deleting data, recording
 private paths, moving secrets, moving personal data, claiming restore
 readiness, or deploying.
+Deployment deferral is bounded by
+[`docs/FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md),
+which drafts deployment prerequisite, cloud, endpoint, runtime health,
+rollback, cost, credential, customer/support, and publication questions without
+approving deployment plans, activating cloud resources, opening public
+endpoints, claiming production health, claiming runtime readiness, inviting
+customers, spending money, using credentials, mutating DNS, publishing
+externally, or deploying.
+External infrastructure is bounded by
+[`docs/FOUNDATION_EXTERNAL_INFRASTRUCTURE_BOUNDARY.md`](docs/FOUNDATION_EXTERNAL_INFRASTRUCTURE_BOUNDARY.md),
+which drafts DNS authority, gateway target, runtime host, managed database,
+secret-manager, TLS, firewall, rollback, private runtime witness, repository
+variable, endpoint reachability, and workflow dispatch questions without DNS
+mutation, runtime provisioning, secret placement, workflow dispatch, paid
+infrastructure, customer access, external publication, or deployment.
 The first technical proof thread is
 [`docs/FOUNDATION_LOCAL_PROOF_THREAD.md`](docs/FOUNDATION_LOCAL_PROOF_THREAD.md),
 backed by a local workflow descriptor, validator, and ignored local receipt
@@ -69,6 +270,14 @@ runner. Product-scope learning is bounded by
 [`docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md`](docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md),
 which selects one local proof lane without restricting the long-term platform or
 opening pilot, customer, market, paid-launch, or deployment-readiness claims.
+Pilot deferral is bounded by
+[`docs/FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md),
+which drafts pilot purpose, participant-boundary, access-channel, consent,
+support, rollback, metric, legal, and public-claim questions without executing
+a pilot, inviting participants, opening access, opening waitlists or beta,
+collecting personal data, claiming market validation, promising support,
+claiming legal clearance, accepting payment, publishing externally, or
+deploying.
 Support readiness is bounded by
 [`docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md`](docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md),
 which prepares local support and incident-response shape without opening

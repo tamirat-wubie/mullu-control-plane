@@ -1,0 +1,98 @@
+{
+  "blocked_claims": [
+    "hazard-map completeness",
+    "hazard classification readiness",
+    "hazard severity closure",
+    "mitigation readiness",
+    "safety review readiness",
+    "runtime hazard readiness",
+    "owner approval assignment",
+    "test pass",
+    "refactor approval",
+    "implementation approval",
+    "external publication",
+    "deployment readiness"
+  ],
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "hazard_classification_ready_claimed": false,
+  "hazard_map_complete_claimed": false,
+  "hazard_map_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft safety-floor and irreversible-action hazard questions without safety-review claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "safety_hazards",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft service, endpoint, migration, and process hazard questions without runtime hazard readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_hazards",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft data exposure, deletion, retention, and recovery hazard questions without data safety closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "data_hazards",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft package, provider, service, and account hazard questions without dependency hazard closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dependency_hazards",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft input, output, error-path, and handoff hazard questions without interface hazard closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "interface_hazards",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft policy, approval, receipt, and bypass hazard questions without governance hazard closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "governance_hazards",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft witness, receipt, trace, and false-claim hazard questions without evidence closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_hazards",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft rollback, replay, recovery, and reversibility hazard questions without rollback readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rollback_hazards",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft solo-operator capacity, support, fatigue, and escalation hazard questions without operator readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_hazards",
+      "surface_type": "local_draft"
+    }
+  ],
+  "hazard_mitigation_ready_claimed": false,
+  "hazard_severity_closed_claimed": false,
+  "implementation_approval_allowed": false,
+  "next_action": "continue local hazard map question drafting without readiness promotion",
+  "owner_approval_assigned": false,
+  "refactor_approval_allowed": false,
+  "runtime_hazard_ready_claimed": false,
+  "safety_review_ready_claimed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "test_pass_claimed": false,
+  "witness_id": "foundation_hazard_map_witness.awaiting_evidence.v1"
+}

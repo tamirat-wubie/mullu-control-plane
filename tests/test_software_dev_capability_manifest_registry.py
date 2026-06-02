@@ -50,6 +50,17 @@ def test_capability_manifest_registry_admits_software_dev_directory_locally() ->
     assert all(admission.status is CapabilityManifestAdmissionStatus.ADMITTED for admission in admissions)
     assert read_model["manifest_count"] == 6
     assert set(read_model["capability_ids"]) == admitted_ids
+    assert read_model["capability_abi_coverage_status"] == "complete"
+    assert read_model["capability_abi_covered_count"] == 6
+    assert read_model["capability_abi_blocked_count"] == 0
+    assert len(read_model["capability_abi_coverage"]) == 6
+    coverage = {record["capability_id"]: record for record in read_model["capability_abi_coverage"]}
+    change_coverage = coverage["software_dev.change.run"]
+    assert change_coverage["coverage_status"] == "covered"
+    assert change_coverage["input_schema_ref"] == "schemas/software_dev/change_run.input.schema.json"
+    assert change_coverage["rollback_required"] is True
+    assert change_coverage["sandbox_required"] is True
+    assert "tests/test_software_dev_capability_pack.py" in change_coverage["evidence_refs"]
     assert registry.get_manifest("software_dev.change.run").effect_bearing is True
     assert registry.get_manifest("software_dev.repo_map.read").effect_bearing is False
 
@@ -67,6 +78,13 @@ def test_capability_manifest_registry_rejects_missing_policy_refs(tmp_path: Path
     assert admission.status is CapabilityManifestAdmissionStatus.REJECTED
     assert registry.manifest_count == 0
     assert any("policy_refs" in error for error in admission.errors)
+    read_model = registry.read_model()
+    blocked = read_model["capability_abi_coverage"][0]
+    assert read_model["capability_abi_coverage_status"] == "blocked"
+    assert read_model["capability_abi_blocked_count"] == 1
+    assert blocked["capability_id"] == "software_dev.change.run"
+    assert blocked["coverage_status"] == "blocked"
+    assert any("policy_refs" in error for error in blocked["errors"])
 
 
 def test_capability_manifest_registry_rejects_unresolved_schema_refs(tmp_path: Path) -> None:

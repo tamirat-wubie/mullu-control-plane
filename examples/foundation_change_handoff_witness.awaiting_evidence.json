@@ -1,0 +1,113 @@
+{
+  "blocked_claims": [
+    "change-handoff completeness",
+    "changed-file review completeness",
+    "diff scope closure",
+    "change ownership assignment",
+    "validation completeness",
+    "secret clearance",
+    "staging approval",
+    "commit approval",
+    "branch switch approval",
+    "push approval",
+    "pull request approval",
+    "release readiness",
+    "revert approval",
+    "source-control publication",
+    "external publication",
+    "deployment readiness"
+  ],
+  "branch_switch_allowed": false,
+  "change_handoff_complete_claimed": false,
+  "change_handoff_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft change-family summary questions without claiming handoff completeness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "change_family_summary_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft constructive-delta questions without claiming full changed-file review.",
+      "state": "AwaitingEvidence",
+      "surface_id": "constructive_delta_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft fracture-delta questions without claiming diff scope closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "fracture_delta_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft unrelated-change questions without ownership assignment.",
+      "state": "AwaitingEvidence",
+      "surface_id": "unrelated_change_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft user-change preservation questions without reset or overwrite approval.",
+      "state": "AwaitingEvidence",
+      "surface_id": "user_change_preservation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft validation-evidence questions without validation completeness claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "validation_evidence_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft secret-drift questions without secret-clearance claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "secret_drift_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft rollback and revert questions without revert approval.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rollback_revert_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft next-action questions without broad continuation approval.",
+      "state": "AwaitingEvidence",
+      "surface_id": "next_action_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft operator-handoff questions without staging, commit, push, publication, or deployment approval.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_handoff_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "change_ownership_assigned": false,
+  "changed_file_review_complete_claimed": false,
+  "commit_allowed": false,
+  "deployment_allowed": false,
+  "diff_scope_closed_claimed": false,
+  "external_publication_allowed": false,
+  "next_action": "continue local change handoff question drafting without Git effect promotion",
+  "pull_request_allowed": false,
+  "push_allowed": false,
+  "release_allowed": false,
+  "revert_allowed": false,
+  "schema_version": 1,
+  "secret_clearance_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_publication_allowed": false,
+  "staging_allowed": false,
+  "status": "AwaitingEvidence",
+  "validation_complete_claimed": false,
+  "witness_id": "foundation_change_handoff_witness.awaiting_evidence.v1"
+}

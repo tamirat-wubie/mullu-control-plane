@@ -24,26 +24,55 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     names = [command.name for command in commands]
     args_by_name = {command.name: command.args for command in commands}
 
-    assert names[:17] == [
+    assert names[:46] == [
         "local_assurance_plan",
         "agents_policy",
         "foundation_mode",
         "foundation_source_control_boundary",
+        "foundation_operator_readiness_boundary",
+        "foundation_learning_path_boundary",
+        "foundation_architecture_map_boundary",
+        "foundation_system_boundary_inventory_boundary",
+        "foundation_module_inventory_boundary",
+        "foundation_component_contract_boundary",
+        "foundation_interface_map_boundary",
+        "foundation_dependency_graph_boundary",
+        "foundation_invariant_map_boundary",
+        "foundation_hazard_map_boundary",
+        "foundation_proof_reference_boundary",
+        "foundation_gap_register_boundary",
+        "foundation_diff_review_boundary",
+        "foundation_change_handoff_boundary",
+        "foundation_local_workstation_boundary",
+        "foundation_documentation_boundary",
+        "foundation_plain_language_status_boundary",
+        "foundation_claim_boundary",
+        "foundation_website_posture_boundary",
+        "foundation_research_notebook_boundary",
+        "foundation_evidence_ledger_boundary",
+        "foundation_decision_journal_boundary",
+        "foundation_next_action_boundary",
+        "foundation_test_evidence_boundary",
         "foundation_local_proof_thread",
         "foundation_private_recovery_boundary",
         "foundation_secrets_credentials_boundary",
+        "foundation_security_baseline_boundary",
         "foundation_cost_budget_boundary",
+        "foundation_payment_provider_boundary",
         "foundation_runtime_environment_boundary",
         "foundation_backup_export_boundary",
+        "foundation_deployment_deferral_boundary",
+        "foundation_external_infrastructure_boundary",
         "foundation_domain_email_boundary",
         "foundation_legal_business_boundary",
         "foundation_product_scope_boundary",
+        "foundation_pilot_deferral_boundary",
         "foundation_support_readiness_boundary",
         "foundation_intake_onboarding_boundary",
         "foundation_privacy_data_boundary",
         "protocol_manifest",
     ]
-    assert names[21:29] == [
+    assert names[50:58] == [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
         "workspace_governance_witness_contract",
@@ -53,7 +82,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "workspace_governance_integrity_report_contract",
         "universal_action_orchestration_contract",
     ]
-    assert len(names) == 36
+    assert len(names) == 65
     assert names[-8:] == [
         "universal_action_orchestration_contract",
         "universal_action_orchestration_validation_receipt_contract",
@@ -74,6 +103,78 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert args_by_name["foundation_source_control_boundary"][1:] == (
         "scripts/validate_foundation_source_control_boundary.py",
     )
+    assert args_by_name["foundation_operator_readiness_boundary"][1:] == (
+        "scripts/validate_foundation_operator_readiness_boundary.py",
+    )
+    assert args_by_name["foundation_learning_path_boundary"][1:] == (
+        "scripts/validate_foundation_learning_path_boundary.py",
+    )
+    assert args_by_name["foundation_architecture_map_boundary"][1:] == (
+        "scripts/validate_foundation_architecture_map_boundary.py",
+    )
+    assert args_by_name["foundation_system_boundary_inventory_boundary"][1:] == (
+        "scripts/validate_foundation_system_boundary_inventory_boundary.py",
+    )
+    assert args_by_name["foundation_module_inventory_boundary"][1:] == (
+        "scripts/validate_foundation_module_inventory_boundary.py",
+    )
+    assert args_by_name["foundation_component_contract_boundary"][1:] == (
+        "scripts/validate_foundation_component_contract_boundary.py",
+    )
+    assert args_by_name["foundation_interface_map_boundary"][1:] == (
+        "scripts/validate_foundation_interface_map_boundary.py",
+    )
+    assert args_by_name["foundation_dependency_graph_boundary"][1:] == (
+        "scripts/validate_foundation_dependency_graph_boundary.py",
+    )
+    assert args_by_name["foundation_invariant_map_boundary"][1:] == (
+        "scripts/validate_foundation_invariant_map_boundary.py",
+    )
+    assert args_by_name["foundation_hazard_map_boundary"][1:] == (
+        "scripts/validate_foundation_hazard_map_boundary.py",
+    )
+    assert args_by_name["foundation_proof_reference_boundary"][1:] == (
+        "scripts/validate_foundation_proof_reference_boundary.py",
+    )
+    assert args_by_name["foundation_gap_register_boundary"][1:] == (
+        "scripts/validate_foundation_gap_register_boundary.py",
+    )
+    assert args_by_name["foundation_diff_review_boundary"][1:] == (
+        "scripts/validate_foundation_diff_review_boundary.py",
+    )
+    assert args_by_name["foundation_change_handoff_boundary"][1:] == (
+        "scripts/validate_foundation_change_handoff_boundary.py",
+    )
+    assert args_by_name["foundation_local_workstation_boundary"][1:] == (
+        "scripts/validate_foundation_local_workstation_boundary.py",
+    )
+    assert args_by_name["foundation_documentation_boundary"][1:] == (
+        "scripts/validate_foundation_documentation_boundary.py",
+    )
+    assert args_by_name["foundation_plain_language_status_boundary"][1:] == (
+        "scripts/validate_foundation_plain_language_status_boundary.py",
+    )
+    assert args_by_name["foundation_claim_boundary"][1:] == (
+        "scripts/validate_foundation_claim_boundary.py",
+    )
+    assert args_by_name["foundation_website_posture_boundary"][1:] == (
+        "scripts/validate_foundation_website_posture_boundary.py",
+    )
+    assert args_by_name["foundation_research_notebook_boundary"][1:] == (
+        "scripts/validate_foundation_research_notebook_boundary.py",
+    )
+    assert args_by_name["foundation_evidence_ledger_boundary"][1:] == (
+        "scripts/validate_foundation_evidence_ledger_boundary.py",
+    )
+    assert args_by_name["foundation_decision_journal_boundary"][1:] == (
+        "scripts/validate_foundation_decision_journal_boundary.py",
+    )
+    assert args_by_name["foundation_next_action_boundary"][1:] == (
+        "scripts/validate_foundation_next_action_boundary.py",
+    )
+    assert args_by_name["foundation_test_evidence_boundary"][1:] == (
+        "scripts/validate_foundation_test_evidence_boundary.py",
+    )
     assert args_by_name["foundation_local_proof_thread"][1:] == (
         "scripts/validate_foundation_local_proof_thread.py",
     )
@@ -83,14 +184,26 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert args_by_name["foundation_secrets_credentials_boundary"][1:] == (
         "scripts/validate_foundation_secrets_credentials_boundary.py",
     )
+    assert args_by_name["foundation_security_baseline_boundary"][1:] == (
+        "scripts/validate_foundation_security_baseline_boundary.py",
+    )
     assert args_by_name["foundation_cost_budget_boundary"][1:] == (
         "scripts/validate_foundation_cost_budget_boundary.py",
+    )
+    assert args_by_name["foundation_payment_provider_boundary"][1:] == (
+        "scripts/validate_foundation_payment_provider_boundary.py",
     )
     assert args_by_name["foundation_runtime_environment_boundary"][1:] == (
         "scripts/validate_foundation_runtime_environment_boundary.py",
     )
     assert args_by_name["foundation_backup_export_boundary"][1:] == (
         "scripts/validate_foundation_backup_export_boundary.py",
+    )
+    assert args_by_name["foundation_deployment_deferral_boundary"][1:] == (
+        "scripts/validate_foundation_deployment_deferral_boundary.py",
+    )
+    assert args_by_name["foundation_external_infrastructure_boundary"][1:] == (
+        "scripts/validate_foundation_external_infrastructure_boundary.py",
     )
     assert args_by_name["foundation_domain_email_boundary"][1:] == (
         "scripts/validate_foundation_domain_email_boundary.py",
@@ -100,6 +213,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["foundation_product_scope_boundary"][1:] == (
         "scripts/validate_foundation_product_scope_boundary.py",
+    )
+    assert args_by_name["foundation_pilot_deferral_boundary"][1:] == (
+        "scripts/validate_foundation_pilot_deferral_boundary.py",
     )
     assert args_by_name["foundation_support_readiness_boundary"][1:] == (
         "scripts/validate_foundation_support_readiness_boundary.py",
