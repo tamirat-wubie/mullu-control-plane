@@ -162,6 +162,13 @@ plain-language completeness, comprehension proof, product readiness, capability
 availability, real-task execution readiness, customer readiness, public launch,
 legal clearance, commercial readiness, paid-use readiness, money-movement
 readiness, canonical docs, external publication, or deployment.
+Accessibility/language posture is bounded by
+[`docs/FOUNDATION_ACCESSIBILITY_LANGUAGE_BOUNDARY.md`](docs/FOUNDATION_ACCESSIBILITY_LANGUAGE_BOUNDARY.md),
+which keeps reading-level, glossary, keyboard, screen-reader, contrast, mobile,
+translation, localization, Mfidel, Amharic, and public accessibility-statement
+questions local without claiming accessibility compliance, WCAG conformance,
+verification, language readiness, user testing, personal-data collection,
+customer access, external publication, or deployment.
 Claim posture is bounded by
 [`docs/FOUNDATION_CLAIM_BOUNDARY.md`](docs/FOUNDATION_CLAIM_BOUNDARY.md),
 which separates repository proof, public copy, runtime proof, legal/business

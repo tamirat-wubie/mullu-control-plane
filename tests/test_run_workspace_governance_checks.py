@@ -24,7 +24,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     names = [command.name for command in commands]
     args_by_name = {command.name: command.args for command in commands}
 
-    assert names[:51] == [
+    assert names[:52] == [
         "local_assurance_plan",
         "agents_policy",
         "foundation_mode",
@@ -46,6 +46,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_local_workstation_boundary",
         "foundation_documentation_boundary",
         "foundation_plain_language_status_boundary",
+        "foundation_accessibility_language_boundary",
         "foundation_claim_boundary",
         "foundation_website_posture_boundary",
         "foundation_research_notebook_boundary",
@@ -77,7 +78,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_community_network_boundary",
         "protocol_manifest",
     ]
-    assert names[55:63] == [
+    assert names[56:64] == [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
         "workspace_governance_witness_contract",
@@ -87,7 +88,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "workspace_governance_integrity_report_contract",
         "universal_action_orchestration_contract",
     ]
-    assert len(names) == 70
+    assert len(names) == 71
     assert names[-8:] == [
         "universal_action_orchestration_contract",
         "universal_action_orchestration_validation_receipt_contract",
@@ -158,6 +159,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["foundation_plain_language_status_boundary"][1:] == (
         "scripts/validate_foundation_plain_language_status_boundary.py",
+    )
+    assert args_by_name["foundation_accessibility_language_boundary"][1:] == (
+        "scripts/validate_foundation_accessibility_language_boundary.py",
     )
     assert args_by_name["foundation_claim_boundary"][1:] == (
         "scripts/validate_foundation_claim_boundary.py",
