@@ -1,0 +1,87 @@
+{
+  "blocked_claims": [
+    "evidence promotion",
+    "terminal closure",
+    "readiness claim",
+    "legal clearance",
+    "patent protection",
+    "customer readiness",
+    "paid launch",
+    "secret evidence",
+    "external publication",
+    "deployment readiness"
+  ],
+  "customer_readiness_claimed": false,
+  "deployment_allowed": false,
+  "evidence_ledger_entries": [
+    {
+      "entry_id": "foundation_boundary_docs",
+      "entry_type": "local_reference",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Boundary document references only; no readiness, legal, patent, customer, paid-launch, or deployment claim is made.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "entry_id": "foundation_witness_packets",
+      "entry_type": "local_reference",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Public-safe witness packet references only; no secret, private, customer, reviewer, account, provider, or live endpoint evidence is recorded.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "entry_id": "foundation_validators",
+      "entry_type": "local_reference",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Validator references only; local validators do not prove legal clearance, patent protection, customer readiness, paid launch, or deployment readiness.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "entry_id": "foundation_tests",
+      "entry_type": "local_reference",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Focused test references only; targeted tests do not prove full product, customer, public-runtime, or deployment readiness.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "entry_id": "governance_preflight_receipt",
+      "entry_type": "local_reference",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Saved preflight receipt reference only; a preflight receipt is not terminal closure or external readiness.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "entry_id": "source_control_packet",
+      "entry_type": "local_reference",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Source-control packet reference only; no staging, commit, push, pull request, publication, or deployment is authorized.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "entry_id": "readiness_snapshot",
+      "entry_type": "local_reference",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Readiness snapshot reference only; no public readiness, legal clearance, customer readiness, paid launch, or deployment readiness is promoted.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "entry_id": "public_copy_routing",
+      "entry_type": "local_reference",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Public-copy routing references only; no external publication, access invitation, waitlist, beta, pilot, customer intake, paid launch, or deployment is authorized.",
+      "state": "AwaitingEvidence"
+    }
+  ],
+  "evidence_promotion_allowed": false,
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "next_action": "continue organizing evidence references locally; do not promote evidence, claim terminal closure, claim readiness, claim legal clearance, claim patent protection, claim customer readiness, launch paid use, record secret evidence, publish externally, or deploy",
+  "paid_launch_allowed": false,
+  "patent_protection_claimed": false,
+  "readiness_claimed": false,
+  "schema_version": 1,
+  "secret_evidence_recorded": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "terminal_closure_claimed": false,
+  "witness_id": "foundation_evidence_ledger_witness.awaiting_evidence.v1"
+}

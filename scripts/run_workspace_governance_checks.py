@@ -124,6 +124,98 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_source_control_boundary.py"),
         ),
         CheckCommand(
+            "foundation_operator_readiness_boundary",
+            (python_executable, "scripts/validate_foundation_operator_readiness_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_learning_path_boundary",
+            (python_executable, "scripts/validate_foundation_learning_path_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_architecture_map_boundary",
+            (python_executable, "scripts/validate_foundation_architecture_map_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_system_boundary_inventory_boundary",
+            (python_executable, "scripts/validate_foundation_system_boundary_inventory_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_module_inventory_boundary",
+            (python_executable, "scripts/validate_foundation_module_inventory_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_component_contract_boundary",
+            (python_executable, "scripts/validate_foundation_component_contract_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_interface_map_boundary",
+            (python_executable, "scripts/validate_foundation_interface_map_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_dependency_graph_boundary",
+            (python_executable, "scripts/validate_foundation_dependency_graph_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_invariant_map_boundary",
+            (python_executable, "scripts/validate_foundation_invariant_map_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_hazard_map_boundary",
+            (python_executable, "scripts/validate_foundation_hazard_map_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_proof_reference_boundary",
+            (python_executable, "scripts/validate_foundation_proof_reference_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_gap_register_boundary",
+            (python_executable, "scripts/validate_foundation_gap_register_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_diff_review_boundary",
+            (python_executable, "scripts/validate_foundation_diff_review_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_change_handoff_boundary",
+            (python_executable, "scripts/validate_foundation_change_handoff_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_local_workstation_boundary",
+            (python_executable, "scripts/validate_foundation_local_workstation_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_documentation_boundary",
+            (python_executable, "scripts/validate_foundation_documentation_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_plain_language_status_boundary",
+            (python_executable, "scripts/validate_foundation_plain_language_status_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_claim_boundary",
+            (python_executable, "scripts/validate_foundation_claim_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_website_posture_boundary",
+            (python_executable, "scripts/validate_foundation_website_posture_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_research_notebook_boundary",
+            (python_executable, "scripts/validate_foundation_research_notebook_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_evidence_ledger_boundary",
+            (python_executable, "scripts/validate_foundation_evidence_ledger_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_decision_journal_boundary",
+            (python_executable, "scripts/validate_foundation_decision_journal_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_next_action_boundary",
+            (python_executable, "scripts/validate_foundation_next_action_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_local_proof_thread",
             (python_executable, "scripts/validate_foundation_local_proof_thread.py"),
         ),
@@ -134,6 +226,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         CheckCommand(
             "foundation_secrets_credentials_boundary",
             (python_executable, "scripts/validate_foundation_secrets_credentials_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_security_baseline_boundary",
+            (python_executable, "scripts/validate_foundation_security_baseline_boundary.py"),
         ),
         CheckCommand(
             "foundation_cost_budget_boundary",
@@ -148,6 +244,14 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_backup_export_boundary.py"),
         ),
         CheckCommand(
+            "foundation_deployment_deferral_boundary",
+            (python_executable, "scripts/validate_foundation_deployment_deferral_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_external_infrastructure_boundary",
+            (python_executable, "scripts/validate_foundation_external_infrastructure_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_domain_email_boundary",
             (python_executable, "scripts/validate_foundation_domain_email_boundary.py"),
         ),
@@ -158,6 +262,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         CheckCommand(
             "foundation_product_scope_boundary",
             (python_executable, "scripts/validate_foundation_product_scope_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_pilot_deferral_boundary",
+            (python_executable, "scripts/validate_foundation_pilot_deferral_boundary.py"),
         ),
         CheckCommand(
             "foundation_support_readiness_boundary",

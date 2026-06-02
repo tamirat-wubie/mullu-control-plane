@@ -1,0 +1,100 @@
+﻿{
+  "blocked_claims": [
+    "deployment plan approval",
+    "cloud activation",
+    "public endpoint publication",
+    "production health",
+    "runtime readiness",
+    "customer access",
+    "spending authorization",
+    "credential use",
+    "secret use",
+    "migration execution",
+    "DNS mutation",
+    "external publication",
+    "deployment readiness"
+  ],
+  "cloud_activation_allowed": false,
+  "credential_use_allowed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "deployment_deferral_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deployment prerequisite categories only; no deployment plan approval or deployment schedule is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_prerequisite_map",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Hosting and cloud risk questions only; no provider binding, account value, or cloud activation is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "hosting_cloud_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint exposure questions only; no URL, port, route, DNS target, or public endpoint is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_exposure_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Runtime health categories only; no production health, uptime, or runtime readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_health_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Rollback and recovery questions only; no rollback readiness or incident coverage is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rollback_recovery_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Cost and billing questions only; no spending, billing, subscription, or payment method is authorized.",
+      "state": "AwaitingEvidence",
+      "surface_id": "cost_billing_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Credential and secret categories only; no real credential or secret is created, stored, activated, or used.",
+      "state": "AwaitingEvidence",
+      "surface_id": "credential_secret_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Customer and support prerequisite questions only; no customer access, support opening, or onboarding is authorized.",
+      "state": "AwaitingEvidence",
+      "surface_id": "customer_support_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Publication blocker questions only; no external publication, launch readiness, or paid launch is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "publication_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "deployment_plan_approved": false,
+  "dns_mutation_allowed": false,
+  "external_publication_allowed": false,
+  "migration_execution_allowed": false,
+  "next_action": "keep deployment deferred; do not activate cloud resources, open endpoints, mutate DNS, spend money, use credentials, invite customers, publish externally, or claim deployment readiness without later governed witness evidence",
+  "production_health_claimed": false,
+  "public_endpoint_allowed": false,
+  "runtime_readiness_claimed": false,
+  "schema_version": 1,
+  "secret_use_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "spending_allowed": false,
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_deployment_deferral_witness.awaiting_evidence.v1"
+}

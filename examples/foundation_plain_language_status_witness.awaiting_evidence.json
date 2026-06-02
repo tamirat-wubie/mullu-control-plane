@@ -1,0 +1,109 @@
+{
+  "blocked_claims": [
+    "plain-language completeness",
+    "non-technical comprehension proof",
+    "product readiness",
+    "capability availability",
+    "real-task execution readiness",
+    "customer readiness",
+    "public launch copy",
+    "legal clearance",
+    "commercial readiness",
+    "paid-use readiness",
+    "money-movement readiness",
+    "canonical docs",
+    "external publication",
+    "deployment readiness"
+  ],
+  "canonical_docs_claimed": false,
+  "capability_availability_claimed": false,
+  "commercial_readiness_claimed": false,
+  "customer_readiness_claimed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "money_movement_ready_claimed": false,
+  "next_action": "continue plain-language status drafting without product-readiness, customer, legal, money, publication, or deployment claims",
+  "nontechnical_comprehension_proven": false,
+  "paid_use_ready_claimed": false,
+  "plain_language_complete_claimed": false,
+  "plain_language_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft current-posture summary questions without claiming product readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "current_posture_summary_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft future-capability separation questions without claiming capability availability.",
+      "state": "AwaitingEvidence",
+      "surface_id": "capability_status_separation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft non-technical reader questions without claiming comprehension has been proven.",
+      "state": "AwaitingEvidence",
+      "surface_id": "nontechnical_reader_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft analogy safety questions without implying legal, customer, paid-use, or deployment readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "analogy_safety_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft next-step routing questions without inviting access, waitlists, pilots, customers, or paid use.",
+      "state": "AwaitingEvidence",
+      "surface_id": "next_step_routing_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft glossary-gap questions without claiming canonical docs or complete coverage.",
+      "state": "AwaitingEvidence",
+      "surface_id": "glossary_gap_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft public-claim language questions without claiming public launch or external publication.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_claim_language_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft evidence-reference questions without recording private paths, secrets, account ids, customers, or endpoint targets.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_reference_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft limitation wording questions without converting AwaitingEvidence into readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "limitation_plain_words_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft operator-confusion questions without claiming confusion is solved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_confusion_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "product_readiness_claimed": false,
+  "public_launch_copy_claimed": false,
+  "real_task_execution_ready": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_plain_language_status_witness.awaiting_evidence.v1"
+}

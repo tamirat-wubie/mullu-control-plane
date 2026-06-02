@@ -1,0 +1,91 @@
+{
+  "blocked_claims": [
+    "local workstation verification",
+    "Python toolchain verification",
+    "Node toolchain verification",
+    "Rust toolchain verification",
+    "dependency install authorization",
+    "environment mutation",
+    "privileged command",
+    "service start",
+    "full test suite pass",
+    "cloud dependency",
+    "private path recording",
+    "deployment readiness"
+  ],
+  "cloud_dependency_allowed": false,
+  "dependency_install_allowed": false,
+  "deployment_allowed": false,
+  "environment_mutation_allowed": false,
+  "full_test_suite_pass_claimed": false,
+  "local_workstation_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Command categories only; no verified workstation or private command target is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "local_command_inventory",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Toolchain questions only; no version value, install path, or verification claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "toolchain_version_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Shell/profile questions only; no profile content or mutation is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "shell_profile_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Dependency-install questions only; no install command or target is authorized.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dependency_install_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Test-command questions only; no full-test-suite pass claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "test_command_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Variable-name categories only; no real environment value or secret is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "environment_variable_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Permission prompts only; no privileged command or admin-rights claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "permission_boundary_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Receipt prompts only; no publication or deployment-readiness claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "local_receipt_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "local_workstation_verified": false,
+  "next_action": "continue drafting local-workstation questions; do not claim workstation, toolchain, dependency-install, full-test, service, cloud, or deployment readiness",
+  "node_toolchain_verified": false,
+  "private_path_recording_allowed": false,
+  "privileged_command_allowed": false,
+  "python_toolchain_verified": false,
+  "rust_toolchain_verified": false,
+  "schema_version": 1,
+  "service_start_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_local_workstation_witness.awaiting_evidence.v1"
+}

@@ -103,7 +103,9 @@ projectable
 Current local implementation closes the first read-model slice:
 
 - `OperatingSubstrateSelfModelProjection` records capability maturity, admission, health, world-state status, evidence refs, incident refs, and Solver Outcome classification without mutation authority.
-- `build_operating_substrate_self_model` projects admitted and rejected capability manifest evidence into a read-only self-model.
+- `CapabilityManifestRegistry.read_model` exposes per-capability ABI coverage records for admitted, rejected, and evidence-bound manifests.
+- `MaturityProjectingCapabilityAdmissionGate.read_model` classifies installed capability manifest coverage as complete, partial, missing, or unconfigured.
+- `build_operating_substrate_self_model` projects admitted, rejected, missing, and gateway-classified capability manifest evidence into a read-only self-model.
 - `OperatingSubstrateSummary` and `DashboardSnapshot.operating_substrate` expose a bounded operator view with no raw private reasoning and no mutation authorization.
 - `DashboardEngine.build_operating_substrate_summary` and `DashboardBridge.full_snapshot` pass the projection into the existing dashboard path without creating a parallel action kernel.
 - `UniversalActionRequest.operating_substrate_projection` lets strict UAO callers bind self-model evidence before governed dispatch.
@@ -185,7 +187,7 @@ existing contract test and record `AwaitingEvidence` for the missing lane.
 | Strategy/Product | The foundation belongs under Foundation Mode and Mullu Govern, not a separate product claim. | Pass | Keep language bounded to repository-local architecture. |
 | Design/Research | Operator readability is a risk because the substrate is deep. | Partial | Compact self-model/operator projection exists; broad UI work remains later. |
 | Engineering | Core primitives already exist. | Pass | Integrate through existing contracts and kernels. |
-| Quality/Security | ABI and self-model tests are needed before promotion. | Partial | Self-model, dashboard, and UAO evidence-binding tests exist; broader ABI coverage still needs expansion. |
+| Quality/Security | ABI and self-model tests are needed before promotion. | Pass | Self-model, dashboard, UAO evidence-binding, manifest registry coverage, and gateway fabric coverage tests exist. |
 | Operations | Durable coordination remains the production blocker. | Gap | Require lease and fencing evidence before multi-worker mutation. |
 | Business/GTM | External readiness is not closed. | Gap | Preserve `AwaitingEvidence` until legal, customer, deployment, and production witnesses exist. |
 

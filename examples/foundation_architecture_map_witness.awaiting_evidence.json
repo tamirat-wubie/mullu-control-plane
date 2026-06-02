@@ -1,0 +1,93 @@
+{
+  "architecture_complete_claimed": false,
+  "architecture_map_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "System boundary inventory questions only; no architecture completeness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "system_boundary_inventory",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Module inventory questions only; module inventory completeness is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "module_inventory",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Interface map questions only; interface-contract readiness is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "interface_map",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Dependency graph questions only; dependency-graph readiness is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dependency_graph",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Invariant map questions only; invariant closure is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "invariant_map",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Hazard map questions only; hazard closure and safety approval are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "hazard_map",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Proof-reference map questions only; proof coverage closure is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "proof_reference_map",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Gap register questions only; implementation, refactor, publication, and deployment remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "gap_register",
+      "surface_type": "local_draft"
+    }
+  ],
+  "blocked_claims": [
+    "architecture completeness",
+    "module inventory completeness",
+    "interface contract readiness",
+    "dependency graph readiness",
+    "invariant closure",
+    "hazard closure",
+    "proof coverage closure",
+    "integration readiness",
+    "runtime readiness",
+    "refactor approval",
+    "implementation approval",
+    "external publication",
+    "deployment readiness"
+  ],
+  "dependency_graph_ready_claimed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "hazard_closure_claimed": false,
+  "implementation_approval_allowed": false,
+  "integration_readiness_claimed": false,
+  "interface_contract_ready_claimed": false,
+  "invariant_closure_claimed": false,
+  "module_inventory_complete_claimed": false,
+  "next_action": "continue local architecture mapping; do not claim architecture completeness, module inventory completeness, interface readiness, dependency graph readiness, invariant closure, hazard closure, proof coverage closure, integration readiness, runtime readiness, refactor approval, implementation approval, external publication, or deployment readiness",
+  "proof_coverage_closure_claimed": false,
+  "refactor_approval_allowed": false,
+  "runtime_readiness_claimed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_architecture_map_witness.awaiting_evidence.v1"
+}

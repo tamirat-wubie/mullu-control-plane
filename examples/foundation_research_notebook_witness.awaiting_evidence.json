@@ -1,0 +1,87 @@
+{
+  "blocked_claims": [
+    "patent protection",
+    "trade-secret protection",
+    "scientific validation",
+    "physical-world validation",
+    "market validation",
+    "customer claim",
+    "external publication",
+    "paid launch",
+    "secret evidence",
+    "deployment readiness"
+  ],
+  "customer_claim_allowed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "market_validation_claimed": false,
+  "next_action": "continue organizing research notes locally; do not claim patent protection, trade-secret protection, scientific validation, physical-world validation, market validation, customer readiness, external publication, paid launch, secret evidence, or deployment readiness",
+  "paid_launch_allowed": false,
+  "patent_protection_claimed": false,
+  "physical_world_validation_claimed": false,
+  "research_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Concept inventory questions only; no protected invention scope, patent protection, or clearance is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "concept_inventory",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Assumption register questions only; assumptions are not treated as validated facts.",
+      "state": "AwaitingEvidence",
+      "surface_id": "assumption_register",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Prior-art questions only; no novelty, patentability, or legal clearance is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "prior_art_question_list",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Proof-status mapping questions only; no scientific, physical-world, market, or customer validation is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "proof_status_map",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Experiment-boundary questions only; no external experiment or real-world validation is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "experiment_boundary",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Evidence-promotion questions only; no claim is promoted without a later signed witness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_promotion_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Authorship-lineage notes are public-safe placeholders only; no private communication, reviewer identity, or secret is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "authorship_lineage_notes",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Public-claim language questions only; no research publication, customer invitation, paid launch, or deployment is authorized.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_claim_language",
+      "surface_type": "local_draft"
+    }
+  ],
+  "schema_version": 1,
+  "scientific_validation_claimed": false,
+  "secret_evidence_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "trade_secret_protection_claimed": false,
+  "witness_id": "foundation_research_notebook_witness.awaiting_evidence.v1"
+}

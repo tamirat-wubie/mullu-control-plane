@@ -1,0 +1,87 @@
+{
+  "blocked_claims": [
+    "documentation completeness",
+    "canonical docs",
+    "public launch copy",
+    "customer-ready copy",
+    "deployment readiness",
+    "legal clearance",
+    "commercial readiness",
+    "private fact recording",
+    "external publication",
+    "deployment readiness"
+  ],
+  "canonical_docs_claimed": false,
+  "commercial_readiness_claimed": false,
+  "customer_ready_copy_claimed": false,
+  "deployment_allowed": false,
+  "deployment_readiness_claimed": false,
+  "documentation_complete_claimed": false,
+  "documentation_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Source-of-truth map draft only; no documentation completeness or canonical-docs claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "source_of_truth_map",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Plain-language status draft only; no launch, customer, deployment, or commercial readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "plain_language_status",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Glossary questions only; no full conceptual coverage claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "glossary_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Prerequisite cross-link draft only; no external publication or launch-copy promotion is authorized.",
+      "state": "AwaitingEvidence",
+      "surface_id": "prerequisite_cross_links",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Public-copy alignment questions only; no access, waitlist, customer, paid-use, or public-launch invitation is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_copy_alignment",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Evidence-index draft only; no private path, account identifier, secret, provider internal, or private reviewer note is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_index",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Update-cadence questions only; no maintenance SLA, support promise, or response commitment is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "update_cadence",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Reviewer-handoff draft only; no legal, security, business, deployment, or commercial approval is implied.",
+      "state": "AwaitingEvidence",
+      "surface_id": "reviewer_handoff",
+      "surface_type": "local_draft"
+    }
+  ],
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "next_action": "continue improving local documentation navigation; do not claim documentation completeness, public launch, customer readiness, deployment readiness, legal clearance, commercial readiness, external publication, or deployment",
+  "private_fact_recording_allowed": false,
+  "public_launch_copy_claimed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_documentation_witness.awaiting_evidence.v1"
+}

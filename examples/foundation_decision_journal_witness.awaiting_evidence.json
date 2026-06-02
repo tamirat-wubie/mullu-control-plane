@@ -1,0 +1,91 @@
+{
+  "authority_delegation_claimed": false,
+  "blocked_claims": [
+    "decision execution",
+    "irreversible action",
+    "roadmap commitment",
+    "deadline promise",
+    "authority delegation",
+    "customer commitment",
+    "legal authority",
+    "company action",
+    "patent filing",
+    "spending",
+    "external publication",
+    "deployment readiness"
+  ],
+  "company_action_allowed": false,
+  "customer_commitment_claimed": false,
+  "deadline_promise_claimed": false,
+  "decision_execution_allowed": false,
+  "decision_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Decision context questions only; no decision execution or irreversible action is authorized.",
+      "state": "AwaitingEvidence",
+      "surface_id": "decision_context",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Assumption snapshot questions only; assumptions are not treated as evidence or readiness proof.",
+      "state": "AwaitingEvidence",
+      "surface_id": "assumption_snapshot",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Option-set questions only; no roadmap commitment, deadline promise, or delivery commitment is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "option_set",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Constraint-check questions only; deployment, money, legal, customer, and secret blockers remain active.",
+      "state": "AwaitingEvidence",
+      "surface_id": "constraint_check",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Evidence-reference questions only; no private path, secret, customer, provider, account, or reviewer identity is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_references",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Risk stop-rule questions only; no incident readiness, support coverage, or operational coverage is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "risk_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Review-cadence questions only; no support cadence, delivery date, deadline promise, or schedule readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "review_cadence",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Next-action selection questions only; no staging, commit, publication, spending, filing, invitation, or deployment is authorized.",
+      "state": "AwaitingEvidence",
+      "surface_id": "next_action_selection",
+      "surface_type": "local_draft"
+    }
+  ],
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "irreversible_action_allowed": false,
+  "legal_authority_claimed": false,
+  "next_action": "continue journaling local decisions; do not execute decisions, authorize irreversible action, commit to a roadmap, promise deadlines, delegate authority, make customer commitments, claim legal authority, form a company, file a patent, spend money, publish externally, or deploy",
+  "patent_filing_allowed": false,
+  "roadmap_commitment_claimed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "spending_allowed": false,
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_decision_journal_witness.awaiting_evidence.v1"
+}

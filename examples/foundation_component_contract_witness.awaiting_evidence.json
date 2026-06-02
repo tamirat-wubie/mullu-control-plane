@@ -1,0 +1,93 @@
+{
+  "blocked_claims": [
+    "component contract readiness",
+    "input contract readiness",
+    "output contract readiness",
+    "error contract readiness",
+    "evidence contract readiness",
+    "state contract readiness",
+    "dependency contract readiness",
+    "owner approval assignment",
+    "test pass",
+    "refactor approval",
+    "implementation approval",
+    "external publication",
+    "deployment readiness"
+  ],
+  "component_contract_ready_claimed": false,
+  "component_contract_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft module identity and responsibility questions without readiness promotion.",
+      "state": "AwaitingEvidence",
+      "surface_id": "module_identity_contracts",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft input-shape and validation questions without private values.",
+      "state": "AwaitingEvidence",
+      "surface_id": "input_contracts",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft output-shape and receipt questions without closure claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "output_contracts",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft explicit failure and rollback questions without error-readiness claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "error_contracts",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft witness and proof-reference questions without evidence closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_contracts",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft state boundary and mutation questions without state readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "state_contracts",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft dependency and import-boundary questions without dependency readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dependency_contracts",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft operator-facing summary and handoff questions without ownership or support claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_contracts",
+      "surface_type": "local_draft"
+    }
+  ],
+  "dependency_contract_ready_claimed": false,
+  "deployment_allowed": false,
+  "error_contract_ready_claimed": false,
+  "evidence_contract_ready_claimed": false,
+  "external_publication_allowed": false,
+  "implementation_approval_allowed": false,
+  "input_contract_ready_claimed": false,
+  "next_action": "continue local component contract question drafting without readiness promotion",
+  "output_contract_ready_claimed": false,
+  "owner_approval_assigned": false,
+  "refactor_approval_allowed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "state_contract_ready_claimed": false,
+  "status": "AwaitingEvidence",
+  "test_pass_claimed": false,
+  "witness_id": "foundation_component_contract_witness.awaiting_evidence.v1"
+}

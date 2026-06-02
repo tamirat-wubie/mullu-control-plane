@@ -1,0 +1,111 @@
+{
+  "blocked_claims": [
+    "diff-review completeness",
+    "diff scope closure",
+    "diff ownership assignment",
+    "staging approval",
+    "commit approval",
+    "branch switch approval",
+    "push approval",
+    "pull request approval",
+    "release readiness",
+    "revert approval",
+    "test pass",
+    "secret publication",
+    "source-control publication",
+    "external publication",
+    "deployment readiness"
+  ],
+  "branch_switch_allowed": false,
+  "commit_allowed": false,
+  "deployment_allowed": false,
+  "diff_ownership_assigned": false,
+  "diff_review_complete_claimed": false,
+  "diff_review_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft changed-file inventory questions without claiming diff-review completeness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "changed_file_inventory_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft untracked-file inventory questions without staging untracked files.",
+      "state": "AwaitingEvidence",
+      "surface_id": "untracked_file_inventory_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft unrelated-change classification questions without reverting unrelated work.",
+      "state": "AwaitingEvidence",
+      "surface_id": "unrelated_change_classification",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft agent-change scope questions without ownership closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "agent_change_scope_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft user-change preservation questions without reset or overwrite approval.",
+      "state": "AwaitingEvidence",
+      "surface_id": "user_change_preservation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft validation-summary questions without broad test-pass claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "validation_summary_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft secret-drift questions without secret publication.",
+      "state": "AwaitingEvidence",
+      "surface_id": "secret_drift_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft staging and commit questions without staging, committing, pushing, or pull requests.",
+      "state": "AwaitingEvidence",
+      "surface_id": "staging_commit_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft rollback and revert questions without revert approval.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rollback_revert_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft handoff-summary questions without release or deployment readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "handoff_summary_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "diff_scope_closed_claimed": false,
+  "external_publication_allowed": false,
+  "next_action": "continue local diff review question drafting without Git effect promotion",
+  "pull_request_allowed": false,
+  "push_allowed": false,
+  "release_allowed": false,
+  "revert_allowed": false,
+  "schema_version": 1,
+  "secret_publication_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_publication_allowed": false,
+  "staging_allowed": false,
+  "status": "AwaitingEvidence",
+  "test_pass_claimed": false,
+  "witness_id": "foundation_diff_review_witness.awaiting_evidence.v1"
+}

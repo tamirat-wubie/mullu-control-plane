@@ -12,10 +12,37 @@ Invariants: this snapshot may not claim public production health, legal clearanc
 | Repository | Active governed-runtime development | Public repository, proprietary use terms |
 | Foundation mode | Active private R&D posture | Local proof and prerequisite setup before deployment or launch |
 | Prerequisite ledger | Active atomic setup map | Guides reversible preparation before deployment, legal, money, or customer exposure |
+| Operator readiness | Local draft questions only | Does not claim capacity, schedule, skill, team, hiring, delegation, coverage, authority, or deployment readiness |
+| Learning path | Local practice loops only | Does not claim skill readiness, training completion, certification, paid-course activation, mentor assignment, hiring readiness, delegation readiness, public tutorial publication, curriculum completion, production-operation readiness, customer-support readiness, external account use, or deployment readiness |
+| Architecture map | Local structure mapping only | Does not claim architecture completeness, module inventory completeness, interface contract readiness, dependency graph readiness, invariant closure, hazard closure, proof coverage closure, integration readiness, runtime readiness, refactor approval, implementation approval, external publication, or deployment readiness |
+| System-boundary inventory | Local boundary questions only | Does not claim inventory completeness, ownership closure, trust closure, tenant readiness, data classification closure, endpoint readiness, service binding, integration readiness, runtime readiness, exposure approval, implementation approval, external publication, or deployment readiness |
+| Module inventory | Local module questions only | Does not claim module inventory completeness, ownership assignment, contract readiness, interface readiness, dependency readiness, integration readiness, runtime readiness, refactor approval, implementation approval, external publication, or deployment readiness |
+| Component contracts | Local contract questions only | Does not claim component contract readiness, input readiness, output readiness, error readiness, evidence readiness, state readiness, dependency readiness, owner approval, test pass, refactor approval, implementation approval, external publication, or deployment readiness |
+| Interface map | Local relationship questions only | Does not claim interface-map completeness, interface contract readiness, endpoint readiness, service binding, event/message readiness, data-flow readiness, trust closure, integration readiness, runtime readiness, owner approval, test pass, refactor approval, implementation approval, external publication, or deployment readiness |
+| Dependency graph | Local dependency questions only | Does not claim dependency-graph completeness, dependency contract readiness, import readiness, package install approval, version-lock readiness, service dependency binding, provider binding, vulnerability scan pass, runtime dependency readiness, owner approval, test pass, refactor approval, implementation approval, external publication, or deployment readiness |
+| Invariant map | Local invariant questions only | Does not claim invariant-map completeness, invariant proof readiness, invariant enforcement readiness, invariant conflict resolution, invariant monitor readiness, runtime invariant readiness, owner approval, test pass, refactor approval, implementation approval, external publication, or deployment readiness |
+| Hazard map | Local hazard questions only | Does not claim hazard-map completeness, hazard classification readiness, hazard severity closure, mitigation readiness, safety review readiness, runtime hazard readiness, owner approval, test pass, refactor approval, implementation approval, external publication, or deployment readiness |
+| Proof reference | Local proof questions only | Does not claim proof-reference completeness, proof coverage closure, evidence promotion, terminal closure, verification pass, proof approval, runtime proof readiness, owner approval, test pass, refactor approval, implementation approval, external publication, or deployment readiness |
+| Gap register | Local gap questions only | Does not claim gap-register completeness, gap closure, priority closure, owner assignment, remediation readiness, roadmap commitment, evidence promotion, terminal closure, test pass, refactor approval, implementation approval, external publication, or deployment readiness |
+| Diff review | Local worktree review questions only | Does not claim diff-review completeness, diff scope closure, ownership assignment, staging approval, commit approval, branch switch approval, push approval, pull request approval, release readiness, revert approval, test pass, source-control publication, external publication, or deployment readiness |
+| Change handoff | Local handoff questions only | Does not claim change-handoff completeness, changed-file review completeness, diff scope closure, ownership assignment, validation completeness, secret clearance, staging approval, commit approval, branch switch approval, push approval, pull request approval, release readiness, revert approval, source-control publication, external publication, or deployment readiness |
+| Local workstation | Local draft questions only | Does not verify the workstation, install dependencies, mutate environment, start services, claim full-test pass, depend on cloud, record private paths, or claim deployment readiness |
+| Documentation | Local navigation draft only | Does not claim documentation completeness, canonical docs, public-launch copy, customer readiness, deployment readiness, legal clearance, commercial readiness, external publication, or deployment readiness |
+| Plain-language status | Local non-technical explanation only | Does not claim plain-language completeness, comprehension proof, product readiness, capability availability, real-task execution readiness, customer readiness, public launch, legal clearance, commercial readiness, paid-use readiness, money-movement readiness, canonical docs, external publication, or deployment readiness |
+| Claim boundary | Local claim-separation draft only | Does not claim production health, endpoint readiness, customer readiness, pilot readiness, legal clearance, commercial readiness, public launch, compliance certification, external publication, or deployment readiness |
+| Website posture | Local website-copy review only | Does not mutate website files, publish routes, invite access, open waitlists, open beta, accept pilot signups, collect customer intake, claim production runtime, claim endpoint readiness, launch paid use, or deploy |
+| Research notebook | Local concept-organization draft only | Does not claim patent protection, trade-secret protection, scientific validation, physical-world validation, market validation, customer readiness, external publication, paid launch, secret evidence, or deployment readiness |
+| Evidence ledger | Local evidence-reference draft only | Does not promote evidence, claim terminal closure, claim readiness, claim legal clearance, claim patent protection, claim customer readiness, launch paid use, record secret evidence, publish externally, or deploy |
+| Decision journal | Local decision-context draft only | Does not execute decisions, authorize irreversible action, commit to a roadmap, promise deadlines, delegate authority, make customer commitments, claim legal authority, form a company, file a patent, spend money, publish externally, or deploy |
+| Next action | Local continuation triage only | Does not authorize broad continuation, external action, deployment, publication, spending, customer action, legal/business action, claim promotion, secret use, credential use, service activation, source-control publication, roadmap commitment, or deadline promise |
 | Secrets/credentials | Local draft categories only | Does not store real secrets, activate credentials, bind provider accounts, enable external calls, or claim deployment readiness |
+| Security baseline | Local draft questions only | Does not claim scan pass, dependency audit pass, threat-model approval, access-control verification, compliance certification, customer-security readiness, or deployment readiness |
 | Cost/budget | Local draft categories only | Does not spend, enable billing, bind payment methods, create subscriptions, approve purchases, pay invoices, or claim deployment readiness |
 | Runtime/environment | Local draft checks only | Does not verify runtime readiness, activate databases, start containers, open endpoints, run migrations, connect cloud runtime, or claim deployment readiness |
 | Backup/export | Local draft plan only | Does not run backups, activate cloud sync, export files, publish archives, delete data, record private paths, move secrets, move personal data, claim restore readiness, or claim deployment readiness |
+| Deployment deferral | Delayed by design | Does not approve deployment plans, activate cloud resources, open public endpoints, claim production health, claim runtime readiness, open customer access, spend money, use credentials, mutate DNS, publish externally, or deploy |
+| External infrastructure | Local prerequisite questions only | Does not claim external-infrastructure completeness, DNS authority verification, DNS target binding, DNS mutation, runtime host provisioning, managed database provisioning, secret placement verification, endpoint reachability, repository variable binding, workflow dispatch, paid infrastructure activation, customer access, external publication, or deployment readiness |
+| Pilot deferral | Delayed by design | Does not execute pilots, invite participants, open access channels, open waitlists, open beta, collect personal data, claim market validation, promise support, claim legal clearance, accept payment, publish externally, or deploy |
 | Product scope | One local learning lane selected | Does not restrict the long-term platform or prove pilot/customer/market readiness |
 | Support readiness | Local support shape only | Does not open customer support, SLA, onboarding, or incident-readiness claims |
 | Intake/onboarding | Local draft shape only | Does not publish forms, open waitlists, accept signups, collect personal data, or onboard customers |
@@ -52,11 +79,38 @@ Do not use these until the corresponding evidence exists:
 | Plain explanation | `docs/explain/PLAIN_ENGLISH.md` |
 | Solo-founder foundation posture | `docs/FOUNDATION_MODE.md` |
 | Atomic prerequisite setup | `docs/FOUNDATION_PREREQUISITES.md` |
+| Operator-readiness boundary | `docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md` |
+| Learning-path boundary | `docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md` |
+| Architecture-map boundary | `docs/FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md` |
+| System-boundary inventory | `docs/FOUNDATION_SYSTEM_BOUNDARY_INVENTORY_BOUNDARY.md` |
+| Module-inventory boundary | `docs/FOUNDATION_MODULE_INVENTORY_BOUNDARY.md` |
+| Component-contract boundary | `docs/FOUNDATION_COMPONENT_CONTRACT_BOUNDARY.md` |
+| Interface-map boundary | `docs/FOUNDATION_INTERFACE_MAP_BOUNDARY.md` |
+| Dependency-graph boundary | `docs/FOUNDATION_DEPENDENCY_GRAPH_BOUNDARY.md` |
+| Invariant-map boundary | `docs/FOUNDATION_INVARIANT_MAP_BOUNDARY.md` |
+| Hazard-map boundary | `docs/FOUNDATION_HAZARD_MAP_BOUNDARY.md` |
+| Proof-reference boundary | `docs/FOUNDATION_PROOF_REFERENCE_BOUNDARY.md` |
+| Gap-register boundary | `docs/FOUNDATION_GAP_REGISTER_BOUNDARY.md` |
+| Diff-review boundary | `docs/FOUNDATION_DIFF_REVIEW_BOUNDARY.md` |
+| Change-handoff boundary | `docs/FOUNDATION_CHANGE_HANDOFF_BOUNDARY.md` |
+| Local-workstation boundary | `docs/FOUNDATION_LOCAL_WORKSTATION_BOUNDARY.md` |
+| Documentation boundary | `docs/FOUNDATION_DOCUMENTATION_BOUNDARY.md` |
+| Plain-language status boundary | `docs/FOUNDATION_PLAIN_LANGUAGE_STATUS_BOUNDARY.md` |
+| Claim boundary | `docs/FOUNDATION_CLAIM_BOUNDARY.md` |
+| Website-posture boundary | `docs/FOUNDATION_WEBSITE_POSTURE_BOUNDARY.md` |
+| Research-notebook boundary | `docs/FOUNDATION_RESEARCH_NOTEBOOK_BOUNDARY.md` |
+| Evidence-ledger boundary | `docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md` |
+| Decision-journal boundary | `docs/FOUNDATION_DECISION_JOURNAL_BOUNDARY.md` |
+| Next-action boundary | `docs/FOUNDATION_NEXT_ACTION_BOUNDARY.md` |
 | Secrets/credentials boundary | `docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md` |
+| Security-baseline boundary | `docs/FOUNDATION_SECURITY_BASELINE_BOUNDARY.md` |
 | Cost/budget boundary | `docs/FOUNDATION_COST_BUDGET_BOUNDARY.md` |
 | Runtime/environment boundary | `docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md` |
 | Backup/export boundary | `docs/FOUNDATION_BACKUP_EXPORT_BOUNDARY.md` |
+| Deployment-deferral boundary | `docs/FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md` |
+| External-infrastructure boundary | `docs/FOUNDATION_EXTERNAL_INFRASTRUCTURE_BOUNDARY.md` |
 | Product-scope learning lane | `docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md` |
+| Pilot-deferral boundary | `docs/FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md` |
 | Support-readiness boundary | `docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md` |
 | Intake/onboarding boundary | `docs/FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md` |
 | Privacy/data boundary | `docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md` |

@@ -1,0 +1,131 @@
+{
+  "blocked_claims": [
+    "external-infrastructure completeness",
+    "DNS authority verification",
+    "DNS target binding",
+    "DNS mutation",
+    "runtime host provisioning",
+    "managed database provisioning",
+    "secret placement verification",
+    "TLS readiness",
+    "firewall readiness",
+    "rollback verification",
+    "endpoint reachability",
+    "repository variable binding",
+    "workflow dispatch",
+    "paid infrastructure activation",
+    "customer access",
+    "external publication",
+    "deployment readiness"
+  ],
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "dns_authority_verified": false,
+  "dns_mutation_allowed": false,
+  "dns_target_bound": false,
+  "endpoint_reachability_claimed": false,
+  "external_infrastructure_complete_claimed": false,
+  "external_infrastructure_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft DNS authority questions without DNS target binding or mutation.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dns_authority_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft gateway target questions without recording target values or host addresses.",
+      "state": "AwaitingEvidence",
+      "surface_id": "gateway_dns_target_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft runtime host questions without provisioning hosts, clusters, or endpoints.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_host_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft managed database questions without creating databases or recording database URLs.",
+      "state": "AwaitingEvidence",
+      "surface_id": "managed_database_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft secret-manager questions by secret name only, without secret values.",
+      "state": "AwaitingEvidence",
+      "surface_id": "secret_manager_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft TLS certificate questions without claiming HTTPS readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "tls_certificate_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft firewall and network questions without opening ingress or firewall rules.",
+      "state": "AwaitingEvidence",
+      "surface_id": "firewall_network_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft rollback path questions without claiming rollback verification.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rollback_path_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft private runtime witness questions without exposing private witness values.",
+      "state": "AwaitingEvidence",
+      "surface_id": "private_runtime_witness_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft repository variable questions without binding repository variables.",
+      "state": "AwaitingEvidence",
+      "surface_id": "repository_variable_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft endpoint reachability questions without claiming live endpoint reachability.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_reachability_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft workflow dispatch questions without dispatching deployment or publication workflows.",
+      "state": "AwaitingEvidence",
+      "surface_id": "workflow_dispatch_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "external_publication_allowed": false,
+  "firewall_ready_claimed": false,
+  "issue_ref": "github_issue_330",
+  "issue_state": "AwaitingEvidence",
+  "managed_database_provisioned": false,
+  "next_action": "continue external infrastructure question drafting without deployment effect promotion",
+  "paid_infrastructure_allowed": false,
+  "repository_variable_binding_allowed": false,
+  "rollback_verified": false,
+  "runtime_host_provisioned": false,
+  "schema_version": 1,
+  "secret_placement_verified": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "tls_ready_claimed": false,
+  "witness_id": "foundation_external_infrastructure_witness.awaiting_evidence.v1",
+  "workflow_dispatch_allowed": false
+}

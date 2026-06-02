@@ -1,0 +1,100 @@
+{
+  "blocked_claims": [
+    "proof-reference completeness",
+    "proof coverage closure",
+    "evidence promotion",
+    "terminal closure",
+    "verification pass",
+    "proof approval assignment",
+    "runtime proof readiness",
+    "owner approval assignment",
+    "test pass",
+    "refactor approval",
+    "implementation approval",
+    "external publication",
+    "deployment readiness"
+  ],
+  "deployment_allowed": false,
+  "evidence_promotion_allowed": false,
+  "external_publication_allowed": false,
+  "implementation_approval_allowed": false,
+  "next_action": "continue local proof reference question drafting without readiness promotion",
+  "owner_approval_assigned": false,
+  "proof_approval_assigned": false,
+  "proof_coverage_closed_claimed": false,
+  "proof_reference_complete_claimed": false,
+  "proof_reference_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft architecture proof-reference questions without architecture proof coverage claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "architecture_proof_references",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft module proof-reference questions without module proof approval.",
+      "state": "AwaitingEvidence",
+      "surface_id": "module_proof_references",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft interface proof-reference questions without interface verification pass.",
+      "state": "AwaitingEvidence",
+      "surface_id": "interface_proof_references",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft dependency proof-reference questions without dependency proof closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dependency_proof_references",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft invariant proof-reference questions without invariant proof readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "invariant_proof_references",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft hazard proof-reference questions without hazard proof closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "hazard_proof_references",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft runtime proof-reference questions without runtime proof readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_proof_references",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft rollback proof-reference questions without rollback proof readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rollback_proof_references",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft operator proof-reference questions without owner approval or test pass.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_proof_references",
+      "surface_type": "local_draft"
+    }
+  ],
+  "refactor_approval_allowed": false,
+  "runtime_proof_ready_claimed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "terminal_closure_claimed": false,
+  "test_pass_claimed": false,
+  "verification_pass_claimed": false,
+  "witness_id": "foundation_proof_reference_witness.awaiting_evidence.v1"
+}

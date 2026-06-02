@@ -1,0 +1,89 @@
+{
+  "access_invitation_allowed": false,
+  "beta_invitation_allowed": false,
+  "blocked_claims": [
+    "website mutation",
+    "external website publication",
+    "access invitation",
+    "waitlist opening",
+    "beta invitation",
+    "pilot signup",
+    "customer intake",
+    "production runtime claim",
+    "endpoint readiness",
+    "paid launch",
+    "deployment readiness"
+  ],
+  "customer_intake_allowed": false,
+  "deployment_allowed": false,
+  "endpoint_readiness_claimed": false,
+  "external_publication_allowed": false,
+  "next_action": "continue reviewing website posture locally; do not mutate website, publish, invite access, open waitlist, open beta, accept pilot signup, collect customer intake, claim production runtime, claim endpoint readiness, launch paid use, or deploy",
+  "paid_launch_allowed": false,
+  "pilot_signup_allowed": false,
+  "production_runtime_claimed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "website_mutation_allowed": false,
+  "website_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Static homepage copy review only; no website mutation or publication action is authorized.",
+      "state": "AwaitingEvidence",
+      "surface_id": "static_homepage_copy",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Product-route copy questions only; no access, beta, waitlist, pilot, customer, paid-use, or launch invitation is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "product_route_copy",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Proof-route copy questions only; no production runtime, endpoint readiness, or deployment readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "proof_route_copy",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Access-language scan questions only; no access flow, contact target, route target, or intake target is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "access_language_scan",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Waitlist and beta language questions only; no waitlist, beta opening, or pilot signup is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "waitlist_beta_language_scan",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Runtime and endpoint language questions only; no public health, API readiness, endpoint readiness, or deployment is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_endpoint_language_scan",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Public-naming alignment questions only; no legal, trademark, domain, or paid-launch clearance is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_naming_alignment",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Website evidence receipt questions only; no live URL, private path, account identifier, provider internal, or secret is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "website_evidence_receipts",
+      "surface_type": "local_draft"
+    }
+  ],
+  "waitlist_open": false,
+  "witness_id": "foundation_website_posture_witness.awaiting_evidence.v1"
+}

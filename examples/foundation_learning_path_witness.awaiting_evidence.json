@@ -1,0 +1,93 @@
+{
+  "blocked_claims": [
+    "skill readiness",
+    "training completion",
+    "certification",
+    "paid course activation",
+    "mentor assignment",
+    "hiring readiness",
+    "delegation readiness",
+    "public tutorial publication",
+    "curriculum completion",
+    "production operation readiness",
+    "customer support readiness",
+    "external account use",
+    "deployment readiness"
+  ],
+  "certification_claimed": false,
+  "curriculum_completion_claimed": false,
+  "customer_support_readiness_claimed": false,
+  "delegation_readiness_claimed": false,
+  "deployment_allowed": false,
+  "external_account_use_allowed": false,
+  "hiring_readiness_claimed": false,
+  "learning_path_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Learning goal inventory questions only; no skill readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "learning_goal_inventory",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Glossary loop questions only; confusing words link to local docs without training-completion claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "glossary_loop",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Command practice questions only; harmless local commands do not mutate services, accounts, or deployment state.",
+      "state": "AwaitingEvidence",
+      "surface_id": "command_practice_loop",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Reading queue questions only; no paid course, provider account, or external learning dependency is activated.",
+      "state": "AwaitingEvidence",
+      "surface_id": "reading_queue",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local exercise questions only; practice output does not prove production-operation readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "local_exercise_design",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Error-log questions only; no private paths, accounts, secrets, credentials, schedules, or health details are recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "error_log",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Verification habit questions only; validators and tests do not create certification or curriculum-completion claims.",
+      "state": "AwaitingEvidence",
+      "surface_id": "verification_habit",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Help-request boundary questions only; no mentor assignment, hiring, delegation, or private detail exposure is authorized.",
+      "state": "AwaitingEvidence",
+      "surface_id": "help_request_boundary",
+      "surface_type": "local_draft"
+    }
+  ],
+  "mentor_assignment_allowed": false,
+  "next_action": "continue local learning loops; do not claim skill readiness, training completion, certification, paid course activation, mentor assignment, hiring readiness, delegation readiness, public tutorial publication, curriculum completion, production operation readiness, customer support readiness, external account use, or deployment readiness",
+  "paid_course_allowed": false,
+  "production_operation_readiness_claimed": false,
+  "public_tutorial_publication_allowed": false,
+  "schema_version": 1,
+  "skill_readiness_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "training_completion_claimed": false,
+  "witness_id": "foundation_learning_path_witness.awaiting_evidence.v1"
+}

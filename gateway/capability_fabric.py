@@ -344,10 +344,12 @@ class MaturityProjectingCapabilityAdmissionGate(CommandCapabilityAdmissionGate):
             if manifest_registry is not None
             else _empty_capability_manifest_registry_read_model(),
             "capability_manifest_gated": manifest_registry is not None,
+            "capability_manifest_coverage_status": manifest_coverage["coverage_status"],
             "capability_manifest_covered_count": len(manifest_coverage["covered_capability_ids"]),
             "capability_manifest_missing_count": len(manifest_coverage["missing_capability_ids"]),
             "capability_manifest_covered_capability_ids": manifest_coverage["covered_capability_ids"],
             "capability_manifest_missing_capability_ids": manifest_coverage["missing_capability_ids"],
+            "capability_manifest_coverage": manifest_coverage["coverage_records"],
         }
 
 
@@ -578,6 +580,10 @@ def _empty_capability_manifest_registry_read_model() -> dict:
         "capability_ids": (),
         "manifests": (),
         "admissions": (),
+        "capability_abi_coverage_status": "empty",
+        "capability_abi_covered_count": 0,
+        "capability_abi_blocked_count": 0,
+        "capability_abi_coverage": (),
     }
 
 
@@ -593,7 +599,7 @@ def _manifest_registry_capability_ids(read_model: dict | None) -> frozenset[str]
 def _project_manifest_coverage(
     registry_read_model: dict,
     manifest_read_model: dict | None,
-) -> dict[str, tuple[str, ...]]:
+) -> dict[str, object]:
     installed_ids = tuple(
         str(capability.get("capability_id", ""))
         for capability in registry_read_model.get("capabilities", ())
@@ -601,14 +607,140 @@ def _project_manifest_coverage(
     )
     if manifest_read_model is None:
         return {
+            "coverage_status": "not_configured",
             "covered_capability_ids": (),
             "missing_capability_ids": (),
+            "coverage_records": (),
         }
     manifest_ids = _manifest_registry_capability_ids(manifest_read_model)
+    covered_ids = tuple(sorted(set(installed_ids).intersection(manifest_ids)))
+    missing_ids = tuple(sorted(set(installed_ids).difference(manifest_ids)))
+    coverage_records = _manifest_coverage_records(
+        installed_ids=tuple(sorted(set(installed_ids))),
+        manifest_read_model=manifest_read_model,
+        manifest_ids=manifest_ids,
+    )
     return {
-        "covered_capability_ids": tuple(sorted(set(installed_ids).intersection(manifest_ids))),
-        "missing_capability_ids": tuple(sorted(set(installed_ids).difference(manifest_ids))),
+        "coverage_status": _manifest_coverage_status(coverage_records),
+        "covered_capability_ids": covered_ids,
+        "missing_capability_ids": missing_ids,
+        "coverage_records": coverage_records,
     }
+
+
+def _manifest_coverage_records(
+    *,
+    installed_ids: tuple[str, ...],
+    manifest_read_model: dict,
+    manifest_ids: frozenset[str],
+) -> tuple[dict, ...]:
+    abi_records_by_capability = _capability_abi_records_by_id(manifest_read_model)
+    records: list[dict] = []
+    for capability_id in installed_ids:
+        record = abi_records_by_capability.get(capability_id)
+        if capability_id in manifest_ids:
+            records.append(_covered_manifest_coverage_record(capability_id, record))
+        else:
+            records.append(_missing_manifest_coverage_record(capability_id, record))
+    return tuple(records)
+
+
+def _capability_abi_records_by_id(manifest_read_model: dict) -> dict[str, dict]:
+    records_by_id: dict[str, dict] = {}
+    raw_records = manifest_read_model.get("capability_abi_coverage", ())
+    if isinstance(raw_records, (tuple, list)):
+        for item in raw_records:
+            if not isinstance(item, dict):
+                continue
+            capability_id = str(item.get("capability_id", "")).strip()
+            if capability_id:
+                records_by_id[capability_id] = item
+    if records_by_id:
+        return records_by_id
+
+    for manifest in manifest_read_model.get("manifests", ()):
+        if not isinstance(manifest, dict):
+            continue
+        capability_id = str(manifest.get("capability_id", "")).strip()
+        if not capability_id:
+            continue
+        records_by_id[capability_id] = {
+            "capability_id": capability_id,
+            "source_ref": "capability-manifest-registry",
+            "admission_status": "admitted",
+            "coverage_status": "covered",
+            "reason": "manifest_admitted",
+            "maturity": str(manifest.get("maturity", "unknown")),
+            "risk": str(manifest.get("risk", "unknown")),
+            "effect_bearing": manifest.get("effect_bearing") is True,
+            "sandbox_required": manifest.get("sandbox_required") is True,
+            "rollback_required": manifest.get("rollback_required") is True,
+            "evidence_refs": _read_model_text_tuple(manifest.get("evidence_refs", ())),
+            "errors": (),
+            "warnings": (),
+        }
+    return records_by_id
+
+
+def _covered_manifest_coverage_record(capability_id: str, record: dict | None) -> dict:
+    source = record or {}
+    return {
+        "capability_id": capability_id,
+        "coverage_status": "covered",
+        "manifest_admitted": True,
+        "reason": str(source.get("reason", "manifest_admitted")),
+        "source_ref": str(source.get("source_ref", "capability-manifest-registry")),
+        "maturity": str(source.get("maturity", "unknown")),
+        "risk": str(source.get("risk", "unknown")),
+        "effect_bearing": source.get("effect_bearing") is True,
+        "sandbox_required": source.get("sandbox_required") is True,
+        "rollback_required": source.get("rollback_required") is True,
+        "evidence_refs": _read_model_text_tuple(source.get("evidence_refs", ())),
+        "errors": _read_model_text_tuple(source.get("errors", ())),
+    }
+
+
+def _missing_manifest_coverage_record(capability_id: str, record: dict | None) -> dict:
+    source = record or {}
+    blocked = str(source.get("coverage_status", "")) == "blocked"
+    return {
+        "capability_id": capability_id,
+        "coverage_status": "blocked" if blocked else "missing_manifest",
+        "manifest_admitted": False,
+        "reason": str(source.get("reason", "capability manifest is not admitted for typed intent")),
+        "source_ref": str(source.get("source_ref", "capability-manifest-registry")),
+        "maturity": str(source.get("maturity", "unknown")),
+        "risk": str(source.get("risk", "unknown")),
+        "effect_bearing": source.get("effect_bearing") is True,
+        "sandbox_required": source.get("sandbox_required") is True,
+        "rollback_required": source.get("rollback_required") is True,
+        "evidence_refs": _read_model_text_tuple(source.get("evidence_refs", ())),
+        "errors": _read_model_text_tuple(source.get("errors", ())),
+    }
+
+
+def _manifest_coverage_status(records: tuple[dict, ...]) -> str:
+    if not records:
+        return "empty"
+    statuses = {str(record.get("coverage_status", "")) for record in records}
+    if statuses == {"covered"}:
+        return "complete"
+    if "covered" in statuses:
+        return "partial"
+    if "blocked" in statuses:
+        return "blocked"
+    if "missing_manifest" in statuses:
+        return "missing"
+    return "unknown"
+
+
+def _read_model_text_tuple(value: object) -> tuple[str, ...]:
+    if isinstance(value, str):
+        stripped = value.strip()
+        return (stripped,) if stripped else ()
+    if not isinstance(value, (tuple, list)):
+        return ()
+    return tuple(str(item).strip() for item in value if str(item).strip())
 
 
 def _resolve_capability_manifest_directory(manifest_dir: Path | str | None) -> Path:
