@@ -171,12 +171,30 @@ def main(
 ) -> int:
     """CLI entry point for DNS resolution receipt collection."""
     args = parse_args(argv)
-    host = args.host or _host_from_gateway_url(args.gateway_url)
-    receipt = collect_gateway_dns_resolution_receipt(
-        host=host,
-        resolver=resolver,
-        now_utc=now_utc,
-    )
+    try:
+        host = args.host or _host_from_gateway_url(args.gateway_url)
+        receipt = collect_gateway_dns_resolution_receipt(
+            host=host,
+            resolver=resolver,
+            now_utc=now_utc,
+        )
+    except RuntimeError as exc:
+        if args.json:
+            print(
+                json.dumps(
+                    {
+                        "error": str(exc),
+                        "receipt_written": False,
+                        "resolved": False,
+                        "status": "failed",
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        else:
+            print("gateway DNS resolution receipt failed")
+        return 1
     write_gateway_dns_resolution_receipt(receipt, Path(args.output))
     if args.json:
         print(json.dumps(receipt.as_dict(), indent=2, sort_keys=True))
