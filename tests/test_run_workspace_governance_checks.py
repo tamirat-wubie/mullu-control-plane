@@ -24,7 +24,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     names = [command.name for command in commands]
     args_by_name = {command.name: command.args for command in commands}
 
-    assert names[:52] == [
+    assert names[:54] == [
         "local_assurance_plan",
         "agents_policy",
         "foundation_mode",
@@ -67,6 +67,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_domain_email_boundary",
         "foundation_legal_business_boundary",
         "foundation_product_scope_boundary",
+        "foundation_capability_roadmap_boundary",
+        "foundation_operations_runbook_boundary",
         "foundation_market_research_boundary",
         "foundation_pilot_deferral_boundary",
         "foundation_support_readiness_boundary",
@@ -78,7 +80,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_community_network_boundary",
         "protocol_manifest",
     ]
-    assert names[56:64] == [
+    assert names[58:66] == [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
         "workspace_governance_witness_contract",
@@ -88,7 +90,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "workspace_governance_integrity_report_contract",
         "universal_action_orchestration_contract",
     ]
-    assert len(names) == 71
+    assert len(names) == 73
     assert names[-8:] == [
         "universal_action_orchestration_contract",
         "universal_action_orchestration_validation_receipt_contract",
@@ -222,6 +224,12 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["foundation_product_scope_boundary"][1:] == (
         "scripts/validate_foundation_product_scope_boundary.py",
+    )
+    assert args_by_name["foundation_capability_roadmap_boundary"][1:] == (
+        "scripts/validate_foundation_capability_roadmap_boundary.py",
+    )
+    assert args_by_name["foundation_operations_runbook_boundary"][1:] == (
+        "scripts/validate_foundation_operations_runbook_boundary.py",
     )
     assert args_by_name["foundation_market_research_boundary"][1:] == (
         "scripts/validate_foundation_market_research_boundary.py",

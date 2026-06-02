@@ -30,6 +30,8 @@ Invariants: this snapshot may not claim public production health, legal clearanc
 | Documentation | Local navigation draft only | Does not claim documentation completeness, canonical docs, public-launch copy, customer readiness, deployment readiness, legal clearance, commercial readiness, external publication, or deployment readiness |
 | Plain-language status | Local non-technical explanation only | Does not claim plain-language completeness, comprehension proof, product readiness, capability availability, real-task execution readiness, customer readiness, public launch, legal clearance, commercial readiness, paid-use readiness, money-movement readiness, canonical docs, external publication, or deployment readiness |
 | Accessibility/language | Local usability questions only | Does not claim accessibility compliance, WCAG conformance, screen-reader verification, keyboard-navigation verification, contrast compliance, mobile accessibility verification, translation readiness, localization readiness, Mfidel support, Amharic support, public accessibility statements, external user testing, personal-data collection, customer access, external publication, or deployment readiness |
+| Capability roadmap | [`docs/FOUNDATION_CAPABILITY_ROADMAP_BOUNDARY.md`](FOUNDATION_CAPABILITY_ROADMAP_BOUNDARY.md) local sequencing questions only | Does not claim capability inventory completeness, capability availability, roadmap commitment, delivery-date promise, final sequencing, dependency activation, public roadmap, customer commitment, pilot commitment, support commitment, pricing commitment, money movement, external publication, or deployment readiness |
+| Operations/runbook | Local procedure questions only | Does not claim runbook execution, incident-response readiness, monitoring readiness, alerting readiness, on-call readiness, SLO readiness, recovery readiness, operational-graph completeness, MIL runbook admission readiness, customer-support operations, external publication, or deployment readiness |
 | Claim boundary | Local claim-separation draft only | Does not claim production health, endpoint readiness, customer readiness, pilot readiness, legal clearance, commercial readiness, public launch, compliance certification, external publication, or deployment readiness |
 | Website posture | Local website-copy review only | Does not mutate website files, publish routes, invite access, open waitlists, open beta, accept pilot signups, collect customer intake, claim production runtime, claim endpoint readiness, launch paid use, or deploy |
 | Research notebook | Local concept-organization draft only | Does not claim patent protection, trade-secret protection, scientific validation, physical-world validation, market validation, customer readiness, external publication, paid launch, secret evidence, or deployment readiness |
@@ -104,6 +106,8 @@ Do not use these until the corresponding evidence exists:
 | Documentation boundary | `docs/FOUNDATION_DOCUMENTATION_BOUNDARY.md` |
 | Plain-language status boundary | `docs/FOUNDATION_PLAIN_LANGUAGE_STATUS_BOUNDARY.md` |
 | Accessibility/language boundary | `docs/FOUNDATION_ACCESSIBILITY_LANGUAGE_BOUNDARY.md` |
+| Capability-roadmap boundary | `docs/FOUNDATION_CAPABILITY_ROADMAP_BOUNDARY.md` |
+| Operations/runbook boundary | `docs/FOUNDATION_OPERATIONS_RUNBOOK_BOUNDARY.md` |
 | Claim boundary | `docs/FOUNDATION_CLAIM_BOUNDARY.md` |
 | Website-posture boundary | `docs/FOUNDATION_WEBSITE_POSTURE_BOUNDARY.md` |
 | Research-notebook boundary | `docs/FOUNDATION_RESEARCH_NOTEBOOK_BOUNDARY.md` |

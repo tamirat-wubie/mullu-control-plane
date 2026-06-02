@@ -169,6 +169,21 @@ translation, localization, Mfidel, Amharic, and public accessibility-statement
 questions local without claiming accessibility compliance, WCAG conformance,
 verification, language readiness, user testing, personal-data collection,
 customer access, external publication, or deployment.
+Capability-roadmap posture is bounded by
+[`docs/FOUNDATION_CAPABILITY_ROADMAP_BOUNDARY.md`](docs/FOUNDATION_CAPABILITY_ROADMAP_BOUNDARY.md),
+which keeps capability-family, readiness, sequencing, dependency,
+evidence-gate, user-value, support-load, pricing-exposure, public-claim, and
+evolution-review questions local without claiming inventory completeness,
+availability, roadmap commitment, delivery dates, customer commitment, pilot
+commitment, support commitment, pricing commitment, money movement,
+publication, or deployment.
+Operations/runbook posture is bounded by
+[`docs/FOUNDATION_OPERATIONS_RUNBOOK_BOUNDARY.md`](docs/FOUNDATION_OPERATIONS_RUNBOOK_BOUNDARY.md),
+which keeps runbook inventory, procedure dry-run, incident response,
+monitoring, alerting, on-call, SLO, recovery, operational graph, MIL audit
+runbook, and evidence-promotion questions local without claiming runbook
+execution, operational readiness, customer-support operations, external
+publication, or deployment.
 Claim posture is bounded by
 [`docs/FOUNDATION_CLAIM_BOUNDARY.md`](docs/FOUNDATION_CLAIM_BOUNDARY.md),
 which separates repository proof, public copy, runtime proof, legal/business
@@ -294,6 +309,12 @@ runner. Product-scope learning is bounded by
 [`docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md`](docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md),
 which selects one local proof lane without restricting the long-term platform or
 opening pilot, customer, market, paid-launch, or deployment-readiness claims.
+Capability-roadmap preparation is bounded by
+[`docs/FOUNDATION_CAPABILITY_ROADMAP_BOUNDARY.md`](docs/FOUNDATION_CAPABILITY_ROADMAP_BOUNDARY.md),
+which drafts capability-family, readiness, sequencing, dependency,
+evidence-gate, user-value, support-load, pricing-exposure, public-claim, and
+evolution-review questions without availability, roadmap, delivery-date,
+customer, pilot, support, pricing, money, publication, or deployment claims.
 Pilot deferral is bounded by
 [`docs/FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md),
 which drafts pilot purpose, participant-boundary, access-channel, consent,

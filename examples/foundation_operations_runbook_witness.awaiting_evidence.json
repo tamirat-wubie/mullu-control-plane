@@ -1,0 +1,106 @@
+{
+  "alerting_ready": false,
+  "blocked_claims": [
+    "runbook execution",
+    "incident-response readiness",
+    "monitoring readiness",
+    "alerting readiness",
+    "on-call readiness",
+    "SLO or error-budget readiness",
+    "recovery readiness",
+    "operational graph completeness",
+    "MIL runbook admission readiness",
+    "customer-support operations",
+    "external publication",
+    "deployment readiness"
+  ],
+  "customer_support_operations_allowed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "incident_response_ready": false,
+  "mil_runbook_admission_ready": false,
+  "monitoring_ready": false,
+  "next_action": "keep operations and runbook preparation local; do not claim runbook execution, incident-response readiness, monitoring readiness, alerting readiness, on-call readiness, SLO readiness, recovery readiness, operational graph completeness, MIL runbook admission readiness, customer-support operations, external publication, or deployment without a later signed witness",
+  "on_call_ready": false,
+  "operational_graph_complete": false,
+  "operations_runbook_claimed": false,
+  "operations_runbook_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft runbook-inventory questions only; no executable runbook, trusted skill, or procedural memory claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runbook_inventory_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft procedure dry-run questions only; no operational execution, runtime mutation, or live receipt is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "procedure_dry_run_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft incident-response questions only; no severity coverage, containment readiness, or response readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "incident_response_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft monitoring and alert questions only; no dashboard, alert route, live signal, or monitoring readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "monitoring_alert_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft on-call and escalation questions only; no staffed rotation, support coverage, or escalation readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "on_call_escalation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft SLO and error-budget questions only; no production obligation, protected-variable readiness, or threshold readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "slo_error_budget_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft rollback and recovery questions only; no rollback readiness, recovery readiness, or compensation readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rollback_recovery_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft operational-graph questions only; no graph completeness, live operational truth, or outstanding-obligation closure is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operational_graph_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft MIL audit runbook questions only; no hash-chain closure, replay validation, learning admission, or runbook storage readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "mil_audit_runbook_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft evidence-promotion questions only; no customer-support operations, external publication, or deployment is authorized.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_promotion_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "recovery_ready": false,
+  "runbook_execution_allowed": false,
+  "schema_version": 1,
+  "slo_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_operations_runbook_witness.awaiting_evidence.v1"
+}
