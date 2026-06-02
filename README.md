@@ -537,7 +537,70 @@ External agents (Claude Code, Cursor, etc.) connect to Mullu as a governed tool 
 
 6 governed tools: `mullu_llm`, `mullu_query`, `mullu_execute`, `mullu_balance`, `mullu_transactions`, `mullu_pay`.
 
-## Architecture
+## Current Architecture
+
+Current repository layout map, verified against the local checkout:
+
+```
+mullu-control-plane/
+|-- mcoi/                         # MCOI Runtime; Python runtime and tests.
+|   |-- mcoi_runtime/
+|   |   |-- app/                  # FastAPI/CLI surfaces with APIRouter-backed routes.
+|   |   |-- substrate/            # Mfidel grid, construct substrate, and Phi_gov substrate surfaces.
+|   |   |-- cognition/            # SCCE/SCCCE cycle surfaces: symbol field, tension, convergence.
+|   |   |-- ucja/                 # L0-L9 execution pipeline.
+|   |   |-- domain_adapters/      # Domain adapters for software, business, research, manufacturing, healthcare, and education.
+|   |   |-- migration/            # Proof and witness migration runners.
+|   |   |-- core/                 # Governance, routing, coordination, closure, and orchestration engines.
+|   |   |-- contracts/            # Frozen Python contract and witness dataclasses.
+|   |   |-- adapters/             # Provider, shell, browser, HTTP, and execution adapters.
+|   |   |-- persistence/          # PostgreSQL, SQLite, and memory stores.
+|   |   |-- mcp/                  # MCP tool-provider server for governed external agents.
+|   |   |-- assistant_kernel/     # Assistant/kernel control surfaces.
+|   |   |-- governance/           # Runtime governance helpers.
+|   |   |-- intent_substrate/     # Intent classification and substrate bridge.
+|   |   |-- layers/               # Layered runtime interfaces.
+|   |   |-- swarm/                # Governed swarm runtime surfaces.
+|   |   |-- whqr/                 # WH-question routing surfaces.
+|   |   |-- workers/              # Worker execution surfaces.
+|   |   `-- pilot/                # Deployment and pilot profiles.
+|   `-- tests/                    # Runtime tests.
+|-- gateway/                      # Channel Gateway: WhatsApp, Telegram, Slack, Discord, and Web.
+|   |-- channels/                 # Channel adapters.
+|   |-- router.py                 # Unified message routing.
+|   |-- approval.py               # Risk classification and approval lifecycle.
+|   |-- session.py                # Conversation context management.
+|   |-- skill_dispatch.py         # Intent-to-skill dispatch.
+|   |-- handoff.py                # Multi-agent handoff with loop detection.
+|   `-- server.py                 # FastAPI webhook server.
+|-- capabilities/                 # Governed capability-pack and capability metadata surfaces.
+|-- capsules/                     # Domain capsule surfaces.
+|-- skills/                       # Financial, creative, enterprise, and support skills.
+|-- assistant_profiles/           # Assistant profile descriptors.
+|-- installer/                    # Interactive setup wizard.
+|-- integration/                  # Integration fixtures and checks.
+|-- sdk/                          # SDK/client surfaces.
+|-- site/                         # Local website/static surfaces.
+|-- maf/                          # MAF Rust crate family; receipt-shape parity, no Python runtime binding today.
+|-- docs/                         # Architecture, governance, Foundation Mode, and witness docs.
+|-- examples/                     # Public-safe witness and receipt examples.
+|-- scripts/                      # Validators, preflight, evidence, receipt, and release tooling.
+|-- schemas/                      # JSON schema files.
+|-- tests/                        # Repository-level tests.
+|-- k8s/                          # Kubernetes manifests.
+`-- docker-compose.yml            # Local compose deployment profile.
+```
+
+This map is a layout and boundary map, not a readiness certificate. Foundation
+Mode still blocks deployment, customer access, fundraising, hiring, money
+movement, and external publication unless a later signed witness promotes one
+bounded action.
+
+## Legacy Architecture Snapshot
+
+The following older tree is retained as a historical snapshot until the full
+architecture reference is consolidated. Use the current map above for the active
+repository layout.
 
 ```
 mullu-control-plane/
