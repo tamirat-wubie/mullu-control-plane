@@ -234,7 +234,8 @@ in the wrong room. Use the table above to pick the right room.
    local payment-provider preparation without provider activation, account
    binding, merchant onboarding, KYC/tax readiness, payment-method collection,
    live charges, refunds, payouts, webhook activation, checkout publication,
-   money movement, customer payment access, publication, or deployment claims.
+   money movement, customer payment access, external publication, or deployment
+   claims.
 31. **[Foundation Runtime Environment Boundary](FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md)** --
    local runtime and environment preparation without starting services, opening
    endpoints, running migrations, or deploying.
