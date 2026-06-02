@@ -1,0 +1,22 @@
+# Persistence tenant-guard coverage baseline.
+#
+# Acknowledged persistence store by-id reads of a tenant-owned record that do NOT
+# yet call request_tenant_guard.assert_owns (defense-in-depth). One key per line:
+#   mcoi/mcoi_runtime/persistence/<file>.py::<Class>.<method>
+#
+# A NEW unguarded by-id read (not listed here) fails CI -- it must either call
+# assert_owns(record.tenant_id) or be added here with a reason. The goal is for
+# this list to shrink to empty; do not grow it without justification.
+#
+# Lines starting with '#' and blank lines are ignored.
+
+# Not request-exposed: TenantLedger.get_session has no HTTP router caller (only
+# internal helpers + tests), so there is no by-id endpoint to defend. Left
+# unguarded deliberately; revisit if a tenant-session read is ever exposed.
+mcoi/mcoi_runtime/persistence/tenant_ledger.py::TenantLedger.get_session
+
+# Guarded as of PR #1219 (assert_owns added to get_action). This entry is a
+# no-op once #1219 is on main (the method is no longer a finding) and should be
+# removed in a follow-up; retained here only so this linter passes on bases cut
+# before #1219 merged.
+mcoi/mcoi_runtime/persistence/temporal_scheduler_store.py::TemporalSchedulerStore.get_action
