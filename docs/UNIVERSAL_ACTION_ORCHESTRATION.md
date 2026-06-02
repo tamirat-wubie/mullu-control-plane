@@ -30,6 +30,7 @@ UniversalActionOrchestration :=
 | `admission_receipt_ref` | Receipt reference proving admission was recorded. |
 | `execution_receipt_ref` | Receipt reference proving execution only when execution is admitted; otherwise null. |
 | `recovery_plan` | Explicit rollback or compensation path available before effect-bearing execution closure. |
+| `claim_ledger` | Typed operational claims, evidence references, confidence, verification state, and unverified claim IDs. |
 | `closure_state` | Terminal closure state mirrored from `closure.status`. |
 | `closure.reconciliation_ref` | Reconciliation stage output retained in the closure receipt boundary. |
 | `closure.memory_ref` | Admitted memory update reference retained in the closure receipt boundary, or null when no memory update is admitted. |
@@ -73,12 +74,15 @@ The validator applies these rules deterministically:
 21. Every command replay record must bind proof hash to an independent recomputation of the persisted event-local universal action proof detail before exposure.
 22. Every closure receipt must bind closure state to reconciliation and memory references before exposure.
 23. Every effect-bearing `allow` or post-dispatch review action must carry an available `recovery_plan` with rollback or compensation references before closure.
+24. Every UAO record must expose a `claim_ledger`; verified claims require evidence refs and evidence-free claims must be marked unverified.
 
 The core invariant is:
 
 ```text
 effect_bearing(action) -> trace_ref and admission_receipt_ref and closure_state
 effect_bearing(action) and execution_closure(action) -> recovery_plan.available
+claim.verified -> non_empty(claim.evidence_refs)
+empty(claim.evidence_refs) -> claim_id in claim_ledger.unverified_claim_ids
 ```
 
 Invalid UAO is a preflight-blocking condition:

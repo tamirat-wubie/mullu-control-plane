@@ -1181,6 +1181,15 @@ def build_universal_action_orchestration_record(
         reconciliation_ref=reconciliation_ref,
         memory_ref=memory_ref,
     )
+    claim_ledger = _uao_record_claim_ledger(
+        result=result,
+        decision=decision,
+        receipt_refs=receipt_refs,
+        outcome_ref=outcome_ref,
+        reconciliation_ref=reconciliation_ref,
+        memory_ref=memory_ref,
+        recovery_plan=recovery_plan,
+    )
     return {
         "orchestration_id": stable_identifier(
             "universal-action-orchestration",
@@ -1203,6 +1212,7 @@ def build_universal_action_orchestration_record(
         "capability_refs": capability_refs,
         "temporal_refs": temporal_refs,
         "recovery_plan": recovery_plan,
+        "claim_ledger": claim_ledger,
         "exposure_boundary": {
             "redaction_level": "audit",
             "allowed_audiences": ["operator", "auditor"],
@@ -1742,6 +1752,144 @@ def _uao_record_recovery_plan(result: UniversalActionResult) -> dict[str, Any]:
         "review_required_on_failure": certificate.review_required_on_failure,
         "certificate_ref": certificate.certificate_id,
         "effect_plan_ref": certificate.effect_plan_id,
+    }
+
+
+def _uao_record_claim_ledger(
+    *,
+    result: UniversalActionResult,
+    decision: Mapping[str, Any],
+    receipt_refs: Mapping[str, str],
+    outcome_ref: str | None,
+    reconciliation_ref: str | None,
+    memory_ref: str | None,
+    recovery_plan: Mapping[str, Any],
+) -> dict[str, Any]:
+    ledger_ref = stable_identifier(
+        "universal-action-claim-ledger",
+        {
+            "action_id": result.action_id,
+            "trace_ref": result.trace_ref,
+            "closure_state": result.closure_state,
+        },
+    )
+    claims = [
+        _uao_claim(
+            result=result,
+            claim_type="decision",
+            statement=(
+                "Universal action decision "
+                f"{decision['status']} recorded for {result.action_id}."
+            ),
+            evidence_refs=[result.trace_ref, result.admission_receipt_ref],
+            verified=True,
+            confidence=1.0,
+        ),
+        _uao_claim(
+            result=result,
+            claim_type="closure",
+            statement=(
+                "Universal action closure state "
+                f"{result.closure_state} recorded for {result.action_id}."
+            ),
+            evidence_refs=[receipt_refs["closure"], result.closure_state],
+            verified=True,
+            confidence=1.0,
+        ),
+    ]
+    if result.execution_receipt_ref is not None and outcome_ref is not None:
+        claims.append(
+            _uao_claim(
+                result=result,
+                claim_type="execution",
+                statement=f"Execution receipt emitted for {result.action_id}.",
+                evidence_refs=[result.execution_receipt_ref, outcome_ref],
+                verified=True,
+                confidence=0.95,
+            )
+        )
+    if reconciliation_ref is not None:
+        reconciliation_receipt = receipt_refs.get("reconciliation")
+        claims.append(
+            _uao_claim(
+                result=result,
+                claim_type="reconciliation",
+                statement=f"Reconciliation record linked for {result.action_id}.",
+                evidence_refs=[
+                    ref
+                    for ref in (reconciliation_ref, reconciliation_receipt)
+                    if ref
+                ],
+                verified=True,
+                confidence=0.95,
+            )
+        )
+    if memory_ref is not None:
+        claims.append(
+            _uao_claim(
+                result=result,
+                claim_type="memory",
+                statement=f"Memory update linked for {result.action_id}.",
+                evidence_refs=[memory_ref],
+                verified=True,
+                confidence=0.9,
+            )
+        )
+    if recovery_plan.get("available") is True:
+        claims.append(
+            _uao_claim(
+                result=result,
+                claim_type="recovery",
+                statement=f"Recovery path certified for {result.action_id}.",
+                evidence_refs=_unique_text_list(
+                    (
+                        _optional_text_value(recovery_plan.get("recovery_plan_ref"))
+                        or "",
+                        _optional_text_value(recovery_plan.get("certificate_ref"))
+                        or "",
+                        _optional_text_value(recovery_plan.get("effect_plan_ref"))
+                        or "",
+                    )
+                ),
+                verified=True,
+                confidence=0.95,
+            )
+        )
+    return {
+        "ledger_ref": f"claim-ledger://{ledger_ref}",
+        "claims": claims,
+        "unverified_claim_ids": [
+            claim["claim_id"] for claim in claims if not claim["verified"]
+        ],
+    }
+
+
+def _uao_claim(
+    *,
+    result: UniversalActionResult,
+    claim_type: str,
+    statement: str,
+    evidence_refs: list[str],
+    verified: bool,
+    confidence: float,
+) -> dict[str, Any]:
+    normalized_evidence_refs = _unique_text_list(evidence_refs)
+    claim_id = stable_identifier(
+        "universal-action-claim",
+        {
+            "action_id": result.action_id,
+            "claim_type": claim_type,
+            "statement": statement,
+            "evidence_refs": normalized_evidence_refs,
+        },
+    )
+    return {
+        "claim_id": f"claim://{claim_id}",
+        "claim_type": claim_type,
+        "statement": statement,
+        "evidence_refs": normalized_evidence_refs,
+        "confidence": confidence,
+        "verified": verified,
     }
 
 

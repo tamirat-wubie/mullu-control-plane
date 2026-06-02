@@ -20,6 +20,7 @@
     "capability_refs",
     "temporal_refs",
     "recovery_plan",
+    "claim_ledger",
     "exposure_boundary",
     "pipeline_stages",
     "admission_guards",
@@ -71,6 +72,7 @@
       "uniqueItems": true
     },
     "recovery_plan": { "$ref": "#/$defs/recovery_plan" },
+    "claim_ledger": { "$ref": "#/$defs/claim_ledger" },
     "exposure_boundary": { "$ref": "#/$defs/exposure_boundary" },
     "pipeline_stages": {
       "type": "array",
@@ -184,6 +186,44 @@
         "review_required_on_failure": { "type": "boolean" },
         "certificate_ref": { "type": ["string", "null"], "minLength": 1 },
         "effect_plan_ref": { "type": ["string", "null"], "minLength": 1 }
+      }
+    },
+    "claim_ledger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ledger_ref", "claims", "unverified_claim_ids"],
+      "properties": {
+        "ledger_ref": { "type": "string", "minLength": 1 },
+        "claims": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/claim" }
+        },
+        "unverified_claim_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_id", "claim_type", "statement", "evidence_refs", "confidence", "verified"],
+      "properties": {
+        "claim_id": { "type": "string", "minLength": 1 },
+        "claim_type": {
+          "type": "string",
+          "enum": ["decision", "execution", "reconciliation", "memory", "closure", "recovery"]
+        },
+        "statement": { "type": "string", "minLength": 1 },
+        "evidence_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "verified": { "type": "boolean" }
       }
     },
     "pipeline_stage": {

@@ -50,6 +50,34 @@
     "certificate_ref": "certificate://recovery/payments-invoice-456",
     "effect_plan_ref": "effect-plan://payments/invoice-456"
   },
+  "claim_ledger": {
+    "ledger_ref": "claim-ledger://uao_missing_approval",
+    "claims": [
+      {
+        "claim_id": "claim://uao_missing_approval_decision",
+        "claim_type": "decision",
+        "statement": "Invoice payment publication was blocked because approval was missing.",
+        "evidence_refs": [
+          "trace://cdt_blocked_missing_approval_001",
+          "receipt://uao_admission_missing_approval"
+        ],
+        "confidence": 1.0,
+        "verified": true
+      },
+      {
+        "claim_id": "claim://uao_missing_approval_closure",
+        "claim_type": "closure",
+        "statement": "Invoice payment publication closed blocked without execution.",
+        "evidence_refs": [
+          "receipt://uao_closure_missing_approval",
+          "closure://uao_missing_approval"
+        ],
+        "confidence": 1.0,
+        "verified": true
+      }
+    ],
+    "unverified_claim_ids": []
+  },
   "exposure_boundary": {
     "redaction_level": "user_safe",
     "allowed_audiences": [

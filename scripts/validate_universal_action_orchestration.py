@@ -62,6 +62,7 @@ REQUIRED_ROOT_FIELDS = (
     "capability_refs",
     "temporal_refs",
     "recovery_plan",
+    "claim_ledger",
     "exposure_boundary",
     "pipeline_stages",
     "admission_guards",
@@ -151,6 +152,15 @@ REQUIRED_SCHEMA_DEFS = {
         "certificate_ref",
         "effect_plan_ref",
     ),
+    "claim_ledger": ("ledger_ref", "claims", "unverified_claim_ids"),
+    "claim": (
+        "claim_id",
+        "claim_type",
+        "statement",
+        "evidence_refs",
+        "confidence",
+        "verified",
+    ),
     "pipeline_stage": (
         "stage_id",
         "stage_order",
@@ -219,6 +229,7 @@ REQUIRED_DOCUMENT_TERMS = (
     "Every command replay record must bind proof hash to an independent recomputation of the persisted event-local universal action proof detail before exposure.",
     "Every closure receipt must bind closure state to reconciliation and memory references before exposure.",
     "Every effect-bearing `allow` or post-dispatch review action must carry an available `recovery_plan` with rollback or compensation references before closure.",
+    "Every UAO record must expose a `claim_ledger`; verified claims require evidence refs and evidence-free claims must be marked unverified.",
 )
 
 
@@ -340,6 +351,7 @@ def validate_orchestration(record: dict[str, Any]) -> list[str]:
         )
     )
     errors.extend(_validate_recovery_plan(record["recovery_plan"], record["decision"]))
+    errors.extend(_validate_claim_ledger(record["claim_ledger"], record))
     errors.extend(_validate_exposure_boundary(record["exposure_boundary"]))
 
     stages_by_kind: dict[str, dict[str, Any]] = {}
@@ -755,6 +767,159 @@ def _validate_recovery_plan(
     ]:
         errors.append("recovery_plan_missing decision cannot carry available recovery_plan")
     return errors
+
+
+def _validate_claim_ledger(claim_ledger: Any, record: dict[str, Any]) -> list[str]:
+    errors = _validate_required_fields(
+        "claim_ledger",
+        claim_ledger,
+        ("ledger_ref", "claims", "unverified_claim_ids"),
+    )
+    if errors:
+        return errors
+    if not isinstance(claim_ledger["ledger_ref"], str) or not claim_ledger["ledger_ref"]:
+        errors.append("claim_ledger.ledger_ref must be a non-empty string")
+    errors.extend(
+        _validate_string_array(
+            "claim_ledger.unverified_claim_ids",
+            claim_ledger["unverified_claim_ids"],
+        )
+    )
+    claims = claim_ledger["claims"]
+    if not isinstance(claims, list):
+        return [*errors, "claim_ledger.claims must be a list"]
+    if not claims:
+        errors.append("claim_ledger.claims must contain at least one claim")
+    claim_ids: set[str] = set()
+    known_refs = _known_claim_evidence_refs(record)
+    unverified_claim_ids = set(claim_ledger["unverified_claim_ids"])
+    for index, claim in enumerate(claims):
+        label = f"claim_ledger.claims[{index}]"
+        errors.extend(_validate_claim_record(label, claim))
+        if not isinstance(claim, dict) or any(
+            field not in claim for field in REQUIRED_SCHEMA_DEFS["claim"]
+        ):
+            continue
+        claim_id = claim["claim_id"]
+        if claim_id in claim_ids:
+            errors.append(f"duplicate claim_id: {claim_id}")
+        else:
+            claim_ids.add(claim_id)
+        evidence_refs = claim["evidence_refs"]
+        verified = claim["verified"]
+        if verified and not evidence_refs:
+            errors.append(f"{label}: verified claim requires evidence_refs")
+        if not evidence_refs and verified is False and claim_id not in unverified_claim_ids:
+            errors.append(
+                f"{label}: evidence-free claim must appear in unverified_claim_ids"
+            )
+        if evidence_refs and verified is False and claim_id not in unverified_claim_ids:
+            errors.append(f"{label}: unverified claim must appear in unverified_claim_ids")
+        for evidence_ref in evidence_refs:
+            if evidence_ref not in known_refs:
+                errors.append(f"{label}.evidence_refs references unknown evidence: {evidence_ref}")
+    if unknown_unverified := sorted(unverified_claim_ids - claim_ids):
+        errors.append(
+            "claim_ledger.unverified_claim_ids references unknown claim(s): "
+            + ", ".join(unknown_unverified)
+        )
+    for claim in claims:
+        if (
+            isinstance(claim, dict)
+            and claim.get("claim_id") in unverified_claim_ids
+            and claim.get("verified") is True
+        ):
+            errors.append(
+                f"claim_ledger.unverified_claim_ids includes verified claim: {claim['claim_id']}"
+            )
+    return errors
+
+
+def _validate_claim_record(label: str, claim: Any) -> list[str]:
+    errors = _validate_required_fields(label, claim, REQUIRED_SCHEMA_DEFS["claim"])
+    if errors:
+        return errors
+    for field_name in ("claim_id", "claim_type", "statement"):
+        if not isinstance(claim[field_name], str) or not claim[field_name]:
+            errors.append(f"{label}.{field_name} must be a non-empty string")
+    if claim["claim_type"] not in {
+        "decision",
+        "execution",
+        "reconciliation",
+        "memory",
+        "closure",
+        "recovery",
+    }:
+        errors.append(f"{label}.claim_type is invalid")
+    errors.extend(_validate_string_array(f"{label}.evidence_refs", claim["evidence_refs"]))
+    confidence = claim["confidence"]
+    if (
+        not isinstance(confidence, (int, float))
+        or isinstance(confidence, bool)
+        or not 0 <= confidence <= 1
+    ):
+        errors.append(f"{label}.confidence must be a number in [0, 1]")
+    if not isinstance(claim["verified"], bool):
+        errors.append(f"{label}.verified must be boolean")
+    return errors
+
+
+def _known_claim_evidence_refs(record: dict[str, Any]) -> set[str]:
+    refs: set[str] = set()
+    for field_name in (
+        "input_refs",
+        "policy_refs",
+        "capability_refs",
+        "temporal_refs",
+    ):
+        refs.update(_text_items(record.get(field_name)))
+    refs.update(_text_items(record.get("action_envelope", {}).get("evidence_refs")))
+    refs.update(_text_items(record.get("action_envelope", {}).get("capability_refs")))
+    for field_name in (
+        "trace_ref",
+        "causal_decision_trace_ref",
+        "admission_receipt_ref",
+        "execution_receipt_ref",
+        "closure_state",
+    ):
+        value = record.get(field_name)
+        if isinstance(value, str) and value:
+            refs.add(value)
+    for receipt in record.get("receipts", ()):
+        if isinstance(receipt, dict):
+            refs.update(_text_items((receipt.get("receipt_id"), receipt.get("confirms"))))
+    for stage in record.get("pipeline_stages", ()):
+        if isinstance(stage, dict):
+            refs.update(_text_items(stage.get("input_refs")))
+            refs.update(_text_items(stage.get("output_refs")))
+            refs.update(_text_items((stage.get("receipt_ref"),)))
+    for guard in record.get("admission_guards", ()):
+        if isinstance(guard, dict):
+            refs.update(_text_items(guard.get("evidence_refs")))
+    for field_name in ("recovery_plan", "reconciliation", "memory_update", "closure"):
+        value = record.get(field_name)
+        if isinstance(value, dict):
+            refs.update(_iter_nested_text(value))
+    return refs
+
+
+def _text_items(value: Any) -> set[str]:
+    if isinstance(value, str) and value:
+        return {value}
+    if isinstance(value, (list, tuple)):
+        return {item for item in value if isinstance(item, str) and item}
+    return set()
+
+
+def _iter_nested_text(value: Any):
+    if isinstance(value, str) and value:
+        yield value
+    elif isinstance(value, dict):
+        for child in value.values():
+            yield from _iter_nested_text(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _iter_nested_text(child)
 
 
 def _validate_action_envelope(

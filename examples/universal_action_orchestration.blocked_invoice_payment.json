@@ -53,6 +53,34 @@
     "certificate_ref": "certificate://recovery/payments-invoice-123",
     "effect_plan_ref": "effect-plan://payments/invoice-123"
   },
+  "claim_ledger": {
+    "ledger_ref": "claim-ledger://uao_invoice_payment_blocked",
+    "claims": [
+      {
+        "claim_id": "claim://uao_invoice_payment_blocked_decision",
+        "claim_type": "decision",
+        "statement": "Invoice payment was blocked by admission.",
+        "evidence_refs": [
+          "trace://cdt_blocked_approval_expired_001",
+          "receipt://uao_admission_invoice_payment_blocked"
+        ],
+        "confidence": 1.0,
+        "verified": true
+      },
+      {
+        "claim_id": "claim://uao_invoice_payment_blocked_closure",
+        "claim_type": "closure",
+        "statement": "Invoice payment closed blocked without execution receipt.",
+        "evidence_refs": [
+          "receipt://uao_closure_invoice_payment_blocked",
+          "closure://uao_invoice_payment_blocked"
+        ],
+        "confidence": 1.0,
+        "verified": true
+      }
+    ],
+    "unverified_claim_ids": []
+  },
   "exposure_boundary": {
     "redaction_level": "user_safe",
     "allowed_audiences": [

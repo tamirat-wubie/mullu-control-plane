@@ -46,6 +46,35 @@
     "certificate_ref": null,
     "effect_plan_ref": null
   },
+  "claim_ledger": {
+    "ledger_ref": "claim-ledger://uao_status_preview",
+    "claims": [
+      {
+        "claim_id": "claim://uao_status_preview_decision",
+        "claim_type": "decision",
+        "statement": "Status summary preview was admitted as simulation-only.",
+        "evidence_refs": [
+          "trace://cdt_simulated_low_risk_readonly_001",
+          "receipt://uao_admission_status_preview"
+        ],
+        "confidence": 1.0,
+        "verified": true
+      },
+      {
+        "claim_id": "claim://uao_status_preview_closure",
+        "claim_type": "closure",
+        "statement": "Status summary preview closed simulated without external mutation.",
+        "evidence_refs": [
+          "receipt://uao_simulation_status_preview",
+          "receipt://uao_closure_status_preview",
+          "closure://uao_status_preview"
+        ],
+        "confidence": 1.0,
+        "verified": true
+      }
+    ],
+    "unverified_claim_ids": []
+  },
   "exposure_boundary": {
     "redaction_level": "user_safe",
     "allowed_audiences": [
