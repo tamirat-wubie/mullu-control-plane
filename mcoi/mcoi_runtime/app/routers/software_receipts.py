@@ -10,9 +10,12 @@ Invariants:
 """
 from __future__ import annotations
 
+from html import escape
 from typing import Any
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
@@ -25,6 +28,7 @@ from mcoi_runtime.core.private_pilot_story import (
     DEFAULT_PRIVATE_PILOT_ORG_ID,
     PrivatePilotStoryError,
     PrivatePilotStoryRequest,
+    build_private_pilot_operator_view,
     build_private_pilot_story,
 )
 from mcoi_runtime.core.sdlc_dashboard import (
@@ -118,6 +122,18 @@ class PrivatePilotStoryEnvelope(BaseModel):
     governed: bool = True
 
 
+class PrivatePilotOperatorViewEnvelope(BaseModel):
+    """HTTP response envelope for the private pilot operator view."""
+
+    operation: str
+    tenant_id: str
+    operator_view: dict[str, Any]
+    timeline_count: int
+    receipt_count: int
+    operator_ready: bool
+    governed: bool = True
+
+
 def _bounded_http_error(summary: str, exc: Exception) -> dict[str, str]:
     return {"error": summary, "type": type(exc).__name__}
 
@@ -178,6 +194,163 @@ def _review_signals(receipts: tuple[SoftwareChangeReceipt, ...]) -> list[dict[st
         }
         for receipt in receipts
     ]
+
+
+def _private_pilot_story_read_model(
+    *,
+    tenant_id: str,
+    org_id: str,
+    case_id: str,
+    actor_id: str,
+) -> dict[str, Any]:
+    try:
+        return build_private_pilot_story(
+            PrivatePilotStoryRequest(
+                tenant_id=tenant_id,
+                org_id=org_id,
+                case_id=case_id,
+                actor_id=actor_id,
+            )
+        )
+    except PrivatePilotStoryError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=_bounded_http_error("private pilot story unavailable", exc),
+        ) from exc
+
+
+def _private_pilot_query_string(*, org_id: str, case_id: str, actor_id: str) -> str:
+    return urlencode({"org_id": org_id, "case_id": case_id, "actor_id": actor_id})
+
+
+def _html_cell(value: Any) -> str:
+    if isinstance(value, dict):
+        text = ", ".join(f"{key}: {item}" for key, item in sorted(value.items()))
+    elif isinstance(value, (list, tuple)):
+        text = ", ".join(str(item) for item in value)
+    else:
+        text = str(value)
+    return escape(text)
+
+
+def _html_table(title: str, columns: tuple[str, ...], rows: list[dict[str, Any]]) -> str:
+    if not rows:
+        return f"<section><h2>{escape(title)}</h2><p>No records.</p></section>"
+    heading = "".join(f"<th>{escape(column)}</th>" for column in columns)
+    body_rows = []
+    for row in rows:
+        cells = "".join(f"<td>{_html_cell(row.get(column, ''))}</td>" for column in columns)
+        body_rows.append(f"<tr>{cells}</tr>")
+    return f"""<section>
+  <h2>{escape(title)}</h2>
+  <table>
+    <thead><tr>{heading}</tr></thead>
+    <tbody>{''.join(body_rows)}</tbody>
+  </table>
+</section>"""
+
+
+def _render_private_pilot_operator_view_html(
+    operator_view: dict[str, Any],
+    *,
+    query_string: str,
+) -> str:
+    request = operator_view.get("request", {})
+    request = request if isinstance(request, dict) else {}
+    summary = operator_view.get("summary", {})
+    summary = summary if isinstance(summary, dict) else {}
+    authority = operator_view.get("authority_boundary", {})
+    authority = authority if isinstance(authority, dict) else {}
+    receipt_panel = operator_view.get("receipt_panel", {})
+    receipt_panel = receipt_panel if isinstance(receipt_panel, dict) else {}
+    timeline_rows: list[dict[str, Any]] = []
+    for item in operator_view.get("timeline", []):
+        if not isinstance(item, dict):
+            continue
+        source_panel = item.get("source_refs", {})
+        receipt_refs = item.get("receipt_refs", {})
+        timeline_rows.append({
+            "order": item.get("order", ""),
+            "step": item.get("label", ""),
+            "status": item.get("status", ""),
+            "outcome": item.get("outcome", ""),
+            "source_refs": source_panel.get("refs", []) if isinstance(source_panel, dict) else [],
+            "receipt_refs": receipt_refs.get("refs", []) if isinstance(receipt_refs, dict) else [],
+            "execution_allowed": item.get("execution_allowed", False),
+        })
+    check_rows = [
+        {
+            "check": check.get("check_id", ""),
+            "passed": check.get("passed", False),
+            "proof_state": check.get("proof_state", ""),
+            "reason": check.get("reason_code", ""),
+        }
+        for check in operator_view.get("operator_checks", [])
+        if isinstance(check, dict)
+    ]
+    summary_rows = [
+        {"metric": "tenant", "value": request.get("tenant_id", "")},
+        {"metric": "organization", "value": request.get("org_id", "")},
+        {"metric": "case", "value": request.get("case_id", "")},
+        {"metric": "actor", "value": request.get("actor_id", "")},
+        {"metric": "composition", "value": summary.get("composition_outcome", "")},
+        {"metric": "pilot outcome", "value": summary.get("pilot_execution_outcome", "")},
+        {"metric": "operator outcome", "value": summary.get("operator_outcome", "")},
+        {"metric": "next action", "value": summary.get("next_action", "")},
+    ]
+    authority_rows = [
+        {"boundary": key, "granted": value}
+        for key, value in sorted(authority.items())
+    ]
+    receipt_rows = [
+        {"metric": "receipts", "value": receipt_panel.get("receipt_count", 0)},
+        {"metric": "UAO refs", "value": receipt_panel.get("uao_count", 0)},
+        {"metric": "causal traces", "value": receipt_panel.get("causal_trace_count", 0)},
+    ]
+    title = "Mullu Private Pilot Operator View"
+    json_url = f"/software/receipts/private-pilot/operator-view?{query_string}"
+    story_url = f"/software/receipts/private-pilot/story?{query_string}"
+    sdlc_url = "/software/receipts/sdlc/dashboard"
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{escape(title)}</title>
+  <style>
+    body {{ margin: 0; font-family: system-ui, sans-serif; color: #1f2937; background: #f6f7f8; }}
+    header {{ background: #1d3557; color: #ffffff; padding: 24px 28px; }}
+    main {{ max-width: 1240px; margin: 0 auto; padding: 22px; }}
+    nav {{ display: flex; gap: 14px; margin-top: 12px; flex-wrap: wrap; }}
+    nav a {{ color: #d6ecff; }}
+    h1 {{ margin: 0; font-size: 28px; letter-spacing: 0; }}
+    h2 {{ margin: 26px 0 10px; font-size: 18px; letter-spacing: 0; }}
+    .status {{ margin-top: 8px; color: #dce8f5; }}
+    table {{ border-collapse: collapse; width: 100%; background: #ffffff; }}
+    th, td {{ border: 1px solid #d5dbe3; padding: 8px; text-align: left; vertical-align: top; font-size: 14px; overflow-wrap: anywhere; }}
+    th {{ background: #edf2f7; color: #243047; }}
+    section {{ margin-bottom: 22px; }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>{escape(title)}</h1>
+    <div class="status">Case <strong>{escape(str(request.get("case_id", "")))}</strong> | Tenant <strong>{escape(str(request.get("tenant_id", "")))}</strong></div>
+    <nav>
+      <a href="{escape(json_url)}">json operator view</a>
+      <a href="{escape(story_url)}">json story</a>
+      <a href="{escape(sdlc_url)}">SDLC dashboard</a>
+    </nav>
+  </header>
+  <main>
+    {_html_table("Summary", ("metric", "value"), summary_rows)}
+    {_html_table("Chain", ("order", "step", "status", "outcome", "source_refs", "receipt_refs", "execution_allowed"), timeline_rows)}
+    {_html_table("Authority Boundary", ("boundary", "granted"), authority_rows)}
+    {_html_table("Operator Checks", ("check", "passed", "proof_state", "reason"), check_rows)}
+    {_html_table("Receipts", ("metric", "value"), receipt_rows)}
+  </main>
+</body>
+</html>"""
 
 
 @router.get("", response_model=SoftwareReceiptEnvelope)
@@ -408,20 +581,12 @@ def private_pilot_story_summary(
 ) -> PrivatePilotStoryEnvelope:
     """Return the read-only OrgOS-to-dashboard private pilot story."""
 
-    try:
-        story = build_private_pilot_story(
-            PrivatePilotStoryRequest(
-                tenant_id=tenant_id,
-                org_id=org_id,
-                case_id=case_id,
-                actor_id=actor_id,
-            )
-        )
-    except PrivatePilotStoryError as exc:
-        raise HTTPException(
-            status_code=503,
-            detail=_bounded_http_error("private pilot story unavailable", exc),
-        ) from exc
+    story = _private_pilot_story_read_model(
+        tenant_id=tenant_id,
+        org_id=org_id,
+        case_id=case_id,
+        actor_id=actor_id,
+    )
     return PrivatePilotStoryEnvelope(
         operation="private_pilot_story",
         tenant_id=tenant_id,
@@ -429,6 +594,75 @@ def private_pilot_story_summary(
         stage_count=int(story["stage_count"]),
         uao_branch_count=int(story["uao_branch_count"]),
         receipt_count=int(story["receipt_count"]),
+    )
+
+
+@router.get("/private-pilot/operator-view", response_model=PrivatePilotOperatorViewEnvelope)
+def private_pilot_operator_view(
+    org_id: str = Query(default=DEFAULT_PRIVATE_PILOT_ORG_ID, min_length=1),
+    case_id: str = Query(default=DEFAULT_PRIVATE_PILOT_CASE_ID, min_length=1),
+    actor_id: str = Query(default=DEFAULT_PRIVATE_PILOT_ACTOR_ID, min_length=1),
+    tenant_id: str = Depends(require_read),
+) -> PrivatePilotOperatorViewEnvelope:
+    """Return the read-only private pilot operator chain view."""
+
+    story = _private_pilot_story_read_model(
+        tenant_id=tenant_id,
+        org_id=org_id,
+        case_id=case_id,
+        actor_id=actor_id,
+    )
+    try:
+        operator_view = build_private_pilot_operator_view(story)
+    except PrivatePilotStoryError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=_bounded_http_error("private pilot operator view unavailable", exc),
+        ) from exc
+    receipt_panel = operator_view["receipt_panel"]
+    summary = operator_view["summary"]
+    return PrivatePilotOperatorViewEnvelope(
+        operation="private_pilot_operator_view",
+        tenant_id=tenant_id,
+        operator_view=operator_view,
+        timeline_count=int(operator_view["timeline_count"]),
+        receipt_count=int(receipt_panel["receipt_count"]),
+        operator_ready=bool(summary["operator_ready"]),
+    )
+
+
+@router.get("/private-pilot/operator-view/view", response_class=HTMLResponse)
+def private_pilot_operator_view_html(
+    org_id: str = Query(default=DEFAULT_PRIVATE_PILOT_ORG_ID, min_length=1),
+    case_id: str = Query(default=DEFAULT_PRIVATE_PILOT_CASE_ID, min_length=1),
+    actor_id: str = Query(default=DEFAULT_PRIVATE_PILOT_ACTOR_ID, min_length=1),
+    tenant_id: str = Depends(require_read),
+) -> HTMLResponse:
+    """Return an escaped read-only HTML private pilot operator view."""
+
+    story = _private_pilot_story_read_model(
+        tenant_id=tenant_id,
+        org_id=org_id,
+        case_id=case_id,
+        actor_id=actor_id,
+    )
+    try:
+        operator_view = build_private_pilot_operator_view(story)
+    except PrivatePilotStoryError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=_bounded_http_error("private pilot operator view unavailable", exc),
+        ) from exc
+    query_string = _private_pilot_query_string(
+        org_id=org_id,
+        case_id=case_id,
+        actor_id=actor_id,
+    )
+    return HTMLResponse(
+        _render_private_pilot_operator_view_html(
+            operator_view,
+            query_string=query_string,
+        )
     )
 
 

@@ -157,4 +157,6 @@ def test_openapi_exporter_cli_writes_software_receipt_paths(tmp_path: Path) -> N
     report = json.loads(result.stdout)
     assert "/software/receipts/dashboard" in payload["paths"]
     assert "/software/receipts/sdlc/dashboard" in payload["paths"]
+    assert "/software/receipts/private-pilot/operator-view" in payload["paths"]
+    assert "/software/receipts/private-pilot/operator-view/view" in payload["paths"]
     assert report["governed"] is True

@@ -43,6 +43,7 @@ from mcoi_runtime.core.private_pilot_story import (
     PrivatePilotStoryRequest,
     build_private_pilot_descriptor,
     build_private_pilot_live_rehearsal_uao_record,
+    build_private_pilot_operator_view,
     build_private_pilot_story,
     load_private_pilot_uao_records,
     validate_private_pilot_descriptor,
@@ -243,8 +244,42 @@ def test_private_pilot_story_links_orgos_uao_governors_sdlc_and_dashboards() -> 
     assert story["sdlc_dashboard"]["stage_count"] == 11
     assert "/software/receipts/sdlc/dashboard" in story["dashboard_refs"]
     assert "/software/receipts/private-pilot/story" in story["dashboard_refs"]
+    assert "/software/receipts/private-pilot/operator-view" in story["dashboard_refs"]
     assert story["receipt_count"] >= 1
     assert story["causal_decision_trace_ref_count"] >= 3
+
+
+def test_private_pilot_operator_view_projects_single_chain() -> None:
+    story = build_private_pilot_story(
+        PrivatePilotStoryRequest(
+            tenant_id="tenant-private",
+            org_id="org-demo",
+            case_id="case-demo",
+            actor_id="operator:demo",
+        ),
+        created_at=NOW,
+    )
+
+    operator_view = build_private_pilot_operator_view(story)
+    timeline_steps = [item["step_id"] for item in operator_view["timeline"]]
+
+    assert operator_view["read_only"] is True
+    assert operator_view["governed"] is True
+    assert operator_view["summary"]["operator_outcome"] == "SolvedVerified"
+    assert operator_view["summary"]["pilot_execution_outcome"] == "AwaitingEvidence"
+    assert operator_view["authority_boundary"]["execution_authority_granted"] is False
+    assert operator_view["authority_boundary"]["dispatch_authority_granted"] is False
+    assert timeline_steps == [
+        "request",
+        "uao_rehearsal",
+        "governor_chain",
+        "sdlc_evidence",
+        "receipt_closure",
+    ]
+    assert operator_view["timeline"][1]["status"] == "simulate"
+    assert operator_view["timeline"][1]["execution_allowed"] is False
+    assert operator_view["receipt_panel"]["receipt_count"] == story["receipt_count"]
+    assert all(check["passed"] is True for check in operator_view["operator_checks"])
 
 
 def test_private_pilot_live_rehearsal_record_validates_as_uao_simulation() -> None:
@@ -376,6 +411,55 @@ def test_private_pilot_story_route_returns_read_only_summary() -> None:
     assert body["story"]["request"]["case_id"] == "case-http"
     assert body["story"]["read_only"] is True
     assert body["story"]["authority_boundary"]["external_mutation_allowed"] is False
+
+
+def test_private_pilot_operator_view_route_returns_compact_chain() -> None:
+    client = _client()
+
+    response = client.get(
+        "/software/receipts/private-pilot/operator-view",
+        params={"org_id": "org-http", "case_id": "case-http"},
+        headers={"X-Tenant-ID": "tenant-http"},
+    )
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["operation"] == "private_pilot_operator_view"
+    assert body["tenant_id"] == "tenant-http"
+    assert body["governed"] is True
+    assert body["timeline_count"] == 5
+    assert body["operator_ready"] is True
+    assert body["operator_view"]["request"]["org_id"] == "org-http"
+    assert body["operator_view"]["request"]["case_id"] == "case-http"
+    assert body["operator_view"]["summary"]["operator_outcome"] == "SolvedVerified"
+    assert body["operator_view"]["timeline"][0]["step_id"] == "request"
+    assert body["operator_view"]["timeline"][1]["step_id"] == "uao_rehearsal"
+    assert body["operator_view"]["timeline"][1]["execution_allowed"] is False
+    assert body["operator_view"]["authority_boundary"]["external_mutation_allowed"] is False
+    assert body["receipt_count"] == body["operator_view"]["receipt_panel"]["receipt_count"]
+
+
+def test_private_pilot_operator_view_html_is_read_only_and_escaped() -> None:
+    client = _client()
+
+    response = client.get(
+        "/software/receipts/private-pilot/operator-view/view",
+        params={
+            "org_id": "org-<script>alert('org')</script>",
+            "case_id": "case-<script>alert('case')</script>",
+            "actor_id": "operator-<script>alert('actor')</script>",
+        },
+        headers={"X-Tenant-ID": "tenant-http"},
+    )
+
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "Mullu Private Pilot Operator View" in response.text
+    assert "UAO rehearsal" in response.text
+    assert "SDLC evidence" in response.text
+    assert "<script>alert" not in response.text
+    assert "&lt;script&gt;alert" in response.text
+    assert "external_mutation_allowed" in response.text
 
 
 def test_private_pilot_story_route_bounds_projection_errors(monkeypatch: pytest.MonkeyPatch) -> None:

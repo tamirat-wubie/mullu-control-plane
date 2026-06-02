@@ -43,6 +43,8 @@ class TestOpenAPISpec:
         assert "/software/receipts/dashboard" in paths
         assert "/software/receipts/sdlc/dashboard" in paths
         assert "/software/receipts/private-pilot/story" in paths
+        assert "/software/receipts/private-pilot/operator-view" in paths
+        assert "/software/receipts/private-pilot/operator-view/view" in paths
         assert "/api/v1/cases/{case_id}/plan-steps/{step_id}/private-pilot/rehearsal" in paths
         assert paths["/software/receipts/dashboard"]["get"]["tags"] == ["software-receipts"]
 
