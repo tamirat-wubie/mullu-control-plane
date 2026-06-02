@@ -545,7 +545,7 @@ Current repository layout map, verified against the local checkout:
 mullu-control-plane/
 |-- mcoi/                         # MCOI Runtime; Python runtime and tests.
 |   |-- mcoi_runtime/
-|   |   |-- app/                  # FastAPI/CLI surfaces; 77 router files with APIRouter in this checkout.
+|   |   |-- app/                  # FastAPI/CLI surfaces with APIRouter-backed routes.
 |   |   |-- substrate/            # Mfidel grid, construct substrate, and Phi_gov substrate surfaces.
 |   |   |-- cognition/            # SCCE/SCCCE cycle surfaces: symbol field, tension, convergence.
 |   |   |-- ucja/                 # L0-L9 execution pipeline.
@@ -582,10 +582,10 @@ mullu-control-plane/
 |-- sdk/                          # SDK/client surfaces.
 |-- site/                         # Local website/static surfaces.
 |-- maf/                          # MAF Rust crate family; receipt-shape parity, no Python runtime binding today.
-|-- docs/                         # Architecture, governance, Foundation Mode, and witness docs; 44 Foundation boundary docs in this checkout.
+|-- docs/                         # Architecture, governance, Foundation Mode, and witness docs.
 |-- examples/                     # Public-safe witness and receipt examples.
 |-- scripts/                      # Validators, preflight, evidence, receipt, and release tooling.
-|-- schemas/                      # 177 JSON schema files in this checkout.
+|-- schemas/                      # JSON schema files.
 |-- tests/                        # Repository-level tests.
 |-- k8s/                          # Kubernetes manifests.
 `-- docker-compose.yml            # Local compose deployment profile.
