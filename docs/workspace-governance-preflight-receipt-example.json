@@ -1,5 +1,5 @@
 {
-  "check_count": 67,
+  "check_count": 68,
   "generated_at_epoch": 1780272000.0,
   "checks": [
     {
@@ -494,6 +494,17 @@
         "scripts/validate_foundation_customer_access_boundary.py"
       ],
       "name": "foundation_customer_access_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_github_app_token_format_boundary.py"
+      ],
+      "name": "foundation_github_app_token_format_boundary",
       "passed": true,
       "return_code": 0,
       "stderr": "",

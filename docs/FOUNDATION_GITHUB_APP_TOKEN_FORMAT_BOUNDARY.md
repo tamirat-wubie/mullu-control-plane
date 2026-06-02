@@ -1,6 +1,7 @@
 <!--
 Purpose: define the local compatibility boundary for GitHub App installation token format changes.
 Governance scope: GitHub App installation token handling, token storage shape, validation assumptions, CI scanning, per-request override testing, and deployment blocking.
+Dependencies: examples/foundation_github_app_token_format_witness.awaiting_evidence.json and scripts/validate_foundation_github_app_token_format_boundary.py.
 Invariants: tokens are opaque; token length is not fixed; ghs_ tokens may be long; JWT-shaped ghs_ tokens must not be parsed; no live credential is stored; no deployment readiness claim is made.
 -->
 
@@ -13,6 +14,8 @@ Invariants: tokens are opaque; token length is not fixed; ghs_ tokens may be lon
 GitHub announced that GitHub App installation tokens are moving to a new stateless `ghs_...` format. The new tokens may be much longer, roughly 520 characters, and may contain JWT-style dot separators. Any app, workflow, schema, secret wrapper, validator, log scrubber, or test fixture that assumes old fixed-length tokens can break.
 
 This boundary converts that platform notice into repository rules.
+
+Witness packet: [`../examples/foundation_github_app_token_format_witness.awaiting_evidence.json`](../examples/foundation_github_app_token_format_witness.awaiting_evidence.json)
 
 ## Required Compatibility Rules
 
@@ -75,7 +78,7 @@ deployment_allowed=false
 Run:
 
 ```bash
-python scripts/validate_github_app_token_format_boundary.py
+python scripts/validate_foundation_github_app_token_format_boundary.py
 ```
 
 This validates the committed docs, examples, workflows, source, and configuration files for obvious fixed-length GitHub App installation token assumptions.
