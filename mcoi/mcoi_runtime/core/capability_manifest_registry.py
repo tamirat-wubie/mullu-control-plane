@@ -335,7 +335,7 @@ def _rejected_capability_abi_record(admission: Mapping[str, Any]) -> dict[str, A
         "source_ref": _manifest_record_text(admission.get("source_ref"), "source:unknown"),
         "admission_status": "rejected",
         "coverage_status": "blocked",
-        "reason": ";".join(errors) if errors else "manifest_rejected",
+        "reason": "manifest_rejected",
         "maturity": "unknown",
         "risk": "unknown",
         "effect_bearing": False,
