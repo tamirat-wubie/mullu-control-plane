@@ -1,0 +1,53 @@
+name: GitHub App token format boundary
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/github-app-token-format-boundary.yml"
+      - "docs/FOUNDATION_GITHUB_APP_TOKEN_FORMAT_BOUNDARY.md"
+      - "examples/foundation_github_app_token_format_witness.awaiting_evidence.json"
+      - "scripts/validate_github_app_token_format_boundary.py"
+      - "**/*.py"
+      - "**/*.js"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.json"
+      - "**/*.yaml"
+      - "**/*.yml"
+      - "**/*.toml"
+      - "**/*.sql"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/github-app-token-format-boundary.yml"
+      - "docs/FOUNDATION_GITHUB_APP_TOKEN_FORMAT_BOUNDARY.md"
+      - "examples/foundation_github_app_token_format_witness.awaiting_evidence.json"
+      - "scripts/validate_github_app_token_format_boundary.py"
+      - "**/*.py"
+      - "**/*.js"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.json"
+      - "**/*.yaml"
+      - "**/*.yml"
+      - "**/*.toml"
+      - "**/*.sql"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-github-app-token-format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate GitHub App token format boundary
+        run: python scripts/validate_github_app_token_format_boundary.py
