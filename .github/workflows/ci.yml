@@ -242,6 +242,9 @@ jobs:
       - name: Validate tenant-scope coverage (cross-tenant IDOR guard)
         run: python scripts/validate_tenant_scope_coverage.py
 
+      - name: Validate persistence tenant-guard coverage (defense-in-depth)
+        run: python scripts/validate_persistence_tenant_guard_coverage.py
+
       - name: Validate deployment publication closure
         run: |
           mkdir -p .change_assurance
