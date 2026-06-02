@@ -1,0 +1,26 @@
+{
+  "blocked_claims": [
+    "fixed GitHub App installation token length",
+    "fixed ghs suffix length",
+    "JWT parsing of GitHub App installation tokens",
+    "short token storage capacity",
+    "real token fixture committed",
+    "deployment readiness"
+  ],
+  "deployment_allowed": false,
+  "fixed_length_validation_allowed": false,
+  "github_app_token_format_boundary_state": "ActiveLocalGuard",
+  "jwt_parsing_allowed": false,
+  "minimum_storage_capacity_chars": 520,
+  "next_action": "run repository scanner and validate both GitHub App installation token formats with temporary override headers outside Git when credentials exist",
+  "real_tokens_committed": false,
+  "schema_version": 1,
+  "stateless_override_header": "X-GitHub-Stateless-S2S-Token",
+  "status": "AwaitingExternalValidation",
+  "synthetic_fixtures": {
+    "classic_opaque_shape": "ghs_short_opaque_fixture_without_secret_value",
+    "stateless_long_shape": "ghs_long_stateless_fixture.with.dot.separators.and.length.padding................................................................................................................................................................................................................................................................................................................................................................................................................................................"
+  },
+  "tokens_are_opaque": true,
+  "witness_id": "foundation_github_app_token_format_witness.awaiting_evidence.v1"
+}
