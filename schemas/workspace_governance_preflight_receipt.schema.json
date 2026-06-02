@@ -106,6 +106,7 @@
             "foundation_pilot_deferral_boundary",
             "foundation_support_readiness_boundary",
             "foundation_intake_onboarding_boundary",
+            "foundation_customer_access_boundary",
             "foundation_privacy_data_boundary",
             "protocol_manifest",
             "logic_governance_application",

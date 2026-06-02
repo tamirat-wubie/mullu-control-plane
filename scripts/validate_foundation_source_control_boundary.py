@@ -73,6 +73,7 @@ EXPECTED_CHANGE_FAMILIES = (
     "pilot_deferral_boundary",
     "support_readiness_boundary",
     "intake_onboarding_boundary",
+    "customer_access_boundary",
     "privacy_data_boundary",
     "public_claim_alignment",
     "governance_preflight_wiring",
@@ -119,6 +120,7 @@ EXPECTED_REQUIRED_CHECKS = (
     "python scripts/validate_foundation_pilot_deferral_boundary.py",
     "python scripts/validate_foundation_support_readiness_boundary.py",
     "python scripts/validate_foundation_intake_onboarding_boundary.py",
+    "python scripts/validate_foundation_customer_access_boundary.py",
     "python scripts/validate_foundation_privacy_data_boundary.py",
     "python scripts/validate_foundation_source_control_boundary.py",
     "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json",
@@ -167,6 +169,7 @@ REQUIRED_DOC_PHRASES = (
     "Plain-language status | Local current-posture",
     "Test evidence | Local focused-validator",
     "Payment provider | Local provider-selection",
+    "Customer access | Local access-policy",
     "python scripts/validate_foundation_source_control_boundary.py",
 )
 FORBIDDEN_PACKET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (

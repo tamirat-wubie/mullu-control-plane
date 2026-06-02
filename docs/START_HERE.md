@@ -57,6 +57,7 @@ to the deep document if you want more.
 | "I need one narrow learning lane that does not restrict the whole platform." | [Foundation Product Scope Boundary](FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md) | 8 min read |
 | "I need to prepare support without opening customer support." | [Foundation Support Readiness Boundary](FOUNDATION_SUPPORT_READINESS_BOUNDARY.md) | 8 min read |
 | "I need to prepare intake without forms, waitlists, or signups." | [Foundation Intake Onboarding Boundary](FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md) | 8 min read |
+| "I need to prepare customer access without opening access." | [Foundation Customer Access Boundary](FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md) | 8 min read |
 | "I need to prepare privacy/data rules without handling people data." | [Foundation Privacy Data Boundary](FOUNDATION_PRIVACY_DATA_BOUNDARY.md) | 8 min read |
 | "I need to organize legal and business questions without claiming readiness." | [Foundation Legal Business Boundary](FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md) | 9 min read |
 | "I have no idea what this thing even is. Explain it like I'm not technical." | [Plain-English Overview](explain/PLAIN_ENGLISH.md) | 5 min read |
@@ -269,21 +270,26 @@ in the wrong room. Use the table above to pick the right room.
    local support and incident-response shape without opening support service.
 41. **[Foundation Intake Onboarding Boundary](FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md)** --
    local intake and onboarding shape without forms, waitlists, or signups.
-42. **[Foundation Privacy Data Boundary](FOUNDATION_PRIVACY_DATA_BOUNDARY.md)** --
+42. **[Foundation Customer Access Boundary](FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md)** --
+   local customer-access preparation without invitations, account creation,
+   access channels, onboarding-readiness claims, support commitments,
+   terms/privacy readiness, personal-data collection, paid access, pilot/beta
+   or waitlist opening, publication, or deployment claims.
+43. **[Foundation Privacy Data Boundary](FOUNDATION_PRIVACY_DATA_BOUNDARY.md)** --
    local privacy/data shape without collecting or storing people data.
-43. **[Foundation Legal Business Boundary](FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md)** --
+44. **[Foundation Legal Business Boundary](FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md)** --
    question-only legal and business preparation without readiness claims.
-44. **[Plain-English Overview](explain/PLAIN_ENGLISH.md)** -- what Mullu Govern is, in
+45. **[Plain-English Overview](explain/PLAIN_ENGLISH.md)** -- what Mullu Govern is, in
    everyday language, with an analogy. No setup, just reading.
-45. **[Tutorial 1: Your First Run](tutorials/01_first_governed_task.md)**
+46. **[Tutorial 1: Your First Run](tutorials/01_first_governed_task.md)**
    -- you install it and run it safely, every command explained, every term
    linked.
-46. **[Tutorial 2: Watch Mullu Govern Real Money](tutorials/02_a_real_governed_task.md)**
+47. **[Tutorial 2: Watch Mullu Govern Real Money](tutorials/02_a_real_governed_task.md)**
    -- you watch it *refuse* an over-limit payment and *prove* a valid one. This
    is where the safety stops being a claim and becomes something you've seen.
-47. **[Glossary](GLOSSARY.md)** -- skim it once so the special words stop being
+48. **[Glossary](GLOSSARY.md)** -- skim it once so the special words stop being
    scary.
-48. Now you can wander into [How-To Guides](how-to/) or the deep
+49. Now you can wander into [How-To Guides](how-to/) or the deep
    [Reference](#5-reference--deep-architecture) and it will make sense.
 
 That is the whole on-ramp. About 80 minutes, no prior knowledge assumed.
