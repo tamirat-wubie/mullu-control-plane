@@ -305,11 +305,62 @@
     "memory_update": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "memory_ref", "learning_allowed"],
+      "required": ["status", "memory_ref", "learning_allowed", "constitution"],
       "properties": {
         "status": { "type": "string", "enum": ["not_allowed", "not_required", "recorded", "blocked", "deferred"] },
         "memory_ref": { "type": ["string", "null"] },
-        "learning_allowed": { "type": "boolean" }
+        "learning_allowed": { "type": "boolean" },
+        "constitution": { "$ref": "#/$defs/memory_constitution" }
+      }
+    },
+    "memory_constitution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "constitution_ref",
+        "source_refs",
+        "owner_ref",
+        "scope_ref",
+        "confidence",
+        "sensitivity",
+        "expires_at",
+        "allowed_uses",
+        "forbidden_uses",
+        "evidence_refs",
+        "last_verified_at",
+        "mutation_history_refs"
+      ],
+      "properties": {
+        "constitution_ref": { "type": "string", "minLength": 1 },
+        "source_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "owner_ref": { "type": "string", "minLength": 1 },
+        "scope_ref": { "type": "string", "minLength": 1 },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "sensitivity": {
+          "type": "string",
+          "enum": ["public", "operational", "tenant_confidential", "financial", "security", "personal", "regulated"]
+        },
+        "expires_at": { "type": ["string", "null"] },
+        "allowed_uses": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "forbidden_uses": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "last_verified_at": { "type": ["string", "null"] },
+        "mutation_history_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
       }
     },
     "closure": {

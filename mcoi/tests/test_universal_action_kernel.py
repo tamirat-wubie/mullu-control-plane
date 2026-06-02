@@ -318,6 +318,7 @@ def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
         claim["verified"] and claim["evidence_refs"]
         for claim in record["claim_ledger"]["claims"]
     )
+    _assert_memory_constitution(record, learning_allowed=True)
     assert record["raw_reasoning_included"] is False
     assert record["lineage"]["accepted_deltas"]
     assert record["lineage"]["rejected_deltas"] == []
@@ -489,6 +490,7 @@ def test_universal_action_kernel_blocks_world_mutation_without_recovery_path() -
         claim["verified"] and claim["evidence_refs"]
         for claim in record["claim_ledger"]["claims"]
     )
+    _assert_memory_constitution(record, learning_allowed=False)
     assert any(
         guard["guard"] == "recovery_available" and guard["verdict"] == "blocked"
         for guard in record["admission_guards"]
@@ -1976,3 +1978,28 @@ def _validate_uao_record(record: dict) -> list[str]:
     errors = validator.validate_orchestration(record)
     assert isinstance(errors, list)
     return errors
+
+
+def _assert_memory_constitution(record: dict, *, learning_allowed: bool) -> None:
+    memory_update = record["memory_update"]
+    constitution = memory_update["constitution"]
+
+    assert constitution["constitution_ref"].startswith("memory-constitution://")
+    assert constitution["owner_ref"] == f"tenant://{record['tenant_id']}"
+    assert constitution["scope_ref"] == f"tenant://{record['tenant_id']}"
+    assert 0 <= constitution["confidence"] <= 1
+    assert not set(constitution["allowed_uses"]).intersection(
+        constitution["forbidden_uses"]
+    )
+    if learning_allowed:
+        assert memory_update["learning_allowed"] is True
+        assert "learning" in constitution["allowed_uses"]
+        assert "learning" not in constitution["forbidden_uses"]
+    else:
+        assert memory_update["learning_allowed"] is False
+        assert "learning" in constitution["forbidden_uses"]
+    if memory_update["status"] == "recorded":
+        assert memory_update["memory_ref"] in constitution["source_refs"]
+        assert constitution["evidence_refs"]
+        assert constitution["last_verified_at"]
+        assert constitution["mutation_history_refs"]

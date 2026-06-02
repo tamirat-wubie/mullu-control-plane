@@ -374,7 +374,25 @@
   "memory_update": {
     "status": "deferred",
     "memory_ref": "memory://partner/inventory-deferred",
-    "learning_allowed": false
+    "learning_allowed": false,
+    "constitution": {
+      "constitution_ref": "memory-constitution://partner/inventory-deferred",
+      "source_refs": [
+        "memory://partner/inventory-deferred",
+        "trace://cdt_deferred_stale_evidence_001",
+        "receipt://uao_admission_stale_evidence"
+      ],
+      "owner_ref": "tenant://tenant_ops_demo",
+      "scope_ref": "tenant://tenant_ops_demo",
+      "confidence": 0.0,
+      "sensitivity": "operational",
+      "expires_at": null,
+      "allowed_uses": ["closure_audit"],
+      "forbidden_uses": ["external_sharing", "model_training", "learning"],
+      "evidence_refs": [],
+      "last_verified_at": null,
+      "mutation_history_refs": []
+    }
   },
   "closure_state": "closed_deferred",
   "closure": {

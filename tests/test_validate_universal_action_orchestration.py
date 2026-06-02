@@ -97,6 +97,7 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn("action_envelope", schema["$defs"])
         self.assertIn("claim_ledger", schema["$defs"])
         self.assertIn("claim", schema["$defs"])
+        self.assertIn("memory_constitution", schema["$defs"])
         self.assertIn("pipeline_stage", schema["$defs"])
         self.assertIn("action_envelope", schema["required"])
         self.assertIn("claim_ledger", schema["required"])
@@ -105,6 +106,7 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn("raw_reasoning_included", schema["required"])
         self.assertIn("reconciliation_ref", schema["$defs"]["closure"]["required"])
         self.assertIn("memory_ref", schema["$defs"]["closure"]["required"])
+        self.assertIn("constitution", schema["$defs"]["memory_update"]["required"])
 
     def test_recommended_v1_examples_are_non_executing_shapes(self) -> None:
         fixture_paths = (
@@ -159,6 +161,8 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn("closure receipt must bind closure state", document_text)
         self.assertIn("Runtime bypass detection scans", document_text)
         self.assertIn("verified claims require evidence refs", document_text)
+        self.assertIn("Every memory update must expose a `constitution`", document_text)
+        self.assertIn("memory_update.learning_allowed = true", document_text)
 
     def test_claim_ledger_rejects_verified_claim_without_evidence(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
@@ -184,6 +188,34 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertGreaterEqual(len(errors), 1)
         self.assertIn(
             "claim_ledger.claims[0]: evidence-free claim must appear in unverified_claim_ids",
+            errors,
+        )
+
+    def test_recorded_memory_requires_constitution_evidence_refs(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["memory_update"]["constitution"]["evidence_refs"] = []
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertIn(
+            "memory_update.constitution.evidence_refs must contain at least 1 item(s)",
+            errors,
+        )
+
+    def test_memory_constitution_rejects_allowed_forbidden_use_overlap(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["memory_update"]["constitution"]["forbidden_uses"].append(
+            "learning"
+        )
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertIn(
+            "memory_update.constitution allowed_uses and forbidden_uses overlap: learning",
             errors,
         )
 
