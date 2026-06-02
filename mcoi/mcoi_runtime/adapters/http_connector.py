@@ -556,8 +556,15 @@ class HttpConnector:
                     ct_base = content_type.split(";")[0].strip().lower()
                     if ct_base not in (t.lower() for t in effective_content_types):
                         return self._raw_result(
-                            self._failure(result_id, connector, method, normalized_url, request, started_at,
-                                          f"content_type_not_allowed:{ct_base}")
+                            self._failure(
+                                result_id,
+                                connector,
+                                method,
+                                normalized_url,
+                                self._sanitized_receipt_request(request, body_digest),
+                                started_at,
+                                f"content_type_not_allowed:{ct_base}",
+                            )
                         )
 
                 # Time-bounded and size-bounded read (defends against slow trickle)
@@ -600,8 +607,15 @@ class HttpConnector:
                     total_read += len(chunk)
                     if total_read > max_bytes:
                         return self._raw_result(
-                            self._failure(result_id, connector, method, normalized_url, request, started_at,
-                                          f"response_too_large:{total_read}")
+                            self._failure(
+                                result_id,
+                                connector,
+                                method,
+                                normalized_url,
+                                self._sanitized_receipt_request(request, body_digest),
+                                started_at,
+                                f"response_too_large:{total_read}",
+                            )
                         )
                 body = b"".join(chunks)
 
@@ -649,10 +663,29 @@ class HttpConnector:
             # Surface redirect-blocked errors distinctly
             if exc.msg and exc.msg.startswith("redirect_blocked:"):
                 error_msg = exc.msg
-            return self._raw_result(self._failure(result_id, connector, method, url, request, started_at, error_msg))
+            return self._raw_result(
+                self._failure(
+                    result_id,
+                    connector,
+                    method,
+                    url,
+                    self._sanitized_receipt_request(request, body_digest),
+                    started_at,
+                    error_msg,
+                )
+            )
         except urllib.error.URLError as exc:
-            return self._raw_result(self._failure(result_id, connector, method, url, request, started_at,
-                                                  f"url_error:{exc.reason}"))
+            return self._raw_result(
+                self._failure(
+                    result_id,
+                    connector,
+                    method,
+                    url,
+                    self._sanitized_receipt_request(request, body_digest),
+                    started_at,
+                    f"url_error:{exc.reason}",
+                )
+            )
         except TimeoutError:
             finished_at = self._clock()
             receipt = _build_connector_receipt(
@@ -680,8 +713,17 @@ class HttpConnector:
                 )
             )
         except Exception as exc:
-            return self._raw_result(self._failure(result_id, connector, method, url, request, started_at,
-                                                  f"unexpected:{type(exc).__name__}"))
+            return self._raw_result(
+                self._failure(
+                    result_id,
+                    connector,
+                    method,
+                    url,
+                    self._sanitized_receipt_request(request, body_digest),
+                    started_at,
+                    f"unexpected:{type(exc).__name__}",
+                )
+            )
 
     def _raw_result(
         self,
