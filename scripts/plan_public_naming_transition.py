@@ -26,7 +26,7 @@ GATE_ACTIONS = {
     "close_variant_review": "Complete legal confusion analysis for close-variant MULU records.",
     "domain_ownership": "Acquire or verify the product domain/subdomain and record DNS ownership.",
     "legal_review": "Record legal/trademark reviewer decision in the clearance packet.",
-    "homepage_update": "Apply approved launch copy only after clearance closes or mark as waitlist/private beta.",
+    "homepage_update": "Apply approved launch copy only after clearance closes or keep foundation-stage proof-boundary copy with no access invitation.",
     "website_deployment_verification": "Verify mullusi.com and product routes are live and not site-not-found.",
     "app_title_update": "Update product-facing app title to Mullu Govern after launch authorization.",
     "sdk_api_stability_review": "Confirm technical contracts keep Mullu Platform where required.",

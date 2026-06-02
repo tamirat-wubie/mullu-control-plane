@@ -42,6 +42,11 @@ from mcoi_runtime.contracts.learning import (
     LearningAdmissionDecision,
     LearningAdmissionStatus,
 )
+from mcoi_runtime.contracts.meta_reasoning import (
+    HealthStatus,
+    OperatingSubstrateSelfModelProjection,
+    SelfModelCapabilityProjection,
+)
 from mcoi_runtime.contracts.plan import Plan, PlanItem
 from mcoi_runtime.contracts.simulation import (
     RiskLevel,
@@ -61,6 +66,7 @@ from mcoi_runtime.contracts.verification import (
     VerificationStatus,
 )
 from mcoi_runtime.contracts.world_state import WorldStateSnapshot
+from mcoi_runtime.contracts.solver_outcome import SolverOutcome
 from mcoi_runtime.core.closure_learning import ClosureLearningAdmissionGate
 from mcoi_runtime.core.command_capability_admission import (
     CommandCapabilityAdmissionGate,
@@ -107,6 +113,7 @@ class UniversalActionRequest:
     success_probability: float = 0.9
     mode: str = "simulation"
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    operating_substrate_projection: OperatingSubstrateSelfModelProjection | None = None
 
     def __post_init__(self) -> None:
         for field_name in ("actor_id", "tenant_id", "intent_id", "objective", "mode"):
@@ -123,6 +130,13 @@ class UniversalActionRequest:
             raise ValueError("estimated_duration_seconds must be non-negative")
         if self.success_probability < 0.0 or self.success_probability > 1.0:
             raise ValueError("success_probability must be between 0.0 and 1.0")
+        if self.operating_substrate_projection is not None and not isinstance(
+            self.operating_substrate_projection,
+            OperatingSubstrateSelfModelProjection,
+        ):
+            raise ValueError(
+                "operating_substrate_projection must be an OperatingSubstrateSelfModelProjection"
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -138,6 +152,18 @@ class WorldSupportCertificate:
     snapshot: WorldStateSnapshot
     allows_execution: bool
     reason: str
+    evidence_refs: tuple[str, ...]
+    issued_at: str
+
+
+@dataclass(frozen=True, slots=True)
+class OperatingSubstrateSupportCertificate:
+    certificate_id: str
+    projection: OperatingSubstrateSelfModelProjection | None
+    capability_id: str
+    allows_execution: bool
+    reason: str
+    evidence_refs: tuple[str, ...]
     issued_at: str
 
 
@@ -182,6 +208,7 @@ class UniversalActionResult:
     simulation_certificate: SimulationCertificate | None = None
     effect_prediction_certificate: EffectPredictionCertificate | None = None
     intent_certificate: IntentCompilationCertificate | None = None
+    operating_substrate_certificate: OperatingSubstrateSupportCertificate | None = None
     capability_decision: CommandCapabilityAdmissionDecision | None = None
     governed_action: GovernedAction | None = None
     dispatch_result: GovernedDispatchResult | None = None
@@ -273,6 +300,28 @@ class UniversalActionKernel:
                 capability_decision=capability_decision,
             )
 
+        operating_substrate_certificate = self._build_operating_substrate_certificate(
+            request=request,
+            capability_decision=capability_decision,
+            issued_at=now,
+        )
+        if (
+            operating_substrate_certificate is not None
+            and not operating_substrate_certificate.allows_execution
+        ):
+            return self._blocked(
+                action_id=action_id,
+                request=request,
+                issued_at=now,
+                trace_ref=trace_ref,
+                block_reason=operating_substrate_certificate.reason,
+                goal_certificate=goal_certificate,
+                world_certificate=world_certificate,
+                intent_certificate=intent_certificate,
+                capability_decision=capability_decision,
+                operating_substrate_certificate=operating_substrate_certificate,
+            )
+
         try:
             governed_action = self._build_governed_action(
                 request=request,
@@ -290,6 +339,7 @@ class UniversalActionKernel:
                 goal_certificate=goal_certificate,
                 world_certificate=world_certificate,
                 intent_certificate=intent_certificate,
+                operating_substrate_certificate=operating_substrate_certificate,
                 capability_decision=capability_decision,
             )
 
@@ -323,6 +373,7 @@ class UniversalActionKernel:
                 simulation_certificate=simulation_certificate,
                 effect_prediction_certificate=effect_prediction_certificate,
                 intent_certificate=intent_certificate,
+                operating_substrate_certificate=operating_substrate_certificate,
                 capability_decision=capability_decision,
                 governed_action=governed_action,
             )
@@ -372,6 +423,7 @@ class UniversalActionKernel:
             simulation_certificate=simulation_certificate,
             effect_prediction_certificate=effect_prediction_certificate,
             intent_certificate=intent_certificate,
+            operating_substrate_certificate=operating_substrate_certificate,
             capability_decision=capability_decision,
             governed_action=governed_action,
             dispatch_result=dispatch_result,
@@ -417,6 +469,7 @@ class UniversalActionKernel:
             if allows_execution
             else "open_world_contradictions"
         )
+        evidence_refs = _world_support_evidence_refs(snapshot=snapshot, reason=reason)
         return WorldSupportCertificate(
             certificate_id=stable_identifier(
                 "world-support-cert",
@@ -429,6 +482,72 @@ class UniversalActionKernel:
             snapshot=snapshot,
             allows_execution=allows_execution,
             reason=reason,
+            evidence_refs=evidence_refs,
+            issued_at=issued_at,
+        )
+
+    def _build_operating_substrate_certificate(
+        self,
+        *,
+        request: UniversalActionRequest,
+        capability_decision: CommandCapabilityAdmissionDecision,
+        issued_at: str,
+    ) -> OperatingSubstrateSupportCertificate | None:
+        projection_required = _operating_substrate_projection_required(request)
+        projection = request.operating_substrate_projection
+        capability_id = capability_decision.capability_id
+        if projection is None:
+            if not projection_required:
+                return None
+            return OperatingSubstrateSupportCertificate(
+                certificate_id=stable_identifier(
+                    "operating-substrate-support-cert",
+                    {
+                        "intent_id": request.intent_id,
+                        "capability_id": capability_id,
+                        "projection_id": "missing",
+                        "issued_at": issued_at,
+                    },
+                ),
+                projection=None,
+                capability_id=capability_id,
+                allows_execution=False,
+                reason="operating_substrate_self_model_missing",
+                evidence_refs=("operating-substrate://projection/missing",),
+                issued_at=issued_at,
+            )
+
+        matched_capability = _operating_substrate_capability(
+            projection=projection,
+            capability_id=capability_id,
+            route=request.dispatch_request.route,
+        )
+        reason = _operating_substrate_support_reason(
+            projection=projection,
+            matched_capability=matched_capability,
+        )
+        allows_execution = reason == "operating_substrate_supports_execution"
+        evidence_refs = _operating_substrate_evidence_refs(
+            projection=projection,
+            matched_capability=matched_capability,
+            reason=reason,
+        )
+        return OperatingSubstrateSupportCertificate(
+            certificate_id=stable_identifier(
+                "operating-substrate-support-cert",
+                {
+                    "intent_id": request.intent_id,
+                    "capability_id": capability_id,
+                    "projection_id": projection.projection_id,
+                    "reason": reason,
+                    "issued_at": issued_at,
+                },
+            ),
+            projection=projection,
+            capability_id=capability_id,
+            allows_execution=allows_execution,
+            reason=reason,
+            evidence_refs=evidence_refs,
             issued_at=issued_at,
         )
 
@@ -539,6 +658,7 @@ class UniversalActionKernel:
         capability_decision: CommandCapabilityAdmissionDecision | None = None,
         governed_action: GovernedAction | None = None,
         intent_certificate: IntentCompilationCertificate | None = None,
+        operating_substrate_certificate: OperatingSubstrateSupportCertificate | None = None,
     ) -> UniversalActionResult:
         result = UniversalActionResult(
             action_id=action_id,
@@ -567,6 +687,7 @@ class UniversalActionKernel:
             simulation_certificate=simulation_certificate,
             effect_prediction_certificate=effect_prediction_certificate,
             intent_certificate=intent_certificate,
+            operating_substrate_certificate=operating_substrate_certificate,
             capability_decision=capability_decision,
             governed_action=governed_action,
         )
@@ -835,6 +956,28 @@ class UniversalActionKernel:
             "intent_hash": result.intent_certificate.intent_hash
             if result.intent_certificate
             else "",
+            "operating_substrate_certificate_id": (
+                result.operating_substrate_certificate.certificate_id
+                if result.operating_substrate_certificate
+                else ""
+            ),
+            "operating_substrate_projection_id": (
+                result.operating_substrate_certificate.projection.projection_id
+                if result.operating_substrate_certificate is not None
+                and result.operating_substrate_certificate.projection is not None
+                else ""
+            ),
+            "operating_substrate_reason": (
+                result.operating_substrate_certificate.reason
+                if result.operating_substrate_certificate
+                else ""
+            ),
+            "world_support_evidence_refs": result.world_certificate.evidence_refs,
+            "operating_substrate_evidence_refs": (
+                result.operating_substrate_certificate.evidence_refs
+                if result.operating_substrate_certificate
+                else ()
+            ),
             "capability_status": result.capability_decision.status.value
             if result.capability_decision
             else "",
@@ -877,6 +1020,7 @@ class UniversalActionKernel:
             simulation_certificate=result.simulation_certificate,
             effect_prediction_certificate=result.effect_prediction_certificate,
             intent_certificate=result.intent_certificate,
+            operating_substrate_certificate=result.operating_substrate_certificate,
             capability_decision=result.capability_decision,
             governed_action=result.governed_action,
             dispatch_result=result.dispatch_result,
@@ -1048,6 +1192,78 @@ def _text_tuple_from_metadata(metadata: Mapping[str, Any], key: str) -> tuple[st
     if not isinstance(value, (tuple, list)):
         return ()
     return tuple(item for item in value if isinstance(item, str) and item.strip())
+
+
+def _operating_substrate_projection_required(request: UniversalActionRequest) -> bool:
+    return request.metadata.get("require_operating_substrate_projection") is True
+
+
+def _operating_substrate_capability(
+    *,
+    projection: OperatingSubstrateSelfModelProjection,
+    capability_id: str,
+    route: str,
+) -> SelfModelCapabilityProjection | None:
+    for capability in projection.capabilities:
+        if capability.capability_id in {capability_id, route}:
+            return capability
+    return None
+
+
+def _operating_substrate_support_reason(
+    *,
+    projection: OperatingSubstrateSelfModelProjection,
+    matched_capability: SelfModelCapabilityProjection | None,
+) -> str:
+    if projection.mutation_authorized or projection.raw_private_reasoning_included:
+        return "operating_substrate_self_model_unsafe"
+    if projection.solver_outcome is not SolverOutcome.SOLVED_VERIFIED:
+        return "operating_substrate_self_model_rejected"
+    if projection.overall_status is not HealthStatus.HEALTHY:
+        return "operating_substrate_self_model_rejected"
+    if matched_capability is None:
+        return "operating_substrate_capability_uncovered"
+    if not matched_capability.admitted:
+        return "operating_substrate_capability_not_admitted"
+    if matched_capability.status is not HealthStatus.HEALTHY:
+        return "operating_substrate_capability_unavailable"
+    return "operating_substrate_supports_execution"
+
+
+def _operating_substrate_evidence_refs(
+    *,
+    projection: OperatingSubstrateSelfModelProjection,
+    matched_capability: SelfModelCapabilityProjection | None,
+    reason: str,
+) -> tuple[str, ...]:
+    refs: list[str] = [
+        f"operating-substrate://projection/{projection.projection_id}",
+        f"operating-substrate://status/{projection.overall_status.value}",
+        f"operating-substrate://solver-outcome/{projection.solver_outcome.value}",
+        f"operating-substrate://reason/{reason}",
+    ]
+    refs.extend(projection.evidence_refs)
+    if matched_capability is not None:
+        refs.append(f"operating-substrate://capability/{matched_capability.capability_id}")
+        refs.extend(matched_capability.evidence_refs)
+        refs.extend(matched_capability.open_incident_refs)
+    return tuple(_unique_text_list(refs))
+
+
+def _world_support_evidence_refs(
+    *,
+    snapshot: WorldStateSnapshot,
+    reason: str,
+) -> tuple[str, ...]:
+    refs: list[str] = [
+        f"world-state://snapshot/{snapshot.snapshot_id}",
+        f"world-state://state-hash/{snapshot.state_hash}",
+        f"world-state://support/{reason}",
+    ]
+    for contradiction in snapshot.unresolved_contradictions:
+        refs.append(f"world-state://contradiction/{contradiction.contradiction_id}")
+        refs.extend(contradiction.conflicting_evidence_ids)
+    return tuple(_unique_text_list(refs))
 
 
 def _build_action_envelope(
@@ -1384,6 +1600,9 @@ def _uao_record_evidence_refs(
     refs.extend(_text_iterable(action_envelope.get("evidence_refs", ())))
     if result.terminal_certificate is not None:
         refs.extend(result.terminal_certificate.evidence_refs)
+    refs.extend(result.world_certificate.evidence_refs)
+    if result.operating_substrate_certificate is not None:
+        refs.extend(result.operating_substrate_certificate.evidence_refs)
     refs.append(result.world_certificate.snapshot.snapshot_id)
     return _unique_text_list(refs)
 
@@ -1446,6 +1665,15 @@ def _uao_record_decision(result: UniversalActionResult) -> dict[str, Any]:
             else "SolvedUnverified",
             "next_action": "retain_receipts",
             "execution_allowed": True,
+        }
+    if result.block_reason == "operating_substrate_self_model_missing":
+        return {
+            "status": "block",
+            "reason_code": result.block_reason,
+            "proof_state": "Unknown",
+            "solver_outcome": "AwaitingEvidence",
+            "next_action": "collect_operating_substrate_evidence",
+            "execution_allowed": False,
         }
     return {
         "status": "block",
@@ -1700,11 +1928,16 @@ def _uao_record_admission_guards(
     for guard_name, reason_code, refs in guard_specs:
         if guard_name == blocked_guard:
             verdict = "escalated" if _result_requires_review(result) else "blocked"
+            proof_state = (
+                "Unknown"
+                if result.block_reason == "operating_substrate_self_model_missing"
+                else "Fail"
+            )
             guards.append(
                 {
                     "guard": guard_name,
                     "verdict": verdict,
-                    "proof_state": "Fail",
+                    "proof_state": proof_state,
                     "reason_code": (
                         "effect_reconciliation_mismatch"
                         if _result_requires_review(result)
@@ -1732,6 +1965,8 @@ def _uao_record_blocked_guard(result: UniversalActionResult) -> str | None:
     if result.dispatched:
         return None
     if result.block_reason == "open_world_contradictions":
+        return "evidence_sufficient"
+    if result.block_reason.startswith("operating_substrate_"):
         return "evidence_sufficient"
     if result.block_reason == "capability_admission_rejected":
         return "capability_certified"

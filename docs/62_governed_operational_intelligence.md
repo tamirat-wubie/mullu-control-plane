@@ -432,6 +432,13 @@ Do not admit physical control until digital governance has production witness ev
 
 These five are the minimum path from governed task runtime to governed operational intelligence platform.
 
+The repository-local integration path for the operating-substrate foundation is
+bounded in
+[`72_operating_substrate_integration_plan.md`](72_operating_substrate_integration_plan.md).
+That plan keeps capability ABI coverage, self-model projection, and world-state
+projection inside the existing Mullu Govern authority path instead of creating a
+parallel root architecture.
+
 ## Promotion Gates
 
 | Gate | Required evidence |

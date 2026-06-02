@@ -284,8 +284,9 @@ def validate_product_route_draft(route_path: Path = PRODUCT_ROUTE_DRAFT_PATH) ->
         "Mullu Govern, by Mullusi",
         "Govern every symbolic action before it runs.",
         "Symbols are atomic. Meaning is relational. Traversal is governed. Judgment is earned.",
-        "private beta",
-        "Request access",
+        "foundation mode",
+        "Review repository",
+        "local proof first",
         "Mullu Govern",
         "Mullu Proof",
         "Mullu Ledger",
@@ -641,6 +642,15 @@ def validate_website_deployment_evidence_template(
         "website template must name website_deployment_verification gate",
     )
     _require("No GitHub Pages site-not-found page" in template_text, "website template must reject site-not-found pages")
+    _require(
+        "foundation-stage with no access, waitlist, or beta invitation" in template_text,
+        "website template must enforce Foundation Mode access boundary",
+    )
+    for forbidden_forward_term in ("private_beta_only", "request-access", "private beta, waitlist"):
+        _require(
+            forbidden_forward_term not in template_text,
+            f"website template must not authorize forward-looking {forbidden_forward_term!r} posture",
+        )
 
 
 def validate_website_deployment_evidence_log(
@@ -807,6 +817,10 @@ def validate_public_naming_review_packet(packet_path: Path = PUBLIC_NAMING_REVIE
     _require("Paid public launch allowed | false" in packet_text, "review packet must show launch remains blocked")
     _require("Final clearance decision | pending" in packet_text, "review packet must show final decision is pending")
     _require("Do Not Approve If" in packet_text, "review packet must include rejection criteria")
+    _require(
+        "foundation-stage with no access, waitlist, or beta invitation" in packet_text,
+        "review packet must preserve Foundation Mode access boundary",
+    )
 
     missing_open_gates = sorted(gate for gate in REQUIRED_OPEN_GATES if gate not in packet_text)
     _require(not missing_open_gates, f"review packet missing open gates: {missing_open_gates}")

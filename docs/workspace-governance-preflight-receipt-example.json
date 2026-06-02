@@ -1,5 +1,5 @@
 {
-  "check_count": 22,
+  "check_count": 36,
   "generated_at_epoch": 1780272000.0,
   "checks": [
     {
@@ -21,6 +21,160 @@
         "scripts/validate_agents_governance.py"
       ],
       "name": "agents_policy",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_mode.py"
+      ],
+      "name": "foundation_mode",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_source_control_boundary.py"
+      ],
+      "name": "foundation_source_control_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_local_proof_thread.py"
+      ],
+      "name": "foundation_local_proof_thread",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_private_recovery_boundary.py"
+      ],
+      "name": "foundation_private_recovery_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_secrets_credentials_boundary.py"
+      ],
+      "name": "foundation_secrets_credentials_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_cost_budget_boundary.py"
+      ],
+      "name": "foundation_cost_budget_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_runtime_environment_boundary.py"
+      ],
+      "name": "foundation_runtime_environment_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_backup_export_boundary.py"
+      ],
+      "name": "foundation_backup_export_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_domain_email_boundary.py"
+      ],
+      "name": "foundation_domain_email_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_legal_business_boundary.py"
+      ],
+      "name": "foundation_legal_business_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_product_scope_boundary.py"
+      ],
+      "name": "foundation_product_scope_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_support_readiness_boundary.py"
+      ],
+      "name": "foundation_support_readiness_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_intake_onboarding_boundary.py"
+      ],
+      "name": "foundation_intake_onboarding_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_privacy_data_boundary.py"
+      ],
+      "name": "foundation_privacy_data_boundary",
       "passed": true,
       "return_code": 0,
       "stderr": "",

@@ -48,7 +48,14 @@ from mcoi_runtime.contracts.governed_capability_fabric import (
     DomainCapsuleCertificationStatus,
 )
 from mcoi_runtime.contracts.learning import LearningAdmissionStatus
+from mcoi_runtime.contracts.meta_reasoning import (
+    HealthStatus,
+    OperatingSubstrateSelfModelProjection,
+    SelfModelCapabilityProjection,
+    SubsystemHealth,
+)
 from mcoi_runtime.contracts.simulation import RiskLevel, VerdictType
+from mcoi_runtime.contracts.solver_outcome import SolverOutcome
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
 from mcoi_runtime.contracts.world_state import (
     ContradictionRecord,
@@ -285,6 +292,86 @@ def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
     assert record["raw_reasoning_included"] is False
     assert record["lineage"]["accepted_deltas"]
     assert record["lineage"]["rejected_deltas"] == []
+    assert any(ref.startswith("world-state://snapshot/") for ref in record["input_refs"])
+
+
+def test_universal_action_record_binds_operating_substrate_projection_evidence() -> None:
+    kernel, _executor = _kernel_with_capability()
+    projection = _operating_substrate_projection()
+    request = _action_request(
+        intent_id="intent-operating-substrate-allow",
+        operating_substrate_projection=projection,
+        require_operating_substrate_projection=True,
+    )
+
+    result = kernel.run(request)
+    record = build_universal_action_orchestration_record(request=request, result=result)
+    validation_errors = _validate_uao_record(record)
+    evidence_guard = _guard(record, "evidence_sufficient")
+
+    assert validation_errors == []
+    assert result.blocked is False
+    assert result.operating_substrate_certificate is not None
+    assert result.operating_substrate_certificate.allows_execution is True
+    assert result.operating_substrate_certificate.projection == projection
+    assert f"operating-substrate://projection/{projection.projection_id}" in record["input_refs"]
+    assert f"operating-substrate://projection/{projection.projection_id}" in evidence_guard["evidence_refs"]
+    assert "proof://operating-substrate" in evidence_guard["evidence_refs"]
+
+
+def test_universal_action_kernel_blocks_when_required_self_model_evidence_missing() -> None:
+    kernel, executor = _kernel_with_capability()
+    request = _action_request(
+        intent_id="intent-operating-substrate-missing",
+        require_operating_substrate_projection=True,
+    )
+
+    result = kernel.run(request)
+    record = build_universal_action_orchestration_record(request=request, result=result)
+    validation_errors = _validate_uao_record(record)
+    evidence_guard = _guard(record, "evidence_sufficient")
+
+    assert validation_errors == []
+    assert result.blocked is True
+    assert result.block_reason == "operating_substrate_self_model_missing"
+    assert result.operating_substrate_certificate is not None
+    assert result.operating_substrate_certificate.allows_execution is False
+    assert result.governed_action is None
+    assert result.dispatch_result is None
+    assert executor.calls == 0
+    assert record["decision"]["solver_outcome"] == "AwaitingEvidence"
+    assert record["decision"]["next_action"] == "collect_operating_substrate_evidence"
+    assert evidence_guard["proof_state"] == "Unknown"
+    assert "operating-substrate://projection/missing" in evidence_guard["evidence_refs"]
+
+
+def test_universal_action_kernel_blocks_degraded_self_model_before_dispatch() -> None:
+    kernel, executor = _kernel_with_capability()
+    projection = _operating_substrate_projection(
+        status=HealthStatus.DEGRADED,
+        solver_outcome=SolverOutcome.SOLVED_UNVERIFIED,
+    )
+    request = _action_request(
+        intent_id="intent-operating-substrate-degraded",
+        operating_substrate_projection=projection,
+        require_operating_substrate_projection=True,
+    )
+
+    result = kernel.run(request)
+    record = build_universal_action_orchestration_record(request=request, result=result)
+    validation_errors = _validate_uao_record(record)
+    evidence_guard = _guard(record, "evidence_sufficient")
+
+    assert validation_errors == []
+    assert result.blocked is True
+    assert result.block_reason == "operating_substrate_self_model_rejected"
+    assert result.operating_substrate_certificate is not None
+    assert result.operating_substrate_certificate.allows_execution is False
+    assert result.dispatch_result is None
+    assert executor.calls == 0
+    assert record["decision"]["solver_outcome"] == "GovernanceBlocked"
+    assert evidence_guard["proof_state"] == "Fail"
+    assert "operating-substrate://status/degraded" in evidence_guard["evidence_refs"]
 
 
 def test_universal_action_kernel_escalates_effect_prediction_mismatch() -> None:
@@ -1643,12 +1730,16 @@ def _action_request(
     success_probability: float = 0.9,
     dispatch_request: DispatchRequest | None = None,
     metadata: dict | None = None,
+    operating_substrate_projection: OperatingSubstrateSelfModelProjection | None = None,
+    require_operating_substrate_projection: bool = False,
 ) -> UniversalActionRequest:
     request_metadata = {
         "actor_roles": (REQUIRED_ROLE,),
         "approval_refs": APPROVAL_REFS,
         "approval_actor_ids": APPROVAL_ACTOR_IDS,
     }
+    if require_operating_substrate_projection:
+        request_metadata["require_operating_substrate_projection"] = True
     if metadata is not None:
         request_metadata.update(metadata)
     return UniversalActionRequest(
@@ -1660,6 +1751,7 @@ def _action_request(
         risk_level=risk_level,
         success_probability=success_probability,
         metadata=request_metadata,
+        operating_substrate_projection=operating_substrate_projection,
     )
 
 
@@ -1670,6 +1762,57 @@ def _dispatch_request(goal_id: str = "goal-1") -> DispatchRequest:
         template=VALID_TEMPLATE,
         bindings={"msg": "hello"},
     )
+
+
+def _operating_substrate_projection(
+    *,
+    capability_id: str = "shell_command",
+    admitted: bool = True,
+    status: HealthStatus = HealthStatus.HEALTHY,
+    solver_outcome: SolverOutcome = SolverOutcome.SOLVED_VERIFIED,
+    world_state_status: HealthStatus = HealthStatus.HEALTHY,
+) -> OperatingSubstrateSelfModelProjection:
+    capability = SelfModelCapabilityProjection(
+        capability_id=capability_id,
+        maturity="C4",
+        risk="low",
+        admitted=admitted,
+        status=status,
+        reason="manifest_admitted" if admitted else "manifest_rejected",
+        evidence_refs=("proof://capability",),
+    )
+    return OperatingSubstrateSelfModelProjection(
+        projection_id="os-projection-uao",
+        captured_at=NOW,
+        capabilities=(capability,),
+        subsystem_health=(
+            SubsystemHealth(
+                subsystem="capability_fabric",
+                status=HealthStatus.HEALTHY,
+                details="manifest evidence available",
+            ),
+            SubsystemHealth(
+                subsystem="universal_action_orchestration",
+                status=HealthStatus.HEALTHY,
+                details="UAO kernel available",
+            ),
+        ),
+        world_state_status=world_state_status,
+        evidence_refs=("proof://operating-substrate",),
+        capability_count=1,
+        admitted_capability_count=1 if admitted else 0,
+        degraded_capability_count=1 if status is HealthStatus.DEGRADED else 0,
+        unknown_capability_count=1 if status is HealthStatus.UNKNOWN else 0,
+        solver_outcome=solver_outcome,
+    )
+
+
+def _guard(record: dict, guard_name: str) -> dict:
+    guard = next(
+        item for item in record["admission_guards"] if item["guard"] == guard_name
+    )
+    assert isinstance(guard, dict)
+    return guard
 
 
 def _capability_admission_gate(

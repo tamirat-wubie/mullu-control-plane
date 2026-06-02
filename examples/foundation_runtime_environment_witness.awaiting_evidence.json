@@ -1,0 +1,87 @@
+{
+  "blocked_claims": [
+    "local runtime verification",
+    "workstation repeatability verification",
+    "dependency install verification",
+    "database runtime activation",
+    "container runtime activation",
+    "network endpoint activation",
+    "public endpoint publication",
+    "cloud runtime activation",
+    "migration execution",
+    "deployment readiness"
+  ],
+  "cloud_runtime_allowed": false,
+  "container_runtime_allowed": false,
+  "database_runtime_allowed": false,
+  "dependency_install_verified": false,
+  "deployment_allowed": false,
+  "local_runtime_verified": false,
+  "migration_execution_allowed": false,
+  "network_endpoint_allowed": false,
+  "next_action": "keep runtime and environment materials as local draft categories only; do not start services, open endpoints, run migrations, connect cloud runtimes, or claim runtime readiness without later witness evidence",
+  "public_endpoint_allowed": false,
+  "runtime_environment_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Command categories only; no live command output, hostnames, ports, or runtime readiness claim is stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_command_inventory",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Version questions only; no verified workstation or dependency-install claim is made.",
+      "state": "AwaitingEvidence",
+      "surface_id": "toolchain_version_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Install-risk questions only; no installed-state proof or package registry credentials are stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dependency_install_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Database-role questions only; no connection strings, migrations, or active database state are stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "database_runtime_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Container-boundary questions only; no active containers, registry targets, or image publication is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "container_runtime_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Exposure-risk questions only; no network listeners, public endpoints, or routing targets are stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_exposure_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Rollback questions only; no executed migrations or state-changing database proof is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "migration_rollback_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Checklist labels only; no runtime readiness or deployment readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "local_verification_checklist",
+      "surface_type": "local_draft"
+    }
+  ],
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_runtime_environment_witness.awaiting_evidence.v1",
+  "workstation_repeatability_verified": false
+}

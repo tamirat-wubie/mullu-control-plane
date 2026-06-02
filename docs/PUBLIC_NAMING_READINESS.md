@@ -3,7 +3,7 @@
 Purpose: define the release gate for exposing `Mullu Govern` as the public product name.
 Governance scope: brand clearance, domain ownership, website copy, SDK/API terminology, admin surfaces, and product launch evidence.
 Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/PUBLIC_LAUNCH_COPY.md`, `docs/NAME_CLEARANCE_PRELIMINARY.md`, `docs/APP_TITLE_UPDATE_EVIDENCE_2026-05-15.md`, `docs/HOMEPAGE_UPDATE_EVIDENCE_2026-05-15.md`, `docs/OFFICIAL_CLEARANCE_ACCESS_LOG_2026-05-15.md`, `docs/SDK_API_STABILITY_REVIEW_2026-05-15.md`, `docs/NAMING_MIGRATION_PLAN.md`, `docs/TRADEMARK_SEARCH_RUNBOOK.md`, `docs/DOMAIN_ACQUISITION_PLAN.md`, `docs/WEBSITE_UPDATE_CHECKLIST.md`, `docs/WEBSITE_RECHECK_LOG.md`, `docs/WEBSITE_LOCAL_BROWSER_VERIFICATION_2026-05-25.md`, `docs/WEBSITE_DEPLOYMENT_EVIDENCE_2026-05-24.md`, `docs/PUBLIC_NAMING_STATE_TRANSITION.md`, `docs/PUBLIC_NAMING_HANDOFF.md`, `docs/CLEARANCE_PACKET_TEMPLATE.md`, `docs/DOMAIN_OWNERSHIP_RECORD_TEMPLATE.md`, `docs/public-naming-readiness.json`.
-Invariants: `Mullu Govern` is the public product name for internal alignment and private beta; paid public launch remains blocked until clearance; `Mullu` remains the suite/family; `Mullusi` remains the company and governance authority; `Mullu Platform` remains valid for developer contracts and architecture surfaces; `Mullu Control Plane` remains the internal/admin technical surface.
+Invariants: `Mullu Govern` is the public product name for internal alignment and Foundation Mode; paid public launch remains blocked until clearance; `Mullu` remains the suite/family; `Mullusi` remains the company and governance authority; `Mullu Platform` remains valid for developer contracts and architecture surfaces; `Mullu Control Plane` remains the internal/admin technical surface.
 
 ## Readiness Gates
 
@@ -15,7 +15,7 @@ Invariants: `Mullu Govern` is the public product name for internal alignment and
 | Admin boundary | `Mullu Control Plane` is documented as internal/admin governance/deployment surface | Closed |
 | Blocked generic names | `Mullusi Handler`, `Mullusi Work`, `Mullusi Operator`, and `Mullu Generic` are blocked as public product names | Closed |
 | Public copy | Launch-ready homepage copy exists | Closed |
-| Product route draft | Deploy-ready `/mullu/index.html` product page exists and remains private beta | Closed |
+| Product route draft | Deploy-ready `/mullu/index.html` product page exists and remains foundation-stage | Closed |
 | Product route deployment handoff | Product route copied to sibling website repo target and verified live at `/mullu` | Closed |
 | Trademark runbook | Official search procedure exists | Closed |
 | TSDR evidence template | Official USPTO close-variant serial capture template exists | Closed |
@@ -109,7 +109,8 @@ site/mullu/index.html
 
 Deploy it as `/mullu/index.html` in the public GitHub Pages site only after the
 appropriate clearance posture is chosen. Until the open gates close, the page
-must remain private beta or request-access copy, not a paid public launch page.
+must remain foundation-stage proof-boundary copy with no access, waitlist, or
+beta invitation, not a paid public launch page.
 
 The current deployment handoff target is:
 

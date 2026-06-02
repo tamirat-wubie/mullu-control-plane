@@ -1,0 +1,75 @@
+{
+  "api_provisioning_allowed": false,
+  "confirmed_at_utc": null,
+  "deployment_allowed": false,
+  "dns_publication_allowed": false,
+  "manual_confirmation_required": true,
+  "next_action": "complete private recovery inventory outside Git; then update only public-safe states after manual confirmation",
+  "private_inventory_content_stored_in_git": false,
+  "private_inventory_state": "AwaitingEvidence",
+  "promotion_blockers": [
+    "private_recovery_inventory_missing",
+    "cloud_account_recovery_awaiting_evidence",
+    "source_account_recovery_awaiting_evidence",
+    "workspace_email_recovery_awaiting_evidence",
+    "domain_registrar_recovery_awaiting_evidence",
+    "dns_provider_recovery_awaiting_evidence",
+    "password_manager_recovery_awaiting_evidence",
+    "offline_backup_recovery_awaiting_evidence",
+    "billing_renewal_recovery_awaiting_evidence"
+  ],
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_recovery_witness.awaiting_evidence.v1",
+  "witnesses": [
+    {
+      "private_value_present": false,
+      "public_evidence_ref": "outside_git_manual_confirmation_pending",
+      "state": "AwaitingEvidence",
+      "witness_id": "cloud_account_recovery"
+    },
+    {
+      "private_value_present": false,
+      "public_evidence_ref": "outside_git_manual_confirmation_pending",
+      "state": "AwaitingEvidence",
+      "witness_id": "source_account_recovery"
+    },
+    {
+      "private_value_present": false,
+      "public_evidence_ref": "outside_git_manual_confirmation_pending",
+      "state": "AwaitingEvidence",
+      "witness_id": "workspace_email_recovery"
+    },
+    {
+      "private_value_present": false,
+      "public_evidence_ref": "outside_git_manual_confirmation_pending",
+      "state": "AwaitingEvidence",
+      "witness_id": "domain_registrar_recovery"
+    },
+    {
+      "private_value_present": false,
+      "public_evidence_ref": "outside_git_manual_confirmation_pending",
+      "state": "AwaitingEvidence",
+      "witness_id": "dns_provider_recovery"
+    },
+    {
+      "private_value_present": false,
+      "public_evidence_ref": "outside_git_manual_confirmation_pending",
+      "state": "AwaitingEvidence",
+      "witness_id": "password_manager_recovery"
+    },
+    {
+      "private_value_present": false,
+      "public_evidence_ref": "outside_git_manual_confirmation_pending",
+      "state": "AwaitingEvidence",
+      "witness_id": "offline_backup_recovery"
+    },
+    {
+      "private_value_present": false,
+      "public_evidence_ref": "outside_git_manual_confirmation_pending",
+      "state": "AwaitingEvidence",
+      "witness_id": "billing_renewal_recovery"
+    }
+  ]
+}

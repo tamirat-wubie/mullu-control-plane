@@ -26,6 +26,7 @@ from mcoi_runtime.contracts.dashboard import (
     LearningInsight,
     MetaReasoningSummary,
     NoteMemorySummary,
+    OperatingSubstrateSummary,
     ProviderRoutingSummary,
     ReliabilityPillarSummary,
     WorldStateSummary,
@@ -35,8 +36,13 @@ from mcoi_runtime.contracts.decision_learning import (
     DecisionAdjustment,
     DecisionOutcomeRecord,
 )
-from mcoi_runtime.contracts.meta_reasoning import MetaReasoningSnapshot
+from mcoi_runtime.contracts.meta_reasoning import (
+    HealthStatus,
+    MetaReasoningSnapshot,
+    OperatingSubstrateSelfModelProjection,
+)
 from mcoi_runtime.contracts.provider_routing import RoutingOutcome
+from mcoi_runtime.contracts.solver_outcome import SolverOutcome
 from .invariants import stable_identifier
 
 
@@ -409,6 +415,50 @@ class DashboardEngine:
         )
 
     # ------------------------------------------------------------------
+    # Operating-substrate self-model summary
+    # ------------------------------------------------------------------
+
+    def build_operating_substrate_summary(
+        self,
+        projection: OperatingSubstrateSelfModelProjection,
+    ) -> OperatingSubstrateSummary:
+        """Build a dashboard-ready summary from a read-only self-model projection."""
+        if not isinstance(projection, OperatingSubstrateSelfModelProjection):
+            raise ValueError("projection must be an OperatingSubstrateSelfModelProjection")
+
+        unavailable_capability_count = sum(
+            1 for capability in projection.capabilities if capability.status is HealthStatus.UNAVAILABLE
+        )
+        evidence_ref_count = len(projection.evidence_refs) + sum(
+            len(capability.evidence_refs) for capability in projection.capabilities
+        )
+        open_incident_count = sum(len(capability.open_incident_refs) for capability in projection.capabilities)
+        now = self._clock()
+        summary_id = stable_identifier("dash-operating-substrate", {
+            "projection_id": projection.projection_id,
+            "solver_outcome": projection.solver_outcome.value,
+            "generated_at": now,
+        })
+
+        return OperatingSubstrateSummary(
+            summary_id=summary_id,
+            overall_status=projection.overall_status.value,
+            solver_outcome=projection.solver_outcome.value,
+            capability_count=projection.capability_count,
+            admitted_capability_count=projection.admitted_capability_count,
+            degraded_capability_count=projection.degraded_capability_count,
+            unknown_capability_count=projection.unknown_capability_count,
+            unavailable_capability_count=unavailable_capability_count,
+            subsystem_count=len(projection.subsystem_health),
+            evidence_ref_count=evidence_ref_count,
+            open_incident_count=open_incident_count,
+            mutation_authorized=projection.mutation_authorized,
+            raw_private_reasoning_included=projection.raw_private_reasoning_included,
+            recommendation=_operating_substrate_recommendation(projection),
+            assessed_at=now,
+        )
+
+    # ------------------------------------------------------------------
     # Full snapshot
     # ------------------------------------------------------------------
 
@@ -428,6 +478,7 @@ class DashboardEngine:
         meta_snapshot: MetaReasoningSnapshot | None = None,
         world_state_summary: WorldStateSummary | None = None,
         note_memory_snapshot: Mapping[str, Any] | None = None,
+        operating_substrate_projection: OperatingSubstrateSelfModelProjection | None = None,
     ) -> DashboardSnapshot:
         """Assemble a complete dashboard snapshot from subsystem data.
 
@@ -450,6 +501,10 @@ class DashboardEngine:
         if note_memory_snapshot is not None:
             note_summary = self.build_note_memory_summary(note_memory_snapshot)
 
+        operating_substrate_summary: OperatingSubstrateSummary | None = None
+        if operating_substrate_projection is not None:
+            operating_substrate_summary = self.build_operating_substrate_summary(operating_substrate_projection)
+
         now = self._clock()
         snapshot_id = stable_identifier("dash-snap", {
             "total_decisions": total_decisions,
@@ -468,6 +523,7 @@ class DashboardEngine:
             meta_reasoning=meta_summary,
             world_state=world_state_summary,
             note_memory=note_summary,
+            operating_substrate=operating_substrate_summary,
         )
 
 
@@ -526,3 +582,21 @@ def _optional_text_at(value: Mapping[str, Any], key: str) -> str:
     if not isinstance(raw_value, str):
         raise ValueError(f"{key} must be a string")
     return raw_value.strip()
+
+
+def _operating_substrate_recommendation(projection: OperatingSubstrateSelfModelProjection) -> str:
+    if projection.overall_status is HealthStatus.UNAVAILABLE or projection.solver_outcome in {
+        SolverOutcome.GOVERNANCE_BLOCKED,
+        SolverOutcome.SAFE_HALT,
+        SolverOutcome.IMPOSSIBLE_PROVED,
+        SolverOutcome.MODEL_INVALIDATED,
+    }:
+        return "block_execution"
+    if projection.overall_status is HealthStatus.UNKNOWN or projection.solver_outcome is SolverOutcome.AWAITING_EVIDENCE:
+        return "collect_evidence"
+    if projection.overall_status is HealthStatus.DEGRADED or projection.solver_outcome in {
+        SolverOutcome.SOLVED_UNVERIFIED,
+        SolverOutcome.BUDGET_EXHAUSTED,
+    }:
+        return "operator_review"
+    return "ready"

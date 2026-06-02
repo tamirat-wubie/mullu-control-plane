@@ -1,0 +1,219 @@
+{
+  "company_ready_claimed": false,
+  "customer_terms_ready_claimed": false,
+  "domains": [
+    {
+      "blocked_claims": [
+        "ownership_dispute_resolved",
+        "invention_authorship_final"
+      ],
+      "current_state": "AwaitingEvidence",
+      "domain_id": "ownership_invention_record",
+      "evidence_to_collect": [
+        "dated invention notes",
+        "contribution boundary notes",
+        "repository authorship record"
+      ],
+      "public_safe_note": "Prepare a dated authorship and invention-history question list without claiming ownership disputes are resolved.",
+      "qualified_reviewer_type": "intellectual_property_or_startup_counsel",
+      "questions": [
+        "What invention records should be preserved before any public launch claim?",
+        "How should contribution history be recorded while the project is solo-operated?",
+        "Which materials should stay private until qualified review?"
+      ]
+    },
+    {
+      "blocked_claims": [
+        "trademark_clearance",
+        "brand_name_final"
+      ],
+      "current_state": "AwaitingEvidence",
+      "domain_id": "public_name_trademark",
+      "evidence_to_collect": [
+        "candidate name list",
+        "public usage summary",
+        "qualified name-clearance questions"
+      ],
+      "public_safe_note": "Prepare name and trademark questions without claiming clearance.",
+      "qualified_reviewer_type": "trademark_or_startup_counsel",
+      "questions": [
+        "Which names need clearance review before broader public use?",
+        "Which public pages use each name today?",
+        "What should change if a name is not clear?"
+      ]
+    },
+    {
+      "blocked_claims": [
+        "company_ready",
+        "entity_formed"
+      ],
+      "current_state": "AwaitingEvidence",
+      "domain_id": "company_formation",
+      "evidence_to_collect": [
+        "formation timing questions",
+        "ownership structure questions",
+        "operating obligation questions"
+      ],
+      "public_safe_note": "Prepare formation questions without creating or claiming a company entity.",
+      "qualified_reviewer_type": "startup_counsel_or_business_advisor",
+      "questions": [
+        "What event should trigger company formation review?",
+        "Which obligations begin after formation?",
+        "What records should be ready before formation?"
+      ]
+    },
+    {
+      "blocked_claims": [
+        "tax_ready",
+        "bookkeeping_ready"
+      ],
+      "current_state": "AwaitingEvidence",
+      "domain_id": "tax_accounting",
+      "evidence_to_collect": [
+        "expense tracking questions",
+        "income timing questions",
+        "bookkeeping setup questions"
+      ],
+      "public_safe_note": "Prepare accounting questions without claiming tax readiness.",
+      "qualified_reviewer_type": "accountant_or_tax_professional",
+      "questions": [
+        "What records should exist before spending or earning money?",
+        "How should project expenses be tracked before company formation?",
+        "What tax questions must be answered before paid launch?"
+      ]
+    },
+    {
+      "blocked_claims": [
+        "terms_ready",
+        "privacy_ready",
+        "customer_access_allowed"
+      ],
+      "current_state": "AwaitingEvidence",
+      "domain_id": "terms_privacy",
+      "evidence_to_collect": [
+        "future customer data categories",
+        "terms questions",
+        "privacy questions"
+      ],
+      "public_safe_note": "Prepare terms and privacy questions without opening customer access.",
+      "qualified_reviewer_type": "technology_counsel_or_privacy_reviewer",
+      "questions": [
+        "What user data would the product handle in a future pilot?",
+        "What terms are required before customer access?",
+        "What privacy notices are required before customer access?"
+      ]
+    },
+    {
+      "blocked_claims": [
+        "patent_protection",
+        "claims_ready"
+      ],
+      "current_state": "AwaitingEvidence",
+      "domain_id": "patent_invention_boundary",
+      "evidence_to_collect": [
+        "invention boundary notes",
+        "claim-area questions",
+        "prior-art review questions"
+      ],
+      "public_safe_note": "Prepare invention-boundary questions without claiming patent protection.",
+      "qualified_reviewer_type": "patent_counsel",
+      "questions": [
+        "Which invention boundaries are stable enough for review?",
+        "Which public disclosures should be delayed until review?",
+        "What prior-art questions should be prepared?"
+      ]
+    },
+    {
+      "blocked_claims": [
+        "compliance_clearance",
+        "regulated_use_ready"
+      ],
+      "current_state": "AwaitingEvidence",
+      "domain_id": "data_compliance",
+      "evidence_to_collect": [
+        "data category map",
+        "regulated domain questions",
+        "retention and deletion questions"
+      ],
+      "public_safe_note": "Prepare compliance questions without claiming regulated-use readiness.",
+      "qualified_reviewer_type": "privacy_or_compliance_reviewer",
+      "questions": [
+        "Which data categories are expected in future use?",
+        "Which regulated domains must stay blocked?",
+        "What retention and deletion questions need review?"
+      ]
+    },
+    {
+      "blocked_claims": [
+        "payments_ready",
+        "money_movement_allowed"
+      ],
+      "current_state": "AwaitingEvidence",
+      "domain_id": "finance_payments",
+      "evidence_to_collect": [
+        "payment-provider questions",
+        "refund and dispute questions",
+        "ledger and audit questions"
+      ],
+      "public_safe_note": "Prepare payment questions without processing real payments.",
+      "qualified_reviewer_type": "payments_counsel_accountant_or_provider_reviewer",
+      "questions": [
+        "What must exist before processing real payments?",
+        "What refund and dispute duties would apply?",
+        "What ledger evidence is required before money movement?"
+      ]
+    },
+    {
+      "blocked_claims": [
+        "contractor_ready",
+        "team_process_ready"
+      ],
+      "current_state": "AwaitingEvidence",
+      "domain_id": "contractor_team",
+      "evidence_to_collect": [
+        "contribution agreement questions",
+        "confidentiality questions",
+        "access-control questions"
+      ],
+      "public_safe_note": "Prepare team and contractor questions without inviting contributors.",
+      "qualified_reviewer_type": "startup_counsel_or_operator_reviewer",
+      "questions": [
+        "What agreement would be needed before outside contribution?",
+        "What access should stay blocked for future contributors?",
+        "How should contribution ownership be recorded?"
+      ]
+    },
+    {
+      "blocked_claims": [
+        "support_ready",
+        "liability_boundary_ready"
+      ],
+      "current_state": "AwaitingEvidence",
+      "domain_id": "support_liability",
+      "evidence_to_collect": [
+        "support duty questions",
+        "incident response questions",
+        "liability boundary questions"
+      ],
+      "public_safe_note": "Prepare support and liability questions without opening customer access.",
+      "qualified_reviewer_type": "technology_counsel_or_support_operator_reviewer",
+      "questions": [
+        "What support duties would begin with customer access?",
+        "What incident response promises must be avoided until ready?",
+        "What liability boundary questions need review?"
+      ]
+    }
+  ],
+  "legal_clearance_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "refine one question area at a time; do not promote readiness without qualified review or signed witness evidence",
+  "packet_id": "foundation_legal_business_questions.awaiting_review.v1",
+  "paid_launch_allowed": false,
+  "patent_protection_claimed": false,
+  "qualified_review_required": true,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "tax_readiness_claimed": false,
+  "trademark_clearance_claimed": false
+}

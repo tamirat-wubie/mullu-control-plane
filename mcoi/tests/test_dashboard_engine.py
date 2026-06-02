@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from mcoi_runtime.contracts.dashboard import MetaReasoningSummary, NoteMemorySummary
+from mcoi_runtime.contracts.dashboard import MetaReasoningSummary, NoteMemorySummary, OperatingSubstrateSummary
 from mcoi_runtime.contracts.decision_learning import (
     AdjustmentType,
     DecisionAdjustment,
@@ -17,14 +17,17 @@ from mcoi_runtime.contracts.meta_reasoning import (
     EscalationSeverity,
     HealthStatus,
     MetaReasoningSnapshot,
+    OperatingSubstrateSelfModelProjection,
     ReplanReason,
     ReplanRecommendation,
     SelfHealthSnapshot,
+    SelfModelCapabilityProjection,
     SubsystemHealth,
     UncertaintyReport,
     UncertaintySource,
 )
 from mcoi_runtime.contracts.provider_routing import RoutingOutcome
+from mcoi_runtime.contracts.solver_outcome import SolverOutcome
 from mcoi_runtime.core.dashboard import DashboardEngine
 
 
@@ -33,6 +36,7 @@ from mcoi_runtime.core.dashboard import DashboardEngine
 # ---------------------------------------------------------------------------
 
 _TICK = 0
+_OS_TS = "2026-03-20T00:00:00Z"
 
 
 def _make_engine() -> DashboardEngine:
@@ -131,6 +135,45 @@ def _note_memory_snapshot(
     if filters is not None:
         snapshot["filters"] = filters
     return snapshot
+
+
+def _operating_substrate_projection(
+    *,
+    status: HealthStatus = HealthStatus.HEALTHY,
+    admitted: bool = True,
+    solver_outcome: SolverOutcome = SolverOutcome.SOLVED_VERIFIED,
+    world_state_status: HealthStatus = HealthStatus.HEALTHY,
+    open_incident_refs: tuple[str, ...] = (),
+) -> OperatingSubstrateSelfModelProjection:
+    capability = SelfModelCapabilityProjection(
+        capability_id="software_dev.repo_map.read",
+        maturity="C4",
+        risk="low",
+        admitted=admitted,
+        status=status,
+        reason="manifest_admitted" if admitted else "manifest_rejected",
+        evidence_refs=("proof://capability",),
+        open_incident_refs=open_incident_refs,
+    )
+    return OperatingSubstrateSelfModelProjection(
+        projection_id="os-projection-1",
+        captured_at=_OS_TS,
+        capabilities=(capability,),
+        subsystem_health=(
+            SubsystemHealth(
+                subsystem="capability_fabric",
+                status=HealthStatus.HEALTHY,
+                details="manifest evidence available",
+            ),
+        ),
+        world_state_status=world_state_status,
+        evidence_refs=("receipt://preflight",),
+        capability_count=1,
+        admitted_capability_count=1 if admitted else 0,
+        degraded_capability_count=1 if status is HealthStatus.DEGRADED else 0,
+        unknown_capability_count=1 if status is HealthStatus.UNKNOWN else 0,
+        solver_outcome=solver_outcome,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -816,3 +859,68 @@ class TestSnapshotWithMetaReasoning:
         assert snap.meta_reasoning is not None
         assert isinstance(snap.meta_reasoning, MetaReasoningSummary)
         assert snap.meta_reasoning.overall_confidence == 0.75
+
+
+class TestBuildOperatingSubstrateSummary:
+    def test_builds_operator_read_model_from_self_model_projection(self) -> None:
+        engine = _make_engine()
+        summary = engine.build_operating_substrate_summary(_operating_substrate_projection())
+
+        assert isinstance(summary, OperatingSubstrateSummary)
+        assert summary.overall_status == "healthy"
+        assert summary.solver_outcome == "SolvedVerified"
+        assert summary.evidence_ref_count == 2
+        assert summary.recommendation == "ready"
+
+    def test_unavailable_capability_blocks_execution_recommendation(self) -> None:
+        engine = _make_engine()
+        summary = engine.build_operating_substrate_summary(
+            _operating_substrate_projection(
+                status=HealthStatus.UNAVAILABLE,
+                admitted=False,
+                solver_outcome=SolverOutcome.GOVERNANCE_BLOCKED,
+                open_incident_refs=("incident://capability",),
+            ),
+        )
+
+        assert summary.overall_status == "unavailable"
+        assert summary.unavailable_capability_count == 1
+        assert summary.open_incident_count == 1
+        assert summary.recommendation == "block_execution"
+
+
+class TestSnapshotWithOperatingSubstrate:
+    def test_snapshot_without_operating_substrate(self) -> None:
+        engine = _make_engine()
+        snap = engine.snapshot(
+            outcomes=(),
+            adjustments=(),
+            routing_outcomes=(),
+            preferences={},
+            provider_ids=(),
+            health_scores={},
+            learned_adjustments={},
+            total_decisions=0,
+            total_routing_decisions=0,
+        )
+        assert snap.operating_substrate is None
+
+    def test_snapshot_with_operating_substrate(self) -> None:
+        engine = _make_engine()
+        snap = engine.snapshot(
+            outcomes=(),
+            adjustments=(),
+            routing_outcomes=(),
+            preferences={},
+            provider_ids=(),
+            health_scores={},
+            learned_adjustments={},
+            total_decisions=0,
+            total_routing_decisions=0,
+            operating_substrate_projection=_operating_substrate_projection(),
+        )
+
+        assert snap.operating_substrate is not None
+        assert snap.operating_substrate.capability_count == 1
+        assert snap.operating_substrate.mutation_authorized is False
+        assert snap.operating_substrate.raw_private_reasoning_included is False

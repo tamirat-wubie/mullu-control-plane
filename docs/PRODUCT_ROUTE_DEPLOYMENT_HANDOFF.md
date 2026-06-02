@@ -131,6 +131,10 @@ first-reference copy to:
 Mullu Govern, by Mullusi
 ```
 
+On 2026-06-01, the repository-local product route draft moved the current
+operating posture from private beta/request-access wording to Foundation Mode
+wording: local proof first, no deployment claim, and prerequisites open.
+
 The local browser verification record for this source draft is
 `docs/WEBSITE_LOCAL_BROWSER_VERIFICATION_2026-05-25.md`. That evidence verifies
 the repo-local `/mullu/` and `/proof/` route labels and responsive layout only.

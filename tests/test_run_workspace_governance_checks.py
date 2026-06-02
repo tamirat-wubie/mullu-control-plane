@@ -24,13 +24,26 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     names = [command.name for command in commands]
     args_by_name = {command.name: command.args for command in commands}
 
-    assert names[:4] == [
+    assert names[:17] == [
         "local_assurance_plan",
         "agents_policy",
+        "foundation_mode",
+        "foundation_source_control_boundary",
+        "foundation_local_proof_thread",
+        "foundation_private_recovery_boundary",
+        "foundation_secrets_credentials_boundary",
+        "foundation_cost_budget_boundary",
+        "foundation_runtime_environment_boundary",
+        "foundation_backup_export_boundary",
+        "foundation_domain_email_boundary",
+        "foundation_legal_business_boundary",
+        "foundation_product_scope_boundary",
+        "foundation_support_readiness_boundary",
+        "foundation_intake_onboarding_boundary",
+        "foundation_privacy_data_boundary",
         "protocol_manifest",
-        "logic_governance_application",
     ]
-    assert names[7:15] == [
+    assert names[21:29] == [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
         "workspace_governance_witness_contract",
@@ -40,7 +53,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "workspace_governance_integrity_report_contract",
         "universal_action_orchestration_contract",
     ]
-    assert len(names) == 22
+    assert len(names) == 36
     assert names[-8:] == [
         "universal_action_orchestration_contract",
         "universal_action_orchestration_validation_receipt_contract",
@@ -57,6 +70,46 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "--json",
     )
     assert args_by_name["agents_policy"][1:] == ("scripts/validate_agents_governance.py",)
+    assert args_by_name["foundation_mode"][1:] == ("scripts/validate_foundation_mode.py",)
+    assert args_by_name["foundation_source_control_boundary"][1:] == (
+        "scripts/validate_foundation_source_control_boundary.py",
+    )
+    assert args_by_name["foundation_local_proof_thread"][1:] == (
+        "scripts/validate_foundation_local_proof_thread.py",
+    )
+    assert args_by_name["foundation_private_recovery_boundary"][1:] == (
+        "scripts/validate_foundation_private_recovery_boundary.py",
+    )
+    assert args_by_name["foundation_secrets_credentials_boundary"][1:] == (
+        "scripts/validate_foundation_secrets_credentials_boundary.py",
+    )
+    assert args_by_name["foundation_cost_budget_boundary"][1:] == (
+        "scripts/validate_foundation_cost_budget_boundary.py",
+    )
+    assert args_by_name["foundation_runtime_environment_boundary"][1:] == (
+        "scripts/validate_foundation_runtime_environment_boundary.py",
+    )
+    assert args_by_name["foundation_backup_export_boundary"][1:] == (
+        "scripts/validate_foundation_backup_export_boundary.py",
+    )
+    assert args_by_name["foundation_domain_email_boundary"][1:] == (
+        "scripts/validate_foundation_domain_email_boundary.py",
+    )
+    assert args_by_name["foundation_legal_business_boundary"][1:] == (
+        "scripts/validate_foundation_legal_business_boundary.py",
+    )
+    assert args_by_name["foundation_product_scope_boundary"][1:] == (
+        "scripts/validate_foundation_product_scope_boundary.py",
+    )
+    assert args_by_name["foundation_support_readiness_boundary"][1:] == (
+        "scripts/validate_foundation_support_readiness_boundary.py",
+    )
+    assert args_by_name["foundation_intake_onboarding_boundary"][1:] == (
+        "scripts/validate_foundation_intake_onboarding_boundary.py",
+    )
+    assert args_by_name["foundation_privacy_data_boundary"][1:] == (
+        "scripts/validate_foundation_privacy_data_boundary.py",
+    )
     assert args_by_name["workspace_governance_inventory_report"][1:] == (
         "scripts/report_workspace_governance_inventory.py",
     )

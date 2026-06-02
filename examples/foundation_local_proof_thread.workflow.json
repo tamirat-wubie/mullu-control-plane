@@ -1,0 +1,118 @@
+{
+  "workflow_id": "foundation_local_proof_thread.v1",
+  "name": "Foundation Local Proof Thread",
+  "description": "Local-only Foundation Mode workflow for one harmless proof thread with approval, receipt evidence, verification, rollback, and closure.",
+  "created_at": "2026-06-01T00:00:00Z",
+  "stages": [
+    {
+      "stage_id": "stage_intake",
+      "stage_type": "observation",
+      "description": "Capture one local request, forbidden effects, and evidence boundary.",
+      "timeout_seconds": 300
+    },
+    {
+      "stage_id": "stage_classify_intent",
+      "stage_type": "skill_execution",
+      "skill_id": "foundation.intent_classification.local.v1",
+      "description": "Classify the request as local-only, reversible, and non-external.",
+      "predecessors": ["stage_intake"],
+      "timeout_seconds": 300
+    },
+    {
+      "stage_id": "stage_policy_authority_check",
+      "stage_type": "skill_execution",
+      "skill_id": "foundation.policy_authority_check.local.v1",
+      "description": "Check policy, authority, and Foundation Mode boundaries.",
+      "predecessors": ["stage_classify_intent"],
+      "timeout_seconds": 300
+    },
+    {
+      "stage_id": "stage_local_approval",
+      "stage_type": "approval_gate",
+      "description": "Pause for local operator approval before creating the local result.",
+      "predecessors": ["stage_policy_authority_check"],
+      "timeout_seconds": 900
+    },
+    {
+      "stage_id": "stage_create_local_result",
+      "stage_type": "skill_execution",
+      "skill_id": "foundation.local_document_receipt.v1",
+      "description": "Create a harmless local document or JSON result and receipt reference.",
+      "predecessors": ["stage_local_approval"],
+      "timeout_seconds": 300
+    },
+    {
+      "stage_id": "stage_verify_local_result",
+      "stage_type": "observation",
+      "description": "Verify the local result exists and contains no external-effect claim.",
+      "predecessors": ["stage_create_local_result"],
+      "timeout_seconds": 300
+    },
+    {
+      "stage_id": "stage_record_rollback_note",
+      "stage_type": "skill_execution",
+      "skill_id": "foundation.rollback_recovery_note.local.v1",
+      "description": "Record how to undo, delete, or ignore the local result.",
+      "predecessors": ["stage_verify_local_result"],
+      "timeout_seconds": 300
+    },
+    {
+      "stage_id": "stage_close_receipt",
+      "stage_type": "observation",
+      "description": "Close with pass or fail status, evidence refs, and open issues.",
+      "predecessors": ["stage_record_rollback_note"],
+      "timeout_seconds": 300
+    }
+  ],
+  "bindings": [
+    {
+      "binding_id": "binding_request_to_intent",
+      "source_stage_id": "stage_intake",
+      "source_output_key": "local_request_ref",
+      "target_stage_id": "stage_classify_intent",
+      "target_input_key": "local_request_ref"
+    },
+    {
+      "binding_id": "binding_intent_to_policy",
+      "source_stage_id": "stage_classify_intent",
+      "source_output_key": "intent_classification_ref",
+      "target_stage_id": "stage_policy_authority_check",
+      "target_input_key": "intent_classification_ref"
+    },
+    {
+      "binding_id": "binding_policy_to_approval",
+      "source_stage_id": "stage_policy_authority_check",
+      "source_output_key": "policy_decision_ref",
+      "target_stage_id": "stage_local_approval",
+      "target_input_key": "policy_decision_ref"
+    },
+    {
+      "binding_id": "binding_approval_to_result",
+      "source_stage_id": "stage_local_approval",
+      "source_output_key": "approval_ref",
+      "target_stage_id": "stage_create_local_result",
+      "target_input_key": "approval_ref"
+    },
+    {
+      "binding_id": "binding_result_to_verification",
+      "source_stage_id": "stage_create_local_result",
+      "source_output_key": "local_result_ref",
+      "target_stage_id": "stage_verify_local_result",
+      "target_input_key": "local_result_ref"
+    },
+    {
+      "binding_id": "binding_verification_to_rollback",
+      "source_stage_id": "stage_verify_local_result",
+      "source_output_key": "verification_ref",
+      "target_stage_id": "stage_record_rollback_note",
+      "target_input_key": "verification_ref"
+    },
+    {
+      "binding_id": "binding_rollback_to_closure",
+      "source_stage_id": "stage_record_rollback_note",
+      "source_output_key": "rollback_note_ref",
+      "target_stage_id": "stage_close_receipt",
+      "target_input_key": "rollback_note_ref"
+    }
+  ]
+}

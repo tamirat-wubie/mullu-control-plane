@@ -1,0 +1,93 @@
+{
+  "entries": [
+    {
+      "evidence_state": "AwaitingEvidence",
+      "item_id": "cloud_account_recovery",
+      "next_action": "operator manual confirmation outside Git",
+      "private_value_stored_outside_git": false,
+      "public_label": "Cloud account recovery",
+      "public_safe_note": "Confirm recovery setup and storage location category outside Git."
+    },
+    {
+      "evidence_state": "AwaitingEvidence",
+      "item_id": "source_account_recovery",
+      "next_action": "operator manual confirmation outside Git",
+      "private_value_stored_outside_git": false,
+      "public_label": "Source account recovery",
+      "public_safe_note": "Confirm source-control recovery setup outside Git."
+    },
+    {
+      "evidence_state": "AwaitingEvidence",
+      "item_id": "workspace_email_recovery",
+      "next_action": "operator manual confirmation outside Git",
+      "private_value_stored_outside_git": false,
+      "public_label": "Workspace and email recovery",
+      "public_safe_note": "Confirm admin recovery path outside Git."
+    },
+    {
+      "evidence_state": "AwaitingEvidence",
+      "item_id": "domain_registrar_recovery",
+      "next_action": "operator manual confirmation outside Git",
+      "private_value_stored_outside_git": false,
+      "public_label": "Domain registrar recovery",
+      "public_safe_note": "Confirm registrar recovery and transfer-lock state outside Git."
+    },
+    {
+      "evidence_state": "AwaitingEvidence",
+      "item_id": "dns_provider_recovery",
+      "next_action": "operator manual confirmation outside Git",
+      "private_value_stored_outside_git": false,
+      "public_label": "DNS provider recovery",
+      "public_safe_note": "Confirm DNS provider recovery setup outside Git."
+    },
+    {
+      "evidence_state": "AwaitingEvidence",
+      "item_id": "password_manager_recovery",
+      "next_action": "operator manual confirmation outside Git",
+      "private_value_stored_outside_git": false,
+      "public_label": "Password manager recovery",
+      "public_safe_note": "Confirm emergency access setup outside Git."
+    },
+    {
+      "evidence_state": "AwaitingEvidence",
+      "item_id": "offline_backup_recovery",
+      "next_action": "operator manual confirmation outside Git",
+      "private_value_stored_outside_git": false,
+      "public_label": "Offline backup recovery",
+      "public_safe_note": "Confirm encrypted offline backup location category outside Git."
+    },
+    {
+      "evidence_state": "AwaitingEvidence",
+      "item_id": "billing_renewal_recovery",
+      "next_action": "operator manual confirmation outside Git",
+      "private_value_stored_outside_git": false,
+      "public_label": "Billing renewal recovery",
+      "public_safe_note": "Confirm renewal ownership and reminder location outside Git."
+    }
+  ],
+  "inventory_id": "foundation_private_recovery_inventory.redacted.v1",
+  "must_not_store_in_git": [
+    "recovery_code_values",
+    "password_values",
+    "provider_account_ids",
+    "dns_target_values",
+    "billing_details",
+    "private_storage_paths",
+    "api_tokens",
+    "session_exports",
+    "private_keys"
+  ],
+  "next_action": "complete private recovery inventory outside Git; then update a public-safe witness without secret content",
+  "private_inventory_location_ref": "outside_git_private_operator_record",
+  "promotion_rule": {
+    "api_provisioning_allowed": false,
+    "deployment_allowed": false,
+    "dns_publication_allowed": false,
+    "ready_status": "ReadyForProvisioning",
+    "requires_all_entries_confirmed": true
+  },
+  "schema_version": 1,
+  "scope": "public_safe_recovery_boundary",
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence"
+}

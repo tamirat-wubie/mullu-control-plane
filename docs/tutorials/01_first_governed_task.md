@@ -169,6 +169,7 @@ Nothing was persisted, nothing external happened — by design.
 
 | You now want to... | Go to |
 | --- | --- |
+| Keep working cautiously in local foundation mode | [Foundation Mode](../FOUNDATION_MODE.md) |
 | Understand *why* it's built this way | [Plain-English Overview](../explain/PLAIN_ENGLISH.md) |
 | Do a specific real task (deploy, set a budget) | [How-To Guides](../how-to/) |
 | Watch it govern something real, step by step | [Tutorial 2: Watch Mullu Govern Real Money](02_a_real_governed_task.md) |

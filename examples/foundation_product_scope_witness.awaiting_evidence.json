@@ -1,0 +1,75 @@
+{
+  "blocked_claims": [
+    "pilot readiness",
+    "customer access",
+    "market validation",
+    "deployment readiness",
+    "paid launch",
+    "legal readiness"
+  ],
+  "customer_access_allowed": false,
+  "deployment_dependency_allowed": false,
+  "learning_lanes": [
+    {
+      "lane_id": "local_governed_task_receipt",
+      "lane_type": "selected_local_proof",
+      "state": "AwaitingEvidence",
+      "tests": [
+        "intent classification",
+        "policy check",
+        "local approval",
+        "receipt writing",
+        "result verification",
+        "rollback naming"
+      ],
+      "what_it_does_not_claim": [
+        "pilot readiness",
+        "customer access",
+        "market validation",
+        "deployment readiness",
+        "legal readiness"
+      ]
+    },
+    {
+      "lane_id": "finance_approval_simulation",
+      "lane_type": "future_candidate",
+      "state": "AwaitingEvidence",
+      "tests": [
+        "budget rule simulation",
+        "approval packet shape",
+        "blocked payment proof"
+      ],
+      "what_it_does_not_claim": [
+        "real payment readiness",
+        "customer access",
+        "legal readiness"
+      ]
+    },
+    {
+      "lane_id": "document_packet_simulation",
+      "lane_type": "future_candidate",
+      "state": "AwaitingEvidence",
+      "tests": [
+        "document request classification",
+        "local artifact receipt",
+        "review gate"
+      ],
+      "what_it_does_not_claim": [
+        "external delivery readiness",
+        "customer access",
+        "market validation"
+      ]
+    }
+  ],
+  "long_term_platform_restricted": false,
+  "market_validation_claimed": false,
+  "next_action": "keep the selected lane local; do not convert it into pilot, customer, market, deployment, or paid-launch evidence without a later signed witness",
+  "paid_launch_allowed": false,
+  "pilot_access_allowed": false,
+  "schema_version": 1,
+  "scope_mode": "foundation_learning_lane",
+  "selected_learning_lane": "local_governed_task_receipt",
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_product_scope_witness.awaiting_evidence.v1"
+}

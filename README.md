@@ -20,6 +20,84 @@ Mullusi company boundary. This repository and its generated artifacts are not
 free for public use; see [LICENSE](LICENSE) for the governing authorization
 terms.
 
+## Current Operating Posture: Foundation Mode
+
+This checkout is currently treated as **Foundation Mode**: private, local-first
+architecture hardening before deployment, customer access, company formation,
+paid infrastructure, or patent filing. The useful work now is to refine one
+local proof thread at a time, strengthen docs and tests, and preserve evidence
+without creating external obligations.
+
+See [`docs/FOUNDATION_MODE.md`](docs/FOUNDATION_MODE.md) for the canonical
+properties that guide the owner, future contributors, assisting developer
+agents, and website copy. Use
+[`docs/FOUNDATION_PREREQUISITES.md`](docs/FOUNDATION_PREREQUISITES.md) as the
+atomic setup ledger before touching deployment, customer access, company
+formation, patent filing, paid infrastructure, or other external obligations.
+Source-control preparation is bounded by
+[`docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md`](docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md),
+which organizes commit readiness without staging, committing, pushing, opening a
+pull request, publishing a release, deploying, or exposing secrets.
+Secrets and credentials are bounded by
+[`docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md`](docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md),
+which drafts credential categories, environment-variable names, provider-access
+questions, key questions, and rotation questions without storing real secrets,
+activating credentials, binding provider accounts, enabling external calls, or
+deploying.
+Cost and budget posture is bounded by
+[`docs/FOUNDATION_COST_BUDGET_BOUNDARY.md`](docs/FOUNDATION_COST_BUDGET_BOUNDARY.md),
+which drafts cost categories, budget questions, billing questions, subscription
+questions, and purchase controls without spending, enabling paid infrastructure,
+binding payment methods, approving purchases, paying invoices, or deploying.
+Runtime and environment posture is bounded by
+[`docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md`](docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md),
+which drafts local command, toolchain, dependency, database, container,
+endpoint, and migration questions without claiming runtime readiness, starting
+services, opening endpoints, running migrations, connecting cloud runtimes, or
+deploying.
+Backup and export posture is bounded by
+[`docs/FOUNDATION_BACKUP_EXPORT_BOUNDARY.md`](docs/FOUNDATION_BACKUP_EXPORT_BOUNDARY.md),
+which drafts backup inventory, export scope, archive, restore-drill, redaction,
+retention, deletion, and handoff questions without running backups, activating
+cloud sync, exporting files, publishing archives, deleting data, recording
+private paths, moving secrets, moving personal data, claiming restore
+readiness, or deploying.
+The first technical proof thread is
+[`docs/FOUNDATION_LOCAL_PROOF_THREAD.md`](docs/FOUNDATION_LOCAL_PROOF_THREAD.md),
+backed by a local workflow descriptor, validator, and ignored local receipt
+runner. Product-scope learning is bounded by
+[`docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md`](docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md),
+which selects one local proof lane without restricting the long-term platform or
+opening pilot, customer, market, paid-launch, or deployment-readiness claims.
+Support readiness is bounded by
+[`docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md`](docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md),
+which prepares local support and incident-response shape without opening
+customer support, support SLA, onboarding, paid support, mailbox-deliverability,
+or deployment claims.
+Intake and onboarding are bounded by
+[`docs/FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md`](docs/FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md),
+which drafts future intake shape without publishing forms, opening waitlists,
+accepting pilot signups, collecting personal data, importing CRM records,
+starting outreach, onboarding customers, or deploying.
+Privacy and data retention are bounded by
+[`docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md`](docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md),
+which drafts privacy, consent, retention, deletion, processor, and tracking
+questions without collecting or storing personal data, publishing privacy
+notices, enabling tracking, activating processors, claiming legal clearance, or
+deploying.
+Owner-only account recovery is bounded by
+[`docs/FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md`](docs/FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md),
+which keeps recovery checklist evidence public-safe while the real private
+inventory stays outside Git. Domain and email posture is bounded by
+[`docs/FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md`](docs/FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md),
+which records public labels without provider account IDs, private DNS targets,
+DNS mutation, endpoint-readiness, email-deliverability, or deployment claims.
+Legal and business uncertainty is bounded by
+[`docs/FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md`](docs/FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md),
+which keeps legal, company, patent, tax, terms, compliance, payment, and launch
+questions in `AwaitingEvidence` until qualified review or signed witness
+evidence exists.
+
 Users interact through messaging channels (WhatsApp, Telegram, Slack, Discord,
 Web). Mullu Govern executes bounded real-world tasks -- email, payments, document
 generation, data analysis -- under deterministic governance: 8-guard chain,

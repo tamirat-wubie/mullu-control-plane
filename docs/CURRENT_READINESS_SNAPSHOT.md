@@ -10,13 +10,23 @@ Invariants: this snapshot may not claim public production health, legal clearanc
 | Surface | Current posture | Claim boundary |
 | --- | --- | --- |
 | Repository | Active governed-runtime development | Public repository, proprietary use terms |
+| Foundation mode | Active private R&D posture | Local proof and prerequisite setup before deployment or launch |
+| Prerequisite ledger | Active atomic setup map | Guides reversible preparation before deployment, legal, money, or customer exposure |
+| Secrets/credentials | Local draft categories only | Does not store real secrets, activate credentials, bind provider accounts, enable external calls, or claim deployment readiness |
+| Cost/budget | Local draft categories only | Does not spend, enable billing, bind payment methods, create subscriptions, approve purchases, pay invoices, or claim deployment readiness |
+| Runtime/environment | Local draft checks only | Does not verify runtime readiness, activate databases, start containers, open endpoints, run migrations, connect cloud runtime, or claim deployment readiness |
+| Backup/export | Local draft plan only | Does not run backups, activate cloud sync, export files, publish archives, delete data, record private paths, move secrets, move personal data, claim restore readiness, or claim deployment readiness |
+| Product scope | One local learning lane selected | Does not restrict the long-term platform or prove pilot/customer/market readiness |
+| Support readiness | Local support shape only | Does not open customer support, SLA, onboarding, or incident-readiness claims |
+| Intake/onboarding | Local draft shape only | Does not publish forms, open waitlists, accept signups, collect personal data, or onboard customers |
+| Privacy/data | Local draft shape only | Does not collect or store personal data, publish privacy notices, enable tracking, activate processors, or claim legal clearance |
 | Product name | `Mullu Govern` internally aligned | Paid public launch remains blocked by naming/legal/domain gates |
 | Control surface | `Mullu Control Plane` | Internal/admin/deployment/governance surface |
 | Latest tagged release | `v3.13.3` | GitHub release witness, not superseded by mainline notes |
 | Mainline implementation | v4.x implementation and hardening records | Repository-mainline evidence only |
 | Public production runtime | Not published from this repository | No production health claim |
 | Public health endpoint | Not declared | Requires deployment witness and production evidence plane closure |
-| Best current external posture | Private pilot / controlled staging review | Not public SaaS, not enterprise SLA |
+| Best current external posture | Foundation-stage product direction / controlled staging review | Not public SaaS, not enterprise SLA |
 
 ## Allowed short description
 
@@ -40,6 +50,16 @@ Do not use these until the corresponding evidence exists:
 | Reader need | Start here |
 | --- | --- |
 | Plain explanation | `docs/explain/PLAIN_ENGLISH.md` |
+| Solo-founder foundation posture | `docs/FOUNDATION_MODE.md` |
+| Atomic prerequisite setup | `docs/FOUNDATION_PREREQUISITES.md` |
+| Secrets/credentials boundary | `docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md` |
+| Cost/budget boundary | `docs/FOUNDATION_COST_BUDGET_BOUNDARY.md` |
+| Runtime/environment boundary | `docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md` |
+| Backup/export boundary | `docs/FOUNDATION_BACKUP_EXPORT_BOUNDARY.md` |
+| Product-scope learning lane | `docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md` |
+| Support-readiness boundary | `docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md` |
+| Intake/onboarding boundary | `docs/FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md` |
+| Privacy/data boundary | `docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md` |
 | Product/name status | `docs/PUBLIC_NAMING_READINESS.md` |
 | Repository claim boundary | `STATUS.md` |
 | Deployment health boundary | `DEPLOYMENT_STATUS.md` |
@@ -54,5 +74,5 @@ This file should be updated only when one of these changes:
 2. deployment witness state changes;
 3. public production health state changes;
 4. product naming launch state changes;
-5. pilot posture changes;
+5. foundation or pilot posture changes;
 6. evidence classification policy changes.

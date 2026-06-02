@@ -1,0 +1,89 @@
+{
+  "blocked_claims": [
+    "spending authorization",
+    "paid infrastructure activation",
+    "provider billing activation",
+    "payment method binding",
+    "subscription creation",
+    "purchase approval",
+    "invoice payment",
+    "budget limit approval",
+    "cost forecast approval",
+    "external vendor commitment",
+    "deployment readiness"
+  ],
+  "budget_limit_approved": false,
+  "cost_budget_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Category labels only; no monetary amounts, vendor quotes, or payment records are stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "expense_category_draft",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Approval questions only; no approved limits or spend authority is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "budget_limit_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Service-type questions only; no active paid hosts, databases, or accounts are stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "paid_infrastructure_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Billing-risk questions only; no provider account identifiers or billing activation is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "provider_billing_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Review questions only; no card, bank, wallet, or payment-method references are stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "payment_method_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Purchase-flow questions only; no active subscriptions or purchase approvals are claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "subscription_purchase_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Payment-control questions only; no invoice records, payment dispatch, or settlement claim is stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "invoice_payment_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local checklist only; no live metering, budget approval, or cost forecast approval is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "cost_monitoring_checklist",
+      "surface_type": "local_draft"
+    }
+  ],
+  "cost_forecast_approved": false,
+  "deployment_allowed": false,
+  "external_vendor_commitment_allowed": false,
+  "invoice_payment_allowed": false,
+  "next_action": "keep cost and budget materials as local draft categories only; do not spend, bind payment methods, enable billing, create subscriptions, approve purchases, or pay invoices without later private authority evidence",
+  "paid_infrastructure_allowed": false,
+  "payment_method_binding_allowed": false,
+  "provider_billing_allowed": false,
+  "purchase_approval_allowed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "spending_allowed": false,
+  "status": "AwaitingEvidence",
+  "subscription_creation_allowed": false,
+  "witness_id": "foundation_cost_budget_witness.awaiting_evidence.v1"
+}
