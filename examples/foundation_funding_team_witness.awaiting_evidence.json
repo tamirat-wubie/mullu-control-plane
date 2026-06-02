@@ -1,0 +1,113 @@
+{
+  "advisor_commitment_allowed": false,
+  "blocked_claims": [
+    "fundraising",
+    "investor outreach",
+    "grant application",
+    "pitch publication",
+    "hiring",
+    "contractor engagement",
+    "advisor commitment",
+    "compensation commitment",
+    "equity promise",
+    "payroll setup",
+    "budget commitment",
+    "company formation readiness",
+    "legal clearance",
+    "money movement",
+    "external publication",
+    "deployment readiness"
+  ],
+  "budget_commitment_allowed": false,
+  "company_formation_claimed": false,
+  "compensation_commitment_allowed": false,
+  "contractor_engagement_allowed": false,
+  "deployment_allowed": false,
+  "equity_promise_allowed": false,
+  "external_publication_allowed": false,
+  "funding_team_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft funding readiness questions only; no fundraising readiness, outside funding proof, or outside money path is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "funding_readiness_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft investor-contact boundary questions only; no investor outreach, interest, meeting, or contact list is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "investor_boundary_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local grant-fit questions only; no grant submission, award likelihood, application, or program relationship is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "grant_program_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft pitch-content questions only; no sent deck, published pitch, investor packet, or fundraising launch is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "pitch_deck_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local role-gap questions only; no open role, candidate pipeline, hiring readiness, or job posting is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "hiring_role_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft contractor-scope questions only; no contractor engagement, statement of work, vendor commitment, or payment is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "contractor_engagement_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local advisor-boundary questions only; no advisor commitment, mentor assignment, board formation, or outside role is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "advisor_mentor_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local compensation and ownership questions only; no salary, equity, option, percentage, or ownership promise is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "compensation_equity_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft payroll and budget questions only; no payroll setup, budget approval, spend authority, or invoice path is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "payroll_budget_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local recruiting wording questions only; no job post, public recruiting, external publication, or candidate intake is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_recruiting_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "fundraising_allowed": false,
+  "grant_application_allowed": false,
+  "hiring_allowed": false,
+  "investor_outreach_allowed": false,
+  "legal_clearance_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "keep funding and team preparation local; do not contact investors, submit grants, send pitch decks, publish job posts, hire, engage contractors, commit advisors, promise compensation or equity, set up payroll, move money, publish externally, or deploy without a later signed witness",
+  "payroll_setup_allowed": false,
+  "pitch_deck_publication_allowed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_funding_team_witness.awaiting_evidence.v1"
+}
