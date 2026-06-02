@@ -70,6 +70,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_support_readiness_boundary",
         "foundation_intake_onboarding_boundary",
         "foundation_customer_access_boundary",
+        "foundation_github_app_token_format_boundary",
         "foundation_privacy_data_boundary",
         "foundation_funding_team_boundary",
         "foundation_community_network_boundary",
@@ -228,6 +229,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["foundation_customer_access_boundary"][1:] == (
         "scripts/validate_foundation_customer_access_boundary.py",
+    )
+    assert args_by_name["foundation_github_app_token_format_boundary"][1:] == (
+        "scripts/validate_foundation_github_app_token_format_boundary.py",
     )
     assert args_by_name["foundation_privacy_data_boundary"][1:] == (
         "scripts/validate_foundation_privacy_data_boundary.py",

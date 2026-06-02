@@ -502,6 +502,17 @@
     {
       "args": [
         "python",
+        "scripts/validate_foundation_github_app_token_format_boundary.py"
+      ],
+      "name": "foundation_github_app_token_format_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_foundation_privacy_data_boundary.py"
       ],
       "name": "foundation_privacy_data_boundary",
