@@ -1,5 +1,5 @@
 {
-  "artifact_count": 42,
+  "artifact_count": 46,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -35,6 +35,21 @@
       "name": "workspace_governance_inventory_reporter",
       "path": "scripts/report_workspace_governance_inventory.py",
       "purpose": "Read-only reporter for governance witness artifact presence."
+    },
+    {
+      "name": "workspace_governance_inventory_report_schema",
+      "path": "schemas/workspace_governance_inventory_report.schema.json",
+      "purpose": "JSON schema for machine-readable governance artifact inventory reports."
+    },
+    {
+      "name": "workspace_governance_inventory_report_example",
+      "path": "docs/workspace-governance-inventory-report-example.json",
+      "purpose": "Stable saved inventory report example for contract validation."
+    },
+    {
+      "name": "workspace_governance_inventory_report_contract_validator",
+      "path": "scripts/validate_workspace_governance_inventory_report_contract.py",
+      "purpose": "Read-only validator for inventory report schema, example, and current output."
     },
     {
       "name": "workspace_governance_integrity_reporter",
@@ -187,6 +202,11 @@
       "purpose": "Regression tests for governance inventory reporting."
     },
     {
+      "name": "workspace_governance_inventory_report_contract_tests",
+      "path": "tests/test_validate_workspace_governance_inventory_report_contract.py",
+      "purpose": "Regression tests for inventory report contract validation."
+    },
+    {
       "name": "workspace_governance_integrity_tests",
       "path": "tests/test_report_workspace_governance_integrity.py",
       "purpose": "Regression tests for governance integrity reporting."
@@ -216,6 +236,7 @@
     "witness references a missing artifact",
     "witness artifact path escapes the repository",
     "workspace governance witness schema absent or failing",
+    "governance inventory report counts contradict artifact records",
     "governance integrity report omits a digest for an existing artifact",
     "governance integrity report counts contradict artifact records",
     "workspace governance preflight omits inventory, integrity, or witness validation"

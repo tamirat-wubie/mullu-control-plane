@@ -55,6 +55,10 @@ REQUIRED_ARTIFACT_NAMES = frozenset(
         "workspace_governance_witness_validator",
         "workspace_governance_witness_tests",
         "workspace_governance_inventory_reporter",
+        "workspace_governance_inventory_report_schema",
+        "workspace_governance_inventory_report_example",
+        "workspace_governance_inventory_report_contract_validator",
+        "workspace_governance_inventory_report_contract_tests",
         "workspace_governance_integrity_reporter",
         "workspace_governance_integrity_report_contract_validator",
         "workspace_governance_preflight_runner",
@@ -65,6 +69,7 @@ REQUIRED_BLOCK_CONDITIONS = frozenset(
         "witness references a missing artifact",
         "witness artifact path escapes the repository",
         "workspace governance witness schema absent or failing",
+        "governance inventory report counts contradict artifact records",
         "workspace governance preflight omits inventory, integrity, or witness validation",
     }
 )
