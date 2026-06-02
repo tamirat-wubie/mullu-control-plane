@@ -14,6 +14,8 @@ Invariants:
 
 from __future__ import annotations
 
+import threading
+
 from collections import deque
 from dataclasses import dataclass
 from hashlib import sha256
@@ -79,12 +81,14 @@ class ReplayRecorder:
         # support slice indexing.
         self._completed: deque[ReplayTrace] = deque(maxlen=max_completed)
         self._frame_counter = 0
+        self._lock = threading.Lock()
 
     def start_trace(self, trace_id: str) -> None:
         """Start recording a new trace."""
-        if trace_id in self._traces:
-            raise ValueError("trace already started")
-        self._traces[trace_id] = []
+        with self._lock:
+            if trace_id in self._traces:
+                raise ValueError("trace already started")
+            self._traces[trace_id] = []
 
     def record_frame(
         self,
@@ -95,30 +99,31 @@ class ReplayRecorder:
         duration_ms: float = 0.0,
     ) -> ReplayFrame:
         """Record a single frame in a trace."""
-        frames = self._traces.get(trace_id)
-        if frames is None:
-            raise ValueError("trace not started")
-        if len(frames) >= self._max_frames:
-            raise ValueError("trace exceeded max frames")
+        with self._lock:
+            frames = self._traces.get(trace_id)
+            if frames is None:
+                raise ValueError("trace not started")
+            if len(frames) >= self._max_frames:
+                raise ValueError("trace exceeded max frames")
 
-        self._frame_counter += 1
-        content = json.dumps(
-            {"op": operation, "in": input_data, "out": output_data},
-            sort_keys=True, default=str,
-        ).encode()
-        frame_hash = sha256(content).hexdigest()
+            self._frame_counter += 1
+            content = json.dumps(
+                {"op": operation, "in": input_data, "out": output_data},
+                sort_keys=True, default=str,
+            ).encode()
+            frame_hash = sha256(content).hexdigest()
 
-        frame = ReplayFrame(
-            frame_id=f"frame-{self._frame_counter}",
-            sequence=len(frames) + 1,
-            operation=operation,
-            input_data=input_data,
-            output_data=output_data,
-            duration_ms=duration_ms,
-            frame_hash=frame_hash,
-        )
-        frames.append(frame)
-        return frame
+            frame = ReplayFrame(
+                frame_id=f"frame-{self._frame_counter}",
+                sequence=len(frames) + 1,
+                operation=operation,
+                input_data=input_data,
+                output_data=output_data,
+                duration_ms=duration_ms,
+                frame_hash=frame_hash,
+            )
+            frames.append(frame)
+            return frame
 
     def complete_trace(self, trace_id: str) -> ReplayTrace:
         """Finalize a trace — makes it immutable."""

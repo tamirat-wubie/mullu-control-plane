@@ -14,7 +14,9 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import threading
+
+from dataclasses import dataclass
 from typing import Any, Callable
 from hashlib import sha256
 import json
@@ -51,6 +53,7 @@ class EventBus:
 
     def __init__(self, *, clock: Callable[[], str]) -> None:
         self._clock = clock
+        self._lock = threading.Lock()
         self._subscribers: dict[str, list[Callable[[GovernedEvent], Any]]] = {}
         self._global_subscribers: list[Callable[[GovernedEvent], Any]] = []
         self._event_counter = 0
@@ -79,7 +82,6 @@ class EventBus:
 
         Returns the published event. Subscriber errors are caught and recorded.
         """
-        self._event_counter += 1
         payload = payload or {}
         now = self._clock()
 
@@ -87,18 +89,24 @@ class EventBus:
             json.dumps({"type": event_type, "payload": payload, "at": now}, sort_keys=True, default=str).encode()
         ).hexdigest()
 
-        event = GovernedEvent(
-            event_id=f"evt-{self._event_counter}",
-            event_type=event_type,
-            tenant_id=tenant_id,
-            source=source,
-            payload=payload,
-            event_hash=event_hash,
-            published_at=now,
-        )
-        self._history.append(event)
-        if len(self._history) > self._MAX_HISTORY:
-            self._history = self._history[-self._MAX_HISTORY:]
+        # Lock the counter + id + history mutation (the racy section) so concurrent
+        # publishes (FastAPI sync handlers run in a threadpool) cannot collide on the
+        # event_counter and emit duplicate event_ids. Subscriber delivery stays OUTSIDE
+        # the lock -- handlers may be slow and may re-enter the bus.
+        with self._lock:
+            self._event_counter += 1
+            event = GovernedEvent(
+                event_id=f"evt-{self._event_counter}",
+                event_type=event_type,
+                tenant_id=tenant_id,
+                source=source,
+                payload=payload,
+                event_hash=event_hash,
+                published_at=now,
+            )
+            self._history.append(event)
+            if len(self._history) > self._MAX_HISTORY:
+                self._history = self._history[-self._MAX_HISTORY:]
 
         # Deliver to type-specific subscribers
         for handler in self._subscribers.get(event_type, []):
