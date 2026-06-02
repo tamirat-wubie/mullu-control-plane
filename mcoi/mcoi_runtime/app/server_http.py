@@ -74,6 +74,27 @@ def install_global_exception_handler(
     limit, so it is mapped to a bounded 400 instead of a 500.
     """
     from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+    from mcoi_runtime.core.request_tenant_guard import CrossTenantRecordError
+
+    async def cross_tenant_record_handler(
+        request: StarletteRequest,
+        exc: Exception,
+    ) -> StarletteJSONResponse:
+        # Persistence-layer defense-in-depth fired: a store refused to return a
+        # record owned by a different tenant (a router skipped enforce_tenant_scope).
+        # Surface the same bounded 403 the router would have, never a 500.
+        try:
+            metrics.inc("requests_rejected")
+        except Exception:
+            pass
+        return StarletteJSONResponse(
+            status_code=403,
+            content={
+                "error": "cross-tenant access denied",
+                "error_code": "cross_tenant_denied",
+                "governed": True,
+            },
+        )
 
     async def invariant_violation_handler(
         request: StarletteRequest,
@@ -133,6 +154,7 @@ def install_global_exception_handler(
             },
         )
 
+    app.add_exception_handler(CrossTenantRecordError, cross_tenant_record_handler)
     app.add_exception_handler(RuntimeCoreInvariantError, invariant_violation_handler)
     app.add_exception_handler(RecursionError, recursion_limit_handler)
     app.add_exception_handler(Exception, global_exception_handler)
