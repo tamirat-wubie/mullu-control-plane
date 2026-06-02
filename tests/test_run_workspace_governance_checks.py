@@ -24,7 +24,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     names = [command.name for command in commands]
     args_by_name = {command.name: command.args for command in commands}
 
-    assert names[:46] == [
+    assert names[:47] == [
         "local_assurance_plan",
         "agents_policy",
         "foundation_mode",
@@ -69,10 +69,11 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_pilot_deferral_boundary",
         "foundation_support_readiness_boundary",
         "foundation_intake_onboarding_boundary",
+        "foundation_customer_access_boundary",
         "foundation_privacy_data_boundary",
         "protocol_manifest",
     ]
-    assert names[50:58] == [
+    assert names[51:59] == [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
         "workspace_governance_witness_contract",
@@ -82,7 +83,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "workspace_governance_integrity_report_contract",
         "universal_action_orchestration_contract",
     ]
-    assert len(names) == 65
+    assert len(names) == 66
     assert names[-8:] == [
         "universal_action_orchestration_contract",
         "universal_action_orchestration_validation_receipt_contract",
@@ -222,6 +223,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["foundation_intake_onboarding_boundary"][1:] == (
         "scripts/validate_foundation_intake_onboarding_boundary.py",
+    )
+    assert args_by_name["foundation_customer_access_boundary"][1:] == (
+        "scripts/validate_foundation_customer_access_boundary.py",
     )
     assert args_by_name["foundation_privacy_data_boundary"][1:] == (
         "scripts/validate_foundation_privacy_data_boundary.py",

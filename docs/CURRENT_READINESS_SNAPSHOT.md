@@ -48,6 +48,7 @@ Invariants: this snapshot may not claim public production health, legal clearanc
 | Product scope | One local learning lane selected | Does not restrict the long-term platform or prove pilot/customer/market readiness |
 | Support readiness | Local support shape only | Does not open customer support, SLA, onboarding, or incident-readiness claims |
 | Intake/onboarding | Local draft shape only | Does not publish forms, open waitlists, accept signups, collect personal data, or onboard customers |
+| Customer access | Local access questions only | Does not invite customers, create accounts, open access channels, claim onboarding readiness, make support commitments, claim terms/privacy readiness, collect personal data, accept paid access, open pilot/beta/waitlist access, publish externally, or claim deployment readiness |
 | Privacy/data | Local draft shape only | Does not collect or store personal data, publish privacy notices, enable tracking, activate processors, or claim legal clearance |
 | Product name | `Mullu Govern` internally aligned | Paid public launch remains blocked by naming/legal/domain gates |
 | Control surface | `Mullu Control Plane` | Internal/admin/deployment/governance surface |
@@ -117,6 +118,7 @@ Do not use these until the corresponding evidence exists:
 | Pilot-deferral boundary | `docs/FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md` |
 | Support-readiness boundary | `docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md` |
 | Intake/onboarding boundary | `docs/FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md` |
+| Customer-access boundary | `docs/FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md` |
 | Privacy/data boundary | `docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md` |
 | Product/name status | `docs/PUBLIC_NAMING_READINESS.md` |
 | Repository claim boundary | `STATUS.md` |
