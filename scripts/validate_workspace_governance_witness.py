@@ -10,7 +10,7 @@ Invariants:
   - Validation is read-only and deterministic.
   - Witness artifact paths cannot escape the repository.
   - Artifact names and paths are unique.
-  - Required governance scopes and self-validation artifacts are present.
+  - Required governance scopes and canonical witness artifact names match exactly.
 """
 
 from __future__ import annotations
@@ -208,9 +208,13 @@ def validate_witness(witness: dict[str, Any], workspace_root: Path = WORKSPACE_R
     duplicate_paths = sorted(_find_duplicates(observed_paths))
     errors.extend(f"duplicate artifact name: {name}" for name in duplicate_names)
     errors.extend(f"duplicate artifact path: {path}" for path in duplicate_paths)
-    missing_artifact_names = sorted(REQUIRED_ARTIFACT_NAMES - set(observed_names))
+    observed_name_set = set(observed_names)
+    missing_artifact_names = sorted(REQUIRED_ARTIFACT_NAMES - observed_name_set)
     if missing_artifact_names:
         errors.append(f"witness missing required artifact name(s): {', '.join(missing_artifact_names)}")
+    unexpected_artifact_names = sorted(observed_name_set - REQUIRED_ARTIFACT_NAMES)
+    if unexpected_artifact_names:
+        errors.append(f"witness has unexpected artifact name(s): {', '.join(unexpected_artifact_names)}")
     return errors
 
 

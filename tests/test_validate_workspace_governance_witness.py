@@ -4,7 +4,7 @@ Dependencies: scripts.validate_workspace_governance_witness.
 Invariants:
   - The live witness references repository-local files only.
   - Witness artifact count, names, paths, and governance scopes are explicit.
-  - Missing self-validation artifacts fail closed.
+  - Missing or unexpected canonical artifacts fail closed.
 """
 
 from __future__ import annotations
@@ -112,6 +112,26 @@ def test_missing_canonical_artifact_fails_with_adjusted_count() -> None:
     assert any("witness missing required artifact name" in error for error in errors)
     assert any("agents_policy" in error for error in errors)
     assert invalid_witness["artifact_count"] == witness["artifact_count"] - 1
+
+
+def test_unexpected_canonical_artifact_fails_with_adjusted_count() -> None:
+    witness = validator.load_json_object(validator.DEFAULT_WITNESS_PATH, "witness")
+    invalid_witness = copy.deepcopy(witness)
+    invalid_witness["artifacts"].append(
+        {
+            "name": "unexpected_governance_artifact",
+            "path": "README.md",
+            "purpose": "unexpected artifact outside the canonical witness contract",
+        }
+    )
+    invalid_witness["artifact_count"] = len(invalid_witness["artifacts"])
+
+    errors = validator.validate_witness(invalid_witness)
+
+    assert "artifact_count must match artifacts length" not in errors
+    assert not any("witness missing required artifact name" in error for error in errors)
+    assert any("witness has unexpected artifact name" in error for error in errors)
+    assert any("unexpected_governance_artifact" in error for error in errors)
 
 
 def test_schema_artifact_rejects_missing_required_field() -> None:
