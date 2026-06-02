@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:workspace-governance-witness:1",
+  "title": "Workspace Governance Witness",
+  "description": "Machine-readable repository-local governance artifact witness used by workspace preflight checks.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "witness_id",
+    "capability",
+    "created_at",
+    "governance_scope",
+    "artifact_count",
+    "artifacts",
+    "block_conditions",
+    "release_status"
+  ],
+  "properties": {
+    "witness_id": {
+      "type": "string",
+      "const": "control_plane_workspace_governance_witness_001"
+    },
+    "capability": {
+      "type": "string",
+      "const": "repository_local_workspace_governance_surface"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "governance_scope": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "artifact_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/witness_artifact"
+      }
+    },
+    "block_conditions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "release_status": {
+      "type": "string",
+      "enum": ["ready_for_repository_preflight_use"]
+    }
+  },
+  "$defs": {
+    "witness_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "path", "purpose"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*\\.\\.).+$"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

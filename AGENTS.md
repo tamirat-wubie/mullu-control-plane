@@ -238,6 +238,12 @@ The runner is read-only and must pass before claiming the workspace policy surfa
 python scripts/validate_agents_governance.py
 ```
 
+The workspace governance witness contract is validated with:
+
+```powershell
+python scripts/validate_workspace_governance_witness.py
+```
+
 For automation, the governance preflight can emit a JSON receipt:
 
 ```powershell

@@ -1055,6 +1055,12 @@
       "surface": "governance"
     },
     {
+      "schema_id": "workspace-governance-witness",
+      "path": "schemas/workspace_governance_witness.schema.json",
+      "urn": "urn:mullusi:schema:workspace-governance-witness:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "finding-receipt",
       "path": "schemas/finding_receipt.schema.json",
       "urn": "urn:mullusi:schema:finding-receipt:1",
