@@ -20,8 +20,10 @@ from mcoi_runtime.core.cognitive_loop import (
     CognitiveLoop,
     CognitiveLoopReport,
     CognitiveStepRequest,
+    CriticVerdict,
     DecisionVerdict,
     HardConstraint,
+    NullCritic,
     ProofState,
 )
 from mcoi_runtime.core.decision_learning import DecisionLearningEngine
@@ -337,6 +339,114 @@ def test_blocked_execution_rejects_and_leaves_memory_clean():
     assert report.learning_admission_count == 0
     assert report.terminal_outcome is SolverOutcome.AWAITING_EVIDENCE
     assert report.steps[-1].admission_status.value == "reject"
+
+
+# --------------------------------------------------------------------------
+# Inner critic (VERIFY-phase monotone-skeptic downgrade)
+# --------------------------------------------------------------------------
+
+
+class _RejectingCritic:
+    """Deterministic critic that refuses every mechanically-passing outcome."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def review(self, *, capability_id, execution_result, mechanical_verification_passed):
+        self.calls += 1
+        return CriticVerdict(
+            accepted=False,
+            confidence=0.9,
+            reason="critic refuted: output substantively wrong",
+        )
+
+
+class _AcceptingCritic:
+    """Deterministic critic that confirms every mechanically-passing outcome."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def review(self, *, capability_id, execution_result, mechanical_verification_passed):
+        self.calls += 1
+        return CriticVerdict(accepted=True, confidence=0.9, reason="critic confirmed")
+
+
+def test_null_critic_is_byte_identical_to_no_critic():
+    # Explicit NullCritic must produce the same report hash as the default.
+    default_report = _make_loop(
+        _make_dispatch_fn(ExecutionOutcome.SUCCEEDED, verification_passed=True)
+    ).run(_request())
+    null_report = _make_loop(
+        _make_dispatch_fn(ExecutionOutcome.SUCCEEDED, verification_passed=True),
+        inner_critic=NullCritic(),
+    ).run(_request())
+
+    assert null_report.report_hash == default_report.report_hash
+    assert null_report.terminal_outcome is SolverOutcome.SOLVED_VERIFIED
+    assert null_report.steps[0].critic_accepted is True
+
+
+def test_rejecting_critic_downgrades_passing_outcome_and_keeps_memory_clean():
+    dispatch_fn = _make_dispatch_fn(ExecutionOutcome.SUCCEEDED, verification_passed=True)
+    episodic = EpisodicMemory()
+    critic = _RejectingCritic()
+    loop = _make_loop(
+        dispatch_fn, episodic=episodic, inner_critic=critic, max_steps=1, step_budget=1
+    )
+
+    report = loop.run(_request())
+
+    # Mechanically passed, but the critic refused => not verified, not admitted.
+    assert critic.calls == 1
+    assert report.terminal_outcome is SolverOutcome.SOLVED_UNVERIFIED
+    assert report.steps[0].verification_passed is True
+    assert report.steps[0].critic_accepted is False
+    assert report.learning_admission_count == 0
+    assert episodic.size == 0  # rollback-safe: vetoed outcome never learned
+
+
+def test_accepting_critic_preserves_verified_terminal():
+    dispatch_fn = _make_dispatch_fn(ExecutionOutcome.SUCCEEDED, verification_passed=True)
+    episodic = EpisodicMemory()
+    critic = _AcceptingCritic()
+    loop = _make_loop(dispatch_fn, episodic=episodic, inner_critic=critic)
+
+    report = loop.run(_request())
+
+    assert critic.calls == 1
+    assert report.terminal_outcome is SolverOutcome.SOLVED_VERIFIED
+    assert report.steps[0].critic_accepted is True
+    assert report.learning_admission_count == 1
+    assert episodic.size == 1
+
+
+def test_critic_not_consulted_when_mechanical_proof_fails():
+    # Monotone-skeptic: the critic cannot manufacture trust the proof denied.
+    dispatch_fn = _make_dispatch_fn(ExecutionOutcome.SUCCEEDED, verification_passed=False)
+    critic = _AcceptingCritic()
+    loop = _make_loop(dispatch_fn, inner_critic=critic, max_steps=1, step_budget=1)
+
+    report = loop.run(_request())
+
+    assert critic.calls == 0  # never consulted on a non-passing mechanical proof
+    assert report.terminal_outcome is SolverOutcome.SOLVED_UNVERIFIED
+    assert report.steps[0].critic_accepted is None
+
+
+def test_critic_runs_are_deterministic():
+    report_a = _make_loop(
+        _make_dispatch_fn(ExecutionOutcome.SUCCEEDED, verification_passed=True),
+        inner_critic=_RejectingCritic(),
+    ).run(_request())
+    report_b = _make_loop(
+        _make_dispatch_fn(ExecutionOutcome.SUCCEEDED, verification_passed=True),
+        inner_critic=_RejectingCritic(),
+    ).run(_request())
+
+    assert report_a.report_hash == report_b.report_hash
+    assert report_a.terminal_outcome == report_b.terminal_outcome
+    assert report_a.steps[0].critic_accepted == report_b.steps[0].critic_accepted
 
 
 def test_report_is_frozen_value_object():

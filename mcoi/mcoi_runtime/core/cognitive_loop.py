@@ -32,13 +32,19 @@ Invariants:
     step budget; exceeding the budget terminates with BudgetExhausted.
   - Rollback-safe learning: a DEFER/REJECT admission leaves episodic/semantic
     memory untouched (only ADMIT appends an anchor).
+  - Monotone-skeptic critic: the optional inner critic (VERIFY phase) may only
+    DOWNGRADE trust. It is consulted solely when the mechanical proof already
+    passed, and trust is the logical AND of the mechanical proof and the critic's
+    acceptance - a critic can never manufacture trust the proof did not grant.
+    The default NullCritic makes VERIFY byte-identical to the mechanical-only
+    behavior, so the critic is an explicit opt-in refinement.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Callable, Mapping
+from typing import Callable, Mapping, Protocol
 
 from mcoi_runtime.contracts.execution import ExecutionOutcome, ExecutionResult
 from mcoi_runtime.contracts.learning import (
@@ -77,6 +83,77 @@ class DecisionVerdict(StrEnum):
     REPLAN = "replan"
     BLOCK_UNKNOWN_CONSTRAINT = "block_unknown_constraint"
     DEFER_TO_REVIEW = "defer_to_review"
+
+
+@dataclass(frozen=True, slots=True)
+class CriticVerdict:
+    """The inner critic's judgement of a mechanically-passing outcome.
+
+    The critic is a fast inner reviewer (distinct from the heavyweight platform
+    reviewer) that runs in the VERIFY phase AFTER the governed dispatch has
+    already reported its mechanical verification proof. Its sole authority is to
+    DOWNGRADE trust: a mechanically-passing-but-substantively-wrong outcome must
+    not be reported as verified nor admitted to memory.
+
+    Invariant (monotone-skeptic): a critic may only ever REDUCE trust. It can
+    turn an accepted outcome into a rejected one; it can NEVER turn a failed or
+    mechanically-unverified outcome into a verified one. The loop enforces this
+    by only consulting the critic when the mechanical proof already passed, and
+    by combining ``accepted`` via logical AND with the mechanical result.
+    """
+
+    accepted: bool
+    confidence: float
+    reason: str
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.accepted, bool):
+            raise RuntimeCoreInvariantError("CriticVerdict.accepted must be a bool")
+        if not (0.0 <= float(self.confidence) <= 1.0):
+            raise RuntimeCoreInvariantError("CriticVerdict.confidence must be in [0.0, 1.0]")
+        object.__setattr__(self, "reason", ensure_non_empty_text("reason", self.reason))
+
+
+class InnerCritic(Protocol):
+    """A fast inner critic consulted in VERIFY to confirm/refute a passing proof.
+
+    Implementations MUST be deterministic and side-effect free: given identical
+    inputs they return an identical CriticVerdict, and they never mutate engine
+    or loop state. A real implementation would issue a second, cheaper model
+    call (replacing today's heuristic peer_review). The loop only ever asks the
+    critic to potentially DOWNGRADE an already-passing outcome.
+    """
+
+    def review(
+        self,
+        *,
+        capability_id: str,
+        execution_result: "ExecutionResult",
+        mechanical_verification_passed: bool,
+    ) -> CriticVerdict:
+        ...
+
+
+class NullCritic:
+    """Default critic that accepts whatever the mechanical proof already decided.
+
+    With the NullCritic installed the loop's VERIFY behavior is byte-identical to
+    the pre-critic loop: ``verified == succeeded and mechanical_passed``. This is
+    the default so enabling the critic is an explicit, opt-in refinement.
+    """
+
+    def review(
+        self,
+        *,
+        capability_id: str,
+        execution_result: "ExecutionResult",
+        mechanical_verification_passed: bool,
+    ) -> CriticVerdict:
+        return CriticVerdict(
+            accepted=bool(mechanical_verification_passed),
+            confidence=1.0,
+            reason="null critic defers to mechanical verification proof",
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,6 +217,8 @@ class CognitiveStepRecord:
     dispatched: bool
     execution_id: str | None
     verification_passed: bool | None
+    critic_accepted: bool | None
+    critic_reason: str
     outcome_quality: str
     admission_status: LearningAdmissionStatus
     admission_id: str
@@ -197,6 +276,7 @@ class CognitiveLoop:
         clock: Callable[[], str],
         working_memory: object | None = None,
         semantic_memory: object | None = None,
+        inner_critic: InnerCritic | None = None,
         max_steps: int = 3,
         step_budget: int = 3,
         replan_threshold: float = _DEFAULT_REPLAN_THRESHOLD,
@@ -232,6 +312,9 @@ class CognitiveLoop:
         self._clock = clock
         self._working = working_memory
         self._semantic = semantic_memory
+        # Default-OFF refinement: the NullCritic keeps VERIFY byte-identical to
+        # the mechanical-only behavior. A real critic may only downgrade trust.
+        self._critic: InnerCritic = inner_critic if inner_critic is not None else NullCritic()
         self._max_steps = int(max_steps)
         self._step_budget = int(step_budget)
         self._replan_threshold = float(replan_threshold)
@@ -349,17 +432,34 @@ class CognitiveLoop:
             )
             execution_result = dispatch_result.execution_result
 
-            # --- VERIFY (use the existing dispatch verification proof) ---
+            # --- VERIFY (mechanical proof + inner critic) ---
             verification_passed = bool(dispatch_result.verification.passed)
             governance_blocked = self._is_governance_blocked(execution_result)
             succeeded = (
                 execution_result.status is ExecutionOutcome.SUCCEEDED
                 and not governance_blocked
             )
-            verified = succeeded and verification_passed
+            mechanical_verified = succeeded and verification_passed
+            # The inner critic is consulted ONLY when the mechanical proof already
+            # passed - its sole power is to downgrade a passing-but-wrong outcome.
+            # When it is not consulted, critic_accepted stays None (auditable).
+            critic_accepted: bool | None = None
+            critic_reason = ""
+            if mechanical_verified:
+                critic_verdict = self._critic.review(
+                    capability_id=request.capability_id,
+                    execution_result=execution_result,
+                    mechanical_verification_passed=verification_passed,
+                )
+                critic_accepted = bool(critic_verdict.accepted)
+                critic_reason = critic_verdict.reason
+            # Monotone-skeptic combination: trust requires BOTH the mechanical
+            # proof and the critic's acceptance. The critic can never manufacture
+            # trust the mechanical proof did not already grant.
+            verified = mechanical_verified and (critic_accepted is not False)
 
             # --- LEARN (close the loop through every engine) ---
-            quality = self._outcome_quality(succeeded, verification_passed)
+            quality = self._outcome_quality(succeeded, verified)
             self._update_confidence(
                 request.capability_id,
                 confidence_before,
@@ -386,6 +486,8 @@ class CognitiveLoop:
                     dispatched=True,
                     execution_id=execution_result.execution_id,
                     verification_passed=verification_passed,
+                    critic_accepted=critic_accepted,
+                    critic_reason=critic_reason,
                     outcome_quality=quality,
                     admission_status=admission.status,
                     admission_id=admission.admission_id,
@@ -396,6 +498,13 @@ class CognitiveLoop:
             if verified:
                 terminal_outcome = SolverOutcome.SOLVED_VERIFIED
                 rationale = "execution succeeded and verification passed"
+                break
+            if succeeded and critic_accepted is False:
+                # Mechanically passing but the inner critic refused to confirm:
+                # succeeded-but-untrusted, so it is reported unverified and never
+                # admitted to memory (the LEARN phase already deferred it).
+                terminal_outcome = SolverOutcome.SOLVED_UNVERIFIED
+                rationale = f"execution succeeded but inner critic refused: {critic_reason}"
                 break
             if succeeded and not verification_passed:
                 terminal_outcome = SolverOutcome.SOLVED_UNVERIFIED
@@ -675,6 +784,8 @@ class CognitiveLoop:
             dispatched=False,
             execution_id=None,
             verification_passed=None,
+            critic_accepted=None,
+            critic_reason="",
             outcome_quality="not_dispatched",
             admission_status=LearningAdmissionStatus.DEFER,
             admission_id=admission_id,
@@ -706,6 +817,7 @@ class CognitiveLoop:
                         "dispatched": s.dispatched,
                         "execution_id": s.execution_id,
                         "verification_passed": s.verification_passed,
+                        "critic_accepted": s.critic_accepted,
                         "quality": s.outcome_quality,
                         "admission": s.admission_status.value,
                         "block_reason": s.block_reason,
@@ -731,7 +843,10 @@ __all__ = [
     "CognitiveLoopReport",
     "CognitiveStepRecord",
     "CognitiveStepRequest",
+    "CriticVerdict",
     "DecisionVerdict",
     "HardConstraint",
+    "InnerCritic",
+    "NullCritic",
     "ProofState",
 ]
