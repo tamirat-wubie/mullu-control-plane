@@ -37,9 +37,20 @@ def _clock() -> str:
     return "2026-06-03T12:00:00Z"
 
 
-def _meta_with_confidence(capability_id: str, confidence: float) -> MetaReasoningEngine:
-    """Build meta confidence records whose overall_confidence equals confidence."""
+def _meta_with_confidence(
+    capability_id: str,
+    confidence: float,
+    *,
+    degraded_threshold: float = 0.0,
+) -> MetaReasoningEngine:
+    """Build meta confidence records whose overall_confidence equals confidence.
+
+    The default test threshold is 0.0 so confidence-band tests exercise the base
+    DECIDE bands directly rather than accidentally entering degraded mode at the
+    engine's production default threshold of 0.5.
+    """
     meta = MetaReasoningEngine(clock=_clock)
+    meta.set_threshold(capability_id, degraded_threshold)
     meta.update_confidence(
         CapabilityConfidence(
             capability_id=capability_id,
