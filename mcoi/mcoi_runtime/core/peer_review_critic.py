@@ -134,33 +134,35 @@ class PeerReviewCritic:
         # capability_id is a minimal prompt context when none is carried.
         result = verify_response(prompt or capability_id, response)
 
+        # Canonical-reason discipline: ``reason`` is a fixed string per verdict;
+        # the variable marker detail rides in ``issues`` (non-contract field), so
+        # this passes the reflective-contract guard without losing diagnostics.
         if result.verdict is VerificationVerdict.CONTRADICTED:
             return CriticVerdict(
                 accepted=False,
                 confidence=result.confidence,
-                reason=f"peer-review contradicted: {self._issue_text(result.issues)}",
+                reason="peer-review contradicted the outcome",
+                issues=result.issues,
             )
         if result.verdict is VerificationVerdict.FLAGGED:
             if self._strict:
                 return CriticVerdict(
                     accepted=False,
                     confidence=result.confidence,
-                    reason=f"peer-review flagged (strict): {self._issue_text(result.issues)}",
+                    reason="peer-review flagged the outcome (strict)",
+                    issues=result.issues,
                 )
             return CriticVerdict(
                 accepted=True,
                 confidence=result.confidence,
-                reason=f"peer-review flagged (advisory): {self._issue_text(result.issues)}",
+                reason="peer-review flagged the outcome (advisory)",
+                issues=result.issues,
             )
         return CriticVerdict(
             accepted=True,
             confidence=result.confidence,
             reason="peer-review consistent",
         )
-
-    @staticmethod
-    def _issue_text(issues: tuple[str, ...]) -> str:
-        return "; ".join(issues) if issues else "no specific issue text"
 
 
 __all__ = [

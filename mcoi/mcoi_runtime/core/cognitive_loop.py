@@ -105,6 +105,13 @@ class CriticVerdict:
     accepted: bool
     confidence: float
     reason: str
+    # Canonical-reason discipline: ``reason`` is a STABLE, static string (no
+    # interpolation of ids / caller text / status), so it stays auditable and
+    # passes the reflective-contract guard. Variable diagnostic detail (e.g.
+    # which peer-review markers fired) goes in ``issues`` - a non-contract
+    # field that callers may surface for debugging but is never a canonical
+    # outward-facing string.
+    issues: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.accepted, bool):
@@ -112,6 +119,8 @@ class CriticVerdict:
         if not (0.0 <= float(self.confidence) <= 1.0):
             raise RuntimeCoreInvariantError("CriticVerdict.confidence must be in [0.0, 1.0]")
         object.__setattr__(self, "reason", ensure_non_empty_text("reason", self.reason))
+        if not isinstance(self.issues, tuple):
+            raise RuntimeCoreInvariantError("CriticVerdict.issues must be a tuple")
 
 
 class InnerCritic(Protocol):

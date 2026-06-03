@@ -61,6 +61,9 @@ def test_contradiction_marker_is_rejected():
     assert isinstance(verdict, CriticVerdict)
     assert verdict.accepted is False
     assert "contradicted" in verdict.reason
+    # Canonical-reason discipline: reason is static; marker detail rides in issues.
+    assert verdict.issues  # diagnostics preserved
+    assert any("contradiction" in i for i in verdict.issues)
 
 
 def test_hallucination_marker_flagged_is_rejected_when_strict():
@@ -73,7 +76,8 @@ def test_hallucination_marker_flagged_is_rejected_when_strict():
 
     assert critic.strict is True
     assert verdict.accepted is False
-    assert "flagged (strict)" in verdict.reason
+    assert "flagged" in verdict.reason and "strict" in verdict.reason
+    assert verdict.issues  # marker detail preserved in non-contract field
 
 
 def test_flagged_is_accepted_when_advisory():
@@ -87,6 +91,7 @@ def test_flagged_is_accepted_when_advisory():
     assert critic.strict is False
     assert verdict.accepted is True  # advisory: flag recorded but not blocking
     assert "advisory" in verdict.reason
+    assert verdict.issues  # marker detail preserved even when advisory
 
 
 def test_consistent_response_is_accepted():
