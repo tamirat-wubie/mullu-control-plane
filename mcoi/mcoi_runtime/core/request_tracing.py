@@ -12,6 +12,7 @@ Invariants:
 """
 from __future__ import annotations
 
+import threading
 import uuid
 import time
 from dataclasses import dataclass, field
@@ -108,6 +109,12 @@ class RequestTracer:
         self._max_traces = max_traces
         self._on_span_finish = on_span_finish
         self._total_spans = 0
+        # start_span runs on every request (threadpool); it evicts + inserts trace
+        # keys and slow_traces/get_trace read them. Without this lock, concurrent
+        # start_spans race the check-then-evict-then-append (a KeyError when one
+        # thread evicts the key another just created) and slow_traces can hit
+        # "dictionary changed size during iteration".
+        self._lock = threading.Lock()
 
     def start_span(self, ctx: TraceContext, operation: str, **attrs: Any) -> Span:
         span = Span(
@@ -118,13 +125,16 @@ class RequestTracer:
             start_time=time.monotonic(),
             attributes=attrs,
         )
-        if ctx.trace_id not in self._traces:
-            if len(self._traces) >= self._max_traces:
-                oldest = next(iter(self._traces))
-                del self._traces[oldest]
-            self._traces[ctx.trace_id] = []
-        self._traces[ctx.trace_id].append(span)
-        self._total_spans += 1
+        # Span construction above touches no shared state; guard only the _traces
+        # mutation (evict + insert + append must be one atomic step).
+        with self._lock:
+            if ctx.trace_id not in self._traces:
+                if len(self._traces) >= self._max_traces:
+                    oldest = next(iter(self._traces))
+                    del self._traces[oldest]
+                self._traces[ctx.trace_id] = []
+            self._traces[ctx.trace_id].append(span)
+            self._total_spans += 1
         return span
 
     def finish_span(self, span: Span, status: SpanStatus = SpanStatus.OK) -> None:
@@ -133,7 +143,8 @@ class RequestTracer:
             self._on_span_finish(span)
 
     def get_trace(self, trace_id: str) -> list[Span]:
-        return list(self._traces.get(trace_id, []))
+        with self._lock:
+            return list(self._traces.get(trace_id, []))
 
     @property
     def trace_count(self) -> int:
@@ -153,7 +164,13 @@ class RequestTracer:
     def slow_traces(self, threshold_ms: float = 1000.0) -> list[dict[str, Any]]:
         """Return traces with root span duration exceeding threshold."""
         result = []
-        for trace_id, spans in self._traces.items():
+        # Snapshot the dict items under the lock so a concurrent start_span insert
+        # cannot raise "dictionary changed size during iteration". The per-trace
+        # span lists are then iterated outside the lock (list iteration tolerates
+        # concurrent appends without raising).
+        with self._lock:
+            items = list(self._traces.items())
+        for trace_id, spans in items:
             roots = [s for s in spans if s.is_root and s.duration_ms is not None]
             for root in roots:
                 if root.duration_ms and root.duration_ms > threshold_ms:
