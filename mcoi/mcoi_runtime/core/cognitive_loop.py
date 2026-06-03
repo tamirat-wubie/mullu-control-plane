@@ -265,6 +265,55 @@ _DEFAULT_CAUTION_THRESHOLD = 0.5
 _NEUTRAL_CONFIDENCE = 0.5
 
 
+def decide_verdict(
+    *,
+    confidence: float,
+    degraded: bool,
+    hard_constraints: tuple[HardConstraint, ...] = (),
+    replan_threshold: float = _DEFAULT_REPLAN_THRESHOLD,
+    caution_threshold: float = _DEFAULT_CAUTION_THRESHOLD,
+) -> tuple[DecisionVerdict, str]:
+    """Pure DECIDE-phase decision: proceed / caution / replan / defer / block.
+
+    Extracted so the live ``CognitiveLoop`` and the record-only shadow observer
+    apply IDENTICAL decision logic. ProofState discipline first (any REFUTED or
+    UNKNOWN hard constraint blocks), then the meta-reasoning signals (degraded
+    mode + confidence band) gate the verdict. Pure and deterministic: no IO, no
+    state, identical output for identical inputs.
+    """
+    for constraint in hard_constraints:
+        if constraint.proof_state is ProofState.REFUTED:
+            return (
+                DecisionVerdict.BLOCK_UNKNOWN_CONSTRAINT,
+                f"hard constraint refuted: {constraint.constraint_id}",
+            )
+        if constraint.proof_state is ProofState.UNKNOWN:
+            return (
+                DecisionVerdict.BLOCK_UNKNOWN_CONSTRAINT,
+                f"hard constraint proof state unknown: {constraint.constraint_id}",
+            )
+
+    if degraded:
+        if confidence < replan_threshold:
+            return (
+                DecisionVerdict.DEFER_TO_REVIEW,
+                "capability degraded with confidence below replan threshold",
+            )
+        return (
+            DecisionVerdict.REPLAN,
+            "capability degraded; bounded replan before dispatch",
+        )
+
+    if confidence < replan_threshold:
+        return (
+            DecisionVerdict.REPLAN,
+            "confidence below replan threshold; bounded replan before dispatch",
+        )
+    if confidence < caution_threshold:
+        return (DecisionVerdict.PROCEED_WITH_CAUTION, "confidence in caution band")
+    return (DecisionVerdict.PROCEED, "confidence sufficient to proceed")
+
+
 class CognitiveLoop:
     """Bounded iterative loop wrapping the EXISTING governed single-step dispatch.
 
@@ -572,40 +621,16 @@ class CognitiveLoop:
     ) -> tuple[DecisionVerdict, str]:
         """Decide whether to proceed, replan, defer, or block - before any dispatch.
 
-        ProofState discipline first: any UNKNOWN hard constraint blocks. Then the
-        meta-reasoning signals (degraded mode + confidence) gate the verdict.
+        Delegates to the pure module-level ``decide_verdict`` so the live loop and
+        the record-only shadow observer share identical decision logic.
         """
-        for constraint in request.hard_constraints:
-            if constraint.proof_state is ProofState.REFUTED:
-                return (
-                    DecisionVerdict.BLOCK_UNKNOWN_CONSTRAINT,
-                    f"hard constraint refuted: {constraint.constraint_id}",
-                )
-            if constraint.proof_state is ProofState.UNKNOWN:
-                return (
-                    DecisionVerdict.BLOCK_UNKNOWN_CONSTRAINT,
-                    f"hard constraint proof state unknown: {constraint.constraint_id}",
-                )
-
-        if degraded:
-            if confidence < self._replan_threshold:
-                return (
-                    DecisionVerdict.DEFER_TO_REVIEW,
-                    "capability degraded with confidence below replan threshold",
-                )
-            return (
-                DecisionVerdict.REPLAN,
-                "capability degraded; bounded replan before dispatch",
-            )
-
-        if confidence < self._replan_threshold:
-            return (
-                DecisionVerdict.REPLAN,
-                "confidence below replan threshold; bounded replan before dispatch",
-            )
-        if confidence < self._caution_threshold:
-            return (DecisionVerdict.PROCEED_WITH_CAUTION, "confidence in caution band")
-        return (DecisionVerdict.PROCEED, "confidence sufficient to proceed")
+        return decide_verdict(
+            confidence=confidence,
+            degraded=degraded,
+            hard_constraints=request.hard_constraints,
+            replan_threshold=self._replan_threshold,
+            caution_threshold=self._caution_threshold,
+        )
 
     def _capability_confidence(self, capability_id: str) -> float:
         """Return engine-derived overall confidence, neutral when unseen."""
@@ -858,4 +883,5 @@ __all__ = [
     "InnerCritic",
     "NullCritic",
     "ProofState",
+    "decide_verdict",
 ]
