@@ -563,7 +563,15 @@ class ProofBridge:
         return self._store.get_lineage(entity_id)
 
     def verify_receipt(self, receipt: TransitionReceipt) -> bool:
-        """Verify a receipt's hash matches its content."""
+        """Integrity check: the receipt_hash matches its transition-identity content.
+
+        Covers ONLY ``transition_content`` (entity/from/to/action/before/after/
+        causal), so the decision-as-``to_state`` is bound but ``verdict`` and
+        ``guard_verdicts`` are NOT (they sit outside the content-address). A True
+        result means the transition identity is intact — not that the verdict or
+        guard evidence is authentic. See ``TransitionReceipt`` (authentication
+        boundary) and ``fully_verify_receipt``.
+        """
         expected = hashlib.sha256(receipt_content(receipt).encode()).hexdigest()
         return expected == receipt.receipt_hash
 
