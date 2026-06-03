@@ -256,6 +256,46 @@ class CognitiveLoopReport:
         object.__setattr__(self, "report_hash", ensure_non_empty_text("report_hash", self.report_hash))
 
 
+@dataclass(frozen=True, slots=True)
+class ShadowObservation:
+    """Stage-A shadow judgement over an already-produced live dispatch outcome.
+
+    Purely advisory and side-effect free: it records what the cognitive loop's
+    DECIDE gate WOULD have ruled before dispatch (``decision_verdict`` /
+    ``would_block_dispatch``) and what VERIFY+critic rule about the actual result
+    (``critic_accepted`` / ``would_be_verified`` / ``would_admission``), so
+    operators can measure what Stage B would block and what Stage C would learn -
+    without any production behavior change. Deterministic ``observation_hash``.
+    """
+
+    goal_id: str
+    capability_id: str
+    execution_id: str
+    observed_planning_entity_count: int
+    observed_prior_outcome_count: int
+    confidence_before: float
+    capability_was_degraded: bool
+    decision_verdict: DecisionVerdict
+    would_block_dispatch: bool
+    block_reason: str
+    mechanical_verification_passed: bool
+    critic_accepted: bool | None
+    critic_reason: str
+    would_be_verified: bool
+    would_admission: LearningAdmissionStatus
+    observation_hash: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "goal_id", ensure_non_empty_text("goal_id", self.goal_id))
+        object.__setattr__(self, "capability_id", ensure_non_empty_text("capability_id", self.capability_id))
+        object.__setattr__(self, "execution_id", ensure_non_empty_text("execution_id", self.execution_id))
+        if not isinstance(self.decision_verdict, DecisionVerdict):
+            raise RuntimeCoreInvariantError("decision_verdict must be a DecisionVerdict value")
+        if not isinstance(self.would_admission, LearningAdmissionStatus):
+            raise RuntimeCoreInvariantError("would_admission must be a LearningAdmissionStatus value")
+        object.__setattr__(self, "observation_hash", ensure_non_empty_text("observation_hash", self.observation_hash))
+
+
 # Default DECIDE-phase thresholds. Confidence is the engine-derived overall
 # confidence in [0.0, 1.0]; see CapabilityConfidence.overall_confidence.
 _DEFAULT_REPLAN_THRESHOLD = 0.3
@@ -537,6 +577,114 @@ class CognitiveLoop:
             admission_count=admission_count,
             terminal_outcome=terminal_outcome,
             rationale=rationale,
+        )
+
+    # ------------------------------------------------------------------
+    # SHADOW (Stage A: pure observability, NEVER dispatches or mutates)
+    # ------------------------------------------------------------------
+
+    def shadow_observe(
+        self,
+        request: CognitiveStepRequest,
+        execution_result: ExecutionResult,
+        *,
+        mechanical_verification_passed: bool,
+    ) -> ShadowObservation:
+        """Judge an ALREADY-PRODUCED dispatch outcome without acting on it.
+
+        Stage-A shadow mode: the live single-shot path has already done OBSERVE +
+        the real governed dispatch and produced ``execution_result`` +
+        ``mechanical_verification_passed``. This method replays only the loop's
+        JUDGEMENTS over that result - what DECIDE would have ruled BEFORE the
+        dispatch, and what VERIFY+critic rule about the result - WITHOUT
+        dispatching anything and WITHOUT mutating any engine (no confidence
+        update, no memory append, no admission write).
+
+        Critical invariant: this method must be side-effect free. The whole point
+        of shadow mode is that attaching it to the live path cannot perturb the
+        production outcome. It therefore calls only the read-only helpers
+        (_decide / _capability_confidence / _is_degraded / _observe_*) and the
+        pure critic, and NEVER _update_confidence / _route_learning_admission /
+        _dispatch_fn.
+
+        Returns a frozen ShadowObservation: the pre-dispatch verdict the gate
+        WOULD have produced (so operators can see what Stage B would block), plus
+        whether the inner critic WOULD have downgraded the actual result, plus the
+        learning disposition that WOULD have been routed - all advisory.
+        """
+        if not isinstance(request, CognitiveStepRequest):
+            raise RuntimeCoreInvariantError("request must be a CognitiveStepRequest")
+        if not isinstance(execution_result, ExecutionResult):
+            raise RuntimeCoreInvariantError("execution_result must be an ExecutionResult")
+
+        planning_entity_count = self._observe_planning_entities()
+        prior_outcomes = self._observe_prior_outcomes(request.capability_id)
+        confidence = self._capability_confidence(request.capability_id)
+        degraded = self._is_degraded(request.capability_id)
+        verdict, block_reason = self._decide(request, confidence, degraded)
+        would_block_dispatch = verdict in (
+            DecisionVerdict.BLOCK_UNKNOWN_CONSTRAINT,
+            DecisionVerdict.DEFER_TO_REVIEW,
+            DecisionVerdict.REPLAN,
+        )
+
+        governance_blocked = self._is_governance_blocked(execution_result)
+        succeeded = (
+            execution_result.status is ExecutionOutcome.SUCCEEDED and not governance_blocked
+        )
+        mechanical_verified = succeeded and bool(mechanical_verification_passed)
+        critic_accepted: bool | None = None
+        critic_reason = "critic not consulted (mechanical proof did not pass)"
+        if mechanical_verified:
+            critic_verdict = self._critic.review(
+                capability_id=request.capability_id,
+                execution_result=execution_result,
+                mechanical_verification_passed=bool(mechanical_verification_passed),
+            )
+            critic_accepted = bool(critic_verdict.accepted)
+            critic_reason = critic_verdict.reason
+        would_be_verified = mechanical_verified and (critic_accepted is not False)
+
+        # Learning DISPOSITION only - nothing is written. Mirrors the live LEARN
+        # routing: verified => would ADMIT; governance-blocked => would REJECT;
+        # otherwise => would DEFER.
+        if governance_blocked:
+            would_admission = LearningAdmissionStatus.REJECT
+        elif would_be_verified:
+            would_admission = LearningAdmissionStatus.ADMIT
+        else:
+            would_admission = LearningAdmissionStatus.DEFER
+
+        observation_hash = stable_identifier(
+            "cognitive-loop-shadow",
+            {
+                "goal_id": request.goal_id,
+                "capability_id": request.capability_id,
+                "execution_id": execution_result.execution_id,
+                "verdict": verdict.value,
+                "would_block_dispatch": would_block_dispatch,
+                "critic_accepted": critic_accepted,
+                "would_be_verified": would_be_verified,
+                "would_admission": would_admission.value,
+            },
+        )
+        return ShadowObservation(
+            goal_id=request.goal_id,
+            capability_id=request.capability_id,
+            execution_id=execution_result.execution_id,
+            observed_planning_entity_count=planning_entity_count,
+            observed_prior_outcome_count=len(prior_outcomes),
+            confidence_before=round(confidence, 4),
+            capability_was_degraded=degraded,
+            decision_verdict=verdict,
+            would_block_dispatch=would_block_dispatch,
+            block_reason=block_reason,
+            mechanical_verification_passed=bool(mechanical_verification_passed),
+            critic_accepted=critic_accepted,
+            critic_reason=critic_reason,
+            would_be_verified=would_be_verified,
+            would_admission=would_admission,
+            observation_hash=observation_hash,
         )
 
     # ------------------------------------------------------------------
@@ -858,4 +1006,5 @@ __all__ = [
     "InnerCritic",
     "NullCritic",
     "ProofState",
+    "ShadowObservation",
 ]
