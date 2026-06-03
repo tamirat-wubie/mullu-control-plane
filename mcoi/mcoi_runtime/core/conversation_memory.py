@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 from hashlib import sha256
 import json
+import threading
 
 
 @dataclass(frozen=True, slots=True)
@@ -139,6 +140,13 @@ class ConversationStore:
     def __init__(self, *, clock: Callable[[], str]) -> None:
         self._clock = clock
         self._conversations: dict[str, Conversation] = {}
+        # FastAPI runs sync handlers in a threadpool, so these methods run
+        # concurrently. list_conversations / summary iterate _conversations
+        # while get_or_create inserts and delete pops -- which raised
+        # "dictionary changed size during iteration". This lock guards the
+        # size-mutating sections and the iterate-snapshot; per-snapshot work
+        # (sort / filter / sum) stays outside the lock.
+        self._lock = threading.Lock()
 
     def get_or_create(
         self,
@@ -147,31 +155,38 @@ class ConversationStore:
         tenant_id: str = "",
         config: ConversationConfig | None = None,
     ) -> Conversation:
-        if conversation_id not in self._conversations:
-            self._conversations[conversation_id] = Conversation(
-                conversation_id, tenant_id=tenant_id,
-                config=config, clock=self._clock,
-            )
-        return self._conversations[conversation_id]
+        with self._lock:
+            if conversation_id not in self._conversations:
+                self._conversations[conversation_id] = Conversation(
+                    conversation_id, tenant_id=tenant_id,
+                    config=config, clock=self._clock,
+                )
+            return self._conversations[conversation_id]
 
     def get(self, conversation_id: str) -> Conversation | None:
-        return self._conversations.get(conversation_id)
+        with self._lock:
+            return self._conversations.get(conversation_id)
 
     def list_conversations(self, tenant_id: str | None = None) -> list[Conversation]:
-        convs = list(self._conversations.values())
+        with self._lock:
+            convs = list(self._conversations.values())
         if tenant_id is not None:
             convs = [c for c in convs if c.tenant_id == tenant_id]
         return sorted(convs, key=lambda c: c.conversation_id)
 
     def delete(self, conversation_id: str) -> bool:
-        return self._conversations.pop(conversation_id, None) is not None
+        with self._lock:
+            return self._conversations.pop(conversation_id, None) is not None
 
     @property
     def count(self) -> int:
-        return len(self._conversations)
+        with self._lock:
+            return len(self._conversations)
 
     def summary(self) -> dict[str, Any]:
+        with self._lock:
+            vals = list(self._conversations.values())
         return {
-            "conversations": self.count,
-            "total_messages": sum(c.message_count for c in self._conversations.values()),
+            "conversations": len(vals),
+            "total_messages": sum(c.message_count for c in vals),
         }
