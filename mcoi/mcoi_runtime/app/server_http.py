@@ -179,6 +179,7 @@ def include_default_routers(app: FastAPI) -> None:
     from mcoi_runtime.app.routers.finance_approval import router as finance_approval_router
     from mcoi_runtime.app.routers.god_mode import router as god_mode_router
     from mcoi_runtime.app.routers.health import router as health_router
+    from mcoi_runtime.app.routers.health_remote import router as health_remote_router
     from mcoi_runtime.app.routers.knowledge import router as knowledge_router
     from mcoi_runtime.app.routers.lineage import router as lineage_router
     from mcoi_runtime.app.routers.llm import router as llm_router
@@ -206,6 +207,7 @@ def include_default_routers(app: FastAPI) -> None:
     from mcoi_runtime.app.routers.workflow import router as workflow_router
 
     app.include_router(health_router)
+    app.include_router(health_remote_router)
     app.include_router(llm_router)
     app.include_router(lineage_router)
     app.include_router(trust_router)
