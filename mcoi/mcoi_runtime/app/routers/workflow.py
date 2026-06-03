@@ -10,7 +10,10 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Header, Request
 from pydantic import BaseModel, Field
 
-from mcoi_runtime.app.cognitive_shadow_integration import record_execution_shadow
+from mcoi_runtime.app.cognitive_shadow_integration import (
+    read_shadow_observations,
+    record_execution_shadow,
+)
 from mcoi_runtime.app.cognitive_live_integration import (
     evaluate_execution_gate,
     record_execution_learning,
@@ -234,6 +237,21 @@ def workflow_history(limit: int = 50):
         ],
         "summary": deps.workflow_engine.summary(),
     }
+
+
+@router.get("/api/v1/cognitive/shadow/observations")
+def cognitive_shadow_observations(limit: int = 50):
+    """Read-only view of the cognitive shadow observer's recorded observations.
+
+    Surfaces the evidence the record-only Stage-A shadow gathers on live traffic:
+    a ``summary`` (the Stage-B decision signal - how often the cognitive DECIDE
+    gate WOULD have withheld dispatch on executions that actually succeeded,
+    i.e. ``diverged`` / ``divergence_rate``) plus the recent per-execution
+    reports. When shadow mode is OFF (``MULLU_COGNITIVE_LOOP_SHADOW`` unset) the
+    observer is absent and this returns ``enabled: false`` with empty data. This
+    endpoint holds NO authority - it only reads what the shadow already recorded.
+    """
+    return read_shadow_observations(deps, limit=limit)
 
 
 # ═══ Traced Workflow ══════════════════════════════════════════════════════
