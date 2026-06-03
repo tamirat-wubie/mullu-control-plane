@@ -388,10 +388,16 @@ class ConversationManager:
         return len(self._sessions)
 
     def summary(self) -> dict[str, Any]:
-        total_threads = sum(s.thread_count for s in self._sessions.values())
-        total_messages = sum(s.total_messages for s in self._sessions.values())
+        with self._lock:
+            # Snapshot under the lock: add_message inserts/evicts _sessions
+            # concurrently, which would race these iterations as "dictionary
+            # changed size during iteration".
+            sessions = list(self._sessions.values())
+            session_count = len(self._sessions)
+        total_threads = sum(s.thread_count for s in sessions)
+        total_messages = sum(s.total_messages for s in sessions)
         return {
-            "active_sessions": len(self._sessions),
+            "active_sessions": session_count,
             "total_threads": total_threads,
             "total_messages": total_messages,
             "max_messages_per_thread": self._max_messages,

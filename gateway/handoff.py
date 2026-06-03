@@ -16,6 +16,7 @@ Invariants:
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from hashlib import sha256
@@ -130,6 +131,16 @@ class HandoffRouter:
         self._specialist_workers: dict[str, SpecialistWorkerSpec] = {}
         self._active_delegations: dict[str, SpecialistDelegation] = {}
         self._delegation_receipts: list[SpecialistDelegationReceipt] = []
+        # FastAPI runs sync handlers concurrently across a threadpool.
+        # delegate_to_specialist iterates self._active_delegations (via
+        # _active_lease_count) and then inserts/pops the same map, while
+        # kill_specialist_lease pops it -- racing as "dictionary changed size
+        # during iteration". A reentrant lock serializes admission + lease
+        # mutation + receipt append; it is reentrant because admission calls
+        # several helpers that also take it. The user-supplied worker.handler
+        # is always invoked OUTSIDE the lock so a slow/blocking worker cannot
+        # stall other tenants.
+        self._lock = threading.RLock()
 
     def register_agent(self, spec: AgentSpec) -> None:
         """Register a specialized agent."""
@@ -155,11 +166,18 @@ class HandoffRouter:
             raise ValueError("max_timeout_seconds must be > 0")
         if spec.max_active_leases <= 0:
             raise ValueError("max_active_leases must be > 0")
-        self._specialist_workers[spec.worker_id] = spec
+        with self._lock:
+            self._specialist_workers[spec.worker_id] = spec
 
     def _active_lease_count(self, worker_id: str) -> int:
+        """Count active leases for a worker.
+
+        Lock-free body: callers already hold ``self._lock``. Snapshots the
+        values into a tuple before counting so it never iterates the live map
+        while another path mutates it.
+        """
         return sum(
-            1 for delegation in self._active_delegations.values()
+            1 for delegation in tuple(self._active_delegations.values())
             if delegation.worker_id == worker_id
         )
 
@@ -215,7 +233,8 @@ class HandoffRouter:
             result_hash=result_hash,
             output=output,
         )
-        self._delegation_receipts.append(receipt)
+        with self._lock:
+            self._delegation_receipts.append(receipt)
         return receipt
 
     def _rejection_receipt(
@@ -244,7 +263,8 @@ class HandoffRouter:
             created_at=created_at,
             lease_expires_at=created_at,
         )
-        self._delegation_receipts.append(receipt)
+        with self._lock:
+            self._delegation_receipts.append(receipt)
         return receipt
 
     def delegate_to_specialist(
@@ -313,7 +333,41 @@ class HandoffRouter:
                 reason="timeout outside worker boundary",
                 created_at=created_at,
             )
-        if self._active_lease_count(worker_id) >= worker.max_active_leases:
+        # Admission control + lease insertion must be atomic: the capacity
+        # check (which iterates _active_delegations) and the insert have to
+        # happen under one lock acquisition, or two callers could both pass the
+        # check and over-admit. The user handler runs *after* the lock drops.
+        with self._lock:
+            if self._active_lease_count(worker_id) >= worker.max_active_leases:
+                rejected_at_capacity = True
+            else:
+                rejected_at_capacity = False
+                request_id, lease_id = self._delegation_ids(
+                    delegator_id=delegator_id,
+                    worker_id=worker_id,
+                    goal_id=goal_id,
+                    capability_id=capability_id,
+                    created_at=created_at,
+                )
+                delegation = SpecialistDelegation(
+                    request_id=request_id,
+                    lease_id=lease_id,
+                    delegator_id=delegator_id,
+                    worker_id=worker_id,
+                    role=worker.role,
+                    goal_id=goal_id,
+                    capability_id=capability_id,
+                    tenant_id=tenant_id,
+                    identity_id=identity_id,
+                    budget_cents=budget_cents,
+                    timeout_seconds=timeout_seconds,
+                    created_at=created_at,
+                    lease_expires_at=self._lease_expiry(created_at, timeout_seconds),
+                    payload=dict(payload or {}),
+                )
+                self._active_delegations[lease_id] = delegation
+
+        if rejected_at_capacity:
             return self._rejection_receipt(
                 worker_id=worker_id,
                 role=worker.role,
@@ -324,31 +378,6 @@ class HandoffRouter:
                 created_at=created_at,
             )
 
-        request_id, lease_id = self._delegation_ids(
-            delegator_id=delegator_id,
-            worker_id=worker_id,
-            goal_id=goal_id,
-            capability_id=capability_id,
-            created_at=created_at,
-        )
-        delegation = SpecialistDelegation(
-            request_id=request_id,
-            lease_id=lease_id,
-            delegator_id=delegator_id,
-            worker_id=worker_id,
-            role=worker.role,
-            goal_id=goal_id,
-            capability_id=capability_id,
-            tenant_id=tenant_id,
-            identity_id=identity_id,
-            budget_cents=budget_cents,
-            timeout_seconds=timeout_seconds,
-            created_at=created_at,
-            lease_expires_at=self._lease_expiry(created_at, timeout_seconds),
-            payload=dict(payload or {}),
-        )
-        self._active_delegations[lease_id] = delegation
-
         if worker.handler is None:
             return self._delegation_receipt(
                 delegation,
@@ -356,10 +385,13 @@ class HandoffRouter:
                 reason="lease issued",
             )
 
+        # Run the user-supplied worker handler OUTSIDE the lock so a slow or
+        # blocking worker cannot stall admission for other tenants.
         try:
             output = worker.handler(delegation)
         except Exception as exc:
-            self._active_delegations.pop(lease_id, None)
+            with self._lock:
+                self._active_delegations.pop(lease_id, None)
             return self._delegation_receipt(
                 delegation,
                 status="failed",
@@ -367,7 +399,8 @@ class HandoffRouter:
                 completed_at=self._clock(),
             )
 
-        self._active_delegations.pop(lease_id, None)
+        with self._lock:
+            self._active_delegations.pop(lease_id, None)
         return self._delegation_receipt(
             delegation,
             status="completed",
@@ -378,7 +411,8 @@ class HandoffRouter:
 
     def kill_specialist_lease(self, lease_id: str, *, reason: str) -> SpecialistDelegationReceipt:
         """Terminate an active specialist lease and record the cancellation."""
-        delegation = self._active_delegations.pop(lease_id, None)
+        with self._lock:
+            delegation = self._active_delegations.pop(lease_id, None)
         if delegation is None:
             now = self._clock()
             receipt = SpecialistDelegationReceipt(
@@ -395,7 +429,8 @@ class HandoffRouter:
                 lease_expires_at=now,
                 completed_at=now,
             )
-            self._delegation_receipts.append(receipt)
+            with self._lock:
+                self._delegation_receipts.append(receipt)
             return receipt
         return self._delegation_receipt(
             delegation,

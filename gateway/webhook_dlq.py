@@ -355,11 +355,16 @@ class WebhookDLQ:
 
     @property
     def pending_count(self) -> int:
-        return sum(1 for e in self._entries.values() if e.status == DLQEntryStatus.PENDING)
+        with self._lock:
+            # enqueue inserts and _evict_oldest deletes _entries concurrently;
+            # snapshot under the lock before counting to avoid "dictionary
+            # changed size during iteration".
+            return sum(1 for e in tuple(self._entries.values()) if e.status == DLQEntryStatus.PENDING)
 
     @property
     def exhausted_count(self) -> int:
-        return sum(1 for e in self._entries.values() if e.status == DLQEntryStatus.EXHAUSTED)
+        with self._lock:
+            return sum(1 for e in tuple(self._entries.values()) if e.status == DLQEntryStatus.EXHAUSTED)
 
     @property
     def entry_count(self) -> int:

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import re as _re
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import StrEnum
@@ -147,6 +148,14 @@ class ApprovalRouter:
         self._pending: dict[str, ApprovalRequest] = {}
         self._history: list[ApprovalRequest] = []
         self._evicted_count = 0
+        # FastAPI dispatches sync handlers across a threadpool, so these
+        # methods run concurrently. Several iterate self._pending
+        # (get_pending / summary / _prune_expired_pending) while others
+        # size-mutate it (request_approval insert, resolve/lookup/evict pop),
+        # which races as "dictionary changed size during iteration". A single
+        # non-reentrant lock guards every read/mutate of the shared maps;
+        # _prune_expired_pending is a lock-free body invoked only while held.
+        self._lock = threading.Lock()
 
     def _parse_timestamp(self, value: str) -> datetime | None:
         """Parse an ISO timestamp, returning None when parsing fails."""
@@ -232,7 +241,12 @@ class ApprovalRouter:
         self._append_history(evicted)
 
     def _prune_expired_pending(self, now_text: str | None = None) -> None:
-        """Expire all stale pending requests."""
+        """Expire all stale pending requests.
+
+        Lock-free body: every caller already holds ``self._lock``. It snapshots
+        the expired ids into a list before popping, so it never iterates and
+        mutates ``self._pending`` simultaneously even in isolation.
+        """
         current_text = now_text or self._clock()
         now = self._parse_timestamp(current_text)
         if now is None:
@@ -277,11 +291,36 @@ class ApprovalRouter:
         keyword_risk = classify_risk(action_description, body)
         risk = _max_risk(keyword_risk, passport_risk_tier)
         now = self._clock()
-        self._prune_expired_pending(now)
         request_id = f"apr-{hashlib.sha256(f'{tenant_id}:{identity_id}:{now}'.encode()).hexdigest()[:12]}"
 
-        if risk == RiskTier.LOW:
-            # Auto-approve
+        with self._lock:
+            self._prune_expired_pending(now)
+
+            if risk == RiskTier.LOW:
+                # Auto-approve
+                request = ApprovalRequest(
+                    request_id=request_id,
+                    tenant_id=tenant_id,
+                    identity_id=identity_id,
+                    channel=channel,
+                    action_description=action_description,
+                    risk_tier=risk,
+                    command_id=command_id,
+                    payload_hash=payload_hash,
+                    policy_version=policy_version,
+                    status=ApprovalStatus.APPROVED,
+                    requested_at=now,
+                    resolved_at=now,
+                    resolved_by="auto",
+                )
+                self._append_history(request)
+                return request
+
+            # Evict oldest pending if at capacity
+            if len(self._pending) >= self.MAX_PENDING:
+                self._evict_oldest_pending(now)
+
+            # Medium or High — create pending request
             request = ApprovalRequest(
                 request_id=request_id,
                 tenant_id=tenant_id,
@@ -292,34 +331,11 @@ class ApprovalRouter:
                 command_id=command_id,
                 payload_hash=payload_hash,
                 policy_version=policy_version,
-                status=ApprovalStatus.APPROVED,
+                status=ApprovalStatus.PENDING,
                 requested_at=now,
-                resolved_at=now,
-                resolved_by="auto",
             )
-            self._append_history(request)
+            self._pending[request_id] = request
             return request
-
-        # Evict oldest pending if at capacity
-        if len(self._pending) >= self.MAX_PENDING:
-            self._evict_oldest_pending(now)
-
-        # Medium or High — create pending request
-        request = ApprovalRequest(
-            request_id=request_id,
-            tenant_id=tenant_id,
-            identity_id=identity_id,
-            channel=channel,
-            action_description=action_description,
-            risk_tier=risk,
-            command_id=command_id,
-            payload_hash=payload_hash,
-            policy_version=policy_version,
-            status=ApprovalStatus.PENDING,
-            requested_at=now,
-        )
-        self._pending[request_id] = request
-        return request
 
     def resolve(self, request_id: str, approved: bool, resolved_by: str = "user") -> ApprovalRequest | None:
         """Resolve a pending approval request."""
@@ -328,87 +344,99 @@ class ApprovalRouter:
         if now is None:
             now = datetime.now(timezone.utc)
             now_text = now.isoformat()
-        pending = self._pending.pop(request_id, None)
-        if pending is None:
-            return None
-        if self._is_expired(pending, now):
-            return self._expire_pending(request_id, pending, now_text)
+        with self._lock:
+            pending = self._pending.pop(request_id, None)
+            if pending is None:
+                return None
+            if self._is_expired(pending, now):
+                return self._expire_pending(request_id, pending, now_text)
 
-        resolved = ApprovalRequest(
-            request_id=pending.request_id,
-            tenant_id=pending.tenant_id,
-            identity_id=pending.identity_id,
-            channel=pending.channel,
-            action_description=pending.action_description,
-            risk_tier=pending.risk_tier,
-            command_id=pending.command_id,
-            payload_hash=pending.payload_hash,
-            policy_version=pending.policy_version,
-            status=ApprovalStatus.APPROVED if approved else ApprovalStatus.DENIED,
-            requested_at=pending.requested_at,
-            resolved_at=now_text,
-            resolved_by=resolved_by,
-        )
-        self._append_history(resolved)
-        return resolved
+            resolved = ApprovalRequest(
+                request_id=pending.request_id,
+                tenant_id=pending.tenant_id,
+                identity_id=pending.identity_id,
+                channel=pending.channel,
+                action_description=pending.action_description,
+                risk_tier=pending.risk_tier,
+                command_id=pending.command_id,
+                payload_hash=pending.payload_hash,
+                policy_version=pending.policy_version,
+                status=ApprovalStatus.APPROVED if approved else ApprovalStatus.DENIED,
+                requested_at=pending.requested_at,
+                resolved_at=now_text,
+                resolved_by=resolved_by,
+            )
+            self._append_history(resolved)
+            return resolved
 
     def lookup_request(self, request_id: str) -> ApprovalRequest | None:
         """Return a pending request, expiring it first if its timeout elapsed."""
-        pending = self._pending.get(request_id)
-        if pending is None:
-            return None
-
         now_text = self._clock()
         now = self._parse_timestamp(now_text)
         if now is None:
             now = datetime.now(timezone.utc)
             now_text = now.isoformat()
 
-        if self._is_expired(pending, now):
-            self._pending.pop(request_id, None)
-            return self._expire_pending(request_id, pending, now_text)
-        return pending
+        with self._lock:
+            pending = self._pending.get(request_id)
+            if pending is None:
+                return None
+            if self._is_expired(pending, now):
+                self._pending.pop(request_id, None)
+                return self._expire_pending(request_id, pending, now_text)
+            return pending
 
     def get_pending(self, tenant_id: str = "") -> list[ApprovalRequest]:
         """Get pending approval requests, optionally filtered by tenant."""
-        self._prune_expired_pending()
+        with self._lock:
+            self._prune_expired_pending()
+            # Snapshot under the lock; ApprovalRequest is frozen so the list is
+            # a safe immutable view once detached from the mutating dict.
+            pending = list(self._pending.values())
         if tenant_id:
-            return [r for r in self._pending.values() if r.tenant_id == tenant_id]
-        return list(self._pending.values())
+            return [r for r in pending if r.tenant_id == tenant_id]
+        return pending
 
     @property
     def pending_count(self) -> int:
-        self._prune_expired_pending()
-        return len(self._pending)
+        with self._lock:
+            self._prune_expired_pending()
+            return len(self._pending)
 
     @property
     def total_requests(self) -> int:
-        self._prune_expired_pending()
-        return len(self._history) + len(self._pending)
+        with self._lock:
+            self._prune_expired_pending()
+            return len(self._history) + len(self._pending)
 
     def summary(self) -> dict[str, Any]:
-        self._prune_expired_pending()
         by_status: dict[str, int] = {}
         by_risk_tier: dict[str, int] = {}
         pending_by_risk_tier: dict[str, int] = {}
         resolution_reasons: dict[str, int] = {}
 
-        for request in (*self._history, *self._pending.values()):
+        with self._lock:
+            self._prune_expired_pending()
+            # Snapshot both collections under the lock, then tally outside it.
+            history = list(self._history)
+            pending = list(self._pending.values())
+
+        for request in (*history, *pending):
             by_status[request.status.value] = by_status.get(request.status.value, 0) + 1
             by_risk_tier[request.risk_tier.value] = by_risk_tier.get(request.risk_tier.value, 0) + 1
 
-        for request in self._pending.values():
+        for request in pending:
             risk_tier = request.risk_tier.value
             pending_by_risk_tier[risk_tier] = pending_by_risk_tier.get(risk_tier, 0) + 1
 
-        for request in self._history:
+        for request in history:
             reason = self._resolution_reason(request)
             resolution_reasons[reason] = resolution_reasons.get(reason, 0) + 1
 
         return {
-            "pending": len(self._pending),
-            "total": len(self._history) + len(self._pending),
-            "history_count": len(self._history),
+            "pending": len(pending),
+            "total": len(history) + len(pending),
+            "history_count": len(history),
             "by_status": dict(sorted(by_status.items())),
             "by_risk_tier": dict(sorted(by_risk_tier.items())),
             "pending_by_risk_tier": dict(sorted(pending_by_risk_tier.items())),
