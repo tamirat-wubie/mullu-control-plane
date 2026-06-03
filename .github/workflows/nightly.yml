@@ -64,6 +64,35 @@ jobs:
         working-directory: mcoi
         run: python -m pytest tests/test_infra_certification.py -m "infra_smtp" -v --tb=short
 
+  serial-pollution-guard:
+    name: Serial Full-Suite (cross-test pollution guard)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: mcoi
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Upgrade pip
+        run: python -m pip install --disable-pip-version-check --upgrade pip --timeout 60 --retries 2
+
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check --timeout 60 --retries 2 -e ".[dev]"
+
+      - name: Run full MCOI suite in one process
+        # The PR gate (ci.yml) shards the suite across many jobs, so a polluter
+        # and its victim land in different shards and cross-test / global-state
+        # pollution is structurally invisible there. This lane co-executes the
+        # whole tests/ tree in ONE process to catch that class (it caught the
+        # _Deps monkeypatch-shadow pollution, PR #1255). Nightly + non-gating so
+        # it never blocks PRs; failures are investigated next morning.
+        run: python ../scripts/run_mcoi_shards.py --serial-full
+
   governance-benchmarks:
     name: Governance Performance Benchmarks
     runs-on: ubuntu-24.04

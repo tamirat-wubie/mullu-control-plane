@@ -28,7 +28,10 @@ def test_shard_inventory_is_deterministic_and_excludes_empty_prefixes() -> None:
     assert names[-4:] == ("t", "u", "v", "w")
     assert "p" not in names
     assert {"pa-pe", "ph-pl", "po", "pr", "pu"}.issubset(set(names))
-    assert "q" not in names
+    # ``q`` is a real shard: test_query_* files exist (tenant-scope security
+    # tests) and were previously uncovered by the shard matrix -> never run in
+    # the PR gate. See test_non_soak_shards_cover_each_top_level_mcoi_file_once.
+    assert "q" in names
     assert "x" not in names
     assert "y" not in names
     assert "z" not in names
@@ -85,3 +88,16 @@ def test_dry_run_returns_receipts_without_invoking_runner() -> None:
     assert runs[0].dry_run is True
     assert runs[0].returncode == 0
     assert runs[0].target_count == len(run_mcoi_shards.resolve_shard_files("n"))
+
+
+def test_serial_full_command_runs_whole_tree_in_one_process() -> None:
+    command = run_mcoi_shards.build_serial_full_command()
+
+    assert command[:3] == (sys.executable, "-m", "pytest")
+    # Whole tree in one process (not per-shard file targets) so cross-test /
+    # global-state pollution is exercised — the class the sharded gate hides.
+    assert "tests" in command
+    # Same non-soak / non-infra / non-live boundary the shards use.
+    assert run_mcoi_shards.DEFAULT_MARKER in command
+    # ``--maxfail`` is intentionally omitted: report the complete failure list.
+    assert not any(arg.startswith("--maxfail") for arg in command)
