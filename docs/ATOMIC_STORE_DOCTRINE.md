@@ -366,6 +366,39 @@ When the high-level operation retries on `None` (as v4.30
 (raise after exhaustion vs. return None vs. silent), and the
 backoff (none / exponential / jittered).
 
+### When you migrate state to the store, migrate its bounds too
+
+Step 2 says "move the state to the store." Easy to forget: the
+*caller* may have been bounding that state, and the bound does not
+move automatically. When the store owns the state, the dispatcher
+calls `try_*` directly and never touches the caller's bookkeeping —
+so any cap, eviction, or TTL the caller enforced is silently
+bypassed.
+
+Concrete miss (F11): pre-doctrine, `RateLimiter` capped live buckets
+at `max_buckets=100_000` via an LRU in `_get_bucket`. Once the store
+owned bucket state, the dispatcher called `store.try_consume(...)`
+and `_get_bucket` was never reached — so `InMemoryRateLimitStore._buckets`
+(a plain dict) and the Postgres `governance_rate_buckets` table grew
+once per unique `(tenant, identity, endpoint)` **forever**. A memory
+leak / table-bloat regression introduced by the migration itself,
+invisible to every correctness test (the cap still held per bucket;
+only the *count* of buckets was unbounded).
+
+The fix: the store carries its own bound. In-memory restored the LRU
+(`OrderedDict` + `popitem`, default `max_buckets=100_000` — the old
+cap); Postgres added `prune_stale_buckets(older_than_seconds)`, an
+operator/cron DELETE of idle rows. For a token bucket, eviction is
+safe because deleting a bucket ≡ resetting it to full, which is what
+an idle bucket would have refilled to anyway — but only past the
+refill-to-full horizon (`max_tokens / refill_rate`), so the prune
+window must exceed it.
+
+Checklist when migrating state in Step 2: did the caller cap the
+count, evict by age/LRU, or TTL the entries? If so, the store needs
+an equivalent — and a test that asserts the bound holds on the
+store-owned path, not just per-entry correctness.
+
 ### Don't apply the doctrine speculatively
 
 If a store has no observed concurrency bug **and** no plausible
