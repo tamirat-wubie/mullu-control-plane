@@ -872,10 +872,10 @@
   "route_coverage": {
     "by_coverage_state": {
       "proven": 239,
-      "unproven": 1,
+      "unproven": 2,
       "witnessed": 149
     },
-    "route_count": 389,
+    "route_count": 390,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1201,6 +1201,11 @@
         "coverage_state": "proven",
         "route": "/api/v1/circuits/dashboard",
         "surface_id": "operational_health_read_models"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/cognitive-loop/plan-context/{capability_id}",
+        "surface_id": "unclassified_declared_route"
       },
       {
         "coverage_state": "witnessed",
@@ -2823,7 +2828,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 1
+    "unclassified_route_count": 2
   },
   "schema_version": 1,
   "surfaces": [

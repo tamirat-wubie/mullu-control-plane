@@ -260,9 +260,209 @@ class CognitiveLearner:
         return getattr(admitted, "entry_id", None)
 
 
+@dataclass(frozen=True, slots=True)
+class CognitivePlanContext:
+    """A read-only snapshot of the organs' state for one capability.
+
+    Composed from the SAME organ public APIs the gate and learner already use,
+    so the read surface cannot diverge from the write surface. Every field is a
+    plain scalar or a deterministically-ordered tuple so the snapshot is
+    hashable / loggable / replayable. Each per-organ read in the builder below
+    is independently try/except'd, so a missing or raising organ degrades to a
+    safe default (zero / empty / None) and never blocks the snapshot.
+    """
+
+    capability_id: str
+    confidence: float
+    degraded: bool
+    prior_outcomes_count: int
+    prior_success_count: int
+    learned_factor_adjustments: tuple[tuple[str, float], ...]
+    learned_adjustment_count: int
+    world_entity_count: int
+    world_snapshot_hash: str | None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "capability_id", ensure_non_empty_text("capability_id", self.capability_id))
+        if not (0.0 <= float(self.confidence) <= 1.0):
+            raise RuntimeCoreInvariantError("confidence must be in [0.0, 1.0]")
+        if not isinstance(self.degraded, bool):
+            raise RuntimeCoreInvariantError("degraded must be a bool")
+        for field_name in (
+            "prior_outcomes_count",
+            "prior_success_count",
+            "learned_adjustment_count",
+            "world_entity_count",
+        ):
+            value = getattr(self, field_name)
+            if not isinstance(value, int) or value < 0:
+                raise RuntimeCoreInvariantError("counts must be non-negative ints")
+        if self.prior_success_count > self.prior_outcomes_count:
+            raise RuntimeCoreInvariantError("prior_success_count cannot exceed prior_outcomes_count")
+        if not isinstance(self.learned_factor_adjustments, tuple):
+            raise RuntimeCoreInvariantError("learned_factor_adjustments must be a tuple")
+        for pair in self.learned_factor_adjustments:
+            if (
+                not isinstance(pair, tuple)
+                or len(pair) != 2
+                or not isinstance(pair[0], str)
+                or not isinstance(pair[1], (int, float))
+            ):
+                raise RuntimeCoreInvariantError("each learned_factor entry must be (str, float)")
+        if self.world_snapshot_hash is not None and not isinstance(self.world_snapshot_hash, str):
+            raise RuntimeCoreInvariantError("world_snapshot_hash must be str or None")
+
+
+def _read_confidence(meta_reasoning: object | None, capability_id: str) -> tuple[float, bool]:
+    """Read confidence + degraded from meta_reasoning, fail-OPEN to neutral."""
+    if meta_reasoning is None:
+        return _LIVE_NEUTRAL_CONFIDENCE, False
+    confidence = _LIVE_NEUTRAL_CONFIDENCE
+    try:
+        get_confidence = getattr(meta_reasoning, "get_confidence", None)
+        if get_confidence is not None:
+            existing = get_confidence(capability_id)
+            if existing is not None:
+                confidence = float(existing.overall_confidence)
+                if not (0.0 <= confidence <= 1.0):
+                    confidence = _LIVE_NEUTRAL_CONFIDENCE
+    except Exception:  # noqa: BLE001 - organ read must never raise into the snapshot
+        confidence = _LIVE_NEUTRAL_CONFIDENCE
+    degraded = False
+    try:
+        is_degraded = getattr(meta_reasoning, "is_degraded", None)
+        if is_degraded is not None:
+            degraded = bool(is_degraded(capability_id))
+    except Exception:  # noqa: BLE001 - organ read must never raise into the snapshot
+        degraded = False
+    return confidence, degraded
+
+
+def _read_episodic_priors(episodic_memory: object | None, capability_id: str) -> tuple[int, int]:
+    """Count prior cognitive_loop_outcome episodic entries for capability_id.
+
+    Returns (total_count, success_count). Each iteration is wrapped so a
+    malformed entry or a missing attribute degrades to skip-this-entry rather
+    than blowing up the whole read.
+    """
+    if episodic_memory is None:
+        return 0, 0
+    try:
+        list_entries = getattr(episodic_memory, "list_entries", None)
+        if list_entries is None:
+            return 0, 0
+        entries = list_entries(category="cognitive_loop_outcome")
+    except Exception:  # noqa: BLE001 - organ read must never raise into the snapshot
+        return 0, 0
+    total = 0
+    successes = 0
+    for entry in entries:
+        try:
+            content = getattr(entry, "content", None) or {}
+            if str(content.get("capability_id", "")) != capability_id:
+                continue
+            total += 1
+            if bool(content.get("succeeded", False)):
+                successes += 1
+        except Exception:  # noqa: BLE001 - skip malformed entries
+            continue
+    return total, successes
+
+
+def _read_learned_factors(
+    decision_learning: object | None,
+) -> tuple[tuple[tuple[str, float], ...], int]:
+    """Read learned factor adjustments + total adjustment count, sorted by key."""
+    if decision_learning is None:
+        return (), 0
+    adjustments: tuple[tuple[str, float], ...] = ()
+    try:
+        get_factors = getattr(decision_learning, "get_learned_factor_adjustments", None)
+        if get_factors is not None:
+            factors = get_factors()
+            adjustments = tuple(
+                sorted(
+                    ((str(key), float(value)) for key, value in dict(factors).items()),
+                    key=lambda pair: pair[0],
+                )
+            )
+    except Exception:  # noqa: BLE001 - organ read must never raise into the snapshot
+        adjustments = ()
+    count = 0
+    try:
+        adjustment_count = getattr(decision_learning, "adjustment_count", None)
+        if adjustment_count is not None:
+            count = int(adjustment_count)
+            if count < 0:
+                count = 0
+    except Exception:  # noqa: BLE001 - organ read must never raise into the snapshot
+        count = 0
+    return adjustments, count
+
+
+def _read_world_summary(world_state: object | None) -> tuple[int, str | None]:
+    """Read entity count + snapshot hash from world_state."""
+    if world_state is None:
+        return 0, None
+    entity_count = 0
+    try:
+        list_entities = getattr(world_state, "list_entities", None)
+        if list_entities is not None:
+            entity_count = len(list_entities())
+            if entity_count < 0:
+                entity_count = 0
+    except Exception:  # noqa: BLE001 - organ read must never raise into the snapshot
+        entity_count = 0
+    snapshot_hash: str | None = None
+    try:
+        snapshot_hash_fn = getattr(world_state, "snapshot_hash", None)
+        if snapshot_hash_fn is not None:
+            raw = snapshot_hash_fn()
+            snapshot_hash = str(raw) if raw is not None else None
+    except Exception:  # noqa: BLE001 - organ read must never raise into the snapshot
+        snapshot_hash = None
+    return entity_count, snapshot_hash
+
+
+def build_plan_context(
+    *,
+    capability_id: str,
+    meta_reasoning: object | None,
+    episodic_memory: object | None,
+    decision_learning: object | None,
+    world_state: object | None,
+) -> CognitivePlanContext:
+    """Build a CognitivePlanContext snapshot from the organs (Stage D read-back).
+
+    Pure read. Each organ read is independently fail-OPEN: a missing or raising
+    organ degrades to a safe default (neutral confidence, zero counts, empty
+    adjustments, no snapshot hash) so the snapshot is always returned. The
+    snapshot deliberately does NOT consult the gate's verdict - it is the
+    organ state, NOT a decision.
+    """
+    capability_id = ensure_non_empty_text("capability_id", capability_id)
+    confidence, degraded = _read_confidence(meta_reasoning, capability_id)
+    prior_total, prior_success = _read_episodic_priors(episodic_memory, capability_id)
+    learned, learned_count = _read_learned_factors(decision_learning)
+    world_entities, world_hash = _read_world_summary(world_state)
+    return CognitivePlanContext(
+        capability_id=capability_id,
+        confidence=round(confidence, 4),
+        degraded=bool(degraded),
+        prior_outcomes_count=prior_total,
+        prior_success_count=prior_success,
+        learned_factor_adjustments=learned,
+        learned_adjustment_count=learned_count,
+        world_entity_count=world_entities,
+        world_snapshot_hash=world_hash,
+    )
+
+
 __all__ = [
     "CognitiveExecutionGate",
     "CognitiveLearner",
+    "CognitivePlanContext",
     "GateDecision",
     "LearnRecord",
+    "build_plan_context",
 ]

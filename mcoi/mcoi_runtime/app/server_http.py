@@ -167,6 +167,7 @@ def include_default_routers(app: FastAPI) -> None:
     from mcoi_runtime.app.routers.assistant import router as assistant_router
     from mcoi_runtime.app.routers.audit import router as audit_router
     from mcoi_runtime.app.routers.cognition import router as cognition_router
+    from mcoi_runtime.app.routers.cognitive_state import router as cognitive_state_router
     from mcoi_runtime.app.routers.domains import router as domains_router
     from mcoi_runtime.app.routers.compliance import router as compliance_router
     from mcoi_runtime.app.routers.connectors import router as connectors_router
@@ -242,6 +243,7 @@ def include_default_routers(app: FastAPI) -> None:
     app.include_router(mfidel_router)
     app.include_router(constructs_router)
     app.include_router(cognition_router)
+    app.include_router(cognitive_state_router)
     app.include_router(ucja_router)
     app.include_router(musia_tenants_router)
     app.include_router(musia_governance_metrics_router)

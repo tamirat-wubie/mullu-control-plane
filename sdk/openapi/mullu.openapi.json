@@ -8728,6 +8728,48 @@
         "summary": "Get Circuit Dashboard"
       }
     },
+    "/api/v1/cognitive-loop/plan-context/{capability_id}": {
+      "get": {
+        "description": "Read-only snapshot of organ state for ``capability_id`` (Stage D).\n\nThe response is bounded, deterministic in shape, and carries no execution\nauthority. When the read flag is off, returns 503 with a stable disabled\ndetail (so the contract is discoverable but the feature is observably\noff). When on, returns the CognitivePlanContext fields as JSON.",
+        "operationId": "cognitive_plan_context_api_v1_cognitive_loop_plan_context__capability_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "capability_id",
+            "required": true,
+            "schema": {
+              "title": "Capability Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Cognitive Plan Context Api V1 Cognitive Loop Plan Context  Capability Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cognitive Plan Context"
+      }
+    },
     "/api/v1/complete": {
       "post": {
         "description": "Governed LLM completion \u2014 budgeted, ledgered, circuit-protected.",

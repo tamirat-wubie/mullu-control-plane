@@ -27,13 +27,17 @@ from typing import Callable, Mapping
 from mcoi_runtime.core.cognitive_live import (
     CognitiveExecutionGate,
     CognitiveLearner,
+    CognitivePlanContext,
     GateDecision,
+    build_plan_context,
 )
 
 COGNITIVE_LOOP_ENFORCE_ENV = "MULLU_COGNITIVE_LOOP_ENFORCE"
 COGNITIVE_LOOP_LEARN_ENV = "MULLU_COGNITIVE_LOOP_LEARN"
+COGNITIVE_LOOP_READ_ENV = "MULLU_COGNITIVE_LOOP_READ"
 EXECUTION_GATE_DEP = "cognitive_execution_gate"
 LEARNER_DEP = "cognitive_learner"
+COGNITIVE_RUNTIME_DEP = "cognitive_runtime"
 
 _TRUE_VALUES = frozenset({"1", "true", "yes", "on"})
 _FALSE_VALUES = frozenset({"0", "false", "no", "off", ""})
@@ -72,6 +76,11 @@ def validate_enforce_config(runtime_env: Mapping[str, str]) -> CognitiveLiveConf
 def validate_learn_config(runtime_env: Mapping[str, str]) -> CognitiveLiveConfigReport:
     """Validate the Stage-C learn flag without raising into startup."""
     return _validate(runtime_env, COGNITIVE_LOOP_LEARN_ENV)
+
+
+def validate_read_config(runtime_env: Mapping[str, str]) -> CognitiveLiveConfigReport:
+    """Validate the Stage-D plan-context read flag without raising into startup."""
+    return _validate(runtime_env, COGNITIVE_LOOP_READ_ENV)
 
 
 def build_execution_gate(
@@ -174,6 +183,53 @@ def chain_capability_key(step_names: tuple[str, ...]) -> str:
     return "agent_chain"
 
 
+def read_plan_context(deps: object, *, capability_id: str) -> CognitivePlanContext | None:
+    """Read a CognitivePlanContext snapshot for capability_id (Stage D).
+
+    Returns None when:
+      * the cognitive_runtime bundle is absent from deps (no organs mounted), or
+      * any organ read raises (fail-OPEN at the wrapper boundary too).
+
+    The snapshot itself is fail-OPEN per-organ - a missing meta_reasoning gives
+    neutral confidence, a missing episodic gives zero priors, etc. - so a
+    partial bundle still yields a useful read. This wrapper only returns None
+    on the wholesale absence of the bundle or a top-level error.
+
+    The read consults the SAME organs already mounted by
+    cognitive_runtime_integration; it does NOT instantiate or mutate any organ.
+    """
+    try:
+        runtime = deps.get(COGNITIVE_RUNTIME_DEP)
+    except Exception:  # noqa: BLE001 - absent runtime => no snapshot
+        return None
+    if runtime is None:
+        return None
+    try:
+        return build_plan_context(
+            capability_id=str(capability_id),
+            meta_reasoning=getattr(runtime, "meta_reasoning", None),
+            episodic_memory=getattr(runtime, "episodic_memory", None),
+            decision_learning=getattr(runtime, "decision_learning", None),
+            world_state=getattr(runtime, "world_state", None),
+        )
+    except Exception:  # noqa: BLE001 - never raise out of an observability read
+        return None
+
+
+def plan_context_disabled_detail() -> dict[str, object]:
+    """Shared 503 body for the Stage-D read endpoint when the flag is off.
+
+    Static strings only (no caller text), so it passes the reflective-contract
+    guard. The endpoint still responds to the call (operators can discover it
+    exists and is disabled) instead of pretending it does not exist.
+    """
+    return {
+        "error": "cognitive plan-context read is disabled",
+        "error_code": "cognitive_loop_read_disabled",
+        "governed": True,
+    }
+
+
 def cognitive_block_detail(verdict: str) -> dict[str, object]:
     """Shared detail body for a dispatch withheld by the Stage-B cognitive gate.
 
@@ -191,6 +247,8 @@ def cognitive_block_detail(verdict: str) -> dict[str, object]:
 __all__ = [
     "COGNITIVE_LOOP_ENFORCE_ENV",
     "COGNITIVE_LOOP_LEARN_ENV",
+    "COGNITIVE_LOOP_READ_ENV",
+    "COGNITIVE_RUNTIME_DEP",
     "EXECUTION_GATE_DEP",
     "LEARNER_DEP",
     "CognitiveLiveConfigReport",
@@ -198,8 +256,11 @@ __all__ = [
     "build_learner",
     "evaluate_execution_gate",
     "record_execution_learning",
+    "read_plan_context",
     "validate_enforce_config",
     "validate_learn_config",
+    "validate_read_config",
     "chain_capability_key",
     "cognitive_block_detail",
+    "plan_context_disabled_detail",
 ]
