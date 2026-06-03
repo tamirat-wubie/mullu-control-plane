@@ -21,7 +21,12 @@ from mcoi_runtime.contracts.code_worker import (
     CodeWorkerLease,
     CodeWorkerReceiptStatus,
 )
-from mcoi_runtime.workers.code_worker import SandboxedCodeWorker, _workspace_snapshot
+from mcoi_runtime.workers.code_worker import (
+    SandboxedCodeWorker,
+    _changed_path_violations,
+    _workspace_snapshot,
+)
+from mcoi_runtime.governance.protected_paths import DEFAULT_GOVERNANCE_PROTECTED_PATHS
 
 
 def _lease(**overrides: object) -> CodeWorkerLease:
@@ -196,6 +201,92 @@ def test_sandboxed_code_worker_blocks_sandbox_mutation_outside_lease_path(
         "sandbox_changed_file_outside_lease_allowed_paths:"
     )
     assert "other/result.txt" not in result.stderr
+
+
+# --- Protected-path denylist (defense-in-depth) ---
+
+
+def test_changed_path_violations_flags_protected_governance_file() -> None:
+    # Inside the allowlist (".github") but a protected governance artifact.
+    violations = _changed_path_violations(
+        changed_paths=(".github/workflows/ci.yml",),
+        allowed_paths=(".github",),
+        protected_paths=DEFAULT_GOVERNANCE_PROTECTED_PATHS,
+    )
+    assert any(v.startswith("sandbox_changed_protected_path:") for v in violations)
+    assert not any(
+        v.startswith("sandbox_changed_file_outside_lease_allowed_paths:") for v in violations
+    )
+
+
+def test_changed_path_violations_ignores_ordinary_file() -> None:
+    violations = _changed_path_violations(
+        changed_paths=("src/task.py",),
+        allowed_paths=(".",),
+        protected_paths=DEFAULT_GOVERNANCE_PROTECTED_PATHS,
+    )
+    assert violations == ()
+
+
+def test_changed_path_violations_protected_denylist_off_without_policy() -> None:
+    # No protected policy passed -> back-compatible (allowlist-only) behaviour.
+    violations = _changed_path_violations(
+        changed_paths=(".github/workflows/ci.yml",),
+        allowed_paths=(".github",),
+    )
+    assert violations == ()
+
+
+def _ci_writing_runner(tmp_path: Path):
+    def fake_runner(argv, **kwargs):  # noqa: ANN001, ANN202, ARG001
+        target = tmp_path / ".github" / "workflows" / "ci.yml"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("name: ci\n", encoding="utf-8")
+        return subprocess.CompletedProcess(argv, 0, stdout="ok\n", stderr="")
+
+    return fake_runner
+
+
+def test_worker_blocks_command_that_modifies_protected_path(tmp_path: Path) -> None:
+    # The protected file is INSIDE the lease allowlist, so the only reason it
+    # is blocked is the protected-path denylist.
+    (tmp_path / "src").mkdir()
+    worker = SandboxedCodeWorker(
+        workspace_root=str(tmp_path),
+        clock=lambda: "2026-05-07T12:00:00+00:00",
+        runner=_ci_writing_runner(tmp_path),
+        platform_system=lambda: "Linux",
+    )
+    result = worker.execute_command(
+        _lease(allowed_paths=("src", ".github"), allowed_commands=(("python", "-m", "task"),)),
+        command_id="cmd-protected",
+        argv=("python", "-m", "task"),
+        cwd="src",
+    )
+    assert result.status is CodeWorkerReceiptStatus.BLOCKED
+    assert any(
+        ref.startswith("sandbox_changed_protected_path:")
+        for ref in result.receipt.violation_reasons
+    )
+
+
+def test_worker_allows_protected_change_when_denylist_disabled(tmp_path: Path) -> None:
+    (tmp_path / "src").mkdir()
+    worker = SandboxedCodeWorker(
+        workspace_root=str(tmp_path),
+        clock=lambda: "2026-05-07T12:00:00+00:00",
+        runner=_ci_writing_runner(tmp_path),
+        platform_system=lambda: "Linux",
+        protected_paths=None,
+    )
+    result = worker.execute_command(
+        _lease(allowed_paths=("src", ".github"), allowed_commands=(("python", "-m", "task"),)),
+        command_id="cmd-protected-off",
+        argv=("python", "-m", "task"),
+        cwd="src",
+    )
+    assert result.status is CodeWorkerReceiptStatus.SUCCEEDED
+    assert result.receipt.violation_reasons == ()
 
 
 def test_workspace_snapshot_records_symlink_without_following_target(
