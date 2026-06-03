@@ -42,6 +42,10 @@ from mcoi_runtime.core.invariants import (
     stable_identifier,
 )
 from mcoi_runtime.core.memory import MemoryEntry, MemoryTier
+from mcoi_runtime.persistence.cognitive_outcome_ledger import (
+    CognitiveOutcomeEvent,
+    CognitiveOutcomeLedger,
+)
 from typing import Callable
 
 # Mirror CognitiveLoop's DECIDE-phase defaults (kept in sync intentionally).
@@ -171,8 +175,20 @@ class CognitiveLearner:
 
     Determinism note: deterministic for a given ordered outcome sequence + clock.
     Strict cross-run / multi-worker determinism (the design doc's D1 record-and-
-    replay) requires a durable, replayable event ledger; until that backend lands,
-    this is wired default-OFF and behaves as a single-process running cache.
+    replay) requires a durable, replayable event ledger; D1 is shipped as the
+    optional ``ledger`` parameter below. When ``ledger`` is None (the historical
+    default), the learner behaves byte-identically to the pre-D1 implementation.
+    When a ledger is injected and the env-flag composition turns it on, each
+    ``learn`` call appends one ``CognitiveOutcomeEvent`` to the durable substrate
+    as the FINAL step inside the existing ``_lock``-serialised admission path.
+
+    Durability contract: best-effort across worker crashes. The ledger write
+    runs AFTER the in-memory cache mutations (``update_confidence`` then
+    ``admit``), so a crash between admit success and ledger append loses the
+    single in-flight event. The cache itself stays internally consistent.
+    Stronger durability (ledger-first WAL) is a future refinement that needs
+    the rehydrate path (#1276 / N+2) to handle idempotent re-application via
+    ``source_ref`` and the explicit ``next_confidence`` recorded in the event.
     """
 
     def __init__(
@@ -181,6 +197,7 @@ class CognitiveLearner:
         meta_reasoning: object,
         episodic_memory: object,
         clock: Callable[[], str],
+        ledger: CognitiveOutcomeLedger | None = None,
     ) -> None:
         if meta_reasoning is None:
             raise RuntimeCoreInvariantError("learner requires a meta_reasoning engine")
@@ -192,6 +209,7 @@ class CognitiveLearner:
         self._episodic = episodic_memory
         self._clock = clock
         self._lock = threading.Lock()
+        self._ledger = ledger
 
     def learn(
         self,
@@ -207,8 +225,33 @@ class CognitiveLearner:
         verified = bool(verified)
         with self._lock:
             learned_at = self._clock()
+            # Read the prior confidence BEFORE mutation so the ledger event
+            # records the actual (prior, next) transition. The read is a pure
+            # query against the same accessor the gate uses.
+            prior_value = self._read_capability_confidence(capability_id)
             self._update_confidence(capability_id, succeeded=succeeded, verified=verified, assessed_at=learned_at)
             admitted_id = self._admit_outcome(capability_id, succeeded=succeeded, verified=verified, source_ref=source_ref)
+            # Ledger write LAST. When None (D1 disabled), the live path is
+            # byte-identical to the pre-D1 implementation. When present, this
+            # is the durable substrate the rehydrate path consumes; a write
+            # failure surfaces to the caller (the existing
+            # ``record_execution_learning`` wrapper still swallows exceptions
+            # so the live request is never perturbed), and the cache is left
+            # in its updated state -- a single in-flight event may be lost
+            # across a worker crash but the cache itself stays consistent.
+            if self._ledger is not None:
+                next_value = self._read_capability_confidence(capability_id)
+                event = CognitiveOutcomeEvent(
+                    capability_id=capability_id,
+                    succeeded=succeeded,
+                    verified=verified,
+                    admitted_entry_id=admitted_id,
+                    source_ref=source_ref,
+                    learned_at=learned_at,
+                    prior_confidence=round(prior_value, 4),
+                    next_confidence=round(next_value, 4),
+                )
+                self._ledger.append(event)
         return LearnRecord(
             capability_id=capability_id,
             succeeded=succeeded,
@@ -216,6 +259,24 @@ class CognitiveLearner:
             admitted_entry_id=admitted_id,
             learned_at=learned_at,
         )
+
+    def _read_capability_confidence(self, capability_id: str) -> float:
+        """Read overall_confidence for ``capability_id`` via the meta organ.
+
+        Returns ``_LIVE_NEUTRAL_CONFIDENCE`` when the organ has no record (a
+        previously-unseen capability) or the get_confidence accessor is
+        absent. Mirrors ``CognitiveExecutionGate._capability_confidence`` so
+        the gate's read and the learner's pre/post-mutation snapshots are
+        derived from the same source -- the ledger event's confidence values
+        will agree with what the gate sees on the next read.
+        """
+        get_confidence = getattr(self._meta, "get_confidence", None)
+        if get_confidence is None:
+            return _LIVE_NEUTRAL_CONFIDENCE
+        existing = get_confidence(capability_id)
+        if existing is None:
+            return _LIVE_NEUTRAL_CONFIDENCE
+        return float(existing.overall_confidence)
 
     def _update_confidence(self, capability_id: str, *, succeeded: bool, verified: bool, assessed_at: str) -> None:
         update = getattr(self._meta, "update_confidence", None)
