@@ -65,7 +65,7 @@ def test_document_bbox_rejects_invalid_geometry() -> None:
     with pytest.raises(ValueError, match="x1 must be greater than x0"):
         DocumentBBox(page_number=1, x0=10, y0=0, x1=10, y1=1)
 
-    with pytest.raises(ValueError, match="page_number"):
+    with pytest.raises(ValueError, match=">= 1"):
         DocumentBBox(page_number=0, x0=0, y0=0, x1=1, y1=1)
 
 
@@ -162,7 +162,11 @@ def test_layout_risk_detector_surfaces_clipping_overlap_and_redaction_overlay() 
 
     assert LayoutRiskKind.CLIPPING in risk_kinds
     assert LayoutRiskKind.REDACTION_OVERLAY_RISK in risk_kinds
-    assert any("overlap_ratio=" in evidence for risk in risks for evidence in risk.evidence)
+    assert any(
+        "overlap_ratio=" in evidence
+        for risk in risks
+        for evidence in risk.evidence
+    )
 
 
 def test_object_graph_rejects_dangling_references() -> None:
