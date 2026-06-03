@@ -1,13 +1,23 @@
 """Health-related endpoints extracted from server.py.
 
-Provides liveness, readiness, deep-health, scored-health, and versioned
-health-check routes.
+Provides liveness (/health), dependency-aware readiness (/ready),
+deep-health, scored-health, and versioned health-check routes.
+
+Liveness vs readiness:
+  - /health is a shallow liveness signal (is the process up). It is what the
+    container HEALTHCHECK probes and must stay cheap and dependency-free.
+  - /ready is a readiness gate: it consults the deep-health probes and fails
+    closed (HTTP 503) when a dependency is unhealthy, plus enforces
+    promotion-grade policy in pilot/production.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter
+from typing import Any
+
+from fastapi import APIRouter, Response
 
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.core.deep_health import SystemHealth
 
 router = APIRouter()
 
@@ -24,10 +34,58 @@ def health():
     }
 
 
+# Environments where readiness applies strict promotion-grade gates.
+_STRICT_ENVIRONMENTS = ("pilot", "production")
+
+
+def _environment() -> str:
+    """Best-effort deployment environment name (never raises)."""
+    try:
+        return str(deps.surface.manifest.environment)
+    except Exception:  # pragma: no cover - defensive; surface is always wired
+        return "unknown"
+
+
+def evaluate_readiness(health_report: SystemHealth, environment: str) -> dict[str, Any]:
+    """Pure readiness verdict over a deep-health report + environment.
+
+    Ready iff no component is ``unhealthy``. ``degraded`` does not block. In
+    pilot/production two promotion-grade gates also apply (defense in depth —
+    the LLM bootstrap already fails closed on a stub backend): the LLM backend
+    must not be ``stub`` and field encryption must be available.
+    """
+    components = {c.name: c for c in health_report.components}
+    checks = {name: component.status.value for name, component in components.items()}
+    blocking = [
+        name for name, component in components.items()
+        if component.status.value == "unhealthy"
+    ]
+
+    if environment in _STRICT_ENVIRONMENTS:
+        llm = components.get("llm")
+        if llm is not None and llm.detail.get("provider") == "stub":
+            blocking.append("llm:stub_backend_forbidden")
+        field_encryption = components.get("field_encryption")
+        if field_encryption is not None and not field_encryption.detail.get("aes_available", False):
+            blocking.append("field_encryption:unavailable")
+
+    return {
+        "ready": not blocking,
+        "status": health_report.overall.value,
+        "governed": True,
+        "environment": environment,
+        "checks": checks,
+        "blocking": blocking,
+    }
+
+
 @router.get("/ready")
-def ready():
-    h = health()
-    return {"ready": h["status"] == "healthy", **h}
+def ready(response: Response):
+    """Dependency-aware readiness gate; returns HTTP 503 when not ready."""
+    report = evaluate_readiness(deps.deep_health.run(), _environment())
+    if not report["ready"]:
+        response.status_code = 503
+    return report
 
 
 # ── Deep & scored health ─────────────────────────────────────────────────

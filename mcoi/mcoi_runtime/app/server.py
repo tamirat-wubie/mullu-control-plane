@@ -169,6 +169,29 @@ shutdown_mgr = _runtime_stack.shutdown_mgr
 state_persistence = _runtime_stack.state_persistence
 platform_logger = _operational_bootstrap.platform_logger
 
+
+def _field_encryption_deep_health() -> dict[str, Any]:
+    """Readiness fact for field-level encryption (read-only).
+
+    Reports whether an encryptor is configured and whether AES-GCM is
+    actually available. The /ready policy requires AES in pilot/production;
+    dev/test only reports it. Registered here (not in server_agents) because
+    the encryptor is constructed in the server context, not the agent runtime.
+    """
+    enc = _field_encryptor
+    return {
+        "status": "healthy",
+        "configured": enc is not None,
+        "aes_available": bool(getattr(enc, "aes_available", False)),
+    }
+
+
+# The field-encryption probe shares the same DeepHealthChecker instance that
+# is registered into ``deps`` as ``deep_health`` (server_registry reads
+# ``agent_bootstrap.deep_health``), so /ready and /api/v1/health/deep see it.
+_agent_bootstrap.deep_health.register("field_encryption", _field_encryption_deep_health)
+
+
 def _validate_or_raise(schema_id: str, data: dict[str, Any]) -> None:
     """Validate request data against a schema; raise 422 if invalid."""
     _validate_or_raise_impl(

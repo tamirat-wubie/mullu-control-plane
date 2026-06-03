@@ -130,7 +130,14 @@ def test_bootstrap_agent_runtime_registers_default_agents_and_health_probes() ->
         "code-agent",
     ]
     assert bootstrap.task_manager.registry is bootstrap.agent_registry
-    assert set(bootstrap.deep_health.probes) == {"store", "llm", "certification", "metrics"}
+    assert set(bootstrap.deep_health.probes) == {
+        "store",
+        "llm",
+        "certification",
+        "metrics",
+        "proof_bridge",
+        "audit",
+    }
     assert bootstrap.deep_health.probes["store"]() == {"status": "healthy", "ledger_count": 7}
     assert bootstrap.config_manager.initial["llm"]["default_model"] == "stub"
 
