@@ -14,9 +14,3 @@
 # internal helpers + tests), so there is no by-id endpoint to defend. Left
 # unguarded deliberately; revisit if a tenant-session read is ever exposed.
 mcoi/mcoi_runtime/persistence/tenant_ledger.py::TenantLedger.get_session
-
-# Guarded as of PR #1219 (assert_owns added to get_action). This entry is a
-# no-op once #1219 is on main (the method is no longer a finding) and should be
-# removed in a follow-up; retained here only so this linter passes on bases cut
-# before #1219 merged.
-mcoi/mcoi_runtime/persistence/temporal_scheduler_store.py::TemporalSchedulerStore.get_action

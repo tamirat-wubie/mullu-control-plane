@@ -42,6 +42,7 @@ from mcoi_runtime.contracts.organization_kernel import (
 )
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
 from .invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
+from .request_tenant_guard import assert_owns
 
 
 LAUNCH_GATEWAY_PILOT_CASE_TYPE = "launch_gateway_pilot"
@@ -526,7 +527,19 @@ class OrganizationKernel:
 
     def get_case(self, case_id: str) -> OrganizationCase | None:
         ensure_non_empty_text("case_id", case_id)
-        return self._cases.get(case_id)
+        case = self._cases.get(case_id)
+        if case is not None:
+            # Defense-in-depth (see request_tenant_guard): an organization case
+            # carries an org_id, not a tenant_id, so resolve the owning tenant
+            # through the organization and refuse to hand the case to a different
+            # tenant even if a caller forgot _enforce_case_tenant. No-op unless the
+            # middleware bound a non-operator authenticated tenant for this request;
+            # an unknown org resolves to no tenant and is left unguarded (matching
+            # the router's ``if tenant_id`` resolution).
+            tenant_id = self.organization_tenant(case.org_id)
+            if tenant_id:
+                assert_owns(tenant_id, resource="organization case")
+        return case
 
     def get_plan(self, plan_id: str) -> OrganizationPlan | None:
         ensure_non_empty_text("plan_id", plan_id)
