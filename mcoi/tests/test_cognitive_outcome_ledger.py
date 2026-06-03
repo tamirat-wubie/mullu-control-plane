@@ -10,9 +10,8 @@ Covers the six categories from §6 of docs/design/COGNITIVE_OUTCOME_LEDGER.md:
      CorruptedDataError -- fail-CLOSED)
   6. per-tenant isolation (one tenant's chain cannot taint another's)
 
-The substrate has NO integration with CognitiveLearner / runtime / routers yet;
-those land in follow-up PRs. These tests therefore exercise only the persistence
-module's contract.
+These tests exercise the persistence module's contract and the explicit
+``tenant_id`` carried inside each event body.
 """
 
 from __future__ import annotations
@@ -41,6 +40,7 @@ from mcoi_runtime.persistence.hash_chain import compute_content_hash
 
 def _event(
     *,
+    tenant_id: str = "tenant-A",
     capability_id: str = "llm.completion",
     source_ref: str = "wf-001",
     succeeded: bool = True,
@@ -51,6 +51,7 @@ def _event(
     next_confidence: float = 0.55,
 ) -> CognitiveOutcomeEvent:
     return CognitiveOutcomeEvent(
+        tenant_id=tenant_id,
         capability_id=capability_id,
         succeeded=succeeded,
         verified=verified,
@@ -67,6 +68,11 @@ def _ledger(tmp_path: Path, *, tenant_id: str = "tenant-A") -> FileBackedCogniti
 
 
 # ---------- (0) shape invariants ----------
+
+
+def test_event_rejects_blank_tenant_id():
+    with pytest.raises(Exception):
+        _event(tenant_id="   ")
 
 
 def test_event_rejects_blank_capability_id():
@@ -108,6 +114,12 @@ def test_append_assigns_monotone_sequence(tmp_path):
     e3 = ledger.append(_event(source_ref="wf-003"))
     assert (e1.sequence, e2.sequence, e3.sequence) == (0, 1, 2)
     assert ledger.latest_sequence() == 2
+
+
+def test_append_rejects_event_for_different_tenant(tmp_path):
+    ledger = _ledger(tmp_path, tenant_id="tenant-A")
+    with pytest.raises(PersistenceError):
+        ledger.append(_event(tenant_id="tenant-B", source_ref="wf-other-tenant"))
 
 
 def test_append_chain_validates_clean(tmp_path):
@@ -313,21 +325,33 @@ def test_replay_also_detects_body_tamper(tmp_path):
         list(ledger.replay())
 
 
+def test_replay_rejects_body_with_wrong_tenant(tmp_path):
+    ledger_a = _ledger(tmp_path, tenant_id="tenant-A")
+    ledger_b = _ledger(tmp_path, tenant_id="tenant-B")
+    entry_b = ledger_b.append(_event(tenant_id="tenant-B", source_ref="wf-B"))
+    # Public append is the supported guard: a tenant-B event cannot be placed
+    # into tenant-A's chain.
+    with pytest.raises(PersistenceError):
+        ledger_a.append(entry_b.event)
+
+
 # ---------- (6) per-tenant isolation ----------
 
 
 def test_per_tenant_chains_are_independent(tmp_path):
     a = _ledger(tmp_path, tenant_id="tenant-A")
     b = _ledger(tmp_path, tenant_id="tenant-B")
-    a.append(_event(source_ref="wf-A1"))
-    a.append(_event(source_ref="wf-A2"))
-    b.append(_event(source_ref="wf-B1"))
+    a.append(_event(tenant_id="tenant-A", source_ref="wf-A1"))
+    a.append(_event(tenant_id="tenant-A", source_ref="wf-A2"))
+    b.append(_event(tenant_id="tenant-B", source_ref="wf-B1"))
     assert a.latest_sequence() == 1
     assert b.latest_sequence() == 0
     a_events = [entry.event.source_ref for entry in a.replay()]
     b_events = [entry.event.source_ref for entry in b.replay()]
     assert a_events == ["wf-A1", "wf-A2"]
     assert b_events == ["wf-B1"]
+    assert {entry.event.tenant_id for entry in a.replay()} == {"tenant-A"}
+    assert {entry.event.tenant_id for entry in b.replay()} == {"tenant-B"}
 
 
 def test_tenant_id_rejects_path_traversal(tmp_path):
@@ -357,7 +381,10 @@ def test_two_independent_ledgers_with_identical_input_produce_identical_chain(tm
     """
     ledger_a = _ledger(tmp_path / "a", tenant_id="tenant")
     ledger_b = _ledger(tmp_path / "b", tenant_id="tenant")
-    events = [_event(source_ref=f"wf-{i}", next_confidence=0.5 + 0.01 * i) for i in range(5)]
+    events = [
+        _event(tenant_id="tenant", source_ref=f"wf-{i}", next_confidence=0.5 + 0.01 * i)
+        for i in range(5)
+    ]
     out_a = [ledger_a.append(e) for e in events]
     out_b = [ledger_b.append(e) for e in events]
     # The recorded_at field comes from wall-clock so it WILL differ; everything
