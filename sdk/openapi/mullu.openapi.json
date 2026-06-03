@@ -12441,6 +12441,23 @@
         "summary": "Get Health V3"
       }
     },
+    "/api/v1/health/witness": {
+      "post": {
+        "description": "Prove the governed proof + audit chain at runtime (promotion gate).\n\nDisabled by default \u2014 set ``MULLU_HEALTH_WITNESS_ENABLED=true`` in the\npromotion environment. Each call issues ONE bounded synthetic governed\ndecision (tenant ``system``, actor ``health-witness``), persists its proof\nand audit receipts, then verifies both. Returns HTTP 503 when the witness\ncannot be produced or verified.",
+        "operationId": "promotion_witness_api_v1_health_witness_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Promotion Witness"
+      }
+    },
     "/api/v1/idempotency/summary": {
       "get": {
         "description": "Return idempotency store summary.",
@@ -21656,6 +21673,7 @@
     },
     "/ready": {
       "get": {
+        "description": "Dependency-aware readiness gate; returns HTTP 503 when not ready.",
         "operationId": "ready_ready_get",
         "responses": {
           "200": {

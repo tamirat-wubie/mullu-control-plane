@@ -134,9 +134,9 @@ Coverage summary:
 | Proven surfaces | 37 |
 | Witnessed surfaces | 82 |
 | Unproven surfaces | 0 |
-| Declared proof-relevant routes | 388 |
+| Declared proof-relevant routes | 389 |
 | Classified declared routes | 388 |
-| Unclassified declared routes | 0 |
+| Unclassified declared routes | 1 |
 
 Evidence quality audit:
 
@@ -285,5 +285,5 @@ none
 STATUS:
   Completeness: 100%
   Invariants verified: route declarations, route-level coverage classification, coverage levels, coverage states, closure action mapping, schema contract validation, deployment orchestration receipt schema contract
-  Open issues: none
-  Next action: collect live deployment witness and apply public health declaration with approval
+  Open issues: 1 proof-relevant declared routes remain unclassified and are marked unproven in the machine witness
+  Next action: classify remaining unproven declared routes into named proof surfaces or explicit exemptions

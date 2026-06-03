@@ -68,6 +68,17 @@
 - [ ] Webhook event log active
 - [ ] Provider health monitor tracking all providers
 
+## Promotion Gate (pilot → production)
+
+The promotion witness proves the governed receipt chain works end-to-end on the
+running deployment before traffic is cut over. It is an operator action that
+persists a synthetic proof + audit receipt, so it is disabled by default.
+
+- [ ] `/ready` returns `200` (dependency-aware readiness — the k8s `readinessProbe`); a `503` means a dependency is down
+- [ ] Enable the witness for the check: `MULLU_HEALTH_WITNESS_ENABLED=true`
+- [ ] `POST /api/v1/health/witness` returns `200` with `"outcome": "verified"` (proof receipt verified + audit chain valid); a `503` blocks promotion
+- [ ] Leave `MULLU_HEALTH_WITNESS_ENABLED` unset in steady state
+
 ## Database
 
 - [ ] PostgreSQL 14+ with WAL mode
