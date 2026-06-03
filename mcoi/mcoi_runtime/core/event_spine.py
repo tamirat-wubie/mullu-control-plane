@@ -12,9 +12,10 @@ Invariants:
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import json
-from collections import defaultdict
+import threading
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping
 
@@ -29,6 +30,24 @@ from mcoi_runtime.contracts.event import (
     EventWindow,
 )
 from .invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
+
+
+def _synchronized(method):
+    """Run a bound method while holding self._lock (a re-entrant RLock).
+
+    The spine is hit concurrently under FastAPI's sync-handler threadpool;
+    several read methods iterate _events/_subscriptions/_reactions/_envelopes
+    while writers insert/clear them, which raises "dictionary changed size
+    during iteration". One engine-wide RLock serializes all access; it is
+    re-entrant so the internal cross-calls (emit_and_envelope -> emit,
+    correlate/build_window -> list_events, snapshot -> state_hash) do not
+    deadlock.
+    """
+    @functools.wraps(method)
+    def _wrapper(self, *args, **kwargs):
+        with self._lock:
+            return method(self, *args, **kwargs)
+    return _wrapper
 
 
 class EventSpineEngine:
@@ -49,6 +68,7 @@ class EventSpineEngine:
         self._subscriptions: dict[str, EventSubscription] = {}
         self._reactions: dict[str, EventReaction] = {}
         self._clock = clock or self._default_clock
+        self._lock = threading.RLock()
 
     @staticmethod
     def _default_clock() -> str:
@@ -59,6 +79,7 @@ class EventSpineEngine:
 
     # --- Event ingestion ---
 
+    @_synchronized
     def emit(self, event: EventRecord) -> EventRecord:
         """Append an event to the spine. Duplicate event_ids are rejected."""
         if event.event_id in self._events:
@@ -66,6 +87,7 @@ class EventSpineEngine:
         self._events[event.event_id] = event
         return event
 
+    @_synchronized
     def emit_and_envelope(
         self,
         event: EventRecord,
@@ -88,10 +110,12 @@ class EventSpineEngine:
         self._envelopes[envelope.envelope_id] = envelope
         return envelope
 
+    @_synchronized
     def get_event(self, event_id: str) -> EventRecord | None:
         ensure_non_empty_text("event_id", event_id)
         return self._events.get(event_id)
 
+    @_synchronized
     def list_events(
         self,
         *,
@@ -112,6 +136,7 @@ class EventSpineEngine:
 
     # --- Subscriptions ---
 
+    @_synchronized
     def subscribe(self, subscription: EventSubscription) -> EventSubscription:
         """Register a subscription. Duplicate subscription_ids are rejected."""
         if subscription.subscription_id in self._subscriptions:
@@ -119,6 +144,7 @@ class EventSpineEngine:
         self._subscriptions[subscription.subscription_id] = subscription
         return subscription
 
+    @_synchronized
     def unsubscribe(self, subscription_id: str) -> None:
         """Remove a subscription."""
         ensure_non_empty_text("subscription_id", subscription_id)
@@ -126,6 +152,7 @@ class EventSpineEngine:
             raise RuntimeCoreInvariantError("subscription not found")
         del self._subscriptions[subscription_id]
 
+    @_synchronized
     def list_subscriptions(
         self,
         *,
@@ -139,6 +166,7 @@ class EventSpineEngine:
             subs = [s for s in subs if s.event_type == event_type]
         return tuple(subs)
 
+    @_synchronized
     def matching_subscriptions(self, event: EventRecord) -> tuple[EventSubscription, ...]:
         """Find all active subscriptions that match a given event."""
         matches: list[EventSubscription] = []
@@ -154,6 +182,7 @@ class EventSpineEngine:
 
     # --- Reactions ---
 
+    @_synchronized
     def record_reaction(self, reaction: EventReaction) -> EventReaction:
         """Record that a reaction was triggered by an event."""
         if reaction.reaction_id in self._reactions:
@@ -163,6 +192,7 @@ class EventSpineEngine:
         self._reactions[reaction.reaction_id] = reaction
         return reaction
 
+    @_synchronized
     def list_reactions(
         self,
         *,
@@ -176,6 +206,7 @@ class EventSpineEngine:
 
     # --- Correlation ---
 
+    @_synchronized
     def correlate(self, correlation_id: str) -> EventCorrelation | None:
         """Build a correlation record for all events sharing a correlation_id."""
         ensure_non_empty_text("correlation_id", correlation_id)
@@ -194,6 +225,7 @@ class EventSpineEngine:
 
     # --- Event windows ---
 
+    @_synchronized
     def build_window(self, correlation_id: str) -> EventWindow | None:
         """Build a temporal window for all events in a correlation group."""
         ensure_non_empty_text("correlation_id", correlation_id)
@@ -225,6 +257,7 @@ class EventSpineEngine:
 
     # --- Snapshot / restore ---
 
+    @_synchronized
     def state_hash(self) -> str:
         """Compute a deterministic SHA-256 hash of all spine state.
 
@@ -242,6 +275,7 @@ class EventSpineEngine:
         ).encode()
         return hashlib.sha256(digest_input).hexdigest()
 
+    @_synchronized
     def snapshot(self) -> dict[str, Any]:
         """Capture the complete spine state as a serializable dictionary.
 
@@ -256,6 +290,7 @@ class EventSpineEngine:
             "state_hash": self.state_hash(),
         }
 
+    @_synchronized
     def restore(self, snapshot: Mapping[str, Any]) -> None:
         """Restore spine state from a snapshot dictionary.
 
