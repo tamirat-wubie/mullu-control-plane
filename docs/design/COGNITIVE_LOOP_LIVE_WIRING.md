@@ -6,6 +6,36 @@ dormant cognitive organs on for live HTTP traffic. This document exists to surfa
 decisions that are the user's to make (determinism/replay posture, governance posture) BEFORE any
 code is written.
 
+## 0. CORRECTION (2026-06-03, code-grounded) — the live seam is NOT the operator loop
+
+A grounding pass before implementation (branch `codex/cognitive-shadow-observer-20260603`)
+**falsified this doc's central premise** (Section 1's "OperatorLoop.run_step is the ACTUAL
+HTTP-serving path"). Evidence:
+- `OperatorLoop` is constructed ONLY at `app/cli.py:309`; `run_step` is invoked only there and in
+  tests. **No router** constructs `OperatorLoop` or calls `run_step` (grep over all of `app/`).
+- **No router** calls any `governed_execution` dispatch. The lone router reference, `routers/
+  assistant.py`, COMPILES plans only and executes nothing.
+- The ACTUAL live HTTP execution runs through `deps.agent_chain.execute(...)` (`routers/agent.py`)
+  and `deps.workflow_engine.execute(...)` (`routers/workflow.py`).
+- The cognitive organs (`MetaReasoningEngine`/`WorldStateEngine`/`DecisionLearningEngine`/
+  `EpisodicMemory`) are **absent from the HTTP server runtime** — zero references in
+  `app/server_runtime_stack.py` + `app/routers/deps.py`; instantiated only in the CLI
+  `app/bootstrap.py`. (Consistent with `project_whqr_spine_cognition_wiring`.)
+
+**Consequence:** Stage A as originally written (shadow `run_step`) would shadow a CLI-only path and
+observe ZERO live HTTP traffic. `CognitiveLoop` is also built around the operator MIL-dispatch
+shape, not the agent_chain/workflow shape.
+
+**Corrected staged plan (implemented in this branch):**
+- **Slice 1 — mount the organs in the HTTP server runtime + expose on `deps`** (CLI-only before).
+  Additive, NO behavior change (nothing reads them ⇒ byte-identical responses). The unblocker.
+- **Slice 2 — record-only `ShadowCognitiveObserver` at the live workflow seam**, default-OFF
+  (`MULLU_COGNITIVE_LOOP_SHADOW`), exception-isolated, zero authority: consults the now-present
+  organs (the shared pure `decide_verdict`) and records a `CognitiveShadowReport`. The workflow
+  capability is a real consultation key; the agent-chain seam (no clean key) is a noted follow-up.
+- Then **Stage B** (enforce DECIDE) / **Stage C** (replan + live LEARN) on the live seam, gated by
+  D1/D2 below — NOT enabled here.
+
 ## 1. Problem (grounded in current code)
 
 Two execution paths exist and never meet:

@@ -59,6 +59,14 @@ from mcoi_runtime.app.temporal_scheduler_integration import (
 from mcoi_runtime.app.server_lifecycle import bootstrap_server_lifecycle
 from mcoi_runtime.app.server_registry import bootstrap_dependency_registry
 from mcoi_runtime.app.server_runtime_stack import bootstrap_server_runtime_stack
+from mcoi_runtime.app.cognitive_runtime_integration import (
+    bootstrap_cognitive_runtime,
+    register_cognitive_runtime,
+)
+from mcoi_runtime.app.cognitive_shadow_integration import (
+    SHADOW_OBSERVER_DEP,
+    build_shadow_observer,
+)
 from mcoi_runtime.app.server_bootstrap import (
     init_field_encryption_from_env as _init_field_encryption_from_env_impl,
     utc_clock as _utc_clock,
@@ -248,6 +256,21 @@ _dependency_bootstrap = bootstrap_dependency_registry(
     capability_bootstrap=_capability_bootstrap,
 )
 platform = _dependency_bootstrap.platform
+
+# Cognitive organs (live wiring, Slice 1): mount the reasoning/learning engines
+# into the SERVED runtime (historically CLI-bootstrap only) and register them on
+# deps so live paths CAN consult them. Inert/additive — nothing on the live path
+# reads them yet, so responses are byte-identical. See
+# docs/design/COGNITIVE_LOOP_LIVE_WIRING.md.
+_cognitive_runtime = bootstrap_cognitive_runtime(clock=_clock)
+register_cognitive_runtime(deps, _cognitive_runtime)
+
+# Record-only cognitive shadow observer (live wiring, Slice 2): default-OFF via
+# MULLU_COGNITIVE_LOOP_SHADOW. None when disabled (or malformed flag — fail-safe).
+# It holds NO authority over any response; routers record observations through the
+# exception-isolated record_execution_shadow entrypoint.
+_cognitive_shadow_observer = build_shadow_observer(os.environ, _cognitive_runtime, clock=_clock)
+deps.set(SHADOW_OBSERVER_DEP, _cognitive_shadow_observer)
 
 _shadow_runtime = build_inceptadive_shadow_runtime(os.environ)
 deps.set("inceptadive_shadow_runtime", _shadow_runtime)

@@ -10,6 +10,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Header, Request
 from pydantic import BaseModel, Field
 
+from mcoi_runtime.app.cognitive_shadow_integration import record_execution_shadow
 from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_listing_tenant
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.agent_protocol import AgentCapability
@@ -172,6 +173,8 @@ def execute_workflow(req: WorkflowRequest, request: Request):
         capability=cap, payload=req.payload,
         tenant_id=req.tenant_id, budget_id=req.budget_id,
     )
+    # Record-only cognitive shadow (default-OFF). No authority over the response.
+    record_execution_shadow(deps, capability_id=req.capability, succeeded=result.status == "completed")
     deps.metrics.inc("llm_calls_total" if result.status == "completed" else "errors_total")
     return {
         "workflow_id": result.workflow_id,
@@ -221,6 +224,8 @@ def execute_traced_workflow(req: WorkflowRequest, request: Request):
         capability=cap, payload=req.payload,
         tenant_id=req.tenant_id, budget_id=req.budget_id,
     )
+    # Record-only cognitive shadow (default-OFF). No authority over the response.
+    record_execution_shadow(deps, capability_id=req.capability, succeeded=result.status == "completed")
     return {
         "workflow_id": result.workflow_id,
         "status": result.status,
