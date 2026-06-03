@@ -21,6 +21,7 @@ import json
 import logging as _logging
 import threading
 import time
+from collections import OrderedDict
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from hashlib import sha256
@@ -861,6 +862,44 @@ class PostgresRateLimitStore(_PostgresBase, RateLimitStore):
         remaining = float(rem_row[0]) if rem_row is not None else 0.0
         return False, remaining
 
+    def prune_stale_buckets(self, older_than_seconds: float) -> int:
+        """Delete idle token-bucket rows to bound table growth.
+
+        ``try_consume`` creates one ``governance_rate_buckets`` row per
+        unique ``bucket_key`` and never removes it — over time, with
+        many ``(tenant, identity, endpoint)`` combinations, the table
+        grows without bound. (The in-memory store self-bounds via LRU;
+        the table needs explicit pruning, invoked by an operator job or
+        cron — never on the hot path.)
+
+        Deletes every bucket whose ``last_refill`` is older than the
+        cutoff. **Safety**: deleting a bucket is equivalent to resetting
+        it to full on next access. That is only correct when the bucket
+        has already refilled to full, i.e. when
+
+            older_than_seconds >= max_tokens / refill_rate
+
+        for the *tightest* config in use. Choose ``older_than_seconds``
+        accordingly (a generous window — e.g. an hour — is safe for any
+        config whose bucket refills within that window). An actively
+        used bucket updates ``last_refill`` on every consume, so it is
+        never pruned; only genuinely idle buckets are removed.
+
+        Returns the number of rows deleted (0 when disconnected).
+        """
+        if self._conn is None:
+            return 0
+        cutoff = time.time() - older_than_seconds
+        with self._connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM governance_rate_buckets WHERE last_refill < %s",
+                    (cutoff,),
+                )
+                deleted = cur.rowcount
+                conn.commit()
+        return int(deleted)
+
 
 # --- PostgresTenantGatingStore ---
 
@@ -1103,11 +1142,26 @@ class InMemoryRateLimitStore(RateLimitStore):
     atomic test-and-consume via ``try_consume`` guarded by a
     ``threading.Lock``. Single-process atomic. Cross-process replicas
     need the Postgres/Redis backend.
+
+    Bounded-growth (audit F11 follow-up): when the store owns bucket
+    state, the RateLimiter's own LRU cap (``_get_bucket`` /
+    ``max_buckets``) is bypassed — the dispatcher calls
+    ``try_consume`` directly and never touches the limiter's bucket
+    dict. Without a cap here, ``_buckets`` would grow once per unique
+    ``(tenant, identity, endpoint)`` forever (a memory leak under many
+    identities/endpoints). This store therefore carries its OWN LRU
+    cap, restoring the pre-doctrine bound the limiter used to provide.
+    Evicting a least-recently-used bucket is safe: the bucket is
+    recreated full on next access, which is exactly what an idle
+    bucket would have refilled to — identical semantics to the
+    limiter's old ``_get_bucket`` eviction.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, max_buckets: int = 100_000) -> None:
         self._decisions: dict[str, dict[str, int]] = {}
-        self._buckets: dict[str, tuple[float, float]] = {}  # key -> (tokens, last_refill)
+        # OrderedDict for LRU: most-recently-used at the end.
+        self._buckets: "OrderedDict[str, tuple[float, float]]" = OrderedDict()
+        self._max_buckets = max(1, int(max_buckets))
         self._bucket_lock = threading.Lock()
 
     def record_decision(self, bucket_key: str, allowed: bool) -> None:
@@ -1134,6 +1188,8 @@ class InMemoryRateLimitStore(RateLimitStore):
         # callers strictly serialize at the bucket - no last-write-wins
         # window. Cross-process atomicity needs PostgresRateLimitStore.
         if tokens > config.burst_limit:
+            # Burst guard reads but never creates a bucket — no growth,
+            # so no eviction bookkeeping needed on this path.
             with self._bucket_lock:
                 current, _ = self._buckets.get(
                     bucket_key, (float(config.max_tokens), time.monotonic())
@@ -1141,20 +1197,26 @@ class InMemoryRateLimitStore(RateLimitStore):
                 return False, current
         with self._bucket_lock:
             now = time.monotonic()
-            current, last_refill = self._buckets.get(
-                bucket_key, (float(config.max_tokens), now)
-            )
+            if bucket_key in self._buckets:
+                self._buckets.move_to_end(bucket_key)  # mark recently used
+                current, last_refill = self._buckets[bucket_key]
+            else:
+                current, last_refill = float(config.max_tokens), now
             elapsed = now - last_refill
             current = min(
                 float(config.max_tokens),
                 current + elapsed * config.refill_rate,
             )
-            if current >= tokens:
+            allowed = current >= tokens
+            if allowed:
                 current -= tokens
-                self._buckets[bucket_key] = (current, now)
-                return True, current
             self._buckets[bucket_key] = (current, now)
-            return False, current
+            self._buckets.move_to_end(bucket_key)  # newest at the end
+            # LRU eviction: bound total bucket count. The just-touched
+            # key is at the end, so popitem(last=False) never evicts it.
+            if len(self._buckets) > self._max_buckets:
+                self._buckets.popitem(last=False)
+            return allowed, current
 
 
 class InMemoryTenantGatingStore(TenantGatingStore):

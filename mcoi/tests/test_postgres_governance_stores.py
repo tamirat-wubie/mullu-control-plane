@@ -229,6 +229,53 @@ class TestInMemoryRateLimitStore:
         assert counters["allowed"] == 5
         assert counters["denied"] == 3
 
+    # --- Bounded growth (audit F11 follow-up) ---
+
+    def test_bucket_count_bounded_by_max_buckets(self):
+        # When the store owns bucket state, the limiter's LRU cap is
+        # bypassed — the store must self-bound, else _buckets leaks
+        # one entry per unique key forever.
+        store = InMemoryRateLimitStore(max_buckets=3)
+        cfg = RateLimitConfig(max_tokens=10, refill_rate=0.0001, burst_limit=10)
+        for key in ("a", "b", "c", "d", "e"):
+            store.try_consume(key, 1, cfg)
+        assert len(store._buckets) == 3
+
+    def test_eviction_is_lru(self):
+        store = InMemoryRateLimitStore(max_buckets=3)
+        cfg = RateLimitConfig(max_tokens=10, refill_rate=0.0001, burst_limit=10)
+        for key in ("a", "b", "c"):
+            store.try_consume(key, 1, cfg)
+        # Touch "a" so it's most-recently-used; "b" becomes the LRU.
+        store.try_consume("a", 1, cfg)
+        store.try_consume("d", 1, cfg)  # forces one eviction
+        assert "b" not in store._buckets
+        assert set(store._buckets.keys()) == {"a", "c", "d"}
+
+    def test_eviction_does_not_break_per_bucket_cap(self):
+        # Eviction must not weaken enforcement for retained buckets.
+        store = InMemoryRateLimitStore(max_buckets=100)
+        cfg = RateLimitConfig(max_tokens=3, refill_rate=0.0001, burst_limit=5)
+        results = [store.try_consume("x", 1, cfg)[0] for _ in range(5)]
+        assert results == [True, True, True, False, False]
+
+    def test_max_buckets_floor_is_one(self):
+        # A degenerate cap must not make the store evict the just-added
+        # key and become a no-op.
+        store = InMemoryRateLimitStore(max_buckets=0)
+        cfg = RateLimitConfig(max_tokens=2, refill_rate=0.0001, burst_limit=5)
+        allowed, _ = store.try_consume("only", 1, cfg)
+        assert allowed is True
+        assert len(store._buckets) == 1
+
+    def test_burst_guard_path_does_not_grow_buckets(self):
+        # Oversized requests are rejected without creating a bucket.
+        store = InMemoryRateLimitStore(max_buckets=100)
+        cfg = RateLimitConfig(max_tokens=10, refill_rate=0.0001, burst_limit=5)
+        allowed, _ = store.try_consume("k", 999, cfg)
+        assert allowed is False
+        assert len(store._buckets) == 0
+
 
 # ═══ Integration: Budget Store with TenantBudgetManager ═══
 
@@ -534,6 +581,16 @@ class TestPostgresRateLimitStoreStructure:
         )
         assert allowed is False
         assert remaining == 0.0
+
+    def test_prune_stale_buckets_noop_without_connection(self):
+        # Bounded-growth cleanup: safe no-op (returns 0) when the store
+        # is disconnected. Atomic DELETE semantics are exercised in the
+        # gated integration suite.
+        store = PostgresRateLimitStore.__new__(PostgresRateLimitStore)
+        store._conn = None
+        store._available = False
+        store._lock = __import__("threading").Lock()
+        assert store.prune_stale_buckets(3600) == 0
 
 
 class TestPostgresBaseWarnings:
