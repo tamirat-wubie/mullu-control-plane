@@ -156,6 +156,8 @@ def build_learner(
     Composes the optional D1 ledger when MULLU_COGNITIVE_LOOP_LEDGER is on and
     the path env is set. When EITHER condition is missing, the learner is
     built without a ledger (= byte-identical to the pre-D1 implementation).
+    The same tenant_id is carried by both the ledger and CognitiveOutcomeEvent
+    bodies, so replay cannot infer partitioning from path alone.
     """
     if not validate_learn_config(runtime_env).enabled:
         return None
@@ -169,6 +171,7 @@ def build_learner(
         episodic_memory=episodic_memory,
         clock=clock,
         ledger=ledger,
+        tenant_id=tenant_id,
     )
 
 
