@@ -26,7 +26,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Mapping
 
-from mcoi_runtime.core.cognitive_loop import CognitiveLoop
+from mcoi_runtime.core.cognitive_loop import CognitiveLoop, InnerCritic
 
 
 COGNITIVE_LOOP_ENABLED_ENV = "MULLU_COGNITIVE_LOOP_ENABLED"
@@ -67,6 +67,7 @@ def build_cognitive_loop(
     runtime_env: Mapping[str, str],
     runtime: object,
     *,
+    inner_critic: InnerCritic | None = None,
     max_steps: int = 3,
     step_budget: int = 3,
 ) -> CognitiveLoop | None:
@@ -76,6 +77,11 @@ def build_cognitive_loop(
     runtime. A malformed flag is surfaced explicitly (no silent failure). A
     runtime missing a required engine is also an explicit error rather than a
     silently degraded loop.
+
+    ``inner_critic`` is optional: when omitted the loop installs the default
+    NullCritic and VERIFY is byte-identical to the mechanical-only behavior. A
+    caller may pass a real (deterministic) critic to enable monotone-skeptic
+    downgrade of mechanically-passing-but-wrong outcomes.
     """
     report = validate_cognitive_loop_config(runtime_env)
     if report.error is not None:
@@ -117,6 +123,7 @@ def build_cognitive_loop(
         decision_learning=decision_learning,
         clock=clock,
         working_memory=working_memory,
+        inner_critic=inner_critic,
         max_steps=max_steps,
         step_budget=step_budget,
     )
