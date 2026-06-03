@@ -79,14 +79,27 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+# Bound every git subprocess so a hung git (network fetch, credential prompt,
+# locked index) cannot hang the change-assurance operation indefinitely. Local
+# read commands complete in well under a second, so this only fires on a genuine
+# hang.
+_GIT_TIMEOUT_SECONDS = 30
+
+
 def _run_git(repo_root: Path, args: Sequence[str]) -> str:
-    process = subprocess.run(
-        ["git", *args],
-        cwd=repo_root,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        process = subprocess.run(
+            ["git", *args],
+            cwd=repo_root,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=_GIT_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeCoreInvariantError(
+            f"git command timed out after {_GIT_TIMEOUT_SECONDS}s: git {' '.join(args)}"
+        ) from exc
     if process.returncode != 0:
         detail = process.stderr.strip() or process.stdout.strip()
         raise RuntimeCoreInvariantError(f"git command failed: git {' '.join(args)}: {detail}")
@@ -94,13 +107,17 @@ def _run_git(repo_root: Path, args: Sequence[str]) -> str:
 
 
 def _optional_git(repo_root: Path, args: Sequence[str]) -> str | None:
-    process = subprocess.run(
-        ["git", *args],
-        cwd=repo_root,
-        check=False,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        process = subprocess.run(
+            ["git", *args],
+            cwd=repo_root,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=_GIT_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        return None
     if process.returncode != 0:
         return None
     value = process.stdout.strip()
