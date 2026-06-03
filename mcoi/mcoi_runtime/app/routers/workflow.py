@@ -11,6 +11,10 @@ from fastapi import APIRouter, HTTPException, Header, Request
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.cognitive_shadow_integration import record_execution_shadow
+from mcoi_runtime.app.cognitive_live_integration import (
+    evaluate_execution_gate,
+    record_execution_learning,
+)
 from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_listing_tenant
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.agent_protocol import AgentCapability
@@ -24,6 +28,20 @@ router = APIRouter()
 
 def _workflow_error_detail(error: str, error_code: str) -> dict[str, object]:
     return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _cognitive_block_detail(verdict: str) -> dict[str, object]:
+    """Detail for a dispatch withheld by the Stage-B cognitive DECIDE gate.
+
+    Static strings only (the verdict is a fixed enum value, not interpolated
+    caller text), so this passes the reflective-contract guard.
+    """
+    return {
+        "error": "cognitive governance gate withheld dispatch pending review",
+        "error_code": "cognitive_gate_withheld",
+        "verdict": verdict,
+        "governed": True,
+    }
 
 
 def _certify_action_proof(
@@ -168,14 +186,26 @@ def execute_workflow(req: WorkflowRequest, request: Request):
     except ValueError:
         raise HTTPException(400, detail=_workflow_error_detail("invalid capability", "invalid_capability"))
 
+    # Stage-B cognitive DECIDE gate (default-OFF): may WITHHOLD dispatch on a blocking
+    # verdict. fail-OPEN (None => allow); safety-positive (it can only ever refuse).
+    _gate = evaluate_execution_gate(deps, capability_id=req.capability)
+    if _gate is not None and _gate.blocked:
+        raise HTTPException(409, detail=_cognitive_block_detail(_gate.decision_verdict.value))
+
     result = deps.workflow_engine.execute(
         task_id=req.task_id, description=req.description,
         capability=cap, payload=req.payload,
         tenant_id=req.tenant_id, budget_id=req.budget_id,
     )
+    _succeeded = result.status == "completed"
     # Record-only cognitive shadow (default-OFF). No authority over the response.
-    record_execution_shadow(deps, capability_id=req.capability, succeeded=result.status == "completed")
-    deps.metrics.inc("llm_calls_total" if result.status == "completed" else "errors_total")
+    record_execution_shadow(deps, capability_id=req.capability, succeeded=_succeeded)
+    # Stage-C cognitive learn (default-OFF): feed the outcome back into the organs. Never raises.
+    record_execution_learning(
+        deps, capability_id=req.capability, succeeded=_succeeded, verified=_succeeded,
+        source_ref=result.workflow_id,
+    )
+    deps.metrics.inc("llm_calls_total" if _succeeded else "errors_total")
     return {
         "workflow_id": result.workflow_id,
         "task_id": result.task_id,
@@ -219,13 +249,25 @@ def execute_traced_workflow(req: WorkflowRequest, request: Request):
     except ValueError:
         raise HTTPException(400, detail=_workflow_error_detail("invalid capability", "invalid_capability"))
 
+    # Stage-B cognitive DECIDE gate (default-OFF): may WITHHOLD dispatch on a blocking
+    # verdict. fail-OPEN (None => allow); safety-positive (it can only ever refuse).
+    _gate = evaluate_execution_gate(deps, capability_id=req.capability)
+    if _gate is not None and _gate.blocked:
+        raise HTTPException(409, detail=_cognitive_block_detail(_gate.decision_verdict.value))
+
     result, trace = deps.traced_workflow.execute(
         task_id=req.task_id, description=req.description,
         capability=cap, payload=req.payload,
         tenant_id=req.tenant_id, budget_id=req.budget_id,
     )
+    _succeeded = result.status == "completed"
     # Record-only cognitive shadow (default-OFF). No authority over the response.
-    record_execution_shadow(deps, capability_id=req.capability, succeeded=result.status == "completed")
+    record_execution_shadow(deps, capability_id=req.capability, succeeded=_succeeded)
+    # Stage-C cognitive learn (default-OFF): feed the outcome back into the organs. Never raises.
+    record_execution_learning(
+        deps, capability_id=req.capability, succeeded=_succeeded, verified=_succeeded,
+        source_ref=result.workflow_id,
+    )
     return {
         "workflow_id": result.workflow_id,
         "status": result.status,
