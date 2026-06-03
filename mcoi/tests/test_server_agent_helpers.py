@@ -9,6 +9,22 @@ from __future__ import annotations
 from mcoi_runtime.app import server_agents
 
 
+_REQUIRED_PROBES = {
+    "store",
+    "llm",
+    "certification",
+    "metrics",
+    "proof_bridge",
+    "audit",
+    "rate_limiter",
+    "tenant_budget",
+    "tenant_gating",
+    "content_safety",
+    "pii_scanner",
+    "shell_policy",
+}
+
+
 def test_bootstrap_agent_runtime_registers_default_agents_and_health_probes() -> None:
     class FakeRegistry:
         def __init__(self):
@@ -63,7 +79,16 @@ def test_bootstrap_agent_runtime_registers_default_agents_and_health_probes() ->
         def __init__(self, **kwargs):
             self.__dict__.update(kwargs)
 
-    store = type("Store", (), {"ledger_count": lambda self: 7})()
+    store = type(
+        "Store",
+        (),
+        {
+            "ledger_count": lambda self: 7,
+            "request_count": lambda self: 2,
+            "active_session_count": lambda self: 1,
+            "llm_invocation_count": lambda self: 3,
+        },
+    )()
     llm_bridge = type(
         "Bridge",
         (),
@@ -75,7 +100,7 @@ def test_bootstrap_agent_runtime_registers_default_agents_and_health_probes() ->
     )()
     cert_daemon = type("Daemon", (), {"status": lambda self: {"runs": 2}})()
     metrics = type("Metrics", (), {"KNOWN_COUNTERS": ("a", "b")})()
-    audit_trail = type("Audit", (), {"summary": lambda self: {"count": 4}})()
+    audit_trail = type("Audit", (), {"summary": lambda self: {"chain_valid": True, "entry_count": 4}})()
     tenant_budget_mgr = type(
         "Budget",
         (),
@@ -88,7 +113,7 @@ def test_bootstrap_agent_runtime_registers_default_agents_and_health_probes() ->
         (),
         {"filter_count": 3, "filter_names": lambda self: ["a", "b", "c"]},
     )()
-    proof_bridge = type("Proof", (), {"summary": lambda self: {"proofs": 1}})()
+    proof_bridge = type("Proof", (), {"summary": lambda self: {"receipt_count": 1}})()
     rate_limiter = type("Limiter", (), {"status": lambda self: {"allowed": 10}})()
     shell_policy = type(
         "Policy",
@@ -130,15 +155,23 @@ def test_bootstrap_agent_runtime_registers_default_agents_and_health_probes() ->
         "code-agent",
     ]
     assert bootstrap.task_manager.registry is bootstrap.agent_registry
-    assert set(bootstrap.deep_health.probes) == {
-        "store",
-        "llm",
-        "certification",
-        "metrics",
-        "proof_bridge",
-        "audit",
+    assert set(bootstrap.deep_health.probes) == _REQUIRED_PROBES
+    assert bootstrap.deep_health.probes["store"]() == {
+        "status": "healthy",
+        "backend": "Store",
+        "ledger_count": 7,
+        "request_count": 2,
+        "active_session_count": 1,
+        "llm_invocation_count": 3,
     }
-    assert bootstrap.deep_health.probes["store"]() == {"status": "healthy", "ledger_count": 7}
+    assert bootstrap.deep_health.probes["proof_bridge"]()["receipt_count"] == 1
+    assert bootstrap.deep_health.probes["audit"]()["chain_valid"] is True
+    assert bootstrap.deep_health.probes["rate_limiter"]()["status"] == "healthy"
+    assert bootstrap.deep_health.probes["tenant_budget"]()["tenant_count"] == 2
+    assert bootstrap.deep_health.probes["tenant_gating"]()["registered"] == 2
+    assert bootstrap.deep_health.probes["content_safety"]()["filters_configured"] is True
+    assert bootstrap.deep_health.probes["pii_scanner"]()["enabled"] is True
+    assert bootstrap.deep_health.probes["shell_policy"]()["allowed_executable_count"] == 2
     assert bootstrap.config_manager.initial["llm"]["default_model"] == "stub"
 
 
@@ -172,7 +205,7 @@ def test_bootstrap_agent_runtime_wires_workflow_and_observability_sources() -> N
         cert_daemon=type("Daemon", (), {"status": lambda self: {"runs": 1}})(),
         metrics=type("Metrics", (), {"KNOWN_COUNTERS": ("x",)})(),
         default_model="governed-model",
-        audit_trail=type("Audit", (), {"summary": lambda self: {"count": 1}})(),
+        audit_trail=type("Audit", (), {"summary": lambda self: {"chain_valid": True, "entry_count": 1}})(),
         tenant_budget_mgr=type(
             "Budget",
             (),
@@ -185,7 +218,7 @@ def test_bootstrap_agent_runtime_wires_workflow_and_observability_sources() -> N
             (),
             {"filter_count": 4, "filter_names": lambda self: ["f1"]},
         )(),
-        proof_bridge=type("Proof", (), {"summary": lambda self: {"proofs": 2}})(),
+        proof_bridge=type("Proof", (), {"summary": lambda self: {"receipt_count": 2}})(),
         rate_limiter=type("Limiter", (), {"status": lambda self: {"allowed": 8}})(),
         shell_policy=type(
             "Policy",
