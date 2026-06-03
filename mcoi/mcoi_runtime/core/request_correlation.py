@@ -14,10 +14,11 @@ Invariants:
 
 from __future__ import annotations
 
+import threading
 import time
 import uuid
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable
 from contextvars import ContextVar
 
@@ -76,6 +77,12 @@ class CorrelationManager:
         # in O(1) when the cap is hit. Read paths only use len() and
         # iteration, both of which work identically on deque.
         self._completed: deque[CorrelationContext] = deque(maxlen=max_completed)
+        # start() runs on every request (threadpool); cleanup_stale iterates
+        # _active_inserted_at while concurrent start()/complete() mutate it, which
+        # raised "dictionary changed size during iteration". This lock serializes
+        # the _active / _active_inserted_at / _completed mutations + reads. Slow
+        # work (substrate metric calls, the ContextVar set) stays outside it.
+        self._lock = threading.Lock()
 
     def cleanup_stale(self) -> int:
         """Evict active entries older than the configured TTL.
@@ -88,6 +95,11 @@ class CorrelationManager:
         treated as crashed-request leaks and dropped without ever
         making it onto _completed — they ARE incomplete by definition.
         """
+        with self._lock:
+            return self._cleanup_stale_locked()
+
+    def _cleanup_stale_locked(self) -> int:
+        """Body of cleanup_stale; caller must hold self._lock."""
         if self._active_ttl is None or not self._active:
             return 0
         cutoff = self._monotonic() - self._active_ttl
@@ -116,10 +128,6 @@ class CorrelationManager:
         with even occasional crashes would accumulate stale entries
         without limit.
         """
-        # Lazy sweep — amortized over starts. Cheap when no entries
-        # are stale (most calls).
-        self.cleanup_stale()
-
         cid = f"cor-{uuid.uuid4().hex[:12]}"
         ctx = CorrelationContext(
             correlation_id=cid,
@@ -129,8 +137,13 @@ class CorrelationManager:
             endpoint=endpoint,
             created_at=self._clock(),
         )
-        self._active[cid] = ctx
-        self._active_inserted_at[cid] = self._monotonic()
+        # Lazy sweep (amortized over starts) + insert, under one lock so a
+        # concurrent start()/complete() cannot mutate _active_inserted_at while
+        # cleanup iterates it.
+        with self._lock:
+            self._cleanup_stale_locked()
+            self._active[cid] = ctx
+            self._active_inserted_at[cid] = self._monotonic()
         _current_correlation_id.set(cid)
         # Mirror into substrate metrics so per-request Mfidel path tracking
         # can attribute lookups to this request. v3.13.1 soak telemetry only.
@@ -140,10 +153,11 @@ class CorrelationManager:
 
     def complete(self, correlation_id: str) -> None:
         """Mark a correlated request as complete."""
-        ctx = self._active.pop(correlation_id, None)
-        self._active_inserted_at.pop(correlation_id, None)
-        if ctx is not None:
-            self._completed.append(ctx)
+        with self._lock:
+            ctx = self._active.pop(correlation_id, None)
+            self._active_inserted_at.pop(correlation_id, None)
+            if ctx is not None:
+                self._completed.append(ctx)
         # Finalize substrate per-request bucket. Returns the path verdict
         # ("legacy_only" | "canonical_only" | "mixed" | "none") which callers
         # can read via REGISTRY.snapshot() at any time.
@@ -157,7 +171,8 @@ class CorrelationManager:
 
     def get_context(self, correlation_id: str) -> CorrelationContext | None:
         """Get context for a correlation ID."""
-        return self._active.get(correlation_id)
+        with self._lock:
+            return self._active.get(correlation_id)
 
     def child(self, parent_id: str, **kwargs: Any) -> CorrelationContext:
         """Create a child correlation (for sub-operations)."""
