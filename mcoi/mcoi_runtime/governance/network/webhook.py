@@ -19,6 +19,7 @@ from hashlib import sha256
 from typing import Any, Callable
 import hmac
 import json
+import threading
 
 from mcoi_runtime.governance.network.ssrf import is_private_url as _is_private_url
 
@@ -125,56 +126,70 @@ class WebhookManager:
         self._deliveries: list[WebhookDelivery] = []
         self._mutation_receipts: list[WebhookMutationReceipt] = []
         self._delivery_counter: int = 0
+        # FastAPI runs sync handlers in a threadpool, so subscribe / unsubscribe /
+        # emit can run concurrently. This lock guards the racy mutations: the
+        # delivery-id counter (an unlocked ``+= 1`` would emit duplicate wh-N
+        # ids), the check-then-set in subscribe, and -- crucially -- it lets emit
+        # snapshot the subscriptions before iterating, so a concurrent
+        # subscribe/unsubscribe cannot raise "dictionary changed size during
+        # iteration". Slow work (DNS-based SSRF checks, HMAC) stays OUTSIDE it.
+        self._lock = threading.Lock()
 
     def subscribe(self, sub: WebhookSubscription) -> WebhookSubscription:
         """Register a webhook subscription. Rejects private/internal URLs (SSRF prevention)."""
-        if sub.subscription_id in self._subscriptions:
-            raise ValueError("subscription already exists")
+        # SSRF check is a DNS lookup -- keep it OUTSIDE the lock. (A private URL
+        # paired with a duplicate id now reports the URL rejection first; both
+        # are rejections, so the precedence is immaterial.)
         if _is_private_url(sub.url):
             raise ValueError("webhook URL rejected: private/internal address not allowed")
-        before_count = len(self._subscriptions)
-        self._subscriptions[sub.subscription_id] = sub
-        self._record_mutation(
-            mutation_type="subscribe",
-            effect_name="webhook_subscription_registered",
-            tenant_id=sub.tenant_id,
-            subject_ref=f"webhook-subscription:{sub.subscription_id}",
-            before_count=before_count,
-            after_count=len(self._subscriptions),
-            metadata={
-                "event_count": len(sub.events),
-                "enabled": sub.enabled,
-                "target_url_hash": _sha256_text(sub.url),
-                "secret_present": bool(sub.secret),
-            },
-        )
+        with self._lock:
+            if sub.subscription_id in self._subscriptions:
+                raise ValueError("subscription already exists")
+            before_count = len(self._subscriptions)
+            self._subscriptions[sub.subscription_id] = sub
+            self._record_mutation(
+                mutation_type="subscribe",
+                effect_name="webhook_subscription_registered",
+                tenant_id=sub.tenant_id,
+                subject_ref=f"webhook-subscription:{sub.subscription_id}",
+                before_count=before_count,
+                after_count=len(self._subscriptions),
+                metadata={
+                    "event_count": len(sub.events),
+                    "enabled": sub.enabled,
+                    "target_url_hash": _sha256_text(sub.url),
+                    "secret_present": bool(sub.secret),
+                },
+            )
         return sub
 
     def unsubscribe(self, subscription_id: str) -> bool:
-        before_count = len(self._subscriptions)
-        removed = self._subscriptions.pop(subscription_id, None)
-        if removed is None:
-            return False
-        self._record_mutation(
-            mutation_type="unsubscribe",
-            effect_name="webhook_subscription_removed",
-            tenant_id=removed.tenant_id,
-            subject_ref=f"webhook-subscription:{subscription_id}",
-            before_count=before_count,
-            after_count=len(self._subscriptions),
-            metadata={
-                "event_count": len(removed.events),
-                "enabled": removed.enabled,
-                "target_url_hash": _sha256_text(removed.url),
-            },
-        )
+        with self._lock:
+            before_count = len(self._subscriptions)
+            removed = self._subscriptions.pop(subscription_id, None)
+            if removed is None:
+                return False
+            self._record_mutation(
+                mutation_type="unsubscribe",
+                effect_name="webhook_subscription_removed",
+                tenant_id=removed.tenant_id,
+                subject_ref=f"webhook-subscription:{subscription_id}",
+                before_count=before_count,
+                after_count=len(self._subscriptions),
+                metadata={
+                    "event_count": len(removed.events),
+                    "enabled": removed.enabled,
+                    "target_url_hash": _sha256_text(removed.url),
+                },
+            )
         return True
 
     def get_subscription(self, subscription_id: str) -> WebhookSubscription | None:
         return self._subscriptions.get(subscription_id)
 
     def list_subscriptions(self, tenant_id: str | None = None) -> list[WebhookSubscription]:
-        subs = list(self._subscriptions.values())
+        with self._lock:
+            subs = list(self._subscriptions.values())
         if tenant_id is not None:
             subs = [s for s in subs if s.tenant_id == tenant_id]
         return subs
@@ -183,14 +198,20 @@ class WebhookManager:
         """Emit an event — queues deliveries to all matching subscriptions."""
         deliveries: list[WebhookDelivery] = []
 
-        for sub in self._subscriptions.values():
-            if not sub.enabled:
-                continue
-            if event not in sub.events:
-                continue
-            if tenant_id and sub.tenant_id != tenant_id and sub.tenant_id != "*":
-                continue
+        # Snapshot the matching subscriptions UNDER the lock, then iterate the
+        # snapshot. Iterating self._subscriptions directly would raise
+        # "dictionary changed size during iteration" if another thread
+        # subscribes/unsubscribes mid-emit.
+        with self._lock:
+            candidates = [
+                sub
+                for sub in self._subscriptions.values()
+                if sub.enabled
+                and event in sub.events
+                and not (tenant_id and sub.tenant_id != tenant_id and sub.tenant_id != "*")
+            ]
 
+        for sub in candidates:
             # v4.29.0 (audit F9): re-check SSRF policy at delivery time,
             # not just at registration. A subscription's hostname could
             # have flipped to a private IP since registration (DNS
@@ -198,14 +219,11 @@ class WebhookManager:
             # subscribed domain). Skip the delivery when this happens —
             # the subscription stays registered (operators can audit
             # the failure pattern via delivery_history) but no actual
-            # outbound request fires.
+            # outbound request fires. DNS lookup -- stays OUTSIDE the lock.
             if _is_private_url(sub.url):
                 continue
 
-            self._delivery_counter += 1
-            delivery_id = f"wh-{self._delivery_counter}"
-
-            # Compute HMAC signature
+            # Compute HMAC signature OUTSIDE the lock (per-delivery CPU work).
             signature = ""
             if sub.secret:
                 payload_bytes = json.dumps(payload, sort_keys=True, default=str).encode()
@@ -213,36 +231,41 @@ class WebhookManager:
                     sub.secret.encode(), payload_bytes, sha256
                 ).hexdigest()
 
-            delivery = WebhookDelivery(
-                delivery_id=delivery_id,
-                subscription_id=sub.subscription_id,
-                event=event,
-                payload=payload,
-                signature=signature,
-                status="queued",
-                created_at=self._clock(),
-            )
-            self._deliveries.append(delivery)
-            self._record_mutation(
-                mutation_type="emit",
-                effect_name="webhook_delivery_queued",
-                tenant_id=sub.tenant_id,
-                subject_ref=f"webhook-delivery:{delivery_id}",
-                before_count=len(self._deliveries) - 1,
-                after_count=len(self._deliveries),
-                metadata={
-                    "subscription_id_hash": _sha256_text(sub.subscription_id),
-                    "event": event,
-                    "payload_hash": _sha256_json(payload),
-                    "signature_present": bool(signature),
-                },
-            )
+            # Lock only the racy section: id counter + delivery append + receipt.
+            with self._lock:
+                self._delivery_counter += 1
+                delivery_id = f"wh-{self._delivery_counter}"
+                delivery = WebhookDelivery(
+                    delivery_id=delivery_id,
+                    subscription_id=sub.subscription_id,
+                    event=event,
+                    payload=payload,
+                    signature=signature,
+                    status="queued",
+                    created_at=self._clock(),
+                )
+                self._deliveries.append(delivery)
+                self._record_mutation(
+                    mutation_type="emit",
+                    effect_name="webhook_delivery_queued",
+                    tenant_id=sub.tenant_id,
+                    subject_ref=f"webhook-delivery:{delivery_id}",
+                    before_count=len(self._deliveries) - 1,
+                    after_count=len(self._deliveries),
+                    metadata={
+                        "subscription_id_hash": _sha256_text(sub.subscription_id),
+                        "event": event,
+                        "payload_hash": _sha256_json(payload),
+                        "signature_present": bool(signature),
+                    },
+                )
             deliveries.append(delivery)
 
-        if len(self._deliveries) > self._MAX_DELIVERIES:
-            self._deliveries = self._deliveries[-self._MAX_DELIVERIES:]
-        if len(self._mutation_receipts) > self._MAX_DELIVERIES:
-            self._mutation_receipts = self._mutation_receipts[-self._MAX_DELIVERIES:]
+        with self._lock:
+            if len(self._deliveries) > self._MAX_DELIVERIES:
+                self._deliveries = self._deliveries[-self._MAX_DELIVERIES:]
+            if len(self._mutation_receipts) > self._MAX_DELIVERIES:
+                self._mutation_receipts = self._mutation_receipts[-self._MAX_DELIVERIES:]
 
         return deliveries
 
