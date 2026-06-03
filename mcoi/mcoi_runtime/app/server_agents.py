@@ -45,6 +45,52 @@ class AgentBootstrap:
     observability: Any
 
 
+def _llm_deep_health(llm_bridge: Any) -> dict[str, Any]:
+    """Readiness fact for the LLM bridge.
+
+    Reports the active default backend's provider (so the /ready policy can
+    refuse a ``stub`` backend in pilot/production) and flags an unconfigured
+    bridge as unhealthy. Read-only. The bridge exposes no public accessor for
+    its default provider, so we read ``_backends`` defensively.
+    """
+    backends = getattr(llm_bridge, "_backends", {}) or {}
+    default = backends.get("default")
+    if default is None:
+        return {"status": "unhealthy", "detail": "no_default_backend"}
+    provider = getattr(getattr(default, "provider", None), "value", "unknown")
+    return {
+        "status": "healthy",
+        "provider": provider,
+        "invocations": getattr(llm_bridge, "invocation_count", 0),
+    }
+
+
+def _proof_bridge_deep_health(proof_bridge: Any) -> dict[str, Any]:
+    """Readiness probe for the proof bridge: proves it is callable.
+
+    ``summary()`` is read-only (in-memory counters). If the bridge is not
+    wired the call raises and DeepHealthChecker records the component
+    unhealthy.
+    """
+    summary = proof_bridge.summary()
+    return {"status": "healthy", "receipt_count": summary.get("receipt_count", 0)}
+
+
+def _audit_deep_health(audit_trail: Any) -> dict[str, Any]:
+    """Readiness probe for the audit trail: integrity of the hash chain.
+
+    ``summary()`` runs ``verify_chain()`` (read-only). A broken chain is an
+    environment-independent failure, so it degrades to unhealthy.
+    """
+    summary = audit_trail.summary()
+    chain_valid = bool(summary.get("chain_valid", True))
+    return {
+        "status": "healthy" if chain_valid else "unhealthy",
+        "chain_valid": chain_valid,
+        "entry_count": summary.get("entry_count", 0),
+    }
+
+
 def bootstrap_agent_runtime(
     *,
     clock: Callable[[], str],
@@ -99,7 +145,7 @@ def bootstrap_agent_runtime(
     )
     deep_health.register(
         "llm",
-        lambda: {"status": "healthy", "invocations": llm_bridge.invocation_count},
+        lambda: _llm_deep_health(llm_bridge),
     )
     deep_health.register(
         "certification",
@@ -111,6 +157,14 @@ def bootstrap_agent_runtime(
             "status": "healthy",
             "counters": len(getattr(metrics, "KNOWN_COUNTERS", ())),
         },
+    )
+    deep_health.register(
+        "proof_bridge",
+        lambda: _proof_bridge_deep_health(proof_bridge),
+    )
+    deep_health.register(
+        "audit",
+        lambda: _audit_deep_health(audit_trail),
     )
 
     config_manager = config_manager_cls(
