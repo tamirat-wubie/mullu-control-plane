@@ -10,6 +10,7 @@ Invariants:
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Mapping
@@ -81,6 +82,15 @@ class WorkingMemory:
     def __init__(self, *, max_entries: int = 1000) -> None:
         if max_entries <= 0:
             raise RuntimeCoreInvariantError("max_entries must be positive")
+        # FastAPI runs sync handlers in a threadpool, so concurrent requests
+        # race this engine: list_entries iterates self._entries while a
+        # concurrent store/remove/clear mutates its size, which raised
+        # RuntimeError("dictionary changed size during iteration"). One lock
+        # guards every mutation site and snapshots every iteration site so
+        # the sort/filter computes on a local copy outside the lock. Mirrors
+        # the canonical lock fix shipped for AgentOrchestrator / GovernedTool
+        # Registry / NotificationDispatcher / ConversationStore.
+        self._lock = threading.Lock()
         self._entries: dict[str, MemoryEntry] = {}
         self._max_entries = max_entries
 
@@ -99,17 +109,24 @@ class WorkingMemory:
     def store(self, entry: MemoryEntry) -> MemoryEntry:
         if entry.tier is not MemoryTier.WORKING:
             raise RuntimeCoreInvariantError("only working-tier entries may be stored in working memory")
-        if len(self._entries) >= self._max_entries and entry.entry_id not in self._entries:
-            raise RuntimeCoreInvariantError("working memory capacity exceeded")
-        self._entries[entry.entry_id] = entry
+        with self._lock:
+            if len(self._entries) >= self._max_entries and entry.entry_id not in self._entries:
+                raise RuntimeCoreInvariantError("working memory capacity exceeded")
+            self._entries[entry.entry_id] = entry
         return entry
 
     def get(self, entry_id: str) -> MemoryEntry | None:
         ensure_non_empty_text("entry_id", entry_id)
-        return self._entries.get(entry_id)
+        with self._lock:
+            return self._entries.get(entry_id)
 
     def list_entries(self, *, category: str | None = None) -> tuple[MemoryEntry, ...]:
-        entries = sorted(self._entries.values(), key=lambda e: e.entry_id)
+        # Snapshot under the lock so a concurrent store/remove/clear cannot
+        # raise "dictionary changed size during iteration"; sort/filter on the
+        # local copy outside the lock.
+        with self._lock:
+            snapshot = list(self._entries.values())
+        entries = sorted(snapshot, key=lambda e: e.entry_id)
         if category is not None:
             ensure_non_empty_text("category", category)
             entries = [e for e in entries if e.category == category]
@@ -117,16 +134,19 @@ class WorkingMemory:
 
     def remove(self, entry_id: str) -> bool:
         ensure_non_empty_text("entry_id", entry_id)
-        return self._entries.pop(entry_id, None) is not None
+        with self._lock:
+            return self._entries.pop(entry_id, None) is not None
 
     def clear(self) -> int:
-        count = len(self._entries)
-        self._entries.clear()
+        with self._lock:
+            count = len(self._entries)
+            self._entries.clear()
         return count
 
     @property
     def size(self) -> int:
-        return len(self._entries)
+        with self._lock:
+            return len(self._entries)
 
     @property
     def max_entries(self) -> int:
@@ -144,6 +164,18 @@ class EpisodicMemory:
     """
 
     def __init__(self) -> None:
+        # FastAPI runs sync handlers in a threadpool, and the Stage-C
+        # CognitiveLearner (MULLU_COGNITIVE_LOOP_LEARN) plus the CLI cognitive
+        # loop both admit episodic entries from outside the engine. Before
+        # this lock, the engine's own thread-safety was provided ONLY by
+        # CognitiveLearner._lock for that one consumer; any second consumer
+        # raced. list_entries iterates self._order while a concurrent admit
+        # appends to it and inserts into self._entries -- could raise
+        # RuntimeError or briefly observe an entry_id in _order whose value is
+        # not yet in _entries. One lock guards both racy structures together
+        # so each read sees a consistent (_entries, _order) pair. Mirrors the
+        # canonical lock fix shipped for AgentOrchestrator etc.
+        self._lock = threading.Lock()
         self._entries: dict[str, MemoryEntry] = {}
         self._order: list[str] = []
 
@@ -161,18 +193,25 @@ class EpisodicMemory:
         """
         if entry.tier is not MemoryTier.EPISODIC:
             raise RuntimeCoreInvariantError("only episodic-tier entries may be admitted to episodic memory")
-        if entry.entry_id in self._entries:
-            raise RuntimeCoreInvariantError("entry_id already exists in episodic memory")
-        self._entries[entry.entry_id] = entry
-        self._order.append(entry.entry_id)
+        with self._lock:
+            if entry.entry_id in self._entries:
+                raise RuntimeCoreInvariantError("entry_id already exists in episodic memory")
+            self._entries[entry.entry_id] = entry
+            self._order.append(entry.entry_id)
         return entry
 
     def get(self, entry_id: str) -> MemoryEntry | None:
         ensure_non_empty_text("entry_id", entry_id)
-        return self._entries.get(entry_id)
+        with self._lock:
+            return self._entries.get(entry_id)
 
     def list_entries(self, *, category: str | None = None) -> tuple[MemoryEntry, ...]:
-        entries = [self._entries[eid] for eid in self._order]
+        # Snapshot _order and _entries together under the lock so a concurrent
+        # admit cannot make _order reference an entry_id that is not yet in
+        # _entries; filter on the local copy outside the lock.
+        with self._lock:
+            snapshot = [self._entries[eid] for eid in self._order]
+        entries = snapshot
         if category is not None:
             ensure_non_empty_text("category", category)
             entries = [e for e in entries if e.category == category]
@@ -180,7 +219,8 @@ class EpisodicMemory:
 
     @property
     def size(self) -> int:
-        return len(self._entries)
+        with self._lock:
+            return len(self._entries)
 
 
 def promote_to_episodic(
