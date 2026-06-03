@@ -12,6 +12,7 @@ Invariants:
 from __future__ import annotations
 
 import hashlib
+import threading
 import time
 from dataclasses import dataclass, field
 from enum import Enum, unique
@@ -87,25 +88,36 @@ class NotificationDispatcher:
         self._total_sent = 0
         self._total_suppressed = 0
         self._total_failed = 0
+        # send() runs on every notification (FastAPI threadpool). The dedup
+        # region iterates _recent_hashes in _clean_dedup_cache_locked while a
+        # concurrent send() inserts a new key / deletes an expired one, which
+        # raised "dictionary changed size during iteration" (and a double-del
+        # KeyError). This lock serializes clean + membership-test + insert as
+        # one critical section. Slow work (the user channel handler doing
+        # webhook/email I/O, DeliveryRecord build, _deliveries.append) stays
+        # OUTSIDE it.
+        self._lock = threading.Lock()
 
     def register_channel(self, channel: NotificationChannel,
                          handler: Callable[[Notification], bool]) -> None:
         self._handlers[channel] = handler
 
     def send(self, notification: Notification) -> DeliveryRecord:
-        # Deduplication check
+        # Deduplication check. dedup_hash (sha256) is computed outside the
+        # lock; only the cache clean + membership test + insert are guarded.
         now = time.time()
-        self._clean_dedup_cache(now)
         dedup_key = notification.dedup_hash
-        if dedup_key in self._recent_hashes:
-            self._total_suppressed += 1
-            return DeliveryRecord(
-                notification_id=notification.notification_id,
-                channel=notification.channel,
-                recipient=notification.recipient,
-                delivered=False, timestamp=now, error="Deduplicated",
-            )
-        self._recent_hashes[dedup_key] = now
+        with self._lock:
+            self._clean_dedup_cache_locked(now)
+            if dedup_key in self._recent_hashes:
+                self._total_suppressed += 1
+                return DeliveryRecord(
+                    notification_id=notification.notification_id,
+                    channel=notification.channel,
+                    recipient=notification.recipient,
+                    delivered=False, timestamp=now, error="Deduplicated",
+                )
+            self._recent_hashes[dedup_key] = now
 
         handler = self._handlers.get(notification.channel)
         if not handler:
@@ -152,11 +164,15 @@ class NotificationDispatcher:
         self._deliveries.append(record)
         return record
 
-    def _clean_dedup_cache(self, now: float) -> None:
+    def _clean_dedup_cache_locked(self, now: float) -> None:
+        """Evict expired dedup entries. Caller must hold ``self._lock``.
+
+        Snapshots keys before deleting so the dict is not mutated mid-iteration.
+        """
         expired = [k for k, t in self._recent_hashes.items()
                    if now - t > self._dedup_window]
         for k in expired:
-            del self._recent_hashes[k]
+            self._recent_hashes.pop(k, None)
 
     @property
     def channel_count(self) -> int:

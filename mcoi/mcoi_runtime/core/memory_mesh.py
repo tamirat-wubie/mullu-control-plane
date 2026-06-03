@@ -15,6 +15,7 @@ Invariants:
 
 from __future__ import annotations
 
+import threading
 from datetime import datetime, timezone
 from hashlib import sha256
 from types import MappingProxyType
@@ -75,6 +76,14 @@ class MemoryMeshEngine:
         self._edges: dict[str, MetadataEdge] = {}
         self._decay_log: list[dict[str, Any]] = []
         self._validation_log: list[dict[str, Any]] = []
+        # Read/scan methods (list_memories, retrieve, apply_decay, state_hash)
+        # iterate _memories while a concurrent add_memory inserts a key or
+        # apply_decay deletes one (FastAPI threadpool), which raised "dictionary
+        # changed size during iteration" and a double-delete KeyError in
+        # apply_decay. This lock serializes the dict mutations and snapshots the
+        # values under it; slow work (ISO parsing, sha256 value hashing, result
+        # construction, post-snapshot filtering/sorting) runs OUTSIDE it.
+        self._lock = threading.Lock()
 
     def _record_timestamp_validation_failure(
         self,
@@ -103,6 +112,17 @@ class MemoryMeshEngine:
 
     def add_memory(self, record: MemoryRecord) -> MemoryRecord:
         """Add a memory record. Raises on duplicate ID."""
+        with self._lock:
+            return self._add_memory_locked(record)
+
+    def _add_memory_locked(self, record: MemoryRecord) -> MemoryRecord:
+        """Body of add_memory; caller must hold ``self._lock``.
+
+        The duplicate-ID check and the insert are one critical section so a
+        concurrent add cannot race the check, and so callers already holding
+        the lock (e.g. supersede_memory) do not deadlock on the non-reentrant
+        Lock.
+        """
         if not isinstance(record, MemoryRecord):
             raise RuntimeCoreInvariantError("record must be a MemoryRecord")
         if record.memory_id in self._memories:
@@ -122,8 +142,10 @@ class MemoryMeshEngine:
         trust_floor: float = 0.0,
     ) -> tuple[MemoryRecord, ...]:
         """Return filtered snapshot of memory records."""
+        with self._lock:
+            snapshot = list(self._memories.values())
         results: list[MemoryRecord] = []
-        for mem in self._memories.values():
+        for mem in snapshot:
             if memory_type is not None and mem.memory_type != memory_type:
                 continue
             if scope is not None and mem.scope != scope:
@@ -196,28 +218,34 @@ class MemoryMeshEngine:
         now = datetime.now(timezone.utc)
         now_iso = _now_iso()
         expired: list[str] = []
-        for mem in list(self._memories.values()):
-            if mem.expires_at is not None:
-                try:
-                    exp_dt = _parse_iso_datetime_text(mem.expires_at)
-                    if exp_dt <= now:
-                        expired.append(mem.memory_id)
-                except ValueError:
-                    self._record_timestamp_validation_failure(
-                        operation="apply_decay",
-                        target_kind="memory",
-                        target_id=mem.memory_id,
-                        field_name="expires_at",
-                        field_value=mem.expires_at,
-                        observed_at=now_iso,
-                    )
-        for mid in expired:
-            self._decay_log.append({
-                "action": "memory_decay",
-                "memory_id": mid,
-                "decayed_at": now_iso,
-            })
-            del self._memories[mid]
+        # The scan AND the deletes are one critical section: snapshotting then
+        # deleting outside the lock let two threads compute the same expired
+        # set and double-delete (KeyError). datetime parsing stays in-lock here
+        # because it gates which keys we delete; the validation witness append
+        # is lock-free (we already hold the lock).
+        with self._lock:
+            for mem in list(self._memories.values()):
+                if mem.expires_at is not None:
+                    try:
+                        exp_dt = _parse_iso_datetime_text(mem.expires_at)
+                        if exp_dt <= now:
+                            expired.append(mem.memory_id)
+                    except ValueError:
+                        self._record_timestamp_validation_failure(
+                            operation="apply_decay",
+                            target_kind="memory",
+                            target_id=mem.memory_id,
+                            field_name="expires_at",
+                            field_value=mem.expires_at,
+                            observed_at=now_iso,
+                        )
+            for mid in expired:
+                self._decay_log.append({
+                    "action": "memory_decay",
+                    "memory_id": mid,
+                    "decayed_at": now_iso,
+                })
+                self._memories.pop(mid, None)
         return tuple(expired)
 
     @property
@@ -244,11 +272,12 @@ class MemoryMeshEngine:
         The old record stays accessible but new_record.supersedes_ids
         must contain old_id (enforced here).
         """
-        if old_id not in self._memories:
-            raise RuntimeCoreInvariantError("old memory_id not found")
-        if old_id not in new_record.supersedes_ids:
-            raise RuntimeCoreInvariantError("new_record.supersedes_ids must contain old memory_id")
-        return self.add_memory(new_record)
+        with self._lock:
+            if old_id not in self._memories:
+                raise RuntimeCoreInvariantError("old memory_id not found")
+            if old_id not in new_record.supersedes_ids:
+                raise RuntimeCoreInvariantError("new_record.supersedes_ids must contain old memory_id")
+            return self._add_memory_locked(new_record)
 
     # ------------------------------------------------------------------
     # Conflict management
@@ -285,7 +314,8 @@ class MemoryMeshEngine:
         if not isinstance(query, MemoryRetrievalQuery):
             raise RuntimeCoreInvariantError("query must be a MemoryRetrievalQuery")
 
-        candidates = list(self._memories.values())
+        with self._lock:
+            candidates = list(self._memories.values())
 
         # Filter by scope
         if query.scope is not None:
@@ -422,22 +452,34 @@ class MemoryMeshEngine:
 
     def state_hash(self) -> str:
         """Deterministic hash over all ordered records."""
+        # Snapshot all collection keys/logs under one lock so a concurrent
+        # add_memory/apply_decay cannot resize a dict mid-sort; the sha256 and
+        # string assembly run outside the lock.
+        with self._lock:
+            memory_ids = sorted(self._memories)
+            link_ids = sorted(self._links)
+            promotion_ids = sorted(self._promotions)
+            conflict_ids = sorted(self._conflicts)
+            node_ids = sorted(self._nodes)
+            edge_ids = sorted(self._edges)
+            decay_entries = list(self._decay_log)
+            validation_entries = list(self._validation_log)
         parts: list[str] = []
-        for mid in sorted(self._memories):
+        for mid in memory_ids:
             parts.append(f"mem:{mid}")
-        for lid in sorted(self._links):
+        for lid in link_ids:
             parts.append(f"lnk:{lid}")
-        for pid in sorted(self._promotions):
+        for pid in promotion_ids:
             parts.append(f"prm:{pid}")
-        for cid in sorted(self._conflicts):
+        for cid in conflict_ids:
             parts.append(f"cfl:{cid}")
-        for nid in sorted(self._nodes):
+        for nid in node_ids:
             parts.append(f"nod:{nid}")
-        for eid in sorted(self._edges):
+        for eid in edge_ids:
             parts.append(f"edg:{eid}")
-        for entry in self._decay_log:
+        for entry in decay_entries:
             parts.append(f"decay:{entry['memory_id']}")
-        for entry in self._validation_log:
+        for entry in validation_entries:
             parts.append(
                 "validation:"
                 f"{entry['operation']}:"
