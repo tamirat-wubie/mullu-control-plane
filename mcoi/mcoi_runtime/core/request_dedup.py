@@ -12,9 +12,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import threading
 import time
-from dataclasses import dataclass, field
-from typing import Any, Callable
+from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -35,6 +36,7 @@ class RequestDeduplicator:
         self._tenant_seen: dict[str, dict[str, float]] = {}
         self._total_checked = 0
         self._total_duplicates = 0
+        self._lock = threading.Lock()
 
     @staticmethod
     def _hash_request(data: dict[str, Any]) -> str:
@@ -45,27 +47,34 @@ class RequestDeduplicator:
         """Check if request is a duplicate. Returns DedupResult."""
         self._total_checked += 1
         now = time.time()
-        self._cleanup(now)
-
+        # Hashing touches no shared state -- keep it outside the lock.
         req_hash = self._hash_request(request_data)
         key = f"{tenant_id}:{req_hash}" if tenant_id else req_hash
 
-        existing = self._seen.get(key)
-        if existing is not None:
-            self._total_duplicates += 1
-            return DedupResult(is_duplicate=True, request_hash=req_hash, original_timestamp=existing)
+        # FastAPI runs sync handlers in a threadpool, so check() runs
+        # concurrently. _cleanup iterates self._seen and eviction does
+        # min(self._seen); a concurrent insert (self._seen[key] = now) would
+        # otherwise raise "dictionary changed size during iteration". Guard the
+        # shared-state section with the lock -- all fast in-memory ops.
+        with self._lock:
+            self._cleanup(now)
 
-        # Store
-        if len(self._seen) >= self._max_entries:
-            oldest_key = min(self._seen, key=self._seen.get)
-            del self._seen[oldest_key]
-        self._seen[key] = now
+            existing = self._seen.get(key)
+            if existing is not None:
+                self._total_duplicates += 1
+                return DedupResult(is_duplicate=True, request_hash=req_hash, original_timestamp=existing)
 
-        # Track per-tenant
-        if tenant_id:
-            if tenant_id not in self._tenant_seen:
-                self._tenant_seen[tenant_id] = {}
-            self._tenant_seen[tenant_id][req_hash] = now
+            # Store
+            if len(self._seen) >= self._max_entries:
+                oldest_key = min(self._seen, key=self._seen.get)
+                del self._seen[oldest_key]
+            self._seen[key] = now
+
+            # Track per-tenant
+            if tenant_id:
+                if tenant_id not in self._tenant_seen:
+                    self._tenant_seen[tenant_id] = {}
+                self._tenant_seen[tenant_id][req_hash] = now
 
         return DedupResult(is_duplicate=False, request_hash=req_hash)
 
