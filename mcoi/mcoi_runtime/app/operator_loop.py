@@ -6,7 +6,7 @@ Invariants: request handling is single-step, ordered, deterministic, and never m
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Mapping
 
 from mcoi_runtime.adapters.observer_base import ObservationResult, ObservationStatus
@@ -90,6 +90,16 @@ from .operator_runners import (
 @dataclass(slots=True)
 class OperatorLoop:
     runtime: BootstrappedRuntime
+    # Stage-A shadow mode (default-OFF). When a CognitiveLoop is supplied, each
+    # dispatched run is ALSO observed by the side-effect-free shadow path AFTER
+    # the real dispatch completes. shadow_observe never dispatches and never
+    # mutates engines, so the live result is unchanged. Observations accumulate
+    # on ``shadow_observations`` for operators/trace to read. The shadow call is
+    # wrapped so it can NEVER break a real request (no silent failure: any error
+    # is captured in ``shadow_errors`` with causal context).
+    shadow_loop: object | None = None
+    shadow_observations: list[object] = field(default_factory=list)
+    shadow_errors: list[str] = field(default_factory=list)
 
     def run_step(self, request: OperatorRequest) -> OperatorRunReport:
         observation_reports: list[ObservationReport] = []
@@ -306,6 +316,17 @@ class OperatorLoop:
         meta_reasoning = self.runtime.meta_reasoning
         provider_attribution_counters = self.runtime.provider_attribution_ledger.witness_counters()
 
+        # Stage-A shadow observation (default-OFF; only when a shadow_loop is set).
+        # Runs AFTER the real dispatch on already-computed values; side-effect free.
+        if self.shadow_loop is not None:
+            self._shadow_observe(
+                request=request,
+                execution_result=execution_result,
+                route=route,
+                policy_decision=policy_decision,
+                mil_verification_passed=mil_verification_passed,
+            )
+
         return OperatorRunReport(
             request_id=request.request_id,
             goal_id=request.goal_id,
@@ -485,6 +506,47 @@ class OperatorLoop:
         request: WorkQueueReconcileRequest,
     ) -> WorkQueueReconcileReport:
         return reconcile_work_queue(self, request)
+
+    def _shadow_observe(
+        self,
+        *,
+        request: OperatorRequest,
+        execution_result: ExecutionResult,
+        route: str,
+        policy_decision: PolicyDecision,
+        mil_verification_passed: bool | None,
+    ) -> None:
+        """Run the side-effect-free Stage-A shadow observation (default-OFF).
+
+        Reconstructs a CognitiveStepRequest from values the live path already
+        computed and calls shadow_loop.shadow_observe, which NEVER dispatches and
+        NEVER mutates engines. Wrapped so it can never break a real request: any
+        failure is recorded in ``shadow_errors`` with causal context (no silent
+        failure), and the live OperatorRunReport is returned regardless.
+        """
+        try:
+            from mcoi_runtime.core.cognitive_loop import CognitiveStepRequest
+
+            step_request = CognitiveStepRequest(
+                goal_id=request.goal_id,
+                capability_id=route or "unknown",
+                template=request.template,
+                policy_decision=policy_decision,
+                bindings=request.bindings,
+                hard_constraints=(),
+                actor_id="operator_main",
+            )
+            observation = self.shadow_loop.shadow_observe(
+                step_request,
+                execution_result,
+                mechanical_verification_passed=bool(mil_verification_passed),
+            )
+            self.shadow_observations.append(observation)
+        except Exception as exc:  # never let observability break the live path
+            self.shadow_errors.append(
+                f"shadow_observe failed for request={request.request_id} "
+                f"route={route}: {type(exc).__name__}: {exc}"
+            )
 
     def _runtime_state_fields(self) -> dict[str, object]:
         """Capture current world-state, meta-reasoning, and provider state for reports."""

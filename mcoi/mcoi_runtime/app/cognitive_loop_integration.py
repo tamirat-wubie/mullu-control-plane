@@ -30,6 +30,7 @@ from mcoi_runtime.core.cognitive_loop import CognitiveLoop, InnerCritic
 
 
 COGNITIVE_LOOP_ENABLED_ENV = "MULLU_COGNITIVE_LOOP_ENABLED"
+COGNITIVE_LOOP_SHADOW_ENV = "MULLU_COGNITIVE_LOOP_SHADOW"
 
 _TRUE_VALUES = frozenset({"1", "true", "yes", "on"})
 _FALSE_VALUES = frozenset({"0", "false", "no", "off", ""})
@@ -129,8 +130,66 @@ def build_cognitive_loop(
     )
 
 
+def validate_cognitive_loop_shadow_config(
+    runtime_env: Mapping[str, str],
+) -> CognitiveLoopConfigReport:
+    """Validate the Stage-A shadow-mode env flag without raising into startup."""
+    raw_value = runtime_env.get(COGNITIVE_LOOP_SHADOW_ENV)
+    normalized = _normalize(raw_value)
+    if normalized in _TRUE_VALUES:
+        return CognitiveLoopConfigReport(enabled=True, error=None)
+    if normalized in _FALSE_VALUES:
+        return CognitiveLoopConfigReport(enabled=False, error=None)
+    return CognitiveLoopConfigReport(
+        enabled=False,
+        error=f"unsupported {COGNITIVE_LOOP_SHADOW_ENV} value: {raw_value!r}",
+    )
+
+
+def attach_shadow_observer(
+    runtime_env: Mapping[str, str],
+    runtime: object,
+    operator_loop: object,
+) -> bool:
+    """Attach a side-effect-free Stage-A shadow observer to an OperatorLoop.
+
+    Default-OFF: when ``MULLU_COGNITIVE_LOOP_SHADOW`` is not truthy this is a
+    no-op and returns False (the operator loop is left byte-identical to today).
+    A malformed flag is an explicit error, never a silent enable. When enabled,
+    builds a CognitiveLoop wired from the runtime's existing engines (with a
+    PeerReviewCritic so the shadow VERIFY preview has teeth) and sets it as the
+    operator loop's ``shadow_loop`` so each dispatched run is also observed.
+
+    Returns True iff a shadow observer was attached. Idempotent: a second call
+    with the flag on replaces the handle with an equivalent, independent one.
+    """
+    report = validate_cognitive_loop_shadow_config(runtime_env)
+    if report.error is not None:
+        raise ValueError(report.error)
+    if not report.enabled:
+        return False
+
+    # Reuse the same engine wiring as the enabled loop, but force-build it
+    # regardless of the (separate) MULLU_COGNITIVE_LOOP_ENABLED flag - shadow is
+    # its own opt-in. We construct directly to avoid coupling the two flags.
+    from mcoi_runtime.core.peer_review_critic import PeerReviewCritic
+
+    shadow_loop = build_cognitive_loop(
+        {COGNITIVE_LOOP_ENABLED_ENV: "1"},
+        runtime,
+        inner_critic=PeerReviewCritic(strict=True),
+    )
+    if shadow_loop is None:  # defensive: build_cognitive_loop returned nothing
+        raise ValueError("shadow observer requested but cognitive loop could not be built")
+    setattr(operator_loop, "shadow_loop", shadow_loop)
+    return True
+
+
 __all__ = [
     "COGNITIVE_LOOP_ENABLED_ENV",
+    "COGNITIVE_LOOP_SHADOW_ENV",
+    "attach_shadow_observer",
+    "validate_cognitive_loop_shadow_config",
     "CognitiveLoopConfigReport",
     "build_cognitive_loop",
     "validate_cognitive_loop_config",
