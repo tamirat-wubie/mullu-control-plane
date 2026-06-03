@@ -14,7 +14,9 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from mcoi_runtime.core.concurrency import AtomicCounter
+
+from dataclasses import dataclass
 from typing import Any, Callable
 from hashlib import sha256
 import json
@@ -55,15 +57,14 @@ class Conversation:
         self._config = config or ConversationConfig()
         self._clock = clock or (lambda: "")
         self._messages: list[ConversationMessage] = []
-        self._message_counter = 0
+        self._message_counter = AtomicCounter()
 
     def add_message(self, role: str, content: str) -> ConversationMessage:
         """Add a message to the conversation."""
-        self._message_counter += 1
         msg = ConversationMessage(
             role=role,
             content=content,
-            message_id=f"msg-{self._message_counter}",
+            message_id=f"msg-{self._message_counter.next()}",
             timestamp=self._clock(),
         )
         self._messages.append(msg)

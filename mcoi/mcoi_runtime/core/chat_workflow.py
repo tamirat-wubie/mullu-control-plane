@@ -15,14 +15,14 @@ Invariants:
 
 from __future__ import annotations
 
+from mcoi_runtime.core.concurrency import AtomicCounter
+
 from dataclasses import dataclass
 from typing import Any, Callable
 
 from mcoi_runtime.core.agent_protocol import AgentCapability
-from mcoi_runtime.core.conversation_memory import Conversation, ConversationStore
-from mcoi_runtime.core.agent_workflow import WorkflowResult
+from mcoi_runtime.core.conversation_memory import ConversationStore
 from mcoi_runtime.core.traced_workflow import TracedWorkflowEngine
-from mcoi_runtime.core.execution_replay import ReplayTrace
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,7 +55,7 @@ class ChatWorkflowEngine:
         self._conv_store = conversation_store
         self._traced = traced_workflow
         self._cost_fn = cost_record_fn
-        self._counter = 0
+        self._counter = AtomicCounter()
         self._history: list[ChatWorkflowResult] = []
 
     def execute(
@@ -77,8 +77,7 @@ class ChatWorkflowEngine:
         5. Add result as assistant message
         6. Return unified result
         """
-        self._counter += 1
-        task_id = f"chat-wf-{self._counter}"
+        task_id = f"chat-wf-{self._counter.next()}"
 
         conv = self._conv_store.get_or_create(conversation_id, tenant_id=tenant_id)
 

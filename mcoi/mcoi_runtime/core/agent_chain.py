@@ -14,7 +14,9 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from mcoi_runtime.core.concurrency import AtomicCounter
+
+from dataclasses import dataclass
 from typing import Any, Callable
 
 
@@ -88,7 +90,7 @@ class AgentChainEngine:
     ) -> None:
         self._clock = clock
         self._llm_fn = llm_fn
-        self._counter = 0
+        self._counter = AtomicCounter()
         self._history: list[AgentChainResult] = []
 
     def execute(
@@ -98,8 +100,7 @@ class AgentChainEngine:
         initial_input: str = "",
     ) -> AgentChainResult:
         """Execute a chain of agent steps sequentially."""
-        self._counter += 1
-        chain_id = f"chain-{self._counter}"
+        chain_id = f"chain-{self._counter.next()}"
         step_results: list[ChainStepResult] = []
         prev_output = initial_input
         total_cost = 0.0

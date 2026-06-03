@@ -15,6 +15,8 @@ Invariants:
 
 from __future__ import annotations
 
+from mcoi_runtime.core.concurrency import AtomicCounter
+
 import threading
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -97,7 +99,7 @@ class GovernedScheduler:
         self._jobs: dict[str, ScheduledJob] = {}
         self._handlers: dict[str, Callable[..., dict[str, Any]]] = {}
         self._history: list[JobExecution] = []
-        self._execution_counter = 0
+        self._execution_counter = AtomicCounter()
         self._lock = threading.Lock()
 
     def _bounded_job_error(self, exc: Exception) -> str:
@@ -210,10 +212,9 @@ class GovernedScheduler:
         result: dict[str, Any] | None = None, error: str = "",
     ) -> JobExecution:
         """Record an execution in history and audit trail."""
-        self._execution_counter += 1
         now = self._clock()
         execution = JobExecution(
-            execution_id=f"exec-{self._execution_counter:06d}",
+            execution_id=f"exec-{self._execution_counter.next():06d}",
             job_id=job.job_id,
             status=status,
             started_at=now,
@@ -266,7 +267,7 @@ class GovernedScheduler:
                 "total_jobs": total,
                 "enabled_jobs": enabled,
                 "disabled_jobs": total - enabled,
-                "total_executions": self._execution_counter,
+                "total_executions": self._execution_counter.value,
                 "recent_failures": sum(
                     1 for e in self._history[-100:]
                     if e.status == JobStatus.FAILED

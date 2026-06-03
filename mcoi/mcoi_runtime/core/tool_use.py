@@ -14,6 +14,8 @@ Invariants:
 
 from __future__ import annotations
 
+from mcoi_runtime.core.concurrency import AtomicCounter
+
 from dataclasses import dataclass
 from typing import Any, Callable
 from hashlib import sha256
@@ -129,7 +131,7 @@ class ToolRegistry:
         self._tools: dict[str, ToolDefinition] = {}
         self._handlers: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {}
         self._invocation_log: list[ToolResult] = []
-        self._counter = 0
+        self._counter = AtomicCounter()
 
     def register(self, tool: ToolDefinition, handler: Callable[[dict[str, Any]], dict[str, Any]]) -> None:
         """Register a tool with its handler function."""
@@ -153,8 +155,7 @@ class ToolRegistry:
         allowed_tool_ids: set[str] | None = None,
     ) -> ToolResult:
         """Invoke a registered tool."""
-        self._counter += 1
-        invocation_id = f"inv-{self._counter}"
+        invocation_id = f"inv-{self._counter.next()}"
 
         if allowed_tool_ids is not None and tool_id not in allowed_tool_ids:
             result = ToolResult(
