@@ -25,8 +25,15 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 from dataclasses import dataclass
-from typing import Callable, Iterable
+from pathlib import Path
+from typing import Callable, Iterable, Mapping
 
+from mcoi_runtime.app.cognitive_live_integration import (
+    COGNITIVE_LOOP_LEDGER_ENV,
+    COGNITIVE_LOOP_LEDGER_PATH_ENV,
+    COGNITIVE_LOOP_LEDGER_TENANT_DEFAULT,
+    validate_ledger_config,
+)
 from mcoi_runtime.core.cognitive_loop import next_capability_confidence
 from mcoi_runtime.core.decision_learning import DecisionLearningEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
@@ -37,6 +44,7 @@ from mcoi_runtime.persistence.cognitive_outcome_ledger import (
     CognitiveOutcomeEntry,
     CognitiveOutcomeEvent,
     CognitiveOutcomeLedger,
+    FileBackedCognitiveOutcomeLedger,
 )
 
 _DEFAULT_REHYDRATE_TIMEOUT_SECONDS = 30.0
@@ -62,6 +70,33 @@ class CognitiveRuntimeRehydrateReport:
     events_applied: int
     duplicate_events_skipped: int
     last_sequence: int | None
+
+
+def build_rehydrate_ledger(
+    runtime_env: Mapping[str, str],
+    *,
+    tenant_id: str = COGNITIVE_LOOP_LEDGER_TENANT_DEFAULT,
+) -> CognitiveOutcomeLedger | None:
+    """Build the D1 ledger for startup rehydrate.
+
+    Unlike the Stage-C learner builder, this is strict once the ledger flag is
+    explicitly set. Disabled remains None (byte-identical startup). Malformed flag
+    or enabled-without-path raises so startup fails before deps are published.
+    """
+    report = validate_ledger_config(runtime_env)
+    if report.error is not None:
+        raise RuntimeCoreInvariantError("unsupported cognitive ledger flag value")
+    if not report.enabled:
+        return None
+    raw_path = runtime_env.get(COGNITIVE_LOOP_LEDGER_PATH_ENV)
+    if raw_path is None or not raw_path.strip():
+        raise RuntimeCoreInvariantError(
+            f"{COGNITIVE_LOOP_LEDGER_ENV}=1 requires {COGNITIVE_LOOP_LEDGER_PATH_ENV}"
+        )
+    return FileBackedCognitiveOutcomeLedger(
+        base_path=Path(raw_path.strip()),
+        tenant_id=tenant_id,
+    )
 
 
 def bootstrap_cognitive_runtime(
@@ -260,6 +295,7 @@ __all__ = [
     "CognitiveRuntime",
     "CognitiveRuntimeRehydrateReport",
     "bootstrap_cognitive_runtime",
+    "build_rehydrate_ledger",
     "rehydrate_cognitive_runtime_from_ledger",
     "register_cognitive_runtime",
 ]
