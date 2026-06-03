@@ -263,6 +263,10 @@ def _discover_repository_files(root_path: Path) -> tuple[str, ...]:
     return tuple(sorted(discovered_files))
 
 
+# Bound every git subprocess so a hung git cannot hang code indexing indefinitely.
+_GIT_TIMEOUT_SECONDS = 30
+
+
 def _git_file_list(root_path: Path) -> tuple[str, ...] | None:
     try:
         process = subprocess.run(
@@ -271,8 +275,9 @@ def _git_file_list(root_path: Path) -> tuple[str, ...] | None:
             check=False,
             capture_output=True,
             text=True,
+            timeout=_GIT_TIMEOUT_SECONDS,
         )
-    except OSError:
+    except (OSError, subprocess.TimeoutExpired):
         return None
     if process.returncode != 0:
         return None
@@ -296,8 +301,9 @@ def _resolve_commit_sha(root_path: Path) -> str:
             check=False,
             capture_output=True,
             text=True,
+            timeout=_GIT_TIMEOUT_SECONDS,
         )
-    except OSError:
+    except (OSError, subprocess.TimeoutExpired):
         return "unknown"
     if process.returncode != 0:
         return "unknown"
