@@ -13,6 +13,12 @@ from .errors import (
     TraceNotFoundError,
 )
 from .hash_chain import HashChainStore, compute_chain_hash, compute_content_hash
+from .cognitive_outcome_ledger import (
+    CognitiveOutcomeEntry,
+    CognitiveOutcomeEvent,
+    CognitiveOutcomeLedger,
+    FileBackedCognitiveOutcomeLedger,
+)
 from .coordination_store import CoordinationStore
 from .goal_store import GoalStore
 from .memory_store import MemoryStore
