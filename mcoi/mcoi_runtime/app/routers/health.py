@@ -12,9 +12,10 @@ Liveness vs readiness:
 """
 from __future__ import annotations
 
+import os
 from typing import Any
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, HTTPException, Response
 
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.deep_health import SystemHealth
@@ -304,3 +305,94 @@ def get_health_v3():
     """Weighted health check with recovery tracking."""
     deps.metrics.inc("requests_governed")
     return deps.health_v3.check_all()
+
+
+# ── Promotion witness ────────────────────────────────────────────────────
+#
+# A deliberate, operator-invoked promotion-grade proof that the governed
+# receipt chain works end-to-end at runtime. Unlike /health and /ready it
+# MUTATES state (persists one synthetic proof + audit receipt per call), so it
+# is disabled by default and must be explicitly enabled in the promotion
+# environment. It is POST (an action, not a probe) and is never invoked by the
+# liveness/readiness probes.
+
+_WITNESS_FLAG = "MULLU_HEALTH_WITNESS_ENABLED"
+_WITNESS_TENANT = "system"
+_WITNESS_ACTOR = "health-witness"
+
+
+def _witness_enabled() -> bool:
+    """Whether the promotion-witness endpoint is enabled (default off)."""
+    return os.environ.get(_WITNESS_FLAG, "").strip().lower() in ("1", "true", "yes", "on")
+
+
+@router.post("/api/v1/health/witness")
+def promotion_witness(response: Response):
+    """Prove the governed proof + audit chain at runtime (promotion gate).
+
+    Disabled by default — set ``MULLU_HEALTH_WITNESS_ENABLED=true`` in the
+    promotion environment. Each call issues ONE bounded synthetic governed
+    decision (tenant ``system``, actor ``health-witness``), persists its proof
+    and audit receipts, then verifies both. Returns HTTP 503 when the witness
+    cannot be produced or verified.
+    """
+    if not _witness_enabled():
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "error_code": "not_found"},
+        )
+
+    errors: list[str] = []
+
+    # 1. Synthetic governed decision -> proof receipt (real wired bridge).
+    proof = deps.proof_bridge.certify_governance_decision(
+        tenant_id=_WITNESS_TENANT,
+        endpoint="/api/v1/health/witness",
+        guard_results=[
+            {
+                "guard_name": "health_witness",
+                "allowed": True,
+                "reason": "synthetic promotion witness",
+            }
+        ],
+        decision="allowed",
+        actor_id=_WITNESS_ACTOR,
+        reason="promotion witness",
+    )
+    receipt = proof.capsule.receipt
+    proof_verified = bool(deps.proof_bridge.verify_receipt(receipt))
+    if not proof_verified:
+        errors.append("proof_receipt_unverified")
+
+    # 2. Audit receipt + hash-chain verification (real wired trail).
+    entry = deps.audit_trail.record(
+        action="health.witness",
+        actor_id=_WITNESS_ACTOR,
+        tenant_id=_WITNESS_TENANT,
+        target="control-plane",
+        outcome="success",
+        detail={"proof_receipt_id": receipt.receipt_id},
+    )
+    chain_valid, chain_length = deps.audit_trail.verify_chain()
+    if not chain_valid:
+        errors.append("audit_chain_invalid")
+
+    if errors:
+        response.status_code = 503
+    return {
+        "witness_id": f"health-witness-{receipt.receipt_id}",
+        "outcome": "verified" if not errors else "failed",
+        "governed": True,
+        "environment": _environment(),
+        "proof": {
+            "receipt_id": receipt.receipt_id,
+            "receipt_hash": proof.receipt_hash,
+            "verified": proof_verified,
+        },
+        "audit": {
+            "entry_id": entry.entry_id,
+            "chain_valid": chain_valid,
+            "chain_length": chain_length,
+        },
+        "errors": errors,
+    }
