@@ -91,6 +91,35 @@ class CognitiveShadowReport:
         object.__setattr__(self, "report_hash", ensure_non_empty_text("report_hash", self.report_hash))
 
 
+@dataclass(frozen=True, slots=True)
+class CognitiveShadowSummary:
+    """Aggregate Stage-B decision signal over the observer's retained reports.
+
+    ``diverged`` (live succeeded yet DECIDE would have withheld) and the derived
+    ``divergence_rate`` are the headline: they quantify how much promoting DECIDE
+    from shadow to enforced would change real outcomes. All fields are structured
+    scalars / a sorted id tuple (no interpolated free text) so the summary passes
+    the reflective-contract guard when surfaced through an endpoint.
+    """
+
+    observed: int
+    would_have_blocked: int
+    diverged: int
+    degraded: int
+    divergence_rate: float
+    diverged_capabilities: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        for name in ("observed", "would_have_blocked", "diverged", "degraded"):
+            value = getattr(self, name)
+            if not isinstance(value, int) or value < 0:
+                raise RuntimeCoreInvariantError(f"{name} must be a non-negative int")
+        if not (0.0 <= float(self.divergence_rate) <= 1.0):
+            raise RuntimeCoreInvariantError("divergence_rate must be in [0.0, 1.0]")
+        if not isinstance(self.diverged_capabilities, tuple):
+            raise RuntimeCoreInvariantError("diverged_capabilities must be a tuple")
+
+
 class ShadowCognitiveObserver:
     """Consults the cognitive organs about a live execution, record-only.
 
@@ -188,6 +217,35 @@ class ShadowCognitiveObserver:
         """Return the retained recent shadow reports (oldest first)."""
         return tuple(self._recent)
 
+    def summary(self) -> CognitiveShadowSummary:
+        """Aggregate the retained reports into the Stage-B decision signal.
+
+        Pure read-only fold over ``recent_reports`` (no clock, no mutation). The
+        headline is ``diverged`` - live executions that SUCCEEDED while the
+        cognitive DECIDE gate would have WITHHELD dispatch. A high, well-
+        understood divergence count is the evidence that promoting DECIDE from
+        shadow (Stage A) to enforced (Stage B) would change real outcomes; a near-
+        zero count is evidence it would be safe/low-impact. ``divergence_rate`` is
+        diverged / observed (0.0 when nothing observed).
+        """
+        reports = self._recent
+        observed = len(reports)
+        would_have_blocked = sum(1 for r in reports if r.would_have_blocked)
+        diverged = sum(1 for r in reports if r.diverged)
+        degraded = sum(1 for r in reports if r.degraded)
+        diverged_capabilities = tuple(
+            sorted({r.capability_id for r in reports if r.diverged})
+        )
+        divergence_rate = round(diverged / observed, 4) if observed else 0.0
+        return CognitiveShadowSummary(
+            observed=observed,
+            would_have_blocked=would_have_blocked,
+            diverged=diverged,
+            degraded=degraded,
+            divergence_rate=divergence_rate,
+            diverged_capabilities=diverged_capabilities,
+        )
+
     # --- read-only engine accessors (mirror CognitiveLoop; never mutate) ---
 
     def _capability_confidence(self, capability_id: str) -> float:
@@ -223,4 +281,4 @@ class ShadowCognitiveObserver:
         return count
 
 
-__all__ = ["CognitiveShadowReport", "ShadowCognitiveObserver"]
+__all__ = ["CognitiveShadowReport", "CognitiveShadowSummary", "ShadowCognitiveObserver"]

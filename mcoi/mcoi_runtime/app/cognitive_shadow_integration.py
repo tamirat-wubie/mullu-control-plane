@@ -107,11 +107,73 @@ def record_execution_shadow(deps: object, *, capability_id: str, succeeded: bool
         return
 
 
+def read_shadow_observations(deps: object, *, limit: int = 50) -> dict[str, object]:
+    """Return a serializable, read-only view of the shadow observations.
+
+    Resolves the (optional) observer from ``deps``. When the observer is absent
+    (flag OFF), returns ``{"enabled": False, ...}`` with empty data - never an
+    error, so the endpoint behaves cleanly whether or not shadow mode is on. The
+    summary carries the Stage-B decision signal (diverged / divergence_rate); the
+    recent reports are the per-execution evidence. Read-only: this never mutates
+    the observer or any engine.
+    """
+    empty = {
+        "enabled": False,
+        "summary": {
+            "observed": 0,
+            "would_have_blocked": 0,
+            "diverged": 0,
+            "degraded": 0,
+            "divergence_rate": 0.0,
+            "diverged_capabilities": [],
+        },
+        "observations": [],
+    }
+    try:
+        observer = deps.get(SHADOW_OBSERVER_DEP)
+    except Exception:  # noqa: BLE001 - absent observer => shadow disabled
+        return empty
+    if observer is None:
+        return empty
+
+    capped = max(1, int(limit))
+    reports = observer.recent_reports()[-capped:]
+    summary = observer.summary()
+    return {
+        "enabled": True,
+        "summary": {
+            "observed": summary.observed,
+            "would_have_blocked": summary.would_have_blocked,
+            "diverged": summary.diverged,
+            "degraded": summary.degraded,
+            "divergence_rate": summary.divergence_rate,
+            "diverged_capabilities": list(summary.diverged_capabilities),
+        },
+        "observations": [
+            {
+                "capability_id": r.capability_id,
+                "decision_verdict": r.decision_verdict.value,
+                "confidence": r.confidence,
+                "degraded": r.degraded,
+                "observed_planning_entities": r.observed_planning_entities,
+                "observed_prior_outcomes": r.observed_prior_outcomes,
+                "live_succeeded": r.live_succeeded,
+                "would_have_blocked": r.would_have_blocked,
+                "diverged": r.diverged,
+                "observed_at": r.observed_at,
+                "report_hash": r.report_hash,
+            }
+            for r in reports
+        ],
+    }
+
+
 __all__ = [
     "COGNITIVE_LOOP_SHADOW_ENV",
     "SHADOW_OBSERVER_DEP",
     "CognitiveShadowConfigReport",
     "build_shadow_observer",
+    "read_shadow_observations",
     "record_execution_shadow",
     "validate_cognitive_shadow_config",
 ]
