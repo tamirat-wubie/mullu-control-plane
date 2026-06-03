@@ -61,6 +61,7 @@ from mcoi_runtime.app.server_registry import bootstrap_dependency_registry
 from mcoi_runtime.app.server_runtime_stack import bootstrap_server_runtime_stack
 from mcoi_runtime.app.cognitive_runtime_integration import (
     bootstrap_cognitive_runtime,
+    build_rehydrate_ledger,
     register_cognitive_runtime,
 )
 from mcoi_runtime.app.cognitive_shadow_integration import (
@@ -95,6 +96,7 @@ from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReview
 from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.core.structured_logging import LogLevel
 from mcoi_runtime.core.event_spine import EventSpineEngine
+
 
 def _init_field_encryption_from_env() -> tuple[Any | None, dict[str, Any]]:
     """Build optional field encryption and expose explicit startup posture."""
@@ -225,6 +227,7 @@ def _calculator_handler(args: dict[str, Any]) -> dict[str, str]:
         evaluate_expression_fn=evaluate_expression,
     )
 
+
 app = create_governed_app(
     env=ENV,
     cors_origins_raw=os.environ.get("MULLU_CORS_ORIGINS"),
@@ -269,10 +272,14 @@ platform = _dependency_bootstrap.platform
 
 # Cognitive organs (live wiring, Slice 1): mount the reasoning/learning engines
 # into the SERVED runtime (historically CLI-bootstrap only) and register them on
-# deps so live paths CAN consult them. Inert/additive — nothing on the live path
-# reads them yet, so responses are byte-identical. See
-# docs/design/COGNITIVE_LOOP_LIVE_WIRING.md.
-_cognitive_runtime = bootstrap_cognitive_runtime(clock=_clock)
+# deps so live paths CAN consult them. With MULLU_COGNITIVE_LOOP_LEDGER=1, the
+# D1 ledger is validated + replayed BEFORE deps are published; corruption, timeout,
+# or missing required path fails startup closed.
+_cognitive_rehydrate_ledger = build_rehydrate_ledger(os.environ)
+_cognitive_runtime = bootstrap_cognitive_runtime(
+    clock=_clock,
+    ledger=_cognitive_rehydrate_ledger,
+)
 register_cognitive_runtime(deps, _cognitive_runtime)
 
 # Record-only cognitive shadow observer (live wiring, Slice 2): default-OFF via
