@@ -43,8 +43,10 @@ env:
 After deploy, verify:
 
 ```bash
-curl https://your-host/health   # → {"status":"healthy"}
-curl https://your-host/ready    # → 200 with subsystem status
+curl https://your-host/health   # → {"status":"healthy"}  (liveness)
+curl https://your-host/ready    # → 200 readiness; 503 when a dependency is down
+# Promotion gate (opt-in): set MULLU_HEALTH_WITNESS_ENABLED=true, then
+curl -X POST https://your-host/api/v1/health/witness  # → 200 {"outcome":"verified"}
 ```
 
 If `MULLU_ENV_REQUIRED=true` but `MULLU_ENV` is missing, the platform refuses to start with `EnvBindingError`. That's intended.
@@ -104,6 +106,12 @@ Variables are grouped by purpose. Every row marks whether the variable is **requ
 | Variable | Required | Default | Notes |
 |---|---|---|---|
 | `MULLU_SHELL_EXECUTION_ENABLED` | optional | `false` (effective) | When truthy AND `MULLU_ENV` is `pilot`/`production`, shell execution uses `PILOT_PROD` policy. When unset/false, uses `PILOT_PROD_DISABLED` (shell off). Unknown environments always fall to `SANDBOXED`. |
+
+### Health / promotion witness
+
+| Variable | Required | Default | Notes |
+|---|---|---|---|
+| `MULLU_HEALTH_WITNESS_ENABLED` | optional | unset (off) | When truthy, exposes `POST /api/v1/health/witness` — an operator promotion gate that issues one bounded synthetic governed decision (tenant `system`), persists its proof + audit receipts, and verifies both (`200`/`"outcome":"verified"`, else `503`). Off by default so it is not an open ledger-write vector; enable only to run the promotion check. `/health` (liveness) and `/ready` (dependency-aware readiness) are always on. |
 
 ### Model provider configuration
 
