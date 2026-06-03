@@ -131,20 +131,19 @@ def test_reviewer_is_candidate_specific():
     assert not reviewer(_SIG, _pipeline(good), _EVAL, "s").findings  # the other clean
 
 
-def test_from_registry_flags_llm_capsules_but_not_benchmark_capsules():
+def test_starter_catalog_passes_all_default_probes():
+    # The shipped starter catalog declares the failure modes its own probes
+    # require (injection mitigations on the LLM capsules, an availability guard
+    # on the human-review gate), so every capsule is clean. The synthetic
+    # capsules above prove the probes still flag genuinely under-declared
+    # contracts.
     reviewer = CapsuleProbeReviewer.from_registry(default_registry())
-    flagged_families = set()
+    flagged = {}
     for capsule in default_registry().all_capsules():
         result = reviewer(_SIG, _pipeline(capsule), _EVAL, "s")
         if not result.passed:
-            flagged_families.add(capsule.method_family)
-    # LLM-backed families lack a declared injection failure mode -> flagged.
-    assert {"llm_planner", "llm_reviewer", "multi_agent_debate"} <= flagged_families
-    # The duplicate-invoice benchmark capsules are clean, so probes can be
-    # attached to that benchmark without compromising its baseline.
-    assert "rule_based" not in flagged_families
-    assert "graph_match" not in flagged_families
-    assert "statistical_anomaly" not in flagged_families
+            flagged[capsule.capsule_id] = result.findings
+    assert flagged == {}
 
 
 # ------------------------------- composite --------------------------------- #
