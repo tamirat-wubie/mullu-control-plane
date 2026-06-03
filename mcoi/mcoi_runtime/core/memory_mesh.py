@@ -22,26 +22,21 @@ from types import MappingProxyType
 from typing import Any, Mapping
 
 from ..contracts.memory_mesh import (
-    ConflictResolutionState,
-    DecayMode,
     MemoryConflictRecord,
     MemoryDecayPolicy,
     MemoryLink,
-    MemoryLinkRelation,
     MemoryPromotionRecord,
     MemoryRecord,
     MemoryRetrievalQuery,
     MemoryRetrievalResult,
     MemoryScope,
-    MemoryTrustLevel,
     MemoryType,
 )
 from ..contracts.metadata_mesh import (
     MetadataEdge,
-    MetadataEdgeRelation,
     MetadataNode,
 )
-from .invariants import RuntimeCoreInvariantError, stable_identifier
+from .invariants import RuntimeCoreInvariantError
 
 
 def _now_iso() -> str:
