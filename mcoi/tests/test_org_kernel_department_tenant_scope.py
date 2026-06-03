@@ -70,6 +70,20 @@ class _Kernel:
     def list_departments(self):
         return ()
 
+    # O(1) lookups the router now uses; derive from the same mocked state so the
+    # behavior is identical to the old snapshot_state()+scan.
+    def get_organization(self, org_id):
+        return next((o for o in self.snapshot_state().organizations if o.org_id == org_id), None)
+
+    def get_role(self, role_id):
+        return next((r for r in self.snapshot_state().roles if r.role_id == role_id), None)
+
+    def plan_for_case(self, case_id):
+        return next((p for p in getattr(self.snapshot_state(), "plans", ()) if p.case_id == case_id), None)
+
+    def closure_for_case(self, case_id):
+        return next((c for c in getattr(self.snapshot_state(), "closures", ()) if c.case_id == case_id), None)
+
 
 class _Body:
     org_id = "org-x"

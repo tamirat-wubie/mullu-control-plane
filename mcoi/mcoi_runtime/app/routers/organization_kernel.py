@@ -293,7 +293,7 @@ def _case_or_404(kernel: OrganizationKernel, case_id: str) -> OrganizationCase:
 
 
 def _organization_or_404(kernel: OrganizationKernel, org_id: str) -> OrganizationProfile:
-    organization = next((item for item in kernel.snapshot_state().organizations if item.org_id == org_id), None)
+    organization = kernel.get_organization(org_id)
     if organization is None:
         raise HTTPException(404, detail=_error_detail("organization not found", "organization_not_found"))
     return organization
@@ -344,8 +344,8 @@ def _body(record: Any) -> dict[str, Any]:
 def _state_case_bundle(kernel: OrganizationKernel, case_id: str) -> dict[str, Any]:
     organization_case = _case_or_404(kernel, case_id)
     state = kernel.snapshot_state()
-    plan = next((item for item in state.plans if item.case_id == case_id), None)
-    closure = next((item for item in state.closures if item.case_id == case_id), None)
+    plan = kernel.plan_for_case(case_id)
+    closure = kernel.closure_for_case(case_id)
     return {
         "case": _body(organization_case),
         "plan": _body(plan) if plan is not None else None,
@@ -380,8 +380,8 @@ def _timeline_item(
 def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, Any]:
     organization_case = _case_or_404(kernel, case_id)
     state = kernel.snapshot_state()
-    plan = next((item for item in state.plans if item.case_id == case_id), None)
-    closure = next((item for item in state.closures if item.case_id == case_id), None)
+    plan = kernel.plan_for_case(case_id)
+    closure = kernel.closure_for_case(case_id)
     evidence = tuple(item for item in state.case_evidence if item.case_id == case_id)
     approvals = tuple(item for item in state.approvals if item.case_id == case_id)
     gate_decisions = tuple(item for item in state.gate_decisions if item.case_id == case_id)
@@ -847,8 +847,7 @@ def _step_handoff_next_action(handoff_status: str) -> str:
 
 def _case_step_handoffs(kernel: OrganizationKernel, case_id: str) -> dict[str, Any]:
     proof = _case_proof_timeline(kernel, case_id)
-    state = kernel.snapshot_state()
-    plan = next((item for item in state.plans if item.case_id == case_id), None)
+    plan = kernel.plan_for_case(case_id)
     steps_by_id = {step.step_id: step for step in plan.steps} if plan is not None else {}
     attention_items: list[dict[str, object]] = []
     handoff_rows: list[dict[str, Any]] = []
@@ -969,7 +968,7 @@ def _case_step_action_admission_preview(
         (item for item in state.organizations if item.org_id == organization_case.org_id),
         None,
     )
-    plan = next((item for item in state.plans if item.case_id == case_id), None)
+    plan = kernel.plan_for_case(case_id)
     if plan is None:
         raise RuntimeCoreInvariantError("case plan unavailable")
     step = next((item for item in plan.steps if item.step_id == step_id), None)
@@ -1010,7 +1009,7 @@ def _case_step_action_admission_preview(
 
     actor_guard = "not_required_for_preview"
     if req.requested_by_role_id is not None:
-        role = next((item for item in state.roles if item.role_id == req.requested_by_role_id), None)
+        role = kernel.get_role(req.requested_by_role_id)
         if role is None or role.org_id != organization_case.org_id:
             decision = "block"
             reason_code = "actor_role_unavailable"
@@ -2877,8 +2876,8 @@ def _launch_gateway_gate_preview(kernel: OrganizationKernel, case_id: str) -> tu
 def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) -> dict[str, Any]:
     organization_case = _require_launch_gateway_pilot_case(kernel, case_id)
     state = kernel.snapshot_state()
-    plan = next((item for item in state.plans if item.case_id == case_id), None)
-    closure = next((item for item in state.closures if item.case_id == case_id), None)
+    plan = kernel.plan_for_case(case_id)
+    closure = kernel.closure_for_case(case_id)
     gate_preview = _launch_gateway_gate_preview(kernel, case_id)
     evidence_by_requirement = {
         requirement_id: [
