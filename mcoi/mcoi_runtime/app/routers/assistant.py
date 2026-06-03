@@ -18,6 +18,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from mcoi_runtime.app.cognitive_planning_integration import planning_context_for
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.assistant_kernel import (
     AssistantKernel,
@@ -107,14 +108,22 @@ def compile_finance_ops_assistant_plan(req: FinanceOpsAssistantPlanRequest):
     except RuntimeCoreInvariantError as exc:
         raise HTTPException(400, detail=_assistant_error_detail("invalid assistant plan", "invalid_assistant_plan")) from exc
 
-    return {
+    # Plan-time cognitive read-back (default-OFF). Read-only advisory; None when
+    # disabled => the response is byte-identical. Never mutates the governed plan.
+    cognitive_context = planning_context_for(deps, tuple(step.capability_id for step in plan.steps))
+    response = {
         "profile": profile.to_dict(),
         "goal": goal.to_dict(),
         "plan": plan.to_dict(),
-        "operator_queue_item": _operator_queue_item(plan=plan, tenant_id=req.tenant_id, owner_id=req.owner_id),
+        "operator_queue_item": _operator_queue_item(
+            plan=plan, tenant_id=req.tenant_id, owner_id=req.owner_id, cognitive_context=cognitive_context
+        ),
         "outcome": "AwaitingEvidence" if plan.blocked else "SolvedUnverified",
         "governed": True,
     }
+    if cognitive_context is not None:
+        response["cognitive_planning_context"] = cognitive_context
+    return response
 
 
 def _consent_ledger_from_request(
@@ -151,7 +160,9 @@ def _consent_ledger_from_request(
     return ledger
 
 
-def _operator_queue_item(*, plan: Any, tenant_id: str, owner_id: str) -> dict[str, Any]:
+def _operator_queue_item(
+    *, plan: Any, tenant_id: str, owner_id: str, cognitive_context: dict | None = None
+) -> dict[str, Any]:
     queue_state = "blocked" if plan.blocked else "ready_for_governed_dispatch"
     queue_id = stable_identifier(
         "assistant-operator-queue",
@@ -162,7 +173,7 @@ def _operator_queue_item(*, plan: Any, tenant_id: str, owner_id: str) -> dict[st
             "queue_state": queue_state,
         },
     )
-    return {
+    item = {
         "queue_id": queue_id,
         "plan_id": plan.plan_id,
         "tenant_id": tenant_id,
@@ -173,3 +184,7 @@ def _operator_queue_item(*, plan: Any, tenant_id: str, owner_id: str) -> dict[st
         "step_count": len(plan.steps),
         "execution_authority_granted": False,
     }
+    # Advisory only; never changes queue identity (queue_id excludes it).
+    if cognitive_context is not None:
+        item["cognitive_planning_context"] = cognitive_context
+    return item

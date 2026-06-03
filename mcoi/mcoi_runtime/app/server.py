@@ -73,6 +73,10 @@ from mcoi_runtime.app.cognitive_live_integration import (
     build_execution_gate,
     build_learner,
 )
+from mcoi_runtime.app.cognitive_planning_integration import (
+    PLANNING_READER_DEP,
+    build_planning_reader,
+)
 from mcoi_runtime.app.server_bootstrap import (
     init_field_encryption_from_env as _init_field_encryption_from_env_impl,
     utc_clock as _utc_clock,
@@ -288,6 +292,13 @@ _cognitive_execution_gate = build_execution_gate(os.environ, _cognitive_runtime)
 deps.set(EXECUTION_GATE_DEP, _cognitive_execution_gate)
 _cognitive_learner = build_learner(os.environ, _cognitive_runtime, clock=_clock)
 deps.set(LEARNER_DEP, _cognitive_learner)
+
+# Plan-time cognitive context reader (read-back, default-OFF via
+# MULLU_COGNITIVE_LOOP_PLAN_CONTEXT): when enabled, plan-compilation routers attach a
+# read-only learned-context advisory for the plan's capabilities. None when disabled
+# => byte-identical responses. Read-only: never writes organs, never mutates plans.
+_cognitive_planning_reader = build_planning_reader(os.environ, _cognitive_runtime)
+deps.set(PLANNING_READER_DEP, _cognitive_planning_reader)
 
 _shadow_runtime = build_inceptadive_shadow_runtime(os.environ)
 deps.set("inceptadive_shadow_runtime", _shadow_runtime)
