@@ -10,6 +10,13 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from mcoi_runtime.app.cognitive_shadow_integration import record_execution_shadow
+from mcoi_runtime.app.cognitive_live_integration import (
+    chain_capability_key,
+    cognitive_block_detail,
+    evaluate_execution_gate,
+    record_execution_learning,
+)
 from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_listing_tenant
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.governance.network.webhook import WebhookSubscription
@@ -215,7 +222,19 @@ def execute_chain(req: ChainRequest, request: Request):
     from mcoi_runtime.core.agent_chain import ChainStep
     deps.metrics.inc("requests_governed")
     steps = [ChainStep(step_id=s.step_id, name=s.name, prompt_template=s.prompt_template, on_failure=s.on_failure) for s in req.steps]
+    _cap_key = chain_capability_key(tuple(s.name for s in req.steps))
+    # Stage-B cognitive DECIDE gate (default-OFF): may WITHHOLD on a blocking verdict.
+    # fail-OPEN (None => allow); safety-positive (it can only ever refuse).
+    _gate = evaluate_execution_gate(deps, capability_id=_cap_key)
+    if _gate is not None and _gate.blocked:
+        raise HTTPException(409, detail=cognitive_block_detail(_gate.decision_verdict.value))
     result = deps.agent_chain.execute(steps, initial_input=req.initial_input)
+    # Record-only shadow + Stage-C learn (both default-OFF). No authority over the response.
+    record_execution_shadow(deps, capability_id=_cap_key, succeeded=result.succeeded)
+    record_execution_learning(
+        deps, capability_id=_cap_key, succeeded=result.succeeded, verified=result.succeeded,
+        source_ref=result.chain_id,
+    )
     deps.event_bus.publish("chain.completed" if result.succeeded else "chain.failed",
                            tenant_id=req.tenant_id, source="agent_chain",
                            payload={"chain_id": result.chain_id, "succeeded": result.succeeded})

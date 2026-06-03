@@ -159,6 +159,35 @@ def record_execution_learning(
         return
 
 
+def chain_capability_key(step_names: tuple[str, ...]) -> str:
+    """Derive a stable capability key for an agent chain.
+
+    A chain has no single capability, so the key is COARSE: it is anchored on the
+    chain's entry step (the first non-empty step name), or a generic key when the
+    chain is empty. This groups chains by their entry step for confidence / gating -
+    good enough for shadow + learn; a finer key is a future refinement.
+    """
+    for name in step_names:
+        cleaned = (name or "").strip()
+        if cleaned:
+            return f"agent_chain:{cleaned}"
+    return "agent_chain"
+
+
+def cognitive_block_detail(verdict: str) -> dict[str, object]:
+    """Shared detail body for a dispatch withheld by the Stage-B cognitive gate.
+
+    Static strings only (the verdict is a fixed enum value, not interpolated caller
+    text), so it passes the reflective-contract guard.
+    """
+    return {
+        "error": "cognitive governance gate withheld dispatch pending review",
+        "error_code": "cognitive_gate_withheld",
+        "verdict": verdict,
+        "governed": True,
+    }
+
+
 __all__ = [
     "COGNITIVE_LOOP_ENFORCE_ENV",
     "COGNITIVE_LOOP_LEARN_ENV",
@@ -171,4 +200,6 @@ __all__ = [
     "record_execution_learning",
     "validate_enforce_config",
     "validate_learn_config",
+    "chain_capability_key",
+    "cognitive_block_detail",
 ]
