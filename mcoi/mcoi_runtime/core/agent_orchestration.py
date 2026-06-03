@@ -41,6 +41,7 @@ Invariants:
 """
 from __future__ import annotations
 
+import threading
 import uuid
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
@@ -789,6 +790,16 @@ class AgentOrchestrator:
                  manifest_raw_capability_count: int | None = None,
                  manifest_binding_action: str = "initialize"):
         self._clock = clock
+        # FastAPI runs sync handlers in a threadpool, so registry reads/writes
+        # race. find_capable_agents iterates self._capabilities while
+        # register_agent/unregister_agent mutate its size, and summary/read_model
+        # iterate self._plans while create_plan inserts -- either raised
+        # RuntimeError("dictionary changed size during iteration"). One lock
+        # guards both dicts: every iterate site snapshots under the lock and
+        # computes on the local copy outside it; the size-mutators take the lock
+        # for the mutation only. Proof-record building and list appends stay
+        # outside the lock (those lists are not the racy state).
+        self._lock = threading.Lock()
         self._capabilities: dict[str, tuple[str, ...]] = dict(agent_capabilities or {})
         self._admitted_capabilities: frozenset[str] | None = _normalize_admitted_capabilities(admitted_capabilities)
         self._plans: dict[str, OrchestrationPlan] = {}
@@ -837,9 +848,10 @@ class AgentOrchestrator:
         )
 
     def register_agent(self, agent_id: str, capabilities: tuple[str, ...]) -> None:
-        previous_capabilities = self._capabilities.get(agent_id)
         current_capabilities = tuple(capabilities)
-        self._capabilities[agent_id] = current_capabilities
+        with self._lock:
+            previous_capabilities = self._capabilities.get(agent_id)
+            self._capabilities[agent_id] = current_capabilities
         self._registration_proofs.append(
             self._build_registration_proof(
                 agent_id=agent_id,
@@ -856,7 +868,8 @@ class AgentOrchestrator:
         )
 
     def unregister_agent(self, agent_id: str) -> None:
-        previous_capabilities = self._capabilities.pop(agent_id, None)
+        with self._lock:
+            previous_capabilities = self._capabilities.pop(agent_id, None)
         self._registration_proofs.append(
             self._build_registration_proof(
                 agent_id=agent_id,
@@ -874,7 +887,8 @@ class AgentOrchestrator:
 
     @property
     def agent_count(self) -> int:
-        return len(self._capabilities)
+        with self._lock:
+            return len(self._capabilities)
 
     @property
     def manifest_gated(self) -> bool:
@@ -919,8 +933,9 @@ class AgentOrchestrator:
             goal=goal,
             created_at=self._clock(),
         )
-        self._plans[plan.plan_id] = plan
-        self._total_plans += 1
+        with self._lock:
+            self._plans[plan.plan_id] = plan
+            self._total_plans += 1
         self._plan_creation_proofs.append(
             self._build_plan_creation_proof(
                 plan_id=plan.plan_id,
@@ -1374,9 +1389,14 @@ class AgentOrchestrator:
             )
             return []
         required_set = set(required)
+        # Snapshot under the lock so a concurrent register_agent/unregister_agent
+        # resize cannot raise "dictionary changed size during iteration"; match
+        # against the local copy outside the lock.
+        with self._lock:
+            capabilities_snapshot = list(self._capabilities.items())
         agents = [
             aid
-            for aid, caps in self._capabilities.items()
+            for aid, caps in capabilities_snapshot
             if required_set <= set(caps)
         ]
         self._capability_discovery_proofs.append(
@@ -1464,6 +1484,11 @@ class AgentOrchestrator:
         return [proof.to_dict() for proof in self._manifest_binding_proofs[-limit:]]
 
     def summary(self) -> dict[str, Any]:
+        # One consistent snapshot of the plan registry taken under the lock; the
+        # many aggregations below iterate this local list outside the lock so
+        # they cannot race a concurrent create_plan insert.
+        plans = self._plans_snapshot()
+        active_plans = sum(1 for plan in plans if self._active_phase(plan.phase))
         return {
             "registered_agents": self.agent_count,
             "registration_proofs": len(self._registration_proofs),
@@ -1495,8 +1520,8 @@ class AgentOrchestrator:
                 proof.decision for proof in self._manifest_binding_proofs
             ),
             "total_plans": self._total_plans,
-            "active_plans": self._active_plan_count(),
-            "plans_by_phase": _count_by_value(p.phase.value for p in self._plans.values()),
+            "active_plans": active_plans,
+            "plans_by_phase": _count_by_value(p.phase.value for p in plans),
             "total_handoffs": self._total_handoffs,
             "successful_handoffs": len(self._handoffs),
             "handoff_proofs": len(self._handoff_proofs),
@@ -1507,42 +1532,42 @@ class AgentOrchestrator:
             "admitted_capability_count": (
                 0 if self._admitted_capabilities is None else len(self._admitted_capabilities)
             ),
-            "dispatch_proofs": sum(len(p.dispatch_proofs) for p in self._plans.values()),
+            "dispatch_proofs": sum(len(p.dispatch_proofs) for p in plans),
             "dispatch_decisions": _count_by_value(
                 proof.decision
-                for plan in self._plans.values()
+                for plan in plans
                 for proof in plan.dispatch_proofs
             ),
-            "proposal_proofs": sum(len(p.proposal_proofs) for p in self._plans.values()),
+            "proposal_proofs": sum(len(p.proposal_proofs) for p in plans),
             "proposal_decisions": _count_by_value(
                 proof.decision
-                for plan in self._plans.values()
+                for plan in plans
                 for proof in plan.proposal_proofs
             ),
-            "vote_proofs": sum(len(p.vote_proofs) for p in self._plans.values()),
+            "vote_proofs": sum(len(p.vote_proofs) for p in plans),
             "vote_decisions": _count_by_value(
                 proof.decision
-                for plan in self._plans.values()
+                for plan in plans
                 for proof in plan.vote_proofs
             ),
-            "submission_proofs": sum(len(p.submission_proofs) for p in self._plans.values()),
+            "submission_proofs": sum(len(p.submission_proofs) for p in plans),
             "submission_decisions": _count_by_value(
                 proof.decision
-                for plan in self._plans.values()
+                for plan in plans
                 for proof in plan.submission_proofs
             ),
-            "execution_proofs": sum(len(p.execution_proofs) for p in self._plans.values()),
+            "execution_proofs": sum(len(p.execution_proofs) for p in plans),
             "execution_decisions": _count_by_value(
                 proof.decision
-                for plan in self._plans.values()
+                for plan in plans
                 for proof in plan.execution_proofs
             ),
             "finalization_proofs": sum(
-                len(p.finalization_proofs) for p in self._plans.values()
+                len(p.finalization_proofs) for p in plans
             ),
             "finalization_decisions": _count_by_value(
                 proof.decision
-                for plan in self._plans.values()
+                for plan in plans
                 for proof in plan.finalization_proofs
             ),
         }
@@ -1552,7 +1577,7 @@ class AgentOrchestrator:
             return []
         proofs = [
             proof
-            for plan in self._plans.values()
+            for plan in self._plans_snapshot()
             for proof in plan.proposal_proofs
         ]
         return [proof.to_dict() for proof in proofs[-limit:]]
@@ -1562,7 +1587,7 @@ class AgentOrchestrator:
             return []
         proofs = [
             proof
-            for plan in self._plans.values()
+            for plan in self._plans_snapshot()
             for proof in plan.vote_proofs
         ]
         return [proof.to_dict() for proof in proofs[-limit:]]
@@ -1572,7 +1597,7 @@ class AgentOrchestrator:
             return []
         proofs = [
             proof
-            for plan in self._plans.values()
+            for plan in self._plans_snapshot()
             for proof in plan.submission_proofs
         ]
         return [proof.to_dict() for proof in proofs[-limit:]]
@@ -1582,7 +1607,7 @@ class AgentOrchestrator:
             return []
         proofs = [
             proof
-            for plan in self._plans.values()
+            for plan in self._plans_snapshot()
             for proof in plan.execution_proofs
         ]
         return [proof.to_dict() for proof in proofs[-limit:]]
@@ -1592,7 +1617,7 @@ class AgentOrchestrator:
             return []
         proofs = [
             proof
-            for plan in self._plans.values()
+            for plan in self._plans_snapshot()
             for proof in plan.dispatch_proofs
         ]
         return [proof.to_dict() for proof in proofs[-limit:]]
@@ -1602,7 +1627,7 @@ class AgentOrchestrator:
             return []
         proofs = [
             proof
-            for plan in self._plans.values()
+            for plan in self._plans_snapshot()
             for proof in plan.finalization_proofs
         ]
         return [proof.to_dict() for proof in proofs[-limit:]]
@@ -1616,10 +1641,17 @@ class AgentOrchestrator:
             if capability not in self._admitted_capabilities
         )
 
+    def _plans_snapshot(self) -> list[OrchestrationPlan]:
+        # Snapshot the plan registry under the lock so iteration cannot race a
+        # concurrent create_plan insert ("dictionary changed size during
+        # iteration"). Callers iterate the returned local list outside the lock.
+        with self._lock:
+            return list(self._plans.values())
+
     def _active_plan_count(self) -> int:
         return sum(
             1
-            for plan in self._plans.values()
+            for plan in self._plans_snapshot()
             if plan.phase in (
                 OrchestrationPhase.PLANNING,
                 OrchestrationPhase.VOTING,
@@ -1630,7 +1662,7 @@ class AgentOrchestrator:
     def _active_proposal_count(self) -> int:
         return sum(
             len(plan.proposals)
-            for plan in self._plans.values()
+            for plan in self._plans_snapshot()
             if plan.phase in (
                 OrchestrationPhase.PLANNING,
                 OrchestrationPhase.VOTING,
@@ -1639,7 +1671,7 @@ class AgentOrchestrator:
         )
 
     def _phase_plan_count(self, phase: OrchestrationPhase) -> int:
-        return sum(1 for plan in self._plans.values() if plan.phase == phase)
+        return sum(1 for plan in self._plans_snapshot() if plan.phase == phase)
 
     @staticmethod
     def _successful_result_count(plan: OrchestrationPlan) -> int:

@@ -191,21 +191,33 @@ class GovernedToolRegistry:
         executor: Callable[[str, dict[str, Any]], Any] | None = None,
     ) -> None:
         """Register a tool with optional executor."""
-        self._tools[tool.name] = tool
-        if executor is not None:
-            self._executors[tool.name] = executor
+        # FastAPI runs sync handlers in a threadpool. list_tools/summary/
+        # capability_contract_coverage iterate self._tools; a concurrent
+        # register/unregister mutating its size would otherwise raise
+        # RuntimeError("dictionary changed size during iteration"). Guard the
+        # mutation with the existing registry lock so it pairs with the
+        # snapshot-under-lock reads below.
+        with self._lock:
+            self._tools[tool.name] = tool
+            if executor is not None:
+                self._executors[tool.name] = executor
 
     def unregister(self, tool_name: str) -> bool:
         """Remove a tool from the registry."""
-        if tool_name in self._tools:
-            del self._tools[tool_name]
-            self._executors.pop(tool_name, None)
-            return True
-        return False
+        with self._lock:
+            if tool_name in self._tools:
+                del self._tools[tool_name]
+                self._executors.pop(tool_name, None)
+                return True
+            return False
 
     def list_tools(self, *, enabled_only: bool = True) -> list[ToolDefinition]:
         """List registered tools."""
-        tools = list(self._tools.values())
+        # Snapshot under the lock so a concurrent register/unregister resize
+        # cannot raise "dictionary changed size during iteration"; filter the
+        # local copy outside the lock.
+        with self._lock:
+            tools = list(self._tools.values())
         if enabled_only:
             tools = [t for t in tools if t.enabled]
         return tools
@@ -575,21 +587,31 @@ class GovernedToolRegistry:
 
     @property
     def tool_count(self) -> int:
-        return len(self._tools)
+        with self._lock:
+            return len(self._tools)
 
     def summary(self) -> dict[str, Any]:
-        enabled = sum(1 for t in self._tools.values() if t.enabled)
+        # Snapshot tools under the lock before counting so iteration cannot race
+        # a concurrent register/unregister resize; sum on the local copy outside.
+        with self._lock:
+            tools = list(self._tools.values())
+            active_sessions = len(self._session_usage)
+        enabled = sum(1 for t in tools if t.enabled)
         return {
-            "registered_tools": len(self._tools),
+            "registered_tools": len(tools),
             "enabled_tools": enabled,
             "total_invocations": self._total_invocations,
             "total_denied": self._total_denied,
-            "active_sessions": len(self._session_usage),
+            "active_sessions": active_sessions,
         }
 
     def capability_contract_coverage(self) -> CapabilityContractCoverageReport:
         """Return a deterministic GCI coverage audit for registered tools."""
-        return audit_capability_contract_coverage(self._tools.values())
+        # Snapshot under the lock; the audit iterates the supplied tools and must
+        # not race a concurrent register/unregister resize.
+        with self._lock:
+            tools = list(self._tools.values())
+        return audit_capability_contract_coverage(tools)
 
     def decision_read_model(self, *, limit: int = 50) -> dict[str, Any]:
         """Return a bounded operator read model of recent tool decisions."""
