@@ -173,7 +173,7 @@ class ProtectedPathPolicy(ContractRecord):
                     protected=True,
                     match=ProtectedPathMatch.WITHIN_DIRECTORY,
                     matched_pattern=directory,
-                    reason=f"path is within protected directory '{directory}'",
+                    reason="path is within a protected directory",
                 )
 
         basename = normalized.rsplit("/", 1)[-1]
@@ -184,7 +184,7 @@ class ProtectedPathPolicy(ContractRecord):
                     protected=True,
                     match=ProtectedPathMatch.GLOB,
                     matched_pattern=glob,
-                    reason=f"path matches protected pattern '{glob}'",
+                    reason="path matches a protected pattern",
                 )
 
         return ProtectedPathVerdict(
