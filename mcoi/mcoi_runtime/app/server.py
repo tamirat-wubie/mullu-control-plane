@@ -67,6 +67,12 @@ from mcoi_runtime.app.cognitive_shadow_integration import (
     SHADOW_OBSERVER_DEP,
     build_shadow_observer,
 )
+from mcoi_runtime.app.cognitive_live_integration import (
+    EXECUTION_GATE_DEP,
+    LEARNER_DEP,
+    build_execution_gate,
+    build_learner,
+)
 from mcoi_runtime.app.server_bootstrap import (
     init_field_encryption_from_env as _init_field_encryption_from_env_impl,
     utc_clock as _utc_clock,
@@ -271,6 +277,17 @@ register_cognitive_runtime(deps, _cognitive_runtime)
 # exception-isolated record_execution_shadow entrypoint.
 _cognitive_shadow_observer = build_shadow_observer(os.environ, _cognitive_runtime, clock=_clock)
 deps.set(SHADOW_OBSERVER_DEP, _cognitive_shadow_observer)
+
+# Live-acting cognitive components (live wiring, Stage B + C), both default-OFF:
+#  - Stage B enforce gate (MULLU_COGNITIVE_LOOP_ENFORCE): may WITHHOLD a dispatch on a
+#    blocking DECIDE verdict. fail-OPEN, safety-positive (it can only ever refuse).
+#  - Stage C learner (MULLU_COGNITIVE_LOOP_LEARN): feeds live outcomes back into the
+#    organs (confidence + episodic), deterministic + rollback-safe.
+# Both None when disabled => byte-identical live path. See COGNITIVE_LOOP_LIVE_WIRING.md.
+_cognitive_execution_gate = build_execution_gate(os.environ, _cognitive_runtime)
+deps.set(EXECUTION_GATE_DEP, _cognitive_execution_gate)
+_cognitive_learner = build_learner(os.environ, _cognitive_runtime, clock=_clock)
+deps.set(LEARNER_DEP, _cognitive_learner)
 
 _shadow_runtime = build_inceptadive_shadow_runtime(os.environ)
 deps.set("inceptadive_shadow_runtime", _shadow_runtime)

@@ -314,6 +314,42 @@ def decide_verdict(
     return (DecisionVerdict.PROCEED, "confidence sufficient to proceed")
 
 
+def next_capability_confidence(
+    existing: CapabilityConfidence | None,
+    *,
+    capability_id: str,
+    succeeded: bool,
+    verified: bool,
+    assessed_at: str,
+) -> CapabilityConfidence:
+    """Compute the next capability confidence via an incremental running rate.
+
+    Extracted so the live ``CognitiveLoop`` LEARN phase and the live-path
+    ``CognitiveLearner`` share ONE confidence-update formula (single source of
+    truth). Deterministic for a given prior state + outcome + assessed_at;
+    mirrors OperatorLoop._update_capability_confidence.
+    """
+    sample_count = (existing.sample_count + 1) if existing is not None else 1
+    old_success = existing.success_rate if existing is not None else 0.0
+    old_verify = existing.verification_pass_rate if existing is not None else 0.0
+    old_error = existing.error_rate if existing is not None else 0.0
+
+    weight = 1.0 / sample_count
+    new_success = old_success * (1 - weight) + (1.0 if succeeded else 0.0) * weight
+    new_verify = old_verify * (1 - weight) + (1.0 if verified else 0.0) * weight
+    new_error = old_error * (1 - weight) + (0.0 if succeeded else 1.0) * weight
+
+    return CapabilityConfidence(
+        capability_id=capability_id,
+        success_rate=round(new_success, 4),
+        verification_pass_rate=round(new_verify, 4),
+        timeout_rate=0.0,
+        error_rate=round(new_error, 4),
+        sample_count=sample_count,
+        assessed_at=assessed_at,
+    )
+
+
 class CognitiveLoop:
     """Bounded iterative loop wrapping the EXISTING governed single-step dispatch.
 
@@ -670,24 +706,12 @@ class CognitiveLoop:
         if update is None or get_confidence is None:
             return
         existing = get_confidence(capability_id)
-        sample_count = (existing.sample_count + 1) if existing is not None else 1
-        old_success = existing.success_rate if existing is not None else 0.0
-        old_verify = existing.verification_pass_rate if existing is not None else 0.0
-        old_error = existing.error_rate if existing is not None else 0.0
-
-        weight = 1.0 / sample_count
-        new_success = old_success * (1 - weight) + (1.0 if succeeded else 0.0) * weight
-        new_verify = old_verify * (1 - weight) + (1.0 if verified else 0.0) * weight
-        new_error = old_error * (1 - weight) + (0.0 if succeeded else 1.0) * weight
-
         update(
-            CapabilityConfidence(
+            next_capability_confidence(
+                existing,
                 capability_id=capability_id,
-                success_rate=round(new_success, 4),
-                verification_pass_rate=round(new_verify, 4),
-                timeout_rate=0.0,
-                error_rate=round(new_error, 4),
-                sample_count=sample_count,
+                succeeded=succeeded,
+                verified=verified,
                 assessed_at=self._clock(),
             )
         )
@@ -884,4 +908,5 @@ __all__ = [
     "NullCritic",
     "ProofState",
     "decide_verdict",
+    "next_capability_confidence",
 ]
