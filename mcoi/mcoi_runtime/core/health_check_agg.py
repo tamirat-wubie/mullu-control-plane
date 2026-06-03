@@ -12,6 +12,7 @@ Invariants:
 """
 from __future__ import annotations
 
+import threading
 import time
 from dataclasses import dataclass, field
 from enum import IntEnum
@@ -82,23 +83,38 @@ class HealthCheckAggregator:
         self._checks: dict[str, HealthCheckDef] = {}
         self._last_result: CompositeHealth | None = None
         self._total_runs = 0
+        # FastAPI runs sync handlers in a threadpool, so run() can execute
+        # concurrently with register/unregister. run() iterated _checks while a
+        # concurrent register inserted / unregister popped -- which raised
+        # "dictionary changed size during iteration". This lock guards the
+        # size-mutating sections; run() only holds it to snapshot _checks, then
+        # invokes each user check_fn (real I/O) on the snapshot, outside the lock.
+        self._lock = threading.Lock()
 
     def register(self, check: HealthCheckDef) -> None:
-        self._checks[check.name] = check
+        with self._lock:
+            self._checks[check.name] = check
 
     def unregister(self, name: str) -> None:
-        self._checks.pop(name, None)
+        with self._lock:
+            self._checks.pop(name, None)
 
     @property
     def check_count(self) -> int:
-        return len(self._checks)
+        with self._lock:
+            return len(self._checks)
 
     def run(self) -> CompositeHealth:
         """Run all health checks and aggregate results."""
         results: list[CheckResult] = []
         self._total_runs += 1
 
-        for name, check_def in self._checks.items():
+        # Snapshot under the lock, then run probes outside it: each check_fn is
+        # a user callback that may do real I/O and must not hold the lock.
+        with self._lock:
+            checks_snapshot = list(self._checks.items())
+
+        for name, check_def in checks_snapshot:
             start = time.monotonic()
             try:
                 output = check_def.check_fn()
@@ -121,9 +137,10 @@ class HealthCheckAggregator:
                 latency_ms=latency, details=output,
             ))
 
-        # Compute composite
-        overall_status = self._compute_overall(results)
-        score = self._compute_score(results)
+        # Compute composite against the same snapshot the probes ran on.
+        checks_by_name = dict(checks_snapshot)
+        overall_status = self._compute_overall(results, checks_by_name)
+        score = self._compute_score(results, checks_by_name)
 
         composite = CompositeHealth(
             status=overall_status,
@@ -134,13 +151,17 @@ class HealthCheckAggregator:
         self._last_result = composite
         return composite
 
-    def _compute_overall(self, results: list[CheckResult]) -> HealthStatus:
+    def _compute_overall(
+        self,
+        results: list[CheckResult],
+        checks_by_name: dict[str, HealthCheckDef],
+    ) -> HealthStatus:
         if not results:
             return HealthStatus.HEALTHY
 
         # Critical checks: if any critical check is unhealthy, overall is unhealthy
         for r in results:
-            check_def = self._checks.get(r.name)
+            check_def = checks_by_name.get(r.name)
             if check_def and check_def.critical and r.status == HealthStatus.UNHEALTHY:
                 return HealthStatus.UNHEALTHY
 
@@ -148,15 +169,19 @@ class HealthCheckAggregator:
         worst = max(r.status for r in results)
         return HealthStatus(worst)
 
-    def _compute_score(self, results: list[CheckResult]) -> float:
+    def _compute_score(
+        self,
+        results: list[CheckResult],
+        checks_by_name: dict[str, HealthCheckDef],
+    ) -> float:
         if not results:
             return 100.0
-        total_weight = sum(self._checks[r.name].weight for r in results if r.name in self._checks)
+        total_weight = sum(checks_by_name[r.name].weight for r in results if r.name in checks_by_name)
         if total_weight == 0:
             return 100.0
         weighted_sum = 0.0
         for r in results:
-            check_def = self._checks.get(r.name)
+            check_def = checks_by_name.get(r.name)
             if not check_def:
                 continue
             if r.status == HealthStatus.HEALTHY:
