@@ -14,7 +14,9 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from mcoi_runtime.core.concurrency import AtomicCounter
+
+from dataclasses import dataclass
 from typing import Any, Callable
 
 
@@ -97,7 +99,7 @@ class BatchPipeline:
         self._clock = clock
         self._llm_fn = llm_complete_fn
         self._history: list[PipelineResult] = []
-        self._counter = 0
+        self._counter = AtomicCounter()
 
     def execute(
         self,
@@ -112,8 +114,7 @@ class BatchPipeline:
         Each step gets the previous step's output as {input}.
         Stops on first failure.
         """
-        self._counter += 1
-        pipeline_id = f"pipe-{self._counter}"
+        pipeline_id = f"pipe-{self._counter.next()}"
         step_results: list[StepResult] = []
         current_input = initial_input
         total_cost = 0.0

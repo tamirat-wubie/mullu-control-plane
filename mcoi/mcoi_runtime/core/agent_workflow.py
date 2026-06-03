@@ -14,6 +14,8 @@ Invariants:
 
 from __future__ import annotations
 
+from mcoi_runtime.core.concurrency import AtomicCounter
+
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -99,7 +101,7 @@ class AgentWorkflowEngine:
         self._llm_complete_fn = llm_complete_fn
         self._webhook_mgr = webhook_manager
         self._audit = audit_trail
-        self._workflow_counter = 0
+        self._workflow_counter = AtomicCounter()
         self._history: list[WorkflowResult] = []
 
     def execute(
@@ -116,8 +118,7 @@ class AgentWorkflowEngine:
 
         Steps: submit → assign → start → invoke LLM → complete → audit → webhook
         """
-        self._workflow_counter += 1
-        workflow_id = f"wf-{self._workflow_counter}"
+        workflow_id = f"wf-{self._workflow_counter.next()}"
         steps: list[WorkflowStep] = []
         agent_id = ""
 

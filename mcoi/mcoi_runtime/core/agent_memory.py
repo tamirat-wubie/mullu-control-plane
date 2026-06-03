@@ -14,9 +14,10 @@ Invariants:
 
 from __future__ import annotations
 
+from mcoi_runtime.core.concurrency import AtomicCounter
+
 from dataclasses import dataclass
 from typing import Any, Callable
-from hashlib import sha256
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,7 +49,7 @@ class AgentMemoryStore:
         self._clock = clock
         self._max = max_per_agent
         self._memories: dict[str, list[MemoryEntry]] = {}  # agent_id -> memories
-        self._counter = 0
+        self._counter = AtomicCounter()
 
     def store(
         self,
@@ -60,8 +61,7 @@ class AgentMemoryStore:
         confidence: float = 1.0,
     ) -> MemoryEntry:
         """Store a new memory for an agent."""
-        self._counter += 1
-        mid = f"mem-{self._counter}"
+        mid = f"mem-{self._counter.next()}"
         kw = tuple(keywords) if keywords else tuple(content.lower().split()[:10])
 
         entry = MemoryEntry(
