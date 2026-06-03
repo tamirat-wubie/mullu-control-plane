@@ -260,7 +260,11 @@ class StreamingBridge:
 
     @property
     def active_count(self) -> int:
-        return sum(1 for s in self._streams.values() if not s.finalized)
+        with self._lock:
+            # start_stream inserts/_evict_oldest deletes _streams concurrently;
+            # snapshot the values under the lock before counting to avoid
+            # "dictionary changed size during iteration".
+            return sum(1 for s in tuple(self._streams.values()) if not s.finalized)
 
     @property
     def callback_errors(self) -> int:
