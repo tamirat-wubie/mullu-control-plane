@@ -1,8 +1,8 @@
 # Atomic Store Doctrine — v1
 
-**Status:** Doctrine, distilled from four fracture closures (F2, F11, F15, F4) across six releases (v4.27, v4.29, v4.30, v4.31, v4.34, v4.40).
+**Status:** Doctrine, distilled from four fracture closures (F2, F11, F15, F4) across six releases (v4.27, v4.29, v4.30, v4.31, v4.34, v4.40), since extended to a fifth store (tenant-gating transitions) found by applying the lens proactively — see Section 7.
 **Companion documents:** `docs/LEDGER_SPEC.md`, `docs/GOVERNANCE_GUARD_CHAIN.md`
-**Last updated:** v4.40.0 (2026-04)
+**Last updated:** tenant-gating atomic transition (2026-06)
 
 ## Purpose
 
@@ -452,17 +452,30 @@ Shipped since the doctrine was first published:
   hash + insert + commit. No `SERIAL` column needed — the advisory lock
   gives strict ordering and `entry_hash` stays Python-computed via the
   same `_canonical_hash_v1` helper the in-process path uses.
+- **TenantGate state transitions** — ✅ shipped (audit follow-up).
+  `TenantGatingStore.try_transition(tenant_id, allowed_from,
+  new_status, reason, gated_at)`: a conditional compare-and-set
+  (in-memory `threading.Lock`; Postgres
+  `UPDATE governance_tenant_gates SET status = %s WHERE tenant_id = %s
+  AND status = ANY(%s) RETURNING ...`). Found by *applying the audit
+  lens proactively*, not from a filed fracture: `update_status`
+  validated the transition against a stale read and persisted via an
+  unconditional UPSERT, so two replicas could last-write-wins and
+  **un-terminate a tenant** — defeating the `TERMINATED` terminal-state
+  invariant (a banned tenant regains request admission). The registry
+  passes `allowed_from = {s : new_status ∈ _VALID_TRANSITIONS[s]}` so
+  the DB enforces the transition table against the committed row. The
+  concurrency test asserts terminated stays terminal under 40 racing
+  terminate/suspend workers.
 
-Remaining candidates that fit the doctrine:
+This last one is worth noting as a doctrine outcome: once the pattern
+is named and the lens is sharp, you find the *next* instance by
+asking "what other store does read-validate-write and persists
+unconditionally?" — not by waiting for a production incident.
 
-- **TenantGate state transitions** — if `TenantGatingStore` ever
-  needs cross-replica conditional state changes (e.g., "gate to
-  paused only if currently active"), the same doctrine applies.
-  `try_transition(tenant_id, from_status, to_status)` with a
-  conditional `UPDATE ... WHERE status = from_status` is the shape.
-
-Both the in-memory and Postgres paths for F2, F11, and F4 are now
-under the doctrine meta-test (`test_atomic_store_doctrine.py`,
+Both the in-memory and Postgres paths for F2, F11, F4, and tenant
+gating are now under the doctrine meta-test
+(`test_atomic_store_doctrine.py`,
 Shape 2 + Shape 2b) — a Postgres path that regresses to the base
 sentinel trips CI.
 

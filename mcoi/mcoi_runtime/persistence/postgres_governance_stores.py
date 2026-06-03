@@ -974,6 +974,53 @@ class PostgresTenantGatingStore(_PostgresBase, TenantGatingStore):
             for r in rows
         ]
 
+    def try_transition(
+        self,
+        tenant_id: str,
+        allowed_from: "frozenset[TenantStatus]",
+        new_status: "TenantStatus",
+        reason: str,
+        gated_at: str,
+    ) -> "TenantGate | None":
+        """Cross-replica atomic conditional status transition (audit).
+
+        The pre-this-change ``save`` is an unconditional UPSERT
+        (``status = EXCLUDED.status``), so two replicas validating
+        against a stale read could last-write-wins and un-terminate a
+        tenant. This override moves the predicate into the write: a
+        single ``UPDATE ... WHERE status = ANY(allowed) RETURNING ...``
+        commits the transition iff the *committed* row's status is in
+        ``allowed_from``. Zero rows returned → rejected (tenant absent,
+        or current status not transitionable to ``new_status``). The DB
+        row is the only source of truth; no replica trusts a snapshot.
+        """
+        # No source state can reach new_status → always reject without
+        # touching the DB (also avoids an empty-array ANY() edge).
+        if not allowed_from:
+            return None
+        if self._conn is None:
+            return None
+        allowed_values = [s.value for s in allowed_from]
+        with self._connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE governance_tenant_gates "
+                    "SET status = %s, reason = %s, gated_at = %s "
+                    "WHERE tenant_id = %s AND status = ANY(%s) "
+                    "RETURNING tenant_id, status, reason, gated_at",
+                    (new_status.value, reason, gated_at, tenant_id, allowed_values),
+                )
+                row = cur.fetchone()
+                conn.commit()
+        if row is None:
+            return None
+        return TenantGate(
+            tenant_id=row[0],
+            status=TenantStatus(row[1]),
+            reason=row[2],
+            gated_at=row[3],
+        )
+
 
 # --- In-Memory Governance Stores (for testing without PostgreSQL) ---
 
@@ -1220,19 +1267,54 @@ class InMemoryRateLimitStore(RateLimitStore):
 
 
 class InMemoryTenantGatingStore(TenantGatingStore):
-    """In-memory tenant gating store for testing."""
+    """In-memory tenant gating store for testing.
+
+    Atomic Store Doctrine (audit follow-up): ``try_transition`` does a
+    ``threading.Lock``-guarded compare-and-set so concurrent registries
+    sharing one store cannot defeat the transition invariant (e.g.
+    un-terminating a tenant). Single-process atomic; cross-process
+    replicas need PostgresTenantGatingStore.
+    """
 
     def __init__(self) -> None:
         self._gates: dict[str, TenantGate] = {}
+        self._lock = threading.Lock()
 
     def load(self, tenant_id: str) -> TenantGate | None:
         return self._gates.get(tenant_id)
 
     def save(self, gate: TenantGate) -> None:
-        self._gates[gate.tenant_id] = gate
+        with self._lock:
+            self._gates[gate.tenant_id] = gate
 
     def load_all(self) -> list[TenantGate]:
-        return sorted(self._gates.values(), key=lambda g: g.tenant_id)
+        with self._lock:
+            return sorted(self._gates.values(), key=lambda g: g.tenant_id)
+
+    def try_transition(
+        self,
+        tenant_id: str,
+        allowed_from: "frozenset[TenantStatus]",
+        new_status: "TenantStatus",
+        reason: str,
+        gated_at: str,
+    ) -> "TenantGate | None":
+        # Compare-and-set under the lock: read current, check the
+        # predicate, write — all atomic. Two threads racing to move the
+        # same tenant strictly serialize; the loser sees a current
+        # status no longer in allowed_from and is rejected.
+        with self._lock:
+            current = self._gates.get(tenant_id)
+            if current is None or current.status not in allowed_from:
+                return None
+            gate = TenantGate(
+                tenant_id=tenant_id,
+                status=new_status,
+                reason=reason,
+                gated_at=gated_at,
+            )
+            self._gates[tenant_id] = gate
+            return gate
 
 
 # --- Factory ---

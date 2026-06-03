@@ -48,9 +48,11 @@ POSTGRES_AVAILABLE = _postgres_available()
 
 from mcoi_runtime.governance.guards.rate_limit import RateLimitConfig
 from mcoi_runtime.governance.audit.trail import verify_chain_from_entries
+from mcoi_runtime.governance.guards.tenant_gating import TenantGate, TenantStatus
 from mcoi_runtime.persistence.postgres_governance_stores import (
     PostgresAuditStore,
     PostgresRateLimitStore,
+    PostgresTenantGatingStore,
 )
 
 
@@ -205,5 +207,77 @@ class TestPostgresAuditAtomic:
             # No duplicate sequences (no fork).
             seqs = [e["sequence"] for e in raw]
             assert len(set(seqs)) == len(seqs)
+        finally:
+            store.close()
+
+
+# ============================================================
+# Tenant gating — PostgresTenantGatingStore.try_transition
+# cross-replica terminal-invariant enforcement
+# ============================================================
+
+
+class TestPostgresTenantGatingAtomic:
+    def test_terminated_is_terminal_under_concurrent_transitions(self):
+        """Many connections race terminate vs suspend on one tenant.
+        Terminate fires from active/suspended; nothing fires from
+        terminated. Final committed status is always terminated — never
+        un-terminated. (Pre-fix: unconditional UPSERT could land
+        suspended over terminated.)"""
+        assert POSTGRES_URL is not None
+        store = PostgresTenantGatingStore(POSTGRES_URL, pool_size=8)
+        try:
+            tid = f"it-gate-{uuid.uuid4().hex}"
+            store.save(TenantGate(tenant_id=tid, status=TenantStatus.ACTIVE,
+                                  reason="seed", gated_at="2026-06-03T00:00:00Z"))
+
+            term_from = frozenset({TenantStatus.ONBOARDING, TenantStatus.ACTIVE,
+                                   TenantStatus.SUSPENDED})
+            susp_from = frozenset({TenantStatus.ACTIVE})
+
+            def worker(i: int):
+                if i % 2 == 0:
+                    store.try_transition(tid, term_from, TenantStatus.TERMINATED,
+                                         f"ban{i}", "2026-06-03T00:00:01Z")
+                else:
+                    store.try_transition(tid, susp_from, TenantStatus.SUSPENDED,
+                                         f"quota{i}", "2026-06-03T00:00:01Z")
+
+            threads = [threading.Thread(target=worker, args=(i,)) for i in range(40)]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join()
+
+            assert store.load(tid).status is TenantStatus.TERMINATED
+        finally:
+            store.close()
+
+    def test_exactly_one_winner_single_step(self):
+        assert POSTGRES_URL is not None
+        store = PostgresTenantGatingStore(POSTGRES_URL, pool_size=8)
+        try:
+            tid = f"it-gate1-{uuid.uuid4().hex}"
+            store.save(TenantGate(tenant_id=tid, status=TenantStatus.ACTIVE,
+                                  reason="seed", gated_at="2026-06-03T00:00:00Z"))
+            susp_from = frozenset({TenantStatus.ACTIVE})
+            wins: list[int] = []
+            lock = threading.Lock()
+
+            def worker(i: int):
+                gate = store.try_transition(tid, susp_from, TenantStatus.SUSPENDED,
+                                            f"q{i}", "2026-06-03T00:00:01Z")
+                if gate is not None:
+                    with lock:
+                        wins.append(i)
+
+            threads = [threading.Thread(target=worker, args=(i,)) for i in range(50)]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join()
+
+            assert len(wins) == 1
+            assert store.load(tid).status is TenantStatus.SUSPENDED
         finally:
             store.close()

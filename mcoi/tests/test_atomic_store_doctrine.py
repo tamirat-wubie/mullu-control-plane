@@ -41,14 +41,17 @@ from mcoi_runtime.governance.guards.budget import (
     TenantBudgetManager,
     TenantBudgetPolicy,
 )
+from mcoi_runtime.governance.guards.tenant_gating import TenantGatingStore
 from mcoi_runtime.persistence.hash_chain import HashChainStore
 from mcoi_runtime.persistence.postgres_governance_stores import (
     InMemoryAuditStore,
     InMemoryBudgetStore,
     InMemoryRateLimitStore,
+    InMemoryTenantGatingStore,
     PostgresAuditStore,
     PostgresBudgetStore,
     PostgresRateLimitStore,
+    PostgresTenantGatingStore,
 )
 
 
@@ -105,6 +108,14 @@ CASES: list[DoctrineCase] = [
         method_name="try_append",
         in_memory_cls=InMemoryAuditStore,
         postgres_cls=PostgresAuditStore,
+    ),
+    DoctrineCase(
+        fracture="TGATE",  # tenant-gating transitions (audit follow-up)
+        release="audit",
+        base_cls=TenantGatingStore,
+        method_name="try_transition",
+        in_memory_cls=InMemoryTenantGatingStore,
+        postgres_cls=PostgresTenantGatingStore,
     ),
 ]
 

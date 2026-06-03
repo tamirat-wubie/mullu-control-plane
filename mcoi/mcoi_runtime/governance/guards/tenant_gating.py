@@ -105,6 +105,19 @@ class TenantGatingStore:
 
     When provided to TenantGatingRegistry, tenant lifecycle state
     is written through for cross-replica consistency.
+
+    Atomic Store Doctrine (audit follow-up): ``try_transition`` is the
+    optional cross-replica conditional-state-change primitive. The
+    registry's ``update_status`` reads the current status, validates
+    the transition, then writes — a read-validate-write race. Under
+    ``self._lock`` that is single-process safe, but ``save`` is an
+    unconditional UPSERT, so two replicas can both read ``active``,
+    both validate (one to ``terminated``, one to ``suspended``), and
+    last-write-wins — silently *un-terminating* a tenant and defeating
+    the ``TERMINATED`` terminal-state invariant. When a store overrides
+    ``try_transition``, the registry delegates the compare-and-set to
+    it; detection uses the same MRO override-sentinel as the other
+    atomic stores. See docs/ATOMIC_STORE_DOCTRINE.md.
     """
 
     def load(self, tenant_id: str) -> TenantGate | None:
@@ -115,6 +128,33 @@ class TenantGatingStore:
 
     def load_all(self) -> list[TenantGate]:
         return []
+
+    def try_transition(
+        self,
+        tenant_id: str,
+        allowed_from: "frozenset[TenantStatus]",
+        new_status: "TenantStatus",
+        reason: str,
+        gated_at: str,
+    ) -> "TenantGate | None":
+        """Atomic conditional status transition (cross-replica).
+
+        Atomically set the tenant's status to ``new_status`` **iff** the
+        tenant exists and its current (committed) status is in
+        ``allowed_from``. Returns the updated ``TenantGate`` on success.
+
+        Returns ``None`` for either "transition rejected" (tenant
+        absent, or current status not in ``allowed_from`` — e.g. another
+        replica already moved it, or it is ``TERMINATED``) **or** "this
+        base class has no atomic path." The registry disambiguates via
+        MRO override-detection: when the store overrides this method,
+        ``None`` means *rejected* and the registry re-reads to raise the
+        correct error; when it does not, the registry falls through to
+        the legacy in-process read-validate-write path. This overload of
+        ``None`` matches the established convention of
+        ``BudgetStore.try_record_spend`` and ``RateLimitStore.try_consume``.
+        """
+        return None
 
 
 class TenantGatingRegistry:
@@ -175,8 +215,48 @@ class TenantGatingRegistry:
 
         Validates that the transition is allowed. Raises ValueError for
         invalid transitions or unknown tenants.
+
+        When the backing store provides an atomic ``try_transition``
+        (cross-replica conditional compare-and-set), the transition is
+        delegated to it — closing the read-validate-write race where two
+        replicas could both validate against a stale ``active`` read and
+        last-write-wins (e.g. un-terminating a tenant). Stores without
+        the override fall through to the legacy in-process path, which
+        is single-process safe under ``self._lock``.
         """
         with self._lock:
+            store_owned = (
+                self._store is not None
+                and getattr(type(self._store), "try_transition", TenantGatingStore.try_transition)
+                is not TenantGatingStore.try_transition
+            )
+            if store_owned:
+                # Compute the set of current-states from which new_status
+                # is reachable, then let the store enforce the predicate
+                # atomically against the committed row.
+                allowed_from = frozenset(
+                    s for s, targets in _VALID_TRANSITIONS.items() if new_status in targets
+                )
+                gate = self._store.try_transition(
+                    tenant_id, allowed_from, new_status, reason, self._clock()
+                )
+                if gate is None:
+                    # Rejected: tenant absent, or current status not in
+                    # allowed_from (invalid transition, or another replica
+                    # already moved it). Re-read the authoritative store
+                    # row to raise the precise error.
+                    current = self._store.load(tenant_id)
+                    if current is not None:
+                        self._gates[tenant_id] = current
+                        raise InvalidTenantStatusTransitionError(
+                            tenant_id, current.status, new_status
+                        )
+                    self._gates.pop(tenant_id, None)
+                    raise TenantNotRegisteredError(tenant_id)
+                self._gates[tenant_id] = gate  # refresh cache from authoritative result
+                return gate
+
+            # Legacy in-process path (no atomic store): unchanged.
             current = self._load_gate_locked(tenant_id)
             if current is None:
                 raise TenantNotRegisteredError(tenant_id)
