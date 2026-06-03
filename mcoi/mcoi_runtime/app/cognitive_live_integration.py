@@ -22,6 +22,7 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable, Mapping
 
 from mcoi_runtime.core.cognitive_live import (
@@ -29,9 +30,16 @@ from mcoi_runtime.core.cognitive_live import (
     CognitiveLearner,
     GateDecision,
 )
+from mcoi_runtime.persistence.cognitive_outcome_ledger import (
+    CognitiveOutcomeLedger,
+    FileBackedCognitiveOutcomeLedger,
+)
 
 COGNITIVE_LOOP_ENFORCE_ENV = "MULLU_COGNITIVE_LOOP_ENFORCE"
 COGNITIVE_LOOP_LEARN_ENV = "MULLU_COGNITIVE_LOOP_LEARN"
+COGNITIVE_LOOP_LEDGER_ENV = "MULLU_COGNITIVE_LOOP_LEDGER"
+COGNITIVE_LOOP_LEDGER_PATH_ENV = "MULLU_COGNITIVE_LOOP_LEDGER_PATH"
+COGNITIVE_LOOP_LEDGER_TENANT_DEFAULT = "system"
 EXECUTION_GATE_DEP = "cognitive_execution_gate"
 LEARNER_DEP = "cognitive_learner"
 
@@ -74,6 +82,52 @@ def validate_learn_config(runtime_env: Mapping[str, str]) -> CognitiveLiveConfig
     return _validate(runtime_env, COGNITIVE_LOOP_LEARN_ENV)
 
 
+def validate_ledger_config(runtime_env: Mapping[str, str]) -> CognitiveLiveConfigReport:
+    """Validate the D1 ledger flag without raising into startup.
+
+    When enabled AND the path env is set AND the Stage-C learner is built, the
+    learner is wired to a FileBackedCognitiveOutcomeLedger so every LEARN event
+    is durably recorded under the configured path. With the flag OFF (default),
+    the learner's ledger reference stays None and the live path is byte-
+    identical to today.
+    """
+    return _validate(runtime_env, COGNITIVE_LOOP_LEDGER_ENV)
+
+
+def build_outcome_ledger(
+    runtime_env: Mapping[str, str],
+    *,
+    tenant_id: str = COGNITIVE_LOOP_LEDGER_TENANT_DEFAULT,
+) -> CognitiveOutcomeLedger | None:
+    """Build a FileBackedCognitiveOutcomeLedger when D1 is enabled, else None.
+
+    Returns None on any of:
+      * the ledger flag (MULLU_COGNITIVE_LOOP_LEDGER) is missing / off /
+        malformed;
+      * the ledger path env (MULLU_COGNITIVE_LOOP_LEDGER_PATH) is unset or
+        blank;
+      * the substrate construction raises (e.g. invalid tenant_id, path-
+        traversal).
+    Fail-safe: a typo or missing config does NOT crash startup; the learner
+    is simply built without a ledger reference (= byte-identical to pre-D1).
+    """
+    if not validate_ledger_config(runtime_env).enabled:
+        return None
+    raw_path = runtime_env.get(COGNITIVE_LOOP_LEDGER_PATH_ENV)
+    if raw_path is None:
+        return None
+    cleaned_path = raw_path.strip()
+    if not cleaned_path:
+        return None
+    try:
+        return FileBackedCognitiveOutcomeLedger(
+            base_path=Path(cleaned_path),
+            tenant_id=tenant_id,
+        )
+    except Exception:  # noqa: BLE001 - misconfig must never crash startup
+        return None
+
+
 def build_execution_gate(
     runtime_env: Mapping[str, str], organs: object
 ) -> CognitiveExecutionGate | None:
@@ -95,18 +149,29 @@ def build_learner(
     organs: object,
     *,
     clock: Callable[[], str],
+    tenant_id: str = COGNITIVE_LOOP_LEDGER_TENANT_DEFAULT,
 ) -> CognitiveLearner | None:
-    """Build the Stage-C learner when enabled and organs are present, else None."""
+    """Build the Stage-C learner when enabled and organs are present, else None.
+
+    Composes the optional D1 ledger when MULLU_COGNITIVE_LOOP_LEDGER is on and
+    the path env is set. When EITHER condition is missing, the learner is
+    built without a ledger (= byte-identical to the pre-D1 implementation).
+    The same tenant_id is carried by both the ledger and CognitiveOutcomeEvent
+    bodies, so replay cannot infer partitioning from path alone.
+    """
     if not validate_learn_config(runtime_env).enabled:
         return None
     meta_reasoning = getattr(organs, "meta_reasoning", None)
     episodic_memory = getattr(organs, "episodic_memory", None)
     if meta_reasoning is None or episodic_memory is None or clock is None:
         return None
+    ledger = build_outcome_ledger(runtime_env, tenant_id=tenant_id)
     return CognitiveLearner(
         meta_reasoning=meta_reasoning,
         episodic_memory=episodic_memory,
         clock=clock,
+        ledger=ledger,
+        tenant_id=tenant_id,
     )
 
 
@@ -191,15 +256,20 @@ def cognitive_block_detail(verdict: str) -> dict[str, object]:
 __all__ = [
     "COGNITIVE_LOOP_ENFORCE_ENV",
     "COGNITIVE_LOOP_LEARN_ENV",
+    "COGNITIVE_LOOP_LEDGER_ENV",
+    "COGNITIVE_LOOP_LEDGER_PATH_ENV",
+    "COGNITIVE_LOOP_LEDGER_TENANT_DEFAULT",
     "EXECUTION_GATE_DEP",
     "LEARNER_DEP",
     "CognitiveLiveConfigReport",
     "build_execution_gate",
     "build_learner",
+    "build_outcome_ledger",
     "evaluate_execution_gate",
     "record_execution_learning",
     "validate_enforce_config",
     "validate_learn_config",
+    "validate_ledger_config",
     "chain_capability_key",
     "cognitive_block_detail",
 ]

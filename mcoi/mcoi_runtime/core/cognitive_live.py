@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import threading
 from dataclasses import dataclass
+from typing import Callable
 
 from mcoi_runtime.core.cognitive_loop import (
     DecisionVerdict,
@@ -42,7 +43,10 @@ from mcoi_runtime.core.invariants import (
     stable_identifier,
 )
 from mcoi_runtime.core.memory import MemoryEntry, MemoryTier
-from typing import Callable
+from mcoi_runtime.persistence.cognitive_outcome_ledger import (
+    CognitiveOutcomeEvent,
+    CognitiveOutcomeLedger,
+)
 
 # Mirror CognitiveLoop's DECIDE-phase defaults (kept in sync intentionally).
 _LIVE_REPLAN_THRESHOLD = 0.3
@@ -171,8 +175,16 @@ class CognitiveLearner:
 
     Determinism note: deterministic for a given ordered outcome sequence + clock.
     Strict cross-run / multi-worker determinism (the design doc's D1 record-and-
-    replay) requires a durable, replayable event ledger; until that backend lands,
-    this is wired default-OFF and behaves as a single-process running cache.
+    replay) requires a durable, replayable event ledger; D1 is shipped as the
+    optional ``ledger`` parameter below. When ``ledger`` is None (the historical
+    default), the learner behaves byte-identically to the pre-D1 implementation.
+    When a ledger is injected and the env-flag composition turns it on, each
+    ``learn`` call appends one tenant-scoped ``CognitiveOutcomeEvent`` to the
+    durable substrate BEFORE in-memory mutation. A ledger append failure therefore
+    aborts LEARN before confidence or episodic state is promoted, matching the D1
+    audit gate. A crash after the append but before cache promotion is recovered by
+    the N+2 rehydrate path, which treats the ledger as source of truth and the
+    in-process organs as derived indexes.
     """
 
     def __init__(
@@ -181,6 +193,8 @@ class CognitiveLearner:
         meta_reasoning: object,
         episodic_memory: object,
         clock: Callable[[], str],
+        ledger: CognitiveOutcomeLedger | None = None,
+        tenant_id: str = "system",
     ) -> None:
         if meta_reasoning is None:
             raise RuntimeCoreInvariantError("learner requires a meta_reasoning engine")
@@ -192,6 +206,8 @@ class CognitiveLearner:
         self._episodic = episodic_memory
         self._clock = clock
         self._lock = threading.Lock()
+        self._ledger = ledger
+        self._tenant_id = ensure_non_empty_text("tenant_id", tenant_id)
 
     def learn(
         self,
@@ -207,8 +223,63 @@ class CognitiveLearner:
         verified = bool(verified)
         with self._lock:
             learned_at = self._clock()
-            self._update_confidence(capability_id, succeeded=succeeded, verified=verified, assessed_at=learned_at)
-            admitted_id = self._admit_outcome(capability_id, succeeded=succeeded, verified=verified, source_ref=source_ref)
+
+            if self._ledger is None:
+                self._update_confidence(
+                    capability_id,
+                    succeeded=succeeded,
+                    verified=verified,
+                    assessed_at=learned_at,
+                )
+                admitted_id = self._admit_outcome(
+                    capability_id,
+                    succeeded=succeeded,
+                    verified=verified,
+                    source_ref=source_ref,
+                )
+            else:
+                prior_value = self._read_capability_confidence(capability_id)
+                next_confidence = self._compute_next_confidence(
+                    capability_id,
+                    succeeded=succeeded,
+                    verified=verified,
+                    assessed_at=learned_at,
+                )
+                next_value = (
+                    prior_value
+                    if next_confidence is None
+                    else float(next_confidence.overall_confidence)
+                )
+                admitted_id = self._candidate_admitted_entry_id(
+                    capability_id,
+                    succeeded=succeeded,
+                    verified=verified,
+                    source_ref=source_ref,
+                )
+                event = CognitiveOutcomeEvent(
+                    tenant_id=self._tenant_id,
+                    capability_id=capability_id,
+                    succeeded=succeeded,
+                    verified=verified,
+                    admitted_entry_id=admitted_id,
+                    source_ref=source_ref,
+                    learned_at=learned_at,
+                    prior_confidence=round(prior_value, 4),
+                    next_confidence=round(next_value, 4),
+                )
+                # Ledger FIRST. If append raises, no confidence or episodic state
+                # has been promoted. The integration wrapper still swallows the
+                # exception so a learning failure never perturbs the live request.
+                self._ledger.append(event)
+                if next_confidence is not None:
+                    self._write_confidence(next_confidence)
+                actual_admitted_id = self._admit_outcome(
+                    capability_id,
+                    succeeded=succeeded,
+                    verified=verified,
+                    source_ref=source_ref,
+                )
+                admitted_id = actual_admitted_id
         return LearnRecord(
             capability_id=capability_id,
             succeeded=succeeded,
@@ -217,20 +288,62 @@ class CognitiveLearner:
             learned_at=learned_at,
         )
 
-    def _update_confidence(self, capability_id: str, *, succeeded: bool, verified: bool, assessed_at: str) -> None:
-        update = getattr(self._meta, "update_confidence", None)
+    def _read_capability_confidence(self, capability_id: str) -> float:
+        """Read overall_confidence for ``capability_id`` via the meta organ.
+
+        Returns ``_LIVE_NEUTRAL_CONFIDENCE`` when the organ has no record (a
+        previously-unseen capability) or the get_confidence accessor is
+        absent. Mirrors ``CognitiveExecutionGate._capability_confidence`` so
+        the gate's read and the learner's pre/post-mutation snapshots are
+        derived from the same source -- the ledger event's confidence values
+        will agree with what the gate sees on the next read.
+        """
         get_confidence = getattr(self._meta, "get_confidence", None)
-        if update is None or get_confidence is None:
-            return
+        if get_confidence is None:
+            return _LIVE_NEUTRAL_CONFIDENCE
         existing = get_confidence(capability_id)
-        update(
-            next_capability_confidence(
-                existing,
-                capability_id=capability_id,
-                succeeded=succeeded,
-                verified=verified,
-                assessed_at=assessed_at,
-            )
+        if existing is None:
+            return _LIVE_NEUTRAL_CONFIDENCE
+        return float(existing.overall_confidence)
+
+    def _compute_next_confidence(self, capability_id: str, *, succeeded: bool, verified: bool, assessed_at: str):
+        get_confidence = getattr(self._meta, "get_confidence", None)
+        if get_confidence is None:
+            return None
+        existing = get_confidence(capability_id)
+        return next_capability_confidence(
+            existing,
+            capability_id=capability_id,
+            succeeded=succeeded,
+            verified=verified,
+            assessed_at=assessed_at,
+        )
+
+    def _write_confidence(self, confidence_record) -> None:
+        update = getattr(self._meta, "update_confidence", None)
+        if update is None:
+            return
+        update(confidence_record)
+
+    def _update_confidence(self, capability_id: str, *, succeeded: bool, verified: bool, assessed_at: str) -> None:
+        next_confidence = self._compute_next_confidence(
+            capability_id,
+            succeeded=succeeded,
+            verified=verified,
+            assessed_at=assessed_at,
+        )
+        if next_confidence is not None:
+            self._write_confidence(next_confidence)
+
+    def _candidate_admitted_entry_id(self, capability_id: str, *, succeeded: bool, verified: bool, source_ref: str) -> str | None:
+        if not (succeeded and verified):
+            return None
+        admit = getattr(self._episodic, "admit", None)
+        if admit is None:
+            return None
+        return stable_identifier(
+            "cognitive-live-outcome",
+            {"capability_id": capability_id, "source_ref": source_ref},
         )
 
     def _admit_outcome(self, capability_id: str, *, succeeded: bool, verified: bool, source_ref: str) -> str | None:

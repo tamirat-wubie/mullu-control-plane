@@ -2,8 +2,8 @@
     loop's LEARN-phase outcomes (the "D1 record-and-replay substrate" from
     docs/design/COGNITIVE_OUTCOME_LEDGER.md and the cognitive_loop_live_wiring
     follow-up). One ledger event = one Stage-C CognitiveLearner outcome
-    (per-capability succeeded/verified + the confidence transition + the
-    caller's unique source_ref).
+    (per-tenant / per-capability succeeded/verified + the confidence transition
+    + the caller's unique source_ref).
 
 Governance scope: persistence-layer substrate only. This module:
   - composes persistence/hash_chain.py::HashChainStore for tamper-evident
@@ -15,9 +15,9 @@ Governance scope: persistence-layer substrate only. This module:
     orphan chain entry; a partial chain append never leaves a body without an
     integrity record).
 
-This module does NOT yet wire the ledger to ``CognitiveLearner`` or to the
-HTTP server runtime; that integration ships as separate PRs once this
-substrate is reviewed and merged. See ``__all__`` for the public surface.
+This module does NOT itself wire the ledger to ``CognitiveLearner`` or to the
+HTTP server runtime; integration slices consume this substrate explicitly. See
+``__all__`` for the public surface.
 
 Dependencies:
   - persistence/hash_chain.py for chain primitives,
@@ -31,12 +31,13 @@ Invariants:
   - Body files are content-addressed under ``bodies/`` so two concurrent
     appenders writing the same body content cannot corrupt each other.
   - Per-tenant isolation: each tenant_id maps to a unique on-disk directory
-    (path-traversal-safe via HashChainStore._safe_path), so cross-tenant
-    chains cannot contaminate each other.
+    (path-traversal-safe via HashChainStore._safe_path), and the event body
+    itself carries the same ``tenant_id`` so replay / incident export never
+    infer partitioning from path alone.
   - ``validate`` is fail-CLOSED: any broken chain hash, body-hash mismatch,
-    or missing body file raises CorruptedDataError. Rehydrate paths that
-    consume ``replay`` MUST call ``validate`` first and refuse to serve on
-    failure (the rehydrate posture chosen in L3 of the design doc).
+    tenant mismatch, or missing body file raises CorruptedDataError. Rehydrate
+    paths that consume ``replay`` MUST call ``validate`` first and refuse to
+    serve on failure (the rehydrate posture chosen in L3 of the design doc).
   - The event body and the chain entry are independently deterministic
     (canonical JSON serialise + SHA-256 content hash + SHA-256 chain hash);
     replay is byte-identical for identical input sequences.
@@ -85,14 +86,15 @@ _BODY_FILENAME_MAX = 80
 class CognitiveOutcomeEvent:
     """One Stage-C LEARN event recorded in the cognitive outcome ledger.
 
-    Fields mirror ``core.cognitive_live.LearnRecord`` plus the
-    ``prior_confidence`` / ``next_confidence`` transition (so a replay can
-    detect a corrupted-state restart: rehydrated confidence MUST equal the
-    last event's ``next_confidence``) and ``source_ref`` (the caller's
-    unique workflow_id / chain_id, used by Stage-C for episodic admission
-    idempotency).
+    Fields mirror ``core.cognitive_live.LearnRecord`` plus:
+      - ``tenant_id`` as the explicit replay / audit partition key;
+      - ``prior_confidence`` / ``next_confidence`` transition, so replay can
+        detect corrupted-state restart; and
+      - ``source_ref`` (the caller's unique workflow_id / chain_id, used by
+        Stage-C for episodic admission idempotency).
     """
 
+    tenant_id: str
     capability_id: str
     succeeded: bool
     verified: bool
@@ -103,6 +105,11 @@ class CognitiveOutcomeEvent:
     next_confidence: float
 
     def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "tenant_id",
+            ensure_non_empty_text("tenant_id", self.tenant_id),
+        )
         object.__setattr__(
             self,
             "capability_id",
@@ -245,6 +252,7 @@ class FileBackedCognitiveOutcomeLedger:
         if not isinstance(base_path, Path):
             raise PersistenceError("base_path must be a Path instance")
         normalised = _normalise_tenant_id(tenant_id)
+        self._tenant_id = normalised
         self._tenant_dir = (base_path / normalised).resolve()
         # Ensure base + tenant dir exist (HashChainStore will mkdir its own
         # files inside but does not create the base directory itself).
@@ -261,6 +269,8 @@ class FileBackedCognitiveOutcomeLedger:
     def append(self, event: CognitiveOutcomeEvent) -> CognitiveOutcomeEntry:
         if not isinstance(event, CognitiveOutcomeEvent):
             raise PersistenceError("append requires a CognitiveOutcomeEvent")
+        if event.tenant_id != self._tenant_id:
+            raise PersistenceError("event.tenant_id does not match ledger tenant_id")
         body_str = serialize_record(event)
         content_hash = compute_content_hash(body_str)
         body_path = self._body_path(content_hash)
@@ -301,7 +311,8 @@ class FileBackedCognitiveOutcomeLedger:
         Raises ``CorruptedDataError`` on any of:
           * a chain hash mismatch (HashChainStore.validate -> not-valid),
           * a body file missing for a chain entry's content_hash,
-          * a body file's actual SHA-256 not matching the recorded content_hash.
+          * a body file's actual SHA-256 not matching the recorded content_hash,
+          * an event body carrying a tenant_id different from this ledger.
 
         This is the rehydrate gate: a worker MUST call this before serving
         the first request. A failure aborts startup (the L3 hard-cap +
@@ -324,6 +335,14 @@ class FileBackedCognitiveOutcomeLedger:
                 raise CorruptedDataError(
                     "cognitive outcome ledger body hash mismatch"
                 )
+            try:
+                event = deserialize_record(body_str, CognitiveOutcomeEvent)
+            except (CorruptedDataError, TypeError, ValueError) as exc:
+                raise CorruptedDataError(
+                    f"cognitive outcome ledger body invalid ({type(exc).__name__})"
+                ) from exc
+            if event.tenant_id != self._tenant_id:
+                raise CorruptedDataError("cognitive outcome ledger tenant mismatch")
             # Cross-check by recomputing the chain hash from canonical primitives.
             expected_chain = compute_chain_hash(
                 chain_entry.sequence_number,
@@ -377,6 +396,8 @@ class FileBackedCognitiveOutcomeLedger:
         # already enforces this, but this is the user-visible boundary).
         if not isinstance(event, CognitiveOutcomeEvent):
             raise CorruptedDataError("cognitive outcome ledger body deserialise drift")
+        if event.tenant_id != self._tenant_id:
+            raise CorruptedDataError("cognitive outcome ledger tenant mismatch on replay")
         # Also guard against an upstream JSON change introducing a non-dict
         # body shape that deserialize_record permits.
         try:
