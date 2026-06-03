@@ -14,6 +14,9 @@ Invariants:
 
 from __future__ import annotations
 
+import functools
+import threading
+
 from datetime import datetime, timezone
 from hashlib import sha256
 from typing import Any
@@ -73,6 +76,23 @@ def _emit(es: EventSpineEngine, action: str, payload: dict[str, Any], cid: str) 
     es.emit(event)
 
 
+def _synchronized(method):
+    """Run a bound method while holding self._lock (a re-entrant RLock).
+
+    DistributedRuntimeEngine had NO lock: read methods iterate its eight record
+    dicts (_workers/_queues/_leases/_shards/_checkpoints/_retries/_locks/
+    _violations) while writers insert/pop them, raising "dictionary changed size
+    during iteration" under FastAPI's threadpool. One engine-wide RLock
+    serializes all access; re-entrant so internal cross-method calls do not
+    deadlock.
+    """
+    @functools.wraps(method)
+    def _wrapper(self, *args, **kwargs):
+        with self._lock:
+            return method(self, *args, **kwargs)
+    return _wrapper
+
+
 class DistributedRuntimeEngine:
     """Governed distributed execution fabric engine."""
 
@@ -88,6 +108,7 @@ class DistributedRuntimeEngine:
         self._retries: dict[str, RetrySchedule] = {}
         self._locks: dict[str, ConcurrencyLock] = {}
         self._violations: dict[str, DistributedViolation] = {}
+        self._lock = threading.RLock()
 
     # -- Properties --
     @property
@@ -126,6 +147,7 @@ class DistributedRuntimeEngine:
     # Workers
     # -----------------------------------------------------------------------
 
+    @_synchronized
     def register_worker(
         self,
         worker_id: str,
@@ -146,11 +168,13 @@ class DistributedRuntimeEngine:
         _emit(self._events, "register_worker", {"worker_id": worker_id}, worker_id)
         return worker
 
+    @_synchronized
     def get_worker(self, worker_id: str) -> WorkerRecord:
         if worker_id not in self._workers:
             raise RuntimeCoreInvariantError("unknown worker_id")
         return self._workers[worker_id]
 
+    @_synchronized
     def drain_worker(self, worker_id: str) -> WorkerRecord:
         worker = self.get_worker(worker_id)
         if worker.status == WorkerStatus.TERMINATED:
@@ -166,6 +190,7 @@ class DistributedRuntimeEngine:
         _emit(self._events, "drain_worker", {"worker_id": worker_id}, worker_id)
         return updated
 
+    @_synchronized
     def terminate_worker(self, worker_id: str) -> WorkerRecord:
         worker = self.get_worker(worker_id)
         if worker.status == WorkerStatus.TERMINATED:
@@ -181,6 +206,7 @@ class DistributedRuntimeEngine:
         _emit(self._events, "terminate_worker", {"worker_id": worker_id}, worker_id)
         return updated
 
+    @_synchronized
     def workers_for_tenant(self, tenant_id: str) -> tuple[WorkerRecord, ...]:
         return tuple(w for w in self._workers.values() if w.tenant_id == tenant_id)
 
@@ -188,6 +214,7 @@ class DistributedRuntimeEngine:
     # Queues
     # -----------------------------------------------------------------------
 
+    @_synchronized
     def create_queue(
         self,
         queue_id: str,
@@ -207,11 +234,13 @@ class DistributedRuntimeEngine:
         _emit(self._events, "create_queue", {"queue_id": queue_id}, queue_id)
         return queue
 
+    @_synchronized
     def get_queue(self, queue_id: str) -> QueueRecord:
         if queue_id not in self._queues:
             raise RuntimeCoreInvariantError("unknown queue_id")
         return self._queues[queue_id]
 
+    @_synchronized
     def pause_queue(self, queue_id: str) -> QueueRecord:
         queue = self.get_queue(queue_id)
         if queue.status == QueueStatus.CLOSED:
@@ -227,6 +256,7 @@ class DistributedRuntimeEngine:
         _emit(self._events, "pause_queue", {"queue_id": queue_id}, queue_id)
         return updated
 
+    @_synchronized
     def resume_queue(self, queue_id: str) -> QueueRecord:
         queue = self.get_queue(queue_id)
         if queue.status == QueueStatus.CLOSED:
@@ -242,6 +272,7 @@ class DistributedRuntimeEngine:
         _emit(self._events, "resume_queue", {"queue_id": queue_id}, queue_id)
         return updated
 
+    @_synchronized
     def close_queue(self, queue_id: str) -> QueueRecord:
         queue = self.get_queue(queue_id)
         if queue.status == QueueStatus.CLOSED:
@@ -257,6 +288,7 @@ class DistributedRuntimeEngine:
         _emit(self._events, "close_queue", {"queue_id": queue_id}, queue_id)
         return updated
 
+    @_synchronized
     def queues_for_tenant(self, tenant_id: str) -> tuple[QueueRecord, ...]:
         return tuple(q for q in self._queues.values() if q.tenant_id == tenant_id)
 
@@ -264,6 +296,7 @@ class DistributedRuntimeEngine:
     # Leases
     # -----------------------------------------------------------------------
 
+    @_synchronized
     def acquire_lease(
         self,
         lease_id: str,
@@ -300,12 +333,15 @@ class DistributedRuntimeEngine:
         _emit(self._events, f"lease_{target.value}", {"lease_id": lease_id}, lease_id)
         return updated
 
+    @_synchronized
     def release_lease(self, lease_id: str) -> LeaseRecord:
         return self._transition_lease(lease_id, LeaseStatus.RELEASED)
 
+    @_synchronized
     def expire_lease(self, lease_id: str) -> LeaseRecord:
         return self._transition_lease(lease_id, LeaseStatus.EXPIRED)
 
+    @_synchronized
     def revoke_lease(self, lease_id: str) -> LeaseRecord:
         return self._transition_lease(lease_id, LeaseStatus.REVOKED)
 
@@ -313,6 +349,7 @@ class DistributedRuntimeEngine:
     # Shards
     # -----------------------------------------------------------------------
 
+    @_synchronized
     def register_shard(
         self,
         shard_id: str,
@@ -350,12 +387,15 @@ class DistributedRuntimeEngine:
         _emit(self._events, f"shard_{target.value}", {"shard_id": shard_id}, shard_id)
         return updated
 
+    @_synchronized
     def migrate_shard(self, shard_id: str) -> ShardRecord:
         return self._transition_shard(shard_id, ShardStatus.MIGRATING)
 
+    @_synchronized
     def complete_migration(self, shard_id: str) -> ShardRecord:
         return self._transition_shard(shard_id, ShardStatus.ASSIGNED)
 
+    @_synchronized
     def decommission_shard(self, shard_id: str) -> ShardRecord:
         return self._transition_shard(shard_id, ShardStatus.DECOMMISSIONED)
 
@@ -363,6 +403,7 @@ class DistributedRuntimeEngine:
     # Checkpoints
     # -----------------------------------------------------------------------
 
+    @_synchronized
     def create_checkpoint(
         self,
         checkpoint_id: str,
@@ -399,12 +440,15 @@ class DistributedRuntimeEngine:
         _emit(self._events, f"checkpoint_{target.value}", {"checkpoint_id": checkpoint_id}, checkpoint_id)
         return updated
 
+    @_synchronized
     def commit_checkpoint(self, checkpoint_id: str) -> DistributedCheckpoint:
         return self._transition_checkpoint(checkpoint_id, CheckpointDisposition.COMMITTED)
 
+    @_synchronized
     def fail_checkpoint(self, checkpoint_id: str) -> DistributedCheckpoint:
         return self._transition_checkpoint(checkpoint_id, CheckpointDisposition.FAILED)
 
+    @_synchronized
     def rollback_checkpoint(self, checkpoint_id: str) -> DistributedCheckpoint:
         return self._transition_checkpoint(checkpoint_id, CheckpointDisposition.ROLLED_BACK)
 
@@ -412,6 +456,7 @@ class DistributedRuntimeEngine:
     # Retry schedules
     # -----------------------------------------------------------------------
 
+    @_synchronized
     def create_retry_schedule(
         self,
         schedule_id: str,
@@ -432,6 +477,7 @@ class DistributedRuntimeEngine:
         _emit(self._events, "create_retry_schedule", {"schedule_id": schedule_id}, schedule_id)
         return rs
 
+    @_synchronized
     def increment_retry(self, schedule_id: str) -> RetrySchedule:
         if schedule_id not in self._retries:
             raise RuntimeCoreInvariantError("unknown schedule_id")
@@ -454,6 +500,7 @@ class DistributedRuntimeEngine:
     # Concurrency locks
     # -----------------------------------------------------------------------
 
+    @_synchronized
     def acquire_lock(
         self,
         lock_id: str,
@@ -476,6 +523,7 @@ class DistributedRuntimeEngine:
         _emit(self._events, "acquire_lock", {"lock_id": lock_id, "resource_ref": resource_ref}, lock_id)
         return lock
 
+    @_synchronized
     def release_lock(self, lock_id: str) -> ConcurrencyLock:
         if lock_id not in self._locks:
             raise RuntimeCoreInvariantError("unknown lock_id")
@@ -487,6 +535,7 @@ class DistributedRuntimeEngine:
     # Backpressure
     # -----------------------------------------------------------------------
 
+    @_synchronized
     def compute_backpressure(self, queue_id: str) -> QueueRecord:
         queue = self.get_queue(queue_id)
         if queue.max_depth == 0:
@@ -520,13 +569,14 @@ class DistributedRuntimeEngine:
     # Snapshot
     # -----------------------------------------------------------------------
 
+    @_synchronized
     def distributed_snapshot(self, snapshot_id: str, tenant_id: str) -> DistributedSnapshot:
         now = _now_iso()
         snap = DistributedSnapshot(
             snapshot_id=snapshot_id, tenant_id=tenant_id,
             total_workers=len([w for w in self._workers.values() if w.tenant_id == tenant_id]),
             total_queues=len([q for q in self._queues.values() if q.tenant_id == tenant_id]),
-            total_leases=len([l for l in self._leases.values() if l.tenant_id == tenant_id]),
+            total_leases=len([ls for ls in self._leases.values() if ls.tenant_id == tenant_id]),
             total_shards=len([s for s in self._shards.values() if s.tenant_id == tenant_id]),
             total_checkpoints=len([c for c in self._checkpoints.values() if c.tenant_id == tenant_id]),
             total_violations=len([v for v in self._violations.values() if v.tenant_id == tenant_id]),
@@ -539,6 +589,7 @@ class DistributedRuntimeEngine:
     # Violations
     # -----------------------------------------------------------------------
 
+    @_synchronized
     def detect_distributed_violations(self, tenant_id: str) -> tuple[DistributedViolation, ...]:
         new_violations: list[DistributedViolation] = []
         now = _now_iso()
@@ -607,11 +658,12 @@ class DistributedRuntimeEngine:
     # Assessment
     # -----------------------------------------------------------------------
 
+    @_synchronized
     def distributed_assessment(self, assessment_id: str, tenant_id: str) -> DistributedAssessment:
         now = _now_iso()
         t_workers = len([w for w in self._workers.values() if w.tenant_id == tenant_id])
         t_queues = len([q for q in self._queues.values() if q.tenant_id == tenant_id])
-        t_leases = len([l for l in self._leases.values() if l.tenant_id == tenant_id])
+        t_leases = len([ls for ls in self._leases.values() if ls.tenant_id == tenant_id])
         t_checkpoints = len([c for c in self._checkpoints.values() if c.tenant_id == tenant_id])
         t_violations = len([v for v in self._violations.values() if v.tenant_id == tenant_id])
         active_workers = len([w for w in self._workers.values() if w.tenant_id == tenant_id and w.status == WorkerStatus.ACTIVE])
@@ -631,13 +683,14 @@ class DistributedRuntimeEngine:
     # Closure report
     # -----------------------------------------------------------------------
 
+    @_synchronized
     def distributed_closure_report(self, report_id: str, tenant_id: str) -> DistributedClosureReport:
         now = _now_iso()
         report = DistributedClosureReport(
             report_id=report_id, tenant_id=tenant_id,
             total_workers=len([w for w in self._workers.values() if w.tenant_id == tenant_id]),
             total_queues=len([q for q in self._queues.values() if q.tenant_id == tenant_id]),
-            total_leases=len([l for l in self._leases.values() if l.tenant_id == tenant_id]),
+            total_leases=len([ls for ls in self._leases.values() if ls.tenant_id == tenant_id]),
             total_checkpoints=len([c for c in self._checkpoints.values() if c.tenant_id == tenant_id]),
             total_violations=len([v for v in self._violations.values() if v.tenant_id == tenant_id]),
             created_at=now,
@@ -649,6 +702,7 @@ class DistributedRuntimeEngine:
     # State hash
     # -----------------------------------------------------------------------
 
+    @_synchronized
     def state_hash(self) -> str:
         parts: list[str] = []
         for k in sorted(self._workers):
