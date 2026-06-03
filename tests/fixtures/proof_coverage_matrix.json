@@ -872,10 +872,10 @@
   "route_coverage": {
     "by_coverage_state": {
       "proven": 239,
-      "unproven": 2,
+      "unproven": 3,
       "witnessed": 149
     },
-    "route_count": 390,
+    "route_count": 391,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1691,6 +1691,11 @@
         "coverage_state": "proven",
         "route": "/api/v1/health/deep",
         "surface_id": "operational_health_read_models"
+      },
+      {
+        "coverage_state": "unproven",
+        "route": "/api/v1/health/dependencies",
+        "surface_id": "unclassified_declared_route"
       },
       {
         "coverage_state": "proven",
@@ -2828,7 +2833,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 2
+    "unclassified_route_count": 3
   },
   "schema_version": 1,
   "surfaces": [
