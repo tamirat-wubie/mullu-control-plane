@@ -34,6 +34,7 @@ from mcoi_runtime.core.cognitive_loop import (
     DecisionVerdict,
     HardConstraint,
     decide_verdict,
+    enrich_verdict,
     next_capability_confidence,
 )
 from mcoi_runtime.core.invariants import (
@@ -89,12 +90,26 @@ class CognitiveExecutionGate:
     and only a blocking verdict sets ``blocked=True``; every non-block verdict is
     allowed, so enabling the gate can never cause the system to act where it would
     not have - it can only refuse.
+
+    Stage E (additive, default-OFF) - when ``enriched=True`` and an
+    ``episodic_memory`` is injected, the gate ALSO consults the capability's
+    prior episodic outcomes (admitted by the Stage-C learner) and may escalate
+    today's verdict to a strictly more restrictive one via ``enrich_verdict``.
+    By construction the enriched verdict has rank >= today's verdict (see
+    ``_VERDICT_RANK`` in cognitive_loop.py), so turning enrichment on can only
+    ADD refusals, never remove them - the safety-positive invariant of Stage B
+    is preserved end-to-end. When ``enriched`` is False (the default), the
+    gate is byte-identical to the pre-Stage-E implementation: the episodic
+    engine is never consulted and the verdict is exactly ``decide_verdict``'s
+    output.
     """
 
     def __init__(
         self,
         *,
         meta_reasoning: object,
+        episodic_memory: object | None = None,
+        enriched: bool = False,
         replan_threshold: float = _LIVE_REPLAN_THRESHOLD,
         caution_threshold: float = _LIVE_CAUTION_THRESHOLD,
     ) -> None:
@@ -104,7 +119,13 @@ class CognitiveExecutionGate:
             raise RuntimeCoreInvariantError(
                 "thresholds must satisfy 0.0 <= replan_threshold <= caution_threshold <= 1.0"
             )
+        if enriched and episodic_memory is None:
+            raise RuntimeCoreInvariantError(
+                "enriched gate requires an episodic_memory engine"
+            )
         self._meta = meta_reasoning
+        self._episodic = episodic_memory
+        self._enriched = bool(enriched)
         self._replan_threshold = float(replan_threshold)
         self._caution_threshold = float(caution_threshold)
 
@@ -124,6 +145,13 @@ class CognitiveExecutionGate:
             replan_threshold=self._replan_threshold,
             caution_threshold=self._caution_threshold,
         )
+        if self._enriched and self._episodic is not None:
+            prior_total, prior_success = self._read_priors(capability_id)
+            verdict = enrich_verdict(
+                verdict,
+                prior_outcomes_count=prior_total,
+                prior_success_count=prior_success,
+            )
         return GateDecision(
             capability_id=capability_id,
             decision_verdict=verdict,
@@ -146,6 +174,38 @@ class CognitiveExecutionGate:
         if is_degraded is None:
             return False
         return bool(is_degraded(capability_id))
+
+    def _read_priors(self, capability_id: str) -> tuple[int, int]:
+        """Count cognitive_loop_outcome entries for capability_id (total, success).
+
+        Read-only. Fail-OPEN: a missing list_entries / malformed entry / raising
+        organ degrades to (0, 0) so the enrichment step has no usable evidence
+        and ``enrich_verdict`` falls back to today's verdict unchanged
+        (safety-positive: a broken read can never cause a spurious refusal).
+        """
+        episodic = self._episodic
+        if episodic is None:
+            return 0, 0
+        try:
+            list_entries = getattr(episodic, "list_entries", None)
+            if list_entries is None:
+                return 0, 0
+            entries = list_entries(category="cognitive_loop_outcome")
+        except Exception:  # noqa: BLE001 - never raise into the gate decision
+            return 0, 0
+        total = 0
+        successes = 0
+        for entry in entries:
+            try:
+                content = getattr(entry, "content", None) or {}
+                if str(content.get("capability_id", "")) != capability_id:
+                    continue
+                total += 1
+                if bool(content.get("succeeded", False)):
+                    successes += 1
+            except Exception:  # noqa: BLE001 - skip malformed entry, keep counting
+                continue
+        return total, successes
 
 
 @dataclass(frozen=True, slots=True)

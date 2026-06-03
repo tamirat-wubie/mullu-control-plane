@@ -32,6 +32,7 @@ from mcoi_runtime.core.cognitive_live import (
 
 COGNITIVE_LOOP_ENFORCE_ENV = "MULLU_COGNITIVE_LOOP_ENFORCE"
 COGNITIVE_LOOP_LEARN_ENV = "MULLU_COGNITIVE_LOOP_LEARN"
+COGNITIVE_LOOP_GATE_ENRICHED_ENV = "MULLU_COGNITIVE_LOOP_GATE_ENRICHED"
 EXECUTION_GATE_DEP = "cognitive_execution_gate"
 LEARNER_DEP = "cognitive_learner"
 
@@ -74,19 +75,47 @@ def validate_learn_config(runtime_env: Mapping[str, str]) -> CognitiveLiveConfig
     return _validate(runtime_env, COGNITIVE_LOOP_LEARN_ENV)
 
 
+def validate_gate_enriched_config(
+    runtime_env: Mapping[str, str],
+) -> CognitiveLiveConfigReport:
+    """Validate the Stage-E gate-enrichment flag without raising into startup.
+
+    When enabled, the Stage-B execution gate will additionally consult prior
+    episodic outcomes for the capability and may escalate today's verdict to a
+    strictly more restrictive one (see core.cognitive_loop.enrich_verdict).
+    """
+    return _validate(runtime_env, COGNITIVE_LOOP_GATE_ENRICHED_ENV)
+
+
 def build_execution_gate(
     runtime_env: Mapping[str, str], organs: object
 ) -> CognitiveExecutionGate | None:
     """Build the Stage-B DECIDE gate when enabled and organs are present, else None.
 
-    Fail-safe: a malformed flag or missing organ returns None (the gate is optional;
-    a typo must not crash startup). When None, the live path applies no gate.
+    Fail-safe: a malformed flag or missing organ returns None (the gate is
+    optional; a typo must not crash startup). When None, the live path applies
+    no gate.
+
+    Stage-E enrichment is additive: when both ``MULLU_COGNITIVE_LOOP_ENFORCE``
+    and ``MULLU_COGNITIVE_LOOP_GATE_ENRICHED`` are on AND the organs bundle has
+    an ``episodic_memory``, the built gate also consults prior outcomes and may
+    escalate to a strictly more restrictive verdict. If either condition is
+    missing, the gate is built without enrichment - byte-identical to the
+    pre-Stage-E path.
     """
     if not validate_enforce_config(runtime_env).enabled:
         return None
     meta_reasoning = getattr(organs, "meta_reasoning", None)
     if meta_reasoning is None:
         return None
+    enrichment_enabled = validate_gate_enriched_config(runtime_env).enabled
+    episodic_memory = getattr(organs, "episodic_memory", None)
+    if enrichment_enabled and episodic_memory is not None:
+        return CognitiveExecutionGate(
+            meta_reasoning=meta_reasoning,
+            episodic_memory=episodic_memory,
+            enriched=True,
+        )
     return CognitiveExecutionGate(meta_reasoning=meta_reasoning)
 
 
@@ -191,6 +220,7 @@ def cognitive_block_detail(verdict: str) -> dict[str, object]:
 __all__ = [
     "COGNITIVE_LOOP_ENFORCE_ENV",
     "COGNITIVE_LOOP_LEARN_ENV",
+    "COGNITIVE_LOOP_GATE_ENRICHED_ENV",
     "EXECUTION_GATE_DEP",
     "LEARNER_DEP",
     "CognitiveLiveConfigReport",
@@ -200,6 +230,7 @@ __all__ = [
     "record_execution_learning",
     "validate_enforce_config",
     "validate_learn_config",
+    "validate_gate_enriched_config",
     "chain_capability_key",
     "cognitive_block_detail",
 ]

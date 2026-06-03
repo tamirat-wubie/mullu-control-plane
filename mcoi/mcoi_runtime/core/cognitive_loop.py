@@ -314,6 +314,99 @@ def decide_verdict(
     return (DecisionVerdict.PROCEED, "confidence sufficient to proceed")
 
 
+# Verdict-restrictiveness rank. Higher rank = more restrictive (refuses more).
+# Used by enrich_verdict and more_restrictive_verdict to enforce the safety-
+# positive invariant of the Stage-E enrichment: an enriched verdict may only
+# ADD a refusal, never remove one. Because the rank is total (every verdict
+# maps to a unique non-negative int), max-by-rank is a sound monotone-tighter
+# composition operator for any number of candidate verdicts.
+_VERDICT_RANK: dict[DecisionVerdict, int] = {
+    DecisionVerdict.PROCEED: 0,
+    DecisionVerdict.PROCEED_WITH_CAUTION: 1,
+    DecisionVerdict.REPLAN: 2,
+    DecisionVerdict.DEFER_TO_REVIEW: 3,
+    DecisionVerdict.BLOCK_UNKNOWN_CONSTRAINT: 4,
+}
+
+# Minimum sample size at which the rule-E2 "bad track record" enrichment may
+# fire. Below this, a single bad outcome would defer-to-review, which would be
+# noise rather than signal. Three is the smallest sample whose <50% success
+# rate is unambiguously "majority failure" rather than a coin flip.
+_E2_MIN_SAMPLE = 3
+
+# Success-rate ceiling below which rule E2 escalates REPLAN -> DEFER_TO_REVIEW
+# (assuming the sample size precondition is met). 0.5 = "majority failures".
+_E2_BAD_SUCCESS_RATE = 0.5
+
+
+def more_restrictive_verdict(
+    left: DecisionVerdict, right: DecisionVerdict
+) -> DecisionVerdict:
+    """Return the more restrictive of two verdicts (by _VERDICT_RANK).
+
+    Pure / total / commutative. ``left`` is returned on ties so the function is
+    deterministic for snapshot tests. This is the composition primitive the
+    Stage-E enrichment uses to guarantee monotone-tighter results.
+    """
+    if not isinstance(left, DecisionVerdict):
+        raise RuntimeCoreInvariantError("more_restrictive_verdict requires DecisionVerdict")
+    if not isinstance(right, DecisionVerdict):
+        raise RuntimeCoreInvariantError("more_restrictive_verdict requires DecisionVerdict")
+    return left if _VERDICT_RANK[left] >= _VERDICT_RANK[right] else right
+
+
+def enrich_verdict(
+    today_verdict: DecisionVerdict,
+    *,
+    prior_outcomes_count: int,
+    prior_success_count: int,
+) -> DecisionVerdict:
+    """Stage-E enrichment: compute a verdict at least as restrictive as today's.
+
+    By construction the result satisfies
+    ``_VERDICT_RANK[enrich_verdict(t, ...)] >= _VERDICT_RANK[t]`` for every
+    input - the function only ever ADDS a refusal, never removes one. The
+    grid test ``test_enrich_verdict_is_monotone_over_input_space`` proves this
+    by exhaustive enumeration over a representative input grid.
+
+    Rules (each independent; the result is the most restrictive candidate):
+    * E1 - "hedged verdict + no evidence": if today is PROCEED_WITH_CAUTION
+      and there are zero prior outcomes for this capability, the system has
+      no past evidence supporting "proceed cautiously" - escalate to
+      DEFER_TO_REVIEW so an operator decides.
+    * E2 - "REPLAN with bad track record": if today is REPLAN and there are
+      at least _E2_MIN_SAMPLE (=3) prior outcomes whose success rate is
+      strictly below _E2_BAD_SUCCESS_RATE (=0.5), bounded replan is unlikely
+      to help - escalate to DEFER_TO_REVIEW.
+
+    Bad inputs (negative counts, success > total, non-int) are treated as
+    "no usable evidence" - the function returns ``today_verdict`` unchanged,
+    so a bug in the caller's priors read cannot cause a spurious refusal.
+    """
+    if not isinstance(today_verdict, DecisionVerdict):
+        raise RuntimeCoreInvariantError("enrich_verdict requires a DecisionVerdict today")
+    if not isinstance(prior_outcomes_count, int) or not isinstance(prior_success_count, int):
+        return today_verdict
+    if prior_outcomes_count < 0 or prior_success_count < 0:
+        return today_verdict
+    if prior_success_count > prior_outcomes_count:
+        return today_verdict
+
+    result = today_verdict
+
+    # Rule E1.
+    if today_verdict is DecisionVerdict.PROCEED_WITH_CAUTION and prior_outcomes_count == 0:
+        result = more_restrictive_verdict(result, DecisionVerdict.DEFER_TO_REVIEW)
+
+    # Rule E2.
+    if today_verdict is DecisionVerdict.REPLAN and prior_outcomes_count >= _E2_MIN_SAMPLE:
+        success_rate = prior_success_count / prior_outcomes_count
+        if success_rate < _E2_BAD_SUCCESS_RATE:
+            result = more_restrictive_verdict(result, DecisionVerdict.DEFER_TO_REVIEW)
+
+    return result
+
+
 def next_capability_confidence(
     existing: CapabilityConfidence | None,
     *,
