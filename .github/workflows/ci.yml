@@ -42,6 +42,7 @@ jobs:
           - po
           - pr
           - pu
+          - q
           - r
           - s
           - t

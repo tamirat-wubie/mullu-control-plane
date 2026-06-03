@@ -12,6 +12,9 @@ Invariants:
   - Shard targets are deterministic and bounded by directory or filename prefix.
   - Oversized filename prefixes are split into deterministic sub-shards.
   - No shell command construction is used for test execution.
+  - The ``--serial-full`` lane runs the whole tests/ tree in one process with
+    the same non-soak/non-infra/non-live marker, to catch cross-test and
+    global-state pollution that per-shard isolation structurally hides.
 """
 
 from __future__ import annotations
@@ -92,6 +95,7 @@ SHARDS: tuple[ShardSpec, ...] = (
     ShardSpec("po", "top-level tests with filenames test_po*"),
     ShardSpec("pr", "top-level tests with filenames test_pr*"),
     ShardSpec("pu", "top-level tests with filenames test_pu*"),
+    ShardSpec("q", "top-level tests with filenames test_q*"),
     ShardSpec("r", "top-level tests with filenames test_r*"),
     ShardSpec("s", "top-level tests with filenames test_s*"),
     ShardSpec("t", "top-level tests with filenames test_t*"),
@@ -168,6 +172,33 @@ def build_soak_command(*, extra_pytest_args: Sequence[str] = ()) -> tuple[str, .
         *DEFAULT_PYTEST_FLAGS,
         "-m",
         SOAK_MARKER,
+        *extra_pytest_args,
+    )
+
+
+def build_serial_full_command(*, extra_pytest_args: Sequence[str] = ()) -> tuple[str, ...]:
+    """Build the single-process, whole-suite pytest command.
+
+    Runs the entire ``mcoi/tests`` tree in ONE pytest process with the same
+    non-soak / non-infra / non-live marker the shards use. Unlike the shards
+    (which split by filename and run in separate processes / CI jobs), this lane
+    deliberately co-executes every test in one process so that cross-test,
+    global-singleton, and module-state pollution is exercised -- the class of
+    bug the sharded PR gate structurally cannot see (a polluter and its victim
+    land in different shards). ``--maxfail`` is intentionally omitted so the run
+    reports the complete failure list rather than stopping at the first.
+    """
+    return (
+        sys.executable,
+        "-m",
+        "pytest",
+        "tests",
+        "-q",
+        "--tb=short",
+        "-p",
+        "no:cacheprovider",
+        "-m",
+        DEFAULT_MARKER,
         *extra_pytest_args,
     )
 
@@ -303,11 +334,31 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--shard", action="append", choices=shard_names(), help="Run one shard; repeatable.")
     parser.add_argument("--include-soak", action="store_true", help="Run local soak after non-soak shards.")
     parser.add_argument("--soak-only", action="store_true", help="Run only local soak tests.")
+    parser.add_argument(
+        "--serial-full",
+        action="store_true",
+        help="Run the whole tests/ tree in ONE process (catches cross-shard "
+        "pollution the sharded gate cannot). Ignores --shard.",
+    )
     parser.add_argument("--pytest-arg", action="append", default=[], help="Append an extra pytest argument.")
     parser.add_argument("--list", action="store_true", help="List canonical shard names and exit.")
     parser.add_argument("--dry-run", action="store_true", help="Print planned commands without executing tests.")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable run receipts.")
     args = parser.parse_args(argv)
+
+    if args.serial_full:
+        command = build_serial_full_command(extra_pytest_args=tuple(args.pytest_arg))
+        run = _execute_command(
+            "serial-full",
+            command,
+            target_count=1,
+            dry_run=bool(args.dry_run),
+            runner=subprocess.run,
+            emit_progress=not bool(args.json),
+        )
+        if args.json:
+            print(json.dumps([run.as_dict()], indent=2, sort_keys=True))
+        return 0 if run.returncode == 0 else 1
 
     if args.list:
         payload = [{"name": shard.name, "description": shard.description} for shard in SHARDS]
