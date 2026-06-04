@@ -148,6 +148,16 @@ def test_action_queue_view_rejects_cross_tenant(cross_tenant_kernel):
     assert exc.value.status_code == 403
 
 
+def test_action_queue_selection_preview_rejects_cross_tenant(cross_tenant_kernel):
+    with pytest.raises(HTTPException) as exc:
+        ok.preview_organization_action_queue_selection(
+            "org-x",
+            ok.ActionQueueSelectionPreviewRequest(action_id="queued-action"),
+            _authed("tenant-a"),
+        )
+    assert exc.value.status_code == 403
+
+
 def test_create_department_rejects_cross_tenant(cross_tenant_kernel):
     with pytest.raises(HTTPException) as exc:
         ok.create_department(_Body(), _authed("tenant-a"))
