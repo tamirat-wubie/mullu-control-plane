@@ -34,12 +34,14 @@ def test_musia_tier2_reference_declares_implemented_surface() -> None:
 
 def test_musia_tier2_reference_rejects_stale_stub_language() -> None:
     content = DOC_PATH.read_text(encoding="utf-8")
+    normalized_content = " ".join(content.split())
     stale_phrases = (
         "stub into a real consumer",
         "stub-shaped placeholder",
         "Once Tier 2 ships",
         "no change needed at draft time",
         "Tier2Validator` is referenced but not specified",
+        "By the time Tier 5 is implemented",
     )
 
     assert all(phrase not in content for phrase in stale_phrases)
@@ -48,4 +50,6 @@ def test_musia_tier2_reference_rejects_stale_stub_language() -> None:
     assert "Production soak remains deferred by user direction" in content
     assert "construct-local invariant checks" in content
     assert "Registry-backed semantic validation" in content
+    assert "Tier 3-5 responsibility tables lazily" in content
+    assert "all 25 construct responsibilities" in normalized_content
 
