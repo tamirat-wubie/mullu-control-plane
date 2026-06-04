@@ -299,8 +299,13 @@ wrappers emit the same normalized contract, as does the workspace-groups export
 wrapper, SAML-groups export wrapper, and LDAP export wrapper. Live LDAP polling
 is not implemented.
 
+Source-adapter consolidation around `scripts/authority_directory_mapping.py` is
+closed for the bounded export adapters: SCIM, GitHub Teams, workspace groups,
+SAML groups, and LDAP all import the shared mapping helpers before handing the
+normalized authority source to `scripts/sync_authority_directory.py`.
+
 STATUS:
   Completeness: 100%
   Invariants verified: source evidence required, no fabricated org data, explicit ownership required, duplicate records rejected, bounded parser failures, live SCIM identity export separated from authority mappings, live GitHub team evidence separated from authority mappings, workspace group evidence separated from authority mappings, SAML group evidence separated from authority mappings, LDAP DN evidence separated from authority mappings, read-model verification required
   Open issues: live LDAP polling not implemented
-  Next action: add live LDAP polling or consolidate source adapters around shared mapping helpers
+  Next action: add credentialed live LDAP polling without bypassing the export-adapter mapping contract
