@@ -12,6 +12,9 @@ Invariants:
 
 from __future__ import annotations
 
+from pathlib import Path
+
+import scripts.validate_release_status as validate_release_status_module
 from scripts.validate_release_status import (
     CI_WORKFLOW_PATH,
     DEPLOYMENT_WITNESS_WORKFLOW_PATH,
@@ -216,6 +219,32 @@ def test_deployment_guide_requires_read_only_email_calendar_scope() -> None:
         "python scripts/validate_finance_email_calendar_recovery_env_example.py "
         "--template examples/finance_email_calendar_recovery.env.example --strict --json"
     ) in content
+
+
+def test_release_source_hygiene_scan_skips_nested_git_worktree(tmp_path: Path) -> None:
+    nested_repo = tmp_path / "mullu-control-plane-shadow"
+    nested_repo.mkdir()
+    (nested_repo / ".git").write_text(
+        "gitdir: ../.git/worktrees/mullu-control-plane-shadow\n",
+        encoding="utf-8",
+    )
+    (nested_repo / "bad.py").write_text(
+        "try:\n    pass\nexcept:\n    pass\n",
+        encoding="utf-8",
+    )
+    active_file = tmp_path / "good.py"
+    active_file.write_text("def ok() -> None:\n    return None\n", encoding="utf-8")
+
+    original_root = validate_release_status_module.REPO_ROOT
+    try:
+        validate_release_status_module.REPO_ROOT = tmp_path
+        paths = validate_release_status_module._iter_source_hygiene_paths()
+    finally:
+        validate_release_status_module.REPO_ROOT = original_root
+
+    assert paths == (active_file,)
+    assert nested_repo / "bad.py" not in paths
+    assert active_file in paths
 
 
 def test_gateway_publication_workflow_reports_missing_receipt_validator() -> None:

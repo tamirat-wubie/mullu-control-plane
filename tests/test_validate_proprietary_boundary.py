@@ -66,6 +66,28 @@ def test_forbidden_scan_rejects_obsolete_license_grant(tmp_path: Path) -> None:
     assert "MIT" in errors[0]
 
 
+def test_forbidden_scan_skips_nested_git_worktree(tmp_path: Path) -> None:
+    nested_repo = tmp_path / "mullu-control-plane-shadow"
+    nested_repo.mkdir()
+    (nested_repo / ".git").write_text("gitdir: ../.git/worktrees/shadow\n", encoding="utf-8")
+    (nested_repo / "README.md").write_text("Header\n" + "MIT" + " License\n", encoding="utf-8")
+    active_doc = tmp_path / "README.md"
+    active_doc.write_text("Mullusi proprietary boundary text.\n", encoding="utf-8")
+
+    errors = validate_proprietary_boundary.scan_forbidden_text_patterns(root=tmp_path)
+
+    assert errors == []
+
+
+def test_forbidden_scan_skips_patch_artifacts(tmp_path: Path) -> None:
+    patch_artifact = tmp_path / "review.patch"
+    patch_artifact.write_bytes(b"\xff\xfeM\x00I\x00T\x00 \x00L\x00i\x00c\x00e\x00n\x00s\x00e\x00")
+
+    errors = validate_proprietary_boundary.scan_forbidden_text_patterns(root=tmp_path)
+
+    assert errors == []
+
+
 def test_typescript_package_rejects_publishable_metadata(tmp_path: Path) -> None:
     package = tmp_path / "package.json"
     package.write_text('{"private": false, "license": "' + "MIT" + '"}', encoding="utf-8")

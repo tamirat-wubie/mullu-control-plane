@@ -95,7 +95,16 @@ SCAN_EXCLUDED_PATHS = {
     Path("scripts/validate_foundation_github_app_token_format_boundary.py"),
     Path("tests/test_validate_foundation_github_app_token_format_boundary.py"),
 }
-SCAN_EXCLUDED_PARTS = {".git", ".tmp", "__pycache__", ".pytest_cache", "node_modules"}
+SCAN_EXCLUDED_PARTS = {
+    ".claude",
+    ".git",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".tmp",
+    ".worktrees",
+    "__pycache__",
+    "node_modules",
+}
 FORBIDDEN_SCAN_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("fixed_ghs_suffix_regex", re.compile(r"ghs_[^\n]{0,24}\{(?:36|40)\}", re.IGNORECASE)),
     ("exact_ghs_fixture", re.compile(r"ghs_[A-Za-z0-9]{36}(?![A-Za-z0-9])")),
@@ -251,18 +260,42 @@ def iter_scannable_files(repo_root: Path) -> list[Path]:
     """Return repository files eligible for token-format assumption scanning."""
 
     paths: list[Path] = []
-    for path in repo_root.rglob("*"):
-        relative_path = path.relative_to(repo_root)
-        if not path.is_file():
+    pending = [repo_root]
+    while pending:
+        current = pending.pop()
+        try:
+            children = tuple(current.iterdir())
+        except OSError:
             continue
-        if any(part in SCAN_EXCLUDED_PARTS for part in relative_path.parts):
-            continue
-        if relative_path in SCAN_EXCLUDED_PATHS:
-            continue
-        if path.suffix.lower() not in SCANNED_SUFFIXES:
-            continue
-        paths.append(path)
-    return paths
+        for path in children:
+            relative_path = path.relative_to(repo_root)
+            if path.is_dir():
+                if _skip_scan_directory(path, relative_path, repo_root):
+                    continue
+                pending.append(path)
+                continue
+            if not path.is_file():
+                continue
+            if any(part in SCAN_EXCLUDED_PARTS for part in relative_path.parts):
+                continue
+            if relative_path in SCAN_EXCLUDED_PATHS:
+                continue
+            if path.suffix.lower() not in SCANNED_SUFFIXES:
+                continue
+            paths.append(path)
+    return sorted(paths)
+
+
+def _skip_scan_directory(path: Path, relative_path: Path, repo_root: Path) -> bool:
+    """Return whether a directory is outside this repository scan boundary."""
+
+    if any(part in SCAN_EXCLUDED_PARTS for part in relative_path.parts):
+        return True
+    if path != repo_root and (path / ".git").exists():
+        return True
+    if path != repo_root and (path / ".git").is_file():
+        return True
+    return False
 
 
 def validate_repository_scan(repo_root: Path = REPO_ROOT) -> list[TokenFormatFinding]:

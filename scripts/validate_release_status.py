@@ -422,10 +422,15 @@ PUBLIC_NAMING_RELEASE_SURFACE_LITERALS: dict[str, tuple[str, ...]] = {
 
 SOURCE_HYGIENE_GLOBS: tuple[str, ...] = ("*.py", "*.rs", "*.toml", "*.yml", "*.yaml")
 IGNORED_SOURCE_DIR_SEGMENTS: tuple[str, ...] = (
+    ".claude",
     ".git",
-    ".venv",
     ".pytest_cache",
+    ".ruff_cache",
+    ".tmp",
+    ".venv",
+    ".worktrees",
     "__pycache__",
+    "node_modules",
     "target",
 )
 PYTHON_BARE_EXCEPT_PATTERN = re.compile(r"^\s*except\s*:\s*$", re.MULTILINE)
@@ -747,14 +752,37 @@ def validate_deployment_matrix_text(content: str) -> list[str]:
 
 def _iter_source_hygiene_paths() -> tuple[Path, ...]:
     paths: list[Path] = []
-    for pattern in SOURCE_HYGIENE_GLOBS:
-        for path in REPO_ROOT.rglob(pattern):
-            if any(segment in IGNORED_SOURCE_DIR_SEGMENTS for segment in path.parts):
+    pending = [REPO_ROOT]
+    while pending:
+        current = pending.pop()
+        try:
+            children = tuple(sorted(current.iterdir()))
+        except OSError:
+            continue
+        for path in children:
+            relative_path = path.relative_to(REPO_ROOT)
+            if path.is_dir():
+                if _skip_source_hygiene_directory(path, relative_path):
+                    continue
+                pending.append(path)
                 continue
             if not path.is_file():
                 continue
+            if any(segment in IGNORED_SOURCE_DIR_SEGMENTS for segment in relative_path.parts):
+                continue
+            if not any(path.match(pattern) for pattern in SOURCE_HYGIENE_GLOBS):
+                continue
             paths.append(path)
     return tuple(sorted(set(paths)))
+
+
+def _skip_source_hygiene_directory(path: Path, relative_path: Path) -> bool:
+    """Return whether a directory is outside release source-hygiene scope."""
+    if any(segment in IGNORED_SOURCE_DIR_SEGMENTS for segment in relative_path.parts):
+        return True
+    if path != REPO_ROOT and (path / ".git").exists():
+        return True
+    return False
 
 
 def scan_source_hygiene_text(path: Path, content: str) -> list[str]:
