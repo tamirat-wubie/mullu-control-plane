@@ -665,6 +665,12 @@
       "surface": "simulation"
     },
     {
+      "schema_id": "intelligence-coordination-episode-receipt",
+      "path": "schemas/intelligence_coordination_episode_receipt.schema.json",
+      "urn": "urn:mullusi:schema:intelligence-coordination-episode-receipt:1",
+      "surface": "coordination"
+    },
+    {
       "schema_id": "sdlc-change-request",
       "path": "schemas/sdlc_change_request.schema.json",
       "urn": "urn:mullusi:schema:sdlc-change-request:1",
