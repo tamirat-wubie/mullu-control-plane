@@ -12,6 +12,8 @@
 
 Every governed software delivery PR must either attach the lifecycle artifacts or explain why the change is documentation-only or read-only.
 
+- [ ] SDLC route used is stated or linked.
+- [ ] Route evidence was produced by `python scripts/route_sdlc.py "<request text>"` or checked by `python scripts/validate_sdlc_route.py`.
 - [ ] Change request is linked or included.
 - [ ] Requirement is linked or included.
 - [ ] Design decision includes rollback path and test plan.
@@ -52,6 +54,7 @@ If this PR adds runtime-only contracts:
 python scripts/validate_protocol_manifest.py
 python scripts/validate_release_status.py --strict
 python scripts/validate_sdlc_artifact.py
+python scripts/validate_sdlc_route.py
 python scripts/validate_sdlc_state_machine.py
 python scripts/validate_sdlc_release_readiness.py --strict
 python scripts/validate_sdlc_security_review.py --strict

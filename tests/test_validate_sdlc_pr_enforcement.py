@@ -28,6 +28,9 @@ def test_current_sdlc_pr_enforcement_contract_passes() -> None:
     assert errors == []
     assert "## SDLC / SDLD evidence" in texts.pr_template
     assert "name: SDLC Governance Gate" in texts.ci_workflow
+    assert "SDLC route used" in texts.pr_template
+    assert "python scripts/route_sdlc.py" in texts.pr_template
+    assert "python scripts/validate_sdlc_route.py" in texts.pr_template
     assert "Gate decision envelope" in texts.pr_template
     assert "Implementation receipt" in texts.pr_template
     assert "Transition receipt" in texts.pr_template
@@ -39,6 +42,7 @@ def test_current_sdlc_pr_enforcement_contract_passes() -> None:
     assert "sdlc_inventory_closure proves canonical schema and example coverage" in texts.enforcement_doc
     assert "sdlc_branch_ruleset_witness proves `main-protection`" in texts.enforcement_doc
     assert "sdlc_workspace_preflight_closure proves workspace preflight command" in texts.enforcement_doc
+    assert "SDLC route used" in texts.enforcement_doc
     assert "recovery handoff has `sdlc_recovery_handoff_receipt` evidence" in texts.enforcement_doc
     assert texts.ruleset_witness["ruleset_name"] == "main-protection"
 
@@ -51,6 +55,8 @@ def test_ci_workflow_requires_sdlc_gate_before_build_verification() -> None:
     assert texts.ci_workflow.find("sdlc-governance-gate:") < texts.ci_workflow.find("build-verification:")
     assert "sdlc-governance-gate" in texts.ci_workflow
     assert "tests/test_validate_sdlc_pr_enforcement.py" in texts.ci_workflow
+    assert "python scripts/validate_sdlc_route.py" in texts.ci_workflow
+    assert "tests/test_validate_sdlc_route.py" in texts.ci_workflow
     assert "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json" in texts.ci_workflow
     assert all(context in texts.ci_workflow for context in validator.REQUIRED_RULESET_STATUS_CONTEXTS)
 

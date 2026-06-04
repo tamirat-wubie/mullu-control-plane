@@ -9,6 +9,7 @@ Invariants: a software delivery PR is not ready for merge until SDLC evidence is
 
 Every effect-bearing software delivery PR must state or link:
 
+1. SDLC route used, produced by `python scripts/route_sdlc.py "<request text>"` or checked by `python scripts/validate_sdlc_route.py`.
 1. Change request.
 2. Requirement.
 3. Design decision with rollback path and test plan.
@@ -40,12 +41,14 @@ The gate runs:
 
 ```powershell
 python scripts/validate_sdlc_artifact.py --receipt-path .change_assurance/sdlc_artifact_validation_receipt.json
+python scripts/validate_sdlc_route.py
 python scripts/validate_sdlc_state_machine.py
 python scripts/validate_sdlc_release_readiness.py --strict
 python scripts/validate_sdlc_security_review.py --strict
 python scripts/validate_sdlc_pr_enforcement.py
 python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json
 python -m pytest tests/test_validate_sdlc_artifact.py tests/test_validate_sdlc_state_machine.py tests/test_validate_sdlc_release_readiness.py tests/test_sdlc_security_review.py tests/test_validate_sdlc_pr_enforcement.py -q
+python -m pytest tests/test_validate_sdlc_route.py -q
 ```
 
 `Build Verification` depends on `sdlc-governance-gate`, so the existing `main-protection` ruleset cannot pass the aggregate build gate if SDLC validation fails. Branch protection may also require `SDLC Governance Gate` directly.
@@ -67,6 +70,7 @@ The witness must also keep `main-protection` active for `~DEFAULT_BRANCH`, requi
 merge_ready
 <=> PR template SDLC evidence complete
 and SDLC Governance Gate passed
+and SDLC route used evidence exists
 and workspace governance preflight passed
 and sdlc_branch_ruleset_witness proves `main-protection` requires SDLC-critical status contexts
 and gate_decision_envelopes are retained through terminal closure

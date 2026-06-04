@@ -1,0 +1,13 @@
+{
+  "route_id": "sdlc_route_ci_failure_001",
+  "request": "CI failed on the SDLC Governance Gate for a PR",
+  "expected_sequence": "failing_pr",
+  "expected_fallback_used": false,
+  "expected_skills": [
+    "sdlc-ci-failure-triage",
+    "sdlc-change-impact-audit",
+    "sdlc-test-contract-authoring",
+    "sdlc-pr-readiness-closure",
+    "sdlc-governance-receipt-auditor"
+  ]
+}

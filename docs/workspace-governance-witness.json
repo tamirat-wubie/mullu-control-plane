@@ -1,5 +1,5 @@
 {
-  "artifact_count": 62,
+  "artifact_count": 65,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -222,6 +222,16 @@
       "purpose": "Read-only validator for canonical SDLC artifact-chain closure."
     },
     {
+      "name": "sdlc_route_helper",
+      "path": "scripts/route_sdlc.py",
+      "purpose": "Read-only helper for deterministic SDLC route selection."
+    },
+    {
+      "name": "sdlc_route_validator",
+      "path": "scripts/validate_sdlc_route.py",
+      "purpose": "Read-only validator for SDLC route fixtures and route evidence hooks."
+    },
+    {
       "name": "sdlc_state_machine_validator",
       "path": "scripts/validate_sdlc_state_machine.py",
       "purpose": "Read-only validator for SDLC state transition evidence."
@@ -310,6 +320,11 @@
       "name": "sdlc_artifact_tests",
       "path": "tests/test_validate_sdlc_artifact.py",
       "purpose": "Regression tests for canonical SDLC artifact-chain closure."
+    },
+    {
+      "name": "sdlc_route_tests",
+      "path": "tests/test_validate_sdlc_route.py",
+      "purpose": "Regression tests for deterministic SDLC route validation."
     }
   ],
   "block_conditions": [

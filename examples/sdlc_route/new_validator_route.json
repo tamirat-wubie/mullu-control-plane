@@ -1,0 +1,15 @@
+{
+  "route_id": "sdlc_route_new_validator_001",
+  "request": "Add a new governance validator with requirements, tests, security review, rollback, and receipt closure",
+  "expected_sequence": "new_effect_bearing_change",
+  "expected_fallback_used": false,
+  "expected_skills": [
+    "sdlc-requirements-boundary",
+    "sdlc-change-impact-audit",
+    "sdlc-test-contract-authoring",
+    "sdlc-security-review-gate",
+    "sdlc-rollback-recovery-plan",
+    "sdlc-governance-receipt-auditor",
+    "sdlc-pr-readiness-closure"
+  ]
+}

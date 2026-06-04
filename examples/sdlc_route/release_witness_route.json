@@ -1,0 +1,12 @@
+{
+  "route_id": "sdlc_route_release_witness_001",
+  "request": "Prepare release deployment witness and rollback",
+  "expected_sequence": "release_or_deployment",
+  "expected_fallback_used": false,
+  "expected_skills": [
+    "sdlc-release-witness-closure",
+    "sdlc-security-review-gate",
+    "sdlc-rollback-recovery-plan",
+    "sdlc-governance-receipt-auditor"
+  ]
+}
