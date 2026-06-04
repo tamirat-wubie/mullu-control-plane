@@ -93,13 +93,18 @@ class Transformation(ConstructBase):
         super().__post_init__()
 ```
 
-**Invariant verification (deferred to a `Tier2Validator`):**
+**Invariant verification boundary:**
 - `tier1_references_resolve` — all five Tier 1 IDs must resolve in the construct registry
 - `boundary_contains_states` — both states must satisfy the boundary's `inside_predicate`
 - `change_matches_states` — change's `state_before_id` and `state_after_id` must equal the transformation's initial and target
 - `causation_produces_change` — causation's `effect_id` must equal `change_id`
 
-The validator is **not** part of the construct's `__post_init__` because it requires registry lookup. It runs at composition time when constructs are added to a graph.
+The shipped Tier 2 module performs construct-local invariant checks in each
+`__post_init__` method: required references, bounded numeric fields,
+classification enums, distinct participants, non-empty pattern containment, and
+bounded composition depth. Registry-backed semantic validation remains a
+follow-on because it requires a concrete construct registry and edge model; it
+must not be described as an unspecified placeholder.
 
 ### Composition (priority 2)
 
@@ -335,7 +340,7 @@ payoff of having reserved all 25 enum slots in v4.0.0.
 ## What this draft does NOT decide
 
 - **Cognitive engine integration.** The 15-step SCCCE cycle is what *populates* the construct graph. Tier 2 constructs are graph nodes; the cycle defines what edges look like. That's a separate design (Phase 2, post-W12).
-- **Validator implementation.** `Tier2Validator` is referenced but not specified. Its design depends on the construct registry shape, which is also Phase 2.
+- **Registry-backed semantic validation.** Construct-local invariant checks are implemented in `tier2_structural.py`; the remaining validator scope is registry lookup, boundary membership, causal-edge agreement, and graph-level semantic checks once the construct registry and edge model are concrete.
 - **Persistence.** Tier 2 constructs persist to the same store as Tier 1. The store interface is set; no new schema needed beyond `universal_construct.schema.json`.
 - **Φ_gov integration.** Modifying a Tier 2 construct cascades through Tier 1 references. Cascade rules are W12 scope.
 - **Performance.** Tier 2 constructs may be high-volume in real usage. Caching strategy is W7+ when we have actual usage data.
