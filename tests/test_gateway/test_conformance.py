@@ -331,6 +331,7 @@ def test_known_limitations_alignment_rejects_stale_directory_adapter_claim(tmp_p
     )
     for script_name in (
         "scim_authority_directory_adapter.py",
+        "github_teams_authority_directory_adapter.py",
         "ldap_authority_directory_adapter.py",
         "saml_groups_authority_directory_adapter.py",
         "workspace_groups_authority_directory_adapter.py",
@@ -348,6 +349,7 @@ def test_known_limitations_alignment_rejects_stale_directory_adapter_claim(tmp_p
 
     assert stale is False
     assert aligned is True
+    assert (scripts_dir / "github_teams_authority_directory_adapter.py").exists()
     assert (scripts_dir / "ldap_authority_directory_adapter.py").exists()
 
 
@@ -362,6 +364,7 @@ def test_known_limitations_alignment_ignores_unrelated_not_implemented_text(tmp_
     )
     for script_name in (
         "scim_authority_directory_adapter.py",
+        "github_teams_authority_directory_adapter.py",
         "ldap_authority_directory_adapter.py",
         "saml_groups_authority_directory_adapter.py",
         "workspace_groups_authority_directory_adapter.py",
@@ -385,6 +388,10 @@ def test_known_limitations_alignment_ignores_unrelated_not_implemented_text(tmp_
         "External directory adapters are implemented; scheduling UI is not yet implemented.",
         ("external directory adapters",),
     ) is False
+    assert _has_stale_limitation_claim(
+        "GitHub Teams adapter is not yet implemented.",
+        ("github teams",),
+    ) is True
 
 
 def _signature_valid(payload: dict, secret: str) -> bool:
