@@ -308,6 +308,6 @@ def test_cycle_universal_result_kwargs_match_adapter_shape():
     assert "cognitive_cycles_run" in kwargs
     assert "converged" in kwargs
     assert "proof_state" in kwargs
-    # The transformation Tier 2 stub the software_dev adapter checks for
+    # The software_dev adapter consumes this real Tier 2 transformation count.
     summary = kwargs["construct_graph_summary"]
     assert summary.get("transformation", 0) >= 1
