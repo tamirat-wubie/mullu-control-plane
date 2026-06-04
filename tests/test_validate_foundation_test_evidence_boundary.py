@@ -23,11 +23,15 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.validate_foundation_test_evidence_boundary import (  # noqa: E402
     DEFAULT_PACKET_PATH,
+    DEFAULT_ROUTING_PATH,
+    EXPECTED_RECEIPT_ROUTES,
+    EXPECTED_ROUTING_ID,
     EXPECTED_SURFACES,
     EXPECTED_WITNESS_ID,
     load_json_object,
     validate_foundation_test_evidence_boundary,
     validate_packet,
+    validate_receipt_routing_packet,
 )
 
 
@@ -46,6 +50,27 @@ def test_test_evidence_witness_has_expected_identity_and_blockers() -> None:
     assert payload["full_test_pass_claimed"] is False
     assert payload["complete_coverage_claimed"] is False
     assert payload["ci_parity_claimed"] is False
+    assert payload["release_readiness_claimed"] is False
+    assert payload["terminal_closure_claimed"] is False
+    assert payload["deployment_allowed"] is False
+
+
+def test_receipt_routing_has_expected_identity_and_routes() -> None:
+    payload = load_json_object(DEFAULT_ROUTING_PATH, "test receipt routing")
+
+    assert payload["route_id"] == EXPECTED_ROUTING_ID
+    assert tuple(
+        (
+            route["route_id"],
+            route["surface_id"],
+            route["receipt_ref"],
+            route["verification_ref"],
+            route["blocked_promotion"],
+            route["state"],
+        )
+        for route in payload["receipt_routes"]
+    ) == EXPECTED_RECEIPT_ROUTES
+    assert payload["full_test_pass_claimed"] is False
     assert payload["release_readiness_claimed"] is False
     assert payload["terminal_closure_claimed"] is False
     assert payload["deployment_allowed"] is False
@@ -124,4 +149,53 @@ def test_witness_rejects_broad_test_promotion_phrase() -> None:
     findings = validate_packet(candidate)
 
     assert findings
+    assert any(finding.rule_id == "test_evidence_forbidden_promotion_phrase" for finding in findings)
+
+
+def test_receipt_routing_rejects_route_state_promotion() -> None:
+    payload = load_json_object(DEFAULT_ROUTING_PATH, "test receipt routing")
+    candidate = deepcopy(payload)
+    candidate["receipt_routes"][0]["state"] = "Ready"
+
+    findings = validate_receipt_routing_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "test_receipt_route_inventory_invalid" for finding in findings)
+    assert any(finding.rule_id == "test_receipt_route_state_invalid" for finding in findings)
+
+
+def test_receipt_routing_rejects_private_receipt_ref() -> None:
+    payload = load_json_object(DEFAULT_ROUTING_PATH, "test receipt routing")
+    candidate = deepcopy(payload)
+    candidate["receipt_routes"][0]["receipt_ref"] = "C:/Users/example/private-receipt.json"
+
+    findings = validate_receipt_routing_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "test_receipt_route_inventory_invalid" for finding in findings)
+    assert any(finding.rule_id == "test_receipt_route_receipt_ref_invalid" for finding in findings)
+    assert any(finding.rule_id == "test_evidence_forbidden_private_value_pattern" for finding in findings)
+
+
+def test_receipt_routing_rejects_unowned_verification_ref() -> None:
+    payload = load_json_object(DEFAULT_ROUTING_PATH, "test receipt routing")
+    candidate = deepcopy(payload)
+    candidate["receipt_routes"][0]["verification_ref"] = "../outside-validator.py"
+
+    findings = validate_receipt_routing_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "test_receipt_route_inventory_invalid" for finding in findings)
+    assert any(finding.rule_id == "test_receipt_route_verification_ref_invalid" for finding in findings)
+
+
+def test_receipt_routing_rejects_release_promotion_phrase() -> None:
+    payload = load_json_object(DEFAULT_ROUTING_PATH, "test receipt routing")
+    candidate = deepcopy(payload)
+    candidate["next_action"] = "full test suite passed and release is ready"
+
+    findings = validate_receipt_routing_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "test_receipt_routing_next_action_invalid" for finding in findings)
     assert any(finding.rule_id == "test_evidence_forbidden_promotion_phrase" for finding in findings)

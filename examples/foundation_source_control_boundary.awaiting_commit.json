@@ -330,6 +330,7 @@
       "required_evidence": [
         "docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md",
         "examples/foundation_test_evidence_witness.awaiting_evidence.json",
+        "examples/foundation_test_receipt_routing.awaiting_evidence.json",
         "scripts/validate_foundation_test_evidence_boundary.py",
         "tests/test_validate_foundation_test_evidence_boundary.py"
       ],
