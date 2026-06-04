@@ -6,7 +6,8 @@ Invariants:
   - Missing connector credentials fail closed before transport.
   - Inbound receive and transcript record produce digest evidence without
     external call effects.
-  - Outbound place and transfer require an approval witness before dispatch.
+  - Outbound place, transfer, and terminate require an approval witness before
+    dispatch.
   - Provider tokens are used only in HTTP headers and never returned in
     observation fields or errors.
 """
@@ -79,7 +80,28 @@ def test_twilio_call_place_with_approval_uses_basic_auth_form_body() -> None:
     assert "twilio-token" not in observation.error
 
 
-def test_twilio_call_terminate_does_not_register_external_call() -> None:
+def test_twilio_call_terminate_requires_approval_before_transport() -> None:
+    transport = FakeTransport(response_body={"sid": "CA123", "status": "completed"})
+    adapter = HttpPhoneAdapter(
+        credentials={"twilio": _twilio_credential()},
+        urlopen=transport,
+    )
+
+    observation = adapter.perform(_request(
+        request_id="call-terminate-no-approval",
+        capability_id="phone.call.terminate",
+        action="phone.call.terminate",
+        connector_id="twilio",
+        call_id="CA123",
+    ))
+
+    assert observation.succeeded is False
+    assert observation.error == "approval witness required for connector call"
+    assert observation.external_call is False
+    assert transport.calls == []
+
+
+def test_twilio_call_terminate_with_approval_updates_call_status() -> None:
     transport = FakeTransport(response_body={"sid": "CA123", "status": "completed"})
     adapter = HttpPhoneAdapter(
         credentials={"twilio": _twilio_credential()},
@@ -92,6 +114,7 @@ def test_twilio_call_terminate_does_not_register_external_call() -> None:
         action="phone.call.terminate",
         connector_id="twilio",
         call_id="CA123",
+        approval_id="approval-terminate-1",
     ))
 
     assert observation.succeeded is True
