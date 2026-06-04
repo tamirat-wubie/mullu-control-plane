@@ -303,6 +303,7 @@ def build_private_pilot_live_rehearsal_uao_record(
     trace_receipt_ref = f"receipt://{stable_identifier('uao-trace-private-pilot-rehearsal', {'action_id': action_id})}"
     simulation_receipt_ref = f"receipt://{stable_identifier('uao-simulation-private-pilot-rehearsal', {'action_id': action_id})}"
     closure_receipt_ref = f"receipt://{stable_identifier('uao-closure-private-pilot-rehearsal', {'action_id': action_id})}"
+    fracture_report_ref = f"fracture-report://{stable_identifier('private-pilot-rehearsal-fracture-report', {'action_id': action_id})}"
     receipt_set_ref = f"receipt-set://{action_id}"
     simulation_ref = f"simulation://{action_id}"
     closure_ref = f"closure://{action_id}"
@@ -393,6 +394,36 @@ def build_private_pilot_live_rehearsal_uao_record(
             ],
             "unverified_claim_ids": [],
         },
+        "fracture_report": {
+            "report_ref": fracture_report_ref,
+            "status": "passed",
+            "checks": [
+                {
+                    "check_id": f"fracture-check://{stable_identifier('private-pilot-rehearsal-fracture-check', {'action_id': action_id, 'check_type': check_type})}",
+                    "check_type": check_type,
+                    "status": "passed",
+                    "proof_state": "Pass",
+                    "reason_code": f"{check_type}_absent",
+                    "evidence_refs": [trace_ref, admission_receipt_ref],
+                    "blocking": False,
+                }
+                for check_type in (
+                    "policy_conflict",
+                    "identity_conflict",
+                    "budget_conflict",
+                    "schema_conflict",
+                    "capability_mismatch",
+                    "memory_contradiction",
+                    "unverified_claim",
+                    "missing_recovery",
+                    "authority_mismatch",
+                    "duplicate_command",
+                    "prompt_injection",
+                )
+            ],
+            "blocking_check_ids": [],
+            "risk_notes": ["decision:simulate", "reason:live_orgos_rehearsal_only"],
+        },
         "exposure_boundary": {
             "redaction_level": "user_safe",
             "allowed_audiences": ["operator", "auditor"],
@@ -447,8 +478,16 @@ def build_private_pilot_live_rehearsal_uao_record(
                 [f"capability-binding://{action_id}/simulation"],
             ),
             _uao_stage(
-                "stage_execution",
+                "stage_fracture",
                 6,
+                "fracture",
+                "simulated",
+                [f"capability-binding://{action_id}/simulation"],
+                [fracture_report_ref],
+            ),
+            _uao_stage(
+                "stage_execution",
+                7,
                 "execution",
                 "simulated",
                 [f"capability-binding://{action_id}/simulation"],
@@ -457,7 +496,7 @@ def build_private_pilot_live_rehearsal_uao_record(
             ),
             _uao_stage(
                 "stage_receipt",
-                7,
+                8,
                 "receipt",
                 "completed",
                 [simulation_ref],
@@ -466,7 +505,7 @@ def build_private_pilot_live_rehearsal_uao_record(
             ),
             _uao_stage(
                 "stage_reconciliation",
-                8,
+                9,
                 "reconciliation",
                 "skipped",
                 [receipt_set_ref],
@@ -476,7 +515,7 @@ def build_private_pilot_live_rehearsal_uao_record(
             ),
             _uao_stage(
                 "stage_memory",
-                9,
+                10,
                 "memory",
                 "skipped",
                 [f"decision://{action_id}"],
@@ -486,7 +525,7 @@ def build_private_pilot_live_rehearsal_uao_record(
             ),
             _uao_stage(
                 "stage_closure",
-                10,
+                11,
                 "closure",
                 "completed",
                 [receipt_set_ref],

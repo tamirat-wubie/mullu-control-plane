@@ -21,6 +21,7 @@
     "temporal_refs",
     "recovery_plan",
     "claim_ledger",
+    "fracture_report",
     "exposure_boundary",
     "pipeline_stages",
     "admission_guards",
@@ -73,10 +74,11 @@
     },
     "recovery_plan": { "$ref": "#/$defs/recovery_plan" },
     "claim_ledger": { "$ref": "#/$defs/claim_ledger" },
+    "fracture_report": { "$ref": "#/$defs/fracture_report" },
     "exposure_boundary": { "$ref": "#/$defs/exposure_boundary" },
     "pipeline_stages": {
       "type": "array",
-      "minItems": 10,
+      "minItems": 11,
       "items": { "$ref": "#/$defs/pipeline_stage" }
     },
     "admission_guards": {
@@ -226,6 +228,63 @@
         "verified": { "type": "boolean" }
       }
     },
+    "fracture_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["report_ref", "status", "checks", "blocking_check_ids", "risk_notes"],
+      "properties": {
+        "report_ref": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["passed", "failed", "skipped"] },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/fracture_check" }
+        },
+        "blocking_check_ids": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "risk_notes": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    },
+    "fracture_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check_id", "check_type", "status", "proof_state", "reason_code", "evidence_refs", "blocking"],
+      "properties": {
+        "check_id": { "type": "string", "minLength": 1 },
+        "check_type": {
+          "type": "string",
+          "enum": [
+            "policy_conflict",
+            "identity_conflict",
+            "budget_conflict",
+            "schema_conflict",
+            "capability_mismatch",
+            "memory_contradiction",
+            "unverified_claim",
+            "missing_recovery",
+            "authority_mismatch",
+            "duplicate_command",
+            "prompt_injection"
+          ]
+        },
+        "status": { "type": "string", "enum": ["passed", "failed", "waived", "not_applicable"] },
+        "proof_state": { "$ref": "#/$defs/proof_state" },
+        "reason_code": { "type": "string", "minLength": 1 },
+        "evidence_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "blocking": { "type": "boolean" }
+      }
+    },
     "pipeline_stage": {
       "type": "object",
       "additionalProperties": false,
@@ -235,7 +294,7 @@
         "stage_order": { "type": "integer", "minimum": 1 },
         "stage_kind": {
           "type": "string",
-          "enum": ["action", "evidence", "trace", "admission", "capability", "execution", "receipt", "reconciliation", "memory", "closure"]
+          "enum": ["action", "evidence", "trace", "admission", "capability", "fracture", "execution", "receipt", "reconciliation", "memory", "closure"]
         },
         "status": { "type": "string", "enum": ["completed", "blocked", "skipped", "deferred", "escalated", "simulated"] },
         "input_refs": {

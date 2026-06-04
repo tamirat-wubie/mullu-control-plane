@@ -307,6 +307,12 @@ def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
     assert record["recovery_plan"]["certificate_ref"]
     assert record["claim_ledger"]["ledger_ref"].startswith("claim-ledger://")
     assert record["claim_ledger"]["unverified_claim_ids"] == []
+    assert record["fracture_report"]["report_ref"].startswith("fracture-report://")
+    assert record["fracture_report"]["status"] == "passed"
+    assert record["fracture_report"]["blocking_check_ids"] == []
+    assert _pipeline_stage(record, "fracture")["stage_order"] < _pipeline_stage(
+        record, "execution"
+    )["stage_order"]
     assert {claim["claim_type"] for claim in record["claim_ledger"]["claims"]} >= {
         "decision",
         "execution",
@@ -484,6 +490,12 @@ def test_universal_action_kernel_blocks_world_mutation_without_recovery_path() -
     assert record["decision"]["reason_code"] == "recovery_plan_missing"
     assert record["recovery_plan"]["available"] is False
     assert record["recovery_plan"]["recovery_kind"] == "none"
+    assert record["fracture_report"]["status"] == "failed"
+    assert any(
+        check["check_type"] == "missing_recovery" and check["blocking"]
+        for check in record["fracture_report"]["checks"]
+    )
+    assert _pipeline_stage(record, "fracture")["status"] == "blocked"
     assert record["claim_ledger"]["claims"]
     assert record["claim_ledger"]["unverified_claim_ids"] == []
     assert all(
@@ -975,10 +987,11 @@ def test_universal_command_orchestration_record_replays_success_events() -> None
     assert record["closure"]["memory_ref"] == record["memory_update"]["memory_ref"]
     assert (
         record["closure"]["reconciliation_ref"]
-        in record["pipeline_stages"][7]["output_refs"]
+        in _pipeline_stage(record, "reconciliation")["output_refs"]
     )
     assert (
-        record["closure"]["memory_ref"] in record["pipeline_stages"][8]["output_refs"]
+        record["closure"]["memory_ref"]
+        in _pipeline_stage(record, "memory")["output_refs"]
     )
     closure_receipt = next(
         receipt for receipt in record["receipts"] if receipt["kind"] == "closure"
@@ -1299,8 +1312,8 @@ def test_universal_command_orchestration_record_rejects_closure_memory_ref_spoof
     record = tampered_detail["universal_action_orchestration"]
     record["memory_update"]["memory_ref"] = spoofed_memory_ref
     record["closure"]["memory_ref"] = spoofed_memory_ref
-    record["pipeline_stages"][8]["output_refs"] = [spoofed_memory_ref]
-    record["pipeline_stages"][9]["input_refs"] = [spoofed_memory_ref]
+    _pipeline_stage(record, "memory")["output_refs"] = [spoofed_memory_ref]
+    _pipeline_stage(record, "closure")["input_refs"] = [spoofed_memory_ref]
     for receipt in record["receipts"]:
         if receipt["kind"] == "closure":
             receipt["confirms"] = stable_identifier(
@@ -1978,6 +1991,12 @@ def _validate_uao_record(record: dict) -> list[str]:
     errors = validator.validate_orchestration(record)
     assert isinstance(errors, list)
     return errors
+
+
+def _pipeline_stage(record: dict, stage_kind: str) -> dict:
+    return next(
+        stage for stage in record["pipeline_stages"] if stage["stage_kind"] == stage_kind
+    )
 
 
 def _assert_memory_constitution(record: dict, *, learning_allowed: bool) -> None:

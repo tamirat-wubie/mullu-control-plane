@@ -81,6 +81,145 @@
     ],
     "unverified_claim_ids": []
   },
+  "fracture_report": {
+    "report_ref": "fracture-report://act_pay_invoice_123",
+    "status": "failed",
+    "checks": [
+      {
+        "check_id": "fracture-check://act_pay_invoice_123/policy_conflict",
+        "check_type": "policy_conflict",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "policy_conflict_absent",
+        "evidence_refs": [
+          "policy://budget/monthly-ap",
+          "policy://payments/approval-freshness"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_pay_invoice_123/identity_conflict",
+        "check_type": "identity_conflict",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "identity_conflict_absent",
+        "evidence_refs": [
+          "trace://cdt_blocked_approval_expired_001"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_pay_invoice_123/budget_conflict",
+        "check_type": "budget_conflict",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "budget_conflict_absent",
+        "evidence_refs": [
+          "policy://budget/monthly-ap",
+          "policy://payments/approval-freshness"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_pay_invoice_123/schema_conflict",
+        "check_type": "schema_conflict",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "schema_conflict_absent",
+        "evidence_refs": [
+          "trace://cdt_blocked_approval_expired_001"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_pay_invoice_123/capability_mismatch",
+        "check_type": "capability_mismatch",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "capability_mismatch_absent",
+        "evidence_refs": [
+          "capability://payments/pay-invoice/v1"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_pay_invoice_123/memory_contradiction",
+        "check_type": "memory_contradiction",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "memory_contradiction_absent",
+        "evidence_refs": [
+          "trace://cdt_blocked_approval_expired_001"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_pay_invoice_123/unverified_claim",
+        "check_type": "unverified_claim",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "unverified_claim_absent",
+        "evidence_refs": [
+          "claim-ledger://uao_invoice_payment_blocked"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_pay_invoice_123/missing_recovery",
+        "check_type": "missing_recovery",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "missing_recovery_absent",
+        "evidence_refs": [
+          "recovery://payments/invoice-123",
+          "trace://cdt_blocked_approval_expired_001"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_pay_invoice_123/authority_mismatch",
+        "check_type": "authority_mismatch",
+        "status": "failed",
+        "proof_state": "Fail",
+        "reason_code": "approval_expired",
+        "evidence_refs": [
+          "trace://cdt_blocked_approval_expired_001",
+          "receipt://uao_admission_invoice_payment_blocked"
+        ],
+        "blocking": true
+      },
+      {
+        "check_id": "fracture-check://act_pay_invoice_123/duplicate_command",
+        "check_type": "duplicate_command",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "duplicate_command_absent",
+        "evidence_refs": [
+          "trace://cdt_blocked_approval_expired_001"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_pay_invoice_123/prompt_injection",
+        "check_type": "prompt_injection",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "prompt_injection_absent",
+        "evidence_refs": [
+          "trace://cdt_blocked_approval_expired_001"
+        ],
+        "blocking": false
+      }
+    ],
+    "blocking_check_ids": [
+      "fracture-check://act_pay_invoice_123/authority_mismatch"
+    ],
+    "risk_notes": [
+      "decision:block",
+      "reason:approval_expired",
+      "closure:closed_blocked"
+    ]
+  },
   "exposure_boundary": {
     "redaction_level": "user_safe",
     "allowed_audiences": [
@@ -165,12 +304,26 @@
       "failure_reason": "admission_blocked"
     },
     {
-      "stage_id": "stage_execution",
+      "stage_id": "stage_fracture",
       "stage_order": 6,
+      "stage_kind": "fracture",
+      "status": "blocked",
+      "input_refs": [
+        "capability://payments/pay-invoice/v1"
+      ],
+      "output_refs": [
+        "fracture-report://act_pay_invoice_123"
+      ],
+      "receipt_ref": null,
+      "failure_reason": "fracture_blocking_checks"
+    },
+    {
+      "stage_id": "stage_execution",
+      "stage_order": 7,
       "stage_kind": "execution",
       "status": "skipped",
       "input_refs": [
-        "capability://payments/pay-invoice/v1"
+        "fracture-report://act_pay_invoice_123"
       ],
       "output_refs": [],
       "receipt_ref": null,
@@ -178,7 +331,7 @@
     },
     {
       "stage_id": "stage_receipt",
-      "stage_order": 7,
+      "stage_order": 8,
       "stage_kind": "receipt",
       "status": "completed",
       "input_refs": [
@@ -192,7 +345,7 @@
     },
     {
       "stage_id": "stage_reconciliation",
-      "stage_order": 8,
+      "stage_order": 9,
       "stage_kind": "reconciliation",
       "status": "blocked",
       "input_refs": [
@@ -206,7 +359,7 @@
     },
     {
       "stage_id": "stage_memory",
-      "stage_order": 9,
+      "stage_order": 10,
       "stage_kind": "memory",
       "status": "completed",
       "input_refs": [
@@ -220,7 +373,7 @@
     },
     {
       "stage_id": "stage_closure",
-      "stage_order": 10,
+      "stage_order": 11,
       "stage_kind": "closure",
       "status": "completed",
       "input_refs": [
@@ -394,15 +547,24 @@
       "confidence": 1.0,
       "sensitivity": "financial",
       "expires_at": null,
-      "allowed_uses": ["closure_audit", "planning", "learning"],
-      "forbidden_uses": ["external_sharing", "model_training"],
+      "allowed_uses": [
+        "closure_audit",
+        "planning",
+        "learning"
+      ],
+      "forbidden_uses": [
+        "external_sharing",
+        "model_training"
+      ],
       "evidence_refs": [
         "memory://invoice-123/payment-blocked",
         "trace://cdt_blocked_approval_expired_001",
         "receipt://uao_admission_invoice_payment_blocked"
       ],
       "last_verified_at": "2026-05-31T00:00:00Z",
-      "mutation_history_refs": ["trace://cdt_blocked_approval_expired_001"]
+      "mutation_history_refs": [
+        "trace://cdt_blocked_approval_expired_001"
+      ]
     }
   },
   "closure_state": "closed_blocked",

@@ -2565,8 +2565,12 @@ class TestGatewayStatus:
         spoofed_memory_ref = "memory://spoofed-gateway-closure-memory"
         record["memory_update"]["memory_ref"] = spoofed_memory_ref
         record["closure"]["memory_ref"] = spoofed_memory_ref
-        record["pipeline_stages"][8]["output_refs"] = [spoofed_memory_ref]
-        record["pipeline_stages"][9]["input_refs"] = [spoofed_memory_ref]
+        next(
+            stage for stage in record["pipeline_stages"] if stage["stage_kind"] == "memory"
+        )["output_refs"] = [spoofed_memory_ref]
+        next(
+            stage for stage in record["pipeline_stages"] if stage["stage_kind"] == "closure"
+        )["input_refs"] = [spoofed_memory_ref]
         for receipt in record["receipts"]:
             if receipt["kind"] == "closure":
                 receipt["confirms"] = _uao_closure_confirmation(

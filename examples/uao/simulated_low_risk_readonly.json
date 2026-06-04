@@ -75,6 +75,140 @@
     ],
     "unverified_claim_ids": []
   },
+  "fracture_report": {
+    "report_ref": "fracture-report://act_preview_status_summary",
+    "status": "passed",
+    "checks": [
+      {
+        "check_id": "fracture-check://act_preview_status_summary/policy_conflict",
+        "check_type": "policy_conflict",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "policy_conflict_absent",
+        "evidence_refs": [
+          "policy://status-page/read-only-preview"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_preview_status_summary/identity_conflict",
+        "check_type": "identity_conflict",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "identity_conflict_absent",
+        "evidence_refs": [
+          "trace://cdt_simulated_low_risk_readonly_001"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_preview_status_summary/budget_conflict",
+        "check_type": "budget_conflict",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "budget_conflict_absent",
+        "evidence_refs": [
+          "policy://status-page/read-only-preview"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_preview_status_summary/schema_conflict",
+        "check_type": "schema_conflict",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "schema_conflict_absent",
+        "evidence_refs": [
+          "trace://cdt_simulated_low_risk_readonly_001"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_preview_status_summary/capability_mismatch",
+        "check_type": "capability_mismatch",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "capability_mismatch_absent",
+        "evidence_refs": [
+          "capability://status-page/read/v1"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_preview_status_summary/memory_contradiction",
+        "check_type": "memory_contradiction",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "memory_contradiction_absent",
+        "evidence_refs": [
+          "trace://cdt_simulated_low_risk_readonly_001"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_preview_status_summary/unverified_claim",
+        "check_type": "unverified_claim",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "unverified_claim_absent",
+        "evidence_refs": [
+          "claim-ledger://uao_status_preview"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_preview_status_summary/missing_recovery",
+        "check_type": "missing_recovery",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "missing_recovery_absent",
+        "evidence_refs": [
+          "trace://cdt_simulated_low_risk_readonly_001"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_preview_status_summary/authority_mismatch",
+        "check_type": "authority_mismatch",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "authority_mismatch_absent",
+        "evidence_refs": [
+          "trace://cdt_simulated_low_risk_readonly_001",
+          "receipt://uao_admission_status_preview"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_preview_status_summary/duplicate_command",
+        "check_type": "duplicate_command",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "duplicate_command_absent",
+        "evidence_refs": [
+          "trace://cdt_simulated_low_risk_readonly_001"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_preview_status_summary/prompt_injection",
+        "check_type": "prompt_injection",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "prompt_injection_absent",
+        "evidence_refs": [
+          "trace://cdt_simulated_low_risk_readonly_001"
+        ],
+        "blocking": false
+      }
+    ],
+    "blocking_check_ids": [],
+    "risk_notes": [
+      "decision:simulate",
+      "reason:simulation_only",
+      "closure:closed_simulated"
+    ]
+  },
   "exposure_boundary": {
     "redaction_level": "user_safe",
     "allowed_audiences": [
@@ -160,8 +294,22 @@
       "failure_reason": null
     },
     {
-      "stage_id": "stage_execution",
+      "stage_id": "stage_fracture",
       "stage_order": 6,
+      "stage_kind": "fracture",
+      "status": "simulated",
+      "input_refs": [
+        "capability-binding://status-preview/simulated"
+      ],
+      "output_refs": [
+        "fracture-report://act_preview_status_summary"
+      ],
+      "receipt_ref": null,
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_execution",
+      "stage_order": 7,
       "stage_kind": "execution",
       "status": "simulated",
       "input_refs": [
@@ -175,7 +323,7 @@
     },
     {
       "stage_id": "stage_receipt",
-      "stage_order": 7,
+      "stage_order": 8,
       "stage_kind": "receipt",
       "status": "completed",
       "input_refs": [
@@ -189,7 +337,7 @@
     },
     {
       "stage_id": "stage_reconciliation",
-      "stage_order": 8,
+      "stage_order": 9,
       "stage_kind": "reconciliation",
       "status": "skipped",
       "input_refs": [
@@ -201,7 +349,7 @@
     },
     {
       "stage_id": "stage_memory",
-      "stage_order": 9,
+      "stage_order": 10,
       "stage_kind": "memory",
       "status": "skipped",
       "input_refs": [
@@ -213,7 +361,7 @@
     },
     {
       "stage_id": "stage_closure",
-      "stage_order": 10,
+      "stage_order": 11,
       "stage_kind": "closure",
       "status": "completed",
       "input_refs": [
@@ -395,7 +543,11 @@
       "sensitivity": "operational",
       "expires_at": null,
       "allowed_uses": [],
-      "forbidden_uses": ["external_sharing", "model_training", "learning"],
+      "forbidden_uses": [
+        "external_sharing",
+        "model_training",
+        "learning"
+      ],
       "evidence_refs": [],
       "last_verified_at": null,
       "mutation_history_refs": []
