@@ -1,0 +1,95 @@
+{
+  "blocked_claims": [
+    "support triage execution",
+    "customer support opening",
+    "inbound message acceptance",
+    "support ticket creation",
+    "inbox routing",
+    "customer-data handling",
+    "personal-data handling",
+    "response-time promise",
+    "support SLA",
+    "incident response readiness",
+    "support-tool activation",
+    "onboarding",
+    "paid support",
+    "deployment readiness"
+  ],
+  "customer_data_handling_allowed": false,
+  "customer_support_open": false,
+  "deployment_allowed": false,
+  "inbound_message_acceptance_allowed": false,
+  "inbox_routing_allowed": false,
+  "incident_response_ready_claimed": false,
+  "next_action": "draft fictional local support triage categories only; do not open support, accept inbound messages, create tickets, route inboxes, handle customer data, handle personal data, promise response times, claim SLA, claim incident readiness, activate support tools, onboard users, sell paid support, or deploy",
+  "onboarding_allowed": false,
+  "paid_support_allowed": false,
+  "personal_data_handling_allowed": false,
+  "response_time_promise_claimed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "support_sla_claimed": false,
+  "support_ticket_creation_allowed": false,
+  "support_tool_activation_allowed": false,
+  "support_triage_executed": false,
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Fictional request category questions only; real customer messages and personal data remain excluded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "fictional_request_categories",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Severity label questions only; incident-response readiness and on-call coverage are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "severity_labels",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Triage decision-rule questions only; inbound messages and support tickets remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "triage_decision_rules",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Privacy stop-rule questions only; customer data and personal data are not collected, stored, or processed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "privacy_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Billing stop-rule questions only; payment, refund, and paid-support work remains blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "billing_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Legal stop-rule questions only; legal conclusions and terms commitments remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "legal_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Tooling stop-rule questions only; helpdesk tools, inbox routing, and service accounts remain inactive.",
+      "state": "AwaitingEvidence",
+      "surface_id": "tooling_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Handoff-note questions only; support readiness, SLA, customer access, and deployment remain unclaimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "handoff_note",
+      "surface_type": "local_draft"
+    }
+  ],
+  "witness_id": "foundation_support_triage_rehearsal_witness.awaiting_evidence.v1"
+}

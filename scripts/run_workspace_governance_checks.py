@@ -128,6 +128,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_operator_readiness_boundary.py"),
         ),
         CheckCommand(
+            "foundation_solo_daily_loop_boundary",
+            (python_executable, "scripts/validate_foundation_solo_daily_loop_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_learning_path_boundary",
             (python_executable, "scripts/validate_foundation_learning_path_boundary.py"),
         ),
@@ -232,6 +236,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_private_recovery_boundary.py"),
         ),
         CheckCommand(
+            "foundation_private_recovery_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_private_recovery_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_secrets_credentials_boundary",
             (python_executable, "scripts/validate_foundation_secrets_credentials_boundary.py"),
         ),
@@ -300,12 +308,24 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_support_readiness_boundary.py"),
         ),
         CheckCommand(
+            "foundation_support_triage_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_support_triage_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_intake_onboarding_boundary",
             (python_executable, "scripts/validate_foundation_intake_onboarding_boundary.py"),
         ),
         CheckCommand(
+            "foundation_intake_questionnaire_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_intake_questionnaire_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_customer_access_boundary",
             (python_executable, "scripts/validate_foundation_customer_access_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_customer_access_policy_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_customer_access_policy_rehearsal_boundary.py"),
         ),
         CheckCommand(
             "foundation_github_app_token_format_boundary",

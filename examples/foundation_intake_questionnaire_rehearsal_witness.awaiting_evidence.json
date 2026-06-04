@@ -1,0 +1,93 @@
+{
+  "active_intake_form_exists": false,
+  "blocked_claims": [
+    "questionnaire execution",
+    "active intake form",
+    "form publication",
+    "waitlist opening",
+    "pilot signup",
+    "personal-data collection",
+    "CRM import",
+    "outreach campaign",
+    "customer onboarding",
+    "customer access",
+    "payment collection",
+    "legal/privacy readiness",
+    "deployment readiness"
+  ],
+  "crm_import_allowed": false,
+  "customer_access_allowed": false,
+  "customer_onboarding_allowed": false,
+  "deployment_allowed": false,
+  "form_publication_allowed": false,
+  "legal_privacy_readiness_claimed": false,
+  "next_action": "draft fictional local intake questionnaire fields only; do not publish forms, collect submissions, open waitlists, accept pilot signups, collect personal data, import CRM contacts, start outreach, onboard customers, open customer access, collect payment, claim legal or privacy readiness, or deploy",
+  "outreach_campaign_allowed": false,
+  "payment_collection_allowed": false,
+  "personal_data_collection_allowed": false,
+  "pilot_signup_open": false,
+  "questionnaire_rehearsal_executed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Fictional field-category questions only; form publication and collection remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "fictional_field_categories",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Eligibility prompt questions only; real user qualification, acceptance, rejection, and onboarding remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "eligibility_prompt_shape",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Consent boundary questions only; consent capture, terms readiness, privacy readiness, and legal conclusions remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "consent_boundary_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Privacy minimization questions only; personal data is not collected, stored, processed, imported, or retained.",
+      "state": "AwaitingEvidence",
+      "surface_id": "privacy_minimization_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Retention and deletion questions only; retention systems and deletion promises remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "retention_deletion_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Disqualification reply-shape questions only; no replies are sent and outreach remains blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "disqualification_reply_shape",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Operator review-gate questions only; intake approval, onboarding, customer access, payment, and deployment remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_review_gate",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Handoff-note questions only; intake readiness and onboarding readiness remain unclaimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "handoff_note",
+      "surface_type": "local_draft"
+    }
+  ],
+  "waitlist_open": false,
+  "witness_id": "foundation_intake_questionnaire_rehearsal_witness.awaiting_evidence.v1"
+}

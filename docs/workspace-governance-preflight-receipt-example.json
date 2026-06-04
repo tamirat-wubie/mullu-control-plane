@@ -1,5 +1,5 @@
 {
-  "check_count": 75,
+  "check_count": 80,
   "generated_at_epoch": 1780272000.0,
   "checks": [
     {
@@ -54,6 +54,17 @@
         "scripts/validate_foundation_operator_readiness_boundary.py"
       ],
       "name": "foundation_operator_readiness_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_solo_daily_loop_boundary.py"
+      ],
+      "name": "foundation_solo_daily_loop_boundary",
       "passed": true,
       "return_code": 0,
       "stderr": "",
@@ -348,6 +359,17 @@
     {
       "args": [
         "python",
+        "scripts/validate_foundation_private_recovery_rehearsal_boundary.py"
+      ],
+      "name": "foundation_private_recovery_rehearsal_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_foundation_secrets_credentials_boundary.py"
       ],
       "name": "foundation_secrets_credentials_boundary",
@@ -535,6 +557,17 @@
     {
       "args": [
         "python",
+        "scripts/validate_foundation_support_triage_rehearsal_boundary.py"
+      ],
+      "name": "foundation_support_triage_rehearsal_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_foundation_intake_onboarding_boundary.py"
       ],
       "name": "foundation_intake_onboarding_boundary",
@@ -546,9 +579,31 @@
     {
       "args": [
         "python",
+        "scripts/validate_foundation_intake_questionnaire_rehearsal_boundary.py"
+      ],
+      "name": "foundation_intake_questionnaire_rehearsal_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
         "scripts/validate_foundation_customer_access_boundary.py"
       ],
       "name": "foundation_customer_access_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_customer_access_policy_rehearsal_boundary.py"
+      ],
+      "name": "foundation_customer_access_policy_rehearsal_boundary",
       "passed": true,
       "return_code": 0,
       "stderr": "",

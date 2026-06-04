@@ -1,0 +1,99 @@
+{
+  "blocked_claims": [
+    "daily productivity readiness",
+    "schedule readiness",
+    "private calendar recording",
+    "private health tracking",
+    "task-completion guarantee",
+    "team coverage",
+    "support coverage",
+    "roadmap commitment",
+    "deadline promise",
+    "external action",
+    "spending",
+    "legal/business action",
+    "secret use",
+    "credential use",
+    "source-control publication",
+    "deployment readiness"
+  ],
+  "credential_use_allowed": false,
+  "daily_productivity_readiness_claimed": false,
+  "deadline_promise_claimed": false,
+  "deployment_allowed": false,
+  "external_action_allowed": false,
+  "legal_business_action_allowed": false,
+  "next_action": "pick one local-safe task, validate it, and stop with public-safe evidence; do not record private calendar or health details, claim productivity or schedule readiness, guarantee completion, claim team or support coverage, commit to roadmap, promise deadline, cross external boundaries, spend, take legal or business action, use secrets, use credentials, publish source control, or deploy",
+  "private_calendar_recording_allowed": false,
+  "private_health_tracking_allowed": false,
+  "roadmap_commitment_claimed": false,
+  "schedule_readiness_claimed": false,
+  "schema_version": 1,
+  "secret_use_allowed": false,
+  "solo_daily_loop_surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Session-intake questions only; no private calendar, private health, account, or customer values are recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "session_intake",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "One-task selection questions only; broad roadmap work and bundled execution remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "one_task_selection",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Prerequisite-alignment questions only; unknown hard constraints remain AwaitingEvidence.",
+      "state": "AwaitingEvidence",
+      "surface_id": "prerequisite_alignment",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Risk and stop-check questions only; validation failure, private data, money, legal, customer, and deployment boundaries stop the loop.",
+      "state": "AwaitingEvidence",
+      "surface_id": "risk_and_stop_check",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Local evidence-capture questions only; secrets, credentials, customer data, account values, and private paths are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "local_evidence_capture",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Validation-checkpoint questions only; readiness is not claimed from intent or partial evidence.",
+      "state": "AwaitingEvidence",
+      "surface_id": "validation_checkpoint",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Handoff-note questions only; customer support, team coverage, and deployment readiness remain unclaimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "handoff_note",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Carryover-note questions only; no dates, deadlines, or roadmap commitments are promised.",
+      "state": "AwaitingEvidence",
+      "surface_id": "carryover_note",
+      "surface_type": "local_draft"
+    }
+  ],
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_publication_allowed": false,
+  "spending_allowed": false,
+  "status": "AwaitingEvidence",
+  "support_coverage_claimed": false,
+  "task_completion_guaranteed": false,
+  "team_coverage_claimed": false,
+  "witness_id": "foundation_solo_daily_loop_witness.awaiting_evidence.v1"
+}

@@ -1,0 +1,97 @@
+{
+  "backup_execution_allowed": false,
+  "billing_action_allowed": false,
+  "blocked_claims": [
+    "recovery rehearsal execution",
+    "private recovery material recording",
+    "credential use",
+    "secret use",
+    "backup execution",
+    "restore execution",
+    "cloud sync",
+    "external export",
+    "deletion operation",
+    "provider account access",
+    "billing action",
+    "customer-data handling",
+    "personal-data handling",
+    "restore readiness",
+    "deployment readiness"
+  ],
+  "cloud_sync_allowed": false,
+  "credential_use_allowed": false,
+  "customer_data_handling_allowed": false,
+  "deletion_operation_allowed": false,
+  "deployment_allowed": false,
+  "external_export_allowed": false,
+  "next_action": "draft public-safe recovery rehearsal questions only; do not execute rehearsal, record private recovery material, use credentials, use secrets, run backup, restore files, sync cloud storage, export data, delete data, access provider accounts, touch billing, handle customer data, handle personal data, claim restore readiness, or deploy",
+  "personal_data_handling_allowed": false,
+  "private_recovery_material_recording_allowed": false,
+  "provider_account_access_allowed": false,
+  "recovery_rehearsal_executed": false,
+  "restore_execution_allowed": false,
+  "restore_readiness_claimed": false,
+  "schema_version": 1,
+  "secret_use_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Rehearsal-scope questions only; rehearsal execution remains blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rehearsal_scope",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Public-safe inventory-check questions only; recovery codes, account values, private paths, and secrets remain outside Git.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_safe_inventory_check",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Private-material exclusion questions only; no private recovery material is copied into repository files.",
+      "state": "AwaitingEvidence",
+      "surface_id": "private_material_exclusion",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Credential-use stop questions only; credentials and provider sessions remain unused.",
+      "state": "AwaitingEvidence",
+      "surface_id": "credential_use_stop",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Backup/restore dry-run questions only; backups, restores, cloud sync, and external export remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "backup_restore_dry_run_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Failure-mode questions only; deletion and external mutation remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "failure_mode_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Receipt questions only; restore readiness and terminal closure are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "receipt_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Handoff questions only; deployment, support, customer, and billing readiness remain unclaimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "handoff_questions",
+      "surface_type": "local_draft"
+    }
+  ],
+  "witness_id": "foundation_private_recovery_rehearsal_witness.awaiting_evidence.v1"
+}
