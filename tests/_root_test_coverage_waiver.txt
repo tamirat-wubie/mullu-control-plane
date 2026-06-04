@@ -232,7 +232,6 @@ tests/test_validate_mcp_operator_checklist.py
 tests/test_validate_nested_mind_p3_readiness.py
 tests/test_validate_proprietary_boundary.py
 tests/test_validate_protocol_manifest.py
-tests/test_validate_public_demo_surfaces.py
 tests/test_validate_public_repository_surface.py
 tests/test_validate_release_status.py
 tests/test_validate_sandbox_execution_receipt.py
