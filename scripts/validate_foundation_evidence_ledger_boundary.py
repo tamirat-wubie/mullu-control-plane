@@ -9,8 +9,9 @@ Governance scope: Foundation Mode, local evidence index, witness references,
 validator references, test references, receipt references, source-control
 packet references, readiness snapshot references, public-copy routing,
 private-value exclusion, and claim-promotion blocking.
-Dependencies: docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md and
-examples/foundation_evidence_ledger_witness.awaiting_evidence.json.
+Dependencies: docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md,
+examples/foundation_evidence_ledger_witness.awaiting_evidence.json, and
+examples/foundation_evidence_index.awaiting_evidence.json.
 Invariants:
   - Validation is read-only.
   - The witness records evidence-ledger preparation only.
@@ -33,8 +34,10 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DOC_PATH = REPO_ROOT / "docs" / "FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md"
 DEFAULT_PACKET_PATH = REPO_ROOT / "examples" / "foundation_evidence_ledger_witness.awaiting_evidence.json"
+DEFAULT_INDEX_PATH = REPO_ROOT / "examples" / "foundation_evidence_index.awaiting_evidence.json"
 
 EXPECTED_WITNESS_ID = "foundation_evidence_ledger_witness.awaiting_evidence.v1"
+EXPECTED_INDEX_ID = "foundation_evidence_index.awaiting_evidence.v1"
 EXPECTED_BLOCKED_CLAIMS = (
     "evidence promotion",
     "terminal closure",
@@ -83,17 +86,56 @@ EXPECTED_ENTRY_KEYS = {
     "public_safe_note",
     "state",
 }
+EXPECTED_INDEX_ENTRIES = (
+    ("foundation_evidence_ledger_boundary_doc", "boundary_doc", "docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md", "AwaitingEvidence"),
+    ("foundation_evidence_ledger_witness_packet", "witness_packet", "examples/foundation_evidence_ledger_witness.awaiting_evidence.json", "AwaitingEvidence"),
+    ("foundation_evidence_ledger_validator", "validator", "scripts/validate_foundation_evidence_ledger_boundary.py", "AwaitingEvidence"),
+    ("foundation_evidence_ledger_test", "test", "tests/test_validate_foundation_evidence_ledger_boundary.py", "AwaitingEvidence"),
+    ("governance_preflight_receipt_validator", "receipt_validator", "scripts/validate_workspace_governance_preflight_receipt.py", "AwaitingEvidence"),
+    ("source_control_packet", "source_control_packet", "examples/foundation_source_control_boundary.awaiting_commit.json", "AwaitingEvidence"),
+    ("readiness_snapshot", "readiness_snapshot", "docs/CURRENT_READINESS_SNAPSHOT.md", "AwaitingEvidence"),
+    ("public_copy_routing_index", "public_copy_routing", "docs/START_HERE.md", "AwaitingEvidence"),
+)
+EXPECTED_INDEX_ROOT_KEYS = {
+    "blocked_claims",
+    "customer_readiness_claimed",
+    "deployment_allowed",
+    "evidence_index_entries",
+    "evidence_promotion_allowed",
+    "external_publication_allowed",
+    "index_id",
+    "legal_clearance_claimed",
+    "next_action",
+    "paid_launch_allowed",
+    "patent_protection_claimed",
+    "readiness_claimed",
+    "schema_version",
+    "secret_evidence_recorded",
+    "solver_outcome",
+    "status",
+    "terminal_closure_claimed",
+}
+EXPECTED_INDEX_ENTRY_KEYS = {
+    "artifact_ref",
+    "entry_id",
+    "entry_type",
+    "public_safe_note",
+    "state",
+}
 REQUIRED_DOC_PHRASES = (
     "Foundation Evidence Ledger Boundary",
     "Witness packet: [`../examples/foundation_evidence_ledger_witness.awaiting_evidence.json`]",
+    "Index packet: [`../examples/foundation_evidence_index.awaiting_evidence.json`]",
     "Rule: Evidence-ledger preparation is a local planning boundary, not a terminal-closure, readiness, legal, patent, customer, publication, paid-launch, secret-evidence, or deployment certificate.",
     "No terminal closure, readiness promotion, legal clearance, patent protection,",
     "evidence_ledger_boundary_state=AwaitingEvidence",
+    "evidence_index_state=AwaitingEvidence",
     "evidence_promotion_allowed=false",
     "terminal_closure_claimed=false",
     "readiness_claimed=false",
     "secret_evidence_recorded=false",
     "deployment_allowed=false",
+    "Preflight receipt validator | `scripts/validate_workspace_governance_preflight_receipt.py` | `AwaitingEvidence`",
     "python scripts/validate_foundation_evidence_ledger_boundary.py",
 )
 FORBIDDEN_VALUE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -173,6 +215,17 @@ def validate_packet(payload: dict[str, Any]) -> list[EvidenceLedgerFinding]:
     findings: list[EvidenceLedgerFinding] = []
     findings.extend(validate_root_contract(payload))
     findings.extend(validate_evidence_entries(payload.get("evidence_ledger_entries")))
+    findings.extend(validate_forbidden_value_patterns(payload))
+    findings.extend(validate_forbidden_promotion_patterns(payload))
+    return findings
+
+
+def validate_index_packet(payload: dict[str, Any]) -> list[EvidenceLedgerFinding]:
+    """Return findings for evidence-index packet drift."""
+
+    findings: list[EvidenceLedgerFinding] = []
+    findings.extend(validate_index_root_contract(payload))
+    findings.extend(validate_index_entries(payload.get("evidence_index_entries")))
     findings.extend(validate_forbidden_value_patterns(payload))
     findings.extend(validate_forbidden_promotion_patterns(payload))
     return findings
@@ -284,6 +337,131 @@ def validate_evidence_entries(evidence_entries: object) -> list[EvidenceLedgerFi
     return findings
 
 
+def validate_index_root_contract(payload: dict[str, Any]) -> list[EvidenceLedgerFinding]:
+    """Return findings for root-level evidence-index drift."""
+
+    findings: list[EvidenceLedgerFinding] = []
+    if set(payload) != EXPECTED_INDEX_ROOT_KEYS:
+        findings.append(
+            EvidenceLedgerFinding(
+                "evidence_index_root_keys_invalid",
+                f"root keys must be: {', '.join(sorted(EXPECTED_INDEX_ROOT_KEYS))}",
+            )
+        )
+    expected_values = {
+        "index_id": EXPECTED_INDEX_ID,
+        "schema_version": 1,
+        "status": "AwaitingEvidence",
+        "solver_outcome": "AwaitingEvidence",
+        "evidence_promotion_allowed": False,
+        "terminal_closure_claimed": False,
+        "readiness_claimed": False,
+        "legal_clearance_claimed": False,
+        "patent_protection_claimed": False,
+        "customer_readiness_claimed": False,
+        "paid_launch_allowed": False,
+        "secret_evidence_recorded": False,
+        "external_publication_allowed": False,
+        "deployment_allowed": False,
+    }
+    for key, expected_value in expected_values.items():
+        if payload.get(key) != expected_value:
+            findings.append(
+                EvidenceLedgerFinding(
+                    "evidence_index_root_value_invalid",
+                    f"{key} must be {expected_value!r}",
+                )
+            )
+    if tuple(payload.get("blocked_claims") or ()) != EXPECTED_BLOCKED_CLAIMS:
+        findings.append(
+            EvidenceLedgerFinding(
+                "evidence_index_blocked_claims_invalid",
+                f"blocked_claims must be: {', '.join(EXPECTED_BLOCKED_CLAIMS)}",
+            )
+        )
+    next_action = payload.get("next_action")
+    if not isinstance(next_action, str) or "do not promote evidence" not in next_action or "deploy" not in next_action:
+        findings.append(
+            EvidenceLedgerFinding(
+                "evidence_index_next_action_invalid",
+                "next_action must preserve the evidence-index boundary",
+            )
+        )
+    return findings
+
+
+def validate_index_entries(index_entries: object) -> list[EvidenceLedgerFinding]:
+    """Return findings for evidence-index entry drift."""
+
+    findings: list[EvidenceLedgerFinding] = []
+    if not isinstance(index_entries, list) or not all(isinstance(entry, dict) for entry in index_entries):
+        return [EvidenceLedgerFinding("evidence_index_entries_invalid", "evidence_index_entries must be a list of objects")]
+    observed_entries = tuple(
+        (entry.get("entry_id"), entry.get("entry_type"), entry.get("artifact_ref"), entry.get("state"))
+        for entry in index_entries
+    )
+    if observed_entries != EXPECTED_INDEX_ENTRIES:
+        findings.append(
+            EvidenceLedgerFinding(
+                "evidence_index_entry_inventory_invalid",
+                "evidence-index entry inventory does not match the Foundation Mode evidence index",
+            )
+        )
+    entry_ids = [entry.get("entry_id") for entry in index_entries]
+    if len(set(entry_ids)) != len(entry_ids):
+        findings.append(EvidenceLedgerFinding("evidence_index_entry_duplicate", "entry ids must be unique"))
+    artifact_refs = [entry.get("artifact_ref") for entry in index_entries]
+    if len(set(artifact_refs)) != len(artifact_refs):
+        findings.append(EvidenceLedgerFinding("evidence_index_entry_artifact_duplicate", "artifact refs must be unique"))
+    for entry in index_entries:
+        entry_id = str(entry.get("entry_id", "<missing>"))
+        if set(entry) != EXPECTED_INDEX_ENTRY_KEYS:
+            findings.append(
+                EvidenceLedgerFinding(
+                    "evidence_index_entry_keys_invalid",
+                    f"{entry_id} entry keys must be: {', '.join(sorted(EXPECTED_INDEX_ENTRY_KEYS))}",
+                )
+            )
+        if entry.get("state") != "AwaitingEvidence":
+            findings.append(
+                EvidenceLedgerFinding(
+                    "evidence_index_entry_state_invalid",
+                    f"{entry_id} state must be AwaitingEvidence",
+                )
+            )
+        artifact_ref = entry.get("artifact_ref")
+        if not isinstance(artifact_ref, str) or not artifact_ref.strip():
+            findings.append(
+                EvidenceLedgerFinding(
+                    "evidence_index_entry_artifact_invalid",
+                    f"{entry_id} artifact_ref must be a non-empty public repository path",
+                )
+            )
+            continue
+        artifact_path = Path(artifact_ref)
+        if (
+            artifact_path.is_absolute()
+            or artifact_ref.startswith(".tmp")
+            or "\\" in artifact_ref
+            or ".." in artifact_path.parts
+            or not (REPO_ROOT / artifact_path).exists()
+        ):
+            findings.append(
+                EvidenceLedgerFinding(
+                    "evidence_index_entry_artifact_invalid",
+                    f"{entry_id} artifact_ref must point to an existing public repository path",
+                )
+            )
+        if not isinstance(entry.get("public_safe_note"), str) or not entry["public_safe_note"].strip():
+            findings.append(
+                EvidenceLedgerFinding(
+                    "evidence_index_entry_note_invalid",
+                    f"{entry_id} public_safe_note must be a non-empty string",
+                )
+            )
+    return findings
+
+
 def validate_forbidden_value_patterns(payload: dict[str, Any]) -> list[EvidenceLedgerFinding]:
     """Return findings for private, provider, customer, reviewer, or secret-shaped values."""
 
@@ -319,14 +497,17 @@ def validate_forbidden_promotion_patterns(payload: dict[str, Any]) -> list[Evide
 def validate_foundation_evidence_ledger_boundary(
     doc_path: Path = DEFAULT_DOC_PATH,
     packet_path: Path = DEFAULT_PACKET_PATH,
+    index_path: Path = DEFAULT_INDEX_PATH,
 ) -> list[EvidenceLedgerFinding]:
     """Validate the Foundation Mode evidence-ledger boundary artifacts."""
 
     doc_text = load_text(doc_path, "evidence-ledger boundary doc")
     packet_payload = load_json_object(packet_path, "evidence-ledger witness packet")
+    index_payload = load_json_object(index_path, "evidence-index packet")
     return [
         *validate_doc_text(doc_text),
         *validate_packet(packet_payload),
+        *validate_index_packet(index_payload),
     ]
 
 
@@ -336,10 +517,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validate Foundation Mode evidence-ledger boundary artifacts.")
     parser.add_argument("--doc", type=Path, default=DEFAULT_DOC_PATH)
     parser.add_argument("--packet", type=Path, default=DEFAULT_PACKET_PATH)
+    parser.add_argument("--index", type=Path, default=DEFAULT_INDEX_PATH)
     args = parser.parse_args(argv)
 
     try:
-        findings = validate_foundation_evidence_ledger_boundary(args.doc, args.packet)
+        findings = validate_foundation_evidence_ledger_boundary(args.doc, args.packet, args.index)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"[FAIL] foundation_evidence_ledger_load: {exc}", file=sys.stderr)
         print("STATUS: failed", file=sys.stderr)
@@ -352,6 +534,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     print("[PASS] foundation_evidence_ledger_doc")
     print("[PASS] foundation_evidence_ledger_witness")
+    print("[PASS] foundation_evidence_index")
     print("STATUS: passed")
     return 0
 

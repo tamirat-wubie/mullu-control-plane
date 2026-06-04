@@ -283,6 +283,7 @@
       "required_evidence": [
         "docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md",
         "examples/foundation_evidence_ledger_witness.awaiting_evidence.json",
+        "examples/foundation_evidence_index.awaiting_evidence.json",
         "scripts/validate_foundation_evidence_ledger_boundary.py",
         "tests/test_validate_foundation_evidence_ledger_boundary.py"
       ],
