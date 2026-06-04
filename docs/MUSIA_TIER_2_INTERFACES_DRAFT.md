@@ -296,20 +296,39 @@ def verify_tier2_disambiguation() -> None:
         seen.add(resp)
 ```
 
-Cross-tier check (must not collide with Tier 1):
+Cross-tier check (must not collide with any implemented tier):
 
 ```python
 def verify_no_cross_tier_overlap() -> None:
-    all_responsibilities = (
-        set(TIER1_RESPONSIBILITIES.values())
-        | set(TIER2_RESPONSIBILITIES.values())
-    )
-    expected = len(TIER1_RESPONSIBILITIES) + len(TIER2_RESPONSIBILITIES)
-    if len(all_responsibilities) != expected:
+    tables = [TIER1_RESPONSIBILITIES, TIER2_RESPONSIBILITIES]
+    try:
+        from mcoi_runtime.substrate.constructs.tier3_coordination import TIER3_RESPONSIBILITIES
+        tables.append(TIER3_RESPONSIBILITIES)
+    except ImportError:
+        pass
+    try:
+        from mcoi_runtime.substrate.constructs.tier4_governance import TIER4_RESPONSIBILITIES
+        tables.append(TIER4_RESPONSIBILITIES)
+    except ImportError:
+        pass
+    try:
+        from mcoi_runtime.substrate.constructs.tier5_cognitive import TIER5_RESPONSIBILITIES
+        tables.append(TIER5_RESPONSIBILITIES)
+    except ImportError:
+        pass
+
+    all_responsibilities = [responsibility for table in tables for responsibility in table.values()]
+    expected = sum(len(table) for table in tables)
+    if len(set(all_responsibilities)) != expected:
         raise ValueError("cross-tier responsibility overlap detected")
 ```
 
-This must run at module load just like the Tier 1 verifier. By the time Tier 5 is implemented, the verifier will check disambiguation across all 25 constructs.
+This runs at module load just like the Tier 1 verifier. The current package
+import loads Tier 1 through Tier 5, runs `verify_no_cross_tier_overlap()` after
+all five tables are available, and therefore checks all 25 construct
+responsibilities. The implementation in `tier2_structural.py` still imports
+Tier 3-5 responsibility tables lazily so the function can also run during
+partial import without creating circular import failures.
 
 ---
 
