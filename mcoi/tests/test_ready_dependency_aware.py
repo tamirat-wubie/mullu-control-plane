@@ -1,12 +1,14 @@
 """Readiness gate test lane — proves /ready is dependency-aware.
 
 These tests fail if any of the readiness invariants regress:
-  - /ready reports ready while a dependency component is unhealthy
-    (DB unreachable / proof bridge uncallable / audit chain broken all
-    surface as an ``unhealthy`` component via DeepHealthChecker).
+  - /ready reports ready while a required dependency component is missing.
+  - /ready reports ready while a dependency component is unhealthy.
+  - DB unreachable / proof bridge uncallable / audit chain broken all surface as
+    an ``unhealthy`` component via DeepHealthChecker.
   - pilot/production reports ready while the LLM backend is ``stub``.
   - pilot/production reports ready while field encryption is unavailable.
-  - dev/test is *incorrectly* gated on stub LLM / encryption.
+  - pilot/production reports ready while PII scanning is disabled.
+  - dev/test is not incorrectly gated on stub LLM / encryption / PII posture.
 
 The policy is verified as a pure function (``evaluate_readiness``); the real
 ``DeepHealthChecker`` is used to prove the throwing-dependency path; and a
@@ -36,6 +38,20 @@ except ImportError:  # pragma: no cover - optional dependency guard
     FASTAPI_AVAILABLE = False
 
 
+_BASELINE_COMPONENTS = (
+    "store",
+    "llm",
+    "proof_bridge",
+    "audit",
+    "rate_limiter",
+    "tenant_budget",
+    "tenant_gating",
+    "content_safety",
+)
+
+_STRICT_COMPONENTS = ("field_encryption", "pii_scanner")
+
+
 def _component(name: str, status: str, **detail: object) -> ComponentHealth:
     return ComponentHealth(
         name=name,
@@ -43,6 +59,26 @@ def _component(name: str, status: str, **detail: object) -> ComponentHealth:
         latency_ms=0.1,
         detail={"status": status, **detail},
     )
+
+
+def _healthy_baseline_components() -> list[ComponentHealth]:
+    return [
+        _component("store", "healthy"),
+        _component("llm", "healthy", provider="anthropic"),
+        _component("proof_bridge", "healthy"),
+        _component("audit", "healthy", chain_valid=True),
+        _component("rate_limiter", "healthy"),
+        _component("tenant_budget", "healthy"),
+        _component("tenant_gating", "healthy"),
+        _component("content_safety", "healthy", filters_configured=True),
+    ]
+
+
+def _healthy_strict_components() -> list[ComponentHealth]:
+    return [
+        _component("field_encryption", "healthy", aes_available=True),
+        _component("pii_scanner", "healthy", enabled=True),
+    ]
 
 
 def _report(*components: ComponentHealth) -> SystemHealth:
@@ -64,43 +100,43 @@ def _report(*components: ComponentHealth) -> SystemHealth:
 
 
 def test_all_healthy_is_ready() -> None:
-    report = _report(
-        _component("store", "healthy"),
-        _component("llm", "healthy", provider="anthropic"),
-        _component("proof_bridge", "healthy"),
-        _component("audit", "healthy", chain_valid=True),
-    )
+    report = _report(*_healthy_baseline_components(), *_healthy_strict_components())
     verdict = evaluate_readiness(report, "production")
     assert verdict["ready"] is True
     assert verdict["status"] == "healthy"
+    assert verdict["missing"] == []
     assert verdict["blocking"] == []
 
 
-def test_degraded_component_does_not_block() -> None:
+def test_degraded_advisory_component_does_not_block() -> None:
     report = _report(
-        _component("store", "healthy"),
+        *_healthy_baseline_components(),
         _component("metrics", "degraded"),
     )
-    verdict = evaluate_readiness(report, "production")
+    verdict = evaluate_readiness(report, "development")
     assert verdict["ready"] is True
     assert verdict["status"] == "degraded"
 
 
-# ── Pure policy: unhealthy dependency blocks readiness ────────────────────
+# ── Pure policy: missing / unhealthy dependencies block readiness ─────────
 
 
-@pytest.mark.parametrize("failed", ["store", "proof_bridge", "audit"])
+@pytest.mark.parametrize("missing", _BASELINE_COMPONENTS)
+def test_missing_required_component_blocks_readiness(missing: str) -> None:
+    components = [component for component in _healthy_baseline_components() if component.name != missing]
+    verdict = evaluate_readiness(_report(*components), "development")
+    assert verdict["ready"] is False
+    assert missing in verdict["missing"]
+    assert f"{missing}:missing" in verdict["blocking"]
+
+
+@pytest.mark.parametrize("failed", ["store", "proof_bridge", "audit", "content_safety"])
 def test_unhealthy_dependency_blocks_readiness(failed: str) -> None:
-    """A dead DB, an uncallable proof bridge, or a broken audit chain all
-    surface as an unhealthy component and must make the service not-ready."""
-    components = [
-        _component("store", "healthy"),
-        _component("proof_bridge", "healthy"),
-        _component("audit", "healthy", chain_valid=True),
-    ]
+    """A dead DB, an uncallable proof bridge, a broken audit chain, or a
+    disabled first-line content-safety chain must make the service not-ready."""
     components = [
         _component(c.name, "unhealthy") if c.name == failed else c
-        for c in components
+        for c in _healthy_baseline_components()
     ]
     verdict = evaluate_readiness(_report(*components), "production")
     assert verdict["ready"] is False
@@ -117,7 +153,9 @@ def test_real_checker_throwing_probe_is_not_ready() -> None:
         raise ConnectionError("database unavailable")
 
     checker.register("store", _dead_store)
-    checker.register("llm", lambda: {"status": "healthy", "provider": "anthropic"})
+    for component in _healthy_baseline_components():
+        if component.name != "store":
+            checker.register(component.name, lambda component=component: component.detail)
 
     verdict = evaluate_readiness(checker.run(), "production")
     assert verdict["ready"] is False
@@ -127,10 +165,14 @@ def test_real_checker_throwing_probe_is_not_ready() -> None:
 # ── Pure policy: promotion-grade gates are env-aware ──────────────────────
 
 
-def test_dev_allows_stub_llm() -> None:
+def test_dev_allows_stub_llm_encryption_and_pii_advisory_posture() -> None:
     report = _report(
-        _component("llm", "healthy", provider="stub"),
+        *[
+            _component("llm", "healthy", provider="stub") if c.name == "llm" else c
+            for c in _healthy_baseline_components()
+        ],
         _component("field_encryption", "healthy", aes_available=False),
+        _component("pii_scanner", "degraded", enabled=False),
     )
     verdict = evaluate_readiness(report, "development")
     assert verdict["ready"] is True
@@ -140,9 +182,11 @@ def test_dev_allows_stub_llm() -> None:
 @pytest.mark.parametrize("env", ["pilot", "production"])
 def test_production_blocks_stub_llm(env: str) -> None:
     report = _report(
-        _component("store", "healthy"),
-        _component("llm", "healthy", provider="stub"),
-        _component("field_encryption", "healthy", aes_available=True),
+        *[
+            _component("llm", "healthy", provider="stub") if c.name == "llm" else c
+            for c in _healthy_baseline_components()
+        ],
+        *_healthy_strict_components(),
     )
     verdict = evaluate_readiness(report, env)
     assert verdict["ready"] is False
@@ -152,23 +196,38 @@ def test_production_blocks_stub_llm(env: str) -> None:
 @pytest.mark.parametrize("env", ["pilot", "production"])
 def test_production_requires_field_encryption(env: str) -> None:
     report = _report(
-        _component("store", "healthy"),
-        _component("llm", "healthy", provider="anthropic"),
+        *_healthy_baseline_components(),
         _component("field_encryption", "healthy", aes_available=False),
+        _component("pii_scanner", "healthy", enabled=True),
     )
     verdict = evaluate_readiness(report, env)
     assert verdict["ready"] is False
     assert "field_encryption:unavailable" in verdict["blocking"]
 
 
-def test_production_ready_with_real_provider_and_encryption() -> None:
+@pytest.mark.parametrize("env", ["pilot", "production"])
+def test_production_requires_pii_scanner(env: str) -> None:
     report = _report(
-        _component("store", "healthy"),
-        _component("llm", "healthy", provider="anthropic"),
-        _component("proof_bridge", "healthy"),
-        _component("audit", "healthy", chain_valid=True),
+        *_healthy_baseline_components(),
         _component("field_encryption", "healthy", aes_available=True),
+        _component("pii_scanner", "degraded", enabled=False),
     )
+    verdict = evaluate_readiness(report, env)
+    assert verdict["ready"] is False
+    assert "pii_scanner:disabled" in verdict["blocking"]
+
+
+@pytest.mark.parametrize("env", ["pilot", "production"])
+def test_production_missing_strict_component_blocks(env: str) -> None:
+    report = _report(*_healthy_baseline_components())
+    verdict = evaluate_readiness(report, env)
+    assert verdict["ready"] is False
+    assert "field_encryption:missing" in verdict["blocking"]
+    assert "pii_scanner:missing" in verdict["blocking"]
+
+
+def test_production_ready_with_real_provider_encryption_and_pii() -> None:
+    report = _report(*_healthy_baseline_components(), *_healthy_strict_components())
     verdict = evaluate_readiness(report, "production")
     assert verdict["ready"] is True
     assert verdict["blocking"] == []
@@ -176,9 +235,12 @@ def test_production_ready_with_real_provider_and_encryption() -> None:
 
 def test_no_default_llm_backend_is_unhealthy_everywhere() -> None:
     """An unconfigured LLM bridge is unhealthy regardless of environment."""
-    report = _report(_component("llm", "unhealthy"))
-    assert evaluate_readiness(report, "development")["ready"] is False
-    assert evaluate_readiness(report, "production")["ready"] is False
+    components = [
+        _component("llm", "unhealthy") if c.name == "llm" else c
+        for c in _healthy_baseline_components()
+    ]
+    assert evaluate_readiness(_report(*components), "development")["ready"] is False
+    assert evaluate_readiness(_report(*components, *_healthy_strict_components()), "production")["ready"] is False
 
 
 # ── Integration: probes are actually wired into the app ───────────────────
@@ -203,13 +265,23 @@ def test_ready_endpoint_is_ready_in_dev(client: TestClient) -> None:
     assert body["ready"] is True
     assert body["governed"] is True
     assert body["blocking"] == []
-    # The new dependency probes are wired and consulted.
-    for name in ("store", "llm", "proof_bridge", "audit", "field_encryption"):
+    for name in (*_BASELINE_COMPONENTS, *_STRICT_COMPONENTS):
         assert name in body["checks"]
 
 
-def test_deep_health_includes_new_components(client: TestClient) -> None:
+def test_deep_health_includes_required_components(client: TestClient) -> None:
     resp = client.get("/api/v1/health/deep")
     assert resp.status_code == 200
     names = {c["name"] for c in resp.json()["components"]}
-    assert {"proof_bridge", "audit", "field_encryption"} <= names
+    assert set(_BASELINE_COMPONENTS) <= names
+    assert set(_STRICT_COMPONENTS) <= names
+
+
+def test_dependency_health_route_is_deep_health_derived(client: TestClient) -> None:
+    resp = client.get("/api/v1/health/dependencies")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["governed"] is True
+    assert body["dependencies"]
+    names = {component["name"] for component in body["dependencies"]}
+    assert set(_BASELINE_COMPONENTS) <= names

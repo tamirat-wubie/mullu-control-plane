@@ -7,7 +7,7 @@ Liveness vs readiness:
   - /health is a shallow liveness signal (is the process up). It is what the
     container HEALTHCHECK probes and must stay cheap and dependency-free.
   - /ready is a readiness gate: it consults the deep-health probes and fails
-    closed (HTTP 503) when a dependency is unhealthy, plus enforces
+    closed (HTTP 503) when a dependency is unhealthy, missing, or violates
     promotion-grade policy in pilot/production.
 """
 from __future__ import annotations
@@ -38,6 +38,42 @@ def health():
 # Environments where readiness applies strict promotion-grade gates.
 _STRICT_ENVIRONMENTS = ("pilot", "production")
 
+# Components that must be registered and non-unhealthy for the API to accept
+# real traffic. Optional/advisory components may still be exposed by deep-health
+# without blocking readiness.
+_REQUIRED_COMPONENTS = (
+    "store",
+    "llm",
+    "proof_bridge",
+    "audit",
+    "rate_limiter",
+    "tenant_budget",
+    "tenant_gating",
+    "content_safety",
+)
+
+# Components whose degraded/missing posture blocks promotion-grade environments.
+_STRICT_REQUIRED_COMPONENTS = (
+    "field_encryption",
+    "pii_scanner",
+)
+
+_HEALTH_SCORE_WEIGHTS: dict[str, float] = {
+    "store": 3.0,
+    "llm": 3.0,
+    "proof_bridge": 3.0,
+    "audit": 3.0,
+    "rate_limiter": 2.0,
+    "tenant_budget": 2.0,
+    "tenant_gating": 2.0,
+    "content_safety": 2.0,
+    "field_encryption": 2.0,
+    "pii_scanner": 1.0,
+    "certification": 1.0,
+    "metrics": 1.0,
+    "shell_policy": 1.0,
+}
+
 
 def _environment() -> str:
     """Best-effort deployment environment name (never raises)."""
@@ -47,36 +83,55 @@ def _environment() -> str:
         return "unknown"
 
 
+def _component_map(health_report: SystemHealth) -> dict[str, Any]:
+    return {component.name: component for component in health_report.components}
+
+
 def evaluate_readiness(health_report: SystemHealth, environment: str) -> dict[str, Any]:
     """Pure readiness verdict over a deep-health report + environment.
 
-    Ready iff no component is ``unhealthy``. ``degraded`` does not block. In
-    pilot/production two promotion-grade gates also apply (defense in depth —
-    the LLM bootstrap already fails closed on a stub backend): the LLM backend
-    must not be ``stub`` and field encryption must be available.
+    Ready iff every required component is present and no component is unhealthy.
+    Degraded advisory components do not block. In pilot/production, additional
+    promotion gates require a real LLM backend, available field encryption, and
+    an enabled PII scanner.
     """
-    components = {c.name: c for c in health_report.components}
+    components = _component_map(health_report)
     checks = {name: component.status.value for name, component in components.items()}
-    blocking = [
+    required = list(_REQUIRED_COMPONENTS)
+    if environment in _STRICT_ENVIRONMENTS:
+        required.extend(_STRICT_REQUIRED_COMPONENTS)
+
+    missing = [name for name in required if name not in components]
+    blocking = [f"{name}:missing" for name in missing]
+    blocking.extend(
         name for name, component in components.items()
         if component.status.value == "unhealthy"
-    ]
+    )
 
     if environment in _STRICT_ENVIRONMENTS:
         llm = components.get("llm")
         if llm is not None and llm.detail.get("provider") == "stub":
             blocking.append("llm:stub_backend_forbidden")
+
         field_encryption = components.get("field_encryption")
         if field_encryption is not None and not field_encryption.detail.get("aes_available", False):
             blocking.append("field_encryption:unavailable")
 
+        pii_scanner = components.get("pii_scanner")
+        if pii_scanner is not None and not pii_scanner.detail.get("enabled", False):
+            blocking.append("pii_scanner:disabled")
+
+    # Preserve order while removing duplicates produced by multiple gates.
+    deduped_blocking = list(dict.fromkeys(blocking))
     return {
-        "ready": not blocking,
+        "ready": not deduped_blocking,
         "status": health_report.overall.value,
         "governed": True,
         "environment": environment,
         "checks": checks,
-        "blocking": blocking,
+        "required_components": required,
+        "missing": missing,
+        "blocking": deduped_blocking,
     }
 
 
@@ -92,10 +147,7 @@ def ready(response: Response):
 # ── Deep & scored health ─────────────────────────────────────────────────
 
 
-@router.get("/api/v1/health/deep")
-def deep_health_check():
-    """System-wide deep health diagnostic."""
-    result = deps.deep_health.run()
+def _deep_health_payload(result: SystemHealth) -> dict[str, Any]:
     return {
         "overall": result.overall.value,
         "components": [
@@ -107,18 +159,59 @@ def deep_health_check():
     }
 
 
+@router.get("/api/v1/health/deep")
+def deep_health_check():
+    """System-wide deep health diagnostic."""
+    return _deep_health_payload(deps.deep_health.run())
+
+
+@router.get("/api/v1/health/dependencies")
+def dependency_health():
+    """Dependency-focused health read model derived from the readiness probes."""
+    result = deps.deep_health.run()
+    payload = _deep_health_payload(result)
+    return {
+        "governed": True,
+        "overall": payload["overall"],
+        "dependencies": payload["components"],
+        "total_latency_ms": payload["total_latency_ms"],
+        "checked_at": payload["checked_at"],
+    }
+
+
+def _component_score(status: str) -> float:
+    if status == "healthy":
+        return 1.0
+    if status == "degraded":
+        return 0.5
+    return 0.0
+
+
 @router.get("/api/v1/health/score")
 def health_score():
-    """Unified system health score (0.0-1.0)."""
-    result = deps.health_agg.compute()
+    """Unified system health score (0.0-1.0) from real deep-health probes."""
+    result = deps.deep_health.run()
+    components = []
+    total_weight = 0.0
+    weighted_score = 0.0
+    for component in result.components:
+        weight = _HEALTH_SCORE_WEIGHTS.get(component.name, 1.0)
+        score = _component_score(component.status.value)
+        total_weight += weight
+        weighted_score += weight * score
+        components.append({
+            "name": component.name,
+            "score": score,
+            "weight": weight,
+            "status": component.status.value,
+        })
+    score = round(weighted_score / total_weight, 4) if total_weight else 0.0
     return {
-        "score": result.overall_score,
-        "status": result.status,
-        "components": [
-            {"name": c.name, "score": c.score, "weight": c.weight, "status": c.status}
-            for c in result.components
-        ],
+        "score": score,
+        "status": result.overall.value,
+        "components": components,
         "checked_at": result.checked_at,
+        "source": "deep_health",
     }
 
 
@@ -171,7 +264,7 @@ def _extension_bootstrap_read_model(
 
 
 def _nested_mind_connector_read_model() -> dict[str, object]:
-    """Return nested-mind connector posture without exposing URL or token values."""
+    """Return nested-mind connector posture without exposing connector values."""
 
     try:
         bootstrap = deps.get("nested_mind_bootstrap")
@@ -224,7 +317,7 @@ def _nested_mind_observation_bridge_read_model() -> dict[str, object]:
 
 
 def _nested_mind_observation_submitter_read_model() -> dict[str, object]:
-    """Return nested-mind live observation submitter posture without secrets."""
+    """Return nested-mind live observation submitter posture without connector values."""
 
     try:
         bootstrap = deps.get("nested_mind_observation_submitter_bootstrap")
@@ -328,14 +421,7 @@ def _witness_enabled() -> bool:
 
 @router.post("/api/v1/health/witness")
 def promotion_witness(response: Response):
-    """Prove the governed proof + audit chain at runtime (promotion gate).
-
-    Disabled by default — set ``MULLU_HEALTH_WITNESS_ENABLED=true`` in the
-    promotion environment. Each call issues ONE bounded synthetic governed
-    decision (tenant ``system``, actor ``health-witness``), persists its proof
-    and audit receipts, then verifies both. Returns HTTP 503 when the witness
-    cannot be produced or verified.
-    """
+    """Prove the governed proof + audit chain at runtime (promotion gate)."""
     if not _witness_enabled():
         raise HTTPException(
             status_code=404,
@@ -343,56 +429,74 @@ def promotion_witness(response: Response):
         )
 
     errors: list[str] = []
+    receipt_id = ""
+    receipt_hash = ""
+    proof_verified = False
+    audit_entry_id = ""
+    chain_valid = False
+    chain_length = 0
 
-    # 1. Synthetic governed decision -> proof receipt (real wired bridge).
-    proof = deps.proof_bridge.certify_governance_decision(
-        tenant_id=_WITNESS_TENANT,
-        endpoint="/api/v1/health/witness",
-        guard_results=[
-            {
-                "guard_name": "health_witness",
-                "allowed": True,
-                "reason": "synthetic promotion witness",
-            }
-        ],
-        decision="allowed",
-        actor_id=_WITNESS_ACTOR,
-        reason="promotion witness",
-    )
-    receipt = proof.capsule.receipt
-    proof_verified = bool(deps.proof_bridge.verify_receipt(receipt))
-    if not proof_verified:
-        errors.append("proof_receipt_unverified")
+    readiness_report = evaluate_readiness(deps.deep_health.run(), _environment())
+    if not readiness_report["ready"]:
+        errors.append("readiness_not_ready")
 
-    # 2. Audit receipt + hash-chain verification (real wired trail).
-    entry = deps.audit_trail.record(
-        action="health.witness",
-        actor_id=_WITNESS_ACTOR,
-        tenant_id=_WITNESS_TENANT,
-        target="control-plane",
-        outcome="success",
-        detail={"proof_receipt_id": receipt.receipt_id},
-    )
-    chain_valid, chain_length = deps.audit_trail.verify_chain()
-    if not chain_valid:
-        errors.append("audit_chain_invalid")
+    try:
+        proof = deps.proof_bridge.certify_governance_decision(
+            tenant_id=_WITNESS_TENANT,
+            endpoint="/api/v1/health/witness",
+            guard_results=[
+                {
+                    "guard_name": "health_witness",
+                    "allowed": True,
+                    "reason": "synthetic promotion witness",
+                }
+            ],
+            decision="allowed",
+            actor_id=_WITNESS_ACTOR,
+            reason="promotion witness",
+        )
+        receipt = proof.capsule.receipt
+        receipt_id = receipt.receipt_id
+        receipt_hash = proof.receipt_hash
+        proof_verified = bool(deps.proof_bridge.verify_receipt(receipt))
+        if not proof_verified:
+            errors.append("proof_receipt_unverified")
+    except Exception:
+        errors.append("proof_receipt_error")
+
+    try:
+        entry = deps.audit_trail.record(
+            action="health.witness",
+            actor_id=_WITNESS_ACTOR,
+            tenant_id=_WITNESS_TENANT,
+            target="control-plane",
+            outcome="success" if not errors else "failure",
+            detail={"proof_receipt_id": receipt_id, "errors": list(errors)},
+        )
+        audit_entry_id = entry.entry_id
+        chain_valid, chain_length = deps.audit_trail.verify_chain()
+        if not chain_valid:
+            errors.append("audit_chain_invalid")
+    except Exception:
+        errors.append("audit_chain_error")
 
     if errors:
         response.status_code = 503
     return {
-        "witness_id": f"health-witness-{receipt.receipt_id}",
+        "witness_id": f"health-witness-{receipt_id or 'unissued'}",
         "outcome": "verified" if not errors else "failed",
         "governed": True,
         "environment": _environment(),
+        "readiness": readiness_report,
         "proof": {
-            "receipt_id": receipt.receipt_id,
-            "receipt_hash": proof.receipt_hash,
+            "receipt_id": receipt_id,
+            "receipt_hash": receipt_hash,
             "verified": proof_verified,
         },
         "audit": {
-            "entry_id": entry.entry_id,
+            "entry_id": audit_entry_id,
             "chain_valid": chain_valid,
             "chain_length": chain_length,
         },
-        "errors": errors,
+        "errors": list(dict.fromkeys(errors)),
     }

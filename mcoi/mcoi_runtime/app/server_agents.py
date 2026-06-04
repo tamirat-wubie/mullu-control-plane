@@ -3,15 +3,12 @@
 Purpose: isolate agent registry, workflow, health, config, and early
 observability bootstrap from the main server module.
 Governance scope: [OCE, CDCV, CQTE, UWMA]
-Dependencies: agent protocol, workflow engine, webhook manager, health, config,
-and observability subsystems.
+Dependencies: agent protocol, workflow engine, health, config, and observability.
 Invariants:
   - Default agent registrations remain stable.
   - Health probe names and bounded summaries remain deterministic.
-  - Config bootstrap payload stays stable for llm, rate limits, and
-    certification.
-  - Workflow engine wiring remains bound to task manager, webhook manager, and
-    audit trail.
+  - Config bootstrap payload stays stable for llm, rate limits, and certification.
+  - Workflow engine wiring remains bound to task manager, webhook manager, and audit trail.
   - Early observability sources remain stable and deterministic.
 """
 from __future__ import annotations
@@ -45,14 +42,63 @@ class AgentBootstrap:
     observability: Any
 
 
-def _llm_deep_health(llm_bridge: Any) -> dict[str, Any]:
-    """Readiness fact for the LLM bridge.
+def _bounded_detail(value: Any) -> Any:
+    """Return a small JSON-safe health payload."""
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    if isinstance(value, dict):
+        return {str(key): _bounded_detail(child) for key, child in value.items()}
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return [_bounded_detail(child) for child in list(value)[:20]]
+    return str(type(value).__name__)
 
-    Reports the active default backend's provider (so the /ready policy can
-    refuse a ``stub`` backend in pilot/production) and flags an unconfigured
-    bridge as unhealthy. Read-only. The bridge exposes no public accessor for
-    its default provider, so we read ``_backends`` defensively.
+
+def _store_deep_health(store: Any) -> dict[str, Any]:
+    """Readiness probe for durable store connectivity and basic shape.
+
+    ``ledger_count`` is intentionally used as a real read round-trip. For the
+    PostgreSQL store, a missing live connection is unhealthy before trying the
+    query, and the schema_version table is read when available so migration
+    drift is surfaced by the same probe without mutating state.
     """
+    backend = type(store).__name__
+    if backend == "PostgresStore" and getattr(store, "_conn", None) is None:
+        return {
+            "status": "unhealthy",
+            "backend": backend,
+            "detail": "connection_unavailable",
+        }
+
+    detail: dict[str, Any] = {
+        "status": "healthy",
+        "backend": backend,
+        "ledger_count": store.ledger_count(),
+    }
+    for method_name in ("request_count", "active_session_count", "llm_invocation_count"):
+        method = getattr(store, method_name, None)
+        if callable(method):
+            detail[method_name] = method()
+    if backend == "PostgresStore":
+        detail.update(_postgres_schema_readiness(store))
+    return detail
+
+
+def _postgres_schema_readiness(store: Any) -> dict[str, Any]:
+    """Best-effort read-only PostgreSQL schema-version probe."""
+    connection = getattr(store, "_connection", None)
+    if not callable(connection):
+        return {"schema_version_checked": False}
+    with connection() as conn, conn.cursor() as cur:
+        cur.execute("SELECT COALESCE(MAX(version), 0) FROM schema_version")
+        row = cur.fetchone()
+    return {
+        "schema_version_checked": True,
+        "schema_version": int(row[0] if row else 0),
+    }
+
+
+def _llm_deep_health(llm_bridge: Any) -> dict[str, Any]:
+    """Readiness fact for the LLM bridge."""
     backends = getattr(llm_bridge, "_backends", {}) or {}
     default = backends.get("default")
     if default is None:
@@ -66,28 +112,68 @@ def _llm_deep_health(llm_bridge: Any) -> dict[str, Any]:
 
 
 def _proof_bridge_deep_health(proof_bridge: Any) -> dict[str, Any]:
-    """Readiness probe for the proof bridge: proves it is callable.
-
-    ``summary()`` is read-only (in-memory counters). If the bridge is not
-    wired the call raises and DeepHealthChecker records the component
-    unhealthy.
-    """
+    """Readiness probe for the proof bridge: proves it is callable."""
     summary = proof_bridge.summary()
-    return {"status": "healthy", "receipt_count": summary.get("receipt_count", 0)}
+    return {"status": "healthy", "receipt_count": summary.get("receipt_count", summary.get("proofs", 0))}
 
 
 def _audit_deep_health(audit_trail: Any) -> dict[str, Any]:
-    """Readiness probe for the audit trail: integrity of the hash chain.
-
-    ``summary()`` runs ``verify_chain()`` (read-only). A broken chain is an
-    environment-independent failure, so it degrades to unhealthy.
-    """
+    """Readiness probe for the audit trail: integrity of the hash chain."""
     summary = audit_trail.summary()
     chain_valid = bool(summary.get("chain_valid", True))
     return {
         "status": "healthy" if chain_valid else "unhealthy",
         "chain_valid": chain_valid,
-        "entry_count": summary.get("entry_count", 0),
+        "entry_count": summary.get("entry_count", summary.get("count", 0)),
+    }
+
+
+def _rate_limiter_deep_health(rate_limiter: Any) -> dict[str, Any]:
+    """Readiness probe for the rate limiter without evaluating a request."""
+    return {"status": "healthy", **_bounded_detail(rate_limiter.status())}
+
+
+def _tenant_budget_deep_health(tenant_budget_mgr: Any) -> dict[str, Any]:
+    """Readiness probe for the tenant budget manager."""
+    return {
+        "status": "healthy",
+        "tenant_count": tenant_budget_mgr.tenant_count(),
+        "total_spent": tenant_budget_mgr.total_spent(),
+    }
+
+
+def _tenant_gating_deep_health(tenant_gating: Any) -> dict[str, Any]:
+    """Readiness probe for tenant lifecycle gating state."""
+    return {"status": "healthy", **_bounded_detail(tenant_gating.summary())}
+
+
+def _content_safety_deep_health(content_safety_chain: Any) -> dict[str, Any]:
+    """Readiness probe for the input/output safety chain."""
+    filter_count = int(getattr(content_safety_chain, "filter_count", 0))
+    return {
+        "status": "healthy" if filter_count > 0 else "unhealthy",
+        "filter_count": filter_count,
+        "filters_configured": filter_count > 0,
+    }
+
+
+def _pii_scanner_deep_health(pii_scanner: Any) -> dict[str, Any]:
+    """Readiness probe for PII scanner configuration."""
+    return {
+        "status": "healthy" if getattr(pii_scanner, "enabled", False) else "degraded",
+        "enabled": bool(getattr(pii_scanner, "enabled", False)),
+        "pattern_count": int(getattr(pii_scanner, "pattern_count", 0)),
+    }
+
+
+def _shell_policy_deep_health(shell_policy: Any) -> dict[str, Any]:
+    """Readiness probe for shell policy posture without exposing command paths."""
+    allowed = getattr(shell_policy, "allowed_executables", ()) or ()
+    return {
+        "status": "healthy" if getattr(shell_policy, "enabled", False) else "degraded",
+        "policy_id": str(getattr(shell_policy, "policy_id", "")),
+        "enabled": bool(getattr(shell_policy, "enabled", False)),
+        "allowed_executable_count": len(tuple(allowed)),
     }
 
 
@@ -122,10 +208,7 @@ def bootstrap_agent_runtime(
         agent_descriptor_cls(
             agent_id="llm-agent",
             name="LLM Completion Agent",
-            capabilities=(
-                AgentCapability.LLM_COMPLETION,
-                AgentCapability.TOOL_USE,
-            ),
+            capabilities=(AgentCapability.LLM_COMPLETION, AgentCapability.TOOL_USE),
         )
     )
     agent_registry.register(
@@ -139,33 +222,21 @@ def bootstrap_agent_runtime(
     webhook_manager = webhook_manager_cls(clock=clock)
 
     deep_health = deep_health_checker_cls(clock=clock)
-    deep_health.register(
-        "store",
-        lambda: {"status": "healthy", "ledger_count": store.ledger_count()},
-    )
-    deep_health.register(
-        "llm",
-        lambda: _llm_deep_health(llm_bridge),
-    )
-    deep_health.register(
-        "certification",
-        lambda: {"status": "healthy", **cert_daemon.status()},
-    )
+    deep_health.register("store", lambda: _store_deep_health(store))
+    deep_health.register("llm", lambda: _llm_deep_health(llm_bridge))
+    deep_health.register("certification", lambda: {"status": "healthy", **cert_daemon.status()})
     deep_health.register(
         "metrics",
-        lambda: {
-            "status": "healthy",
-            "counters": len(getattr(metrics, "KNOWN_COUNTERS", ())),
-        },
+        lambda: {"status": "healthy", "counters": len(getattr(metrics, "KNOWN_COUNTERS", ()))},
     )
-    deep_health.register(
-        "proof_bridge",
-        lambda: _proof_bridge_deep_health(proof_bridge),
-    )
-    deep_health.register(
-        "audit",
-        lambda: _audit_deep_health(audit_trail),
-    )
+    deep_health.register("proof_bridge", lambda: _proof_bridge_deep_health(proof_bridge))
+    deep_health.register("audit", lambda: _audit_deep_health(audit_trail))
+    deep_health.register("rate_limiter", lambda: _rate_limiter_deep_health(rate_limiter))
+    deep_health.register("tenant_budget", lambda: _tenant_budget_deep_health(tenant_budget_mgr))
+    deep_health.register("tenant_gating", lambda: _tenant_gating_deep_health(tenant_gating))
+    deep_health.register("content_safety", lambda: _content_safety_deep_health(content_safety_chain))
+    deep_health.register("pii_scanner", lambda: _pii_scanner_deep_health(pii_scanner))
+    deep_health.register("shell_policy", lambda: _shell_policy_deep_health(shell_policy))
 
     config_manager = config_manager_cls(
         clock=clock,
@@ -179,10 +250,7 @@ def bootstrap_agent_runtime(
     workflow_engine = workflow_engine_cls(
         clock=clock,
         task_manager=task_manager,
-        llm_complete_fn=lambda prompt, budget_id: llm_bridge.complete(
-            prompt,
-            budget_id=budget_id,
-        ),
+        llm_complete_fn=lambda prompt, budget_id: llm_bridge.complete(prompt, budget_id=budget_id),
         webhook_manager=webhook_manager,
         audit_trail=audit_trail,
     )
@@ -192,10 +260,7 @@ def bootstrap_agent_runtime(
     observability.register_source("llm", lambda: llm_bridge.budget_summary())
     observability.register_source(
         "tenants",
-        lambda: {
-            "count": tenant_budget_mgr.tenant_count(),
-            "total_spent": tenant_budget_mgr.total_spent(),
-        },
+        lambda: {"count": tenant_budget_mgr.tenant_count(), "total_spent": tenant_budget_mgr.total_spent()},
     )
     observability.register_source(
         "agents",
@@ -211,10 +276,7 @@ def bootstrap_agent_runtime(
     )
     observability.register_source(
         "content_safety",
-        lambda: {
-            "filters": content_safety_chain.filter_count,
-            "names": content_safety_chain.filter_names(),
-        },
+        lambda: {"filters": content_safety_chain.filter_count, "names": content_safety_chain.filter_names()},
     )
     observability.register_source("proof_bridge", lambda: proof_bridge.summary())
     observability.register_source("rate_limiter", lambda: rate_limiter.status())
