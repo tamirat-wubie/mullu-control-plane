@@ -1,0 +1,103 @@
+{
+  "governed": true,
+  "witness_set_id": "engineering-puzzle-universality-witness-set.v1",
+  "claim": "survival_before_optimization_universality",
+  "kernel_rule": "not Pass(L2_survival) => Block(L5_optimization)",
+  "source_refs": [
+    "docs/ENGINEERING_PUZZLE_KERNEL.md",
+    "mcoi/mcoi_runtime/contracts/engineering_puzzle.py",
+    "mcoi/mcoi_runtime/core/engineering_puzzle_kernel.py"
+  ],
+  "cases": [
+    {
+      "case_id": "software_gateway_authorization_before_cache",
+      "domain": "software",
+      "scenario": "API gateway caching proposal before authorization boundary proof",
+      "survival_guard": "authorization boundary must survive before cache optimization",
+      "optimization_candidate": "increase cache hit ratio by bypassing repeated authorization checks",
+      "expected_failed_level": "L2_survival",
+      "expected_optimization_blocked": true,
+      "expected_verdict": "SafeHalt",
+      "model_evidence": [
+        "kernel-rule:R1",
+        "candidate-filter:L2_survival=false"
+      ],
+      "observation_evidence": [
+        "evaluate_filter_stack stops at L2_survival",
+        "L5_optimization not evaluated"
+      ]
+    },
+    {
+      "case_id": "physical_bridge_load_before_material_reduction",
+      "domain": "physical_engineering",
+      "scenario": "Bridge material reduction proposal before load survival proof",
+      "survival_guard": "load-bearing safety margin must survive before material optimization",
+      "optimization_candidate": "reduce beam material to lower cost and mass",
+      "expected_failed_level": "L2_survival",
+      "expected_optimization_blocked": true,
+      "expected_verdict": "SafeHalt",
+      "model_evidence": [
+        "kernel-rule:R1",
+        "candidate-filter:L2_survival=false"
+      ],
+      "observation_evidence": [
+        "evaluate_filter_stack stops at L2_survival",
+        "L5_optimization not evaluated"
+      ]
+    },
+    {
+      "case_id": "legal_authority_before_approval_removal",
+      "domain": "legal_compliance",
+      "scenario": "Approval removal proposal before authority preservation proof",
+      "survival_guard": "approval authority chain must survive before process optimization",
+      "optimization_candidate": "remove second approval to reduce cycle time",
+      "expected_failed_level": "L2_survival",
+      "expected_optimization_blocked": true,
+      "expected_verdict": "SafeHalt",
+      "model_evidence": [
+        "kernel-rule:R1",
+        "candidate-filter:L2_survival=false"
+      ],
+      "observation_evidence": [
+        "evaluate_filter_stack stops at L2_survival",
+        "L5_optimization not evaluated"
+      ]
+    },
+    {
+      "case_id": "finance_authorization_before_payment_batching",
+      "domain": "finance_operations",
+      "scenario": "Payment batching proposal before spend authority proof",
+      "survival_guard": "spend authority and approval receipt must survive before payment throughput optimization",
+      "optimization_candidate": "batch vendor payments without per-payment approval receipt checks",
+      "expected_failed_level": "L2_survival",
+      "expected_optimization_blocked": true,
+      "expected_verdict": "SafeHalt",
+      "model_evidence": [
+        "kernel-rule:R1",
+        "candidate-filter:L2_survival=false"
+      ],
+      "observation_evidence": [
+        "evaluate_filter_stack stops at L2_survival",
+        "L5_optimization not evaluated"
+      ]
+    },
+    {
+      "case_id": "runtime_recovery_before_queue_throughput",
+      "domain": "runtime_operations",
+      "scenario": "Queue throughput tuning proposal before recovery-path proof",
+      "survival_guard": "rollback and replay path must survive before dispatch throughput optimization",
+      "optimization_candidate": "increase worker lease concurrency before replay cursor safety is proven",
+      "expected_failed_level": "L2_survival",
+      "expected_optimization_blocked": true,
+      "expected_verdict": "SafeHalt",
+      "model_evidence": [
+        "kernel-rule:R1",
+        "candidate-filter:L2_survival=false"
+      ],
+      "observation_evidence": [
+        "evaluate_filter_stack stops at L2_survival",
+        "L5_optimization not evaluated"
+      ]
+    }
+  ]
+}
