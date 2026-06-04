@@ -32,10 +32,11 @@ Invariants: no live network calls in default mode, explicit proof tradeoff, stab
 
 1. Run `python scripts/benchmark_gateway_overhead.py`.
 2. Save the JSON report with `--output artifacts/gateway_benchmark_report.json` when publishing.
-3. Publish latency overhead and audit cost together. Proof has a cost; the benchmark must show it.
+3. Run `python scripts/validate_public_demo_surfaces.py --output .change_assurance/public_demo_surface_validation.json` for the release-CI witness.
+4. Publish latency overhead and audit cost together. Proof has a cost; the benchmark must show it.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: deterministic seeded samples, no live network calls, stable report hash, latency metric, throughput metric, audit cost metric, proof tradeoff declaration
+  Invariants verified: deterministic seeded samples, no live network calls, stable report hash, latency metric, throughput metric, audit cost metric, proof tradeoff declaration, release-CI public demo witness
   Open issues: none
-  Next action: wire the harness into release CI once the artifact directory is standardized
+  Next action: keep the benchmark witness in public demo validation CI before publishing sandbox or dashboard demos
