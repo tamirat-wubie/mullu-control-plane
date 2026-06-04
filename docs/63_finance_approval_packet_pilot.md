@@ -6,8 +6,8 @@
 > [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: How-to.)*
 
 Purpose: operate the governed finance approval packet pilot from invoice packet creation through policy evaluation, approval, effect handoff, proof export, and operator read-model inspection.
-Governance scope: finance packet contracts, policy decisions, approval/effect receipts, persistent packet store, proof export, and route proof coverage.
-Dependencies: `mcoi_runtime.app.routers.finance_approval`, `mcoi_runtime.persistence.finance_approval_store`, `schemas/finance_approval_packet_proof.schema.json`, `examples/finance_approval_packet_blocked.json`, and `examples/finance_approval_packet_success.json`.
+Governance scope: finance packet contracts, policy decisions, approval/effect receipts, persistent packet store, proof export, route proof coverage, and static operator summary rendering.
+Dependencies: `mcoi_runtime.app.routers.finance_approval`, `mcoi_runtime.persistence.finance_approval_store`, `schemas/finance_approval_packet_proof.schema.json`, `schemas/finance_approval_operator_summary.schema.json`, `scripts/render_finance_approval_operator_page.py`, `examples/finance_approval_packet_blocked.json`, and `examples/finance_approval_packet_success.json`.
 Invariants:
 - Money uses integer minor units, never floats.
 - Packet creation evaluates policy before the packet is exposed.
@@ -17,6 +17,7 @@ Invariants:
 - Closed packet proof requires a closure certificate id.
 - `closed_sent` proof requires at least one effect reference.
 - The operator read model is bounded by `limit`.
+- The static operator page renders only from a schema-valid redacted summary and contains no JavaScript.
 
 ## Capability
 
@@ -256,13 +257,14 @@ pytest mcoi\tests\test_finance_approval_packet.py `
   mcoi\tests\test_finance_approval_router.py `
   mcoi\tests\test_finance_approval_store.py `
   tests\test_validate_protocol_manifest.py `
+  tests\test_render_finance_approval_operator_page.py `
   tests\test_proof_coverage_matrix.py -q
 ```
 
 Expected result:
 
 ```text
-193 passed
+238 passed
 ```
 
 Schema/protocol verification:
@@ -274,7 +276,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 156 schemas
+protocol manifest ok: 177 schemas
 ```
 
 Finance pilot readiness verification:
@@ -323,6 +325,7 @@ python scripts\validate_finance_approval_live_handoff_chain.py --strict --requir
 python scripts\validate_finance_approval_live_handoff_chain_schema.py --strict --json
 python scripts\produce_finance_approval_operator_summary.py --output .change_assurance\finance_approval_operator_summary.json --strict --json
 python scripts\validate_finance_approval_operator_summary_schema.py --strict --json
+python scripts\render_finance_approval_operator_page.py --summary .change_assurance\finance_approval_operator_summary.json --output .change_assurance\finance_approval_operator_page.html --strict --json
 ```
 
 Use `examples\finance_email_calendar_recovery.env.example` as the redacted binding template; validate it before replacing secret placeholders through a secrets manager.
@@ -338,6 +341,7 @@ one read-only scope witness: EMAIL_CALENDAR_CONNECTOR_SCOPE_ID=gmail.readonly or
 Do not use write-capable scope witnesses such as `calendar.events`, `mail.send`, or `compose` for the finance pilot recovery path.
 The handoff packet carries `promotion_boundary.ok` separately from `promotion_boundary.ready`. `ok=true` means the packet artifacts are structurally usable. `ready=false` means live handoff promotion remains blocked. The packet must include the `email_calendar_live_receipt` artifact, and `ready=true` requires that receipt to validate as passed, read-only, worker-bound, and effect-free. The strict promotion command is `python scripts\validate_finance_approval_live_handoff_chain.py --strict --require-ready --json`.
 The operator summary is a redacted read-only artifact that copies packet readiness, chain readiness, readiness blockers, artifact statuses, next actions, and must-not-claim boundaries into `.change_assurance\finance_approval_operator_summary.json`.
+The static operator page renders that validated redacted summary into `.change_assurance\finance_approval_operator_page.html`. It performs no live adapter action, contains no JavaScript, escapes rendered text, and must not be used as a production finance automation or live email delivery claim.
 The closure runner is a 17-command dry-run artifact by default. It validates the redacted recovery env template before binding receipt emission, marks the read-only email/calendar live receipt command as the only live connector touchpoint, validates that receipt before adapter evidence collection, validates the aggregate handoff chain, produces the operator summary, validates the operator summary schema, and blocks until the binding receipt, live receipt, preflight, packet, and pilot readiness are closed.
 
 Payment-provider binding receipt:
@@ -401,6 +405,6 @@ production finance automation
 
 STATUS:
   Completeness: 100%
-  Invariants verified: no-float money, policy-before-exposure, no effect on blocked packets, explicit approval/effect receipts, proof schema, bounded operator read model, deterministic persistence, finance-scoped live handoff plan, dry-run live handoff closure sequence, payment-provider binding receipt validation
-  Open issues: no HTML operator page; no PostgreSQL finance store; no live email/calendar adapter closure
+  Invariants verified: no-float money, policy-before-exposure, no effect on blocked packets, explicit approval/effect receipts, proof schema, bounded operator read model, deterministic persistence, finance-scoped live handoff plan, dry-run live handoff closure sequence, payment-provider binding receipt validation, static redacted HTML operator page
+  Open issues: no PostgreSQL finance store; no live email/calendar adapter closure
   Next action: close live email/calendar adapter evidence before claiming production finance operations

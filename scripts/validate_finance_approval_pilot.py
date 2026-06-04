@@ -188,7 +188,7 @@ def _proof_coverage_classifies_finance_routes() -> bool:
         for route in routes
         if isinstance(route, dict)
         and route.get("surface_id") == "finance_approval_packets"
-        and route.get("coverage_state") == "witnessed"
+        and route.get("coverage_state") in {"proven", "witnessed"}
     }
     return required <= classified
 
