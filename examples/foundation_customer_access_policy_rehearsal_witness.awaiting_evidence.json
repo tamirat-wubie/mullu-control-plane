@@ -1,0 +1,108 @@
+{
+  "access_policy_approved": false,
+  "access_policy_rehearsal_executed": false,
+  "account_creation_allowed": false,
+  "blocked_claims": [
+    "access-policy approval",
+    "customer access opening",
+    "customer invitation",
+    "account creation",
+    "tenant provisioning",
+    "login route publication",
+    "support commitment",
+    "terms/privacy readiness",
+    "personal-data collection",
+    "paid access",
+    "pilot/beta/waitlist access",
+    "external publication",
+    "deployment readiness"
+  ],
+  "customer_access_allowed": false,
+  "customer_invitation_allowed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "login_route_publication_allowed": false,
+  "next_action": "draft fictional local customer-access policy rules only; do not approve access, invite customers, create accounts, provision tenants, publish login routes, promise support, claim terms or privacy readiness, collect personal data, accept paid access, open pilot beta or waitlist access, publish externally, or deploy",
+  "paid_access_allowed": false,
+  "personal_data_collection_allowed": false,
+  "pilot_beta_waitlist_access_allowed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "support_commitment_allowed": false,
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Entry criteria questions only; no customer qualification, admission, or access approval is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "entry_criteria_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Denial criteria questions only; no real person is rejected and no reply is sent.",
+      "state": "AwaitingEvidence",
+      "surface_id": "denial_criteria_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pause and stop-rule questions only; privacy, legal, support, payment, runtime, and deployment gates are not bypassed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "pause_stop_rules",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Account and tenant boundary questions only; accounts, tenants, logins, identities, and access links remain uncreated.",
+      "state": "AwaitingEvidence",
+      "surface_id": "account_tenant_boundary",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Invitation boundary questions only; customer invitations and invite links remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "invitation_boundary",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Support-duty questions only; response-time promises, SLA, and incident coverage remain unclaimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "support_duty_boundary",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Terms and privacy boundary questions only; terms readiness, privacy readiness, and legal clearance remain unclaimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "terms_privacy_boundary",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Data and payment exposure questions only; personal data, payment details, subscriptions, and invoices remain uncollected.",
+      "state": "AwaitingEvidence",
+      "surface_id": "data_payment_boundary",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Publication and deployment stop questions only; access routes, public offers, and deployment claims remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "publication_deployment_boundary",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Handoff-note questions only; customer-access readiness remains unclaimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "handoff_note",
+      "surface_type": "local_draft"
+    }
+  ],
+  "tenant_provisioning_allowed": false,
+  "terms_privacy_ready_claimed": false,
+  "witness_id": "foundation_customer_access_policy_rehearsal_witness.awaiting_evidence.v1"
+}

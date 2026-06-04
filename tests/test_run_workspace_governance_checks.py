@@ -24,12 +24,13 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     names = [command.name for command in commands]
     args_by_name = {command.name: command.args for command in commands}
 
-    assert names[:55] == [
+    assert names[:60] == [
         "local_assurance_plan",
         "agents_policy",
         "foundation_mode",
         "foundation_source_control_boundary",
         "foundation_operator_readiness_boundary",
+        "foundation_solo_daily_loop_boundary",
         "foundation_learning_path_boundary",
         "foundation_architecture_map_boundary",
         "foundation_system_boundary_inventory_boundary",
@@ -56,6 +57,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_test_evidence_boundary",
         "foundation_local_proof_thread",
         "foundation_private_recovery_boundary",
+        "foundation_private_recovery_rehearsal_boundary",
         "foundation_secrets_credentials_boundary",
         "foundation_security_baseline_boundary",
         "foundation_cost_budget_boundary",
@@ -73,15 +75,18 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_market_research_boundary",
         "foundation_pilot_deferral_boundary",
         "foundation_support_readiness_boundary",
+        "foundation_support_triage_rehearsal_boundary",
         "foundation_intake_onboarding_boundary",
+        "foundation_intake_questionnaire_rehearsal_boundary",
         "foundation_customer_access_boundary",
+        "foundation_customer_access_policy_rehearsal_boundary",
         "foundation_github_app_token_format_boundary",
         "foundation_privacy_data_boundary",
         "foundation_funding_team_boundary",
         "foundation_community_network_boundary",
         "protocol_manifest",
     ]
-    assert names[59:67] == [
+    assert names[64:72] == [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
         "workspace_governance_witness_contract",
@@ -91,7 +96,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "workspace_governance_integrity_report_contract",
         "universal_action_orchestration_contract",
     ]
-    assert len(names) == 75
+    assert len(names) == 80
     assert names[-9:] == [
         "universal_action_orchestration_contract",
         "universal_action_orchestration_validation_receipt_contract",
@@ -115,6 +120,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["foundation_operator_readiness_boundary"][1:] == (
         "scripts/validate_foundation_operator_readiness_boundary.py",
+    )
+    assert args_by_name["foundation_solo_daily_loop_boundary"][1:] == (
+        "scripts/validate_foundation_solo_daily_loop_boundary.py",
     )
     assert args_by_name["foundation_learning_path_boundary"][1:] == (
         "scripts/validate_foundation_learning_path_boundary.py",
@@ -194,6 +202,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert args_by_name["foundation_private_recovery_boundary"][1:] == (
         "scripts/validate_foundation_private_recovery_boundary.py",
     )
+    assert args_by_name["foundation_private_recovery_rehearsal_boundary"][1:] == (
+        "scripts/validate_foundation_private_recovery_rehearsal_boundary.py",
+    )
     assert args_by_name["foundation_secrets_credentials_boundary"][1:] == (
         "scripts/validate_foundation_secrets_credentials_boundary.py",
     )
@@ -245,11 +256,20 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert args_by_name["foundation_support_readiness_boundary"][1:] == (
         "scripts/validate_foundation_support_readiness_boundary.py",
     )
+    assert args_by_name["foundation_support_triage_rehearsal_boundary"][1:] == (
+        "scripts/validate_foundation_support_triage_rehearsal_boundary.py",
+    )
     assert args_by_name["foundation_intake_onboarding_boundary"][1:] == (
         "scripts/validate_foundation_intake_onboarding_boundary.py",
     )
+    assert args_by_name["foundation_intake_questionnaire_rehearsal_boundary"][1:] == (
+        "scripts/validate_foundation_intake_questionnaire_rehearsal_boundary.py",
+    )
     assert args_by_name["foundation_customer_access_boundary"][1:] == (
         "scripts/validate_foundation_customer_access_boundary.py",
+    )
+    assert args_by_name["foundation_customer_access_policy_rehearsal_boundary"][1:] == (
+        "scripts/validate_foundation_customer_access_policy_rehearsal_boundary.py",
     )
     assert args_by_name["foundation_github_app_token_format_boundary"][1:] == (
         "scripts/validate_foundation_github_app_token_format_boundary.py",
