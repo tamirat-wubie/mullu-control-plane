@@ -105,6 +105,7 @@
             "foundation_external_infrastructure_boundary",
             "foundation_domain_email_boundary",
             "foundation_legal_business_boundary",
+            "foundation_legal_business_question_rehearsal_boundary",
             "foundation_product_scope_boundary",
             "foundation_capability_roadmap_boundary",
             "foundation_agentic_management_boundary",

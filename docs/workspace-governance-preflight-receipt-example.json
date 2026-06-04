@@ -1,5 +1,5 @@
 {
-  "check_count": 81,
+  "check_count": 82,
   "generated_at_epoch": 1780272000.0,
   "checks": [
     {
@@ -472,6 +472,17 @@
         "scripts/validate_foundation_legal_business_boundary.py"
       ],
       "name": "foundation_legal_business_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_legal_business_question_rehearsal_boundary.py"
+      ],
+      "name": "foundation_legal_business_question_rehearsal_boundary",
       "passed": true,
       "return_code": 0,
       "stderr": "",
