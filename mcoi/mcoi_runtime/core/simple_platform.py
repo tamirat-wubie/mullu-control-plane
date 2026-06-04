@@ -517,28 +517,28 @@ class SimplePlatform:
 
         return SimpleOnboardingGuide(
             title="Mullu simple mode",
-            message="Open the simple menu, choose the work you want to do, then check it before continuing.",
+            message="Choose a workflow, check it, then continue only when it is ready.",
             recommended_path=(
                 SimpleOnboardingStep(
                     step="choose",
-                    title="Open the simple menu",
-                    command="mullu menu",
-                    purpose="Show the simple actions, tasks, outcomes, and workflows.",
+                    title="Choose a workflow",
+                    command="mullu workflows",
+                    purpose="Show the common work users can start with.",
                 ),
                 SimpleOnboardingStep(
                     step="check",
                     title="Check before continuing",
-                    command="mullu workflow docs-update --item docs/README.md",
-                    purpose="Confirm whether the workflow is ready, needs approval, or is blocked.",
+                    command="mullu workflow docs-update --target docs/README.md",
+                    purpose="Confirm whether the workflow is ready, needs review, or is blocked.",
                 ),
                 SimpleOnboardingStep(
                     step="act",
                     title="Continue only when ready",
-                    command="mullu documents",
-                    purpose="Use the saved result in an app, dashboard, or support flow.",
+                    command="mullu workflow docs-update --target docs/README.md --json",
+                    purpose="Use the proof-backed outcome in an app, dashboard, or support flow.",
                 ),
             ),
-            outcomes=("Ready", "Needs approval", "Blocked"),
+            outcomes=("Ready", "Needs review", "Blocked"),
         )
 
     @staticmethod
@@ -557,9 +557,9 @@ class SimplePlatform:
         )
         return SimpleHomeSummary(
             title="Start simple",
-            message="Open the simple menu and choose the work you want to do.",
-            primary_command=choices[0].command if choices else "mullu menu",
-            next_action="Open the simple menu and choose the work you want to do.",
+            message="Choose one guided workflow and check it before continuing.",
+            primary_command=choices[0].command if choices else "mullu workflows",
+            next_action="Open the workflow list and choose the work you want to do.",
             choices=choices,
         )
 
@@ -731,7 +731,7 @@ def _project_check(
         return SimpleActionCheck(
             outcome="ready",
             title="Ready",
-            message="This task is in the right place and has a saved check.",
+            message="This action stays inside the allowed area and has the required proof.",
             next_step="Continue with the action.",
             decision_ref=decision_ref,
             proof_stamp_ref=proof_stamp_ref,
@@ -745,9 +745,9 @@ def _project_check(
         reasons = review_reasons or ("This action changes something outside the local workspace.",)
         return SimpleActionCheck(
             outcome="needs_review",
-            title="Needs approval",
-            message="This task needs approval before it can continue.",
-            next_step="Send it for approval with the saved check.",
+            title="Needs review",
+            message="This action needs approval before it can continue.",
+            next_step="Send it to an approver with the proof reference.",
             decision_ref=decision_ref,
             proof_stamp_ref=proof_stamp_ref,
             boundary_witness_ref=boundary_witness_ref,
@@ -762,7 +762,7 @@ def _project_check(
             outcome="blocked",
             title="Blocked",
             message="This action cannot continue as requested.",
-            next_step="Use a smaller item or choose the right place, then check again.",
+            next_step="Narrow the request or change the allowed area, then check again.",
             decision_ref=decision_ref,
             proof_stamp_ref=proof_stamp_ref,
             boundary_witness_ref=boundary_witness_ref,
@@ -798,7 +798,7 @@ def _project_workflow_plan(
             workflow=template.workflow,
             label=template.label,
             outcome="needs_review",
-            title="Needs approval",
+            title="Needs review",
             message="One or more steps need approval before the workflow can continue.",
             next_step=review[0].next_step,
             checks=checks,
@@ -886,7 +886,8 @@ def _plain_reason(reason: object) -> str:
 
     text = str(reason)
     translations = {
-        "scope_within_intent": "This item is outside the right place for this task.",
+        "This item is outside the right place for this task.": "The target is outside the allowed area.",
+        "scope_within_intent": "The target is outside the allowed area.",
         "kernel.side_effect.declared": "The action includes an undeclared side effect.",
         "kernel.proof.scope_checked:scope_checked": "The action is missing required scope proof.",
         "kernel.side_effect.external_requires_approval:external_write": "External changes require approval.",
@@ -907,7 +908,7 @@ def _task_kind(value: str) -> SimpleTaskKind:
         return "verify_artifact"
     if normalized in {"review_docs", "update_docs", "notify_support", "verify_artifact"}:
         return normalized  # type: ignore[return-value]
-    raise RuntimeCoreInvariantError("task must be one of: review_docs, update_docs, notify_support, verify_item")
+    raise RuntimeCoreInvariantError("task must be one of: review_docs, update_docs, notify_support, verify_artifact")
 
 
 def _workflow_kind(value: str) -> SimpleWorkflowKind:
@@ -916,7 +917,7 @@ def _workflow_kind(value: str) -> SimpleWorkflowKind:
         return "artifact_review"
     if normalized in {"docs_update", "support_notice", "artifact_review"}:
         return normalized  # type: ignore[return-value]
-    raise RuntimeCoreInvariantError("workflow must be one of: docs_update, support_notice, item_review")
+    raise RuntimeCoreInvariantError("workflow must be one of: docs_update, support_notice, artifact_review")
 
 
 def _required_text(value: Mapping[str, object], field_name: str) -> str:
@@ -924,7 +925,7 @@ def _required_text(value: Mapping[str, object], field_name: str) -> str:
         raise RuntimeCoreInvariantError(f"{field_name} is required")
     raw_value = value[field_name]
     if not isinstance(raw_value, str):
-        raise RuntimeCoreInvariantError(f"{_public_field_name(field_name)} must be text")
+        raise RuntimeCoreInvariantError(f"{field_name} must be text")
     text = raw_value.strip()
     _require_text(text, field_name)
     return text
@@ -935,7 +936,7 @@ def _optional_text(value: Mapping[str, object], field_name: str, *, default: str
         return default
     raw_value = value[field_name]
     if not isinstance(raw_value, str):
-        raise RuntimeCoreInvariantError(f"{_public_field_name(field_name)} must be text")
+        raise RuntimeCoreInvariantError(f"{field_name} must be text")
     text = raw_value.strip()
     if not text:
         return default

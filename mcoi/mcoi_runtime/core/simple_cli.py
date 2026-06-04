@@ -470,7 +470,7 @@ def _start_text(home: dict[str, object]) -> str:
             "Common tasks: review-docs, update-docs, notify-support, verify-artifact",
             "Common workflows: docs-update, support-notice, artifact-review",
             "Actions: view, change, send, verify",
-            "Outcomes: Ready, Needs approval, Blocked",
+            "Outcomes: Ready, Needs review, Blocked",
         )
     )
     return "\n".join(lines)

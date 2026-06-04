@@ -172,7 +172,7 @@ def test_simple_platform_start_route_contract_returns_non_executing_guide() -> N
     assert payload["governed"] is True
     assert payload["status"] == "listed"
     assert guide["execution_allowed"] is False
-    assert guide["recommended_path"][0]["command"] == "mullu menu"
+    assert guide["recommended_path"][0]["command"] == "mullu workflows"
 
 
 def test_simple_platform_document_route_contract_returns_read_only_wiring() -> None:
