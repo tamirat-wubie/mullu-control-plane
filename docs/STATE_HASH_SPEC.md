@@ -144,10 +144,10 @@ the supplied state log is authoritative.
 
 ## Versioning
 
-This spec is version `1`. It documents the state-hash protocol as
-implemented in `mcoi/mcoi_runtime/core/proof_bridge.py::_state_hash`
-on the date this file was added. Schema changes to the canonical
-content layout require a new spec version.
+This spec is version `1`. It documents the state-hash protocol implemented
+by Python `mcoi/mcoi_runtime/core/proof_bridge.py::state_hash` and Rust
+`maf/rust/crates/maf-kernel/src/lib.rs::state_hash`. Schema changes to the
+canonical content layout require a new spec version.
 
 A future `STATE_HASH_SCHEMA_VERSION_MAX` constant should be added to
 the codebase (parallel to `LEDGER_SCHEMA_VERSION_MAX`) once a verifier
@@ -158,12 +158,11 @@ implicit by deployment.
 ## Why this document exists
 
 `MAF_RECEIPT_COVERAGE.md` listed "State-hash content layout
-undocumented" as a Medium-severity Open gap. Without this spec, two
-implementations (Python today; a hypothetical Rust mirror tomorrow)
-could each "implement state hashing" with different content layouts
-and the divergence would only surface at integration time — exactly
-the failure mode the SHA-256 drift / cross-language receipt-hash
-contract was written to prevent.
+undocumented" as a Medium-severity Open gap. Without this spec, Python and
+Rust state-hash construction could drift into different content
+layouts and the divergence would only surface at integration time — exactly
+the failure mode the SHA-256 drift / cross-language receipt-hash contract was
+written to prevent.
 
 This document doesn't add code. It documents what the code already
 does and — more importantly — declares the layout as a frozen

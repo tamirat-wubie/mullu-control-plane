@@ -146,3 +146,17 @@ def test_maf_receipt_coverage_state_hash_claim_matches_implemented_verifiers() -
     assert "No external verifier for state-hash consistency" in state_hash_spec
     assert "| No external verifier for state-hash consistency | Medium" in state_hash_spec
     assert "| Closed |" in state_hash_spec
+
+
+def test_state_hash_spec_does_not_describe_rust_mirror_as_hypothetical() -> None:
+    """State-hash docs must track the implemented Rust mirror."""
+    state_hash_spec = Path("docs/STATE_HASH_SPEC.md").read_text(encoding="utf-8")
+    rust_kernel = Path("maf/rust/crates/maf-kernel/src/lib.rs").read_text(encoding="utf-8")
+    proof_contract_tests = Path("mcoi/tests/test_proof_hash_contract.py").read_text(encoding="utf-8")
+
+    assert "hypothetical Rust mirror" not in state_hash_spec
+    assert "Python today" not in state_hash_spec
+    assert "maf/rust/crates/maf-kernel/src/lib.rs::state_hash" in state_hash_spec
+    assert "pub fn state_hash" in rust_kernel
+    assert "fn state_hash_matches_python_sha256()" in rust_kernel
+    assert "def test_python_state_hash_matches_rust" in proof_contract_tests
