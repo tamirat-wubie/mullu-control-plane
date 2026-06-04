@@ -25,11 +25,15 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.validate_foundation_decision_journal_boundary import (  # noqa: E402
     DEFAULT_PACKET_PATH,
+    DEFAULT_REVIEW_CADENCE_PATH,
+    EXPECTED_CADENCE_ITEMS,
+    EXPECTED_REVIEW_CADENCE_ID,
     EXPECTED_SURFACES,
     EXPECTED_WITNESS_ID,
     load_json_object,
     validate_foundation_decision_journal_boundary,
     validate_packet,
+    validate_review_cadence_packet,
 )
 
 
@@ -53,6 +57,28 @@ def test_decision_journal_witness_has_expected_identity_and_blockers() -> None:
     assert payload["company_action_allowed"] is False
     assert payload["patent_filing_allowed"] is False
     assert payload["spending_allowed"] is False
+    assert payload["deployment_allowed"] is False
+
+
+def test_review_cadence_packet_has_expected_identity_and_items() -> None:
+    payload = load_json_object(DEFAULT_REVIEW_CADENCE_PATH, "decision review-cadence packet")
+
+    assert payload["review_cadence_id"] == EXPECTED_REVIEW_CADENCE_ID
+    assert tuple(
+        (item["cadence_id"], item["cadence_type"], item["state"])
+        for item in payload["cadence_items"]
+    ) == EXPECTED_CADENCE_ITEMS
+    assert payload["decision_execution_allowed"] is False
+    assert payload["irreversible_action_allowed"] is False
+    assert payload["roadmap_commitment_claimed"] is False
+    assert payload["deadline_promise_claimed"] is False
+    assert payload["authority_delegation_claimed"] is False
+    assert payload["customer_commitment_claimed"] is False
+    assert payload["legal_authority_claimed"] is False
+    assert payload["company_action_allowed"] is False
+    assert payload["patent_filing_allowed"] is False
+    assert payload["spending_allowed"] is False
+    assert payload["external_publication_allowed"] is False
     assert payload["deployment_allowed"] is False
 
 
@@ -121,3 +147,26 @@ def test_witness_rejects_decision_promotion_phrase() -> None:
 
     assert findings
     assert any(finding.rule_id == "decision_journal_forbidden_promotion_phrase" for finding in findings)
+
+
+def test_review_cadence_rejects_item_state_promotion() -> None:
+    payload = load_json_object(DEFAULT_REVIEW_CADENCE_PATH, "decision review-cadence packet")
+    candidate = deepcopy(payload)
+    candidate["cadence_items"][0]["state"] = "Ready"
+
+    findings = validate_review_cadence_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "decision_review_cadence_inventory_invalid" for finding in findings)
+    assert any(finding.rule_id == "decision_review_cadence_item_state_invalid" for finding in findings)
+
+
+def test_review_cadence_rejects_private_value_shape() -> None:
+    payload = load_json_object(DEFAULT_REVIEW_CADENCE_PATH, "decision review-cadence packet")
+    candidate = deepcopy(payload)
+    candidate["cadence_items"][0]["public_safe_note"] = "reviewer_name=private deadline_at=private"
+
+    findings = validate_review_cadence_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "decision_journal_forbidden_private_value_pattern" for finding in findings)

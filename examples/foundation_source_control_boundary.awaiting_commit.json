@@ -294,6 +294,7 @@
       "required_evidence": [
         "docs/FOUNDATION_DECISION_JOURNAL_BOUNDARY.md",
         "examples/foundation_decision_journal_witness.awaiting_evidence.json",
+        "examples/foundation_decision_review_cadence.awaiting_evidence.json",
         "scripts/validate_foundation_decision_journal_boundary.py",
         "tests/test_validate_foundation_decision_journal_boundary.py"
       ],

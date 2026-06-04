@@ -91,6 +91,19 @@ def test_packet_rejects_family_state_promotion() -> None:
     assert any(finding.rule_id == "source_control_family_state_invalid" for finding in findings)
 
 
+def test_packet_rejects_duplicate_family_evidence() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "source-control packet")
+    candidate = deepcopy(payload)
+    candidate["change_families"][0]["required_evidence"].append(
+        candidate["change_families"][0]["required_evidence"][0]
+    )
+
+    findings = validate_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "source_control_family_evidence_duplicate" for finding in findings)
+
+
 def test_packet_rejects_publication_phrase() -> None:
     payload = load_json_object(DEFAULT_PACKET_PATH, "source-control packet")
     candidate = deepcopy(payload)
