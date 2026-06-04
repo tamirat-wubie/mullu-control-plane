@@ -2,10 +2,78 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "schemas/enterprise/task_schedule.output.schema.json",
   "type": "object",
-  "required": ["task_id", "receipt_status"],
+  "required": ["task_id", "receipt_status", "temporal_action", "temporal_warnings"],
   "properties": {
     "task_id": {"type": "string", "minLength": 1},
-    "receipt_status": {"const": "scheduled"}
+    "receipt_status": {"const": "scheduled"},
+    "temporal_warnings": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "temporal_action": {
+      "type": "object",
+      "required": [
+        "action_id",
+        "owner",
+        "intent",
+        "trigger",
+        "timezone",
+        "approval_required",
+        "expiry_policy",
+        "rollback_plan",
+        "evidence_refs",
+        "status"
+      ],
+      "properties": {
+        "action_id": {"type": "string", "minLength": 1},
+        "owner": {"type": "string", "minLength": 1},
+        "intent": {"type": "string", "minLength": 1},
+        "trigger": {
+          "type": "object",
+          "required": ["type", "value"],
+          "properties": {
+            "type": {
+              "enum": ["at_time", "after_duration", "recurring", "condition_until"]
+            },
+            "value": {"type": "string", "minLength": 1},
+            "reference_time": {"type": "string", "minLength": 1},
+            "timezone": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        },
+        "timezone": {"type": "string", "minLength": 1},
+        "approval_required": {"type": "boolean"},
+        "expiry_policy": {
+          "type": "object",
+          "required": ["mode"],
+          "properties": {
+            "mode": {"enum": ["none", "expires_at", "evidence_ttl"]},
+            "expires_at": {"type": "string", "minLength": 1},
+            "evidence_ttl_seconds": {"type": "integer", "minimum": 1},
+            "stale_evidence_action": {"enum": ["block", "escalate", "refresh"]}
+          },
+          "additionalProperties": false
+        },
+        "rollback_plan": {
+          "type": "object",
+          "required": ["strategy", "steps"],
+          "properties": {
+            "strategy": {"type": "string", "minLength": 1},
+            "steps": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1}
+            }
+          },
+          "additionalProperties": false
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "status": {"const": "scheduled"}
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": true
 }
