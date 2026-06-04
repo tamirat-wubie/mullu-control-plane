@@ -1,7 +1,7 @@
 <!--
 Purpose: define the public-safe legal and business question boundary for Foundation Mode.
 Governance scope: legal/business pre-clearance, question inventory, qualified-review gating, claim blocking, and no irreversible external action.
-Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, examples/foundation_legal_business_questions.awaiting_review.json, scripts/validate_foundation_legal_business_boundary.py.
+Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, docs/FOUNDATION_LEGAL_BUSINESS_QUESTION_REHEARSAL_BOUNDARY.md, examples/foundation_legal_business_questions.awaiting_review.json, scripts/validate_foundation_legal_business_boundary.py.
 Invariants: no legal clearance claim, no company readiness claim, no patent protection claim, no trademark clearance claim, no tax readiness claim, no customer terms readiness claim, no paid launch claim, no money movement claim.
 -->
 
@@ -98,6 +98,7 @@ The validator checks that the question packet:
 | --- | --- |
 | See the whole Foundation Mode posture | [Foundation Mode](FOUNDATION_MODE.md) |
 | See the prerequisite ledger | [Foundation Prerequisites](FOUNDATION_PREREQUISITES.md) |
+| Rehearse legal/business questions without legal claims | [Foundation Legal Business Question Rehearsal Boundary](FOUNDATION_LEGAL_BUSINESS_QUESTION_REHEARSAL_BOUNDARY.md) |
 | Prepare private recovery safely | [Foundation Private Recovery Boundary](FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md) |
 | Check deployment truth | [Deployment Status](../DEPLOYMENT_STATUS.md) |
 

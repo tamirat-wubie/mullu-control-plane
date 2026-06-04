@@ -280,6 +280,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_legal_business_boundary.py"),
         ),
         CheckCommand(
+            "foundation_legal_business_question_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_legal_business_question_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_product_scope_boundary",
             (python_executable, "scripts/validate_foundation_product_scope_boundary.py"),
         ),

@@ -1,0 +1,127 @@
+{
+  "blocked_claims": [
+    "legal conclusion",
+    "legal clearance",
+    "qualified review completion",
+    "company formation",
+    "company readiness",
+    "patent filing",
+    "patent protection",
+    "trademark clearance",
+    "tax readiness",
+    "terms/privacy readiness",
+    "compliance clearance",
+    "contractor/team commitment",
+    "paid launch",
+    "payment processing",
+    "money movement",
+    "customer access",
+    "external publication",
+    "secret/private reviewer material",
+    "deployment readiness"
+  ],
+  "company_formation_allowed": false,
+  "company_readiness_claimed": false,
+  "compliance_clearance_claimed": false,
+  "contractor_team_commitment_allowed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "legal_conclusion_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "draft public-safe local legal/business question categories only; do not answer as legal conclusions, complete qualified review, form a company, file patents or trademarks, claim tax readiness, approve terms or privacy, engage contractors, open paid launch, process payments, move money, open customer access, publish externally, store secret reviewer material, or deploy",
+  "paid_launch_allowed": false,
+  "patent_filing_allowed": false,
+  "patent_protection_claimed": false,
+  "payment_processing_allowed": false,
+  "qualified_review_completed": false,
+  "question_rehearsal_executed": false,
+  "schema_version": 1,
+  "secret_or_private_reviewer_material_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Ownership and invention-history questions only; no ownership dispute or authorship finality is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "ownership_invention_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Name and trademark questions only; no trademark clearance or final brand ownership is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "naming_trademark_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Formation timing questions only; no entity is formed or claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "formation_timing_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Tax and accounting questions only; no tax or bookkeeping readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "tax_accounting_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Terms and privacy questions only; no terms/privacy readiness or customer access is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "terms_privacy_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Patent and invention-boundary questions only; no filing, publication, or protection claim is made.",
+      "state": "AwaitingEvidence",
+      "surface_id": "patent_invention_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Compliance and data questions only; no compliance clearance is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "compliance_data_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Finance and payment questions only; no payment processing, paid access, or money movement is allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "finance_payment_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Contractor and team questions only; no hiring, contractor engagement, contribution invitation, or equity promise is allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "contractor_team_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Support and liability questions only; no support commitment, customer channel, or liability boundary is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "support_liability_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Qualified-review handoff questions only; no private reviewer material is stored and no review completion is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "qualified_review_handoff",
+      "surface_type": "local_draft"
+    }
+  ],
+  "tax_readiness_claimed": false,
+  "terms_privacy_readiness_claimed": false,
+  "trademark_clearance_claimed": false,
+  "witness_id": "foundation_legal_business_question_rehearsal_witness.awaiting_evidence.v1"
+}
