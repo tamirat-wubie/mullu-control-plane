@@ -15,9 +15,11 @@ from pathlib import Path
 from scripts.validate_governed_code_change_loop_sandbox_readiness_runbook import (
     DEFAULT_RUNNER_DOCKERFILE_PATH,
     DEFAULT_RUNBOOK_PATH,
+    DEFAULT_WINDOWS_ASSESSOR_PATH,
     DEFAULT_WSL_LAUNCHER_PATH,
     REQUIRED_DOCKERFILE_FRAGMENTS,
     REQUIRED_FRAGMENTS,
+    REQUIRED_WINDOWS_ASSESSOR_FRAGMENTS,
     REQUIRED_WSL_LAUNCHER_FRAGMENTS,
     validate_runbook,
 )
@@ -34,6 +36,8 @@ def test_canonical_runbook_validates() -> None:
     assert DEFAULT_RUNNER_DOCKERFILE_PATH.name == "governed-code-change-loop-runner.Dockerfile"
     assert DEFAULT_WSL_LAUNCHER_PATH.exists()
     assert DEFAULT_WSL_LAUNCHER_PATH.name == "run_wsl_governed_code_change_loop_sandbox_probe.py"
+    assert DEFAULT_WINDOWS_ASSESSOR_PATH.exists()
+    assert DEFAULT_WINDOWS_ASSESSOR_PATH.name == "assess_windows_governed_code_change_loop_readiness.py"
 
 
 def test_runner_dockerfile_carries_required_contract() -> None:
@@ -55,17 +59,27 @@ def test_wsl_launcher_carries_required_contract() -> None:
     assert "wsl_workspace_path_invalid" in launcher_text
 
 
+def test_windows_assessor_carries_required_contract() -> None:
+    assessor_text = DEFAULT_WINDOWS_ASSESSOR_PATH.read_text(encoding="utf-8")
+
+    assert "Assess Windows readiness for governed code-change loop sandbox evidence" in assessor_text
+    assert all(fragment in assessor_text for fragment in REQUIRED_WINDOWS_ASSESSOR_FRAGMENTS)
+    assert "windows_docker_cli_missing" in assessor_text
+    assert "windows_wsl_cli_missing" in assessor_text
+    assert "strict_probe_argv" in assessor_text
+
+
 def test_missing_required_fragment_is_reported(tmp_path: Path) -> None:
     runbook_path = tmp_path / "runbook.md"
     runbook_path.write_text(
-        "\n".join(fragment for fragment in REQUIRED_FRAGMENTS if fragment != "AwaitingEvidence"),
+        "\n".join(fragment for fragment in REQUIRED_FRAGMENTS if fragment != "windows_wsl_cli_missing"),
         encoding="utf-8",
     )
 
     validation = validate_runbook(runbook_path)
 
     assert validation.valid is False
-    assert validation.missing_fragments == ("AwaitingEvidence",)
+    assert validation.missing_fragments == ("windows_wsl_cli_missing",)
     assert validation.detail == "runbook missing required strict-readiness fragments"
     assert validation.runbook_path == "runbook.md"
 

@@ -25,9 +25,14 @@ WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_RUNBOOK_PATH = WORKSPACE_ROOT / "docs" / "GOVERNED_CODE_CHANGE_LOOP_SANDBOX_READINESS.md"
 DEFAULT_RUNNER_DOCKERFILE_PATH = WORKSPACE_ROOT / "docker" / "governed-code-change-loop-runner.Dockerfile"
 DEFAULT_WSL_LAUNCHER_PATH = WORKSPACE_ROOT / "scripts" / "run_wsl_governed_code_change_loop_sandbox_probe.py"
+DEFAULT_WINDOWS_ASSESSOR_PATH = WORKSPACE_ROOT / "scripts" / "assess_windows_governed_code_change_loop_readiness.py"
 REQUIRED_FRAGMENTS = (
     "sandbox execution remains Linux-only",
     "Linux execution lane",
+    "python scripts/assess_windows_governed_code_change_loop_readiness.py --json",
+    "python scripts/assess_windows_governed_code_change_loop_readiness.py --strict --json",
+    "python scripts/assess_windows_governed_code_change_loop_readiness.py --print-command --json",
+    "The Windows readiness assessor reports `AwaitingEvidence` by design.",
     "WSL2 Ubuntu",
     "python scripts/run_wsl_governed_code_change_loop_sandbox_probe.py --distro Ubuntu --user root --strict --json",
     "python scripts/run_wsl_governed_code_change_loop_sandbox_probe.py --print-command --json",
@@ -51,6 +56,13 @@ REQUIRED_FRAGMENTS = (
     "python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-receipt.json",
     "receipt_is_not_terminal_closure",
     "terminal_closure_required",
+    "windows_host_required",
+    "windows_docker_cli_missing",
+    "windows_docker_daemon_unreachable",
+    "windows_wsl_cli_missing",
+    "windows_wsl_distro_unavailable",
+    "windows_wsl_distro_timeout",
+    "windows_readiness_assessor_invalid_input",
     "wsl_cli_missing",
     "wsl_workspace_path_invalid",
     "wsl_strict_probe_timeout",
@@ -80,6 +92,19 @@ REQUIRED_WSL_LAUNCHER_FRAGMENTS = (
     "--require-sandbox-execution --json",
     "wsl_cli_missing",
     "wsl_strict_probe_command_failed",
+)
+REQUIRED_WINDOWS_ASSESSOR_FRAGMENTS = (
+    "Purpose: give a Windows operator deterministic preflight evidence",
+    "assess_windows_readiness",
+    "ready_to_collect_evidence",
+    "solver_outcome=\"AwaitingEvidence\"",
+    "windows_docker_cli_missing",
+    "windows_docker_daemon_unreachable",
+    "windows_wsl_cli_missing",
+    "windows_wsl_distro_unavailable",
+    "windows_readiness_assessor_invalid_input",
+    "--print-command",
+    "build_wsl_argv",
 )
 
 
@@ -136,7 +161,11 @@ def validate_runbook(runbook_path: Path = DEFAULT_RUNBOOK_PATH) -> RunbookValida
         DEFAULT_WSL_LAUNCHER_PATH,
         REQUIRED_WSL_LAUNCHER_FRAGMENTS,
     )
-    missing = (*missing, *dockerfile_missing, *launcher_missing)
+    windows_assessor_missing = _missing_file_fragments(
+        DEFAULT_WINDOWS_ASSESSOR_PATH,
+        REQUIRED_WINDOWS_ASSESSOR_FRAGMENTS,
+    )
+    missing = (*missing, *dockerfile_missing, *launcher_missing, *windows_assessor_missing)
     if missing:
         return RunbookValidation(
             valid=False,

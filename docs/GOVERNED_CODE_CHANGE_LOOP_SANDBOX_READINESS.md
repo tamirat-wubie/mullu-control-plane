@@ -13,6 +13,26 @@ Do not bypass the Linux-only runner by treating Windows Docker Desktop as a stri
 
 ## Windows Local Path
 
+First assess the Windows host without making a strict-readiness claim:
+
+```powershell
+python scripts/assess_windows_governed_code_change_loop_readiness.py --json
+```
+
+Use strict mode when automation should fail closed until Docker Desktop and WSL prerequisites are available:
+
+```powershell
+python scripts/assess_windows_governed_code_change_loop_readiness.py --strict --json
+```
+
+Inspect the strict WSL command without probing Docker or WSL:
+
+```powershell
+python scripts/assess_windows_governed_code_change_loop_readiness.py --print-command --json
+```
+
+The Windows readiness assessor reports `AwaitingEvidence` by design. It only proves whether the Windows host is ready to launch the WSL strict probe; it does not replace the Linux strict sandbox receipt.
+
 Use WSL2 Ubuntu as the local Linux execution lane. This does not require a separate Linux computer, but the probe command must run inside Ubuntu so Python reports `Linux`.
 
 Preferred one-command launcher from Windows PowerShell:
@@ -125,6 +145,18 @@ Blocked probe evidence remains valid when blockers are explicit. Expected blocke
 
 | Blocker | Meaning |
 | --- | --- |
+| `windows_host_required` | The Windows readiness assessor was invoked from a non-Windows host. |
+| `windows_docker_cli_missing` | Docker CLI is unavailable from Windows PowerShell. |
+| `windows_docker_cli_failed` | Docker CLI launched but failed its version probe. |
+| `windows_docker_cli_timeout` | Docker CLI version probe timed out. |
+| `windows_docker_daemon_unreachable` | Docker CLI exists but the Docker daemon is not reachable. |
+| `windows_docker_daemon_timeout` | Docker daemon probe timed out. |
+| `windows_wsl_cli_missing` | WSL CLI is unavailable from Windows PowerShell. |
+| `windows_wsl_status_failed` | WSL exists but status probing failed. |
+| `windows_wsl_status_timeout` | WSL status probe timed out. |
+| `windows_wsl_distro_unavailable` | The target WSL distro does not launch. |
+| `windows_wsl_distro_timeout` | The target WSL distro launch probe timed out. |
+| `windows_readiness_assessor_invalid_input` | The Windows assessor received invalid arguments. |
 | `wsl_cli_missing` | Windows cannot launch WSL. |
 | `wsl_workspace_path_invalid` | The launcher cannot translate the workspace path into `/mnt/<drive>/...`. |
 | `wsl_strict_probe_timeout` | The WSL strict probe exceeded the launcher timeout. |
