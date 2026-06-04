@@ -39,10 +39,13 @@ def test_musia_tier2_reference_rejects_stale_stub_language() -> None:
         "stub-shaped placeholder",
         "Once Tier 2 ships",
         "no change needed at draft time",
+        "Tier2Validator` is referenced but not specified",
     )
 
     assert all(phrase not in content for phrase in stale_phrases)
     assert "SCCCECycle.to_universal_result_kwargs()" in content
     assert "mcoi/tests/test_cognition.py" in content
     assert "Production soak remains deferred by user direction" in content
+    assert "construct-local invariant checks" in content
+    assert "Registry-backed semantic validation" in content
 
