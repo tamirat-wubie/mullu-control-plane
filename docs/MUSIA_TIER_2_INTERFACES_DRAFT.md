@@ -50,7 +50,10 @@ No two Tier 2 constructs share a responsibility. The disambiguation verifier (`v
 
 ### Transformation (priority 1 — implements first)
 
-The construct that the `software_dev` adapter already references via `construct_graph_summary["transformation"]`. Implementing this turns the adapter's stub into a real consumer.
+The construct that the `software_dev` adapter consumes via
+`construct_graph_summary["transformation"]`. The implemented cognitive cycle
+now derives that count from registered `Transformation` constructs, and the
+adapter turns the count into the transformation work-plan step.
 
 ```python
 @dataclass
@@ -307,19 +310,25 @@ This must run at module load just like the Tier 1 verifier. By the time Tier 5 i
 
 ## Integration with the existing `software_dev` adapter
 
-The current adapter's `_work_plan_from_constructs` checks `summary.get("transformation", 0) > 0`. Once Tier 2 ships:
+The current adapter's `_work_plan_from_constructs` checks
+`summary.get("transformation", 0) > 0`:
 
 ```python
-# In software_dev adapter (no change needed at draft time):
 if summary.get("transformation", 0) > 0:
     steps.append(
         f"Apply transformations within boundary [{req.repository}:{req.target_branch}]"
     )
 ```
 
-The string key `"transformation"` matches `ConstructType.TRANSFORMATION.value`, so the adapter already emits the right key. What changes at W7 is the *source* of the count: it goes from a stub-shaped placeholder to a real Transformation construct count from the cognitive engine output.
+The string key `"transformation"` matches `ConstructType.TRANSFORMATION.value`,
+so the adapter consumes the Tier 2 count without an API change. The source of
+the count is the implemented cognitive engine output:
+`SCCCECycle.to_universal_result_kwargs()` summarizes registered construct
+types, and `mcoi/tests/test_cognition.py` verifies that a registered
+`Transformation` produces a nonzero `"transformation"` count.
 
-No adapter change is required to make Tier 2 land. This is the structural payoff of having reserved all 25 enum slots in v4.0.0.
+No adapter change was required for Tier 2 to land. This is the structural
+payoff of having reserved all 25 enum slots in v4.0.0.
 
 ---
 
@@ -333,15 +342,17 @@ No adapter change is required to make Tier 2 land. This is the structural payoff
 
 ---
 
-## Review checklist (pre-W7)
+## Implementation witness checklist
 
-- [ ] Disambiguation table reviewed for semantic overlap
-- [ ] Each construct's `__post_init__` invariants checked against MUSIA spec
-- [ ] Cross-tier verifier mentally exercised (Tier 1 ∪ Tier 2 = 10 distinct responsibilities)
-- [ ] `software_dev` adapter compatibility confirmed (no API change required)
-- [ ] Open questions (Composition.nesting_depth, Pattern similarity rule registry) resolved or deferred with rationale
-- [ ] Conservation vs Constraint disambiguation documented for non-author readers
-- [ ] Interaction's multi-participant validation rule defended against degenerate cases (1 participant, 0 causations)
+- [x] Disambiguation table reviewed for semantic overlap
+- [x] Each construct's `__post_init__` invariants checked against MUSIA spec
+- [x] Cross-tier verifier exercised (Tier 1 ∪ Tier 2 = 10 distinct responsibilities)
+- [x] `software_dev` adapter compatibility confirmed with no API change
+- [x] Composition depth and Pattern similarity rule choices implemented with bounded validation
+- [x] Conservation vs Constraint disambiguation documented for non-author readers
+- [x] Interaction's multi-participant validation rule defends against degenerate cases (1 participant, 0 causations)
+- [ ] Production soak remains deferred by user direction
+- [ ] Dual-Mfidel convergence remains scheduled outside Tier 2 closure
 
 ---
 
