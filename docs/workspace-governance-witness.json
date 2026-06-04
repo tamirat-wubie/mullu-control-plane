@@ -1,5 +1,5 @@
 {
-  "artifact_count": 82,
+  "artifact_count": 84,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -337,6 +337,16 @@
       "purpose": "Regression tests for WSL strict probe launcher command construction and blockers."
     },
     {
+      "name": "governed_code_change_loop_windows_readiness_assessor",
+      "path": "scripts/assess_windows_governed_code_change_loop_readiness.py",
+      "purpose": "Windows prerequisite assessor for governed code-change loop strict evidence collection."
+    },
+    {
+      "name": "governed_code_change_loop_windows_readiness_assessor_tests",
+      "path": "tests/test_assess_windows_governed_code_change_loop_readiness.py",
+      "purpose": "Regression tests for Windows readiness assessment, blockers, and strict command planning."
+    },
+    {
       "name": "universal_action_orchestration_validator_tests",
       "path": "tests/test_validate_universal_action_orchestration.py",
       "purpose": "Regression tests for UAO schema, fixture, doctrine, and semantic validation."
@@ -425,7 +435,8 @@
     "governed code-change loop sandbox probe reports unvalidated execution readiness",
     "governed code-change loop sandbox probe validator rejects the evidence artifact",
     "governed code-change loop sandbox readiness runbook validator rejects the handoff",
-    "governed code-change loop WSL launcher contract is missing or drifted"
+    "governed code-change loop WSL launcher contract is missing or drifted",
+    "governed code-change loop Windows readiness assessor contract is missing or drifted"
   ],
   "capability": "repository_local_workspace_governance_surface",
   "created_at": "2026-06-01T00:00:00Z",

@@ -69,6 +69,8 @@ REQUIRED_ARTIFACT_NAMES = frozenset(
         "governed_code_change_loop_sandbox_readiness_runbook_validator",
         "governed_code_change_loop_sandbox_readiness_runbook_tests",
         "governed_code_change_loop_tests",
+        "governed_code_change_loop_windows_readiness_assessor",
+        "governed_code_change_loop_windows_readiness_assessor_tests",
         "governed_code_change_loop_wsl_strict_probe_launcher",
         "governed_code_change_loop_wsl_strict_probe_launcher_tests",
         "logic_governance_application_validator",
@@ -147,6 +149,7 @@ REQUIRED_BLOCK_CONDITIONS = frozenset(
         "governed code-change loop sandbox probe validator rejects the evidence artifact",
         "governed code-change loop sandbox readiness runbook validator rejects the handoff",
         "governed code-change loop WSL launcher contract is missing or drifted",
+        "governed code-change loop Windows readiness assessor contract is missing or drifted",
         "workspace governance witness omits Universal Action Orchestration artifacts",
     }
 )

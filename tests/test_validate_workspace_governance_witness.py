@@ -37,9 +37,15 @@ def test_current_witness_contract_passes() -> None:
     assert "sdlc_route_helper" in artifact_names
     assert "sdlc_route_validator" in artifact_names
     assert "sdlc_route_tests" in artifact_names
+    assert "governed_code_change_loop_windows_readiness_assessor" in artifact_names
+    assert "governed_code_change_loop_windows_readiness_assessor_tests" in artifact_names
     assert "universal_action_orchestration" in witness["governance_scope"]
     assert (
         "workspace governance witness omits Universal Action Orchestration artifacts"
+        in witness["block_conditions"]
+    )
+    assert (
+        "governed code-change loop Windows readiness assessor contract is missing or drifted"
         in witness["block_conditions"]
     )
 
