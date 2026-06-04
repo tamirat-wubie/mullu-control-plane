@@ -2226,6 +2226,9 @@ def _organization_action_queue(
                         f"{quote(str(handoff['step_id']), safe='')}/admission-preview"
                     ),
                     "selection_preview": f"/api/v1/orgs/{quote(org_id, safe='')}/action-queue/selection-preview",
+                    "approval_packet_preview": (
+                        f"/api/v1/orgs/{quote(org_id, safe='')}/action-queue/approval-packet-preview"
+                    ),
                 },
             }
             action_rows.append(action_row)
@@ -2403,6 +2406,125 @@ def _organization_action_queue_selection_preview(
             "worker_dispatch",
             "case_state_mutation",
             "approval_creation",
+            "receipt_binding",
+            "terminal_closure",
+        ],
+        "metadata": req.metadata,
+    }
+
+
+def _organization_action_queue_approval_packet_preview(
+    kernel: OrganizationKernel,
+    org_id: str,
+    req: ActionQueueSelectionPreviewRequest,
+) -> dict[str, Any]:
+    selection_preview = _organization_action_queue_selection_preview(kernel, org_id, req)
+    selected_action = selection_preview["selected_action"]
+    admission_preview = selection_preview["admission_preview"]
+    handoff = admission_preview["handoff"]
+    required_approvals = list(handoff["approvals_required"])
+    missing_evidence = list(handoff["missing_evidence"])
+    approval_packet_id = stable_identifier(
+        "orgos-action-queue-approval-packet-preview",
+        {
+            "org_id": org_id,
+            "action_id": req.action_id,
+            "selection_preview_id": selection_preview["selection_preview_id"],
+            "required_approvals": required_approvals,
+            "decision": admission_preview["decision"],
+            "reason_code": admission_preview["reason_code"],
+        },
+    )
+    approval_roles = [
+        {
+            "approval_scope": approval_scope,
+            "required": True,
+            "satisfied": False,
+            "requested_role_id": selected_action["responsible_role_id"],
+            "separation_of_duty_required": True,
+            "self_approval_forbidden": True,
+        }
+        for approval_scope in required_approvals
+    ]
+    packet_decision = "approval_required" if required_approvals else "approval_not_required"
+    if admission_preview["decision"] in {"block", "defer", "simulate"} and missing_evidence:
+        packet_decision = "awaiting_evidence_before_approval"
+    elif admission_preview["decision"] == "escalate":
+        packet_decision = "approval_required"
+
+    workflow_stages = [
+        {
+            "stage_id": "selection_preview_binding",
+            "stage_type": "observation",
+            "predecessor_ids": [],
+            "input_bindings": ["org_id", "action_id", "filters"],
+            "output_keys": ["selection_preview", "selected_action", "admission_preview"],
+            "verification_evidence": [selection_preview["selection_preview_id"]],
+            "authority_boundary": "read_only_projection",
+        },
+        {
+            "stage_id": "approval_requirement_projection",
+            "stage_type": "approval_gate",
+            "predecessor_ids": ["selection_preview_binding"],
+            "input_bindings": ["approvals_required", "responsible_role_id", "case_risk"],
+            "output_keys": ["approval_roles", "approval_packet_decision"],
+            "verification_evidence": [approval_packet_id],
+            "authority_boundary": "no_approval_creation",
+        },
+        {
+            "stage_id": "operator_review_packet",
+            "stage_type": "observation",
+            "predecessor_ids": ["approval_requirement_projection"],
+            "input_bindings": ["approval_packet_decision", "missing_evidence", "reason_code"],
+            "output_keys": ["operator_next_step"],
+            "verification_evidence": [approval_packet_id],
+            "authority_boundary": "no_dispatch_no_receipt_binding",
+        },
+    ]
+    next_steps_by_decision = {
+        "approval_required": "open_explicit_approval_request_after_evidence_is_complete",
+        "approval_not_required": "continue_with_admission_preview_next_step",
+        "awaiting_evidence_before_approval": "collect_required_evidence_before_requesting_approval",
+    }
+    return {
+        "approval_packet_preview_id": approval_packet_id,
+        "org_id": org_id,
+        "action_id": req.action_id,
+        "case_id": selected_action["case_id"],
+        "step_id": selected_action["step_id"],
+        "read_only": True,
+        "governed": True,
+        "selection_preview": selection_preview,
+        "approval_packet_decision": packet_decision,
+        "approval_roles": approval_roles,
+        "required_approvals": required_approvals,
+        "approval_count": len(required_approvals),
+        "missing_evidence": missing_evidence,
+        "evidence_ready": not missing_evidence,
+        "separation_of_duty": {
+            "required": bool(required_approvals),
+            "requesting_role_id": selected_action["responsible_role_id"],
+            "self_approval_forbidden": bool(required_approvals),
+            "satisfied": False,
+        },
+        "workflow_projection": {
+            "acyclic": True,
+            "stage_count": len(workflow_stages),
+            "terminal_closure_condition": "preview_only_no_approval_mutation",
+            "stages": workflow_stages,
+        },
+        "operator_next_step": next_steps_by_decision[packet_decision],
+        "approval_creation_authority_granted": False,
+        "execution_authority_granted": False,
+        "dispatch_authority_granted": False,
+        "receipt_binding_authority_granted": False,
+        "receipt_ref": None,
+        "closure_state": "preview_only",
+        "forbidden_effects": [
+            "approval_creation",
+            "approval_decision",
+            "worker_dispatch",
+            "case_state_mutation",
             "receipt_binding",
             "terminal_closure",
         ],
@@ -3377,6 +3499,28 @@ def preview_organization_action_queue_selection(
             detail=_error_detail(
                 "action queue selection preview rejected",
                 "action_queue_selection_preview_rejected",
+            ),
+        ) from exc
+
+
+@router.post("/api/v1/orgs/{org_id}/action-queue/approval-packet-preview")
+def preview_organization_action_queue_approval_packet(
+    org_id: str,
+    req: ActionQueueSelectionPreviewRequest,
+    request: Request,
+):
+    """Preview approval requirements for a visible queued action without mutating approvals."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_organization_tenant(request, kernel, org_id)
+    try:
+        return _organization_action_queue_approval_packet_preview(kernel, org_id, req)
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_error_detail(
+                "action queue approval packet preview rejected",
+                "action_queue_approval_packet_preview_rejected",
             ),
         ) from exc
 
