@@ -27,6 +27,9 @@ def test_current_integrity_passes() -> None:
     assert report["issue_count"] == 0
     assert report["report_is_not_terminal_closure"] is True
     assert report["terminal_closure_required"] is True
+    assert any(artifact.name == "sdlc_route_validator" and artifact.sha256 for artifact in integrity)
+    assert any(artifact.path == "scripts/route_sdlc.py" and artifact.sha256 for artifact in integrity)
+    assert any(artifact.path == "tests/test_validate_sdlc_route.py" and artifact.sha256 for artifact in integrity)
 
 
 def test_known_artifact_digest_matches_file_bytes() -> None:

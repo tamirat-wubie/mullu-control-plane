@@ -2,7 +2,7 @@
 
 Purpose: define the governed software delivery lifecycle doctrine for Mullu software changes.
 Governance scope: OCE lifecycle field completeness, RAG artifact linkage, CDCV stage transition causality, CQTE decidable gates, UWMA receipt anchoring, and PRS closure evidence.
-Dependencies: `docs/SDLC_GOVERNANCE_POLICY.md`, `docs/SDLC_STATE_MACHINE.md`, `docs/SDLC_RELEASE_POLICY.md`, `docs/SDLC_SECURITY_REVIEW.md`, `docs/SDLC_PR_ENFORCEMENT.md`, `docs/main-protection-ruleset-witness.json`, `schemas/sdlc_*.schema.json`, `examples/sdlc/*.json`, and `scripts/validate_sdlc_*.py`.
+Dependencies: `docs/SDLC_GOVERNANCE_POLICY.md`, `docs/SDLC_STATE_MACHINE.md`, `docs/SDLC_RELEASE_POLICY.md`, `docs/SDLC_SECURITY_REVIEW.md`, `docs/SDLC_PR_ENFORCEMENT.md`, `docs/main-protection-ruleset-witness.json`, `schemas/sdlc_*.schema.json`, `examples/sdlc/*.json`, `examples/sdlc_route/*.json`, `scripts/route_sdlc.py`, and `scripts/validate_sdlc_*.py`.
 Invariants: no software change, release, deployment, or production claim advances without evidence, validation, receipt, and closure.
 
 ## Architecture
@@ -36,6 +36,14 @@ The repository implementation is intentionally non-runtime in this phase:
 ```text
 doctrine docs -> schema contracts -> example fixtures -> validators -> workspace preflight required gates
 ```
+
+The repo-owned route helper is:
+
+```text
+request text -> scripts/route_sdlc.py -> SDLC route used -> required skill lanes -> PR evidence
+```
+
+`python scripts/route_sdlc.py "CI failed on the SDLC Governance Gate for a PR"` emits the deterministic SDLC route used for a change. `python scripts/validate_sdlc_route.py` validates checked route fixtures and the PR evidence hooks.
 
 The read-only dashboard projection is:
 
@@ -129,13 +137,15 @@ Run:
 
 ```powershell
 python scripts/validate_sdlc_artifact.py
+python scripts/validate_sdlc_route.py
 python scripts/validate_sdlc_state_machine.py
 python scripts/validate_sdlc_release_readiness.py --strict
 python scripts/validate_sdlc_security_review.py --strict
 python scripts/validate_sdlc_pr_enforcement.py
+python scripts/route_sdlc.py "CI failed on the SDLC Governance Gate for a PR"
 python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json
 python -m pytest mcoi/tests/test_sdlc_dashboard.py -q
-python -m pytest tests/test_validate_sdlc_artifact.py tests/test_validate_sdlc_state_machine.py tests/test_validate_sdlc_release_readiness.py tests/test_sdlc_security_review.py tests/test_validate_sdlc_pr_enforcement.py -q
+python -m pytest tests/test_validate_sdlc_artifact.py tests/test_validate_sdlc_route.py tests/test_validate_sdlc_state_machine.py tests/test_validate_sdlc_release_readiness.py tests/test_sdlc_security_review.py tests/test_validate_sdlc_pr_enforcement.py -q
 python scripts/run_workspace_governance_checks.py
 ```
 
@@ -153,6 +163,7 @@ No release without evidence.
 No deployment without witness.
 No claim without proof.
 No inventory drift between lifecycle schemas, examples, implementation receipts, and verification coverage.
+No SDLC route used claim without `scripts/route_sdlc.py` or `scripts/validate_sdlc_route.py` evidence.
 No terminal closure without workspace preflight receipt retention.
 No PR enforcement claim without branch protection witness retention.
 No closure without recovery handoff.

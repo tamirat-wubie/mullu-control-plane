@@ -31,6 +31,9 @@ def test_current_witness_contract_passes() -> None:
     assert len(validator.REQUIRED_ARTIFACT_NAMES) == witness["artifact_count"]
     assert validator.REQUIRED_ARTIFACT_NAMES == artifact_names
     assert "workspace_governance_witness_validator" in artifact_names
+    assert "sdlc_route_helper" in artifact_names
+    assert "sdlc_route_validator" in artifact_names
+    assert "sdlc_route_tests" in artifact_names
     assert "universal_action_orchestration_document" in artifact_names
     assert "universal_action_orchestration_allowed_example" in artifact_names
     assert "universal_action_orchestration_gateway_replay_tests" in artifact_names

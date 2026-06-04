@@ -37,6 +37,7 @@ RULESET_WITNESS_PATH = WORKSPACE_ROOT / "docs" / "main-protection-ruleset-witnes
 
 SDLC_COMMANDS = (
     "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_route.py",
     "python scripts/validate_sdlc_state_machine.py",
     "python scripts/validate_sdlc_release_readiness.py --strict",
     "python scripts/validate_sdlc_security_review.py --strict",
@@ -118,6 +119,9 @@ def validate_pr_template(template_text: str) -> list[str]:
     required_terms = (
         "## SDLC / SDLD evidence",
         "documentation-only or read-only",
+        "SDLC route used",
+        "python scripts/route_sdlc.py",
+        "python scripts/validate_sdlc_route.py",
         "Gate decision envelope",
         "Inventory closure",
         "Workspace preflight receipt",
@@ -158,6 +162,9 @@ def validate_enforcement_document(document_text: str) -> list[str]:
     required_terms = (
         "Purpose: bind governed software delivery evidence",
         "SDLC Governance Gate",
+        "SDLC route used",
+        "python scripts/route_sdlc.py",
+        "python scripts/validate_sdlc_route.py",
         "main-protection",
         "branch protection",
         "merge_ready",
