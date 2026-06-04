@@ -242,9 +242,11 @@ python -m gateway.server
 
 If the manifest is invalid, gateway deployment readiness remains blocked until
 the manifest produces certified capabilities, ownership records, approval
-policies, and an escalation policy. If capability plan evidence bundle export
-is not wired, deployment readiness remains blocked until `/capability-plans/{plan_id}/closure`
-can return the terminal certificate and `plan_evidence_bundle`.
+policies, and an escalation policy. Capability plan evidence bundle export is
+witnessed through `/capability-plans/{plan_id}/closure`; deployment readiness
+remains blocked only when runtime conformance reports
+`capability_plan_bundle_canary_passed=false` or the closure response lacks the
+terminal certificate and `plan_evidence_bundle`.
 
 ## General-Agent Promotion Handoff
 
