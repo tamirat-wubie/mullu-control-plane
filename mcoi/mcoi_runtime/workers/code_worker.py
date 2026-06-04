@@ -31,6 +31,10 @@ from mcoi_runtime.contracts.code_worker import (
     CodeWorkerReceipt,
     CodeWorkerReceiptStatus,
 )
+from mcoi_runtime.governance.protected_paths import (
+    DEFAULT_GOVERNANCE_PROTECTED_PATHS,
+    ProtectedPathPolicy,
+)
 
 
 Runner = Callable[..., subprocess.CompletedProcess[str]]
@@ -146,6 +150,7 @@ class SandboxedCodeWorker:
         platform_system: Callable[[], str] | None = None,
         sandbox_image: str = "mullu-agent-runner:latest",
         allow_network_leases: bool = False,
+        protected_paths: ProtectedPathPolicy | None = DEFAULT_GOVERNANCE_PROTECTED_PATHS,
     ) -> None:
         root = Path(workspace_root).resolve(strict=False)
         if not root.exists() or not root.is_dir():
@@ -156,6 +161,11 @@ class SandboxedCodeWorker:
         self._platform_system = platform_system
         self._sandbox_image = sandbox_image
         self._allow_network_leases = allow_network_leases
+        # Defense-in-depth protected-path denylist: a sandboxed command that
+        # modifies a governance/control-plane artifact is flagged as a
+        # violation even when the change is inside the lease allowlist. Pass
+        # protected_paths=None (or an empty policy) to disable.
+        self._protected_paths = protected_paths
 
     @property
     def workspace_root(self) -> Path:
@@ -254,6 +264,7 @@ class SandboxedCodeWorker:
         worker_path_violations = _changed_path_violations(
             changed_paths=worker_changed_paths,
             allowed_paths=lease.allowed_paths,
+            protected_paths=self._protected_paths,
         )
         if worker_path_violations:
             status = CodeWorkerReceiptStatus.BLOCKED
@@ -563,11 +574,15 @@ def _changed_path_violations(
     *,
     changed_paths: tuple[str, ...],
     allowed_paths: tuple[str, ...],
+    protected_paths: ProtectedPathPolicy | None = None,
 ) -> tuple[str, ...]:
+    use_protected = protected_paths is not None and not protected_paths.is_empty
     violations: list[str] = []
     for changed_path in changed_paths:
         if not _path_within_allowed(changed_path, allowed_paths):
             violations.append(f"sandbox_changed_file_outside_lease_allowed_paths:{_sha256_text(changed_path)[:16]}")
+        if use_protected and protected_paths.classify(changed_path).protected:
+            violations.append(f"sandbox_changed_protected_path:{_sha256_text(changed_path)[:16]}")
     return tuple(violations)
 
 

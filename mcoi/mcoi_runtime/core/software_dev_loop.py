@@ -27,7 +27,12 @@ from typing import Any, Callable, Mapping, Protocol
 from uuid import uuid4
 
 from mcoi_runtime.adapters.code_adapter import LocalCodeAdapter
+from mcoi_runtime.governance.protected_paths import (
+    DEFAULT_GOVERNANCE_PROTECTED_PATHS,
+    ProtectedPathPolicy,
+)
 from mcoi_runtime.contracts.code import (
+    PatchApplicationResult,
     PatchProposal,
     PatchStatus,
     WorkspaceState,
@@ -168,6 +173,7 @@ def governed_software_change(
     gate_runners: Mapping[SoftwareQualityGate, GateRunner],
     clock: Callable[[], str],
     ucja_runner: Callable[[dict[str, Any]], "UCJAOutcomeShape"] | None = None,
+    protected_paths: ProtectedPathPolicy | None = DEFAULT_GOVERNANCE_PROTECTED_PATHS,
 ) -> LoopOutcome:
     """Run the bounded sequential autonomy loop.
 
@@ -372,8 +378,8 @@ def governed_software_change(
                 ),
             )
 
-        # 4c. Apply patch
-        patch_result = adapter.apply_patch(patch.patch_id, patch.target_file, patch.unified_diff)
+        # 4c. Apply patch (protected-path gate first, fail-closed).
+        patch_result = _apply_patch_guarded(adapter, patch, protected_paths)
         if patch_result.status is not PatchStatus.APPLIED:
             attempts.append(AttemptRecord(
                 attempt_index=attempt_index,
@@ -580,6 +586,31 @@ def _validate_plan_within_blast_radius(plan: WorkPlan, request: SoftwareRequest)
 
 
 # ---- Workspace state capture & restore ----
+
+
+def _apply_patch_guarded(
+    adapter: LocalCodeAdapter,
+    patch: PatchProposal,
+    protected_paths: ProtectedPathPolicy | None,
+) -> PatchApplicationResult:
+    """Apply a patch, refusing protected control-plane targets fail-closed.
+
+    A protected target never reaches the adapter: it yields a synthetic
+    BLOCKED result that the loop records as an apply failure (and rolls
+    back the attempt), so a governed code change cannot rewrite the
+    artifacts that constrain it. Disabled when protected_paths is None or
+    an empty policy.
+    """
+    if protected_paths is not None and not protected_paths.is_empty:
+        verdict = protected_paths.classify(patch.target_file)
+        if verdict.protected:
+            return PatchApplicationResult(
+                patch_id=patch.patch_id,
+                status=PatchStatus.BLOCKED,
+                target_file=patch.target_file,
+                error_message="protected path requires elevated authority: " + verdict.reason,
+            )
+    return adapter.apply_patch(patch.patch_id, patch.target_file, patch.unified_diff)
 
 
 def _capture_files(adapter: LocalCodeAdapter, paths: tuple[str, ...]) -> dict[str, str | None]:
