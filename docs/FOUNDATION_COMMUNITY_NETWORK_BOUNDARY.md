@@ -1,7 +1,7 @@
 <!--
 Purpose: define the Foundation Mode community/network boundary before any community outreach, social post publication, forum post publication, direct message, collaborator recruitment, partnership outreach, mentor request, public feedback request, event participation, contact-list recording, personal-data collection, external-account use, customer access, external publication, or deployment claim.
 Governance scope: solo-operator community posture, public-safe local questions, outreach blocking, social/forum blocking, message blocking, collaborator/partner blocking, mentor-request blocking, public-feedback blocking, event blocking, contact-list blocking, personal-data blocking, external-account blocking, customer-access blocking, publication restraint, and deployment blocking.
-Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md, docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md, docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md, docs/FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md, examples/foundation_community_network_witness.awaiting_evidence.json, scripts/validate_foundation_community_network_boundary.py.
+Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md, docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md, docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md, docs/FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md, docs/FOUNDATION_COMMUNITY_NETWORK_NO_OUTREACH_REHEARSAL_BOUNDARY.md, examples/foundation_community_network_witness.awaiting_evidence.json, scripts/validate_foundation_community_network_boundary.py.
 Invariants: no community outreach, no social post publication, no forum post publication, no direct messaging, no collaborator recruitment, no partnership outreach, no mentor request, no public feedback request, no event participation, no contact-list recording, no personal-data collection, no external-account use, no customer access, no external publication, and no deployment claim.
 -->
 
@@ -123,6 +123,7 @@ The validator checks that the witness packet:
 | Prepare learning loops safely | [Foundation Learning Path Boundary](FOUNDATION_LEARNING_PATH_BOUNDARY.md) |
 | Prepare privacy/data safely | [Foundation Privacy Data Boundary](FOUNDATION_PRIVACY_DATA_BOUNDARY.md) |
 | Prepare customer access without opening access | [Foundation Customer Access Boundary](FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md) |
+| Rehearse community/network questions without outreach | [Foundation Community Network No-Outreach Rehearsal Boundary](FOUNDATION_COMMUNITY_NETWORK_NO_OUTREACH_REHEARSAL_BOUNDARY.md) |
 
 STATUS:
   Completeness: 100%

@@ -1,7 +1,7 @@
 ﻿<!--
 Purpose: define the Foundation Mode pilot-deferral boundary before any pilot execution, participant invitation, access channel, waitlist, beta opening, customer access, personal-data collection, market-validation claim, support-readiness claim, legal-clearance claim, paid-pilot claim, external publication, or deployment claim.
 Governance scope: pilot deferral, local pilot prerequisite questions, participant-boundary blocking, access-channel blocking, intake blocking, support-duty blocking, privacy caution, legal/business restraint, public-claim restraint, and deployment blocking.
-Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md, docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md, docs/FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md, docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md, examples/foundation_pilot_deferral_witness.awaiting_evidence.json, scripts/validate_foundation_pilot_deferral_boundary.py.
+Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md, docs/FOUNDATION_PILOT_DEFERRAL_REHEARSAL_BOUNDARY.md, docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md, docs/FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md, docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md, examples/foundation_pilot_deferral_witness.awaiting_evidence.json, scripts/validate_foundation_pilot_deferral_boundary.py.
 Invariants: no pilot execution, no participant invitation, no access channel opening, no waitlist opening, no beta opening, no customer access, no personal-data collection, no market-validation claim, no support-readiness claim, no legal-clearance claim, no paid-pilot claim, no external-publication claim, and no deployment claim.
 -->
 
@@ -118,6 +118,7 @@ The validator checks that the pilot-deferral witness:
 | --- | --- |
 | See the whole Foundation Mode posture | [Foundation Mode](FOUNDATION_MODE.md) |
 | See the prerequisite ledger | [Foundation Prerequisites](FOUNDATION_PREREQUISITES.md) |
+| Rehearse why pilot remains deferred | [Foundation Pilot Deferral Rehearsal Boundary](FOUNDATION_PILOT_DEFERRAL_REHEARSAL_BOUNDARY.md) |
 | Prepare product scope safely | [Foundation Product Scope Boundary](FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md) |
 | Prepare support safely | [Foundation Support Readiness Boundary](FOUNDATION_SUPPORT_READINESS_BOUNDARY.md) |
 | Prepare intake safely | [Foundation Intake Onboarding Boundary](FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md) |

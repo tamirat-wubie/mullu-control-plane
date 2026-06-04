@@ -308,6 +308,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_pilot_deferral_boundary.py"),
         ),
         CheckCommand(
+            "foundation_pilot_deferral_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_pilot_deferral_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_support_readiness_boundary",
             (python_executable, "scripts/validate_foundation_support_readiness_boundary.py"),
         ),
@@ -354,6 +358,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         CheckCommand(
             "foundation_community_network_boundary",
             (python_executable, "scripts/validate_foundation_community_network_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_community_network_no_outreach_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_community_network_no_outreach_rehearsal_boundary.py"),
         ),
         CheckCommand("protocol_manifest", (python_executable, "scripts/validate_protocol_manifest.py")),
         CheckCommand(
