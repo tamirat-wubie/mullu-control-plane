@@ -336,6 +336,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_privacy_data_boundary.py"),
         ),
         CheckCommand(
+            "foundation_privacy_minimization_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_privacy_minimization_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_funding_team_boundary",
             (python_executable, "scripts/validate_foundation_funding_team_boundary.py"),
         ),

@@ -1,5 +1,5 @@
 {
-  "check_count": 80,
+  "check_count": 81,
   "generated_at_epoch": 1780272000.0,
   "checks": [
     {
@@ -626,6 +626,17 @@
         "scripts/validate_foundation_privacy_data_boundary.py"
       ],
       "name": "foundation_privacy_data_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_privacy_minimization_rehearsal_boundary.py"
+      ],
+      "name": "foundation_privacy_minimization_rehearsal_boundary",
       "passed": true,
       "return_code": 0,
       "stderr": "",

@@ -1,0 +1,97 @@
+{
+  "analytics_tracking_allowed": false,
+  "blocked_claims": [
+    "minimization approval",
+    "personal-data collection",
+    "personal-data storage",
+    "consent capture",
+    "retention/deletion approval",
+    "privacy notice publication",
+    "analytics tracking",
+    "processor activation",
+    "legal clearance",
+    "customer access",
+    "deployment readiness"
+  ],
+  "consent_capture_allowed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "legal_clearance_claimed": false,
+  "minimization_policy_approved": false,
+  "minimization_rehearsal_executed": false,
+  "next_action": "draft fictional local privacy minimization questions only; do not collect personal data, store personal data, capture consent, approve retention or deletion rules, publish privacy notices, enable tracking, activate processors, claim legal clearance, open customer access, or deploy",
+  "personal_data_collection_allowed": false,
+  "personal_data_storage_allowed": false,
+  "privacy_notice_publication_allowed": false,
+  "processor_activation_allowed": false,
+  "retention_deletion_policy_approved": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Fictional data-category questions only; names, emails, contacts, account IDs, and customer records are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "fictional_data_categories",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Prohibited-field questions only; real intake fields and collection forms remain uncreated.",
+      "state": "AwaitingEvidence",
+      "surface_id": "prohibited_field_list",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Minimization rule questions only; no minimization policy is approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "minimization_rule_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Consent stop-rule questions only; consent capture and legal approval remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "consent_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Retention and deletion stop-rule questions only; retention schedules and deletion workflows remain unapproved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "retention_deletion_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Tracking stop-rule questions only; cookies, analytics tags, pixels, and telemetry tracking remain disabled.",
+      "state": "AwaitingEvidence",
+      "surface_id": "tracking_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Processor stop-rule questions only; vendors, accounts, contracts, processors, and CRM tools remain inactive.",
+      "state": "AwaitingEvidence",
+      "surface_id": "processor_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Subject request stop-rule questions only; support workflows and response-time promises remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "subject_request_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Handoff-note questions only; privacy readiness, customer access, and deployment remain unclaimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "handoff_note",
+      "surface_type": "local_draft"
+    }
+  ],
+  "witness_id": "foundation_privacy_minimization_rehearsal_witness.awaiting_evidence.v1"
+}
