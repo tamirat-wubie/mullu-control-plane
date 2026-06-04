@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:intelligence-coordination-episode-receipt:1",
+  "title": "Intelligence Coordination Episode Receipt",
+  "description": "Persisted receipt and operator summary for one governed symbolic intelligence coordination episode.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "generated_at",
+    "episode",
+    "operator_summary",
+    "receipt_refs"
+  ],
+  "properties": {
+    "receipt_id": { "const": "intelligence_coordination_episode_receipt" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "episode": { "$ref": "#/$defs/episode" },
+    "operator_summary": { "$ref": "#/$defs/operator_summary" },
+    "receipt_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "non_empty_string_array": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "problem_signature": {
+      "type": "string",
+      "enum": [
+        "boolean_feasibility",
+        "linear_resource_allocation",
+        "ordered_scheduling",
+        "symbol_rewrite",
+        "graph_dependency",
+        "causal_diagnosis",
+        "local_search_landscape",
+        "high_uncertainty_forecast"
+      ]
+    },
+    "method_family": {
+      "type": "string",
+      "enum": [
+        "sat",
+        "ilp",
+        "temporal_propagation",
+        "rewrite_system",
+        "graph_method",
+        "causal_graph",
+        "bounded_search",
+        "probabilistic_model"
+      ]
+    },
+    "terminal_outcome": {
+      "type": "string",
+      "enum": [
+        "SolvedVerified",
+        "SolvedUnverified",
+        "AwaitingEvidence",
+        "SafeHalt",
+        "GovernanceBlocked",
+        "BudgetExhausted",
+        "ImpossibleProved",
+        "ModelInvalidated"
+      ]
+    },
+    "method_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method_id",
+        "family",
+        "compatible_signatures",
+        "estimated_cost",
+        "confidence",
+        "resource_requirement"
+      ],
+      "properties": {
+        "method_id": { "type": "string", "minLength": 1 },
+        "family": { "$ref": "#/$defs/method_family" },
+        "compatible_signatures": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/problem_signature" },
+          "uniqueItems": true
+        },
+        "estimated_cost": { "type": "number", "minimum": 0 },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "resource_requirement": { "type": "number", "minimum": 0 }
+      }
+    },
+    "counterfactual_branch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "branch_id",
+        "baseline_snapshot_ref",
+        "intervention",
+        "affected_entity_ids",
+        "affected_relation_ids",
+        "predicted_delta_refs",
+        "reversible_step_ids",
+        "irreversible_risk_ids",
+        "confidence_lower",
+        "confidence_upper"
+      ],
+      "properties": {
+        "branch_id": { "type": "string", "minLength": 1 },
+        "baseline_snapshot_ref": { "type": "string", "minLength": 1 },
+        "intervention": { "type": "string", "minLength": 1 },
+        "affected_entity_ids": { "$ref": "#/$defs/non_empty_string_array" },
+        "affected_relation_ids": { "$ref": "#/$defs/non_empty_string_array" },
+        "predicted_delta_refs": { "$ref": "#/$defs/non_empty_string_array" },
+        "reversible_step_ids": { "$ref": "#/$defs/non_empty_string_array" },
+        "irreversible_risk_ids": { "$ref": "#/$defs/non_empty_string_array" },
+        "confidence_lower": { "type": "number", "minimum": 0, "maximum": 1 },
+        "confidence_upper": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "episode_metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "operator_summary_ref",
+        "blocked_branch_ids",
+        "receipt_tier"
+      ],
+      "properties": {
+        "operator_summary_ref": { "type": "string", "minLength": 1 },
+        "blocked_branch_ids": { "$ref": "#/$defs/non_empty_string_array" },
+        "receipt_tier": { "type": "string", "enum": ["R0", "R1", "R2", "R3", "R4"] }
+      }
+    },
+    "episode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "episode_id",
+        "goal_id",
+        "input_symbol_mesh_ref",
+        "world_snapshot_ref",
+        "active_constraints_ref",
+        "causal_graph_ref",
+        "uncertainty_envelope_ref",
+        "problem_signature",
+        "method_candidates",
+        "selected_method_id",
+        "rejected_method_ids",
+        "counterfactual_branches",
+        "failure_map_ref",
+        "tradeoff_report_ref",
+        "execution_plan_ref",
+        "diagnosis_report_ref",
+        "world_model_delta_ref",
+        "proof_record_ref",
+        "terminal_outcome",
+        "created_at",
+        "coordination_depth",
+        "metadata"
+      ],
+      "properties": {
+        "episode_id": { "type": "string", "minLength": 1 },
+        "goal_id": { "type": "string", "minLength": 1 },
+        "input_symbol_mesh_ref": { "type": "string", "minLength": 1 },
+        "world_snapshot_ref": { "type": "string", "minLength": 1 },
+        "active_constraints_ref": { "type": "string", "minLength": 1 },
+        "causal_graph_ref": { "type": "string", "minLength": 1 },
+        "uncertainty_envelope_ref": { "type": "string", "minLength": 1 },
+        "problem_signature": { "$ref": "#/$defs/problem_signature" },
+        "method_candidates": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/method_candidate" }
+        },
+        "selected_method_id": { "type": "string", "minLength": 1 },
+        "rejected_method_ids": { "$ref": "#/$defs/non_empty_string_array" },
+        "counterfactual_branches": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/counterfactual_branch" }
+        },
+        "failure_map_ref": { "type": "string", "minLength": 1 },
+        "tradeoff_report_ref": { "type": "string", "minLength": 1 },
+        "execution_plan_ref": { "type": "string", "minLength": 1 },
+        "diagnosis_report_ref": { "type": "string", "minLength": 1 },
+        "world_model_delta_ref": {
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "proof_record_ref": { "type": "string", "minLength": 1 },
+        "terminal_outcome": { "$ref": "#/$defs/terminal_outcome" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "coordination_depth": { "type": "integer", "minimum": 0 },
+        "metadata": { "$ref": "#/$defs/episode_metadata" }
+      }
+    },
+    "operator_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "episode_id",
+        "terminal_outcome",
+        "selected_method_id",
+        "rejected_method_ids",
+        "blocked_branch_count",
+        "uncertainty_status",
+        "world_model_delta_ref",
+        "next_action"
+      ],
+      "properties": {
+        "summary_id": { "type": "string", "minLength": 1 },
+        "episode_id": { "type": "string", "minLength": 1 },
+        "terminal_outcome": { "$ref": "#/$defs/terminal_outcome" },
+        "selected_method_id": { "type": "string", "minLength": 1 },
+        "rejected_method_ids": { "$ref": "#/$defs/non_empty_string_array" },
+        "blocked_branch_count": { "type": "integer", "minimum": 0 },
+        "uncertainty_status": { "type": "string", "enum": ["stable", "degraded", "blocked"] },
+        "world_model_delta_ref": {
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "next_action": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

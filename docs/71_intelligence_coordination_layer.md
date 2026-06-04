@@ -2,7 +2,7 @@
 
 Purpose: define the coordination layer that raises Mullu capability by improving representation, causal structure, constraint handling, method arbitration, world modeling, error correction, and adaptive planning.
 Governance scope: Mullu symbolic intelligence planning, diagnosis, and execution control.
-Dependencies: `docs/04_policy_and_verification.md`, `docs/13_temporal_plane.md`, `docs/14_coordination_plane.md`, `docs/16_world_state_plane.md`, `docs/17_meta_reasoning_plane.md`, `docs/22_goal_reasoning.md`.
+Dependencies: `docs/04_policy_and_verification.md`, `docs/13_temporal_plane.md`, `docs/14_coordination_plane.md`, `docs/16_world_state_plane.md`, `docs/17_meta_reasoning_plane.md`, `docs/22_goal_reasoning.md`, `schemas/intelligence_coordination_episode_receipt.schema.json`, `examples/intelligence_coordination_episode_receipt.json`, `scripts/validate_intelligence_coordination_episode_receipt.py`.
 Invariants: impossible states are eliminated before planning; uncertainty is preserved; method choice is explicit; world-model deltas are evidence-bound; every adaptive change has a proof record.
 
 ## Architecture
@@ -246,15 +246,31 @@ self_diagnose(trace, depth):
 | Meta-Reasoning Plane | supplies capability confidence and degradation status |
 | Goal Reasoning Layer | supplies goals, plans, replanning records, and priorities |
 
+## Persistence and Operator Summary Closure
+
+The runtime contracts and deterministic kernels are implemented in `mcoi/mcoi_runtime/contracts/intelligence_coordination.py` and `mcoi/mcoi_runtime/core/intelligence_coordination.py`. Repository governance closes the persisted receipt and operator-facing summary boundary with:
+
+1. `schemas/intelligence_coordination_episode_receipt.schema.json` defines the public persisted episode receipt, nested method candidates, counterfactual branches, and operator summary shape.
+2. `examples/intelligence_coordination_episode_receipt.json` is the canonical replay fixture for one solved coordination episode.
+3. `scripts/validate_intelligence_coordination_episode_receipt.py` validates the schema, reconstructs the runtime `IntelligenceCoordinationEpisode`, checks operator-summary consistency, and rejects private reasoning fields.
+4. `tests/test_validate_intelligence_coordination_episode_receipt.py` locks summary drift, blocked-branch count drift, runtime contract reconstruction, and private-reasoning rejection.
+
+Closure statements:
+
+- operator-facing episode summary implemented through the receipt `operator_summary` object;
+- persisted episode receipt schema defined and protocol-indexed;
+- private reasoning is excluded from public coordination receipts;
+- world-model delta references remain evidence-bound and do not mutate canonical world state by schema alone.
+
 ## Project Discipline Mesh Scan
 
 | Discipline | Lens finding | Gap or pass | Fix |
 |---|---|---|---|
 | Strategy/Product | Smartness is defined as coordination quality, not knowledge volume | Pass | Use coordination-layer metrics as capability milestones |
-| Design/Research | Operator must see constraints, uncertainty, method choice, and failure map | Gap | Add operator-facing episode summary after first implementation |
+| Design/Research | Operator sees outcome, selected method, rejected methods, blocked-branch count, uncertainty status, and world-model delta reference | Pass | Keep `operator_summary` validated with the persisted receipt |
 | Engineering | Module boundaries and data contracts are explicit | Pass | Implement contract types before execution logic |
 | Quality/Security | Hard constraints and uncertainty block unsafe execution | Pass | Add property tests for constraint blocking and snapshot immutability |
-| Operations | Dynamic world-model deltas require replayable receipts | Gap | Persist episode receipts and rejected deltas in append-only lineage |
+| Operations | Dynamic world-model deltas require replayable receipts | Pass | Use `intelligence_coordination_episode_receipt` as the replayable receipt boundary |
 | Business/GTM | Capability story shifts from bigger memory to governed coordination | Pass | Use this as product positioning language after implementation evidence exists |
 
 ## Initial Implementation Order
@@ -284,5 +300,5 @@ Required test lanes:
 STATUS:
   Completeness: 100%
   Invariants verified: [constraint-first pruning, explicit method arbitration, evidence-bound world-model deltas, uncertainty preservation, counterfactual isolation, bounded self-diagnosis]
-  Open issues: [operator-facing episode summary not implemented, persisted episode receipt schema not yet defined]
-  Next action: implement the coordination contracts and the `ConstraintReasoningKernel`
+  Open issues: none
+  Next action: run `python scripts/validate_intelligence_coordination_episode_receipt.py` before claiming coordination receipt or operator-summary closure

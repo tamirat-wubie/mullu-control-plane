@@ -1,0 +1,77 @@
+{
+  "receipt_id": "intelligence_coordination_episode_receipt",
+  "generated_at": "2026-06-04T09:40:00+00:00",
+  "episode": {
+    "episode_id": "coordination-episode-001",
+    "goal_id": "goal-route-governance-001",
+    "input_symbol_mesh_ref": "mesh://symbols/route-governance-001",
+    "world_snapshot_ref": "world://snapshot/main-20260604",
+    "active_constraints_ref": "constraint://set/sdlc-route-governance",
+    "causal_graph_ref": "causal://graph/sdlc-route-governance",
+    "uncertainty_envelope_ref": "uncertainty://envelope/sdlc-route-governance",
+    "problem_signature": "graph_dependency",
+    "method_candidates": [
+      {
+        "method_id": "method-graph-dependency",
+        "family": "graph_method",
+        "compatible_signatures": ["graph_dependency"],
+        "estimated_cost": 1.0,
+        "confidence": 0.92,
+        "resource_requirement": 1.0
+      },
+      {
+        "method_id": "method-causal-diagnosis",
+        "family": "causal_graph",
+        "compatible_signatures": ["causal_diagnosis"],
+        "estimated_cost": 2.0,
+        "confidence": 0.71,
+        "resource_requirement": 2.0
+      }
+    ],
+    "selected_method_id": "method-graph-dependency",
+    "rejected_method_ids": ["method-causal-diagnosis"],
+    "counterfactual_branches": [
+      {
+        "branch_id": "branch-missing-route-validator",
+        "baseline_snapshot_ref": "world://snapshot/main-20260604",
+        "intervention": "remove SDLC route validator from the governance gate",
+        "affected_entity_ids": ["entity://sdlc-route-validator"],
+        "affected_relation_ids": ["relation://validator-to-preflight"],
+        "predicted_delta_refs": ["delta://route-evidence-gap"],
+        "reversible_step_ids": ["step://restore-route-validator"],
+        "irreversible_risk_ids": ["risk://unverified-route-claim"],
+        "confidence_lower": 0.66,
+        "confidence_upper": 0.9
+      }
+    ],
+    "failure_map_ref": "failure://map/sdlc-route-governance",
+    "tradeoff_report_ref": "tradeoff://report/sdlc-route-governance",
+    "execution_plan_ref": "plan://sdlc-route-governance",
+    "diagnosis_report_ref": "diagnosis://report/sdlc-route-governance",
+    "world_model_delta_ref": "delta://world-model/sdlc-route-governance",
+    "proof_record_ref": "proof://coordination/sdlc-route-governance",
+    "terminal_outcome": "SolvedVerified",
+    "created_at": "2026-06-04T09:39:30+00:00",
+    "coordination_depth": 0,
+    "metadata": {
+      "operator_summary_ref": "operator-summary://coordination-episode-001",
+      "blocked_branch_ids": ["branch-missing-route-validator"],
+      "receipt_tier": "R1"
+    }
+  },
+  "operator_summary": {
+    "summary_id": "operator-summary://coordination-episode-001",
+    "episode_id": "coordination-episode-001",
+    "terminal_outcome": "SolvedVerified",
+    "selected_method_id": "method-graph-dependency",
+    "rejected_method_ids": ["method-causal-diagnosis"],
+    "blocked_branch_count": 1,
+    "uncertainty_status": "stable",
+    "world_model_delta_ref": "delta://world-model/sdlc-route-governance",
+    "next_action": "retain the route validator in the workspace governance preflight"
+  },
+  "receipt_refs": [
+    "receipt://workspace/governance-preflight/001",
+    "receipt://sdlc/route-validation/001"
+  ]
+}
