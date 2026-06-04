@@ -21,6 +21,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import StrEnum
@@ -782,30 +783,44 @@ def _known_limitations_aligned(repo_root: Path) -> bool:
         and "/authority/obligations" in server
         and "/authority/escalations" in server
     )
-    stale_claim = (
-        "approval chain" in limitations
-        and ("not yet implemented" in limitations or "not implemented" in limitations)
-    )
-    escalation_stale_claim = (
-        "escalation" in limitations
-        and ("not yet implemented" in limitations or "not implemented" in limitations)
-    )
-    directory_adapter_stale_claim = (
+    stale_claim = _has_stale_limitation_claim(limitations, ("approval chain",))
+    escalation_stale_claim = _has_stale_limitation_claim(limitations, ("escalation",))
+    directory_adapter_stale_claim = _has_stale_limitation_claim(
+        limitations,
         (
-            "external directory adapters" in limitations
-            or (
-                "scim" in limitations
-                and "ldap" in limitations
-                and "saml" in limitations
-                and "workspace-directory" in limitations
-            )
-        )
-        and ("not yet implemented" in limitations or "not implemented" in limitations)
+            "external directory adapters",
+            "scim",
+            "ldap",
+            "saml",
+            "workspace-directory",
+            "workspace directory",
+        ),
     )
     return not (
         (authority_surfaces and (stale_claim or escalation_stale_claim))
         or (_directory_adapter_scripts_present(repo_root) and directory_adapter_stale_claim)
     )
+
+
+def _has_stale_limitation_claim(text: str, subjects: tuple[str, ...]) -> bool:
+    """Return whether a bounded statement says a subject is not implemented.
+
+    Known limitations can legitimately contain both resolved authority/directory
+    text and unrelated future UI limitations. A document-wide substring check
+    would combine those unrelated statements into a false drift gap, so this
+    detector evaluates sentence/list fragments independently.
+    """
+    normalized_text = text.lower()
+    normalized_subjects = tuple(subject.lower() for subject in subjects)
+    for segment in re.split(r"[\n.;]+", normalized_text):
+        if not (
+            "not yet implemented" in segment
+            or "not implemented" in segment
+        ):
+            continue
+        if any(subject in segment for subject in normalized_subjects):
+            return True
+    return False
 
 
 def _directory_adapter_scripts_present(repo_root: Path) -> bool:

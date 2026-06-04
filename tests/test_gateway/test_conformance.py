@@ -32,6 +32,7 @@ from gateway.conformance import (  # noqa: E402
     ConformanceStatus,
     ProofCoverageStatus,
     _decide_class,
+    _has_stale_limitation_claim,
     _known_limitations_aligned,
     issue_conformance_certificate,
 )
@@ -348,6 +349,42 @@ def test_known_limitations_alignment_rejects_stale_directory_adapter_claim(tmp_p
     assert stale is False
     assert aligned is True
     assert (scripts_dir / "ldap_authority_directory_adapter.py").exists()
+
+
+def test_known_limitations_alignment_ignores_unrelated_not_implemented_text(tmp_path) -> None:
+    gateway_dir = tmp_path / "gateway"
+    scripts_dir = tmp_path / "scripts"
+    gateway_dir.mkdir()
+    scripts_dir.mkdir()
+    (gateway_dir / "server.py").write_text(
+        '"/authority/approval-chains" "/authority/obligations" "/authority/escalations"',
+        encoding="utf-8",
+    )
+    for script_name in (
+        "scim_authority_directory_adapter.py",
+        "ldap_authority_directory_adapter.py",
+        "saml_groups_authority_directory_adapter.py",
+        "workspace_groups_authority_directory_adapter.py",
+    ):
+        (scripts_dir / script_name).write_text("# adapter present\n", encoding="utf-8")
+    (tmp_path / "KNOWN_LIMITATIONS_v0.1.md").write_text(
+        "\n".join((
+            "Gateway authority includes approval-chain and escalation surfaces.",
+            "External directory sync adapters are implemented for SCIM, LDAP, SAML, and workspace directory exports.",
+            "Full approval queues and scheduling UI are not yet implemented.",
+        )),
+        encoding="utf-8",
+    )
+
+    assert _known_limitations_aligned(tmp_path) is True
+    assert _has_stale_limitation_claim(
+        "External directory adapters are not yet implemented.",
+        ("external directory adapters",),
+    ) is True
+    assert _has_stale_limitation_claim(
+        "External directory adapters are implemented; scheduling UI is not yet implemented.",
+        ("external directory adapters",),
+    ) is False
 
 
 def _signature_valid(payload: dict, secret: str) -> bool:
