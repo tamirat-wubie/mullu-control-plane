@@ -91,12 +91,13 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "workspace_governance_integrity_report_contract",
         "universal_action_orchestration_contract",
     ]
-    assert len(names) == 74
-    assert names[-8:] == [
+    assert len(names) == 75
+    assert names[-9:] == [
         "universal_action_orchestration_contract",
         "universal_action_orchestration_validation_receipt_contract",
         "universal_action_orchestration_validation_receipt_example",
         "sdlc_artifact_validation",
+        "sdlc_route_validation",
         "sdlc_state_machine_validation",
         "sdlc_release_readiness_validation",
         "sdlc_security_review_validation",
@@ -280,6 +281,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert args_by_name["sdlc_release_readiness_validation"][1:] == (
         "scripts/validate_sdlc_release_readiness.py",
         "--strict",
+    )
+    assert args_by_name["sdlc_route_validation"][1:] == (
+        "scripts/validate_sdlc_route.py",
     )
     assert args_by_name["sdlc_security_review_validation"][1:] == (
         "scripts/validate_sdlc_security_review.py",

@@ -1,0 +1,12 @@
+{
+  "route_id": "sdlc_route_documentation_drift_001",
+  "request": "Audit documentation drift between schemas examples validators and tests",
+  "expected_sequence": "documentation_or_artifact_drift",
+  "expected_fallback_used": false,
+  "expected_skills": [
+    "sdlc-documentation-drift-audit",
+    "sdlc-change-impact-audit",
+    "sdlc-governance-receipt-auditor",
+    "sdlc-test-contract-authoring"
+  ]
+}

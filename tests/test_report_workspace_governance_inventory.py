@@ -27,6 +27,9 @@ def test_current_inventory_passes() -> None:
     assert report["issue_count"] == 0
     assert report["report_is_not_terminal_closure"] is True
     assert report["terminal_closure_required"] is True
+    assert any(artifact.name == "sdlc_route_validator" for artifact in inventory)
+    assert any(artifact.path == "tests/test_validate_sdlc_route.py" for artifact in inventory)
+    assert any(artifact.name == "sdlc_route_helper" for artifact in inventory)
 
 
 def test_missing_artifact_is_reported() -> None:

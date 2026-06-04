@@ -1,0 +1,9 @@
+{
+  "route_id": "sdlc_route_fallback_001",
+  "request": "organize the next symbolic delivery step",
+  "expected_sequence": null,
+  "expected_fallback_used": true,
+  "expected_skills": [
+    "sdlc-skill-router"
+  ]
+}
