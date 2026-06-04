@@ -24,11 +24,15 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.validate_foundation_operator_readiness_boundary import (  # noqa: E402
     DEFAULT_PACKET_PATH,
+    DEFAULT_STOP_RULE_PATH,
+    EXPECTED_STOP_RULE_ID,
+    EXPECTED_STOP_RULES,
     EXPECTED_SURFACES,
     EXPECTED_WITNESS_ID,
     load_json_object,
     validate_foundation_operator_readiness_boundary,
     validate_packet,
+    validate_stop_rule_packet,
 )
 
 
@@ -49,6 +53,22 @@ def test_operator_readiness_witness_has_expected_identity_and_blockers() -> None
     assert payload["team_readiness_claimed"] is False
     assert payload["hiring_ready_claimed"] is False
     assert payload["support_coverage_ready_claimed"] is False
+    assert payload["deployment_allowed"] is False
+
+
+def test_operator_stop_rules_have_expected_identity_and_rules() -> None:
+    payload = load_json_object(DEFAULT_STOP_RULE_PATH, "operator stop-rule packet")
+
+    assert payload["stop_rule_id"] == EXPECTED_STOP_RULE_ID
+    assert tuple(
+        (stop_rule["stop_id"], stop_rule["stop_type"], stop_rule["state"])
+        for stop_rule in payload["stop_rules"]
+    ) == EXPECTED_STOP_RULES
+    assert payload["operator_capacity_verified"] is False
+    assert payload["team_readiness_claimed"] is False
+    assert payload["support_coverage_ready_claimed"] is False
+    assert payload["private_schedule_recording_allowed"] is False
+    assert payload["private_health_recording_allowed"] is False
     assert payload["deployment_allowed"] is False
 
 
@@ -119,3 +139,26 @@ def test_witness_rejects_operator_ready_phrase() -> None:
 
     assert findings
     assert any(finding.rule_id == "operator_readiness_forbidden_promotion_phrase" for finding in findings)
+
+
+def test_stop_rules_reject_state_promotion() -> None:
+    payload = load_json_object(DEFAULT_STOP_RULE_PATH, "operator stop-rule packet")
+    candidate = deepcopy(payload)
+    candidate["stop_rules"][0]["state"] = "Ready"
+
+    findings = validate_stop_rule_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "operator_stop_rule_inventory_invalid" for finding in findings)
+    assert any(finding.rule_id == "operator_stop_rule_state_invalid" for finding in findings)
+
+
+def test_stop_rules_reject_private_value_shape() -> None:
+    payload = load_json_object(DEFAULT_STOP_RULE_PATH, "operator stop-rule packet")
+    candidate = deepcopy(payload)
+    candidate["stop_rules"][0]["public_safe_note"] = "schedule=value health_status=private"
+
+    findings = validate_stop_rule_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "operator_readiness_forbidden_private_value_pattern" for finding in findings)

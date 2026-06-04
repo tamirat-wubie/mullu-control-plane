@@ -1,0 +1,79 @@
+{
+  "blocked_claims": [
+    "solo operator capacity verification",
+    "schedule readiness",
+    "skill readiness",
+    "team readiness",
+    "hiring readiness",
+    "delegation readiness",
+    "incident coverage readiness",
+    "support coverage readiness",
+    "legal authority readiness",
+    "financial authority readiness",
+    "private schedule recording",
+    "private health recording",
+    "deployment readiness"
+  ],
+  "delegation_ready_claimed": false,
+  "deployment_allowed": false,
+  "financial_authority_ready_claimed": false,
+  "hiring_ready_claimed": false,
+  "incident_coverage_ready_claimed": false,
+  "legal_authority_ready_claimed": false,
+  "next_action": "use these local stop rules only to pause work; do not claim capacity, schedule, skill, team, hiring, delegation, coverage, authority, or deployment readiness",
+  "operator_capacity_verified": false,
+  "private_health_recording_allowed": false,
+  "private_schedule_recording_allowed": false,
+  "schema_version": 1,
+  "skill_readiness_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "stop_rule_id": "foundation_operator_stop_rules.awaiting_evidence.v1",
+  "stop_rule_scope": "public-safe local stop rules for pausing solo work before scope expansion, private-detail recording, failed validation, external action, money or legal action, support promises, or deployment pressure",
+  "stop_rules": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pause when one small task expands into many tasks; return to the next-action boundary.",
+      "state": "AwaitingEvidence",
+      "stop_id": "scope_expansion_stop",
+      "stop_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pause before recording private schedule, private health, account, secret, legal, financial, customer, or support details.",
+      "state": "AwaitingEvidence",
+      "stop_id": "private_detail_stop",
+      "stop_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pause when a validator, test, or expected-output check fails; keep the result local until fixed.",
+      "state": "AwaitingEvidence",
+      "stop_id": "validation_failure_stop",
+      "stop_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pause before using external accounts, contacting people, publishing, or crossing a repository boundary.",
+      "state": "AwaitingEvidence",
+      "stop_id": "external_boundary_stop",
+      "stop_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pause before spending, payment setup, company action, patent action, legal claim, or financial authority claim.",
+      "state": "AwaitingEvidence",
+      "stop_id": "money_legal_stop",
+      "stop_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pause before claiming customer support, incident coverage, operator coverage, production operation, or deployment readiness.",
+      "state": "AwaitingEvidence",
+      "stop_id": "coverage_deployment_stop",
+      "stop_type": "local_draft"
+    }
+  ],
+  "support_coverage_ready_claimed": false,
+  "team_readiness_claimed": false
+}

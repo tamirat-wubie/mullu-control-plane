@@ -1,7 +1,7 @@
 <!--
 Purpose: define the Foundation Mode operator-readiness boundary for a solo operator before any team, hiring, support, authority, or deployment claim.
 Governance scope: solo-operator planning, local capacity questions, skill-gap questions, learning-plan questions, decision-authority questions, escalation-boundary questions, fatigue stop rules, review cadence, private-value exclusion, and deployment blocking.
-Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, examples/foundation_operator_readiness_witness.awaiting_evidence.json, scripts/validate_foundation_operator_readiness_boundary.py.
+Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, examples/foundation_operator_readiness_witness.awaiting_evidence.json, examples/foundation_operator_stop_rules.awaiting_evidence.json, scripts/validate_foundation_operator_readiness_boundary.py.
 Invariants: no solo-operator capacity verification claim, no schedule-readiness claim, no skill-readiness claim, no team-readiness claim, no hiring-readiness claim, no delegation-readiness claim, no incident-coverage readiness claim, no support-coverage readiness claim, no legal-authority readiness claim, no financial-authority readiness claim, no private schedule or health recording, and no deployment claim.
 -->
 
@@ -17,6 +17,8 @@ Invariants: no solo-operator capacity verification claim, no schedule-readiness 
 > authority, record private personal details, or deploy anything.
 
 Witness packet: [`../examples/foundation_operator_readiness_witness.awaiting_evidence.json`](../examples/foundation_operator_readiness_witness.awaiting_evidence.json)
+
+Stop-rule packet: [`../examples/foundation_operator_stop_rules.awaiting_evidence.json`](../examples/foundation_operator_stop_rules.awaiting_evidence.json)
 
 Rule: Operator-readiness preparation is a local planning boundary, not
 permission to claim operational readiness.
@@ -49,6 +51,7 @@ This is preparation only:
 
 ```text
 operator_readiness_boundary_state=AwaitingEvidence
+operator_stop_rules_state=AwaitingEvidence
 operator_capacity_verified=false
 schedule_readiness_claimed=false
 skill_readiness_claimed=false
@@ -88,6 +91,17 @@ deployment_allowed=false
    legally authorized, financially authorized, or deployment-ready from this
    boundary.
 
+## Sample Stop Rules
+
+| Stop rule | Pause when... | Blocked now |
+| --- | --- | --- |
+| Scope expansion stop | One small task turns into many tasks. | Do not claim capacity is verified. |
+| Private-detail stop | Work would record private schedule, private health, account, secret, legal, financial, customer, or support details. | Do not record private details in Git. |
+| Validation-failure stop | A validator, test, or expected-output check fails. | Do not claim readiness from a failing check. |
+| External-boundary stop | Work would use external accounts, contact people, publish, or cross a repository boundary. | Do not open external action. |
+| Money/legal stop | Work would spend, set up payment, form a company, file a patent, make a legal claim, or claim financial authority. | Do not move money or claim authority. |
+| Coverage/deployment stop | Work would claim customer support, incident coverage, operator coverage, production operation, or deployment readiness. | Do not claim coverage or deploy. |
+
 ## Validation
 
 Run:
@@ -104,10 +118,11 @@ The validator checks that the operator-readiness witness:
    private schedule recording, private health recording, and deployment
    disabled;
 2. keeps every surface in `AwaitingEvidence`;
-3. rejects URL, email, private path, private schedule, private health, team,
+3. validates the stop-rule packet as `AwaitingEvidence`;
+4. rejects URL, email, private path, private schedule, private health, team,
    hiring, delegation, support coverage, legal authority, or financial authority
    shaped values; and
-4. rejects readiness-promotion phrases.
+5. rejects readiness-promotion phrases.
 
 ## Go Deeper / Where To Go Next
 
