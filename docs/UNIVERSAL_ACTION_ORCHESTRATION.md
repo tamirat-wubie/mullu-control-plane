@@ -31,6 +31,7 @@ UniversalActionOrchestration :=
 | `execution_receipt_ref` | Receipt reference proving execution only when execution is admitted; otherwise null. |
 | `recovery_plan` | Explicit rollback or compensation path available before effect-bearing execution closure. |
 | `claim_ledger` | Typed operational claims, evidence references, confidence, verification state, and unverified claim IDs. |
+| `fracture_report` | Pre-dispatch contradiction report covering policy, identity, budget, schema, capability, memory, claim, recovery, authority, duplicate-command, and prompt-injection checks. |
 | `closure_state` | Terminal closure state mirrored from `closure.status`. |
 | `closure.reconciliation_ref` | Reconciliation stage output retained in the closure receipt boundary. |
 | `closure.memory_ref` | Admitted memory update reference retained in the closure receipt boundary, or null when no memory update is admitted. |
@@ -77,6 +78,7 @@ The validator applies these rules deterministically:
 23. Every effect-bearing `allow` or post-dispatch review action must carry an available `recovery_plan` with rollback or compensation references before closure.
 24. Every UAO record must expose a `claim_ledger`; verified claims require evidence refs and evidence-free claims must be marked unverified.
 25. Every memory update must expose a `constitution`; recorded memory requires evidence refs, owner, scope, source refs, allowed uses, and mutation history.
+26. Every UAO record must expose a `fracture_report`; execution-allowed records require fracture status `passed`, no blocking checks, and a canonical fracture pipeline stage before execution.
 
 The core invariant is:
 
@@ -88,6 +90,9 @@ empty(claim.evidence_refs) -> claim_id in claim_ledger.unverified_claim_ids
 memory_update.status = recorded -> non_empty(memory_update.constitution.evidence_refs)
 memory_update.learning_allowed = true -> "learning" in memory_update.constitution.allowed_uses
 intersection(allowed_uses, forbidden_uses) != empty -> reject
+decision.execution_allowed -> fracture_report.status = passed
+decision.execution_allowed -> empty(fracture_report.blocking_check_ids)
+stage_order(fracture) < stage_order(execution)
 ```
 
 Invalid UAO is a preflight-blocking condition:

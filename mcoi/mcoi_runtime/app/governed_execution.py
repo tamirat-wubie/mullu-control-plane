@@ -129,6 +129,7 @@ _UAO_CANONICAL_PIPELINE_STAGE_KINDS = (
     "trace",
     "admission",
     "capability",
+    "fracture",
     "execution",
     "receipt",
     "reconciliation",
@@ -635,6 +636,13 @@ def _is_replayable_universal_action_orchestration_record(
     stages_by_kind = _uao_stage_records_by_kind(value.get("pipeline_stages"))
     if stages_by_kind is None:
         return False
+    if not _uao_record_binds_fracture_report(
+        value,
+        stages_by_kind=stages_by_kind,
+        decision_status=str(decision_status),
+        effect_mismatch_escalation=effect_mismatch_escalation,
+    ):
+        return False
     receipts = value.get("receipts")
     receipts_by_kind = _uao_receipt_records_by_kind(receipts)
     if receipts_by_kind is None:
@@ -799,6 +807,69 @@ def _uao_record_binds_universal_detail(
     if closure.get("memory_ref") != (universal_detail.get("memory_ref") or None):
         return False
     return True
+
+
+def _uao_record_binds_fracture_report(
+    record: Mapping[str, Any],
+    *,
+    stages_by_kind: Mapping[str, Mapping[str, Any]],
+    decision_status: str,
+    effect_mismatch_escalation: bool,
+) -> bool:
+    fracture_report = record.get("fracture_report")
+    if not isinstance(fracture_report, Mapping):
+        return False
+    report_ref = fracture_report.get("report_ref")
+    if not _non_empty_text(report_ref):
+        return False
+    fracture_stage = stages_by_kind.get("fracture")
+    if not isinstance(fracture_stage, Mapping):
+        return False
+    if fracture_stage.get("receipt_ref") is not None:
+        return False
+    if _uao_stage_single_output_ref(fracture_stage) != report_ref:
+        return False
+    status = fracture_report.get("status")
+    if status not in {"passed", "failed"}:
+        return False
+    checks = fracture_report.get("checks")
+    blocking_check_ids = fracture_report.get("blocking_check_ids")
+    if not isinstance(checks, list) or not checks:
+        return False
+    if not isinstance(blocking_check_ids, list):
+        return False
+    observed_blocking_ids: set[str] = set()
+    seen_check_ids: set[str] = set()
+    for check in checks:
+        if not isinstance(check, Mapping):
+            return False
+        check_id = check.get("check_id")
+        if not _non_empty_text(check_id) or str(check_id) in seen_check_ids:
+            return False
+        seen_check_ids.add(str(check_id))
+        check_status = check.get("status")
+        if check_status not in {"passed", "failed"}:
+            return False
+        if not isinstance(check.get("blocking"), bool):
+            return False
+        if check.get("blocking") is True:
+            if check_status != "failed":
+                return False
+            observed_blocking_ids.add(str(check_id))
+    declared_blocking_ids = set(_text_tuple(blocking_check_ids))
+    if declared_blocking_ids != observed_blocking_ids:
+        return False
+    if status == "passed" and declared_blocking_ids:
+        return False
+    if status == "failed" and not declared_blocking_ids:
+        return False
+    if decision_status == "allow" or effect_mismatch_escalation:
+        if status != "passed" or declared_blocking_ids:
+            return False
+        return fracture_stage.get("status") == "completed"
+    if status == "failed":
+        return fracture_stage.get("status") == "blocked"
+    return fracture_stage.get("status") in {"completed", "skipped"}
 
 
 def _recomputed_universal_action_proof_hash(

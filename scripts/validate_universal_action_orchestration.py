@@ -63,6 +63,7 @@ REQUIRED_ROOT_FIELDS = (
     "temporal_refs",
     "recovery_plan",
     "claim_ledger",
+    "fracture_report",
     "exposure_boundary",
     "pipeline_stages",
     "admission_guards",
@@ -85,6 +86,7 @@ PIPELINE_STAGE_KINDS = (
     "trace",
     "admission",
     "capability",
+    "fracture",
     "execution",
     "receipt",
     "reconciliation",
@@ -175,6 +177,22 @@ REQUIRED_SCHEMA_DEFS = {
         "last_verified_at",
         "mutation_history_refs",
     ),
+    "fracture_report": (
+        "report_ref",
+        "status",
+        "checks",
+        "blocking_check_ids",
+        "risk_notes",
+    ),
+    "fracture_check": (
+        "check_id",
+        "check_type",
+        "status",
+        "proof_state",
+        "reason_code",
+        "evidence_refs",
+        "blocking",
+    ),
     "pipeline_stage": (
         "stage_id",
         "stage_order",
@@ -245,6 +263,7 @@ REQUIRED_DOCUMENT_TERMS = (
     "Every effect-bearing `allow` or post-dispatch review action must carry an available `recovery_plan` with rollback or compensation references before closure.",
     "Every UAO record must expose a `claim_ledger`; verified claims require evidence refs and evidence-free claims must be marked unverified.",
     "Every memory update must expose a `constitution`; recorded memory requires evidence refs, owner, scope, source refs, allowed uses, and mutation history.",
+    "Every UAO record must expose a `fracture_report`; execution-allowed records require fracture status `passed`, no blocking checks, and a canonical fracture pipeline stage before execution.",
 )
 
 
@@ -367,6 +386,7 @@ def validate_orchestration(record: dict[str, Any]) -> list[str]:
     )
     errors.extend(_validate_recovery_plan(record["recovery_plan"], record["decision"]))
     errors.extend(_validate_claim_ledger(record["claim_ledger"], record))
+    errors.extend(_validate_fracture_report(record["fracture_report"], record))
     errors.extend(_validate_exposure_boundary(record["exposure_boundary"]))
 
     stages_by_kind: dict[str, dict[str, Any]] = {}
@@ -383,6 +403,11 @@ def validate_orchestration(record: dict[str, Any]) -> list[str]:
     )
     errors.extend(
         _validate_decision(record["decision"], guards_by_name, stages_by_kind)
+    )
+    errors.extend(
+        _validate_fracture_stage_binding(
+            record["fracture_report"], record["decision"], stages_by_kind
+        )
     )
     errors.extend(_validate_trace_binding(record, stages_by_kind))
 
@@ -876,6 +901,153 @@ def _validate_claim_record(label: str, claim: Any) -> list[str]:
         errors.append(f"{label}.confidence must be a number in [0, 1]")
     if not isinstance(claim["verified"], bool):
         errors.append(f"{label}.verified must be boolean")
+    return errors
+
+
+def _validate_fracture_report(
+    fracture_report: Any, record: dict[str, Any]
+) -> list[str]:
+    errors = _validate_required_fields(
+        "fracture_report",
+        fracture_report,
+        ("report_ref", "status", "checks", "blocking_check_ids", "risk_notes"),
+    )
+    if errors:
+        return errors
+    if not isinstance(fracture_report["report_ref"], str) or not fracture_report[
+        "report_ref"
+    ]:
+        errors.append("fracture_report.report_ref must be a non-empty string")
+    if fracture_report["status"] not in {"passed", "failed", "skipped"}:
+        errors.append("fracture_report.status is invalid")
+    errors.extend(
+        _validate_string_array(
+            "fracture_report.blocking_check_ids",
+            fracture_report["blocking_check_ids"],
+        )
+    )
+    errors.extend(
+        _validate_string_array("fracture_report.risk_notes", fracture_report["risk_notes"])
+    )
+
+    checks = fracture_report["checks"]
+    if not isinstance(checks, list):
+        return [*errors, "fracture_report.checks must be a list"]
+    if not checks:
+        errors.append("fracture_report.checks must contain at least one check")
+
+    check_ids: set[str] = set()
+    blocking_check_ids = set(fracture_report["blocking_check_ids"])
+    observed_blocking_ids: set[str] = set()
+    for index, check in enumerate(checks):
+        label = f"fracture_report.checks[{index}]"
+        errors.extend(_validate_fracture_check(label, check))
+        if not isinstance(check, dict) or "check_id" not in check:
+            continue
+        check_id = check["check_id"]
+        if isinstance(check_id, str) and check_id:
+            if check_id in check_ids:
+                errors.append(f"duplicate fracture check_id: {check_id}")
+            check_ids.add(check_id)
+            if check.get("blocking") is True:
+                observed_blocking_ids.add(check_id)
+
+    unknown_blocking_ids = blocking_check_ids.difference(check_ids)
+    if unknown_blocking_ids:
+        errors.append(
+            "fracture_report.blocking_check_ids references unknown check(s): "
+            + ", ".join(sorted(unknown_blocking_ids))
+        )
+    if blocking_check_ids != observed_blocking_ids:
+        errors.append(
+            "fracture_report.blocking_check_ids must match blocking failed checks"
+        )
+    if fracture_report["status"] == "passed" and blocking_check_ids:
+        errors.append("fracture_report: passed status cannot include blocking checks")
+    if fracture_report["status"] == "failed" and not blocking_check_ids:
+        errors.append("fracture_report: failed status requires blocking checks")
+    execution_observed = record["decision"]["execution_allowed"] or record.get(
+        "execution_receipt_ref"
+    )
+    if execution_observed:
+        if fracture_report["status"] != "passed":
+            errors.append("execution requires fracture_report.status passed")
+        if blocking_check_ids:
+            errors.append("execution requires no fracture blocking_check_ids")
+    return errors
+
+
+def _validate_fracture_check(label: str, check: Any) -> list[str]:
+    errors = _validate_required_fields(
+        label,
+        check,
+        (
+            "check_id",
+            "check_type",
+            "status",
+            "proof_state",
+            "reason_code",
+            "evidence_refs",
+            "blocking",
+        ),
+    )
+    if errors:
+        return errors
+    for field_name in ("check_id", "reason_code"):
+        if not isinstance(check[field_name], str) or not check[field_name]:
+            errors.append(f"{label}.{field_name} must be a non-empty string")
+    if check["check_type"] not in {
+        "policy_conflict",
+        "identity_conflict",
+        "budget_conflict",
+        "schema_conflict",
+        "capability_mismatch",
+        "memory_contradiction",
+        "unverified_claim",
+        "missing_recovery",
+        "authority_mismatch",
+        "duplicate_command",
+        "prompt_injection",
+    }:
+        errors.append(f"{label}.check_type is invalid")
+    if check["status"] not in {"passed", "failed", "waived", "not_applicable"}:
+        errors.append(f"{label}.status is invalid")
+    if check["proof_state"] not in PROOF_STATES:
+        errors.append(f"{label}.proof_state is invalid")
+    if not isinstance(check["blocking"], bool):
+        errors.append(f"{label}.blocking must be boolean")
+    if check["blocking"] and check["status"] != "failed":
+        errors.append(f"{label}: blocking check must have failed status")
+    if check["status"] == "failed" and not check["blocking"]:
+        errors.append(f"{label}: failed check must be blocking")
+    errors.extend(_validate_string_array(f"{label}.evidence_refs", check["evidence_refs"]))
+    return errors
+
+
+def _validate_fracture_stage_binding(
+    fracture_report: Any,
+    decision: dict[str, Any],
+    stages_by_kind: dict[str, dict[str, Any]],
+) -> list[str]:
+    if not isinstance(fracture_report, dict):
+        return []
+    fracture_stage = stages_by_kind.get("fracture")
+    execution_stage = stages_by_kind.get("execution")
+    if not isinstance(fracture_stage, dict) or not isinstance(execution_stage, dict):
+        return []
+    errors: list[str] = []
+    if fracture_stage["stage_order"] >= execution_stage["stage_order"]:
+        errors.append("fracture stage must precede execution stage")
+    report_ref = fracture_report.get("report_ref")
+    if report_ref not in fracture_stage.get("output_refs", []):
+        errors.append("fracture stage output_refs must include fracture_report.report_ref")
+    if decision["execution_allowed"] and fracture_stage["status"] != "completed":
+        errors.append("execution_allowed requires completed fracture stage")
+    if (
+        fracture_report.get("status") == "failed"
+        and fracture_stage["status"] != "blocked"
+    ):
+        errors.append("failed fracture_report requires blocked fracture stage")
     return errors
 
 

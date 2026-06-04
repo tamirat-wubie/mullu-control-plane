@@ -79,6 +79,141 @@
     ],
     "unverified_claim_ids": []
   },
+  "fracture_report": {
+    "report_ref": "fracture-report://act_refresh_public_status_page",
+    "status": "passed",
+    "checks": [
+      {
+        "check_id": "fracture-check://act_refresh_public_status_page/policy_conflict",
+        "check_type": "policy_conflict",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "policy_conflict_absent",
+        "evidence_refs": [
+          "policy://public-status-page/update-window"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_refresh_public_status_page/identity_conflict",
+        "check_type": "identity_conflict",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "identity_conflict_absent",
+        "evidence_refs": [
+          "trace://cdt_allowed_low_risk_action_001"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_refresh_public_status_page/budget_conflict",
+        "check_type": "budget_conflict",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "budget_conflict_absent",
+        "evidence_refs": [
+          "policy://public-status-page/update-window"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_refresh_public_status_page/schema_conflict",
+        "check_type": "schema_conflict",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "schema_conflict_absent",
+        "evidence_refs": [
+          "trace://cdt_allowed_low_risk_action_001"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_refresh_public_status_page/capability_mismatch",
+        "check_type": "capability_mismatch",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "capability_mismatch_absent",
+        "evidence_refs": [
+          "capability://status-page/publish/v1"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_refresh_public_status_page/memory_contradiction",
+        "check_type": "memory_contradiction",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "memory_contradiction_absent",
+        "evidence_refs": [
+          "trace://cdt_allowed_low_risk_action_001"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_refresh_public_status_page/unverified_claim",
+        "check_type": "unverified_claim",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "unverified_claim_absent",
+        "evidence_refs": [
+          "claim-ledger://uao_public_status_refresh"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_refresh_public_status_page/missing_recovery",
+        "check_type": "missing_recovery",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "missing_recovery_absent",
+        "evidence_refs": [
+          "recovery://status-page/publish/revert-public-status",
+          "trace://cdt_allowed_low_risk_action_001"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_refresh_public_status_page/authority_mismatch",
+        "check_type": "authority_mismatch",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "authority_mismatch_absent",
+        "evidence_refs": [
+          "trace://cdt_allowed_low_risk_action_001",
+          "receipt://uao_admission_public_status_refresh"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_refresh_public_status_page/duplicate_command",
+        "check_type": "duplicate_command",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "duplicate_command_absent",
+        "evidence_refs": [
+          "trace://cdt_allowed_low_risk_action_001"
+        ],
+        "blocking": false
+      },
+      {
+        "check_id": "fracture-check://act_refresh_public_status_page/prompt_injection",
+        "check_type": "prompt_injection",
+        "status": "passed",
+        "proof_state": "Pass",
+        "reason_code": "prompt_injection_absent",
+        "evidence_refs": [
+          "trace://cdt_allowed_low_risk_action_001"
+        ],
+        "blocking": false
+      }
+    ],
+    "blocking_check_ids": [],
+    "risk_notes": [
+      "decision:allow",
+      "reason:low_risk_controls_satisfied",
+      "closure:closed_allowed"
+    ]
+  },
   "exposure_boundary": {
     "redaction_level": "user_safe",
     "allowed_audiences": [
@@ -165,12 +300,26 @@
       "failure_reason": null
     },
     {
-      "stage_id": "stage_execution",
+      "stage_id": "stage_fracture",
       "stage_order": 6,
-      "stage_kind": "execution",
+      "stage_kind": "fracture",
       "status": "completed",
       "input_refs": [
         "capability-binding://status-page/publish/v1/public-status-refresh"
+      ],
+      "output_refs": [
+        "fracture-report://act_refresh_public_status_page"
+      ],
+      "receipt_ref": null,
+      "failure_reason": null
+    },
+    {
+      "stage_id": "stage_execution",
+      "stage_order": 7,
+      "stage_kind": "execution",
+      "status": "completed",
+      "input_refs": [
+        "fracture-report://act_refresh_public_status_page"
       ],
       "output_refs": [
         "outcome://status-page/public-status-refresh"
@@ -180,7 +329,7 @@
     },
     {
       "stage_id": "stage_receipt",
-      "stage_order": 7,
+      "stage_order": 8,
       "stage_kind": "receipt",
       "status": "completed",
       "input_refs": [
@@ -194,7 +343,7 @@
     },
     {
       "stage_id": "stage_reconciliation",
-      "stage_order": 8,
+      "stage_order": 9,
       "stage_kind": "reconciliation",
       "status": "completed",
       "input_refs": [
@@ -208,7 +357,7 @@
     },
     {
       "stage_id": "stage_memory",
-      "stage_order": 9,
+      "stage_order": 10,
       "stage_kind": "memory",
       "status": "completed",
       "input_refs": [
@@ -222,7 +371,7 @@
     },
     {
       "stage_id": "stage_closure",
-      "stage_order": 10,
+      "stage_order": 11,
       "stage_kind": "closure",
       "status": "completed",
       "input_refs": [
@@ -413,8 +562,15 @@
       "confidence": 1.0,
       "sensitivity": "operational",
       "expires_at": null,
-      "allowed_uses": ["closure_audit", "planning", "learning"],
-      "forbidden_uses": ["external_sharing", "model_training"],
+      "allowed_uses": [
+        "closure_audit",
+        "planning",
+        "learning"
+      ],
+      "forbidden_uses": [
+        "external_sharing",
+        "model_training"
+      ],
       "evidence_refs": [
         "memory://status-page/public-status-refresh",
         "trace://cdt_allowed_low_risk_action_001",
@@ -422,7 +578,9 @@
         "receipt://uao_execution_public_status_refresh"
       ],
       "last_verified_at": "2026-05-31T00:05:00Z",
-      "mutation_history_refs": ["trace://cdt_allowed_low_risk_action_001"]
+      "mutation_history_refs": [
+        "trace://cdt_allowed_low_risk_action_001"
+      ]
     }
   },
   "closure_state": "closed_allowed",

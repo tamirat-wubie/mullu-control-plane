@@ -1190,6 +1190,15 @@ def build_universal_action_orchestration_record(
         memory_ref=memory_ref,
         recovery_plan=recovery_plan,
     )
+    fracture_report = _uao_record_fracture_report(
+        result=result,
+        decision=decision,
+        claim_ledger=claim_ledger,
+        recovery_plan=recovery_plan,
+        capability_refs=capability_refs,
+        policy_refs=policy_refs,
+        evidence_refs=evidence_refs,
+    )
     return {
         "orchestration_id": stable_identifier(
             "universal-action-orchestration",
@@ -1213,6 +1222,7 @@ def build_universal_action_orchestration_record(
         "temporal_refs": temporal_refs,
         "recovery_plan": recovery_plan,
         "claim_ledger": claim_ledger,
+        "fracture_report": fracture_report,
         "exposure_boundary": {
             "redaction_level": "audit",
             "allowed_audiences": ["operator", "auditor"],
@@ -1229,6 +1239,7 @@ def build_universal_action_orchestration_record(
             capability_refs=capability_refs,
             input_refs=input_refs,
             receipt_refs=receipt_refs,
+            fracture_report=fracture_report,
             outcome_ref=outcome_ref,
             reconciliation_ref=reconciliation_ref,
             memory_ref=memory_ref,
@@ -1867,6 +1878,179 @@ def _uao_record_claim_ledger(
     }
 
 
+def _uao_record_fracture_report(
+    *,
+    result: UniversalActionResult,
+    decision: Mapping[str, Any],
+    claim_ledger: Mapping[str, Any],
+    recovery_plan: Mapping[str, Any],
+    capability_refs: list[str],
+    policy_refs: list[str],
+    evidence_refs: list[str],
+) -> dict[str, Any]:
+    report_ref = "fracture-report://" + stable_identifier(
+        "universal-action-fracture-report",
+        {
+            "action_id": result.action_id,
+            "trace_ref": result.trace_ref,
+            "decision_status": str(decision["status"]),
+        },
+    )
+    reason_code = str(decision["reason_code"])
+    unverified_claim_ids = claim_ledger.get("unverified_claim_ids", [])
+    capability_failed = (
+        result.capability_decision is not None
+        and result.capability_decision.status
+        is not CommandCapabilityAdmissionStatus.ACCEPTED
+    )
+    missing_recovery = reason_code == "recovery_plan_missing" or (
+        result.dispatched and recovery_plan.get("available") is not True
+    )
+    checks = [
+        _uao_fracture_check(
+            result=result,
+            check_type="policy_conflict",
+            failed="policy" in reason_code and reason_code != "policy_allows",
+            reason_code="policy_conflict_absent",
+            failure_reason_code=reason_code,
+            evidence_refs=policy_refs,
+        ),
+        _uao_fracture_check(
+            result=result,
+            check_type="identity_conflict",
+            failed="identity" in reason_code or "tenant" in reason_code,
+            reason_code="identity_conflict_absent",
+            failure_reason_code=reason_code,
+            evidence_refs=[result.trace_ref],
+        ),
+        _uao_fracture_check(
+            result=result,
+            check_type="budget_conflict",
+            failed="budget" in reason_code,
+            reason_code="budget_conflict_absent",
+            failure_reason_code=reason_code,
+            evidence_refs=policy_refs,
+        ),
+        _uao_fracture_check(
+            result=result,
+            check_type="schema_conflict",
+            failed="schema" in reason_code,
+            reason_code="schema_conflict_absent",
+            failure_reason_code=reason_code,
+            evidence_refs=evidence_refs,
+        ),
+        _uao_fracture_check(
+            result=result,
+            check_type="capability_mismatch",
+            failed=capability_failed,
+            reason_code="capability_mismatch_absent",
+            failure_reason_code=reason_code,
+            evidence_refs=capability_refs,
+        ),
+        _uao_fracture_check(
+            result=result,
+            check_type="memory_contradiction",
+            failed=False,
+            reason_code="memory_contradiction_absent",
+            failure_reason_code="memory_contradiction",
+            evidence_refs=[result.trace_ref],
+        ),
+        _uao_fracture_check(
+            result=result,
+            check_type="unverified_claim",
+            failed=bool(unverified_claim_ids),
+            reason_code="unverified_claim_absent",
+            failure_reason_code="unverified_claim_present",
+            evidence_refs=list(unverified_claim_ids) or [str(claim_ledger["ledger_ref"])],
+        ),
+        _uao_fracture_check(
+            result=result,
+            check_type="missing_recovery",
+            failed=missing_recovery,
+            reason_code="recovery_path_available",
+            failure_reason_code="recovery_plan_missing",
+            evidence_refs=[
+                ref
+                for ref in (
+                    recovery_plan.get("recovery_plan_ref"),
+                    recovery_plan.get("certificate_ref"),
+                    result.trace_ref,
+                )
+                if isinstance(ref, str) and ref
+            ],
+        ),
+        _uao_fracture_check(
+            result=result,
+            check_type="authority_mismatch",
+            failed="authority" in reason_code or "approval" in reason_code,
+            reason_code="authority_mismatch_absent",
+            failure_reason_code=reason_code,
+            evidence_refs=policy_refs,
+        ),
+        _uao_fracture_check(
+            result=result,
+            check_type="duplicate_command",
+            failed=False,
+            reason_code="duplicate_command_absent",
+            failure_reason_code="duplicate_command",
+            evidence_refs=[result.action_id, result.trace_ref],
+        ),
+        _uao_fracture_check(
+            result=result,
+            check_type="prompt_injection",
+            failed=False,
+            reason_code="prompt_injection_absent",
+            failure_reason_code="prompt_injection",
+            evidence_refs=evidence_refs or [result.trace_ref],
+        ),
+    ]
+    blocking_check_ids = [
+        check["check_id"] for check in checks if check["blocking"] is True
+    ]
+    return {
+        "report_ref": report_ref,
+        "status": "failed" if blocking_check_ids else "passed",
+        "checks": checks,
+        "blocking_check_ids": blocking_check_ids,
+        "risk_notes": _unique_text_list(
+            (
+                f"decision:{decision['status']}",
+                f"reason:{reason_code}",
+                f"closure:{result.closure_state}",
+            )
+        ),
+    }
+
+
+def _uao_fracture_check(
+    *,
+    result: UniversalActionResult,
+    check_type: str,
+    failed: bool,
+    reason_code: str,
+    failure_reason_code: str,
+    evidence_refs: list[str],
+) -> dict[str, Any]:
+    status = "failed" if failed else "passed"
+    return {
+        "check_id": "fracture-check://"
+        + stable_identifier(
+            "universal-action-fracture-check",
+            {
+                "action_id": result.action_id,
+                "check_type": check_type,
+                "status": status,
+            },
+        ),
+        "check_type": check_type,
+        "status": status,
+        "proof_state": "Fail" if failed else "Pass",
+        "reason_code": failure_reason_code if failed else reason_code,
+        "evidence_refs": _unique_text_list(evidence_refs or [result.trace_ref]),
+        "blocking": failed,
+    }
+
+
 def _uao_claim(
     *,
     result: UniversalActionResult,
@@ -2022,6 +2206,7 @@ def _uao_record_pipeline_stages(
     capability_refs: list[str],
     input_refs: list[str],
     receipt_refs: Mapping[str, str],
+    fracture_report: Mapping[str, Any],
     outcome_ref: str | None,
     reconciliation_ref: str | None,
     memory_ref: str | None,
@@ -2033,6 +2218,14 @@ def _uao_record_pipeline_stages(
     execution_completed = result.dispatched and outcome_ref is not None
     reconciliation_completed = execution_completed
     failure_reason = result.block_reason or "execution_blocked"
+    fracture_status = (
+        "blocked" if fracture_report.get("status") == "failed" else "completed"
+    )
+    fracture_failure_reason = (
+        "fracture_blocking_checks"
+        if fracture_report.get("status") == "failed"
+        else None
+    )
     receipt_set_ref = f"receipt-set://{result.action_id}"
     memory_output_ref = memory_ref or f"memory://{result.action_id}/blocked"
     closure_ref = f"closure://{result.action_id}"
@@ -2083,8 +2276,20 @@ def _uao_record_pipeline_stages(
             None if capability_bound else failure_reason,
         ),
         _uao_stage(
-            "stage_execution",
+            "stage_fracture",
             6,
+            "fracture",
+            fracture_status,
+            [f"capability-binding://{result.action_id}"]
+            if capability_bound
+            else capability_refs,
+            [str(fracture_report["report_ref"])],
+            None,
+            fracture_failure_reason,
+        ),
+        _uao_stage(
+            "stage_execution",
+            7,
             "execution",
             "completed" if execution_completed else "skipped",
             [f"capability-binding://{result.action_id}"]
@@ -2096,7 +2301,7 @@ def _uao_record_pipeline_stages(
         ),
         _uao_stage(
             "stage_receipt",
-            7,
+            8,
             "receipt",
             "completed",
             [outcome_ref]
@@ -2107,7 +2312,7 @@ def _uao_record_pipeline_stages(
         ),
         _uao_stage(
             "stage_reconciliation",
-            8,
+            9,
             "reconciliation",
             "completed" if reconciliation_completed else "skipped",
             [receipt_set_ref],
@@ -2117,7 +2322,7 @@ def _uao_record_pipeline_stages(
         ),
         _uao_stage(
             "stage_memory",
-            9,
+            10,
             "memory",
             "completed",
             [f"reconciliation://{result.action_id}"]
@@ -2127,7 +2332,7 @@ def _uao_record_pipeline_stages(
         ),
         _uao_stage(
             "stage_closure",
-            10,
+            11,
             "closure",
             "completed",
             [memory_output_ref],

@@ -97,10 +97,13 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn("action_envelope", schema["$defs"])
         self.assertIn("claim_ledger", schema["$defs"])
         self.assertIn("claim", schema["$defs"])
+        self.assertIn("fracture_report", schema["$defs"])
+        self.assertIn("fracture_check", schema["$defs"])
         self.assertIn("memory_constitution", schema["$defs"])
         self.assertIn("pipeline_stage", schema["$defs"])
         self.assertIn("action_envelope", schema["required"])
         self.assertIn("claim_ledger", schema["required"])
+        self.assertIn("fracture_report", schema["required"])
         self.assertIn("admission_guards", schema["required"])
         self.assertIn("closure_state", schema["required"])
         self.assertIn("raw_reasoning_included", schema["required"])
@@ -163,6 +166,8 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn("verified claims require evidence refs", document_text)
         self.assertIn("Every memory update must expose a `constitution`", document_text)
         self.assertIn("memory_update.learning_allowed = true", document_text)
+        self.assertIn("Every UAO record must expose a `fracture_report`", document_text)
+        self.assertIn("decision.execution_allowed -> fracture_report.status = passed", document_text)
 
     def test_claim_ledger_rejects_verified_claim_without_evidence(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
@@ -218,6 +223,27 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
             "memory_update.constitution allowed_uses and forbidden_uses overlap: learning",
             errors,
         )
+
+    def test_execution_rejects_failed_fracture_report(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        check = invalid_record["fracture_report"]["checks"][0]
+        check["status"] = "failed"
+        check["proof_state"] = "Fail"
+        check["reason_code"] = "policy_conflict"
+        check["blocking"] = True
+        invalid_record["fracture_report"]["status"] = "failed"
+        invalid_record["fracture_report"]["blocking_check_ids"] = [check["check_id"]]
+        next(
+            stage
+            for stage in invalid_record["pipeline_stages"]
+            if stage["stage_kind"] == "fracture"
+        )["status"] = "blocked"
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertIn("execution requires fracture_report.status passed", errors)
 
     def test_effect_bearing_action_requires_causal_trace(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
@@ -298,8 +324,13 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
     def test_blocked_decision_cannot_execute(self) -> None:
         record = VALIDATOR.load_json_object(BLOCKED_EXAMPLE_PATH, "blocked UAO")
         invalid_record = copy.deepcopy(record)
-        invalid_record["pipeline_stages"][5]["status"] = "completed"
-        invalid_record["pipeline_stages"][5]["failure_reason"] = None
+        execution_stage = next(
+            stage
+            for stage in invalid_record["pipeline_stages"]
+            if stage["stage_kind"] == "execution"
+        )
+        execution_stage["status"] = "completed"
+        execution_stage["failure_reason"] = None
         invalid_record["decision"]["execution_allowed"] = True
 
         errors = VALIDATOR.validate_orchestration(invalid_record)
