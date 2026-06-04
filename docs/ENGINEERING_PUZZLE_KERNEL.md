@@ -126,6 +126,12 @@ Witnesses:
 | Physical engineering | Do not reduce bridge material before load survival is proven. |
 | Legal/compliance | Do not remove approvals before authority preservation is proven. |
 
+The empirical witness set is encoded in
+`examples/engineering_puzzle_universality_witness_set.json` and validated by
+`scripts/validate_engineering_puzzle_universality_witness.py`. Each case is
+replayed against `evaluate_filter_stack` and must prove that failed
+`L2_survival` stops evaluation before `L5_optimization`.
+
 ## Observer Binding
 
 ```text
@@ -203,11 +209,14 @@ Phase 6: Learn
 | `mcoi_runtime.app.engineering_puzzle_control` | JSON-like control adapter for route-ready request and response envelopes |
 | `mcoi_runtime.app.routers.engineering_puzzle` | Standalone FastAPI router for goal-delta and candidate-judgment endpoints |
 | `mcoi_runtime.app.server` | Registers the engineering puzzle control surface and includes the router |
+| `examples/engineering_puzzle_universality_witness_set.json` | Encoded cross-domain witness set for survival-before-optimization universality |
+| `scripts/validate_engineering_puzzle_universality_witness.py` | Deterministic replay validator for the universality witness set |
 | `mcoi/tests/test_engineering_puzzle_kernel.py` | Runtime contract tests for the closure rules |
 | `mcoi/tests/test_engineering_puzzle_integration.py` | Event-spine integration tests for facade workflow behavior |
 | `mcoi/tests/test_engineering_puzzle_control.py` | Control-surface tests for payload validation and JSON-safe responses |
 | `mcoi/tests/test_engineering_puzzle_router.py` | Standalone router tests for dependency wiring and HTTP error behavior |
 | `mcoi/tests/test_engineering_puzzle_server.py` | Server-level test for dependency registration and route inclusion |
+| `tests/test_validate_engineering_puzzle_universality_witness.py` | Validator tests for pass, stale expectation, missing evidence, and CLI report paths |
 
 ## Status
 
@@ -221,8 +230,8 @@ STATUS:
     - Phi_gov commitment gate
     - append-only history
     - dual verification witness requirement
-  Open issues:
-    - broader empirical universality witness set is not encoded
+    - empirical universality witness set replay
+  Open issues: none
   Next action:
-    - run targeted kernel tests and then expand integration binding where needed
+    - expand the witness set when new engineering domains are admitted
 ```
