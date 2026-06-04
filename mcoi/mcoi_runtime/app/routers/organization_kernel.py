@@ -2229,6 +2229,9 @@ def _organization_action_queue(
                     "approval_packet_preview": (
                         f"/api/v1/orgs/{quote(org_id, safe='')}/action-queue/approval-packet-preview"
                     ),
+                    "dispatch_lease_preview": (
+                        f"/api/v1/orgs/{quote(org_id, safe='')}/action-queue/dispatch-lease-preview"
+                    ),
                 },
             }
             action_rows.append(action_row)
@@ -2525,6 +2528,146 @@ def _organization_action_queue_approval_packet_preview(
             "approval_decision",
             "worker_dispatch",
             "case_state_mutation",
+            "receipt_binding",
+            "terminal_closure",
+        ],
+        "metadata": req.metadata,
+    }
+
+
+def _organization_action_queue_dispatch_lease_preview(
+    kernel: OrganizationKernel,
+    org_id: str,
+    req: ActionQueueSelectionPreviewRequest,
+) -> dict[str, Any]:
+    selection_preview = _organization_action_queue_selection_preview(kernel, org_id, req)
+    selected_action = selection_preview["selected_action"]
+    admission_preview = selection_preview["admission_preview"]
+    handoff = admission_preview["handoff"]
+    missing_evidence = list(handoff["missing_evidence"])
+    required_approvals = list(handoff["approvals_required"])
+    decision = str(admission_preview["decision"])
+    reason_code = str(admission_preview["reason_code"])
+    lease_decision = "lease_not_admissible"
+    if decision == "allow":
+        lease_decision = "lease_request_ready"
+    elif decision == "simulate":
+        lease_decision = "simulation_only"
+    elif reason_code in {"approval_missing", "dual_control_missing"}:
+        lease_decision = "awaiting_approval"
+    elif missing_evidence:
+        lease_decision = "awaiting_evidence"
+
+    lease_preview_id = stable_identifier(
+        "orgos-action-queue-dispatch-lease-preview",
+        {
+            "org_id": org_id,
+            "action_id": req.action_id,
+            "selection_preview_id": selection_preview["selection_preview_id"],
+            "capability_id": selected_action["capability_id"],
+            "lease_decision": lease_decision,
+            "reason_code": reason_code,
+        },
+    )
+    lease_scope = {
+        "case_id": selected_action["case_id"],
+        "step_id": selected_action["step_id"],
+        "department_id": selected_action["department_id"],
+        "responsible_role_id": selected_action["responsible_role_id"],
+        "capability_id": selected_action["capability_id"],
+        "expected_effect": handoff["expected_effect"],
+        "allowed_next_action": selected_action["next_action"],
+        "sandbox_required": True,
+        "receipt_required": True,
+        "timeout_required": True,
+        "budget_required": True,
+    }
+    blockers = []
+    if missing_evidence:
+        blockers.append({
+            "kind": "missing_evidence",
+            "refs": missing_evidence,
+        })
+    if lease_decision == "awaiting_approval":
+        blockers.append({
+            "kind": "approval_required",
+            "refs": required_approvals,
+        })
+    if decision == "block":
+        blockers.append({
+            "kind": "admission_blocked",
+            "refs": [reason_code],
+        })
+
+    workflow_stages = [
+        {
+            "stage_id": "selection_preview_binding",
+            "stage_type": "observation",
+            "predecessor_ids": [],
+            "input_bindings": ["org_id", "action_id", "filters"],
+            "output_keys": ["selection_preview", "admission_preview"],
+            "verification_evidence": [selection_preview["selection_preview_id"]],
+            "authority_boundary": "read_only_projection",
+        },
+        {
+            "stage_id": "dispatch_lease_projection",
+            "stage_type": "approval_gate",
+            "predecessor_ids": ["selection_preview_binding"],
+            "input_bindings": ["capability_id", "responsible_role_id", "evidence_refs", "approval_refs"],
+            "output_keys": ["lease_scope", "lease_decision", "lease_blockers"],
+            "verification_evidence": [lease_preview_id],
+            "authority_boundary": "no_worker_lease_mutation",
+        },
+        {
+            "stage_id": "operator_dispatch_review",
+            "stage_type": "observation",
+            "predecessor_ids": ["dispatch_lease_projection"],
+            "input_bindings": ["lease_decision", "lease_scope", "lease_blockers"],
+            "output_keys": ["operator_next_step"],
+            "verification_evidence": [lease_preview_id],
+            "authority_boundary": "no_worker_dispatch",
+        },
+    ]
+    next_steps_by_decision = {
+        "lease_request_ready": "open_bounded_worker_lease_request",
+        "simulation_only": "run_read_only_simulation_or_collect_evidence",
+        "awaiting_approval": "complete_required_approval_before_lease",
+        "awaiting_evidence": "collect_required_evidence_before_lease",
+        "lease_not_admissible": "resolve_admission_blocker_before_lease",
+    }
+    return {
+        "dispatch_lease_preview_id": lease_preview_id,
+        "org_id": org_id,
+        "action_id": req.action_id,
+        "case_id": selected_action["case_id"],
+        "step_id": selected_action["step_id"],
+        "read_only": True,
+        "governed": True,
+        "selection_preview": selection_preview,
+        "lease_decision": lease_decision,
+        "lease_scope": lease_scope,
+        "lease_blockers": blockers,
+        "lease_blocker_count": len(blockers),
+        "required_approvals": required_approvals,
+        "missing_evidence": missing_evidence,
+        "workflow_projection": {
+            "acyclic": True,
+            "stage_count": len(workflow_stages),
+            "terminal_closure_condition": "preview_only_no_worker_lease",
+            "stages": workflow_stages,
+        },
+        "operator_next_step": next_steps_by_decision[lease_decision],
+        "worker_lease_authority_granted": False,
+        "execution_authority_granted": False,
+        "dispatch_authority_granted": False,
+        "receipt_binding_authority_granted": False,
+        "receipt_ref": None,
+        "closure_state": "preview_only",
+        "forbidden_effects": [
+            "worker_lease_creation",
+            "worker_dispatch",
+            "case_state_mutation",
+            "approval_creation",
             "receipt_binding",
             "terminal_closure",
         ],
@@ -3521,6 +3664,28 @@ def preview_organization_action_queue_approval_packet(
             detail=_error_detail(
                 "action queue approval packet preview rejected",
                 "action_queue_approval_packet_preview_rejected",
+            ),
+        ) from exc
+
+
+@router.post("/api/v1/orgs/{org_id}/action-queue/dispatch-lease-preview")
+def preview_organization_action_queue_dispatch_lease(
+    org_id: str,
+    req: ActionQueueSelectionPreviewRequest,
+    request: Request,
+):
+    """Preview a bounded worker lease envelope without creating a lease or dispatching work."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_organization_tenant(request, kernel, org_id)
+    try:
+        return _organization_action_queue_dispatch_lease_preview(kernel, org_id, req)
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_error_detail(
+                "action queue dispatch lease preview rejected",
+                "action_queue_dispatch_lease_preview_rejected",
             ),
         ) from exc
 

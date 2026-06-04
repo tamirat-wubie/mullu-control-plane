@@ -14310,6 +14310,54 @@
         "summary": "Preview Organization Action Queue Approval Packet"
       }
     },
+    "/api/v1/orgs/{org_id}/action-queue/dispatch-lease-preview": {
+      "post": {
+        "description": "Preview a bounded worker lease envelope without creating a lease or dispatching work.",
+        "operationId": "preview_organization_action_queue_dispatch_lease_api_v1_orgs__org_id__action_queue_dispatch_lease_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActionQueueSelectionPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Organization Action Queue Dispatch Lease"
+      }
+    },
     "/api/v1/orgs/{org_id}/action-queue/selection-preview": {
       "post": {
         "description": "Preview a visible queued action selection without executing or mutating case state.",
