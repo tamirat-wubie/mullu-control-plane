@@ -733,6 +733,85 @@ def test_organization_action_queue_filters_ready_receipt_actions_without_mutatio
     assert before["gate_decisions"] == after["gate_decisions"]
 
 
+def test_organization_action_queue_selection_preview_simulates_visible_filtered_action_without_mutation(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    queue = client.get(
+        "/api/v1/orgs/org-mullu/action-queue"
+        "?department_id=engineering&next_action=collect_required_evidence"
+    ).json()
+    action_id = queue["actions"][0]["action_id"]
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/orgs/org-mullu/action-queue/selection-preview",
+        json={
+            "action_id": action_id,
+            "filters": {
+                "department_id": "engineering",
+                "next_action": "collect_required_evidence",
+            },
+        },
+    )
+    payload = response.json()
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["read_only"] is True
+    assert payload["action_id"] == action_id
+    assert payload["filters"] == {
+        "department_id": "engineering",
+        "next_action": "collect_required_evidence",
+    }
+    assert payload["queue_context"]["action_count"] == 1
+    assert payload["queue_context"]["total_action_count"] == 5
+    assert payload["selected_action"]["department_id"] == "engineering"
+    assert payload["selected_action"]["next_action"] == "collect_required_evidence"
+    assert payload["admission_preview"]["decision"] == "simulate"
+    assert payload["admission_preview"]["reason_code"] == "evidence_missing_simulation_available"
+    assert payload["selection_decision"] == "simulate"
+    assert payload["simulation_available"] is True
+    assert payload["workflow_projection"]["acyclic"] is True
+    assert payload["workflow_projection"]["stage_count"] == 3
+    assert payload["execution_authority_granted"] is False
+    assert payload["dispatch_authority_granted"] is False
+    assert payload["receipt_binding_authority_granted"] is False
+    assert payload["receipt_ref"] is None
+    assert "worker_dispatch" in payload["forbidden_effects"]
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
+def test_organization_action_queue_selection_preview_rejects_filtered_out_action_without_mutation(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    queue = client.get("/api/v1/orgs/org-mullu/action-queue").json()
+    finance_action = next(
+        item for item in queue["actions"]
+        if item["department_id"] == "finance"
+    )
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/orgs/org-mullu/action-queue/selection-preview",
+        json={
+            "action_id": finance_action["action_id"],
+            "filters": {"department_id": "engineering"},
+        },
+    )
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_code"] == "action_queue_selection_preview_rejected"
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
 def test_organization_action_queue_view_is_read_only_and_escaped(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     bootstrap = client.post(
@@ -763,6 +842,7 @@ def test_organization_action_queue_view_is_read_only_and_escaped(tmp_path: Path)
     assert "&lt;script&gt;alert(&#x27;queue&#x27;)&lt;/script&gt;" in view.text
     assert before["events"] == after["events"]
     assert before["gate_decisions"] == after["gate_decisions"] == []
+
 
 def test_case_private_pilot_live_rehearsal_binds_preview_receipts_without_mutation(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
@@ -1644,6 +1724,7 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/orgs/{org_id}/case-portfolio/view" in paths
     assert "/api/v1/orgs/{org_id}/action-queue" in paths
     assert "/api/v1/orgs/{org_id}/action-queue/view" in paths
+    assert "/api/v1/orgs/{org_id}/action-queue/selection-preview" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate/view" in paths
     assert "/api/v1/cases/{case_id}/audit-explorer" in paths

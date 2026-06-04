@@ -26,6 +26,36 @@
         "title": "ABTestRequest",
         "type": "object"
       },
+      "ActionQueueSelectionPreviewRequest": {
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "allow_simulation_when_blocked": {
+            "default": true,
+            "title": "Allow Simulation When Blocked",
+            "type": "boolean"
+          },
+          "filters": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Filters",
+            "type": "object"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          }
+        },
+        "required": [
+          "action_id"
+        ],
+        "title": "ActionQueueSelectionPreviewRequest",
+        "type": "object"
+      },
       "ActionRequest": {
         "properties": {
           "action_type": {
@@ -8728,6 +8758,45 @@
         "summary": "Get Circuit Dashboard"
       }
     },
+    "/api/v1/cognitive/shadow/observations": {
+      "get": {
+        "description": "Read-only view of the cognitive shadow observer's recorded observations.\n\nSurfaces the evidence the record-only Stage-A shadow gathers on live traffic:\na ``summary`` (the Stage-B decision signal - how often the cognitive DECIDE\ngate WOULD have withheld dispatch on executions that actually succeeded,\ni.e. ``diverged`` / ``divergence_rate``) plus the recent per-execution\nreports. When shadow mode is OFF (``MULLU_COGNITIVE_LOOP_SHADOW`` unset) the\nobserver is absent and this returns ``enabled: false`` with empty data. This\nendpoint holds NO authority - it only reads what the shadow already recorded.",
+        "operationId": "cognitive_shadow_observations_api_v1_cognitive_shadow_observations_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cognitive Shadow Observations"
+      }
+    },
     "/api/v1/complete": {
       "post": {
         "description": "Governed LLM completion \u2014 budgeted, ledgered, circuit-protected.",
@@ -12352,6 +12421,23 @@
         "summary": "Deep Health Check"
       }
     },
+    "/api/v1/health/dependencies": {
+      "get": {
+        "description": "Dependency-focused health read model derived from the readiness probes.",
+        "operationId": "dependency_health_api_v1_health_dependencies_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Dependency Health"
+      }
+    },
     "/api/v1/health/extensions": {
       "get": {
         "description": "Optional extension posture without exposing host filesystem paths.",
@@ -12369,9 +12455,25 @@
         "summary": "Extension Health"
       }
     },
+    "/api/v1/health/remote": {
+      "get": {
+        "operationId": "remote_health_api_v1_health_remote_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Remote Health"
+      }
+    },
     "/api/v1/health/score": {
       "get": {
-        "description": "Unified system health score (0.0-1.0).",
+        "description": "Unified system health score (0.0-1.0) from real deep-health probes.",
         "operationId": "health_score_api_v1_health_score_get",
         "responses": {
           "200": {
@@ -12443,7 +12545,7 @@
     },
     "/api/v1/health/witness": {
       "post": {
-        "description": "Prove the governed proof + audit chain at runtime (promotion gate).\n\nDisabled by default \u2014 set ``MULLU_HEALTH_WITNESS_ENABLED=true`` in the\npromotion environment. Each call issues ONE bounded synthetic governed\ndecision (tenant ``system``, actor ``health-witness``), persists its proof\nand audit receipts, then verifies both. Returns HTTP 503 when the witness\ncannot be produced or verified.",
+        "description": "Prove the governed proof + audit chain at runtime (promotion gate).",
         "operationId": "promotion_witness_api_v1_health_witness_post",
         "responses": {
           "200": {
@@ -14158,6 +14260,54 @@
           }
         },
         "summary": "Get Organization Action Queue"
+      }
+    },
+    "/api/v1/orgs/{org_id}/action-queue/selection-preview": {
+      "post": {
+        "description": "Preview a visible queued action selection without executing or mutating case state.",
+        "operationId": "preview_organization_action_queue_selection_api_v1_orgs__org_id__action_queue_selection_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActionQueueSelectionPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Organization Action Queue Selection"
       }
     },
     "/api/v1/orgs/{org_id}/action-queue/view": {

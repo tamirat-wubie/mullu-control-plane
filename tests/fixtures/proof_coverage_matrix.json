@@ -871,11 +871,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 239,
-      "unproven": 4,
+      "proven": 244,
+      "unproven": 0,
       "witnessed": 149
     },
-    "route_count": 392,
+    "route_count": 393,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1203,9 +1203,9 @@
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "proven",
         "route": "/api/v1/cognitive/shadow/observations",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "workflow_execution_lifecycle"
       },
       {
         "coverage_state": "witnessed",
@@ -1693,9 +1693,9 @@
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "proven",
         "route": "/api/v1/health/dependencies",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "proven",
@@ -1703,9 +1703,9 @@
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "proven",
         "route": "/api/v1/health/remote",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "proven",
@@ -1728,9 +1728,9 @@
         "surface_id": "operational_health_read_models"
       },
       {
-        "coverage_state": "unproven",
+        "coverage_state": "proven",
         "route": "/api/v1/health/witness",
-        "surface_id": "unclassified_declared_route"
+        "surface_id": "operational_health_read_models"
       },
       {
         "coverage_state": "proven",
@@ -1960,6 +1960,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/orgs/{org_id}/action-queue",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/orgs/{org_id}/action-queue/selection-preview",
         "surface_id": "orgos_case_governance_lifecycle"
       },
       {
@@ -2838,7 +2843,7 @@
         "surface_id": "gateway_capability_fabric"
       }
     ],
-    "unclassified_route_count": 4
+    "unclassified_route_count": 0
   },
   "schema_version": 1,
   "surfaces": [
@@ -4983,6 +4988,8 @@
       "coverage_state": "proven",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/health.py",
+        "mcoi/mcoi_runtime/app/routers/health_remote.py",
+        "mcoi/mcoi_runtime/app/health_external.py",
         "mcoi/mcoi_runtime/app/routers/shadow.py",
         "mcoi/mcoi_runtime/core/deep_health.py",
         "mcoi/mcoi_runtime/core/health_aggregator.py",
@@ -4994,13 +5001,16 @@
         "mcoi/tests/test_deep_health.py",
         "mcoi/tests/test_health_aggregator.py",
         "mcoi/tests/test_health_check_agg.py",
+        "mcoi/tests/test_health_remote.py",
+        "mcoi/tests/test_health_witness.py",
+        "mcoi/tests/test_ready_dependency_aware.py",
         "mcoi/tests/test_inceptadive_shadow_routes.py",
         "mcoi/tests/test_operational_health_read_models.py",
         "mcoi/tests/test_phase232.py",
         "mcoi/tests/test_server_phase205.py",
         "mcoi/tests/test_server_phase210.py"
       ],
-      "notes": "Operational health routes expose bounded read models for deep component diagnostics, weighted health score, optional extension posture, shadow posture, degraded-state checks, and v3 recovery tracking without mutation authority.",
+      "notes": "Operational health routes expose bounded read models for deep component diagnostics, weighted health score, optional extension posture, shadow posture, dependency readiness, remote endpoint health, degraded-state checks, v3 recovery tracking, and gated health witness proof receipts without open mutation authority.",
       "representative_paths": [
         "/api/v1/health/deep",
         "/api/v1/health/score",
@@ -5008,6 +5018,9 @@
         "/api/v1/health/shadow",
         "/api/v1/health/v2",
         "/api/v1/health/v3",
+        "/api/v1/health/witness",
+        "/api/v1/health/dependencies",
+        "/api/v1/health/remote",
         "/api/v1/dashboard",
         "/api/v1/plugins",
         "/api/v1/guards",
@@ -5050,6 +5063,9 @@
         "health_v2_exception_sanitized",
         "health_v3_weighted_aggregation",
         "health_v3_recovery_tracking",
+        "witness_disabled_by_default",
+        "witness_verified_when_enabled",
+        "witness_produces_distinct_verified_receipts",
         "health_routes_return_read_models",
         "ops_dashboard_read_model_bounded",
         "production_readiness_checks_bounded",
@@ -5143,13 +5159,14 @@
         "mcoi/mcoi_runtime/core/traced_workflow.py",
         "tests/test_gateway/test_workflow_orchestration.py",
         "mcoi/tests/test_agent_workflow.py",
+        "mcoi/tests/test_cognitive_shadow_observations.py",
         "mcoi/tests/test_traced_workflow.py",
         "mcoi/tests/test_server_phase199.py",
         "mcoi/tests/test_server_phase205.py",
         "mcoi/tests/test_server_phase206.py",
         "mcoi/tests/test_workflow_templates.py"
       ],
-      "notes": "Workflow execution routes execute governed multi-agent workflows with action proof receipts, expose bounded history read models, produce replay-traced workflow runs, and record workflow lifecycle mutation receipts as bounded Effect Assurance evidence.",
+      "notes": "Workflow execution routes execute governed multi-agent workflows with action proof receipts, expose bounded history and cognitive shadow observation read models, produce replay-traced workflow runs, and record workflow lifecycle mutation receipts as bounded Effect Assurance evidence.",
       "representative_paths": [
         "/api/v1/execute",
         "/api/v1/session",
@@ -5157,6 +5174,7 @@
         "/api/v1/workflow/execute",
         "/api/v1/workflow/history",
         "/api/v1/workflow/traced",
+        "/api/v1/cognitive/shadow/observations",
         "/api/v1/pipeline/execute",
         "/api/v1/pipeline/history",
         "/api/v1/templates",
@@ -5167,6 +5185,8 @@
         "execute_workflow",
         "execute_workflow_bad_capability",
         "workflow_history",
+        "read_surfaces_observations_and_summary_when_enabled",
+        "read_respects_limit",
         "audit_on_success",
         "audit_on_failure",
         "workflow_runtime_error_redacted",
@@ -5850,10 +5870,11 @@
         "mcoi/tests/test_organization_kernel_router.py",
         "mcoi/tests/test_organization_kernel_store.py"
       ],
-      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, private pilot live rehearsal receipts, closure decisions, case portfolio, action queue, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
+      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, private pilot live rehearsal receipts, closure decisions, case portfolio, action queue, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
       "representative_paths": [
         "/api/v1/orgs",
         "/api/v1/orgs/{org_id}/action-queue",
+        "/api/v1/orgs/{org_id}/action-queue/selection-preview",
         "/api/v1/orgs/{org_id}/action-queue/view",
         "/api/v1/orgs/{org_id}/authority-map",
         "/api/v1/orgs/{org_id}/authority-map/view",
@@ -5920,6 +5941,8 @@
         "organization_action_queue_reports_deferred_handoff_actions_without_mutation",
         "organization_action_queue_reports_receipt_ready_step_without_dispatch",
         "organization_action_queue_filters_ready_receipt_actions_without_mutation",
+        "organization_action_queue_selection_preview_simulates_visible_filtered_action_without_mutation",
+        "organization_action_queue_selection_preview_rejects_filtered_out_action_without_mutation",
         "organization_action_queue_view_is_read_only_and_escaped",
         "case_private_pilot_live_rehearsal_binds_preview_receipts_without_mutation",
         "organization_action_queue_view_preserves_filters",
@@ -9396,8 +9419,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1155,
-    "runtime_witness_count": 1155,
+    "exact_test_anchor_count": 1162,
+    "runtime_witness_count": 1162,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -12026,6 +12049,24 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_health_witness.py::test_witness_disabled_by_default"
+            ],
+            "witness": "witness_disabled_by_default"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_health_witness.py::test_witness_verified_when_enabled"
+            ],
+            "witness": "witness_verified_when_enabled"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_health_witness.py::test_witness_produces_distinct_verified_receipts"
+            ],
+            "witness": "witness_produces_distinct_verified_receipts"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_operational_health_read_models.py::test_health_routes_return_read_models"
             ],
             "witness": "health_routes_return_read_models"
@@ -12085,8 +12126,8 @@
             "witness": "system_snapshot_read_model_bounded"
           }
         ],
-        "exact_test_anchor_count": 21,
-        "runtime_witness_count": 21,
+        "exact_test_anchor_count": 24,
+        "runtime_witness_count": 24,
         "surface_id": "operational_health_read_models",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
@@ -12184,6 +12225,18 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_cognitive_shadow_observations.py::test_read_surfaces_observations_and_summary_when_enabled"
+            ],
+            "witness": "read_surfaces_observations_and_summary_when_enabled"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_cognitive_shadow_observations.py::test_read_respects_limit"
+            ],
+            "witness": "read_respects_limit"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_agent_workflow.py::test_audit_on_success"
             ],
             "witness": "audit_on_success"
@@ -12273,8 +12326,8 @@
             "witness": "list_by_category"
           }
         ],
-        "exact_test_anchor_count": 18,
-        "runtime_witness_count": 18,
+        "exact_test_anchor_count": 20,
+        "runtime_witness_count": 20,
         "surface_id": "workflow_execution_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
@@ -13137,6 +13190,18 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_organization_action_queue_selection_preview_simulates_visible_filtered_action_without_mutation"
+            ],
+            "witness": "organization_action_queue_selection_preview_simulates_visible_filtered_action_without_mutation"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_organization_action_queue_selection_preview_rejects_filtered_out_action_without_mutation"
+            ],
+            "witness": "organization_action_queue_selection_preview_rejects_filtered_out_action_without_mutation"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_organization_kernel_router.py::test_organization_action_queue_view_is_read_only_and_escaped"
             ],
             "witness": "organization_action_queue_view_is_read_only_and_escaped"
@@ -13232,8 +13297,8 @@
             "witness": "worker_receipts_satisfy_engineering_gate_evidence"
           }
         ],
-        "exact_test_anchor_count": 41,
-        "runtime_witness_count": 41,
+        "exact_test_anchor_count": 43,
+        "runtime_witness_count": 43,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
