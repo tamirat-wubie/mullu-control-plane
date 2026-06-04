@@ -1,0 +1,111 @@
+{
+  "blocked_claims": [
+    "full-test pass",
+    "complete coverage",
+    "CI parity",
+    "release readiness",
+    "deployment readiness",
+    "security clearance",
+    "secret clearance",
+    "customer readiness",
+    "legal clearance",
+    "performance readiness",
+    "flake-free guarantee",
+    "terminal closure",
+    "external publication",
+    "deployment readiness"
+  ],
+  "ci_parity_claimed": false,
+  "complete_coverage_claimed": false,
+  "customer_readiness_claimed": false,
+  "deployment_allowed": false,
+  "deployment_readiness_claimed": false,
+  "external_publication_allowed": false,
+  "flake_free_guarantee_claimed": false,
+  "full_test_pass_claimed": false,
+  "gap_warning_entries": [
+    {
+      "blocked_claim": "full-test pass",
+      "entry_id": "focused_validator_scope_gap",
+      "entry_type": "coverage_gap",
+      "evidence_ref": "local_gap_summary_pending",
+      "public_safe_note": "Focused validators can prove one boundary; they cannot prove full-test pass, complete coverage, release readiness, or deployment readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "focused_validator_questions"
+    },
+    {
+      "blocked_claim": "complete coverage",
+      "entry_id": "targeted_pytest_scope_gap",
+      "entry_type": "coverage_gap",
+      "evidence_ref": "local_gap_summary_pending",
+      "public_safe_note": "Targeted pytest files can prove selected validator behavior; they cannot prove complete coverage, CI parity, release readiness, or deployment readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "targeted_pytest_questions"
+    },
+    {
+      "blocked_claim": "release readiness",
+      "entry_id": "full_preflight_scope_gap",
+      "entry_type": "coverage_gap",
+      "evidence_ref": "local_gap_summary_pending",
+      "public_safe_note": "A full workspace preflight can prove registered local governance checks ran; it cannot prove release readiness, legal clearance, customer readiness, or deployment readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "full_preflight_questions"
+    },
+    {
+      "blocked_claim": "warning-free claim",
+      "entry_id": "warning_triage_unresolved_gap",
+      "entry_type": "warning_triage",
+      "evidence_ref": "local_warning_summary_pending",
+      "public_safe_note": "Warning triage must keep unresolved or accepted warnings visible; it cannot become a warning-free, release-ready, or deployment-ready claim.",
+      "state": "AwaitingEvidence",
+      "surface_id": "warning_triage_questions"
+    },
+    {
+      "blocked_claim": "secret clearance",
+      "entry_id": "diff_hygiene_warning_gap",
+      "entry_type": "warning_triage",
+      "evidence_ref": "local_warning_summary_pending",
+      "public_safe_note": "Diff hygiene can report formatting warnings; it cannot prove secret clearance, security clearance, release readiness, or deployment readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "diff_hygiene_questions"
+    },
+    {
+      "blocked_claim": "complete coverage",
+      "entry_id": "coverage_gap_explicit",
+      "entry_type": "coverage_gap",
+      "evidence_ref": "local_gap_summary_pending",
+      "public_safe_note": "Coverage-gap notes keep missing proof explicit; they cannot be converted into coverage completeness, CI parity, release readiness, or deployment readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "coverage_gap_questions"
+    },
+    {
+      "blocked_claim": "CI parity",
+      "entry_id": "reproducibility_replay_gap",
+      "entry_type": "replay_gap",
+      "evidence_ref": "local_replay_summary_pending",
+      "public_safe_note": "A local replay checklist may support repeatability; it cannot prove CI parity, release readiness, customer readiness, or deployment readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "reproducibility_questions"
+    },
+    {
+      "blocked_claim": "terminal closure",
+      "entry_id": "non_terminal_closure_gap",
+      "entry_type": "closure_gap",
+      "evidence_ref": "local_closure_summary_pending",
+      "public_safe_note": "Non-terminal closure notes keep local evidence bounded; they cannot authorize customer access, paid use, external publication, or deployment.",
+      "state": "AwaitingEvidence",
+      "surface_id": "non_terminal_closure_questions"
+    }
+  ],
+  "gap_warning_id": "foundation_test_gap_warning_register.awaiting_evidence.v1",
+  "legal_clearance_claimed": false,
+  "next_action": "keep warning and coverage gaps visible as local AwaitingEvidence; do not claim full-test pass, complete coverage, CI parity, release readiness, security clearance, customer readiness, legal clearance, terminal closure, external publication, or deployment",
+  "performance_readiness_claimed": false,
+  "release_readiness_claimed": false,
+  "schema_version": 1,
+  "secret_clearance_claimed": false,
+  "security_clearance_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "terminal_closure_claimed": false
+}
