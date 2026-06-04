@@ -32,9 +32,13 @@ def test_finance_runbook_documents_strict_promotion_boundary() -> None:
     assert "python scripts\\validate_finance_approval_live_handoff_chain.py --strict --require-ready --json" in content
     assert "python scripts\\produce_finance_approval_operator_summary.py --output .change_assurance\\finance_approval_operator_summary.json --strict --json" in content
     assert "python scripts\\validate_finance_approval_operator_summary_schema.py --strict --json" in content
+    assert "python scripts\\render_finance_approval_operator_page.py --summary .change_assurance\\finance_approval_operator_summary.json --output .change_assurance\\finance_approval_operator_page.html --strict --json" in content
     assert "python scripts\\validate_finance_email_calendar_recovery_env_example.py --template examples\\finance_email_calendar_recovery.env.example --strict --json" in content
     assert "`promotion_boundary.ok` separately from `promotion_boundary.ready`" in content
     assert "operator summary is a redacted read-only artifact" in content
+    assert "static operator page renders that validated redacted summary" in content
+    assert "contains no JavaScript" in content
+    assert "escapes rendered text" in content
     assert "`ok=true` means the packet artifacts are structurally usable" in content
     assert "`ready=false` means live handoff promotion remains blocked" in content
     assert "packet must include the `email_calendar_live_receipt` artifact" in content

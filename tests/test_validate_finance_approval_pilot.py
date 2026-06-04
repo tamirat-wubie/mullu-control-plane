@@ -15,8 +15,27 @@ import json
 from scripts.validate_finance_approval_pilot import validate_finance_approval_pilot
 
 
-def test_current_finance_pilot_is_proof_ready_but_not_live_email_ready() -> None:
-    report = validate_finance_approval_pilot()
+def test_finance_pilot_is_proof_ready_when_document_evidence_is_closed(tmp_path) -> None:
+    evidence = {
+        "adapters": [
+            {
+                "adapter_id": "document.production_parsers",
+                "status": "closed",
+                "blockers": [],
+                "evidence_refs": ["document_live_receipt.json"],
+            },
+            {
+                "adapter_id": "communication.email_calendar_worker",
+                "status": "blocked",
+                "blockers": ["email_calendar_live_evidence_missing"],
+                "evidence_refs": [],
+            },
+        ]
+    }
+    evidence_path = tmp_path / "capability_adapter_evidence.json"
+    evidence_path.write_text(json.dumps(evidence), encoding="utf-8")
+
+    report = validate_finance_approval_pilot(adapter_evidence_path=evidence_path)
     checks = {check["name"]: check for check in report.checks}
 
     assert report.readiness_level == "proof-pilot-ready"
