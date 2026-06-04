@@ -222,6 +222,17 @@
       "summary": "Capability-roadmap preparation drafts local capability-family, readiness, sequencing, dependency, evidence-gate, user-value, support-load, pricing-exposure, public-claim, and evolution-review questions without capability inventory completeness, availability, roadmap commitment, delivery-date, customer, pilot, support, pricing, money-movement, external publication, or deployment claims."
     },
     {
+      "family_id": "agentic_management_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_AGENTIC_MANAGEMENT_BOUNDARY.md",
+        "examples/foundation_agentic_management_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_agentic_management_boundary.py",
+        "tests/test_validate_foundation_agentic_management_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Agentic-management preparation drafts local goal-intake, plan-decomposition, delegation, schedule/queue, resource/budget, priority/tradeoff, escalation/approval, progress/receipt, rollback/recovery, and performance-review questions without management authority, task execution, delegation activation, scheduling commitments, resource allocation approval, budget commitments, approval bypass, customer commitments, money movement, external publication, or deployment claims."
+    },
+    {
       "family_id": "operations_runbook_boundary",
       "required_evidence": [
         "docs/FOUNDATION_OPERATIONS_RUNBOOK_BOUNDARY.md",
@@ -596,6 +607,7 @@
     "python scripts/validate_foundation_plain_language_status_boundary.py",
     "python scripts/validate_foundation_accessibility_language_boundary.py",
     "python scripts/validate_foundation_capability_roadmap_boundary.py",
+    "python scripts/validate_foundation_agentic_management_boundary.py",
     "python scripts/validate_foundation_operations_runbook_boundary.py",
     "python scripts/validate_foundation_claim_boundary.py",
     "python scripts/validate_foundation_website_posture_boundary.py",

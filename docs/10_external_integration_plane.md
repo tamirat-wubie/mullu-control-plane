@@ -1,6 +1,6 @@
 # External Integration Plane (MXI)
 
-> **In one box:** The controlled doorway to systems *outside* Mullu
+> **In one box:** The controlled doorway to systems *outside* Mullu Govern
 > (third-party APIs and services). Anything crossing the platform boundary goes
 > through here so it stays governed. Brand new? → the jargon-free
 > [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →

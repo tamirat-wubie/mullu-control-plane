@@ -1,7 +1,7 @@
 # Skill System
 
 > **In one box:** A [skill](GLOSSARY.md#skill--skill-boundary) is a defined unit
-> of "something Mullu knows how to do." This page explains how skills are built
+> of "something Mullu Govern knows how to do." This page explains how skills are built
 > from governed capabilities into reusable, checkable, promotable units — and
 > the hard edge that stops the symbolic intelligence runtime doing anything outside its authorized skills
 > (its "job description"). *(Doc type: Reference.)*

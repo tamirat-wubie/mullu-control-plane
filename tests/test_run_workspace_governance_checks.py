@@ -24,7 +24,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     names = [command.name for command in commands]
     args_by_name = {command.name: command.args for command in commands}
 
-    assert names[:54] == [
+    assert names[:55] == [
         "local_assurance_plan",
         "agents_policy",
         "foundation_mode",
@@ -68,6 +68,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_legal_business_boundary",
         "foundation_product_scope_boundary",
         "foundation_capability_roadmap_boundary",
+        "foundation_agentic_management_boundary",
         "foundation_operations_runbook_boundary",
         "foundation_market_research_boundary",
         "foundation_pilot_deferral_boundary",
@@ -80,7 +81,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_community_network_boundary",
         "protocol_manifest",
     ]
-    assert names[58:66] == [
+    assert names[59:67] == [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
         "workspace_governance_witness_contract",
@@ -90,7 +91,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "workspace_governance_integrity_report_contract",
         "universal_action_orchestration_contract",
     ]
-    assert len(names) == 73
+    assert len(names) == 74
     assert names[-8:] == [
         "universal_action_orchestration_contract",
         "universal_action_orchestration_validation_receipt_contract",
@@ -227,6 +228,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["foundation_capability_roadmap_boundary"][1:] == (
         "scripts/validate_foundation_capability_roadmap_boundary.py",
+    )
+    assert args_by_name["foundation_agentic_management_boundary"][1:] == (
+        "scripts/validate_foundation_agentic_management_boundary.py",
     )
     assert args_by_name["foundation_operations_runbook_boundary"][1:] == (
         "scripts/validate_foundation_operations_runbook_boundary.py",
