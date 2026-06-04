@@ -175,6 +175,13 @@ class PlanStepActionAdmissionPreviewRequest(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class ActionQueueSelectionPreviewRequest(BaseModel):
+    action_id: str
+    filters: dict[str, str] = Field(default_factory=dict)
+    allow_simulation_when_blocked: bool = True
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class OrganizationCaseCloseRequest(BaseModel):
     reconciliation_id: str
     expected_effect: str
@@ -2089,6 +2096,27 @@ def _organization_case_portfolio(kernel: OrganizationKernel, org_id: str) -> dic
     }
 
 
+_ACTION_QUEUE_FILTER_KEYS = frozenset({
+    "decision",
+    "severity",
+    "department_id",
+    "responsible_role_id",
+    "case_id",
+    "next_action",
+})
+
+
+def _normalize_action_queue_filters(filters: dict[str, object]) -> dict[str, str]:
+    unsupported_filters = sorted(set(filters) - _ACTION_QUEUE_FILTER_KEYS)
+    if unsupported_filters:
+        raise ValueError(f"unsupported action queue filters: {', '.join(unsupported_filters)}")
+    return {
+        key: value.strip()
+        for key, value in filters.items()
+        if isinstance(value, str) and value.strip()
+    }
+
+
 def _action_queue_filter_params(
     *,
     decision: str | None = None,
@@ -2106,11 +2134,7 @@ def _action_queue_filter_params(
         "case_id": case_id,
         "next_action": next_action,
     }
-    return {
-        key: value.strip()
-        for key, value in raw_filters.items()
-        if isinstance(value, str) and value.strip()
-    }
+    return _normalize_action_queue_filters(raw_filters)
 
 
 def _action_queue_row_matches_filters(row: dict[str, Any], filters: dict[str, str]) -> bool:
@@ -2201,6 +2225,7 @@ def _organization_action_queue(
                         f"/api/v1/cases/{quote(organization_case.case_id, safe='')}/plan-steps/"
                         f"{quote(str(handoff['step_id']), safe='')}/admission-preview"
                     ),
+                    "selection_preview": f"/api/v1/orgs/{quote(org_id, safe='')}/action-queue/selection-preview",
                 },
             }
             action_rows.append(action_row)
@@ -2253,6 +2278,135 @@ def _organization_action_queue(
         },
         "actions": filtered_action_rows,
         "attention_items": filtered_attention_items,
+    }
+
+
+def _organization_action_queue_selection_preview(
+    kernel: OrganizationKernel,
+    org_id: str,
+    req: ActionQueueSelectionPreviewRequest,
+) -> dict[str, Any]:
+    filters = _normalize_action_queue_filters(req.filters)
+    queue_projection = _organization_action_queue(kernel, org_id, filters=filters)
+    selected_action = next(
+        (
+            item for item in queue_projection["actions"]
+            if item["action_id"] == req.action_id
+        ),
+        None,
+    )
+    if selected_action is None:
+        raise RuntimeCoreInvariantError("selected action is not visible in the filtered queue")
+
+    case_id = str(selected_action["case_id"])
+    step_id = str(selected_action["step_id"])
+    handoff_projection = _case_step_handoffs(kernel, case_id)
+    handoff = next(
+        (item for item in handoff_projection["handoffs"] if item["step_id"] == step_id),
+        None,
+    )
+    if handoff is None:
+        raise RuntimeCoreInvariantError("selected action handoff unavailable")
+
+    admission_preview = _case_step_action_admission_preview(
+        kernel,
+        case_id,
+        step_id,
+        PlanStepActionAdmissionPreviewRequest(
+            checked_preconditions=list(handoff["preconditions"]),
+            proposed_action=str(selected_action["next_action"]),
+            requested_by_role_id=str(selected_action["responsible_role_id"]),
+            allow_simulation_when_blocked=req.allow_simulation_when_blocked,
+            metadata=req.metadata,
+        ),
+    )
+    preview_id = stable_identifier(
+        "orgos-action-queue-selection-preview",
+        {
+            "org_id": org_id,
+            "action_id": req.action_id,
+            "filters": filters,
+            "decision": admission_preview["decision"],
+            "reason_code": admission_preview["reason_code"],
+        },
+    )
+    workflow_stages = [
+        {
+            "stage_id": "queue_projection_binding",
+            "stage_type": "observation",
+            "predecessor_ids": [],
+            "input_bindings": ["org_id", "filters", "action_id"],
+            "output_keys": ["selected_action"],
+            "verification_evidence": [req.action_id],
+            "authority_boundary": "read_only_projection",
+        },
+        {
+            "stage_id": "handoff_admission_preview",
+            "stage_type": "observation",
+            "predecessor_ids": ["queue_projection_binding"],
+            "input_bindings": ["case_id", "step_id", "checked_preconditions", "proposed_action"],
+            "output_keys": ["admission_preview", "causal_decision_trace"],
+            "verification_evidence": [admission_preview["admission_preview_id"]],
+            "authority_boundary": "no_execution_no_dispatch",
+        },
+        {
+            "stage_id": "operator_next_step_projection",
+            "stage_type": "observation",
+            "predecessor_ids": ["handoff_admission_preview"],
+            "input_bindings": ["admission_decision", "reason_code"],
+            "output_keys": ["operator_next_step"],
+            "verification_evidence": [preview_id],
+            "authority_boundary": "no_state_write",
+        },
+    ]
+    next_steps_by_decision = {
+        "allow": "bind_existing_worker_receipt_or_open_required_approval_surface",
+        "block": "resolve_blocking_policy_or_capability_gap",
+        "defer": "collect_required_evidence_or_preconditions",
+        "escalate": "request_required_human_or_dual_control_approval",
+        "simulate": "run_read_only_rehearsal_or_collect_missing_evidence",
+    }
+    return {
+        "selection_preview_id": preview_id,
+        "org_id": org_id,
+        "queue_id": queue_projection["queue_id"],
+        "action_id": req.action_id,
+        "read_only": True,
+        "governed": True,
+        "filters": filters,
+        "queue_context": {
+            "action_count": queue_projection["summary"]["action_count"],
+            "total_action_count": queue_projection["summary"]["total_action_count"],
+            "filter_count": queue_projection["summary"]["filter_count"],
+        },
+        "selected_action": selected_action,
+        "admission_preview": admission_preview,
+        "selection_decision": admission_preview["decision"],
+        "reason_code": admission_preview["reason_code"],
+        "simulation_available": admission_preview["decision"] == "simulate",
+        "operator_next_step": next_steps_by_decision.get(
+            str(admission_preview["decision"]),
+            "review_selection_preview",
+        ),
+        "workflow_projection": {
+            "acyclic": True,
+            "stage_count": len(workflow_stages),
+            "terminal_closure_condition": "preview_only_no_execution",
+            "stages": workflow_stages,
+        },
+        "execution_authority_granted": False,
+        "dispatch_authority_granted": False,
+        "receipt_binding_authority_granted": False,
+        "receipt_ref": None,
+        "closure_state": "preview_only",
+        "forbidden_effects": [
+            "worker_dispatch",
+            "case_state_mutation",
+            "approval_creation",
+            "receipt_binding",
+            "terminal_closure",
+        ],
+        "metadata": req.metadata,
     }
 
 
@@ -3203,6 +3357,28 @@ def get_organization_action_queue_view(
             )
         )
     )
+
+
+@router.post("/api/v1/orgs/{org_id}/action-queue/selection-preview")
+def preview_organization_action_queue_selection(
+    org_id: str,
+    req: ActionQueueSelectionPreviewRequest,
+    request: Request,
+):
+    """Preview a visible queued action selection without executing or mutating case state."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_organization_tenant(request, kernel, org_id)
+    try:
+        return _organization_action_queue_selection_preview(kernel, org_id, req)
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_error_detail(
+                "action queue selection preview rejected",
+                "action_queue_selection_preview_rejected",
+            ),
+        ) from exc
 
 
 @router.post("/api/v1/cases/launch-gateway-pilot")
