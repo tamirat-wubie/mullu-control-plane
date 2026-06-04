@@ -28,8 +28,11 @@ true within one worker, and false across workers.
 
 This is the **fourth application** of the v4.27 atomic-test-and-update
 pattern (after v4.27 budget, v4.29 rate limit, v4.30 hash chain).
-Same shape: name the contract, override-detection dispatch,
-in-memory atomic reference + tests, defer storage-backend to next PR.
+Same shape: name the contract, override-detection dispatch, and
+in-memory atomic reference + tests. Historical v4.31 release-state
+deferred the storage backend; current main wires
+`PostgresAuditStore.try_append` and guards it through
+`mcoi/tests/test_atomic_store_doctrine.py`.
 
 ---
 
@@ -142,9 +145,11 @@ Single `InMemoryAuditStore` instance shared by multiple
 `AuditTrail` instances (in tests / single-process multi-thread
 scenarios) now produces a strictly linear chain under concurrency.
 For genuine cross-process workers, the in-memory store is
-single-process — `PostgresAuditStore.try_append` is the next PR.
+single-process. Historical v4.31 release-state deferred
+`PostgresAuditStore.try_append`; current main wires the Postgres
+override for cross-replica audit append.
 
-The next PR will add SQL roughly:
+The current Postgres path follows SQL roughly shaped as:
 
 ```sql
 WITH last AS (
@@ -222,12 +227,11 @@ allocation with single-process atomic guarantee.
 
 ### Postgres deployments
 
-`PostgresAuditStore` does **not** yet override `try_append` in
-v4.31. AuditTrails using it continue to allocate sequences
-per-process. **Operator-visible behavior in v4.31 is unchanged**
-for Postgres-backed deployments. Cross-worker F4 closure is
-deferred to the next PR (which will include the schema-side
-sequence allocation).
+Historical v4.31 release-state: `PostgresAuditStore` did not override
+`try_append`, so AuditTrails using it continued to allocate sequences
+per-process. Current main follow-up: cross-worker F4 closure is wired
+through `PostgresAuditStore.try_append`. **Operator-visible behavior in
+v4.31 was unchanged** for Postgres-backed deployments.
 
 ### Custom audit stores
 

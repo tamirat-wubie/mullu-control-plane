@@ -20,10 +20,15 @@ The platform's stated invariant is **"per-tenant rate limits — one
 tenant cannot starve others."** Pre-v4.29, that was true within a
 process; across replicas the limit became `N × max_tokens`.
 
-v4.29 introduces the contract that closes the gap. The Postgres/Redis
-implementation that fully closes F11 cross-replica is the next PR;
-v4.29 lands the API, the in-memory atomic reference path, and the
-dispatcher.
+v4.29 introduces the contract that closes the gap. At the time of
+this release, the Postgres/Redis implementation that fully closed F11
+cross-replica enforcement was deferred; v4.29 landed the API, the
+in-memory atomic reference path, and the dispatcher.
+
+Current main follow-up: `PostgresRateLimitStore.try_consume` now
+overrides the same contract for cross-replica enforcement, and
+`mcoi/tests/test_atomic_store_doctrine.py` guards that the Postgres
+path remains wired.
 
 ---
 
@@ -127,9 +132,10 @@ Identity-level dispatch (the dual-gate path) keeps the in-memory
 ### Cross-replica behavior
 
 In-memory `try_consume` is single-process atomic.
-`PostgresRateLimitStore` does **not** yet override `try_consume` in
-v4.29 — it remains a counter sink. Cross-replica enforcement requires
-the next PR, which will add:
+Historical v4.29 release-state: `PostgresRateLimitStore` did not
+override `try_consume` in v4.29 and remained a counter sink.
+Current main follow-up: the Postgres store now overrides
+`try_consume`; the SQL pattern is:
 
 ```sql
 UPDATE governance_rate_buckets
@@ -201,11 +207,12 @@ with the same single-process atomic guarantee the previous
 
 ### Postgres deployments
 
-`PostgresRateLimitStore` does not yet override `try_consume`.
-Limiters using it continue to enforce via the in-memory `TokenBucket`
-path (per-process). Cross-replica F11 closure is deferred to the
-next PR. **Operator-visible behavior in v4.29 is unchanged** for
-Postgres-backed deployments.
+Historical v4.29 release-state: `PostgresRateLimitStore` did not
+override `try_consume`, so limiters using it continued to enforce via
+the in-memory `TokenBucket` path (per-process). Current main
+follow-up: cross-replica F11 closure is wired through
+`PostgresRateLimitStore.try_consume`. **Operator-visible behavior in
+v4.29 was unchanged** for Postgres-backed deployments.
 
 ### Custom rate limit stores
 
@@ -223,9 +230,10 @@ If you have a forked `RateLimitStore` subclass:
 Audit fractures explicitly NOT closed by this PR:
 
 - **F11 (Postgres path)** — schema + atomic SQL UPDATE for cross-replica
-  enforcement. Next PR.
+  enforcement. Historical v4.29 non-closure; closed on current main.
 - **F11 (identity-level)** — dual-gate dispatch through the store for
-  per-identity buckets. Next PR.
+  per-identity buckets. Historical v4.29 non-closure; closed in
+  v4.34.
 - **F1** routers without `/api/` prefix bypass middleware
 - **F4** audit chain forks per worker
 - **F8** MAF substrate disconnect
