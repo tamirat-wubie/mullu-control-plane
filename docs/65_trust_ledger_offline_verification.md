@@ -1,6 +1,6 @@
 # Trust Ledger Offline Verification
 
-> **In one box:** How someone can independently check Mullu's
+> **In one box:** How someone can independently check Mullu Govern's
 > [proof receipts](GLOSSARY.md#proof-receipt--execution-receipt) and
 > [trust ledger](GLOSSARY.md#trust-ledger) *without* access to the live system —
 > "don't trust us, verify it yourself, even offline." This is the

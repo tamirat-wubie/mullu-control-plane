@@ -1,6 +1,6 @@
 # Federated Control Plane
 
-> **In one box:** How multiple regional Mullu instances share one signed
+> **In one box:** How multiple regional Mullu Govern instances share one signed
 > rulebook while still enforcing locally — enterprise/multi-region architecture.
 > New here? → [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word?
 > → [Glossary](GLOSSARY.md). *(Doc type: Reference.)*

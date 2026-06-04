@@ -1,6 +1,6 @@
 # Solver Forge Loop
 
-> **In one box:** How Mullu *discovers* which solution to a problem is worth
+> **In one box:** How Mullu Govern *discovers* which solution to a problem is worth
 > packaging — candidates are built, compared on real evidence, and adversarially
 > reviewed before being handed to the
 > [capability forge](GLOSSARY.md#capability-forge--solver-forge). Crucially it

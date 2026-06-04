@@ -17,8 +17,8 @@ are reformatted into this folder, here is where to find each task:
 
 | I want to... | Go to |
 | --- | --- |
-| Install and run Mullu the fast way | [QUICKSTART.md](../QUICKSTART.md) |
-| Deploy Mullu to real infrastructure | [DEPLOYMENT.md](../../DEPLOYMENT.md) |
+| Install and run Mullu Govern the fast way | [QUICKSTART.md](../QUICKSTART.md) |
+| Deploy Mullu Govern to real infrastructure | [DEPLOYMENT.md](../../DEPLOYMENT.md) |
 | Operate it day-to-day / handle incidents | [RUNBOOK.md](../../RUNBOOK.md) |
 | Run it as an operator (pilot) | [OPERATOR_GUIDE_v0.1.md](../../OPERATOR_GUIDE_v0.1.md) |
 | Turn on the governed swarm surface | [README → Governed Swarm Runtime](../../README.md) |

@@ -177,6 +177,15 @@ evolution-review questions local without claiming inventory completeness,
 availability, roadmap commitment, delivery dates, customer commitment, pilot
 commitment, support commitment, pricing commitment, money movement,
 publication, or deployment.
+Agentic-management posture is bounded by
+[`docs/FOUNDATION_AGENTIC_MANAGEMENT_BOUNDARY.md`](docs/FOUNDATION_AGENTIC_MANAGEMENT_BOUNDARY.md),
+which keeps goal intake, plan decomposition, delegation, schedule/queue,
+resource/budget, priority/tradeoff, escalation/approval, progress/receipt,
+rollback/recovery, and performance-review questions local without claiming
+autonomous management authority, task execution authority, delegation
+activation, scheduling commitment, resource allocation approval, budget
+commitment, approval bypass, customer commitment, money movement, publication,
+or deployment.
 Operations/runbook posture is bounded by
 [`docs/FOUNDATION_OPERATIONS_RUNBOOK_BOUNDARY.md`](docs/FOUNDATION_OPERATIONS_RUNBOOK_BOUNDARY.md),
 which keeps runbook inventory, procedure dry-run, incident response,
@@ -315,6 +324,13 @@ which drafts capability-family, readiness, sequencing, dependency,
 evidence-gate, user-value, support-load, pricing-exposure, public-claim, and
 evolution-review questions without availability, roadmap, delivery-date,
 customer, pilot, support, pricing, money, publication, or deployment claims.
+Agentic-management preparation is bounded by
+[`docs/FOUNDATION_AGENTIC_MANAGEMENT_BOUNDARY.md`](docs/FOUNDATION_AGENTIC_MANAGEMENT_BOUNDARY.md),
+which drafts goal-intake, plan-decomposition, delegation, schedule/queue,
+resource/budget, priority/tradeoff, escalation/approval, progress/receipt,
+rollback/recovery, and performance-review questions without management
+authority, task execution, delegation activation, scheduling, allocation,
+approval-bypass, customer, money, publication, or deployment claims.
 Pilot deferral is bounded by
 [`docs/FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md),
 which drafts pilot purpose, participant-boundary, access-channel, consent,

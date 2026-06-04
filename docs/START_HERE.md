@@ -36,6 +36,7 @@ to the deep document if you want more.
 | "I need to explain the current status in plain words without overclaiming." | [Foundation Plain-Language Status Boundary](FOUNDATION_PLAIN_LANGUAGE_STATUS_BOUNDARY.md) | 8 min read |
 | "I need to prepare accessibility or language questions without compliance claims." | [Foundation Accessibility Language Boundary](FOUNDATION_ACCESSIBILITY_LANGUAGE_BOUNDARY.md) | 8 min read |
 | "I need to plan management, math, algorithm, coding, ops, or swarm capabilities without readiness claims." | [Foundation Capability Roadmap Boundary](FOUNDATION_CAPABILITY_ROADMAP_BOUNDARY.md) | 8 min read |
+| "I need management controls without autonomous execution or approval-bypass claims." | [Foundation Agentic Management Boundary](FOUNDATION_AGENTIC_MANAGEMENT_BOUNDARY.md) | 8 min read |
 | "I need to prepare runbooks, monitoring, recovery, or support operations without readiness claims." | [Foundation Operations Runbook Boundary](FOUNDATION_OPERATIONS_RUNBOOK_BOUNDARY.md) | 8 min read |
 | "I need to separate local proof from public, runtime, legal, customer, or deployment claims." | [Foundation Claim Boundary](FOUNDATION_CLAIM_BOUNDARY.md) | 8 min read |
 | "I need to keep website copy in Foundation Mode without publishing or opening access." | [Foundation Website Posture Boundary](FOUNDATION_WEBSITE_POSTURE_BOUNDARY.md) | 8 min read |
@@ -60,6 +61,7 @@ to the deep document if you want more.
 | "I need to record domain and email labels without exposing DNS or provider details." | [Foundation Domain Email Boundary](FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md) | 8 min read |
 | "I need one narrow learning lane that does not restrict the whole platform." | [Foundation Product Scope Boundary](FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md) | 8 min read |
 | "I need to sequence capabilities without promising availability or dates." | [Foundation Capability Roadmap Boundary](FOUNDATION_CAPABILITY_ROADMAP_BOUNDARY.md) | 8 min read |
+| "I need to prepare management, delegation, scheduling, or budget controls without authority claims." | [Foundation Agentic Management Boundary](FOUNDATION_AGENTIC_MANAGEMENT_BOUNDARY.md) | 8 min read |
 | "I need to prepare operations or runbooks without claiming they are ready." | [Foundation Operations Runbook Boundary](FOUNDATION_OPERATIONS_RUNBOOK_BOUNDARY.md) | 8 min read |
 | "I need to prepare support without opening customer support." | [Foundation Support Readiness Boundary](FOUNDATION_SUPPORT_READINESS_BOUNDARY.md) | 8 min read |
 | "I need to prepare intake without forms, waitlists, or signups." | [Foundation Intake Onboarding Boundary](FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md) | 8 min read |
@@ -205,12 +207,19 @@ in the wrong room. Use the table above to pick the right room.
    evolution-review questions without inventory-completeness, availability,
    roadmap, delivery-date, customer, pilot, support, pricing, money,
    publication, or deployment claims.
-21. **[Foundation Operations Runbook Boundary](FOUNDATION_OPERATIONS_RUNBOOK_BOUNDARY.md)** --
+21. **[Foundation Agentic Management Boundary](FOUNDATION_AGENTIC_MANAGEMENT_BOUNDARY.md)** --
+   local goal-intake, plan-decomposition, delegation, schedule/queue,
+   resource/budget, priority/tradeoff, escalation/approval, progress/receipt,
+   rollback/recovery, and performance-review questions without management
+   authority, task execution, delegation activation, scheduling commitments,
+   allocation approval, approval bypass, customer commitment, money movement,
+   publication, or deployment claims.
+22. **[Foundation Operations Runbook Boundary](FOUNDATION_OPERATIONS_RUNBOOK_BOUNDARY.md)** --
    local runbook inventory, procedure dry-run, incident response, monitoring,
    alerting, on-call, SLO, recovery, operational graph, MIL audit runbook, and
    evidence-promotion questions without runbook execution, operational readiness,
    customer-support, publication, or deployment claims.
-22. **[Foundation Claim Boundary](FOUNDATION_CLAIM_BOUNDARY.md)** --
+23. **[Foundation Claim Boundary](FOUNDATION_CLAIM_BOUNDARY.md)** --
    claim separation without production-health, endpoint-readiness,
    customer-readiness, pilot-readiness, legal-clearance, commercial-readiness,
    public-launch, compliance-certification, external-publication, or deployment
