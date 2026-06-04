@@ -160,3 +160,24 @@ def test_state_hash_spec_does_not_describe_rust_mirror_as_hypothetical() -> None
     assert "pub fn state_hash" in rust_kernel
     assert "fn state_hash_matches_python_sha256()" in rust_kernel
     assert "def test_python_state_hash_matches_rust" in proof_contract_tests
+
+
+def test_temporal_scheduler_runbook_separates_adjacent_temporal_boundaries() -> None:
+    """Scheduler docs must not relabel implemented temporal receipts as absent."""
+    runbook = Path("docs/61_temporal_scheduler_runbook.md").read_text(encoding="utf-8")
+    proof_matrix = Path("docs/40_proof_coverage_matrix.md").read_text(encoding="utf-8")
+    protocol_tests = Path("tests/test_validate_protocol_manifest.py").read_text(encoding="utf-8")
+
+    current_limits = runbook.split("## Current Limits", 1)[1]
+    scheduler_limit_list = current_limits.split("Two adjacent temporal boundaries", 1)[0]
+
+    assert "natural-language time parsing" not in scheduler_limit_list
+    assert "recurring schedule expansion" not in scheduler_limit_list
+    assert "Bounded temporal phrase resolution" in runbook
+    assert "Recurrence-window validation" in runbook
+    assert "schemas/temporal_resolution_receipt.schema.json" in runbook
+    assert "schemas/temporal_recurrence_window_receipt.schema.json" in runbook
+    assert "| `temporal_resolution` |" in proof_matrix
+    assert "| `temporal_recurrence_window` |" in proof_matrix
+    assert "temporal-resolution-receipt" in protocol_tests
+    assert "temporal-recurrence-window-receipt" in protocol_tests

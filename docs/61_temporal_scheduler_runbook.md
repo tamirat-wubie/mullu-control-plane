@@ -1,8 +1,8 @@
 # Temporal Scheduler Runbook
 
-> **In one box:** How to operate scheduled, time-delayed governed actions —
+> **In one box:** How to operate scheduled, time-delayed governed actions -
 > admission, persistence, worker execution, receipts. Operator how-to; pairs
-> with the [Temporal Plane](13_temporal_plane.md). New here? →
+> with the [Temporal Plane](13_temporal_plane.md). New here? ->
 > [Plain-English Overview](explain/PLAIN_ENGLISH.md). *(Doc type: How-to.)*
 
 Purpose: operate governed scheduled temporal actions across API admission,
@@ -281,12 +281,19 @@ For a scheduled action:
 ## Current Limits
 
 This runbook covers durable local JSON persistence and in-process background
-execution. It does not yet define:
+execution. The scheduler surface does not yet define:
 
 - distributed scheduler leader election
 - multi-process lease persistence
 - external handler plugin loading
-- natural-language time parsing
-- recurring schedule expansion
 
-Those are later layers built on this governed temporal substrate.
+Two adjacent temporal boundaries are implemented outside this scheduler
+runbook:
+
+| Boundary | Implemented surface | Scheduler relationship |
+| --- | --- | --- |
+| Bounded temporal phrase resolution | `TemporalResolutionReceipt`, `schemas/temporal_resolution_receipt.schema.json`, `docs/40_proof_coverage_matrix.md` `temporal_resolution` surface | Produces governed time instants before a schedule is created; it is not arbitrary natural-language parsing inside the scheduler. |
+| Recurrence-window validation | `TemporalRecurrenceWindowReceipt`, `schemas/temporal_recurrence_window_receipt.schema.json`, `docs/40_proof_coverage_matrix.md` `temporal_recurrence_window` surface | Certifies recurrence candidates before dispatch; it is not distributed recurring job expansion inside the scheduler. |
+
+The remaining scheduler limits are later layers built on this governed temporal
+substrate.
