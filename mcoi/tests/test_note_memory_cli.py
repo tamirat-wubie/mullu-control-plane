@@ -16,6 +16,9 @@ import json
 from mcoi_runtime.core.note_memory_cli import guarded_main
 
 
+NON_EXPIRING_TEST_NOTE_AT = "2999-01-01T00:00:00+00:00"
+
+
 def _last_json(capsys) -> dict[str, object]:
     captured = capsys.readouterr()
     return json.loads(captured.out.strip().splitlines()[-1])
@@ -42,7 +45,7 @@ def test_cli_capture_retrieve_dashboard_and_list_events_redacts_before_write(tmp
             "--trust-zone",
             "workspace",
             "--expires-at",
-            "2999-01-01T00:00:00+00:00",
+            NON_EXPIRING_TEST_NOTE_AT,
             "--evidence-ref",
             "test_cli_capture",
         ]
@@ -434,7 +437,7 @@ def test_cli_queue_and_promote_memory_anchor_with_receipt(tmp_path, capsys) -> N
             "--trust-zone",
             "workspace",
             "--expires-at",
-            "2999-01-01T00:00:00+00:00",
+            NON_EXPIRING_TEST_NOTE_AT,
             "--evidence-ref",
             "test_note_memory_cli.py::test_cli_queue_and_promote",
         ]
@@ -498,7 +501,7 @@ def _queued_cli_promotion(tmp_path, capsys) -> tuple[object, str, int, str]:
             "--trust-zone",
             "workspace",
             "--expires-at",
-            "2999-01-01T00:00:00+00:00",
+            NON_EXPIRING_TEST_NOTE_AT,
             "--evidence-ref",
             "test_note_memory_cli.py::boundary",
         ]
