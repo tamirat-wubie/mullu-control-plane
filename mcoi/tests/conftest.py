@@ -16,8 +16,10 @@ MCOI_ROOT = Path(__file__).resolve().parent.parent
 REPO_ROOT = MCOI_ROOT.parent
 
 for import_root in (REPO_ROOT, MCOI_ROOT):
-    if str(import_root) not in sys.path:
-        sys.path.insert(0, str(import_root))
+    import_root_text = str(import_root)
+    if import_root_text in sys.path:
+        sys.path.remove(import_root_text)
+    sys.path.insert(0, import_root_text)
 
 
 # v4.26.0 (audit P0): the production resolver now fails closed when no

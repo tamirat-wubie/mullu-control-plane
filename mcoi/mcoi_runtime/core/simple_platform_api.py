@@ -13,11 +13,34 @@ the simple platform facade.
 
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, Mapping
 
 from .invariants import RuntimeCoreInvariantError
 from .simple_platform import SimplePlatform
+
+DOCUMENT_MANIPULATION_WIRING_CLIENT_CONTRACT: dict[str, object] = {
+    "contract_ref": "simple_platform.document_manipulation_wiring.v1",
+    "purpose": "Expose read-only document manipulation wiring for clients.",
+    "routes": (
+        {
+            "method": "GET",
+            "path": "/api/v1/simple/documents/wiring",
+            "payload_key": "wiring",
+        },
+        {
+            "method": "GET",
+            "path": "/api/v1/simple/documents/wiring/contract",
+            "payload_key": "contract",
+        },
+    ),
+    "invariants": (
+        "document wiring is read-only",
+        "document wiring grants no execution authority",
+        "document manipulation remains bounded to docs_update checks",
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -141,7 +164,7 @@ class SimplePlatformRuntime:
                 "tasks": [template.to_dict() for template in self.platform.task_templates()],
                 "outcomes": [
                     {"outcome": "ready", "label": "Ready"},
-                    {"outcome": "needs_review", "label": "Needs review"},
+                    {"outcome": "needs_review", "label": "Needs approval"},
                     {"outcome": "blocked", "label": "Blocked"},
                 ],
                 "workflows": [template.to_dict() for template in self.platform.workflow_templates()],
@@ -156,6 +179,26 @@ class SimplePlatformRuntime:
             ok=True,
             status="ready",
             payload={"home": self.platform.simple_home().to_dict()},
+        )
+
+    def document_manipulation_wiring(self) -> SimplePlatformEnvelope:
+        """Return the read-only document manipulation wiring proof."""
+
+        return SimplePlatformEnvelope(
+            governed=True,
+            ok=True,
+            status="listed",
+            payload={"wiring": self.platform.document_manipulation_wiring().to_dict()},
+        )
+
+    def document_manipulation_wiring_contract(self) -> SimplePlatformEnvelope:
+        """Return the client contract for document wiring readback."""
+
+        return SimplePlatformEnvelope(
+            governed=True,
+            ok=True,
+            status="listed",
+            payload={"contract": deepcopy(DOCUMENT_MANIPULATION_WIRING_CLIENT_CONTRACT)},
         )
 
     def start_guide(self) -> SimplePlatformEnvelope:

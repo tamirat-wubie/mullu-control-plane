@@ -78,6 +78,88 @@ class SimpleWorkflowTemplate:
 
 
 @dataclass(frozen=True)
+class DocumentManipulationComponent:
+    """One governed component in the document manipulation path."""
+
+    component_ref: str
+    label: str
+    boundary: str
+    contract_ref: str
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if self.execution_allowed:
+            raise RuntimeCoreInvariantError("document manipulation component cannot allow execution")
+        for field_name, field_value in {
+            "component_ref": self.component_ref,
+            "label": self.label,
+            "boundary": self.boundary,
+            "contract_ref": self.contract_ref,
+        }.items():
+            _require_trimmed_text(field_value, f"document manipulation {field_name}")
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible wiring component."""
+
+        return {
+            "component_ref": self.component_ref,
+            "label": self.label,
+            "boundary": self.boundary,
+            "contract_ref": self.contract_ref,
+            "execution_allowed": self.execution_allowed,
+        }
+
+
+@dataclass(frozen=True)
+class DocumentManipulationWiring:
+    """Read-only proof that document manipulation checks are fully wired."""
+
+    title: str
+    manipulation_ref: str
+    components: tuple[DocumentManipulationComponent, ...]
+    invariants: tuple[str, ...]
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if self.execution_allowed:
+            raise RuntimeCoreInvariantError("document manipulation wiring cannot allow execution")
+        _require_trimmed_text(self.title, "document manipulation title")
+        _require_trimmed_text(self.manipulation_ref, "document manipulation ref")
+        if self.manipulation_ref != "docs_update":
+            raise RuntimeCoreInvariantError("document manipulation ref must be docs_update")
+        expected_refs = {
+            "task.update_docs",
+            "workflow.docs_update",
+            "cli.workflow_docs_update",
+            "api.check_workflow",
+            "http.workflows_check",
+            "app.mount_gate",
+            "memory.update_documentation",
+            "dashboard.simple_workflow_summaries",
+        }
+        actual_refs = {component.component_ref for component in self.components}
+        if actual_refs != expected_refs:
+            raise RuntimeCoreInvariantError("document manipulation components must match wiring contract")
+        if len(actual_refs) != len(self.components):
+            raise RuntimeCoreInvariantError("document manipulation components must be unique")
+        if len(self.invariants) < 3:
+            raise RuntimeCoreInvariantError("document manipulation wiring requires invariant coverage")
+        for invariant in self.invariants:
+            _require_trimmed_text(invariant, "document manipulation invariant")
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible document manipulation wiring contract."""
+
+        return {
+            "title": self.title,
+            "manipulation_ref": self.manipulation_ref,
+            "components": [component.to_dict() for component in self.components],
+            "invariants": list(self.invariants),
+            "execution_allowed": self.execution_allowed,
+        }
+
+
+@dataclass(frozen=True)
 class SimpleTaskRequest:
     """Plain task request that can be converted into a governed action check."""
 
@@ -435,28 +517,28 @@ class SimplePlatform:
 
         return SimpleOnboardingGuide(
             title="Mullu simple mode",
-            message="Choose a workflow, check it, then continue only when it is ready.",
+            message="Open the simple menu, choose the work you want to do, then check it before continuing.",
             recommended_path=(
                 SimpleOnboardingStep(
                     step="choose",
-                    title="Choose a workflow",
-                    command="mullu workflows",
-                    purpose="Show the common work users can start with.",
+                    title="Open the simple menu",
+                    command="mullu menu",
+                    purpose="Show the simple actions, tasks, outcomes, and workflows.",
                 ),
                 SimpleOnboardingStep(
                     step="check",
                     title="Check before continuing",
-                    command="mullu workflow docs-update --target docs/README.md",
-                    purpose="Confirm whether the workflow is ready, needs review, or is blocked.",
+                    command="mullu workflow docs-update --item docs/README.md",
+                    purpose="Confirm whether the workflow is ready, needs approval, or is blocked.",
                 ),
                 SimpleOnboardingStep(
                     step="act",
                     title="Continue only when ready",
-                    command="mullu workflow docs-update --target docs/README.md --json",
-                    purpose="Use the proof-backed outcome in an app, dashboard, or support flow.",
+                    command="mullu documents",
+                    purpose="Use the saved result in an app, dashboard, or support flow.",
                 ),
             ),
-            outcomes=("Ready", "Needs review", "Blocked"),
+            outcomes=("Ready", "Needs approval", "Blocked"),
         )
 
     @staticmethod
@@ -475,10 +557,75 @@ class SimplePlatform:
         )
         return SimpleHomeSummary(
             title="Start simple",
-            message="Choose one guided workflow and check it before continuing.",
-            primary_command=choices[0].command if choices else "mullu workflows",
-            next_action="Open the workflow list and choose the work you want to do.",
+            message="Open the simple menu and choose the work you want to do.",
+            primary_command=choices[0].command if choices else "mullu menu",
+            next_action="Open the simple menu and choose the work you want to do.",
             choices=choices,
+        )
+
+    @staticmethod
+    def document_manipulation_wiring() -> DocumentManipulationWiring:
+        """Return the read-only document manipulation wiring proof."""
+
+        return DocumentManipulationWiring(
+            title="Document manipulation wiring",
+            manipulation_ref="docs_update",
+            components=(
+                DocumentManipulationComponent(
+                    component_ref="task.update_docs",
+                    label="Update docs task",
+                    boundary="docs/**",
+                    contract_ref="SimplePlatform.check_task",
+                ),
+                DocumentManipulationComponent(
+                    component_ref="workflow.docs_update",
+                    label="Docs update workflow",
+                    boundary="docs/**",
+                    contract_ref="SimplePlatform.check_workflow",
+                ),
+                DocumentManipulationComponent(
+                    component_ref="cli.workflow_docs_update",
+                    label="CLI workflow command",
+                    boundary="mullu workflow docs-update --item docs/README.md",
+                    contract_ref="mcoi_runtime.core.simple_cli.guarded_main",
+                ),
+                DocumentManipulationComponent(
+                    component_ref="api.check_workflow",
+                    label="Runtime workflow envelope",
+                    boundary="SimplePlatformRuntime.check_workflow",
+                    contract_ref="simple_platform.menu.v1",
+                ),
+                DocumentManipulationComponent(
+                    component_ref="http.workflows_check",
+                    label="HTTP workflow check route",
+                    boundary="POST /api/v1/simple/workflows/check",
+                    contract_ref="SimplePlatformFastAPIAdapter.route_specs",
+                ),
+                DocumentManipulationComponent(
+                    component_ref="app.mount_gate",
+                    label="App mount gate",
+                    boundary="MULLU_SIMPLE_PLATFORM_ENABLED",
+                    contract_ref="mount_simple_platform_router_from_env",
+                ),
+                DocumentManipulationComponent(
+                    component_ref="memory.update_documentation",
+                    label="Memory candidate action",
+                    boundary="CompiledActionType.UPDATE_DOCUMENTATION",
+                    contract_ref="compile_memory_actions",
+                ),
+                DocumentManipulationComponent(
+                    component_ref="dashboard.simple_workflow_summaries",
+                    label="Dashboard readback",
+                    boundary="simple_workflow_summaries",
+                    contract_ref="build_operational_dashboard_state",
+                ),
+            ),
+            invariants=(
+                "docs_update targets remain bounded to docs/**",
+                "workflow checks preserve review and blocked outcomes",
+                "route and dashboard readbacks do not grant execution authority",
+                "memory candidates require a Mullu control-plane verdict before side effects",
+            ),
         )
 
 
@@ -584,7 +731,7 @@ def _project_check(
         return SimpleActionCheck(
             outcome="ready",
             title="Ready",
-            message="This action stays inside the allowed area and has the required proof.",
+            message="This task is in the right place and has a saved check.",
             next_step="Continue with the action.",
             decision_ref=decision_ref,
             proof_stamp_ref=proof_stamp_ref,
@@ -598,9 +745,9 @@ def _project_check(
         reasons = review_reasons or ("This action changes something outside the local workspace.",)
         return SimpleActionCheck(
             outcome="needs_review",
-            title="Needs review",
-            message="This action needs approval before it can continue.",
-            next_step="Send it to an approver with the proof reference.",
+            title="Needs approval",
+            message="This task needs approval before it can continue.",
+            next_step="Send it for approval with the saved check.",
             decision_ref=decision_ref,
             proof_stamp_ref=proof_stamp_ref,
             boundary_witness_ref=boundary_witness_ref,
@@ -615,7 +762,7 @@ def _project_check(
             outcome="blocked",
             title="Blocked",
             message="This action cannot continue as requested.",
-            next_step="Narrow the request or change the allowed area, then check again.",
+            next_step="Use a smaller item or choose the right place, then check again.",
             decision_ref=decision_ref,
             proof_stamp_ref=proof_stamp_ref,
             boundary_witness_ref=boundary_witness_ref,
@@ -651,7 +798,7 @@ def _project_workflow_plan(
             workflow=template.workflow,
             label=template.label,
             outcome="needs_review",
-            title="Needs review",
+            title="Needs approval",
             message="One or more steps need approval before the workflow can continue.",
             next_step=review[0].next_step,
             checks=checks,
@@ -739,7 +886,7 @@ def _plain_reason(reason: object) -> str:
 
     text = str(reason)
     translations = {
-        "scope_within_intent": "The target is outside the allowed area.",
+        "scope_within_intent": "This item is outside the right place for this task.",
         "kernel.side_effect.declared": "The action includes an undeclared side effect.",
         "kernel.proof.scope_checked:scope_checked": "The action is missing required scope proof.",
         "kernel.side_effect.external_requires_approval:external_write": "External changes require approval.",
@@ -756,16 +903,20 @@ def _action_kind(value: str) -> SimpleActionKind:
 
 def _task_kind(value: str) -> SimpleTaskKind:
     normalized = value.strip().replace("-", "_")
+    if normalized == "verify_item":
+        return "verify_artifact"
     if normalized in {"review_docs", "update_docs", "notify_support", "verify_artifact"}:
         return normalized  # type: ignore[return-value]
-    raise RuntimeCoreInvariantError("task must be one of: review_docs, update_docs, notify_support, verify_artifact")
+    raise RuntimeCoreInvariantError("task must be one of: review_docs, update_docs, notify_support, verify_item")
 
 
 def _workflow_kind(value: str) -> SimpleWorkflowKind:
     normalized = value.strip().replace("-", "_")
+    if normalized == "item_review":
+        return "artifact_review"
     if normalized in {"docs_update", "support_notice", "artifact_review"}:
         return normalized  # type: ignore[return-value]
-    raise RuntimeCoreInvariantError("workflow must be one of: docs_update, support_notice, artifact_review")
+    raise RuntimeCoreInvariantError("workflow must be one of: docs_update, support_notice, item_review")
 
 
 def _required_text(value: Mapping[str, object], field_name: str) -> str:
@@ -773,7 +924,7 @@ def _required_text(value: Mapping[str, object], field_name: str) -> str:
         raise RuntimeCoreInvariantError(f"{field_name} is required")
     raw_value = value[field_name]
     if not isinstance(raw_value, str):
-        raise RuntimeCoreInvariantError(f"{field_name} must be text")
+        raise RuntimeCoreInvariantError(f"{_public_field_name(field_name)} must be text")
     text = raw_value.strip()
     _require_text(text, field_name)
     return text
@@ -784,11 +935,19 @@ def _optional_text(value: Mapping[str, object], field_name: str, *, default: str
         return default
     raw_value = value[field_name]
     if not isinstance(raw_value, str):
-        raise RuntimeCoreInvariantError(f"{field_name} must be text")
+        raise RuntimeCoreInvariantError(f"{_public_field_name(field_name)} must be text")
     text = raw_value.strip()
     if not text:
         return default
     return text
+
+
+
+def _public_field_name(field_name: str) -> str:
+    return {
+        "target": "item",
+        "actor_id": "person or app",
+    }.get(field_name, field_name)
 
 
 def _reject_unsupported_fields(value: Mapping[str, object], allowed_fields: frozenset[str]) -> None:

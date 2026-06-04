@@ -33,11 +33,13 @@ def _request(**overrides: object) -> dict[str, object]:
 def test_simple_platform_fastapi_adapter_route_specs_are_stable() -> None:
     specs = SimplePlatformFastAPIAdapter.route_specs()
 
-    assert len(specs) == 6
+    assert len(specs) == 8
     assert [(spec.method, spec.path, spec.handler_name) for spec in specs] == [
         ("GET", "/api/v1/simple/home", "simple_home"),
         ("GET", "/api/v1/simple/actions", "action_menu"),
         ("GET", "/api/v1/simple/start", "start_guide"),
+        ("GET", "/api/v1/simple/documents/wiring", "document_manipulation_wiring"),
+        ("GET", "/api/v1/simple/documents/wiring/contract", "document_manipulation_wiring_contract"),
         ("POST", "/api/v1/simple/actions/check", "check_action"),
         ("POST", "/api/v1/simple/tasks/check", "check_task"),
         ("POST", "/api/v1/simple/workflows/check", "check_workflow"),
@@ -77,8 +79,8 @@ def test_simple_platform_fastapi_adapter_returns_simple_home() -> None:
     assert envelope["governed"] is True
     assert envelope["ok"] is True
     assert envelope["status"] == "ready"
-    assert envelope["payload"]["home"]["primary_command"] == "mullu workflows"
-    assert envelope["payload"]["home"]["choices"][0]["label"] == "Choose a workflow"
+    assert envelope["payload"]["home"]["primary_command"] == "mullu menu"
+    assert envelope["payload"]["home"]["choices"][0]["label"] == "Open the simple menu"
     assert envelope["payload"]["home"]["execution_allowed"] is False
 
 
@@ -101,7 +103,33 @@ def test_simple_platform_fastapi_adapter_returns_start_guide() -> None:
     assert envelope["ok"] is True
     assert envelope["status"] == "listed"
     assert envelope["payload"]["guide"]["execution_allowed"] is False
-    assert envelope["payload"]["guide"]["recommended_path"][0]["command"] == "mullu workflows"
+    assert envelope["payload"]["guide"]["recommended_path"][0]["command"] == "mullu menu"
+
+
+def test_simple_platform_fastapi_adapter_returns_document_wiring() -> None:
+    adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
+    envelope = adapter.document_manipulation_wiring()
+    wiring = envelope["payload"]["wiring"]
+
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "listed"
+    assert wiring["manipulation_ref"] == "docs_update"
+    assert wiring["components"][2]["component_ref"] == "cli.workflow_docs_update"
+    assert wiring["execution_allowed"] is False
+
+
+def test_simple_platform_fastapi_adapter_returns_document_wiring_contract() -> None:
+    adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
+    envelope = adapter.document_manipulation_wiring_contract()
+    contract = envelope["payload"]["contract"]
+
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "listed"
+    assert contract["contract_ref"] == "simple_platform.document_manipulation_wiring.v1"
+    assert contract["routes"][1]["path"] == "/api/v1/simple/documents/wiring/contract"
+    assert "document wiring is read-only" in contract["invariants"]
 
 
 def test_simple_platform_fastapi_adapter_returns_task_envelope() -> None:

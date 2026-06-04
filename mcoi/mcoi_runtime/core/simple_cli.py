@@ -79,6 +79,9 @@ def build_parser() -> argparse.ArgumentParser:
     workflows_parser = subparsers.add_parser("workflows", help="List common workflow templates")
     workflows_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
 
+    documents_parser = subparsers.add_parser("documents", help="Show document manipulation wiring")
+    documents_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
+
     start_parser = subparsers.add_parser("start", help="Show the simple platform home screen")
     start_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
     return parser
@@ -184,6 +187,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(json.dumps(_envelope(True, "listed", {"workflows": templates}), sort_keys=True, separators=(",", ":")))
         else:
             print(_readable_workflows(templates))
+        return 0
+    if args.command == "documents":
+        payload = SimplePlatformRuntime().document_manipulation_wiring().to_dict()
+        wiring = payload["payload"]["wiring"]
+        if args.json:
+            print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+        else:
+            print(_readable_document_wiring(wiring))
         return 0
     parser.error(f"unknown command: {args.command}")
     return 1
@@ -345,6 +356,45 @@ def _readable_workflows(templates: object) -> str:
     return "\n".join(lines)
 
 
+def _readable_document_wiring(wiring: object) -> str:
+    if not isinstance(wiring, dict):
+        raise RuntimeCoreInvariantError("document manipulation wiring must be an object")
+    title = _catalog_text(wiring, "document manipulation wiring", "title")
+    manipulation_ref = _catalog_text(wiring, "document manipulation wiring", "manipulation_ref")
+    execution_allowed = _catalog_bool(wiring, "document manipulation wiring", "execution_allowed")
+    components = wiring.get("components")
+    invariants = wiring.get("invariants")
+    if not isinstance(components, list):
+        raise RuntimeCoreInvariantError("document manipulation wiring components must be a list")
+    if not isinstance(invariants, list):
+        raise RuntimeCoreInvariantError("document manipulation wiring invariants must be a list")
+
+    lines = [
+        title,
+        f"Manipulation: {manipulation_ref}",
+        f"Execution allowed: {_readable_yes_no(execution_allowed)}",
+        "Components:",
+    ]
+    for component in components:
+        if not isinstance(component, dict):
+            raise RuntimeCoreInvariantError("document manipulation wiring component must be an object")
+        lines.append(
+            "- "
+            f"{_catalog_text(component, 'document manipulation component', 'component_ref')}: "
+            f"{_catalog_text(component, 'document manipulation component', 'boundary')}"
+        )
+    lines.append("Invariants:")
+    for invariant in invariants:
+        if not isinstance(invariant, str) or not invariant.strip() or invariant != invariant.strip():
+            raise RuntimeCoreInvariantError("document manipulation wiring invariant must be trimmed text")
+        lines.append(f"- {invariant}")
+    return "\n".join(lines)
+
+
+def _readable_yes_no(value: bool) -> str:
+    return "yes" if value else "no"
+
+
 def _validated_workflow_templates(templates: object) -> list[dict[str, object]]:
     if not isinstance(templates, list):
         raise RuntimeCoreInvariantError("simple workflow catalog must be a list")
@@ -420,7 +470,7 @@ def _start_text(home: dict[str, object]) -> str:
             "Common tasks: review-docs, update-docs, notify-support, verify-artifact",
             "Common workflows: docs-update, support-notice, artifact-review",
             "Actions: view, change, send, verify",
-            "Outcomes: Ready, Needs review, Blocked",
+            "Outcomes: Ready, Needs approval, Blocked",
         )
     )
     return "\n".join(lines)

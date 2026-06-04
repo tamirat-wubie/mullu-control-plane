@@ -19,6 +19,7 @@ import os
 from typing import Any, Callable, Mapping
 
 from mcoi_runtime.app._integration_paths import env_flag, route_prefix_or_default, validate_route_prefix
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.simple_platform_api import SimplePlatformRuntime
 from mcoi_runtime.core.simple_platform_fastapi_router import create_simple_platform_fastapi_router
 
@@ -68,11 +69,14 @@ def mount_simple_platform_router_from_env(
             ),
             reason="disabled_by_env",
         )
-    prefix = validate_route_prefix(
-        runtime_env.get("MULLU_SIMPLE_PLATFORM_PREFIX"),
-        default=_DEFAULT_SIMPLE_PLATFORM_PREFIX,
-        env_name="MULLU_SIMPLE_PLATFORM_PREFIX",
-    )
+    try:
+        prefix = validate_route_prefix(
+            runtime_env.get("MULLU_SIMPLE_PLATFORM_PREFIX"),
+            default=_DEFAULT_SIMPLE_PLATFORM_PREFIX,
+            env_name="MULLU_SIMPLE_PLATFORM_PREFIX",
+        )
+    except RuntimeError as exc:
+        raise RuntimeCoreInvariantError(str(exc).replace("'", "")) from exc
     simple_runtime = runtime or SimplePlatformRuntime()
     router = router_factory(simple_runtime, prefix)
     app.include_router(router)

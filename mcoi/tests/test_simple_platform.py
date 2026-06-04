@@ -20,12 +20,15 @@ import pytest
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.simple_cli import (
     _readable_actions,
+    _readable_document_wiring,
     _readable_outcomes,
     _readable_tasks,
     _readable_workflows,
     guarded_main,
 )
 from mcoi_runtime.core.simple_platform import (
+    DocumentManipulationComponent,
+    DocumentManipulationWiring,
     SimpleActionRequest,
     SimpleHomeChoice,
     SimpleHomeSummary,
@@ -52,7 +55,7 @@ def test_simple_platform_allows_plain_view_inside_allowed_area() -> None:
 
     assert check.outcome == "ready"
     assert check.ok_to_continue is True
-    assert check.message == "This action stays inside the allowed area and has the required proof."
+    assert check.message == "This task is in the right place and has a saved check."
     assert check.proof_stamp_ref.startswith("proof-")
     assert check.boundary_witness_ref.startswith("witness-")
 
@@ -71,8 +74,8 @@ def test_simple_platform_blocks_plain_change_outside_allowed_area() -> None:
     assert check.outcome == "blocked"
     assert check.ok_to_continue is False
     assert check.raw_decision == "block"
-    assert "The target is outside the allowed area." in check.blocked_reasons
-    assert check.next_step == "Narrow the request or change the allowed area, then check again."
+    assert "This item is outside the right place for this task." in check.blocked_reasons
+    assert check.next_step == "Use a smaller item or choose the right place, then check again."
 
 
 def test_simple_platform_sends_external_change_to_review() -> None:
@@ -119,7 +122,7 @@ def test_simple_platform_task_template_blocks_target_outside_template_scope() ->
 
     assert check.outcome == "blocked"
     assert check.ok_to_continue is False
-    assert check.blocked_reasons == ("The target is outside the allowed area.",)
+    assert check.blocked_reasons == ("This item is outside the right place for this task.",)
 
 
 def test_simple_platform_task_template_uses_default_target_for_support_notice() -> None:
@@ -161,7 +164,7 @@ def test_simple_platform_workflow_blocks_docs_update_outside_docs() -> None:
     assert plan.ready_count == 1
     assert plan.blocked_count == 2
     assert "One or more steps cannot continue" in plan.message
-    assert plan.checks[0].blocked_reasons == ("The target is outside the allowed area.",)
+    assert plan.checks[0].blocked_reasons == ("This item is outside the right place for this task.",)
 
 
 def test_simple_platform_workflow_projects_support_notice_review() -> None:
@@ -174,15 +177,56 @@ def test_simple_platform_workflow_projects_support_notice_review() -> None:
     assert plan.checks[0].review_reasons == ("External changes require approval.",)
 
 
+def test_simple_platform_document_manipulation_wiring_covers_all_components() -> None:
+    wiring = SimplePlatform.document_manipulation_wiring()
+    payload = wiring.to_dict()
+    component_refs = [component["component_ref"] for component in payload["components"]]
+
+    assert wiring.execution_allowed is False
+    assert payload["manipulation_ref"] == "docs_update"
+    assert component_refs == [
+        "task.update_docs",
+        "workflow.docs_update",
+        "cli.workflow_docs_update",
+        "api.check_workflow",
+        "http.workflows_check",
+        "app.mount_gate",
+        "memory.update_documentation",
+        "dashboard.simple_workflow_summaries",
+    ]
+    assert all(component["execution_allowed"] is False for component in payload["components"])
+    assert "docs_update targets remain bounded to docs/**" in payload["invariants"]
+
+
+def test_simple_platform_document_manipulation_rejects_execution_authority() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="document manipulation component cannot allow execution"):
+        DocumentManipulationComponent(
+            component_ref="unsafe.component",
+            label="Unsafe",
+            boundary="docs/**",
+            contract_ref="unsafe",
+            execution_allowed=True,
+        )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="document manipulation wiring cannot allow execution"):
+        DocumentManipulationWiring(
+            title="Document manipulation wiring",
+            manipulation_ref="docs_update",
+            components=SimplePlatform.document_manipulation_wiring().components,
+            invariants=SimplePlatform.document_manipulation_wiring().invariants,
+            execution_allowed=True,
+        )
+
+
 def test_simple_platform_onboarding_guide_is_plain_and_non_executing() -> None:
     guide = SimplePlatform.onboarding_guide()
     payload = guide.to_dict()
 
     assert guide.execution_allowed is False
     assert payload["title"] == "Mullu simple mode"
-    assert payload["recommended_path"][0]["command"] == "mullu workflows"
-    assert payload["recommended_path"][1]["command"] == "mullu workflow docs-update --target docs/README.md"
-    assert payload["outcomes"] == ["Ready", "Needs review", "Blocked"]
+    assert payload["recommended_path"][0]["command"] == "mullu menu"
+    assert payload["recommended_path"][1]["command"] == "mullu workflow docs-update --item docs/README.md"
+    assert payload["outcomes"] == ["Ready", "Needs approval", "Blocked"]
 
 
 def test_simple_platform_home_is_plain_bounded_and_non_executing() -> None:
@@ -191,11 +235,11 @@ def test_simple_platform_home_is_plain_bounded_and_non_executing() -> None:
 
     assert home.execution_allowed is False
     assert payload["title"] == "Start simple"
-    assert payload["primary_command"] == "mullu workflows"
-    assert payload["next_action"] == "Open the workflow list and choose the work you want to do."
+    assert payload["primary_command"] == "mullu menu"
+    assert payload["next_action"] == "Open the simple menu and choose the work you want to do."
     assert len(payload["choices"]) == 3
-    assert payload["choices"][0]["label"] == "Choose a workflow"
-    assert payload["choices"][0]["command"] == "mullu workflows"
+    assert payload["choices"][0]["label"] == "Open the simple menu"
+    assert payload["choices"][0]["command"] == "mullu menu"
     assert all(choice["execution_allowed"] is False for choice in payload["choices"])
 
 
@@ -219,7 +263,7 @@ def test_simple_platform_home_rejects_execution_authority() -> None:
         SimpleHomeSummary(
             title="Unsafe",
             message="Unsafe home.",
-            primary_command="mullu workflows",
+            primary_command="mullu menu",
             next_action="Continue.",
             choices=(),
             execution_allowed=True,
@@ -231,7 +275,7 @@ def test_simple_platform_home_rejects_too_many_choices() -> None:
         SimpleHomeChoice(
             choice_ref=f"choice-{index}",
             label=f"Choice {index}",
-            command="mullu workflows",
+            command="mullu menu",
             purpose="Open a guided path.",
         )
         for index in range(4)
@@ -241,14 +285,14 @@ def test_simple_platform_home_rejects_too_many_choices() -> None:
         SimpleHomeSummary(
             title="Start simple",
             message="Choose one guided workflow.",
-            primary_command="mullu workflows",
+            primary_command="mullu menu",
             next_action="Choose a workflow.",
             choices=choices,
         )
 
 
 def test_simple_platform_rejects_loose_action_target() -> None:
-    with pytest.raises(RuntimeCoreInvariantError, match="target must be text"):
+    with pytest.raises(RuntimeCoreInvariantError, match="item must be text"):
         SimplePlatform().check_action(
             {
                 "goal": "Review docs",
@@ -261,7 +305,7 @@ def test_simple_platform_rejects_loose_action_target() -> None:
 
 
 def test_simple_platform_rejects_loose_action_actor() -> None:
-    with pytest.raises(RuntimeCoreInvariantError, match="actor_id must be text"):
+    with pytest.raises(RuntimeCoreInvariantError, match="person or app must be text"):
         SimplePlatform().check_action(
             {
                 "goal": "Review docs",
@@ -286,7 +330,7 @@ def test_simple_platform_rejects_loose_task_goal() -> None:
 
 
 def test_simple_platform_rejects_loose_workflow_actor() -> None:
-    with pytest.raises(RuntimeCoreInvariantError, match="actor_id must be text"):
+    with pytest.raises(RuntimeCoreInvariantError, match="person or app must be text"):
         SimplePlatform().check_workflow(
             {
                 "workflow": "docs_update",
@@ -469,7 +513,7 @@ def test_simple_cli_lists_outcomes_as_json(capsys) -> None:
     assert envelope["ok"] is True
     assert envelope["status"] == "listed"
     assert envelope["payload"]["outcomes"][0]["outcome"] == "ready"
-    assert envelope["payload"]["outcomes"][1]["label"] == "Needs review"
+    assert envelope["payload"]["outcomes"][1]["label"] == "Needs approval"
 
 
 @pytest.mark.parametrize(
@@ -602,16 +646,54 @@ def test_simple_cli_rejects_loose_workflow_catalog_entries(templates: object, me
         _readable_workflows(templates)
 
 
+def test_simple_cli_documents_outputs_wiring(capsys) -> None:
+    exit_code = guarded_main(["documents"])
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "Document manipulation wiring" in output
+    assert "Manipulation: docs_update" in output
+    assert "Execution allowed: no" in output
+    assert "memory.update_documentation" in output
+    assert "docs_update targets remain bounded to docs/**" in output
+
+
+def test_simple_cli_documents_outputs_wiring_json(capsys) -> None:
+    exit_code = guarded_main(["documents", "--json"])
+    payload = json.loads(capsys.readouterr().out)
+    wiring = payload["payload"]["wiring"]
+
+    assert exit_code == 0
+    assert payload["governed"] is True
+    assert payload["ok"] is True
+    assert payload["status"] == "listed"
+    assert wiring["execution_allowed"] is False
+    assert wiring["components"][0]["component_ref"] == "task.update_docs"
+
+
+def test_simple_cli_rejects_loose_document_wiring() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="document manipulation wiring components must be a list"):
+        _readable_document_wiring(
+            {
+                "title": "Document manipulation wiring",
+                "manipulation_ref": "docs_update",
+                "execution_allowed": False,
+                "components": "task.update_docs",
+                "invariants": [],
+            }
+        )
+
+
 def test_simple_cli_start_outputs_onboarding_path(capsys) -> None:
     exit_code = guarded_main(["start"])
     output = capsys.readouterr().out
 
     assert exit_code == 0
     assert "Start simple" in output
-    assert "Next: Open the workflow list and choose the work you want to do." in output
+    assert "Next: Open the simple menu and choose the work you want to do." in output
     assert "Recommended path:" in output
-    assert "mullu workflows" in output
-    assert "mullu workflow docs-update --target docs/README.md" in output
+    assert "mullu menu" in output
+    assert "mullu workflow docs-update --item docs/README.md" in output
 
 
 def test_simple_cli_start_outputs_home_json(capsys) -> None:
@@ -623,7 +705,7 @@ def test_simple_cli_start_outputs_home_json(capsys) -> None:
     assert envelope["ok"] is True
     assert envelope["status"] == "ready"
     assert envelope["payload"]["home"]["title"] == "Start simple"
-    assert envelope["payload"]["home"]["choices"][0]["command"] == "mullu workflows"
+    assert envelope["payload"]["home"]["choices"][0]["command"] == "mullu menu"
 
 
 def test_simple_platform_api_projects_ready_check() -> None:
@@ -678,6 +760,30 @@ def test_simple_platform_api_projects_template_backed_workflow() -> None:
     assert payload["payload"]["workflow"]["ready_count"] == 3
 
 
+def test_simple_platform_api_returns_document_manipulation_wiring() -> None:
+    payload = SimplePlatformRuntime().document_manipulation_wiring().to_dict()
+    wiring = payload["payload"]["wiring"]
+
+    assert payload["governed"] is True
+    assert payload["ok"] is True
+    assert payload["status"] == "listed"
+    assert wiring["manipulation_ref"] == "docs_update"
+    assert wiring["components"][4]["component_ref"] == "http.workflows_check"
+    assert wiring["execution_allowed"] is False
+
+
+def test_simple_platform_api_returns_document_manipulation_contract() -> None:
+    payload = SimplePlatformRuntime().document_manipulation_wiring_contract().to_dict()
+    contract = payload["payload"]["contract"]
+
+    assert payload["governed"] is True
+    assert payload["ok"] is True
+    assert payload["status"] == "listed"
+    assert contract["contract_ref"] == "simple_platform.document_manipulation_wiring.v1"
+    assert contract["routes"][0]["path"] == "/api/v1/simple/documents/wiring"
+    assert "document wiring grants no execution authority" in contract["invariants"]
+
+
 def test_simple_platform_api_rejects_invalid_workflow() -> None:
     envelope = SimplePlatformRuntime().check_workflow({"workflow": "unknown-workflow", "target": "docs/README.md"})
     payload = envelope.to_dict()
@@ -706,7 +812,7 @@ def test_simple_platform_api_returns_simple_home() -> None:
     assert payload["ok"] is True
     assert payload["status"] == "ready"
     assert payload["payload"]["home"]["title"] == "Start simple"
-    assert payload["payload"]["home"]["primary_command"] == "mullu workflows"
+    assert payload["payload"]["home"]["primary_command"] == "mullu menu"
     assert payload["payload"]["home"]["choices"][0]["execution_allowed"] is False
 
 
@@ -736,9 +842,9 @@ def test_simple_platform_api_rejects_non_text_request_fields() -> None:
     assert action_payload["ok"] is False
     assert "goal must be text" in action_payload["error"]
     assert task_payload["ok"] is False
-    assert "actor_id must be text" in task_payload["error"]
+    assert "person or app must be text" in task_payload["error"]
     assert workflow_payload["ok"] is False
-    assert "target must be text" in workflow_payload["error"]
+    assert "item must be text" in workflow_payload["error"]
 
 
 def test_simple_platform_api_rejects_unknown_request_fields_without_reflection() -> None:

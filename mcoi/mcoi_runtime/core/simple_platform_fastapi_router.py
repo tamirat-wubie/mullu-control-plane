@@ -15,6 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from .invariants import RuntimeCoreInvariantError
 from .simple_platform_api import SimplePlatformRuntime
 
 
@@ -59,6 +60,16 @@ class SimplePlatformFastAPIAdapter:
 
         return self.runtime.simple_home().to_dict()
 
+    def document_manipulation_wiring(self) -> dict[str, Any]:
+        """Handle GET /documents/wiring."""
+
+        return self.runtime.document_manipulation_wiring().to_dict()
+
+    def document_manipulation_wiring_contract(self) -> dict[str, Any]:
+        """Handle GET /documents/wiring/contract."""
+
+        return self.runtime.document_manipulation_wiring_contract().to_dict()
+
     def start_guide(self) -> dict[str, Any]:
         """Handle GET /start."""
 
@@ -68,7 +79,7 @@ class SimplePlatformFastAPIAdapter:
     def route_specs(prefix: str = "/api/v1/simple") -> tuple[SimplePlatformRouteSpec, ...]:
         """Return the stable HTTP route contracts."""
 
-        normalized = prefix.rstrip("/")
+        normalized = _route_prefix(prefix, "prefix")
         return (
             SimplePlatformRouteSpec(
                 method="GET",
@@ -87,6 +98,18 @@ class SimplePlatformFastAPIAdapter:
                 path=f"{normalized}/start",
                 handler_name="start_guide",
                 purpose="show the plain onboarding path for simple mode",
+            ),
+            SimplePlatformRouteSpec(
+                method="GET",
+                path=f"{normalized}/documents/wiring",
+                handler_name="document_manipulation_wiring",
+                purpose="show read-only document manipulation component wiring",
+            ),
+            SimplePlatformRouteSpec(
+                method="GET",
+                path=f"{normalized}/documents/wiring/contract",
+                handler_name="document_manipulation_wiring_contract",
+                purpose="show the client contract for document manipulation wiring",
             ),
             SimplePlatformRouteSpec(
                 method="POST",
@@ -122,7 +145,8 @@ def create_simple_platform_fastapi_router(runtime: SimplePlatformRuntime, prefix
         raise RuntimeError("FastAPI is required to create the simple platform router") from exc
 
     adapter = SimplePlatformFastAPIAdapter(runtime)
-    router = APIRouter(prefix=prefix.rstrip("/"), tags=["simple-platform"])
+    route_prefix = _route_prefix(prefix, "prefix")
+    router = APIRouter(prefix=route_prefix, tags=["simple-platform"])
 
     @router.get("/home")
     def simple_home():
@@ -135,6 +159,14 @@ def create_simple_platform_fastapi_router(runtime: SimplePlatformRuntime, prefix
     @router.get("/start")
     def start_guide():
         return adapter.start_guide()
+
+    @router.get("/documents/wiring")
+    def document_manipulation_wiring():
+        return adapter.document_manipulation_wiring()
+
+    @router.get("/documents/wiring/contract")
+    def document_manipulation_wiring_contract():
+        return adapter.document_manipulation_wiring_contract()
 
     @router.post("/actions/check")
     def check_action(request_body: dict[str, Any] = Body(...)):
@@ -149,3 +181,29 @@ def create_simple_platform_fastapi_router(runtime: SimplePlatformRuntime, prefix
         return adapter.check_workflow(request_body)
 
     return router
+
+
+def _route_prefix(value: object, field_name: str) -> str:
+    prefix = _require_text(value, field_name).rstrip("/")
+    if not prefix.startswith("/"):
+        raise RuntimeCoreInvariantError(f"{field_name} must start with /")
+    if "?" in prefix or "#" in prefix:
+        raise RuntimeCoreInvariantError(f"{field_name} must not contain query or fragment markers")
+    if "//" in prefix:
+        raise RuntimeCoreInvariantError(f"{field_name} must not contain empty path segments")
+    for segment in prefix.split("/")[1:]:
+        if segment in {".", ".."}:
+            raise RuntimeCoreInvariantError(f"{field_name} must not contain traversal segments")
+        if not _is_route_prefix_segment(segment):
+            raise RuntimeCoreInvariantError(f"{field_name} contains unsupported path characters")
+    return prefix
+
+
+def _is_route_prefix_segment(segment: str) -> bool:
+    return all(char.isascii() and (char.isalnum() or char in {"-", "_", "."}) for char in segment)
+
+
+def _require_text(value: object, field_name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise RuntimeCoreInvariantError(f"{field_name} must be non-empty text")
+    return value.strip()
