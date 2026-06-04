@@ -8,7 +8,8 @@ Governance scope: Foundation Mode, solo-operator posture, public-safe planning
 witness, private-value exclusion, operational-readiness blocking, and
 deployment blocking.
 Dependencies: docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md and
-examples/foundation_operator_readiness_witness.awaiting_evidence.json.
+examples/foundation_operator_readiness_witness.awaiting_evidence.json plus the
+operator stop-rule packet.
 Invariants:
   - Validation is read-only.
   - The witness records local operator-readiness planning only.
@@ -32,8 +33,10 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DOC_PATH = REPO_ROOT / "docs" / "FOUNDATION_OPERATOR_READINESS_BOUNDARY.md"
 DEFAULT_PACKET_PATH = REPO_ROOT / "examples" / "foundation_operator_readiness_witness.awaiting_evidence.json"
+DEFAULT_STOP_RULE_PATH = REPO_ROOT / "examples" / "foundation_operator_stop_rules.awaiting_evidence.json"
 
 EXPECTED_WITNESS_ID = "foundation_operator_readiness_witness.awaiting_evidence.v1"
+EXPECTED_STOP_RULE_ID = "foundation_operator_stop_rules.awaiting_evidence.v1"
 EXPECTED_BLOCKED_CLAIMS = (
     "solo operator capacity verification",
     "schedule readiness",
@@ -59,6 +62,14 @@ EXPECTED_SURFACES = (
     ("fatigue_stop_rules", "local_draft", "AwaitingEvidence"),
     ("review_cadence_questions", "local_draft", "AwaitingEvidence"),
 )
+EXPECTED_STOP_RULES = (
+    ("scope_expansion_stop", "local_draft", "AwaitingEvidence"),
+    ("private_detail_stop", "local_draft", "AwaitingEvidence"),
+    ("validation_failure_stop", "local_draft", "AwaitingEvidence"),
+    ("external_boundary_stop", "local_draft", "AwaitingEvidence"),
+    ("money_legal_stop", "local_draft", "AwaitingEvidence"),
+    ("coverage_deployment_stop", "local_draft", "AwaitingEvidence"),
+)
 EXPECTED_ROOT_KEYS = {
     "blocked_claims",
     "delegation_ready_claimed",
@@ -81,6 +92,28 @@ EXPECTED_ROOT_KEYS = {
     "team_readiness_claimed",
     "witness_id",
 }
+EXPECTED_STOP_RULE_ROOT_KEYS = {
+    "blocked_claims",
+    "delegation_ready_claimed",
+    "deployment_allowed",
+    "financial_authority_ready_claimed",
+    "hiring_ready_claimed",
+    "incident_coverage_ready_claimed",
+    "legal_authority_ready_claimed",
+    "next_action",
+    "operator_capacity_verified",
+    "private_health_recording_allowed",
+    "private_schedule_recording_allowed",
+    "schema_version",
+    "skill_readiness_claimed",
+    "solver_outcome",
+    "status",
+    "stop_rule_id",
+    "stop_rule_scope",
+    "stop_rules",
+    "support_coverage_ready_claimed",
+    "team_readiness_claimed",
+}
 EXPECTED_SURFACE_KEYS = {
     "evidence_ref",
     "public_safe_note",
@@ -88,12 +121,21 @@ EXPECTED_SURFACE_KEYS = {
     "surface_id",
     "surface_type",
 }
+EXPECTED_STOP_RULE_KEYS = {
+    "evidence_ref",
+    "public_safe_note",
+    "state",
+    "stop_id",
+    "stop_type",
+}
 REQUIRED_DOC_PHRASES = (
     "Foundation Operator Readiness Boundary",
     "Witness packet: [`../examples/foundation_operator_readiness_witness.awaiting_evidence.json`]",
+    "Stop-rule packet: [`../examples/foundation_operator_stop_rules.awaiting_evidence.json`]",
     "Rule: Operator-readiness preparation is a local planning boundary, not",
     "No solo-operator capacity verification, schedule-readiness claim,",
     "operator_readiness_boundary_state=AwaitingEvidence",
+    "operator_stop_rules_state=AwaitingEvidence",
     "operator_capacity_verified=false",
     "schedule_readiness_claimed=false",
     "team_readiness_claimed=false",
@@ -202,6 +244,17 @@ def validate_packet(payload: dict[str, Any]) -> list[OperatorReadinessFinding]:
     return findings
 
 
+def validate_stop_rule_packet(payload: dict[str, Any]) -> list[OperatorReadinessFinding]:
+    """Return findings for operator stop-rule packet drift."""
+
+    findings: list[OperatorReadinessFinding] = []
+    findings.extend(validate_stop_rule_root_contract(payload))
+    findings.extend(validate_stop_rules(payload.get("stop_rules")))
+    findings.extend(validate_forbidden_value_patterns(payload))
+    findings.extend(validate_forbidden_promotion_patterns(payload))
+    return findings
+
+
 def validate_root_contract(payload: dict[str, Any]) -> list[OperatorReadinessFinding]:
     """Return findings for root-level operator-readiness witness drift."""
 
@@ -253,6 +306,69 @@ def validate_root_contract(payload: dict[str, Any]) -> list[OperatorReadinessFin
             OperatorReadinessFinding(
                 "operator_readiness_next_action_invalid",
                 "next_action must preserve the closed operator-readiness boundary",
+            )
+        )
+    return findings
+
+
+def validate_stop_rule_root_contract(payload: dict[str, Any]) -> list[OperatorReadinessFinding]:
+    """Return findings for root-level operator stop-rule packet drift."""
+
+    findings: list[OperatorReadinessFinding] = []
+    if set(payload) != EXPECTED_STOP_RULE_ROOT_KEYS:
+        findings.append(
+            OperatorReadinessFinding(
+                "operator_stop_rule_root_keys_invalid",
+                f"root keys must be: {', '.join(sorted(EXPECTED_STOP_RULE_ROOT_KEYS))}",
+            )
+        )
+    expected_values = {
+        "stop_rule_id": EXPECTED_STOP_RULE_ID,
+        "schema_version": 1,
+        "status": "AwaitingEvidence",
+        "solver_outcome": "AwaitingEvidence",
+        "operator_capacity_verified": False,
+        "skill_readiness_claimed": False,
+        "team_readiness_claimed": False,
+        "hiring_ready_claimed": False,
+        "delegation_ready_claimed": False,
+        "incident_coverage_ready_claimed": False,
+        "support_coverage_ready_claimed": False,
+        "legal_authority_ready_claimed": False,
+        "financial_authority_ready_claimed": False,
+        "private_schedule_recording_allowed": False,
+        "private_health_recording_allowed": False,
+        "deployment_allowed": False,
+    }
+    for key, expected_value in expected_values.items():
+        if payload.get(key) != expected_value:
+            findings.append(
+                OperatorReadinessFinding(
+                    "operator_stop_rule_root_value_invalid",
+                    f"{key} must be {expected_value!r}",
+                )
+            )
+    if tuple(payload.get("blocked_claims") or ()) != EXPECTED_BLOCKED_CLAIMS:
+        findings.append(
+            OperatorReadinessFinding(
+                "operator_stop_rule_blocked_claims_invalid",
+                f"blocked_claims must be: {', '.join(EXPECTED_BLOCKED_CLAIMS)}",
+            )
+        )
+    stop_rule_scope = payload.get("stop_rule_scope")
+    if not isinstance(stop_rule_scope, str) or "public-safe local stop rules" not in stop_rule_scope:
+        findings.append(
+            OperatorReadinessFinding(
+                "operator_stop_rule_scope_invalid",
+                "stop_rule_scope must preserve public-safe local stop rules",
+            )
+        )
+    next_action = payload.get("next_action")
+    if not isinstance(next_action, str) or "do not claim capacity" not in next_action:
+        findings.append(
+            OperatorReadinessFinding(
+                "operator_stop_rule_next_action_invalid",
+                "next_action must keep stop rules from promoting operator readiness",
             )
         )
     return findings
@@ -318,6 +434,64 @@ def validate_operator_readiness_surfaces(operator_readiness_surfaces: object) ->
     return findings
 
 
+def validate_stop_rules(stop_rules: object) -> list[OperatorReadinessFinding]:
+    """Return findings for operator stop-rule inventory drift."""
+
+    findings: list[OperatorReadinessFinding] = []
+    if not isinstance(stop_rules, list) or not all(isinstance(stop_rule, dict) for stop_rule in stop_rules):
+        return [
+            OperatorReadinessFinding(
+                "operator_stop_rules_invalid",
+                "stop_rules must be a list of objects",
+            )
+        ]
+    observed_stop_rules = tuple(
+        (stop_rule.get("stop_id"), stop_rule.get("stop_type"), stop_rule.get("state"))
+        for stop_rule in stop_rules
+    )
+    if observed_stop_rules != EXPECTED_STOP_RULES:
+        findings.append(
+            OperatorReadinessFinding(
+                "operator_stop_rule_inventory_invalid",
+                "operator stop-rule inventory does not match the Foundation Mode stop set",
+            )
+        )
+    stop_ids = [stop_rule.get("stop_id") for stop_rule in stop_rules]
+    if len(set(stop_ids)) != len(stop_ids):
+        findings.append(OperatorReadinessFinding("operator_stop_rule_duplicate", "stop ids must be unique"))
+    for stop_rule in stop_rules:
+        stop_id = str(stop_rule.get("stop_id", "<missing>"))
+        if set(stop_rule) != EXPECTED_STOP_RULE_KEYS:
+            findings.append(
+                OperatorReadinessFinding(
+                    "operator_stop_rule_keys_invalid",
+                    f"{stop_id} stop rule keys must be: {', '.join(sorted(EXPECTED_STOP_RULE_KEYS))}",
+                )
+            )
+        if stop_rule.get("state") != "AwaitingEvidence":
+            findings.append(
+                OperatorReadinessFinding(
+                    "operator_stop_rule_state_invalid",
+                    f"{stop_id} state must be AwaitingEvidence",
+                )
+            )
+        if stop_rule.get("evidence_ref") != "manual_preparation_pending":
+            findings.append(
+                OperatorReadinessFinding(
+                    "operator_stop_rule_evidence_invalid",
+                    f"{stop_id} evidence_ref must stay manual_preparation_pending in the committed packet",
+                )
+            )
+        if not isinstance(stop_rule.get("public_safe_note"), str) or not stop_rule["public_safe_note"].strip():
+            findings.append(
+                OperatorReadinessFinding(
+                    "operator_stop_rule_note_invalid",
+                    f"{stop_id} public_safe_note must be a non-empty string",
+                )
+            )
+    return findings
+
+
 def validate_forbidden_value_patterns(payload: dict[str, Any]) -> list[OperatorReadinessFinding]:
     """Return findings for private schedule, health, team, coverage, or authority-shaped values."""
 
@@ -353,14 +527,17 @@ def validate_forbidden_promotion_patterns(payload: dict[str, Any]) -> list[Opera
 def validate_foundation_operator_readiness_boundary(
     doc_path: Path = DEFAULT_DOC_PATH,
     packet_path: Path = DEFAULT_PACKET_PATH,
+    stop_rule_path: Path = DEFAULT_STOP_RULE_PATH,
 ) -> list[OperatorReadinessFinding]:
     """Validate the Foundation Mode operator-readiness boundary artifacts."""
 
     doc_text = load_text(doc_path, "operator-readiness boundary doc")
     packet_payload = load_json_object(packet_path, "operator-readiness witness packet")
+    stop_rule_payload = load_json_object(stop_rule_path, "operator stop-rule packet")
     return [
         *validate_doc_text(doc_text),
         *validate_packet(packet_payload),
+        *validate_stop_rule_packet(stop_rule_payload),
     ]
 
 
@@ -370,10 +547,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validate Foundation Mode operator-readiness boundary artifacts.")
     parser.add_argument("--doc", type=Path, default=DEFAULT_DOC_PATH)
     parser.add_argument("--packet", type=Path, default=DEFAULT_PACKET_PATH)
+    parser.add_argument("--stop-rules", type=Path, default=DEFAULT_STOP_RULE_PATH)
     args = parser.parse_args(argv)
 
     try:
-        findings = validate_foundation_operator_readiness_boundary(args.doc, args.packet)
+        findings = validate_foundation_operator_readiness_boundary(args.doc, args.packet, args.stop_rules)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"[FAIL] foundation_operator_readiness_load: {exc}", file=sys.stderr)
         print("STATUS: failed", file=sys.stderr)
@@ -386,6 +564,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     print("[PASS] foundation_operator_readiness_doc")
     print("[PASS] foundation_operator_readiness_witness")
+    print("[PASS] foundation_operator_stop_rules")
     print("STATUS: passed")
     return 0
 
