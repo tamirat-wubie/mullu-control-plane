@@ -181,3 +181,32 @@ def test_temporal_scheduler_runbook_separates_adjacent_temporal_boundaries() -> 
     assert "| `temporal_recurrence_window` |" in proof_matrix
     assert "temporal-resolution-receipt" in protocol_tests
     assert "temporal-recurrence-window-receipt" in protocol_tests
+
+
+def test_authority_directory_doc_does_not_defer_closed_mapping_helper_consolidation() -> None:
+    """Authority-directory docs must track the shared adapter mapping helpers."""
+    runbook = Path("docs/54_authority_directory_sync.md").read_text(encoding="utf-8")
+    adapter_paths = (
+        Path("scripts/scim_authority_directory_adapter.py"),
+        Path("scripts/github_teams_authority_directory_adapter.py"),
+        Path("scripts/workspace_groups_authority_directory_adapter.py"),
+        Path("scripts/saml_groups_authority_directory_adapter.py"),
+        Path("scripts/ldap_authority_directory_adapter.py"),
+    )
+    adapter_texts = {
+        adapter_path.as_posix(): adapter_path.read_text(encoding="utf-8")
+        for adapter_path in adapter_paths
+    }
+
+    assert "consolidate source adapters around shared mapping helpers" not in runbook
+    assert "Source-adapter consolidation around `scripts/authority_directory_mapping.py` is" in runbook
+    assert "closed for the bounded export adapters" in runbook
+    assert "live LDAP polling not implemented" in runbook
+    assert all("from scripts.authority_directory_mapping import" in text for text in adapter_texts.values())
+    assert set(adapter_texts) == {
+        "scripts/scim_authority_directory_adapter.py",
+        "scripts/github_teams_authority_directory_adapter.py",
+        "scripts/workspace_groups_authority_directory_adapter.py",
+        "scripts/saml_groups_authority_directory_adapter.py",
+        "scripts/ldap_authority_directory_adapter.py",
+    }
