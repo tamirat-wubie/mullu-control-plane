@@ -23,11 +23,15 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.validate_foundation_evidence_ledger_boundary import (  # noqa: E402
+    DEFAULT_INDEX_PATH,
     DEFAULT_PACKET_PATH,
     EXPECTED_ENTRIES,
+    EXPECTED_INDEX_ENTRIES,
+    EXPECTED_INDEX_ID,
     EXPECTED_WITNESS_ID,
     load_json_object,
     validate_foundation_evidence_ledger_boundary,
+    validate_index_packet,
     validate_packet,
 )
 
@@ -51,6 +55,20 @@ def test_evidence_ledger_witness_has_expected_identity_and_blockers() -> None:
     assert payload["patent_protection_claimed"] is False
     assert payload["customer_readiness_claimed"] is False
     assert payload["secret_evidence_recorded"] is False
+    assert payload["deployment_allowed"] is False
+
+
+def test_evidence_index_has_expected_identity_and_public_paths() -> None:
+    payload = load_json_object(DEFAULT_INDEX_PATH, "evidence index")
+
+    assert payload["index_id"] == EXPECTED_INDEX_ID
+    assert tuple(
+        (entry["entry_id"], entry["entry_type"], entry["artifact_ref"], entry["state"])
+        for entry in payload["evidence_index_entries"]
+    ) == EXPECTED_INDEX_ENTRIES
+    assert payload["evidence_promotion_allowed"] is False
+    assert payload["terminal_closure_claimed"] is False
+    assert payload["readiness_claimed"] is False
     assert payload["deployment_allowed"] is False
 
 
@@ -119,3 +137,45 @@ def test_witness_rejects_evidence_promotion_phrase() -> None:
 
     assert findings
     assert any(finding.rule_id == "evidence_ledger_forbidden_promotion_phrase" for finding in findings)
+
+
+def test_index_rejects_entry_state_promotion() -> None:
+    payload = load_json_object(DEFAULT_INDEX_PATH, "evidence index")
+    candidate = deepcopy(payload)
+    candidate["evidence_index_entries"][0]["state"] = "Ready"
+
+    findings = validate_index_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "evidence_index_entry_inventory_invalid" for finding in findings)
+    assert any(finding.rule_id == "evidence_index_entry_state_invalid" for finding in findings)
+
+
+def test_index_rejects_private_path_value() -> None:
+    payload = load_json_object(DEFAULT_INDEX_PATH, "evidence index")
+    candidate = deepcopy(payload)
+    candidate["evidence_index_entries"][0]["artifact_ref"] = "C:/Users/example/private-evidence.json"
+
+    findings = validate_index_packet(candidate)
+
+    assert findings
+    assert any(
+        finding.rule_id
+        in {
+            "evidence_index_entry_artifact_invalid",
+            "evidence_ledger_forbidden_private_value_pattern",
+        }
+        for finding in findings
+    )
+
+
+def test_index_rejects_duplicate_artifact_refs() -> None:
+    payload = load_json_object(DEFAULT_INDEX_PATH, "evidence index")
+    candidate = deepcopy(payload)
+    candidate["evidence_index_entries"][1]["artifact_ref"] = candidate["evidence_index_entries"][0]["artifact_ref"]
+
+    findings = validate_index_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "evidence_index_entry_inventory_invalid" for finding in findings)
+    assert any(finding.rule_id == "evidence_index_entry_artifact_duplicate" for finding in findings)

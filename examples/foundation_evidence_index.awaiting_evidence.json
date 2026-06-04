@@ -1,0 +1,87 @@
+{
+  "blocked_claims": [
+    "evidence promotion",
+    "terminal closure",
+    "readiness claim",
+    "legal clearance",
+    "patent protection",
+    "customer readiness",
+    "paid launch",
+    "secret evidence",
+    "external publication",
+    "deployment readiness"
+  ],
+  "customer_readiness_claimed": false,
+  "deployment_allowed": false,
+  "evidence_index_entries": [
+    {
+      "artifact_ref": "docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md",
+      "entry_id": "foundation_evidence_ledger_boundary_doc",
+      "entry_type": "boundary_doc",
+      "public_safe_note": "Boundary document path only; it does not prove terminal closure, readiness, legal clearance, patent protection, customer readiness, paid launch, or deployment readiness.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "artifact_ref": "examples/foundation_evidence_ledger_witness.awaiting_evidence.json",
+      "entry_id": "foundation_evidence_ledger_witness_packet",
+      "entry_type": "witness_packet",
+      "public_safe_note": "Witness packet path only; it contains public-safe preparation notes and no secret, private, customer, reviewer, account, provider, or live endpoint evidence.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "artifact_ref": "scripts/validate_foundation_evidence_ledger_boundary.py",
+      "entry_id": "foundation_evidence_ledger_validator",
+      "entry_type": "validator",
+      "public_safe_note": "Validator path only; local validation does not prove legal clearance, patent protection, customer readiness, paid launch, terminal closure, or deployment readiness.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "artifact_ref": "tests/test_validate_foundation_evidence_ledger_boundary.py",
+      "entry_id": "foundation_evidence_ledger_test",
+      "entry_type": "test",
+      "public_safe_note": "Focused test path only; targeted tests do not prove full product, customer, public-runtime, legal, commercial, or deployment readiness.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "artifact_ref": "scripts/validate_workspace_governance_preflight_receipt.py",
+      "entry_id": "governance_preflight_receipt_validator",
+      "entry_type": "receipt_validator",
+      "public_safe_note": "Receipt-validator path only; saved receipts remain local evidence and do not authorize terminal closure, public claims, paid launch, or deployment.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "artifact_ref": "examples/foundation_source_control_boundary.awaiting_commit.json",
+      "entry_id": "source_control_packet",
+      "entry_type": "source_control_packet",
+      "public_safe_note": "Source-control packet path only; it does not authorize staging, commit, push, pull request, publication, release, or deployment.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "artifact_ref": "docs/CURRENT_READINESS_SNAPSHOT.md",
+      "entry_id": "readiness_snapshot",
+      "entry_type": "readiness_snapshot",
+      "public_safe_note": "Readiness snapshot path only; it preserves local status without promoting legal, customer, paid-use, public-runtime, or deployment readiness.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "artifact_ref": "docs/START_HERE.md",
+      "entry_id": "public_copy_routing_index",
+      "entry_type": "public_copy_routing",
+      "public_safe_note": "Public-copy routing path only; it does not publish externally, invite access, open a waitlist, start a beta, start a pilot, or deploy.",
+      "state": "AwaitingEvidence"
+    }
+  ],
+  "evidence_promotion_allowed": false,
+  "external_publication_allowed": false,
+  "index_id": "foundation_evidence_index.awaiting_evidence.v1",
+  "legal_clearance_claimed": false,
+  "next_action": "keep the evidence index as a local navigation packet; do not promote evidence, claim terminal closure, claim readiness, claim legal clearance, claim patent protection, claim customer readiness, launch paid use, record secret evidence, publish externally, or deploy",
+  "paid_launch_allowed": false,
+  "patent_protection_claimed": false,
+  "readiness_claimed": false,
+  "schema_version": 1,
+  "secret_evidence_recorded": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "terminal_closure_claimed": false
+}
