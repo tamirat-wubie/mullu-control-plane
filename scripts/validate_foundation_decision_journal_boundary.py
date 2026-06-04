@@ -11,7 +11,8 @@ option set, constraint check, evidence references, risk stop rule, review
 cadence, next-action selection, private-value exclusion, and external-commitment
 blocking.
 Dependencies: docs/FOUNDATION_DECISION_JOURNAL_BOUNDARY.md and
-examples/foundation_decision_journal_witness.awaiting_evidence.json.
+examples/foundation_decision_journal_witness.awaiting_evidence.json plus the
+review-cadence packet.
 Invariants:
   - Validation is read-only.
   - The witness records decision-journal preparation only.
@@ -35,8 +36,10 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DOC_PATH = REPO_ROOT / "docs" / "FOUNDATION_DECISION_JOURNAL_BOUNDARY.md"
 DEFAULT_PACKET_PATH = REPO_ROOT / "examples" / "foundation_decision_journal_witness.awaiting_evidence.json"
+DEFAULT_REVIEW_CADENCE_PATH = REPO_ROOT / "examples" / "foundation_decision_review_cadence.awaiting_evidence.json"
 
 EXPECTED_WITNESS_ID = "foundation_decision_journal_witness.awaiting_evidence.v1"
+EXPECTED_REVIEW_CADENCE_ID = "foundation_decision_review_cadence.awaiting_evidence.v1"
 EXPECTED_BLOCKED_CLAIMS = (
     "decision execution",
     "irreversible action",
@@ -61,6 +64,14 @@ EXPECTED_SURFACES = (
     ("review_cadence", "local_draft", "AwaitingEvidence"),
     ("next_action_selection", "local_draft", "AwaitingEvidence"),
 )
+EXPECTED_CADENCE_ITEMS = (
+    ("context_recheck", "local_draft", "AwaitingEvidence"),
+    ("assumption_recheck", "local_draft", "AwaitingEvidence"),
+    ("constraint_recheck", "local_draft", "AwaitingEvidence"),
+    ("evidence_recheck", "local_draft", "AwaitingEvidence"),
+    ("stop_rule_recheck", "local_draft", "AwaitingEvidence"),
+    ("next_action_recheck", "local_draft", "AwaitingEvidence"),
+)
 EXPECTED_ROOT_KEYS = {
     "authority_delegation_claimed",
     "blocked_claims",
@@ -82,6 +93,28 @@ EXPECTED_ROOT_KEYS = {
     "status",
     "witness_id",
 }
+EXPECTED_REVIEW_CADENCE_ROOT_KEYS = {
+    "authority_delegation_claimed",
+    "blocked_claims",
+    "cadence_items",
+    "company_action_allowed",
+    "customer_commitment_claimed",
+    "deadline_promise_claimed",
+    "decision_execution_allowed",
+    "deployment_allowed",
+    "external_publication_allowed",
+    "irreversible_action_allowed",
+    "legal_authority_claimed",
+    "next_action",
+    "patent_filing_allowed",
+    "review_cadence_id",
+    "review_cadence_scope",
+    "roadmap_commitment_claimed",
+    "schema_version",
+    "solver_outcome",
+    "spending_allowed",
+    "status",
+}
 EXPECTED_SURFACE_KEYS = {
     "evidence_ref",
     "public_safe_note",
@@ -89,12 +122,21 @@ EXPECTED_SURFACE_KEYS = {
     "surface_id",
     "surface_type",
 }
+EXPECTED_CADENCE_ITEM_KEYS = {
+    "cadence_id",
+    "cadence_type",
+    "evidence_ref",
+    "public_safe_note",
+    "state",
+}
 REQUIRED_DOC_PHRASES = (
     "Foundation Decision Journal Boundary",
     "Witness packet: [`../examples/foundation_decision_journal_witness.awaiting_evidence.json`]",
+    "Review-cadence packet: [`../examples/foundation_decision_review_cadence.awaiting_evidence.json`]",
     "Rule: Decision-journal preparation is a local planning boundary, not a decision-execution, commitment, authority, legal, company, patent, spending, publication, or deployment certificate.",
     "No decision execution, irreversible action, roadmap commitment, deadline",
     "decision_journal_boundary_state=AwaitingEvidence",
+    "decision_review_cadence_state=AwaitingEvidence",
     "decision_execution_allowed=false",
     "irreversible_action_allowed=false",
     "roadmap_commitment_claimed=false",
@@ -187,6 +229,17 @@ def validate_packet(payload: dict[str, Any]) -> list[DecisionJournalFinding]:
     return findings
 
 
+def validate_review_cadence_packet(payload: dict[str, Any]) -> list[DecisionJournalFinding]:
+    """Return findings for decision review-cadence packet drift."""
+
+    findings: list[DecisionJournalFinding] = []
+    findings.extend(validate_review_cadence_root_contract(payload))
+    findings.extend(validate_cadence_items(payload.get("cadence_items")))
+    findings.extend(validate_forbidden_value_patterns(payload))
+    findings.extend(validate_forbidden_promotion_patterns(payload))
+    return findings
+
+
 def validate_root_contract(payload: dict[str, Any]) -> list[DecisionJournalFinding]:
     """Return findings for root-level decision-journal witness drift."""
 
@@ -237,6 +290,69 @@ def validate_root_contract(payload: dict[str, Any]) -> list[DecisionJournalFindi
             DecisionJournalFinding(
                 "decision_journal_next_action_invalid",
                 "next_action must preserve the decision-journal boundary",
+            )
+        )
+    return findings
+
+
+def validate_review_cadence_root_contract(payload: dict[str, Any]) -> list[DecisionJournalFinding]:
+    """Return findings for root-level review-cadence packet drift."""
+
+    findings: list[DecisionJournalFinding] = []
+    if set(payload) != EXPECTED_REVIEW_CADENCE_ROOT_KEYS:
+        findings.append(
+            DecisionJournalFinding(
+                "decision_review_cadence_root_keys_invalid",
+                f"root keys must be: {', '.join(sorted(EXPECTED_REVIEW_CADENCE_ROOT_KEYS))}",
+            )
+        )
+    expected_values = {
+        "review_cadence_id": EXPECTED_REVIEW_CADENCE_ID,
+        "schema_version": 1,
+        "status": "AwaitingEvidence",
+        "solver_outcome": "AwaitingEvidence",
+        "decision_execution_allowed": False,
+        "irreversible_action_allowed": False,
+        "roadmap_commitment_claimed": False,
+        "deadline_promise_claimed": False,
+        "authority_delegation_claimed": False,
+        "customer_commitment_claimed": False,
+        "legal_authority_claimed": False,
+        "company_action_allowed": False,
+        "patent_filing_allowed": False,
+        "spending_allowed": False,
+        "external_publication_allowed": False,
+        "deployment_allowed": False,
+    }
+    for key, expected_value in expected_values.items():
+        if payload.get(key) != expected_value:
+            findings.append(
+                DecisionJournalFinding(
+                    "decision_review_cadence_root_value_invalid",
+                    f"{key} must be {expected_value!r}",
+                )
+            )
+    if tuple(payload.get("blocked_claims") or ()) != EXPECTED_BLOCKED_CLAIMS:
+        findings.append(
+            DecisionJournalFinding(
+                "decision_review_cadence_blocked_claims_invalid",
+                f"blocked_claims must be: {', '.join(EXPECTED_BLOCKED_CLAIMS)}",
+            )
+        )
+    review_cadence_scope = payload.get("review_cadence_scope")
+    if not isinstance(review_cadence_scope, str) or "public-safe local review rhythm" not in review_cadence_scope:
+        findings.append(
+            DecisionJournalFinding(
+                "decision_review_cadence_scope_invalid",
+                "review_cadence_scope must preserve public-safe local review rhythm",
+            )
+        )
+    next_action = payload.get("next_action")
+    if not isinstance(next_action, str) or "do not execute decisions" not in next_action:
+        findings.append(
+            DecisionJournalFinding(
+                "decision_review_cadence_next_action_invalid",
+                "next_action must keep review cadence from promoting commitments",
             )
         )
     return findings
@@ -295,6 +411,59 @@ def validate_decision_surfaces(decision_surfaces: object) -> list[DecisionJourna
     return findings
 
 
+def validate_cadence_items(cadence_items: object) -> list[DecisionJournalFinding]:
+    """Return findings for review-cadence item inventory drift."""
+
+    findings: list[DecisionJournalFinding] = []
+    if not isinstance(cadence_items, list) or not all(isinstance(item, dict) for item in cadence_items):
+        return [DecisionJournalFinding("decision_review_cadence_items_invalid", "cadence_items must be a list of objects")]
+    observed_items = tuple(
+        (item.get("cadence_id"), item.get("cadence_type"), item.get("state"))
+        for item in cadence_items
+    )
+    if observed_items != EXPECTED_CADENCE_ITEMS:
+        findings.append(
+            DecisionJournalFinding(
+                "decision_review_cadence_inventory_invalid",
+                "review cadence inventory does not match the Foundation Mode cadence set",
+            )
+        )
+    cadence_ids = [item.get("cadence_id") for item in cadence_items]
+    if len(set(cadence_ids)) != len(cadence_ids):
+        findings.append(DecisionJournalFinding("decision_review_cadence_duplicate", "cadence ids must be unique"))
+    for item in cadence_items:
+        cadence_id = str(item.get("cadence_id", "<missing>"))
+        if set(item) != EXPECTED_CADENCE_ITEM_KEYS:
+            findings.append(
+                DecisionJournalFinding(
+                    "decision_review_cadence_item_keys_invalid",
+                    f"{cadence_id} cadence item keys must be: {', '.join(sorted(EXPECTED_CADENCE_ITEM_KEYS))}",
+                )
+            )
+        if item.get("state") != "AwaitingEvidence":
+            findings.append(
+                DecisionJournalFinding(
+                    "decision_review_cadence_item_state_invalid",
+                    f"{cadence_id} state must be AwaitingEvidence",
+                )
+            )
+        if item.get("evidence_ref") != "manual_preparation_pending":
+            findings.append(
+                DecisionJournalFinding(
+                    "decision_review_cadence_item_evidence_invalid",
+                    f"{cadence_id} evidence_ref must stay manual_preparation_pending in the committed packet",
+                )
+            )
+        if not isinstance(item.get("public_safe_note"), str) or not item["public_safe_note"].strip():
+            findings.append(
+                DecisionJournalFinding(
+                    "decision_review_cadence_item_note_invalid",
+                    f"{cadence_id} public_safe_note must be a non-empty string",
+                )
+            )
+    return findings
+
+
 def validate_forbidden_value_patterns(payload: dict[str, Any]) -> list[DecisionJournalFinding]:
     """Return findings for private, schedule, customer, provider, reviewer, or secret-shaped values."""
 
@@ -330,14 +499,17 @@ def validate_forbidden_promotion_patterns(payload: dict[str, Any]) -> list[Decis
 def validate_foundation_decision_journal_boundary(
     doc_path: Path = DEFAULT_DOC_PATH,
     packet_path: Path = DEFAULT_PACKET_PATH,
+    review_cadence_path: Path = DEFAULT_REVIEW_CADENCE_PATH,
 ) -> list[DecisionJournalFinding]:
     """Validate the Foundation Mode decision-journal boundary artifacts."""
 
     doc_text = load_text(doc_path, "decision-journal boundary doc")
     packet_payload = load_json_object(packet_path, "decision-journal witness packet")
+    review_cadence_payload = load_json_object(review_cadence_path, "decision review-cadence packet")
     return [
         *validate_doc_text(doc_text),
         *validate_packet(packet_payload),
+        *validate_review_cadence_packet(review_cadence_payload),
     ]
 
 
@@ -347,10 +519,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validate Foundation Mode decision-journal boundary artifacts.")
     parser.add_argument("--doc", type=Path, default=DEFAULT_DOC_PATH)
     parser.add_argument("--packet", type=Path, default=DEFAULT_PACKET_PATH)
+    parser.add_argument("--review-cadence", type=Path, default=DEFAULT_REVIEW_CADENCE_PATH)
     args = parser.parse_args(argv)
 
     try:
-        findings = validate_foundation_decision_journal_boundary(args.doc, args.packet)
+        findings = validate_foundation_decision_journal_boundary(args.doc, args.packet, args.review_cadence)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"[FAIL] foundation_decision_journal_load: {exc}", file=sys.stderr)
         print("STATUS: failed", file=sys.stderr)
@@ -363,6 +536,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     print("[PASS] foundation_decision_journal_doc")
     print("[PASS] foundation_decision_journal_witness")
+    print("[PASS] foundation_decision_review_cadence")
     print("STATUS: passed")
     return 0
 

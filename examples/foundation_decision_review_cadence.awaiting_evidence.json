@@ -1,0 +1,78 @@
+{
+  "authority_delegation_claimed": false,
+  "blocked_claims": [
+    "decision execution",
+    "irreversible action",
+    "roadmap commitment",
+    "deadline promise",
+    "authority delegation",
+    "customer commitment",
+    "legal authority",
+    "company action",
+    "patent filing",
+    "spending",
+    "external publication",
+    "deployment readiness"
+  ],
+  "cadence_items": [
+    {
+      "cadence_id": "context_recheck",
+      "cadence_type": "local_draft",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Re-read the local decision context before choosing a next action; no decision execution is authorized.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "cadence_id": "assumption_recheck",
+      "cadence_type": "local_draft",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Separate assumptions from evidence before continuing; no assumption becomes proof.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "cadence_id": "constraint_recheck",
+      "cadence_type": "local_draft",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Re-check deployment, money, legal, customer, publication, secret, and external-boundary blockers.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "cadence_id": "evidence_recheck",
+      "cadence_type": "local_draft",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Point only to public-safe local artifacts; no private paths, accounts, customers, providers, reviewers, or secrets are recorded.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "cadence_id": "stop_rule_recheck",
+      "cadence_type": "local_draft",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pause if the next action is broad, irreversible, external, money-related, legal, customer-facing, publication-facing, or deployment-facing.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "cadence_id": "next_action_recheck",
+      "cadence_type": "local_draft",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Choose one reversible local next action only; no roadmap, delivery date, support rhythm, or external commitment is promised.",
+      "state": "AwaitingEvidence"
+    }
+  ],
+  "company_action_allowed": false,
+  "customer_commitment_claimed": false,
+  "deadline_promise_claimed": false,
+  "decision_execution_allowed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "irreversible_action_allowed": false,
+  "legal_authority_claimed": false,
+  "next_action": "continue non-binding local review cadence; do not execute decisions, authorize irreversible action, commit to a roadmap, promise deadlines, delegate authority, make customer commitments, claim legal authority, form a company, file a patent, spend money, publish externally, or deploy",
+  "patent_filing_allowed": false,
+  "review_cadence_id": "foundation_decision_review_cadence.awaiting_evidence.v1",
+  "review_cadence_scope": "public-safe local review rhythm for rechecking context, assumptions, constraints, evidence references, stop rules, and one reversible next action without commitments",
+  "roadmap_commitment_claimed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "spending_allowed": false,
+  "status": "AwaitingEvidence"
+}

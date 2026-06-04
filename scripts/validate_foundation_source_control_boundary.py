@@ -365,6 +365,13 @@ def validate_change_families(change_families: object) -> list[SourceControlFindi
                     f"{family_id} required_evidence must contain public repository paths only",
                 )
             )
+        elif len(set(required_evidence)) != len(required_evidence):
+            findings.append(
+                SourceControlFinding(
+                    "source_control_family_evidence_duplicate",
+                    f"{family_id} required_evidence paths must be unique",
+                )
+            )
         if not isinstance(family.get("summary"), str) or not family["summary"].strip():
             findings.append(
                 SourceControlFinding(

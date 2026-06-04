@@ -1,7 +1,7 @@
 ﻿<!--
 Purpose: define the Foundation Mode decision-journal boundary before any decision-execution, irreversible-action, roadmap-commitment, deadline-promise, authority-delegation, customer-commitment, legal-authority, company-action, patent-filing, spending, external-publication, or deployment claim.
 Governance scope: decision context, assumption snapshot, option set, constraint check, evidence references, risk stop rule, review cadence, next-action selection, private-value exclusion, and external-commitment blocking.
-Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md, examples/foundation_decision_journal_witness.awaiting_evidence.json, scripts/validate_foundation_decision_journal_boundary.py.
+Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md, examples/foundation_decision_journal_witness.awaiting_evidence.json, examples/foundation_decision_review_cadence.awaiting_evidence.json, scripts/validate_foundation_decision_journal_boundary.py.
 Invariants: no decision-execution claim, no irreversible-action claim, no roadmap-commitment claim, no deadline-promise claim, no authority-delegation claim, no customer-commitment claim, no legal-authority claim, no company-action claim, no patent-filing claim, no spending claim, no external-publication claim, and no deployment claim.
 -->
 
@@ -18,6 +18,8 @@ Invariants: no decision-execution claim, no irreversible-action claim, no roadma
 > file a patent, spend money, publish externally, or deploy.
 
 Witness packet: [`../examples/foundation_decision_journal_witness.awaiting_evidence.json`](../examples/foundation_decision_journal_witness.awaiting_evidence.json)
+
+Review-cadence packet: [`../examples/foundation_decision_review_cadence.awaiting_evidence.json`](../examples/foundation_decision_review_cadence.awaiting_evidence.json)
 
 Rule: Decision-journal preparation is a local planning boundary, not a decision-execution, commitment, authority, legal, company, patent, spending, publication, or deployment certificate.
 
@@ -47,6 +49,7 @@ This boundary keeps decision journaling narrow:
 
 ```text
 decision_journal_boundary_state=AwaitingEvidence
+decision_review_cadence_state=AwaitingEvidence
 decision_execution_allowed=false
 irreversible_action_allowed=false
 roadmap_commitment_claimed=false
@@ -86,6 +89,17 @@ deployment_allowed=false
 5. Treat every next action as reversible unless the user explicitly requests a
    governed irreversible action and the required evidence exists.
 
+## Sample Review Cadence
+
+| Cadence item | Re-check locally | Blocked now |
+| --- | --- | --- |
+| Context recheck | Re-read the local decision context before choosing a next action. | Do not execute the decision. |
+| Assumption recheck | Separate assumptions from evidence. | Do not treat assumptions as proof. |
+| Constraint recheck | Re-check deployment, money, legal, customer, publication, secret, and external-boundary blockers. | Do not bypass blockers. |
+| Evidence recheck | Point only to public-safe local artifacts. | Do not record private paths, accounts, customers, providers, reviewers, or secrets. |
+| Stop-rule recheck | Pause when the next action is broad, irreversible, external, money-related, legal, customer-facing, publication-facing, or deployment-facing. | Do not authorize irreversible action. |
+| Next-action recheck | Choose one reversible local next action. | Do not promise a roadmap, delivery date, support rhythm, or external commitment. |
+
 ## Validation
 
 Run:
@@ -101,9 +115,10 @@ The validator checks that the decision-journal witness:
    promise, authority delegation, customer commitment, legal authority, company
    action, patent filing, spending, external publication, and deployment
    blocked;
-3. rejects URL, email, private path, private schedule, provider, account,
+3. validates the review-cadence packet as `AwaitingEvidence`;
+4. rejects URL, email, private path, private schedule, provider, account,
    customer, reviewer, deadline, or secret-shaped values; and
-4. rejects decision-promotion phrases.
+5. rejects decision-promotion phrases.
 
 ## Go Deeper / Where To Go Next
 
