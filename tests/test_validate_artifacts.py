@@ -119,3 +119,15 @@ def test_mcoi_contract_runtime_fixture_validator_bounds_enum_errors(tmp_path: Pa
     assert errors == [f"{invalid_fixture_path.as_posix()}: field 'decision' has invalid enum value"]
     assert "secret-invalid-decision" not in errors[0]
     assert "AccessDecision" not in errors[0]
+
+
+def test_operator_guide_does_not_regress_capability_plan_bundle_wiring() -> None:
+    """Operator docs must not contradict the witnessed capability-plan closure route."""
+    operator_guide = Path("OPERATOR_GUIDE_v0.1.md").read_text(encoding="utf-8")
+    mcp_manifest_doc = Path("docs/55_mcp_capability_manifest.md").read_text(encoding="utf-8")
+
+    assert "capability plan evidence bundle export is not wired" not in operator_guide
+    assert "/capability-plans/{plan_id}/closure" in operator_guide
+    assert "capability_plan_bundle_canary_passed=false" in operator_guide
+    assert "plan_evidence_bundle" in operator_guide
+    assert "Runtime conformance did not witness a plan evidence bundle" in mcp_manifest_doc

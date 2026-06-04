@@ -291,7 +291,7 @@ as closed.
 | `gateway DNS target binding validation valid=false` | DNS target, record type, or provider is missing | Bind `MULLU_GATEWAY_DNS_TARGET`, `MULLU_GATEWAY_DNS_RECORD_TYPE`, and `MULLU_DNS_PROVIDER`, then rerun target binding validation with `--require-ready` |
 | `gateway DNS resolution validation valid=false` | DNS receipt is unresolved or lacks address evidence | Publish DNS for the gateway host, then rerun DNS receipt collection and `validate_gateway_dns_resolution_receipt.py --require-resolved` |
 | `mcp_manifest_configured=false` in read model | Gateway was not started with `MULLU_MCP_CAPABILITY_MANIFEST_PATH` | Set the environment variable and restart |
-| `capability_plan_bundle_canary_passed=false` | Runtime conformance cannot export a plan evidence bundle | Keep deployment blocked until `/capability-plans/{plan_id}/closure` returns `plan_evidence_bundle` |
+| `capability_plan_bundle_canary_passed=false` | Runtime conformance did not witness a plan evidence bundle | Keep deployment blocked until `/capability-plans/{plan_id}/closure` returns the terminal certificate and `plan_evidence_bundle`, then recollect conformance |
 
 STATUS:
   Completeness: 100%
