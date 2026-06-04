@@ -125,15 +125,23 @@ CASE_IDS = [f"{c.fracture}-{c.release}" for c in CASES]
 
 
 def test_legacy_fracture_headers_do_not_regress_to_stale_postgres_pending_text():
-    """F11/F4 test headers must not contradict shipped Postgres doctrine."""
+    """F11/F4 docs must not contradict shipped Postgres doctrine."""
     repo_root = Path(__file__).resolve().parents[2]
     stale_claims = (
         "PostgresRateLimitStore: " + "not implemented",
         "PostgresAuditStore: " + "not implemented",
+        "PostgresRateLimitStore.try_consume is still " + "pending",
+        "PostgresRateLimitStore does not yet override " + "try_consume",
+        "PostgresAuditStore.try_append is the next " + "PR",
+        "PostgresAuditStore does " + "**not** yet override try_append",
+        "per-identity buckets. " + "Next PR",
     )
     files = (
         repo_root / "mcoi" / "tests" / "test_v4_29_atomic_rate_limit.py",
         repo_root / "mcoi" / "tests" / "test_v4_31_atomic_audit_append.py",
+        repo_root / "RELEASE_NOTES_v4.29.0.md",
+        repo_root / "RELEASE_NOTES_v4.31.0.md",
+        repo_root / "RELEASE_NOTES_v4.34.0.md",
     )
 
     for path in files:

@@ -114,10 +114,11 @@ both levels or for neither.
 ### Cross-replica behavior
 
 In-memory `try_consume` is single-process atomic for **both** bucket
-levels. `PostgresRateLimitStore.try_consume` is still pending (named
-in v4.29 release notes; same SQL pattern); when it lands, both
-tenant and identity buckets gain cross-replica atomic enforcement
-automatically — no further dispatcher changes needed.
+levels. Historical v4.34 release-state kept
+`PostgresRateLimitStore.try_consume` deferred from v4.29. Current main
+follow-up: the Postgres store now overrides `try_consume`, so both
+tenant and identity buckets share the cross-replica atomic path with
+no further dispatcher changes.
 
 ---
 
@@ -174,11 +175,12 @@ same single-process atomic guarantee tenant buckets got in v4.29.
 
 ### Postgres deployments
 
-`PostgresRateLimitStore` does not yet override `try_consume` (still
-deferred from v4.29). Both tenant and identity buckets enforce via
-the in-memory `TokenBucket` path until that PR lands. Operator-
-visible behavior in v4.34 is unchanged for Postgres-backed
-deployments.
+Historical v4.34 release-state: `PostgresRateLimitStore` did not
+override `try_consume` and both tenant and identity buckets enforced
+via the in-memory `TokenBucket` path for Postgres-backed deployments.
+Current main follow-up: `PostgresRateLimitStore.try_consume` is wired
+for cross-replica enforcement. Operator-visible behavior in v4.34 was
+unchanged for Postgres-backed deployments.
 
 ### Custom rate limit stores
 
@@ -194,9 +196,11 @@ arbitrary strings — `"tenant:endpoint"` vs `"tenant:identity:endpoint"`).
 ## What v4.34.0 still does NOT include
 
 - **F11 (Postgres path)** — atomic SQL UPDATE for cross-replica
-  rate limit enforcement. Same shape as v4.27 BudgetStore, deferred.
+  rate limit enforcement. Historical v4.34 non-closure; closed on
+  current main.
 - **F4 (Postgres path)** — atomic SQL for cross-replica audit
-  sequence allocation. Pending.
+  sequence allocation. Historical v4.34 non-closure; closed on
+  current main.
 - **F1** routers without `/api/` prefix bypass middleware
 - **F8** MAF substrate disconnect
 - **F12** per-store mutex throughput ceiling (different shape;
