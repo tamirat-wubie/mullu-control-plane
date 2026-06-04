@@ -16,9 +16,9 @@ store. Detection uses the same MRO override-sentinel as v4.27
 overriding the method, nothing more.
 
   - InMemoryRateLimitStore: ``threading.Lock``-guarded bucket state.
-  - PostgresRateLimitStore: not implemented in v4.29 (own PR; needs
-    schema columns for ``tokens``/``last_refill`` and an atomic
-    ``UPDATE … WHERE tokens >= $1 RETURNING …``).
+  - PostgresRateLimitStore: shipped follow-up path for cross-replica
+    enforcement. The doctrine meta-tests verify it overrides the same
+    ``try_consume`` primitive as the in-memory store.
 
 These tests exercise the in-memory atomic path under thread
 concurrency and verify the override-detection dispatch.

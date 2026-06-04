@@ -22,9 +22,9 @@ overriding the method, nothing more.
 
   - InMemoryAuditStore: ``threading.Lock``-guarded sequence + chain
     head. Single-process atomic.
-  - PostgresAuditStore: not implemented in v4.31 (own PR; needs a
-    SERIAL/identity ``sequence`` column or a ``FOR UPDATE`` lock on
-    the latest row to compute ``previous_hash`` server-side).
+  - PostgresAuditStore: shipped follow-up path for cross-replica chain
+    linkage. The doctrine meta-tests verify it overrides the same
+    ``try_append`` primitive as the in-memory store.
 
 These tests exercise the in-memory atomic path under thread
 concurrency simulating multiple workers, plus dispatch and
