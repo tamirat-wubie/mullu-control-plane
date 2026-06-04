@@ -25,6 +25,7 @@ from scripts.proof_route_gap_triage import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+DOC_PATH = REPO_ROOT / "docs" / "70_proof_route_gap_triage.md"
 
 
 def test_gap_triage_report_preserves_canonical_unclassified_routes() -> None:
@@ -46,6 +47,19 @@ def test_gap_triage_report_preserves_canonical_unclassified_routes() -> None:
             family["route_family"],
         ),
     )
+
+
+def test_closed_gap_triage_document_matches_canonical_report() -> None:
+    matrix = json.loads(CANONICAL_OUTPUT.read_text(encoding="utf-8"))
+    report = build_gap_triage_report(matrix, discover_route_declarations())
+    document = DOC_PATH.read_text(encoding="utf-8")
+
+    assert report["total_unclassified_route_count"] == 0
+    assert report["ranked_families"] == []
+    assert report["open_issue"] == "none"
+    assert "Open issues: none" in document
+    assert "unclassified route families still require named proof surfaces" not in document
+    assert "closed report/documentation parity" in document
 
 
 def test_unclassified_routes_grouped_by_family() -> None:
