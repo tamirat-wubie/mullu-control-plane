@@ -405,6 +405,7 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     browser_record = records["browser.submit"]
     extract_record = records["document.extract_text"]
     pdf_record = records["document.generate_pdf"]
+    phone_terminate_record = records["phone.call.terminate"]
     spreadsheet_record = records["spreadsheet.generate"]
     voice_record = records["voice.intent_classification"]
     voice_confirm_record = records["voice.intent_confirm"]
@@ -471,6 +472,16 @@ def test_default_read_model_projects_governed_capability_records() -> None:
     assert pdf_record["risk_level"] == "medium"
     assert pdf_record["world_mutating"] is True
     assert pdf_record["rollback_or_compensation_required"] is True
+    assert phone_terminate_record["risk_level"] == "high"
+    assert phone_terminate_record["world_mutating"] is True
+    assert phone_terminate_record["requires_approval"] is True
+    assert phone_terminate_record["requires_sandbox"] is True
+    assert phone_terminate_record["allowed_tools"] == ["phone_worker.call_terminate"]
+    assert phone_terminate_record["forbidden_effects"] == [
+        "phone_call_terminated_without_approval",
+        "external_phone_call_placed",
+        "credential_scope_exceeded",
+    ]
     assert spreadsheet_record["capability_id"] == "spreadsheet.generate"
     assert spreadsheet_record["allowed_tools"] == ["document_worker.spreadsheet_generate"]
     assert voice_record["risk_level"] == "medium"

@@ -91,7 +91,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_community_network_no_outreach_rehearsal_boundary",
         "protocol_manifest",
     ]
-    assert names[69:77] == [
+    assert names[69:79] == [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
         "workspace_governance_witness_contract",
@@ -99,10 +99,14 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "workspace_governance_inventory_report_contract",
         "workspace_governance_integrity_report",
         "workspace_governance_integrity_report_contract",
+        "governed_code_change_loop_sandbox_probe_example",
+        "governed_code_change_loop_sandbox_readiness_runbook",
         "universal_action_orchestration_contract",
     ]
-    assert len(names) == 85
-    assert names[-9:] == [
+    assert len(names) == 87
+    assert names[-11:] == [
+        "governed_code_change_loop_sandbox_probe_example",
+        "governed_code_change_loop_sandbox_readiness_runbook",
         "universal_action_orchestration_contract",
         "universal_action_orchestration_validation_receipt_contract",
         "universal_action_orchestration_validation_receipt_example",
@@ -317,6 +321,14 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["workspace_governance_integrity_report_contract"][1:] == (
         "scripts/validate_workspace_governance_integrity_report_contract.py",
+    )
+    assert args_by_name["governed_code_change_loop_sandbox_probe_example"][1:] == (
+        "scripts/validate_governed_code_change_loop_sandbox_probe.py",
+        "--probe",
+        "docs/governed-code-change-loop-sandbox-probe-example.json",
+    )
+    assert args_by_name["governed_code_change_loop_sandbox_readiness_runbook"][1:] == (
+        "scripts/validate_governed_code_change_loop_sandbox_readiness_runbook.py",
     )
     assert args_by_name["sdlc_release_readiness_validation"][1:] == (
         "scripts/validate_sdlc_release_readiness.py",

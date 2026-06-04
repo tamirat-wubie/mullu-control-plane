@@ -178,17 +178,17 @@
       "output_schema_ref": "schemas/phone/call_terminate.output.schema.json",
       "effect_model": {
         "expected_effects": ["phone_call_terminated"],
-        "forbidden_effects": ["external_phone_call_placed", "credential_scope_exceeded"],
+        "forbidden_effects": ["phone_call_terminated_without_approval", "external_phone_call_placed", "credential_scope_exceeded"],
         "reconciliation_required": true
       },
       "evidence_model": {
-        "required_evidence": ["connector_id", "call_id", "provider_receipt"],
+        "required_evidence": ["connector_id", "call_id", "approval_id", "provider_receipt"],
         "terminal_certificate_required": true
       },
       "authority_policy": {
         "required_roles": ["phone_operator"],
-        "approval_chain": [],
-        "separation_of_duty": false
+        "approval_chain": ["platform_approver"],
+        "separation_of_duty": true
       },
       "isolation_profile": {
         "execution_plane": "phone_worker",
@@ -212,13 +212,13 @@
       "certification_status": "certified",
       "metadata": {
         "display_name": "Terminate active phone call",
-        "risk_tier": "medium"
+        "risk_tier": "high"
       },
       "extensions": {
         "governed_record": {
           "read_only": false,
           "world_mutating": true,
-          "requires_approval": false,
+          "requires_approval": true,
           "requires_sandbox": true,
           "allowed_roles": ["phone_operator"],
           "allowed_tools": ["phone_worker.call_terminate"],

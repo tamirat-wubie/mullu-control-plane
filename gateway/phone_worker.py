@@ -2,14 +2,15 @@
 
 Purpose: host signed phone call operations behind approval, connector scope,
     and receipt boundaries.
-Governance scope: connector allowlisting, place/transfer approval, raw callee
-    redaction, adapter isolation, transcript redaction, and receipt emission.
+Governance scope: connector allowlisting, place/transfer/terminate approval,
+    raw callee redaction, adapter isolation, transcript redaction, and receipt
+    emission.
 Dependencies: FastAPI, gateway canonical hashing, and an injected connector
     adapter.
 Invariants:
   - Unsigned requests are rejected before adapter invocation.
   - Connector IDs must be allowlisted before execution.
-  - Outbound place and transfer actions require approval.
+  - Outbound place, transfer, and terminate actions require approval.
   - Receipts hash callees and transcripts instead of exposing raw values.
   - The worker delegates effects only to the injected adapter.
 """
@@ -54,6 +55,7 @@ class PhoneWorkerPolicy:
     approval_required_actions: tuple[str, ...] = (
         "phone.call.place.with_approval",
         "phone.call.transfer.with_approval",
+        "phone.call.terminate",
     )
     max_callees: int = 1
     max_transcript_chars: int = 65536

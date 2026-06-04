@@ -1,5 +1,5 @@
 {
-  "artifact_count": 65,
+  "artifact_count": 82,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -252,6 +252,91 @@
       "purpose": "Read-only validator for SDLC PR enforcement surfaces."
     },
     {
+      "name": "governed_code_change_loop_blocked_request_example",
+      "path": "examples/governed_code_change_loop.blocked_request.json",
+      "purpose": "Safe blocked request fixture for governed code-change loop receipt replay."
+    },
+    {
+      "name": "governed_code_change_loop_runner",
+      "path": "scripts/run_governed_code_change_loop.py",
+      "purpose": "Receipt producer for lease-bound governed code-change loop execution evidence."
+    },
+    {
+      "name": "governed_code_change_loop_receipt_validator",
+      "path": "scripts/validate_governed_code_change_loop_receipt.py",
+      "purpose": "Read-only validator for governed code-change loop receipt artifacts."
+    },
+    {
+      "name": "governed_code_change_loop_tests",
+      "path": "tests/test_governed_code_change_loop.py",
+      "purpose": "Regression tests for lease-bound code-worker closure gating."
+    },
+    {
+      "name": "governed_code_change_loop_runner_tests",
+      "path": "tests/test_run_governed_code_change_loop_script.py",
+      "purpose": "Regression tests for governed code-change loop receipt producer CLI behavior."
+    },
+    {
+      "name": "governed_code_change_loop_runner_image",
+      "path": "docker/governed-code-change-loop-runner.Dockerfile",
+      "purpose": "Minimal governed local sandbox image definition for strict code-change loop probes."
+    },
+    {
+      "name": "governed_code_change_loop_receipt_validator_tests",
+      "path": "tests/test_validate_governed_code_change_loop_receipt.py",
+      "purpose": "Regression tests for governed code-change loop receipt validation."
+    },
+    {
+      "name": "governed_code_change_loop_sandbox_probe",
+      "path": "scripts/probe_governed_code_change_loop_sandbox.py",
+      "purpose": "Readiness probe for strict governed code-change loop sandbox execution evidence."
+    },
+    {
+      "name": "governed_code_change_loop_sandbox_probe_example",
+      "path": "docs/governed-code-change-loop-sandbox-probe-example.json",
+      "purpose": "Blocked example evidence for governed code-change loop sandbox probe validation."
+    },
+    {
+      "name": "governed_code_change_loop_sandbox_probe_tests",
+      "path": "tests/test_probe_governed_code_change_loop_sandbox.py",
+      "purpose": "Regression tests for governed code-change loop sandbox readiness probe behavior."
+    },
+    {
+      "name": "governed_code_change_loop_sandbox_probe_validator",
+      "path": "scripts/validate_governed_code_change_loop_sandbox_probe.py",
+      "purpose": "Read-only validator for governed code-change loop sandbox probe evidence."
+    },
+    {
+      "name": "governed_code_change_loop_sandbox_probe_validator_tests",
+      "path": "tests/test_validate_governed_code_change_loop_sandbox_probe.py",
+      "purpose": "Regression tests for governed code-change loop sandbox probe validation."
+    },
+    {
+      "name": "governed_code_change_loop_sandbox_readiness_runbook",
+      "path": "docs/GOVERNED_CODE_CHANGE_LOOP_SANDBOX_READINESS.md",
+      "purpose": "Operator handoff for collecting strict Linux sandbox readiness evidence."
+    },
+    {
+      "name": "governed_code_change_loop_sandbox_readiness_runbook_validator",
+      "path": "scripts/validate_governed_code_change_loop_sandbox_readiness_runbook.py",
+      "purpose": "Read-only validator for governed code-change loop sandbox readiness runbook drift."
+    },
+    {
+      "name": "governed_code_change_loop_sandbox_readiness_runbook_tests",
+      "path": "tests/test_validate_governed_code_change_loop_sandbox_readiness_runbook.py",
+      "purpose": "Regression tests for sandbox readiness runbook validation."
+    },
+    {
+      "name": "governed_code_change_loop_wsl_strict_probe_launcher",
+      "path": "scripts/run_wsl_governed_code_change_loop_sandbox_probe.py",
+      "purpose": "Windows-side launcher for collecting strict governed code-change loop sandbox evidence through WSL."
+    },
+    {
+      "name": "governed_code_change_loop_wsl_strict_probe_launcher_tests",
+      "path": "tests/test_run_wsl_governed_code_change_loop_sandbox_probe.py",
+      "purpose": "Regression tests for WSL strict probe launcher command construction and blockers."
+    },
+    {
       "name": "universal_action_orchestration_validator_tests",
       "path": "tests/test_validate_universal_action_orchestration.py",
       "purpose": "Regression tests for UAO schema, fixture, doctrine, and semantic validation."
@@ -335,7 +420,12 @@
     "governance integrity report omits a digest for an existing artifact",
     "governance integrity report counts contradict artifact records",
     "workspace governance preflight omits inventory, integrity, or witness validation",
-    "workspace governance witness omits Universal Action Orchestration artifacts"
+    "workspace governance witness omits Universal Action Orchestration artifacts",
+    "governed code-change loop receipt validator rejects the evidence artifact",
+    "governed code-change loop sandbox probe reports unvalidated execution readiness",
+    "governed code-change loop sandbox probe validator rejects the evidence artifact",
+    "governed code-change loop sandbox readiness runbook validator rejects the handoff",
+    "governed code-change loop WSL launcher contract is missing or drifted"
   ],
   "capability": "repository_local_workspace_governance_surface",
   "created_at": "2026-06-01T00:00:00Z",

@@ -221,6 +221,7 @@ def test_call_terminate_requires_call_id() -> None:
             callees=[],
             callers=[],
             call_id="",
+            approval_id="approval-terminate-1",
         )
     )
 
@@ -232,6 +233,56 @@ def test_call_terminate_requires_call_id() -> None:
 
     assert response.status == "blocked"
     assert response.error == "phone action requires call_id"
+
+
+def test_call_terminate_requires_approval_before_adapter() -> None:
+    request = phone_action_request_from_mapping(
+        _payload(
+            request_id="phone-terminate-no-approval",
+            capability_id="phone.call.terminate",
+            action="phone.call.terminate",
+            callees=[],
+            callers=[],
+            call_id="call-1",
+        )
+    )
+    adapter = FakePhoneAdapter()
+
+    response = execute_phone_request(
+        request,
+        adapter=adapter,
+        policy=PhoneWorkerPolicy(),
+    )
+
+    assert response.status == "blocked"
+    assert response.error == "phone action requires approval"
+    assert response.receipt.verification_status == "blocked"
+    assert adapter.requests == []
+
+
+def test_call_terminate_with_approval_executes_bounded_update() -> None:
+    request = phone_action_request_from_mapping(
+        _payload(
+            request_id="phone-terminate-approved",
+            capability_id="phone.call.terminate",
+            action="phone.call.terminate",
+            callees=[],
+            callers=[],
+            call_id="call-1",
+            approval_id="approval-terminate-1",
+        )
+    )
+
+    response = execute_phone_request(
+        request,
+        adapter=FakePhoneAdapter(),
+        policy=PhoneWorkerPolicy(),
+    )
+
+    assert response.status == "succeeded"
+    assert response.receipt.approval_id == "approval-terminate-1"
+    assert response.receipt.external_call is False
+    assert response.receipt.verification_status == "passed"
 
 
 def test_transcript_record_redacts_transcript() -> None:

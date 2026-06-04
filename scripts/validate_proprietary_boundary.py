@@ -72,9 +72,29 @@ FORBIDDEN_TEXT_PATTERNS = (
     "Mullu " + "A" + "I",
     "Mulu " + "A" + "I",
 )
+SCANNED_SUFFIXES = frozenset(
+    {
+        ".cfg",
+        ".cmd",
+        ".env",
+        ".ini",
+        ".json",
+        ".md",
+        ".ps1",
+        ".py",
+        ".rs",
+        ".sh",
+        ".toml",
+        ".ts",
+        ".tsx",
+        ".yaml",
+        ".yml",
+    }
+)
 
 EXCLUDED_DIR_NAMES = frozenset(
     {
+        ".claude",
         ".git",
         ".hypothesis",
         ".mypy_cache",
@@ -86,6 +106,7 @@ EXCLUDED_DIR_NAMES = frozenset(
         "target",
         "tmp",
         ".tmp",
+        ".worktrees",
         ".change_assurance",
     }
 )
@@ -195,13 +216,37 @@ def validate_rust_crate_licenses(crates_dir: Path = RUST_CRATES_DIR) -> list[str
 def iter_scannable_files(root: Path = REPO_ROOT) -> list[Path]:
     """Return repository files whose text content participates in boundary checks."""
     files: list[Path] = []
-    for path in sorted(root.rglob("*")):
-        if not path.is_file():
+    pending = [root]
+    while pending:
+        current = pending.pop()
+        try:
+            children = tuple(sorted(current.iterdir()))
+        except OSError:
             continue
-        if any(part in EXCLUDED_DIR_NAMES for part in path.relative_to(root).parts):
-            continue
-        files.append(path)
-    return files
+        for path in children:
+            relative_path = path.relative_to(root)
+            if path.is_dir():
+                if _skip_scan_directory(path, relative_path, root):
+                    continue
+                pending.append(path)
+                continue
+            if not path.is_file():
+                continue
+            if any(part in EXCLUDED_DIR_NAMES for part in relative_path.parts):
+                continue
+            if path.suffix.lower() not in SCANNED_SUFFIXES:
+                continue
+            files.append(path)
+    return sorted(files)
+
+
+def _skip_scan_directory(path: Path, relative_path: Path, root: Path) -> bool:
+    """Return whether a directory is outside the proprietary scan boundary."""
+    if any(part in EXCLUDED_DIR_NAMES for part in relative_path.parts):
+        return True
+    if path != root and (path / ".git").exists():
+        return True
+    return False
 
 
 def scan_forbidden_text_patterns(

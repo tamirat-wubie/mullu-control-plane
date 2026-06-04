@@ -3,14 +3,14 @@
 Purpose: perform Twilio and Vonage voice HTTP operations for the signed phone
     worker without exposing raw tools upstream.
 Governance scope: connector credential binding, explicit action allowlists,
-    approval defense for outbound calls and transfers, response digest evidence,
-    and provider error containment.
+    approval defense for outbound calls, transfers, and terminations, response
+    digest evidence, and provider error containment.
 Dependencies: stdlib urllib/json/hashlib and gateway.phone_worker request/
     observation contracts.
 Invariants:
   - Connector credentials are never returned in observations or errors.
   - Unsupported actions fail closed before an HTTP request is issued.
-  - Outbound place and transfer require an approval witness.
+  - Outbound place, transfer, and terminate require an approval witness.
   - Provider responses are represented by call SIDs and SHA-256 digests.
 """
 
@@ -43,7 +43,11 @@ WRITE_ACTIONS = frozenset(
 )
 SUPPORTED_ACTIONS = READ_ACTIONS | WRITE_ACTIONS
 APPROVAL_REQUIRED_ACTIONS = frozenset(
-    {"phone.call.place.with_approval", "phone.call.transfer.with_approval"}
+    {
+        "phone.call.place.with_approval",
+        "phone.call.transfer.with_approval",
+        "phone.call.terminate",
+    }
 )
 
 

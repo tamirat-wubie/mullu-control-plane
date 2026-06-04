@@ -17,6 +17,7 @@ from gateway.sandbox_runner import (
     DockerRootlessSandboxRunner,
     SandboxCommandRequest,
     SandboxRunnerProfile,
+    _docker_desktop_wsl_host_path,
     _workspace_snapshot,
 )
 
@@ -61,7 +62,7 @@ def test_sandbox_runner_builds_no_network_readonly_docker_command(tmp_path: Path
     assert f"seccomp={_DEFAULT_SECCOMP_PROFILE}" in docker_argv
     assert docker_argv[docker_argv.index(f"seccomp={_DEFAULT_SECCOMP_PROFILE}") - 1] == "--security-opt"
     assert "--mount" in docker_argv
-    assert f"type=bind,src={tmp_path.resolve()},dst=/workspace,rw" in docker_argv
+    assert f"type=bind,src={tmp_path.resolve()},dst=/workspace" in docker_argv
     assert "--env" in docker_argv
     assert "MULLU_TRACE_ID=trace-1" in docker_argv
     assert docker_argv[-3:] == ["python", "-m", "pytest"]
@@ -299,6 +300,24 @@ def test_sandbox_runner_blocked_receipt_still_witnesses_hardening(tmp_path: Path
     assert result.status == "blocked"
     assert result.receipt.capabilities_dropped is True
     assert result.receipt.seccomp_profile_applied == _DEFAULT_SECCOMP_PROFILE
+
+
+def test_docker_desktop_wsl_host_path_translation(monkeypatch: pytest.MonkeyPatch) -> None:
+    class ExistingMarker:
+        @staticmethod
+        def exists() -> bool:
+            return True
+
+    monkeypatch.setattr("gateway.sandbox_runner._DOCKER_DESKTOP_WSL_MARKER", ExistingMarker())
+
+    translated = _docker_desktop_wsl_host_path(
+        "/mnt/c/Users/tmrtl/Projects/workspace/gateway/sandbox_seccomp.json"
+    )
+    ordinary_linux = _docker_desktop_wsl_host_path("/home/operator/workspace")
+
+    assert translated == "/mnt/host/c/Users/tmrtl/Projects/workspace/gateway/sandbox_seccomp.json"
+    assert ordinary_linux == "/home/operator/workspace"
+    assert _docker_desktop_wsl_host_path("C:/Users/tmrtl/workspace") == "C:/Users/tmrtl/workspace"
 
 
 def test_sandbox_runner_rejects_host_root_workspace() -> None:
