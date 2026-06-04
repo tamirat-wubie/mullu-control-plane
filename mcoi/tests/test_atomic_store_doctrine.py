@@ -26,6 +26,7 @@ file owns the shape.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
 
@@ -121,6 +122,24 @@ CASES: list[DoctrineCase] = [
 
 
 CASE_IDS = [f"{c.fracture}-{c.release}" for c in CASES]
+
+
+def test_legacy_fracture_headers_do_not_regress_to_stale_postgres_pending_text():
+    """F11/F4 test headers must not contradict shipped Postgres doctrine."""
+    repo_root = Path(__file__).resolve().parents[2]
+    stale_claims = (
+        "PostgresRateLimitStore: " + "not implemented",
+        "PostgresAuditStore: " + "not implemented",
+    )
+    files = (
+        repo_root / "mcoi" / "tests" / "test_v4_29_atomic_rate_limit.py",
+        repo_root / "mcoi" / "tests" / "test_v4_31_atomic_audit_append.py",
+    )
+
+    for path in files:
+        text = path.read_text(encoding="utf-8")
+        for stale_claim in stale_claims:
+            assert stale_claim not in text
 
 
 # ============================================================
