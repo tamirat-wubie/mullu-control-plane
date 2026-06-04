@@ -38,3 +38,26 @@ def test_operator_doc_states_corrupted_evidence_is_not_blocked_json() -> None:
 
     assert "Malformed or corrupted evidence stores raise a typed persistence error" in text
     assert "do not emit a normal blocked readiness JSON object" in text
+
+
+def test_operator_doc_aligns_phase2_projection_import_status() -> None:
+    text = " ".join(DOC_PATH.read_text(encoding="utf-8").split())
+
+    assert "Phase 2 typed projection import is implemented" in text
+    assert "runtime-only read-model contract" in text
+    assert "does not admit content into semantic or procedural memory" in text
+    assert "does not create a public Mullu Governance Protocol schema" in text
+    assert "Phase 2 may import" not in text
+    assert "A later Phase 2 can add" not in text
+    assert "does not yet import nested-mind projection" not in text
+
+
+def test_operator_doc_keeps_symbol_flow_ascii_stable() -> None:
+    text = DOC_PATH.read_text(encoding="utf-8")
+
+    assert "Nested-mind Gamma response" in text
+    assert "Mullu Phi_gov" in text
+    assert "-> NestedMindProjectionEnvelope" in text
+    assert "\u2192" not in text
+    assert "\u2193" not in text
+    assert "\u2014" not in text

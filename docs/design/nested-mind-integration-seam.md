@@ -1,4 +1,4 @@
-# Nested-mind integration seam — Phase 1 read-only bridge
+# Nested-mind integration seam - read-only bridge and typed import boundary
 
 <!-- TYPE: Design -->
 <!-- AUDIENCE: developer integrating nested symbolic memory with the control plane -->
@@ -11,12 +11,12 @@ transplant into MAF.
 The control plane remains the outer agentic/governance brain. Nested-mind owns
 the recursive symbolic-state substrate:
 
-- `Σ`: nested symbolic state.
-- `Λ`: lawbook/admissibility rules for state evolution.
+- `Sigma`: nested symbolic state.
+- `Lambda`: lawbook/admissibility rules for state evolution.
 - `H`: signed causal history.
-- `Γ`: read/proposal boundary exposed over HTTP.
+- `Gamma`: read/proposal boundary exposed over HTTP.
 
-Phase 1 mounts only the read side of `Γ`. It does not expose proposal,
+Phase 1 mounts only the read side of `Gamma`. It does not expose proposal,
 child-mind creation, lawbook mutation, or commit-writing routes.
 
 ## Why not merge the Rust crates now?
@@ -32,13 +32,13 @@ vocabulary reconciliation between `StateMachineSpec`/`TransitionReceipt` and
 A service seam avoids that collision:
 
 ```text
-Mullu Φ_gov
+Mullu Phi_gov
   gates intent and operational authority
-      ↓
-Nested-mind Γ
+      ->
+Nested-mind Gamma
   exposes projection/history without leaking mutation authority
-      ↓
-Nested-mind Λ/H
+      ->
+Nested-mind Lambda/H
   validates and signs state evolution inside the nested-brain service
 ```
 
@@ -69,9 +69,9 @@ MULLU_NESTED_MIND_BEARER_TOKEN=<optional>
 
 Startup posture:
 
-- flag unset/false/blank → connector is not mounted; zero runtime behavior
+- flag unset/false/blank -> connector is not mounted; zero runtime behavior
   changes.
-- flag enabled but base URL missing → fail closed at bootstrap.
+- flag enabled but base URL missing -> fail closed at bootstrap.
 - base URL must be HTTPS, must include a host, and must not include query or
   fragment.
 - bearer token is optional; when present, only the `Authorization` header name
@@ -159,14 +159,15 @@ Fracture delta intentionally avoided:
 
 ## Phase 2 typed projection import boundary
 
-Phase 2 may import nested-mind projection content only through typed envelopes.
-It is still a read-only boundary:
+Phase 2 typed projection import is implemented as a runtime-only read-model
+contract. It imports nested-mind projection content only through typed
+envelopes and remains a read-only boundary:
 
 ```text
-Nested-mind Γ response
-  → NestedMindProjectionEnvelope / NestedMindHistoryEnvelope
-  → NestedMindProjectionImportReceipt
-  → bounded Mullu read model
+Nested-mind Gamma response
+  -> NestedMindProjectionEnvelope / NestedMindHistoryEnvelope
+  -> NestedMindProjectionImportReceipt
+  -> bounded Mullu read model
 ```
 
 Phase 2 invariants:
@@ -186,25 +187,24 @@ This is an information-flow boundary, not a write bridge.
 
 ## Current limitation
 
-The existing governed HTTP connector returns a digest and receipt, not a raw
-response body. Phase 1 therefore proves reachability, route construction,
-policy posture, and auditability. It does not yet import nested-mind projection
-content into Mullu memory.
+The governed HTTP connector has both receipt-only reads and JSON read helpers.
+Typed projection import consumes only the JSON helper output, validates it as a
+bounded runtime contract, and binds it to the connector receipt.
 
-A later Phase 2 can add a typed, schema-validated projection reader if the
-control plane must consume nested-mind state content directly. That should be
-a separate PR because it changes the information-flow boundary.
+The import still does not admit content into semantic or procedural memory, does
+not create a public Mullu Governance Protocol schema, and does not expose
+proposal, child-mind, lawbook, or commit-writing authority.
 
 ## Next phases
 
-1. **Phase 1 — read-only witness bridge**: mount connector, test route
+1. **Phase 1 - read-only witness bridge**: mount connector, test route
    construction and fail-closed env behavior.
-2. **Phase 2 — typed projection import**: add schema-validated projection
-   envelopes if Mullu needs to consume nested-mind state content.
-3. **Phase 3 — governed proposal bridge**: add `POST /minds/root/proposals`
+2. **Phase 2 - typed projection import**: validate projection and history JSON
+   as runtime-only envelopes, then bind accepted imports to connector receipts.
+3. **Phase 3 - governed proposal bridge**: add `POST /minds/root/proposals`
    only after Mullu-side approval/budget/effect receipts are mapped into
    nested-mind proposal metadata.
-4. **Phase 4 — nested-brain topology**: map tenants/projects to child minds
+4. **Phase 4 - nested-brain topology**: map tenants/projects to child minds
    once the system-of-record decision is explicit.
 
 ## Open decisions before mutation routes
