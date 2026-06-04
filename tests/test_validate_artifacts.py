@@ -131,3 +131,18 @@ def test_operator_guide_does_not_regress_capability_plan_bundle_wiring() -> None
     assert "capability_plan_bundle_canary_passed=false" in operator_guide
     assert "plan_evidence_bundle" in operator_guide
     assert "Runtime conformance did not witness a plan evidence bundle" in mcp_manifest_doc
+
+
+def test_maf_receipt_coverage_state_hash_claim_matches_implemented_verifiers() -> None:
+    """Receipt coverage docs must not regress closed state-hash verifier claims."""
+    receipt_coverage_doc = Path("docs/MAF_RECEIPT_COVERAGE.md").read_text(encoding="utf-8")
+    state_hash_spec = Path("docs/STATE_HASH_SPEC.md").read_text(encoding="utf-8")
+
+    assert "the absence of a Rust mirror" not in receipt_coverage_doc
+    assert "three sub-gaps for future work" not in receipt_coverage_doc
+    assert "Building the external verifier" not in receipt_coverage_doc
+    assert "mcoi verify-state-hash" in receipt_coverage_doc
+    assert "Rust `maf-kernel::state_hash`" in receipt_coverage_doc
+    assert "No external verifier for state-hash consistency" in state_hash_spec
+    assert "| No external verifier for state-hash consistency | Medium" in state_hash_spec
+    assert "| Closed |" in state_hash_spec

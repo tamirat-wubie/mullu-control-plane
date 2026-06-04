@@ -235,7 +235,7 @@ content; this is a follow-up document.
 | Receipts not persisted | High | Add `ReceiptStore` protocol mirroring `AuditStore`; wire to PostgreSQL in production profile. | Partially closed — `JsonlReceiptStore` persists emitted receipts and lineage as append-only JSONL when injected into `ProofBridge` or configured through `MULLU_RECEIPT_STORE_JSONL_PATH`; production PostgreSQL profile wiring remains open. |
 | No external receipt verifier | Medium | After persistence: implement `mcoi verify-receipt-chain` mirroring `mcoi verify-ledger`. | **Closed** — `mcoi verify-receipt-chain` verifies exported JSON/JSONL receipt chains for receipt hash, receipt id, replay token, and causal-parent linkage. |
 | Rust ↔ Python protocol drift caught only by code review | Medium | Add a contract test that both implementations produce the same `receipt_hash` for the same input. | **Closed** — paired tests in `maf-kernel/src/lib.rs` and `mcoi/tests/test_proof_hash_contract.py` pin the canonical content to a hardcoded SHA-256 constant on each side. Drift on either side fails the matching test. |
-| State-hash content layout undocumented | Medium | Write `STATE_HASH_SPEC.md` mirroring the entry-hash section of LEDGER_SPEC.md. | **Closed** — `docs/STATE_HASH_SPEC.md` documents the canonical content layout (`state:entity_id:timestamp`), the Python implementation in `proof_bridge.py::_state_hash`, the absence of a Rust mirror, and three sub-gaps for future work (Rust mirror, structured entity fields, external verifier). |
+| State-hash content layout undocumented | Medium | Write `STATE_HASH_SPEC.md` mirroring the entry-hash section of LEDGER_SPEC.md. | **Closed** — `docs/STATE_HASH_SPEC.md` documents the canonical content layout (`state:entity_id:timestamp`), Python `proof_bridge.py::state_hash`, Rust `maf-kernel::state_hash`, the `mcoi verify-state-hash` internal-consistency verifier, and the remaining v2 design gap for structured entity fields. |
 | Receipt persistence architectural seam | High | Define a `ReceiptStore` Protocol so a durable backend can plug in without touching ProofBridge core logic. (Separate from picking the durable shape.) | **Closed** — `mcoi/mcoi_runtime/contracts/receipt_store.py` defines `ReceiptStore` (base class with no-op defaults, mirroring AuditStore's pattern), `InMemoryReceiptStore` (default, preserves pre-Protocol FIFO eviction at MAX_LINEAGE_ENTRIES), and `JsonlReceiptStore` (append-only durable receipt + lineage JSONL replay). `ProofBridge` records emitted receipts and lineage through the Protocol via injection. The production storage shape decision (PostgreSQL append table vs ledger-hashed) is still the operator's call, but the architectural blocker is removed. |
 | Replay token has no verifier | Low-Medium | Surfaced by audit 2026-04-28: every receipt has a `replay_token` field but no code anywhere consumes it. Field name implies a contract the codebase doesn't honor. | **Closed** — `ProofBridge.verify_replay_token(receipt) -> bool` (static) reconstructs the token from the receipt's content + issued_at and compares. Holds the token-internal-consistency half of replay validation; a real replay system that derives its own token and compares would close the loop. |
 | Coverage invariant not CI-enforced | Medium | Add `scripts/validate_receipt_coverage.py` enumerating routes and asserting each has a known emission path or is in the "Acknowledged exclusions" list. | **Closed** — `scripts/validate_receipt_coverage.py` enumerates every state-mutating route and classifies it as MIDDLEWARE_API / MIDDLEWARE_GATEWAY / MIDDLEWARE_MUSIA / EXCLUDED / UNCOVERED. The ratchet test `mcoi/tests/test_receipt_coverage_invariant.py` pins the UNCOVERED count to zero; any drift fails the test, so coverage regressions are reviewer-visible. The script supports `--strict` for CI gating. |
@@ -268,13 +268,9 @@ and — more importantly — what it doesn't do. That distinction is the
 difference between a system that earns its compliance posture and one
 that asserts it.
 
-The next move from here is not more architecture. It is:
-
-1. Closing the gateway webhook gap (concrete code change).
-2. Adding receipt persistence (concrete code change).
-3. Building the external verifier (concrete code change).
-4. CI-enforcing the coverage invariant (concrete code change).
-
-Each of these is half a day to a week of work. Together they convert
-the receipt claim into the same load-bearing artifact the audit ledger
-became. Until then, the spec is the contract, and the contract is honest.
+The remaining move from here is durable production receipt persistence.
+Gateway receipt coverage, the external receipt verifier, state-hash
+verification, and CI coverage enforcement are now implemented and pinned by
+tests. PostgreSQL receipt-store profile wiring remains open; until it lands,
+`JsonlReceiptStore` is the durable local receipt path and the spec is the
+contract boundary.
