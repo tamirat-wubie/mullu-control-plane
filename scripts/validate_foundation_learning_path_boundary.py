@@ -11,7 +11,8 @@ Governance scope: Foundation Mode, learning goal inventory, glossary loop,
 command practice, reading queue, local exercise design, error log, verification
 habit, help-request boundary, private-value exclusion, and readiness blocking.
 Dependencies: docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md and
-examples/foundation_learning_path_witness.awaiting_evidence.json.
+examples/foundation_learning_path_witness.awaiting_evidence.json plus the
+sample learning-loop packet.
 Invariants:
   - Validation is read-only.
   - The witness records learning-path preparation only.
@@ -35,8 +36,10 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DOC_PATH = REPO_ROOT / "docs" / "FOUNDATION_LEARNING_PATH_BOUNDARY.md"
 DEFAULT_PACKET_PATH = REPO_ROOT / "examples" / "foundation_learning_path_witness.awaiting_evidence.json"
+DEFAULT_LOOP_PATH = REPO_ROOT / "examples" / "foundation_learning_loop_sample.awaiting_evidence.json"
 
 EXPECTED_WITNESS_ID = "foundation_learning_path_witness.awaiting_evidence.v1"
+EXPECTED_LOOP_ID = "foundation_learning_loop_sample.awaiting_evidence.v1"
 EXPECTED_BLOCKED_CLAIMS = (
     "skill readiness",
     "training completion",
@@ -62,6 +65,14 @@ EXPECTED_SURFACES = (
     ("verification_habit", "local_draft", "AwaitingEvidence"),
     ("help_request_boundary", "local_draft", "AwaitingEvidence"),
 )
+EXPECTED_LOOP_STEPS = (
+    ("select_one_local_topic", "local_draft", "AwaitingEvidence"),
+    ("read_one_local_doc", "local_draft", "AwaitingEvidence"),
+    ("run_one_harmless_command", "local_draft", "AwaitingEvidence"),
+    ("record_one_error_category", "local_draft", "AwaitingEvidence"),
+    ("pair_one_validator", "local_draft", "AwaitingEvidence"),
+    ("choose_next_tiny_loop", "local_draft", "AwaitingEvidence"),
+)
 EXPECTED_ROOT_KEYS = {
     "blocked_claims",
     "certification_claimed",
@@ -84,6 +95,29 @@ EXPECTED_ROOT_KEYS = {
     "training_completion_claimed",
     "witness_id",
 }
+EXPECTED_LOOP_ROOT_KEYS = {
+    "blocked_claims",
+    "certification_claimed",
+    "curriculum_completion_claimed",
+    "customer_support_readiness_claimed",
+    "delegation_readiness_claimed",
+    "deployment_allowed",
+    "external_account_use_allowed",
+    "hiring_readiness_claimed",
+    "loop_id",
+    "loop_scope",
+    "mentor_assignment_allowed",
+    "next_action",
+    "paid_course_allowed",
+    "practice_steps",
+    "production_operation_readiness_claimed",
+    "public_tutorial_publication_allowed",
+    "schema_version",
+    "skill_readiness_claimed",
+    "solver_outcome",
+    "status",
+    "training_completion_claimed",
+}
 EXPECTED_SURFACE_KEYS = {
     "evidence_ref",
     "public_safe_note",
@@ -91,12 +125,21 @@ EXPECTED_SURFACE_KEYS = {
     "surface_id",
     "surface_type",
 }
+EXPECTED_LOOP_STEP_KEYS = {
+    "evidence_ref",
+    "public_safe_note",
+    "state",
+    "step_id",
+    "step_type",
+}
 REQUIRED_DOC_PHRASES = (
     "Foundation Learning Path Boundary",
     "Witness packet: [`../examples/foundation_learning_path_witness.awaiting_evidence.json`]",
+    "Sample loop packet: [`../examples/foundation_learning_loop_sample.awaiting_evidence.json`]",
     "Rule: Learning-path preparation is a local planning boundary, not a skill,",
     "No skill-readiness claim, training-completion claim, certification claim,",
     "learning_path_boundary_state=AwaitingEvidence",
+    "foundation_learning_loop_sample_state=AwaitingEvidence",
     "skill_readiness_claimed=false",
     "training_completion_claimed=false",
     "certification_claimed=false",
@@ -222,6 +265,17 @@ def validate_packet(payload: dict[str, Any]) -> list[LearningPathFinding]:
     return findings
 
 
+def validate_practice_loop(payload: dict[str, Any]) -> list[LearningPathFinding]:
+    """Return findings for the sample local learning-loop packet."""
+
+    findings: list[LearningPathFinding] = []
+    findings.extend(validate_loop_root_contract(payload))
+    findings.extend(validate_loop_steps(payload.get("practice_steps")))
+    findings.extend(validate_forbidden_value_patterns(payload))
+    findings.extend(validate_forbidden_promotion_patterns(payload))
+    return findings
+
+
 def validate_root_contract(payload: dict[str, Any]) -> list[LearningPathFinding]:
     """Return findings for root-level learning-path witness drift."""
 
@@ -273,6 +327,70 @@ def validate_root_contract(payload: dict[str, Any]) -> list[LearningPathFinding]
             LearningPathFinding(
                 "learning_path_next_action_invalid",
                 "next_action must preserve local learning loops without readiness promotion",
+            )
+        )
+    return findings
+
+
+def validate_loop_root_contract(payload: dict[str, Any]) -> list[LearningPathFinding]:
+    """Return findings for root-level sample learning-loop drift."""
+
+    findings: list[LearningPathFinding] = []
+    if set(payload) != EXPECTED_LOOP_ROOT_KEYS:
+        findings.append(
+            LearningPathFinding(
+                "learning_loop_root_keys_invalid",
+                f"root keys must be: {', '.join(sorted(EXPECTED_LOOP_ROOT_KEYS))}",
+            )
+        )
+    expected_values = {
+        "loop_id": EXPECTED_LOOP_ID,
+        "schema_version": 1,
+        "status": "AwaitingEvidence",
+        "solver_outcome": "AwaitingEvidence",
+        "skill_readiness_claimed": False,
+        "training_completion_claimed": False,
+        "certification_claimed": False,
+        "paid_course_allowed": False,
+        "mentor_assignment_allowed": False,
+        "hiring_readiness_claimed": False,
+        "delegation_readiness_claimed": False,
+        "public_tutorial_publication_allowed": False,
+        "curriculum_completion_claimed": False,
+        "production_operation_readiness_claimed": False,
+        "customer_support_readiness_claimed": False,
+        "external_account_use_allowed": False,
+        "deployment_allowed": False,
+    }
+    for key, expected_value in expected_values.items():
+        if payload.get(key) != expected_value:
+            findings.append(
+                LearningPathFinding(
+                    "learning_loop_root_value_invalid",
+                    f"{key} must be {expected_value!r}",
+                )
+            )
+    if tuple(payload.get("blocked_claims") or ()) != EXPECTED_BLOCKED_CLAIMS:
+        findings.append(
+            LearningPathFinding(
+                "learning_loop_blocked_claims_invalid",
+                f"blocked_claims must be: {', '.join(EXPECTED_BLOCKED_CLAIMS)}",
+            )
+        )
+    loop_scope = payload.get("loop_scope")
+    if not isinstance(loop_scope, str) or "one public-safe local practice loop" not in loop_scope:
+        findings.append(
+            LearningPathFinding(
+                "learning_loop_scope_invalid",
+                "loop_scope must keep the sample loop public-safe and local",
+            )
+        )
+    next_action = payload.get("next_action")
+    if not isinstance(next_action, str) or "repeat one local learning loop" not in next_action:
+        findings.append(
+            LearningPathFinding(
+                "learning_loop_next_action_invalid",
+                "next_action must preserve one local loop without readiness promotion",
             )
         )
     return findings
@@ -333,6 +451,56 @@ def validate_learning_path_surfaces(learning_path_surfaces: object) -> list[Lear
     return findings
 
 
+def validate_loop_steps(practice_steps: object) -> list[LearningPathFinding]:
+    """Return findings for sample learning-loop step drift."""
+
+    findings: list[LearningPathFinding] = []
+    if not isinstance(practice_steps, list) or not all(isinstance(step, dict) for step in practice_steps):
+        return [LearningPathFinding("learning_loop_steps_invalid", "practice_steps must be a list of objects")]
+    observed_steps = tuple((step.get("step_id"), step.get("step_type"), step.get("state")) for step in practice_steps)
+    if observed_steps != EXPECTED_LOOP_STEPS:
+        findings.append(
+            LearningPathFinding(
+                "learning_loop_step_inventory_invalid",
+                "practice step inventory does not match the Foundation Mode sample loop",
+            )
+        )
+    step_ids = [step.get("step_id") for step in practice_steps]
+    if len(set(step_ids)) != len(step_ids):
+        findings.append(LearningPathFinding("learning_loop_step_duplicate", "step ids must be unique"))
+    for step in practice_steps:
+        step_id = str(step.get("step_id", "<missing>"))
+        if set(step) != EXPECTED_LOOP_STEP_KEYS:
+            findings.append(
+                LearningPathFinding(
+                    "learning_loop_step_keys_invalid",
+                    f"{step_id} step keys must be: {', '.join(sorted(EXPECTED_LOOP_STEP_KEYS))}",
+                )
+            )
+        if step.get("state") != "AwaitingEvidence":
+            findings.append(
+                LearningPathFinding(
+                    "learning_loop_step_state_invalid",
+                    f"{step_id} state must be AwaitingEvidence",
+                )
+            )
+        if step.get("evidence_ref") != "manual_preparation_pending":
+            findings.append(
+                LearningPathFinding(
+                    "learning_loop_step_evidence_invalid",
+                    f"{step_id} evidence_ref must stay manual_preparation_pending in the committed packet",
+                )
+            )
+        if not isinstance(step.get("public_safe_note"), str) or not step["public_safe_note"].strip():
+            findings.append(
+                LearningPathFinding(
+                    "learning_loop_step_note_invalid",
+                    f"{step_id} public_safe_note must be a non-empty string",
+                )
+            )
+    return findings
+
+
 def validate_forbidden_value_patterns(payload: dict[str, Any]) -> list[LearningPathFinding]:
     """Return findings for private, paid, person, account, customer, support, or deployment-shaped values."""
 
@@ -368,14 +536,17 @@ def validate_forbidden_promotion_patterns(payload: dict[str, Any]) -> list[Learn
 def validate_foundation_learning_path_boundary(
     doc_path: Path = DEFAULT_DOC_PATH,
     packet_path: Path = DEFAULT_PACKET_PATH,
+    loop_path: Path = DEFAULT_LOOP_PATH,
 ) -> list[LearningPathFinding]:
     """Validate the Foundation Mode learning-path boundary artifacts."""
 
     doc_text = load_text(doc_path, "learning-path boundary doc")
     packet_payload = load_json_object(packet_path, "learning-path witness packet")
+    loop_payload = load_json_object(loop_path, "sample learning-loop packet")
     return [
         *validate_doc_text(doc_text),
         *validate_packet(packet_payload),
+        *validate_practice_loop(loop_payload),
     ]
 
 
@@ -385,10 +556,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validate Foundation Mode learning-path boundary artifacts.")
     parser.add_argument("--doc", type=Path, default=DEFAULT_DOC_PATH)
     parser.add_argument("--packet", type=Path, default=DEFAULT_PACKET_PATH)
+    parser.add_argument("--loop", type=Path, default=DEFAULT_LOOP_PATH)
     args = parser.parse_args(argv)
 
     try:
-        findings = validate_foundation_learning_path_boundary(args.doc, args.packet)
+        findings = validate_foundation_learning_path_boundary(args.doc, args.packet, args.loop)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"[FAIL] foundation_learning_path_load: {exc}", file=sys.stderr)
         print("STATUS: failed", file=sys.stderr)
@@ -401,6 +573,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     print("[PASS] foundation_learning_path_doc")
     print("[PASS] foundation_learning_path_witness")
+    print("[PASS] foundation_learning_loop_sample")
     print("STATUS: passed")
     return 0
 

@@ -25,12 +25,16 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.validate_foundation_learning_path_boundary import (  # noqa: E402
+    DEFAULT_LOOP_PATH,
     DEFAULT_PACKET_PATH,
+    EXPECTED_LOOP_ID,
+    EXPECTED_LOOP_STEPS,
     EXPECTED_SURFACES,
     EXPECTED_WITNESS_ID,
     load_json_object,
     validate_foundation_learning_path_boundary,
     validate_packet,
+    validate_practice_loop,
 )
 
 
@@ -51,6 +55,21 @@ def test_learning_path_witness_has_expected_identity_and_blockers() -> None:
     assert payload["certification_claimed"] is False
     assert payload["paid_course_allowed"] is False
     assert payload["mentor_assignment_allowed"] is False
+    assert payload["external_account_use_allowed"] is False
+    assert payload["deployment_allowed"] is False
+
+
+def test_sample_learning_loop_has_expected_identity_and_steps() -> None:
+    payload = load_json_object(DEFAULT_LOOP_PATH, "sample learning-loop packet")
+
+    assert payload["loop_id"] == EXPECTED_LOOP_ID
+    assert tuple(
+        (step["step_id"], step["step_type"], step["state"])
+        for step in payload["practice_steps"]
+    ) == EXPECTED_LOOP_STEPS
+    assert payload["skill_readiness_claimed"] is False
+    assert payload["training_completion_claimed"] is False
+    assert payload["certification_claimed"] is False
     assert payload["external_account_use_allowed"] is False
     assert payload["deployment_allowed"] is False
 
@@ -122,3 +141,26 @@ def test_witness_rejects_skill_ready_phrase() -> None:
 
     assert findings
     assert any(finding.rule_id == "learning_path_forbidden_promotion_phrase" for finding in findings)
+
+
+def test_sample_loop_rejects_step_state_promotion() -> None:
+    payload = load_json_object(DEFAULT_LOOP_PATH, "sample learning-loop packet")
+    candidate = deepcopy(payload)
+    candidate["practice_steps"][0]["state"] = "Ready"
+
+    findings = validate_practice_loop(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "learning_loop_step_inventory_invalid" for finding in findings)
+    assert any(finding.rule_id == "learning_loop_step_state_invalid" for finding in findings)
+
+
+def test_sample_loop_rejects_private_value() -> None:
+    payload = load_json_object(DEFAULT_LOOP_PATH, "sample learning-loop packet")
+    candidate = deepcopy(payload)
+    candidate["practice_steps"][0]["public_safe_note"] = "schedule_id=private token=secret"
+
+    findings = validate_practice_loop(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "learning_path_forbidden_private_value_pattern" for finding in findings)

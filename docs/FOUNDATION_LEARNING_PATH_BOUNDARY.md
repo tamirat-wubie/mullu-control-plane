@@ -1,7 +1,7 @@
 <!--
 Purpose: define the Foundation Mode learning-path boundary for a solo beginner preparing skills locally without claiming readiness, certification, training completion, hiring capacity, public teaching, customer support, or deployment authority.
 Governance scope: learning goal inventory, glossary loop, command practice, reading queue, local exercise design, error log, verification habit, help-request boundary, public-safe planning, and external-action blocking.
-Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md, docs/FOUNDATION_NEXT_ACTION_BOUNDARY.md, examples/foundation_learning_path_witness.awaiting_evidence.json, scripts/validate_foundation_learning_path_boundary.py.
+Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md, docs/FOUNDATION_NEXT_ACTION_BOUNDARY.md, examples/foundation_learning_path_witness.awaiting_evidence.json, examples/foundation_learning_loop_sample.awaiting_evidence.json, scripts/validate_foundation_learning_path_boundary.py.
 Invariants: no skill-readiness claim, no training-completion claim, no certification claim, no paid-course activation, no mentor assignment, no hiring-readiness claim, no delegation-readiness claim, no public tutorial publication, no curriculum-completion claim, no production-operation readiness claim, no customer-support readiness claim, no external account use, and no deployment claim.
 -->
 
@@ -17,6 +17,8 @@ Invariants: no skill-readiness claim, no training-completion claim, no certifica
 > open customer support, use external accounts, or deploy anything.
 
 Witness packet: [`../examples/foundation_learning_path_witness.awaiting_evidence.json`](../examples/foundation_learning_path_witness.awaiting_evidence.json)
+
+Sample loop packet: [`../examples/foundation_learning_loop_sample.awaiting_evidence.json`](../examples/foundation_learning_loop_sample.awaiting_evidence.json)
 
 Rule: Learning-path preparation is a local planning boundary, not a skill,
 training, certification, hiring, support, publication, or deployment
@@ -47,6 +49,7 @@ This is preparation only:
 
 ```text
 learning_path_boundary_state=AwaitingEvidence
+foundation_learning_loop_sample_state=AwaitingEvidence
 skill_readiness_claimed=false
 training_completion_claimed=false
 certification_claimed=false
@@ -87,6 +90,17 @@ deployment_allowed=false
 7. Do not treat local practice as customer, support, deployment, hiring,
    certification, or business readiness.
 
+## Sample Atomic Loop
+
+| Step | Local action | Blocked claim |
+| --- | --- | --- |
+| Select one topic | Choose one confusing local concept from Foundation docs. | Do not claim skill readiness. |
+| Read one doc | Read one local source-of-truth page. | Do not claim training completion. |
+| Run one harmless command | Run one validator or inspect-only command. | Do not mutate services, accounts, or deployment state. |
+| Record one error category | Write only a public-safe confusion or error category. | Do not record private paths, accounts, secrets, schedules, or health details. |
+| Pair one validator | Name the validator, test, or expected output for the loop. | Do not claim certification or curriculum completion. |
+| Choose next tiny loop | Pick the next local loop. | Do not assign mentors, hire, delegate, publish, use external accounts, or open support. |
+
 ## Validation
 
 Run:
@@ -102,10 +116,11 @@ The validator checks that the learning-path witness:
    publication, curriculum completion, production-operation readiness,
    customer-support readiness, external account use, and deployment disabled;
 2. keeps every learning surface in `AwaitingEvidence`;
-3. rejects URL, email, private path, schedule, person, mentor, account,
+3. validates the sample atomic loop packet as `AwaitingEvidence`;
+4. rejects URL, email, private path, schedule, person, mentor, account,
    provider, paid-course, certificate, secret, credential, customer, support,
    publication, service, or deployment shaped values; and
-4. rejects readiness-promotion phrases.
+5. rejects readiness-promotion phrases.
 
 ## Go Deeper / Where To Go Next
 
@@ -120,5 +135,5 @@ The validator checks that the learning-path witness:
 STATUS:
   Completeness: 100%
   Invariants verified: skill-readiness claim blocked, training-completion claim blocked, certification claim blocked, paid-course activation blocked, mentor assignment blocked, hiring-readiness claim blocked, delegation-readiness claim blocked, public tutorial publication blocked, curriculum-completion claim blocked, production-operation readiness blocked, customer-support readiness blocked, external account use blocked, deployment blocked
-  Open issues: learning-goal evidence, glossary-loop evidence, command-practice evidence, reading-queue evidence, local-exercise evidence, error-log evidence, verification-habit evidence, and help-request-boundary evidence remain AwaitingEvidence
+  Open issues: learning-goal evidence, glossary-loop evidence, command-practice evidence, reading-queue evidence, local-exercise evidence, error-log evidence, verification-habit evidence, help-request-boundary evidence, and sample-loop evidence remain AwaitingEvidence
   Next action: run the learning-path boundary validator before using learning notes as readiness evidence

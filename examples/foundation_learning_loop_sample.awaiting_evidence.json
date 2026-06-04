@@ -1,0 +1,80 @@
+{
+  "blocked_claims": [
+    "skill readiness",
+    "training completion",
+    "certification",
+    "paid course activation",
+    "mentor assignment",
+    "hiring readiness",
+    "delegation readiness",
+    "public tutorial publication",
+    "curriculum completion",
+    "production operation readiness",
+    "customer support readiness",
+    "external account use",
+    "deployment readiness"
+  ],
+  "certification_claimed": false,
+  "curriculum_completion_claimed": false,
+  "customer_support_readiness_claimed": false,
+  "delegation_readiness_claimed": false,
+  "deployment_allowed": false,
+  "external_account_use_allowed": false,
+  "hiring_readiness_claimed": false,
+  "loop_id": "foundation_learning_loop_sample.awaiting_evidence.v1",
+  "loop_scope": "one public-safe local practice loop for reading one local document, running one harmless local validation command, recording one error category, and choosing one next tiny loop without readiness promotion",
+  "mentor_assignment_allowed": false,
+  "next_action": "repeat one local learning loop; do not claim skill readiness, training completion, certification, paid course activation, mentor assignment, hiring readiness, delegation readiness, public tutorial publication, curriculum completion, production operation readiness, customer support readiness, external account use, or deployment readiness",
+  "paid_course_allowed": false,
+  "practice_steps": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pick one confusing local topic from Foundation docs; do not claim skill readiness.",
+      "state": "AwaitingEvidence",
+      "step_id": "select_one_local_topic",
+      "step_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Read one local source-of-truth document; do not claim training completion.",
+      "state": "AwaitingEvidence",
+      "step_id": "read_one_local_doc",
+      "step_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Run one harmless local validator or inspect-only command; do not mutate services, accounts, or deployment state.",
+      "state": "AwaitingEvidence",
+      "step_id": "run_one_harmless_command",
+      "step_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Record one public-safe error category or confusion point; do not store private paths, accounts, secrets, schedules, or health details.",
+      "state": "AwaitingEvidence",
+      "step_id": "record_one_error_category",
+      "step_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pair the loop with one local validator, test, or expected output; do not claim certification or curriculum completion.",
+      "state": "AwaitingEvidence",
+      "step_id": "pair_one_validator",
+      "step_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Choose one next tiny local loop; do not assign a mentor, hire, delegate, publish, use external accounts, or open support.",
+      "state": "AwaitingEvidence",
+      "step_id": "choose_next_tiny_loop",
+      "step_type": "local_draft"
+    }
+  ],
+  "production_operation_readiness_claimed": false,
+  "public_tutorial_publication_allowed": false,
+  "schema_version": 1,
+  "skill_readiness_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "training_completion_claimed": false
+}

@@ -27,6 +27,7 @@
       "required_evidence": [
         "docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md",
         "examples/foundation_learning_path_witness.awaiting_evidence.json",
+        "examples/foundation_learning_loop_sample.awaiting_evidence.json",
         "scripts/validate_foundation_learning_path_boundary.py",
         "tests/test_validate_foundation_learning_path_boundary.py"
       ],
