@@ -931,6 +931,160 @@ def test_organization_action_queue_approval_packet_preview_rejects_filtered_out_
     assert before["gate_decisions"] == after["gate_decisions"] == []
 
 
+def test_organization_action_queue_dispatch_lease_preview_reports_ready_lease_without_dispatch(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    gate = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+    queue = client.get(
+        "/api/v1/orgs/org-mullu/action-queue"
+        "?department_id=engineering&next_action=bind_worker_receipt"
+    ).json()
+    action_id = queue["actions"][0]["action_id"]
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/orgs/org-mullu/action-queue/dispatch-lease-preview",
+        json={
+            "action_id": action_id,
+            "filters": {
+                "department_id": "engineering",
+                "next_action": "bind_worker_receipt",
+            },
+        },
+    )
+    payload = response.json()
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert gate.status_code == 200
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["read_only"] is True
+    assert payload["lease_decision"] == "lease_request_ready"
+    assert payload["lease_blockers"] == []
+    assert payload["lease_blocker_count"] == 0
+    assert payload["lease_scope"]["capability_id"] == "engineering.gateway_runtime.verify"
+    assert payload["lease_scope"]["sandbox_required"] is True
+    assert payload["lease_scope"]["receipt_required"] is True
+    assert payload["operator_next_step"] == "open_bounded_worker_lease_request"
+    assert payload["worker_lease_authority_granted"] is False
+    assert payload["dispatch_authority_granted"] is False
+    assert payload["receipt_binding_authority_granted"] is False
+    assert "worker_lease_creation" in payload["forbidden_effects"]
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"]
+
+
+def test_organization_action_queue_dispatch_lease_preview_simulates_missing_evidence_without_mutation(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    queue = client.get(
+        "/api/v1/orgs/org-mullu/action-queue"
+        "?department_id=security_compliance&next_action=collect_required_evidence"
+    ).json()
+    action_id = queue["actions"][0]["action_id"]
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/orgs/org-mullu/action-queue/dispatch-lease-preview",
+        json={
+            "action_id": action_id,
+            "filters": {
+                "department_id": "security_compliance",
+                "next_action": "collect_required_evidence",
+            },
+        },
+    )
+    payload = response.json()
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 200
+    assert payload["lease_decision"] == "simulation_only"
+    assert payload["selection_preview"]["selection_decision"] == "simulate"
+    assert payload["lease_blockers"][0]["kind"] == "missing_evidence"
+    assert "security_public_claim_boundary" in payload["lease_blockers"][0]["refs"]
+    assert payload["missing_evidence"]
+    assert payload["worker_lease_authority_granted"] is False
+    assert payload["dispatch_authority_granted"] is False
+    assert payload["workflow_projection"]["terminal_closure_condition"] == "preview_only_no_worker_lease"
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
+def test_organization_action_queue_dispatch_lease_preview_blocks_until_approval_without_mutation(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    queue = client.get(
+        "/api/v1/orgs/org-mullu/action-queue"
+        "?department_id=security_compliance&next_action=evaluate_plan_step_gate"
+    ).json()
+    action_id = queue["actions"][0]["action_id"]
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/orgs/org-mullu/action-queue/dispatch-lease-preview",
+        json={
+            "action_id": action_id,
+            "filters": {
+                "department_id": "security_compliance",
+                "next_action": "evaluate_plan_step_gate",
+            },
+        },
+    )
+    payload = response.json()
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 200
+    assert payload["lease_decision"] == "awaiting_approval"
+    assert payload["required_approvals"] == ["security_approval"]
+    assert payload["lease_blockers"] == [
+        {"kind": "approval_required", "refs": ["security_approval"]}
+    ]
+    assert payload["selection_preview"]["reason_code"] == "approval_missing"
+    assert payload["operator_next_step"] == "complete_required_approval_before_lease"
+    assert payload["worker_lease_authority_granted"] is False
+    assert payload["dispatch_authority_granted"] is False
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"]
+
+
+def test_organization_action_queue_dispatch_lease_preview_rejects_filtered_out_action_without_mutation(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    queue = client.get("/api/v1/orgs/org-mullu/action-queue").json()
+    finance_action = next(
+        item for item in queue["actions"]
+        if item["department_id"] == "finance"
+    )
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/orgs/org-mullu/action-queue/dispatch-lease-preview",
+        json={
+            "action_id": finance_action["action_id"],
+            "filters": {"department_id": "engineering"},
+        },
+    )
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_code"] == "action_queue_dispatch_lease_preview_rejected"
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
 def test_organization_action_queue_view_is_read_only_and_escaped(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     bootstrap = client.post(
@@ -1845,6 +1999,7 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/orgs/{org_id}/action-queue/view" in paths
     assert "/api/v1/orgs/{org_id}/action-queue/selection-preview" in paths
     assert "/api/v1/orgs/{org_id}/action-queue/approval-packet-preview" in paths
+    assert "/api/v1/orgs/{org_id}/action-queue/dispatch-lease-preview" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate/view" in paths
     assert "/api/v1/cases/{case_id}/audit-explorer" in paths

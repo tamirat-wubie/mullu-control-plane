@@ -609,6 +609,10 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
     assert "organization_action_queue_approval_packet_preview_defers_missing_evidence_without_mutation" in witnesses
     assert "organization_action_queue_approval_packet_preview_requires_approval_after_evidence_ready" in witnesses
     assert "organization_action_queue_approval_packet_preview_rejects_filtered_out_action_without_mutation" in witnesses
+    assert "organization_action_queue_dispatch_lease_preview_reports_ready_lease_without_dispatch" in witnesses
+    assert "organization_action_queue_dispatch_lease_preview_simulates_missing_evidence_without_mutation" in witnesses
+    assert "organization_action_queue_dispatch_lease_preview_blocks_until_approval_without_mutation" in witnesses
+    assert "organization_action_queue_dispatch_lease_preview_rejects_filtered_out_action_without_mutation" in witnesses
     assert "organization_action_queue_view_is_read_only_and_escaped" in witnesses
     assert "case_private_pilot_live_rehearsal_binds_preview_receipts_without_mutation" in witnesses
     assert "organization_action_queue_view_preserves_filters" in witnesses
@@ -642,6 +646,10 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
     )
     assert (
         route_records["/api/v1/orgs/{org_id}/action-queue/approval-packet-preview"]["surface_id"]
+        == "orgos_case_governance_lifecycle"
+    )
+    assert (
+        route_records["/api/v1/orgs/{org_id}/action-queue/dispatch-lease-preview"]["surface_id"]
         == "orgos_case_governance_lifecycle"
     )
     assert (
@@ -717,7 +725,7 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
         == "orgos_case_governance_lifecycle"
     )
     assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "proven"
-    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 46
+    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 50
 
 
 def test_webhooks_proof_surface_is_witnessed() -> None:
