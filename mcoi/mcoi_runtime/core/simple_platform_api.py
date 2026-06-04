@@ -167,3 +167,44 @@ class SimplePlatformRuntime:
             status="listed",
             payload={"guide": self.platform.onboarding_guide().to_dict()},
         )
+
+    def document_manipulation_wiring(self) -> SimplePlatformEnvelope:
+        """Return the read-only document manipulation wiring proof."""
+
+        return SimplePlatformEnvelope(
+            governed=True,
+            ok=True,
+            status="listed",
+            payload={"wiring": self.platform.document_manipulation_wiring().to_dict()},
+        )
+
+    def document_manipulation_wiring_contract(self) -> SimplePlatformEnvelope:
+        """Return the client contract for document manipulation wiring readback."""
+
+        return SimplePlatformEnvelope(
+            governed=True,
+            ok=True,
+            status="listed",
+            payload={
+                "contract": {
+                    "contract_ref": "simple_platform.document_manipulation_wiring.v1",
+                    "routes": [
+                        {
+                            "method": "GET",
+                            "path": "/api/v1/simple/documents/wiring",
+                            "handler_name": "document_manipulation_wiring",
+                        },
+                        {
+                            "method": "GET",
+                            "path": "/api/v1/simple/documents/wiring/contract",
+                            "handler_name": "document_manipulation_wiring_contract",
+                        },
+                    ],
+                    "invariants": [
+                        "document wiring is read-only",
+                        "document wiring does not grant execution authority",
+                        "docs_update remains bounded to docs/**",
+                    ],
+                }
+            },
+        )

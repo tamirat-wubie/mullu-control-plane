@@ -172,3 +172,18 @@ def test_simple_platform_start_route_contract_returns_non_executing_guide() -> N
     assert payload["status"] == "listed"
     assert guide["execution_allowed"] is False
     assert guide["recommended_path"][0]["command"] == "mullu workflows"
+
+
+def test_simple_platform_document_route_contract_returns_read_only_wiring() -> None:
+    adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
+    route_specs = SimplePlatformFastAPIAdapter.route_specs("/simple")
+    route_by_handler = {route.handler_name: route for route in route_specs}
+    payload = adapter.document_manipulation_wiring()
+    wiring = payload["payload"]["wiring"]
+
+    assert route_by_handler["document_manipulation_wiring"].method == "GET"
+    assert route_by_handler["document_manipulation_wiring"].path == "/simple/documents/wiring"
+    assert payload["governed"] is True
+    assert payload["status"] == "listed"
+    assert wiring["execution_allowed"] is False
+    assert wiring["components"][0]["component_ref"] == "task.update_docs"

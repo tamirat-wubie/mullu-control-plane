@@ -64,6 +64,16 @@ class SimplePlatformFastAPIAdapter:
 
         return self.runtime.start_guide().to_dict()
 
+    def document_manipulation_wiring(self) -> dict[str, Any]:
+        """Handle GET /documents/wiring."""
+
+        return self.runtime.document_manipulation_wiring().to_dict()
+
+    def document_manipulation_wiring_contract(self) -> dict[str, Any]:
+        """Handle GET /documents/wiring/contract."""
+
+        return self.runtime.document_manipulation_wiring_contract().to_dict()
+
     @staticmethod
     def route_specs(prefix: str = "/api/v1/simple") -> tuple[SimplePlatformRouteSpec, ...]:
         """Return the stable HTTP route contracts."""
@@ -87,6 +97,18 @@ class SimplePlatformFastAPIAdapter:
                 path=f"{normalized}/start",
                 handler_name="start_guide",
                 purpose="show the plain onboarding path for simple mode",
+            ),
+            SimplePlatformRouteSpec(
+                method="GET",
+                path=f"{normalized}/documents/wiring",
+                handler_name="document_manipulation_wiring",
+                purpose="show read-only document manipulation component wiring",
+            ),
+            SimplePlatformRouteSpec(
+                method="GET",
+                path=f"{normalized}/documents/wiring/contract",
+                handler_name="document_manipulation_wiring_contract",
+                purpose="show the client contract for document manipulation wiring",
             ),
             SimplePlatformRouteSpec(
                 method="POST",
@@ -135,6 +157,14 @@ def create_simple_platform_fastapi_router(runtime: SimplePlatformRuntime, prefix
     @router.get("/start")
     def start_guide():
         return adapter.start_guide()
+
+    @router.get("/documents/wiring")
+    def document_manipulation_wiring():
+        return adapter.document_manipulation_wiring()
+
+    @router.get("/documents/wiring/contract")
+    def document_manipulation_wiring_contract():
+        return adapter.document_manipulation_wiring_contract()
 
     @router.post("/actions/check")
     def check_action(request_body: dict[str, Any] = Body(...)):

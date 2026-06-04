@@ -79,6 +79,9 @@ def build_parser() -> argparse.ArgumentParser:
     workflows_parser = subparsers.add_parser("workflows", help="List common workflow templates")
     workflows_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
 
+    documents_parser = subparsers.add_parser("documents", help="Show document manipulation wiring")
+    documents_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
+
     start_parser = subparsers.add_parser("start", help="Show the simple platform home screen")
     start_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
     return parser
@@ -184,6 +187,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(json.dumps(_envelope(True, "listed", {"workflows": templates}), sort_keys=True, separators=(",", ":")))
         else:
             print(_readable_workflows(templates))
+        return 0
+    if args.command == "documents":
+        wiring = SimplePlatform.document_manipulation_wiring().to_dict()
+        if args.json:
+            print(json.dumps(_envelope(True, "listed", {"wiring": wiring}), sort_keys=True, separators=(",", ":")))
+        else:
+            print(_readable_document_wiring(wiring))
         return 0
     parser.error(f"unknown command: {args.command}")
     return 1
@@ -363,6 +373,53 @@ def _validated_workflow_templates(templates: object) -> list[dict[str, object]]:
             }
         )
     return validated
+
+
+def _readable_document_wiring(wiring: object) -> str:
+    value = _validated_document_wiring(wiring)
+    lines = [
+        str(value["title"]),
+        f"Manipulation: {value['manipulation_ref']}",
+        f"Execution allowed: {'yes' if value['execution_allowed'] else 'no'}",
+        "Components:",
+    ]
+    for component in value["components"]:
+        lines.append(f"- {component['component_ref']}: {component['label']}")
+        lines.append(f"  boundary: {component['boundary']}")
+        lines.append(f"  contract: {component['contract_ref']}")
+    lines.append("Invariants:")
+    lines.extend(f"- {invariant}" for invariant in value["invariants"])
+    return "\n".join(lines)
+
+
+def _validated_document_wiring(wiring: object) -> dict[str, object]:
+    if not isinstance(wiring, dict):
+        raise RuntimeCoreInvariantError("document manipulation wiring must be an object")
+    components = wiring.get("components")
+    if not isinstance(components, list):
+        raise RuntimeCoreInvariantError("document manipulation wiring components must be a list")
+    invariants = wiring.get("invariants")
+    if not isinstance(invariants, list):
+        raise RuntimeCoreInvariantError("document manipulation wiring invariants must be a list")
+    return {
+        "title": _catalog_text(wiring, "document manipulation wiring", "title"),
+        "manipulation_ref": _catalog_text(wiring, "document manipulation wiring", "manipulation_ref"),
+        "execution_allowed": _catalog_bool(wiring, "document manipulation wiring", "execution_allowed"),
+        "components": [_validated_document_component(component) for component in components],
+        "invariants": _catalog_text_list(wiring, "document manipulation wiring", "invariants"),
+    }
+
+
+def _validated_document_component(component: object) -> dict[str, object]:
+    if not isinstance(component, dict):
+        raise RuntimeCoreInvariantError("document manipulation wiring component must be an object")
+    return {
+        "component_ref": _catalog_text(component, "document manipulation wiring component", "component_ref"),
+        "label": _catalog_text(component, "document manipulation wiring component", "label"),
+        "boundary": _catalog_text(component, "document manipulation wiring component", "boundary"),
+        "contract_ref": _catalog_text(component, "document manipulation wiring component", "contract_ref"),
+        "execution_allowed": _catalog_bool(component, "document manipulation wiring component", "execution_allowed"),
+    }
 
 
 def _catalog_text(

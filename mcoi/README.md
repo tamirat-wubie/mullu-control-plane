@@ -30,6 +30,7 @@ mullu start --json
 mullu actions
 mullu outcomes
 mullu workflows
+mullu documents
 mullu workflow docs-update --target docs/README.md
 mullu task review-docs --target docs/README.md
 mullu task update-docs --target docs/README.md
@@ -59,9 +60,14 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
   - `GET /api/v1/simple/home`
   - `GET /api/v1/simple/actions`
   - `GET /api/v1/simple/start`
+  - `GET /api/v1/simple/documents/wiring`
+  - `GET /api/v1/simple/documents/wiring/contract`
   - `POST /api/v1/simple/actions/check`
   - `POST /api/v1/simple/tasks/check`
   - `POST /api/v1/simple/workflows/check`
+- `mullu documents` and the document wiring routes expose the read-only
+  document-manipulation path for `docs_update`; they do not grant execution
+  authority or bypass workflow checks.
 - `build_operational_dashboard_state(..., simple_action_checks=...)` projects checks into `simple_action_summaries`, `simple_ready_action_refs`, `simple_review_action_refs`, and `simple_blocked_action_refs` for dashboard rendering without granting execution authority.
 - `build_operational_dashboard_state(..., simple_workflow_plans=...,
   simple_start_guide=...)` projects simple workflows and the start guide into

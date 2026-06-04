@@ -19,6 +19,7 @@ import pytest
 
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.simple_cli import (
+    _readable_document_wiring,
     _readable_actions,
     _readable_outcomes,
     _readable_tasks,
@@ -26,6 +27,8 @@ from mcoi_runtime.core.simple_cli import (
     guarded_main,
 )
 from mcoi_runtime.core.simple_platform import (
+    DocumentManipulationComponent,
+    DocumentManipulationWiring,
     SimpleActionRequest,
     SimpleHomeChoice,
     SimpleHomeSummary,
@@ -172,6 +175,47 @@ def test_simple_platform_workflow_projects_support_notice_review() -> None:
     assert plan.review_count == 1
     assert plan.blocked_count == 0
     assert plan.checks[0].review_reasons == ("External changes require approval.",)
+
+
+def test_simple_platform_document_manipulation_wiring_covers_all_components() -> None:
+    wiring = SimplePlatform.document_manipulation_wiring()
+    payload = wiring.to_dict()
+    component_refs = [component["component_ref"] for component in payload["components"]]
+
+    assert wiring.execution_allowed is False
+    assert payload["manipulation_ref"] == "docs_update"
+    assert component_refs == [
+        "task.update_docs",
+        "workflow.docs_update",
+        "cli.workflow_docs_update",
+        "api.check_workflow",
+        "http.workflows_check",
+        "app.mount_gate",
+        "memory.update_documentation",
+        "dashboard.simple_workflow_summaries",
+    ]
+    assert all(component["execution_allowed"] is False for component in payload["components"])
+    assert "docs_update targets remain bounded to docs/**" in payload["invariants"]
+
+
+def test_simple_platform_document_manipulation_rejects_execution_authority() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="document manipulation component cannot allow execution"):
+        DocumentManipulationComponent(
+            component_ref="unsafe.component",
+            label="Unsafe",
+            boundary="docs/**",
+            contract_ref="unsafe",
+            execution_allowed=True,
+        )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="document manipulation wiring cannot allow execution"):
+        DocumentManipulationWiring(
+            title="Document manipulation wiring",
+            manipulation_ref="docs_update",
+            components=SimplePlatform.document_manipulation_wiring().components,
+            invariants=SimplePlatform.document_manipulation_wiring().invariants,
+            execution_allowed=True,
+        )
 
 
 def test_simple_platform_onboarding_guide_is_plain_and_non_executing() -> None:
@@ -602,6 +646,44 @@ def test_simple_cli_rejects_loose_workflow_catalog_entries(templates: object, me
         _readable_workflows(templates)
 
 
+def test_simple_cli_documents_outputs_wiring(capsys) -> None:
+    exit_code = guarded_main(["documents"])
+    output = capsys.readouterr().out
+
+    assert exit_code == 0
+    assert "Document manipulation wiring" in output
+    assert "Manipulation: docs_update" in output
+    assert "Execution allowed: no" in output
+    assert "memory.update_documentation" in output
+    assert "docs_update targets remain bounded to docs/**" in output
+
+
+def test_simple_cli_documents_outputs_wiring_json(capsys) -> None:
+    exit_code = guarded_main(["documents", "--json"])
+    payload = json.loads(capsys.readouterr().out)
+    wiring = payload["payload"]["wiring"]
+
+    assert exit_code == 0
+    assert payload["governed"] is True
+    assert payload["ok"] is True
+    assert payload["status"] == "listed"
+    assert wiring["execution_allowed"] is False
+    assert wiring["components"][0]["component_ref"] == "task.update_docs"
+
+
+def test_simple_cli_rejects_loose_document_wiring() -> None:
+    with pytest.raises(RuntimeCoreInvariantError, match="document manipulation wiring components must be a list"):
+        _readable_document_wiring(
+            {
+                "title": "Document manipulation wiring",
+                "manipulation_ref": "docs_update",
+                "execution_allowed": False,
+                "components": "task.update_docs",
+                "invariants": [],
+            }
+        )
+
+
 def test_simple_cli_start_outputs_onboarding_path(capsys) -> None:
     exit_code = guarded_main(["start"])
     output = capsys.readouterr().out
@@ -676,6 +758,29 @@ def test_simple_platform_api_projects_template_backed_workflow() -> None:
     assert payload["status"] == "ready"
     assert payload["payload"]["workflow"]["outcome"] == "ready"
     assert payload["payload"]["workflow"]["ready_count"] == 3
+
+
+def test_simple_platform_api_returns_document_wiring() -> None:
+    payload = SimplePlatformRuntime().document_manipulation_wiring().to_dict()
+    wiring = payload["payload"]["wiring"]
+
+    assert payload["governed"] is True
+    assert payload["ok"] is True
+    assert payload["status"] == "listed"
+    assert wiring["manipulation_ref"] == "docs_update"
+    assert wiring["execution_allowed"] is False
+
+
+def test_simple_platform_api_returns_document_wiring_contract() -> None:
+    payload = SimplePlatformRuntime().document_manipulation_wiring_contract().to_dict()
+    contract = payload["payload"]["contract"]
+
+    assert payload["governed"] is True
+    assert payload["ok"] is True
+    assert payload["status"] == "listed"
+    assert contract["contract_ref"] == "simple_platform.document_manipulation_wiring.v1"
+    assert contract["routes"][0]["handler_name"] == "document_manipulation_wiring"
+    assert "document wiring is read-only" in contract["invariants"]
 
 
 def test_simple_platform_api_rejects_invalid_workflow() -> None:

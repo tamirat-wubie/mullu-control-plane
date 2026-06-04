@@ -78,6 +78,88 @@ class SimpleWorkflowTemplate:
 
 
 @dataclass(frozen=True)
+class DocumentManipulationComponent:
+    """One governed component in the document manipulation path."""
+
+    component_ref: str
+    label: str
+    boundary: str
+    contract_ref: str
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if self.execution_allowed:
+            raise RuntimeCoreInvariantError("document manipulation component cannot allow execution")
+        for field_name, field_value in {
+            "component_ref": self.component_ref,
+            "label": self.label,
+            "boundary": self.boundary,
+            "contract_ref": self.contract_ref,
+        }.items():
+            _require_trimmed_text(field_value, f"document manipulation {field_name}")
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible wiring component."""
+
+        return {
+            "component_ref": self.component_ref,
+            "label": self.label,
+            "boundary": self.boundary,
+            "contract_ref": self.contract_ref,
+            "execution_allowed": self.execution_allowed,
+        }
+
+
+@dataclass(frozen=True)
+class DocumentManipulationWiring:
+    """Read-only proof that document manipulation checks are fully wired."""
+
+    title: str
+    manipulation_ref: str
+    components: tuple[DocumentManipulationComponent, ...]
+    invariants: tuple[str, ...]
+    execution_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if self.execution_allowed:
+            raise RuntimeCoreInvariantError("document manipulation wiring cannot allow execution")
+        _require_trimmed_text(self.title, "document manipulation title")
+        _require_trimmed_text(self.manipulation_ref, "document manipulation ref")
+        if self.manipulation_ref != "docs_update":
+            raise RuntimeCoreInvariantError("document manipulation ref must be docs_update")
+        expected_refs = {
+            "task.update_docs",
+            "workflow.docs_update",
+            "cli.workflow_docs_update",
+            "api.check_workflow",
+            "http.workflows_check",
+            "app.mount_gate",
+            "memory.update_documentation",
+            "dashboard.simple_workflow_summaries",
+        }
+        actual_refs = {component.component_ref for component in self.components}
+        if actual_refs != expected_refs:
+            raise RuntimeCoreInvariantError("document manipulation components must match wiring contract")
+        if len(actual_refs) != len(self.components):
+            raise RuntimeCoreInvariantError("document manipulation components must be unique")
+        if len(self.invariants) < 3:
+            raise RuntimeCoreInvariantError("document manipulation wiring requires invariant coverage")
+        for invariant in self.invariants:
+            _require_trimmed_text(invariant, "document manipulation invariant")
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a JSON-compatible document manipulation wiring contract."""
+
+        return {
+            "title": self.title,
+            "manipulation_ref": self.manipulation_ref,
+            "components": [component.to_dict() for component in self.components],
+            "invariants": list(self.invariants),
+            "execution_allowed": self.execution_allowed,
+        }
+
+
+@dataclass(frozen=True)
 class SimpleTaskRequest:
     """Plain task request that can be converted into a governed action check."""
 
@@ -479,6 +561,71 @@ class SimplePlatform:
             primary_command=choices[0].command if choices else "mullu workflows",
             next_action="Open the workflow list and choose the work you want to do.",
             choices=choices,
+        )
+
+    @staticmethod
+    def document_manipulation_wiring() -> DocumentManipulationWiring:
+        """Return the read-only document manipulation wiring proof."""
+
+        return DocumentManipulationWiring(
+            title="Document manipulation wiring",
+            manipulation_ref="docs_update",
+            components=(
+                DocumentManipulationComponent(
+                    component_ref="task.update_docs",
+                    label="Update docs task",
+                    boundary="docs/**",
+                    contract_ref="SimplePlatform.check_task",
+                ),
+                DocumentManipulationComponent(
+                    component_ref="workflow.docs_update",
+                    label="Docs update workflow",
+                    boundary="docs/**",
+                    contract_ref="SimplePlatform.check_workflow",
+                ),
+                DocumentManipulationComponent(
+                    component_ref="cli.workflow_docs_update",
+                    label="CLI workflow command",
+                    boundary="mullu workflow docs-update --target docs/README.md",
+                    contract_ref="mcoi_runtime.core.simple_cli.guarded_main",
+                ),
+                DocumentManipulationComponent(
+                    component_ref="api.check_workflow",
+                    label="Runtime workflow envelope",
+                    boundary="SimplePlatformRuntime.check_workflow",
+                    contract_ref="simple_platform.menu.v1",
+                ),
+                DocumentManipulationComponent(
+                    component_ref="http.workflows_check",
+                    label="HTTP workflow check route",
+                    boundary="POST /api/v1/simple/workflows/check",
+                    contract_ref="SimplePlatformFastAPIAdapter.route_specs",
+                ),
+                DocumentManipulationComponent(
+                    component_ref="app.mount_gate",
+                    label="App mount gate",
+                    boundary="MULLU_SIMPLE_PLATFORM_ENABLED",
+                    contract_ref="mount_simple_platform_router_from_env",
+                ),
+                DocumentManipulationComponent(
+                    component_ref="memory.update_documentation",
+                    label="Memory candidate action",
+                    boundary="CompiledActionType.UPDATE_DOCUMENTATION",
+                    contract_ref="compile_memory_actions",
+                ),
+                DocumentManipulationComponent(
+                    component_ref="dashboard.simple_workflow_summaries",
+                    label="Dashboard readback",
+                    boundary="simple_workflow_summaries",
+                    contract_ref="build_operational_dashboard_state",
+                ),
+            ),
+            invariants=(
+                "docs_update targets remain bounded to docs/**",
+                "workflow checks preserve review and blocked outcomes",
+                "route and dashboard readbacks do not grant execution authority",
+                "memory candidates require a Mullu control-plane verdict before side effects",
+            ),
         )
 
 
