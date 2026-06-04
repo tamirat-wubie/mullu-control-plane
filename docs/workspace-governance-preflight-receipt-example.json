@@ -1,5 +1,5 @@
 {
-  "check_count": 82,
+  "check_count": 83,
   "generated_at_epoch": 1780272000.0,
   "checks": [
     {
@@ -659,6 +659,17 @@
         "scripts/validate_foundation_funding_team_boundary.py"
       ],
       "name": "foundation_funding_team_boundary",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_foundation_funding_team_obligation_rehearsal_boundary.py"
+      ],
+      "name": "foundation_funding_team_obligation_rehearsal_boundary",
       "passed": true,
       "return_code": 0,
       "stderr": "",

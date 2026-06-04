@@ -1,7 +1,7 @@
 <!--
 Purpose: define the Foundation Mode funding and team boundary before any fundraising, investor outreach, grant application, pitch publication, hiring, contractor engagement, advisor commitment, compensation commitment, equity promise, payroll setup, budget commitment, company-formation claim, legal-clearance claim, external publication, or deployment claim.
 Governance scope: funding posture, team posture, local planning questions, investor-outreach blocking, grant-application blocking, pitch-publication blocking, hiring blocking, contractor/advisor blocking, compensation/equity blocking, payroll blocking, budget blocking, legal/company blocking, money-movement blocking, external-publication restraint, and deployment blocking.
-Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md, docs/FOUNDATION_COST_BUDGET_BOUNDARY.md, docs/FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md, examples/foundation_funding_team_witness.awaiting_evidence.json, scripts/validate_foundation_funding_team_boundary.py.
+Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md, docs/FOUNDATION_COST_BUDGET_BOUNDARY.md, docs/FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md, docs/FOUNDATION_FUNDING_TEAM_OBLIGATION_REHEARSAL_BOUNDARY.md, examples/foundation_funding_team_witness.awaiting_evidence.json, scripts/validate_foundation_funding_team_boundary.py.
 Invariants: no fundraising, no investor outreach, no grant application, no pitch publication, no hiring, no contractor engagement, no advisor commitment, no compensation commitment, no equity promise, no payroll setup, no budget commitment, no company-formation claim, no legal-clearance claim, no money movement, no external publication, and no deployment claim.
 -->
 
@@ -117,6 +117,7 @@ The validator checks that the witness packet:
 | Prepare operator readiness safely | [Foundation Operator Readiness Boundary](FOUNDATION_OPERATOR_READINESS_BOUNDARY.md) |
 | Prepare cost/budget safely | [Foundation Cost Budget Boundary](FOUNDATION_COST_BUDGET_BOUNDARY.md) |
 | Prepare legal/business questions safely | [Foundation Legal Business Boundary](FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md) |
+| Rehearse funding/team obligations without obligations | [Foundation Funding Team Obligation Rehearsal Boundary](FOUNDATION_FUNDING_TEAM_OBLIGATION_REHEARSAL_BOUNDARY.md) |
 
 STATUS:
   Completeness: 100%

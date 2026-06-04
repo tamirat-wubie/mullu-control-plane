@@ -1,0 +1,140 @@
+{
+  "advisor_commitment_allowed": false,
+  "blocked_claims": [
+    "funding readiness",
+    "team readiness",
+    "fundraising",
+    "investor outreach",
+    "grant application",
+    "pitch publication",
+    "hiring",
+    "contractor engagement",
+    "advisor commitment",
+    "compensation commitment",
+    "equity promise",
+    "payroll setup",
+    "budget commitment",
+    "spending",
+    "company formation readiness",
+    "legal clearance",
+    "customer access",
+    "contact-list storage",
+    "money movement",
+    "external publication",
+    "secret material",
+    "deployment readiness"
+  ],
+  "budget_commitment_allowed": false,
+  "company_formation_claimed": false,
+  "compensation_commitment_allowed": false,
+  "contact_list_storage_allowed": false,
+  "contractor_engagement_allowed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "equity_promise_allowed": false,
+  "external_publication_allowed": false,
+  "funding_readiness_claimed": false,
+  "fundraising_allowed": false,
+  "grant_application_allowed": false,
+  "hiring_allowed": false,
+  "investor_outreach_allowed": false,
+  "legal_clearance_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "draft local funding/team obligation questions only; do not contact investors, store contact lists, submit grants, send or publish pitches, publish job posts, hire, engage contractors, commit advisors, promise compensation or equity, set up payroll, approve budgets, spend, move money, claim company formation, claim legal clearance, open customer access, publish externally, store secret material, or deploy",
+  "obligation_rehearsal_executed": false,
+  "payroll_setup_allowed": false,
+  "pitch_publication_allowed": false,
+  "schema_version": 1,
+  "secret_material_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "spending_allowed": false,
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Solo capacity obligation questions only; no team coverage, support capacity, or operational readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "solo_capacity_obligation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Funding readiness obligation questions only; no readiness claim, outside funding proof, or secured-financing claim is made.",
+      "state": "AwaitingEvidence",
+      "surface_id": "funding_readiness_obligation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Investor outreach obligation questions only; no investor contact, meeting, interest, or contact list is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "investor_outreach_obligation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Grant obligation questions only; no grant submission, award likelihood, application, or program relationship is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "grant_obligation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pitch publication obligation questions only; no sent deck, public pitch, investor packet, or fundraising launch is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "pitch_publication_obligation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Hiring obligation questions only; no open role, candidate pipeline, hiring readiness, or job posting is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "hiring_obligation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Contractor obligation questions only; no contractor engagement, statement of work, vendor commitment, or payment is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "contractor_obligation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Advisor obligation questions only; no advisor commitment, mentor assignment, board formation, or outside access is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "advisor_obligation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Compensation and equity obligation questions only; no salary, equity, option, percentage, or ownership promise is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "compensation_equity_obligation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Payroll and budget obligation questions only; no payroll setup, budget approval, spending, invoice path, or money movement is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "payroll_budget_obligation_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Public recruiting stop-rule questions only; no job post, recruiting copy, external publication, or candidate intake is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_recruiting_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Legal and company handoff questions only; no company formation, legal clearance, or qualified review completion is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "legal_company_handoff",
+      "surface_type": "local_draft"
+    }
+  ],
+  "team_readiness_claimed": false,
+  "witness_id": "foundation_funding_team_obligation_rehearsal_witness.awaiting_evidence.v1"
+}
