@@ -1,13 +1,14 @@
 # Design: cognitive outcome ledger (the D1 record-and-replay substrate)
 
-Status: **DECISION-LOCKED for first implementation — no code in this PR.** Author: Claude (Opus 4.7, 1M context).
+Status: **IMPLEMENTED for the first file-backed D1 ledger slice; Postgres backing remains future.**
+Author: Claude (Opus 4.7, 1M context).
 Date: 2026-06-03.
 Scope: the concrete architecture for the "D1 record-and-replay" decision left open by
 [`COGNITIVE_LOOP_LIVE_WIRING.md`](COGNITIVE_LOOP_LIVE_WIRING.md). That doc named D1 and
 recommended posture (a) — record-and-replay the loop trajectory via hash-bound events —
 but was written before Stages A/B/C/D/E landed. This doc updates the context, locks the
-first safe implementation posture, and records the audit gates that must pass before any
-ledger code ships.
+first safe implementation posture, and records the audit gates that the shipped file-backed
+ledger slice must keep satisfying.
 
 ## 0. Applied decision record (2026-06-03)
 
@@ -39,22 +40,24 @@ Per-tenant source stream → no cross-tenant replay, lock, or derived-memory ble
 | B+C — enforce DECIDE + live LEARN (workflow seam) | MERGED | #1263 | OFF (`MULLU_COGNITIVE_LOOP_ENFORCE`, `_LEARN`) |
 | B+C — agent_chain seam | MERGED | #1265 | OFF |
 | D — plan-time organ read-back (assistant seam) | MERGED | #1271 | OFF (`MULLU_COGNITIVE_LOOP_PLAN_CONTEXT`) |
-| Engine thread-safety (memory.py) | IN REVIEW | #1267 | (no flag — defensive fix) |
-| E — gate-enrichment (safety-positive) | IN REVIEW | #1274 | OFF (`MULLU_COGNITIVE_LOOP_GATE_ENRICHED`) |
+| Engine thread-safety (memory.py) | MERGED | #1267 | (no flag — defensive fix) |
+| D1 — file-backed cognitive outcome ledger | MERGED | #1280 | OFF (`MULLU_COGNITIVE_LOOP_LEDGER`) |
+| E — gate-enrichment (safety-positive) | MERGED | #1283 (supersedes closed #1274) | OFF (`MULLU_COGNITIVE_LOOP_GATE_ENRICHED`) |
 
 What the campaign actually does today:
-- **Writes** via Stage C: `CognitiveLearner` updates `meta_reasoning.update_confidence(...)` and
-  admits a `cognitive_loop_outcome` `MemoryEntry` to `EpisodicMemory` on every verified success.
+- **Writes** via Stage C: `CognitiveLearner` updates `meta_reasoning.update_confidence(...)`,
+  admits a `cognitive_loop_outcome` `MemoryEntry` to `EpisodicMemory` on every verified success,
+  and, when `MULLU_COGNITIVE_LOOP_LEDGER=1`, appends the same outcome to
+  `FileBackedCognitiveOutcomeLedger`.
 - **Reads** via Stage E and Stage D: the gate consults `episodic.list_entries(category="cognitive_loop_outcome")`
   per capability (Stage E); the planning reader consults the same at plan time (Stage D).
-- **No durable substrate**: `EpisodicMemory` is an in-process `dict[str, MemoryEntry]` + ordered
-  list. Restart loses everything. Multi-worker prod cannot share the learned state. The Stage C
-  PR body says explicitly:
+- **Durable substrate**: the default-off file-backed D1 ledger rehydrates `meta_reasoning` and
+  `EpisodicMemory` before runtime deps are published. `EpisodicMemory` remains the in-process
+  derived read model; the ledger is the restart-safe source stream. Multi-host production sharing
+  still needs the later Postgres backend.
 
-  > Strict cross-run / multi-worker determinism (design-doc D1 record-and-replay) needs a
-  > durable replayable ledger; until then both stages stay default-OFF (in-process cache).
-
-  That is the gap this doc closes.
+  The implemented file-backed slice closes the single-host restart-safety gap. The remaining
+  open gap is shared multi-host coherence beyond a shared filesystem.
 
 ## 2. Goal — what "ledger" means concretely
 
@@ -290,11 +293,12 @@ The first code PR is admissible only if it satisfies all gates below.
 
 ## 11. Relationship to other open work
 
-- **#1267 (engine thread-safety)** is a prerequisite — the ledger's writer holds the
-  `CognitiveLearner._lock`, and `EpisodicMemory` itself must be safe to mutate from the
-  rehydrate path without racing the still-in-flight first request. Land #1267 first.
-- **#1274 (Stage E)** is independent — the enrichment reads episodic but writes nothing. A
-  ledger-backed episodic is a drop-in for Stage E's reader.
+- **#1267 (engine thread-safety)** is merged — the ledger's writer holds the
+  `CognitiveLearner._lock`, and `EpisodicMemory` itself is safe to mutate from the
+  rehydrate path without racing the still-in-flight first request.
+- **#1283 (Stage E)** is merged — the enrichment reads episodic but writes nothing. A
+  ledger-backed episodic is a drop-in for Stage E's reader. Closed #1274 is superseded by
+  the merged Stage E implementation.
 - **PR #1271's `CognitivePlanningReader`** consumes the same surface (`episodic.list_entries`).
   A ledger-backed episodic is transparent to it.
 - **`HashChainStore`** is reused as-is; no new persistence dependency.
@@ -303,6 +307,6 @@ The first code PR is admissible only if it satisfies all gates below.
 
 ---
 
-*Resume*: land prerequisite engine thread-safety (#1267), then implement the selected file-backed,
-per-tenant, fail-CLOSED ledger behind `MULLU_COGNITIVE_LOOP_LEDGER` with rehydrate-on-startup as
-the first ledger code PR.
+*Resume*: keep the selected file-backed, per-tenant, fail-CLOSED ledger behind
+`MULLU_COGNITIVE_LOOP_LEDGER` as the D1 source stream. The next implementation slice is the
+Postgres/shared-stream backend when multi-host production coherence becomes the target.
