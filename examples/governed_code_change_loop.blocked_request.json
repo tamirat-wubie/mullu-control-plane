@@ -1,0 +1,27 @@
+{
+  "action_id": "example-blocked-code-change-loop",
+  "allowed_commands": [
+    [
+      "bash",
+      "src/task.sh"
+    ]
+  ],
+  "allowed_paths": [
+    "src"
+  ],
+  "argv": [
+    "bash",
+    "src/task.sh"
+  ],
+  "actor_id": "operator-example",
+  "command_id": "cmd-blocked-shell",
+  "commit_sha": "example-commit",
+  "cwd": "src",
+  "expires_at": "2026-05-08T12:00:00+00:00",
+  "metadata": {
+    "purpose": "blocked example request for governed code-change loop receipt validation"
+  },
+  "observed_sdlc_receipt_refs": {},
+  "repository": "example-repo",
+  "tenant_id": "tenant-example"
+}

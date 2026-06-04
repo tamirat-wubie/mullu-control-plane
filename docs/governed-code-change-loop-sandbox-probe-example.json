@@ -1,0 +1,31 @@
+{
+  "blockers": [
+    "sandbox_runner_linux_only",
+    "governed_code_change_loop_strict_sandbox_invalid",
+    "solver_outcome_GovernanceBlocked",
+    "code_worker_status_blocked",
+    "code_worker_sandbox_runner_linux_only",
+    "sandbox_verification_not_passed"
+  ],
+  "closure_allowed": false,
+  "closure_blockers": [
+    "code_worker_status_blocked"
+  ],
+  "code_worker_receipt_ref": "receipt://code-worker-receipt-example",
+  "docker_cli_status": "available",
+  "docker_daemon_status": "reachable",
+  "normal_receipt_valid": true,
+  "normal_validation_detail": "governed code-change loop receipt verified",
+  "output_path": "docs/governed-code-change-loop-sandbox-probe-example.json",
+  "platform_system": "Windows",
+  "probe_id": "governed-code-change-loop-sandbox-probe-example",
+  "receipt_id": "governed-code-change-loop-receipt-example",
+  "receipt_is_not_terminal_closure": true,
+  "receipt_path": "docs/governed-code-change-loop-sandbox-probe-receipt-example.json",
+  "request_path": "docs/governed-code-change-loop-sandbox-probe-request-example.json",
+  "solver_outcome": "GovernanceBlocked",
+  "status": "failed",
+  "strict_sandbox_valid": false,
+  "strict_validation_detail": "sandbox_execution_required_status_not_succeeded,sandbox_execution_required_verification_not_passed",
+  "terminal_closure_required": true
+}

@@ -26,6 +26,8 @@ def test_current_receipt_contract_passes() -> None:
     assert errors == []
     assert tuple(check_name_enum) == validator.REQUIRED_PREFLIGHT_CHECK_NAMES
     assert "universal_action_orchestration_validation_receipt_example" in check_name_enum
+    assert "governed_code_change_loop_sandbox_probe_example" in check_name_enum
+    assert "governed_code_change_loop_sandbox_readiness_runbook" in check_name_enum
     assert validator.DEFAULT_SCHEMA_PATH.exists()
     assert validator.DEFAULT_SCHEMA_PATH.name == "workspace_governance_preflight_receipt.schema.json"
 

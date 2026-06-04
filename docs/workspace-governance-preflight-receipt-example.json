@@ -1,5 +1,5 @@
 {
-  "check_count": 85,
+  "check_count": 87,
   "generated_at_epoch": 1780272000.0,
   "checks": [
     {
@@ -835,6 +835,30 @@
         "scripts/validate_workspace_governance_integrity_report_contract.py"
       ],
       "name": "workspace_governance_integrity_report_contract",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_governed_code_change_loop_sandbox_probe.py",
+        "--probe",
+        "docs/governed-code-change-loop-sandbox-probe-example.json"
+      ],
+      "name": "governed_code_change_loop_sandbox_probe_example",
+      "passed": true,
+      "return_code": 0,
+      "stderr": "",
+      "stdout": "STATUS: passed\n"
+    },
+    {
+      "args": [
+        "python",
+        "scripts/validate_governed_code_change_loop_sandbox_readiness_runbook.py"
+      ],
+      "name": "governed_code_change_loop_sandbox_readiness_runbook",
       "passed": true,
       "return_code": 0,
       "stderr": "",

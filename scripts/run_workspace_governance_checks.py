@@ -403,6 +403,22 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_workspace_governance_integrity_report_contract.py"),
         ),
         CheckCommand(
+            "governed_code_change_loop_sandbox_probe_example",
+            (
+                python_executable,
+                "scripts/validate_governed_code_change_loop_sandbox_probe.py",
+                "--probe",
+                "docs/governed-code-change-loop-sandbox-probe-example.json",
+            ),
+        ),
+        CheckCommand(
+            "governed_code_change_loop_sandbox_readiness_runbook",
+            (
+                python_executable,
+                "scripts/validate_governed_code_change_loop_sandbox_readiness_runbook.py",
+            ),
+        ),
+        CheckCommand(
             "universal_action_orchestration_contract",
             (python_executable, "scripts/validate_universal_action_orchestration.py"),
         ),

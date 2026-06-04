@@ -37,6 +37,7 @@ Runner = Callable[..., subprocess.CompletedProcess[str]]
 # Bundled seccomp profile applied when a profile does not pin its own. It is
 # layered on top of --cap-drop ALL and no-new-privileges as defense-in-depth.
 _DEFAULT_SECCOMP_PROFILE = str(Path(__file__).resolve().with_name("sandbox_seccomp.json"))
+_DOCKER_DESKTOP_WSL_MARKER = Path("/mnt/wsl/docker-desktop")
 
 
 @dataclass(frozen=True, slots=True)
@@ -306,7 +307,9 @@ class DockerRootlessSandboxRunner:
         return self._profile.seccomp_profile or _DEFAULT_SECCOMP_PROFILE
 
     def _docker_args(self, request: SandboxCommandRequest) -> tuple[str, ...]:
-        mount_arg = f"type=bind,src={self._host_workspace_root},dst=/workspace,rw"
+        mount_source = _docker_desktop_wsl_host_path(str(self._host_workspace_root))
+        seccomp_profile = self._seccomp_profile()
+        mount_arg = f"type=bind,src={mount_source},dst=/workspace"
         args = [
             "docker",
             "run",
@@ -324,7 +327,7 @@ class DockerRootlessSandboxRunner:
         if self._profile.drop_all_capabilities:
             args.extend(["--cap-drop", "ALL"])
         args.extend(["--security-opt", "no-new-privileges"])
-        args.extend(["--security-opt", f"seccomp={self._seccomp_profile()}"])
+        args.extend(["--security-opt", f"seccomp={seccomp_profile}"])
         args.extend([
             "--mount",
             mount_arg,
@@ -413,6 +416,21 @@ def _reject_forbidden_host_mount(host_workspace_root: str, profile: SandboxRunne
             raise ValueError("host workspace root cannot be a forbidden mount")
         if normalized.endswith("/var/run/docker.sock"):
             raise ValueError("host workspace root cannot be the Docker socket")
+
+
+def _docker_desktop_wsl_host_path(path_text: str) -> str:
+    """Translate WSL Windows mounts to Docker Desktop daemon-visible paths."""
+
+    if not _DOCKER_DESKTOP_WSL_MARKER.exists():
+        return path_text
+    normalized = path_text.replace("\\", "/")
+    parts = normalized.split("/")
+    if len(parts) < 4 or parts[0] != "" or parts[1] != "mnt":
+        return normalized
+    drive_name = parts[2]
+    if len(drive_name) != 1 or not drive_name.isalpha():
+        return normalized
+    return "/mnt/host/" + drive_name.lower() + "/" + "/".join(parts[3:])
 
 
 def _executable_name(value: str) -> str:
