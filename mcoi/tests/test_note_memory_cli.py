@@ -434,7 +434,7 @@ def test_cli_queue_and_promote_memory_anchor_with_receipt(tmp_path, capsys) -> N
             "--trust-zone",
             "workspace",
             "--expires-at",
-            "2026-06-04T00:00:00+00:00",
+            "2999-01-01T00:00:00+00:00",
             "--evidence-ref",
             "test_note_memory_cli.py::test_cli_queue_and_promote",
         ]
@@ -498,7 +498,7 @@ def _queued_cli_promotion(tmp_path, capsys) -> tuple[object, str, int, str]:
             "--trust-zone",
             "workspace",
             "--expires-at",
-            "2026-06-04T00:00:00+00:00",
+            "2999-01-01T00:00:00+00:00",
             "--evidence-ref",
             "test_note_memory_cli.py::boundary",
         ]
