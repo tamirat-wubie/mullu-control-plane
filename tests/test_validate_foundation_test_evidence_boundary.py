@@ -22,14 +22,18 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.validate_foundation_test_evidence_boundary import (  # noqa: E402
+    DEFAULT_GAP_WARNING_PATH,
     DEFAULT_PACKET_PATH,
     DEFAULT_ROUTING_PATH,
+    EXPECTED_GAP_WARNING_ENTRIES,
+    EXPECTED_GAP_WARNING_ID,
     EXPECTED_RECEIPT_ROUTES,
     EXPECTED_ROUTING_ID,
     EXPECTED_SURFACES,
     EXPECTED_WITNESS_ID,
     load_json_object,
     validate_foundation_test_evidence_boundary,
+    validate_gap_warning_packet,
     validate_packet,
     validate_receipt_routing_packet,
 )
@@ -73,6 +77,27 @@ def test_receipt_routing_has_expected_identity_and_routes() -> None:
     assert payload["full_test_pass_claimed"] is False
     assert payload["release_readiness_claimed"] is False
     assert payload["terminal_closure_claimed"] is False
+    assert payload["deployment_allowed"] is False
+
+
+def test_gap_warning_register_has_expected_identity_and_entries() -> None:
+    payload = load_json_object(DEFAULT_GAP_WARNING_PATH, "test gap warning register")
+
+    assert payload["gap_warning_id"] == EXPECTED_GAP_WARNING_ID
+    assert tuple(
+        (
+            entry["entry_id"],
+            entry["surface_id"],
+            entry["entry_type"],
+            entry["evidence_ref"],
+            entry["blocked_claim"],
+            entry["state"],
+        )
+        for entry in payload["gap_warning_entries"]
+    ) == EXPECTED_GAP_WARNING_ENTRIES
+    assert payload["complete_coverage_claimed"] is False
+    assert payload["ci_parity_claimed"] is False
+    assert payload["release_readiness_claimed"] is False
     assert payload["deployment_allowed"] is False
 
 
@@ -198,4 +223,53 @@ def test_receipt_routing_rejects_release_promotion_phrase() -> None:
 
     assert findings
     assert any(finding.rule_id == "test_receipt_routing_next_action_invalid" for finding in findings)
+    assert any(finding.rule_id == "test_evidence_forbidden_promotion_phrase" for finding in findings)
+
+
+def test_gap_warning_register_rejects_entry_state_promotion() -> None:
+    payload = load_json_object(DEFAULT_GAP_WARNING_PATH, "test gap warning register")
+    candidate = deepcopy(payload)
+    candidate["gap_warning_entries"][0]["state"] = "Ready"
+
+    findings = validate_gap_warning_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "test_gap_warning_entry_inventory_invalid" for finding in findings)
+    assert any(finding.rule_id == "test_gap_warning_entry_state_invalid" for finding in findings)
+
+
+def test_gap_warning_register_rejects_private_evidence_ref() -> None:
+    payload = load_json_object(DEFAULT_GAP_WARNING_PATH, "test gap warning register")
+    candidate = deepcopy(payload)
+    candidate["gap_warning_entries"][0]["evidence_ref"] = "C:/Users/example/private-gap.json"
+
+    findings = validate_gap_warning_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "test_gap_warning_entry_inventory_invalid" for finding in findings)
+    assert any(finding.rule_id == "test_gap_warning_entry_evidence_ref_invalid" for finding in findings)
+    assert any(finding.rule_id == "test_evidence_forbidden_private_value_pattern" for finding in findings)
+
+
+def test_gap_warning_register_rejects_duplicate_entries() -> None:
+    payload = load_json_object(DEFAULT_GAP_WARNING_PATH, "test gap warning register")
+    candidate = deepcopy(payload)
+    candidate["gap_warning_entries"][1]["entry_id"] = candidate["gap_warning_entries"][0]["entry_id"]
+
+    findings = validate_gap_warning_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "test_gap_warning_entry_inventory_invalid" for finding in findings)
+    assert any(finding.rule_id == "test_gap_warning_entry_duplicate" for finding in findings)
+
+
+def test_gap_warning_register_rejects_coverage_promotion_phrase() -> None:
+    payload = load_json_object(DEFAULT_GAP_WARNING_PATH, "test gap warning register")
+    candidate = deepcopy(payload)
+    candidate["next_action"] = "coverage is complete and release is ready"
+
+    findings = validate_gap_warning_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "test_gap_warning_next_action_invalid" for finding in findings)
     assert any(finding.rule_id == "test_evidence_forbidden_promotion_phrase" for finding in findings)

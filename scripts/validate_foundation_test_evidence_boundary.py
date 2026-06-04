@@ -7,10 +7,12 @@ clearance, secret clearance, customer readiness, legal clearance, performance
 readiness, flake-free, terminal-closure, external-publication, and deployment
 claims remain blocked.
 Governance scope: Foundation Mode, test-evidence surfaces, receipt routing,
-private-value exclusion, validation-scope blocking, and readiness blocking.
+warning and coverage-gap registration, private-value exclusion,
+validation-scope blocking, and readiness blocking.
 Dependencies: docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md,
 examples/foundation_test_evidence_witness.awaiting_evidence.json, and
-examples/foundation_test_receipt_routing.awaiting_evidence.json.
+examples/foundation_test_receipt_routing.awaiting_evidence.json, and
+examples/foundation_test_gap_warning_register.awaiting_evidence.json.
 Invariants:
   - Validation is read-only.
   - The witness records test-evidence preparation only.
@@ -33,9 +35,11 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DOC_PATH = REPO_ROOT / "docs" / "FOUNDATION_TEST_EVIDENCE_BOUNDARY.md"
 DEFAULT_PACKET_PATH = REPO_ROOT / "examples" / "foundation_test_evidence_witness.awaiting_evidence.json"
 DEFAULT_ROUTING_PATH = REPO_ROOT / "examples" / "foundation_test_receipt_routing.awaiting_evidence.json"
+DEFAULT_GAP_WARNING_PATH = REPO_ROOT / "examples" / "foundation_test_gap_warning_register.awaiting_evidence.json"
 
 EXPECTED_WITNESS_ID = "foundation_test_evidence_witness.awaiting_evidence.v1"
 EXPECTED_ROUTING_ID = "foundation_test_receipt_routing.awaiting_evidence.v1"
+EXPECTED_GAP_WARNING_ID = "foundation_test_gap_warning_register.awaiting_evidence.v1"
 EXPECTED_BLOCKED_CLAIMS = (
     "full-test pass",
     "complete coverage",
@@ -150,14 +154,64 @@ ALLOWED_VERIFICATION_REFS = {
     "local_operator_replay_pending",
     "local_operator_review_pending",
 }
+EXPECTED_GAP_WARNING_ENTRIES = (
+    ("focused_validator_scope_gap", "focused_validator_questions", "coverage_gap", "local_gap_summary_pending", "full-test pass", "AwaitingEvidence"),
+    ("targeted_pytest_scope_gap", "targeted_pytest_questions", "coverage_gap", "local_gap_summary_pending", "complete coverage", "AwaitingEvidence"),
+    ("full_preflight_scope_gap", "full_preflight_questions", "coverage_gap", "local_gap_summary_pending", "release readiness", "AwaitingEvidence"),
+    ("warning_triage_unresolved_gap", "warning_triage_questions", "warning_triage", "local_warning_summary_pending", "warning-free claim", "AwaitingEvidence"),
+    ("diff_hygiene_warning_gap", "diff_hygiene_questions", "warning_triage", "local_warning_summary_pending", "secret clearance", "AwaitingEvidence"),
+    ("coverage_gap_explicit", "coverage_gap_questions", "coverage_gap", "local_gap_summary_pending", "complete coverage", "AwaitingEvidence"),
+    ("reproducibility_replay_gap", "reproducibility_questions", "replay_gap", "local_replay_summary_pending", "CI parity", "AwaitingEvidence"),
+    ("non_terminal_closure_gap", "non_terminal_closure_questions", "closure_gap", "local_closure_summary_pending", "terminal closure", "AwaitingEvidence"),
+)
+EXPECTED_GAP_WARNING_ROOT_KEYS = {
+    "blocked_claims",
+    "ci_parity_claimed",
+    "complete_coverage_claimed",
+    "customer_readiness_claimed",
+    "deployment_allowed",
+    "deployment_readiness_claimed",
+    "external_publication_allowed",
+    "flake_free_guarantee_claimed",
+    "full_test_pass_claimed",
+    "gap_warning_entries",
+    "gap_warning_id",
+    "legal_clearance_claimed",
+    "next_action",
+    "performance_readiness_claimed",
+    "release_readiness_claimed",
+    "schema_version",
+    "secret_clearance_claimed",
+    "security_clearance_claimed",
+    "solver_outcome",
+    "status",
+    "terminal_closure_claimed",
+}
+EXPECTED_GAP_WARNING_ENTRY_KEYS = {
+    "blocked_claim",
+    "entry_id",
+    "entry_type",
+    "evidence_ref",
+    "public_safe_note",
+    "state",
+    "surface_id",
+}
+ALLOWED_GAP_WARNING_EVIDENCE_REFS = {
+    "local_closure_summary_pending",
+    "local_gap_summary_pending",
+    "local_replay_summary_pending",
+    "local_warning_summary_pending",
+}
 REQUIRED_DOC_PHRASES = (
     "Foundation Test Evidence Boundary",
     "Witness packet: [`../examples/foundation_test_evidence_witness.awaiting_evidence.json`]",
     "Receipt routing packet: [`../examples/foundation_test_receipt_routing.awaiting_evidence.json`]",
+    "Gap/warning register packet: [`../examples/foundation_test_gap_warning_register.awaiting_evidence.json`]",
     "Rule: Test-evidence preparation is a local planning boundary, not a full-test",
     "No full-test-pass, complete-coverage, CI-parity, release-readiness",
     "test_evidence_boundary_state=AwaitingEvidence",
     "receipt_routing_state=AwaitingEvidence",
+    "gap_warning_register_state=AwaitingEvidence",
     "full_test_pass_claimed=false",
     "complete_coverage_claimed=false",
     "ci_parity_claimed=false",
@@ -172,6 +226,7 @@ REQUIRED_DOC_PHRASES = (
     "deployment_allowed=false",
     "Full preflight | `.tmp/workspace-governance-preflight-receipt.json` | `scripts/run_workspace_governance_checks.py` | release readiness",
     "Receipt validation | `.tmp/workspace-governance-preflight-receipt.json` | `scripts/validate_workspace_governance_preflight_receipt.py` | terminal closure",
+    "Warning triage unresolved gap | `local_warning_summary_pending` | warning-free claim | `AwaitingEvidence`",
     "python scripts/validate_foundation_test_evidence_boundary.py",
 )
 FORBIDDEN_VALUE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -265,6 +320,17 @@ def validate_receipt_routing_packet(payload: dict[str, Any]) -> list[TestEvidenc
     findings: list[TestEvidenceFinding] = []
     findings.extend(validate_routing_root_contract(payload))
     findings.extend(validate_receipt_routes(payload.get("receipt_routes")))
+    findings.extend(validate_forbidden_value_patterns(payload))
+    findings.extend(validate_forbidden_promotion_patterns(payload))
+    return findings
+
+
+def validate_gap_warning_packet(payload: dict[str, Any]) -> list[TestEvidenceFinding]:
+    """Return findings for test-evidence warning and coverage-gap drift."""
+
+    findings: list[TestEvidenceFinding] = []
+    findings.extend(validate_gap_warning_root_contract(payload))
+    findings.extend(validate_gap_warning_entries(payload.get("gap_warning_entries")))
     findings.extend(validate_forbidden_value_patterns(payload))
     findings.extend(validate_forbidden_promotion_patterns(payload))
     return findings
@@ -526,6 +592,131 @@ def is_allowed_verification_ref(verification_ref: str) -> bool:
     return (REPO_ROOT / verification_path).exists()
 
 
+def validate_gap_warning_root_contract(payload: dict[str, Any]) -> list[TestEvidenceFinding]:
+    """Return findings for root-level warning and coverage-gap register drift."""
+
+    findings: list[TestEvidenceFinding] = []
+    if set(payload) != EXPECTED_GAP_WARNING_ROOT_KEYS:
+        findings.append(
+            TestEvidenceFinding(
+                "test_gap_warning_root_keys_invalid",
+                f"root keys must be: {', '.join(sorted(EXPECTED_GAP_WARNING_ROOT_KEYS))}",
+            )
+        )
+    expected_values = {
+        "gap_warning_id": EXPECTED_GAP_WARNING_ID,
+        "schema_version": 1,
+        "status": "AwaitingEvidence",
+        "solver_outcome": "AwaitingEvidence",
+        "full_test_pass_claimed": False,
+        "complete_coverage_claimed": False,
+        "ci_parity_claimed": False,
+        "release_readiness_claimed": False,
+        "deployment_readiness_claimed": False,
+        "security_clearance_claimed": False,
+        "secret_clearance_claimed": False,
+        "customer_readiness_claimed": False,
+        "legal_clearance_claimed": False,
+        "performance_readiness_claimed": False,
+        "flake_free_guarantee_claimed": False,
+        "terminal_closure_claimed": False,
+        "external_publication_allowed": False,
+        "deployment_allowed": False,
+    }
+    for key, expected_value in expected_values.items():
+        if payload.get(key) != expected_value:
+            findings.append(
+                TestEvidenceFinding(
+                    "test_gap_warning_root_value_invalid",
+                    f"{key} must be {expected_value!r}",
+                )
+            )
+    if tuple(payload.get("blocked_claims") or ()) != EXPECTED_BLOCKED_CLAIMS:
+        findings.append(
+            TestEvidenceFinding(
+                "test_gap_warning_blocked_claims_invalid",
+                f"blocked_claims must be: {', '.join(EXPECTED_BLOCKED_CLAIMS)}",
+            )
+        )
+    next_action = payload.get("next_action")
+    if not isinstance(next_action, str) or "keep warning and coverage gaps visible" not in next_action:
+        findings.append(
+            TestEvidenceFinding(
+                "test_gap_warning_next_action_invalid",
+                "next_action must preserve local warning and coverage-gap visibility",
+            )
+        )
+    return findings
+
+
+def validate_gap_warning_entries(gap_warning_entries: object) -> list[TestEvidenceFinding]:
+    """Return findings for warning and coverage-gap entry drift."""
+
+    findings: list[TestEvidenceFinding] = []
+    if not isinstance(gap_warning_entries, list) or not all(isinstance(entry, dict) for entry in gap_warning_entries):
+        return [TestEvidenceFinding("test_gap_warning_entries_invalid", "gap_warning_entries must be a list of objects")]
+    observed_entries = tuple(
+        (
+            entry.get("entry_id"),
+            entry.get("surface_id"),
+            entry.get("entry_type"),
+            entry.get("evidence_ref"),
+            entry.get("blocked_claim"),
+            entry.get("state"),
+        )
+        for entry in gap_warning_entries
+    )
+    if observed_entries != EXPECTED_GAP_WARNING_ENTRIES:
+        findings.append(
+            TestEvidenceFinding(
+                "test_gap_warning_entry_inventory_invalid",
+                "gap-warning inventory does not match the Foundation Mode test-evidence gap set",
+            )
+        )
+    entry_ids = [entry.get("entry_id") for entry in gap_warning_entries]
+    if len(set(entry_ids)) != len(entry_ids):
+        findings.append(TestEvidenceFinding("test_gap_warning_entry_duplicate", "entry ids must be unique"))
+    for entry in gap_warning_entries:
+        entry_id = str(entry.get("entry_id", "<missing>"))
+        if set(entry) != EXPECTED_GAP_WARNING_ENTRY_KEYS:
+            findings.append(
+                TestEvidenceFinding(
+                    "test_gap_warning_entry_keys_invalid",
+                    f"{entry_id} entry keys must be: {', '.join(sorted(EXPECTED_GAP_WARNING_ENTRY_KEYS))}",
+                )
+            )
+        if entry.get("state") != "AwaitingEvidence":
+            findings.append(
+                TestEvidenceFinding(
+                    "test_gap_warning_entry_state_invalid",
+                    f"{entry_id} state must be AwaitingEvidence",
+                )
+            )
+        evidence_ref = entry.get("evidence_ref")
+        if not isinstance(evidence_ref, str) or evidence_ref not in ALLOWED_GAP_WARNING_EVIDENCE_REFS:
+            findings.append(
+                TestEvidenceFinding(
+                    "test_gap_warning_entry_evidence_ref_invalid",
+                    f"{entry_id} evidence_ref must be a governed local gap or warning reference",
+                )
+            )
+        if not isinstance(entry.get("blocked_claim"), str) or not entry["blocked_claim"].strip():
+            findings.append(
+                TestEvidenceFinding(
+                    "test_gap_warning_entry_blocked_claim_invalid",
+                    f"{entry_id} blocked_claim must be a non-empty string",
+                )
+            )
+        if not isinstance(entry.get("public_safe_note"), str) or not entry["public_safe_note"].strip():
+            findings.append(
+                TestEvidenceFinding(
+                    "test_gap_warning_entry_note_invalid",
+                    f"{entry_id} public_safe_note must be a non-empty string",
+                )
+            )
+    return findings
+
+
 def validate_forbidden_value_patterns(payload: dict[str, Any]) -> list[TestEvidenceFinding]:
     """Return findings for private, test-result, source-control, customer, or deployment values."""
 
@@ -562,16 +753,19 @@ def validate_foundation_test_evidence_boundary(
     doc_path: Path = DEFAULT_DOC_PATH,
     packet_path: Path = DEFAULT_PACKET_PATH,
     routing_path: Path = DEFAULT_ROUTING_PATH,
+    gap_warning_path: Path = DEFAULT_GAP_WARNING_PATH,
 ) -> list[TestEvidenceFinding]:
     """Validate the Foundation Mode test-evidence boundary artifacts."""
 
     doc_text = load_text(doc_path, "test-evidence boundary doc")
     packet_payload = load_json_object(packet_path, "test-evidence witness packet")
     routing_payload = load_json_object(routing_path, "test-evidence receipt routing packet")
+    gap_warning_payload = load_json_object(gap_warning_path, "test-evidence gap warning packet")
     return [
         *validate_doc_text(doc_text),
         *validate_packet(packet_payload),
         *validate_receipt_routing_packet(routing_payload),
+        *validate_gap_warning_packet(gap_warning_payload),
     ]
 
 
@@ -582,10 +776,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--doc", type=Path, default=DEFAULT_DOC_PATH)
     parser.add_argument("--packet", type=Path, default=DEFAULT_PACKET_PATH)
     parser.add_argument("--routing", type=Path, default=DEFAULT_ROUTING_PATH)
+    parser.add_argument("--gap-warning", type=Path, default=DEFAULT_GAP_WARNING_PATH)
     args = parser.parse_args(argv)
 
     try:
-        findings = validate_foundation_test_evidence_boundary(args.doc, args.packet, args.routing)
+        findings = validate_foundation_test_evidence_boundary(args.doc, args.packet, args.routing, args.gap_warning)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"[FAIL] foundation_test_evidence_load: {exc}", file=sys.stderr)
         print("STATUS: failed", file=sys.stderr)
@@ -599,6 +794,7 @@ def main(argv: list[str] | None = None) -> int:
     print("[PASS] foundation_test_evidence_doc")
     print("[PASS] foundation_test_evidence_witness")
     print("[PASS] foundation_test_receipt_routing")
+    print("[PASS] foundation_test_gap_warning_register")
     print("STATUS: passed")
     return 0
 
