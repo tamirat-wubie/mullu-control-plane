@@ -792,6 +792,8 @@ def _known_limitations_aligned(repo_root: Path) -> bool:
             "scim",
             "ldap",
             "saml",
+            "github-teams",
+            "github teams",
             "workspace-directory",
             "workspace directory",
         ),
@@ -827,6 +829,7 @@ def _directory_adapter_scripts_present(repo_root: Path) -> bool:
     """Return whether merged authority directory adapters are present."""
     adapter_paths = (
         "scripts/scim_authority_directory_adapter.py",
+        "scripts/github_teams_authority_directory_adapter.py",
         "scripts/ldap_authority_directory_adapter.py",
         "scripts/saml_groups_authority_directory_adapter.py",
         "scripts/workspace_groups_authority_directory_adapter.py",
