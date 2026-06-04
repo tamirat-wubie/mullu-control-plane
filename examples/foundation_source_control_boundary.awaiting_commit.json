@@ -16,6 +16,7 @@
       "required_evidence": [
         "docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md",
         "examples/foundation_operator_readiness_witness.awaiting_evidence.json",
+        "examples/foundation_operator_stop_rules.awaiting_evidence.json",
         "scripts/validate_foundation_operator_readiness_boundary.py",
         "tests/test_validate_foundation_operator_readiness_boundary.py"
       ],
