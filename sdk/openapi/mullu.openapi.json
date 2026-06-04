@@ -14262,6 +14262,54 @@
         "summary": "Get Organization Action Queue"
       }
     },
+    "/api/v1/orgs/{org_id}/action-queue/approval-packet-preview": {
+      "post": {
+        "description": "Preview approval requirements for a visible queued action without mutating approvals.",
+        "operationId": "preview_organization_action_queue_approval_packet_api_v1_orgs__org_id__action_queue_approval_packet_preview_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActionQueueSelectionPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Organization Action Queue Approval Packet"
+      }
+    },
     "/api/v1/orgs/{org_id}/action-queue/selection-preview": {
       "post": {
         "description": "Preview a visible queued action selection without executing or mutating case state.",

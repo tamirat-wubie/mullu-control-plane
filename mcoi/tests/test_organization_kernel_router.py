@@ -812,6 +812,125 @@ def test_organization_action_queue_selection_preview_rejects_filtered_out_action
     assert before["gate_decisions"] == after["gate_decisions"] == []
 
 
+def test_organization_action_queue_approval_packet_preview_defers_missing_evidence_without_mutation(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    queue = client.get(
+        "/api/v1/orgs/org-mullu/action-queue"
+        "?department_id=security_compliance&next_action=collect_required_evidence"
+    ).json()
+    action_id = queue["actions"][0]["action_id"]
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/orgs/org-mullu/action-queue/approval-packet-preview",
+        json={
+            "action_id": action_id,
+            "filters": {
+                "department_id": "security_compliance",
+                "next_action": "collect_required_evidence",
+            },
+        },
+    )
+    payload = response.json()
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["read_only"] is True
+    assert payload["action_id"] == action_id
+    assert payload["approval_packet_decision"] == "awaiting_evidence_before_approval"
+    assert payload["required_approvals"] == ["security_approval"]
+    assert payload["approval_count"] == 1
+    assert payload["approval_roles"][0]["approval_scope"] == "security_approval"
+    assert payload["approval_roles"][0]["self_approval_forbidden"] is True
+    assert payload["evidence_ready"] is False
+    assert "security_public_claim_boundary" in payload["missing_evidence"]
+    assert "security_approval" in payload["missing_evidence"]
+    assert payload["selection_preview"]["selection_decision"] == "simulate"
+    assert payload["workflow_projection"]["acyclic"] is True
+    assert payload["workflow_projection"]["stage_count"] == 3
+    assert payload["approval_creation_authority_granted"] is False
+    assert payload["dispatch_authority_granted"] is False
+    assert payload["receipt_binding_authority_granted"] is False
+    assert "approval_creation" in payload["forbidden_effects"]
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
+def test_organization_action_queue_approval_packet_preview_requires_approval_after_evidence_ready(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    queue = client.get(
+        "/api/v1/orgs/org-mullu/action-queue"
+        "?department_id=security_compliance&next_action=evaluate_plan_step_gate"
+    ).json()
+    action_id = queue["actions"][0]["action_id"]
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/orgs/org-mullu/action-queue/approval-packet-preview",
+        json={
+            "action_id": action_id,
+            "filters": {
+                "department_id": "security_compliance",
+                "next_action": "evaluate_plan_step_gate",
+            },
+        },
+    )
+    payload = response.json()
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 200
+    assert payload["approval_packet_decision"] == "approval_required"
+    assert payload["required_approvals"] == ["security_approval"]
+    assert payload["evidence_ready"] is True
+    assert payload["missing_evidence"] == []
+    assert payload["selection_preview"]["selection_decision"] == "escalate"
+    assert payload["selection_preview"]["reason_code"] == "approval_missing"
+    assert payload["separation_of_duty"]["required"] is True
+    assert payload["separation_of_duty"]["requesting_role_id"] == "security_compliance.owner"
+    assert payload["separation_of_duty"]["self_approval_forbidden"] is True
+    assert payload["operator_next_step"] == "open_explicit_approval_request_after_evidence_is_complete"
+    assert payload["approval_creation_authority_granted"] is False
+    assert payload["execution_authority_granted"] is False
+    assert payload["dispatch_authority_granted"] is False
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"]
+
+
+def test_organization_action_queue_approval_packet_preview_rejects_filtered_out_action_without_mutation(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    queue = client.get("/api/v1/orgs/org-mullu/action-queue").json()
+    security_action = next(
+        item for item in queue["actions"]
+        if item["department_id"] == "security_compliance"
+    )
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/orgs/org-mullu/action-queue/approval-packet-preview",
+        json={
+            "action_id": security_action["action_id"],
+            "filters": {"department_id": "engineering"},
+        },
+    )
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_code"] == "action_queue_approval_packet_preview_rejected"
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+
+
 def test_organization_action_queue_view_is_read_only_and_escaped(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     bootstrap = client.post(
@@ -1725,6 +1844,7 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/orgs/{org_id}/action-queue" in paths
     assert "/api/v1/orgs/{org_id}/action-queue/view" in paths
     assert "/api/v1/orgs/{org_id}/action-queue/selection-preview" in paths
+    assert "/api/v1/orgs/{org_id}/action-queue/approval-packet-preview" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate/view" in paths
     assert "/api/v1/cases/{case_id}/audit-explorer" in paths
