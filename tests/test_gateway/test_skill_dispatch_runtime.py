@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from jsonschema import Draft202012Validator
 
 _ROOT = Path(__file__).resolve().parent.parent.parent
 if str(_ROOT) not in sys.path:
@@ -506,6 +507,104 @@ def test_dispatcher_executes_registered_enterprise_capability() -> None:
     assert result["capability_id"] == "enterprise.task_schedule"
     assert result["receipt_status"] == "scheduled"
     assert result["task_id"].startswith("task-")
+    assert result["temporal_action"]["action_id"] == result["task_id"]
+    assert result["temporal_action"]["owner"] == "identity-1"
+    assert result["temporal_action"]["trigger"] == {
+        "type": "after_duration",
+        "value": "P1D",
+        "timezone": "UTC",
+    }
+    assert result["temporal_warnings"] == ["trigger_missing_defaulted_to_after_duration_p1d"]
+
+
+def test_dispatcher_preserves_explicit_enterprise_schedule_trigger() -> None:
+    dispatcher = build_skill_dispatcher_from_platform(None)
+
+    result = dispatcher.dispatch(
+        SkillIntent(
+            "enterprise",
+            "task_schedule",
+            {
+                "title": "Rotate dashboard evidence",
+                "owner": "ops-owner",
+                "intent": "refresh deployment witness",
+                "timezone": "America/New_York",
+                "trigger": {
+                    "type": "at_time",
+                    "value": "2026-06-05T09:00:00-04:00",
+                },
+                "approval_required": True,
+                "expiry_policy": {
+                    "mode": "evidence_ttl",
+                    "evidence_ttl_seconds": 86400,
+                    "stale_evidence_action": "refresh",
+                },
+                "rollback_plan": {
+                    "strategy": "cancel_pending_task",
+                    "steps": ["disable scheduled task"],
+                },
+                "evidence_refs": ["proof://temporal/intent"],
+            },
+        ),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+
+    temporal_action = result["temporal_action"]
+    assert temporal_action["owner"] == "ops-owner"
+    assert temporal_action["intent"] == "refresh deployment witness"
+    assert temporal_action["timezone"] == "America/New_York"
+    assert temporal_action["trigger"]["type"] == "at_time"
+    assert temporal_action["trigger"]["value"] == "2026-06-05T09:00:00-04:00"
+    assert temporal_action["approval_required"] is True
+    assert temporal_action["expiry_policy"]["mode"] == "evidence_ttl"
+    assert temporal_action["rollback_plan"]["strategy"] == "cancel_pending_task"
+    assert temporal_action["evidence_refs"] == ["proof://temporal/intent"]
+    assert result["temporal_warnings"] == []
+
+
+def test_enterprise_task_schedule_schemas_validate_temporal_contract() -> None:
+    input_schema = json.loads(
+        (_ROOT / "schemas" / "enterprise" / "task_schedule.input.schema.json").read_text(
+            encoding="utf-8",
+        ),
+    )
+    output_schema = json.loads(
+        (_ROOT / "schemas" / "enterprise" / "task_schedule.output.schema.json").read_text(
+            encoding="utf-8",
+        ),
+    )
+    Draft202012Validator.check_schema(input_schema)
+    Draft202012Validator.check_schema(output_schema)
+    input_validator = Draft202012Validator(input_schema)
+    output_validator = Draft202012Validator(output_schema)
+
+    input_validator.validate(
+        {
+            "title": "Refresh evidence",
+            "owner": "operator-1",
+            "timezone": "UTC",
+            "trigger": {"type": "after_duration", "value": "PT2H"},
+            "approval_required": False,
+            "expiry_policy": {"mode": "none"},
+            "rollback_plan": {"strategy": "cancel", "steps": ["disable task"]},
+            "evidence_refs": ["proof://temporal/request"],
+        },
+    )
+
+    dispatcher = build_skill_dispatcher_from_platform(None)
+    result = dispatcher.dispatch(
+        SkillIntent(
+            "enterprise",
+            "task_schedule",
+            {"title": "Refresh evidence", "trigger": {"type": "after_duration", "value": "PT2H"}},
+        ),
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+    output_validator.validate(result)
+    assert result["temporal_action"]["trigger"]["value"] == "PT2H"
+    assert result["temporal_warnings"] == []
 
 
 def test_computer_command_run_uses_sandbox_runner(tmp_path: Path) -> None:

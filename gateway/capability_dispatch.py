@@ -982,11 +982,97 @@ def _task_schedule(
         action=str(params.get("action") or "follow_up"),
         action_params=dict(params),
     )
+    temporal_action, temporal_warnings = _enterprise_temporal_action_read_model(
+        task_id=task.task_id,
+        context=context,
+        params=params,
+        title=title,
+    )
     return {
         "response": f"Task scheduled: {task.task_id}",
         "task_id": task.task_id,
         "receipt_status": "scheduled",
+        "temporal_action": temporal_action,
+        "temporal_warnings": temporal_warnings,
     }
+
+
+def _enterprise_temporal_action_read_model(
+    *,
+    task_id: str,
+    context: CapabilityExecutionContext,
+    params: dict[str, Any],
+    title: str,
+) -> tuple[dict[str, Any], list[str]]:
+    """Return the governed temporal action read model for enterprise schedules."""
+    temporal_warnings: list[str] = []
+    timezone = str(params.get("timezone") or "UTC").strip() or "UTC"
+    owner = str(params.get("owner") or params.get("assignee") or context.identity_id).strip()
+    intent = str(params.get("intent") or title).strip()
+    trigger = _enterprise_temporal_trigger(params, timezone, temporal_warnings)
+    expiry_policy = _enterprise_temporal_mapping(
+        params.get("expiry_policy"),
+        default={"mode": "none"},
+    )
+    rollback_plan = _enterprise_temporal_mapping(
+        params.get("rollback_plan"),
+        default={"strategy": "manual_cancel_or_disable", "steps": []},
+    )
+    rollback_plan.setdefault("steps", [])
+    evidence_refs = params.get("evidence_refs")
+    if evidence_refs is None:
+        normalized_evidence_refs: list[str] = []
+    elif isinstance(evidence_refs, (list, tuple)):
+        normalized_evidence_refs = [str(item).strip() for item in evidence_refs if str(item).strip()]
+    else:
+        normalized_evidence_refs = [str(evidence_refs).strip()] if str(evidence_refs).strip() else []
+    return (
+        {
+            "action_id": task_id,
+            "owner": owner,
+            "intent": intent,
+            "trigger": trigger,
+            "timezone": timezone,
+            "approval_required": bool(params.get("approval_required", False)),
+            "expiry_policy": expiry_policy,
+            "rollback_plan": rollback_plan,
+            "evidence_refs": normalized_evidence_refs,
+            "status": "scheduled",
+        },
+        temporal_warnings,
+    )
+
+
+def _enterprise_temporal_trigger(
+    params: dict[str, Any],
+    timezone: str,
+    temporal_warnings: list[str],
+) -> dict[str, str]:
+    trigger = params.get("trigger")
+    if isinstance(trigger, dict):
+        trigger_type = str(trigger.get("type") or "").strip()
+        trigger_value = str(trigger.get("value") or "").strip()
+        if trigger_type and trigger_value:
+            normalized = {"type": trigger_type, "value": trigger_value}
+            reference_time = str(trigger.get("reference_time") or "").strip()
+            trigger_timezone = str(trigger.get("timezone") or timezone).strip()
+            if reference_time:
+                normalized["reference_time"] = reference_time
+            if trigger_timezone:
+                normalized["timezone"] = trigger_timezone
+            return normalized
+        temporal_warnings.append("trigger_invalid_defaulted")
+    due_at = str(params.get("due_at") or "").strip()
+    if due_at:
+        return {"type": "at_time", "value": due_at, "timezone": timezone}
+    temporal_warnings.append("trigger_missing_defaulted_to_after_duration_p1d")
+    return {"type": "after_duration", "value": "P1D", "timezone": timezone}
+
+
+def _enterprise_temporal_mapping(value: Any, *, default: dict[str, Any]) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return {str(key): item for key, item in value.items()}
+    return dict(default)
 
 
 def _first_platform_attribute(platform: Any, names: tuple[str, ...]) -> Any | None:
