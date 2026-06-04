@@ -30,6 +30,8 @@ mullu start --json
 mullu actions
 mullu outcomes
 mullu workflows
+mullu documents
+mullu documents --json
 mullu workflow docs-update --target docs/README.md
 mullu task review-docs --target docs/README.md
 mullu task update-docs --target docs/README.md
@@ -48,6 +50,11 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
 ## Simple App Surface
 
 - `SimplePlatformRuntime` exposes the same outcomes in JSON envelopes.
+- `SimplePlatformRuntime.document_manipulation_wiring()` exposes the read-only
+  document manipulation component chain for `docs_update` without granting
+  execution authority.
+- `SimplePlatformRuntime.document_manipulation_wiring_contract()` exposes the
+  stable client contract for document manipulation wiring readback.
 - `mount_simple_platform_router_from_env(app, env)` mounts the simple routes
   when `MULLU_SIMPLE_PLATFORM_ENABLED=1` and uses
   `MULLU_SIMPLE_PLATFORM_PREFIX` when provided.
@@ -59,6 +66,8 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
   - `GET /api/v1/simple/home`
   - `GET /api/v1/simple/actions`
   - `GET /api/v1/simple/start`
+  - `GET /api/v1/simple/documents/wiring`
+  - `GET /api/v1/simple/documents/wiring/contract`
   - `POST /api/v1/simple/actions/check`
   - `POST /api/v1/simple/tasks/check`
   - `POST /api/v1/simple/workflows/check`

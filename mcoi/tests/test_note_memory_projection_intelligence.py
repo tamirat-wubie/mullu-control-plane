@@ -397,7 +397,9 @@ def test_dashboard_projects_simple_actions_without_execution_authority(tmp_path)
     assert dashboard.simple_blocked_action_refs == (blocked_check.decision_ref,)
     assert payload["simple_action_summaries"][0]["title"] == "Ready"
     assert payload["simple_action_summaries"][1]["review_reasons"] == ["External changes require approval."]
-    assert payload["simple_action_summaries"][2]["blocked_reasons"] == ["The target is outside the allowed area."]
+    assert payload["simple_action_summaries"][2]["blocked_reasons"] == [
+        "The target is outside the allowed area."
+    ]
     assert all(summary["execution_allowed"] is False for summary in payload["simple_action_summaries"])
     assert payload["execution_allowed"] is False
 

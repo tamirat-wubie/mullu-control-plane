@@ -19,6 +19,7 @@ from mcoi_runtime.app.simple_platform_integration import (
     SimplePlatformMountResult,
     mount_simple_platform_router_from_env,
 )
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.simple_platform_api import SimplePlatformRuntime
 from mcoi_runtime.core.simple_platform_fastapi_router import SimplePlatformFastAPIAdapter
 
@@ -150,7 +151,7 @@ def test_simple_platform_integration_uses_default_prefix() -> None:
 def test_simple_platform_integration_rejects_malformed_prefix() -> None:
     app = FakeApp()
 
-    with pytest.raises(RuntimeError, match="MULLU_SIMPLE_PLATFORM_PREFIX must start with '/'"):
+    with pytest.raises(RuntimeCoreInvariantError, match="MULLU_SIMPLE_PLATFORM_PREFIX must start with /"):
         mount_simple_platform_router_from_env(
             app,
             {"MULLU_SIMPLE_PLATFORM_ENABLED": "1", "MULLU_SIMPLE_PLATFORM_PREFIX": "simple"},
@@ -172,3 +173,18 @@ def test_simple_platform_start_route_contract_returns_non_executing_guide() -> N
     assert payload["status"] == "listed"
     assert guide["execution_allowed"] is False
     assert guide["recommended_path"][0]["command"] == "mullu workflows"
+
+
+def test_simple_platform_document_route_contract_returns_read_only_wiring() -> None:
+    adapter = SimplePlatformFastAPIAdapter(SimplePlatformRuntime())
+    route_specs = SimplePlatformFastAPIAdapter.route_specs("/simple")
+    route_by_handler = {route.handler_name: route for route in route_specs}
+    payload = adapter.document_manipulation_wiring()
+    wiring = payload["payload"]["wiring"]
+
+    assert route_by_handler["document_manipulation_wiring"].method == "GET"
+    assert route_by_handler["document_manipulation_wiring"].path == "/simple/documents/wiring"
+    assert payload["governed"] is True
+    assert payload["status"] == "listed"
+    assert wiring["execution_allowed"] is False
+    assert wiring["components"][0]["component_ref"] == "task.update_docs"
