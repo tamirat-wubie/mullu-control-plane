@@ -21,10 +21,12 @@ It does not mark any route as witnessed or proven.
    `python scripts/proof_route_gap_triage.py`
 3. Verify the witness is fresh:
    `python scripts/proof_route_gap_triage.py --check`
-4. Select the first `ranked_families[]` item as the next closure candidate unless
-   a release blocker names a stricter family.
-5. Close the selected family by adding a named proof surface, evidence files,
-   route tests, and a closure action in `scripts/proof_coverage_matrix.py`.
+4. If `ranked_families[]` is non-empty, select the first item as the next
+   closure candidate unless a release blocker names a stricter family.
+5. If `ranked_families[]` is empty and `open_issue` is `none`, preserve the
+   closed witness and continue monitoring new route declarations.
+6. Close any future selected family by adding a named proof surface, evidence
+   files, route tests, and a closure action in `scripts/proof_coverage_matrix.py`.
 
 ## Report Contract
 
@@ -46,8 +48,19 @@ It does not mark any route as witnessed or proven.
    suggested proof level.
 4. `--check` fails when the stored assurance witness is stale.
 
+## Current Closure Witness
+
+The current canonical proof matrix reports `declared_route_count: 395` and
+`total_unclassified_route_count: 0`. The generated proof-route triage report is
+therefore closed with `ranked_families: []`, `open_issue: none`, and
+`next_action: none`.
+
+The closure is guarded by `tests/test_proof_route_gap_triage.py`, which compares
+the documentation status with `build_gap_triage_report(...)` output from the
+canonical proof coverage fixture.
+
 STATUS:
   Completeness: 100%
-  Invariants verified: [route gap preservation, deterministic ranking, source-file binding, stale witness detection]
-  Open issues: unclassified route families still require named proof surfaces
-  Next action: classify the highest-ranked route family into a governed proof surface
+  Invariants verified: [route gap preservation, deterministic ranking, source-file binding, stale witness detection, closed report/documentation parity]
+  Open issues: none
+  Next action: run `python scripts/proof_route_gap_triage.py --check` after route or proof-surface changes
