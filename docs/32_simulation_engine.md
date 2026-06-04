@@ -1,6 +1,6 @@
 # 32 — Simulation Engine
 
-> **In one box:** How Mullu thinks through "what would happen if I did this?"
+> **In one box:** How Mullu Govern thinks through "what would happen if I did this?"
 > *before* doing it — a dry run for consequences. New here? →
 > [Plain-English Overview](explain/PLAIN_ENGLISH.md); unknown word? →
 > [Glossary](GLOSSARY.md). *(Doc type: Reference.)*

@@ -1,0 +1,110 @@
+{
+  "witness_id": "foundation_agentic_management_witness.awaiting_evidence.v1",
+  "schema_version": 1,
+  "status": "AwaitingEvidence",
+  "solver_outcome": "AwaitingEvidence",
+  "agentic_management_claimed": false,
+  "autonomous_management_authority_claimed": false,
+  "task_execution_authority_allowed": false,
+  "delegation_activation_allowed": false,
+  "scheduling_commitment_allowed": false,
+  "resource_allocation_approved": false,
+  "budget_commitment_allowed": false,
+  "priority_final_claimed": false,
+  "approval_bypass_allowed": false,
+  "live_monitoring_claimed": false,
+  "operator_replacement_claimed": false,
+  "customer_commitment_allowed": false,
+  "money_movement_allowed": false,
+  "external_publication_allowed": false,
+  "deployment_allowed": false,
+  "blocked_claims": [
+    "autonomous management authority",
+    "task execution authority",
+    "delegation activation",
+    "scheduling commitment",
+    "resource allocation approval",
+    "budget commitment",
+    "final priority claim",
+    "approval bypass",
+    "live monitoring claim",
+    "operator replacement claim",
+    "customer commitment",
+    "money movement",
+    "external publication",
+    "deployment readiness"
+  ],
+  "agentic_management_surfaces": [
+    {
+      "surface_id": "goal_intake_questions",
+      "surface_type": "local_draft",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft how goals enter a governed local queue without claiming autonomous authority."
+    },
+    {
+      "surface_id": "plan_decomposition_questions",
+      "surface_type": "local_draft",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft bounded planning questions without authorizing task execution."
+    },
+    {
+      "surface_id": "delegation_questions",
+      "surface_type": "local_draft",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft worker and skill routing questions without activating delegation."
+    },
+    {
+      "surface_id": "schedule_queue_questions",
+      "surface_type": "local_draft",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft queue and wait-state questions without schedule commitments."
+    },
+    {
+      "surface_id": "resource_budget_questions",
+      "surface_type": "local_draft",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft resource and budget guard questions without allocation approval."
+    },
+    {
+      "surface_id": "priority_tradeoff_questions",
+      "surface_type": "local_draft",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft priority and tradeoff questions without final sequencing claims."
+    },
+    {
+      "surface_id": "escalation_approval_questions",
+      "surface_type": "local_draft",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft approval and escalation gates without bypass authority."
+    },
+    {
+      "surface_id": "progress_receipt_questions",
+      "surface_type": "local_draft",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft progress and receipt fields without live monitoring claims."
+    },
+    {
+      "surface_id": "rollback_recovery_questions",
+      "surface_type": "local_draft",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft rollback and recovery questions without recovery readiness claims."
+    },
+    {
+      "surface_id": "performance_review_questions",
+      "surface_type": "local_draft",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Draft review questions without operator replacement, customer, money, publication, or deployment claims."
+    }
+  ],
+  "next_action": "keep agentic-management work local until a later witness promotes one exact management-control action"
+}

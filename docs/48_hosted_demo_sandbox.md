@@ -1,6 +1,6 @@
 # Hosted Demo Sandbox
 
-> **In one box:** A safe, read-only hosted place for evaluators to try Mullu
+> **In one box:** A safe, read-only hosted place for evaluators to try Mullu Govern
 > without installing anything — good for decision-makers. For the big picture
 > first, see the [Plain-English Overview](explain/PLAIN_ENGLISH.md).
 > *(Doc type: How-to.)*

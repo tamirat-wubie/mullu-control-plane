@@ -26,7 +26,11 @@ from mcoi_runtime.contracts.code import (
     WorkspaceState,
 )
 from mcoi_runtime.adapters.code_adapter import LocalCodeAdapter
-from .invariants import ensure_non_empty_text, stable_identifier
+from mcoi_runtime.governance.protected_paths import (
+    DEFAULT_GOVERNANCE_PROTECTED_PATHS,
+    ProtectedPathPolicy,
+)
+from .invariants import stable_identifier
 
 
 class CodeEngine:
@@ -35,9 +39,21 @@ class CodeEngine:
     All operations use the adapter's workspace containment.
     """
 
-    def __init__(self, *, adapter: LocalCodeAdapter, clock: Callable[[], str]) -> None:
+    def __init__(
+        self,
+        *,
+        adapter: LocalCodeAdapter,
+        clock: Callable[[], str],
+        protected_paths: ProtectedPathPolicy | None = DEFAULT_GOVERNANCE_PROTECTED_PATHS,
+    ) -> None:
         self._adapter = adapter
         self._clock = clock
+        # Fail-closed protected-path gate. A governed code change must not
+        # silently rewrite the control-plane artifacts that constrain it
+        # (CI, schemas, capability packs, the governance package,
+        # receipt/proof stores, secrets). Pass protected_paths=None to
+        # disable, or a custom ProtectedPathPolicy to scope it.
+        self._protected_paths = protected_paths
 
     def inspect(self, repo_id: str, name: str) -> WorkspaceState:
         """Inspect the repository and return workspace state."""
@@ -97,8 +113,37 @@ class CodeEngine:
             duration_ms=duration_ms,
         )
 
+    def _protected_path_block(
+        self, patch_id: str, target_file: str,
+    ) -> PatchApplicationResult | None:
+        """Return a BLOCKED result if target_file is protected, else None.
+
+        Fail-closed governance gate: refuses to patch governance /
+        control-plane artifacts. Disabled when protected_paths is None or
+        an empty policy.
+        """
+        policy = self._protected_paths
+        if policy is None or policy.is_empty:
+            return None
+        verdict = policy.classify(target_file)
+        if not verdict.protected:
+            return None
+        return PatchApplicationResult(
+            patch_id=patch_id,
+            status=PatchStatus.BLOCKED,
+            target_file=target_file,
+            error_message="protected path requires elevated authority: " + verdict.reason,
+        )
+
     def apply_patch_and_verify(self, proposal: PatchProposal) -> PatchApplicationResult:
         """Apply a patch and verify the file was changed."""
+        # Protected-path gate (fail-closed) runs before any filesystem
+        # access. Disabled only when the engine is constructed with
+        # protected_paths=None (or an empty policy).
+        blocked = self._protected_path_block(proposal.patch_id, proposal.target_file)
+        if blocked is not None:
+            return blocked
+
         # Read original content
         original = self._adapter.read_file(proposal.target_file)
         if original is None:

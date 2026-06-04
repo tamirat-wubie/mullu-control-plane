@@ -2,7 +2,7 @@
 
 > **In one box:** Hands-on, hand-held lessons that teach by *doing*. Unlike a
 > [How-To Guide](../how-to/) (which assumes you know the basics and just wants
-> steps), a tutorial is for someone who has never used Mullu and wants to be
+> steps), a tutorial is for someone who has never used Mullu Govern and wants to be
 > walked through it slowly, with every command explained. **No prior knowledge
 > assumed.** Any unfamiliar word is one click away in the
 > [Glossary](../GLOSSARY.md).
@@ -15,7 +15,7 @@ Do them **in order** — Tutorial 2 assumes you finished Tutorial 1.
 
 | # | Tutorial | What you'll have done by the end | Time |
 | --- | --- | --- | --- |
-| 1 | [Your First Run](01_first_governed_task.md) | Installed Mullu, run the test suite, started the server, and seen for yourself that powerful features are **off until turned on**. | ~20 min |
+| 1 | [Your First Run](01_first_governed_task.md) | Installed Mullu Govern, run the test suite, started the server, and seen for yourself that powerful features are **off until turned on**. | ~20 min |
 | 2 | [Watch Mullu Govern Real Money](02_a_real_governed_task.md) | Watched the budget gate **mechanically refuse** an over-limit payment, then **approve** a valid one and produce an auditable **proof**. | ~25 min |
 
 Together these are the full on-ramp: about 45 minutes of hands-on work that

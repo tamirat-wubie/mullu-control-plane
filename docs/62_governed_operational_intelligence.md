@@ -1,6 +1,6 @@
 # Governed Operational Intelligence Extension
 
-> **In one box:** The roadmap for Mullu's *next* layer — moving from "safely do
+> **In one box:** The roadmap for Mullu Govern's *next* layer — moving from "safely do
 > one task" to "safely run ongoing operations" (world model, goal compiler,
 > simulator, [capability forge](GLOSSARY.md#capability-forge--solver-forge),
 > worker mesh, trust ledger). This is forward-looking design, not the current

@@ -1,6 +1,6 @@
 # Compliance Alignment Mapping
 
-> **In one box:** Which Mullu controls line up with SOC 2, HIPAA, EU high-risk system obligations,
+> **In one box:** Which Mullu Govern controls line up with SOC 2, HIPAA, EU high-risk system obligations,
 > and ISO/IEC 42001 — the "is this compliant?" map, useful for decision-makers
 > and auditors. New here? → [Plain-English Overview](explain/PLAIN_ENGLISH.md).
 > *(Doc type: Reference.)*

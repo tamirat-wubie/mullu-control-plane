@@ -416,7 +416,7 @@ def test_cli_blocks_direct_memory_anchor_and_records_rejected_delta(tmp_path, ca
 
 def test_cli_queue_and_promote_memory_anchor_with_receipt(tmp_path, capsys) -> None:
     note_store = tmp_path / "notes"
-    guarded_main(
+    capture_code = guarded_main(
         [
             "--note-store",
             str(note_store),
@@ -434,12 +434,14 @@ def test_cli_queue_and_promote_memory_anchor_with_receipt(tmp_path, capsys) -> N
             "--trust-zone",
             "workspace",
             "--expires-at",
-            "2026-06-04T00:00:00+00:00",
+            "2999-01-01T00:00:00+00:00",
             "--evidence-ref",
             "test_note_memory_cli.py::test_cli_queue_and_promote",
         ]
     )
     capture_envelope = _last_json(capsys)
+    assert capture_code == 0
+    assert capture_envelope["status"] == "captured"
     source_note_id = capture_envelope["payload"]["event"]["note_id"]
     source_event_seq = capture_envelope["payload"]["event"]["event_seq"]
 
@@ -480,7 +482,7 @@ def test_cli_queue_and_promote_memory_anchor_with_receipt(tmp_path, capsys) -> N
 
 def _queued_cli_promotion(tmp_path, capsys) -> tuple[object, str, int, str]:
     note_store = tmp_path / "notes"
-    guarded_main(
+    capture_code = guarded_main(
         [
             "--note-store",
             str(note_store),
@@ -498,12 +500,14 @@ def _queued_cli_promotion(tmp_path, capsys) -> tuple[object, str, int, str]:
             "--trust-zone",
             "workspace",
             "--expires-at",
-            "2026-06-04T00:00:00+00:00",
+            "2999-01-01T00:00:00+00:00",
             "--evidence-ref",
             "test_note_memory_cli.py::boundary",
         ]
     )
     capture_envelope = _last_json(capsys)
+    assert capture_code == 0
+    assert capture_envelope["status"] == "captured"
     source_note_id = capture_envelope["payload"]["event"]["note_id"]
     source_event_seq = capture_envelope["payload"]["event"]["event_seq"]
     guarded_main(["--note-store", str(note_store), "queue-promotion", source_note_id])

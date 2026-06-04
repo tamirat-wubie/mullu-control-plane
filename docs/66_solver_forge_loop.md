@@ -1,6 +1,6 @@
 # Solver Forge Loop
 
-> **In one box:** How Mullu *discovers* which solution to a problem is worth
+> **In one box:** How Mullu Govern *discovers* which solution to a problem is worth
 > packaging — candidates are built, compared on real evidence, and adversarially
 > reviewed before being handed to the
 > [capability forge](GLOSSARY.md#capability-forge--solver-forge). Crucially it
@@ -351,11 +351,13 @@ invariant — it is applied symmetrically to the baseline (a flagged baseline se
 ledger record. `CompositeAdversarialReviewer` unions several reviewers so the
 platform harness and the capsule probes can run together.
 
-Running the default probes over the starter catalog flags the LLM-backed
-capsules (`llm_planner`, `llm_reviewer`, `multi_agent_debate`) for not declaring
-an injection failure mode — a real contract gap for capsule owners to close —
-while the duplicate-invoice benchmark capsules are clean, so the probes can be
-attached to that benchmark without compromising its baseline.
+The shipped starter catalog **passes** its own default probes: every capsule
+declares the failure modes the probes require — injection mitigations on the
+LLM-backed capsules (`llm_planner`, `llm_reviewer`, `multi_agent_debate`) and an
+availability guard on `human_review_gate`. (Those declarations were added in
+response to the probes flagging the gaps — the lab closing a contract gap it
+found in itself.) A test asserts the catalog stays clean, so probes can be
+attached to any benchmark without compromising its baseline.
 
 ## Cross-signature clustering
 

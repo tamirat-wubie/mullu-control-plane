@@ -58,6 +58,17 @@ class TransitionReceipt(ContractRecord):
 
     Captures before/after state hashes, guard verdicts, and a replay token
     for deterministic re-execution. Matches MAF Rust TransitionReceipt.
+
+    Authentication boundary: ``receipt_hash`` (and the Ed25519 ``signature``
+    over it) bind ONLY the transition identity in ``transition_content``
+    (entity/from/to/action/before_state_hash/after_state_hash/causal_parent).
+    The decision is authenticated insofar as it is encoded in ``to_state``.
+    ``verdict``, ``guard_verdicts``, ``issued_at`` and the authenticity fields
+    are NOT part of the content-address and are therefore NOT tamper-evident on
+    their own — a validly signed receipt can have its ``verdict`` flipped and
+    its ``guard_verdicts`` altered without breaking the hash or signature. Read
+    the authenticated decision from the hash-bound ``to_state``, not from
+    ``verdict``.
     """
 
     receipt_id: str
@@ -238,11 +249,21 @@ def certify_transition(
         verdict=DENIED_GUARD_FAILED, including the full guard list (passing
         AND failing) so the receipt is a complete proof of the denial.
 
-    The receipt IS the cryptographic record of the decision — including
-    denials. Stripping failed guards from the receipt would erase the
-    audit-trail reason for denial. Callers that previously caught the
-    "guard failed" ValueError should instead inspect
-    capsule.receipt.verdict.
+    The receipt records the decision — including denials, with the full guard
+    list (passing AND failing) so it reads as a complete audit trail of the
+    rejection. Callers that previously caught the "guard failed" ValueError may
+    inspect ``capsule.receipt.verdict`` for control flow.
+
+    SECURITY BOUNDARY: ``receipt_hash`` and the signature bind ONLY the
+    transition identity in ``transition_content`` (which includes the
+    decision-as-``to_state``: a governed decision uses to_state
+    "allowed"/"denied"). They do NOT cover ``verdict`` or ``guard_verdicts`` —
+    those sit outside the content-address and are NOT tamper-evident, so a
+    consumer making a trust decision must derive the authenticated outcome from
+    the hash-bound ``to_state``, never from the ``verdict`` field, and must not
+    treat the guard evidence as cryptographically proven. (Binding verdict +
+    guard evidence into the signed payload is a separate, Rust-coordinated
+    change — it would invalidate every existing signature.)
 
     This is the Python equivalent of MAF's StateMachineSpec.certify_transition().
     """
