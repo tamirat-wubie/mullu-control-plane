@@ -31,6 +31,7 @@ from mcoi_runtime.substrate.cascade import (
     CascadeOutcome,
     CascadeResult,
     DependencyGraph,
+    registry_dispatch_checker,
 )
 from mcoi_runtime.substrate.constructs import ConstructBase
 
@@ -197,7 +198,9 @@ class PhiGov:
         ] = (),
     ) -> None:
         self._graph = graph
-        self._cascade = cascade_engine or CascadeEngine(graph)
+        self._cascade = cascade_engine or CascadeEngine(
+            graph, invariant_checker=registry_dispatch_checker
+        )
         self._phi_agent = phi_agent or PhiAgentFilter()
         self._external = external_validators
 

@@ -123,3 +123,23 @@ def test_registered_validator_escalates_and_phi_gov_blocks():
     # ESCALATED -> A1 fail-closed -> FAIL with the escalation reason.
     assert result.judgment.state == ProofState.FAIL
     assert "escalated" in result.judgment.reason
+
+
+def test_phi_gov_default_cascade_uses_registry_dispatch():
+    g = DependencyGraph()
+    root = State(configuration={"x": 0})
+    g.register(root)
+    dep = State(configuration={"x": 1})
+    g.register(dep, depends_on=(root.id,))
+    register_invariant_validator(root.type, lambda d, c: False)
+    phi = PhiGov(g)
+
+    result = phi.evaluate(
+        (ProposedDelta(construct_id=root.id, operation="update"),),
+        _ctx(),
+        _auth(),
+    )
+
+    assert result.judgment.state == ProofState.FAIL
+    assert result.judgment.cascade_summaries[0]["escalations"] == 1
+    assert "cascade_escalated" in result.judgment.reason
