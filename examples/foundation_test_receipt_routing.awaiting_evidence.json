@@ -1,0 +1,129 @@
+{
+  "blocked_claims": [
+    "full-test pass",
+    "complete coverage",
+    "CI parity",
+    "release readiness",
+    "deployment readiness",
+    "security clearance",
+    "secret clearance",
+    "customer readiness",
+    "legal clearance",
+    "performance readiness",
+    "flake-free guarantee",
+    "terminal closure",
+    "external publication",
+    "deployment readiness"
+  ],
+  "ci_parity_claimed": false,
+  "complete_coverage_claimed": false,
+  "customer_readiness_claimed": false,
+  "deployment_allowed": false,
+  "deployment_readiness_claimed": false,
+  "external_publication_allowed": false,
+  "flake_free_guarantee_claimed": false,
+  "full_test_pass_claimed": false,
+  "legal_clearance_claimed": false,
+  "next_action": "keep receipt routing local and scoped; do not claim full-test pass, complete coverage, CI parity, release readiness, security clearance, customer readiness, legal clearance, terminal closure, external publication, or deployment",
+  "performance_readiness_claimed": false,
+  "receipt_routes": [
+    {
+      "blocked_promotion": "full-test pass",
+      "public_safe_note": "Focused validator output may be summarized locally; it cannot prove full-test pass, coverage completeness, release readiness, or deployment readiness.",
+      "receipt_ref": "local_cli_summary_pending",
+      "route_id": "focused_validator_receipt_route",
+      "state": "AwaitingEvidence",
+      "surface_id": "focused_validator_questions",
+      "verification_ref": "scripts/validate_foundation_test_evidence_boundary.py"
+    },
+    {
+      "blocked_promotion": "complete coverage",
+      "public_safe_note": "Targeted pytest output may be summarized locally; it cannot prove complete coverage, CI parity, release readiness, or deployment readiness.",
+      "receipt_ref": "local_cli_summary_pending",
+      "route_id": "targeted_pytest_receipt_route",
+      "state": "AwaitingEvidence",
+      "surface_id": "targeted_pytest_questions",
+      "verification_ref": "tests/test_validate_foundation_test_evidence_boundary.py"
+    },
+    {
+      "blocked_promotion": "release readiness",
+      "public_safe_note": "A saved workspace preflight receipt may be validated locally; it cannot prove release readiness, legal clearance, customer readiness, terminal closure, or deployment readiness.",
+      "receipt_ref": ".tmp/workspace-governance-preflight-receipt.json",
+      "route_id": "full_preflight_receipt_route",
+      "state": "AwaitingEvidence",
+      "surface_id": "full_preflight_questions",
+      "verification_ref": "scripts/run_workspace_governance_checks.py"
+    },
+    {
+      "blocked_promotion": "terminal closure",
+      "public_safe_note": "Receipt validation may prove the saved receipt shape and pass status; it cannot prove terminal closure, public readiness, customer readiness, or deployment readiness.",
+      "receipt_ref": ".tmp/workspace-governance-preflight-receipt.json",
+      "route_id": "receipt_validation_receipt_route",
+      "state": "AwaitingEvidence",
+      "surface_id": "receipt_validation_questions",
+      "verification_ref": "scripts/validate_workspace_governance_preflight_receipt.py"
+    },
+    {
+      "blocked_promotion": "secret clearance",
+      "public_safe_note": "Diff-hygiene output may be summarized locally; it cannot prove secret clearance, security clearance, release readiness, or deployment readiness.",
+      "receipt_ref": "local_cli_summary_pending",
+      "route_id": "diff_hygiene_receipt_route",
+      "state": "AwaitingEvidence",
+      "surface_id": "diff_hygiene_questions",
+      "verification_ref": "git diff --check"
+    },
+    {
+      "blocked_promotion": "flake-free guarantee",
+      "public_safe_note": "Failure-case output may be summarized locally; it cannot prove flake-free behavior, complete coverage, release readiness, or deployment readiness.",
+      "receipt_ref": "local_cli_summary_pending",
+      "route_id": "failure_case_receipt_route",
+      "state": "AwaitingEvidence",
+      "surface_id": "failure_case_questions",
+      "verification_ref": "tests/test_validate_foundation_test_evidence_boundary.py"
+    },
+    {
+      "blocked_promotion": "warning-free claim",
+      "public_safe_note": "Warning triage may be summarized locally; unresolved warnings must remain visible and cannot be converted into release readiness or deployment readiness.",
+      "receipt_ref": "local_cli_summary_pending",
+      "route_id": "warning_triage_receipt_route",
+      "state": "AwaitingEvidence",
+      "surface_id": "warning_triage_questions",
+      "verification_ref": "local_operator_review_pending"
+    },
+    {
+      "blocked_promotion": "complete coverage",
+      "public_safe_note": "Coverage gaps may be listed locally; the route cannot claim coverage completeness, CI parity, release readiness, or deployment readiness.",
+      "receipt_ref": "local_gap_summary_pending",
+      "route_id": "coverage_gap_receipt_route",
+      "state": "AwaitingEvidence",
+      "surface_id": "coverage_gap_questions",
+      "verification_ref": "local_operator_review_pending"
+    },
+    {
+      "blocked_promotion": "CI parity",
+      "public_safe_note": "A reproducibility command list may be kept locally; it cannot prove CI parity, release readiness, customer readiness, or deployment readiness.",
+      "receipt_ref": "local_replay_summary_pending",
+      "route_id": "reproducibility_receipt_route",
+      "state": "AwaitingEvidence",
+      "surface_id": "reproducibility_questions",
+      "verification_ref": "local_operator_replay_pending"
+    },
+    {
+      "blocked_promotion": "terminal closure",
+      "public_safe_note": "Non-terminal closure notes may explain why checks are local evidence only; they cannot authorize external publication, customer access, paid use, or deployment.",
+      "receipt_ref": "local_closure_summary_pending",
+      "route_id": "non_terminal_closure_receipt_route",
+      "state": "AwaitingEvidence",
+      "surface_id": "non_terminal_closure_questions",
+      "verification_ref": "docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md"
+    }
+  ],
+  "release_readiness_claimed": false,
+  "route_id": "foundation_test_receipt_routing.awaiting_evidence.v1",
+  "schema_version": 1,
+  "secret_clearance_claimed": false,
+  "security_clearance_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "terminal_closure_claimed": false
+}
