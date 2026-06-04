@@ -1,0 +1,135 @@
+{
+  "blocked_claims": [
+    "outreach rehearsal execution",
+    "community outreach",
+    "social post publication",
+    "forum post publication",
+    "direct messaging",
+    "help request",
+    "collaborator recruitment",
+    "partnership outreach",
+    "mentor request",
+    "public feedback request",
+    "event participation",
+    "referral request",
+    "contact list recording",
+    "personal data collection",
+    "external account use",
+    "public profile readiness",
+    "customer access",
+    "external publication",
+    "secret material",
+    "deployment readiness"
+  ],
+  "collaborator_recruitment_allowed": false,
+  "community_outreach_allowed": false,
+  "contact_list_recorded": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "direct_message_allowed": false,
+  "event_participation_allowed": false,
+  "external_account_use_allowed": false,
+  "external_publication_allowed": false,
+  "forum_post_publication_allowed": false,
+  "help_request_allowed": false,
+  "mentor_request_allowed": false,
+  "next_action": "draft local community/network no-outreach questions only; do not post publicly, contact people, send messages, request help, ask for feedback, recruit collaborators, approach partners, request mentors, register for events, request referrals, store contact lists, collect personal data, use external accounts, open customer access, publish externally, store secret material, or deploy",
+  "no_outreach_rehearsal_executed": false,
+  "partnership_outreach_allowed": false,
+  "personal_data_collection_allowed": false,
+  "public_feedback_request_allowed": false,
+  "public_profile_claimed": false,
+  "referral_request_allowed": false,
+  "schema_version": 1,
+  "secret_material_allowed": false,
+  "social_post_publication_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Audience boundary questions only; no people, communities, customers, contact list, or outside audience is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "audience_boundary_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Channel-fit questions only; no community joining, platform account, channel target, or external account use is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "channel_fit_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Help-request stop-rule questions only; help requests remain unexecuted and private detail remains excluded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "help_request_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Forum-post stop-rule questions only; no forum post, thread, reply, or public feedback request is published.",
+      "state": "AwaitingEvidence",
+      "surface_id": "forum_post_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Social-post stop-rule questions only; no social post, public profile, engagement claim, or external account is used.",
+      "state": "AwaitingEvidence",
+      "surface_id": "social_post_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Direct-message stop-rule questions only; direct messaging remains unexecuted and named-person text remains excluded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "direct_message_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Collaborator stop-rule questions only; no collaborator recruitment, role promise, or work expectation is created.",
+      "state": "AwaitingEvidence",
+      "surface_id": "collaborator_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Partnership stop-rule questions only; no partner outreach, agreement, referral path, or outside obligation is created.",
+      "state": "AwaitingEvidence",
+      "surface_id": "partnership_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Mentor stop-rule questions only; no mentor request, advisor request, assignment, or outside role is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "mentor_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Feedback stop-rule questions only; no feedback request, survey, beta signal, customer input, or external response is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "feedback_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Event and referral stop-rule questions only; no event registration, referral request, introduction, or contact path is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "event_referral_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Privacy and support handoff questions only; no personal data, support duty, customer access, or publication is allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "privacy_support_handoff",
+      "surface_type": "local_draft"
+    }
+  ],
+  "witness_id": "foundation_community_network_no_outreach_rehearsal_witness.awaiting_evidence.v1"
+}

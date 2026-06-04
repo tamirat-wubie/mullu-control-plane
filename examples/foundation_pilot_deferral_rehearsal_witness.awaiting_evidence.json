@@ -1,0 +1,129 @@
+{
+  "access_channel_opening_allowed": false,
+  "blocked_claims": [
+    "pilot deferral rehearsal execution",
+    "pilot execution",
+    "participant invitation",
+    "access channel opening",
+    "waitlist opening",
+    "pilot signup opening",
+    "customer access",
+    "personal data collection",
+    "market validation",
+    "support readiness",
+    "legal clearance",
+    "paid pilot",
+    "payment enablement",
+    "money movement",
+    "external publication",
+    "secret material",
+    "deployment readiness"
+  ],
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "deferral_rehearsal_executed": false,
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "market_validation_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "draft local pilot-deferral rehearsal questions only; do not execute a pilot, invite participants, open access channels, open waitlists, open signup paths, collect personal data, claim market validation, promise support, claim legal clearance, accept payment, move money, publish externally, store secret material, or deploy",
+  "paid_pilot_allowed": false,
+  "participant_invitation_allowed": false,
+  "payment_enabled": false,
+  "personal_data_collection_allowed": false,
+  "pilot_execution_allowed": false,
+  "pilot_signup_open": false,
+  "schema_version": 1,
+  "secret_material_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "support_readiness_claimed": false,
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pilot purpose deferral questions only; no pilot execution, schedule, approval, or launch claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "pilot_purpose_deferral_questions",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Participant boundary stop-rule questions only; no names, contact details, invitations, enrollment, or outside contact is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "participant_boundary_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Access-channel stop-rule questions only; no link, account, form, waitlist, signup path, or invite route is opened.",
+      "state": "AwaitingEvidence",
+      "surface_id": "access_channel_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Waitlist and signup stop-rule questions only; no waitlist, beta path, signup path, or customer-access flow is opened.",
+      "state": "AwaitingEvidence",
+      "surface_id": "waitlist_signup_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Data-collection stop-rule questions only; no personal data is collected, stored, or imported.",
+      "state": "AwaitingEvidence",
+      "surface_id": "data_collection_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Support-obligation stop-rule questions only; no support readiness, response time, triage, incident, or coverage claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "support_obligation_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Legal/business stop-rule questions only; no legal clearance, company authority, terms readiness, or paid pilot is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "legal_business_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Paid-pilot stop-rule questions only; no payment enablement, billing, money movement, or paid access is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "paid_pilot_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Success-metric stop-rule questions only; no market validation, demand proof, product proof, or customer proof is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "success_metric_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Rollback/recovery stop-rule questions only; no recovery readiness, incident readiness, or customer-exit readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rollback_recovery_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Public-claim stop-rule questions only; no external publication, access availability, pilot availability, or deployment claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_claim_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Reassessment handoff questions only; no surface is promoted out of AwaitingEvidence.",
+      "state": "AwaitingEvidence",
+      "surface_id": "reassessment_handoff",
+      "surface_type": "local_draft"
+    }
+  ],
+  "waitlist_opening_allowed": false,
+  "witness_id": "foundation_pilot_deferral_rehearsal_witness.awaiting_evidence.v1"
+}

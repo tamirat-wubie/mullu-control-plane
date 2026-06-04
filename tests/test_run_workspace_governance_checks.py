@@ -24,7 +24,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     names = [command.name for command in commands]
     args_by_name = {command.name: command.args for command in commands}
 
-    assert names[:63] == [
+    assert names[:65] == [
         "local_assurance_plan",
         "agents_policy",
         "foundation_mode",
@@ -75,6 +75,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_operations_runbook_boundary",
         "foundation_market_research_boundary",
         "foundation_pilot_deferral_boundary",
+        "foundation_pilot_deferral_rehearsal_boundary",
         "foundation_support_readiness_boundary",
         "foundation_support_triage_rehearsal_boundary",
         "foundation_intake_onboarding_boundary",
@@ -87,9 +88,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_funding_team_boundary",
         "foundation_funding_team_obligation_rehearsal_boundary",
         "foundation_community_network_boundary",
+        "foundation_community_network_no_outreach_rehearsal_boundary",
         "protocol_manifest",
     ]
-    assert names[67:75] == [
+    assert names[69:77] == [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
         "workspace_governance_witness_contract",
@@ -99,7 +101,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "workspace_governance_integrity_report_contract",
         "universal_action_orchestration_contract",
     ]
-    assert len(names) == 83
+    assert len(names) == 85
     assert names[-9:] == [
         "universal_action_orchestration_contract",
         "universal_action_orchestration_validation_receipt_contract",
@@ -259,6 +261,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert args_by_name["foundation_pilot_deferral_boundary"][1:] == (
         "scripts/validate_foundation_pilot_deferral_boundary.py",
     )
+    assert args_by_name["foundation_pilot_deferral_rehearsal_boundary"][1:] == (
+        "scripts/validate_foundation_pilot_deferral_rehearsal_boundary.py",
+    )
     assert args_by_name["foundation_support_readiness_boundary"][1:] == (
         "scripts/validate_foundation_support_readiness_boundary.py",
     )
@@ -294,6 +299,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["foundation_community_network_boundary"][1:] == (
         "scripts/validate_foundation_community_network_boundary.py",
+    )
+    assert args_by_name["foundation_community_network_no_outreach_rehearsal_boundary"][1:] == (
+        "scripts/validate_foundation_community_network_no_outreach_rehearsal_boundary.py",
     )
     assert args_by_name["workspace_governance_inventory_report"][1:] == (
         "scripts/report_workspace_governance_inventory.py",
