@@ -60,6 +60,8 @@ class ValidatedTemplate:
     environment: Mapping[str, str] = field(default_factory=dict)
     effect_observation_paths: tuple[str, ...] = ()
     timeout_seconds: float | None = None
+    economic_cost: float | None = None
+    economic_value: float | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.template_id, str) or not self.template_id.strip():
@@ -81,6 +83,10 @@ class ValidatedTemplate:
                 raise RuntimeCoreInvariantError("environment values must be strings")
         if self.timeout_seconds is not None and self.timeout_seconds <= 0:
             raise RuntimeCoreInvariantError("timeout_seconds must be greater than zero when provided")
+        if self.economic_cost is not None and self.economic_cost < 0:
+            raise RuntimeCoreInvariantError("economic_cost must be non-negative when provided")
+        if self.economic_value is not None and self.economic_value < 0:
+            raise RuntimeCoreInvariantError("economic_value must be non-negative when provided")
         for path in self.effect_observation_paths:
             if not isinstance(path, str) or not path.strip():
                 raise RuntimeCoreInvariantError("effect_observation_paths items must be non-empty strings")
@@ -115,6 +121,8 @@ class TemplateValidator:
         "environment",
         "forbidden_effects",
         "timeout_seconds",
+        "economic_cost",
+        "economic_value",
     }
 
     def validate(self, template: Mapping[str, Any], bindings: Mapping[str, str]) -> ValidatedTemplate:
@@ -202,6 +210,8 @@ class TemplateValidator:
                 "malformed_template",
                 "timeout_seconds must be a positive number when provided",
             )
+        economic_cost = self._optional_non_negative_number(template.get("economic_cost"), "economic_cost")
+        economic_value = self._optional_non_negative_number(template.get("economic_value"), "economic_value")
 
         return ValidatedTemplate(
             template_id=template_id,
@@ -211,6 +221,8 @@ class TemplateValidator:
             environment=environment,
             effect_observation_paths=effect_observation_paths,
             timeout_seconds=float(timeout_seconds) if timeout_seconds is not None else None,
+            economic_cost=economic_cost,
+            economic_value=economic_value,
         )
 
     def _normalized_bindings(self, bindings: Mapping[str, str]) -> dict[str, str]:
@@ -267,3 +279,14 @@ class TemplateValidator:
                 _TEMPLATE_NON_EMPTY_SEQUENCE_REQUIREMENTS.get(field_name, "value must contain at least one item"),
             )
         return values
+
+    @staticmethod
+    def _optional_non_negative_number(value: Any, field_name: str) -> float | None:
+        if value is None:
+            return None
+        if not isinstance(value, (int, float)) or isinstance(value, bool) or value < 0:
+            raise TemplateValidationError(
+                "malformed_template",
+                f"{field_name} must be a non-negative number when provided",
+            )
+        return float(value)
