@@ -4,7 +4,7 @@ Purpose: Address structural gaps in reality interaction, execution verification,
     temporal operations, failure recovery, and simulation/reality boundary.
 Governance scope: execution verification, temporal scheduling, failure compensation,
     ingestion validation, mode separation.
-Dependencies: event_spine, invariants, contracts._base
+Dependencies: event_spine, invariants, contracts._base, execution contracts
 Invariants: fail-closed defaults, deterministic state, proof-carrying results.
 """
 from __future__ import annotations
@@ -12,6 +12,8 @@ from dataclasses import dataclass, field
 from typing import Any
 from datetime import datetime, timezone
 from hashlib import sha256
+
+from mcoi_runtime.contracts.execution import ExecutionMode, coerce_execution_mode
 
 # ═══ Phase 181 — Ground Truth & Ingestion Validation ═══
 
@@ -208,7 +210,7 @@ class FailureRecoveryEngine:
 @dataclass(frozen=True)
 class ModeDeclaration:
     declaration_id: str
-    mode: str  # "simulation", "reality", "sandbox", "dry_run"
+    mode: str
     scope: str
     enforced: bool
     declared_at: str
@@ -217,34 +219,57 @@ class SimRealityBoundary:
     """Explicit separation between simulated and real execution modes."""
     def __init__(self):
         self._declarations: dict[str, ModeDeclaration] = {}
-        self._current_mode: str = "simulation"  # safe default
+        self._current_mode: ExecutionMode = ExecutionMode.SIMULATION  # safe default
 
-    def declare_mode(self, declaration_id: str, mode: str, scope: str) -> ModeDeclaration:
-        if mode not in ("simulation", "reality", "sandbox", "dry_run"):
-            raise ValueError("Invalid mode")
+    def declare_mode(self, declaration_id: str, mode: ExecutionMode | str, scope: str) -> ModeDeclaration:
+        execution_mode = _coerce_boundary_execution_mode(mode)
         if declaration_id in self._declarations:
             raise ValueError("Duplicate mode declaration")
-        d = ModeDeclaration(declaration_id, mode, scope, True, datetime.now(timezone.utc).isoformat())
+        d = ModeDeclaration(
+            declaration_id,
+            execution_mode.value,
+            scope,
+            True,
+            datetime.now(timezone.utc).isoformat(),
+        )
         self._declarations[declaration_id] = d
-        self._current_mode = mode
+        self._current_mode = execution_mode
         return d
 
     def promote_to_reality(self, declaration_id: str, scope: str) -> ModeDeclaration:
         """Safe promotion from simulation to reality -- explicit, auditable."""
-        if self._current_mode not in ("simulation", "sandbox", "dry_run"):
+        if self._current_mode not in {
+            ExecutionMode.SIMULATION,
+            ExecutionMode.DRY_RUN,
+            ExecutionMode.SHADOW,
+            ExecutionMode.TEST,
+        }:
             raise ValueError("Cannot promote from current mode")
-        return self.declare_mode(declaration_id, "reality", scope)
+        return self.declare_mode(declaration_id, ExecutionMode.REAL, scope)
 
     def demote_to_simulation(self, declaration_id: str, scope: str) -> ModeDeclaration:
-        return self.declare_mode(declaration_id, "simulation", scope)
+        return self.declare_mode(declaration_id, ExecutionMode.SIMULATION, scope)
 
     @property
     def current_mode(self) -> str:
-        return self._current_mode
+        return self._current_mode.value
 
     def is_real(self) -> bool:
-        return self._current_mode == "reality"
+        return self._current_mode is ExecutionMode.REAL
 
     @property
     def declaration_count(self) -> int:
         return len(self._declarations)
+
+
+def _coerce_boundary_execution_mode(mode: ExecutionMode | str) -> ExecutionMode:
+    """Normalize legacy sim/reality labels to the shared ExecutionMode ABI."""
+
+    if mode == "reality":
+        return ExecutionMode.REAL
+    if mode == "sandbox":
+        return ExecutionMode.TEST
+    try:
+        return coerce_execution_mode(mode)
+    except ValueError as exc:
+        raise ValueError("Invalid mode") from exc

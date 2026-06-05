@@ -19,7 +19,14 @@ from mcoi_runtime.contracts.effect_assurance import (
     ExpectedEffect,
     ReconciliationStatus,
 )
-from mcoi_runtime.contracts.execution import EffectRecord, ExecutionResult, ExecutionOutcome
+from mcoi_runtime.contracts.execution import (
+    EffectRecord,
+    ExecutionMode,
+    ExecutionOutcome,
+    ExecutionResult,
+    coerce_execution_mode,
+    execution_mode_requires_backend,
+)
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CommandCapabilityAdmissionStatus,
 )
@@ -79,9 +86,12 @@ class GovernedDispatchContext:
     actor_id: str
     intent_id: str
     request: DispatchRequest
-    mode: str = "simulation"  # "simulation" or "reality"
+    mode: ExecutionMode | str = ExecutionMode.SIMULATION
     budget_remaining: float = 10000.0
     current_load: float = 0.0
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "mode", _coerce_dispatch_execution_mode(self.mode).value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -227,8 +237,8 @@ class GovernedDispatcher:
         result.gates_passed.append(GateResult("equilibrium", True, f"score={self._equilibrium.equilibrium_score()}"))
 
         # --- Gate 5: Sim/Real Promotion ---
-        if context.mode == "reality" and not self._boundary.is_real():
-            result.gates_failed.append(GateResult("promotion_boundary", False, f"mode={self._boundary.current_mode}, requested=reality"))
+        if execution_mode_requires_backend(context.mode) and not self._boundary.is_real():
+            result.gates_failed.append(GateResult("promotion_boundary", False, f"mode={self._boundary.current_mode}, requested={context.mode}"))
             result.blocked = True
             result.block_reason = "promotion_boundary: not promoted to reality"
             self._emit_ledger(context, result, now)
@@ -557,6 +567,7 @@ class GovernedDispatcher:
             "block_reason": result.block_reason,
             "gates_passed": len(result.gates_passed),
             "gates_failed": len(result.gates_failed),
+            "execution_mode": context.mode,
             "timestamp": timestamp,
         }
         entry_str = str(sorted(entry.items()))
@@ -612,6 +623,16 @@ def _string_tuple(value: object) -> tuple[str, ...]:
     if not isinstance(value, (list, tuple)):
         return ()
     return tuple(item for item in value if isinstance(item, str) and item.strip())
+
+
+def _coerce_dispatch_execution_mode(mode: ExecutionMode | str) -> ExecutionMode:
+    """Normalize legacy dispatcher labels to the shared ExecutionMode ABI."""
+
+    if mode == "reality":
+        return ExecutionMode.REAL
+    if mode == "sandbox":
+        return ExecutionMode.TEST
+    return coerce_execution_mode(mode)
 
 
 def _effect_observation_paths_from_request(request: DispatchRequest) -> tuple[str, ...]:
