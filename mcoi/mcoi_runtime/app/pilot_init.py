@@ -13,7 +13,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime
 import json
+import os
 from pathlib import Path
+from threading import RLock
+import tempfile
 from typing import Any
 
 from mcoi_runtime.core.invariants import ensure_non_empty_text, stable_identifier
@@ -130,6 +133,7 @@ class PilotProvisionRegistry:
         self._max_records = max_records
         self._records: dict[str, PilotProvisionRecord] = {}
         self._order: list[str] = []
+        self._lock = RLock()
 
     def accept(
         self,
@@ -150,17 +154,27 @@ class PilotProvisionRegistry:
             artifact_count=len(bundle.artifacts),
             accepted_at=timestamp,
         )
+        with self._lock:
+            self._store_record(record)
+            self._after_records_changed()
+        return record
+
+    def _store_record(self, record: PilotProvisionRecord) -> None:
+        """Store one already validated provision record in insertion order."""
         if record.pilot_id not in self._records:
             self._order.append(record.pilot_id)
         self._records[record.pilot_id] = record
         while len(self._order) > self._max_records:
             oldest = self._order.pop(0)
             self._records.pop(oldest, None)
-        return record
+
+    def _after_records_changed(self) -> None:
+        """Mutation hook for persistent registry variants."""
 
     def get(self, pilot_id: str) -> PilotProvisionRecord | None:
         """Fetch one accepted pilot provision by pilot id."""
-        return self._records.get(pilot_id)
+        with self._lock:
+            return self._records.get(pilot_id)
 
     def list_records(
         self,
@@ -172,18 +186,143 @@ class PilotProvisionRegistry:
         """List accepted provisions newest-first with bounded paging."""
         bounded_limit = min(max(limit, 1), 100)
         bounded_offset = max(offset, 0)
-        records = [
-            self._records[pilot_id]
-            for pilot_id in reversed(self._order)
-            if pilot_id in self._records and (not tenant_id or self._records[pilot_id].tenant_id == tenant_id)
-        ]
+        with self._lock:
+            records = [
+                self._records[pilot_id]
+                for pilot_id in reversed(self._order)
+                if pilot_id in self._records and (not tenant_id or self._records[pilot_id].tenant_id == tenant_id)
+            ]
         return tuple(records[bounded_offset : bounded_offset + bounded_limit])
 
     def count(self, *, tenant_id: str = "") -> int:
         """Count accepted provision records, optionally scoped to a tenant."""
-        if not tenant_id:
-            return len(self._records)
-        return sum(1 for record in self._records.values() if record.tenant_id == tenant_id)
+        with self._lock:
+            if not tenant_id:
+                return len(self._records)
+            return sum(1 for record in self._records.values() if record.tenant_id == tenant_id)
+
+
+class FilePilotProvisionRegistry(PilotProvisionRegistry):
+    """JSON-file backed pilot provision registry.
+
+    The store rewrites one deterministic JSON document after each accepted
+    provision. Startup loads fail closed when the payload is malformed,
+    duplicates pilot ids, or carries an artifact-count mismatch.
+    """
+
+    def __init__(self, path: Path, *, max_records: int = 500) -> None:
+        if not isinstance(path, Path):
+            raise ValueError("path must be a Path instance")
+        self._path = path
+        super().__init__(max_records=max_records)
+        self._load_if_present()
+
+    def _after_records_changed(self) -> None:
+        self._persist()
+
+    def _persist(self) -> None:
+        payload = {
+            "schema_version": 1,
+            "max_records": self._max_records,
+            "records": [
+                _record_to_json(self._records[pilot_id])
+                for pilot_id in self._order
+                if pilot_id in self._records
+            ],
+        }
+        _atomic_write(self._path, _deterministic_json(payload))
+
+    def _load_if_present(self) -> None:
+        if not self._path.exists():
+            return
+        try:
+            raw = json.loads(self._path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
+            raise ValueError(_bounded_registry_error("malformed pilot provision registry file", exc)) from exc
+        if not isinstance(raw, dict):
+            raise ValueError("pilot provision registry payload must be an object")
+        if raw.get("schema_version") != 1:
+            raise ValueError("pilot provision registry schema version unsupported")
+        records_raw = raw.get("records")
+        if not isinstance(records_raw, list):
+            raise ValueError("pilot provision registry records must be a list")
+        with self._lock:
+            for item in records_raw:
+                record = _record_from_json(item)
+                if record.pilot_id in self._records:
+                    raise ValueError("duplicate pilot provision record in registry file")
+                self._store_record(record)
+
+
+def _record_to_json(record: PilotProvisionRecord) -> dict[str, Any]:
+    return {
+        "pilot_id": record.pilot_id,
+        "tenant_id": record.tenant_id,
+        "pilot_name": record.pilot_name,
+        "policy_pack_id": record.policy_pack_id,
+        "policy_version": record.policy_version,
+        "artifact_names": list(record.artifact_names),
+        "artifact_count": record.artifact_count,
+        "accepted_at": record.accepted_at,
+    }
+
+
+def _record_from_json(raw: Any) -> PilotProvisionRecord:
+    if not isinstance(raw, dict):
+        raise ValueError("pilot provision record payload must be an object")
+    try:
+        artifact_names_raw = raw["artifact_names"]
+        if not isinstance(artifact_names_raw, list):
+            raise ValueError("pilot provision artifact_names must be a list")
+        artifact_names = tuple(
+            ensure_non_empty_text("artifact_name", artifact_name)
+            for artifact_name in artifact_names_raw
+        )
+        artifact_count = raw["artifact_count"]
+        if not isinstance(artifact_count, int):
+            raise ValueError("pilot provision artifact_count must be an integer")
+        record = PilotProvisionRecord(
+            pilot_id=ensure_non_empty_text("pilot_id", raw["pilot_id"]),
+            tenant_id=ensure_non_empty_text("tenant_id", raw["tenant_id"]),
+            pilot_name=ensure_non_empty_text("pilot_name", raw["pilot_name"]),
+            policy_pack_id=ensure_non_empty_text("policy_pack_id", raw["policy_pack_id"]),
+            policy_version=ensure_non_empty_text("policy_version", raw["policy_version"]),
+            artifact_names=artifact_names,
+            artifact_count=artifact_count,
+            accepted_at=ensure_non_empty_text("accepted_at", raw["accepted_at"]),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError(_bounded_registry_error("invalid pilot provision record payload", exc)) from exc
+    if record.artifact_count != len(record.artifact_names):
+        raise ValueError("pilot provision artifact count mismatch")
+    return record
+
+
+def _deterministic_json(payload: Any) -> str:
+    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
+
+
+def _bounded_registry_error(summary: str, exc: BaseException) -> str:
+    return f"{summary} ({type(exc).__name__})"
+
+
+def _atomic_write(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        fd, tmp_path = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
+        try:
+            os.write(fd, content.encode("utf-8"))
+            os.close(fd)
+            fd = -1
+            os.replace(tmp_path, str(path))
+        except BaseException:
+            if fd >= 0:
+                os.close(fd)
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+            raise
+    except OSError as exc:
+        raise ValueError(_bounded_registry_error("pilot provision registry persistence failed", exc)) from exc
 
 
 def initialize_pilot(request: PilotInitRequest) -> PilotInitResult:

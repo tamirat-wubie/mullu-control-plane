@@ -86,7 +86,7 @@ class _Registry:
 
 
 def test_pilot_provision_rejects_cross_tenant(monkeypatch):
-    monkeypatch.setattr(pilot, "_provision_registry", _Registry())
+    monkeypatch.setattr(pilot.deps, "pilot_provision_registry", _Registry())
     with pytest.raises(HTTPException) as exc:
         pilot.get_pilot_provision("pilot-1", _authed("tenant-a"))
     assert exc.value.status_code == 403

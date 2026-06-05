@@ -35,6 +35,15 @@ class PilotProvisionRequest(BaseModel):
     max_calls: int = Field(default=1000, ge=1)
 
 
+def _pilot_provision_registry() -> PilotProvisionRegistry:
+    """Resolve the configured pilot provision registry with test fallback."""
+
+    try:
+        return deps.pilot_provision_registry
+    except RuntimeError:
+        return _provision_registry
+
+
 @router.post("/api/v1/pilots/provision")
 def provision_pilot(req: PilotProvisionRequest, _: str = Depends(require_admin)) -> dict[str, Any]:
     """Return a deterministic pilot scaffold bundle for hosted provisioning."""
@@ -61,7 +70,7 @@ def provision_pilot(req: PilotProvisionRequest, _: str = Depends(require_admin))
             },
         ) from exc
 
-    record = _provision_registry.accept(request=request, bundle=bundle, accepted_at=deps._clock())
+    record = _pilot_provision_registry().accept(request=request, bundle=bundle, accepted_at=deps._clock())
     deps.audit_trail.record(
         action="pilot.provision.scaffold",
         actor_id="api",
@@ -87,10 +96,11 @@ def list_pilot_provisions(
     """List accepted hosted pilot provisioning records."""
     deps.metrics.inc("requests_governed")
     tenant_id = scoped_listing_tenant(request, tenant_id)
-    records = _provision_registry.list_records(tenant_id=tenant_id, limit=limit, offset=offset)
+    registry = _pilot_provision_registry()
+    records = registry.list_records(tenant_id=tenant_id, limit=limit, offset=offset)
     return {
         "records": [record.to_dict() for record in records],
-        "count": _provision_registry.count(tenant_id=tenant_id),
+        "count": registry.count(tenant_id=tenant_id),
         "limit": min(max(limit, 1), 100),
         "offset": max(offset, 0),
         "governed": True,
@@ -101,7 +111,7 @@ def list_pilot_provisions(
 def get_pilot_provision(pilot_id: str, request: Request) -> dict[str, Any]:
     """Fetch one accepted hosted pilot provisioning record."""
     deps.metrics.inc("requests_governed")
-    record = _provision_registry.get(pilot_id)
+    record = _pilot_provision_registry().get(pilot_id)
     if record is None:
         raise HTTPException(
             404,

@@ -63,8 +63,20 @@ in pilot and production profiles, and each accepted request records
 `pilot.provision.scaffold` audit evidence. Accepted provisions are retained in a
 bounded operator history read model for list and detail queries.
 
+Hosted operators can persist the provisioning history by setting an absolute
+JSON file path before server startup:
+
+```powershell
+$env:MULLU_PILOT_PROVISION_REGISTRY_PATH = "C:\mullu\stores\pilot-provisions.json"
+```
+
+If the variable is unset, the server keeps the existing bounded in-memory
+history. If it is set, startup validates that the path is absolute, uses a
+`.json` suffix, has an existing writable parent directory, and loads the file
+fail-closed when records are malformed or artifact counts are inconsistent.
+
 STATUS:
   Completeness: 100%
-  Invariants verified: local-only scaffold, deterministic pilot id, stable JSON output, no silent overwrite, tenant/policy/budget/dashboard/audit/lineage artifacts, hosted endpoint has no filesystem mutation, hosted endpoint records audit evidence, accepted provisions persist to bounded history
+  Invariants verified: local-only scaffold, deterministic pilot id, stable JSON output, no silent overwrite, tenant/policy/budget/dashboard/audit/lineage artifacts, hosted endpoint has no filesystem mutation, hosted endpoint records audit evidence, accepted provisions persist to bounded history, hosted persistence path is env-governed and fail-closed
   Open issues: none
-  Next action: back hosted pilot provisioning history with the persistent governance store bundle
+  Next action: configure `MULLU_PILOT_PROVISION_REGISTRY_PATH` in hosted operator environments that require durable pilot provision history
