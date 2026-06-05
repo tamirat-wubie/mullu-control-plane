@@ -572,6 +572,64 @@ def test_due_action_becomes_visible_at_execute_at() -> None:
     assert due[0].execute_at == "2026-05-04T14:00:00+00:00"
 
 
+def test_due_action_audit_classifies_pending_without_mutating_state() -> None:
+    clock = MutableClock("2026-05-04T14:00:00+00:00")
+    scheduler = _engine(clock)
+    scheduler.register("sched-future", _action(execute_at="2026-05-04T14:30:00+00:00"))
+    scheduler.register("sched-due", _action(execute_at="2026-05-04T14:00:00+00:00"))
+    scheduler.register(
+        "sched-expired",
+        _action(
+            execute_at="2026-05-04T13:00:00+00:00",
+            expires_at="2026-05-04T13:30:00+00:00",
+        ),
+    )
+
+    audits = {audit.schedule_id: audit for audit in scheduler.audit_due_actions()}
+
+    assert audits["sched-due"].verdict == ScheduleDecisionVerdict.DUE
+    assert audits["sched-due"].reason == "execute_at_reached"
+    assert audits["sched-future"].verdict == ScheduleDecisionVerdict.NOT_DUE
+    assert audits["sched-expired"].verdict == ScheduleDecisionVerdict.EXPIRED
+    assert audits["sched-expired"].reason == "command_expired_candidate"
+    assert scheduler.get("sched-expired").state == ScheduledActionState.PENDING
+    assert scheduler.receipt_count == 0
+
+
+def test_due_action_audit_reports_active_lease_without_duplicate_dispatch() -> None:
+    clock = MutableClock("2026-05-04T14:00:00+00:00")
+    scheduler = _engine(clock)
+    scheduler.register("sched-1", _action())
+    lease = scheduler.acquire_lease("sched-1", "worker-a", lease_seconds=120)
+
+    audits = scheduler.audit_due_actions(now="2026-05-04T14:01:00+00:00")
+
+    assert lease is not None
+    assert len(audits) == 1
+    assert audits[0].verdict == ScheduleDecisionVerdict.LEASED
+    assert audits[0].reason == "active_lease"
+    assert audits[0].lease_worker_id == "worker-a"
+    assert scheduler.get("sched-1").state == ScheduledActionState.RUNNING
+    assert scheduler.due_actions(now="2026-05-04T14:01:00+00:00") == ()
+
+
+def test_due_action_audit_reports_expired_lease_without_repairing_state() -> None:
+    clock = MutableClock("2026-05-04T14:00:00+00:00")
+    scheduler = _engine(clock)
+    scheduler.register("sched-1", _action())
+    lease = scheduler.acquire_lease("sched-1", "worker-a", lease_seconds=60)
+
+    audits = scheduler.audit_due_actions(now="2026-05-04T14:02:00+00:00")
+
+    assert lease is not None
+    assert audits[0].verdict == ScheduleDecisionVerdict.DUE
+    assert audits[0].reason == "lease_expired_reclaimable"
+    assert audits[0].lease_id == lease.lease_id
+    assert audits[0].lease_expires_at == "2026-05-04T14:01:00+00:00"
+    assert scheduler.get("sched-1").state == ScheduledActionState.RUNNING
+    assert scheduler.receipt_count == 0
+
+
 def test_lease_prevents_duplicate_worker_execution() -> None:
     clock = MutableClock("2026-05-04T14:00:00+00:00")
     scheduler = _engine(clock)

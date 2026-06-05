@@ -3008,6 +3008,23 @@ class TemporalLease:
 
 
 @dataclass(frozen=True, slots=True)
+class TemporalDueAudit:
+    """Read-only classification for pending or running temporal work."""
+
+    schedule_id: str
+    tenant_id: str
+    state: ScheduledActionState
+    execute_at: str
+    observed_at: str
+    verdict: ScheduleDecisionVerdict
+    reason: str
+    expires_at: str = ""
+    lease_id: str = ""
+    lease_worker_id: str = ""
+    lease_expires_at: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class TemporalRunReceipt:
     """Bounded receipt for a scheduler evaluation or state closure."""
 
@@ -3149,6 +3166,47 @@ class TemporalSchedulerEngine:
             if _parse_iso(action.execute_at) <= now_dt:
                 due.append(action)
         return tuple(sorted(due, key=lambda item: item.schedule_id))
+
+    def audit_due_actions(self, now: str | None = None) -> tuple[TemporalDueAudit, ...]:
+        """Return a read-only due-action classification without state mutation."""
+        observed_at = now or self._clock()
+        now_dt = _parse_iso(observed_at)
+        audits: list[TemporalDueAudit] = []
+        for action in self._actions.values():
+            if action.state not in {ScheduledActionState.PENDING, ScheduledActionState.RUNNING}:
+                continue
+            lease = self._leases.get(action.schedule_id)
+            verdict = ScheduleDecisionVerdict.NOT_DUE
+            reason = "not_due"
+            if action.action.expires_at and now_dt > _parse_iso(action.action.expires_at):
+                verdict = ScheduleDecisionVerdict.EXPIRED
+                reason = "command_expired_candidate"
+            elif action.state is ScheduledActionState.RUNNING and lease is not None:
+                if _parse_iso(lease.expires_at) > now_dt:
+                    verdict = ScheduleDecisionVerdict.LEASED
+                    reason = "active_lease"
+                elif _parse_iso(action.execute_at) <= now_dt:
+                    verdict = ScheduleDecisionVerdict.DUE
+                    reason = "lease_expired_reclaimable"
+            elif _parse_iso(action.execute_at) <= now_dt:
+                verdict = ScheduleDecisionVerdict.DUE
+                reason = "execute_at_reached"
+            audits.append(
+                TemporalDueAudit(
+                    schedule_id=action.schedule_id,
+                    tenant_id=action.tenant_id,
+                    state=action.state,
+                    execute_at=action.execute_at,
+                    observed_at=observed_at,
+                    verdict=verdict,
+                    reason=reason,
+                    expires_at=action.action.expires_at,
+                    lease_id=lease.lease_id if lease is not None else "",
+                    lease_worker_id=lease.worker_id if lease is not None else "",
+                    lease_expires_at=lease.expires_at if lease is not None else "",
+                )
+            )
+        return tuple(sorted(audits, key=lambda item: item.schedule_id))
 
     def acquire_lease(
         self,
