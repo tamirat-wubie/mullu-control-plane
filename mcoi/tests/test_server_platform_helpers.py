@@ -69,6 +69,29 @@ def test_bootstrap_primary_store_normalizes_backend_and_rejects_unknown() -> Non
         )
 
 
+def test_bootstrap_primary_store_requires_postgres_in_strict_env() -> None:
+    captured: dict[str, object] = {}
+
+    bootstrap = server_platform.bootstrap_primary_store(
+        env="production",
+        runtime_env={
+            "MULLU_DB_BACKEND": "postgresql",
+            "MULLU_DB_URL": "postgresql://secret-host/ledger",
+            "MULLU_DB_POOL_SIZE": "7",
+        },
+        clock=lambda: "2026-01-01T00:00:00Z",
+        validate_db_backend_for_env=lambda backend, env: None,
+        create_store_fn=lambda **kwargs: captured.setdefault("kwargs", kwargs) or object(),
+        create_platform_migration_engine_fn=lambda **kwargs: object(),
+    )
+
+    assert bootstrap.db_backend == "postgresql"
+    assert captured["kwargs"]["backend"] == "postgresql"
+    assert captured["kwargs"]["pool_size"] == 7
+    assert captured["kwargs"]["require_available"] is True
+    assert captured["kwargs"]["connection_string"] == "postgresql://secret-host/ledger"
+
+
 def test_bootstrap_governance_runtime_wires_services_and_local_policy() -> None:
     class BudgetManager:
         def __init__(self, *, clock, store):

@@ -4,6 +4,9 @@ Tests: InMemoryStore (same API as PostgresStore), store factory, schema definiti
 PostgresStore structural tests run without a real database.
 """
 
+import sys
+from types import SimpleNamespace
+
 import pytest
 from mcoi_runtime.persistence.postgres_store import (
     InMemoryStore,
@@ -220,6 +223,24 @@ class TestCreateStore:
         with pytest.raises(ValueError, match=r"^unsupported persistence backend$") as excinfo:
             create_store("redis")
         assert "redis" not in str(excinfo.value)
+
+    def test_postgresql_require_available_fails_closed_with_bounded_error(self, monkeypatch):
+        import mcoi_runtime.persistence.postgres_store as pg
+
+        warnings: list[str] = []
+        monkeypatch.setitem(sys.modules, "psycopg2", SimpleNamespace())
+        monkeypatch.setattr(pg._log, "warning", lambda message, *args: warnings.append(message % args))
+
+        with pytest.raises(RuntimeError, match=r"^postgresql store unavailable$") as excinfo:
+            create_store(
+                "postgresql",
+                "postgresql://secret-host/ledger",
+                require_available=True,
+            )
+
+        assert "secret-host" not in str(excinfo.value)
+        assert warnings
+        assert all("secret-host" not in warning for warning in warnings)
 
     def test_postgresql_without_psycopg2(self):
         """PostgresStore constructor handles missing psycopg2 gracefully."""

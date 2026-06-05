@@ -597,12 +597,21 @@ def create_store(backend: str = "memory", connection_string: str = "", **kwargs:
     - "memory" → InMemoryStore (testing/development)
     - "sqlite" → SQLiteStore (pilot) — import from persistence.sqlite_store
     - "postgresql" → PostgresStore (production)
+
+    ``require_available=True`` fails closed when PostgreSQL construction
+    cannot establish a live connection. The default keeps local development
+    and structural tests on the legacy disconnected-store fallback.
     """
+    require_available = bool(kwargs.pop("require_available", False))
     if backend == "memory":
         return InMemoryStore()
     if backend == "sqlite":
         from mcoi_runtime.persistence.sqlite_store import SQLiteStore
         return SQLiteStore(db_path=connection_string or "mullu.db")
     if backend == "postgresql":
-        return PostgresStore(connection_string, **kwargs)
+        store = PostgresStore(connection_string, **kwargs)
+        if require_available and getattr(store, "_conn", None) is None:
+            store.close()
+            raise RuntimeError("postgresql store unavailable")
+        return store
     raise ValueError("unsupported persistence backend")

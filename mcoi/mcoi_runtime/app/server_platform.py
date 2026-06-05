@@ -116,6 +116,7 @@ def bootstrap_primary_store(
     store_kwargs: dict[str, Any] = {}
     if db_backend == "postgresql":
         store_kwargs["pool_size"] = pool_size
+        store_kwargs["require_available"] = env.strip().lower() in ("pilot", "production")
     store = create_store_fn(
         backend=db_backend,
         connection_string=runtime_env.get("MULLU_DB_URL", ""),
