@@ -450,6 +450,50 @@
       "summary": "Runtime-secret-handoff rehearsal prepares public-safe gate labels without recording secret names, secret values, private handoff paths, secret-manager target values, operator identities, dual-control proof, secret-presence proof, repository-secret binding, runtime secret-store binding, workflow mounts, readiness, publication, or deployment claims."
     },
     {
+      "family_id": "production_dependency_evidence_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_PRODUCTION_DEPENDENCY_EVIDENCE_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_production_dependency_evidence_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_production_dependency_evidence_rehearsal_boundary.py",
+        "tests/test_validate_foundation_production_dependency_evidence_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Production-dependency-evidence rehearsal prepares public-safe evidence labels without recovery closure, production image values, runtime host values, database values, secret-store values, schema application, preflight proof, persistence proof, firewall proof, TLS proof, rollback proof, DNS authority proof, external evidence collection, API runtime provisioning, DNS publication, repository-variable binding, workflow dispatch, artifact publication, readiness, publication, or deployment claims."
+    },
+    {
+      "family_id": "external_evidence_acceptance_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_EXTERNAL_EVIDENCE_ACCEPTANCE_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_external_evidence_acceptance_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_external_evidence_acceptance_rehearsal_boundary.py",
+        "tests/test_validate_foundation_external_evidence_acceptance_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "External-evidence-acceptance rehearsal prepares public-safe acceptance gate labels without evidence collection, source-authority verification, ownership verification, redaction proof, freshness proof, custody proof, schema proof, replay proof, acceptance decisions, evidence-ledger append, readiness promotion, API runtime provisioning, DNS publication, workflow dispatch, artifact publication, public-health declaration, deployment-witness publication, publication, or deployment claims."
+    },
+    {
+      "family_id": "deployment_upstream_api_gate_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_DEPLOYMENT_UPSTREAM_API_GATE_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_deployment_upstream_api_gate_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_deployment_upstream_api_gate_rehearsal_boundary.py",
+        "tests/test_validate_foundation_deployment_upstream_api_gate_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Deployment-upstream-API-gate rehearsal prepares public-safe upstream gate labels without upstream API readiness claims, upstream reporter execution, require-ready pass, target gateway URL values, production dependency values, API runtime provisioning, DNS publication, DNS target selection, repository-variable binding, workflow dispatch, artifact publication, readiness, publication, or deployment claims."
+    },
+    {
+      "family_id": "gateway_dns_target_binding_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_GATEWAY_DNS_TARGET_BINDING_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_gateway_dns_target_binding_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_gateway_dns_target_binding_rehearsal_boundary.py",
+        "tests/test_validate_foundation_gateway_dns_target_binding_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Gateway-DNS-target-binding rehearsal prepares public-safe target labels without live DNS target values, gateway URL values, provider account values, repository-variable binding, DNS publication, DNS proof, endpoint proof, secret-presence claims, workflow dispatch, artifact publication, operator approval, readiness, publication, or deployment claims."
+    },
+    {
       "family_id": "gateway_dns_publication_rehearsal_boundary",
       "required_evidence": [
         "docs/FOUNDATION_GATEWAY_DNS_PUBLICATION_REHEARSAL_BOUNDARY.md",
@@ -459,6 +503,50 @@
       ],
       "state": "AwaitingEvidence",
       "summary": "Gateway-DNS-publication rehearsal prepares public-safe DNS publication stop-rule labels without provider account values, DNS zone values, record names, record types, record values, TTL values, DNS mutation, repository-variable binding, workflow dispatch, propagation proof, rollback proof, DNS proof, endpoint proof, operator approval, readiness, publication, or deployment claims."
+    },
+    {
+      "family_id": "gateway_dns_resolution_receipt_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_GATEWAY_DNS_RESOLUTION_RECEIPT_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_gateway_dns_resolution_receipt_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_gateway_dns_resolution_receipt_rehearsal_boundary.py",
+        "tests/test_validate_foundation_gateway_dns_resolution_receipt_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Gateway-DNS-resolution-receipt rehearsal prepares public-safe resolution receipt labels without live DNS queries, host values, gateway URL values, resolved addresses, resolver proof, DNS proof, DNS receipt writes, target-binding promotion, endpoint proof, secret-presence claims, workflow dispatch, artifact publication, operator approval, readiness, publication, or deployment claims."
+    },
+    {
+      "family_id": "gateway_endpoint_reachability_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_GATEWAY_ENDPOINT_REACHABILITY_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_gateway_endpoint_reachability_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_gateway_endpoint_reachability_rehearsal_boundary.py",
+        "tests/test_validate_foundation_gateway_endpoint_reachability_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Gateway-endpoint-reachability rehearsal prepares public-safe reachability labels without endpoint probes, gateway URL values, HTTP status values, response digests, response bodies, witness payloads, conformance payloads, production payloads, audit payloads, deployment witnesses, public-health declaration, secret-presence claims, workflow dispatch, artifact publication, operator approval, readiness, publication, or deployment claims."
+    },
+    {
+      "family_id": "gateway_endpoint_evidence_receipt_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_GATEWAY_ENDPOINT_EVIDENCE_RECEIPT_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_gateway_endpoint_evidence_receipt_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary.py",
+        "tests/test_validate_foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Gateway-endpoint-evidence-receipt rehearsal prepares public-safe endpoint evidence receipt labels without endpoint probes, endpoint URL values, HTTP status values, response digests, response bodies, timestamps, collector identities, evidence-ledger append, witness collection, public-health declaration, secret-presence claims, workflow dispatch, artifact publication, operator approval, readiness, publication, or deployment claims."
+    },
+    {
+      "family_id": "public_health_declaration_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_PUBLIC_HEALTH_DECLARATION_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_public_health_declaration_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_public_health_declaration_rehearsal_boundary.py",
+        "tests/test_validate_foundation_public_health_declaration_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Public-health-declaration rehearsal prepares public-safe declaration labels without public-health declaration, deployment status mutation, declaration receipt writing, deployment-witness publication claims, public-health endpoint values, approval reference values, audited-date values, validation-pass claims, endpoint-match claims, evidence-ledger append, workflow dispatch, artifact publication, readiness, publication, or deployment claims."
     },
     {
       "family_id": "deployment_witness_input_boundary",
@@ -613,6 +701,17 @@
       ],
       "state": "AwaitingEvidence",
       "summary": "Customer-access preparation drafts local access-policy, eligibility, account-creation, invitation, support-duty, terms/privacy, data-handling, rollback/exit, payment-exposure, and public-claim questions without customer invitation, account creation, access channels, onboarding readiness, support commitments, terms/privacy readiness, personal-data collection, paid access, pilot access, beta access, waitlists, external publication, or deployment claims."
+    },
+    {
+      "family_id": "github_app_token_format_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_GITHUB_APP_TOKEN_FORMAT_BOUNDARY.md",
+        "examples/foundation_github_app_token_format_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_github_app_token_format_boundary.py",
+        "tests/test_validate_foundation_github_app_token_format_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "GitHub-App-token-format preparation records public-safe token compatibility labels without live token storage, fixed token length assumptions, JWT parsing, repository secret readiness, workflow dispatch readiness, publication, or deployment claims."
     },
     {
       "family_id": "privacy_data_boundary",
