@@ -731,7 +731,7 @@ def _project_check(
         return SimpleActionCheck(
             outcome="ready",
             title="Ready",
-            message="This task is in the right place and has a saved check.",
+            message="This task is inside the allowed area and has a saved check.",
             next_step="Continue with the action.",
             decision_ref=decision_ref,
             proof_stamp_ref=proof_stamp_ref,
@@ -798,7 +798,7 @@ def _project_workflow_plan(
             workflow=template.workflow,
             label=template.label,
             outcome="needs_review",
-            title="Needs review",
+            title="Needs approval",
             message="One or more steps need approval before the workflow can continue.",
             next_step=review[0].next_step,
             checks=checks,
@@ -886,8 +886,8 @@ def _plain_reason(reason: object) -> str:
 
     text = str(reason)
     translations = {
-        "This item is outside the right place for this task.": "The target is outside the allowed area.",
-        "scope_within_intent": "This item is outside the right place for this task.",
+        "This item is outside the right place for this task.": "This item is outside the allowed area for this task.",
+        "scope_within_intent": "This item is outside the allowed area for this task.",
         "kernel.side_effect.declared": "The action includes an undeclared side effect.",
         "kernel.proof.scope_checked:scope_checked": "The action is missing required scope proof.",
         "kernel.side_effect.external_requires_approval:external_write": "External changes require approval.",

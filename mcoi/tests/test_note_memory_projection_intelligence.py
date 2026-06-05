@@ -398,7 +398,7 @@ def test_dashboard_projects_simple_actions_without_execution_authority(tmp_path)
     assert payload["simple_action_summaries"][0]["title"] == "Ready"
     assert payload["simple_action_summaries"][1]["review_reasons"] == ["External changes require approval."]
     assert payload["simple_action_summaries"][2]["blocked_reasons"] == [
-        "The target is outside the allowed area."
+        "This item is outside the allowed area for this task."
     ]
     assert all(summary["execution_allowed"] is False for summary in payload["simple_action_summaries"])
     assert payload["execution_allowed"] is False
@@ -446,27 +446,27 @@ def test_dashboard_projects_simple_workflows_and_start_guide_without_execution_a
     assert payload["simple_workflow_summaries"][0]["ready_count"] == 3
     assert payload["simple_workflow_summaries"][1]["review_count"] == 1
     assert payload["simple_workflow_summaries"][2]["blocked_count"] == 2
-    assert payload["simple_start_guide"]["recommended_commands"][0] == "mullu workflows"
+    assert payload["simple_start_guide"]["recommended_commands"][0] == "mullu menu"
     assert payload["simple_home_summary"]["title"] == "Blocked"
-    assert payload["simple_home_summary"]["primary_command"] == "mullu workflows"
+    assert payload["simple_home_summary"]["primary_command"] == "mullu menu"
     assert payload["simple_home_summary"]["ready_workflow_count"] == 1
     assert payload["simple_home_summary"]["review_workflow_count"] == 1
     assert payload["simple_home_summary"]["blocked_workflow_count"] == 1
     assert payload["simple_home_summary"]["status_label"] == "Blocked"
-    assert payload["simple_home_summary"]["count_summary"] == "1 ready, 1 need review, 1 blocked"
+    assert payload["simple_home_summary"]["count_summary"] == "1 ready, 1 need approval, 1 blocked"
     assert payload["simple_home_summary"]["next_action"] == "Open the blocked workflows and choose a narrower target."
     assert payload["simple_home_summary"]["action_items"][0]["label"] == "Fix Update docs"
-    assert payload["simple_home_summary"]["action_items"][0]["command"] == "mullu workflows"
+    assert payload["simple_home_summary"]["action_items"][0]["command"] == "mullu menu"
     assert payload["simple_home_summary"]["action_items"][0]["outcome"] == "blocked"
     assert payload["simple_home_summary"]["action_items"][0]["execution_allowed"] is False
     assert payload["simple_home_summary"]["command_guidance"] == [
-        "mullu workflows",
+        "mullu menu",
         "mullu workflow docs-update --target docs/README.md",
         "mullu workflow docs-update --target docs/README.md --json",
     ]
     assert payload["simple_home_summary"]["start_here"]["title"] == "Start here"
     assert payload["simple_home_summary"]["start_here"]["status_label"] == "Blocked"
-    assert payload["simple_home_summary"]["start_here"]["primary_command"] == "mullu workflows"
+    assert payload["simple_home_summary"]["start_here"]["primary_command"] == "mullu menu"
     assert payload["simple_home_summary"]["start_here"]["action_items"][0]["label"] == "Fix Update docs"
     assert payload["simple_home_summary"]["start_here"]["execution_allowed"] is False
     assert all(summary["execution_allowed"] is False for summary in payload["simple_workflow_summaries"])
@@ -677,7 +677,7 @@ def test_dashboard_simple_start_guide_rejects_execution_authority() -> None:
         DashboardSimpleStartGuideSummary(
             title="Mullu simple mode",
             message="Unsafe guide.",
-            recommended_commands=("mullu workflows",),
+            recommended_commands=("mullu menu",),
             outcomes=("Ready",),
             execution_allowed=True,
         )
@@ -687,7 +687,7 @@ def test_simple_onboarding_step_rejects_blank_and_untrimmed_text() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="command must be non-empty text"):
         SimpleOnboardingStep(
             step="choose",
-            title="Choose a workflow",
+            title="Open the simple menu",
             command="   ",
             purpose="Show workflows.",
         )
@@ -695,8 +695,8 @@ def test_simple_onboarding_step_rejects_blank_and_untrimmed_text() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="purpose must be trimmed text"):
         SimpleOnboardingStep(
             step="choose",
-            title="Choose a workflow",
-            command="mullu workflows",
+            title="Open the simple menu",
+            command="mullu menu",
             purpose=" Show workflows. ",
         )
 
@@ -706,7 +706,7 @@ def test_dashboard_simple_home_summary_rejects_execution_authority() -> None:
         DashboardSimpleHomeSummary(
             title="Ready",
             message="Unsafe home.",
-            primary_command="mullu workflows",
+            primary_command="mullu menu",
             ready_workflow_count=1,
             review_workflow_count=0,
             blocked_workflow_count=0,
@@ -719,7 +719,7 @@ def test_dashboard_simple_home_summary_rejects_unsupported_plain_status() -> Non
         DashboardSimpleHomeSummary(
             title="Ready",
             message="Unsafe home.",
-            primary_command="mullu workflows",
+            primary_command="mullu menu",
             ready_workflow_count=1,
             review_workflow_count=0,
             blocked_workflow_count=0,
@@ -732,7 +732,7 @@ def test_dashboard_simple_home_summary_rejects_too_many_action_items() -> None:
         DashboardSimpleHomeAction(
             action_ref=f"dashboard-home-action-{index}",
             label=f"Start workflow {index}",
-            command="mullu workflows",
+            command="mullu menu",
             reason="Workflow is ready.",
             outcome="ready",
         )
@@ -743,7 +743,7 @@ def test_dashboard_simple_home_summary_rejects_too_many_action_items() -> None:
         DashboardSimpleHomeSummary(
             title="Ready",
             message="Unsafe home.",
-            primary_command="mullu workflows",
+            primary_command="mullu menu",
             ready_workflow_count=4,
             review_workflow_count=0,
             blocked_workflow_count=0,
@@ -756,7 +756,7 @@ def test_dashboard_simple_home_summary_rejects_too_many_command_guidance_items()
         DashboardSimpleHomeSummary(
             title="Ready",
             message="Unsafe home.",
-            primary_command="mullu workflows",
+            primary_command="mullu menu",
             ready_workflow_count=1,
             review_workflow_count=0,
             blocked_workflow_count=0,

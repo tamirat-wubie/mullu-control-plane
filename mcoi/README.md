@@ -27,6 +27,8 @@ Invariants:
 ```powershell
 mullu start
 mullu start --json
+mullu menu
+mullu menu --json
 mullu actions
 mullu outcomes
 mullu workflows
@@ -44,7 +46,7 @@ mullu check --goal "Notify support" --action send --target support@mullusi.com -
 `mullu` is the intended front door for non-technical users. It returns one of three outcomes:
 
 - `Ready`: the action stays inside the allowed area and has required proof.
-- `Needs review`: the action has external side effects and requires approval.
+- `Needs approval`: the action has external side effects and requires approval.
 - `Blocked`: the action violates scope, proof, or domain constraints.
 
 ## Simple App Surface

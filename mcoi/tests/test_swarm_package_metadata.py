@@ -59,7 +59,7 @@ def test_package_readme_documents_simple_platform_surface() -> None:
     assert "mullu outcomes" in text
     assert "mullu task review-docs" in text
     assert "Ready" in text
-    assert "Needs review" in text
+    assert "Needs approval" in text
     assert "Blocked" in text
     assert "mount_simple_platform_router_from_env" in text
     assert "mount_public_runtime_routes_from_env" in text

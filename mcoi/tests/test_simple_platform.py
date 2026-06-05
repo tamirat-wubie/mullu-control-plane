@@ -55,7 +55,7 @@ def test_simple_platform_allows_plain_view_inside_allowed_area() -> None:
 
     assert check.outcome == "ready"
     assert check.ok_to_continue is True
-    assert check.message == "This action stays inside the allowed area and has the required proof."
+    assert check.message == "This task is inside the allowed area and has a saved check."
     assert check.proof_stamp_ref.startswith("proof-")
     assert check.boundary_witness_ref.startswith("witness-")
 
@@ -74,7 +74,7 @@ def test_simple_platform_blocks_plain_change_outside_allowed_area() -> None:
     assert check.outcome == "blocked"
     assert check.ok_to_continue is False
     assert check.raw_decision == "block"
-    assert "The target is outside the allowed area." in check.blocked_reasons
+    assert "This item is outside the allowed area for this task." in check.blocked_reasons
     assert check.next_step == "Narrow the request or change the allowed area, then check again."
 
 
@@ -122,7 +122,7 @@ def test_simple_platform_task_template_blocks_target_outside_template_scope() ->
 
     assert check.outcome == "blocked"
     assert check.ok_to_continue is False
-    assert check.blocked_reasons == ("The target is outside the allowed area.",)
+    assert check.blocked_reasons == ("This item is outside the allowed area for this task.",)
 
 
 def test_simple_platform_task_template_uses_default_target_for_support_notice() -> None:
@@ -164,7 +164,7 @@ def test_simple_platform_workflow_blocks_docs_update_outside_docs() -> None:
     assert plan.ready_count == 1
     assert plan.blocked_count == 2
     assert "One or more steps cannot continue" in plan.message
-    assert plan.checks[0].blocked_reasons == ("The target is outside the allowed area.",)
+    assert plan.checks[0].blocked_reasons == ("This item is outside the allowed area for this task.",)
 
 
 def test_simple_platform_workflow_projects_support_notice_review() -> None:
@@ -224,9 +224,9 @@ def test_simple_platform_onboarding_guide_is_plain_and_non_executing() -> None:
 
     assert guide.execution_allowed is False
     assert payload["title"] == "Mullu simple mode"
-    assert payload["recommended_path"][0]["command"] == "mullu workflows"
+    assert payload["recommended_path"][0]["command"] == "mullu menu"
     assert payload["recommended_path"][1]["command"] == "mullu workflow docs-update --target docs/README.md"
-    assert payload["outcomes"] == ["Ready", "Needs review", "Blocked"]
+    assert payload["outcomes"] == ["Ready", "Needs approval", "Blocked"]
 
 
 def test_simple_platform_home_is_plain_bounded_and_non_executing() -> None:
@@ -235,11 +235,11 @@ def test_simple_platform_home_is_plain_bounded_and_non_executing() -> None:
 
     assert home.execution_allowed is False
     assert payload["title"] == "Start simple"
-    assert payload["primary_command"] == "mullu workflows"
-    assert payload["next_action"] == "Open the workflow list and choose the work you want to do."
+    assert payload["primary_command"] == "mullu menu"
+    assert payload["next_action"] == "Open the simple menu and choose the work you want to do."
     assert len(payload["choices"]) == 3
-    assert payload["choices"][0]["label"] == "Choose a workflow"
-    assert payload["choices"][0]["command"] == "mullu workflows"
+    assert payload["choices"][0]["label"] == "Open the simple menu"
+    assert payload["choices"][0]["command"] == "mullu menu"
     assert all(choice["execution_allowed"] is False for choice in payload["choices"])
 
 
@@ -263,7 +263,7 @@ def test_simple_platform_home_rejects_execution_authority() -> None:
         SimpleHomeSummary(
             title="Unsafe",
             message="Unsafe home.",
-            primary_command="mullu workflows",
+            primary_command="mullu menu",
             next_action="Continue.",
             choices=(),
             execution_allowed=True,
@@ -275,7 +275,7 @@ def test_simple_platform_home_rejects_too_many_choices() -> None:
         SimpleHomeChoice(
             choice_ref=f"choice-{index}",
             label=f"Choice {index}",
-            command="mullu workflows",
+            command="mullu menu",
             purpose="Open a guided path.",
         )
         for index in range(4)
@@ -285,8 +285,8 @@ def test_simple_platform_home_rejects_too_many_choices() -> None:
         SimpleHomeSummary(
             title="Start simple",
             message="Choose one guided workflow.",
-            primary_command="mullu workflows",
-            next_action="Choose a workflow.",
+            primary_command="mullu menu",
+            next_action="Open the simple menu.",
             choices=choices,
         )
 
@@ -513,7 +513,7 @@ def test_simple_cli_lists_outcomes_as_json(capsys) -> None:
     assert envelope["ok"] is True
     assert envelope["status"] == "listed"
     assert envelope["payload"]["outcomes"][0]["outcome"] == "ready"
-    assert envelope["payload"]["outcomes"][1]["label"] == "Needs review"
+    assert envelope["payload"]["outcomes"][1]["label"] == "Needs approval"
 
 
 @pytest.mark.parametrize(
@@ -690,9 +690,9 @@ def test_simple_cli_start_outputs_onboarding_path(capsys) -> None:
 
     assert exit_code == 0
     assert "Start simple" in output
-    assert "Next: Open the workflow list and choose the work you want to do." in output
+    assert "Next: Open the simple menu and choose the work you want to do." in output
     assert "Recommended path:" in output
-    assert "mullu workflows" in output
+    assert "mullu menu" in output
     assert "mullu workflow docs-update --target docs/README.md" in output
 
 
@@ -705,7 +705,7 @@ def test_simple_cli_start_outputs_home_json(capsys) -> None:
     assert envelope["ok"] is True
     assert envelope["status"] == "ready"
     assert envelope["payload"]["home"]["title"] == "Start simple"
-    assert envelope["payload"]["home"]["choices"][0]["command"] == "mullu workflows"
+    assert envelope["payload"]["home"]["choices"][0]["command"] == "mullu menu"
 
 
 def test_simple_platform_api_projects_ready_check() -> None:
@@ -812,7 +812,7 @@ def test_simple_platform_api_returns_simple_home() -> None:
     assert payload["ok"] is True
     assert payload["status"] == "ready"
     assert payload["payload"]["home"]["title"] == "Start simple"
-    assert payload["payload"]["home"]["primary_command"] == "mullu workflows"
+    assert payload["payload"]["home"]["primary_command"] == "mullu menu"
     assert payload["payload"]["home"]["choices"][0]["execution_allowed"] is False
 
 

@@ -79,8 +79,8 @@ def test_simple_platform_fastapi_adapter_returns_simple_home() -> None:
     assert envelope["governed"] is True
     assert envelope["ok"] is True
     assert envelope["status"] == "ready"
-    assert envelope["payload"]["home"]["primary_command"] == "mullu workflows"
-    assert envelope["payload"]["home"]["choices"][0]["label"] == "Choose a workflow"
+    assert envelope["payload"]["home"]["primary_command"] == "mullu menu"
+    assert envelope["payload"]["home"]["choices"][0]["label"] == "Open the simple menu"
     assert envelope["payload"]["home"]["execution_allowed"] is False
 
 
@@ -103,7 +103,7 @@ def test_simple_platform_fastapi_adapter_returns_start_guide() -> None:
     assert envelope["ok"] is True
     assert envelope["status"] == "listed"
     assert envelope["payload"]["guide"]["execution_allowed"] is False
-    assert envelope["payload"]["guide"]["recommended_path"][0]["command"] == "mullu workflows"
+    assert envelope["payload"]["guide"]["recommended_path"][0]["command"] == "mullu menu"
 
 
 def test_simple_platform_fastapi_adapter_returns_document_wiring() -> None:

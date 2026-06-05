@@ -59,7 +59,7 @@ def _dashboard_runtime() -> OperationalDashboardRuntime:
         simple_home_summary=DashboardSimpleHomeSummary(
             title="Ready",
             message="Users can start with the recommended simple workflow path.",
-            primary_command="mullu workflows",
+            primary_command="mullu menu",
             ready_workflow_count=1,
             review_workflow_count=0,
             blocked_workflow_count=0,
