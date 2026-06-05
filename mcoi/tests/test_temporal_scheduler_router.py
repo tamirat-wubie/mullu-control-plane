@@ -152,6 +152,51 @@ def test_missed_temporal_schedule_records_terminal_receipt() -> None:
     assert worker.json()["count"] == 0
 
 
+def test_reclaim_expired_temporal_lease_records_repair_receipt() -> None:
+    calls: list[str] = []
+    clock = MutableClock("2026-05-04T14:00:00+00:00")
+    client = _client(clock, handlers={"reminder": lambda action: calls.append(action.schedule_id) or {}})
+    client.post("/api/v1/temporal/schedules", json=_request())
+    lease = deps.temporal_scheduler.acquire_lease("sched-1", "worker-a", lease_seconds=60)
+    deps.temporal_scheduler_store.save_action(deps.temporal_scheduler.get("sched-1"))
+    clock.now = "2026-05-04T14:02:00+00:00"
+
+    reclaimed = client.post("/api/v1/temporal/schedules/sched-1/lease/reclaim", params={"worker_id": "operator-a"})
+    fetched = client.get("/api/v1/temporal/schedules/sched-1")
+    worker = client.post(
+        "/api/v1/temporal/worker/tick",
+        json={"worker_id": "worker-b", "limit": 5, "certify_proofs": True},
+    )
+
+    assert lease is not None
+    assert reclaimed.status_code == 200
+    assert reclaimed.json()["schedule"]["state"] == "pending"
+    assert reclaimed.json()["receipt"]["reason"] == "lease_reclaimed"
+    assert reclaimed.json()["receipt"]["verdict"] == "not_due"
+    assert reclaimed.json()["proof_receipt_id"].startswith("rcpt-")
+    assert fetched.json()["receipt_count"] == 1
+    assert fetched.json()["receipts"][0]["reason"] == "lease_reclaimed"
+    assert worker.json()["count"] == 1
+    assert calls == ["sched-1"]
+
+
+def test_reclaim_active_temporal_lease_fails_closed() -> None:
+    clock = MutableClock("2026-05-04T14:00:00+00:00")
+    client = _client(clock)
+    client.post("/api/v1/temporal/schedules", json=_request())
+    lease = deps.temporal_scheduler.acquire_lease("sched-1", "worker-a", lease_seconds=120)
+    deps.temporal_scheduler_store.save_action(deps.temporal_scheduler.get("sched-1"))
+
+    reclaimed = client.post("/api/v1/temporal/schedules/sched-1/lease/reclaim", params={"worker_id": "operator-a"})
+    fetched = client.get("/api/v1/temporal/schedules/sched-1")
+
+    assert lease is not None
+    assert reclaimed.status_code == 409
+    assert reclaimed.json()["detail"]["error_code"] == "lease_not_reclaimable"
+    assert fetched.json()["schedule"]["state"] == "running"
+    assert fetched.json()["receipt_count"] == 0
+
+
 def test_invalid_risk_and_missing_schedule_fail_closed() -> None:
     client = _client(MutableClock("2026-05-04T13:00:00+00:00"))
     invalid = _request()
@@ -197,6 +242,7 @@ def test_default_routers_include_temporal_scheduler_summary() -> None:
     assert "/api/v1/temporal/monitor" in paths
     assert "/api/v1/temporal/summary" in paths
     assert "/api/v1/temporal/schedules" in paths
+    assert "/api/v1/temporal/schedules/{schedule_id}/lease/reclaim" in paths
     assert "/api/v1/temporal/schedules/{schedule_id}/missed" in paths
     assert "/api/v1/temporal/worker/tick" in paths
 

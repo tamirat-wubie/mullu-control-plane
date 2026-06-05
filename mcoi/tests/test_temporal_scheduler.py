@@ -630,6 +630,40 @@ def test_due_action_audit_reports_expired_lease_without_repairing_state() -> Non
     assert scheduler.receipt_count == 0
 
 
+def test_reclaim_expired_lease_returns_running_action_to_pending() -> None:
+    clock = MutableClock("2026-05-04T14:00:00+00:00")
+    scheduler = _engine(clock)
+    scheduler.register("sched-1", _action())
+    lease = scheduler.acquire_lease("sched-1", "worker-a", lease_seconds=60)
+    clock.now = "2026-05-04T14:02:00+00:00"
+
+    receipt = scheduler.reclaim_expired_lease("sched-1", worker_id="operator-a")
+    reclaimed = scheduler.get("sched-1")
+    reacquired = scheduler.acquire_lease("sched-1", "worker-b", lease_seconds=60)
+
+    assert lease is not None
+    assert receipt is not None
+    assert receipt.verdict == ScheduleDecisionVerdict.NOT_DUE
+    assert receipt.reason == "lease_reclaimed"
+    assert reclaimed.state == ScheduledActionState.PENDING
+    assert reacquired is not None
+    assert reacquired.worker_id == "worker-b"
+
+
+def test_reclaim_active_lease_is_blocked_without_mutation() -> None:
+    clock = MutableClock("2026-05-04T14:00:00+00:00")
+    scheduler = _engine(clock)
+    scheduler.register("sched-1", _action())
+    lease = scheduler.acquire_lease("sched-1", "worker-a", lease_seconds=120)
+
+    receipt = scheduler.reclaim_expired_lease("sched-1", worker_id="operator-a")
+
+    assert lease is not None
+    assert receipt is None
+    assert scheduler.get("sched-1").state == ScheduledActionState.RUNNING
+    assert scheduler.receipt_count == 0
+
+
 def test_lease_prevents_duplicate_worker_execution() -> None:
     clock = MutableClock("2026-05-04T14:00:00+00:00")
     scheduler = _engine(clock)
