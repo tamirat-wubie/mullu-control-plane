@@ -41,10 +41,36 @@ from mcoi_runtime.core.system_stabilization import (
     EconomicOptimizer, AdaptivePromotionEngine,
 )
 
+_DEFAULT_DISPATCH_ECONOMIC_COST = 1.0
+_DEFAULT_DISPATCH_ECONOMIC_VALUE = 1.0
+
 
 def _bounded_gate_error(summary: str, _exc: Exception) -> str:
     """Return a stable gate failure summary without raw backend detail."""
     return summary
+
+
+def _dispatch_economic_metrics(template: Mapping[str, Any]) -> tuple[float, float]:
+    """Return governed cost/value estimates declared by a dispatch template."""
+    if not isinstance(template, Mapping):
+        return _DEFAULT_DISPATCH_ECONOMIC_COST, _DEFAULT_DISPATCH_ECONOMIC_VALUE
+    cost = _optional_non_negative_metric(
+        template.get("economic_cost"),
+        default=_DEFAULT_DISPATCH_ECONOMIC_COST,
+    )
+    value = _optional_non_negative_metric(
+        template.get("economic_value"),
+        default=_DEFAULT_DISPATCH_ECONOMIC_VALUE,
+    )
+    return cost, value
+
+
+def _optional_non_negative_metric(raw: Any, *, default: float) -> float:
+    if raw is None:
+        return default
+    if not isinstance(raw, (int, float)) or isinstance(raw, bool) or raw < 0:
+        raise ValueError("economic metric must be a non-negative number")
+    return float(raw)
 
 
 @dataclass(frozen=True, slots=True)
@@ -168,9 +194,19 @@ class GovernedDispatcher:
         result.gates_passed.append(GateResult("predictive_failure", True, "predictive failure check passed"))
 
         # --- Gate 3: Economic Optimization ---
+        try:
+            estimated_cost, estimated_value = _dispatch_economic_metrics(context.request.template)
+        except ValueError as exc:
+            bounded_error = _bounded_gate_error("economic metrics malformed", exc)
+            result.gates_failed.append(GateResult("economic_optimization", False, bounded_error))
+            result.blocked = True
+            result.block_reason = "economic_optimization: malformed metrics"
+            self._emit_ledger(context, result, now)
+            return result
         estimate = self._optimizer.estimate(
             f"est-{context.intent_id}", context.request.route,
-            cost=100.0, value=500.0,  # placeholder -- real values would come from route metadata
+            cost=estimated_cost,
+            value=estimated_value,
         )
         if estimate.recommendation == "reject":
             result.gates_failed.append(GateResult("economic_optimization", False, f"over_budget: remaining={self._optimizer.remaining_budget}"))
@@ -292,7 +328,7 @@ class GovernedDispatcher:
         )
 
         # --- Post: Economic Commit ---
-        self._optimizer.commit_spend(100.0)
+        self._optimizer.commit_spend(estimated_cost)
 
         # --- Post: Equilibrium Complete ---
         self._equilibrium.complete_action(context.actor_id)

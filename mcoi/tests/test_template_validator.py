@@ -36,6 +36,43 @@ def test_template_validator_accepts_valid_shell_templates() -> None:
     assert validated.timeout_seconds == 5.0
 
 
+def test_template_validator_accepts_declared_economic_metrics() -> None:
+    validator = TemplateValidator()
+    validated = validator.validate(
+        {
+            "template_id": "template-economic-1",
+            "action_type": "shell_command",
+            "command_argv": ("python", "-c", "print('ok')"),
+            "economic_cost": 7.5,
+            "economic_value": 12,
+        },
+        {},
+    )
+
+    assert validated.economic_cost == 7.5
+    assert validated.economic_value == 12.0
+    assert validated.action_type is ExecutionActionType.SHELL_COMMAND
+
+
+def test_template_validator_rejects_negative_economic_metrics() -> None:
+    validator = TemplateValidator()
+
+    with pytest.raises(TemplateValidationError) as exc_info:
+        validator.validate(
+            {
+                "template_id": "template-economic-2",
+                "action_type": "shell_command",
+                "command_argv": ("python", "-c", "print('ok')"),
+                "economic_cost": -1,
+            },
+            {},
+        )
+
+    assert exc_info.value.code == "malformed_template"
+    assert str(exc_info.value) == "economic_cost must be a non-negative number when provided"
+    assert "-1" not in str(exc_info.value)
+
+
 def test_template_validator_binds_effect_observation_paths() -> None:
     validator = TemplateValidator()
     validated = validator.validate(
