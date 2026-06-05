@@ -280,11 +280,16 @@ For a scheduled action:
 
 ## Current Limits
 
-This runbook covers durable local JSON persistence and in-process background
-execution. The scheduler surface does not yet define:
+This runbook covers durable local JSON persistence for scheduled action
+snapshots and scheduler receipts, plus in-process background execution. A
+`FileTemporalSchedulerStore` restart can restore saved actions, including
+their terminal or running scheduler state, but lease ownership itself remains
+an in-memory `TemporalSchedulerEngine` boundary.
+
+The scheduler surface does not yet define:
 
 - distributed scheduler leader election
-- multi-process lease persistence
+- multi-process lease ownership persistence or recovery
 - external handler plugin loading
 
 Two adjacent temporal boundaries are implemented outside this scheduler
