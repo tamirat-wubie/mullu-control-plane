@@ -134,6 +134,13 @@
       ]
     },
     {
+      "action_id": "expose_federated_policy_sync_control_routes",
+      "status": "closed",
+      "surfaces": [
+        "federated_control_plane"
+      ]
+    },
+    {
       "action_id": "classify_finance_approval_packet_routes",
       "status": "closed",
       "surfaces": [
@@ -839,17 +846,17 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 102,
+      "action_proof": 103,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 16,
+      "read_model": 15,
       "request_proof": 2
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 116,
+      "audit_chain": 117,
       "gap": 0,
-      "read_model": 4,
+      "read_model": 3,
       "request_proof": 0
     },
     "by_coverage_state": {
@@ -861,8 +868,8 @@
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
-      "read_model": 18,
-      "request_proof": 101
+      "read_model": 17,
+      "request_proof": 102
     },
     "surface_count": 120
   },
@@ -878,11 +885,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 248,
+      "proven": 251,
       "unproven": 0,
       "witnessed": 151
     },
-    "route_count": 399,
+    "route_count": 402,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1573,6 +1580,21 @@
         "coverage_state": "proven",
         "route": "/api/v1/export/sources",
         "surface_id": "data_export_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/federation/clusters",
+        "surface_id": "federated_control_plane"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/federation/policies",
+        "surface_id": "federated_control_plane"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/federation/policy-sync",
+        "surface_id": "federated_control_plane"
       },
       {
         "coverage_state": "proven",
@@ -4275,8 +4297,8 @@
       "surface_id": "hosted_demo_sandbox"
     },
     {
-      "action_proof": "read_model",
-      "audit": "read_model",
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
       "coverage_state": "proven",
       "evidence_files": [
         "gateway/federated_control.py",
@@ -4288,20 +4310,30 @@
         "docs/51_federated_control_plane.md",
         "tests/test_gateway/test_federated_control.py"
       ],
-      "notes": "Federated control-plane summary exposes signed policy distribution and local enforcement receipts without tenant data replication.",
+      "notes": "Federated control-plane routes expose signed policy distribution, admin-gated regional metadata sync, and local enforcement receipts without tenant data replication.",
       "representative_paths": [
-        "/api/v1/federation/summary"
+        "/api/v1/federation/summary",
+        "/api/v1/federation/clusters",
+        "/api/v1/federation/policies",
+        "/api/v1/federation/policy-sync"
       ],
-      "request_proof": "read_model",
+      "request_proof": "request_proof",
       "runtime_witness_anchor_aliases": {
         "central_data_transfer_forbidden": [
           "signed_policy_syncs_to_allowed_region_without_data_transfer",
           "federation_summary_endpoint_returns_schema_valid_read_model",
-          "local_enforcement_allows_matching_residency_after_sync"
+          "local_enforcement_allows_matching_residency_after_sync",
+          "federation_control_routes_publish_and_sync_policy_metadata"
         ],
         "federated_snapshot_schema_valid": [
           "federated_control_snapshot_schema_exposes_locality_contract",
           "federation_summary_endpoint_returns_schema_valid_read_model"
+        ],
+        "federation_policy_publish_route_rejects_tenant_data_payload": [
+          "federation_policy_publish_route_rejects_tenant_data_payload"
+        ],
+        "federation_policy_sync_route_returns_denied_receipt_for_disallowed_policy": [
+          "federation_policy_sync_route_returns_denied_receipt_for_disallowed_policy"
         ],
         "invalid_signature_denied_before_local_acceptance": [
           "invalid_signature_is_denied_before_local_acceptance"
@@ -4324,11 +4356,14 @@
       },
       "runtime_witnesses": [
         "signed_policy_metadata_only_sync",
+        "federation_control_routes_publish_and_sync_policy_metadata",
         "invalid_signature_denied_before_local_acceptance",
         "policy_not_allowed_for_cluster_denied",
+        "federation_policy_sync_route_returns_denied_receipt_for_disallowed_policy",
         "unsynced_policy_denied_locally",
         "tenant_region_mismatch_denied_locally",
         "central_data_transfer_forbidden",
+        "federation_policy_publish_route_rejects_tenant_data_payload",
         "federated_snapshot_schema_valid"
       ],
       "surface_id": "federated_control_plane"
@@ -9512,8 +9547,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1189,
-    "runtime_witness_count": 1189,
+    "exact_test_anchor_count": 1192,
+    "runtime_witness_count": 1192,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11368,6 +11403,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_federated_control_plane.py::test_federation_control_routes_publish_and_sync_policy_metadata"
+            ],
+            "witness": "federation_control_routes_publish_and_sync_policy_metadata"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_federated_control.py::test_invalid_signature_is_denied_before_local_acceptance"
             ],
             "witness": "invalid_signature_denied_before_local_acceptance"
@@ -11378,6 +11419,12 @@
               "mcoi/tests/test_federated_control_plane.py::test_policy_sync_denies_policy_not_allowed_for_cluster"
             ],
             "witness": "policy_not_allowed_for_cluster_denied"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_federated_control_plane.py::test_federation_policy_sync_route_returns_denied_receipt_for_disallowed_policy"
+            ],
+            "witness": "federation_policy_sync_route_returns_denied_receipt_for_disallowed_policy"
           },
           {
             "anchors": [
@@ -11396,9 +11443,16 @@
             "anchors": [
               "tests/test_gateway/test_federated_control.py::test_signed_policy_syncs_to_allowed_region_without_data_transfer",
               "tests/test_gateway/test_federated_control.py::test_federation_summary_endpoint_returns_schema_valid_read_model",
-              "mcoi/tests/test_federated_control_plane.py::test_local_enforcement_allows_matching_residency_after_sync"
+              "mcoi/tests/test_federated_control_plane.py::test_local_enforcement_allows_matching_residency_after_sync",
+              "mcoi/tests/test_federated_control_plane.py::test_federation_control_routes_publish_and_sync_policy_metadata"
             ],
             "witness": "central_data_transfer_forbidden"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_federated_control_plane.py::test_federation_policy_publish_route_rejects_tenant_data_payload"
+            ],
+            "witness": "federation_policy_publish_route_rejects_tenant_data_payload"
           },
           {
             "anchors": [
@@ -11408,8 +11462,8 @@
             "witness": "federated_snapshot_schema_valid"
           }
         ],
-        "exact_test_anchor_count": 7,
-        "runtime_witness_count": 7,
+        "exact_test_anchor_count": 10,
+        "runtime_witness_count": 10,
         "surface_id": "federated_control_plane",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

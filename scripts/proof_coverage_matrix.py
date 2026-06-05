@@ -1275,10 +1275,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
         ),
         _surface(
             "federated_control_plane",
-            ["/api/v1/federation/summary"],
-            "read_model",
-            "read_model",
-            "read_model",
+            [
+                "/api/v1/federation/summary",
+                "/api/v1/federation/clusters",
+                "/api/v1/federation/policies",
+                "/api/v1/federation/policy-sync",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
             "proven",
             [
                 "gateway/federated_control.py",
@@ -1290,14 +1295,17 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "docs/51_federated_control_plane.md",
                 "tests/test_gateway/test_federated_control.py",
             ],
-            "Federated control-plane summary exposes signed policy distribution and local enforcement receipts without tenant data replication.",
+            "Federated control-plane routes expose signed policy distribution, admin-gated regional metadata sync, and local enforcement receipts without tenant data replication.",
             [
                 "signed_policy_metadata_only_sync",
+                "federation_control_routes_publish_and_sync_policy_metadata",
                 "invalid_signature_denied_before_local_acceptance",
                 "policy_not_allowed_for_cluster_denied",
+                "federation_policy_sync_route_returns_denied_receipt_for_disallowed_policy",
                 "unsynced_policy_denied_locally",
                 "tenant_region_mismatch_denied_locally",
                 "central_data_transfer_forbidden",
+                "federation_policy_publish_route_rejects_tenant_data_payload",
                 "federated_snapshot_schema_valid",
             ],
             runtime_witness_anchor_aliases={
@@ -1312,6 +1320,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                     "policy_not_allowed_for_cluster_is_denied",
                     "policy_sync_denies_policy_not_allowed_for_cluster",
                 ],
+                "federation_policy_sync_route_returns_denied_receipt_for_disallowed_policy": [
+                    "federation_policy_sync_route_returns_denied_receipt_for_disallowed_policy",
+                ],
                 "unsynced_policy_denied_locally": ["local_enforcement_denies_unsynced_policy"],
                 "tenant_region_mismatch_denied_locally": [
                     "tenant_region_mismatch_denies_locally",
@@ -1321,6 +1332,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                     "signed_policy_syncs_to_allowed_region_without_data_transfer",
                     "federation_summary_endpoint_returns_schema_valid_read_model",
                     "local_enforcement_allows_matching_residency_after_sync",
+                    "federation_control_routes_publish_and_sync_policy_metadata",
+                ],
+                "federation_policy_publish_route_rejects_tenant_data_payload": [
+                    "federation_policy_publish_route_rejects_tenant_data_payload",
                 ],
                 "federated_snapshot_schema_valid": [
                     "federated_control_snapshot_schema_exposes_locality_contract",
@@ -6554,6 +6569,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         },
         {
             "action_id": "publish_federated_control_plane_read_model",
+            "surfaces": ["federated_control_plane"],
+            "status": "closed",
+        },
+        {
+            "action_id": "expose_federated_policy_sync_control_routes",
             "surfaces": ["federated_control_plane"],
             "status": "closed",
         },

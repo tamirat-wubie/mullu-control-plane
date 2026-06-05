@@ -138,7 +138,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["operator_console_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["model_experiment_control"]["exact_test_anchor_count"] == 7
     assert surfaces["model_experiment_control"]["unanchored_witness_count"] == 0
-    assert surfaces["federated_control_plane"]["exact_test_anchor_count"] == 7
+    assert surfaces["federated_control_plane"]["exact_test_anchor_count"] == 10
     assert surfaces["federated_control_plane"]["unanchored_witness_count"] == 0
     assert surfaces["audit_chain_api"]["exact_test_anchor_count"] == 7
     assert surfaces["audit_chain_api"]["unanchored_witness_count"] == 0
@@ -1060,11 +1060,18 @@ def test_federated_control_plane_surface_is_witnessed() -> None:
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     federation_surface = surfaces["federated_control_plane"]
     witnesses = set(federation_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
 
     assert federation_surface["coverage_state"] == "proven"
-    assert federation_surface["request_proof"] == "read_model"
-    assert federation_surface["action_proof"] == "read_model"
+    assert federation_surface["request_proof"] == "request_proof"
+    assert federation_surface["action_proof"] == "action_proof"
     assert "/api/v1/federation/summary" in federation_surface["representative_paths"]
+    assert "/api/v1/federation/clusters" in federation_surface["representative_paths"]
+    assert "/api/v1/federation/policies" in federation_surface["representative_paths"]
+    assert "/api/v1/federation/policy-sync" in federation_surface["representative_paths"]
     assert "gateway/federated_control.py" in federation_surface["evidence_files"]
     assert "gateway/server.py" in federation_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/app/routers/federation.py" in federation_surface["evidence_files"]
@@ -1072,13 +1079,20 @@ def test_federated_control_plane_surface_is_witnessed() -> None:
     assert "schemas/federated_control_snapshot.schema.json" in federation_surface["evidence_files"]
     assert "tests/test_gateway/test_federated_control.py" in federation_surface["evidence_files"]
     assert "signed_policy_metadata_only_sync" in witnesses
+    assert "federation_control_routes_publish_and_sync_policy_metadata" in witnesses
     assert "invalid_signature_denied_before_local_acceptance" in witnesses
     assert "policy_not_allowed_for_cluster_denied" in witnesses
+    assert "federation_policy_sync_route_returns_denied_receipt_for_disallowed_policy" in witnesses
     assert "unsynced_policy_denied_locally" in witnesses
     assert "tenant_region_mismatch_denied_locally" in witnesses
     assert "central_data_transfer_forbidden" in witnesses
+    assert "federation_policy_publish_route_rejects_tenant_data_payload" in witnesses
     assert "federated_snapshot_schema_valid" in witnesses
+    assert route_records["/api/v1/federation/clusters"]["surface_id"] == "federated_control_plane"
+    assert route_records["/api/v1/federation/policies"]["surface_id"] == "federated_control_plane"
+    assert route_records["/api/v1/federation/policy-sync"]["surface_id"] == "federated_control_plane"
     assert closure_actions["publish_federated_control_plane_read_model"]["status"] == "closed"
+    assert closure_actions["expose_federated_policy_sync_control_routes"]["status"] == "closed"
 
 
 def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
