@@ -15,7 +15,6 @@ Invariants:
 
 from __future__ import annotations
 
-import hashlib
 import threading
 from collections import deque
 from dataclasses import dataclass, field
@@ -258,16 +257,21 @@ class WorkflowEngine:
         workflow_id: str,
         *,
         executor: Callable[[str, dict[str, Any]], Any] | None = None,
+        dry_run: bool = False,
     ) -> WorkflowExecution:
         """Execute a workflow in topological order.
 
         The executor receives (action, action_params) and returns a result.
+        If no executor is supplied, callers must set dry_run=True so simulated
+        execution is explicit in the call site and step result.
         Steps at the same level run sequentially (parallel execution is
         left to the caller via threading).
         """
         definition = self._definitions.get(workflow_id)
         if definition is None:
             raise ValueError(f"workflow {workflow_id} not found")
+        if executor is None and not dry_run:
+            raise ValueError("workflow executor required unless dry_run=True")
 
         exec_id = self._next_id("wfx")
         # Deep-copy steps for this execution
@@ -317,7 +321,7 @@ class WorkflowEngine:
                     if executor is not None:
                         step.result = executor(step.action, step.action_params)
                     else:
-                        step.result = {"action": step.action, "status": "stub"}
+                        step.result = {"action": step.action, "status": "dry_run"}
                     step.status = StepStatus.COMPLETED
                     step.completed_at = self._clock()
                     execution.steps_completed += 1

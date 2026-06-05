@@ -189,21 +189,35 @@ class TestWorkflowExecution:
         with pytest.raises(ValueError, match="not found"):
             e.execute("wf-nonexistent", executor=_executor)
 
-    def test_stub_executor(self):
+    def test_missing_executor_requires_explicit_dry_run(self):
         e = _engine()
-        wf = e.define(tenant_id="t1", name="stub", steps=[
+        wf = e.define(tenant_id="t1", name="requires-executor", steps=[
             WorkflowStep(step_id="s1", name="A", action="test"),
         ])
-        result = e.execute(wf.workflow_id)  # No executor — uses stub
+
+        with pytest.raises(ValueError, match="executor required"):
+            e.execute(wf.workflow_id)
+
+        assert e.execution_count == 0
+
+    def test_explicit_dry_run_executor(self):
+        e = _engine()
+        wf = e.define(tenant_id="t1", name="dry-run", steps=[
+            WorkflowStep(step_id="s1", name="A", action="test"),
+        ])
+
+        result = e.execute(wf.workflow_id, dry_run=True)
+
         assert result.status == "completed"
-        assert result.steps["s1"].result == {"action": "test", "status": "stub"}
+        assert result.steps_completed == 1
+        assert result.steps["s1"].result == {"action": "test", "status": "dry_run"}
 
     def test_to_dict(self):
         e = _engine()
         wf = e.define(tenant_id="t1", name="test", steps=[
             WorkflowStep(step_id="s1", name="A", action="a"),
         ])
-        result = e.execute(wf.workflow_id)
+        result = e.execute(wf.workflow_id, dry_run=True)
         d = result.to_dict()
         assert d["status"] == "completed"
         assert len(d["steps"]) == 1
@@ -230,7 +244,7 @@ class TestEngineManagement:
         wf = e.define(tenant_id="t1", name="test", steps=[
             WorkflowStep(step_id="s1", name="A", action="a"),
         ])
-        e.execute(wf.workflow_id)
+        e.execute(wf.workflow_id, dry_run=True)
         s = e.summary()
         assert s["definitions"] == 1
         assert s["executions"] == 1
