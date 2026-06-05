@@ -48,6 +48,7 @@ from mcoi_runtime.assistant_kernel import (
 )
 from mcoi_runtime.assistant_kernel.effects import EffectReceipt
 from mcoi_runtime.assistant_kernel.goals import FINANCE_OPS_PAYMENT_CLOSURE_PREDICATES
+from mcoi_runtime.assistant_kernel.identity import PROTECTED_FORBIDDEN_CAPABILITIES
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -121,10 +122,36 @@ def test_builtin_finance_ops_profile_preserves_skill_capability_boundary() -> No
     assert "payment.execute.with_approval" in finance_profile.allowed_capabilities
     assert "payment.execute" in finance_profile.forbidden_capabilities
     assert "policy.modify" in finance_profile.forbidden_capabilities
+    assert set(PROTECTED_FORBIDDEN_CAPABILITIES).issubset(finance_profile.forbidden_capabilities)
     assert set(finance_profile.skill_ids).isdisjoint(finance_profile.allowed_capabilities)
     assert "signed_evidence_bundle" in finance_profile.evidence_required
     assert binding.binding_hash
     assert binding.metadata["skill_capability_boundary_enforced"] is True
+
+
+def test_assistant_profile_applies_protected_forbidden_capability_floor() -> None:
+    profile = AssistantProfile(
+        assistant_id="profile.protected-floor",
+        kind="personal",
+        owner_scope="single_owner",
+        tenant_scope="personal_tenant",
+        role="floor_test",
+        skill_ids=("skill.floor.review",),
+        allowed_capabilities=("email.read",),
+        forbidden_capabilities=(),
+        memory_policy="bounded_memory",
+        approval_policy="approval_required",
+        budget_policy="bounded_budget",
+        external_send_policy="approval_required",
+        data_retention_policy="retention_policy",
+        evidence_required=("approval_receipt",),
+        escalation_path=("owner",),
+    )
+
+    assert profile.forbidden_capabilities == tuple(sorted(PROTECTED_FORBIDDEN_CAPABILITIES))
+    assert "email.read" in profile.allowed_capabilities
+    assert set(PROTECTED_FORBIDDEN_CAPABILITIES).isdisjoint(profile.allowed_capabilities)
+    assert set(profile.allowed_capabilities).isdisjoint(profile.forbidden_capabilities)
 
 
 def test_assistant_profiles_read_model_bounded() -> None:

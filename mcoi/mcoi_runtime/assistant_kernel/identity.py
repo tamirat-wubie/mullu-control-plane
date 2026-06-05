@@ -16,6 +16,11 @@ from dataclasses import asdict, dataclass, field, replace
 from typing import Any
 
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
+from mcoi_runtime.governance.protected_variables import (
+    ProtectedVariable,
+    ProtectedVariableMonitor,
+    ProtectionRule,
+)
 
 
 ASSISTANT_PROFILE_KINDS = (
@@ -38,6 +43,22 @@ PROTECTED_FORBIDDEN_CAPABILITIES = frozenset(
         "policy.promote",
     }
 )
+_FORBIDDEN_CAPABILITIES_FIELD = "forbidden_capabilities"
+
+
+def _assistant_capability_floor_monitor() -> ProtectedVariableMonitor:
+    monitor = ProtectedVariableMonitor()
+    monitor.register(
+        ProtectedVariable(
+            name=_FORBIDDEN_CAPABILITIES_FIELD,
+            rule=ProtectionRule.REQUIRED_SUPERSET,
+            required_members=tuple(sorted(PROTECTED_FORBIDDEN_CAPABILITIES)),
+        )
+    )
+    return monitor
+
+
+_ASSISTANT_CAPABILITY_FLOOR_MONITOR = _assistant_capability_floor_monitor()
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,10 +93,7 @@ class AssistantProfile:
         object.__setattr__(self, "role", ensure_non_empty_text("role", self.role))
         skill_ids = _normalize_text_tuple(self.skill_ids, "skill_ids")
         allowed = _normalize_text_tuple(self.allowed_capabilities, "allowed_capabilities")
-        forbidden = _normalize_text_tuple(
-            (*self.forbidden_capabilities, *tuple(sorted(PROTECTED_FORBIDDEN_CAPABILITIES))),
-            "forbidden_capabilities",
-        )
+        forbidden = _apply_protected_forbidden_capability_floor(self.forbidden_capabilities)
         if set(allowed).intersection(forbidden):
             raise RuntimeCoreInvariantError("capability scope conflict")
         if set(skill_ids).intersection(allowed, forbidden):
@@ -383,6 +401,31 @@ def _normalize_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str
     if not normalized:
         raise RuntimeCoreInvariantError(f"{field_name} must contain at least one item")
     return normalized
+
+
+def _apply_protected_forbidden_capability_floor(capabilities: tuple[str, ...]) -> tuple[str, ...]:
+    """Return forbidden capabilities with the protected denial floor present."""
+    normalized = _normalize_optional_text_tuple(capabilities)
+    report = _ASSISTANT_CAPABILITY_FLOOR_MONITOR.check(
+        {},
+        {_FORBIDDEN_CAPABILITIES_FIELD: normalized},
+    )
+    if not report.ok:
+        normalized = _normalize_text_tuple(
+            (*normalized, *tuple(sorted(PROTECTED_FORBIDDEN_CAPABILITIES))),
+            _FORBIDDEN_CAPABILITIES_FIELD,
+        )
+    final_report = _ASSISTANT_CAPABILITY_FLOOR_MONITOR.check(
+        {},
+        {_FORBIDDEN_CAPABILITIES_FIELD: normalized},
+    )
+    if not final_report.ok:
+        raise RuntimeCoreInvariantError("protected forbidden capability floor missing")
+    return normalized
+
+
+def _normalize_optional_text_tuple(values: tuple[str, ...]) -> tuple[str, ...]:
+    return tuple(dict.fromkeys(str(value).strip() for value in values if str(value).strip()))
 
 
 def _json_ready(value: Any) -> Any:
