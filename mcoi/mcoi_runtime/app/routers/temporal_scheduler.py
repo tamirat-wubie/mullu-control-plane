@@ -287,6 +287,43 @@ def mark_temporal_schedule_missed(schedule_id: str, request: Request, worker_id:
     }
 
 
+@router.post("/api/v1/temporal/schedules/{schedule_id}/lease/reclaim")
+def reclaim_temporal_schedule_lease(schedule_id: str, request: Request, worker_id: str = "temporal-api"):
+    """Reclaim an expired temporal schedule lease and persist the repair receipt."""
+    deps.metrics.inc("requests_governed")
+    schedule = deps.temporal_scheduler_store.get_action(schedule_id)
+    if schedule is None:
+        raise HTTPException(404, detail=_temporal_error_detail("schedule not found", "schedule_not_found"))
+    enforce_tenant_scope(request, schedule.tenant_id)
+    try:
+        receipt = deps.temporal_scheduler.reclaim_expired_lease(schedule_id, worker_id=worker_id)
+        if receipt is None:
+            raise HTTPException(409, detail=_temporal_error_detail("lease not reclaimable", "lease_not_reclaimable"))
+        schedule = deps.temporal_scheduler.get(schedule_id)
+        deps.temporal_scheduler_store.append_receipt(receipt)
+        deps.temporal_scheduler_store.save_action(schedule)
+        proof = deps.proof_bridge.certify_temporal_run_receipt(
+            scheduled_action=schedule,
+            run_receipt=receipt,
+            actor_id=worker_id,
+        )
+    except HTTPException:
+        raise
+    except RuntimeCoreInvariantError as exc:
+        raise HTTPException(404, detail=_temporal_error_detail("schedule not found", "schedule_not_found")) from exc
+    except (ValueError, PersistenceError) as exc:
+        raise HTTPException(
+            400,
+            detail=_temporal_error_detail("temporal lease reclaim failed", "temporal_lease_reclaim_failed"),
+        ) from exc
+    return {
+        "schedule": _schedule_to_body(schedule),
+        "receipt": _receipt_to_body(receipt),
+        "proof_receipt_id": proof.capsule.receipt.receipt_id,
+        "governed": True,
+    }
+
+
 @router.post("/api/v1/temporal/worker/tick")
 def tick_temporal_worker(req: TemporalWorkerTickRequest):
     """Run one bounded temporal scheduler worker tick."""

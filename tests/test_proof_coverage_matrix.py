@@ -241,7 +241,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["llm_chat_workflow"]["unanchored_witness_count"] == 0
     assert surfaces["llm_chat_workflow"]["exact_test_anchor_count"] == 7
     assert surfaces["temporal_kernel"]["unanchored_witness_count"] == 0
-    assert surfaces["temporal_kernel"]["exact_test_anchor_count"] == 15
+    assert surfaces["temporal_kernel"]["exact_test_anchor_count"] == 16
     assert surfaces["networked_worker_mesh"]["unanchored_witness_count"] == 0
     assert surfaces["networked_worker_mesh"]["exact_test_anchor_count"] == 13
     assert surfaces["task_queue_lifecycle"]["unanchored_witness_count"] == 0
@@ -392,6 +392,7 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/cases/{case_id}/plan"]["surface_id"] == "orgos_case_governance_lifecycle"
     assert classified_routes["/api/v1/orgos/replay"]["surface_id"] == "orgos_case_governance_lifecycle"
     assert classified_routes["/api/v1/temporal/schedules"]["surface_id"] == "temporal_kernel"
+    assert classified_routes["/api/v1/temporal/schedules/{schedule_id}/lease/reclaim"]["surface_id"] == "temporal_kernel"
     assert classified_routes["/api/v1/temporal/schedules/{schedule_id}/missed"]["surface_id"] == "temporal_kernel"
     assert classified_routes["/api/v1/temporal/worker/tick"]["surface_id"] == "temporal_kernel"
     assert classified_routes["/api/v1/temporal/monitor"]["surface_id"] == "temporal_kernel"

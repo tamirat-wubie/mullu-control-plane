@@ -95,6 +95,7 @@ TEMPORAL_SCHEDULER_MACHINE = StateMachineSpec(
         TransitionRule(from_state="pending", to_state="blocked", action="temporal_action_blocked"),
         TransitionRule(from_state="pending", to_state="missed", action="temporal_action_missed"),
         TransitionRule(from_state="pending", to_state="cancelled", action="temporal_action_cancelled"),
+        TransitionRule(from_state="running", to_state="pending", action="temporal_lease_reclaimed"),
         TransitionRule(from_state="running", to_state="completed", action="temporal_action_completed"),
         TransitionRule(from_state="running", to_state="failed", action="temporal_action_failed"),
         TransitionRule(from_state="running", to_state="cancelled", action="temporal_action_cancelled"),
@@ -962,6 +963,8 @@ class ProofBridge:
         if receipt.verdict is ScheduleDecisionVerdict.DUE:
             return "pending", "running", "temporal_action_due", True
         if receipt.verdict is ScheduleDecisionVerdict.NOT_DUE:
+            if receipt.reason == "lease_reclaimed":
+                return "running", "pending", "temporal_lease_reclaimed", True
             return "pending", "pending", "temporal_action_deferred", True
         if receipt.verdict is ScheduleDecisionVerdict.COMPLETED:
             return "running", "completed", "temporal_action_completed", True

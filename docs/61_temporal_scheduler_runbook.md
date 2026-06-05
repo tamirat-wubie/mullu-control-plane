@@ -134,6 +134,21 @@ Missed closure:
 - persists the terminal state
 - prevents later worker ticks from dispatching the closed schedule
 
+### Reclaim expired lease
+
+```text
+POST /api/v1/temporal/schedules/{schedule_id}/lease/reclaim
+```
+
+Expired-lease reclaim:
+
+- requires the schedule to have an expired active lease
+- rejects active or missing leases with `lease_not_reclaimable`
+- moves the schedule from `running` back to `pending`
+- emits a `not_due` scheduler receipt with reason `lease_reclaimed`
+- certifies a temporal scheduler proof receipt for `running -> pending`
+- persists the repaired schedule state before later worker ticks can dispatch
+
 ### Manual worker tick
 
 ```text

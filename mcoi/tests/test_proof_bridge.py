@@ -173,6 +173,29 @@ class TestTemporalSchedulerProof:
         assert proof.capsule.receipt.guard_verdicts[0].passed is False
         assert proof.capsule.receipt.guard_verdicts[0].detail["temporal_verdict"] == "deny"
 
+    def test_reclaimed_lease_receipt_certifies_running_to_pending_transition(self):
+        clock = MutableClock("2026-05-04T14:00:00+00:00")
+        scheduler = _temporal_scheduler(clock)
+        scheduler.register("sched-1", _temporal_action())
+        lease = scheduler.acquire_lease("sched-1", "worker-a", lease_seconds=60)
+        clock.now = "2026-05-04T14:02:00+00:00"
+        run_receipt = scheduler.reclaim_expired_lease("sched-1", worker_id="operator-a")
+        scheduled = scheduler.get("sched-1")
+        bridge = ProofBridge(clock=clock)
+
+        assert lease is not None
+        assert run_receipt is not None
+        proof = bridge.certify_temporal_run_receipt(
+            scheduled_action=scheduled,
+            run_receipt=run_receipt,
+            actor_id="operator-a",
+        )
+
+        assert proof.decision == "pending"
+        assert proof.capsule.receipt.from_state == "running"
+        assert proof.capsule.receipt.to_state == "pending"
+        assert proof.capsule.receipt.action == "temporal_lease_reclaimed"
+
     def test_temporal_scheduler_proof_serializes_scheduler_detail(self):
         clock = MutableClock("2026-05-04T14:00:00+00:00")
         scheduler = _temporal_scheduler(clock)

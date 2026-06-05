@@ -3355,6 +3355,19 @@ class TemporalSchedulerEngine:
             self._replace_action(action, ScheduledActionState.PENDING)
         return True
 
+    def reclaim_expired_lease(self, schedule_id: str, *, worker_id: str = "") -> TemporalRunReceipt | None:
+        """Release an expired lease and record the schedule as pending."""
+        action = self.get(schedule_id)
+        lease = self._leases.get(schedule_id)
+        if lease is None or action.state is not ScheduledActionState.RUNNING:
+            return None
+        now = self._clock()
+        if _parse_iso(lease.expires_at) > _parse_iso(now):
+            return None
+        self._leases.pop(schedule_id, None)
+        self._replace_action(action, ScheduledActionState.PENDING)
+        return self._record(self.get(schedule_id), ScheduleDecisionVerdict.NOT_DUE, "lease_reclaimed", now, worker_id)
+
     def recent_receipts(self, limit: int = 50) -> tuple[TemporalRunReceipt, ...]:
         """Return recent scheduler receipts newest first."""
         return tuple(reversed(self._receipts[-limit:]))
