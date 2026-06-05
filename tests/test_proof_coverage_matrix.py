@@ -104,6 +104,7 @@ def test_evidence_quality_report_tracks_witness_strength_gaps() -> None:
     assert "gateway_approval_resolution" not in quality_gaps
     assert "replay_determinism" not in quality_gaps
     assert "tool_invocation" not in quality_gaps
+    assert "tool_permission_registry" not in quality_gaps
     assert "governed_session" not in quality_gaps
     assert "health_docs_exempt" not in quality_gaps
     assert "lineage_query_api" not in quality_gaps
@@ -227,6 +228,8 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["proof_route_gap_triage"]["exact_test_anchor_count"] == 4
     assert surfaces["proof_route_gap_triage"]["unanchored_witness_count"] == 0
     assert surfaces["tool_registry_read_models"]["unanchored_witness_count"] == 0
+    assert surfaces["tool_permission_registry"]["unanchored_witness_count"] == 0
+    assert surfaces["tool_permission_registry"]["exact_test_anchor_count"] == 7
     assert surfaces["gateway_capability_fabric"]["unanchored_witness_count"] == 0
     assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 15
     assert surfaces["capability_worker_execution"]["unanchored_witness_count"] == 0
@@ -424,6 +427,8 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/tools/history"]["surface_id"] == "tool_registry_read_models"
     assert classified_routes["/api/v1/tools/llm-format"]["surface_id"] == "tool_registry_read_models"
     assert classified_routes["/api/v1/tools/invoke"]["surface_id"] == "tool_invocation"
+    assert classified_routes["/api/v1/tool-permissions"]["surface_id"] == "tool_permission_registry"
+    assert classified_routes["/api/v1/tool-permissions/evaluate"]["surface_id"] == "tool_permission_registry"
     assert classified_routes["/api/v1/output/parse"]["surface_id"] == "structured_output_validation"
     assert classified_routes["/api/v1/output/schemas"]["surface_id"] == "structured_output_validation"
     assert classified_routes["/api/v1/rate-limit/status"]["surface_id"] == "operational_platform_read_models"

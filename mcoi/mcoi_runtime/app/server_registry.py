@@ -23,6 +23,7 @@ from mcoi_runtime.app.server_deps import (
 from mcoi_runtime.core.data_governance import DataGovernanceEngine
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.governed_session import Platform as GovernedPlatform
+from mcoi_runtime.core.tool_permission_primitives import ToolPermissionRegistry
 from mcoi_runtime.governance.policy.versioning import PolicyVersionRegistry
 
 
@@ -57,6 +58,8 @@ def bootstrap_dependency_registry(
     platform_cls: type[Any] = GovernedPlatform,
     policy_version_registry_cls: type[Any] = PolicyVersionRegistry,
     policy_version_registry: Any | None = None,
+    tool_permission_registry_cls: type[Any] = ToolPermissionRegistry,
+    tool_permission_registry: Any | None = None,
     wire_runtime_dependencies_fn: Callable[..., Any] = wire_runtime_dependencies,
     register_dependency_groups_fn: Callable[..., Any] = register_dependency_groups,
 ) -> DependencyRegistryBootstrap:
@@ -157,6 +160,8 @@ def bootstrap_dependency_registry(
     event_store = capability_bootstrap.event_store
     if policy_version_registry is None:
         policy_version_registry = policy_version_registry_cls()
+    if tool_permission_registry is None:
+        tool_permission_registry = tool_permission_registry_cls()
 
     platform = platform_cls(
         clock=clock,
@@ -247,6 +252,7 @@ def bootstrap_dependency_registry(
             "access_runtime": access_runtime,
             "policy_sandbox": policy_sandbox,
             "policy_version_registry": policy_version_registry,
+            "tool_permission_registry": tool_permission_registry,
             "runbook_learning": runbook_learning,
             "explanation_engine": explanation_engine,
             "knowledge_graph": knowledge_graph,

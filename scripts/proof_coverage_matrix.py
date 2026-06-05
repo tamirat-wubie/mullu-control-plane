@@ -1953,6 +1953,34 @@ def proof_coverage_matrix() -> dict[str, Any]:
             ],
         ),
         _surface(
+            "tool_permission_registry",
+            [
+                "/api/v1/tool-permissions",
+                "/api/v1/tool-permissions/evaluate",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "proven",
+            [
+                "mcoi/mcoi_runtime/app/routers/tool_permissions.py",
+                "mcoi/mcoi_runtime/core/tool_permission_primitives.py",
+                "mcoi/mcoi_runtime/core/governed_tool_use.py",
+                "mcoi/tests/test_tool_permission_primitives.py",
+                "mcoi/tests/test_tool_permission_routes.py",
+            ],
+            "Tool permission registry routes expose tenant-scoped permission registration, bounded listing, and dry-run evaluation without invoking tools; governed execution consumes the same primitive registry.",
+            [
+                "permission_match_emits_stable_grammar_and_hashes",
+                "permission_denies_missing_audit_without_executing",
+                "permission_denies_schema_violations_fail_closed",
+                "governed_tool_registry_applies_bound_permission_registry",
+                "tool_permission_routes_register_list_and_evaluate",
+                "tool_permission_routes_reject_duplicate_registration",
+                "tool_permission_routes_deny_missing_permission_fail_closed",
+            ],
+        ),
+        _surface(
             "structured_output_validation",
             [
                 "/api/v1/output/parse",
@@ -6627,6 +6655,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_tool_registry_read_model_routes",
             "surfaces": ["tool_registry_read_models", "tool_invocation"],
+            "status": "closed",
+        },
+        {
+            "action_id": "expose_tool_permission_registry_operator_routes",
+            "surfaces": ["tool_permission_registry"],
             "status": "closed",
         },
         {

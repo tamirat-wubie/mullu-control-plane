@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from hashlib import sha256
 import json
+import threading
 from typing import Any, Literal
 
 from .invariants import ensure_non_empty_text, stable_identifier
@@ -124,23 +125,28 @@ class ToolPermissionRegistry:
 
     def __init__(self) -> None:
         self._permissions: dict[str, ToolCallPermission] = {}
+        self._lock = threading.RLock()
 
     def register(self, permission: ToolCallPermission) -> ToolCallPermission:
-        if permission.permission_id in self._permissions:
-            raise ValueError("tool permission already registered")
-        self._permissions[permission.permission_id] = permission
+        with self._lock:
+            if permission.permission_id in self._permissions:
+                raise ValueError("tool permission already registered")
+            self._permissions[permission.permission_id] = permission
         return permission
 
     def list_permissions(self, *, tenant_id: str | None = None) -> tuple[ToolCallPermission, ...]:
-        permissions = tuple(sorted(self._permissions.values(), key=lambda item: item.permission_id))
+        with self._lock:
+            permissions = tuple(sorted(self._permissions.values(), key=lambda item: item.permission_id))
         if tenant_id is None:
             return permissions
         return tuple(permission for permission in permissions if permission.tenant_id == tenant_id)
 
     def evaluate(self, request: ToolPermissionRequest) -> ToolPermissionDecision:
+        with self._lock:
+            permissions = tuple(self._permissions.values())
         candidates = [
             permission
-            for permission in self._permissions.values()
+            for permission in permissions
             if permission.tenant_id == request.tenant_id and permission.tool_name == request.tool_name
         ]
         if not candidates:

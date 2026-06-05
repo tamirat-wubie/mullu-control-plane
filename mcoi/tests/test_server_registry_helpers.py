@@ -191,6 +191,7 @@ def test_bootstrap_dependency_registry_registers_expected_dependency_keys() -> N
     assert "platform" in group_keys
     assert "data_governance" in group_keys
     assert "tool_registry" in group_keys
+    assert "tool_permission_registry" in group_keys
     assert "event_bus" in group_keys
     assert "shutdown_mgr" in group_keys
     assert "request_ctx_factory" in group_keys
