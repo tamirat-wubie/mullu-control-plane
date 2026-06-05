@@ -149,6 +149,7 @@ def test_extension_health_read_model_bounded(client: TestClient) -> None:
         "nested_mind_observation_bridge",
         "nested_mind_observation_submitter",
         "note_memory",
+        "tool_permission_registry",
     }
     assert set(extensions["governed_swarm"]) == {
         "registered",
@@ -189,6 +190,12 @@ def test_extension_health_read_model_bounded(client: TestClient) -> None:
         "base_url_configured",
         "credential_configured",
     }
+    assert set(extensions["tool_permission_registry"]) == {
+        "registered",
+        "persistent",
+        "state",
+        "path_configured",
+    }
     assert extensions["governed_swarm"]["state"] in {
         "unregistered",
         "disabled",
@@ -222,6 +229,11 @@ def test_extension_health_read_model_bounded(client: TestClient) -> None:
         "standby",
         "active",
     }
+    assert extensions["tool_permission_registry"]["state"] in {
+        "unregistered",
+        "memory",
+        "persistent",
+    }
     assert isinstance(extensions["governed_swarm"]["audit_store_configured"], bool)
     assert isinstance(extensions["note_memory"]["store_configured"], bool)
     assert isinstance(extensions["nested_mind"]["base_url_configured"], bool)
@@ -229,8 +241,11 @@ def test_extension_health_read_model_bounded(client: TestClient) -> None:
     assert isinstance(extensions["nested_mind_observation_bridge"]["planner_configured"], bool)
     assert isinstance(extensions["nested_mind_observation_submitter"]["base_url_configured"], bool)
     assert isinstance(extensions["nested_mind_observation_submitter"]["credential_configured"], bool)
+    assert isinstance(extensions["tool_permission_registry"]["persistent"], bool)
+    assert isinstance(extensions["tool_permission_registry"]["path_configured"], bool)
     assert "audit_store_path" not in extensions["governed_swarm"]
     assert "store_path" not in extensions["note_memory"]
+    assert "path" not in extensions["tool_permission_registry"]
     assert "base_url" not in extensions["nested_mind"]
     assert "token" not in extensions["nested_mind"]
     assert "base_url" not in extensions["nested_mind_observation_submitter"]
