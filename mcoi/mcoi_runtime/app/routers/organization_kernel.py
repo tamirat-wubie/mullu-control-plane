@@ -2784,6 +2784,7 @@ def _organization_action_queue_worker_lease(
     if req.requested_by_role_id != lease_scope["responsible_role_id"]:
         raise RuntimeCoreInvariantError("worker lease requester must match responsible role")
 
+    created_at = _clock_now()
     receipt = kernel.create_worker_lease_receipt(
         PlanStepWorkerLeaseReceipt(
             lease_id=req.lease_id,
@@ -2799,7 +2800,7 @@ def _organization_action_queue_worker_lease(
             evidence_refs=tuple(req.evidence_refs),
             timeout_seconds=req.timeout_seconds,
             budget_ref=req.budget_ref,
-            created_at=_clock_now(),
+            created_at=created_at,
             metadata={
                 **req.metadata,
                 "source": "orgos_action_queue_worker_lease",

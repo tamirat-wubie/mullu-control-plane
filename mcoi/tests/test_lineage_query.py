@@ -90,6 +90,21 @@ def _policy_registry() -> PolicyVersionRegistry:
     registry = PolicyVersionRegistry()
     registry.register(
         PolicyArtifact.create(
+            policy_id="policy",
+            version="v1",
+            created_at=fixed_clock(),
+            rules=(
+                VersionedPolicyRule(
+                    rule_id="allow-readonly",
+                    description="Allow read-only lineage queries",
+                    condition="read_only",
+                    action="allow",
+                ),
+            ),
+        )
+    )
+    registry.register(
+        PolicyArtifact.create(
             policy_id="tenant-governance",
             version="v1",
             rules=(
@@ -319,12 +334,34 @@ def test_lineage_document_enriches_policy_version_from_registry() -> None:
     assert "rules" not in policy_projection
 
 
+def test_lineage_policy_projection_reads_registry_metadata() -> None:
+    recorder = _recorder_with_trace()
+    registry = _policy_registry()
+
+    document = resolve_lineage_uri(
+        "lineage://trace/trace-1?depth=10",
+        replay_source=recorder,
+        clock=fixed_clock,
+        policy_registry=registry,
+    )
+    policy_projection = document["policy_versions"][0]
+    schema = json.loads((REPO_ROOT / "schemas" / "lineage_query.schema.json").read_text(encoding="utf-8"))
+
+    _validate_schema_instance(schema, document, "lineage_query.schema.json")
+    assert policy_projection["registry_lookup_status"] == "matched"
+    assert policy_projection["policy_id"] == "policy"
+    assert policy_projection["registry_version"] == "v1"
+    assert policy_projection["artifact_hash"].startswith("policy-artifact-")
+    assert policy_projection["rule_count"] == 1
+    assert policy_projection["created_at"] == fixed_clock()
+
+
 def test_lineage_document_reports_policy_registry_lookup_boundaries() -> None:
     registry = _policy_registry()
 
     unparseable_document = resolve_lineage_uri(
         "lineage://trace/trace-policy-ref?depth=10",
-        replay_source=_recorder_with_policy_ref("policy:v1"),
+        replay_source=_recorder_with_policy_ref("policy"),
         clock=fixed_clock,
         policy_registry=registry,
     )
@@ -334,6 +371,12 @@ def test_lineage_document_reports_policy_registry_lookup_boundaries() -> None:
         clock=fixed_clock,
         policy_registry=registry,
     )
+    unavailable_document = resolve_lineage_uri(
+        "lineage://trace/trace-1?depth=10",
+        replay_source=_recorder_with_trace(),
+        clock=fixed_clock,
+        policy_registry=object(),  # type: ignore[arg-type]
+    )
 
     assert unparseable_document["policy_versions"][0]["registry_lookup_status"] == "unparseable_ref"
     assert unparseable_document["policy_versions"][0]["policy_id"] == ""
@@ -342,6 +385,7 @@ def test_lineage_document_reports_policy_registry_lookup_boundaries() -> None:
     assert missing_document["policy_versions"][0]["policy_id"] == "tenant-governance"
     assert missing_document["policy_versions"][0]["registry_version"] == "v2"
     assert missing_document["policy_versions"][0]["artifact_hash"] == ""
+    assert unavailable_document["policy_versions"][0]["registry_lookup_status"] == "lookup_unavailable"
 
 
 def test_lineage_document_hash_is_deterministic() -> None:

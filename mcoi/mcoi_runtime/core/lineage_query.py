@@ -614,11 +614,12 @@ def _policy_version_projection(
 
 
 def _split_policy_version_ref(policy_version: str) -> tuple[str, str] | None:
-    """Return canonical policy registry coordinates from policy_id@version."""
+    """Return canonical policy registry coordinates from policy_id@version or policy_id:version."""
     value = policy_version.strip()
-    if "@" not in value:
+    separator = "@" if "@" in value else ":"
+    if separator not in value:
         return None
-    policy_id, version = value.split("@", 1)
+    policy_id, version = value.split(separator, 1)
     if not policy_id or not version:
         return None
     return policy_id, version
