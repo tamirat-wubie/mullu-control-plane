@@ -1,4 +1,4 @@
-﻿# Start Here
+# Start Here
 
 **This is the front door to all Mullu Govern documentation.** You do not need to know
 anything about this project to use this page. Find the row that sounds like you,
@@ -61,6 +61,7 @@ to the deep document if you want more.
 | "I need to rehearse evidence acceptance gates without collecting evidence." | [Foundation External Evidence Acceptance Rehearsal Boundary](FOUNDATION_EXTERNAL_EVIDENCE_ACCEPTANCE_REHEARSAL_BOUNDARY.md) | 8 min read |
 | "I need to rehearse upstream API readiness gates without running live checks." | [Foundation Deployment Upstream API Gate Rehearsal Boundary](FOUNDATION_DEPLOYMENT_UPSTREAM_API_GATE_REHEARSAL_BOUNDARY.md) | 8 min read |
 | "I need to rehearse DNS target binding without publishing DNS." | [Foundation Gateway DNS Target Binding Rehearsal Boundary](FOUNDATION_GATEWAY_DNS_TARGET_BINDING_REHEARSAL_BOUNDARY.md) | 8 min read |
+| "I need to rehearse DNS publication without changing DNS." | [Foundation Gateway DNS Publication Rehearsal Boundary](FOUNDATION_GATEWAY_DNS_PUBLICATION_REHEARSAL_BOUNDARY.md) | 8 min read |
 | "I need to rehearse DNS resolution receipts without probing DNS." | [Foundation Gateway DNS Resolution Receipt Rehearsal Boundary](FOUNDATION_GATEWAY_DNS_RESOLUTION_RECEIPT_REHEARSAL_BOUNDARY.md) | 8 min read |
 | "I need to rehearse endpoint reachability without probing endpoints." | [Foundation Gateway Endpoint Reachability Rehearsal Boundary](FOUNDATION_GATEWAY_ENDPOINT_REACHABILITY_REHEARSAL_BOUNDARY.md) | 8 min read |
 | "I need to rehearse endpoint evidence receipt fields without collecting evidence." | [Foundation Gateway Endpoint Evidence Receipt Rehearsal Boundary](FOUNDATION_GATEWAY_ENDPOINT_EVIDENCE_RECEIPT_REHEARSAL_BOUNDARY.md) | 8 min read |
@@ -357,149 +358,155 @@ in the wrong room. Use the table above to pick the right room.
    binding, DNS publication, DNS proof, endpoint proof, workflow dispatch,
    artifact publication, operator approval, readiness claims, publication, or
    deployment claims.
-47. **[Foundation Gateway DNS Resolution Receipt Rehearsal Boundary](FOUNDATION_GATEWAY_DNS_RESOLUTION_RECEIPT_REHEARSAL_BOUNDARY.md)** --
+47. **[Foundation Gateway DNS Publication Rehearsal Boundary](FOUNDATION_GATEWAY_DNS_PUBLICATION_REHEARSAL_BOUNDARY.md)** --
+   local issue #330 DNS publication gate labels without provider accounts,
+   DNS zones, record names, record types, record values, TTL values, DNS
+   mutation, repository-variable binding, workflow dispatch, propagation
+   proof, rollback proof, DNS proof, endpoint proof, artifact publication,
+   operator approval, readiness claims, publication, or deployment claims.
+48. **[Foundation Gateway DNS Resolution Receipt Rehearsal Boundary](FOUNDATION_GATEWAY_DNS_RESOLUTION_RECEIPT_REHEARSAL_BOUNDARY.md)** --
    local issue #330 DNS resolution receipt question labels without live DNS
    queries, host values, gateway URL values, resolved addresses, resolver
    proof, DNS proof, receipt writing, endpoint proof, workflow dispatch,
    artifact publication, operator approval, readiness claims, publication, or
    deployment claims.
-48. **[Foundation Gateway Endpoint Reachability Rehearsal Boundary](FOUNDATION_GATEWAY_ENDPOINT_REACHABILITY_REHEARSAL_BOUNDARY.md)** --
+49. **[Foundation Gateway Endpoint Reachability Rehearsal Boundary](FOUNDATION_GATEWAY_ENDPOINT_REACHABILITY_REHEARSAL_BOUNDARY.md)** --
    local issue #330 endpoint reachability question labels without endpoint
    probes, gateway URL values, HTTP status values, response digests, response
    bodies, witness payloads, public health declaration, workflow dispatch,
    artifact publication, operator approval, readiness claims, publication, or
    deployment claims.
-49. **[Foundation Gateway Endpoint Evidence Receipt Rehearsal Boundary](FOUNDATION_GATEWAY_ENDPOINT_EVIDENCE_RECEIPT_REHEARSAL_BOUNDARY.md)** --
+50. **[Foundation Gateway Endpoint Evidence Receipt Rehearsal Boundary](FOUNDATION_GATEWAY_ENDPOINT_EVIDENCE_RECEIPT_REHEARSAL_BOUNDARY.md)** --
    local issue #330 endpoint evidence receipt field labels without endpoint
    probes, gateway or endpoint URL values, HTTP status values, response
    evidence, timestamps, collector identities, evidence-ledger append, public
    health declaration, workflow dispatch, artifact publication, operator
    approval, readiness claims, publication, or deployment claims.
-50. **[Foundation Deployment Witness Input Boundary](FOUNDATION_DEPLOYMENT_WITNESS_INPUT_BOUNDARY.md)** --
+51. **[Foundation Deployment Witness Input Boundary](FOUNDATION_DEPLOYMENT_WITNESS_INPUT_BOUNDARY.md)** --
    local issue #330 witness input names, endpoint contract labels, workflow
    gates, artifact gates, and status-promotion gates without secret values,
    repository variable values, DNS mutation, endpoint readiness, workflow
    dispatch, artifact publication, status promotion, publication, or deployment
    claims.
-51. **[Foundation Deployment Witness Preflight Rehearsal Boundary](FOUNDATION_DEPLOYMENT_WITNESS_PREFLIGHT_REHEARSAL_BOUNDARY.md)** --
+52. **[Foundation Deployment Witness Preflight Rehearsal Boundary](FOUNDATION_DEPLOYMENT_WITNESS_PREFLIGHT_REHEARSAL_BOUNDARY.md)** --
    local preflight command labels and fail-closed gate labels without live
    preflight execution, live URL values, DNS probes, endpoint probes, secret
    handling, workflow dispatch, artifact publication, status promotion,
    publication, or deployment claims.
-52. **[Foundation Deployment Witness Evidence Handoff Boundary](FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_HANDOFF_BOUNDARY.md)** --
+53. **[Foundation Deployment Witness Evidence Handoff Boundary](FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_HANDOFF_BOUNDARY.md)** --
    local evidence slot labels and blocked approval gates without live receipts,
    live URL values, DNS proof, endpoint proof, secret-presence claims,
    workflow run claims, artifact publication, status approval, operator
    approval, publication, or deployment claims.
-53. **[Foundation Deployment Witness Evidence Ledger Routing Boundary](FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_LEDGER_ROUTING_BOUNDARY.md)** --
+54. **[Foundation Deployment Witness Evidence Ledger Routing Boundary](FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_LEDGER_ROUTING_BOUNDARY.md)** --
    local evidence-to-ledger route labels without evidence-ledger append, live
    evidence references, ledger promotion, terminal closure, readiness claims,
    DNS proof, endpoint proof, secret-presence claims, workflow run claims,
    artifact publication, status approval, operator approval, publication, or
    deployment claims.
-54. **[Foundation Public Health Declaration Rehearsal Boundary](FOUNDATION_PUBLIC_HEALTH_DECLARATION_REHEARSAL_BOUNDARY.md)** --
+55. **[Foundation Public Health Declaration Rehearsal Boundary](FOUNDATION_PUBLIC_HEALTH_DECLARATION_REHEARSAL_BOUNDARY.md)** --
    local issue #330 public health declaration receipt field labels without
    declaring public health, mutating deployment status, writing declaration
    receipts, claiming deployment witness publication, public health endpoint
    values, approval references, audited-date values, validation-pass claims,
    endpoint-match claims, evidence-ledger append, workflow dispatch, artifact
    publication, readiness claims, publication, or deployment claims.
-55. **[Foundation GitHub App Token Format Boundary](FOUNDATION_GITHUB_APP_TOKEN_FORMAT_BOUNDARY.md)** --
+56. **[Foundation GitHub App Token Format Boundary](FOUNDATION_GITHUB_APP_TOKEN_FORMAT_BOUNDARY.md)** --
    local GitHub App installation token-format compatibility without fixed token
    length assumptions, JWT parsing, live token fixtures, secret storage,
    workflow dispatch readiness, publication, or deployment claims.
-56. **[Foundation Pilot Deferral Boundary](FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md)** --
+57. **[Foundation Pilot Deferral Boundary](FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md)** --
    local pilot deferral without participant invitation, access channels,
    waitlists, beta, personal data collection, market validation, support
    readiness, legal clearance, paid pilot, publication, or deployment claims.
-57. **[Foundation Pilot Deferral Rehearsal Boundary](FOUNDATION_PILOT_DEFERRAL_REHEARSAL_BOUNDARY.md)** --
+58. **[Foundation Pilot Deferral Rehearsal Boundary](FOUNDATION_PILOT_DEFERRAL_REHEARSAL_BOUNDARY.md)** --
    local pilot-stop-rule rehearsal without inviting participants, opening
    access, opening waitlists or signups, collecting personal data, claiming
    market validation, promising support, claiming legal clearance, accepting
    payment, publishing externally, storing secrets, or deploying.
-58. **[Foundation Reassessment Gate Boundary](FOUNDATION_REASSESSMENT_GATE_BOUNDARY.md)** --
+59. **[Foundation Reassessment Gate Boundary](FOUNDATION_REASSESSMENT_GATE_BOUNDARY.md)** --
    local reassessment questions without reassessment approval, prerequisite
    promotion, deployment start, pilot start, evidence promotion, external
    action, customer/data action, legal/business claims, money movement, secret
    material, publication, or deployment claims.
-59. **[Foundation Local Proof Thread](FOUNDATION_LOCAL_PROOF_THREAD.md)** -- the
+60. **[Foundation Local Proof Thread](FOUNDATION_LOCAL_PROOF_THREAD.md)** -- the
    first harmless local workflow shape: approval, receipt, verification, and
    rollback.
-60. **[Foundation Private Recovery Boundary](FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md)** --
+61. **[Foundation Private Recovery Boundary](FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md)** --
    owner-only recovery preparation without private values in Git.
-61. **[Foundation Private Recovery Rehearsal Boundary](FOUNDATION_PRIVATE_RECOVERY_REHEARSAL_BOUNDARY.md)** --
+62. **[Foundation Private Recovery Rehearsal Boundary](FOUNDATION_PRIVATE_RECOVERY_REHEARSAL_BOUNDARY.md)** --
    public-safe recovery dry-run questions without restore, credential use,
    backup execution, cloud sync, export, deletion, provider-account access,
    private material, personal data, restore-readiness, or deployment claims.
-62. **[Foundation Domain Email Boundary](FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md)** --
+63. **[Foundation Domain Email Boundary](FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md)** --
    public-safe domain and email labels without DNS mutation or readiness claims.
-63. **[Foundation Product Scope Boundary](FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md)** --
+64. **[Foundation Product Scope Boundary](FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md)** --
    one selected local learning lane without restricting the long-term platform.
-64. **[Foundation Support Readiness Boundary](FOUNDATION_SUPPORT_READINESS_BOUNDARY.md)** --
+65. **[Foundation Support Readiness Boundary](FOUNDATION_SUPPORT_READINESS_BOUNDARY.md)** --
    local support and incident-response shape without opening support service.
-65. **[Foundation Support Triage Rehearsal Boundary](FOUNDATION_SUPPORT_TRIAGE_REHEARSAL_BOUNDARY.md)** --
+66. **[Foundation Support Triage Rehearsal Boundary](FOUNDATION_SUPPORT_TRIAGE_REHEARSAL_BOUNDARY.md)** --
    fictional support-category rehearsal without opening support, accepting
    inbound messages, creating tickets, routing inboxes, handling customer or
    personal data, promising SLA, activating support tools, or deploying.
-66. **[Foundation Intake Onboarding Boundary](FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md)** --
+67. **[Foundation Intake Onboarding Boundary](FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md)** --
    local intake and onboarding shape without forms, waitlists, or signups.
-67. **[Foundation Intake Questionnaire Rehearsal Boundary](FOUNDATION_INTAKE_QUESTIONNAIRE_REHEARSAL_BOUNDARY.md)** --
+68. **[Foundation Intake Questionnaire Rehearsal Boundary](FOUNDATION_INTAKE_QUESTIONNAIRE_REHEARSAL_BOUNDARY.md)** --
    fictional intake-field rehearsal without publishing forms, collecting
    submissions, opening waitlists, accepting pilot signups, collecting personal
    data, importing CRM contacts, starting outreach, taking payment, or
    deploying.
-68. **[Foundation Customer Access Boundary](FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md)** --
+69. **[Foundation Customer Access Boundary](FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md)** --
    local customer-access preparation without invitations, account creation,
    access channels, onboarding-readiness claims, support commitments,
    terms/privacy readiness, personal-data collection, paid access, pilot/beta
    or waitlist opening, publication, or deployment claims.
-69. **[Foundation Customer Access Policy Rehearsal Boundary](FOUNDATION_CUSTOMER_ACCESS_POLICY_REHEARSAL_BOUNDARY.md)** --
+70. **[Foundation Customer Access Policy Rehearsal Boundary](FOUNDATION_CUSTOMER_ACCESS_POLICY_REHEARSAL_BOUNDARY.md)** --
    local access-rule rehearsal without access approval, customer invitations,
    account creation, tenant provisioning, login-route publication, support
    promises, terms/privacy readiness, personal-data collection, paid access,
    pilot/beta/waitlist access, publication, or deployment claims.
-70. **[Foundation Privacy Data Boundary](FOUNDATION_PRIVACY_DATA_BOUNDARY.md)** --
+71. **[Foundation Privacy Data Boundary](FOUNDATION_PRIVACY_DATA_BOUNDARY.md)** --
    local privacy/data shape without collecting or storing people data.
-71. **[Foundation Privacy Minimization Rehearsal Boundary](FOUNDATION_PRIVACY_MINIMIZATION_REHEARSAL_BOUNDARY.md)** --
+72. **[Foundation Privacy Minimization Rehearsal Boundary](FOUNDATION_PRIVACY_MINIMIZATION_REHEARSAL_BOUNDARY.md)** --
    fictional minimization rehearsal without personal-data collection/storage,
    consent capture, retention/deletion approval, privacy notice publication,
    tracking, processor activation, legal-clearance, customer-access, or
    deployment claims.
-72. **[Foundation Legal Business Boundary](FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md)** --
+73. **[Foundation Legal Business Boundary](FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md)** --
    question-only legal and business preparation without readiness claims.
-73. **[Foundation Legal Business Question Rehearsal Boundary](FOUNDATION_LEGAL_BUSINESS_QUESTION_REHEARSAL_BOUNDARY.md)** --
+74. **[Foundation Legal Business Question Rehearsal Boundary](FOUNDATION_LEGAL_BUSINESS_QUESTION_REHEARSAL_BOUNDARY.md)** --
    local legal/business question rehearsal without legal conclusions, review
    completion, filings, formation, customer access, paid launch, money
    movement, external publication, or deployment claims.
-74. **[Foundation Funding Team Boundary](FOUNDATION_FUNDING_TEAM_BOUNDARY.md)** --
+75. **[Foundation Funding Team Boundary](FOUNDATION_FUNDING_TEAM_BOUNDARY.md)** --
    local funding and team preparation without fundraising, investor outreach,
    grants, pitch publication, hiring, contractor engagement, advisor
    commitments, compensation, equity, payroll, budget commitments, publication,
    money movement, or deployment claims.
-75. **[Foundation Funding Team Obligation Rehearsal Boundary](FOUNDATION_FUNDING_TEAM_OBLIGATION_REHEARSAL_BOUNDARY.md)** --
+76. **[Foundation Funding Team Obligation Rehearsal Boundary](FOUNDATION_FUNDING_TEAM_OBLIGATION_REHEARSAL_BOUNDARY.md)** --
    local obligation rehearsal without funding readiness, team readiness,
    investor outreach, grants, hiring, contractors, compensation, equity,
    payroll, budget approval, spending, contact-list storage, money movement,
    customer access, publication, or deployment claims.
-76. **[Foundation Community Network Boundary](FOUNDATION_COMMUNITY_NETWORK_BOUNDARY.md)** --
+77. **[Foundation Community Network Boundary](FOUNDATION_COMMUNITY_NETWORK_BOUNDARY.md)** --
    local community and network preparation without public posts, messages,
    collaborator recruitment, partnership outreach, mentor requests, feedback
    requests, events, contact lists, personal data, external accounts,
    publication, customer access, or deployment claims.
-77. **[Foundation Community Network No-Outreach Rehearsal Boundary](FOUNDATION_COMMUNITY_NETWORK_NO_OUTREACH_REHEARSAL_BOUNDARY.md)** --
+78. **[Foundation Community Network No-Outreach Rehearsal Boundary](FOUNDATION_COMMUNITY_NETWORK_NO_OUTREACH_REHEARSAL_BOUNDARY.md)** --
    local relationship wording rehearsal without outreach rehearsal execution,
    public posts, contact, messages, feedback requests, collaborator or partner
    outreach, mentor requests, events, contact lists, personal data, external
    accounts, customer access, publication, or deployment claims.
-78. **[Plain-English Overview](explain/PLAIN_ENGLISH.md)** -- what Mullu Govern is, in
+79. **[Plain-English Overview](explain/PLAIN_ENGLISH.md)** -- what Mullu Govern is, in
    everyday language, with an analogy. No setup, just reading.
-79. **[Tutorial 1: Your First Run](tutorials/01_first_governed_task.md)**
+80. **[Tutorial 1: Your First Run](tutorials/01_first_governed_task.md)**
    -- you install it and run it safely, every command explained, every term
    linked.
-80. **[Tutorial 2: Watch Mullu Govern Real Money](tutorials/02_a_real_governed_task.md)**
+81. **[Tutorial 2: Watch Mullu Govern Real Money](tutorials/02_a_real_governed_task.md)**
    -- you watch it *refuse* an over-limit payment and *prove* a valid one. This
    is where the safety stops being a claim and becomes something you've seen.
-81. **[Glossary](GLOSSARY.md)** -- skim it once so the special words stop being
+82. **[Glossary](GLOSSARY.md)** -- skim it once so the special words stop being
    scary.Now you can wander into [How-To Guides](how-to/) or the deep
 [Reference](#5-reference--deep-architecture) and it will make sense.
 

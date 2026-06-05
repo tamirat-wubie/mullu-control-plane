@@ -1,0 +1,157 @@
+{
+  "artifact_publication_allowed": false,
+  "blocked_claims": [
+    "dns provider account value",
+    "dns zone value",
+    "dns record name value",
+    "dns record type value",
+    "dns record value",
+    "ttl value",
+    "dns mutation",
+    "repository variable binding",
+    "workflow dispatch",
+    "dns propagation proof",
+    "dns rollback proof",
+    "dns resolution proof",
+    "endpoint reachability proof",
+    "artifact publication",
+    "operator approval",
+    "readiness claim",
+    "customer access",
+    "personal data collection",
+    "money movement",
+    "legal clearance",
+    "company formation",
+    "patent claim",
+    "external publication",
+    "deployment readiness"
+  ],
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "dns_mutation_allowed": false,
+  "dns_propagation_claimed": false,
+  "dns_provider_account_recorded": false,
+  "dns_record_name_recorded": false,
+  "dns_record_type_value_recorded": false,
+  "dns_record_value_recorded": false,
+  "dns_resolution_claimed": false,
+  "dns_rollback_claimed": false,
+  "dns_zone_value_recorded": false,
+  "endpoint_reachability_claimed": false,
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "record public-safe DNS publication rehearsal gate labels only; do not record provider accounts, DNS zones, record names, record types, record values, TTL values, mutate DNS, bind repository variables, dispatch workflows, claim propagation proof, claim rollback proof, claim DNS resolution proof, claim endpoint reachability proof, publish artifacts, claim operator approval, claim readiness, open customer access, collect personal data, move money, claim legal clearance, form a company, claim patent protection, publish externally, or deploy",
+  "operator_approval_claimed": false,
+  "patent_claimed": false,
+  "personal_data_collection_allowed": false,
+  "question_labels": [
+    "target_binding_receipt_dependency_label",
+    "dns_provider_boundary_label",
+    "dns_zone_boundary_label",
+    "record_name_publication_label",
+    "record_type_publication_label",
+    "record_value_publication_label",
+    "ttl_publication_label",
+    "pre_publication_require_ready_gate_label",
+    "dry_run_publication_command_label",
+    "post_publication_resolution_gate_label",
+    "dns_rollback_label",
+    "operator_reassessment_gate"
+  ],
+  "readiness_claimed": false,
+  "repository_variable_bound": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Target-binding dependency label only; target binding is not promoted.",
+      "state": "AwaitingEvidence",
+      "surface_id": "target_binding_dependency_label",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "DNS provider boundary label only; provider account values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dns_provider_boundary_label",
+      "surface_type": "local_gate_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "DNS zone boundary label only; zone values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dns_zone_boundary_label",
+      "surface_type": "local_gate_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Record-name publication label only; record names are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "record_name_publication_label",
+      "surface_type": "local_gate_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Record-type publication label only; record types are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "record_type_publication_label",
+      "surface_type": "local_gate_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Record-value publication label only; record values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "record_value_publication_label",
+      "surface_type": "local_gate_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "TTL publication label only; TTL values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "ttl_publication_label",
+      "surface_type": "local_gate_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pre-publication require-ready gate label only; publication is not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "pre_publication_require_ready_gate_label",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Dry-run publication command label only; DNS mutation is not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dry_run_publication_command_label",
+      "surface_type": "local_gate_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Post-publication resolution gate label only; DNS proof is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "post_publication_resolution_gate_label",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "DNS rollback label only; rollback proof is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dns_rollback_label",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Operator reassessment gate only; DNS publication and deployment are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_reassessment_gate",
+      "surface_type": "local_gate_label"
+    }
+  ],
+  "ttl_value_recorded": false,
+  "witness_id": "foundation_gateway_dns_publication_rehearsal_witness.awaiting_evidence.v1",
+  "workflow_dispatch_allowed": false
+}

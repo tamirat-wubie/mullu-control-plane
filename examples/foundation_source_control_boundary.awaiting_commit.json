@@ -450,6 +450,17 @@
       "summary": "Runtime-secret-handoff rehearsal prepares public-safe gate labels without recording secret names, secret values, private handoff paths, secret-manager target values, operator identities, dual-control proof, secret-presence proof, repository-secret binding, runtime secret-store binding, workflow mounts, readiness, publication, or deployment claims."
     },
     {
+      "family_id": "gateway_dns_publication_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_GATEWAY_DNS_PUBLICATION_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_gateway_dns_publication_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_gateway_dns_publication_rehearsal_boundary.py",
+        "tests/test_validate_foundation_gateway_dns_publication_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Gateway-DNS-publication rehearsal prepares public-safe DNS publication stop-rule labels without provider account values, DNS zone values, record names, record types, record values, TTL values, DNS mutation, repository-variable binding, workflow dispatch, propagation proof, rollback proof, DNS proof, endpoint proof, operator approval, readiness, publication, or deployment claims."
+    },
+    {
       "family_id": "domain_email_boundary",
       "required_evidence": [
         "docs/FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md",
@@ -648,6 +659,7 @@
     "python scripts/validate_foundation_external_evidence_acceptance_rehearsal_boundary.py",
     "python scripts/validate_foundation_deployment_upstream_api_gate_rehearsal_boundary.py",
     "python scripts/validate_foundation_gateway_dns_target_binding_rehearsal_boundary.py",
+    "python scripts/validate_foundation_gateway_dns_publication_rehearsal_boundary.py",
     "python scripts/validate_foundation_gateway_dns_resolution_receipt_rehearsal_boundary.py",
     "python scripts/validate_foundation_gateway_endpoint_reachability_rehearsal_boundary.py",
     "python scripts/validate_foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary.py",

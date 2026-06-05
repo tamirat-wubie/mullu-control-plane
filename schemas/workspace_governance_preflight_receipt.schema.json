@@ -111,6 +111,7 @@
             "foundation_external_evidence_acceptance_rehearsal_boundary",
             "foundation_deployment_upstream_api_gate_rehearsal_boundary",
             "foundation_gateway_dns_target_binding_rehearsal_boundary",
+            "foundation_gateway_dns_publication_rehearsal_boundary",
             "foundation_gateway_dns_resolution_receipt_rehearsal_boundary",
             "foundation_gateway_endpoint_reachability_rehearsal_boundary",
             "foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary",

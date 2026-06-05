@@ -304,6 +304,13 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "foundation_gateway_dns_publication_rehearsal_boundary",
+            (
+                python_executable,
+                "scripts/validate_foundation_gateway_dns_publication_rehearsal_boundary.py",
+            ),
+        ),
+        CheckCommand(
             "foundation_gateway_dns_resolution_receipt_rehearsal_boundary",
             (
                 python_executable,

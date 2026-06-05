@@ -114,7 +114,11 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_deployment_upstream_api_gate_rehearsal_boundary",
     )
     assert_ordered("foundation_deployment_upstream_api_gate_rehearsal_boundary", "foundation_gateway_dns_target_binding_rehearsal_boundary")
-    assert_ordered("foundation_gateway_dns_target_binding_rehearsal_boundary", "foundation_gateway_dns_resolution_receipt_rehearsal_boundary")
+    assert_ordered("foundation_gateway_dns_target_binding_rehearsal_boundary", "foundation_gateway_dns_publication_rehearsal_boundary")
+    assert_ordered(
+        "foundation_gateway_dns_publication_rehearsal_boundary",
+        "foundation_gateway_dns_resolution_receipt_rehearsal_boundary",
+    )
     assert_ordered("foundation_gateway_dns_resolution_receipt_rehearsal_boundary", "foundation_gateway_endpoint_reachability_rehearsal_boundary")
     assert_ordered("foundation_gateway_endpoint_reachability_rehearsal_boundary", "foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary")
     assert_ordered("foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary", "foundation_public_health_declaration_rehearsal_boundary")
