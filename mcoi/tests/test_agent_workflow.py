@@ -1,7 +1,6 @@
 """Phase 204B — Agent workflow end-to-end tests."""
 
-import pytest
-from mcoi_runtime.core.agent_workflow import AgentWorkflowEngine, WorkflowResult
+from mcoi_runtime.core.agent_workflow import AgentWorkflowEngine
 from mcoi_runtime.core.agent_protocol import (
     AgentCapability, AgentDescriptor, AgentRegistry, TaskManager,
 )
@@ -11,10 +10,12 @@ from mcoi_runtime.core.llm_integration import LLMIntegrationBridge
 from mcoi_runtime.adapters.llm_adapter import StubLLMBackend
 from mcoi_runtime.contracts.llm import LLMBudget
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+
+def fixed_clock() -> str:
+    return "2026-03-26T12:00:00Z"
 
 
-def _setup(with_llm=True, with_webhook=True, with_audit=True, llm_fn_override=None):
+def _setup(with_llm=True, with_webhook=True, with_audit=True, llm_fn_override=None, dry_run=False):
     reg = AgentRegistry()
     reg.register(AgentDescriptor(
         agent_id="llm-agent", name="LLM Agent",
@@ -24,32 +25,37 @@ def _setup(with_llm=True, with_webhook=True, with_audit=True, llm_fn_override=No
         agent_id="code-agent", name="Code Agent",
         capabilities=(AgentCapability.CODE_EXECUTION,),
     ))
-    task_mgr = TaskManager(clock=FIXED_CLOCK, registry=reg)
+    task_mgr = TaskManager(clock=fixed_clock, registry=reg)
 
     llm_fn = None
     if with_llm:
-        bridge = LLMIntegrationBridge(clock=FIXED_CLOCK, default_backend=StubLLMBackend())
+        bridge = LLMIntegrationBridge(clock=fixed_clock, default_backend=StubLLMBackend())
         bridge.register_budget(LLMBudget(budget_id="default", tenant_id="system", max_cost=100.0))
-        llm_fn = lambda prompt, budget_id: bridge.complete(prompt, budget_id=budget_id)
+
+        def complete_with_bridge(prompt, budget_id):
+            return bridge.complete(prompt, budget_id=budget_id)
+
+        llm_fn = complete_with_bridge
     if llm_fn_override is not None:
         llm_fn = llm_fn_override
 
     webhook_mgr = None
     if with_webhook:
-        webhook_mgr = WebhookManager(clock=FIXED_CLOCK)
+        webhook_mgr = WebhookManager(clock=fixed_clock)
         webhook_mgr.subscribe(WebhookSubscription(
             subscription_id="s1", tenant_id="t1",
             url="https://example.com/hook", events=("task.completed", "task.failed"),
         ))
 
-    audit = AuditTrail(clock=FIXED_CLOCK) if with_audit else None
+    audit = AuditTrail(clock=fixed_clock) if with_audit else None
 
     engine = AgentWorkflowEngine(
-        clock=FIXED_CLOCK,
+        clock=fixed_clock,
         task_manager=task_mgr,
         llm_complete_fn=llm_fn,
         webhook_manager=webhook_mgr,
         audit_trail=audit,
+        dry_run=dry_run,
     )
     return engine, audit, webhook_mgr
 
@@ -68,17 +74,30 @@ class TestAgentWorkflowEngine:
         assert result.output["content"]
         assert len(result.steps) >= 5
 
-    def test_workflow_without_llm(self):
+    def test_workflow_without_llm_fails_closed(self):
         engine, _, _ = _setup(with_llm=False)
         result = engine.execute(
             task_id="t1", description="test",
             capability=AgentCapability.LLM_COMPLETION,
             payload={}, tenant_id="t1",
         )
+        assert result.status == "failed"
+        assert result.output == {}
+        assert result.error == "workflow validation error (ValueError)"
+        assert all(s.step_name != "complete" for s in result.steps)
+
+    def test_workflow_dry_run_requires_explicit_flag(self):
+        engine, _, _ = _setup(with_llm=False, dry_run=True)
+        result = engine.execute(
+            task_id="t1", description="test",
+            capability=AgentCapability.LLM_COMPLETION,
+            payload={}, tenant_id="t1",
+        )
         assert result.status == "completed"
-        assert result.output["content"] == "stub result"
+        assert result.output["content"] == "dry_run result"
+        assert result.output["dry_run"] is True
         assert "test" not in result.output["content"]
-        assert any(s.step_name == "llm_invoke" and s.status == "skipped" for s in result.steps)
+        assert any(s.step_name == "llm_invoke" and s.status == "dry_run" for s in result.steps)
 
     def test_workflow_no_capable_agent(self):
         engine, audit, webhook = _setup()
@@ -94,9 +113,10 @@ class TestAgentWorkflowEngine:
         assert webhook.delivery_history()[-1].payload["error"] == "no capable agent available"
 
     def test_workflow_runtime_error_redacted(self):
-        engine, audit, webhook = _setup(
-            llm_fn_override=lambda prompt, budget_id: (_ for _ in ()).throw(RuntimeError("secret llm detail")),
-        )
+        def failing_llm(_prompt, _budget_id):
+            raise RuntimeError("secret llm detail")
+
+        engine, audit, webhook = _setup(llm_fn_override=failing_llm)
         result = engine.execute(
             task_id="t1", description="test",
             capability=AgentCapability.LLM_COMPLETION,
@@ -110,9 +130,10 @@ class TestAgentWorkflowEngine:
         assert "secret llm detail" not in webhook.delivery_history()[-1].payload["error"]
 
     def test_plain_value_error_does_not_trigger_no_capable_classification(self):
-        engine, audit, webhook = _setup(
-            llm_fn_override=lambda prompt, budget_id: (_ for _ in ()).throw(ValueError("no capable agent secret detail")),
-        )
+        def failing_llm(_prompt, _budget_id):
+            raise ValueError("no capable agent secret detail")
+
+        engine, audit, webhook = _setup(llm_fn_override=failing_llm)
         result = engine.execute(
             task_id="t1", description="test",
             capability=AgentCapability.LLM_COMPLETION,
