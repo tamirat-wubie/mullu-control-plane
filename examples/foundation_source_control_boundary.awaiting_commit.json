@@ -24,6 +24,17 @@
       "summary": "Operator-readiness preparation drafts solo-operator questions without capacity, schedule, skill, team, hiring, delegation, coverage, authority, or deployment claims."
     },
     {
+      "family_id": "solo_daily_loop_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_SOLO_DAILY_LOOP_BOUNDARY.md",
+        "examples/foundation_solo_daily_loop_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_solo_daily_loop_boundary.py",
+        "tests/test_validate_foundation_solo_daily_loop_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Solo-daily-loop preparation records local cadence labels without external action, publication, spending, customer action, legal/business action, claim promotion, secret use, credential use, service activation, or deployment claims."
+    },
+    {
       "family_id": "learning_path_boundary",
       "required_evidence": [
         "docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md",
@@ -351,6 +362,17 @@
       "summary": "Owner-only recovery preparation stays public-safe and outside Git."
     },
     {
+      "family_id": "private_recovery_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_PRIVATE_RECOVERY_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_private_recovery_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_private_recovery_rehearsal_boundary.py",
+        "tests/test_validate_foundation_private_recovery_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Private-recovery-rehearsal preparation records local recovery labels without recovery execution, restore execution, backup mutation, credential use, secret use, external service access, customer data access, publication, or deployment claims."
+    },
+    {
       "family_id": "secrets_credentials_boundary",
       "required_evidence": [
         "docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md",
@@ -637,6 +659,17 @@
       "summary": "Legal and business readiness remains question-only until qualified review or signed witness evidence."
     },
     {
+      "family_id": "legal_business_question_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_LEGAL_BUSINESS_QUESTION_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_legal_business_question_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_legal_business_question_rehearsal_boundary.py",
+        "tests/test_validate_foundation_legal_business_question_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Legal-business-question rehearsal records local legal question labels without legal conclusions, company formation, patent claims, trademark claims, contract commitments, tax filings, regulatory conclusions, external publication, or deployment claims."
+    },
+    {
       "family_id": "product_scope_boundary",
       "required_evidence": [
         "docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md",
@@ -670,6 +703,28 @@
       "summary": "Pilot-deferral preparation drafts local pilot purpose, participant-boundary, access-channel, consent/privacy, support, rollback, success-metric, legal/terms, and public-claim questions without pilot execution, participant invitation, access channels, waitlists, beta, customer access, personal-data collection, market validation, support readiness, legal clearance, paid pilot, external publication, or deployment claims."
     },
     {
+      "family_id": "pilot_deferral_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_PILOT_DEFERRAL_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_pilot_deferral_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_pilot_deferral_rehearsal_boundary.py",
+        "tests/test_validate_foundation_pilot_deferral_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Pilot-deferral-rehearsal preparation records local pilot stop-rule labels without pilot execution, participant invitation, access-channel opening, waitlist opening, beta opening, customer access, personal-data collection, market-validation claim, support-readiness claim, legal-clearance claim, paid-pilot acceptance, external publication, or deployment claims."
+    },
+    {
+      "family_id": "reassessment_gate_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_REASSESSMENT_GATE_BOUNDARY.md",
+        "examples/foundation_reassessment_gate_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_reassessment_gate_boundary.py",
+        "tests/test_validate_foundation_reassessment_gate_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Reassessment-gate preparation records local pause-and-check labels without reassessment approval, prerequisite promotion, deployment work activation, pilot work activation, external boundary crossing, customer access, personal data collection, legal clearance, company formation, patent claim, money movement, secret handling, external publication, or deployment claims."
+    },
+    {
       "family_id": "support_readiness_boundary",
       "required_evidence": [
         "docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md",
@@ -679,6 +734,17 @@
       ],
       "state": "AwaitingEvidence",
       "summary": "Support readiness prepares local support and incident-response shape without opening support service, SLA, onboarding, paid support, customer access, or deployment claims."
+    },
+    {
+      "family_id": "support_triage_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_SUPPORT_TRIAGE_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_support_triage_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_support_triage_rehearsal_boundary.py",
+        "tests/test_validate_foundation_support_triage_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Support-triage rehearsal records local support labels without support-channel opening, ticket intake, SLA claim, customer response, incident handling, customer-data access, paid-support claim, external publication, or deployment claims."
     },
     {
       "family_id": "intake_onboarding_boundary",
@@ -692,6 +758,17 @@
       "summary": "Intake and onboarding prepare local draft shape without publishing forms, opening waitlists, accepting signups, collecting personal data, importing CRM records, starting outreach, onboarding customers, paid access, or deployment claims."
     },
     {
+      "family_id": "intake_questionnaire_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_INTAKE_QUESTIONNAIRE_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_intake_questionnaire_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_intake_questionnaire_rehearsal_boundary.py",
+        "tests/test_validate_foundation_intake_questionnaire_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Intake-questionnaire rehearsal records local questionnaire labels without form publication, waitlist opening, pilot signup opening, personal-data collection, CRM import, outreach, paid access, customer access, external publication, or deployment claims."
+    },
+    {
       "family_id": "customer_access_boundary",
       "required_evidence": [
         "docs/FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md",
@@ -701,6 +778,17 @@
       ],
       "state": "AwaitingEvidence",
       "summary": "Customer-access preparation drafts local access-policy, eligibility, account-creation, invitation, support-duty, terms/privacy, data-handling, rollback/exit, payment-exposure, and public-claim questions without customer invitation, account creation, access channels, onboarding readiness, support commitments, terms/privacy readiness, personal-data collection, paid access, pilot access, beta access, waitlists, external publication, or deployment claims."
+    },
+    {
+      "family_id": "customer_access_policy_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_CUSTOMER_ACCESS_POLICY_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_customer_access_policy_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_customer_access_policy_rehearsal_boundary.py",
+        "tests/test_validate_foundation_customer_access_policy_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Customer-access-policy rehearsal records local access-rule labels without customer invitation, account creation, access-channel opening, onboarding-readiness claim, support commitment, terms/privacy readiness claim, personal-data collection, paid access, pilot access, beta access, waitlist opening, external publication, or deployment claims."
     },
     {
       "family_id": "github_app_token_format_boundary",
@@ -725,6 +813,17 @@
       "summary": "Privacy/data preparation drafts local questions without personal-data collection, storage, consent capture, tracking, processor activation, privacy publication, legal-clearance, customer access, or deployment claims."
     },
     {
+      "family_id": "privacy_minimization_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_PRIVACY_MINIMIZATION_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_privacy_minimization_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_privacy_minimization_rehearsal_boundary.py",
+        "tests/test_validate_foundation_privacy_minimization_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Privacy-minimization rehearsal records local minimization labels without personal-data collection, processor activation, tracking activation, consent capture, deletion request handling, privacy publication, legal-clearance claim, customer access, external publication, or deployment claims."
+    },
+    {
       "family_id": "funding_team_boundary",
       "required_evidence": [
         "docs/FOUNDATION_FUNDING_TEAM_BOUNDARY.md",
@@ -736,6 +835,17 @@
       "summary": "Funding/team preparation drafts local funding-readiness, investor-boundary, grant, pitch, hiring, contractor, advisor, compensation/equity, payroll/budget, and recruiting questions without fundraising, investor outreach, grant applications, pitch publication, hiring, contractor engagement, advisor commitments, compensation commitments, equity promises, payroll setup, budget commitments, company-formation claims, legal-clearance claims, money movement, external publication, or deployment claims."
     },
     {
+      "family_id": "funding_team_obligation_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_FUNDING_TEAM_OBLIGATION_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_funding_team_obligation_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_funding_team_obligation_rehearsal_boundary.py",
+        "tests/test_validate_foundation_funding_team_obligation_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Funding-team-obligation rehearsal records local obligation labels without fundraising, investor outreach, grant application, pitch publication, hiring, contractor engagement, advisor commitment, compensation commitment, equity promise, payroll setup, budget commitment, company-formation claim, legal-clearance claim, money movement, external publication, or deployment claims."
+    },
+    {
       "family_id": "community_network_boundary",
       "required_evidence": [
         "docs/FOUNDATION_COMMUNITY_NETWORK_BOUNDARY.md",
@@ -745,6 +855,17 @@
       ],
       "state": "AwaitingEvidence",
       "summary": "Community/network preparation drafts local relationship, community, forum, social, collaborator, partner, mentor, feedback, event, and referral questions without community outreach, public posts, direct messages, collaborator recruitment, partnership outreach, mentor requests, public feedback requests, event participation, contact lists, personal-data collection, external-account use, customer access, external publication, or deployment claims."
+    },
+    {
+      "family_id": "community_network_no_outreach_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_COMMUNITY_NETWORK_NO_OUTREACH_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_community_network_no_outreach_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_community_network_no_outreach_rehearsal_boundary.py",
+        "tests/test_validate_foundation_community_network_no_outreach_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Community-network-no-outreach rehearsal records local no-outreach labels without outreach, public posts, direct messages, recruiting, partnerships, mentor requests, public feedback, events, contact-list building, personal-data collection, external-account activation, customer access, external publication, or deployment claims."
     },
     {
       "family_id": "public_claim_alignment",

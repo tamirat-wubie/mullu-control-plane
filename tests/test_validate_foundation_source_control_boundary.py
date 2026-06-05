@@ -67,6 +67,27 @@ def test_required_checks_cover_current_foundation_preflight_commands() -> None:
     assert full_preflight_index == len(foundation_preflight_checks)
 
 
+def test_change_families_cover_foundation_preflight_boundaries_except_self() -> None:
+    preflight_boundary_families = tuple(
+        "foundation_posture" if command.name == "foundation_mode" else command.name.removeprefix("foundation_")
+        for command in build_check_commands("python")
+        if command.name == "foundation_mode"
+        or (command.name.startswith("foundation_") and command.name != "foundation_source_control_boundary")
+    )
+    doc_only_families = ("public_claim_alignment", "governance_preflight_wiring")
+    missing_families = tuple(family for family in preflight_boundary_families if family not in EXPECTED_CHANGE_FAMILIES)
+    extra_families = tuple(
+        family
+        for family in EXPECTED_CHANGE_FAMILIES
+        if family not in preflight_boundary_families and family not in doc_only_families
+    )
+
+    assert preflight_boundary_families
+    assert missing_families == ()
+    assert extra_families == ()
+    assert "source_control_boundary" not in EXPECTED_CHANGE_FAMILIES
+
+
 def test_deployment_witness_change_families_cover_required_chain() -> None:
     expected_chain = (
         "deployment_witness_input_boundary",
