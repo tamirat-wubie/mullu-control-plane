@@ -94,6 +94,7 @@ deployment_allowed=false
 | External infrastructure | Local DNS authority, gateway target, runtime host, managed database, secret-manager, TLS, firewall, rollback, private runtime witness, repository variable, endpoint reachability, and workflow dispatch questions with external-infrastructure completeness, DNS authority verification, DNS target binding, DNS mutation, runtime provisioning, secret placement, workflow dispatch, paid infrastructure, customer access, publication, and deployment blocked. |
 | Runtime secret handoff rehearsal | Local runtime-secret-handoff gate labels with secret names, secret values, private paths, secret-manager target values, operator identities, dual-control proof, secret-presence proof, repository-secret binding, runtime secret-store binding, workflow mounts, readiness, publication, and deployment blocked. |
 | Gateway DNS publication rehearsal | Local DNS-publication stop-rule labels with provider account values, DNS zone values, record names, record types, record values, TTL values, DNS mutation, repository-variable binding, workflow dispatch, propagation proof, rollback proof, DNS proof, endpoint proof, operator approval, readiness, publication, and deployment blocked. |
+| Deployment witness dispatch rehearsal | Local workflow-dispatch stop-rule labels with workflow dispatch, GitHub API mutation, live gateway URL values, expected-environment values, workflow refs, run ids, dispatch receipts, secret handling, repository-variable binding, workflow-run claims, artifact publication, operator approval, readiness, publication, and deployment blocked. |
 | Domain/email | Public-safe domain and email labels with DNS/email readiness blocked. |
 | Legal/business | Question-only packet with qualified-review gating. |
 | Product scope | Selected local learning lane with platform non-restriction and pilot/customer claims blocked. |
@@ -164,6 +165,7 @@ python scripts/validate_foundation_gateway_endpoint_evidence_receipt_rehearsal_b
 python scripts/validate_foundation_public_health_declaration_rehearsal_boundary.py
 python scripts/validate_foundation_deployment_witness_input_boundary.py
 python scripts/validate_foundation_deployment_witness_preflight_rehearsal_boundary.py
+python scripts/validate_foundation_deployment_witness_dispatch_rehearsal_boundary.py
 python scripts/validate_foundation_deployment_witness_evidence_handoff_boundary.py
 python scripts/validate_foundation_deployment_witness_evidence_ledger_routing_boundary.py
 python scripts/validate_foundation_domain_email_boundary.py

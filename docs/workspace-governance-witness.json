@@ -1,5 +1,5 @@
 {
-  "artifact_count": 309,
+  "artifact_count": 312,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -507,6 +507,11 @@
       "purpose": "Foundation Deployment Upstream Api Gate Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
     },
     {
+      "name": "foundation_boundary_doc_foundation_deployment_witness_dispatch_rehearsal_boundary",
+      "path": "docs/FOUNDATION_DEPLOYMENT_WITNESS_DISPATCH_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Deployment Witness Dispatch Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
       "name": "foundation_boundary_doc_foundation_deployment_witness_evidence_handoff_boundary",
       "path": "docs/FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_HANDOFF_BOUNDARY.md",
       "purpose": "Foundation Deployment Witness Evidence Handoff Boundary doctrine and Foundation Mode boundary evidence contract."
@@ -882,6 +887,11 @@
       "purpose": "Read-only validator for Foundation Deployment Upstream Api Gate Rehearsal Boundary."
     },
     {
+      "name": "foundation_boundary_validator_foundation_deployment_witness_dispatch_rehearsal_boundary",
+      "path": "scripts/validate_foundation_deployment_witness_dispatch_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Deployment Witness Dispatch Rehearsal Boundary."
+    },
+    {
       "name": "foundation_boundary_validator_foundation_deployment_witness_evidence_handoff_boundary",
       "path": "scripts/validate_foundation_deployment_witness_evidence_handoff_boundary.py",
       "purpose": "Read-only validator for Foundation Deployment Witness Evidence Handoff Boundary."
@@ -1255,6 +1265,11 @@
       "name": "foundation_boundary_tests_foundation_deployment_upstream_api_gate_rehearsal_boundary",
       "path": "tests/test_validate_foundation_deployment_upstream_api_gate_rehearsal_boundary.py",
       "purpose": "Regression tests for Foundation Deployment Upstream Api Gate Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_deployment_witness_dispatch_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_deployment_witness_dispatch_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Deployment Witness Dispatch Rehearsal Boundary validation."
     },
     {
       "name": "foundation_boundary_tests_foundation_deployment_witness_evidence_handoff_boundary",
