@@ -19,6 +19,7 @@
 | `MULLU_DB_URL` | Database connection string | `postgresql://...` |
 | `MULLU_DB_POOL_SIZE` | Per-store connection pool cap (v4.36+) | `10` |
 | `MULLU_ALLOW_UNKNOWN_TENANTS` | Reject unknown tenants | `false` |
+| `MULLU_REGISTRY_MAX_TENANTS` | Cap auto-provisioned tenant registry states | `100` |
 | `MULLU_ENCRYPTION_KEY` | Audit-detail at-rest encryption | base64 32-byte |
 | `MULLU_CORS_ORIGINS` | Comma-separated allowlist (no `*`) | `https://app.example.com` |
 | `MULLU_JWT_SECRET` | HMAC signing key | base64 |
@@ -58,6 +59,7 @@
 - [ ] PII scanner enabled (default)
 - [ ] Content safety chain enabled (default)
 - [ ] `MULLU_ALLOW_UNKNOWN_TENANTS=false` in production
+- [ ] `MULLU_REGISTRY_MAX_TENANTS` set to the approved tenant-capacity ceiling
 
 ## Monitoring Checklist
 

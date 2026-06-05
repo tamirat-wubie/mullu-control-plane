@@ -116,6 +116,49 @@ def test_global_exception_handler_returns_bounded_500() -> None:
     assert logger.messages == ["Unhandled exception on /explode: RuntimeError"]
 
 
+def test_global_exception_handler_maps_tenant_quota_to_bounded_429() -> None:
+    from mcoi_runtime.substrate.registry_store import TenantQuotaExceeded
+
+    class Metrics:
+        def __init__(self) -> None:
+            self.calls: list[tuple[str, int]] = []
+
+        def inc(self, name: str, value: int = 1) -> None:
+            self.calls.append((name, value))
+
+    class Logger:
+        def log(self, level: str, message: str) -> None:
+            raise AssertionError("tenant quota handler must not use generic logger")
+
+    class Levels:
+        ERROR = "error"
+
+    app = FastAPI()
+    metrics = Metrics()
+    server_http.install_global_exception_handler(
+        app=app,
+        metrics=metrics,
+        platform_logger=Logger(),
+        log_levels=Levels,
+    )
+
+    @app.get("/tenant-cap")
+    def tenant_cap() -> dict[str, str]:
+        raise TenantQuotaExceeded("max_tenants cap reached: secret-tenant")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.get("/tenant-cap")
+
+    assert resp.status_code == 429
+    assert resp.json() == {
+        "error": "tenant registry capacity exhausted",
+        "error_code": "tenant_registry_capacity_exhausted",
+        "governed": True,
+    }
+    assert metrics.calls == [("requests_rejected", 1)]
+    assert "secret-tenant" not in resp.text
+
+
 def test_global_exception_handler_survives_metrics_and_logger_failures() -> None:
     class BrokenMetrics:
         def inc(self, name: str, value: int = 1) -> None:

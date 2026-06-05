@@ -75,6 +75,24 @@ def install_global_exception_handler(
     """
     from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
     from mcoi_runtime.core.request_tenant_guard import CrossTenantRecordError
+    from mcoi_runtime.substrate.registry_store import TenantQuotaExceeded
+
+    async def tenant_quota_exceeded_handler(
+        request: StarletteRequest,
+        exc: Exception,
+    ) -> StarletteJSONResponse:
+        try:
+            metrics.inc("requests_rejected")
+        except Exception:
+            pass
+        return StarletteJSONResponse(
+            status_code=429,
+            content={
+                "error": "tenant registry capacity exhausted",
+                "error_code": "tenant_registry_capacity_exhausted",
+                "governed": True,
+            },
+        )
 
     async def cross_tenant_record_handler(
         request: StarletteRequest,
@@ -155,6 +173,7 @@ def install_global_exception_handler(
         )
 
     app.add_exception_handler(CrossTenantRecordError, cross_tenant_record_handler)
+    app.add_exception_handler(TenantQuotaExceeded, tenant_quota_exceeded_handler)
     app.add_exception_handler(RuntimeCoreInvariantError, invariant_violation_handler)
     app.add_exception_handler(RecursionError, recursion_limit_handler)
     app.add_exception_handler(Exception, global_exception_handler)

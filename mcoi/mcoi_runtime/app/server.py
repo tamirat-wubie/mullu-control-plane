@@ -98,6 +98,7 @@ from mcoi_runtime.app.server_runtime import (
     calculator_handler as _calculator_handler_impl,
     validate_or_raise as _validate_or_raise_impl,
 )
+from mcoi_runtime.substrate.registry_store import configure_max_tenants_from_env
 from mcoi_runtime.app.software_receipt_observability import (
     register_software_receipt_observability,
 )
@@ -143,6 +144,7 @@ _server_context = bootstrap_server_context(
 ENV = _server_context.env
 surface = _server_context.surface
 _tenant_allow_unknown = _server_context.tenant_allow_unknown
+_tenant_registry_max_tenants = configure_max_tenants_from_env(os.environ)
 _db_backend = _server_context.db_backend
 _db_backend_warning = _server_context.db_backend_warning
 store = _server_context.store
