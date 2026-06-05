@@ -4801,6 +4801,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/temporal/schedules/{schedule_id}",
                 "/api/v1/temporal/schedules/{schedule_id}/cancel",
                 "/api/v1/temporal/worker/tick",
+                "/api/v1/temporal/monitor",
                 "/api/v1/temporal/summary",
                 "TemporalKernel.evaluate",
                 "TrustedClock.now_utc",
@@ -4830,6 +4831,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "budget_window_checked",
                 "causal_preconditions_required",
                 "temporal_scheduler_routes_governed",
+                "temporal_monitor_is_read_only",
                 "schedule_read_models_persisted",
                 "worker_tick_certifies_proofs",
                 "cancel_emits_terminal_receipt",
@@ -4856,6 +4858,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "temporal_scheduler_routes_governed": [
                     "default_routers_include_temporal_scheduler_summary"
+                ],
+                "temporal_monitor_is_read_only": [
+                    "temporal_monitor_reports_due_lease_and_expiry_without_mutation",
+                    "temporal_monitor_filters_by_tenant",
                 ],
                 "schedule_read_models_persisted": [
                     "create_list_and_get_temporal_schedule"

@@ -91,6 +91,34 @@ def _receipt_to_body(receipt: Any) -> dict[str, Any]:
     }
 
 
+def _due_audit_to_body(audit: Any) -> dict[str, Any]:
+    return {
+        "schedule_id": audit.schedule_id,
+        "tenant_id": audit.tenant_id,
+        "state": audit.state.value,
+        "execute_at": audit.execute_at,
+        "observed_at": audit.observed_at,
+        "verdict": audit.verdict.value,
+        "reason": audit.reason,
+        "expires_at": audit.expires_at,
+        "lease_id": audit.lease_id,
+        "lease_worker_id": audit.lease_worker_id,
+        "lease_expires_at": audit.lease_expires_at,
+    }
+
+
+def _temporal_monitor_counts(audits: tuple[Any, ...]) -> dict[str, dict[str, int]]:
+    by_verdict: dict[str, int] = {}
+    by_reason: dict[str, int] = {}
+    for audit in audits:
+        by_verdict[audit.verdict.value] = by_verdict.get(audit.verdict.value, 0) + 1
+        by_reason[audit.reason] = by_reason.get(audit.reason, 0) + 1
+    return {
+        "by_verdict": dict(sorted(by_verdict.items())),
+        "by_reason": dict(sorted(by_reason.items())),
+    }
+
+
 @router.post("/api/v1/temporal/schedules")
 def create_temporal_schedule(req: TemporalScheduleRequest, request: Request):
     """Create a governed temporal action schedule."""
@@ -153,6 +181,31 @@ def list_temporal_schedules(
     return {
         "schedules": [_schedule_to_body(schedule) for schedule in schedules],
         "count": len(schedules),
+        "governed": True,
+    }
+
+
+@router.get("/api/v1/temporal/monitor")
+def temporal_scheduler_monitor(request: Request, tenant_id: str = "", now: str = ""):
+    """Return a non-mutating due-action monitor read model."""
+    deps.metrics.inc("requests_governed")
+    tenant_filter = scoped_listing_tenant(request, tenant_id)
+    try:
+        audits = deps.temporal_scheduler.audit_due_actions(now=now or None)
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_temporal_error_detail("temporal monitor failed", "temporal_monitor_failed"),
+        ) from exc
+    if tenant_filter:
+        audits = tuple(audit for audit in audits if audit.tenant_id == tenant_filter)
+    counts = _temporal_monitor_counts(audits)
+    return {
+        "audits": [_due_audit_to_body(audit) for audit in audits],
+        "count": len(audits),
+        "counts": counts,
+        "runtime": deps.temporal_scheduler.summary(),
+        "store": deps.temporal_scheduler_store.summary(),
         "governed": True,
     }
 

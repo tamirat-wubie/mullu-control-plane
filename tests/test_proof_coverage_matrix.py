@@ -241,7 +241,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["llm_chat_workflow"]["unanchored_witness_count"] == 0
     assert surfaces["llm_chat_workflow"]["exact_test_anchor_count"] == 7
     assert surfaces["temporal_kernel"]["unanchored_witness_count"] == 0
-    assert surfaces["temporal_kernel"]["exact_test_anchor_count"] == 13
+    assert surfaces["temporal_kernel"]["exact_test_anchor_count"] == 14
     assert surfaces["networked_worker_mesh"]["unanchored_witness_count"] == 0
     assert surfaces["networked_worker_mesh"]["exact_test_anchor_count"] == 13
     assert surfaces["task_queue_lifecycle"]["unanchored_witness_count"] == 0
@@ -393,6 +393,7 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/orgos/replay"]["surface_id"] == "orgos_case_governance_lifecycle"
     assert classified_routes["/api/v1/temporal/schedules"]["surface_id"] == "temporal_kernel"
     assert classified_routes["/api/v1/temporal/worker/tick"]["surface_id"] == "temporal_kernel"
+    assert classified_routes["/api/v1/temporal/monitor"]["surface_id"] == "temporal_kernel"
     assert classified_routes["/api/v1/knowledge/entities"]["surface_id"] == "governed_operational_intelligence"
     assert classified_routes["/api/v1/knowledge/contradictions/unresolved"]["surface_id"] == "governed_operational_intelligence"
     assert classified_routes["/api/v1/simulate"]["surface_id"] == "governed_operational_intelligence"
@@ -3509,6 +3510,7 @@ def test_temporal_kernel_surface_owns_runtime_time_truth() -> None:
     assert "/api/v1/temporal/schedules/{schedule_id}" in temporal_surface["representative_paths"]
     assert "/api/v1/temporal/schedules/{schedule_id}/cancel" in temporal_surface["representative_paths"]
     assert "/api/v1/temporal/worker/tick" in temporal_surface["representative_paths"]
+    assert "/api/v1/temporal/monitor" in temporal_surface["representative_paths"]
     assert "/api/v1/temporal/summary" in temporal_surface["representative_paths"]
     assert "TemporalKernel.evaluate" in temporal_surface["representative_paths"]
     assert "TrustedClock.now_utc" in temporal_surface["representative_paths"]
@@ -3529,6 +3531,7 @@ def test_temporal_kernel_surface_owns_runtime_time_truth() -> None:
     assert "budget_window_checked" in witnesses
     assert "causal_preconditions_required" in witnesses
     assert "temporal_scheduler_routes_governed" in witnesses
+    assert "temporal_monitor_is_read_only" in witnesses
     assert "schedule_read_models_persisted" in witnesses
     assert "worker_tick_certifies_proofs" in witnesses
     assert "cancel_emits_terminal_receipt" in witnesses
