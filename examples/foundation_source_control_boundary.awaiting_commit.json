@@ -461,6 +461,17 @@
       "summary": "Gateway-DNS-publication rehearsal prepares public-safe DNS publication stop-rule labels without provider account values, DNS zone values, record names, record types, record values, TTL values, DNS mutation, repository-variable binding, workflow dispatch, propagation proof, rollback proof, DNS proof, endpoint proof, operator approval, readiness, publication, or deployment claims."
     },
     {
+      "family_id": "deployment_witness_dispatch_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_DEPLOYMENT_WITNESS_DISPATCH_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_deployment_witness_dispatch_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_deployment_witness_dispatch_rehearsal_boundary.py",
+        "tests/test_validate_foundation_deployment_witness_dispatch_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Deployment-witness-dispatch rehearsal prepares public-safe workflow dispatch labels without workflow dispatch, GitHub API mutation, live gateway URL values, expected-environment values, workflow refs, run ids, dispatch receipts, secret handling, repository-variable binding, workflow-run claims, artifact publication, operator approval, readiness, publication, or deployment claims."
+    },
+    {
       "family_id": "domain_email_boundary",
       "required_evidence": [
         "docs/FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md",
@@ -666,6 +677,7 @@
     "python scripts/validate_foundation_public_health_declaration_rehearsal_boundary.py",
     "python scripts/validate_foundation_deployment_witness_input_boundary.py",
     "python scripts/validate_foundation_deployment_witness_preflight_rehearsal_boundary.py",
+    "python scripts/validate_foundation_deployment_witness_dispatch_rehearsal_boundary.py",
     "python scripts/validate_foundation_deployment_witness_evidence_handoff_boundary.py",
     "python scripts/validate_foundation_deployment_witness_evidence_ledger_routing_boundary.py",
     "python scripts/validate_foundation_domain_email_boundary.py",

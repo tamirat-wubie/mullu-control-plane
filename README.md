@@ -342,6 +342,13 @@ without live preflight execution, live URL values, DNS probes, endpoint probes,
 secret handling, repository variable binding, workflow dispatch, readiness
 report claims, artifact publication, status promotion, customer access, money
 movement, publication, or deployment.
+Deployment witness dispatch rehearsal is bounded by
+[`docs/FOUNDATION_DEPLOYMENT_WITNESS_DISPATCH_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_DEPLOYMENT_WITNESS_DISPATCH_REHEARSAL_BOUNDARY.md),
+which records future workflow dispatch labels and stop rules without workflow
+dispatch, GitHub API mutation, manual workflow execution, live URL values,
+environment values, workflow refs, run ids, dispatch receipts, secret handling,
+repository variable binding, workflow-run claims, artifact publication,
+operator approval, customer access, money movement, publication, or deployment.
 Deployment witness evidence handoff is bounded by
 [`docs/FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_HANDOFF_BOUNDARY.md`](docs/FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_HANDOFF_BOUNDARY.md),
 which records future evidence slot labels and blocked approval gates without

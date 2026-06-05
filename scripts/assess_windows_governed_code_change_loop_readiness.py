@@ -8,6 +8,7 @@ Dependencies: Python standard library, Docker CLI, optional WSL CLI, and the
     WSL strict probe launcher command builder.
 Invariants:
   - This assessor never claims strict sandbox readiness.
+  - Local-only Windows mode never probes WSL or Docker.
   - Windows host blockers are explicit and bounded.
   - The strict evidence path remains delegated to the Linux/WSL launcher.
   - Generated commands are argv-only and shell-free at the Windows boundary.
@@ -28,7 +29,7 @@ WORKSPACE_ROOT_FOR_IMPORT = Path(__file__).resolve().parents[1]
 if str(WORKSPACE_ROOT_FOR_IMPORT) not in sys.path:
     sys.path.insert(0, str(WORKSPACE_ROOT_FOR_IMPORT))
 
-from scripts.run_wsl_governed_code_change_loop_sandbox_probe import (
+from scripts.run_wsl_governed_code_change_loop_sandbox_probe import (  # noqa: E402
     DEFAULT_DISTRO,
     DEFAULT_PROBE_OUTPUT,
     DEFAULT_PROBE_WORKSPACE,
@@ -107,17 +108,46 @@ def assess_windows_readiness(
     build_image: bool = True,
     use_native_docker_fallback: bool = True,
     with_preflight: bool = False,
+    local_only: bool = False,
     runner: CommandRunner = subprocess.run,
-    platform_system: Callable[[], str] = platform.system,
+    platform_system: Callable[[], str] | None = None,
     timeout_seconds: int = 20,
 ) -> WindowsCodeChangeLoopReadiness:
     """Assess Windows host prerequisites without running strict evidence."""
 
     _require_positive_int(timeout_seconds, "timeout_seconds")
-    observed_platform = platform_system()
+    platform_probe = platform_system or platform.system
+    observed_platform = platform_probe()
     blockers: list[str] = []
     if observed_platform.lower() != "windows":
         blockers.append("windows_host_required")
+
+    if local_only:
+        skipped_probe = CommandProbe(
+            status="skipped",
+            return_code=None,
+            stdout_tail="",
+            stderr_tail="local-only mode does not probe strict sandbox prerequisites",
+            blocker=None,
+        )
+        status = "local_only_ready" if not blockers else "blocked"
+        next_action = (
+            "run local governance preflight; strict Linux sandbox evidence remains AwaitingEvidence"
+            if not blockers
+            else "run local-only mode from a Windows host"
+        )
+        return WindowsCodeChangeLoopReadiness(
+            status=status,
+            solver_outcome="AwaitingEvidence",
+            platform_system=observed_platform,
+            docker_cli=skipped_probe,
+            docker_daemon=skipped_probe,
+            wsl_cli=skipped_probe,
+            wsl_distro=skipped_probe,
+            blockers=tuple(blockers),
+            strict_probe_argv=(),
+            next_action=next_action,
+        )
 
     docker_cli = _probe_command(
         ("docker", "--version"),
@@ -302,6 +332,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--skip-build", action="store_true")
     parser.add_argument("--no-native-docker-fallback", action="store_true")
     parser.add_argument("--with-preflight", action="store_true")
+    parser.add_argument(
+        "--local-only",
+        action="store_true",
+        help="Skip WSL/Docker strict sandbox probes and emit a Windows-local validation posture.",
+    )
     parser.add_argument("--timeout-seconds", type=int, default=20)
     parser.add_argument("--print-command", action="store_true")
     parser.add_argument("--json", action="store_true")
@@ -314,6 +349,16 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     args = parse_args(argv)
     if args.print_command:
+        if args.local_only:
+            payload = {
+                "status": "local_only_ready",
+                "solver_outcome": "AwaitingEvidence",
+                "strict_probe_argv": [],
+                "blockers": [],
+                "next_action": "run local governance preflight; strict Linux sandbox evidence remains AwaitingEvidence",
+            }
+            print(json.dumps(payload, indent=2, sort_keys=True) if args.json else payload["next_action"])
+            return 0
         try:
             strict_probe_argv = _strict_probe_argv(
                 workspace_root=args.workspace_root,
@@ -357,6 +402,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             build_image=not bool(args.skip_build),
             use_native_docker_fallback=not bool(args.no_native_docker_fallback),
             with_preflight=bool(args.with_preflight),
+            local_only=bool(args.local_only),
             timeout_seconds=int(args.timeout_seconds),
         )
     except ValueError as exc:

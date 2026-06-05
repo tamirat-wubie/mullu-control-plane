@@ -1,0 +1,161 @@
+{
+  "artifact_publication_allowed": false,
+  "blocked_claims": [
+    "workflow dispatch",
+    "GitHub API mutation",
+    "manual workflow execution",
+    "live gateway url value",
+    "expected environment value",
+    "workflow ref value",
+    "workflow run id",
+    "dispatch receipt",
+    "secret value",
+    "secret presence claim",
+    "repository variable binding",
+    "workflow run claim",
+    "artifact publication",
+    "deployment claim published",
+    "deployment status promotion",
+    "operator approval",
+    "customer access",
+    "personal data collection",
+    "money movement",
+    "legal clearance",
+    "company formation",
+    "patent claim",
+    "external publication",
+    "deployment readiness"
+  ],
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "deployment_claim_published_claimed": false,
+  "deployment_status_promotion_allowed": false,
+  "dispatch_labels": [
+    "scripts/dispatch_deployment_witness.py",
+    ".github/workflows/deployment-witness.yml",
+    "Deployment Witness Collection",
+    "gateway_url",
+    "expected_environment",
+    "MULLU_GATEWAY_URL",
+    "MULLU_EXPECTED_RUNTIME_ENV",
+    "schemas/deployment_witness.schema.json",
+    "scripts/validate_deployment_publication_closure.py"
+  ],
+  "dispatch_receipt_recorded": false,
+  "expected_environment_value_recorded": false,
+  "external_publication_allowed": false,
+  "gateway_url_value_allowed": false,
+  "github_api_mutation_allowed": false,
+  "legal_clearance_claimed": false,
+  "manual_workflow_execution_allowed": false,
+  "money_movement_allowed": false,
+  "next_action": "record public-safe dispatch labels only; do not dispatch workflows, mutate GitHub state, run manual workflow execution, record live gateway URL values, record expected-environment values, record workflow refs, record workflow run ids, record dispatch receipts, handle secret values, claim secret presence, bind repository variables, claim workflow runs, publish artifacts, claim deployment_claim: published, promote deployment status, claim operator approval, open customer access, collect personal data, move money, claim legal clearance, form a company, claim patent protection, publish externally, or deploy",
+  "operator_approval_claimed": false,
+  "patent_claimed": false,
+  "personal_data_collection_allowed": false,
+  "repository_variable_binding_allowed": false,
+  "schema_version": 1,
+  "secret_presence_claimed": false,
+  "secret_value_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Preflight dependency label only; preflight pass is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "preflight_dependency_label",
+      "surface_type": "dispatch_rehearsal_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Workflow file label only; GitHub workflow APIs are not called.",
+      "state": "AwaitingEvidence",
+      "surface_id": "workflow_file_label",
+      "surface_type": "dispatch_rehearsal_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Workflow name label only; workflow lookup and execution are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "workflow_name_label",
+      "surface_type": "dispatch_rehearsal_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Gateway URL input label only; live gateway URL values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "gateway_url_input_label",
+      "surface_type": "dispatch_rehearsal_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Expected environment input label only; environment values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "expected_environment_input_label",
+      "surface_type": "dispatch_rehearsal_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Repository variable dependency label only; variables are not bound, verified, or updated.",
+      "state": "AwaitingEvidence",
+      "surface_id": "repository_variable_dependency_label",
+      "surface_type": "blocked_external_dependency"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Secret dependency label only; secret values and presence claims remain external.",
+      "state": "AwaitingEvidence",
+      "surface_id": "secret_dependency_label",
+      "surface_type": "blocked_external_dependency"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Manual dispatch command label only; workflow dispatch is not executed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "manual_dispatch_command_label",
+      "surface_type": "blocked_external_action"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Dispatch receipt slot only; dispatch receipts are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dispatch_receipt_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Workflow run receipt slot only; run ids and workflow run claims are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "workflow_run_receipt_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Artifact validation dependency label only; artifact schema and closure passes are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "artifact_validation_dependency_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deployment-claim publication gate only; deployment_claim: published is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_claim_publication_gate",
+      "surface_type": "blocked_promotion_gate"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Operator reassessment gate only; operator approval, readiness, publication, and deployment remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_reassessment_gate",
+      "surface_type": "blocked_promotion_gate"
+    }
+  ],
+  "workflow_dispatch_allowed": false,
+  "workflow_ref_value_recorded": false,
+  "workflow_run_claimed": false,
+  "workflow_run_id_recorded": false,
+  "witness_id": "foundation_deployment_witness_dispatch_rehearsal_witness.awaiting_evidence.v1"
+}

@@ -124,7 +124,14 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert_ordered("foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary", "foundation_public_health_declaration_rehearsal_boundary")
     assert_ordered("foundation_public_health_declaration_rehearsal_boundary", "foundation_deployment_witness_input_boundary")
     assert_ordered("foundation_deployment_witness_input_boundary", "foundation_deployment_witness_preflight_rehearsal_boundary")
-    assert_ordered("foundation_deployment_witness_preflight_rehearsal_boundary", "foundation_deployment_witness_evidence_handoff_boundary")
+    assert_ordered(
+        "foundation_deployment_witness_preflight_rehearsal_boundary",
+        "foundation_deployment_witness_dispatch_rehearsal_boundary",
+    )
+    assert_ordered(
+        "foundation_deployment_witness_dispatch_rehearsal_boundary",
+        "foundation_deployment_witness_evidence_handoff_boundary",
+    )
     assert_ordered("foundation_deployment_witness_evidence_handoff_boundary", "foundation_deployment_witness_evidence_ledger_routing_boundary")
     assert_ordered("foundation_legal_business_boundary", "foundation_legal_business_question_rehearsal_boundary")
     assert_ordered("foundation_pilot_deferral_boundary", "foundation_pilot_deferral_rehearsal_boundary")

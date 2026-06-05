@@ -19,6 +19,18 @@ First assess the Windows host without making a strict-readiness claim:
 python scripts/assess_windows_governed_code_change_loop_readiness.py --json
 ```
 
+If WSL is not installed, use Windows-local mode to keep local governance work
+moving without probing WSL or Docker:
+
+```powershell
+python scripts/assess_windows_governed_code_change_loop_readiness.py --local-only --json
+```
+
+Windows-local mode returns `local_only_ready` only for the local proof lane. It
+skips WSL and Docker checks, leaves strict Linux sandbox evidence as
+`AwaitingEvidence`, and points the next action to the workspace governance
+preflight instead of the WSL strict probe.
+
 Use strict mode when automation should fail closed until Docker Desktop and WSL prerequisites are available:
 
 ```powershell
