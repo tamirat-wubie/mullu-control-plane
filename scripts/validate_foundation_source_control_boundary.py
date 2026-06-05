@@ -39,6 +39,7 @@ EXPECTED_BOUNDARY_ID = "foundation_source_control_boundary.awaiting_commit.v1"
 EXPECTED_CHANGE_FAMILIES = (
     "foundation_posture",
     "operator_readiness_boundary",
+    "solo_daily_loop_boundary",
     "learning_path_boundary",
     "architecture_map_boundary",
     "system_boundary_inventory_boundary",
@@ -68,6 +69,7 @@ EXPECTED_CHANGE_FAMILIES = (
     "local_proof_thread",
     "test_evidence_boundary",
     "private_recovery_boundary",
+    "private_recovery_rehearsal_boundary",
     "secrets_credentials_boundary",
     "security_baseline_boundary",
     "cost_budget_boundary",
@@ -77,7 +79,15 @@ EXPECTED_CHANGE_FAMILIES = (
     "deployment_deferral_boundary",
     "external_infrastructure_boundary",
     "runtime_secret_handoff_rehearsal_boundary",
+    "production_dependency_evidence_rehearsal_boundary",
+    "external_evidence_acceptance_rehearsal_boundary",
+    "deployment_upstream_api_gate_rehearsal_boundary",
+    "gateway_dns_target_binding_rehearsal_boundary",
     "gateway_dns_publication_rehearsal_boundary",
+    "gateway_dns_resolution_receipt_rehearsal_boundary",
+    "gateway_endpoint_reachability_rehearsal_boundary",
+    "gateway_endpoint_evidence_receipt_rehearsal_boundary",
+    "public_health_declaration_rehearsal_boundary",
     "deployment_witness_input_boundary",
     "deployment_witness_preflight_rehearsal_boundary",
     "deployment_witness_dispatch_rehearsal_boundary",
@@ -86,18 +96,29 @@ EXPECTED_CHANGE_FAMILIES = (
     "deployment_witness_evidence_ledger_routing_boundary",
     "domain_email_boundary",
     "legal_business_boundary",
+    "legal_business_question_rehearsal_boundary",
     "product_scope_boundary",
     "market_research_boundary",
     "pilot_deferral_boundary",
+    "pilot_deferral_rehearsal_boundary",
+    "reassessment_gate_boundary",
     "support_readiness_boundary",
+    "support_triage_rehearsal_boundary",
     "intake_onboarding_boundary",
+    "intake_questionnaire_rehearsal_boundary",
     "customer_access_boundary",
+    "customer_access_policy_rehearsal_boundary",
+    "github_app_token_format_boundary",
     "privacy_data_boundary",
+    "privacy_minimization_rehearsal_boundary",
     "funding_team_boundary",
+    "funding_team_obligation_rehearsal_boundary",
     "community_network_boundary",
+    "community_network_no_outreach_rehearsal_boundary",
     "public_claim_alignment",
     "governance_preflight_wiring",
 )
+DOC_ONLY_CHANGE_FAMILIES = ("public_claim_alignment", "governance_preflight_wiring")
 
 
 def _command_to_display(args: tuple[str, ...]) -> str:
@@ -123,7 +144,19 @@ def _build_expected_required_checks() -> tuple[str, ...]:
     )
 
 
+def _build_expected_preflight_family_coverage() -> tuple[str, ...]:
+    """Return Foundation preflight families that must be represented in the packet."""
+
+    return tuple(
+        "foundation_posture" if command.name == "foundation_mode" else command.name.removeprefix("foundation_")
+        for command in build_check_commands("python")
+        if command.name == "foundation_mode"
+        or (command.name.startswith("foundation_") and command.name != "foundation_source_control_boundary")
+    )
+
+
 EXPECTED_REQUIRED_CHECKS = _build_expected_required_checks()
+EXPECTED_PREFLIGHT_FAMILY_COVERAGE = _build_expected_preflight_family_coverage()
 EXPECTED_ROOT_KEYS = {
     "boundary_id",
     "change_families",
@@ -155,6 +188,7 @@ REQUIRED_DOC_PHRASES = (
     "Boundary packet: [`../examples/foundation_source_control_boundary.awaiting_commit.json`]",
     "Rule: Commit readiness is prepared locally, but commit execution requires an",
     "No staging, commit, push, pull request, release, deployment, customer access, or",
+    "Solo daily loop | Local solo-loop",
     "source_control_boundary_state=AwaitingEvidence",
     "commit_state=AwaitingCommit",
     "staging_allowed=false",
@@ -171,16 +205,35 @@ REQUIRED_DOC_PHRASES = (
     "Payment provider | Local provider-selection",
     "Market research | Local problem",
     "Runtime secret handoff rehearsal | Local runtime-secret-handoff",
+    "Production dependency evidence rehearsal | Local production-dependency",
+    "External evidence acceptance rehearsal | Local evidence-acceptance",
+    "Deployment upstream API gate rehearsal | Local upstream-API",
+    "Gateway DNS target binding rehearsal | Local DNS-target-binding",
     "Gateway DNS publication rehearsal | Local DNS-publication",
+    "Gateway DNS resolution receipt rehearsal | Local DNS-resolution",
+    "Gateway endpoint reachability rehearsal | Local endpoint-reachability",
+    "Gateway endpoint evidence receipt rehearsal | Local endpoint-evidence",
+    "Public health declaration rehearsal | Local public-health",
     "Deployment witness input | Local deployment-witness-input",
     "Deployment witness preflight rehearsal | Local deployment-witness-preflight",
     "Deployment witness dispatch rehearsal | Local workflow-dispatch",
     "Deployment witness artifact validation rehearsal | Local artifact-validation",
     "Deployment witness evidence handoff | Local evidence-handoff",
     "Deployment witness evidence ledger routing | Local evidence-ledger-routing",
+    "Private recovery rehearsal | Local recovery-rehearsal",
+    "Legal/business question rehearsal | Local legal-question",
+    "Pilot deferral rehearsal | Local pilot-stop-rule",
+    "Reassessment gate | Local reassessment",
+    "Support triage rehearsal | Local support-triage",
+    "Intake questionnaire rehearsal | Local intake-questionnaire",
     "Customer access | Local access-policy",
+    "Customer-access policy rehearsal | Local access-rule",
+    "GitHub App token format | Local token-format",
+    "Privacy minimization rehearsal | Local minimization",
     "Funding/team | Local funding-readiness",
+    "Funding/team obligation rehearsal | Local obligation",
     "Community/network | Local relationship",
+    "Community/network no-outreach rehearsal | Local no-outreach",
     "python scripts/validate_foundation_source_control_boundary.py",
 )
 FORBIDDEN_PACKET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -328,6 +381,28 @@ def validate_change_families(change_families: object) -> list[SourceControlFindi
             SourceControlFinding(
                 "source_control_family_ids_invalid",
                 f"family ids must be: {', '.join(EXPECTED_CHANGE_FAMILIES)}",
+            )
+        )
+    missing_preflight_families = tuple(
+        family_id for family_id in EXPECTED_PREFLIGHT_FAMILY_COVERAGE if family_id not in observed_family_ids
+    )
+    unexpected_non_preflight_families = tuple(
+        family_id
+        for family_id in observed_family_ids
+        if family_id not in EXPECTED_PREFLIGHT_FAMILY_COVERAGE and family_id not in DOC_ONLY_CHANGE_FAMILIES
+    )
+    if missing_preflight_families:
+        findings.append(
+            SourceControlFinding(
+                "source_control_preflight_family_coverage_missing",
+                f"preflight families missing from source-control packet: {', '.join(missing_preflight_families)}",
+            )
+        )
+    if unexpected_non_preflight_families:
+        findings.append(
+            SourceControlFinding(
+                "source_control_preflight_family_coverage_unexpected",
+                f"families are neither preflight-derived nor documented doc-only exceptions: {', '.join(unexpected_non_preflight_families)}",
             )
         )
     if len(set(observed_family_ids)) != len(observed_family_ids):

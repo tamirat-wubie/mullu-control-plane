@@ -21,8 +21,10 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.validate_foundation_source_control_boundary import (  # noqa: E402
     DEFAULT_PACKET_PATH,
+    DOC_ONLY_CHANGE_FAMILIES,
     EXPECTED_BOUNDARY_ID,
     EXPECTED_CHANGE_FAMILIES,
+    EXPECTED_PREFLIGHT_FAMILY_COVERAGE,
     EXPECTED_REQUIRED_CHECKS,
     load_json_object,
     validate_foundation_source_control_boundary,
@@ -67,6 +69,20 @@ def test_required_checks_cover_current_foundation_preflight_commands() -> None:
     assert full_preflight_index == len(foundation_preflight_checks)
 
 
+def test_change_families_cover_foundation_preflight_boundaries_except_self() -> None:
+    missing_families = tuple(family for family in EXPECTED_PREFLIGHT_FAMILY_COVERAGE if family not in EXPECTED_CHANGE_FAMILIES)
+    extra_families = tuple(
+        family
+        for family in EXPECTED_CHANGE_FAMILIES
+        if family not in EXPECTED_PREFLIGHT_FAMILY_COVERAGE and family not in DOC_ONLY_CHANGE_FAMILIES
+    )
+
+    assert EXPECTED_PREFLIGHT_FAMILY_COVERAGE
+    assert missing_families == ()
+    assert extra_families == ()
+    assert "source_control_boundary" not in EXPECTED_CHANGE_FAMILIES
+
+
 def test_deployment_witness_change_families_cover_required_chain() -> None:
     expected_chain = (
         "deployment_witness_input_boundary",
@@ -81,6 +97,37 @@ def test_deployment_witness_change_families_cover_required_chain() -> None:
     assert tuple(
         family for family in EXPECTED_CHANGE_FAMILIES if family.startswith("deployment_witness_")
     ) == expected_chain
+
+
+def test_external_deployment_change_families_cover_required_chain() -> None:
+    expected_chain = (
+        "deployment_deferral_boundary",
+        "external_infrastructure_boundary",
+        "runtime_secret_handoff_rehearsal_boundary",
+        "production_dependency_evidence_rehearsal_boundary",
+        "external_evidence_acceptance_rehearsal_boundary",
+        "deployment_upstream_api_gate_rehearsal_boundary",
+        "gateway_dns_target_binding_rehearsal_boundary",
+        "gateway_dns_publication_rehearsal_boundary",
+        "gateway_dns_resolution_receipt_rehearsal_boundary",
+        "gateway_endpoint_reachability_rehearsal_boundary",
+        "gateway_endpoint_evidence_receipt_rehearsal_boundary",
+        "public_health_declaration_rehearsal_boundary",
+    )
+
+    assert all(family in EXPECTED_CHANGE_FAMILIES for family in expected_chain)
+    assert tuple(
+        family
+        for family in EXPECTED_CHANGE_FAMILIES
+        if family.startswith(("deployment_", "external_", "runtime_secret_", "production_", "gateway_", "public_health_"))
+    ) == expected_chain + (
+        "deployment_witness_input_boundary",
+        "deployment_witness_preflight_rehearsal_boundary",
+        "deployment_witness_dispatch_rehearsal_boundary",
+        "deployment_witness_artifact_validation_rehearsal_boundary",
+        "deployment_witness_evidence_handoff_boundary",
+        "deployment_witness_evidence_ledger_routing_boundary",
+    )
 
 
 def test_packet_rejects_commit_promotion() -> None:
@@ -114,6 +161,20 @@ def test_packet_rejects_missing_required_check() -> None:
 
     assert findings
     assert any(finding.rule_id == "source_control_required_checks_invalid" for finding in findings)
+
+
+def test_packet_rejects_missing_preflight_family_coverage() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "source-control packet")
+    candidate = deepcopy(payload)
+    candidate["change_families"] = [
+        family for family in candidate["change_families"] if family["family_id"] != "solo_daily_loop_boundary"
+    ]
+
+    findings = validate_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "source_control_family_ids_invalid" for finding in findings)
+    assert any(finding.rule_id == "source_control_preflight_family_coverage_missing" for finding in findings)
 
 
 def test_packet_rejects_family_state_promotion() -> None:
