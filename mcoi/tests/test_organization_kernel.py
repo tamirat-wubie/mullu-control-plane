@@ -25,6 +25,8 @@ from mcoi_runtime.contracts.organization_kernel import (
     PlanStep,
     PlanStepGateDecision,
     PlanStepGateStatus,
+    PlanStepWorkerDispatchReceipt,
+    PlanStepWorkerLeaseReceipt,
     PlanStepWorkerReceiptBinding,
 )
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
@@ -344,17 +346,84 @@ _ENGINEERING_WITNESS_REQUIREMENTS = (
 )
 
 
+def _ensure_worker_lease_evidence(kernel: OrganizationKernel, case_id: str) -> None:
+    if any(evidence.evidence_ref == "evidence:product_launch_boundary" for evidence in kernel.snapshot_state().case_evidence):
+        return
+    kernel.admit_case_evidence(
+        CaseEvidence(
+            evidence_ref="evidence:product_launch_boundary",
+            case_id=case_id,
+            requirement_id="product_launch_boundary",
+            submitted_by="test-harness",
+            submitted_at="2026-05-27T17:01:00+00:00",
+        )
+    )
+
+
+def _record_engineering_dispatch_receipt(
+    kernel: OrganizationKernel,
+    case_id: str,
+    requirement_id: str,
+) -> tuple[str, str, str]:
+    _ensure_worker_lease_evidence(kernel, case_id)
+    lease_id = f"lease.eng.gateway.{requirement_id}"
+    dispatch_request_id = f"req.{requirement_id}"
+    dispatch_receipt_id = f"receipt.{requirement_id}"
+    lease = kernel.create_worker_lease_receipt(
+        PlanStepWorkerLeaseReceipt(
+            lease_id=lease_id,
+            case_id=case_id,
+            step_id="engineering_runtime_witness",
+            capability_id="engineering.gateway_runtime.verify",
+            responsible_role_id="engineering.owner",
+            requested_by_role_id="engineering.owner",
+            dispatch_lease_preview_id=f"dispatch-lease-preview.{requirement_id}",
+            queued_action="bind_worker_receipt",
+            capability_action="verify_gateway_runtime",
+            expected_effect="gateway_runtime_witnessed",
+            evidence_refs=("evidence:product_launch_boundary",),
+            timeout_seconds=900,
+            budget_ref="budget:gateway-pilot",
+            created_at="2026-05-27T17:02:00+00:00",
+        )
+    )
+    kernel.record_worker_dispatch_receipt(
+        PlanStepWorkerDispatchReceipt(
+            dispatch_receipt_id=dispatch_receipt_id,
+            dispatch_request_id=dispatch_request_id,
+            case_id=case_id,
+            step_id="engineering_runtime_witness",
+            worker_lease_id=lease.lease_id,
+            capability_id="engineering.gateway_runtime.verify",
+            responsible_role_id="engineering.owner",
+            requested_by_role_id="engineering.owner",
+            worker_id="worker:gateway-runtime",
+            dispatch_intent="request_gateway_runtime_verification",
+            expected_effect=lease.expected_effect,
+            evidence_refs=lease.evidence_refs,
+            lease_created_at=lease.created_at,
+            dispatched_at="2026-05-27T17:02:30+00:00",
+        )
+    )
+    return lease_id, dispatch_request_id, dispatch_receipt_id
+
+
 def _bind_engineering_worker_receipts(kernel: OrganizationKernel, case_id: str) -> None:
     for requirement_id, route in _ENGINEERING_WITNESS_REQUIREMENTS:
+        lease_id, dispatch_request_id, dispatch_receipt_id = _record_engineering_dispatch_receipt(
+            kernel,
+            case_id,
+            requirement_id,
+        )
         kernel.bind_worker_receipt_evidence(
             PlanStepWorkerReceiptBinding(
                 binding_id=f"binding.{requirement_id}",
                 case_id=case_id,
                 step_id="engineering_runtime_witness",
                 requirement_id=requirement_id,
-                worker_lease_id="lease.eng.gateway",
-                dispatch_request_id=f"req.{requirement_id}",
-                dispatch_receipt_id=f"receipt.{requirement_id}",
+                worker_lease_id=lease_id,
+                dispatch_request_id=dispatch_request_id,
+                dispatch_receipt_id=dispatch_receipt_id,
                 worker_output_hash=f"hash-{requirement_id}",
                 receipt_evidence_refs=(f"worker-evidence:{route}",),
                 admitted_evidence_ref=f"evidence:{requirement_id}",
@@ -384,15 +453,20 @@ def test_worker_receipts_satisfy_engineering_gate_evidence() -> None:
 
 def test_worker_receipt_admitted_as_case_evidence_with_provenance() -> None:
     kernel, plan = _pilot()
+    lease_id, dispatch_request_id, dispatch_receipt_id = _record_engineering_dispatch_receipt(
+        kernel,
+        plan.case_id,
+        "engineering_health_endpoint",
+    )
     binding = kernel.bind_worker_receipt_evidence(
         PlanStepWorkerReceiptBinding(
             binding_id="binding.eng.health",
             case_id=plan.case_id,
             step_id="engineering_runtime_witness",
             requirement_id="engineering_health_endpoint",
-            worker_lease_id="lease.eng.gateway",
-            dispatch_request_id="req.eng.health",
-            dispatch_receipt_id="receipt.eng.health",
+            worker_lease_id=lease_id,
+            dispatch_request_id=dispatch_request_id,
+            dispatch_receipt_id=dispatch_receipt_id,
             worker_output_hash="hash-health",
             receipt_evidence_refs=("worker-evidence:/health",),
             admitted_evidence_ref="evidence:engineering_health_endpoint",
@@ -405,12 +479,60 @@ def test_worker_receipt_admitted_as_case_evidence_with_provenance() -> None:
     admitted = [e for e in state.case_evidence if e.evidence_ref == "evidence:engineering_health_endpoint"]
     assert len(admitted) == 1
     assert admitted[0].requirement_id == "engineering_health_endpoint"
-    assert admitted[0].submitted_by == "worker_mesh:lease.eng.gateway"
+    assert admitted[0].submitted_by == f"worker_mesh:{lease_id}"
     assert admitted[0].metadata["source"] == "worker_dispatch_receipt"
-    assert admitted[0].metadata["dispatch_receipt_id"] == "receipt.eng.health"
+    assert admitted[0].metadata["dispatch_receipt_id"] == dispatch_receipt_id
+    assert admitted[0].metadata["worker_dispatch_receipt_required"] is True
     assert admitted[0].metadata["worker_receipt_is_terminal_closure"] is False
     bound_events = [e for e in kernel.list_case_events(plan.case_id) if e.event_type == "plan_step_worker_receipt_bound"]
     assert len(bound_events) == 1
+
+
+def test_worker_receipt_requires_recorded_dispatch_receipt() -> None:
+    kernel, plan = _pilot()
+
+    with pytest.raises(RuntimeCoreInvariantError, match="dispatch receipt unavailable"):
+        kernel.bind_worker_receipt_evidence(
+            PlanStepWorkerReceiptBinding(
+                binding_id="binding.eng.health",
+                case_id=plan.case_id,
+                step_id="engineering_runtime_witness",
+                requirement_id="engineering_health_endpoint",
+                worker_lease_id="lease.eng.gateway.engineering_health_endpoint",
+                dispatch_request_id="req.engineering_health_endpoint",
+                dispatch_receipt_id="receipt.engineering_health_endpoint",
+                worker_output_hash="hash-health",
+                receipt_evidence_refs=("worker-evidence:/health",),
+                admitted_evidence_ref="evidence:engineering_health_endpoint",
+                bound_at="2026-05-27T17:03:00+00:00",
+            )
+        )
+
+
+def test_worker_receipt_rejects_dispatch_identity_mismatch() -> None:
+    kernel, plan = _pilot()
+    lease_id, dispatch_request_id, dispatch_receipt_id = _record_engineering_dispatch_receipt(
+        kernel,
+        plan.case_id,
+        "engineering_health_endpoint",
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="dispatch request mismatch"):
+        kernel.bind_worker_receipt_evidence(
+            PlanStepWorkerReceiptBinding(
+                binding_id="binding.eng.health",
+                case_id=plan.case_id,
+                step_id="engineering_runtime_witness",
+                requirement_id="engineering_health_endpoint",
+                worker_lease_id=lease_id,
+                dispatch_request_id=f"{dispatch_request_id}.tampered",
+                dispatch_receipt_id=dispatch_receipt_id,
+                worker_output_hash="hash-health",
+                receipt_evidence_refs=("worker-evidence:/health",),
+                admitted_evidence_ref="evidence:engineering_health_endpoint",
+                bound_at="2026-05-27T17:03:00+00:00",
+            )
+        )
 
 
 def test_worker_receipt_contract_requires_receipt_evidence_refs() -> None:

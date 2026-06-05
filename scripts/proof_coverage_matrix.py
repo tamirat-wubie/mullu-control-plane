@@ -2991,7 +2991,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_organization_kernel_router.py",
                 "mcoi/tests/test_organization_kernel_store.py",
             ],
-            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions, case portfolio, action queue, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts as plan-step evidence without holding worker dispatch authority.",
+            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions, case portfolio, action queue, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
             [
                 "orgos_api_runs_launch_gateway_case_control_loop",
                 "orgos_api_denies_unbound_authority_gate",
@@ -3050,6 +3050,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "launch_gateway_pilot_readiness_packet_blocks_without_engineering_witness",
                 "jsonl_case_event_log_preserves_hash_chain",
                 "worker_receipts_satisfy_engineering_gate_evidence",
+                "worker_receipt_requires_recorded_dispatch_receipt",
+                "worker_receipt_rejects_dispatch_identity_mismatch",
+                "worker_receipt_endpoint_rejects_missing_dispatch_receipt",
             ],
         ),
         _surface(
