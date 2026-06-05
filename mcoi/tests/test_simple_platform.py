@@ -708,6 +708,17 @@ def test_simple_cli_start_outputs_home_json(capsys) -> None:
     assert envelope["payload"]["home"]["choices"][0]["command"] == "mullu menu"
 
 
+def test_simple_cli_menu_alias_outputs_home_json(capsys) -> None:
+    exit_code = guarded_main(["menu", "--json"])
+    envelope = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 0
+    assert envelope["governed"] is True
+    assert envelope["ok"] is True
+    assert envelope["status"] == "ready"
+    assert envelope["payload"]["home"]["primary_command"] == "mullu menu"
+
+
 def test_simple_platform_api_projects_ready_check() -> None:
     envelope = SimplePlatformRuntime().check_action(
         {

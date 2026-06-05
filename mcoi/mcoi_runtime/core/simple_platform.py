@@ -277,7 +277,7 @@ class SimpleWorkflowPlan:
 
     @property
     def review_count(self) -> int:
-        """Return how many workflow steps need review."""
+        """Return how many workflow steps need approval."""
 
         return sum(1 for check in self.checks if check.outcome == "needs_review")
 
