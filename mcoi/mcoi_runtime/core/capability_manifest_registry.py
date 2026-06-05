@@ -103,14 +103,17 @@ class CapabilityManifestRegistry:
             capability_id = _optional_manifest_text(payload.get("capability_id"))
         if manifest is not None:
             capability_id = manifest.capability_id
-            errors.extend(
-                self._validation_errors(
-                    manifest,
-                    environment=environment,
-                    hot_reload=hot_reload,
-                    source_path=source_path,
+            try:
+                errors.extend(
+                    self._validation_errors(
+                        manifest,
+                        environment=environment,
+                        hot_reload=hot_reload,
+                        source_path=source_path,
+                    )
                 )
-            )
+            except RuntimeCoreInvariantError as exc:
+                errors.append(f"manifest_validation_error:{exc}")
 
         status = CapabilityManifestAdmissionStatus.REJECTED if errors else CapabilityManifestAdmissionStatus.ADMITTED
         now = self._clock()
@@ -227,11 +230,13 @@ class CapabilityManifestRegistry:
 
     def _schema_ids(self) -> set[str]:
         schema_ids: set[str] = set()
-        for schema_path in (self._repo_root / "schemas").rglob("*.schema.json"):
+        for schema_path in sorted((self._repo_root / "schemas").rglob("*.schema.json")):
             try:
                 payload = json.loads(schema_path.read_text(encoding="utf-8"))
-            except json.JSONDecodeError:
-                continue
+            except json.JSONDecodeError as exc:
+                raise RuntimeCoreInvariantError(
+                    f"schema_registry_malformed:{_relative_ref(self._repo_root, schema_path)}"
+                ) from exc
             schema_id = payload.get("$id") if isinstance(payload, dict) else None
             if isinstance(schema_id, str):
                 schema_ids.add(schema_id)
