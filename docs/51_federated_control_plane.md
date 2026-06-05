@@ -27,14 +27,20 @@ Invariants: policy artifacts may federate; tenant data does not replicate to the
 4. Runtime enforcement happens in the cluster where the tenant data resides.
 5. Enforcement receipts explicitly state `central_data_transfer: false`.
 
-## Read-Only Route
+## Operator Routes
 
 ```powershell
 GET /api/v1/federation/summary
+POST /api/v1/federation/clusters
+POST /api/v1/federation/policies
+POST /api/v1/federation/policy-sync
 ```
 
 The route exposes seeded policy distribution and local-enforcement receipts as a
-read model. It does not publish policy, sync new clusters, or move tenant data.
+read model. The write routes are admin-gated control surfaces for regional
+cluster registration, signed policy metadata publication, and regional
+metadata-only sync. They do not move tenant data or perform central
+enforcement.
 
 ## Failure Semantics
 
@@ -44,11 +50,12 @@ read model. It does not publish policy, sync new clusters, or move tenant data.
 | Unknown policy bundle | hard error |
 | Policy not allowed for cluster | sync denied with `policy_not_allowed_for_cluster` |
 | Invalid signature | sync denied with `invalid_policy_signature` |
+| Tenant data in policy publish payload | hard error with `federated_policy_publication_failed` |
 | Policy not synced locally | enforcement denied with `policy_not_synced_to_cluster` |
 | Tenant region mismatch | enforcement denied with `tenant_region_mismatch` |
 
 STATUS:
   Completeness: 100%
-  Invariants verified: signed registry, local enforcement, no tenant-data replication, residency boundary receipts, deterministic receipt hashes, read-only federation summary route
+  Invariants verified: signed registry, local enforcement, no tenant-data replication, residency boundary receipts, deterministic receipt hashes, read-only federation summary route, admin-gated regional metadata sync routes
   Open issues: none
-  Next action: add authenticated regional policy-sync control routes with explicit operator authority
+  Next action: connect durable signed-policy registry metadata only after hosted federation retention requirements are defined
