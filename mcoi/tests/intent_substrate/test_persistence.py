@@ -26,6 +26,7 @@ from mcoi_runtime.intent_substrate import (
     deserialize_predicate,
     deserialize_predicate_set,
     restore_intents_from_obligations,
+    restore_intents_from_obligations_report,
     serialize_predicate,
     serialize_predicate_set,
 )
@@ -274,6 +275,62 @@ def test_restore_skips_malformed_metadata_without_crashing():
     )
     n = restore_intents_from_obligations(fresh_resolver, obligations)
     assert n == 0  # malformed entry skipped
+
+
+def test_restore_report_records_malformed_metadata_without_payload_leak():
+    _state, obligations, _spine, _resolver = _build()
+    bad = obligations.create_obligation(
+        trigger=ObligationTrigger.CUSTOM,
+        trigger_ref_id="bad-ref",
+        owner=make_owner(),
+        deadline=make_deadline(),
+        description="malformed substrate",
+        correlation_id="bad",
+        metadata={
+            "intent_substrate": "true",
+            METADATA_KEY: "not valid json{secret-predicate}",
+        },
+    )
+    fresh_state = MutableState()
+    fresh_resolver = IntentResolver(
+        state_view=fresh_state,
+        closure=ObligationClosureAdapter(obligations),
+        spine=EventSpineEngine(),
+    )
+    report = restore_intents_from_obligations_report(fresh_resolver, obligations)
+    assert report.scanned_count == 1
+    assert report.restored_count == 0
+    assert report.skipped_count == 1
+    assert report.skipped[0].obligation_id == bad.obligation_id
+    assert report.skipped[0].reason == "malformed_predicate_metadata"
+    assert report.skipped[0].detail == "JSONDecodeError"
+    assert "secret-predicate" not in repr(report)
+
+
+def test_restore_report_records_missing_predicate_metadata():
+    _state, obligations, _spine, _resolver = _build()
+    missing = obligations.create_obligation(
+        trigger=ObligationTrigger.CUSTOM,
+        trigger_ref_id="missing-ref",
+        owner=make_owner(),
+        deadline=make_deadline(),
+        description="missing predicate metadata",
+        correlation_id="missing",
+        metadata={"intent_substrate": "true"},
+    )
+    fresh_state = MutableState()
+    fresh_resolver = IntentResolver(
+        state_view=fresh_state,
+        closure=ObligationClosureAdapter(obligations),
+        spine=EventSpineEngine(),
+    )
+    report = restore_intents_from_obligations_report(fresh_resolver, obligations)
+    assert report.scanned_count == 1
+    assert report.restored_count == 0
+    assert report.skipped_count == 1
+    assert report.skipped[0].obligation_id == missing.obligation_id
+    assert report.skipped[0].reason == "missing_predicate_metadata"
+    assert report.skipped[0].detail == "metadata key absent or empty"
 
 
 def test_restore_is_idempotent():

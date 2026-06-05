@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import json
 import math
+from dataclasses import dataclass
 from typing import Any
 
 from mcoi_runtime.contracts.event import EventType
@@ -63,6 +64,28 @@ _TERMINAL_OBLIGATION_STATES = (
     ObligationState.EXPIRED,
     ObligationState.CANCELLED,
 )
+
+
+@dataclass(frozen=True)
+class IntentRestoreSkip:
+    """Bounded diagnostic for one obligation skipped during intent restore."""
+
+    obligation_id: str
+    reason: str
+    detail: str
+
+
+@dataclass(frozen=True)
+class IntentRestoreReport:
+    """Restart-restore witness for durable intent substrate predicates."""
+
+    scanned_count: int
+    restored_count: int
+    skipped: tuple[IntentRestoreSkip, ...] = ()
+
+    @property
+    def skipped_count(self) -> int:
+        return len(self.skipped)
 
 
 def serialize_predicate(p: IntentPredicate) -> dict[str, Any]:
@@ -190,22 +213,59 @@ def restore_intents_from_obligations(
     accepting events. Idempotent — calling twice without intervening
     state changes simply re-registers the same intents.
 
-    Malformed entries are skipped silently (no crash on a single bad
-    record). Production callers should log skips via observation of
-    the (count, total) ratio.
+    Malformed entries do not crash restore, but callers needing skip
+    evidence should call restore_intents_from_obligations_report.
     """
+    return restore_intents_from_obligations_report(
+        resolver,
+        obligation_engine,
+    ).restored_count
+
+
+def restore_intents_from_obligations_report(
+    resolver: IntentResolver,
+    obligation_engine: ObligationRuntimeEngine,
+) -> IntentRestoreReport:
+    """Restore intents and return bounded diagnostics for skipped entries."""
+
     count = 0
+    scanned = 0
+    skipped: list[IntentRestoreSkip] = []
     for obl in obligation_engine.list_obligations():
         if obl.metadata.get("intent_substrate") != "true":
             continue
         if obl.state in _TERMINAL_OBLIGATION_STATES:
             continue
+        scanned += 1
         blob = obl.metadata.get(METADATA_KEY)
-        if not blob:
+        if blob is None or blob == "":
+            skipped.append(
+                IntentRestoreSkip(
+                    obligation_id=obl.obligation_id,
+                    reason="missing_predicate_metadata",
+                    detail="metadata key absent or empty",
+                )
+            )
+            continue
+        if not isinstance(blob, str):
+            skipped.append(
+                IntentRestoreSkip(
+                    obligation_id=obl.obligation_id,
+                    reason="invalid_predicate_metadata",
+                    detail=type(blob).__name__,
+                )
+            )
             continue
         try:
             pre, succ = deserialize_predicate_set(blob)
-        except (ValueError, KeyError, json.JSONDecodeError):
+        except (ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+            skipped.append(
+                IntentRestoreSkip(
+                    obligation_id=obl.obligation_id,
+                    reason="malformed_predicate_metadata",
+                    detail=type(exc).__name__,
+                )
+            )
             continue
         resolver.register_intent(
             obl.obligation_id,
@@ -213,4 +273,8 @@ def restore_intents_from_obligations(
             success=succ,
         )
         count += 1
-    return count
+    return IntentRestoreReport(
+        scanned_count=scanned,
+        restored_count=count,
+        skipped=tuple(skipped),
+    )

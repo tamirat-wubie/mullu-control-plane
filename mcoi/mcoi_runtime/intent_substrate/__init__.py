@@ -46,10 +46,13 @@ from .causal import causal_priority, deadline_urgency, rank
 from .closures import IntentClosure, ObligationClosureAdapter
 from .declaration import declare_intent
 from .persistence import (
+    IntentRestoreReport,
+    IntentRestoreSkip,
     METADATA_KEY,
     deserialize_predicate,
     deserialize_predicate_set,
     restore_intents_from_obligations,
+    restore_intents_from_obligations_report,
     serialize_predicate,
     serialize_predicate_set,
 )
@@ -90,12 +93,15 @@ __all__ = [
     "BackgroundTicker",
     "declare_intent",
     # persistence
+    "IntentRestoreReport",
+    "IntentRestoreSkip",
     "METADATA_KEY",
     "serialize_predicate",
     "deserialize_predicate",
     "serialize_predicate_set",
     "deserialize_predicate_set",
     "restore_intents_from_obligations",
+    "restore_intents_from_obligations_report",
     # causal
     "causal_priority",
     "deadline_urgency",
