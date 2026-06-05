@@ -21,7 +21,7 @@ import time
 from collections import deque
 from dataclasses import dataclass, field
 from threading import RLock
-from typing import Any, Optional
+from typing import Any, Mapping
 
 from mcoi_runtime.substrate._quota import TenantQuota
 from mcoi_runtime.substrate.cascade import DependencyGraph
@@ -528,6 +528,36 @@ class TenantedRegistryStore:
 
 # Module-level singleton. Tests use reset_all().
 STORE = TenantedRegistryStore()
+
+
+def _parse_max_tenants(value: str) -> int:
+    """Parse the tenant registry capacity cap with bounded error text."""
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError("MULLU_REGISTRY_MAX_TENANTS must be a positive integer") from exc
+    if parsed < 1:
+        raise RuntimeError("MULLU_REGISTRY_MAX_TENANTS must be a positive integer")
+    return parsed
+
+
+def configure_max_tenants_from_env(
+    runtime_env: Mapping[str, str],
+    *,
+    store: TenantedRegistryStore = STORE,
+) -> int | None:
+    """Apply the env-governed tenant registry auto-provisioning cap.
+
+    Unset keeps the legacy unbounded behavior. A positive integer caps the
+    number of tenant states that may be auto-provisioned in this process.
+    """
+    raw_value = runtime_env.get("MULLU_REGISTRY_MAX_TENANTS", "").strip()
+    if not raw_value:
+        store.set_max_tenants(None)
+        return None
+    max_tenants = _parse_max_tenants(raw_value)
+    store.set_max_tenants(max_tenants)
+    return max_tenants
 
 
 def configure_persistence(

@@ -94,6 +94,7 @@ Variables are grouped by purpose. Every row marks whether the variable is **requ
 | Variable | Required | Default | Notes |
 |---|---|---|---|
 | `MULLU_ALLOW_UNKNOWN_TENANTS` | **no in production** | env-derived (`true` only in `local_dev`/`test`) | When truthy, a tenant_id never seen before passes the tenant gate. **Always `false` in production.** |
+| `MULLU_REGISTRY_MAX_TENANTS` | recommended | unset | Positive integer cap for auto-provisioned tenant registry states. When reached, new tenant state creation returns a governed `tenant_registry_capacity_exhausted` response instead of growing without bound. |
 
 ### Field encryption (audit at rest)
 

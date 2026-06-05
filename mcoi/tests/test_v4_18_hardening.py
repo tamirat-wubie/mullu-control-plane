@@ -24,6 +24,7 @@ import pytest
 from mcoi_runtime.substrate.registry_store import (
     TenantedRegistryStore,
     TenantQuotaExceeded,
+    configure_max_tenants_from_env,
 )
 
 
@@ -144,8 +145,10 @@ def test_cap_thread_safety_via_lock():
         threading.Thread(target=worker, args=(f"t{i}",))
         for i in range(50)
     ]
-    for t in threads: t.start()
-    for t in threads: t.join()
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
 
     assert len(store.list_tenants()) == 10
     assert len(rejections) == 40  # exactly 40 of 50 rejected
@@ -155,3 +158,45 @@ def test_tenant_quota_exceeded_is_subclass_of_exception():
     """Catchable as a generic Exception — for HTTP layers that don't
     want to import the specific class."""
     assert issubclass(TenantQuotaExceeded, Exception)
+
+
+def test_configure_max_tenants_from_env_applies_cap():
+    store = TenantedRegistryStore()
+
+    configured = configure_max_tenants_from_env(
+        {"MULLU_REGISTRY_MAX_TENANTS": "3"},
+        store=store,
+    )
+
+    assert configured == 3
+    assert store.max_tenants == 3
+    store.get_or_create("a")
+    store.get_or_create("b")
+    store.get_or_create("c")
+    with pytest.raises(TenantQuotaExceeded):
+        store.get_or_create("d")
+
+
+def test_configure_max_tenants_from_env_unset_resets_to_unbounded():
+    store = TenantedRegistryStore(max_tenants=2)
+
+    configured = configure_max_tenants_from_env({}, store=store)
+
+    assert configured is None
+    assert store.max_tenants is None
+    for index in range(5):
+        store.get_or_create(f"tenant-{index}")
+    assert len(store.list_tenants()) == 5
+
+
+def test_configure_max_tenants_from_env_rejects_invalid_values_with_bounded_error():
+    store = TenantedRegistryStore()
+
+    with pytest.raises(RuntimeError, match="^MULLU_REGISTRY_MAX_TENANTS must be a positive integer$") as excinfo:
+        configure_max_tenants_from_env(
+            {"MULLU_REGISTRY_MAX_TENANTS": "tenant-secret"},
+            store=store,
+        )
+
+    assert "tenant-secret" not in str(excinfo.value)
+    assert store.max_tenants is None
