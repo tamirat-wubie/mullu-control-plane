@@ -62,6 +62,12 @@ records whose stored ids still match the deterministic tenant/tool/schema/
 budget/audit identity. Malformed or tampered durable payloads fail startup
 closed instead of dropping records silently.
 
+`/api/v1/health/extensions` exposes only path-redacted registry posture for
+operators: whether the bootstrap is registered, whether persistence is active,
+whether a path is configured, and the bounded state label (`memory`,
+`persistent`, or `unregistered`). It does not expose filesystem paths,
+permission payloads, tenant ids, or tool names.
+
 ## Reason Codes
 
 | Code | Meaning |
@@ -76,6 +82,6 @@ closed instead of dropping records silently.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: exact tenant/tool lookup, fail-closed permission absence, bounded schema matching, exact budget binding, audit-required enforcement, deterministic argument hash, operator route exposure without tool execution, env-governed durable registry backing
+  Invariants verified: exact tenant/tool lookup, fail-closed permission absence, bounded schema matching, exact budget binding, audit-required enforcement, deterministic argument hash, operator route exposure without tool execution, env-governed durable registry backing, path-redacted health posture
   Open issues: none
   Next action: configure MULLU_TOOL_PERMISSION_REGISTRY_PATH in hosted operator environments that require durable tool permission history

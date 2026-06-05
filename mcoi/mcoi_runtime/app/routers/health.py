@@ -344,6 +344,29 @@ def _nested_mind_observation_submitter_read_model() -> dict[str, object]:
     }
 
 
+def _registry_bootstrap_read_model(dependency_name: str) -> dict[str, object]:
+    """Return a path-redacted registry persistence bootstrap read model."""
+
+    try:
+        bootstrap = deps.get(dependency_name)
+    except RuntimeError:
+        return {
+            "registered": False,
+            "persistent": False,
+            "state": "unregistered",
+            "path_configured": False,
+        }
+
+    persistent = bool(getattr(bootstrap, "persistent", False))
+    path_configured = bool(str(getattr(bootstrap, "path", "") or "").strip())
+    return {
+        "registered": True,
+        "persistent": persistent,
+        "state": "persistent" if persistent else "memory",
+        "path_configured": path_configured,
+    }
+
+
 def _optional_feature_state(*, registered: bool, enabled: bool, active: bool) -> str:
     """Return a bounded state label for non-router optional features."""
 
@@ -378,6 +401,7 @@ def extension_health():
             "nested_mind": _nested_mind_connector_read_model(),
             "nested_mind_observation_bridge": _nested_mind_observation_bridge_read_model(),
             "nested_mind_observation_submitter": _nested_mind_observation_submitter_read_model(),
+            "tool_permission_registry": _registry_bootstrap_read_model("tool_permission_registry_bootstrap"),
         },
     }
 
