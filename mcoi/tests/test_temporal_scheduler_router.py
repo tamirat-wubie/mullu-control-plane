@@ -1,11 +1,11 @@
 """Purpose: verify temporal scheduler HTTP endpoints.
-Governance scope: API creation, listing, cancellation, worker tick, and default
-    router mounting.
+Governance scope: API creation, listing, cancellation, missed closure, worker
+    tick, and default router mounting.
 Dependencies: FastAPI TestClient, temporal scheduler router, proof bridge.
 Invariants:
   - API-created schedules are persisted.
   - Worker tick dispatches only due allowed schedules.
-  - Cancel emits a terminal cancellation receipt and proof.
+  - Cancel and missed closure emit terminal receipts and proofs.
   - Default router mounting includes the temporal scheduler API.
 """
 
@@ -131,18 +131,42 @@ def test_cancel_temporal_schedule_records_terminal_receipt() -> None:
     assert fetched.json()["receipts"][0]["verdict"] == "blocked"
 
 
+def test_missed_temporal_schedule_records_terminal_receipt() -> None:
+    client = _client(MutableClock("2026-05-04T14:30:00+00:00"))
+    client.post("/api/v1/temporal/schedules", json=_request())
+
+    missed = client.post("/api/v1/temporal/schedules/sched-1/missed", params={"worker_id": "operator-a"})
+    fetched = client.get("/api/v1/temporal/schedules/sched-1")
+    worker = client.post(
+        "/api/v1/temporal/worker/tick",
+        json={"worker_id": "worker-a", "limit": 5, "certify_proofs": True},
+    )
+
+    assert missed.status_code == 200
+    assert missed.json()["schedule"]["state"] == "missed"
+    assert missed.json()["receipt"]["reason"] == "missed_run"
+    assert missed.json()["receipt"]["worker_id"] == "operator-a"
+    assert missed.json()["proof_receipt_id"].startswith("rcpt-")
+    assert fetched.json()["receipt_count"] == 1
+    assert fetched.json()["receipts"][0]["verdict"] == "blocked"
+    assert worker.json()["count"] == 0
+
+
 def test_invalid_risk_and_missing_schedule_fail_closed() -> None:
     client = _client(MutableClock("2026-05-04T13:00:00+00:00"))
     invalid = _request()
     invalid["risk"] = "unknown-risk"
 
     created = client.post("/api/v1/temporal/schedules", json=invalid)
-    missing = client.post("/api/v1/temporal/schedules/missing/cancel")
+    missing_cancel = client.post("/api/v1/temporal/schedules/missing/cancel")
+    missing_missed = client.post("/api/v1/temporal/schedules/missing/missed")
 
     assert created.status_code == 400
     assert created.json()["detail"]["error_code"] == "invalid_risk"
-    assert missing.status_code == 404
-    assert missing.json()["detail"]["error_code"] == "schedule_not_found"
+    assert missing_cancel.status_code == 404
+    assert missing_cancel.json()["detail"]["error_code"] == "schedule_not_found"
+    assert missing_missed.status_code == 404
+    assert missing_missed.json()["detail"]["error_code"] == "schedule_not_found"
 
 
 def test_create_temporal_schedule_error_detail_is_bounded() -> None:
@@ -173,6 +197,7 @@ def test_default_routers_include_temporal_scheduler_summary() -> None:
     assert "/api/v1/temporal/monitor" in paths
     assert "/api/v1/temporal/summary" in paths
     assert "/api/v1/temporal/schedules" in paths
+    assert "/api/v1/temporal/schedules/{schedule_id}/missed" in paths
     assert "/api/v1/temporal/worker/tick" in paths
 
 

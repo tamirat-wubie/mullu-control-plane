@@ -4805,6 +4805,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/temporal/schedules",
                 "/api/v1/temporal/schedules/{schedule_id}",
                 "/api/v1/temporal/schedules/{schedule_id}/cancel",
+                "/api/v1/temporal/schedules/{schedule_id}/missed",
                 "/api/v1/temporal/worker/tick",
                 "/api/v1/temporal/monitor",
                 "/api/v1/temporal/summary",
@@ -4840,6 +4841,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schedule_read_models_persisted",
                 "worker_tick_certifies_proofs",
                 "cancel_emits_terminal_receipt",
+                "missed_emits_terminal_receipt",
                 "temporal_receipt_schema_valid",
                 "receipt_not_terminal_closure",
             ],
@@ -4876,6 +4878,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "cancel_emits_terminal_receipt": [
                     "cancel_temporal_schedule_records_terminal_receipt"
+                ],
+                "missed_emits_terminal_receipt": [
+                    "missed_temporal_schedule_records_terminal_receipt"
                 ],
                 "temporal_receipt_schema_valid": [
                     "temporal_kernel_allows_due_fresh_schema_valid_receipt"

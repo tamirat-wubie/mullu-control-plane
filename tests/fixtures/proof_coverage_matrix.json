@@ -885,11 +885,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 254,
+      "proven": 255,
       "unproven": 0,
       "witnessed": 151
     },
-    "route_count": 405,
+    "route_count": 406,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2464,6 +2464,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/temporal/schedules/{schedule_id}/cancel",
+        "surface_id": "temporal_kernel"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/temporal/schedules/{schedule_id}/missed",
         "surface_id": "temporal_kernel"
       },
       {
@@ -7891,6 +7896,7 @@
         "/api/v1/temporal/schedules",
         "/api/v1/temporal/schedules/{schedule_id}",
         "/api/v1/temporal/schedules/{schedule_id}/cancel",
+        "/api/v1/temporal/schedules/{schedule_id}/missed",
         "/api/v1/temporal/worker/tick",
         "/api/v1/temporal/monitor",
         "/api/v1/temporal/summary",
@@ -7914,6 +7920,9 @@
         ],
         "future_schedule_defers": [
           "temporal_kernel_defers_future_execution_without_terminal_closure"
+        ],
+        "missed_emits_terminal_receipt": [
+          "missed_temporal_schedule_records_terminal_receipt"
         ],
         "monotonic_duration_measured": [
           "temporal_kernel_allows_due_fresh_schema_valid_receipt"
@@ -7957,6 +7966,7 @@
         "schedule_read_models_persisted",
         "worker_tick_certifies_proofs",
         "cancel_emits_terminal_receipt",
+        "missed_emits_terminal_receipt",
         "temporal_receipt_schema_valid",
         "receipt_not_terminal_closure"
       ],
@@ -9588,8 +9598,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1209,
-    "runtime_witness_count": 1209,
+    "exact_test_anchor_count": 1210,
+    "runtime_witness_count": 1210,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -16175,6 +16185,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_temporal_scheduler_router.py::test_missed_temporal_schedule_records_terminal_receipt"
+            ],
+            "witness": "missed_emits_terminal_receipt"
+          },
+          {
+            "anchors": [
               "tests/test_gateway/test_temporal_kernel.py::test_temporal_kernel_allows_due_fresh_schema_valid_receipt"
             ],
             "witness": "temporal_receipt_schema_valid"
@@ -16186,8 +16202,8 @@
             "witness": "receipt_not_terminal_closure"
           }
         ],
-        "exact_test_anchor_count": 14,
-        "runtime_witness_count": 14,
+        "exact_test_anchor_count": 15,
+        "runtime_witness_count": 15,
         "surface_id": "temporal_kernel",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
