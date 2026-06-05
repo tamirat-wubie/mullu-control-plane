@@ -20,7 +20,7 @@ tool receipts, and replay witnesses.
 | Lineage resolver | Locate root trace, output, or command and ancestor chain | trace, output, or command id | ordered causal graph |
 | Context projector | Attach policy, model, tenant, and budget context | trace node ids | decorated lineage nodes |
 | Proof verifier | Validate graph edges, hash links, and proof references | decorated nodes and edges | verification summary |
-| Policy-version projector | Build a bounded policy-version index from lineage nodes | decorated nodes | policy-version read model |
+| Policy-version projector | Build a bounded policy-version index and optional registry lookup status from lineage nodes | decorated nodes, optional policy registry | policy-version read model |
 | Read API | Return bounded graph slices | query envelope | JSON lineage document |
 
 ## URI Form
@@ -29,6 +29,7 @@ tool receipts, and replay witnesses.
 lineage://output/{output_id}
 lineage://trace/{trace_id}
 lineage://command/{command_id}
+lineage://artifact/{artifact_id}
 ```
 
 Optional query parameters:
@@ -36,13 +37,14 @@ Optional query parameters:
 | Parameter | Meaning | Default |
 |---|---|---|
 | `depth` | Maximum ancestor depth, bounded to `1..100` | `25` |
-| `include` | Comma-separated context families | `policy,model,tenant,budget,tool,replay` |
+| `include` | Comma-separated context families | `policy,model,tenant,budget,tool,replay,artifact` |
 | `verify` | Recompute proof and hash-chain validity | `true` |
 | `at` | Point-in-time version boundary | latest visible state |
 
 Allowed `include` values are bounded to `policy`, `model`, `tenant`,
-`budget`, `tool`, and `replay`. Duplicate values are removed while preserving
-caller order. Unknown include values fail closed as invalid lineage URIs.
+`budget`, `tool`, `replay`, and `artifact`. Duplicate values are removed while
+preserving caller order. Unknown include values fail closed as invalid lineage
+URIs.
 
 ## Lineage Node Contract
 
@@ -102,6 +104,7 @@ lineage://command/cmd-7?include=policy,tool
 | `/api/v1/lineage/{trace_id}` | `GET` | Fetch lineage by trace id |
 | `/api/v1/lineage/output/{output_id}` | `GET` | Fetch lineage by output id |
 | `/api/v1/lineage/command/{command_id}` | `GET` | Fetch lineage by command id |
+| `/api/v1/lineage/artifact/{artifact_id}` | `GET` | Fetch lineage by artifact id |
 
 ## Index Resolution
 
@@ -125,12 +128,35 @@ entry records:
 2. `node_count`
 3. `node_ids`
 4. `tenant_ids`
+5. `registry_lookup_status`
+6. `policy_id`
+7. `registry_version`
+8. `artifact_hash`
+9. `rule_count`
+10. `created_at`
 
 This lets operators query which policy versions governed the returned lineage
 without walking every node manually.
 
+When the policy-version registry dependency is configured, canonical
+`policy_id@version` labels are looked up against the durable registry. The
+projection returns only bounded metadata: lookup status, policy id, registry
+version, artifact hash, rule count, and creation timestamp. Rule payloads are
+not emitted through lineage documents.
+
+Lookup status values:
+
+| Status | Meaning |
+|---|---|
+| `not_requested` | No policy registry source was supplied to the resolver |
+| `unparseable_ref` | A registry source was supplied but the node label was not `policy_id@version` |
+| `not_found` | The canonical policy/version pair was absent from the registry |
+| `matched` | The policy artifact was found and bounded metadata was attached |
+| `lookup_failed` | The registry source raised during lookup |
+| `lookup_unavailable` | The supplied registry source did not expose `get_version` |
+
 STATUS:
   Completeness: 100%
-  Invariants verified: URI grammar, read-only boundary, tenant context retention, missing ancestor visibility, proof verification position, bounded output index scan, bounded command index scan, edge endpoint verification, parent edge consistency, deterministic document hash, policy-version projection
+  Invariants verified: URI grammar, read-only boundary, tenant context retention, missing ancestor visibility, proof verification position, bounded output index scan, bounded command index scan, artifact lineage replay projection, edge endpoint verification, parent edge consistency, deterministic document hash, policy-version projection, policy registry metadata projection
   Open issues: none
-  Next action: connect external policy registry metadata when a durable registry is introduced
+  Next action: monitor hosted registry readiness once Foundation Mode evidence promotes external deployment surfaces

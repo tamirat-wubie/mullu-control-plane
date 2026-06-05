@@ -14,7 +14,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 from urllib.parse import parse_qs, urlparse
 
 
@@ -56,6 +56,23 @@ class ArtifactLineageSource(Protocol):
 
     def replay_plan(self, target_artifact_id: str) -> Any:
         """Return the replay plan for reconstructing an artifact."""
+
+
+class PolicyVersionRegistrySource(Protocol):
+    """Read-only subset required from a policy-version registry."""
+
+    def get_version(self, policy_id: str, version: str) -> Any | None:
+        """Return a registered policy artifact version when present."""
+
+
+PolicyRegistryLookupStatus = Literal[
+    "not_requested",
+    "unparseable_ref",
+    "not_found",
+    "matched",
+    "lookup_failed",
+    "lookup_unavailable",
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -155,6 +172,12 @@ class PolicyVersionProjection:
     policy_version: str
     node_ids: tuple[str, ...]
     tenant_ids: tuple[str, ...]
+    registry_lookup_status: PolicyRegistryLookupStatus = "not_requested"
+    policy_id: str = ""
+    registry_version: str = ""
+    artifact_hash: str = ""
+    rule_count: int = 0
+    created_at: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -162,6 +185,12 @@ class PolicyVersionProjection:
             "node_count": len(self.node_ids),
             "node_ids": list(self.node_ids),
             "tenant_ids": list(self.tenant_ids),
+            "registry_lookup_status": self.registry_lookup_status,
+            "policy_id": self.policy_id,
+            "registry_version": self.registry_version,
+            "artifact_hash": self.artifact_hash,
+            "rule_count": self.rule_count,
+            "created_at": self.created_at,
         }
 
 
@@ -207,6 +236,7 @@ def resolve_lineage_query(
     clock: Any,
     command_source: CommandLineageSource | None = None,
     artifact_source: ArtifactLineageSource | None = None,
+    policy_registry: PolicyVersionRegistrySource | None = None,
 ) -> dict[str, Any]:
     """Resolve a lineage query against read-only replay trace state."""
     if query.ref.ref_type == "artifact":
@@ -223,8 +253,14 @@ def resolve_lineage_query(
                 edges=(),
                 verified=False,
                 reason_codes=("artifact_source_not_configured",),
+                policy_registry=policy_registry,
             )
-        return _resolve_artifact_lineage(query, artifact_source=artifact_source, clock=clock)
+        return _resolve_artifact_lineage(
+            query,
+            artifact_source=artifact_source,
+            clock=clock,
+            policy_registry=policy_registry,
+        )
 
     if query.ref.ref_type == "command" and command_source is not None:
         command = command_source.get(query.ref.ref_id)
@@ -233,18 +269,39 @@ def resolve_lineage_query(
             edges = tuple(_edges_from_nodes(nodes))
             reason_codes = _verify_graph(nodes, edges) if query.verify else ()
             verified = not reason_codes
-            return _document(query, nodes=nodes, edges=edges, verified=verified, reason_codes=reason_codes)
+            return _document(
+                query,
+                nodes=nodes,
+                edges=edges,
+                verified=verified,
+                reason_codes=reason_codes,
+                policy_registry=policy_registry,
+            )
 
     trace_id, trace = _trace_for_ref(query.ref, replay_source)
     if trace is None:
         node = _unresolved_node(query, trace_id=trace_id, timestamp=clock(), reason="trace_not_found")
-        return _document(query, nodes=(node,), edges=(), verified=False, reason_codes=("trace_not_found",))
+        return _document(
+            query,
+            nodes=(node,),
+            edges=(),
+            verified=False,
+            reason_codes=("trace_not_found",),
+            policy_registry=policy_registry,
+        )
 
     nodes = tuple(_nodes_from_replay_trace(trace, depth=query.depth))
     edges = tuple(_edges_from_nodes(nodes))
     reason_codes = _verify_graph(nodes, edges) if query.verify else ()
     verified = not reason_codes
-    return _document(query, nodes=nodes, edges=edges, verified=verified, reason_codes=reason_codes)
+    return _document(
+        query,
+        nodes=nodes,
+        edges=edges,
+        verified=verified,
+        reason_codes=reason_codes,
+        policy_registry=policy_registry,
+    )
 
 
 def resolve_lineage_uri(
@@ -254,6 +311,7 @@ def resolve_lineage_uri(
     clock: Any,
     command_source: CommandLineageSource | None = None,
     artifact_source: ArtifactLineageSource | None = None,
+    policy_registry: PolicyVersionRegistrySource | None = None,
 ) -> dict[str, Any]:
     """Parse and resolve a lineage URI."""
     return resolve_lineage_query(
@@ -262,6 +320,7 @@ def resolve_lineage_uri(
         clock=clock,
         command_source=command_source,
         artifact_source=artifact_source,
+        policy_registry=policy_registry,
     )
 
 
@@ -383,6 +442,7 @@ def _resolve_artifact_lineage(
     *,
     artifact_source: ArtifactLineageSource,
     clock: Any,
+    policy_registry: PolicyVersionRegistrySource | None = None,
 ) -> dict[str, Any]:
     artifact = artifact_source.get_artifact(query.ref.ref_id)
     if artifact is None:
@@ -392,7 +452,14 @@ def _resolve_artifact_lineage(
             timestamp=clock(),
             reason="artifact_not_found",
         )
-        return _document(query, nodes=(node,), edges=(), verified=False, reason_codes=("artifact_not_found",))
+        return _document(
+            query,
+            nodes=(node,),
+            edges=(),
+            verified=False,
+            reason_codes=("artifact_not_found",),
+            policy_registry=policy_registry,
+        )
 
     replay_plan = artifact_source.replay_plan(query.ref.ref_id)
     artifact_ids = tuple(getattr(replay_plan, "artifact_ids"))[: query.depth]
@@ -411,7 +478,14 @@ def _resolve_artifact_lineage(
     if getattr(replay_plan, "ready") is False:
         reason_codes = (*reason_codes, *tuple(getattr(replay_plan, "blocked_reasons")))
     verified = not reason_codes
-    return _document(query, nodes=nodes, edges=edges, verified=verified, reason_codes=reason_codes)
+    return _document(
+        query,
+        nodes=nodes,
+        edges=edges,
+        verified=verified,
+        reason_codes=reason_codes,
+        policy_registry=policy_registry,
+    )
 
 
 def _node_from_artifact(
@@ -513,7 +587,11 @@ def _verify_graph(nodes: tuple[LineageNode, ...], edges: tuple[LineageEdge, ...]
     return tuple(reason_codes)
 
 
-def _policy_version_projection(nodes: tuple[LineageNode, ...]) -> list[PolicyVersionProjection]:
+def _policy_version_projection(
+    nodes: tuple[LineageNode, ...],
+    *,
+    policy_registry: PolicyVersionRegistrySource | None = None,
+) -> list[PolicyVersionProjection]:
     policy_index: dict[str, dict[str, set[str]]] = {}
     for node in nodes:
         policy_version = node.policy_version or "unknown"
@@ -521,14 +599,73 @@ def _policy_version_projection(nodes: tuple[LineageNode, ...]) -> list[PolicyVer
         entry["node_ids"].add(node.node_id)
         if node.tenant_id:
             entry["tenant_ids"].add(node.tenant_id)
-    return [
-        PolicyVersionProjection(
-            policy_version=policy_version,
-            node_ids=tuple(sorted(entry["node_ids"])),
-            tenant_ids=tuple(sorted(entry["tenant_ids"])),
+    projections: list[PolicyVersionProjection] = []
+    for policy_version, entry in sorted(policy_index.items()):
+        registry_metadata = _policy_registry_metadata(policy_version, policy_registry=policy_registry)
+        projections.append(
+            PolicyVersionProjection(
+                policy_version=policy_version,
+                node_ids=tuple(sorted(entry["node_ids"])),
+                tenant_ids=tuple(sorted(entry["tenant_ids"])),
+                **registry_metadata,
+            )
         )
-        for policy_version, entry in sorted(policy_index.items())
-    ]
+    return projections
+
+
+def _split_policy_version_ref(policy_version: str) -> tuple[str, str] | None:
+    """Return canonical policy registry coordinates from policy_id@version."""
+    value = policy_version.strip()
+    if "@" not in value:
+        return None
+    policy_id, version = value.split("@", 1)
+    if not policy_id or not version:
+        return None
+    return policy_id, version
+
+
+def _policy_registry_metadata(
+    policy_version: str,
+    *,
+    policy_registry: PolicyVersionRegistrySource | None,
+) -> dict[str, Any]:
+    metadata: dict[str, Any] = {
+        "registry_lookup_status": "not_requested",
+        "policy_id": "",
+        "registry_version": "",
+        "artifact_hash": "",
+        "rule_count": 0,
+        "created_at": "",
+    }
+    if policy_registry is None:
+        return metadata
+
+    parsed_ref = _split_policy_version_ref(policy_version)
+    if parsed_ref is None:
+        metadata["registry_lookup_status"] = "unparseable_ref"
+        return metadata
+
+    policy_id, registry_version = parsed_ref
+    metadata["policy_id"] = policy_id
+    metadata["registry_version"] = registry_version
+    get_version = getattr(policy_registry, "get_version", None)
+    if not callable(get_version):
+        metadata["registry_lookup_status"] = "lookup_unavailable"
+        return metadata
+    try:
+        artifact = get_version(policy_id, registry_version)
+    except Exception:
+        metadata["registry_lookup_status"] = "lookup_failed"
+        return metadata
+    if artifact is None:
+        metadata["registry_lookup_status"] = "not_found"
+        return metadata
+
+    metadata["registry_lookup_status"] = "matched"
+    metadata["artifact_hash"] = str(getattr(artifact, "artifact_hash", "") or "")
+    metadata["rule_count"] = len(tuple(getattr(artifact, "rules", ()) or ()))
+    metadata["created_at"] = str(getattr(artifact, "created_at", "") or "")
+    return metadata
 
 
 def _document(
@@ -538,6 +675,7 @@ def _document(
     edges: tuple[LineageEdge, ...],
     verified: bool,
     reason_codes: tuple[str, ...],
+    policy_registry: PolicyVersionRegistrySource | None = None,
 ) -> dict[str, Any]:
     unresolved_nodes = [node.node_id for node in nodes if node.unresolved]
     document = {
@@ -553,7 +691,10 @@ def _document(
             "checked_nodes": len(nodes),
             "checked_edges": len(edges),
         },
-        "policy_versions": [projection.to_dict() for projection in _policy_version_projection(nodes)],
+        "policy_versions": [
+            projection.to_dict()
+            for projection in _policy_version_projection(nodes, policy_registry=policy_registry)
+        ],
         "nodes": [node.to_dict() for node in nodes],
         "edges": [edge.to_dict() for edge in edges],
         "unresolved_nodes": unresolved_nodes,

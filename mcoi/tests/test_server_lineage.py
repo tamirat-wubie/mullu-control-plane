@@ -31,8 +31,14 @@ def client():
     from mcoi_runtime.app.routers.deps import deps
     from mcoi_runtime.app.server import app
     from mcoi_runtime.core.artifact_lineage_dag import ArtifactLineageDAG, hash_artifact_payload
+    from mcoi_runtime.governance.policy.versioning import (
+        PolicyArtifact,
+        PolicyVersionRegistry,
+        VersionedPolicyRule,
+    )
 
     trace_id = "lineage-http-trace"
+    policy_trace_id = "lineage-policy-registry-trace"
     if deps.replay_recorder.get_trace(trace_id) is None:
         deps.replay_recorder.start_trace(trace_id)
         deps.replay_recorder.record_frame(
@@ -48,6 +54,37 @@ def client():
             {"proof_id": "proof:http", "output_id": "out-http"},
         )
         deps.replay_recorder.complete_trace(trace_id)
+    if deps.replay_recorder.get_trace(policy_trace_id) is None:
+        deps.replay_recorder.start_trace(policy_trace_id)
+        deps.replay_recorder.record_frame(
+            policy_trace_id,
+            "request.accepted",
+            {
+                "tenant_id": "tenant-http",
+                "policy_version": "tenant-governance@v1",
+                "model_version": "model:http",
+                "budget_id": "budget-http",
+            },
+            {"proof_id": "proof:policy-registry"},
+        )
+        deps.replay_recorder.complete_trace(policy_trace_id)
+    policy_registry = PolicyVersionRegistry()
+    policy_registry.register(
+        PolicyArtifact.create(
+            policy_id="tenant-governance",
+            version="v1",
+            rules=(
+                VersionedPolicyRule(
+                    rule_id="tenant-boundary",
+                    description="retain tenant boundary",
+                    condition="tenant_id present",
+                    action="allow",
+                ),
+            ),
+            created_at="2026-05-13T14:00:00+00:00",
+        )
+    )
+    deps.set("policy_version_registry", policy_registry)
     artifact_lineage = ArtifactLineageDAG(clock=lambda: "2026-05-13T14:00:00+00:00")
     artifact_lineage.register_artifact(
         artifact_id="source-http",
@@ -97,6 +134,22 @@ def test_lineage_trace_permalink_route_returns_document(client) -> None:
     assert data["root_ref"]["ref_id"] == "lineage-http-trace"
     assert data["depth"] == 3
     assert data["nodes"]
+
+
+def test_lineage_route_enriches_policy_registry_metadata(client) -> None:
+    response = client.get("/api/v1/lineage/lineage-policy-registry-trace?depth=3")
+    data = response.json()
+    policy_projection = data["policy_versions"][0]
+
+    assert response.status_code == 200
+    assert data["verified"] is True
+    assert policy_projection["policy_version"] == "tenant-governance@v1"
+    assert policy_projection["registry_lookup_status"] == "matched"
+    assert policy_projection["policy_id"] == "tenant-governance"
+    assert policy_projection["registry_version"] == "v1"
+    assert policy_projection["artifact_hash"].startswith("policy-artifact-")
+    assert policy_projection["rule_count"] == 1
+    assert "rules" not in policy_projection
 
 
 def test_lineage_output_permalink_returns_unresolved_document(client) -> None:

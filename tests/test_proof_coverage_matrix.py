@@ -1895,6 +1895,7 @@ def test_lineage_query_api_is_proven_read_model() -> None:
     assert "mcoi/tests/test_server_lineage.py" in lineage_surface["evidence_files"]
     assert "schemas/lineage_query.schema.json" in lineage_surface["evidence_files"]
     assert "docs/42_lineage_query_api.md" in lineage_surface["evidence_files"]
+    assert "lineage_route_enriches_policy_registry_metadata" in lineage_surface["runtime_witnesses"]
     assert closure_actions["implement_lineage_query_routes_and_schema"]["status"] == "closed"
 
 

@@ -9438,7 +9438,7 @@
         "schemas/trace_entry.schema.json",
         "schemas/replay_record.schema.json"
       ],
-      "notes": "Lineage query API resolves read-only lineage:// URIs with bounded output, command, graph, and policy-version read models.",
+      "notes": "Lineage query API resolves read-only lineage:// URIs with bounded output, command, artifact, graph, policy-version, and policy-registry metadata read models.",
       "representative_paths": [
         "/api/v1/lineage/resolve",
         "/api/v1/lineage/{trace_id}",
@@ -9450,6 +9450,7 @@
       "runtime_witnesses": [
         "lineage_resolve_route_returns_trace_document",
         "lineage_trace_permalink_route_returns_document",
+        "lineage_route_enriches_policy_registry_metadata",
         "lineage_output_permalink_returns_unresolved_document",
         "lineage_output_permalink_resolves_indexed_trace",
         "lineage_command_permalink_resolves_indexed_trace",
@@ -9557,8 +9558,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1200,
-    "runtime_witness_count": 1200,
+    "exact_test_anchor_count": 1201,
+    "runtime_witness_count": 1201,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -17899,6 +17900,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_server_lineage.py::test_lineage_route_enriches_policy_registry_metadata"
+            ],
+            "witness": "lineage_route_enriches_policy_registry_metadata"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_server_lineage.py::test_lineage_output_permalink_returns_unresolved_document"
             ],
             "witness": "lineage_output_permalink_returns_unresolved_document"
@@ -17928,8 +17935,8 @@
             "witness": "lineage_resolve_rejects_invalid_uri"
           }
         ],
-        "exact_test_anchor_count": 7,
-        "runtime_witness_count": 7,
+        "exact_test_anchor_count": 8,
+        "runtime_witness_count": 8,
         "surface_id": "lineage_query_api",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
