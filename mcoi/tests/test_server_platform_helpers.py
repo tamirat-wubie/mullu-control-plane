@@ -139,6 +139,43 @@ def test_bootstrap_governance_runtime_wires_services_and_local_policy() -> None:
     assert bootstrap.shell_policy is local_policy
 
 
+def test_bootstrap_governance_runtime_requires_postgres_in_strict_env() -> None:
+    captured: dict[str, object] = {}
+
+    def stores_factory(**kwargs):
+        captured["kwargs"] = kwargs
+        return {
+            "budget": object(),
+            "rate_limit": object(),
+            "audit": object(),
+            "tenant_gating": object(),
+        }
+
+    bootstrap = server_platform.bootstrap_governance_runtime(
+        env="pilot",
+        runtime_env={"MULLU_DB_URL": "postgresql://secret-host/db"},
+        db_backend="postgresql",
+        clock=lambda: "2026-01-01T00:00:00Z",
+        field_encryptor=None,
+        allow_unknown_tenants=False,
+        create_governance_stores_fn=stores_factory,
+        tenant_budget_manager_cls=lambda **kwargs: object(),
+        governance_metrics_engine_cls=lambda **kwargs: object(),
+        rate_limiter_cls=lambda **kwargs: object(),
+        rate_limit_config_cls=lambda **kwargs: object(),
+        audit_trail_cls=lambda **kwargs: object(),
+        tenant_gating_registry_cls=lambda **kwargs: object(),
+        sandboxed_policy=object(),
+        local_dev_policy=object(),
+        pilot_prod_policy=object(),
+        pilot_prod_disabled_policy=object(),
+    )
+
+    assert bootstrap.governance_stores["budget"] is not None
+    assert captured["kwargs"]["require_available"] is True
+    assert captured["kwargs"]["connection_string"] == "postgresql://secret-host/db"
+
+
 def test_bootstrap_governance_runtime_defaults_pilot_prod_to_disabled_shell_policy() -> None:
     disabled_policy = object()
 

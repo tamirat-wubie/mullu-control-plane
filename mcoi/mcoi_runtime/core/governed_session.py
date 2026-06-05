@@ -1005,7 +1005,11 @@ class Platform:
 
         db_backend = os.environ.get("MULLU_DB_BACKEND", "memory")
         env = os.environ.get("MULLU_ENV", "local_dev")
-        stores = create_governance_stores(backend=db_backend, connection_string=os.environ.get("MULLU_DB_URL", ""))
+        stores = create_governance_stores(
+            backend=db_backend,
+            connection_string=os.environ.get("MULLU_DB_URL", ""),
+            require_available=env.strip().lower() in ("pilot", "production"),
+        )
         allow_unknown_tenants = _env_flag("MULLU_ALLOW_UNKNOWN_TENANTS")
         if allow_unknown_tenants is None:
             allow_unknown_tenants = env in ("local_dev", "test")

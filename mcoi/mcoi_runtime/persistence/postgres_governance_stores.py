@@ -1360,6 +1360,7 @@ def create_governance_stores(
     *,
     field_encryptor: Any | None = None,
     pool_size: int = 1,
+    require_available: bool = False,
 ) -> GovernanceStoreBundle:
     """Factory for creating governance stores.
 
@@ -1378,6 +1379,8 @@ def create_governance_stores(
     ``self._lock``).
 
     When field_encryptor is provided, audit entry detail fields are encrypted at rest.
+    When require_available is true, PostgreSQL store construction fails closed if
+    any governance store cannot open a connection.
     """
     if backend == "memory":
         return GovernanceStoreBundle({
@@ -1388,7 +1391,7 @@ def create_governance_stores(
         })
     if backend == "postgresql":
         conn = connection_string or "postgresql://localhost:5432/mullu"
-        return GovernanceStoreBundle({
+        bundle = GovernanceStoreBundle({
             "budget": PostgresBudgetStore(conn, pool_size=pool_size),
             "audit": PostgresAuditStore(
                 conn, field_encryptor=field_encryptor, pool_size=pool_size,
@@ -1396,4 +1399,8 @@ def create_governance_stores(
             "rate_limit": PostgresRateLimitStore(conn, pool_size=pool_size),
             "tenant_gating": PostgresTenantGatingStore(conn, pool_size=pool_size),
         })
+        if require_available and any(getattr(store, "_conn", None) is None for _key, store in bundle.items()):
+            bundle.close()
+            raise RuntimeError("postgresql governance stores unavailable")
+        return bundle
     raise ValueError("unsupported governance store backend")
