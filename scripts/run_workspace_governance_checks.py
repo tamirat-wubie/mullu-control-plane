@@ -272,6 +272,85 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_external_infrastructure_boundary.py"),
         ),
         CheckCommand(
+            "foundation_runtime_secret_handoff_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_runtime_secret_handoff_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_production_dependency_evidence_rehearsal_boundary",
+            (
+                python_executable,
+                "scripts/validate_foundation_production_dependency_evidence_rehearsal_boundary.py",
+            ),
+        ),
+        CheckCommand(
+            "foundation_external_evidence_acceptance_rehearsal_boundary",
+            (
+                python_executable,
+                "scripts/validate_foundation_external_evidence_acceptance_rehearsal_boundary.py",
+            ),
+        ),
+        CheckCommand(
+            "foundation_deployment_upstream_api_gate_rehearsal_boundary",
+            (
+                python_executable,
+                "scripts/validate_foundation_deployment_upstream_api_gate_rehearsal_boundary.py",
+            ),
+        ),
+        CheckCommand(
+            "foundation_gateway_dns_target_binding_rehearsal_boundary",
+            (
+                python_executable,
+                "scripts/validate_foundation_gateway_dns_target_binding_rehearsal_boundary.py",
+            ),
+        ),
+        CheckCommand(
+            "foundation_gateway_dns_resolution_receipt_rehearsal_boundary",
+            (
+                python_executable,
+                "scripts/validate_foundation_gateway_dns_resolution_receipt_rehearsal_boundary.py",
+            ),
+        ),
+        CheckCommand(
+            "foundation_gateway_endpoint_reachability_rehearsal_boundary",
+            (
+                python_executable,
+                "scripts/validate_foundation_gateway_endpoint_reachability_rehearsal_boundary.py",
+            ),
+        ),
+        CheckCommand(
+            "foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary",
+            (
+                python_executable,
+                "scripts/validate_foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary.py",
+            ),
+        ),
+        CheckCommand(
+            "foundation_public_health_declaration_rehearsal_boundary",
+            (
+                python_executable,
+                "scripts/validate_foundation_public_health_declaration_rehearsal_boundary.py",
+            ),
+        ),
+        CheckCommand(
+            "foundation_deployment_witness_input_boundary",
+            (python_executable, "scripts/validate_foundation_deployment_witness_input_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_deployment_witness_preflight_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_deployment_witness_preflight_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_deployment_witness_evidence_handoff_boundary",
+            (python_executable, "scripts/validate_foundation_deployment_witness_evidence_handoff_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_deployment_witness_evidence_ledger_routing_boundary",
+            (
+                python_executable,
+                "scripts/validate_foundation_deployment_witness_evidence_ledger_routing_boundary.py",
+            ),
+        ),
+        CheckCommand(
             "foundation_domain_email_boundary",
             (python_executable, "scripts/validate_foundation_domain_email_boundary.py"),
         ),
@@ -310,6 +389,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         CheckCommand(
             "foundation_pilot_deferral_rehearsal_boundary",
             (python_executable, "scripts/validate_foundation_pilot_deferral_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_reassessment_gate_boundary",
+            (python_executable, "scripts/validate_foundation_reassessment_gate_boundary.py"),
         ),
         CheckCommand(
             "foundation_support_readiness_boundary",

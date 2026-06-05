@@ -1,0 +1,149 @@
+{
+  "artifact_publication_allowed": false,
+  "blocked_claims": [
+    "evidence ledger append",
+    "live evidence reference",
+    "ledger promotion",
+    "terminal closure",
+    "readiness claim",
+    "dns proof",
+    "endpoint proof",
+    "secret presence claim",
+    "workflow run claim",
+    "artifact publication",
+    "deployment status approval",
+    "operator approval",
+    "customer access",
+    "personal data collection",
+    "money movement",
+    "legal clearance",
+    "company formation",
+    "patent claim",
+    "external publication",
+    "deployment readiness"
+  ],
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "deployment_status_approval_claimed": false,
+  "dns_proof_claimed": false,
+  "endpoint_proof_claimed": false,
+  "evidence_ledger_append_allowed": false,
+  "external_publication_allowed": false,
+  "ledger_promotion_allowed": false,
+  "legal_clearance_claimed": false,
+  "live_evidence_reference_allowed": false,
+  "money_movement_allowed": false,
+  "next_action": "record public-safe evidence ledger route labels only; do not append live evidence, record live evidence references, promote the ledger, claim terminal closure, claim readiness, claim DNS proof, claim endpoint proof, claim secret presence, claim workflow runs, publish artifacts, claim deployment status approval, claim operator approval, open customer access, collect personal data, move money, claim legal clearance, form a company, claim patent protection, publish externally, or deploy",
+  "operator_approval_claimed": false,
+  "patent_claimed": false,
+  "personal_data_collection_allowed": false,
+  "readiness_claimed": false,
+  "route_labels": [
+    "deployment_witness_receipt_to_evidence_ledger_entry",
+    "gateway_readiness_report_to_evidence_ledger_entry",
+    "closure_plan_receipt_to_evidence_ledger_entry",
+    "dns_resolution_receipt_to_evidence_ledger_entry",
+    "endpoint_probe_receipt_to_evidence_ledger_entry",
+    "runtime_witness_receipt_to_evidence_ledger_entry",
+    "runtime_conformance_receipt_to_evidence_ledger_entry",
+    "workflow_run_receipt_to_evidence_ledger_entry",
+    "artifact_publication_receipt_to_evidence_ledger_entry",
+    "deployment_status_approval_to_evidence_ledger_entry",
+    "operator_decision_to_evidence_ledger_entry",
+    "evidence_ledger_reassessment_gate"
+  ],
+  "schema_version": 1,
+  "secret_presence_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deployment witness receipt route only; live witness evidence is not appended.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_witness_receipt_route",
+      "surface_type": "local_route_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Gateway readiness report route only; readiness report pass is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "gateway_readiness_report_route",
+      "surface_type": "local_route_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Closure plan receipt route only; closure approval is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "closure_plan_receipt_route",
+      "surface_type": "local_route_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "DNS resolution receipt route only; DNS proof is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dns_resolution_receipt_route",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint probe receipt route only; endpoint proof is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_probe_receipt_route",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Runtime witness receipt route only; runtime witness pass is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_witness_receipt_route",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Runtime conformance receipt route only; runtime conformance pass is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_conformance_receipt_route",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Workflow run receipt route only; workflow execution is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "workflow_run_receipt_route",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Artifact publication receipt route only; artifacts are not published or promoted.",
+      "state": "AwaitingEvidence",
+      "surface_id": "artifact_publication_receipt_route",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deployment status approval route only; deployment status approval is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_status_approval_route",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Operator decision route only; operator approval is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_decision_route",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Reassessment gate route only; ledger promotion is not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "reassessment_gate_route",
+      "surface_type": "local_route_label"
+    }
+  ],
+  "terminal_closure_claimed": false,
+  "witness_id": "foundation_deployment_witness_evidence_ledger_routing_witness.awaiting_evidence.v1",
+  "workflow_run_claimed": false
+}

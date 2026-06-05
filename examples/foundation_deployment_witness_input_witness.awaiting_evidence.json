@@ -1,0 +1,139 @@
+{
+  "blocked_claims": [
+    "secret value",
+    "repository variable value",
+    "dns mutation",
+    "endpoint reachability",
+    "workflow dispatch",
+    "witness artifact publication",
+    "deployment status promotion",
+    "customer access",
+    "personal data collection",
+    "money movement",
+    "legal clearance",
+    "company formation",
+    "patent claim",
+    "external publication",
+    "deployment readiness"
+  ],
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "deployment_status_promotion_allowed": false,
+  "dns_mutation_allowed": false,
+  "endpoint_labels": [
+    "/health",
+    "/gateway/witness",
+    "/runtime/conformance"
+  ],
+  "endpoint_reachability_claimed": false,
+  "expected_runtime_env_value_allowed": false,
+  "external_publication_allowed": false,
+  "gateway_url_value_allowed": false,
+  "legal_clearance_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "record public-safe input names only; do not collect secret values, bind repository variables, mutate DNS, claim endpoint reachability, dispatch workflows, publish witness artifacts, promote deployment status, open customer access, collect personal data, move money, claim legal clearance, form a company, claim patent protection, publish externally, or deploy",
+  "patent_claimed": false,
+  "personal_data_collection_allowed": false,
+  "public_safe_names": [
+    "MULLU_RUNTIME_WITNESS_SECRET",
+    "MULLU_RUNTIME_CONFORMANCE_SECRET",
+    "MULLU_GATEWAY_URL",
+    "MULLU_EXPECTED_RUNTIME_ENV"
+  ],
+  "repository_variable_binding_allowed": false,
+  "runtime_conformance_secret_value_allowed": false,
+  "runtime_witness_secret_value_allowed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Runtime witness secret name only; the secret value remains outside Git and is not collected.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_witness_secret_name",
+      "surface_type": "public_safe_name"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Runtime conformance secret name only; the secret value remains outside Git and is not collected.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_conformance_secret_name",
+      "surface_type": "public_safe_name"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Gateway URL variable name only; the live gateway URL value remains unavailable.",
+      "state": "AwaitingEvidence",
+      "surface_id": "gateway_url_variable_name",
+      "surface_type": "public_safe_name"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Expected runtime environment variable name only; no live environment value is selected or bound.",
+      "state": "AwaitingEvidence",
+      "surface_id": "expected_runtime_env_variable_name",
+      "surface_type": "public_safe_name"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Health endpoint path contract only; endpoint reachability and public health are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "health_endpoint_contract",
+      "surface_type": "endpoint_contract"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Gateway witness endpoint path contract only; witness fields, HMAC pass, and artifact publication are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "gateway_witness_endpoint_contract",
+      "surface_type": "endpoint_contract"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Runtime conformance endpoint path contract only; conformance fields and HMAC pass are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_conformance_endpoint_contract",
+      "surface_type": "endpoint_contract"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Repository variable binding gate only; no repository variable is created, updated, or verified.",
+      "state": "AwaitingEvidence",
+      "surface_id": "repository_variable_binding_gate",
+      "surface_type": "blocked_gate"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Workflow dispatch gate only; deployment witness and gateway publication workflows are not dispatched.",
+      "state": "AwaitingEvidence",
+      "surface_id": "workflow_dispatch_gate",
+      "surface_type": "blocked_gate"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Artifact publication gate only; published deployment witness artifacts and promotion remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "artifact_publication_gate",
+      "surface_type": "blocked_gate"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deployment status claim gate only; deployment status is not promoted to healthy or published.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_status_claim_gate",
+      "surface_type": "blocked_gate"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Operator handoff only; live DNS, runtime, provider, money, secret, legal, publication, and deployment action remain external.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_handoff",
+      "surface_type": "blocked_gate"
+    }
+  ],
+  "witness_artifact_publication_allowed": false,
+  "witness_id": "foundation_deployment_witness_input_witness.awaiting_evidence.v1",
+  "workflow_dispatch_allowed": false
+}

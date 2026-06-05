@@ -1,0 +1,239 @@
+{
+  "api_provisioning_allowed": false,
+  "artifact_publication_allowed": false,
+  "blocked_claims": [
+    "upstream API readiness claim",
+    "upstream reporter execution claim",
+    "require-ready pass claim",
+    "target gateway URL value",
+    "production image value",
+    "runtime host value",
+    "managed PostgreSQL value",
+    "schema application value",
+    "secret store value",
+    "deploy env value",
+    "release preflight value",
+    "persistence check value",
+    "host firewall value",
+    "TLS certificate value",
+    "rollback path value",
+    "private runtime witness value",
+    "DNS authority value",
+    "runtime witness closure claim",
+    "API provisioning",
+    "DNS publication",
+    "DNS target selection",
+    "repository variable binding",
+    "workflow dispatch",
+    "artifact publication",
+    "readiness claim",
+    "customer access",
+    "personal data collection",
+    "money movement",
+    "legal clearance",
+    "company formation",
+    "patent claim",
+    "external publication",
+    "deployment readiness"
+  ],
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "deploy_env_value_recorded": false,
+  "dns_authority_value_recorded": false,
+  "dns_publication_allowed": false,
+  "dns_target_selection_allowed": false,
+  "external_publication_allowed": false,
+  "field_labels": [
+    "upstream_reporter_command_label",
+    "target_gateway_url_label",
+    "recovery_witness_gate_label",
+    "production_image_gate_label",
+    "runtime_host_gate_label",
+    "managed_postgres_gate_label",
+    "schema_application_gate_label",
+    "production_secret_store_gate_label",
+    "deploy_env_gate_label",
+    "release_preflight_gate_label",
+    "persistence_check_gate_label",
+    "host_firewall_gate_label",
+    "tls_certificate_gate_label",
+    "rollback_path_gate_label",
+    "private_runtime_witness_gate_label",
+    "dns_authority_gate_label",
+    "runtime_witness_closure_gate_label",
+    "api_provisioning_stop_rule_label",
+    "dns_publication_stop_rule_label",
+    "operator_reassessment_gate"
+  ],
+  "host_firewall_value_recorded": false,
+  "legal_clearance_claimed": false,
+  "managed_postgres_value_recorded": false,
+  "money_movement_allowed": false,
+  "next_action": "record public-safe upstream API gate labels only; do not claim upstream API readiness, execute upstream reporters, claim require-ready pass, record target gateway URL values, record production image values, record runtime host values, record managed PostgreSQL values, record schema application values, record secret store values, record deploy env values, record release preflight values, record persistence check values, record host firewall values, record TLS certificate values, record rollback path values, record private runtime witness values, record DNS authority values, claim runtime witness closure, provision API runtime, publish DNS, select DNS targets, bind repository variables, dispatch workflows, publish artifacts, claim readiness, open customer access, collect personal data, move money, claim legal clearance, form a company, claim patent protection, publish externally, or deploy",
+  "patent_claimed": false,
+  "persistence_check_value_recorded": false,
+  "personal_data_collection_allowed": false,
+  "private_runtime_witness_value_recorded": false,
+  "production_image_value_recorded": false,
+  "readiness_claimed": false,
+  "release_preflight_value_recorded": false,
+  "repository_variable_binding_allowed": false,
+  "require_ready_pass_claimed": false,
+  "rollback_path_value_recorded": false,
+  "runtime_host_value_recorded": false,
+  "runtime_witness_closure_claimed": false,
+  "schema_application_value_recorded": false,
+  "schema_version": 1,
+  "secret_store_value_recorded": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Upstream reporter command label only; reporter execution is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "upstream_reporter_command_label",
+      "surface_type": "local_gate_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Target gateway URL label only; URL values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "target_gateway_url_label",
+      "surface_type": "blocked_external_value"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Recovery witness gate label only; recovery closure is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "recovery_witness_gate_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Production image gate label only; production image values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "production_image_gate_label",
+      "surface_type": "blocked_external_value"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Runtime host gate label only; runtime host values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_host_gate_label",
+      "surface_type": "blocked_external_value"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Managed PostgreSQL gate label only; database values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "managed_postgres_gate_label",
+      "surface_type": "blocked_external_value"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Schema application gate label only; schema application is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "schema_application_gate_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Production secret store gate label only; secrets are not recorded or claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "production_secret_store_gate_label",
+      "surface_type": "blocked_external_value"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deploy-env gate label only; deploy-env closure is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deploy_env_gate_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Release preflight gate label only; preflight pass is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "release_preflight_gate_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Persistence check gate label only; persistence proof is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "persistence_check_gate_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Host firewall gate label only; firewall proof is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "host_firewall_gate_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "TLS certificate gate label only; certificate values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "tls_certificate_gate_label",
+      "surface_type": "blocked_external_value"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Rollback path gate label only; rollback verification is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rollback_path_gate_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Private runtime witness gate label only; private witness values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "private_runtime_witness_gate_label",
+      "surface_type": "blocked_external_value"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "DNS authority gate label only; DNS authority is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dns_authority_gate_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Runtime witness closure gate label only; witness closure is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_witness_closure_gate_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "API provisioning stop-rule label only; API runtime is not provisioned.",
+      "state": "AwaitingEvidence",
+      "surface_id": "api_provisioning_stop_rule_label",
+      "surface_type": "local_stop_rule"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "DNS publication stop-rule label only; DNS target selection and publication are not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dns_publication_stop_rule_label",
+      "surface_type": "local_stop_rule"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Operator reassessment gate only; upstream readiness and deployment are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_reassessment_gate",
+      "surface_type": "local_gate_label"
+    }
+  ],
+  "target_gateway_url_value_recorded": false,
+  "tls_certificate_value_recorded": false,
+  "upstream_api_ready_claimed": false,
+  "upstream_reporter_executed": false,
+  "witness_id": "foundation_deployment_upstream_api_gate_rehearsal_witness.awaiting_evidence.v1",
+  "workflow_dispatch_allowed": false
+}

@@ -1,0 +1,144 @@
+{
+  "blocked_claims": [
+    "live evidence receipt",
+    "live gateway url value",
+    "dns proof",
+    "endpoint proof",
+    "secret presence claim",
+    "repository variable binding",
+    "workflow run claim",
+    "witness artifact publication",
+    "deployment status approval",
+    "operator approval",
+    "customer access",
+    "personal data collection",
+    "money movement",
+    "legal clearance",
+    "company formation",
+    "patent claim",
+    "external publication",
+    "deployment readiness"
+  ],
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "deployment_status_approval_claimed": false,
+  "dns_proof_claimed": false,
+  "endpoint_proof_claimed": false,
+  "evidence_handoff_labels": [
+    "deployment_witness_receipt",
+    "gateway_publication_readiness_report",
+    "deployment_publication_closure_plan",
+    "dns_resolution_receipt",
+    "endpoint_probe_receipt",
+    "runtime_witness_receipt",
+    "runtime_conformance_receipt",
+    "workflow_run_receipt",
+    "artifact_publication_receipt",
+    "deployment_status_approval",
+    "operator_decision"
+  ],
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "live_evidence_receipt_recorded": false,
+  "live_gateway_url_value_allowed": false,
+  "money_movement_allowed": false,
+  "next_action": "record public-safe evidence slot names only; do not collect live receipts, record live gateway URL values, claim DNS proof, claim endpoint proof, claim secret presence, bind repository variables, claim workflow runs, publish witness artifacts, claim deployment status approval, claim operator approval, open customer access, collect personal data, move money, claim legal clearance, form a company, claim patent protection, publish externally, or deploy",
+  "operator_approval_claimed": false,
+  "patent_claimed": false,
+  "personal_data_collection_allowed": false,
+  "repository_variable_binding_allowed": false,
+  "schema_version": 1,
+  "secret_presence_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deployment witness receipt slot only; live witness receipts are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_witness_receipt_slot",
+      "surface_type": "evidence_handoff_slot"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Gateway readiness report slot only; readiness report pass is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "gateway_readiness_report_slot",
+      "surface_type": "evidence_handoff_slot"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Closure plan receipt slot only; closure approval is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "closure_plan_receipt_slot",
+      "surface_type": "evidence_handoff_slot"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "DNS resolution receipt slot only; DNS proof is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dns_resolution_receipt_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint probe receipt slot only; endpoint proof is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_probe_receipt_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Runtime witness receipt slot only; runtime witness pass is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_witness_receipt_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Runtime conformance receipt slot only; runtime conformance pass is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_conformance_receipt_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Workflow run receipt slot only; workflow execution is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "workflow_run_receipt_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Artifact publication receipt slot only; witness artifacts are not published or promoted.",
+      "state": "AwaitingEvidence",
+      "surface_id": "artifact_publication_receipt_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deployment status approval slot only; deployment status approval is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_status_approval_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Operator decision slot only; operator approval is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_decision_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Evidence ledger entry slot only; local ledger entries are not live evidence.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_ledger_entry_slot",
+      "surface_type": "local_reference"
+    }
+  ],
+  "witness_artifact_publication_allowed": false,
+  "witness_id": "foundation_deployment_witness_evidence_handoff_witness.awaiting_evidence.v1",
+  "workflow_run_claimed": false
+}

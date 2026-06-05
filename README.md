@@ -40,6 +40,13 @@ which drafts solo-capacity, pacing, skill-gap, learning-loop,
 decision-authority, escalation, stop-rule, and review-cadence questions without
 claiming capacity, schedule, skill, team, hiring, delegation, coverage,
 authority, or deployment readiness.
+Solo daily loop preparation is bounded by
+[`docs/FOUNDATION_SOLO_DAILY_LOOP_BOUNDARY.md`](docs/FOUNDATION_SOLO_DAILY_LOOP_BOUNDARY.md),
+which keeps each session to one local-safe task, prerequisite alignment,
+evidence capture, validation checkpoint, handoff, and carryover notes without
+private schedule recording, productivity claims, task-completion guarantees,
+team/support coverage, roadmap commitments, deadlines, external action,
+spending, legal/business action, source-control publication, or deployment.
 Learning-path preparation is bounded by
 [`docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md`](docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md),
 which turns skill gaps into local practice loops without claiming skill
@@ -311,6 +318,124 @@ secret-manager, TLS, firewall, rollback, private runtime witness, repository
 variable, endpoint reachability, and workflow dispatch questions without DNS
 mutation, runtime provisioning, secret placement, workflow dispatch, paid
 infrastructure, customer access, external publication, or deployment.
+Runtime secret handoff rehearsal is bounded by
+[`docs/FOUNDATION_RUNTIME_SECRET_HANDOFF_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_RUNTIME_SECRET_HANDOFF_REHEARSAL_BOUNDARY.md),
+which records future runtime witness, runtime conformance, deployment witness,
+secret-manager target, ignored handoff file, operator identity, dual-control,
+secret-value absence, secret-presence attestation, rotation, revocation,
+workflow mount, runtime env binding, preflight secret gate, and reassessment
+labels without recording secret names, secret values, private paths, binding
+repository or runtime secrets, mounting workflow secrets, dispatching
+workflows, publishing artifacts, claiming readiness, opening customer access,
+moving money, publication, or deployment.
+Deployment witness inputs are bounded by
+[`docs/FOUNDATION_DEPLOYMENT_WITNESS_INPUT_BOUNDARY.md`](docs/FOUNDATION_DEPLOYMENT_WITNESS_INPUT_BOUNDARY.md),
+which records public-safe secret names, repository variable names, endpoint
+contract labels, workflow gates, witness artifact gates, and status-promotion
+gates without secret values, live URL values, variable binding, DNS mutation,
+endpoint readiness claims, workflow dispatch, artifact publication, deployment
+status promotion, customer access, money movement, publication, or deployment.
+Deployment witness preflight rehearsal is bounded by
+[`docs/FOUNDATION_DEPLOYMENT_WITNESS_PREFLIGHT_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_DEPLOYMENT_WITNESS_PREFLIGHT_REHEARSAL_BOUNDARY.md),
+which records future preflight command labels and fail-closed gate labels
+without live preflight execution, live URL values, DNS probes, endpoint probes,
+secret handling, repository variable binding, workflow dispatch, readiness
+report claims, artifact publication, status promotion, customer access, money
+movement, publication, or deployment.
+Deployment witness evidence handoff is bounded by
+[`docs/FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_HANDOFF_BOUNDARY.md`](docs/FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_HANDOFF_BOUNDARY.md),
+which records future evidence slot labels and blocked approval gates without
+live receipts, live URL values, DNS proof, endpoint proof, secret-presence
+claims, repository variable binding, workflow run claims, artifact publication,
+deployment status approval, operator approval, customer access, money movement,
+publication, or deployment.
+Deployment witness evidence ledger routing is bounded by
+[`docs/FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_LEDGER_ROUTING_BOUNDARY.md`](docs/FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_LEDGER_ROUTING_BOUNDARY.md),
+which records future evidence-to-ledger route labels without evidence-ledger
+append, live evidence references, ledger promotion, terminal closure,
+readiness claims, DNS proof, endpoint proof, secret-presence claims, workflow
+run claims, artifact publication, status approval, operator approval, customer
+access, money movement, publication, or deployment.
+Deployment upstream API gate rehearsal is bounded by
+[`docs/FOUNDATION_DEPLOYMENT_UPSTREAM_API_GATE_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_DEPLOYMENT_UPSTREAM_API_GATE_REHEARSAL_BOUNDARY.md),
+which records future upstream API readiness gate labels without executing the
+upstream reporter, claiming `--require-ready` pass, recording target gateway
+URL values, recording production dependency values, provisioning API runtime,
+selecting or publishing DNS targets, binding repository variables, dispatching
+workflows, publishing artifacts, claiming readiness, opening customer access,
+moving money, publication, or deployment.
+Production dependency evidence rehearsal is bounded by
+[`docs/FOUNDATION_PRODUCTION_DEPENDENCY_EVIDENCE_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_PRODUCTION_DEPENDENCY_EVIDENCE_REHEARSAL_BOUNDARY.md),
+which records future recovery witness, production image, runtime host, managed
+PostgreSQL, schema application, secret-store, deploy-env, release-preflight,
+persistence, firewall, TLS, rollback, private runtime witness, DNS authority,
+and runtime witness registry closure labels without collecting evidence,
+recording values, provisioning runtime, selecting or publishing DNS, binding
+repository variables, dispatching workflows, publishing artifacts, claiming
+readiness, opening customer access, moving money, publication, or deployment.
+External evidence acceptance rehearsal is bounded by
+[`docs/FOUNDATION_EXTERNAL_EVIDENCE_ACCEPTANCE_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_EXTERNAL_EVIDENCE_ACCEPTANCE_REHEARSAL_BOUNDARY.md),
+which records future source-boundary, classification, owner, redaction,
+value-absence, freshness, chain-of-custody, schema-validation, contradiction,
+replay, rejection, acceptance, ledger-append, readiness-promotion, and
+reassessment gate labels without collecting evidence, verifying sources,
+recording private values, accepting or rejecting evidence, appending ledgers,
+promoting readiness, publishing artifacts, declaring public health, publishing
+deployment witnesses, opening customer access, moving money, publication, or
+deployment.
+Gateway DNS target binding rehearsal is bounded by
+[`docs/FOUNDATION_GATEWAY_DNS_TARGET_BINDING_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_GATEWAY_DNS_TARGET_BINDING_REHEARSAL_BOUNDARY.md),
+which records future DNS target binding question labels without live target
+values, gateway URL values, provider account values, repository-variable
+binding, DNS publication, DNS resolution proof, endpoint proof,
+secret-presence claims, workflow dispatch, artifact publication, operator
+approval, readiness claims, customer access, personal-data collection, money
+movement, legal/company/patent claims, external publication, or deployment.
+Gateway DNS resolution receipt rehearsal is bounded by
+[`docs/FOUNDATION_GATEWAY_DNS_RESOLUTION_RECEIPT_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_GATEWAY_DNS_RESOLUTION_RECEIPT_REHEARSAL_BOUNDARY.md),
+which records future DNS query scope, resolver context, resolved-address set,
+resolver-error, TTL, timestamp, target-binding dependency, endpoint-preflight
+dependency, publication stop-rule, and reassessment questions without live DNS
+queries, host values, gateway URL values, resolved addresses, DNS proof,
+receipt writing, target binding promotion, endpoint proof, secret-presence
+claims, workflow dispatch, artifact publication, operator approval, readiness
+claims, customer access, money movement, publication, or deployment.
+Gateway endpoint reachability rehearsal is bounded by
+[`docs/FOUNDATION_GATEWAY_ENDPOINT_REACHABILITY_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_GATEWAY_ENDPOINT_REACHABILITY_REHEARSAL_BOUNDARY.md),
+which records future health endpoint, gateway witness endpoint, runtime
+conformance endpoint, HTTP status, response digest, response body shape,
+production evidence, capability evidence, audit/proof, publication stop-rule,
+and reassessment questions without endpoint probes, gateway URL values,
+response evidence, deployment witness collection, public health declaration,
+secret-presence claims, workflow dispatch, artifact publication, operator
+approval, readiness claims, customer access, money movement, publication, or
+deployment.
+Gateway endpoint evidence receipt rehearsal is bounded by
+[`docs/FOUNDATION_GATEWAY_ENDPOINT_EVIDENCE_RECEIPT_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_GATEWAY_ENDPOINT_EVIDENCE_RECEIPT_REHEARSAL_BOUNDARY.md),
+which records future endpoint evidence receipt field labels, observation
+slots, response slots, timestamp slots, collector-identity slots,
+validation-result slots, evidence-ledger route slots, and reassessment gates
+without endpoint probes, gateway or endpoint URL values, HTTP status values,
+response digests, response bodies, timestamps, collector identities, evidence
+ledger append, public health declaration, workflow dispatch, artifact
+publication, operator approval, readiness claims, customer access, money
+movement, publication, or deployment.
+Public health declaration rehearsal is bounded by
+[`docs/FOUNDATION_PUBLIC_HEALTH_DECLARATION_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_PUBLIC_HEALTH_DECLARATION_REHEARSAL_BOUNDARY.md),
+which records future public health declaration receipt field labels without
+declaring public health, mutating deployment status, writing declaration
+receipts, claiming deployment witness publication, recording deployment
+witness state values, recording public endpoint values, recording approval
+references, recording audited dates, claiming validation passes, claiming
+endpoint match, appending evidence, dispatching workflows, publishing
+artifacts, claiming readiness, opening customer access, moving money,
+publication, or deployment.
+GitHub App token-format compatibility is bounded by
+[`docs/FOUNDATION_GITHUB_APP_TOKEN_FORMAT_BOUNDARY.md`](docs/FOUNDATION_GITHUB_APP_TOKEN_FORMAT_BOUNDARY.md),
+which keeps installation tokens opaque, long-token-ready, dot-tolerant, and
+free of committed live credentials without claiming live GitHub validation,
+repository secret readiness, workflow dispatch readiness, publication, or
+deployment.
 The first technical proof thread is
 [`docs/FOUNDATION_LOCAL_PROOF_THREAD.md`](docs/FOUNDATION_LOCAL_PROOF_THREAD.md),
 backed by a local workflow descriptor, validator, and ignored local receipt
@@ -339,6 +464,50 @@ a pilot, inviting participants, opening access, opening waitlists or beta,
 collecting personal data, claiming market validation, promising support,
 claiming legal clearance, accepting payment, publishing externally, or
 deploying.
+Reassessment gates are bounded by
+[`docs/FOUNDATION_REASSESSMENT_GATE_BOUNDARY.md`](docs/FOUNDATION_REASSESSMENT_GATE_BOUNDARY.md),
+which keeps deployment-start, pilot-start, evidence-promotion, external-action,
+customer/data, legal/business, money, secret, publication, and deployment
+questions local without approving reassessment or promoting prerequisites.
+Rehearsal-only preparation boundaries are also kept local and public-safe:
+[`docs/FOUNDATION_PRIVATE_RECOVERY_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_PRIVATE_RECOVERY_REHEARSAL_BOUNDARY.md)
+for recovery dry-run questions without restore, credential, backup, sync,
+export, deletion, provider-account, private-material, personal-data, or
+deployment action;
+[`docs/FOUNDATION_SUPPORT_TRIAGE_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_SUPPORT_TRIAGE_REHEARSAL_BOUNDARY.md)
+for fictional support categories without opening support, tickets, inboxes,
+SLA, incident readiness, tooling, customer access, paid support, or deployment;
+[`docs/FOUNDATION_INTAKE_QUESTIONNAIRE_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_INTAKE_QUESTIONNAIRE_REHEARSAL_BOUNDARY.md)
+for fictional intake fields without forms, waitlists, signups, submissions,
+personal data, CRM imports, outreach, payment, legal/privacy readiness, or
+deployment;
+[`docs/FOUNDATION_CUSTOMER_ACCESS_POLICY_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_CUSTOMER_ACCESS_POLICY_REHEARSAL_BOUNDARY.md)
+for access-rule questions without approving access, inviting customers,
+creating accounts, provisioning tenants, publishing login routes, promising
+support, collecting personal data, accepting paid access, opening pilots,
+publishing externally, or deploying;
+[`docs/FOUNDATION_PRIVACY_MINIMIZATION_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_PRIVACY_MINIMIZATION_REHEARSAL_BOUNDARY.md)
+for data-minimization questions without collecting or storing personal data,
+capturing consent, approving retention/deletion, publishing privacy notices,
+enabling tracking, activating processors, opening customer access, or
+deploying;
+[`docs/FOUNDATION_LEGAL_BUSINESS_QUESTION_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_LEGAL_BUSINESS_QUESTION_REHEARSAL_BOUNDARY.md)
+for legal/business question drafting without legal conclusions, review
+completion, filings, company formation, customer access, paid launch, money
+movement, publication, or deployment;
+[`docs/FOUNDATION_FUNDING_TEAM_OBLIGATION_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_FUNDING_TEAM_OBLIGATION_REHEARSAL_BOUNDARY.md)
+for obligation mapping without fundraising, investor outreach, grants, hiring,
+contractors, advisors, compensation, equity, payroll, budgets, contact lists,
+money movement, publication, or deployment;
+[`docs/FOUNDATION_COMMUNITY_NETWORK_NO_OUTREACH_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_COMMUNITY_NETWORK_NO_OUTREACH_REHEARSAL_BOUNDARY.md)
+for relationship wording without posts, messages, feedback requests,
+collaborator recruitment, partner outreach, mentor requests, event
+participation, contact lists, personal data, external accounts, customer
+access, publication, or deployment; and
+[`docs/FOUNDATION_PILOT_DEFERRAL_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_PILOT_DEFERRAL_REHEARSAL_BOUNDARY.md)
+for pilot-stop-rule questions without inviting participants, opening access,
+waitlists, signups, data collection, market validation, support promises,
+legal clearance, payment, publication, secrets, or deployment.
 Support readiness is bounded by
 [`docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md`](docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md),
 which prepares local support and incident-response shape without opening

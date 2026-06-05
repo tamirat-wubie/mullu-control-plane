@@ -1,0 +1,185 @@
+{
+  "artifact_publication_allowed": false,
+  "audit_verification_payload_allowed": false,
+  "blocked_claims": [
+    "endpoint probe",
+    "gateway url value",
+    "endpoint url value",
+    "http status value",
+    "response digest value",
+    "response body value",
+    "collection timestamp value",
+    "collector identity value",
+    "runtime witness payload",
+    "runtime conformance payload",
+    "production evidence payload",
+    "capability evidence payload",
+    "audit verification payload",
+    "proof verification payload",
+    "evidence ledger append",
+    "deployment witness collection",
+    "public health declaration",
+    "secret presence claim",
+    "workflow dispatch",
+    "artifact publication",
+    "operator approval",
+    "readiness claim",
+    "customer access",
+    "personal data collection",
+    "money movement",
+    "legal clearance",
+    "company formation",
+    "patent claim",
+    "external publication",
+    "deployment readiness"
+  ],
+  "capability_evidence_payload_allowed": false,
+  "collection_timestamp_value_allowed": false,
+  "collector_identity_value_allowed": false,
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "deployment_witness_collection_allowed": false,
+  "endpoint_probe_allowed": false,
+  "endpoint_url_value_allowed": false,
+  "evidence_ledger_append_allowed": false,
+  "external_publication_allowed": false,
+  "field_labels": [
+    "endpoint_evidence_receipt_id_label",
+    "endpoint_evidence_source_boundary_label",
+    "health_endpoint_observation_slot",
+    "gateway_witness_observation_slot",
+    "runtime_conformance_observation_slot",
+    "endpoint_http_status_slot",
+    "endpoint_response_digest_slot",
+    "endpoint_body_schema_slot",
+    "endpoint_collection_time_slot",
+    "endpoint_collector_identity_slot",
+    "endpoint_redaction_note_slot",
+    "endpoint_validation_result_slot",
+    "endpoint_evidence_ledger_route_slot",
+    "operator_reassessment_gate"
+  ],
+  "gateway_url_value_allowed": false,
+  "http_status_value_allowed": false,
+  "legal_clearance_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "record public-safe gateway endpoint evidence receipt field labels only; do not probe endpoints, record gateway URL values, record endpoint URL values, record HTTP status values, record response digests, record response bodies, record collection timestamps, record collector identities, claim health proof, claim gateway witness proof, claim runtime conformance proof, append evidence to a ledger, collect deployment witnesses, declare public health, claim secret presence, dispatch workflows, publish artifacts, claim operator approval, claim readiness, open customer access, collect personal data, move money, claim legal clearance, form a company, claim patent protection, publish externally, or deploy",
+  "operator_approval_claimed": false,
+  "patent_claimed": false,
+  "personal_data_collection_allowed": false,
+  "production_evidence_payload_allowed": false,
+  "proof_verification_payload_allowed": false,
+  "public_health_declaration_allowed": false,
+  "readiness_claimed": false,
+  "response_body_value_allowed": false,
+  "response_digest_value_allowed": false,
+  "runtime_conformance_payload_allowed": false,
+  "runtime_witness_payload_allowed": false,
+  "schema_version": 1,
+  "secret_presence_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint evidence receipt id label only; receipt ids are not assigned.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_evidence_receipt_id_label",
+      "surface_type": "receipt_field_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint evidence source boundary label only; source proof is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_evidence_source_boundary_label",
+      "surface_type": "receipt_field_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Health endpoint observation slot only; observations are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "health_endpoint_observation_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Gateway witness observation slot only; gateway witness payloads are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "gateway_witness_observation_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Runtime conformance observation slot only; runtime conformance payloads are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_conformance_observation_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint HTTP status slot only; HTTP status values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_http_status_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint response digest slot only; response digests are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_response_digest_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint body schema slot only; response bodies are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_body_schema_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint collection time slot only; timestamps are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_collection_time_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint collector identity slot only; collector identities are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_collector_identity_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint redaction note slot only; sensitive values are not stored.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_redaction_note_slot",
+      "surface_type": "receipt_field_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint validation result slot only; validation pass is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_validation_result_slot",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint evidence ledger route slot only; evidence is not appended.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_evidence_ledger_route_slot",
+      "surface_type": "local_route_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Operator reassessment gate only; endpoint proof and deployment are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_reassessment_gate",
+      "surface_type": "local_gate_label"
+    }
+  ],
+  "witness_id": "foundation_gateway_endpoint_evidence_receipt_rehearsal_witness.awaiting_evidence.v1",
+  "workflow_dispatch_allowed": false
+}
