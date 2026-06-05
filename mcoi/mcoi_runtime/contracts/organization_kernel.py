@@ -682,6 +682,59 @@ class PlanStepWorkerLeaseReceipt(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class PlanStepWorkerDispatchReceipt(ContractRecord):
+    """Bounded dispatch request envelope recorded for one worker lease.
+
+    The dispatch receipt records that OrgOS created a dispatch request envelope
+    from an existing worker lease. It does NOT execute a worker, bind worker
+    output, admit evidence, create approval, mutate case status, or close a case.
+    """
+
+    dispatch_receipt_id: str
+    dispatch_request_id: str
+    case_id: str
+    step_id: str
+    worker_lease_id: str
+    capability_id: str
+    responsible_role_id: str
+    requested_by_role_id: str
+    worker_id: str
+    dispatch_intent: str
+    expected_effect: str
+    evidence_refs: tuple[str, ...]
+    lease_created_at: str
+    dispatched_at: str
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "dispatch_receipt_id",
+            "dispatch_request_id",
+            "case_id",
+            "step_id",
+            "worker_lease_id",
+            "capability_id",
+            "responsible_role_id",
+            "requested_by_role_id",
+            "worker_id",
+            "dispatch_intent",
+            "expected_effect",
+        ):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        object.__setattr__(
+            self,
+            "evidence_refs",
+            _freeze_text_array(
+                require_non_empty_tuple(self.evidence_refs, "evidence_refs"),
+                "evidence_refs",
+            ),
+        )
+        object.__setattr__(self, "lease_created_at", require_datetime_text(self.lease_created_at, "lease_created_at"))
+        object.__setattr__(self, "dispatched_at", require_datetime_text(self.dispatched_at, "dispatched_at"))
+        object.__setattr__(self, "metadata", freeze_value(self.metadata))
+
+
+@dataclass(frozen=True, slots=True)
 class PlanStepWorkerReceiptBinding(ContractRecord):
     """Bounded worker dispatch receipt admitted as evidence for one plan step.
 

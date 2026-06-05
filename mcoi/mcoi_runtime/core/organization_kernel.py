@@ -38,6 +38,7 @@ from mcoi_runtime.contracts.organization_kernel import (
     PlanStepGateDecision,
     PlanStepGatePreview,
     PlanStepGateStatus,
+    PlanStepWorkerDispatchReceipt,
     PlanStepWorkerLeaseReceipt,
     PlanStepWorkerReceiptBinding,
 )
@@ -117,6 +118,7 @@ class OrganizationKernelState:
     closures: tuple[OrganizationTerminalClosure, ...] = ()
     learning_bindings: tuple[LearningAdmissionBinding, ...] = ()
     worker_lease_receipts: tuple[PlanStepWorkerLeaseReceipt, ...] = ()
+    worker_dispatch_receipts: tuple[PlanStepWorkerDispatchReceipt, ...] = ()
     worker_receipt_bindings: tuple[PlanStepWorkerReceiptBinding, ...] = ()
     events: tuple[OrganizationCaseEvent, ...] = ()
     event_sequence: int = 0
@@ -139,6 +141,7 @@ class OrganizationKernelState:
             "closures",
             "learning_bindings",
             "worker_lease_receipts",
+            "worker_dispatch_receipts",
             "worker_receipt_bindings",
             "events",
         ):
@@ -183,6 +186,7 @@ class OrganizationKernel:
         self._closures: dict[str, OrganizationTerminalClosure] = {}
         self._learning_bindings: dict[str, LearningAdmissionBinding] = {}
         self._worker_lease_receipts: dict[str, PlanStepWorkerLeaseReceipt] = {}
+        self._worker_dispatch_receipts: dict[str, PlanStepWorkerDispatchReceipt] = {}
         self._worker_receipt_bindings: dict[str, PlanStepWorkerReceiptBinding] = {}
         self._events: list[OrganizationCaseEvent] = []
         self._event_sequence = 0
@@ -520,6 +524,75 @@ class OrganizationKernel:
         )
         return receipt
 
+    def record_worker_dispatch_receipt(
+        self,
+        receipt: PlanStepWorkerDispatchReceipt,
+    ) -> PlanStepWorkerDispatchReceipt:
+        """Record a bounded dispatch request envelope without executing a worker."""
+        if receipt.dispatch_receipt_id in self._worker_dispatch_receipts:
+            raise RuntimeCoreInvariantError("worker dispatch receipt already recorded")
+        if any(
+            existing.dispatch_request_id == receipt.dispatch_request_id
+            for existing in self._worker_dispatch_receipts.values()
+        ):
+            raise RuntimeCoreInvariantError("worker dispatch request already recorded")
+        if any(
+            existing.worker_lease_id == receipt.worker_lease_id
+            for existing in self._worker_dispatch_receipts.values()
+        ):
+            raise RuntimeCoreInvariantError("worker lease already has dispatch receipt")
+
+        lease_receipt = self._worker_lease_receipts.get(receipt.worker_lease_id)
+        if lease_receipt is None:
+            raise RuntimeCoreInvariantError("worker dispatch receipt lease unavailable")
+        organization_case = self._require_case(receipt.case_id)
+        if organization_case.status is OrganizationCaseStatus.CLOSED:
+            raise RuntimeCoreInvariantError("closed case cannot receive worker dispatch receipt")
+        plan = self._require_case_plan(receipt.case_id)
+        step = self._require_plan_step(plan, receipt.step_id)
+        if receipt.case_id != lease_receipt.case_id:
+            raise RuntimeCoreInvariantError("worker dispatch receipt case mismatch")
+        if receipt.step_id != lease_receipt.step_id:
+            raise RuntimeCoreInvariantError("worker dispatch receipt step mismatch")
+        if receipt.capability_id != lease_receipt.capability_id or receipt.capability_id != step.capability_id:
+            raise RuntimeCoreInvariantError("worker dispatch receipt capability mismatch")
+        if (
+            receipt.responsible_role_id != lease_receipt.responsible_role_id
+            or receipt.responsible_role_id != step.responsible_role_id
+        ):
+            raise RuntimeCoreInvariantError("worker dispatch receipt responsible role mismatch")
+        if receipt.requested_by_role_id != lease_receipt.requested_by_role_id:
+            raise RuntimeCoreInvariantError("worker dispatch receipt requester mismatch")
+        if receipt.expected_effect != lease_receipt.expected_effect:
+            raise RuntimeCoreInvariantError("worker dispatch receipt expected effect mismatch")
+        if receipt.evidence_refs != lease_receipt.evidence_refs:
+            raise RuntimeCoreInvariantError("worker dispatch receipt evidence mismatch")
+        if receipt.lease_created_at != lease_receipt.created_at:
+            raise RuntimeCoreInvariantError("worker dispatch receipt lease timestamp mismatch")
+
+        role = self._roles.get(receipt.requested_by_role_id)
+        if role is None or role.org_id != organization_case.org_id or role.role_id != step.responsible_role_id:
+            raise RuntimeCoreInvariantError("worker dispatch receipt requesting role mismatch")
+        for evidence_ref in receipt.evidence_refs:
+            evidence = self._case_evidence.get(evidence_ref)
+            if evidence is None or evidence.case_id != receipt.case_id:
+                raise RuntimeCoreInvariantError("worker dispatch receipt evidence unavailable")
+
+        self._worker_dispatch_receipts[receipt.dispatch_receipt_id] = receipt
+        self._emit(
+            receipt.case_id,
+            "plan_step_worker_dispatch_recorded",
+            {
+                "dispatch_receipt_id": receipt.dispatch_receipt_id,
+                "dispatch_request_id": receipt.dispatch_request_id,
+                "worker_lease_id": receipt.worker_lease_id,
+                "step_id": receipt.step_id,
+                "capability_id": receipt.capability_id,
+                "worker_id": receipt.worker_id,
+            },
+        )
+        return receipt
+
     def bind_worker_receipt_evidence(
         self,
         binding: PlanStepWorkerReceiptBinding,
@@ -666,6 +739,9 @@ class OrganizationKernel:
             worker_lease_receipts=tuple(
                 self._worker_lease_receipts[key] for key in sorted(self._worker_lease_receipts)
             ),
+            worker_dispatch_receipts=tuple(
+                self._worker_dispatch_receipts[key] for key in sorted(self._worker_dispatch_receipts)
+            ),
             worker_receipt_bindings=tuple(
                 self._worker_receipt_bindings[key] for key in sorted(self._worker_receipt_bindings)
             ),
@@ -710,6 +786,11 @@ class OrganizationKernel:
             "lease_id",
             "worker lease receipt",
         )
+        candidate._worker_dispatch_receipts = candidate._keyed(
+            state.worker_dispatch_receipts,
+            "dispatch_receipt_id",
+            "worker dispatch receipt",
+        )
         candidate._worker_receipt_bindings = candidate._keyed(
             state.worker_receipt_bindings,
             "binding_id",
@@ -736,6 +817,7 @@ class OrganizationKernel:
         self._closures = candidate._closures
         self._learning_bindings = candidate._learning_bindings
         self._worker_lease_receipts = candidate._worker_lease_receipts
+        self._worker_dispatch_receipts = candidate._worker_dispatch_receipts
         self._worker_receipt_bindings = candidate._worker_receipt_bindings
         self._events = candidate._events
         self._event_sequence = candidate._event_sequence
@@ -759,6 +841,7 @@ class OrganizationKernel:
                 self._closures,
                 self._learning_bindings,
                 self._worker_lease_receipts,
+                self._worker_dispatch_receipts,
                 self._worker_receipt_bindings,
                 self._events,
             )
@@ -881,6 +964,34 @@ class OrganizationKernel:
                 evidence = self._case_evidence.get(evidence_ref)
                 if evidence is None or evidence.case_id != lease_receipt.case_id:
                     raise RuntimeCoreInvariantError("restored worker lease evidence unavailable")
+        dispatch_request_ids: set[str] = set()
+        dispatched_lease_ids: set[str] = set()
+        for dispatch_receipt in self._worker_dispatch_receipts.values():
+            lease_receipt = self._worker_lease_receipts.get(dispatch_receipt.worker_lease_id)
+            if lease_receipt is None:
+                raise RuntimeCoreInvariantError("restored worker dispatch lease unavailable")
+            if dispatch_receipt.dispatch_request_id in dispatch_request_ids:
+                raise RuntimeCoreInvariantError("restored worker dispatch request collision")
+            dispatch_request_ids.add(dispatch_receipt.dispatch_request_id)
+            if dispatch_receipt.worker_lease_id in dispatched_lease_ids:
+                raise RuntimeCoreInvariantError("restored worker lease has multiple dispatch receipts")
+            dispatched_lease_ids.add(dispatch_receipt.worker_lease_id)
+            if dispatch_receipt.case_id != lease_receipt.case_id:
+                raise RuntimeCoreInvariantError("restored worker dispatch case mismatch")
+            if dispatch_receipt.step_id != lease_receipt.step_id:
+                raise RuntimeCoreInvariantError("restored worker dispatch step mismatch")
+            if dispatch_receipt.capability_id != lease_receipt.capability_id:
+                raise RuntimeCoreInvariantError("restored worker dispatch capability mismatch")
+            if dispatch_receipt.responsible_role_id != lease_receipt.responsible_role_id:
+                raise RuntimeCoreInvariantError("restored worker dispatch role mismatch")
+            if dispatch_receipt.requested_by_role_id != lease_receipt.requested_by_role_id:
+                raise RuntimeCoreInvariantError("restored worker dispatch requester mismatch")
+            if dispatch_receipt.expected_effect != lease_receipt.expected_effect:
+                raise RuntimeCoreInvariantError("restored worker dispatch expected effect mismatch")
+            if dispatch_receipt.evidence_refs != lease_receipt.evidence_refs:
+                raise RuntimeCoreInvariantError("restored worker dispatch evidence mismatch")
+            if dispatch_receipt.lease_created_at != lease_receipt.created_at:
+                raise RuntimeCoreInvariantError("restored worker dispatch lease timestamp mismatch")
         for receipt_binding in self._worker_receipt_bindings.values():
             organization_case = self._cases.get(receipt_binding.case_id)
             plan_id = self._plan_by_case.get(receipt_binding.case_id)

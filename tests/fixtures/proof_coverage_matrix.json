@@ -885,11 +885,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 253,
+      "proven": 254,
       "unproven": 0,
       "witnessed": 151
     },
-    "route_count": 404,
+    "route_count": 405,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2009,6 +2009,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/orgs/{org_id}/action-queue/view",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/orgs/{org_id}/action-queue/worker-dispatch-receipt",
         "surface_id": "orgos_case_governance_lifecycle"
       },
       {
@@ -5996,13 +6001,14 @@
         "mcoi/tests/test_organization_kernel_router.py",
         "mcoi/tests/test_organization_kernel_store.py"
       ],
-      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, private pilot live rehearsal receipts, closure decisions, case portfolio, action queue, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker dispatch receipts as plan-step evidence without holding worker dispatch authority.",
+      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions, case portfolio, action queue, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts as plan-step evidence without holding worker dispatch authority.",
       "representative_paths": [
         "/api/v1/orgs",
         "/api/v1/orgs/{org_id}/action-queue",
         "/api/v1/orgs/{org_id}/action-queue/approval-packet-preview",
         "/api/v1/orgs/{org_id}/action-queue/dispatch-lease-preview",
         "/api/v1/orgs/{org_id}/action-queue/selection-preview",
+        "/api/v1/orgs/{org_id}/action-queue/worker-dispatch-receipt",
         "/api/v1/orgs/{org_id}/action-queue/worker-lease",
         "/api/v1/orgs/{org_id}/action-queue/view",
         "/api/v1/orgs/{org_id}/authority-map",
@@ -6082,6 +6088,10 @@
         "organization_action_queue_worker_lease_creates_receipt_without_dispatch",
         "organization_action_queue_worker_lease_rejects_not_ready_selection_without_mutation",
         "organization_action_queue_worker_lease_rejects_duplicate_lease_without_extra_event",
+        "organization_action_queue_worker_dispatch_receipt_records_envelope_without_output_binding",
+        "organization_action_queue_worker_dispatch_receipt_rejects_missing_lease_without_mutation",
+        "organization_action_queue_worker_dispatch_receipt_rejects_duplicate_dispatch_without_extra_event",
+        "organization_action_queue_worker_dispatch_receipt_rejects_not_ready_selection_without_mutation",
         "organization_action_queue_view_is_read_only_and_escaped",
         "case_private_pilot_live_rehearsal_binds_preview_receipts_without_mutation",
         "organization_action_queue_view_preserves_filters",
@@ -9578,8 +9588,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1205,
-    "runtime_witness_count": 1205,
+    "exact_test_anchor_count": 1209,
+    "runtime_witness_count": 1209,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -13569,6 +13579,30 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_organization_action_queue_worker_dispatch_receipt_records_envelope_without_output_binding"
+            ],
+            "witness": "organization_action_queue_worker_dispatch_receipt_records_envelope_without_output_binding"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_organization_action_queue_worker_dispatch_receipt_rejects_missing_lease_without_mutation"
+            ],
+            "witness": "organization_action_queue_worker_dispatch_receipt_rejects_missing_lease_without_mutation"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_organization_action_queue_worker_dispatch_receipt_rejects_duplicate_dispatch_without_extra_event"
+            ],
+            "witness": "organization_action_queue_worker_dispatch_receipt_rejects_duplicate_dispatch_without_extra_event"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_organization_action_queue_worker_dispatch_receipt_rejects_not_ready_selection_without_mutation"
+            ],
+            "witness": "organization_action_queue_worker_dispatch_receipt_rejects_not_ready_selection_without_mutation"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_organization_kernel_router.py::test_organization_action_queue_view_is_read_only_and_escaped"
             ],
             "witness": "organization_action_queue_view_is_read_only_and_escaped"
@@ -13664,8 +13698,8 @@
             "witness": "worker_receipts_satisfy_engineering_gate_evidence"
           }
         ],
-        "exact_test_anchor_count": 53,
-        "runtime_witness_count": 53,
+        "exact_test_anchor_count": 57,
+        "runtime_witness_count": 57,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

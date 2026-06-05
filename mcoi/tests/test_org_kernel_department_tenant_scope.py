@@ -195,6 +195,24 @@ def test_action_queue_worker_lease_rejects_cross_tenant(cross_tenant_kernel):
     assert exc.value.status_code == 403
 
 
+def test_action_queue_worker_dispatch_receipt_rejects_cross_tenant(cross_tenant_kernel):
+    with pytest.raises(HTTPException) as exc:
+        ok.create_organization_action_queue_worker_dispatch_receipt(
+            "org-x",
+            ok.WorkerDispatchReceiptCreateRequest(
+                action_id="queued-action",
+                worker_lease_id="lease:x",
+                dispatch_request_id="dispatch-request:x",
+                dispatch_receipt_id="dispatch-receipt:x",
+                requested_by_role_id="engineering.owner",
+                worker_id="worker:x",
+                evidence_refs=["evidence:x"],
+            ),
+            _authed("tenant-a"),
+        )
+    assert exc.value.status_code == 403
+
+
 def test_create_department_rejects_cross_tenant(cross_tenant_kernel):
     with pytest.raises(HTTPException) as exc:
         ok.create_department(_Body(), _authed("tenant-a"))

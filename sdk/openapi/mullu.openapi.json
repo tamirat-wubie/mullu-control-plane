@@ -6404,6 +6404,69 @@
         "title": "WithdrawRegistrationRequest",
         "type": "object"
       },
+      "WorkerDispatchReceiptCreateRequest": {
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "dispatch_intent": {
+            "default": "request_worker_execution",
+            "title": "Dispatch Intent",
+            "type": "string"
+          },
+          "dispatch_receipt_id": {
+            "title": "Dispatch Receipt Id",
+            "type": "string"
+          },
+          "dispatch_request_id": {
+            "title": "Dispatch Request Id",
+            "type": "string"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "filters": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Filters",
+            "type": "object"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "requested_by_role_id": {
+            "title": "Requested By Role Id",
+            "type": "string"
+          },
+          "worker_id": {
+            "title": "Worker Id",
+            "type": "string"
+          },
+          "worker_lease_id": {
+            "title": "Worker Lease Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id",
+          "worker_lease_id",
+          "dispatch_request_id",
+          "dispatch_receipt_id",
+          "requested_by_role_id",
+          "worker_id",
+          "evidence_refs"
+        ],
+        "title": "WorkerDispatchReceiptCreateRequest",
+        "type": "object"
+      },
       "WorkerLeaseCreateRequest": {
         "properties": {
           "action_id": {
@@ -14989,6 +15052,54 @@
         "summary": "Get Organization Action Queue View"
       }
     },
+    "/api/v1/orgs/{org_id}/action-queue/worker-dispatch-receipt": {
+      "post": {
+        "description": "Record a bounded worker dispatch envelope without executing a worker.",
+        "operationId": "create_organization_action_queue_worker_dispatch_receipt_api_v1_orgs__org_id__action_queue_worker_dispatch_receipt_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkerDispatchReceiptCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Organization Action Queue Worker Dispatch Receipt"
+      }
+    },
     "/api/v1/orgs/{org_id}/action-queue/worker-lease": {
       "post": {
         "description": "Create a bounded worker lease receipt without dispatching a worker.",
@@ -18221,6 +18332,55 @@
           }
         },
         "summary": "Execute Workflow Template"
+      }
+    },
+    "/api/v1/temporal/monitor": {
+      "get": {
+        "description": "Return a non-mutating due-action monitor read model.",
+        "operationId": "temporal_scheduler_monitor_api_v1_temporal_monitor_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "tenant_id",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "now",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Now",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Temporal Scheduler Monitor"
       }
     },
     "/api/v1/temporal/schedules": {

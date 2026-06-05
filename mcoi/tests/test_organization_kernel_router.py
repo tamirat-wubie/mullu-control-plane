@@ -146,7 +146,7 @@ def _signed_conformance_certificate(*, secret: str) -> dict[str, Any]:
         "capsule_registry_certified": True,
         "proof_coverage_matrix_current": True,
         "proof_coverage_declared_routes_classified": True,
-        "proof_coverage_declared_route_count": 302,
+        "proof_coverage_declared_route_count": 303,
         "proof_coverage_unclassified_route_count": 0,
         "known_limitations_aligned": False,
         "security_model_aligned": False,
@@ -1236,6 +1236,236 @@ def test_organization_action_queue_worker_lease_rejects_duplicate_lease_without_
     assert lease_events[0]["payload"]["lease_id"] == "lease:engineering-runtime-witness"
 
 
+def test_organization_action_queue_worker_dispatch_receipt_records_envelope_without_output_binding(
+    tmp_path: Path,
+) -> None:
+    client, store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+    queue = client.get(
+        "/api/v1/orgs/org-mullu/action-queue"
+        "?department_id=engineering&next_action=bind_worker_receipt"
+    ).json()
+    action_id = queue["actions"][0]["action_id"]
+    lease_body = {
+        "action_id": action_id,
+        "filters": {
+            "department_id": "engineering",
+            "next_action": "bind_worker_receipt",
+        },
+        "lease_id": "lease:engineering-runtime-witness",
+        "requested_by_role_id": "engineering.owner",
+        "timeout_seconds": 900,
+        "budget_ref": "budget:gateway-pilot",
+        "evidence_refs": [
+            "evidence:engineering_health_endpoint",
+            "evidence:engineering_gateway_witness",
+            "evidence:engineering_runtime_conformance",
+        ],
+    }
+    lease = client.post("/api/v1/orgs/org-mullu/action-queue/worker-lease", json=lease_body)
+    before_dispatch = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/orgs/org-mullu/action-queue/worker-dispatch-receipt",
+        json={
+            "action_id": action_id,
+            "filters": lease_body["filters"],
+            "worker_lease_id": "lease:engineering-runtime-witness",
+            "dispatch_request_id": "dispatch-request:engineering-runtime-witness",
+            "dispatch_receipt_id": "dispatch-receipt:engineering-runtime-witness",
+            "requested_by_role_id": "engineering.owner",
+            "worker_id": "worker:gateway-runtime",
+            "dispatch_intent": "request_gateway_runtime_verification",
+            "evidence_refs": lease_body["evidence_refs"],
+        },
+    )
+    payload = response.json()
+    after_dispatch = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+    persisted = store.load_state()
+    dispatch_events = [
+        event for event in after_dispatch["events"]
+        if event["event_type"] == "plan_step_worker_dispatch_recorded"
+    ]
+
+    assert lease.status_code == 200
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["dispatch_envelope_created"] is True
+    assert payload["worker_execution_started"] is False
+    assert payload["worker_output_bound"] is False
+    assert payload["evidence_admitted"] is False
+    assert payload["receipt_binding_created"] is False
+    assert payload["approval_created"] is False
+    assert payload["terminal_closure_created"] is False
+    assert payload["dispatch_authority_granted"] is False
+    assert payload["dispatch_lease_preview"]["lease_decision"] == "lease_request_ready"
+    assert payload["worker_dispatch_receipt"]["worker_lease_id"] == "lease:engineering-runtime-witness"
+    assert payload["worker_dispatch_receipt"]["worker_id"] == "worker:gateway-runtime"
+    assert payload["worker_dispatch_receipt"]["metadata"]["worker_execution_started"] is False
+    assert len(after_dispatch["worker_dispatch_receipts"]) == 1
+    assert len(persisted.worker_dispatch_receipts) == 1
+    assert before_dispatch["case"]["status"] == after_dispatch["case"]["status"] == "planned"
+    assert before_dispatch["evidence"] == after_dispatch["evidence"]
+    assert before_dispatch["approvals"] == after_dispatch["approvals"]
+    assert before_dispatch["gate_decisions"] == after_dispatch["gate_decisions"]
+    assert len(dispatch_events) == 1
+    assert dispatch_events[0]["payload"]["dispatch_receipt_id"] == "dispatch-receipt:engineering-runtime-witness"
+
+
+def test_organization_action_queue_worker_dispatch_receipt_rejects_missing_lease_without_mutation(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+    queue = client.get(
+        "/api/v1/orgs/org-mullu/action-queue"
+        "?department_id=engineering&next_action=bind_worker_receipt"
+    ).json()
+    action_id = queue["actions"][0]["action_id"]
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/orgs/org-mullu/action-queue/worker-dispatch-receipt",
+        json={
+            "action_id": action_id,
+            "filters": {
+                "department_id": "engineering",
+                "next_action": "bind_worker_receipt",
+            },
+            "worker_lease_id": "lease:missing",
+            "dispatch_request_id": "dispatch-request:missing",
+            "dispatch_receipt_id": "dispatch-receipt:missing",
+            "requested_by_role_id": "engineering.owner",
+            "worker_id": "worker:gateway-runtime",
+            "evidence_refs": [
+                "evidence:engineering_health_endpoint",
+                "evidence:engineering_gateway_witness",
+                "evidence:engineering_runtime_conformance",
+            ],
+        },
+    )
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_code"] == "action_queue_worker_dispatch_receipt_rejected"
+    assert before["events"] == after["events"]
+    assert after["worker_dispatch_receipts"] == []
+    assert before["evidence"] == after["evidence"]
+
+
+def test_organization_action_queue_worker_dispatch_receipt_rejects_duplicate_dispatch_without_extra_event(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+    queue = client.get(
+        "/api/v1/orgs/org-mullu/action-queue"
+        "?department_id=engineering&next_action=bind_worker_receipt"
+    ).json()
+    action_id = queue["actions"][0]["action_id"]
+    evidence_refs = [
+        "evidence:engineering_health_endpoint",
+        "evidence:engineering_gateway_witness",
+        "evidence:engineering_runtime_conformance",
+    ]
+    client.post(
+        "/api/v1/orgs/org-mullu/action-queue/worker-lease",
+        json={
+            "action_id": action_id,
+            "filters": {
+                "department_id": "engineering",
+                "next_action": "bind_worker_receipt",
+            },
+            "lease_id": "lease:engineering-runtime-witness",
+            "requested_by_role_id": "engineering.owner",
+            "timeout_seconds": 900,
+            "budget_ref": "budget:gateway-pilot",
+            "evidence_refs": evidence_refs,
+        },
+    )
+    request_body = {
+        "action_id": action_id,
+        "filters": {
+            "department_id": "engineering",
+            "next_action": "bind_worker_receipt",
+        },
+        "worker_lease_id": "lease:engineering-runtime-witness",
+        "dispatch_request_id": "dispatch-request:engineering-runtime-witness",
+        "dispatch_receipt_id": "dispatch-receipt:engineering-runtime-witness",
+        "requested_by_role_id": "engineering.owner",
+        "worker_id": "worker:gateway-runtime",
+        "evidence_refs": evidence_refs,
+    }
+
+    first = client.post("/api/v1/orgs/org-mullu/action-queue/worker-dispatch-receipt", json=request_body)
+    before_duplicate = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+    duplicate = client.post("/api/v1/orgs/org-mullu/action-queue/worker-dispatch-receipt", json=request_body)
+    after_duplicate = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+    dispatch_events = [
+        event for event in after_duplicate["events"]
+        if event["event_type"] == "plan_step_worker_dispatch_recorded"
+    ]
+
+    assert first.status_code == 200
+    assert duplicate.status_code == 400
+    assert duplicate.json()["detail"]["error_code"] == "action_queue_worker_dispatch_receipt_rejected"
+    assert len(after_duplicate["worker_dispatch_receipts"]) == 1
+    assert before_duplicate["events"] == after_duplicate["events"]
+    assert len(dispatch_events) == 1
+
+
+def test_organization_action_queue_worker_dispatch_receipt_rejects_not_ready_selection_without_mutation(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    queue = client.get(
+        "/api/v1/orgs/org-mullu/action-queue"
+        "?department_id=security_compliance&next_action=collect_required_evidence"
+    ).json()
+    action_id = queue["actions"][0]["action_id"]
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/orgs/org-mullu/action-queue/worker-dispatch-receipt",
+        json={
+            "action_id": action_id,
+            "filters": {
+                "department_id": "security_compliance",
+                "next_action": "collect_required_evidence",
+            },
+            "worker_lease_id": "lease:security-missing-evidence",
+            "dispatch_request_id": "dispatch-request:security-missing-evidence",
+            "dispatch_receipt_id": "dispatch-receipt:security-missing-evidence",
+            "requested_by_role_id": "security.owner",
+            "worker_id": "worker:security-review",
+            "evidence_refs": ["evidence:security_public_claim_boundary"],
+        },
+    )
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_code"] == "action_queue_worker_dispatch_receipt_rejected"
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+    assert after["worker_dispatch_receipts"] == []
+
+
 def test_organization_action_queue_view_is_read_only_and_escaped(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     bootstrap = client.post(
@@ -2152,6 +2382,7 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/orgs/{org_id}/action-queue/approval-packet-preview" in paths
     assert "/api/v1/orgs/{org_id}/action-queue/dispatch-lease-preview" in paths
     assert "/api/v1/orgs/{org_id}/action-queue/worker-lease" in paths
+    assert "/api/v1/orgs/{org_id}/action-queue/worker-dispatch-receipt" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate/view" in paths
     assert "/api/v1/cases/{case_id}/audit-explorer" in paths

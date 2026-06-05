@@ -46,6 +46,7 @@ from mcoi_runtime.contracts.organization_kernel import (
     OrganizationRisk,
     PlanStep,
     PlanStepGateStatus,
+    PlanStepWorkerDispatchReceipt,
     PlanStepWorkerLeaseReceipt,
     PlanStepWorkerReceiptBinding,
 )
@@ -100,6 +101,19 @@ class WorkerLeaseCreateRequest(BaseModel):
     requested_by_role_id: str
     timeout_seconds: int
     budget_ref: str
+    evidence_refs: list[str]
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class WorkerDispatchReceiptCreateRequest(BaseModel):
+    action_id: str
+    filters: dict[str, str] = Field(default_factory=dict)
+    worker_lease_id: str
+    dispatch_request_id: str
+    dispatch_receipt_id: str
+    requested_by_role_id: str
+    worker_id: str
+    dispatch_intent: str = "request_worker_execution"
     evidence_refs: list[str]
     metadata: dict[str, Any] = Field(default_factory=dict)
 
@@ -375,6 +389,9 @@ def _state_case_bundle(kernel: OrganizationKernel, case_id: str) -> dict[str, An
         "closure": _body(closure) if closure is not None else None,
         "learning_bindings": [_body(item) for item in state.learning_bindings if item.case_id == case_id],
         "worker_leases": [_body(item) for item in state.worker_lease_receipts if item.case_id == case_id],
+        "worker_dispatch_receipts": [
+            _body(item) for item in state.worker_dispatch_receipts if item.case_id == case_id
+        ],
         "events": [_body(item) for item in kernel.list_case_events(case_id)],
         "governed": True,
     }
@@ -406,6 +423,7 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
     approvals = tuple(item for item in state.approvals if item.case_id == case_id)
     gate_decisions = tuple(item for item in state.gate_decisions if item.case_id == case_id)
     worker_leases = tuple(item for item in state.worker_lease_receipts if item.case_id == case_id)
+    worker_dispatch_receipts = tuple(item for item in state.worker_dispatch_receipts if item.case_id == case_id)
     worker_receipts = tuple(item for item in state.worker_receipt_bindings if item.case_id == case_id)
     reconciliations = tuple(item for item in state.reconciliations if item.case_id == case_id)
     learning_bindings = tuple(item for item in state.learning_bindings if item.case_id == case_id)
@@ -424,6 +442,9 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
     worker_leases_by_step: dict[str, list[dict[str, Any]]] = {}
     for lease_receipt in worker_leases:
         worker_leases_by_step.setdefault(lease_receipt.step_id, []).append(_body(lease_receipt))
+    worker_dispatch_receipts_by_step: dict[str, list[dict[str, Any]]] = {}
+    for dispatch_receipt in worker_dispatch_receipts:
+        worker_dispatch_receipts_by_step.setdefault(dispatch_receipt.step_id, []).append(_body(dispatch_receipt))
 
     plan_step_proof = []
     if plan is not None:
@@ -447,6 +468,7 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
                 "evidence_refs": evidence_refs,
                 "missing_evidence": missing_evidence,
                 "worker_lease_receipts": worker_leases_by_step.get(step.step_id, []),
+                "worker_dispatch_receipts": worker_dispatch_receipts_by_step.get(step.step_id, []),
                 "worker_receipt_bindings": worker_receipts_by_step.get(step.step_id, []),
                 "latest_gate_decision": _body(latest_decision) if latest_decision is not None else None,
                 "gate_status": latest_decision.status.value if latest_decision is not None else "not_evaluated",
@@ -496,6 +518,22 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
             },
         )
         for item in worker_leases
+    )
+    proof_timeline.extend(
+        _timeline_item(
+            kind="worker_dispatch_receipt",
+            occurred_at=item.dispatched_at,
+            ref=item.dispatch_receipt_id,
+            status="dispatch_envelope_created",
+            payload={
+                "step_id": item.step_id,
+                "capability_id": item.capability_id,
+                "worker_lease_id": item.worker_lease_id,
+                "dispatch_request_id": item.dispatch_request_id,
+                "worker_execution_started": False,
+            },
+        )
+        for item in worker_dispatch_receipts
     )
     proof_timeline.extend(
         _timeline_item(
@@ -607,6 +645,7 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
             "approval_count": len(approvals),
             "gate_decision_count": len(gate_decisions),
             "worker_lease_count": len(worker_leases),
+            "worker_dispatch_receipt_count": len(worker_dispatch_receipts),
             "worker_receipt_count": len(worker_receipts),
             "reconciliation_count": len(reconciliations),
             "has_terminal_closure": closure is not None,
@@ -948,6 +987,8 @@ def _case_step_handoffs(kernel: OrganizationKernel, case_id: str) -> dict[str, A
             "missing_evidence": step_proof["missing_evidence"],
             "worker_lease_count": len(step_proof["worker_lease_receipts"]),
             "worker_lease_receipts": step_proof["worker_lease_receipts"],
+            "worker_dispatch_receipt_count": len(step_proof["worker_dispatch_receipts"]),
+            "worker_dispatch_receipts": step_proof["worker_dispatch_receipts"],
             "worker_receipt_count": len(step_proof["worker_receipt_bindings"]),
             "worker_receipt_bindings": step_proof["worker_receipt_bindings"],
             "worker_receipt_url": (
@@ -1414,6 +1455,7 @@ def _render_case_step_handoffs_html(payload: dict[str, Any]) -> str:
             "gate_status": item.get("gate_status", ""),
             "handoff_status": item.get("handoff_status", ""),
             "next_action": item.get("next_action", ""),
+            "worker_dispatch_receipts": item.get("worker_dispatch_receipt_count", 0),
             "worker_receipts": item.get("worker_receipt_count", 0),
             "dispatch_authority": item.get("dispatch_authority", False),
         }
@@ -1458,7 +1500,7 @@ def _render_case_step_handoffs_html(payload: dict[str, Any]) -> str:
     <h2>{title}</h2>
     {_proof_explorer_table("Summary", ("metric", "value"), summary_rows)}
     {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
-    {_proof_explorer_table("Step Handoffs", ("step_id", "department", "capability", "action", "gate_status", "handoff_status", "next_action", "worker_receipts", "dispatch_authority"), handoff_rows)}
+    {_proof_explorer_table("Step Handoffs", ("step_id", "department", "capability", "action", "gate_status", "handoff_status", "next_action", "worker_dispatch_receipts", "worker_receipts", "dispatch_authority"), handoff_rows)}
   </main>
 </body>
 </html>
@@ -2088,6 +2130,7 @@ def _organization_case_portfolio(kernel: OrganizationKernel, org_id: str) -> dic
             "evidence_count": proof["summary"]["evidence_count"],
             "approval_count": proof["summary"]["approval_count"],
             "gate_decision_count": proof["summary"]["gate_decision_count"],
+            "worker_dispatch_receipt_count": proof["summary"]["worker_dispatch_receipt_count"],
             "worker_receipt_count": proof["summary"]["worker_receipt_count"],
             "has_terminal_closure": closure_certificate is not None,
             "effect_reconciled": bool(closure_certificate and closure_certificate["effect_reconciled"]),
@@ -2251,6 +2294,7 @@ def _organization_action_queue(
                 "queue_severity": queue_severity,
                 "missing_evidence": handoff["missing_evidence"],
                 "worker_lease_count": handoff["worker_lease_count"],
+                "worker_dispatch_receipt_count": handoff["worker_dispatch_receipt_count"],
                 "worker_receipt_count": handoff["worker_receipt_count"],
                 "execution_authority_granted": False,
                 "dispatch_authority_granted": False,
@@ -2270,6 +2314,9 @@ def _organization_action_queue(
                         f"/api/v1/orgs/{quote(org_id, safe='')}/action-queue/dispatch-lease-preview"
                     ),
                     "worker_lease": f"/api/v1/orgs/{quote(org_id, safe='')}/action-queue/worker-lease",
+                    "worker_dispatch_receipt": (
+                        f"/api/v1/orgs/{quote(org_id, safe='')}/action-queue/worker-dispatch-receipt"
+                    ),
                 },
             }
             action_rows.append(action_row)
@@ -2788,6 +2835,95 @@ def _organization_action_queue_worker_lease(
     }
 
 
+def _organization_action_queue_worker_dispatch_receipt(
+    kernel: OrganizationKernel,
+    org_id: str,
+    req: WorkerDispatchReceiptCreateRequest,
+) -> dict[str, Any]:
+    dispatch_preview = _organization_action_queue_dispatch_lease_preview(
+        kernel,
+        org_id,
+        ActionQueueSelectionPreviewRequest(
+            action_id=req.action_id,
+            filters=req.filters,
+            allow_simulation_when_blocked=False,
+            metadata=req.metadata,
+        ),
+    )
+    if dispatch_preview["lease_decision"] != "lease_request_ready":
+        raise RuntimeCoreInvariantError("worker dispatch receipt requires ready dispatch lease preview")
+
+    lease_scope = dispatch_preview["lease_scope"]
+    state = kernel.snapshot_state()
+    lease_receipt = next(
+        (item for item in state.worker_lease_receipts if item.lease_id == req.worker_lease_id),
+        None,
+    )
+    if lease_receipt is None:
+        raise RuntimeCoreInvariantError("worker dispatch receipt lease unavailable")
+    if lease_receipt.case_id != lease_scope["case_id"]:
+        raise RuntimeCoreInvariantError("worker dispatch receipt selected case mismatch")
+    if lease_receipt.step_id != lease_scope["step_id"]:
+        raise RuntimeCoreInvariantError("worker dispatch receipt selected step mismatch")
+    if lease_receipt.capability_id != lease_scope["capability_id"]:
+        raise RuntimeCoreInvariantError("worker dispatch receipt selected capability mismatch")
+    if req.requested_by_role_id != lease_receipt.requested_by_role_id:
+        raise RuntimeCoreInvariantError("worker dispatch receipt requester must match lease requester")
+
+    receipt = kernel.record_worker_dispatch_receipt(
+        PlanStepWorkerDispatchReceipt(
+            dispatch_receipt_id=req.dispatch_receipt_id,
+            dispatch_request_id=req.dispatch_request_id,
+            case_id=lease_receipt.case_id,
+            step_id=lease_receipt.step_id,
+            worker_lease_id=lease_receipt.lease_id,
+            capability_id=lease_receipt.capability_id,
+            responsible_role_id=lease_receipt.responsible_role_id,
+            requested_by_role_id=req.requested_by_role_id,
+            worker_id=req.worker_id,
+            dispatch_intent=req.dispatch_intent,
+            expected_effect=lease_receipt.expected_effect,
+            evidence_refs=tuple(req.evidence_refs),
+            lease_created_at=lease_receipt.created_at,
+            dispatched_at=_clock_now(),
+            metadata={
+                **req.metadata,
+                "source": "orgos_action_queue_worker_dispatch_receipt",
+                "worker_execution_started": False,
+                "worker_output_bound": False,
+                "evidence_admitted": False,
+                "approval_creation_authority_granted": False,
+                "terminal_closure_created": False,
+            },
+        )
+    )
+    return {
+        "worker_dispatch_receipt": _body(receipt),
+        "dispatch_lease_preview": dispatch_preview,
+        "dispatch_envelope_created": True,
+        "worker_execution_started": False,
+        "worker_output_bound": False,
+        "receipt_binding_created": False,
+        "evidence_admitted": False,
+        "approval_created": False,
+        "terminal_closure_created": False,
+        "execution_authority_granted": False,
+        "dispatch_authority_granted": False,
+        "receipt_binding_authority_granted": False,
+        "closure_state": "worker_dispatch_receipt_created_only",
+        "forbidden_effects": [
+            "worker_execution",
+            "worker_output_binding",
+            "case_status_mutation",
+            "evidence_admission",
+            "approval_creation",
+            "receipt_binding",
+            "terminal_closure",
+        ],
+        "governed": True,
+    }
+
+
 def _render_department_registry_html(payload: dict[str, Any]) -> str:
     raw_org_id = str(payload.get("org_id", ""))
     org_id = escape(raw_org_id)
@@ -3090,6 +3226,7 @@ def _render_action_queue_html(payload: dict[str, Any]) -> str:
             "department": item.get("department_id", ""),
             "role": item.get("responsible_role_id", ""),
             "reason": item.get("reason_code", ""),
+            "dispatch_receipts": item.get("worker_dispatch_receipt_count", 0),
             "receipts": item.get("worker_receipt_count", 0),
         }
         for item in payload.get("actions", [])
@@ -3821,6 +3958,30 @@ def create_organization_action_queue_worker_lease(
             detail=_error_detail(
                 "action queue worker lease rejected",
                 "action_queue_worker_lease_rejected",
+            ),
+        ) from exc
+    _persist_kernel(kernel)
+    return payload
+
+
+@router.post("/api/v1/orgs/{org_id}/action-queue/worker-dispatch-receipt")
+def create_organization_action_queue_worker_dispatch_receipt(
+    org_id: str,
+    req: WorkerDispatchReceiptCreateRequest,
+    request: Request,
+):
+    """Record a bounded worker dispatch envelope without executing a worker."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_organization_tenant(request, kernel, org_id)
+    try:
+        payload = _organization_action_queue_worker_dispatch_receipt(kernel, org_id, req)
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_error_detail(
+                "action queue worker dispatch receipt rejected",
+                "action_queue_worker_dispatch_receipt_rejected",
             ),
         ) from exc
     _persist_kernel(kernel)
