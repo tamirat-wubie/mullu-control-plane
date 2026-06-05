@@ -422,6 +422,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(json.dumps(result.as_dict(), indent=2, sort_keys=True))
     elif result.ready_to_launch_strict_probe:
         print("WINDOWS GOVERNED CODE-CHANGE LOOP READINESS: ready_to_collect_evidence")
+    elif result.status == "local_only_ready":
+        print(
+            "WINDOWS GOVERNED CODE-CHANGE LOOP READINESS: local_only_ready; "
+            "strict Linux sandbox evidence remains AwaitingEvidence"
+        )
     else:
         print(f"WINDOWS GOVERNED CODE-CHANGE LOOP READINESS BLOCKED blockers={list(result.blockers)}")
     return 0 if result.ready_to_launch_strict_probe or not args.strict else 2

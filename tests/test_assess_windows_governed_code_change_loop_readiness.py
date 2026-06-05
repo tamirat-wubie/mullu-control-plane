@@ -292,3 +292,20 @@ def test_local_only_json_reports_windows_local_posture(monkeypatch, capsys) -> N
     assert '"strict_probe_argv": []' in streams.out
     assert '"status": "skipped"' in streams.out
     assert "wsl" not in streams.err.lower()
+
+
+def test_local_only_strict_text_reports_awaiting_evidence_without_empty_blockers(
+    monkeypatch,
+    capsys,
+) -> None:  # noqa: ANN001
+    monkeypatch.setattr(Path, "resolve", lambda self, strict=False: PureWindowsPath("C:/Users/tmrtl/repo"))
+    monkeypatch.setattr(platform, "system", lambda: "Windows")
+
+    exit_code = main(["--local-only", "--strict"])
+    streams = capsys.readouterr()
+
+    assert exit_code == 2
+    assert "local_only_ready" in streams.out
+    assert "strict Linux sandbox evidence remains AwaitingEvidence" in streams.out
+    assert "blockers=[]" not in streams.out
+    assert streams.err == ""
