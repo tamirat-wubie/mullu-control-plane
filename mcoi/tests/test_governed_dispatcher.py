@@ -97,11 +97,18 @@ class FileWritingExecutor:
         )
 
 
-def _make_request(goal_id: str = "goal-1", msg: str = "hello") -> DispatchRequest:
+def _make_request(
+    goal_id: str = "goal-1",
+    msg: str = "hello",
+    template_overrides: dict | None = None,
+) -> DispatchRequest:
+    template = {**VALID_TEMPLATE}
+    if template_overrides:
+        template.update(template_overrides)
     return DispatchRequest(
         goal_id=goal_id,
         route="shell_command",
-        template=VALID_TEMPLATE,
+        template=template,
         bindings={"msg": msg},
     )
 
@@ -340,12 +347,16 @@ def test_predictive_failure_blocks_abort() -> None:
 # ── 4. Economic gate blocks over budget ──
 
 def test_economic_gate_blocks_over_budget() -> None:
-    optimizer = EconomicOptimizer(budget=50.0)  # budget < cost (100)
+    optimizer = EconomicOptimizer(budget=50.0)
 
     eq = EquilibriumEngine()
     eq.register_agent("actor-1")
     governed, exe = _make_governed(optimizer=optimizer, equilibrium=eq)
-    ctx = _make_context()
+    ctx = GovernedDispatchContext(
+        actor_id="actor-1",
+        intent_id="intent-economic-block",
+        request=_make_request(template_overrides={"economic_cost": 51.0, "economic_value": 100.0}),
+    )
 
     result = governed.governed_dispatch(ctx)
 
@@ -355,6 +366,47 @@ def test_economic_gate_blocks_over_budget() -> None:
 
 
 # ── 5. Equilibrium blocks at capacity ──
+
+def test_economic_gate_uses_declared_template_metrics() -> None:
+    optimizer = EconomicOptimizer(budget=10.0)
+    eq = EquilibriumEngine()
+    eq.register_agent("actor-1")
+    governed, exe = _make_governed(optimizer=optimizer, equilibrium=eq)
+    ctx = GovernedDispatchContext(
+        actor_id="actor-1",
+        intent_id="intent-economic-metrics",
+        request=_make_request(template_overrides={"economic_cost": 7.5, "economic_value": 12.5}),
+    )
+
+    result = governed.governed_dispatch(ctx)
+
+    assert not result.blocked
+    assert result.all_gates_passed
+    assert exe.calls == 1
+    assert optimizer.remaining_budget == 2.5
+    economic_gate = next(g for g in result.gates_passed if g.gate_name == "economic_optimization")
+    assert economic_gate.reason == "net_value=5.0"
+
+
+def test_malformed_economic_metrics_fail_closed_before_dispatch() -> None:
+    eq = EquilibriumEngine()
+    eq.register_agent("actor-1")
+    governed, exe = _make_governed(equilibrium=eq)
+    ctx = GovernedDispatchContext(
+        actor_id="actor-1",
+        intent_id="intent-economic-malformed",
+        request=_make_request(template_overrides={"economic_cost": -1.0}),
+    )
+
+    result = governed.governed_dispatch(ctx)
+
+    assert result.blocked
+    assert result.block_reason == "economic_optimization: malformed metrics"
+    assert result.gates_failed[-1].gate_name == "economic_optimization"
+    assert result.gates_failed[-1].reason == "economic metrics malformed"
+    assert exe.calls == 0
+    assert governed.ledger_count == 1
+
 
 def test_equilibrium_blocks_at_capacity() -> None:
     eq = EquilibriumEngine(max_total_pending=1)
@@ -548,8 +600,8 @@ def test_full_pipeline_integration() -> None:
     # Prediction: recorded (low risk, proceed)
     assert predictor.prediction_count == 1
 
-    # Economics: budget committed
-    assert optimizer.remaining_budget == 9900.0
+    # Economics: default template cost committed
+    assert optimizer.remaining_budget == 9999.0
 
     # Equilibrium: action completed (pending back to 0)
     agent_load = eq._agents["actor-full"]
