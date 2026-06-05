@@ -204,7 +204,7 @@ def test_collect_runtime_conformance_rejects_unclassified_proof_routes(monkeypat
         secret=secret,
         overrides={
             "proof_coverage_declared_routes_classified": False,
-            "proof_coverage_declared_route_count": 301,
+            "proof_coverage_declared_route_count": 302,
             "proof_coverage_unclassified_route_count": 237,
         },
     )
@@ -221,7 +221,7 @@ def test_collect_runtime_conformance_rejects_unclassified_proof_routes(monkeypat
     )
 
     assert route_step.passed is False
-    assert "route_count=301" in route_step.detail
+    assert "route_count=302" in route_step.detail
     assert "unclassified_route_count=237" in route_step.detail
     assert "runtime conformance proof coverage declared routes were not fully classified" in collection.errors
 
@@ -640,7 +640,7 @@ def _signed_certificate(
         "capsule_registry_certified": True,
         "proof_coverage_matrix_current": True,
         "proof_coverage_declared_routes_classified": True,
-        "proof_coverage_declared_route_count": 301,
+        "proof_coverage_declared_route_count": 302,
         "proof_coverage_unclassified_route_count": 0,
         "known_limitations_aligned": False,
         "security_model_aligned": False,

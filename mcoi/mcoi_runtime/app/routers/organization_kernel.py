@@ -46,6 +46,7 @@ from mcoi_runtime.contracts.organization_kernel import (
     OrganizationRisk,
     PlanStep,
     PlanStepGateStatus,
+    PlanStepWorkerLeaseReceipt,
     PlanStepWorkerReceiptBinding,
 )
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
@@ -89,6 +90,17 @@ class WorkerReceiptBindRequest(BaseModel):
     worker_output_hash: str
     receipt_evidence_refs: list[str]
     admitted_evidence_ref: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class WorkerLeaseCreateRequest(BaseModel):
+    action_id: str
+    filters: dict[str, str] = Field(default_factory=dict)
+    lease_id: str
+    requested_by_role_id: str
+    timeout_seconds: int
+    budget_ref: str
+    evidence_refs: list[str]
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -362,6 +374,7 @@ def _state_case_bundle(kernel: OrganizationKernel, case_id: str) -> dict[str, An
         "reconciliations": [_body(item) for item in state.reconciliations if item.case_id == case_id],
         "closure": _body(closure) if closure is not None else None,
         "learning_bindings": [_body(item) for item in state.learning_bindings if item.case_id == case_id],
+        "worker_leases": [_body(item) for item in state.worker_lease_receipts if item.case_id == case_id],
         "events": [_body(item) for item in kernel.list_case_events(case_id)],
         "governed": True,
     }
@@ -392,6 +405,7 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
     evidence = tuple(item for item in state.case_evidence if item.case_id == case_id)
     approvals = tuple(item for item in state.approvals if item.case_id == case_id)
     gate_decisions = tuple(item for item in state.gate_decisions if item.case_id == case_id)
+    worker_leases = tuple(item for item in state.worker_lease_receipts if item.case_id == case_id)
     worker_receipts = tuple(item for item in state.worker_receipt_bindings if item.case_id == case_id)
     reconciliations = tuple(item for item in state.reconciliations if item.case_id == case_id)
     learning_bindings = tuple(item for item in state.learning_bindings if item.case_id == case_id)
@@ -407,6 +421,9 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
     worker_receipts_by_step: dict[str, list[dict[str, Any]]] = {}
     for binding in worker_receipts:
         worker_receipts_by_step.setdefault(binding.step_id, []).append(_body(binding))
+    worker_leases_by_step: dict[str, list[dict[str, Any]]] = {}
+    for lease_receipt in worker_leases:
+        worker_leases_by_step.setdefault(lease_receipt.step_id, []).append(_body(lease_receipt))
 
     plan_step_proof = []
     if plan is not None:
@@ -429,6 +446,7 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
                 "capability_id": step.capability_id,
                 "evidence_refs": evidence_refs,
                 "missing_evidence": missing_evidence,
+                "worker_lease_receipts": worker_leases_by_step.get(step.step_id, []),
                 "worker_receipt_bindings": worker_receipts_by_step.get(step.step_id, []),
                 "latest_gate_decision": _body(latest_decision) if latest_decision is not None else None,
                 "gate_status": latest_decision.status.value if latest_decision is not None else "not_evaluated",
@@ -463,6 +481,21 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
             payload={"role_id": item.role_id, "approval_scope": item.approval_scope},
         )
         for item in approvals
+    )
+    proof_timeline.extend(
+        _timeline_item(
+            kind="worker_lease_receipt",
+            occurred_at=item.created_at,
+            ref=item.lease_id,
+            status="created",
+            payload={
+                "step_id": item.step_id,
+                "capability_id": item.capability_id,
+                "dispatch_lease_preview_id": item.dispatch_lease_preview_id,
+                "worker_dispatch_started": False,
+            },
+        )
+        for item in worker_leases
     )
     proof_timeline.extend(
         _timeline_item(
@@ -573,6 +606,7 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
             "evidence_count": len(evidence),
             "approval_count": len(approvals),
             "gate_decision_count": len(gate_decisions),
+            "worker_lease_count": len(worker_leases),
             "worker_receipt_count": len(worker_receipts),
             "reconciliation_count": len(reconciliations),
             "has_terminal_closure": closure is not None,
@@ -912,6 +946,8 @@ def _case_step_handoffs(kernel: OrganizationKernel, case_id: str) -> dict[str, A
             "dispatch_authority": False,
             "evidence_refs": step_proof["evidence_refs"],
             "missing_evidence": step_proof["missing_evidence"],
+            "worker_lease_count": len(step_proof["worker_lease_receipts"]),
+            "worker_lease_receipts": step_proof["worker_lease_receipts"],
             "worker_receipt_count": len(step_proof["worker_receipt_bindings"]),
             "worker_receipt_bindings": step_proof["worker_receipt_bindings"],
             "worker_receipt_url": (
@@ -2214,6 +2250,7 @@ def _organization_action_queue(
                 "reason_code": admission_preview["reason_code"],
                 "queue_severity": queue_severity,
                 "missing_evidence": handoff["missing_evidence"],
+                "worker_lease_count": handoff["worker_lease_count"],
                 "worker_receipt_count": handoff["worker_receipt_count"],
                 "execution_authority_granted": False,
                 "dispatch_authority_granted": False,
@@ -2232,6 +2269,7 @@ def _organization_action_queue(
                     "dispatch_lease_preview": (
                         f"/api/v1/orgs/{quote(org_id, safe='')}/action-queue/dispatch-lease-preview"
                     ),
+                    "worker_lease": f"/api/v1/orgs/{quote(org_id, safe='')}/action-queue/worker-lease",
                 },
             }
             action_rows.append(action_row)
@@ -2672,6 +2710,81 @@ def _organization_action_queue_dispatch_lease_preview(
             "terminal_closure",
         ],
         "metadata": req.metadata,
+    }
+
+
+def _organization_action_queue_worker_lease(
+    kernel: OrganizationKernel,
+    org_id: str,
+    req: WorkerLeaseCreateRequest,
+) -> dict[str, Any]:
+    dispatch_preview = _organization_action_queue_dispatch_lease_preview(
+        kernel,
+        org_id,
+        ActionQueueSelectionPreviewRequest(
+            action_id=req.action_id,
+            filters=req.filters,
+            allow_simulation_when_blocked=False,
+            metadata=req.metadata,
+        ),
+    )
+    if dispatch_preview["lease_decision"] != "lease_request_ready":
+        raise RuntimeCoreInvariantError("worker lease requires ready dispatch lease preview")
+
+    lease_scope = dispatch_preview["lease_scope"]
+    admission_preview = dispatch_preview["selection_preview"]["admission_preview"]
+    handoff = admission_preview["handoff"]
+    if req.requested_by_role_id != lease_scope["responsible_role_id"]:
+        raise RuntimeCoreInvariantError("worker lease requester must match responsible role")
+
+    receipt = kernel.create_worker_lease_receipt(
+        PlanStepWorkerLeaseReceipt(
+            lease_id=req.lease_id,
+            case_id=str(lease_scope["case_id"]),
+            step_id=str(lease_scope["step_id"]),
+            capability_id=str(lease_scope["capability_id"]),
+            responsible_role_id=str(lease_scope["responsible_role_id"]),
+            requested_by_role_id=req.requested_by_role_id,
+            dispatch_lease_preview_id=str(dispatch_preview["dispatch_lease_preview_id"]),
+            queued_action=str(lease_scope["allowed_next_action"]),
+            capability_action=str(handoff["action"]),
+            expected_effect=str(lease_scope["expected_effect"]),
+            evidence_refs=tuple(req.evidence_refs),
+            timeout_seconds=req.timeout_seconds,
+            budget_ref=req.budget_ref,
+            created_at=_clock_now(),
+            metadata={
+                **req.metadata,
+                "source": "orgos_action_queue_worker_lease",
+                "worker_dispatch_started": False,
+                "receipt_binding_created": False,
+                "approval_creation_authority_granted": False,
+                "terminal_closure_created": False,
+            },
+        )
+    )
+    return {
+        "worker_lease": _body(receipt),
+        "dispatch_lease_preview": dispatch_preview,
+        "lease_created": True,
+        "worker_dispatch_started": False,
+        "receipt_binding_created": False,
+        "approval_created": False,
+        "terminal_closure_created": False,
+        "execution_authority_granted": False,
+        "dispatch_authority_granted": False,
+        "receipt_binding_authority_granted": False,
+        "closure_state": "worker_lease_created_only",
+        "forbidden_effects": [
+            "worker_dispatch",
+            "worker_output_binding",
+            "case_status_mutation",
+            "evidence_admission",
+            "approval_creation",
+            "receipt_binding",
+            "terminal_closure",
+        ],
+        "governed": True,
     }
 
 
@@ -3688,6 +3801,30 @@ def preview_organization_action_queue_dispatch_lease(
                 "action_queue_dispatch_lease_preview_rejected",
             ),
         ) from exc
+
+
+@router.post("/api/v1/orgs/{org_id}/action-queue/worker-lease")
+def create_organization_action_queue_worker_lease(
+    org_id: str,
+    req: WorkerLeaseCreateRequest,
+    request: Request,
+):
+    """Create a bounded worker lease receipt without dispatching a worker."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_organization_tenant(request, kernel, org_id)
+    try:
+        payload = _organization_action_queue_worker_lease(kernel, org_id, req)
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_error_detail(
+                "action queue worker lease rejected",
+                "action_queue_worker_lease_rejected",
+            ),
+        ) from exc
+    _persist_kernel(kernel)
+    return payload
 
 
 @router.post("/api/v1/cases/launch-gateway-pilot")
