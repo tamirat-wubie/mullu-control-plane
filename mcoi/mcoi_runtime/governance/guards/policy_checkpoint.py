@@ -1,7 +1,8 @@
 """Purpose: declare canonical governance policy checkpoints by execution phase.
 Governance scope: guard-chain documentation, session enforcement checkpoints,
 and review-visible drift detection.
-Dependencies: content-safety stage constants only; this module has no side effects.
+Dependencies: content-safety stage constants and protected-variable monitors;
+this module has no side effects.
 Invariants:
   - Checkpoint identifiers are stable, non-empty, and unique.
   - HTTP guard-chain checkpoints preserve their documented guard order.
@@ -17,6 +18,11 @@ from enum import Enum
 from mcoi_runtime.governance.guards.content_safety import (
     LAMBDA_INPUT_SAFETY,
     LAMBDA_OUTPUT_SAFETY,
+)
+from mcoi_runtime.governance.protected_variables import (
+    ProtectedVariable,
+    ProtectedVariableMonitor,
+    ProtectionRule,
 )
 
 
@@ -76,6 +82,35 @@ SESSION_LLM_POLICY_CHECKPOINTS: tuple[PolicyCheckpoint, ...] = (
     PolicyCheckpoint("audit", PolicyCheckpointPhase.POST_DISPATCH, PolicyCheckpointSurface.SESSION_ADJACENT, "GovernedSession._record_audit", True),
 )
 
+PROTECTED_HTTP_CHECKPOINT_IDS: tuple[str, ...] = (
+    "api_key",
+    "jwt",
+    "tenant",
+    "tenant_gating",
+    "rbac",
+    LAMBDA_INPUT_SAFETY,
+    "temporal",
+    "rate_limit",
+    "budget",
+)
+
+PROTECTED_SESSION_LLM_CHECKPOINT_IDS: tuple[str, ...] = (
+    "closed_check",
+    "policy",
+    "tenant_gating",
+    "rbac",
+    "rate_limit",
+    LAMBDA_INPUT_SAFETY,
+    "budget",
+    "proof",
+    "llm_call",
+    LAMBDA_OUTPUT_SAFETY,
+    "pii_redaction",
+    "audit",
+)
+
+_PROTECTED_CHECKPOINT_IDS_FIELD = "checkpoint_ids"
+
 
 def checkpoint_ids(checkpoints: tuple[PolicyCheckpoint, ...]) -> tuple[str, ...]:
     """Return checkpoint identifiers in canonical order."""
@@ -88,3 +123,27 @@ def assert_unique_checkpoint_ids(checkpoints: tuple[PolicyCheckpoint, ...]) -> N
     duplicates = sorted({checkpoint_id for checkpoint_id in ids if ids.count(checkpoint_id) > 1})
     if duplicates:
         raise ValueError("duplicate policy checkpoint ids: " + ", ".join(duplicates))
+
+
+def assert_protected_checkpoint_ids(
+    checkpoints: tuple[PolicyCheckpoint, ...],
+    *,
+    required_ids: tuple[str, ...],
+    surface_name: str,
+) -> None:
+    """Raise ValueError when a protected checkpoint is missing from a surface."""
+    monitor = ProtectedVariableMonitor()
+    monitor.register(
+        ProtectedVariable(
+            name=_PROTECTED_CHECKPOINT_IDS_FIELD,
+            rule=ProtectionRule.REQUIRED_SUPERSET,
+            required_members=required_ids,
+        )
+    )
+    report = monitor.check(
+        {},
+        {_PROTECTED_CHECKPOINT_IDS_FIELD: checkpoint_ids(checkpoints)},
+    )
+    if not report.ok:
+        reason = report.violations[0].reason
+        raise ValueError(f"missing protected policy checkpoint ids for {surface_name}: {reason}")
