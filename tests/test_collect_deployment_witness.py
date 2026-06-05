@@ -599,7 +599,7 @@ def test_collect_deployment_witness_rejects_unclassified_proof_routes(monkeypatc
         secret=conformance_secret,
         overrides={
             "proof_coverage_declared_routes_classified": False,
-            "proof_coverage_declared_route_count": 302,
+            "proof_coverage_declared_route_count": 303,
             "proof_coverage_unclassified_route_count": 237,
         },
     )
@@ -1067,7 +1067,7 @@ def _signed_conformance_certificate(
         "capsule_registry_certified": True,
         "proof_coverage_matrix_current": True,
         "proof_coverage_declared_routes_classified": True,
-        "proof_coverage_declared_route_count": 302,
+        "proof_coverage_declared_route_count": 303,
         "proof_coverage_unclassified_route_count": 0,
         "known_limitations_aligned": False,
         "security_model_aligned": False,
