@@ -115,7 +115,7 @@ class SimplePlatformFastAPIAdapter:
                 method="POST",
                 path=f"{normalized}/actions/check",
                 handler_name="check_action",
-                purpose="check whether a plain task is ready, needs review, or is blocked",
+                purpose="check whether a plain task is ready, needs approval, or is blocked",
             ),
             SimplePlatformRouteSpec(
                 method="POST",

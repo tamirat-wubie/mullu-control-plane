@@ -213,7 +213,7 @@ class DashboardSimpleHomeSummary:
             raise RuntimeCoreInvariantError("dashboard simple home cannot allow execution")
         if min(self.ready_workflow_count, self.review_workflow_count, self.blocked_workflow_count) < 0:
             raise RuntimeCoreInvariantError("dashboard simple home counts cannot be negative")
-        if self.status_label and self.status_label not in {"Ready", "Needs review", "Blocked"}:
+        if self.status_label and self.status_label not in {"Ready", "Needs approval", "Blocked"}:
             raise RuntimeCoreInvariantError("dashboard simple home status label is unsupported")
         if self.count_summary.strip() != self.count_summary:
             raise RuntimeCoreInvariantError("dashboard simple home count summary must be trimmed")
@@ -676,25 +676,25 @@ def _simple_home_summary(
         )
     if review_count:
         action_items = _home_action_items(
-            title="Needs review",
+            title="Needs approval",
             primary_command=primary_command,
             simple_workflow_summaries=simple_workflow_summaries,
             simple_start_guide=simple_start_guide,
         )
         return DashboardSimpleHomeSummary(
-            title="Needs review",
+            title="Needs approval",
             message="Some workflows need approval before users continue.",
             primary_command=primary_command,
             ready_workflow_count=ready_count,
             review_workflow_count=review_count,
             blocked_workflow_count=blocked_count,
-            status_label="Needs review",
+            status_label="Needs approval",
             count_summary=_home_count_summary(
                 ready_count=ready_count,
                 review_count=review_count,
                 blocked_count=blocked_count,
             ),
-            next_action=_home_next_action("Needs review", primary_command),
+            next_action=_home_next_action("Needs approval", primary_command),
             action_items=action_items,
             command_guidance=command_guidance,
         )
@@ -726,7 +726,7 @@ def _simple_home_summary(
 def _home_count_summary(*, ready_count: int, review_count: int, blocked_count: int) -> str:
     """Return compact count text for dashboard home cards."""
 
-    return f"{ready_count} ready, {review_count} need review, {blocked_count} blocked"
+    return f"{ready_count} ready, {review_count} need approval, {blocked_count} blocked"
 
 
 def _home_next_action(title: str, primary_command: str) -> str:
@@ -734,7 +734,7 @@ def _home_next_action(title: str, primary_command: str) -> str:
 
     if title == "Blocked":
         return "Open the blocked workflows and choose a narrower target."
-    if title == "Needs review":
+    if title == "Needs approval":
         return "Review the workflows that need approval before continuing."
     return f"Start with `{primary_command}`."
 
@@ -754,7 +754,7 @@ def _home_action_items(
             _home_workflow_action(summary, label_prefix="Fix", command=primary_command)
             for summary in selected_workflows[:3]
         )
-    if title == "Needs review":
+    if title == "Needs approval":
         selected_workflows = tuple(summary for summary in simple_workflow_summaries if summary.outcome == "needs_review")
         return tuple(
             _home_workflow_action(summary, label_prefix="Review", command=primary_command)
@@ -774,7 +774,7 @@ def _home_action_items(
                 "dashboard-home-action",
                 {"command": primary_command, "outcome": "choose"},
             ),
-            label="Choose a workflow",
+            label="Open the simple menu",
             command=primary_command,
             reason=simple_start_guide.message,
             outcome="choose",

@@ -1,7 +1,7 @@
 """CLI front door for simple governed platform actions.
 
 Purpose: provide a small, readable command surface for users who only need to
-check whether a task is ready, needs review, or is blocked.
+check whether a task is ready, needs approval, or is blocked.
 Governance scope: command-line usability projection only; checks execute
 through SimplePlatform and the MVK governance gate.
 Dependencies: argparse, json, and simple platform facade.
@@ -84,6 +84,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     start_parser = subparsers.add_parser("start", help="Show the simple platform home screen")
     start_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
+    menu_parser = subparsers.add_parser("menu", help="Show the simple platform menu")
+    menu_parser.add_argument("--json", action="store_true", help="Emit JSON instead of readable text")
     return parser
 
 
@@ -92,7 +94,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     parser = build_parser()
     args = parser.parse_args(argv)
-    if args.command == "start":
+    if args.command in {"start", "menu"}:
         home = SimplePlatform.simple_home().to_dict()
         if args.json:
             print(json.dumps(_envelope(True, "ready", {"home": home}), sort_keys=True, separators=(",", ":")))
@@ -470,7 +472,7 @@ def _start_text(home: dict[str, object]) -> str:
             "Common tasks: review-docs, update-docs, notify-support, verify-artifact",
             "Common workflows: docs-update, support-notice, artifact-review",
             "Actions: view, change, send, verify",
-            "Outcomes: Ready, Needs review, Blocked",
+            "Outcomes: Ready, Needs approval, Blocked",
         )
     )
     return "\n".join(lines)

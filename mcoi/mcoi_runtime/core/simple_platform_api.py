@@ -164,7 +164,7 @@ class SimplePlatformRuntime:
                 "tasks": [template.to_dict() for template in self.platform.task_templates()],
                 "outcomes": [
                     {"outcome": "ready", "label": "Ready"},
-                    {"outcome": "needs_review", "label": "Needs review"},
+                    {"outcome": "needs_review", "label": "Needs approval"},
                     {"outcome": "blocked", "label": "Blocked"},
                 ],
                 "workflows": [template.to_dict() for template in self.platform.workflow_templates()],

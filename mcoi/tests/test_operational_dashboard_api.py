@@ -45,7 +45,7 @@ def _dashboard_state() -> OperationalDashboardState:
         simple_home_summary=DashboardSimpleHomeSummary(
             title="Ready",
             message="Users can start with the recommended simple workflow path.",
-            primary_command="mullu workflows",
+            primary_command="mullu menu",
             ready_workflow_count=1,
             review_workflow_count=0,
             blocked_workflow_count=0,
@@ -77,14 +77,14 @@ def test_operational_dashboard_runtime_returns_simple_home_envelope() -> None:
     assert envelope["status"] == "ready"
     assert envelope["payload"]["home"]["title"] == "Ready"
     assert envelope["payload"]["home"]["status_label"] == "Ready"
-    assert envelope["payload"]["home"]["count_summary"] == "1 ready, 0 need review, 0 blocked"
-    assert envelope["payload"]["home"]["next_action"] == "Start with `mullu workflows`."
+    assert envelope["payload"]["home"]["count_summary"] == "1 ready, 0 need approval, 0 blocked"
+    assert envelope["payload"]["home"]["next_action"] == "Start with `mullu menu`."
     assert envelope["payload"]["home"]["action_items"] == []
-    assert envelope["payload"]["home"]["command_guidance"] == ["mullu workflows"]
+    assert envelope["payload"]["home"]["command_guidance"] == ["mullu menu"]
     assert envelope["payload"]["home"]["start_here"]["title"] == "Start here"
     assert envelope["payload"]["home"]["start_here"]["status_label"] == "Ready"
-    assert envelope["payload"]["home"]["start_here"]["command_guidance"] == ["mullu workflows"]
-    assert envelope["payload"]["home"]["primary_command"] == "mullu workflows"
+    assert envelope["payload"]["home"]["start_here"]["command_guidance"] == ["mullu menu"]
+    assert envelope["payload"]["home"]["primary_command"] == "mullu menu"
     assert envelope["payload"]["home"]["execution_allowed"] is False
 
 
@@ -142,7 +142,7 @@ def test_operational_dashboard_fastapi_adapter_preserves_runtime_envelopes() -> 
     receipts = adapter.sdlc_receipts()
 
     assert home["governed"] is True
-    assert home["payload"]["home"]["primary_command"] == "mullu workflows"
+    assert home["payload"]["home"]["primary_command"] == "mullu menu"
     assert state["payload"]["dashboard"]["simple_home_summary"]["execution_allowed"] is False
     assert receipts["payload"]["sdlc_receipts"][0]["execution_allowed"] is False
 

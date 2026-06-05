@@ -277,7 +277,7 @@ class SimpleWorkflowPlan:
 
     @property
     def review_count(self) -> int:
-        """Return how many workflow steps need review."""
+        """Return how many workflow steps need approval."""
 
         return sum(1 for check in self.checks if check.outcome == "needs_review")
 
@@ -517,13 +517,13 @@ class SimplePlatform:
 
         return SimpleOnboardingGuide(
             title="Mullu simple mode",
-            message="Choose a workflow, check it, then continue only when it is ready.",
+            message="Open the simple menu, choose the work you want to do, then check it before continuing.",
             recommended_path=(
                 SimpleOnboardingStep(
                     step="choose",
-                    title="Choose a workflow",
-                    command="mullu workflows",
-                    purpose="Show the common work users can start with.",
+                    title="Open the simple menu",
+                    command="mullu menu",
+                    purpose="Show the simple actions, tasks, outcomes, and workflows.",
                 ),
                 SimpleOnboardingStep(
                     step="check",
@@ -538,7 +538,7 @@ class SimplePlatform:
                     purpose="Use the proof-backed outcome in an app, dashboard, or support flow.",
                 ),
             ),
-            outcomes=("Ready", "Needs review", "Blocked"),
+            outcomes=("Ready", "Needs approval", "Blocked"),
         )
 
     @staticmethod
@@ -557,9 +557,9 @@ class SimplePlatform:
         )
         return SimpleHomeSummary(
             title="Start simple",
-            message="Choose one guided workflow and check it before continuing.",
-            primary_command=choices[0].command if choices else "mullu workflows",
-            next_action="Open the workflow list and choose the work you want to do.",
+            message="Open the simple menu and choose the work you want to do.",
+            primary_command=choices[0].command if choices else "mullu menu",
+            next_action="Open the simple menu and choose the work you want to do.",
             choices=choices,
         )
 
@@ -731,7 +731,7 @@ def _project_check(
         return SimpleActionCheck(
             outcome="ready",
             title="Ready",
-            message="This action stays inside the allowed area and has the required proof.",
+            message="This task is inside the allowed area and has a saved check.",
             next_step="Continue with the action.",
             decision_ref=decision_ref,
             proof_stamp_ref=proof_stamp_ref,
@@ -745,9 +745,9 @@ def _project_check(
         reasons = review_reasons or ("This action changes something outside the local workspace.",)
         return SimpleActionCheck(
             outcome="needs_review",
-            title="Needs review",
+            title="Needs approval",
             message="This action needs approval before it can continue.",
-            next_step="Send it to an approver with the proof reference.",
+            next_step="Send it for approval with the saved check.",
             decision_ref=decision_ref,
             proof_stamp_ref=proof_stamp_ref,
             boundary_witness_ref=boundary_witness_ref,
@@ -798,7 +798,7 @@ def _project_workflow_plan(
             workflow=template.workflow,
             label=template.label,
             outcome="needs_review",
-            title="Needs review",
+            title="Needs approval",
             message="One or more steps need approval before the workflow can continue.",
             next_step=review[0].next_step,
             checks=checks,
@@ -886,8 +886,8 @@ def _plain_reason(reason: object) -> str:
 
     text = str(reason)
     translations = {
-        "This item is outside the right place for this task.": "The target is outside the allowed area.",
-        "scope_within_intent": "The target is outside the allowed area.",
+        "This item is outside the right place for this task.": "This item is outside the allowed area for this task.",
+        "scope_within_intent": "This item is outside the allowed area for this task.",
         "kernel.side_effect.declared": "The action includes an undeclared side effect.",
         "kernel.proof.scope_checked:scope_checked": "The action is missing required scope proof.",
         "kernel.side_effect.external_requires_approval:external_write": "External changes require approval.",
