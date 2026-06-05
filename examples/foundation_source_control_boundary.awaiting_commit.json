@@ -461,6 +461,28 @@
       "summary": "Gateway-DNS-publication rehearsal prepares public-safe DNS publication stop-rule labels without provider account values, DNS zone values, record names, record types, record values, TTL values, DNS mutation, repository-variable binding, workflow dispatch, propagation proof, rollback proof, DNS proof, endpoint proof, operator approval, readiness, publication, or deployment claims."
     },
     {
+      "family_id": "deployment_witness_input_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_DEPLOYMENT_WITNESS_INPUT_BOUNDARY.md",
+        "examples/foundation_deployment_witness_input_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_deployment_witness_input_boundary.py",
+        "tests/test_validate_foundation_deployment_witness_input_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Deployment-witness-input preparation records public-safe issue #330 input labels without secret values, repository-variable binding, DNS mutation, endpoint reachability, workflow dispatch, witness artifact publication, deployment-status promotion, customer access, money movement, publication, or deployment claims."
+    },
+    {
+      "family_id": "deployment_witness_preflight_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_DEPLOYMENT_WITNESS_PREFLIGHT_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_deployment_witness_preflight_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_deployment_witness_preflight_rehearsal_boundary.py",
+        "tests/test_validate_foundation_deployment_witness_preflight_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Deployment-witness-preflight rehearsal prepares public-safe preflight command and gate labels without live preflight execution, live URL values, DNS probes, endpoint probes, secret-presence claims, repository-variable binding, workflow dispatch, readiness reports, artifact publication, status promotion, publication, or deployment claims."
+    },
+    {
       "family_id": "deployment_witness_dispatch_rehearsal_boundary",
       "required_evidence": [
         "docs/FOUNDATION_DEPLOYMENT_WITNESS_DISPATCH_REHEARSAL_BOUNDARY.md",
@@ -470,6 +492,39 @@
       ],
       "state": "AwaitingEvidence",
       "summary": "Deployment-witness-dispatch rehearsal prepares public-safe workflow dispatch labels without workflow dispatch, GitHub API mutation, live gateway URL values, expected-environment values, workflow refs, run ids, dispatch receipts, secret handling, repository-variable binding, workflow-run claims, artifact publication, operator approval, readiness, publication, or deployment claims."
+    },
+    {
+      "family_id": "deployment_witness_artifact_validation_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_DEPLOYMENT_WITNESS_ARTIFACT_VALIDATION_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_deployment_witness_artifact_validation_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_deployment_witness_artifact_validation_rehearsal_boundary.py",
+        "tests/test_validate_foundation_deployment_witness_artifact_validation_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Deployment-witness-artifact-validation rehearsal prepares public-safe artifact-validation labels without artifact download, artifact path values, artifact id values, artifact digest values, schema-validation claims, deployment-claim publication, HMAC verification, endpoint proof, closure validation, evidence-ledger append, workflow-run claims, operator approval, readiness, publication, or deployment claims."
+    },
+    {
+      "family_id": "deployment_witness_evidence_handoff_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_HANDOFF_BOUNDARY.md",
+        "examples/foundation_deployment_witness_evidence_handoff_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_deployment_witness_evidence_handoff_boundary.py",
+        "tests/test_validate_foundation_deployment_witness_evidence_handoff_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Deployment-witness-evidence-handoff preparation records public-safe evidence slot labels without live receipts, live URL values, DNS proof, endpoint proof, secret-presence claims, repository-variable binding, workflow-run claims, artifact publication, status approval, operator approval, publication, or deployment claims."
+    },
+    {
+      "family_id": "deployment_witness_evidence_ledger_routing_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_LEDGER_ROUTING_BOUNDARY.md",
+        "examples/foundation_deployment_witness_evidence_ledger_routing_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_deployment_witness_evidence_ledger_routing_boundary.py",
+        "tests/test_validate_foundation_deployment_witness_evidence_ledger_routing_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Deployment-witness-evidence-ledger-routing preparation records public-safe evidence route labels without evidence-ledger append, live evidence references, ledger promotion, terminal-closure claims, readiness claims, DNS proof, endpoint proof, secret-presence claims, workflow-run claims, artifact publication, status approval, operator approval, publication, or deployment claims."
     },
     {
       "family_id": "domain_email_boundary",
@@ -678,6 +733,7 @@
     "python scripts/validate_foundation_deployment_witness_input_boundary.py",
     "python scripts/validate_foundation_deployment_witness_preflight_rehearsal_boundary.py",
     "python scripts/validate_foundation_deployment_witness_dispatch_rehearsal_boundary.py",
+    "python scripts/validate_foundation_deployment_witness_artifact_validation_rehearsal_boundary.py",
     "python scripts/validate_foundation_deployment_witness_evidence_handoff_boundary.py",
     "python scripts/validate_foundation_deployment_witness_evidence_ledger_routing_boundary.py",
     "python scripts/validate_foundation_domain_email_boundary.py",

@@ -119,6 +119,7 @@
             "foundation_deployment_witness_input_boundary",
             "foundation_deployment_witness_preflight_rehearsal_boundary",
             "foundation_deployment_witness_dispatch_rehearsal_boundary",
+            "foundation_deployment_witness_artifact_validation_rehearsal_boundary",
             "foundation_deployment_witness_evidence_handoff_boundary",
             "foundation_deployment_witness_evidence_ledger_routing_boundary",
             "foundation_domain_email_boundary",

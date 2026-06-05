@@ -67,6 +67,22 @@ def test_required_checks_cover_current_foundation_preflight_commands() -> None:
     assert full_preflight_index == len(foundation_preflight_checks)
 
 
+def test_deployment_witness_change_families_cover_required_chain() -> None:
+    expected_chain = (
+        "deployment_witness_input_boundary",
+        "deployment_witness_preflight_rehearsal_boundary",
+        "deployment_witness_dispatch_rehearsal_boundary",
+        "deployment_witness_artifact_validation_rehearsal_boundary",
+        "deployment_witness_evidence_handoff_boundary",
+        "deployment_witness_evidence_ledger_routing_boundary",
+    )
+
+    assert all(family in EXPECTED_CHANGE_FAMILIES for family in expected_chain)
+    assert tuple(
+        family for family in EXPECTED_CHANGE_FAMILIES if family.startswith("deployment_witness_")
+    ) == expected_chain
+
+
 def test_packet_rejects_commit_promotion() -> None:
     payload = load_json_object(DEFAULT_PACKET_PATH, "source-control packet")
     candidate = deepcopy(payload)
