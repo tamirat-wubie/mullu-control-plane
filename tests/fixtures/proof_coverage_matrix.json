@@ -885,11 +885,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 252,
+      "proven": 253,
       "unproven": 0,
       "witnessed": 151
     },
-    "route_count": 403,
+    "route_count": 404,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2440,6 +2440,11 @@
         "coverage_state": "proven",
         "route": "/api/v1/templates/execute",
         "surface_id": "workflow_execution_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/temporal/monitor",
+        "surface_id": "temporal_kernel"
       },
       {
         "coverage_state": "proven",
@@ -7877,6 +7882,7 @@
         "/api/v1/temporal/schedules/{schedule_id}",
         "/api/v1/temporal/schedules/{schedule_id}/cancel",
         "/api/v1/temporal/worker/tick",
+        "/api/v1/temporal/monitor",
         "/api/v1/temporal/summary",
         "TemporalKernel.evaluate",
         "TrustedClock.now_utc",
@@ -7914,6 +7920,10 @@
         "stale_evidence_escalates": [
           "temporal_kernel_escalates_stale_evidence"
         ],
+        "temporal_monitor_is_read_only": [
+          "temporal_monitor_reports_due_lease_and_expiry_without_mutation",
+          "temporal_monitor_filters_by_tenant"
+        ],
         "temporal_receipt_schema_valid": [
           "temporal_kernel_allows_due_fresh_schema_valid_receipt"
         ],
@@ -7933,6 +7943,7 @@
         "budget_window_checked",
         "causal_preconditions_required",
         "temporal_scheduler_routes_governed",
+        "temporal_monitor_is_read_only",
         "schedule_read_models_persisted",
         "worker_tick_certifies_proofs",
         "cancel_emits_terminal_receipt",
@@ -9567,8 +9578,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1204,
-    "runtime_witness_count": 1204,
+    "exact_test_anchor_count": 1205,
+    "runtime_witness_count": 1205,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -16105,6 +16116,13 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_temporal_scheduler_router.py::test_temporal_monitor_reports_due_lease_and_expiry_without_mutation",
+              "mcoi/tests/test_temporal_scheduler_router.py::test_temporal_monitor_filters_by_tenant"
+            ],
+            "witness": "temporal_monitor_is_read_only"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_temporal_scheduler_router.py::test_create_list_and_get_temporal_schedule"
             ],
             "witness": "schedule_read_models_persisted"
@@ -16134,8 +16152,8 @@
             "witness": "receipt_not_terminal_closure"
           }
         ],
-        "exact_test_anchor_count": 13,
-        "runtime_witness_count": 13,
+        "exact_test_anchor_count": 14,
+        "runtime_witness_count": 14,
         "surface_id": "temporal_kernel",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
