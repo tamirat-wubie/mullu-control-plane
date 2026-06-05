@@ -25,6 +25,10 @@ from mcoi_runtime.app.routers.organization_kernel import (
     router,
 )
 from mcoi_runtime.app.server_http import include_default_routers
+from mcoi_runtime.contracts.organization_kernel import (
+    PlanStepWorkerDispatchReceipt,
+    PlanStepWorkerLeaseReceipt,
+)
 from mcoi_runtime.core.organization_kernel import OrganizationKernel
 from mcoi_runtime.persistence.organization_kernel_store import FileOrganizationKernelStore
 
@@ -216,6 +220,60 @@ def _allow_all_plan_steps(client: TestClient) -> None:
         )
         assert response.status_code == 200
         assert response.json()["decision"]["status"] == "allowed"
+
+
+def _record_engineering_dispatch_receipt_for_route(client: TestClient, requirement_id: str) -> tuple[str, str, str]:
+    evidence = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": "evidence:product_launch_boundary",
+            "requirement_id": "product_launch_boundary",
+            "submitted_by": "operator",
+        },
+    )
+    assert evidence.status_code == 200
+    kernel = deps.get("organization_kernel")
+    assert isinstance(kernel, OrganizationKernel)
+    lease_id = f"lease.eng.gateway.{requirement_id}"
+    dispatch_request_id = f"req.{requirement_id}"
+    dispatch_receipt_id = f"receipt.{requirement_id}"
+    lease = kernel.create_worker_lease_receipt(
+        PlanStepWorkerLeaseReceipt(
+            lease_id=lease_id,
+            case_id="case.launch_gateway_pilot",
+            step_id="engineering_runtime_witness",
+            capability_id="engineering.gateway_runtime.verify",
+            responsible_role_id="engineering.owner",
+            requested_by_role_id="engineering.owner",
+            dispatch_lease_preview_id=f"dispatch-lease-preview.{requirement_id}",
+            queued_action="bind_worker_receipt",
+            capability_action="verify_gateway_runtime",
+            expected_effect="gateway_runtime_witnessed",
+            evidence_refs=("evidence:product_launch_boundary",),
+            timeout_seconds=900,
+            budget_ref="budget:gateway-pilot",
+            created_at=FIXED_CLOCK,
+        )
+    )
+    kernel.record_worker_dispatch_receipt(
+        PlanStepWorkerDispatchReceipt(
+            dispatch_receipt_id=dispatch_receipt_id,
+            dispatch_request_id=dispatch_request_id,
+            case_id="case.launch_gateway_pilot",
+            step_id="engineering_runtime_witness",
+            worker_lease_id=lease.lease_id,
+            capability_id="engineering.gateway_runtime.verify",
+            responsible_role_id="engineering.owner",
+            requested_by_role_id="engineering.owner",
+            worker_id="worker:gateway-runtime",
+            dispatch_intent="request_gateway_runtime_verification",
+            expected_effect=lease.expected_effect,
+            evidence_refs=lease.evidence_refs,
+            lease_created_at=lease.created_at,
+            dispatched_at=FIXED_CLOCK,
+        )
+    )
+    return lease_id, dispatch_request_id, dispatch_receipt_id
 
 
 def _readiness_closure_payload() -> dict[str, Any]:
@@ -458,14 +516,18 @@ def test_case_audit_explorer_view_is_read_only_and_escaped(tmp_path: Path) -> No
 def test_case_step_handoffs_report_worker_receipt_binding_without_mutation(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     _bootstrap_and_open_pilot(client)
+    lease_id, dispatch_request_id, dispatch_receipt_id = _record_engineering_dispatch_receipt_for_route(
+        client,
+        "engineering_health_endpoint",
+    )
     bound = client.post(
         "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/worker-receipt",
         json={
             "binding_id": "binding.eng.health",
             "requirement_id": "engineering_health_endpoint",
-            "worker_lease_id": "lease.eng.gateway",
-            "dispatch_request_id": "req.eng.health",
-            "dispatch_receipt_id": "receipt.eng.health",
+            "worker_lease_id": lease_id,
+            "dispatch_request_id": dispatch_request_id,
+            "dispatch_receipt_id": dispatch_receipt_id,
             "worker_output_hash": "hash-health",
             "receipt_evidence_refs": ["worker-evidence:/health"],
             "admitted_evidence_ref": "evidence:engineering_health_endpoint",
@@ -489,10 +551,12 @@ def test_case_step_handoffs_report_worker_receipt_binding_without_mutation(tmp_p
     assert payload["summary"]["step_count"] == 5
     assert payload["summary"]["dispatch_authority_granted"] is False
     assert payload["summary"]["receipt_bound_awaiting_evidence_count"] == 1
-    assert payload["summary"]["awaiting_evidence_count"] == 4
+    assert payload["summary"]["awaiting_evidence_count"] == 3
+    assert payload["summary"]["awaiting_gate_count"] == 1
     assert engineering["handoff_status"] == "receipt_bound_awaiting_evidence"
     assert engineering["next_action"] == "collect_required_evidence"
     assert engineering["dispatch_authority"] is False
+    assert engineering["worker_dispatch_receipt_count"] == 1
     assert engineering["worker_receipt_count"] == 1
     assert engineering["evidence_refs"] == ["evidence:engineering_health_endpoint"]
     assert engineering["missing_evidence"] == [
@@ -2404,15 +2468,19 @@ def test_default_routers_include_organization_kernel_paths() -> None:
 def test_worker_receipt_endpoint_admits_evidence_for_plan_step(tmp_path: Path) -> None:
     client, store = _client(tmp_path)
     _bootstrap_and_open_pilot(client)
+    lease_id, dispatch_request_id, dispatch_receipt_id = _record_engineering_dispatch_receipt_for_route(
+        client,
+        "engineering_health_endpoint",
+    )
 
     response = client.post(
         "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/worker-receipt",
         json={
             "binding_id": "binding.eng.health",
             "requirement_id": "engineering_health_endpoint",
-            "worker_lease_id": "lease.eng.gateway",
-            "dispatch_request_id": "req.eng.health",
-            "dispatch_receipt_id": "receipt.eng.health",
+            "worker_lease_id": lease_id,
+            "dispatch_request_id": dispatch_request_id,
+            "dispatch_receipt_id": dispatch_receipt_id,
             "worker_output_hash": "hash-health",
             "receipt_evidence_refs": ["worker-evidence:/health"],
             "admitted_evidence_ref": "evidence:engineering_health_endpoint",
@@ -2424,8 +2492,34 @@ def test_worker_receipt_endpoint_admits_evidence_for_plan_step(tmp_path: Path) -
     body = response.json()
     assert body["governed"] is True
     assert body["worker_receipt_binding"]["requirement_id"] == "engineering_health_endpoint"
+    assert body["worker_receipt_binding"]["dispatch_receipt_id"] == dispatch_receipt_id
     assert any(event["event_type"] == "plan_step_worker_receipt_bound" for event in events)
     assert store.exists()
+
+
+def test_worker_receipt_endpoint_rejects_missing_dispatch_receipt(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/worker-receipt",
+        json={
+            "binding_id": "binding.eng.health",
+            "requirement_id": "engineering_health_endpoint",
+            "worker_lease_id": "lease.eng.gateway.engineering_health_endpoint",
+            "dispatch_request_id": "req.engineering_health_endpoint",
+            "dispatch_receipt_id": "receipt.engineering_health_endpoint",
+            "worker_output_hash": "hash-health",
+            "receipt_evidence_refs": ["worker-evidence:/health"],
+            "admitted_evidence_ref": "evidence:engineering_health_endpoint",
+        },
+    )
+    case_bundle = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_code"] == "worker_receipt_binding_rejected"
+    assert case_bundle["worker_dispatch_receipts"] == []
+    assert all(item["requirement_id"] != "engineering_health_endpoint" for item in case_bundle["evidence"])
 
 
 def test_worker_receipt_endpoint_rejects_requirement_outside_plan_step(tmp_path: Path) -> None:

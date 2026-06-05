@@ -6006,7 +6006,7 @@
         "mcoi/tests/test_organization_kernel_router.py",
         "mcoi/tests/test_organization_kernel_store.py"
       ],
-      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions, case portfolio, action queue, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts as plan-step evidence without holding worker dispatch authority.",
+      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions, case portfolio, action queue, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
       "representative_paths": [
         "/api/v1/orgs",
         "/api/v1/orgs/{org_id}/action-queue",
@@ -6112,7 +6112,10 @@
         "launch_gateway_pilot_readiness_packet_closes_after_verified_witness",
         "launch_gateway_pilot_readiness_packet_blocks_without_engineering_witness",
         "jsonl_case_event_log_preserves_hash_chain",
-        "worker_receipts_satisfy_engineering_gate_evidence"
+        "worker_receipts_satisfy_engineering_gate_evidence",
+        "worker_receipt_requires_recorded_dispatch_receipt",
+        "worker_receipt_rejects_dispatch_identity_mismatch",
+        "worker_receipt_endpoint_rejects_missing_dispatch_receipt"
       ],
       "surface_id": "orgos_case_governance_lifecycle"
     },
@@ -9598,8 +9601,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1210,
-    "runtime_witness_count": 1210,
+    "exact_test_anchor_count": 1213,
+    "runtime_witness_count": 1213,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -13706,10 +13709,28 @@
               "mcoi/tests/test_organization_kernel.py::test_worker_receipts_satisfy_engineering_gate_evidence"
             ],
             "witness": "worker_receipts_satisfy_engineering_gate_evidence"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_organization_kernel.py::test_worker_receipt_requires_recorded_dispatch_receipt"
+            ],
+            "witness": "worker_receipt_requires_recorded_dispatch_receipt"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_organization_kernel.py::test_worker_receipt_rejects_dispatch_identity_mismatch"
+            ],
+            "witness": "worker_receipt_rejects_dispatch_identity_mismatch"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_worker_receipt_endpoint_rejects_missing_dispatch_receipt"
+            ],
+            "witness": "worker_receipt_endpoint_rejects_missing_dispatch_receipt"
           }
         ],
-        "exact_test_anchor_count": 57,
-        "runtime_witness_count": 57,
+        "exact_test_anchor_count": 60,
+        "runtime_witness_count": 60,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

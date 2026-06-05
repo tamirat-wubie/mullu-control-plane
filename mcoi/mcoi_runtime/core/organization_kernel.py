@@ -602,7 +602,8 @@ class OrganizationKernel:
         This consumes a receipt produced by the governed worker mesh; it does
         not dispatch work or grant dispatch authority. The receipt must carry
         its own evidence refs, must satisfy a requirement declared by the plan
-        step, and is never treated as a terminal closure.
+        step, must reference a recorded dispatch receipt, and is never treated
+        as a terminal closure.
         """
         if binding.binding_id in self._worker_receipt_bindings:
             raise RuntimeCoreInvariantError("worker receipt binding already admitted")
@@ -612,6 +613,17 @@ class OrganizationKernel:
             raise RuntimeCoreInvariantError("worker receipt requirement outside plan step evidence")
         if not binding.receipt_evidence_refs:
             raise RuntimeCoreInvariantError("worker receipt requires evidence refs")
+        dispatch_receipt = self._worker_dispatch_receipts.get(binding.dispatch_receipt_id)
+        if dispatch_receipt is None:
+            raise RuntimeCoreInvariantError("worker receipt dispatch receipt unavailable")
+        if dispatch_receipt.dispatch_request_id != binding.dispatch_request_id:
+            raise RuntimeCoreInvariantError("worker receipt dispatch request mismatch")
+        if dispatch_receipt.worker_lease_id != binding.worker_lease_id:
+            raise RuntimeCoreInvariantError("worker receipt lease mismatch")
+        if dispatch_receipt.case_id != binding.case_id:
+            raise RuntimeCoreInvariantError("worker receipt case mismatch")
+        if dispatch_receipt.step_id != binding.step_id:
+            raise RuntimeCoreInvariantError("worker receipt step mismatch")
         evidence = self.admit_case_evidence(
             CaseEvidence(
                 evidence_ref=binding.admitted_evidence_ref,
@@ -625,6 +637,7 @@ class OrganizationKernel:
                     "dispatch_receipt_id": binding.dispatch_receipt_id,
                     "worker_output_hash": binding.worker_output_hash,
                     "receipt_evidence_refs": binding.receipt_evidence_refs,
+                    "worker_dispatch_receipt_required": True,
                     "worker_receipt_is_terminal_closure": False,
                 },
             )
@@ -1003,6 +1016,17 @@ class OrganizationKernel:
             )
             if step is None or receipt_binding.requirement_id not in step.evidence_required:
                 raise RuntimeCoreInvariantError("restored worker receipt binding step mismatch")
+            dispatch_receipt = self._worker_dispatch_receipts.get(receipt_binding.dispatch_receipt_id)
+            if dispatch_receipt is None:
+                raise RuntimeCoreInvariantError("restored worker receipt dispatch unavailable")
+            if dispatch_receipt.dispatch_request_id != receipt_binding.dispatch_request_id:
+                raise RuntimeCoreInvariantError("restored worker receipt dispatch request mismatch")
+            if dispatch_receipt.worker_lease_id != receipt_binding.worker_lease_id:
+                raise RuntimeCoreInvariantError("restored worker receipt lease mismatch")
+            if dispatch_receipt.case_id != receipt_binding.case_id:
+                raise RuntimeCoreInvariantError("restored worker receipt case mismatch")
+            if dispatch_receipt.step_id != receipt_binding.step_id:
+                raise RuntimeCoreInvariantError("restored worker receipt step mismatch")
             if receipt_binding.admitted_evidence_ref not in self._case_evidence:
                 raise RuntimeCoreInvariantError("restored worker receipt evidence unavailable")
         if self._event_sequence < len(self._events):
