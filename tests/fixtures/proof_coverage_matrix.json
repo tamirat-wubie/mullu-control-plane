@@ -4244,10 +4244,11 @@
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/pilot.py",
         "mcoi/mcoi_runtime/app/pilot_init.py",
+        "mcoi/mcoi_runtime/app/pilot_provision_integration.py",
         "mcoi/tests/test_pilot_init.py",
         "docs/47_one_command_pilot_bringup.md"
       ],
-      "notes": "Pilot provisioning returns deterministic scaffold artifacts, persists accepted provision records, and exposes bounded operator history read models.",
+      "notes": "Pilot provisioning returns deterministic scaffold artifacts, persists accepted provision records, exposes bounded operator history read models, and supports env-governed durable history persistence.",
       "representative_paths": [
         "/api/v1/pilots/provision",
         "/api/v1/pilots/provisions",
@@ -4259,6 +4260,10 @@
         "initialize_pilot_is_deterministic_for_same_inputs",
         "build_pilot_scaffold_has_no_filesystem_side_effects",
         "pilot_provision_registry_persists_bounded_records",
+        "file_pilot_provision_registry_persists_and_reloads_records",
+        "file_pilot_provision_registry_rejects_tampered_record_count",
+        "pilot_provision_registry_integration_selects_memory_or_file",
+        "pilot_provision_registry_path_validation_requires_absolute_json_path",
         "initialize_pilot_fails_closed_on_existing_files",
         "pilot_provision_endpoint_returns_audited_scaffold",
         "pilot_provision_history_routes_return_accepted_records",
@@ -9547,8 +9552,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1192,
-    "runtime_witness_count": 1192,
+    "exact_test_anchor_count": 1196,
+    "runtime_witness_count": 1196,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11306,6 +11311,30 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_pilot_init.py::test_file_pilot_provision_registry_persists_and_reloads_records"
+            ],
+            "witness": "file_pilot_provision_registry_persists_and_reloads_records"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_pilot_init.py::test_file_pilot_provision_registry_rejects_tampered_record_count"
+            ],
+            "witness": "file_pilot_provision_registry_rejects_tampered_record_count"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_pilot_init.py::test_pilot_provision_registry_integration_selects_memory_or_file"
+            ],
+            "witness": "pilot_provision_registry_integration_selects_memory_or_file"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_pilot_init.py::test_pilot_provision_registry_path_validation_requires_absolute_json_path"
+            ],
+            "witness": "pilot_provision_registry_path_validation_requires_absolute_json_path"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_pilot_init.py::test_initialize_pilot_fails_closed_on_existing_files"
             ],
             "witness": "initialize_pilot_fails_closed_on_existing_files"
@@ -11329,8 +11358,8 @@
             "witness": "pilot_provision_detail_fails_closed_for_missing_record"
           }
         ],
-        "exact_test_anchor_count": 8,
-        "runtime_witness_count": 8,
+        "exact_test_anchor_count": 12,
+        "runtime_witness_count": 12,
         "surface_id": "pilot_provisioning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

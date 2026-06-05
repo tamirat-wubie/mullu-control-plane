@@ -17,11 +17,16 @@ from mcoi_runtime.app.cli import main
 from fastapi.testclient import TestClient
 
 from mcoi_runtime.app.pilot_init import (
+    FilePilotProvisionRegistry,
     PILOT_FILE_NAMES,
     PilotInitRequest,
     PilotProvisionRegistry,
     build_pilot_scaffold,
     initialize_pilot,
+)
+from mcoi_runtime.app.pilot_provision_integration import (
+    select_pilot_provision_registry,
+    validate_pilot_provision_registry_path,
 )
 
 
@@ -94,6 +99,69 @@ def test_pilot_provision_registry_persists_bounded_records(tmp_path: Path) -> No
     assert registry.get(first.pilot_id) is None
     assert registry.get(second.pilot_id) == second
     assert records == (second,)
+
+
+def test_file_pilot_provision_registry_persists_and_reloads_records(tmp_path: Path) -> None:
+    path = tmp_path / "pilot-provisions.json"
+    request = _request(tmp_path / "pilot")
+    bundle = build_pilot_scaffold(request)
+    registry = FilePilotProvisionRegistry(path)
+
+    accepted = registry.accept(request=request, bundle=bundle, accepted_at="2026-04-25T00:00:00Z")
+    reloaded = FilePilotProvisionRegistry(path)
+    loaded = reloaded.get(accepted.pilot_id)
+    records = reloaded.list_records(tenant_id="tenant-pilot")
+
+    assert path.exists()
+    assert loaded == accepted
+    assert records == (accepted,)
+    assert reloaded.count(tenant_id="tenant-pilot") == 1
+    assert reloaded.count(tenant_id="missing") == 0
+
+
+def test_file_pilot_provision_registry_rejects_tampered_record_count(tmp_path: Path) -> None:
+    path = tmp_path / "pilot-provisions.json"
+    request = _request(tmp_path / "pilot")
+    bundle = build_pilot_scaffold(request)
+    registry = FilePilotProvisionRegistry(path)
+    registry.accept(request=request, bundle=bundle, accepted_at="2026-04-25T00:00:00Z")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["records"][0]["artifact_count"] = 999
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="artifact count mismatch"):
+        FilePilotProvisionRegistry(path)
+
+    assert payload["records"][0]["artifact_count"] == 999
+    assert payload["records"][0]["pilot_id"] == bundle.pilot_id
+
+
+def test_pilot_provision_registry_integration_selects_memory_or_file(tmp_path: Path) -> None:
+    file_path = tmp_path / "pilot-provisions.json"
+    memory_bootstrap = select_pilot_provision_registry({})
+    file_bootstrap = select_pilot_provision_registry({
+        "MULLU_PILOT_PROVISION_REGISTRY_PATH": str(file_path),
+    })
+
+    assert isinstance(memory_bootstrap.registry, PilotProvisionRegistry)
+    assert memory_bootstrap.persistent is False
+    assert isinstance(file_bootstrap.registry, FilePilotProvisionRegistry)
+    assert file_bootstrap.persistent is True
+    assert file_bootstrap.path == str(file_path)
+
+
+def test_pilot_provision_registry_path_validation_requires_absolute_json_path(tmp_path: Path) -> None:
+    valid_path = tmp_path / "pilot-provisions.json"
+    selected_path = validate_pilot_provision_registry_path(valid_path)
+
+    with pytest.raises(RuntimeError):
+        validate_pilot_provision_registry_path("relative.json")
+    with pytest.raises(RuntimeError):
+        validate_pilot_provision_registry_path(tmp_path / "pilot-provisions.txt")
+
+    assert selected_path == valid_path
+    assert selected_path.suffix == ".json"
+    assert selected_path.parent == tmp_path
 
 
 def test_initialize_pilot_fails_closed_on_existing_files(tmp_path: Path) -> None:

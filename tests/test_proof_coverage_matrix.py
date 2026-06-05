@@ -3558,8 +3558,13 @@ def test_pilot_provisioning_surface_is_proven() -> None:
     assert "/api/v1/pilots/provisions" in pilot_surface["representative_paths"]
     assert "/api/v1/pilots/provisions/{pilot_id}" in pilot_surface["representative_paths"]
     assert "mcoi/tests/test_pilot_init.py" in pilot_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/app/pilot_provision_integration.py" in pilot_surface["evidence_files"]
     assert "initialize_pilot_writes_complete_artifact_set" in witnesses
     assert "pilot_provision_registry_persists_bounded_records" in witnesses
+    assert "file_pilot_provision_registry_persists_and_reloads_records" in witnesses
+    assert "file_pilot_provision_registry_rejects_tampered_record_count" in witnesses
+    assert "pilot_provision_registry_integration_selects_memory_or_file" in witnesses
+    assert "pilot_provision_registry_path_validation_requires_absolute_json_path" in witnesses
     assert "initialize_pilot_fails_closed_on_existing_files" in witnesses
     assert route_records["/api/v1/pilots/provision"]["coverage_state"] == "proven"
     assert route_records["/api/v1/pilots/provision"]["surface_id"] == "pilot_provisioning"
