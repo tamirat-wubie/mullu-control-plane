@@ -170,9 +170,60 @@ def test_default_routers_include_temporal_scheduler_summary() -> None:
     include_default_routers(app)
     paths = {route.path for route in app.routes}
 
+    assert "/api/v1/temporal/monitor" in paths
     assert "/api/v1/temporal/summary" in paths
     assert "/api/v1/temporal/schedules" in paths
     assert "/api/v1/temporal/worker/tick" in paths
+
+
+def test_temporal_monitor_reports_due_lease_and_expiry_without_mutation() -> None:
+    client = _client(MutableClock("2026-05-04T14:00:00+00:00"))
+    client.post("/api/v1/temporal/schedules", json=_request("sched-due"))
+    future = _request("sched-future")
+    future["execute_at"] = "2026-05-04T14:30:00+00:00"
+    client.post("/api/v1/temporal/schedules", json=future)
+    expired = _request("sched-expired")
+    expired["execute_at"] = "2026-05-04T13:00:00+00:00"
+    expired["expires_at"] = "2026-05-04T13:30:00+00:00"
+    client.post("/api/v1/temporal/schedules", json=expired)
+    client.post("/api/v1/temporal/schedules", json=_request("sched-leased"))
+    lease = deps.temporal_scheduler.acquire_lease("sched-leased", "worker-a", lease_seconds=120)
+    deps.temporal_scheduler_store.save_action(deps.temporal_scheduler.get("sched-leased"))
+
+    response = client.get("/api/v1/temporal/monitor")
+    body = response.json()
+    audits = {item["schedule_id"]: item for item in body["audits"]}
+
+    assert response.status_code == 200
+    assert lease is not None
+    assert body["count"] == 4
+    assert audits["sched-due"]["verdict"] == "due"
+    assert audits["sched-future"]["verdict"] == "not_due"
+    assert audits["sched-expired"]["reason"] == "command_expired_candidate"
+    assert audits["sched-leased"]["verdict"] == "leased"
+    assert audits["sched-leased"]["lease_worker_id"] == "worker-a"
+    assert body["counts"]["by_verdict"] == {"due": 1, "expired": 1, "leased": 1, "not_due": 1}
+    assert body["store"]["receipt_count"] == 0
+    assert deps.temporal_scheduler.get("sched-expired").state.value == "pending"
+    assert deps.temporal_scheduler.get("sched-leased").state.value == "running"
+
+
+def test_temporal_monitor_filters_by_tenant() -> None:
+    client = _client(MutableClock("2026-05-04T14:00:00+00:00"))
+    client.post("/api/v1/temporal/schedules", json=_request("sched-a"))
+    other = _request("sched-b")
+    other["tenant_id"] = "tenant-b"
+    client.post("/api/v1/temporal/schedules", json=other)
+
+    response = client.get("/api/v1/temporal/monitor", params={"tenant_id": "tenant-b"})
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["count"] == 1
+    assert body["audits"][0]["tenant_id"] == "tenant-b"
+    assert body["audits"][0]["schedule_id"] == "sched-b"
+    assert body["counts"]["by_verdict"] == {"due": 1}
+    assert body["governed"] is True
 
 
 def test_temporal_summary_reports_background_disabled() -> None:
