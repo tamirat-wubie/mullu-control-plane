@@ -95,12 +95,14 @@ class AgentWorkflowEngine:
         llm_complete_fn: Callable[[str, str], Any] | None = None,
         webhook_manager: WebhookManager | None = None,
         audit_trail: AuditTrail | None = None,
+        dry_run: bool = False,
     ) -> None:
         self._clock = clock
         self._task_mgr = task_manager
         self._llm_complete_fn = llm_complete_fn
         self._webhook_mgr = webhook_manager
         self._audit = audit_trail
+        self._dry_run = dry_run
         self._workflow_counter = AtomicCounter()
         self._history: list[WorkflowResult] = []
 
@@ -144,7 +146,7 @@ class AgentWorkflowEngine:
             self._task_mgr.start(task_id)
             steps.append(WorkflowStep("start", "ok", {}))
 
-            # Step 4: LLM invocation (if function provided)
+            # Step 4: LLM invocation, or explicit dry-run completion.
             llm_output: dict[str, Any] = {}
             if self._llm_complete_fn is not None:
                 prompt = payload.get("prompt", description)
@@ -160,9 +162,11 @@ class AgentWorkflowEngine:
                 else:
                     llm_output = {"result": str(result)}
                 steps.append(WorkflowStep("llm_invoke", "ok", {"model": llm_output.get("model", "")}))
+            elif self._dry_run:
+                llm_output = {"content": "dry_run result", "dry_run": True}
+                steps.append(WorkflowStep("llm_invoke", "dry_run", {"reason": "dry_run enabled"}))
             else:
-                llm_output = {"content": "stub result"}
-                steps.append(WorkflowStep("llm_invoke", "skipped", {"reason": "no LLM function"}))
+                raise ValueError("agent workflow requires llm_complete_fn unless dry_run=True")
 
             # Step 5: Complete task
             task_result = self._task_mgr.complete(task_id, llm_output)
