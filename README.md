@@ -391,6 +391,15 @@ binding, DNS publication, DNS resolution proof, endpoint proof,
 secret-presence claims, workflow dispatch, artifact publication, operator
 approval, readiness claims, customer access, personal-data collection, money
 movement, legal/company/patent claims, external publication, or deployment.
+Gateway DNS publication rehearsal is bounded by
+[`docs/FOUNDATION_GATEWAY_DNS_PUBLICATION_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_GATEWAY_DNS_PUBLICATION_REHEARSAL_BOUNDARY.md),
+which records future DNS publication gate labels without provider account
+values, DNS zone values, DNS record names, record types, record values, TTL
+values, DNS mutation, repository-variable binding, workflow dispatch,
+propagation proof, rollback proof, DNS proof, endpoint proof, artifact
+publication, operator approval, readiness claims, customer access,
+personal-data collection, money movement, legal/company/patent claims,
+external publication, or deployment.
 Gateway DNS resolution receipt rehearsal is bounded by
 [`docs/FOUNDATION_GATEWAY_DNS_RESOLUTION_RECEIPT_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_GATEWAY_DNS_RESOLUTION_RECEIPT_REHEARSAL_BOUNDARY.md),
 which records future DNS query scope, resolver context, resolved-address set,

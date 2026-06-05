@@ -93,6 +93,7 @@ deployment_allowed=false
 | Deployment deferral | Local deployment prerequisite, cloud, endpoint, runtime health, rollback, cost, credential, customer/support, and publication questions with deployment-plan approval, cloud activation, public endpoints, production health, runtime readiness, customer access, spending, credential use, secret use, migration execution, DNS mutation, external publication, and deployment blocked. |
 | External infrastructure | Local DNS authority, gateway target, runtime host, managed database, secret-manager, TLS, firewall, rollback, private runtime witness, repository variable, endpoint reachability, and workflow dispatch questions with external-infrastructure completeness, DNS authority verification, DNS target binding, DNS mutation, runtime provisioning, secret placement, workflow dispatch, paid infrastructure, customer access, publication, and deployment blocked. |
 | Runtime secret handoff rehearsal | Local runtime-secret-handoff gate labels with secret names, secret values, private paths, secret-manager target values, operator identities, dual-control proof, secret-presence proof, repository-secret binding, runtime secret-store binding, workflow mounts, readiness, publication, and deployment blocked. |
+| Gateway DNS publication rehearsal | Local DNS-publication stop-rule labels with provider account values, DNS zone values, record names, record types, record values, TTL values, DNS mutation, repository-variable binding, workflow dispatch, propagation proof, rollback proof, DNS proof, endpoint proof, operator approval, readiness, publication, and deployment blocked. |
 | Domain/email | Public-safe domain and email labels with DNS/email readiness blocked. |
 | Legal/business | Question-only packet with qualified-review gating. |
 | Product scope | Selected local learning lane with platform non-restriction and pilot/customer claims blocked. |
@@ -156,6 +157,7 @@ python scripts/validate_foundation_production_dependency_evidence_rehearsal_boun
 python scripts/validate_foundation_external_evidence_acceptance_rehearsal_boundary.py
 python scripts/validate_foundation_deployment_upstream_api_gate_rehearsal_boundary.py
 python scripts/validate_foundation_gateway_dns_target_binding_rehearsal_boundary.py
+python scripts/validate_foundation_gateway_dns_publication_rehearsal_boundary.py
 python scripts/validate_foundation_gateway_dns_resolution_receipt_rehearsal_boundary.py
 python scripts/validate_foundation_gateway_endpoint_reachability_rehearsal_boundary.py
 python scripts/validate_foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary.py

@@ -1,5 +1,5 @@
 {
-  "artifact_count": 306,
+  "artifact_count": 309,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -572,6 +572,11 @@
       "purpose": "Foundation Gap Register Boundary doctrine and Foundation Mode boundary evidence contract."
     },
     {
+      "name": "foundation_boundary_doc_foundation_gateway_dns_publication_rehearsal_boundary",
+      "path": "docs/FOUNDATION_GATEWAY_DNS_PUBLICATION_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Gateway Dns Publication Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
       "name": "foundation_boundary_doc_foundation_gateway_dns_resolution_receipt_rehearsal_boundary",
       "path": "docs/FOUNDATION_GATEWAY_DNS_RESOLUTION_RECEIPT_REHEARSAL_BOUNDARY.md",
       "purpose": "Foundation Gateway Dns Resolution Receipt Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
@@ -942,6 +947,11 @@
       "purpose": "Read-only validator for Foundation Gap Register Boundary."
     },
     {
+      "name": "foundation_boundary_validator_foundation_gateway_dns_publication_rehearsal_boundary",
+      "path": "scripts/validate_foundation_gateway_dns_publication_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Gateway Dns Publication Rehearsal Boundary."
+    },
+    {
       "name": "foundation_boundary_validator_foundation_gateway_dns_resolution_receipt_rehearsal_boundary",
       "path": "scripts/validate_foundation_gateway_dns_resolution_receipt_rehearsal_boundary.py",
       "purpose": "Read-only validator for Foundation Gateway Dns Resolution Receipt Rehearsal Boundary."
@@ -1310,6 +1320,11 @@
       "name": "foundation_boundary_tests_foundation_gap_register_boundary",
       "path": "tests/test_validate_foundation_gap_register_boundary.py",
       "purpose": "Regression tests for Foundation Gap Register Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_gateway_dns_publication_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_gateway_dns_publication_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Gateway Dns Publication Rehearsal Boundary validation."
     },
     {
       "name": "foundation_boundary_tests_foundation_gateway_dns_resolution_receipt_rehearsal_boundary",
