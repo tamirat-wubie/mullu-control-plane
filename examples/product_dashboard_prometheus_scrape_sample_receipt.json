@@ -1,0 +1,98 @@
+{
+  "schema_version": "product_dashboard.prometheus_scrape_sample_receipt.v1",
+  "receipt_id": "product-dashboard-prometheus-scrape-sample-receipt-20260602",
+  "generated_at": "2026-06-02T00:00:00Z",
+  "proof_state": "Pass",
+  "solver_outcome": "SolvedVerified",
+  "raw_reasoning_included": false,
+  "scrape_sample": {
+    "endpoint": "local://fastapi-testclient/metrics",
+    "route_source": "mcoi/mcoi_runtime/app/routers/ops/metrics.py",
+    "projection_source": "mcoi/mcoi_runtime/core/prometheus_metric_projection.py",
+    "content_type": "text/plain",
+    "format": "prometheus_text_0_0_4",
+    "captured_at": "2026-06-02T00:00:00Z",
+    "sample_text_sha256": "sha256:b03ccebead919a84b6d5521d1b564ab92cc839cabaf8fff66a8c9dc367c6e8c5",
+    "required_metric_families": [
+      "mullu_uptime_seconds",
+      "mullu_health_score",
+      "mullu_active_tenants",
+      "mullu_errors_total",
+      "mullu_llm_requests_total",
+      "mullu_llm_latency_p99_seconds",
+      "mullu_llm_tokens_total",
+      "mullu_llm_budget_utilization_ratio",
+      "mullu_requests_governed_total",
+      "mullu_policy_violations_total",
+      "mullu_audit_events_total",
+      "mullu_circuit_breaker_open",
+      "mullu_active_agents",
+      "mullu_tasks_completed_total",
+      "mullu_chain_success_rate",
+      "mullu_memory_ops_total"
+    ],
+    "sample_lines": [
+      "# TYPE mullu_uptime_seconds gauge",
+      "mullu_uptime_seconds 0.001",
+      "# TYPE mullu_health_score gauge",
+      "mullu_health_score 1.0",
+      "# TYPE mullu_active_tenants gauge",
+      "mullu_active_tenants 1.0",
+      "# TYPE mullu_errors_total counter",
+      "mullu_errors_total 0.0",
+      "# TYPE mullu_llm_requests_total counter",
+      "mullu_llm_requests_total 0.0",
+      "# TYPE mullu_llm_latency_p99_seconds gauge",
+      "mullu_llm_latency_p99_seconds 0.0",
+      "# TYPE mullu_llm_tokens_total counter",
+      "mullu_llm_tokens_total 0.0",
+      "# TYPE mullu_llm_budget_utilization_ratio gauge",
+      "mullu_llm_budget_utilization_ratio 0.0",
+      "# TYPE mullu_requests_governed_total counter",
+      "mullu_requests_governed_total 1.0",
+      "# TYPE mullu_policy_violations_total counter",
+      "mullu_policy_violations_total 0.0",
+      "# TYPE mullu_audit_events_total counter",
+      "mullu_audit_events_total 1.0",
+      "# TYPE mullu_circuit_breaker_open gauge",
+      "mullu_circuit_breaker_open 0.0",
+      "# TYPE mullu_active_agents gauge",
+      "mullu_active_agents 0.0",
+      "# TYPE mullu_tasks_completed_total counter",
+      "mullu_tasks_completed_total 0.0",
+      "# TYPE mullu_chain_success_rate gauge",
+      "mullu_chain_success_rate 1.0",
+      "# TYPE mullu_memory_ops_total counter",
+      "mullu_memory_ops_total 0.0"
+    ]
+  },
+  "production_boundary": {
+    "public_production_claim": "not_claimed",
+    "production_endpoint": "https://api.mullusi.com/metrics",
+    "solver_outcome": "AwaitingEvidence",
+    "latest_probe_receipt": "examples/product_dashboard_production_prometheus_scrape_probe_receipt.json",
+    "required_evidence": [
+      "production_https_scrape_sample",
+      "operator_approval_ref",
+      "deployment_witness",
+      "runtime_conformance_certificate"
+    ],
+    "reason": "Repository-local route sample proves scrape shape only; public production closure requires a named HTTPS endpoint witness."
+  },
+  "summary": {
+    "required_family_count": 16,
+    "observed_family_count": 16,
+    "missing_family_count": 0,
+    "closure_state": "repository_local_scrape_verified"
+  },
+  "lineage": {
+    "accepted_deltas": [
+      {
+        "delta_id": "delta-product-dashboard-local-prometheus-scrape-sample-20260602",
+        "reason": "Recorded repository-local Prometheus scrape sample shape for all default Grafana metric families while preserving the public production evidence boundary.",
+        "logged_in_lineage": true
+      }
+    ],
+    "rejected_deltas": []
+  }
+}

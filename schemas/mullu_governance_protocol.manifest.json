@@ -1019,6 +1019,12 @@
       "surface": "world"
     },
     {
+      "schema_id": "product-dashboard-production-prometheus-scrape-probe-receipt",
+      "path": "schemas/product_dashboard_production_prometheus_scrape_probe_receipt.schema.json",
+      "urn": "urn:mullusi:schema:product-dashboard-production-prometheus-scrape-probe-receipt:1",
+      "surface": "observability"
+    },
+    {
       "schema_id": "public-naming-readiness",
       "path": "schemas/public_naming_readiness.schema.json",
       "urn": "urn:mullusi:schema:public-naming-readiness:1",

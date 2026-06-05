@@ -109,7 +109,7 @@ class GrafanaDashboardGenerator:
             "dashboard": {
                 "uid": self._uid,
                 "title": self._title,
-                "tags": ["mullu", "governed", "ai"],
+                "tags": ["mullu", "governed", "symbolic-intelligence"],
                 "timezone": "utc",
                 "refresh": self._refresh,
                 "schemaVersion": 39,
@@ -133,7 +133,7 @@ def build_default_dashboard() -> GrafanaDashboardGenerator:
         title="Platform Health",
         panels=(
             PanelConfig("Uptime", "stat", 'mullu_uptime_seconds', unit="s"),
-            PanelConfig("Health Score", "gauge", 'mullu_health_score',
+            PanelConfig("Health Score", "gauge", 'mullu_health_score * 100',
                         thresholds=(50.0, 80.0), unit="percent"),
             PanelConfig("Active Tenants", "stat", 'mullu_active_tenants'),
             PanelConfig("Error Rate (5m)", "graph",
@@ -148,7 +148,7 @@ def build_default_dashboard() -> GrafanaDashboardGenerator:
             PanelConfig("LLM Requests/s", "graph",
                         'rate(mullu_llm_requests_total[5m])', unit="reqps"),
             PanelConfig("LLM Latency p99", "graph",
-                        'histogram_quantile(0.99, mullu_llm_duration_seconds_bucket)',
+                        'mullu_llm_latency_p99_seconds',
                         unit="s"),
             PanelConfig("Token Usage", "graph",
                         'rate(mullu_llm_tokens_total[5m])', unit="ops"),

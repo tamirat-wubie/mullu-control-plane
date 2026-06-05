@@ -1,0 +1,224 @@
+{
+  "schema_version": "product_dashboard.grafana_metric_emitter_receipt.v1",
+  "receipt_id": "product-dashboard-grafana-metric-emitter-receipt-20260602",
+  "generated_at": "2026-06-02T00:00:00Z",
+  "proof_state": "Pass",
+  "solver_outcome": "SolvedVerified",
+  "raw_reasoning_included": false,
+  "probe": {
+    "method": "default_dashboard_expression_to_platform_collector_exact_emitter_probe",
+    "dashboard_source": "mcoi/mcoi_runtime/core/grafana_dashboard.py",
+    "collector_source": "mcoi/mcoi_runtime/core/platform_metrics.py",
+    "projection_source": "mcoi/mcoi_runtime/core/prometheus_metric_projection.py",
+    "route_source": "mcoi/mcoi_runtime/app/routers/ops/metrics.py",
+    "exporter_source": "mcoi/mcoi_runtime/core/prometheus_exporter.py",
+    "scrape_sample_receipt": "examples/product_dashboard_prometheus_scrape_sample_receipt.json",
+    "summary": "Every default Grafana panel expression has an exact PlatformMetricsCollector emitter family and a route-level Prometheus projection source."
+  },
+  "registered_metric_families": [
+    "mullu_approvals_denied_total",
+    "mullu_approvals_granted_total",
+    "mullu_approvals_requested_total",
+    "mullu_audit_entries_total",
+    "mullu_audit_events_total",
+    "mullu_budget_checks_total",
+    "mullu_budget_exhausted_total",
+    "mullu_content_safety_blocked_total",
+    "mullu_content_safety_checks_total",
+    "mullu_errors_total",
+    "mullu_gateway_duplicates_total",
+    "mullu_gateway_messages_errors_total",
+    "mullu_gateway_messages_total",
+    "mullu_governance_decisions_denied_total",
+    "mullu_governance_decisions_total",
+    "mullu_llm_cost_total",
+    "mullu_llm_invocations_errors_total",
+    "mullu_llm_invocations_total",
+    "mullu_llm_requests_total",
+    "mullu_llm_tokens_input_total",
+    "mullu_llm_tokens_output_total",
+    "mullu_llm_tokens_total",
+    "mullu_locks_acquired_total",
+    "mullu_locks_denied_total",
+    "mullu_locks_expired_total",
+    "mullu_memory_ops_total",
+    "mullu_pii_detections_total",
+    "mullu_pii_redactions_total",
+    "mullu_pii_scans_total",
+    "mullu_policy_violations_total",
+    "mullu_rate_limit_allowed_total",
+    "mullu_rate_limit_denied_total",
+    "mullu_requests_governed_total",
+    "mullu_sessions_closed_total",
+    "mullu_sessions_created_total",
+    "mullu_skill_executions_errors_total",
+    "mullu_skill_executions_total",
+    "mullu_tasks_completed_total",
+    "mullu_webhook_rejected_total",
+    "mullu_webhook_verified_total",
+    "mullu_active_agents",
+    "mullu_active_tenants",
+    "mullu_audit_chain_valid",
+    "mullu_chain_success_rate",
+    "mullu_circuit_breaker_open",
+    "mullu_health_score",
+    "mullu_llm_budget_utilization_ratio",
+    "mullu_llm_latency_p99_seconds",
+    "mullu_provider_error_rate",
+    "mullu_provider_health_score",
+    "mullu_sessions_active",
+    "mullu_uptime_seconds"
+  ],
+  "summary": {
+    "grafana_expression_count": 16,
+    "confirmed_exact_emitter_count": 16,
+    "alias_candidate_count": 0,
+    "missing_emitter_count": 0,
+    "closure_state": "collector_and_route_projected"
+  },
+  "bindings": [
+    {
+      "panel_title": "Uptime",
+      "expression": "mullu_uptime_seconds",
+      "metric_names": ["mullu_uptime_seconds"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered uptime gauge emitter",
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "panel_title": "Health Score",
+      "expression": "mullu_health_score * 100",
+      "metric_names": ["mullu_health_score"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered unit-ratio health gauge emitter",
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "panel_title": "Active Tenants",
+      "expression": "mullu_active_tenants",
+      "metric_names": ["mullu_active_tenants"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered active tenant gauge emitter",
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "panel_title": "Error Rate (5m)",
+      "expression": "rate(mullu_errors_total[5m])",
+      "metric_names": ["mullu_errors_total"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered aggregate error counter emitter",
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "panel_title": "LLM Requests/s",
+      "expression": "rate(mullu_llm_requests_total[5m])",
+      "metric_names": ["mullu_llm_requests_total"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered LLM request counter emitter",
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "panel_title": "LLM Latency p99",
+      "expression": "mullu_llm_latency_p99_seconds",
+      "metric_names": ["mullu_llm_latency_p99_seconds"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered LLM p99 latency gauge emitter",
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "panel_title": "Token Usage",
+      "expression": "rate(mullu_llm_tokens_total[5m])",
+      "metric_names": ["mullu_llm_tokens_total"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered aggregate LLM token counter emitter",
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "panel_title": "LLM Budget Utilization",
+      "expression": "mullu_llm_budget_utilization_ratio * 100",
+      "metric_names": ["mullu_llm_budget_utilization_ratio"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered unit-ratio budget utilization gauge emitter",
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "panel_title": "Governed Requests",
+      "expression": "mullu_requests_governed_total",
+      "metric_names": ["mullu_requests_governed_total"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered governed request counter emitter",
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "panel_title": "Policy Violations",
+      "expression": "mullu_policy_violations_total",
+      "metric_names": ["mullu_policy_violations_total"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered policy violation counter emitter",
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "panel_title": "Audit Events/s",
+      "expression": "rate(mullu_audit_events_total[5m])",
+      "metric_names": ["mullu_audit_events_total"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered audit event counter emitter",
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "panel_title": "Circuit Breaker State",
+      "expression": "mullu_circuit_breaker_open",
+      "metric_names": ["mullu_circuit_breaker_open"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered circuit breaker gauge emitter",
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "panel_title": "Active Agents",
+      "expression": "mullu_active_agents",
+      "metric_names": ["mullu_active_agents"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered active agent gauge emitter",
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "panel_title": "Task Throughput",
+      "expression": "rate(mullu_tasks_completed_total[5m])",
+      "metric_names": ["mullu_tasks_completed_total"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered task completion counter emitter",
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "panel_title": "Chain Success Rate",
+      "expression": "mullu_chain_success_rate * 100",
+      "metric_names": ["mullu_chain_success_rate"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered unit-ratio chain success gauge emitter",
+      "solver_outcome": "SolvedVerified"
+    },
+    {
+      "panel_title": "Memory Operations",
+      "expression": "rate(mullu_memory_ops_total[5m])",
+      "metric_names": ["mullu_memory_ops_total"],
+      "emitter_status": "confirmed_exact",
+      "required_evidence": "registered memory operation counter emitter",
+      "solver_outcome": "SolvedVerified"
+    }
+  ],
+  "lineage": {
+    "accepted_deltas": [
+      {
+        "delta_id": "delta-product-dashboard-grafana-exact-emitter-closure-20260602",
+        "reason": "Registered exact PlatformMetricsCollector emitter families for every default Grafana panel expression and updated the dashboard to use unit-ratio metric math where required.",
+        "logged_in_lineage": true
+      },
+      {
+        "delta_id": "delta-product-dashboard-prometheus-route-projection-20260602",
+        "reason": "Projected existing runtime read models into the default Grafana metric families at the app-level Prometheus scrape route with counter delta guards.",
+        "logged_in_lineage": true
+      }
+    ],
+    "rejected_deltas": []
+  }
+}
