@@ -120,6 +120,20 @@ Cancellation:
 - certifies a temporal scheduler proof receipt
 - persists the terminal state
 
+### Mark schedule missed
+
+```text
+POST /api/v1/temporal/schedules/{schedule_id}/missed
+```
+
+Missed closure:
+
+- moves the schedule to `missed`
+- emits a `blocked` scheduler receipt with reason `missed_run`
+- certifies a temporal scheduler proof receipt
+- persists the terminal state
+- prevents later worker ticks from dispatching the closed schedule
+
 ### Manual worker tick
 
 ```text
