@@ -24,6 +24,11 @@ from mcoi_runtime.core.lineage_query import (
     parse_lineage_uri,
     resolve_lineage_uri,
 )
+from mcoi_runtime.governance.policy.versioning import (
+    PolicyArtifact,
+    PolicyVersionRegistry,
+    VersionedPolicyRule,
+)
 from scripts.validate_schemas import _validate_schema_instance
 
 
@@ -61,6 +66,44 @@ def _recorder_with_trace() -> ReplayRecorder:
     )
     recorder.complete_trace("trace-1")
     return recorder
+
+
+def _recorder_with_policy_ref(policy_version: str) -> ReplayRecorder:
+    recorder = ReplayRecorder(clock=fixed_clock)
+    recorder.start_trace("trace-policy-ref")
+    recorder.record_frame(
+        "trace-policy-ref",
+        "request.accepted",
+        {
+            "tenant_id": "tenant-1",
+            "policy_version": policy_version,
+            "model_version": "model:v1",
+            "budget_id": "budget-1",
+        },
+        {"proof_id": "proof:request"},
+    )
+    recorder.complete_trace("trace-policy-ref")
+    return recorder
+
+
+def _policy_registry() -> PolicyVersionRegistry:
+    registry = PolicyVersionRegistry()
+    registry.register(
+        PolicyArtifact.create(
+            policy_id="tenant-governance",
+            version="v1",
+            rules=(
+                VersionedPolicyRule(
+                    rule_id="tenant-boundary",
+                    description="retain tenant boundary",
+                    condition="tenant_id present",
+                    action="allow",
+                ),
+            ),
+            created_at="2026-04-25T12:00:00Z",
+        )
+    )
+    return registry
 
 
 def _recorder_with_indexed_refs() -> ReplayRecorder:
@@ -247,6 +290,58 @@ def test_lineage_document_projects_policy_version_read_model() -> None:
     assert policy_projection["node_count"] == 2
     assert policy_projection["tenant_ids"] == ["tenant-1"]
     assert set(policy_projection["node_ids"]) == {node["node_id"] for node in document["nodes"]}
+    assert policy_projection["registry_lookup_status"] == "not_requested"
+    assert policy_projection["policy_id"] == ""
+    assert policy_projection["registry_version"] == ""
+    assert policy_projection["artifact_hash"] == ""
+    assert policy_projection["rule_count"] == 0
+    assert policy_projection["created_at"] == ""
+
+
+def test_lineage_document_enriches_policy_version_from_registry() -> None:
+    registry = _policy_registry()
+
+    document = resolve_lineage_uri(
+        "lineage://trace/trace-policy-ref?depth=10",
+        replay_source=_recorder_with_policy_ref("tenant-governance@v1"),
+        clock=fixed_clock,
+        policy_registry=registry,
+    )
+    policy_projection = document["policy_versions"][0]
+
+    assert policy_projection["policy_version"] == "tenant-governance@v1"
+    assert policy_projection["registry_lookup_status"] == "matched"
+    assert policy_projection["policy_id"] == "tenant-governance"
+    assert policy_projection["registry_version"] == "v1"
+    assert policy_projection["artifact_hash"].startswith("policy-artifact-")
+    assert policy_projection["rule_count"] == 1
+    assert policy_projection["created_at"] == "2026-04-25T12:00:00Z"
+    assert "rules" not in policy_projection
+
+
+def test_lineage_document_reports_policy_registry_lookup_boundaries() -> None:
+    registry = _policy_registry()
+
+    unparseable_document = resolve_lineage_uri(
+        "lineage://trace/trace-policy-ref?depth=10",
+        replay_source=_recorder_with_policy_ref("policy:v1"),
+        clock=fixed_clock,
+        policy_registry=registry,
+    )
+    missing_document = resolve_lineage_uri(
+        "lineage://trace/trace-policy-ref?depth=10",
+        replay_source=_recorder_with_policy_ref("tenant-governance@v2"),
+        clock=fixed_clock,
+        policy_registry=registry,
+    )
+
+    assert unparseable_document["policy_versions"][0]["registry_lookup_status"] == "unparseable_ref"
+    assert unparseable_document["policy_versions"][0]["policy_id"] == ""
+    assert unparseable_document["policy_versions"][0]["rule_count"] == 0
+    assert missing_document["policy_versions"][0]["registry_lookup_status"] == "not_found"
+    assert missing_document["policy_versions"][0]["policy_id"] == "tenant-governance"
+    assert missing_document["policy_versions"][0]["registry_version"] == "v2"
+    assert missing_document["policy_versions"][0]["artifact_hash"] == ""
 
 
 def test_lineage_document_hash_is_deterministic() -> None:

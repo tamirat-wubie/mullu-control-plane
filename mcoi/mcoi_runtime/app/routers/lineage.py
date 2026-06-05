@@ -51,6 +51,7 @@ def _resolve(request: Request, uri: str) -> dict[str, Any]:
             clock=deps._clock,
             command_source=_optional_dependency("command_ledger"),
             artifact_source=_optional_dependency("artifact_lineage"),
+            policy_registry=_optional_dependency("policy_version_registry"),
         )
     except ValueError as exc:
         raise HTTPException(
