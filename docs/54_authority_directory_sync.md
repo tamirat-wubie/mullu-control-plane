@@ -255,18 +255,30 @@ python scripts/sync_authority_directory.py \
 
 ## LDAP Export Adapter
 
-`scripts/ldap_authority_directory_adapter.py` accepts a bounded LDAP users/groups
-export plus the same style of explicit authority mapping JSON and emits the
-normalized directory JSON consumed by the static sync adapter.
+`scripts/collect_ldap_directory_export.py` invokes a credentialed `ldapsearch`
+command for bounded user and group searches, then writes a local LDAP export
+JSON. `scripts/ldap_authority_directory_adapter.py` accepts that bounded LDAP
+users/groups export plus the same style of explicit authority mapping JSON and
+emits the normalized directory JSON consumed by the static sync adapter.
 
 LDAP user and group DNs are identity evidence only. They do not become owners,
 approvers, approval policies, or escalation routes unless the mapping file
 explicitly declares those authority relationships.
 
 ```bash
+python scripts/collect_ldap_directory_export.py \
+  --ldap-uri ldaps://directory.example.com \
+  --bind-dn "$MULLU_LDAP_BIND_DN" \
+  --bind-password "$MULLU_LDAP_BIND_PASSWORD" \
+  --user-base-dn ou=people,dc=example,dc=com \
+  --group-base-dn ou=groups,dc=example,dc=com \
+  --output .change_assurance/ldap_directory_export.json
+```
+
+```bash
 python scripts/ldap_authority_directory_adapter.py \
   --tenant-id tenant-1 \
-  --ldap-export ldap-export.json \
+  --ldap-export .change_assurance/ldap_directory_export.json \
   --mapping authority-mapping.json \
   --output .change_assurance/authority_directory_from_ldap.json
 ```
@@ -293,11 +305,11 @@ python scripts/sync_authority_directory.py \
 
 The repository exposes the authority configuration read models, binds them into
 runtime conformance, includes a static JSON / bounded-YAML adapter that emits
-normalized batches and receipts, includes a live SCIM export collector, and
-includes live GitHub teams export collection. SCIM-export and GitHub-teams-export
-wrappers emit the same normalized contract, as does the workspace-groups export
-wrapper, SAML-groups export wrapper, and LDAP export wrapper. Live LDAP polling
-is not implemented.
+normalized batches and receipts, includes live SCIM export collection, includes
+live GitHub teams export collection, and includes bounded live LDAP export
+collection through `ldapsearch`. SCIM-export, GitHub-teams-export, and
+LDAP-export wrappers emit the same normalized contract, as does the
+workspace-groups export wrapper and SAML-groups export wrapper.
 
 Source-adapter consolidation around `scripts/authority_directory_mapping.py` is
 closed for the bounded export adapters: SCIM, GitHub Teams, workspace groups,
@@ -306,6 +318,6 @@ normalized authority source to `scripts/sync_authority_directory.py`.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: source evidence required, no fabricated org data, explicit ownership required, duplicate records rejected, bounded parser failures, live SCIM identity export separated from authority mappings, live GitHub team evidence separated from authority mappings, workspace group evidence separated from authority mappings, SAML group evidence separated from authority mappings, LDAP DN evidence separated from authority mappings, read-model verification required
-  Open issues: live LDAP polling not implemented
-  Next action: add credentialed live LDAP polling without bypassing the export-adapter mapping contract
+  Invariants verified: source evidence required, no fabricated org data, explicit ownership required, duplicate records rejected, bounded parser failures, live SCIM identity export separated from authority mappings, live GitHub team evidence separated from authority mappings, live LDAP DN evidence separated from authority mappings, workspace group evidence separated from authority mappings, SAML group evidence separated from authority mappings, read-model verification required
+  Open issues: none
+  Next action: run credentialed directory collection in an operator environment before applying authority mappings
