@@ -38,6 +38,7 @@ from mcoi_runtime.contracts.organization_kernel import (
     PlanStepGateDecision,
     PlanStepGatePreview,
     PlanStepGateStatus,
+    PlanStepWorkerLeaseReceipt,
     PlanStepWorkerReceiptBinding,
 )
 from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
@@ -115,6 +116,7 @@ class OrganizationKernelState:
     reconciliations: tuple[OrganizationEffectReconciliation, ...] = ()
     closures: tuple[OrganizationTerminalClosure, ...] = ()
     learning_bindings: tuple[LearningAdmissionBinding, ...] = ()
+    worker_lease_receipts: tuple[PlanStepWorkerLeaseReceipt, ...] = ()
     worker_receipt_bindings: tuple[PlanStepWorkerReceiptBinding, ...] = ()
     events: tuple[OrganizationCaseEvent, ...] = ()
     event_sequence: int = 0
@@ -136,6 +138,7 @@ class OrganizationKernelState:
             "reconciliations",
             "closures",
             "learning_bindings",
+            "worker_lease_receipts",
             "worker_receipt_bindings",
             "events",
         ):
@@ -179,6 +182,7 @@ class OrganizationKernel:
         self._reconciliations: dict[str, OrganizationEffectReconciliation] = {}
         self._closures: dict[str, OrganizationTerminalClosure] = {}
         self._learning_bindings: dict[str, LearningAdmissionBinding] = {}
+        self._worker_lease_receipts: dict[str, PlanStepWorkerLeaseReceipt] = {}
         self._worker_receipt_bindings: dict[str, PlanStepWorkerReceiptBinding] = {}
         self._events: list[OrganizationCaseEvent] = []
         self._event_sequence = 0
@@ -476,6 +480,46 @@ class OrganizationKernel:
         self._emit(binding.case_id, "learning_admission_bound", {"binding_id": binding.binding_id})
         return binding
 
+    def create_worker_lease_receipt(
+        self,
+        receipt: PlanStepWorkerLeaseReceipt,
+    ) -> PlanStepWorkerLeaseReceipt:
+        """Record a bounded worker lease envelope without dispatching work."""
+        if receipt.lease_id in self._worker_lease_receipts:
+            raise RuntimeCoreInvariantError("worker lease already recorded")
+        organization_case = self._require_case(receipt.case_id)
+        if organization_case.status is OrganizationCaseStatus.CLOSED:
+            raise RuntimeCoreInvariantError("closed case cannot receive worker lease")
+        plan = self._require_case_plan(receipt.case_id)
+        step = self._require_plan_step(plan, receipt.step_id)
+        if receipt.capability_id != step.capability_id:
+            raise RuntimeCoreInvariantError("worker lease capability mismatch")
+        if receipt.responsible_role_id != step.responsible_role_id:
+            raise RuntimeCoreInvariantError("worker lease responsible role mismatch")
+        if receipt.capability_action != step.action:
+            raise RuntimeCoreInvariantError("worker lease action mismatch")
+        role = self._roles.get(receipt.requested_by_role_id)
+        if role is None or role.org_id != organization_case.org_id:
+            raise RuntimeCoreInvariantError("worker lease requesting role unavailable")
+        if role.role_id != step.responsible_role_id:
+            raise RuntimeCoreInvariantError("worker lease must be requested by responsible role")
+        for evidence_ref in receipt.evidence_refs:
+            evidence = self._case_evidence.get(evidence_ref)
+            if evidence is None or evidence.case_id != receipt.case_id:
+                raise RuntimeCoreInvariantError("worker lease evidence unavailable")
+        self._worker_lease_receipts[receipt.lease_id] = receipt
+        self._emit(
+            receipt.case_id,
+            "plan_step_worker_lease_created",
+            {
+                "lease_id": receipt.lease_id,
+                "step_id": receipt.step_id,
+                "capability_id": receipt.capability_id,
+                "dispatch_lease_preview_id": receipt.dispatch_lease_preview_id,
+            },
+        )
+        return receipt
+
     def bind_worker_receipt_evidence(
         self,
         binding: PlanStepWorkerReceiptBinding,
@@ -619,6 +663,9 @@ class OrganizationKernel:
             reconciliations=tuple(self._reconciliations[key] for key in sorted(self._reconciliations)),
             closures=tuple(self._closures[key] for key in sorted(self._closures)),
             learning_bindings=tuple(self._learning_bindings[key] for key in sorted(self._learning_bindings)),
+            worker_lease_receipts=tuple(
+                self._worker_lease_receipts[key] for key in sorted(self._worker_lease_receipts)
+            ),
             worker_receipt_bindings=tuple(
                 self._worker_receipt_bindings[key] for key in sorted(self._worker_receipt_bindings)
             ),
@@ -658,6 +705,11 @@ class OrganizationKernel:
         )
         candidate._closures = candidate._keyed(state.closures, "closure_id", "terminal closure")
         candidate._learning_bindings = candidate._keyed(state.learning_bindings, "binding_id", "learning binding")
+        candidate._worker_lease_receipts = candidate._keyed(
+            state.worker_lease_receipts,
+            "lease_id",
+            "worker lease receipt",
+        )
         candidate._worker_receipt_bindings = candidate._keyed(
             state.worker_receipt_bindings,
             "binding_id",
@@ -683,6 +735,7 @@ class OrganizationKernel:
         self._reconciliations = candidate._reconciliations
         self._closures = candidate._closures
         self._learning_bindings = candidate._learning_bindings
+        self._worker_lease_receipts = candidate._worker_lease_receipts
         self._worker_receipt_bindings = candidate._worker_receipt_bindings
         self._events = candidate._events
         self._event_sequence = candidate._event_sequence
@@ -705,6 +758,7 @@ class OrganizationKernel:
                 self._reconciliations,
                 self._closures,
                 self._learning_bindings,
+                self._worker_lease_receipts,
                 self._worker_receipt_bindings,
                 self._events,
             )
@@ -803,6 +857,30 @@ class OrganizationKernel:
             closure = self._closures.get(binding.closure_id)
             if closure is None or closure.case_id != binding.case_id:
                 raise RuntimeCoreInvariantError("restored learning binding closure mismatch")
+        for lease_receipt in self._worker_lease_receipts.values():
+            organization_case = self._cases.get(lease_receipt.case_id)
+            plan_id = self._plan_by_case.get(lease_receipt.case_id)
+            if organization_case is None or plan_id is None:
+                raise RuntimeCoreInvariantError("restored worker lease case unavailable")
+            step = next(
+                (candidate for candidate in self._plans[plan_id].steps if candidate.step_id == lease_receipt.step_id),
+                None,
+            )
+            if step is None:
+                raise RuntimeCoreInvariantError("restored worker lease step unavailable")
+            if lease_receipt.capability_id != step.capability_id:
+                raise RuntimeCoreInvariantError("restored worker lease capability mismatch")
+            if lease_receipt.responsible_role_id != step.responsible_role_id:
+                raise RuntimeCoreInvariantError("restored worker lease role mismatch")
+            if lease_receipt.capability_action != step.action:
+                raise RuntimeCoreInvariantError("restored worker lease action mismatch")
+            role = self._roles.get(lease_receipt.requested_by_role_id)
+            if role is None or role.role_id != step.responsible_role_id or role.org_id != organization_case.org_id:
+                raise RuntimeCoreInvariantError("restored worker lease requesting role mismatch")
+            for evidence_ref in lease_receipt.evidence_refs:
+                evidence = self._case_evidence.get(evidence_ref)
+                if evidence is None or evidence.case_id != lease_receipt.case_id:
+                    raise RuntimeCoreInvariantError("restored worker lease evidence unavailable")
         for receipt_binding in self._worker_receipt_bindings.values():
             organization_case = self._cases.get(receipt_binding.case_id)
             plan_id = self._plan_by_case.get(receipt_binding.case_id)

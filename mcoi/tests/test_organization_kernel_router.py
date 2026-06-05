@@ -146,7 +146,7 @@ def _signed_conformance_certificate(*, secret: str) -> dict[str, Any]:
         "capsule_registry_certified": True,
         "proof_coverage_matrix_current": True,
         "proof_coverage_declared_routes_classified": True,
-        "proof_coverage_declared_route_count": 301,
+        "proof_coverage_declared_route_count": 302,
         "proof_coverage_unclassified_route_count": 0,
         "known_limitations_aligned": False,
         "security_model_aligned": False,
@@ -1085,6 +1085,157 @@ def test_organization_action_queue_dispatch_lease_preview_rejects_filtered_out_a
     assert before["gate_decisions"] == after["gate_decisions"] == []
 
 
+def test_organization_action_queue_worker_lease_creates_receipt_without_dispatch(
+    tmp_path: Path,
+) -> None:
+    client, store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    gate = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+    queue = client.get(
+        "/api/v1/orgs/org-mullu/action-queue"
+        "?department_id=engineering&next_action=bind_worker_receipt"
+    ).json()
+    action_id = queue["actions"][0]["action_id"]
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/orgs/org-mullu/action-queue/worker-lease",
+        json={
+            "action_id": action_id,
+            "filters": {
+                "department_id": "engineering",
+                "next_action": "bind_worker_receipt",
+            },
+            "lease_id": "lease:engineering-runtime-witness",
+            "requested_by_role_id": "engineering.owner",
+            "timeout_seconds": 900,
+            "budget_ref": "budget:gateway-pilot",
+            "evidence_refs": [
+                "evidence:engineering_health_endpoint",
+                "evidence:engineering_gateway_witness",
+                "evidence:engineering_runtime_conformance",
+            ],
+        },
+    )
+    payload = response.json()
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+    persisted = store.load_state()
+
+    assert gate.status_code == 200
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["lease_created"] is True
+    assert payload["worker_dispatch_started"] is False
+    assert payload["receipt_binding_created"] is False
+    assert payload["approval_created"] is False
+    assert payload["terminal_closure_created"] is False
+    assert payload["dispatch_lease_preview"]["lease_decision"] == "lease_request_ready"
+    assert payload["worker_lease"]["lease_id"] == "lease:engineering-runtime-witness"
+    assert payload["worker_lease"]["capability_id"] == "engineering.gateway_runtime.verify"
+    assert payload["worker_lease"]["queued_action"] == "bind_worker_receipt"
+    assert payload["worker_lease"]["capability_action"] == "verify_gateway_runtime"
+    assert payload["worker_lease"]["metadata"]["worker_dispatch_started"] is False
+    assert len(after["worker_leases"]) == 1
+    assert after["worker_leases"][0]["lease_id"] == "lease:engineering-runtime-witness"
+    assert len(persisted.worker_lease_receipts) == 1
+    assert persisted.worker_lease_receipts[0].lease_id == "lease:engineering-runtime-witness"
+    assert before["case"]["status"] == after["case"]["status"] == "planned"
+    assert before["evidence"] == after["evidence"]
+    assert before["approvals"] == after["approvals"]
+    assert before["gate_decisions"] == after["gate_decisions"]
+    assert after["events"][-1]["event_type"] == "plan_step_worker_lease_created"
+
+
+def test_organization_action_queue_worker_lease_rejects_not_ready_selection_without_mutation(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    queue = client.get(
+        "/api/v1/orgs/org-mullu/action-queue"
+        "?department_id=security_compliance&next_action=collect_required_evidence"
+    ).json()
+    action_id = queue["actions"][0]["action_id"]
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    response = client.post(
+        "/api/v1/orgs/org-mullu/action-queue/worker-lease",
+        json={
+            "action_id": action_id,
+            "filters": {
+                "department_id": "security_compliance",
+                "next_action": "collect_required_evidence",
+            },
+            "lease_id": "lease:security-missing-evidence",
+            "requested_by_role_id": "security.owner",
+            "timeout_seconds": 900,
+            "budget_ref": "budget:gateway-pilot",
+            "evidence_refs": ["evidence:security_public_claim_boundary"],
+        },
+    )
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_code"] == "action_queue_worker_lease_rejected"
+    assert before["events"] == after["events"]
+    assert before["gate_decisions"] == after["gate_decisions"] == []
+    assert after["worker_leases"] == []
+
+
+def test_organization_action_queue_worker_lease_rejects_duplicate_lease_without_extra_event(
+    tmp_path: Path,
+) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+    queue = client.get(
+        "/api/v1/orgs/org-mullu/action-queue"
+        "?department_id=engineering&next_action=bind_worker_receipt"
+    ).json()
+    action_id = queue["actions"][0]["action_id"]
+    request_body = {
+        "action_id": action_id,
+        "filters": {
+            "department_id": "engineering",
+            "next_action": "bind_worker_receipt",
+        },
+        "lease_id": "lease:engineering-runtime-witness",
+        "requested_by_role_id": "engineering.owner",
+        "timeout_seconds": 900,
+        "budget_ref": "budget:gateway-pilot",
+        "evidence_refs": [
+            "evidence:engineering_health_endpoint",
+            "evidence:engineering_gateway_witness",
+            "evidence:engineering_runtime_conformance",
+        ],
+    }
+
+    first = client.post("/api/v1/orgs/org-mullu/action-queue/worker-lease", json=request_body)
+    before_duplicate = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+    duplicate = client.post("/api/v1/orgs/org-mullu/action-queue/worker-lease", json=request_body)
+    after_duplicate = client.get("/api/v1/cases/case.launch_gateway_pilot").json()
+    lease_events = [
+        event for event in after_duplicate["events"]
+        if event["event_type"] == "plan_step_worker_lease_created"
+    ]
+
+    assert first.status_code == 200
+    assert duplicate.status_code == 400
+    assert duplicate.json()["detail"]["error_code"] == "action_queue_worker_lease_rejected"
+    assert len(after_duplicate["worker_leases"]) == 1
+    assert before_duplicate["events"] == after_duplicate["events"]
+    assert len(lease_events) == 1
+    assert lease_events[0]["payload"]["lease_id"] == "lease:engineering-runtime-witness"
+
+
 def test_organization_action_queue_view_is_read_only_and_escaped(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     bootstrap = client.post(
@@ -2000,6 +2151,7 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/orgs/{org_id}/action-queue/selection-preview" in paths
     assert "/api/v1/orgs/{org_id}/action-queue/approval-packet-preview" in paths
     assert "/api/v1/orgs/{org_id}/action-queue/dispatch-lease-preview" in paths
+    assert "/api/v1/orgs/{org_id}/action-queue/worker-lease" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate/view" in paths
     assert "/api/v1/cases/{case_id}/audit-explorer" in paths

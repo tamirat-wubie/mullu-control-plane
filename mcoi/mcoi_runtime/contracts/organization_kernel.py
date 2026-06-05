@@ -623,6 +623,65 @@ class OrganizationCaseEvent(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class PlanStepWorkerLeaseReceipt(ContractRecord):
+    """Bounded worker lease envelope recorded for one plan step.
+
+    The lease receipt records that OrgOS admitted a lease request envelope after
+    dispatch-lease preview readiness. It does NOT dispatch a worker, bind worker
+    output, admit step evidence, or close a case.
+    """
+
+    lease_id: str
+    case_id: str
+    step_id: str
+    capability_id: str
+    responsible_role_id: str
+    requested_by_role_id: str
+    dispatch_lease_preview_id: str
+    queued_action: str
+    capability_action: str
+    expected_effect: str
+    evidence_refs: tuple[str, ...]
+    timeout_seconds: int
+    budget_ref: str
+    created_at: str
+    expires_at: str | None = None
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "lease_id",
+            "case_id",
+            "step_id",
+            "capability_id",
+            "responsible_role_id",
+            "requested_by_role_id",
+            "dispatch_lease_preview_id",
+            "queued_action",
+            "capability_action",
+            "expected_effect",
+            "budget_ref",
+        ):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        object.__setattr__(
+            self,
+            "evidence_refs",
+            _freeze_text_array(
+                require_non_empty_tuple(self.evidence_refs, "evidence_refs"),
+                "evidence_refs",
+            ),
+        )
+        if not isinstance(self.timeout_seconds, int) or isinstance(self.timeout_seconds, bool):
+            raise ValueError("timeout_seconds must be an integer")
+        if self.timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive")
+        object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
+        if self.expires_at is not None:
+            object.__setattr__(self, "expires_at", require_datetime_text(self.expires_at, "expires_at"))
+        object.__setattr__(self, "metadata", freeze_value(self.metadata))
+
+
+@dataclass(frozen=True, slots=True)
 class PlanStepWorkerReceiptBinding(ContractRecord):
     """Bounded worker dispatch receipt admitted as evidence for one plan step.
 

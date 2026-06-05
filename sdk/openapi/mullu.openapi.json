@@ -1904,6 +1904,39 @@
         "title": "EducationPayload",
         "type": "object"
       },
+      "EvaluateToolPermissionRequest": {
+        "properties": {
+          "arguments": {
+            "additionalProperties": true,
+            "title": "Arguments",
+            "type": "object"
+          },
+          "audit_present": {
+            "default": false,
+            "title": "Audit Present",
+            "type": "boolean"
+          },
+          "budget_ref": {
+            "title": "Budget Ref",
+            "type": "string"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "tool_name": {
+            "title": "Tool Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "tool_name",
+          "budget_ref"
+        ],
+        "title": "EvaluateToolPermissionRequest",
+        "type": "object"
+      },
       "EventPublishRequest": {
         "properties": {
           "event_type": {
@@ -4194,6 +4227,34 @@
         "title": "PromptRenderRequest",
         "type": "object"
       },
+      "PublishFederatedPolicyRequest": {
+        "properties": {
+          "artifact_payload": {
+            "additionalProperties": true,
+            "title": "Artifact Payload",
+            "type": "object"
+          },
+          "policy_id": {
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "signing_key_id": {
+            "title": "Signing Key Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy_id",
+          "version",
+          "signing_key_id"
+        ],
+        "title": "PublishFederatedPolicyRequest",
+        "type": "object"
+      },
       "QualifyRequest": {
         "description": "Input to /ucja/qualify \u2014 only L0 fields are required.",
         "properties": {
@@ -4536,6 +4597,84 @@
           "name"
         ],
         "title": "RegisterConnectorRequest",
+        "type": "object"
+      },
+      "RegisterFederatedClusterRequest": {
+        "properties": {
+          "allowed_policy_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Allowed Policy Ids",
+            "type": "array"
+          },
+          "cluster_id": {
+            "title": "Cluster Id",
+            "type": "string"
+          },
+          "enforcement_local": {
+            "default": true,
+            "title": "Enforcement Local",
+            "type": "boolean"
+          },
+          "region": {
+            "title": "Region",
+            "type": "string"
+          },
+          "residency_region": {
+            "title": "Residency Region",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cluster_id",
+          "region",
+          "residency_region"
+        ],
+        "title": "RegisterFederatedClusterRequest",
+        "type": "object"
+      },
+      "RegisterToolPermissionRequest": {
+        "properties": {
+          "argument_schema": {
+            "additionalProperties": true,
+            "title": "Argument Schema",
+            "type": "object"
+          },
+          "audit_required": {
+            "default": true,
+            "title": "Audit Required",
+            "type": "boolean"
+          },
+          "budget_ref": {
+            "title": "Budget Ref",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "permission_id": {
+            "default": "",
+            "title": "Permission Id",
+            "type": "string"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "tool_name": {
+            "title": "Tool Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "tool_name",
+          "budget_ref"
+        ],
+        "title": "RegisterToolPermissionRequest",
         "type": "object"
       },
       "ReplayDeterminismRequest": {
@@ -5771,6 +5910,29 @@
         "title": "SuspendCapabilityRequest",
         "type": "object"
       },
+      "SyncFederatedPolicyRequest": {
+        "properties": {
+          "cluster_id": {
+            "title": "Cluster Id",
+            "type": "string"
+          },
+          "policy_id": {
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cluster_id",
+          "policy_id",
+          "version"
+        ],
+        "title": "SyncFederatedPolicyRequest",
+        "type": "object"
+      },
       "TemplateExecuteRequest": {
         "properties": {
           "initial_input": {
@@ -6240,6 +6402,59 @@
           "reason"
         ],
         "title": "WithdrawRegistrationRequest",
+        "type": "object"
+      },
+      "WorkerLeaseCreateRequest": {
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "budget_ref": {
+            "title": "Budget Ref",
+            "type": "string"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "filters": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Filters",
+            "type": "object"
+          },
+          "lease_id": {
+            "title": "Lease Id",
+            "type": "string"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "requested_by_role_id": {
+            "title": "Requested By Role Id",
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "title": "Timeout Seconds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "action_id",
+          "lease_id",
+          "requested_by_role_id",
+          "timeout_seconds",
+          "budget_ref",
+          "evidence_refs"
+        ],
+        "title": "WorkerLeaseCreateRequest",
         "type": "object"
       },
       "WorkerReceiptBindRequest": {
@@ -11153,6 +11368,240 @@
         "summary": "List Export Sources"
       }
     },
+    "/api/v1/federation/clusters": {
+      "post": {
+        "description": "Register a regional cluster for metadata-only policy sync.",
+        "operationId": "register_federated_cluster_api_v1_federation_clusters_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterFederatedClusterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Register Federated Cluster Api V1 Federation Clusters Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Register Federated Cluster",
+        "tags": [
+          "federation"
+        ]
+      }
+    },
+    "/api/v1/federation/policies": {
+      "post": {
+        "description": "Publish signed policy metadata for regional sync.",
+        "operationId": "publish_federated_policy_api_v1_federation_policies_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishFederatedPolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Publish Federated Policy Api V1 Federation Policies Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Publish Federated Policy",
+        "tags": [
+          "federation"
+        ]
+      }
+    },
+    "/api/v1/federation/policy-sync": {
+      "post": {
+        "description": "Sync signed policy metadata to a registered regional cluster.",
+        "operationId": "sync_federated_policy_api_v1_federation_policy_sync_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncFederatedPolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Sync Federated Policy Api V1 Federation Policy Sync Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sync Federated Policy",
+        "tags": [
+          "federation"
+        ]
+      }
+    },
     "/api/v1/federation/summary": {
       "get": {
         "description": "Return a read-only federated control-plane summary.",
@@ -14540,6 +14989,54 @@
         "summary": "Get Organization Action Queue View"
       }
     },
+    "/api/v1/orgs/{org_id}/action-queue/worker-lease": {
+      "post": {
+        "description": "Create a bounded worker lease receipt without dispatching a worker.",
+        "operationId": "create_organization_action_queue_worker_lease_api_v1_orgs__org_id__action_queue_worker_lease_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkerLeaseCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Organization Action Queue Worker Lease"
+      }
+    },
     "/api/v1/orgs/{org_id}/authority-map": {
       "get": {
         "description": "Return a read-only department, role, authority, capability, and evidence map.",
@@ -16224,6 +16721,93 @@
           }
         },
         "summary": "Latest Release"
+      }
+    },
+    "/api/v1/replay/reports": {
+      "get": {
+        "description": "Return stored replay determinism reports for operator history queries.",
+        "operationId": "list_replay_reports_api_v1_replay_reports_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Replay Reports Api V1 Replay Reports Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Replay Reports"
+      }
+    },
+    "/api/v1/replay/reports/{replay_id}": {
+      "get": {
+        "description": "Return one stored replay determinism report by replay id.",
+        "operationId": "get_replay_report_api_v1_replay_reports__replay_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "replay_id",
+            "required": true,
+            "schema": {
+              "title": "Replay Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Replay Report Api V1 Replay Reports  Replay Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Replay Report"
       }
     },
     "/api/v1/replay/traces": {
@@ -18363,6 +18947,163 @@
           }
         },
         "summary": "List Tenants"
+      }
+    },
+    "/api/v1/tool-permissions": {
+      "get": {
+        "description": "List registered tool permission primitives.",
+        "operationId": "list_tool_permissions_api_v1_tool_permissions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "tenant_id",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Tool Permissions Api V1 Tool Permissions Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Tool Permissions"
+      },
+      "post": {
+        "description": "Register one immutable tool permission primitive.",
+        "operationId": "register_tool_permission_api_v1_tool_permissions_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-Tenant-ID",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Tenant-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterToolPermissionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Register Tool Permission Api V1 Tool Permissions Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Register Tool Permission"
+      }
+    },
+    "/api/v1/tool-permissions/evaluate": {
+      "post": {
+        "description": "Evaluate a proposed tool call against registered permissions without execution.",
+        "operationId": "evaluate_tool_permission_api_v1_tool_permissions_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluateToolPermissionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Evaluate Tool Permission Api V1 Tool Permissions Evaluate Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluate Tool Permission"
       }
     },
     "/api/v1/tools": {
