@@ -118,6 +118,7 @@ EXPECTED_CHANGE_FAMILIES = (
     "public_claim_alignment",
     "governance_preflight_wiring",
 )
+DOC_ONLY_CHANGE_FAMILIES = ("public_claim_alignment", "governance_preflight_wiring")
 
 
 def _command_to_display(args: tuple[str, ...]) -> str:
@@ -143,7 +144,19 @@ def _build_expected_required_checks() -> tuple[str, ...]:
     )
 
 
+def _build_expected_preflight_family_coverage() -> tuple[str, ...]:
+    """Return Foundation preflight families that must be represented in the packet."""
+
+    return tuple(
+        "foundation_posture" if command.name == "foundation_mode" else command.name.removeprefix("foundation_")
+        for command in build_check_commands("python")
+        if command.name == "foundation_mode"
+        or (command.name.startswith("foundation_") and command.name != "foundation_source_control_boundary")
+    )
+
+
 EXPECTED_REQUIRED_CHECKS = _build_expected_required_checks()
+EXPECTED_PREFLIGHT_FAMILY_COVERAGE = _build_expected_preflight_family_coverage()
 EXPECTED_ROOT_KEYS = {
     "boundary_id",
     "change_families",
@@ -368,6 +381,28 @@ def validate_change_families(change_families: object) -> list[SourceControlFindi
             SourceControlFinding(
                 "source_control_family_ids_invalid",
                 f"family ids must be: {', '.join(EXPECTED_CHANGE_FAMILIES)}",
+            )
+        )
+    missing_preflight_families = tuple(
+        family_id for family_id in EXPECTED_PREFLIGHT_FAMILY_COVERAGE if family_id not in observed_family_ids
+    )
+    unexpected_non_preflight_families = tuple(
+        family_id
+        for family_id in observed_family_ids
+        if family_id not in EXPECTED_PREFLIGHT_FAMILY_COVERAGE and family_id not in DOC_ONLY_CHANGE_FAMILIES
+    )
+    if missing_preflight_families:
+        findings.append(
+            SourceControlFinding(
+                "source_control_preflight_family_coverage_missing",
+                f"preflight families missing from source-control packet: {', '.join(missing_preflight_families)}",
+            )
+        )
+    if unexpected_non_preflight_families:
+        findings.append(
+            SourceControlFinding(
+                "source_control_preflight_family_coverage_unexpected",
+                f"families are neither preflight-derived nor documented doc-only exceptions: {', '.join(unexpected_non_preflight_families)}",
             )
         )
     if len(set(observed_family_ids)) != len(observed_family_ids):
