@@ -21,8 +21,10 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.validate_foundation_source_control_boundary import (  # noqa: E402
     DEFAULT_PACKET_PATH,
+    DOC_ONLY_CHANGE_FAMILIES,
     EXPECTED_BOUNDARY_ID,
     EXPECTED_CHANGE_FAMILIES,
+    EXPECTED_PREFLIGHT_FAMILY_COVERAGE,
     EXPECTED_REQUIRED_CHECKS,
     load_json_object,
     validate_foundation_source_control_boundary,
@@ -68,21 +70,14 @@ def test_required_checks_cover_current_foundation_preflight_commands() -> None:
 
 
 def test_change_families_cover_foundation_preflight_boundaries_except_self() -> None:
-    preflight_boundary_families = tuple(
-        "foundation_posture" if command.name == "foundation_mode" else command.name.removeprefix("foundation_")
-        for command in build_check_commands("python")
-        if command.name == "foundation_mode"
-        or (command.name.startswith("foundation_") and command.name != "foundation_source_control_boundary")
-    )
-    doc_only_families = ("public_claim_alignment", "governance_preflight_wiring")
-    missing_families = tuple(family for family in preflight_boundary_families if family not in EXPECTED_CHANGE_FAMILIES)
+    missing_families = tuple(family for family in EXPECTED_PREFLIGHT_FAMILY_COVERAGE if family not in EXPECTED_CHANGE_FAMILIES)
     extra_families = tuple(
         family
         for family in EXPECTED_CHANGE_FAMILIES
-        if family not in preflight_boundary_families and family not in doc_only_families
+        if family not in EXPECTED_PREFLIGHT_FAMILY_COVERAGE and family not in DOC_ONLY_CHANGE_FAMILIES
     )
 
-    assert preflight_boundary_families
+    assert EXPECTED_PREFLIGHT_FAMILY_COVERAGE
     assert missing_families == ()
     assert extra_families == ()
     assert "source_control_boundary" not in EXPECTED_CHANGE_FAMILIES
@@ -166,6 +161,20 @@ def test_packet_rejects_missing_required_check() -> None:
 
     assert findings
     assert any(finding.rule_id == "source_control_required_checks_invalid" for finding in findings)
+
+
+def test_packet_rejects_missing_preflight_family_coverage() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "source-control packet")
+    candidate = deepcopy(payload)
+    candidate["change_families"] = [
+        family for family in candidate["change_families"] if family["family_id"] != "solo_daily_loop_boundary"
+    ]
+
+    findings = validate_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "source_control_family_ids_invalid" for finding in findings)
+    assert any(finding.rule_id == "source_control_preflight_family_coverage_missing" for finding in findings)
 
 
 def test_packet_rejects_family_state_promotion() -> None:
