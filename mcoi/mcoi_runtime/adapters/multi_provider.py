@@ -24,6 +24,15 @@ from mcoi_runtime.contracts.llm import (
     LLMResult,
 )
 
+_HOSTED_PROVIDER_STUB_DENY_ENVS = frozenset({"pilot", "production", "prod"})
+
+
+def _hosted_provider_stub_denial() -> str | None:
+    env = os.environ.get("MULLU_ENV", "").strip().lower()
+    if env in _HOSTED_PROVIDER_STUB_DENY_ENVS:
+        return "provider dependency unavailable; hosted provider stub fallback is forbidden"
+    return None
+
 
 def _classify_provider_exception(exc: Exception) -> str:
     error_type = type(exc).__name__
@@ -126,7 +135,20 @@ def _openai_compatible_call(
             finished=True,
         )
     except ImportError:
-        # httpx not available - return stub response for testing
+        denial = _hosted_provider_stub_denial()
+        if denial is not None:
+            return LLMResult(
+                content="",
+                input_tokens=0,
+                output_tokens=0,
+                cost=0.0,
+                model_name=model,
+                provider=provider,
+                finished=False,
+                error=denial,
+            )
+
+        # httpx not available - return bounded local/test stub response
         total_chars = sum(len(m.get("content", "")) for m in messages)
         input_tokens = max(1, total_chars // 4)
         output_tokens = max(1, 20)

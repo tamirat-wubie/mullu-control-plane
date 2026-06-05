@@ -245,6 +245,7 @@ class TestGroqBackend:
     def test_stub_response_is_bounded_when_httpx_missing(self, monkeypatch):
         backend = GroqBackend()
         monkeypatch.setenv("GROQ_API_KEY", "test-key")
+        monkeypatch.setenv("MULLU_ENV", "local_dev")
         original_import = builtins.__import__
 
         def fake_import(name, *args, **kwargs):
@@ -260,6 +261,26 @@ class TestGroqBackend:
         assert result.content == "provider stub response"
         assert "secret prompt" not in result.content
         assert "groq" not in result.content.lower()
+
+    def test_hosted_provider_stub_fallback_forbidden_in_production(self, monkeypatch):
+        backend = GroqBackend()
+        monkeypatch.setenv("GROQ_API_KEY", "test-key")
+        monkeypatch.setenv("MULLU_ENV", "production")
+        original_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "httpx":
+                raise ImportError("httpx unavailable")
+            return original_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", fake_import)
+
+        result = backend.call(_params("secret prompt"))
+
+        assert result.finished is False
+        assert result.error == "provider dependency unavailable; hosted provider stub fallback is forbidden"
+        assert result.content == ""
+        assert "secret prompt" not in result.error
 
     def test_explicit_api_key_overrides_environment(self, monkeypatch):
         backend = GroqBackend(api_key="explicit-key")
