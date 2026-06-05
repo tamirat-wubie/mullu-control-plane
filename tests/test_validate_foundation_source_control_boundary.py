@@ -28,6 +28,7 @@ from scripts.validate_foundation_source_control_boundary import (  # noqa: E402
     validate_foundation_source_control_boundary,
     validate_packet,
 )
+from scripts.run_workspace_governance_checks import build_check_commands  # noqa: E402
 
 
 def test_foundation_source_control_boundary_artifacts_pass() -> None:
@@ -45,6 +46,25 @@ def test_source_control_packet_has_expected_identity_and_blockers() -> None:
     assert payload["push_allowed"] is False
     assert payload["pull_request_allowed"] is False
     assert payload["deployment_allowed"] is False
+
+
+def test_required_checks_cover_current_foundation_preflight_commands() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "source-control packet")
+    required_checks = tuple(payload["required_checks"])
+    foundation_preflight_checks = tuple(
+        " ".join(("python", *command.args[1:]))
+        for command in build_check_commands("python")
+        if command.name == "foundation_mode" or command.name.startswith("foundation_")
+    )
+    full_preflight_command = (
+        "python scripts/run_workspace_governance_checks.py --json "
+        "--receipt-path .tmp/workspace-governance-preflight-receipt.json"
+    )
+    full_preflight_index = required_checks.index(full_preflight_command)
+
+    assert foundation_preflight_checks
+    assert required_checks[: len(foundation_preflight_checks)] == foundation_preflight_checks
+    assert full_preflight_index == len(foundation_preflight_checks)
 
 
 def test_packet_rejects_commit_promotion() -> None:

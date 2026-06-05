@@ -92,6 +92,7 @@ deployment_allowed=false
 | Backup/export | Local backup/export questions with backup execution, cloud backup, external export, public archive, private path recording, secret export, personal-data export, deletion, restore-readiness, and deployment blocked. |
 | Deployment deferral | Local deployment prerequisite, cloud, endpoint, runtime health, rollback, cost, credential, customer/support, and publication questions with deployment-plan approval, cloud activation, public endpoints, production health, runtime readiness, customer access, spending, credential use, secret use, migration execution, DNS mutation, external publication, and deployment blocked. |
 | External infrastructure | Local DNS authority, gateway target, runtime host, managed database, secret-manager, TLS, firewall, rollback, private runtime witness, repository variable, endpoint reachability, and workflow dispatch questions with external-infrastructure completeness, DNS authority verification, DNS target binding, DNS mutation, runtime provisioning, secret placement, workflow dispatch, paid infrastructure, customer access, publication, and deployment blocked. |
+| Runtime secret handoff rehearsal | Local runtime-secret-handoff gate labels with secret names, secret values, private paths, secret-manager target values, operator identities, dual-control proof, secret-presence proof, repository-secret binding, runtime secret-store binding, workflow mounts, readiness, publication, and deployment blocked. |
 | Domain/email | Public-safe domain and email labels with DNS/email readiness blocked. |
 | Legal/business | Question-only packet with qualified-review gating. |
 | Product scope | Selected local learning lane with platform non-restriction and pilot/customer claims blocked. |
@@ -112,7 +113,9 @@ Before a future commit request, verify at minimum:
 
 ```powershell
 python scripts/validate_foundation_mode.py
+python scripts/validate_foundation_source_control_boundary.py
 python scripts/validate_foundation_operator_readiness_boundary.py
+python scripts/validate_foundation_solo_daily_loop_boundary.py
 python scripts/validate_foundation_learning_path_boundary.py
 python scripts/validate_foundation_architecture_map_boundary.py
 python scripts/validate_foundation_system_boundary_inventory_boundary.py
@@ -130,9 +133,6 @@ python scripts/validate_foundation_local_workstation_boundary.py
 python scripts/validate_foundation_documentation_boundary.py
 python scripts/validate_foundation_plain_language_status_boundary.py
 python scripts/validate_foundation_accessibility_language_boundary.py
-python scripts/validate_foundation_capability_roadmap_boundary.py
-python scripts/validate_foundation_agentic_management_boundary.py
-python scripts/validate_foundation_operations_runbook_boundary.py
 python scripts/validate_foundation_claim_boundary.py
 python scripts/validate_foundation_website_posture_boundary.py
 python scripts/validate_foundation_research_notebook_boundary.py
@@ -142,6 +142,7 @@ python scripts/validate_foundation_next_action_boundary.py
 python scripts/validate_foundation_test_evidence_boundary.py
 python scripts/validate_foundation_local_proof_thread.py
 python scripts/validate_foundation_private_recovery_boundary.py
+python scripts/validate_foundation_private_recovery_rehearsal_boundary.py
 python scripts/validate_foundation_secrets_credentials_boundary.py
 python scripts/validate_foundation_security_baseline_boundary.py
 python scripts/validate_foundation_cost_budget_boundary.py
@@ -150,18 +151,43 @@ python scripts/validate_foundation_runtime_environment_boundary.py
 python scripts/validate_foundation_backup_export_boundary.py
 python scripts/validate_foundation_deployment_deferral_boundary.py
 python scripts/validate_foundation_external_infrastructure_boundary.py
+python scripts/validate_foundation_runtime_secret_handoff_rehearsal_boundary.py
+python scripts/validate_foundation_production_dependency_evidence_rehearsal_boundary.py
+python scripts/validate_foundation_external_evidence_acceptance_rehearsal_boundary.py
+python scripts/validate_foundation_deployment_upstream_api_gate_rehearsal_boundary.py
+python scripts/validate_foundation_gateway_dns_target_binding_rehearsal_boundary.py
+python scripts/validate_foundation_gateway_dns_resolution_receipt_rehearsal_boundary.py
+python scripts/validate_foundation_gateway_endpoint_reachability_rehearsal_boundary.py
+python scripts/validate_foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary.py
+python scripts/validate_foundation_public_health_declaration_rehearsal_boundary.py
+python scripts/validate_foundation_deployment_witness_input_boundary.py
+python scripts/validate_foundation_deployment_witness_preflight_rehearsal_boundary.py
+python scripts/validate_foundation_deployment_witness_evidence_handoff_boundary.py
+python scripts/validate_foundation_deployment_witness_evidence_ledger_routing_boundary.py
 python scripts/validate_foundation_domain_email_boundary.py
 python scripts/validate_foundation_legal_business_boundary.py
+python scripts/validate_foundation_legal_business_question_rehearsal_boundary.py
 python scripts/validate_foundation_product_scope_boundary.py
+python scripts/validate_foundation_capability_roadmap_boundary.py
+python scripts/validate_foundation_agentic_management_boundary.py
+python scripts/validate_foundation_operations_runbook_boundary.py
 python scripts/validate_foundation_market_research_boundary.py
 python scripts/validate_foundation_pilot_deferral_boundary.py
+python scripts/validate_foundation_pilot_deferral_rehearsal_boundary.py
+python scripts/validate_foundation_reassessment_gate_boundary.py
 python scripts/validate_foundation_support_readiness_boundary.py
+python scripts/validate_foundation_support_triage_rehearsal_boundary.py
 python scripts/validate_foundation_intake_onboarding_boundary.py
+python scripts/validate_foundation_intake_questionnaire_rehearsal_boundary.py
 python scripts/validate_foundation_customer_access_boundary.py
+python scripts/validate_foundation_customer_access_policy_rehearsal_boundary.py
+python scripts/validate_foundation_github_app_token_format_boundary.py
 python scripts/validate_foundation_privacy_data_boundary.py
+python scripts/validate_foundation_privacy_minimization_rehearsal_boundary.py
 python scripts/validate_foundation_funding_team_boundary.py
+python scripts/validate_foundation_funding_team_obligation_rehearsal_boundary.py
 python scripts/validate_foundation_community_network_boundary.py
-python scripts/validate_foundation_source_control_boundary.py
+python scripts/validate_foundation_community_network_no_outreach_rehearsal_boundary.py
 python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json
 python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-receipt.json
 git diff --check

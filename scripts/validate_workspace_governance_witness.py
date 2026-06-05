@@ -49,7 +49,38 @@ REQUIRED_GOVERNANCE_SCOPES = frozenset(
         "universal_action_orchestration",
     }
 )
-REQUIRED_ARTIFACT_NAMES = frozenset(
+
+
+def _foundation_boundary_artifact_name(kind: str, path: Path) -> str:
+    """Return the canonical witness artifact name for one Foundation boundary file."""
+
+    if kind == "doc":
+        stem = path.stem.lower()
+    elif kind == "validator":
+        stem = path.stem.removeprefix("validate_")
+    elif kind == "tests":
+        stem = path.stem.removeprefix("test_validate_")
+    else:  # pragma: no cover - defensive guard for future callers.
+        raise ValueError(f"unknown foundation boundary artifact kind: {kind}")
+    return f"foundation_boundary_{kind}_{stem}"
+
+
+def _required_foundation_boundary_artifact_names(workspace_root: Path = WORKSPACE_ROOT) -> frozenset[str]:
+    """Return witness artifact names required for all Foundation boundary files."""
+
+    docs = sorted((workspace_root / "docs").glob("FOUNDATION_*BOUNDARY.md"))
+    validators = sorted((workspace_root / "scripts").glob("validate_foundation_*_boundary.py"))
+    tests = sorted((workspace_root / "tests").glob("test_validate_foundation_*_boundary.py"))
+    return frozenset(
+        {
+            *(_foundation_boundary_artifact_name("doc", path) for path in docs),
+            *(_foundation_boundary_artifact_name("validator", path) for path in validators),
+            *(_foundation_boundary_artifact_name("tests", path) for path in tests),
+        }
+    )
+
+
+BASE_REQUIRED_ARTIFACT_NAMES = frozenset(
     {
         "agents_policy",
         "agents_policy_validator",
@@ -137,6 +168,7 @@ REQUIRED_ARTIFACT_NAMES = frozenset(
         "workspace_governance_witness_validator",
     }
 )
+REQUIRED_ARTIFACT_NAMES = BASE_REQUIRED_ARTIFACT_NAMES | _required_foundation_boundary_artifact_names()
 REQUIRED_BLOCK_CONDITIONS = frozenset(
     {
         "witness references a missing artifact",
@@ -144,6 +176,7 @@ REQUIRED_BLOCK_CONDITIONS = frozenset(
         "workspace governance witness schema absent or failing",
         "governance inventory report counts contradict artifact records",
         "workspace governance preflight omits inventory, integrity, or witness validation",
+        "workspace governance witness omits Foundation boundary docs validators or tests",
         "governed code-change loop receipt validator rejects the evidence artifact",
         "governed code-change loop sandbox probe reports unvalidated execution readiness",
         "governed code-change loop sandbox probe validator rejects the evidence artifact",

@@ -1,0 +1,153 @@
+{
+  "artifact_publication_allowed": false,
+  "audit_verification_payload_recorded": false,
+  "blocked_claims": [
+    "endpoint probe",
+    "gateway url value",
+    "http status value",
+    "response digest",
+    "response body",
+    "runtime witness payload",
+    "runtime conformance payload",
+    "production evidence payload",
+    "capability evidence payload",
+    "audit verification payload",
+    "proof verification payload",
+    "deployment witness collection",
+    "public health declaration",
+    "secret presence claim",
+    "workflow dispatch",
+    "artifact publication",
+    "operator approval",
+    "readiness claim",
+    "customer access",
+    "personal data collection",
+    "money movement",
+    "legal clearance",
+    "company formation",
+    "patent claim",
+    "external publication",
+    "deployment readiness"
+  ],
+  "capability_evidence_payload_recorded": false,
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "deployment_witness_collected": false,
+  "external_publication_allowed": false,
+  "gateway_url_recorded": false,
+  "http_status_recorded": false,
+  "legal_clearance_claimed": false,
+  "live_endpoint_probe_allowed": false,
+  "money_movement_allowed": false,
+  "next_action": "record public-safe gateway endpoint reachability question labels only; do not probe endpoints, record gateway URL values, record endpoint response bodies, record HTTP status values, record response digests, claim health proof, claim gateway witness proof, claim runtime conformance proof, collect deployment witnesses, claim public health declaration, claim secret presence, dispatch workflows, publish artifacts, claim operator approval, claim readiness, open customer access, collect personal data, move money, claim legal clearance, form a company, claim patent protection, publish externally, or deploy",
+  "operator_approval_claimed": false,
+  "patent_claimed": false,
+  "personal_data_collection_allowed": false,
+  "production_evidence_payload_recorded": false,
+  "proof_verification_payload_recorded": false,
+  "public_health_declared": false,
+  "question_labels": [
+    "health_endpoint_probe_question",
+    "gateway_witness_endpoint_question",
+    "runtime_conformance_endpoint_question",
+    "endpoint_http_status_question",
+    "endpoint_response_digest_question",
+    "endpoint_body_shape_question",
+    "production_evidence_dependency_question",
+    "capability_evidence_dependency_question",
+    "audit_proof_dependency_question",
+    "publication_stop_rule_question",
+    "operator_reassessment_gate"
+  ],
+  "readiness_claimed": false,
+  "response_body_recorded": false,
+  "response_digest_recorded": false,
+  "runtime_conformance_payload_recorded": false,
+  "runtime_witness_payload_recorded": false,
+  "schema_version": 1,
+  "secret_presence_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Health endpoint probe question only; endpoint probes are not run.",
+      "state": "AwaitingEvidence",
+      "surface_id": "health_endpoint_probe_question",
+      "surface_type": "local_question_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Gateway witness endpoint question only; gateway witness payloads are not collected.",
+      "state": "AwaitingEvidence",
+      "surface_id": "gateway_witness_endpoint_question",
+      "surface_type": "local_question_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Runtime conformance endpoint question only; runtime conformance payloads are not collected.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_conformance_endpoint_question",
+      "surface_type": "local_question_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint HTTP status question only; HTTP status values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_http_status_question",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint response digest question only; response digests are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_response_digest_question",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint body shape question only; response bodies are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_body_shape_question",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Production evidence dependency question only; production evidence payloads are not collected.",
+      "state": "AwaitingEvidence",
+      "surface_id": "production_evidence_dependency_question",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Capability evidence dependency question only; capability evidence payloads are not collected.",
+      "state": "AwaitingEvidence",
+      "surface_id": "capability_evidence_dependency_question",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Audit proof dependency question only; audit and proof payloads are not collected.",
+      "state": "AwaitingEvidence",
+      "surface_id": "audit_proof_dependency_question",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Publication stop rule question only; endpoint receipts and artifacts are not published.",
+      "state": "AwaitingEvidence",
+      "surface_id": "publication_stop_rule_question",
+      "surface_type": "local_question_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Operator reassessment gate only; endpoint proof and deployment are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_reassessment_gate",
+      "surface_type": "local_question_label"
+    }
+  ],
+  "witness_id": "foundation_gateway_endpoint_reachability_rehearsal_witness.awaiting_evidence.v1",
+  "workflow_dispatch_allowed": false
+}

@@ -1,0 +1,137 @@
+{
+  "artifact_publication_allowed": false,
+  "blocked_claims": [
+    "live dns query",
+    "host value",
+    "gateway url value",
+    "resolved address",
+    "resolver error proof",
+    "dns resolution proof",
+    "dns receipt writing",
+    "endpoint reachability proof",
+    "repository variable binding",
+    "secret presence claim",
+    "workflow dispatch",
+    "artifact publication",
+    "operator approval",
+    "readiness claim",
+    "customer access",
+    "personal data collection",
+    "money movement",
+    "legal clearance",
+    "company formation",
+    "patent claim",
+    "external publication",
+    "deployment readiness"
+  ],
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "dns_receipt_written": false,
+  "dns_resolution_claimed": false,
+  "endpoint_reachability_claimed": false,
+  "external_publication_allowed": false,
+  "gateway_url_recorded": false,
+  "host_value_recorded": false,
+  "legal_clearance_claimed": false,
+  "live_dns_query_allowed": false,
+  "money_movement_allowed": false,
+  "next_action": "record public-safe DNS resolution receipt question labels only; do not run live DNS queries, record host values, record gateway URL values, record resolved addresses, claim resolver error proof, claim DNS resolution proof, write DNS receipts, claim endpoint reachability proof, bind repository variables, claim secret presence, dispatch workflows, publish artifacts, claim operator approval, claim readiness, open customer access, collect personal data, move money, claim legal clearance, form a company, claim patent protection, publish externally, or deploy",
+  "operator_approval_claimed": false,
+  "patent_claimed": false,
+  "personal_data_collection_allowed": false,
+  "question_labels": [
+    "dns_query_scope_question",
+    "resolver_context_question",
+    "resolved_address_set_question",
+    "resolver_error_state_question",
+    "ttl_observation_question",
+    "receipt_timestamp_question",
+    "target_binding_dependency_question",
+    "endpoint_preflight_dependency_question",
+    "publication_stop_rule_question",
+    "operator_reassessment_gate"
+  ],
+  "readiness_claimed": false,
+  "repository_variable_bound": false,
+  "resolved_address_recorded": false,
+  "resolver_error_proof_claimed": false,
+  "schema_version": 1,
+  "secret_presence_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "DNS query scope question only; live DNS query is not run.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dns_query_scope_question",
+      "surface_type": "local_question_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Resolver context question only; resolver output is not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "resolver_context_question",
+      "surface_type": "local_question_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Resolved address set question only; resolved addresses are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "resolved_address_set_question",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Resolver error state question only; resolver error proof is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "resolver_error_state_question",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "TTL observation question only; TTL values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "ttl_observation_question",
+      "surface_type": "local_question_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Receipt timestamp question only; timestamps are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "receipt_timestamp_question",
+      "surface_type": "local_question_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Target binding dependency question only; target binding is not promoted.",
+      "state": "AwaitingEvidence",
+      "surface_id": "target_binding_dependency_question",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint preflight dependency question only; endpoint proof is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_preflight_dependency_question",
+      "surface_type": "blocked_external_route"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Publication stop rule question only; DNS receipts and artifacts are not published.",
+      "state": "AwaitingEvidence",
+      "surface_id": "publication_stop_rule_question",
+      "surface_type": "local_question_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Operator reassessment gate only; DNS proof and deployment are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_reassessment_gate",
+      "surface_type": "local_question_label"
+    }
+  ],
+  "witness_id": "foundation_gateway_dns_resolution_receipt_rehearsal_witness.awaiting_evidence.v1",
+  "workflow_dispatch_allowed": false
+}

@@ -1,973 +1,1127 @@
 {
-  "check_count": 87,
-  "generated_at_epoch": 1780272000.0,
+  "receipt_id": "workspace_governance_preflight_receipt",
+  "terminal_closure_required": true,
+  "receipt_is_not_terminal_closure": true,
+  "status": "passed",
+  "generated_at_epoch": 1780664954.505807,
+  "check_count": 101,
   "checks": [
     {
+      "name": "local_assurance_plan",
       "args": [
         "python",
         "scripts/refresh_local_assurance.py",
         "--dry-run",
         "--json"
       ],
-      "name": "local_assurance_plan",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "agents_policy",
       "args": [
         "python",
         "scripts/validate_agents_governance.py"
       ],
-      "name": "agents_policy",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_mode",
       "args": [
         "python",
         "scripts/validate_foundation_mode.py"
       ],
-      "name": "foundation_mode",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_source_control_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_source_control_boundary.py"
       ],
-      "name": "foundation_source_control_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_operator_readiness_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_operator_readiness_boundary.py"
       ],
-      "name": "foundation_operator_readiness_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_solo_daily_loop_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_solo_daily_loop_boundary.py"
       ],
-      "name": "foundation_solo_daily_loop_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_learning_path_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_learning_path_boundary.py"
       ],
-      "name": "foundation_learning_path_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_architecture_map_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_architecture_map_boundary.py"
       ],
-      "name": "foundation_architecture_map_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_system_boundary_inventory_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_system_boundary_inventory_boundary.py"
       ],
-      "name": "foundation_system_boundary_inventory_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_module_inventory_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_module_inventory_boundary.py"
       ],
-      "name": "foundation_module_inventory_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_component_contract_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_component_contract_boundary.py"
       ],
-      "name": "foundation_component_contract_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_interface_map_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_interface_map_boundary.py"
       ],
-      "name": "foundation_interface_map_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_dependency_graph_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_dependency_graph_boundary.py"
       ],
-      "name": "foundation_dependency_graph_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_invariant_map_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_invariant_map_boundary.py"
       ],
-      "name": "foundation_invariant_map_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_hazard_map_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_hazard_map_boundary.py"
       ],
-      "name": "foundation_hazard_map_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_proof_reference_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_proof_reference_boundary.py"
       ],
-      "name": "foundation_proof_reference_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_gap_register_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_gap_register_boundary.py"
       ],
-      "name": "foundation_gap_register_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_diff_review_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_diff_review_boundary.py"
       ],
-      "name": "foundation_diff_review_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_change_handoff_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_change_handoff_boundary.py"
       ],
-      "name": "foundation_change_handoff_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_local_workstation_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_local_workstation_boundary.py"
       ],
-      "name": "foundation_local_workstation_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_documentation_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_documentation_boundary.py"
       ],
-      "name": "foundation_documentation_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_plain_language_status_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_plain_language_status_boundary.py"
       ],
-      "name": "foundation_plain_language_status_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_accessibility_language_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_accessibility_language_boundary.py"
       ],
-      "name": "foundation_accessibility_language_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_claim_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_claim_boundary.py"
       ],
-      "name": "foundation_claim_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_website_posture_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_website_posture_boundary.py"
       ],
-      "name": "foundation_website_posture_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_research_notebook_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_research_notebook_boundary.py"
       ],
-      "name": "foundation_research_notebook_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_evidence_ledger_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_evidence_ledger_boundary.py"
       ],
-      "name": "foundation_evidence_ledger_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_decision_journal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_decision_journal_boundary.py"
       ],
-      "name": "foundation_decision_journal_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_next_action_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_next_action_boundary.py"
       ],
-      "name": "foundation_next_action_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_test_evidence_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_test_evidence_boundary.py"
       ],
-      "name": "foundation_test_evidence_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_local_proof_thread",
       "args": [
         "python",
         "scripts/validate_foundation_local_proof_thread.py"
       ],
-      "name": "foundation_local_proof_thread",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_private_recovery_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_private_recovery_boundary.py"
       ],
-      "name": "foundation_private_recovery_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_private_recovery_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_private_recovery_rehearsal_boundary.py"
       ],
-      "name": "foundation_private_recovery_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_secrets_credentials_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_secrets_credentials_boundary.py"
       ],
-      "name": "foundation_secrets_credentials_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_security_baseline_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_security_baseline_boundary.py"
       ],
-      "name": "foundation_security_baseline_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_cost_budget_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_cost_budget_boundary.py"
       ],
-      "name": "foundation_cost_budget_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_payment_provider_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_payment_provider_boundary.py"
       ],
-      "name": "foundation_payment_provider_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_runtime_environment_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_runtime_environment_boundary.py"
       ],
-      "name": "foundation_runtime_environment_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_backup_export_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_backup_export_boundary.py"
       ],
-      "name": "foundation_backup_export_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_deployment_deferral_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_deployment_deferral_boundary.py"
       ],
-      "name": "foundation_deployment_deferral_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_external_infrastructure_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_external_infrastructure_boundary.py"
       ],
-      "name": "foundation_external_infrastructure_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_runtime_secret_handoff_rehearsal_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_runtime_secret_handoff_rehearsal_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_production_dependency_evidence_rehearsal_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_production_dependency_evidence_rehearsal_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_external_evidence_acceptance_rehearsal_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_external_evidence_acceptance_rehearsal_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_deployment_upstream_api_gate_rehearsal_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_deployment_upstream_api_gate_rehearsal_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_gateway_dns_target_binding_rehearsal_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_gateway_dns_target_binding_rehearsal_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_gateway_dns_resolution_receipt_rehearsal_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_gateway_dns_resolution_receipt_rehearsal_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_gateway_endpoint_reachability_rehearsal_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_gateway_endpoint_reachability_rehearsal_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_public_health_declaration_rehearsal_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_public_health_declaration_rehearsal_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_deployment_witness_input_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_deployment_witness_input_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_deployment_witness_preflight_rehearsal_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_deployment_witness_preflight_rehearsal_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_deployment_witness_evidence_handoff_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_deployment_witness_evidence_handoff_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_deployment_witness_evidence_ledger_routing_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_deployment_witness_evidence_ledger_routing_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_domain_email_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_domain_email_boundary.py"
       ],
-      "name": "foundation_domain_email_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_legal_business_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_legal_business_boundary.py"
       ],
-      "name": "foundation_legal_business_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_legal_business_question_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_legal_business_question_rehearsal_boundary.py"
       ],
-      "name": "foundation_legal_business_question_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_product_scope_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_product_scope_boundary.py"
       ],
-      "name": "foundation_product_scope_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_capability_roadmap_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_capability_roadmap_boundary.py"
       ],
-      "name": "foundation_capability_roadmap_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_agentic_management_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_agentic_management_boundary.py"
       ],
-      "name": "foundation_agentic_management_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_operations_runbook_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_operations_runbook_boundary.py"
       ],
-      "name": "foundation_operations_runbook_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_market_research_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_market_research_boundary.py"
       ],
-      "name": "foundation_market_research_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_pilot_deferral_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_pilot_deferral_boundary.py"
       ],
-      "name": "foundation_pilot_deferral_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_pilot_deferral_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_pilot_deferral_rehearsal_boundary.py"
       ],
-      "name": "foundation_pilot_deferral_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_reassessment_gate_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_reassessment_gate_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_support_readiness_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_support_readiness_boundary.py"
       ],
-      "name": "foundation_support_readiness_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_support_triage_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_support_triage_rehearsal_boundary.py"
       ],
-      "name": "foundation_support_triage_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_intake_onboarding_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_intake_onboarding_boundary.py"
       ],
-      "name": "foundation_intake_onboarding_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_intake_questionnaire_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_intake_questionnaire_rehearsal_boundary.py"
       ],
-      "name": "foundation_intake_questionnaire_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_customer_access_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_customer_access_boundary.py"
       ],
-      "name": "foundation_customer_access_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_customer_access_policy_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_customer_access_policy_rehearsal_boundary.py"
       ],
-      "name": "foundation_customer_access_policy_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_github_app_token_format_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_github_app_token_format_boundary.py"
       ],
-      "name": "foundation_github_app_token_format_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_privacy_data_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_privacy_data_boundary.py"
       ],
-      "name": "foundation_privacy_data_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_privacy_minimization_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_privacy_minimization_rehearsal_boundary.py"
       ],
-      "name": "foundation_privacy_minimization_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_funding_team_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_funding_team_boundary.py"
       ],
-      "name": "foundation_funding_team_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_funding_team_obligation_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_funding_team_obligation_rehearsal_boundary.py"
       ],
-      "name": "foundation_funding_team_obligation_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_community_network_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_community_network_boundary.py"
       ],
-      "name": "foundation_community_network_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "foundation_community_network_no_outreach_rehearsal_boundary",
       "args": [
         "python",
         "scripts/validate_foundation_community_network_no_outreach_rehearsal_boundary.py"
       ],
-      "name": "foundation_community_network_no_outreach_rehearsal_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "protocol_manifest",
       "args": [
         "python",
         "scripts/validate_protocol_manifest.py"
       ],
-      "name": "protocol_manifest",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "logic_governance_application",
       "args": [
         "python",
         "scripts/validate_logic_governance_application.py"
       ],
-      "name": "logic_governance_application",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "public_repository_surface",
       "args": [
         "python",
         "scripts/validate_public_repository_surface.py"
       ],
-      "name": "public_repository_surface",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "proprietary_boundary",
       "args": [
         "python",
         "scripts/validate_proprietary_boundary.py"
       ],
-      "name": "proprietary_boundary",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "release_status",
       "args": [
         "python",
         "scripts/validate_release_status.py"
       ],
-      "name": "release_status",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "workspace_governance_preflight_receipt_contract",
       "args": [
         "python",
         "scripts/validate_workspace_governance_preflight_receipt_contract.py"
       ],
-      "name": "workspace_governance_preflight_receipt_contract",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "workspace_governance_preflight_receipt_example",
       "args": [
         "python",
         "scripts/validate_workspace_governance_preflight_receipt.py"
       ],
-      "name": "workspace_governance_preflight_receipt_example",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "workspace_governance_witness_contract",
       "args": [
         "python",
         "scripts/validate_workspace_governance_witness.py"
       ],
-      "name": "workspace_governance_witness_contract",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "workspace_governance_inventory_report",
       "args": [
         "python",
         "scripts/report_workspace_governance_inventory.py"
       ],
-      "name": "workspace_governance_inventory_report",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "workspace_governance_inventory_report_contract",
       "args": [
         "python",
         "scripts/validate_workspace_governance_inventory_report_contract.py"
       ],
-      "name": "workspace_governance_inventory_report_contract",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "workspace_governance_integrity_report",
       "args": [
         "python",
         "scripts/report_workspace_governance_integrity.py"
       ],
-      "name": "workspace_governance_integrity_report",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "workspace_governance_integrity_report_contract",
       "args": [
         "python",
         "scripts/validate_workspace_governance_integrity_report_contract.py"
       ],
-      "name": "workspace_governance_integrity_report_contract",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "governed_code_change_loop_sandbox_probe_example",
       "args": [
         "python",
         "scripts/validate_governed_code_change_loop_sandbox_probe.py",
         "--probe",
         "docs/governed-code-change-loop-sandbox-probe-example.json"
       ],
-      "name": "governed_code_change_loop_sandbox_probe_example",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "governed_code_change_loop_sandbox_readiness_runbook",
       "args": [
         "python",
         "scripts/validate_governed_code_change_loop_sandbox_readiness_runbook.py"
       ],
-      "name": "governed_code_change_loop_sandbox_readiness_runbook",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "universal_action_orchestration_contract",
       "args": [
         "python",
         "scripts/validate_universal_action_orchestration.py"
       ],
-      "name": "universal_action_orchestration_contract",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "universal_action_orchestration_validation_receipt_contract",
       "args": [
         "python",
         "scripts/validate_universal_action_orchestration_receipt_contract.py"
       ],
-      "name": "universal_action_orchestration_validation_receipt_contract",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "universal_action_orchestration_validation_receipt_example",
       "args": [
         "python",
         "scripts/validate_universal_action_orchestration_receipt.py"
       ],
-      "name": "universal_action_orchestration_validation_receipt_example",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "sdlc_artifact_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_artifact.py"
       ],
-      "name": "sdlc_artifact_validation",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "sdlc_route_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_route.py"
       ],
-      "name": "sdlc_route_validation",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "sdlc_state_machine_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_state_machine.py"
       ],
-      "name": "sdlc_state_machine_validation",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "sdlc_release_readiness_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_release_readiness.py",
         "--strict"
       ],
-      "name": "sdlc_release_readiness_validation",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "sdlc_security_review_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_security_review.py",
         "--strict"
       ],
-      "name": "sdlc_security_review_validation",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     },
     {
+      "name": "sdlc_pr_enforcement_validation",
       "args": [
         "python",
         "scripts/validate_sdlc_pr_enforcement.py"
       ],
-      "name": "sdlc_pr_enforcement_validation",
-      "passed": true,
       "return_code": 0,
+      "stdout": "STATUS: passed\n",
       "stderr": "",
-      "stdout": "STATUS: passed\n"
+      "passed": true
     }
-  ],
-  "receipt_id": "workspace_governance_preflight_receipt",
-  "receipt_is_not_terminal_closure": true,
-  "status": "passed",
-  "terminal_closure_required": true
+  ]
 }

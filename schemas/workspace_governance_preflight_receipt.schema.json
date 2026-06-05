@@ -29,7 +29,10 @@
     },
     "status": {
       "type": "string",
-      "enum": ["passed", "failed"]
+      "enum": [
+        "passed",
+        "failed"
+      ]
     },
     "generated_at_epoch": {
       "type": "number",
@@ -103,6 +106,19 @@
             "foundation_backup_export_boundary",
             "foundation_deployment_deferral_boundary",
             "foundation_external_infrastructure_boundary",
+            "foundation_runtime_secret_handoff_rehearsal_boundary",
+            "foundation_production_dependency_evidence_rehearsal_boundary",
+            "foundation_external_evidence_acceptance_rehearsal_boundary",
+            "foundation_deployment_upstream_api_gate_rehearsal_boundary",
+            "foundation_gateway_dns_target_binding_rehearsal_boundary",
+            "foundation_gateway_dns_resolution_receipt_rehearsal_boundary",
+            "foundation_gateway_endpoint_reachability_rehearsal_boundary",
+            "foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary",
+            "foundation_public_health_declaration_rehearsal_boundary",
+            "foundation_deployment_witness_input_boundary",
+            "foundation_deployment_witness_preflight_rehearsal_boundary",
+            "foundation_deployment_witness_evidence_handoff_boundary",
+            "foundation_deployment_witness_evidence_ledger_routing_boundary",
             "foundation_domain_email_boundary",
             "foundation_legal_business_boundary",
             "foundation_legal_business_question_rehearsal_boundary",
@@ -113,6 +129,7 @@
             "foundation_market_research_boundary",
             "foundation_pilot_deferral_boundary",
             "foundation_pilot_deferral_rehearsal_boundary",
+            "foundation_reassessment_gate_boundary",
             "foundation_support_readiness_boundary",
             "foundation_support_triage_rehearsal_boundary",
             "foundation_intake_onboarding_boundary",

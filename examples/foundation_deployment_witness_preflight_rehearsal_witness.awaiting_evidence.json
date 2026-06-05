@@ -1,0 +1,148 @@
+{
+  "blocked_claims": [
+    "live preflight execution",
+    "live gateway url value",
+    "dns probe",
+    "endpoint probe",
+    "secret value",
+    "secret presence claim",
+    "repository variable binding",
+    "workflow dispatch",
+    "readiness report claim",
+    "witness artifact publication",
+    "deployment status promotion",
+    "customer access",
+    "personal data collection",
+    "money movement",
+    "legal clearance",
+    "company formation",
+    "patent claim",
+    "external publication",
+    "deployment readiness"
+  ],
+  "command_labels": [
+    "scripts/preflight_deployment_witness.py",
+    "scripts/report_gateway_publication_readiness.py",
+    "scripts/plan_deployment_publication_closure.py",
+    "scripts/validate_deployment_publication_closure_plan_schema.py",
+    ".github/workflows/deployment-witness.yml",
+    ".github/workflows/gateway-publication.yml"
+  ],
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "deployment_status_promotion_allowed": false,
+  "dns_probe_allowed": false,
+  "endpoint_probe_allowed": false,
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "live_gateway_url_value_allowed": false,
+  "live_preflight_execution_allowed": false,
+  "money_movement_allowed": false,
+  "next_action": "record public-safe preflight command labels only; do not run live preflight, record live gateway URL values, probe DNS, probe endpoints, handle secret values, claim secret presence, bind repository variables, dispatch workflows, claim readiness reports, publish witness artifacts, promote deployment status, open customer access, collect personal data, move money, claim legal clearance, form a company, claim patent protection, publish externally, or deploy",
+  "patent_claimed": false,
+  "personal_data_collection_allowed": false,
+  "readiness_report_claimed": false,
+  "repository_variable_binding_allowed": false,
+  "schema_version": 1,
+  "secret_presence_claimed": false,
+  "secret_value_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deployment preflight command label only; live preflight execution remains blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_preflight_command_label",
+      "surface_type": "public_safe_command_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Gateway publication readiness label only; readiness report pass is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "gateway_publication_readiness_label",
+      "surface_type": "public_safe_command_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Closure plan command label only; closure approval is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "closure_plan_command_label",
+      "surface_type": "public_safe_command_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Closure plan schema label only; schema validity is not treated as live evidence.",
+      "state": "AwaitingEvidence",
+      "surface_id": "closure_plan_schema_label",
+      "surface_type": "public_safe_command_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Required-validator fail-closed check only; required validators are not bypassed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "required_validator_fail_closed_check",
+      "surface_type": "blocked_gate"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "DNS probe gate only; DNS resolution is not run or claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dns_probe_gate",
+      "surface_type": "blocked_gate"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint probe gate only; endpoint reachability is not run or claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_probe_gate",
+      "surface_type": "blocked_gate"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Secret presence gate only; secret values and presence claims remain external.",
+      "state": "AwaitingEvidence",
+      "surface_id": "secret_presence_gate",
+      "surface_type": "blocked_gate"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Repository variable gate only; repository variables are not created, updated, verified, or bound.",
+      "state": "AwaitingEvidence",
+      "surface_id": "repository_variable_gate",
+      "surface_type": "blocked_gate"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Workflow dispatch gate only; deployment witness and gateway publication workflows are not dispatched.",
+      "state": "AwaitingEvidence",
+      "surface_id": "workflow_dispatch_gate",
+      "surface_type": "blocked_gate"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Artifact publication gate only; witness artifact upload and promotion remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "artifact_publication_gate",
+      "surface_type": "blocked_gate"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deployment status gate only; deployment status is not promoted to healthy or published.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_status_gate",
+      "surface_type": "blocked_gate"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Operator handoff only; live DNS, runtime, provider, money, secret, legal, publication, and deployment action remain external.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_handoff",
+      "surface_type": "blocked_gate"
+    }
+  ],
+  "witness_artifact_publication_allowed": false,
+  "witness_id": "foundation_deployment_witness_preflight_rehearsal_witness.awaiting_evidence.v1",
+  "workflow_dispatch_allowed": false
+}

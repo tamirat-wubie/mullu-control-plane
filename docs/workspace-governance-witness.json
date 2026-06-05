@@ -1,5 +1,5 @@
 {
-  "artifact_count": 84,
+  "artifact_count": 306,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -420,6 +420,1116 @@
       "name": "sdlc_route_tests",
       "path": "tests/test_validate_sdlc_route.py",
       "purpose": "Regression tests for deterministic SDLC route validation."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_accessibility_language_boundary",
+      "path": "docs/FOUNDATION_ACCESSIBILITY_LANGUAGE_BOUNDARY.md",
+      "purpose": "Foundation Accessibility Language Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_agentic_management_boundary",
+      "path": "docs/FOUNDATION_AGENTIC_MANAGEMENT_BOUNDARY.md",
+      "purpose": "Foundation Agentic Management Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_architecture_map_boundary",
+      "path": "docs/FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md",
+      "purpose": "Foundation Architecture Map Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_backup_export_boundary",
+      "path": "docs/FOUNDATION_BACKUP_EXPORT_BOUNDARY.md",
+      "purpose": "Foundation Backup Export Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_capability_roadmap_boundary",
+      "path": "docs/FOUNDATION_CAPABILITY_ROADMAP_BOUNDARY.md",
+      "purpose": "Foundation Capability Roadmap Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_change_handoff_boundary",
+      "path": "docs/FOUNDATION_CHANGE_HANDOFF_BOUNDARY.md",
+      "purpose": "Foundation Change Handoff Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_claim_boundary",
+      "path": "docs/FOUNDATION_CLAIM_BOUNDARY.md",
+      "purpose": "Foundation Claim Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_community_network_boundary",
+      "path": "docs/FOUNDATION_COMMUNITY_NETWORK_BOUNDARY.md",
+      "purpose": "Foundation Community Network Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_community_network_no_outreach_rehearsal_boundary",
+      "path": "docs/FOUNDATION_COMMUNITY_NETWORK_NO_OUTREACH_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Community Network No Outreach Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_component_contract_boundary",
+      "path": "docs/FOUNDATION_COMPONENT_CONTRACT_BOUNDARY.md",
+      "purpose": "Foundation Component Contract Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_cost_budget_boundary",
+      "path": "docs/FOUNDATION_COST_BUDGET_BOUNDARY.md",
+      "purpose": "Foundation Cost Budget Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_customer_access_boundary",
+      "path": "docs/FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md",
+      "purpose": "Foundation Customer Access Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_customer_access_policy_rehearsal_boundary",
+      "path": "docs/FOUNDATION_CUSTOMER_ACCESS_POLICY_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Customer Access Policy Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_decision_journal_boundary",
+      "path": "docs/FOUNDATION_DECISION_JOURNAL_BOUNDARY.md",
+      "purpose": "Foundation Decision Journal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_dependency_graph_boundary",
+      "path": "docs/FOUNDATION_DEPENDENCY_GRAPH_BOUNDARY.md",
+      "purpose": "Foundation Dependency Graph Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_deployment_deferral_boundary",
+      "path": "docs/FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md",
+      "purpose": "Foundation Deployment Deferral Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_deployment_upstream_api_gate_rehearsal_boundary",
+      "path": "docs/FOUNDATION_DEPLOYMENT_UPSTREAM_API_GATE_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Deployment Upstream Api Gate Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_deployment_witness_evidence_handoff_boundary",
+      "path": "docs/FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_HANDOFF_BOUNDARY.md",
+      "purpose": "Foundation Deployment Witness Evidence Handoff Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_deployment_witness_evidence_ledger_routing_boundary",
+      "path": "docs/FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_LEDGER_ROUTING_BOUNDARY.md",
+      "purpose": "Foundation Deployment Witness Evidence Ledger Routing Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_deployment_witness_input_boundary",
+      "path": "docs/FOUNDATION_DEPLOYMENT_WITNESS_INPUT_BOUNDARY.md",
+      "purpose": "Foundation Deployment Witness Input Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_deployment_witness_preflight_rehearsal_boundary",
+      "path": "docs/FOUNDATION_DEPLOYMENT_WITNESS_PREFLIGHT_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Deployment Witness Preflight Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_diff_review_boundary",
+      "path": "docs/FOUNDATION_DIFF_REVIEW_BOUNDARY.md",
+      "purpose": "Foundation Diff Review Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_documentation_boundary",
+      "path": "docs/FOUNDATION_DOCUMENTATION_BOUNDARY.md",
+      "purpose": "Foundation Documentation Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_domain_email_boundary",
+      "path": "docs/FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md",
+      "purpose": "Foundation Domain Email Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_evidence_ledger_boundary",
+      "path": "docs/FOUNDATION_EVIDENCE_LEDGER_BOUNDARY.md",
+      "purpose": "Foundation Evidence Ledger Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_external_evidence_acceptance_rehearsal_boundary",
+      "path": "docs/FOUNDATION_EXTERNAL_EVIDENCE_ACCEPTANCE_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation External Evidence Acceptance Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_external_infrastructure_boundary",
+      "path": "docs/FOUNDATION_EXTERNAL_INFRASTRUCTURE_BOUNDARY.md",
+      "purpose": "Foundation External Infrastructure Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_funding_team_boundary",
+      "path": "docs/FOUNDATION_FUNDING_TEAM_BOUNDARY.md",
+      "purpose": "Foundation Funding Team Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_funding_team_obligation_rehearsal_boundary",
+      "path": "docs/FOUNDATION_FUNDING_TEAM_OBLIGATION_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Funding Team Obligation Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_gap_register_boundary",
+      "path": "docs/FOUNDATION_GAP_REGISTER_BOUNDARY.md",
+      "purpose": "Foundation Gap Register Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_gateway_dns_resolution_receipt_rehearsal_boundary",
+      "path": "docs/FOUNDATION_GATEWAY_DNS_RESOLUTION_RECEIPT_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Gateway Dns Resolution Receipt Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_gateway_dns_target_binding_rehearsal_boundary",
+      "path": "docs/FOUNDATION_GATEWAY_DNS_TARGET_BINDING_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Gateway Dns Target Binding Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary",
+      "path": "docs/FOUNDATION_GATEWAY_ENDPOINT_EVIDENCE_RECEIPT_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Gateway Endpoint Evidence Receipt Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_gateway_endpoint_reachability_rehearsal_boundary",
+      "path": "docs/FOUNDATION_GATEWAY_ENDPOINT_REACHABILITY_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Gateway Endpoint Reachability Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_github_app_token_format_boundary",
+      "path": "docs/FOUNDATION_GITHUB_APP_TOKEN_FORMAT_BOUNDARY.md",
+      "purpose": "Foundation Github App Token Format Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_hazard_map_boundary",
+      "path": "docs/FOUNDATION_HAZARD_MAP_BOUNDARY.md",
+      "purpose": "Foundation Hazard Map Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_intake_onboarding_boundary",
+      "path": "docs/FOUNDATION_INTAKE_ONBOARDING_BOUNDARY.md",
+      "purpose": "Foundation Intake Onboarding Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_intake_questionnaire_rehearsal_boundary",
+      "path": "docs/FOUNDATION_INTAKE_QUESTIONNAIRE_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Intake Questionnaire Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_interface_map_boundary",
+      "path": "docs/FOUNDATION_INTERFACE_MAP_BOUNDARY.md",
+      "purpose": "Foundation Interface Map Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_invariant_map_boundary",
+      "path": "docs/FOUNDATION_INVARIANT_MAP_BOUNDARY.md",
+      "purpose": "Foundation Invariant Map Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_learning_path_boundary",
+      "path": "docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md",
+      "purpose": "Foundation Learning Path Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_legal_business_boundary",
+      "path": "docs/FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md",
+      "purpose": "Foundation Legal Business Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_legal_business_question_rehearsal_boundary",
+      "path": "docs/FOUNDATION_LEGAL_BUSINESS_QUESTION_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Legal Business Question Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_local_workstation_boundary",
+      "path": "docs/FOUNDATION_LOCAL_WORKSTATION_BOUNDARY.md",
+      "purpose": "Foundation Local Workstation Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_market_research_boundary",
+      "path": "docs/FOUNDATION_MARKET_RESEARCH_BOUNDARY.md",
+      "purpose": "Foundation Market Research Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_module_inventory_boundary",
+      "path": "docs/FOUNDATION_MODULE_INVENTORY_BOUNDARY.md",
+      "purpose": "Foundation Module Inventory Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_next_action_boundary",
+      "path": "docs/FOUNDATION_NEXT_ACTION_BOUNDARY.md",
+      "purpose": "Foundation Next Action Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_operations_runbook_boundary",
+      "path": "docs/FOUNDATION_OPERATIONS_RUNBOOK_BOUNDARY.md",
+      "purpose": "Foundation Operations Runbook Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_operator_readiness_boundary",
+      "path": "docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md",
+      "purpose": "Foundation Operator Readiness Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_payment_provider_boundary",
+      "path": "docs/FOUNDATION_PAYMENT_PROVIDER_BOUNDARY.md",
+      "purpose": "Foundation Payment Provider Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_pilot_deferral_boundary",
+      "path": "docs/FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md",
+      "purpose": "Foundation Pilot Deferral Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_pilot_deferral_rehearsal_boundary",
+      "path": "docs/FOUNDATION_PILOT_DEFERRAL_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Pilot Deferral Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_plain_language_status_boundary",
+      "path": "docs/FOUNDATION_PLAIN_LANGUAGE_STATUS_BOUNDARY.md",
+      "purpose": "Foundation Plain Language Status Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_privacy_data_boundary",
+      "path": "docs/FOUNDATION_PRIVACY_DATA_BOUNDARY.md",
+      "purpose": "Foundation Privacy Data Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_privacy_minimization_rehearsal_boundary",
+      "path": "docs/FOUNDATION_PRIVACY_MINIMIZATION_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Privacy Minimization Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_private_recovery_boundary",
+      "path": "docs/FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md",
+      "purpose": "Foundation Private Recovery Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_private_recovery_rehearsal_boundary",
+      "path": "docs/FOUNDATION_PRIVATE_RECOVERY_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Private Recovery Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_product_scope_boundary",
+      "path": "docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md",
+      "purpose": "Foundation Product Scope Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_production_dependency_evidence_rehearsal_boundary",
+      "path": "docs/FOUNDATION_PRODUCTION_DEPENDENCY_EVIDENCE_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Production Dependency Evidence Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_proof_reference_boundary",
+      "path": "docs/FOUNDATION_PROOF_REFERENCE_BOUNDARY.md",
+      "purpose": "Foundation Proof Reference Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_public_health_declaration_rehearsal_boundary",
+      "path": "docs/FOUNDATION_PUBLIC_HEALTH_DECLARATION_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Public Health Declaration Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_reassessment_gate_boundary",
+      "path": "docs/FOUNDATION_REASSESSMENT_GATE_BOUNDARY.md",
+      "purpose": "Foundation Reassessment Gate Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_research_notebook_boundary",
+      "path": "docs/FOUNDATION_RESEARCH_NOTEBOOK_BOUNDARY.md",
+      "purpose": "Foundation Research Notebook Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_runtime_environment_boundary",
+      "path": "docs/FOUNDATION_RUNTIME_ENVIRONMENT_BOUNDARY.md",
+      "purpose": "Foundation Runtime Environment Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_runtime_secret_handoff_rehearsal_boundary",
+      "path": "docs/FOUNDATION_RUNTIME_SECRET_HANDOFF_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Runtime Secret Handoff Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_secrets_credentials_boundary",
+      "path": "docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md",
+      "purpose": "Foundation Secrets Credentials Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_security_baseline_boundary",
+      "path": "docs/FOUNDATION_SECURITY_BASELINE_BOUNDARY.md",
+      "purpose": "Foundation Security Baseline Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_solo_daily_loop_boundary",
+      "path": "docs/FOUNDATION_SOLO_DAILY_LOOP_BOUNDARY.md",
+      "purpose": "Foundation Solo Daily Loop Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_source_control_boundary",
+      "path": "docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md",
+      "purpose": "Foundation Source Control Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_support_readiness_boundary",
+      "path": "docs/FOUNDATION_SUPPORT_READINESS_BOUNDARY.md",
+      "purpose": "Foundation Support Readiness Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_support_triage_rehearsal_boundary",
+      "path": "docs/FOUNDATION_SUPPORT_TRIAGE_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Support Triage Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_system_boundary_inventory_boundary",
+      "path": "docs/FOUNDATION_SYSTEM_BOUNDARY_INVENTORY_BOUNDARY.md",
+      "purpose": "Foundation System Boundary Inventory Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_test_evidence_boundary",
+      "path": "docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md",
+      "purpose": "Foundation Test Evidence Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_website_posture_boundary",
+      "path": "docs/FOUNDATION_WEBSITE_POSTURE_BOUNDARY.md",
+      "purpose": "Foundation Website Posture Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_accessibility_language_boundary",
+      "path": "scripts/validate_foundation_accessibility_language_boundary.py",
+      "purpose": "Read-only validator for Foundation Accessibility Language Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_agentic_management_boundary",
+      "path": "scripts/validate_foundation_agentic_management_boundary.py",
+      "purpose": "Read-only validator for Foundation Agentic Management Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_architecture_map_boundary",
+      "path": "scripts/validate_foundation_architecture_map_boundary.py",
+      "purpose": "Read-only validator for Foundation Architecture Map Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_backup_export_boundary",
+      "path": "scripts/validate_foundation_backup_export_boundary.py",
+      "purpose": "Read-only validator for Foundation Backup Export Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_capability_roadmap_boundary",
+      "path": "scripts/validate_foundation_capability_roadmap_boundary.py",
+      "purpose": "Read-only validator for Foundation Capability Roadmap Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_change_handoff_boundary",
+      "path": "scripts/validate_foundation_change_handoff_boundary.py",
+      "purpose": "Read-only validator for Foundation Change Handoff Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_claim_boundary",
+      "path": "scripts/validate_foundation_claim_boundary.py",
+      "purpose": "Read-only validator for Foundation Claim Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_community_network_boundary",
+      "path": "scripts/validate_foundation_community_network_boundary.py",
+      "purpose": "Read-only validator for Foundation Community Network Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_community_network_no_outreach_rehearsal_boundary",
+      "path": "scripts/validate_foundation_community_network_no_outreach_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Community Network No Outreach Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_component_contract_boundary",
+      "path": "scripts/validate_foundation_component_contract_boundary.py",
+      "purpose": "Read-only validator for Foundation Component Contract Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_cost_budget_boundary",
+      "path": "scripts/validate_foundation_cost_budget_boundary.py",
+      "purpose": "Read-only validator for Foundation Cost Budget Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_customer_access_boundary",
+      "path": "scripts/validate_foundation_customer_access_boundary.py",
+      "purpose": "Read-only validator for Foundation Customer Access Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_customer_access_policy_rehearsal_boundary",
+      "path": "scripts/validate_foundation_customer_access_policy_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Customer Access Policy Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_decision_journal_boundary",
+      "path": "scripts/validate_foundation_decision_journal_boundary.py",
+      "purpose": "Read-only validator for Foundation Decision Journal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_dependency_graph_boundary",
+      "path": "scripts/validate_foundation_dependency_graph_boundary.py",
+      "purpose": "Read-only validator for Foundation Dependency Graph Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_deployment_deferral_boundary",
+      "path": "scripts/validate_foundation_deployment_deferral_boundary.py",
+      "purpose": "Read-only validator for Foundation Deployment Deferral Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_deployment_upstream_api_gate_rehearsal_boundary",
+      "path": "scripts/validate_foundation_deployment_upstream_api_gate_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Deployment Upstream Api Gate Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_deployment_witness_evidence_handoff_boundary",
+      "path": "scripts/validate_foundation_deployment_witness_evidence_handoff_boundary.py",
+      "purpose": "Read-only validator for Foundation Deployment Witness Evidence Handoff Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_deployment_witness_evidence_ledger_routing_boundary",
+      "path": "scripts/validate_foundation_deployment_witness_evidence_ledger_routing_boundary.py",
+      "purpose": "Read-only validator for Foundation Deployment Witness Evidence Ledger Routing Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_deployment_witness_input_boundary",
+      "path": "scripts/validate_foundation_deployment_witness_input_boundary.py",
+      "purpose": "Read-only validator for Foundation Deployment Witness Input Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_deployment_witness_preflight_rehearsal_boundary",
+      "path": "scripts/validate_foundation_deployment_witness_preflight_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Deployment Witness Preflight Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_diff_review_boundary",
+      "path": "scripts/validate_foundation_diff_review_boundary.py",
+      "purpose": "Read-only validator for Foundation Diff Review Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_documentation_boundary",
+      "path": "scripts/validate_foundation_documentation_boundary.py",
+      "purpose": "Read-only validator for Foundation Documentation Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_domain_email_boundary",
+      "path": "scripts/validate_foundation_domain_email_boundary.py",
+      "purpose": "Read-only validator for Foundation Domain Email Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_evidence_ledger_boundary",
+      "path": "scripts/validate_foundation_evidence_ledger_boundary.py",
+      "purpose": "Read-only validator for Foundation Evidence Ledger Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_external_evidence_acceptance_rehearsal_boundary",
+      "path": "scripts/validate_foundation_external_evidence_acceptance_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation External Evidence Acceptance Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_external_infrastructure_boundary",
+      "path": "scripts/validate_foundation_external_infrastructure_boundary.py",
+      "purpose": "Read-only validator for Foundation External Infrastructure Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_funding_team_boundary",
+      "path": "scripts/validate_foundation_funding_team_boundary.py",
+      "purpose": "Read-only validator for Foundation Funding Team Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_funding_team_obligation_rehearsal_boundary",
+      "path": "scripts/validate_foundation_funding_team_obligation_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Funding Team Obligation Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_gap_register_boundary",
+      "path": "scripts/validate_foundation_gap_register_boundary.py",
+      "purpose": "Read-only validator for Foundation Gap Register Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_gateway_dns_resolution_receipt_rehearsal_boundary",
+      "path": "scripts/validate_foundation_gateway_dns_resolution_receipt_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Gateway Dns Resolution Receipt Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_gateway_dns_target_binding_rehearsal_boundary",
+      "path": "scripts/validate_foundation_gateway_dns_target_binding_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Gateway Dns Target Binding Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary",
+      "path": "scripts/validate_foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Gateway Endpoint Evidence Receipt Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_gateway_endpoint_reachability_rehearsal_boundary",
+      "path": "scripts/validate_foundation_gateway_endpoint_reachability_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Gateway Endpoint Reachability Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_github_app_token_format_boundary",
+      "path": "scripts/validate_foundation_github_app_token_format_boundary.py",
+      "purpose": "Read-only validator for Foundation Github App Token Format Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_hazard_map_boundary",
+      "path": "scripts/validate_foundation_hazard_map_boundary.py",
+      "purpose": "Read-only validator for Foundation Hazard Map Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_intake_onboarding_boundary",
+      "path": "scripts/validate_foundation_intake_onboarding_boundary.py",
+      "purpose": "Read-only validator for Foundation Intake Onboarding Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_intake_questionnaire_rehearsal_boundary",
+      "path": "scripts/validate_foundation_intake_questionnaire_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Intake Questionnaire Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_interface_map_boundary",
+      "path": "scripts/validate_foundation_interface_map_boundary.py",
+      "purpose": "Read-only validator for Foundation Interface Map Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_invariant_map_boundary",
+      "path": "scripts/validate_foundation_invariant_map_boundary.py",
+      "purpose": "Read-only validator for Foundation Invariant Map Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_learning_path_boundary",
+      "path": "scripts/validate_foundation_learning_path_boundary.py",
+      "purpose": "Read-only validator for Foundation Learning Path Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_legal_business_boundary",
+      "path": "scripts/validate_foundation_legal_business_boundary.py",
+      "purpose": "Read-only validator for Foundation Legal Business Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_legal_business_question_rehearsal_boundary",
+      "path": "scripts/validate_foundation_legal_business_question_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Legal Business Question Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_local_workstation_boundary",
+      "path": "scripts/validate_foundation_local_workstation_boundary.py",
+      "purpose": "Read-only validator for Foundation Local Workstation Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_market_research_boundary",
+      "path": "scripts/validate_foundation_market_research_boundary.py",
+      "purpose": "Read-only validator for Foundation Market Research Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_module_inventory_boundary",
+      "path": "scripts/validate_foundation_module_inventory_boundary.py",
+      "purpose": "Read-only validator for Foundation Module Inventory Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_next_action_boundary",
+      "path": "scripts/validate_foundation_next_action_boundary.py",
+      "purpose": "Read-only validator for Foundation Next Action Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_operations_runbook_boundary",
+      "path": "scripts/validate_foundation_operations_runbook_boundary.py",
+      "purpose": "Read-only validator for Foundation Operations Runbook Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_operator_readiness_boundary",
+      "path": "scripts/validate_foundation_operator_readiness_boundary.py",
+      "purpose": "Read-only validator for Foundation Operator Readiness Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_payment_provider_boundary",
+      "path": "scripts/validate_foundation_payment_provider_boundary.py",
+      "purpose": "Read-only validator for Foundation Payment Provider Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_pilot_deferral_boundary",
+      "path": "scripts/validate_foundation_pilot_deferral_boundary.py",
+      "purpose": "Read-only validator for Foundation Pilot Deferral Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_pilot_deferral_rehearsal_boundary",
+      "path": "scripts/validate_foundation_pilot_deferral_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Pilot Deferral Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_plain_language_status_boundary",
+      "path": "scripts/validate_foundation_plain_language_status_boundary.py",
+      "purpose": "Read-only validator for Foundation Plain Language Status Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_privacy_data_boundary",
+      "path": "scripts/validate_foundation_privacy_data_boundary.py",
+      "purpose": "Read-only validator for Foundation Privacy Data Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_privacy_minimization_rehearsal_boundary",
+      "path": "scripts/validate_foundation_privacy_minimization_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Privacy Minimization Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_private_recovery_boundary",
+      "path": "scripts/validate_foundation_private_recovery_boundary.py",
+      "purpose": "Read-only validator for Foundation Private Recovery Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_private_recovery_rehearsal_boundary",
+      "path": "scripts/validate_foundation_private_recovery_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Private Recovery Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_product_scope_boundary",
+      "path": "scripts/validate_foundation_product_scope_boundary.py",
+      "purpose": "Read-only validator for Foundation Product Scope Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_production_dependency_evidence_rehearsal_boundary",
+      "path": "scripts/validate_foundation_production_dependency_evidence_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Production Dependency Evidence Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_proof_reference_boundary",
+      "path": "scripts/validate_foundation_proof_reference_boundary.py",
+      "purpose": "Read-only validator for Foundation Proof Reference Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_public_health_declaration_rehearsal_boundary",
+      "path": "scripts/validate_foundation_public_health_declaration_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Public Health Declaration Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_reassessment_gate_boundary",
+      "path": "scripts/validate_foundation_reassessment_gate_boundary.py",
+      "purpose": "Read-only validator for Foundation Reassessment Gate Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_research_notebook_boundary",
+      "path": "scripts/validate_foundation_research_notebook_boundary.py",
+      "purpose": "Read-only validator for Foundation Research Notebook Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_runtime_environment_boundary",
+      "path": "scripts/validate_foundation_runtime_environment_boundary.py",
+      "purpose": "Read-only validator for Foundation Runtime Environment Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_runtime_secret_handoff_rehearsal_boundary",
+      "path": "scripts/validate_foundation_runtime_secret_handoff_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Runtime Secret Handoff Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_secrets_credentials_boundary",
+      "path": "scripts/validate_foundation_secrets_credentials_boundary.py",
+      "purpose": "Read-only validator for Foundation Secrets Credentials Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_security_baseline_boundary",
+      "path": "scripts/validate_foundation_security_baseline_boundary.py",
+      "purpose": "Read-only validator for Foundation Security Baseline Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_solo_daily_loop_boundary",
+      "path": "scripts/validate_foundation_solo_daily_loop_boundary.py",
+      "purpose": "Read-only validator for Foundation Solo Daily Loop Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_source_control_boundary",
+      "path": "scripts/validate_foundation_source_control_boundary.py",
+      "purpose": "Read-only validator for Foundation Source Control Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_support_readiness_boundary",
+      "path": "scripts/validate_foundation_support_readiness_boundary.py",
+      "purpose": "Read-only validator for Foundation Support Readiness Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_support_triage_rehearsal_boundary",
+      "path": "scripts/validate_foundation_support_triage_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Support Triage Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_system_boundary_inventory_boundary",
+      "path": "scripts/validate_foundation_system_boundary_inventory_boundary.py",
+      "purpose": "Read-only validator for Foundation System Boundary Inventory Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_test_evidence_boundary",
+      "path": "scripts/validate_foundation_test_evidence_boundary.py",
+      "purpose": "Read-only validator for Foundation Test Evidence Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_website_posture_boundary",
+      "path": "scripts/validate_foundation_website_posture_boundary.py",
+      "purpose": "Read-only validator for Foundation Website Posture Boundary."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_accessibility_language_boundary",
+      "path": "tests/test_validate_foundation_accessibility_language_boundary.py",
+      "purpose": "Regression tests for Foundation Accessibility Language Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_agentic_management_boundary",
+      "path": "tests/test_validate_foundation_agentic_management_boundary.py",
+      "purpose": "Regression tests for Foundation Agentic Management Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_architecture_map_boundary",
+      "path": "tests/test_validate_foundation_architecture_map_boundary.py",
+      "purpose": "Regression tests for Foundation Architecture Map Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_backup_export_boundary",
+      "path": "tests/test_validate_foundation_backup_export_boundary.py",
+      "purpose": "Regression tests for Foundation Backup Export Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_capability_roadmap_boundary",
+      "path": "tests/test_validate_foundation_capability_roadmap_boundary.py",
+      "purpose": "Regression tests for Foundation Capability Roadmap Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_change_handoff_boundary",
+      "path": "tests/test_validate_foundation_change_handoff_boundary.py",
+      "purpose": "Regression tests for Foundation Change Handoff Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_claim_boundary",
+      "path": "tests/test_validate_foundation_claim_boundary.py",
+      "purpose": "Regression tests for Foundation Claim Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_community_network_boundary",
+      "path": "tests/test_validate_foundation_community_network_boundary.py",
+      "purpose": "Regression tests for Foundation Community Network Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_community_network_no_outreach_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_community_network_no_outreach_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Community Network No Outreach Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_component_contract_boundary",
+      "path": "tests/test_validate_foundation_component_contract_boundary.py",
+      "purpose": "Regression tests for Foundation Component Contract Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_cost_budget_boundary",
+      "path": "tests/test_validate_foundation_cost_budget_boundary.py",
+      "purpose": "Regression tests for Foundation Cost Budget Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_customer_access_boundary",
+      "path": "tests/test_validate_foundation_customer_access_boundary.py",
+      "purpose": "Regression tests for Foundation Customer Access Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_customer_access_policy_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_customer_access_policy_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Customer Access Policy Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_decision_journal_boundary",
+      "path": "tests/test_validate_foundation_decision_journal_boundary.py",
+      "purpose": "Regression tests for Foundation Decision Journal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_dependency_graph_boundary",
+      "path": "tests/test_validate_foundation_dependency_graph_boundary.py",
+      "purpose": "Regression tests for Foundation Dependency Graph Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_deployment_deferral_boundary",
+      "path": "tests/test_validate_foundation_deployment_deferral_boundary.py",
+      "purpose": "Regression tests for Foundation Deployment Deferral Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_deployment_upstream_api_gate_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_deployment_upstream_api_gate_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Deployment Upstream Api Gate Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_deployment_witness_evidence_handoff_boundary",
+      "path": "tests/test_validate_foundation_deployment_witness_evidence_handoff_boundary.py",
+      "purpose": "Regression tests for Foundation Deployment Witness Evidence Handoff Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_deployment_witness_evidence_ledger_routing_boundary",
+      "path": "tests/test_validate_foundation_deployment_witness_evidence_ledger_routing_boundary.py",
+      "purpose": "Regression tests for Foundation Deployment Witness Evidence Ledger Routing Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_deployment_witness_input_boundary",
+      "path": "tests/test_validate_foundation_deployment_witness_input_boundary.py",
+      "purpose": "Regression tests for Foundation Deployment Witness Input Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_deployment_witness_preflight_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_deployment_witness_preflight_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Deployment Witness Preflight Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_diff_review_boundary",
+      "path": "tests/test_validate_foundation_diff_review_boundary.py",
+      "purpose": "Regression tests for Foundation Diff Review Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_documentation_boundary",
+      "path": "tests/test_validate_foundation_documentation_boundary.py",
+      "purpose": "Regression tests for Foundation Documentation Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_domain_email_boundary",
+      "path": "tests/test_validate_foundation_domain_email_boundary.py",
+      "purpose": "Regression tests for Foundation Domain Email Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_evidence_ledger_boundary",
+      "path": "tests/test_validate_foundation_evidence_ledger_boundary.py",
+      "purpose": "Regression tests for Foundation Evidence Ledger Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_external_evidence_acceptance_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_external_evidence_acceptance_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation External Evidence Acceptance Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_external_infrastructure_boundary",
+      "path": "tests/test_validate_foundation_external_infrastructure_boundary.py",
+      "purpose": "Regression tests for Foundation External Infrastructure Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_funding_team_boundary",
+      "path": "tests/test_validate_foundation_funding_team_boundary.py",
+      "purpose": "Regression tests for Foundation Funding Team Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_funding_team_obligation_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_funding_team_obligation_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Funding Team Obligation Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_gap_register_boundary",
+      "path": "tests/test_validate_foundation_gap_register_boundary.py",
+      "purpose": "Regression tests for Foundation Gap Register Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_gateway_dns_resolution_receipt_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_gateway_dns_resolution_receipt_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Gateway Dns Resolution Receipt Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_gateway_dns_target_binding_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_gateway_dns_target_binding_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Gateway Dns Target Binding Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Gateway Endpoint Evidence Receipt Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_gateway_endpoint_reachability_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_gateway_endpoint_reachability_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Gateway Endpoint Reachability Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_github_app_token_format_boundary",
+      "path": "tests/test_validate_foundation_github_app_token_format_boundary.py",
+      "purpose": "Regression tests for Foundation Github App Token Format Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_hazard_map_boundary",
+      "path": "tests/test_validate_foundation_hazard_map_boundary.py",
+      "purpose": "Regression tests for Foundation Hazard Map Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_intake_onboarding_boundary",
+      "path": "tests/test_validate_foundation_intake_onboarding_boundary.py",
+      "purpose": "Regression tests for Foundation Intake Onboarding Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_intake_questionnaire_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_intake_questionnaire_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Intake Questionnaire Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_interface_map_boundary",
+      "path": "tests/test_validate_foundation_interface_map_boundary.py",
+      "purpose": "Regression tests for Foundation Interface Map Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_invariant_map_boundary",
+      "path": "tests/test_validate_foundation_invariant_map_boundary.py",
+      "purpose": "Regression tests for Foundation Invariant Map Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_learning_path_boundary",
+      "path": "tests/test_validate_foundation_learning_path_boundary.py",
+      "purpose": "Regression tests for Foundation Learning Path Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_legal_business_boundary",
+      "path": "tests/test_validate_foundation_legal_business_boundary.py",
+      "purpose": "Regression tests for Foundation Legal Business Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_legal_business_question_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_legal_business_question_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Legal Business Question Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_local_workstation_boundary",
+      "path": "tests/test_validate_foundation_local_workstation_boundary.py",
+      "purpose": "Regression tests for Foundation Local Workstation Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_market_research_boundary",
+      "path": "tests/test_validate_foundation_market_research_boundary.py",
+      "purpose": "Regression tests for Foundation Market Research Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_module_inventory_boundary",
+      "path": "tests/test_validate_foundation_module_inventory_boundary.py",
+      "purpose": "Regression tests for Foundation Module Inventory Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_next_action_boundary",
+      "path": "tests/test_validate_foundation_next_action_boundary.py",
+      "purpose": "Regression tests for Foundation Next Action Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_operations_runbook_boundary",
+      "path": "tests/test_validate_foundation_operations_runbook_boundary.py",
+      "purpose": "Regression tests for Foundation Operations Runbook Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_operator_readiness_boundary",
+      "path": "tests/test_validate_foundation_operator_readiness_boundary.py",
+      "purpose": "Regression tests for Foundation Operator Readiness Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_payment_provider_boundary",
+      "path": "tests/test_validate_foundation_payment_provider_boundary.py",
+      "purpose": "Regression tests for Foundation Payment Provider Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_pilot_deferral_boundary",
+      "path": "tests/test_validate_foundation_pilot_deferral_boundary.py",
+      "purpose": "Regression tests for Foundation Pilot Deferral Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_pilot_deferral_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_pilot_deferral_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Pilot Deferral Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_plain_language_status_boundary",
+      "path": "tests/test_validate_foundation_plain_language_status_boundary.py",
+      "purpose": "Regression tests for Foundation Plain Language Status Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_privacy_data_boundary",
+      "path": "tests/test_validate_foundation_privacy_data_boundary.py",
+      "purpose": "Regression tests for Foundation Privacy Data Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_privacy_minimization_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_privacy_minimization_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Privacy Minimization Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_private_recovery_boundary",
+      "path": "tests/test_validate_foundation_private_recovery_boundary.py",
+      "purpose": "Regression tests for Foundation Private Recovery Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_private_recovery_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_private_recovery_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Private Recovery Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_product_scope_boundary",
+      "path": "tests/test_validate_foundation_product_scope_boundary.py",
+      "purpose": "Regression tests for Foundation Product Scope Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_production_dependency_evidence_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_production_dependency_evidence_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Production Dependency Evidence Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_proof_reference_boundary",
+      "path": "tests/test_validate_foundation_proof_reference_boundary.py",
+      "purpose": "Regression tests for Foundation Proof Reference Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_public_health_declaration_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_public_health_declaration_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Public Health Declaration Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_reassessment_gate_boundary",
+      "path": "tests/test_validate_foundation_reassessment_gate_boundary.py",
+      "purpose": "Regression tests for Foundation Reassessment Gate Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_research_notebook_boundary",
+      "path": "tests/test_validate_foundation_research_notebook_boundary.py",
+      "purpose": "Regression tests for Foundation Research Notebook Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_runtime_environment_boundary",
+      "path": "tests/test_validate_foundation_runtime_environment_boundary.py",
+      "purpose": "Regression tests for Foundation Runtime Environment Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_runtime_secret_handoff_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_runtime_secret_handoff_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Runtime Secret Handoff Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_secrets_credentials_boundary",
+      "path": "tests/test_validate_foundation_secrets_credentials_boundary.py",
+      "purpose": "Regression tests for Foundation Secrets Credentials Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_security_baseline_boundary",
+      "path": "tests/test_validate_foundation_security_baseline_boundary.py",
+      "purpose": "Regression tests for Foundation Security Baseline Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_solo_daily_loop_boundary",
+      "path": "tests/test_validate_foundation_solo_daily_loop_boundary.py",
+      "purpose": "Regression tests for Foundation Solo Daily Loop Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_source_control_boundary",
+      "path": "tests/test_validate_foundation_source_control_boundary.py",
+      "purpose": "Regression tests for Foundation Source Control Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_support_readiness_boundary",
+      "path": "tests/test_validate_foundation_support_readiness_boundary.py",
+      "purpose": "Regression tests for Foundation Support Readiness Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_support_triage_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_support_triage_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Support Triage Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_system_boundary_inventory_boundary",
+      "path": "tests/test_validate_foundation_system_boundary_inventory_boundary.py",
+      "purpose": "Regression tests for Foundation System Boundary Inventory Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_test_evidence_boundary",
+      "path": "tests/test_validate_foundation_test_evidence_boundary.py",
+      "purpose": "Regression tests for Foundation Test Evidence Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_website_posture_boundary",
+      "path": "tests/test_validate_foundation_website_posture_boundary.py",
+      "purpose": "Regression tests for Foundation Website Posture Boundary validation."
     }
   ],
   "block_conditions": [
@@ -436,7 +1546,8 @@
     "governed code-change loop sandbox probe validator rejects the evidence artifact",
     "governed code-change loop sandbox readiness runbook validator rejects the handoff",
     "governed code-change loop WSL launcher contract is missing or drifted",
-    "governed code-change loop Windows readiness assessor contract is missing or drifted"
+    "governed code-change loop Windows readiness assessor contract is missing or drifted",
+    "workspace governance witness omits Foundation boundary docs validators or tests"
   ],
   "capability": "repository_local_workspace_governance_surface",
   "created_at": "2026-06-01T00:00:00Z",

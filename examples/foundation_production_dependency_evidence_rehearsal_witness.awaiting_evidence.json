@@ -1,0 +1,203 @@
+{
+  "schema_version": "foundation.production_dependency_evidence_rehearsal.v1",
+  "witness_id": "foundation_production_dependency_evidence_rehearsal_witness.awaiting_evidence.v1",
+  "status": "AwaitingEvidence",
+  "solver_outcome": "AwaitingEvidence",
+  "field_labels": [
+    "recovery_witness_gate_label",
+    "production_image_evidence_label",
+    "runtime_host_evidence_label",
+    "managed_postgres_evidence_label",
+    "schema_application_evidence_label",
+    "production_secret_store_evidence_label",
+    "deploy_env_evidence_label",
+    "release_preflight_evidence_label",
+    "persistence_check_evidence_label",
+    "host_firewall_evidence_label",
+    "tls_certificate_evidence_label",
+    "rollback_path_evidence_label",
+    "private_runtime_witness_evidence_label",
+    "dns_authority_evidence_label",
+    "runtime_witness_registry_closure_label",
+    "operator_reassessment_gate"
+  ],
+  "blocked_claims": [
+    "recovery witness closure claim",
+    "production image value",
+    "runtime host value",
+    "managed PostgreSQL value",
+    "schema application claim",
+    "secret store value",
+    "deploy env value",
+    "release preflight pass claim",
+    "persistence check pass claim",
+    "host firewall pass claim",
+    "TLS certificate value",
+    "rollback path verification claim",
+    "private runtime witness value",
+    "DNS authority verification claim",
+    "runtime witness registry closure claim",
+    "external evidence collection",
+    "API provisioning",
+    "DNS publication",
+    "DNS target selection",
+    "repository variable binding",
+    "workflow dispatch",
+    "artifact publication",
+    "readiness claim",
+    "customer access",
+    "personal data collection",
+    "money movement",
+    "legal clearance",
+    "company formation",
+    "patent claim",
+    "external publication",
+    "deployment readiness"
+  ],
+  "recovery_witness_closed_claimed": false,
+  "production_image_value_recorded": false,
+  "runtime_host_value_recorded": false,
+  "managed_postgres_value_recorded": false,
+  "schema_application_claimed": false,
+  "secret_store_value_recorded": false,
+  "deploy_env_value_recorded": false,
+  "release_preflight_pass_claimed": false,
+  "persistence_check_pass_claimed": false,
+  "host_firewall_pass_claimed": false,
+  "tls_certificate_value_recorded": false,
+  "rollback_path_verified": false,
+  "private_runtime_witness_value_recorded": false,
+  "dns_authority_verified": false,
+  "runtime_witness_registry_closure_claimed": false,
+  "external_evidence_collected": false,
+  "api_provisioning_allowed": false,
+  "dns_publication_allowed": false,
+  "dns_target_selection_allowed": false,
+  "repository_variable_binding_allowed": false,
+  "workflow_dispatch_allowed": false,
+  "artifact_publication_allowed": false,
+  "readiness_claimed": false,
+  "customer_access_allowed": false,
+  "personal_data_collection_allowed": false,
+  "money_movement_allowed": false,
+  "legal_clearance_claimed": false,
+  "company_formation_claimed": false,
+  "patent_claimed": false,
+  "external_publication_allowed": false,
+  "deployment_allowed": false,
+  "surfaces": [
+    {
+      "surface_id": "recovery_witness_gate_label",
+      "surface_type": "blocked_external_evidence",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "Recovery witness gate label only; recovery closure is not claimed."
+    },
+    {
+      "surface_id": "production_image_evidence_label",
+      "surface_type": "blocked_external_value",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "Production image evidence label only; image values are not recorded."
+    },
+    {
+      "surface_id": "runtime_host_evidence_label",
+      "surface_type": "blocked_external_value",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "Runtime host evidence label only; host values are not recorded."
+    },
+    {
+      "surface_id": "managed_postgres_evidence_label",
+      "surface_type": "blocked_external_value",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "Managed PostgreSQL evidence label only; database values are not recorded."
+    },
+    {
+      "surface_id": "schema_application_evidence_label",
+      "surface_type": "blocked_external_evidence",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "Schema application evidence label only; schema application is not claimed."
+    },
+    {
+      "surface_id": "production_secret_store_evidence_label",
+      "surface_type": "blocked_external_value",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "Production secret store evidence label only; secrets are not recorded or claimed."
+    },
+    {
+      "surface_id": "deploy_env_evidence_label",
+      "surface_type": "blocked_external_value",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "Deploy-env evidence label only; environment values are not recorded."
+    },
+    {
+      "surface_id": "release_preflight_evidence_label",
+      "surface_type": "blocked_external_evidence",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "Release preflight evidence label only; preflight pass is not claimed."
+    },
+    {
+      "surface_id": "persistence_check_evidence_label",
+      "surface_type": "blocked_external_evidence",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "Persistence check evidence label only; persistence proof is not claimed."
+    },
+    {
+      "surface_id": "host_firewall_evidence_label",
+      "surface_type": "blocked_external_evidence",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "Host firewall evidence label only; firewall proof is not claimed."
+    },
+    {
+      "surface_id": "tls_certificate_evidence_label",
+      "surface_type": "blocked_external_value",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "TLS certificate evidence label only; certificate values are not recorded."
+    },
+    {
+      "surface_id": "rollback_path_evidence_label",
+      "surface_type": "blocked_external_evidence",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "Rollback path evidence label only; rollback verification is not claimed."
+    },
+    {
+      "surface_id": "private_runtime_witness_evidence_label",
+      "surface_type": "blocked_external_value",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "Private runtime witness evidence label only; private witness material is not recorded."
+    },
+    {
+      "surface_id": "dns_authority_evidence_label",
+      "surface_type": "blocked_external_evidence",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "DNS authority evidence label only; DNS authority is not claimed."
+    },
+    {
+      "surface_id": "runtime_witness_registry_closure_label",
+      "surface_type": "blocked_external_evidence",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "Runtime witness registry closure label only; registry closure is not claimed."
+    },
+    {
+      "surface_id": "operator_reassessment_gate",
+      "surface_type": "local_gate_label",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_receipt",
+      "public_safe_note": "Operator reassessment gate only; dependency readiness and deployment are not approved."
+    }
+  ],
+  "next_action": "Keep dependency evidence labels local until external operator-owned receipts exist and downstream gates validate."
+}

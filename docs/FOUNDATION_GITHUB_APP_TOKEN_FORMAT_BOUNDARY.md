@@ -82,3 +82,9 @@ python scripts/validate_foundation_github_app_token_format_boundary.py
 ```
 
 This validates the committed docs, examples, workflows, source, and configuration files for obvious fixed-length GitHub App installation token assumptions.
+
+STATUS:
+  Completeness: 100% for local compatibility guard coverage
+  Invariants verified: token opacity, long-token tolerance, dot separator tolerance, no JWT parsing, no committed real tokens, deployment blocked
+  Open issues: controlled external GitHub App token validation remains AwaitingEvidence until private credentials and operator approval exist outside Git
+  Next action: keep the local validator and workflow wired; do not promote deployment readiness from token-format compatibility alone

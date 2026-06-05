@@ -1,0 +1,187 @@
+{
+  "schema_version": "foundation.external_evidence_acceptance_rehearsal.v1",
+  "witness_id": "foundation_external_evidence_acceptance_rehearsal_witness.awaiting_evidence.v1",
+  "status": "AwaitingEvidence",
+  "solver_outcome": "AwaitingEvidence",
+  "field_labels": [
+    "evidence_source_boundary_label",
+    "evidence_classification_label",
+    "evidence_owner_label",
+    "evidence_redaction_gate_label",
+    "evidence_value_absence_gate_label",
+    "evidence_freshness_gate_label",
+    "evidence_chain_of_custody_label",
+    "evidence_schema_validation_label",
+    "evidence_contradiction_check_label",
+    "evidence_replay_requirement_label",
+    "evidence_rejection_reason_label",
+    "evidence_acceptance_decision_label",
+    "ledger_append_gate_label",
+    "readiness_promotion_gate_label",
+    "operator_reassessment_gate"
+  ],
+  "blocked_claims": [
+    "external evidence collection",
+    "source authority verification",
+    "evidence owner verification",
+    "redaction pass claim",
+    "freshness pass claim",
+    "chain of custody verification",
+    "schema validation pass claim",
+    "contradiction check pass claim",
+    "replay pass claim",
+    "acceptance decision",
+    "rejection decision",
+    "ledger append",
+    "readiness promotion",
+    "API provisioning",
+    "DNS publication",
+    "workflow dispatch",
+    "artifact publication",
+    "public health declaration",
+    "deployment witness publication",
+    "customer access",
+    "personal data collection",
+    "money movement",
+    "legal clearance",
+    "company formation",
+    "patent claim",
+    "external publication",
+    "deployment readiness"
+  ],
+  "external_evidence_collected": false,
+  "source_authority_verified": false,
+  "evidence_owner_verified": false,
+  "redaction_pass_claimed": false,
+  "freshness_pass_claimed": false,
+  "chain_of_custody_verified": false,
+  "schema_validation_pass_claimed": false,
+  "contradiction_check_pass_claimed": false,
+  "replay_pass_claimed": false,
+  "acceptance_decision_recorded": false,
+  "rejection_decision_recorded": false,
+  "ledger_append_allowed": false,
+  "readiness_promotion_allowed": false,
+  "api_provisioning_allowed": false,
+  "dns_publication_allowed": false,
+  "workflow_dispatch_allowed": false,
+  "artifact_publication_allowed": false,
+  "public_health_declaration_allowed": false,
+  "deployment_witness_publication_allowed": false,
+  "customer_access_allowed": false,
+  "personal_data_collection_allowed": false,
+  "money_movement_allowed": false,
+  "legal_clearance_claimed": false,
+  "company_formation_claimed": false,
+  "patent_claimed": false,
+  "external_publication_allowed": false,
+  "deployment_allowed": false,
+  "surfaces": [
+    {
+      "surface_id": "evidence_source_boundary_label",
+      "surface_type": "local_acceptance_gate",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_evidence_review",
+      "public_safe_note": "Source-boundary review label only; source authority is not verified."
+    },
+    {
+      "surface_id": "evidence_classification_label",
+      "surface_type": "local_acceptance_gate",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_evidence_review",
+      "public_safe_note": "Evidence-classification label only; live evidence is not classified."
+    },
+    {
+      "surface_id": "evidence_owner_label",
+      "surface_type": "local_acceptance_gate",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_evidence_review",
+      "public_safe_note": "Evidence-owner review label only; ownership is not verified."
+    },
+    {
+      "surface_id": "evidence_redaction_gate_label",
+      "surface_type": "local_acceptance_gate",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_evidence_review",
+      "public_safe_note": "Redaction gate label only; redaction pass is not claimed."
+    },
+    {
+      "surface_id": "evidence_value_absence_gate_label",
+      "surface_type": "local_acceptance_gate",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_evidence_review",
+      "public_safe_note": "Value-absence gate label only; live values are not recorded."
+    },
+    {
+      "surface_id": "evidence_freshness_gate_label",
+      "surface_type": "local_acceptance_gate",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_evidence_review",
+      "public_safe_note": "Freshness gate label only; freshness pass is not claimed."
+    },
+    {
+      "surface_id": "evidence_chain_of_custody_label",
+      "surface_type": "local_acceptance_gate",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_evidence_review",
+      "public_safe_note": "Chain-of-custody gate label only; custody proof is not claimed."
+    },
+    {
+      "surface_id": "evidence_schema_validation_label",
+      "surface_type": "local_acceptance_gate",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_evidence_review",
+      "public_safe_note": "Schema-validation gate label only; schema pass is not claimed."
+    },
+    {
+      "surface_id": "evidence_contradiction_check_label",
+      "surface_type": "local_acceptance_gate",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_evidence_review",
+      "public_safe_note": "Contradiction-check gate label only; contradiction clearance is not claimed."
+    },
+    {
+      "surface_id": "evidence_replay_requirement_label",
+      "surface_type": "local_acceptance_gate",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_evidence_review",
+      "public_safe_note": "Replay requirement label only; replay pass is not claimed."
+    },
+    {
+      "surface_id": "evidence_rejection_reason_label",
+      "surface_type": "blocked_decision_label",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_evidence_review",
+      "public_safe_note": "Rejection-reason label only; no final rejection decision is recorded."
+    },
+    {
+      "surface_id": "evidence_acceptance_decision_label",
+      "surface_type": "blocked_decision_label",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_evidence_review",
+      "public_safe_note": "Acceptance-decision label only; no acceptance decision is recorded."
+    },
+    {
+      "surface_id": "ledger_append_gate_label",
+      "surface_type": "blocked_effect_gate",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_evidence_review",
+      "public_safe_note": "Ledger append gate label only; evidence is not appended."
+    },
+    {
+      "surface_id": "readiness_promotion_gate_label",
+      "surface_type": "blocked_promotion_gate",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_evidence_review",
+      "public_safe_note": "Readiness-promotion gate label only; readiness is not promoted."
+    },
+    {
+      "surface_id": "operator_reassessment_gate",
+      "surface_type": "local_gate_label",
+      "state": "AwaitingEvidence",
+      "evidence_ref": "future_operator_evidence_review",
+      "public_safe_note": "Operator reassessment gate only; readiness and deployment are not approved."
+    }
+  ],
+  "next_action": "Keep evidence acceptance labels local until operator-owned evidence receipts exist and acceptance, ledger, readiness, and deployment gates validate."
+}

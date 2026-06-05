@@ -10,7 +10,9 @@ Invariants:
 
 from __future__ import annotations
 
+import ast
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -19,79 +21,49 @@ import pytest
 from scripts import run_workspace_governance_checks as runner
 
 
+def _foundation_boundary_validator_scripts() -> tuple[Path, ...]:
+    return tuple(sorted((runner.WORKSPACE_ROOT / "scripts").glob("validate_foundation_*_boundary.py")))
+
+
+def _foundation_boundary_docs() -> tuple[Path, ...]:
+    return tuple(sorted((runner.WORKSPACE_ROOT / "docs").glob("FOUNDATION_*BOUNDARY.md")))
+
+
+def _foundation_boundary_test_files() -> tuple[Path, ...]:
+    return tuple(sorted((runner.WORKSPACE_ROOT / "tests").glob("test_validate_foundation_*_boundary.py")))
+
+
+def _ci_workflow_text() -> str:
+    return (runner.WORKSPACE_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+
+
+def _module_docstring(module_path: Path) -> str:
+    return ast.get_docstring(ast.parse(module_path.read_text(encoding="utf-8-sig")), clean=False) or ""
+
+
 def test_build_check_commands_are_ordered_and_repo_local() -> None:
     commands = runner.build_check_commands("python-test")
     names = [command.name for command in commands]
     args_by_name = {command.name: command.args for command in commands}
-
-    assert names[:65] == [
-        "local_assurance_plan",
-        "agents_policy",
+    foundation_start = names.index("foundation_mode")
+    protocol_index = names.index("protocol_manifest")
+    foundation_phase = names[foundation_start:protocol_index]
+    expected_foundation_names = {
         "foundation_mode",
-        "foundation_source_control_boundary",
-        "foundation_operator_readiness_boundary",
-        "foundation_solo_daily_loop_boundary",
-        "foundation_learning_path_boundary",
-        "foundation_architecture_map_boundary",
-        "foundation_system_boundary_inventory_boundary",
-        "foundation_module_inventory_boundary",
-        "foundation_component_contract_boundary",
-        "foundation_interface_map_boundary",
-        "foundation_dependency_graph_boundary",
-        "foundation_invariant_map_boundary",
-        "foundation_hazard_map_boundary",
-        "foundation_proof_reference_boundary",
-        "foundation_gap_register_boundary",
-        "foundation_diff_review_boundary",
-        "foundation_change_handoff_boundary",
-        "foundation_local_workstation_boundary",
-        "foundation_documentation_boundary",
-        "foundation_plain_language_status_boundary",
-        "foundation_accessibility_language_boundary",
-        "foundation_claim_boundary",
-        "foundation_website_posture_boundary",
-        "foundation_research_notebook_boundary",
-        "foundation_evidence_ledger_boundary",
-        "foundation_decision_journal_boundary",
-        "foundation_next_action_boundary",
-        "foundation_test_evidence_boundary",
         "foundation_local_proof_thread",
-        "foundation_private_recovery_boundary",
-        "foundation_private_recovery_rehearsal_boundary",
-        "foundation_secrets_credentials_boundary",
-        "foundation_security_baseline_boundary",
-        "foundation_cost_budget_boundary",
-        "foundation_payment_provider_boundary",
-        "foundation_runtime_environment_boundary",
-        "foundation_backup_export_boundary",
-        "foundation_deployment_deferral_boundary",
-        "foundation_external_infrastructure_boundary",
-        "foundation_domain_email_boundary",
-        "foundation_legal_business_boundary",
-        "foundation_legal_business_question_rehearsal_boundary",
-        "foundation_product_scope_boundary",
-        "foundation_capability_roadmap_boundary",
-        "foundation_agentic_management_boundary",
-        "foundation_operations_runbook_boundary",
-        "foundation_market_research_boundary",
-        "foundation_pilot_deferral_boundary",
-        "foundation_pilot_deferral_rehearsal_boundary",
-        "foundation_support_readiness_boundary",
-        "foundation_support_triage_rehearsal_boundary",
-        "foundation_intake_onboarding_boundary",
-        "foundation_intake_questionnaire_rehearsal_boundary",
-        "foundation_customer_access_boundary",
-        "foundation_customer_access_policy_rehearsal_boundary",
-        "foundation_github_app_token_format_boundary",
-        "foundation_privacy_data_boundary",
-        "foundation_privacy_minimization_rehearsal_boundary",
-        "foundation_funding_team_boundary",
-        "foundation_funding_team_obligation_rehearsal_boundary",
-        "foundation_community_network_boundary",
-        "foundation_community_network_no_outreach_rehearsal_boundary",
+        *(
+            script_path.stem.removeprefix("validate_")
+            for script_path in _foundation_boundary_validator_scripts()
+        ),
+    }
+    repository_governance_phase = [
         "protocol_manifest",
+        "logic_governance_application",
+        "public_repository_surface",
+        "proprietary_boundary",
+        "release_status",
     ]
-    assert names[69:79] == [
+    workspace_evidence_phase = [
         "workspace_governance_preflight_receipt_contract",
         "workspace_governance_preflight_receipt_example",
         "workspace_governance_witness_contract",
@@ -101,12 +73,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "workspace_governance_integrity_report_contract",
         "governed_code_change_loop_sandbox_probe_example",
         "governed_code_change_loop_sandbox_readiness_runbook",
-        "universal_action_orchestration_contract",
     ]
-    assert len(names) == 87
-    assert names[-11:] == [
-        "governed_code_change_loop_sandbox_probe_example",
-        "governed_code_change_loop_sandbox_readiness_runbook",
+    terminal_protocol_phase = [
         "universal_action_orchestration_contract",
         "universal_action_orchestration_validation_receipt_contract",
         "universal_action_orchestration_validation_receipt_example",
@@ -117,196 +85,69 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "sdlc_security_review_validation",
         "sdlc_pr_enforcement_validation",
     ]
+    expected_tail = repository_governance_phase + workspace_evidence_phase + terminal_protocol_phase
+
+    def assert_ordered(before: str, after: str) -> None:
+        assert names.index(before) < names.index(after)
+
+    assert names[:foundation_start] == ["local_assurance_plan", "agents_policy"]
+    assert foundation_phase
+    assert set(foundation_phase) == expected_foundation_names
+    assert len(foundation_phase) == len(expected_foundation_names)
+    assert names[protocol_index:] == expected_tail
+    assert len(names) == len(set(names))
+    assert names == [command.name for command in runner.build_check_commands("python-test")]
+
+    assert foundation_phase[:2] == ["foundation_mode", "foundation_source_control_boundary"]
+    assert_ordered("foundation_source_control_boundary", "foundation_operator_readiness_boundary")
+    assert_ordered("foundation_external_infrastructure_boundary", "foundation_runtime_secret_handoff_rehearsal_boundary")
+    assert_ordered(
+        "foundation_runtime_secret_handoff_rehearsal_boundary",
+        "foundation_production_dependency_evidence_rehearsal_boundary",
+    )
+    assert_ordered(
+        "foundation_production_dependency_evidence_rehearsal_boundary",
+        "foundation_external_evidence_acceptance_rehearsal_boundary",
+    )
+    assert_ordered(
+        "foundation_external_evidence_acceptance_rehearsal_boundary",
+        "foundation_deployment_upstream_api_gate_rehearsal_boundary",
+    )
+    assert_ordered("foundation_deployment_upstream_api_gate_rehearsal_boundary", "foundation_gateway_dns_target_binding_rehearsal_boundary")
+    assert_ordered("foundation_gateway_dns_target_binding_rehearsal_boundary", "foundation_gateway_dns_resolution_receipt_rehearsal_boundary")
+    assert_ordered("foundation_gateway_dns_resolution_receipt_rehearsal_boundary", "foundation_gateway_endpoint_reachability_rehearsal_boundary")
+    assert_ordered("foundation_gateway_endpoint_reachability_rehearsal_boundary", "foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary")
+    assert_ordered("foundation_gateway_endpoint_evidence_receipt_rehearsal_boundary", "foundation_public_health_declaration_rehearsal_boundary")
+    assert_ordered("foundation_public_health_declaration_rehearsal_boundary", "foundation_deployment_witness_input_boundary")
+    assert_ordered("foundation_deployment_witness_input_boundary", "foundation_deployment_witness_preflight_rehearsal_boundary")
+    assert_ordered("foundation_deployment_witness_preflight_rehearsal_boundary", "foundation_deployment_witness_evidence_handoff_boundary")
+    assert_ordered("foundation_deployment_witness_evidence_handoff_boundary", "foundation_deployment_witness_evidence_ledger_routing_boundary")
+    assert_ordered("foundation_legal_business_boundary", "foundation_legal_business_question_rehearsal_boundary")
+    assert_ordered("foundation_pilot_deferral_boundary", "foundation_pilot_deferral_rehearsal_boundary")
+    assert_ordered("foundation_pilot_deferral_rehearsal_boundary", "foundation_reassessment_gate_boundary")
+    assert_ordered("foundation_support_readiness_boundary", "foundation_support_triage_rehearsal_boundary")
+    assert_ordered("foundation_intake_onboarding_boundary", "foundation_intake_questionnaire_rehearsal_boundary")
+    assert_ordered("foundation_customer_access_boundary", "foundation_customer_access_policy_rehearsal_boundary")
+    assert_ordered("foundation_privacy_data_boundary", "foundation_privacy_minimization_rehearsal_boundary")
+    assert_ordered("foundation_funding_team_boundary", "foundation_funding_team_obligation_rehearsal_boundary")
+    assert_ordered("foundation_community_network_boundary", "foundation_community_network_no_outreach_rehearsal_boundary")
+    assert_ordered("foundation_community_network_no_outreach_rehearsal_boundary", "protocol_manifest")
+
     assert args_by_name["local_assurance_plan"][1:] == (
         "scripts/refresh_local_assurance.py",
         "--dry-run",
         "--json",
     )
     assert args_by_name["agents_policy"][1:] == ("scripts/validate_agents_governance.py",)
-    assert args_by_name["foundation_mode"][1:] == ("scripts/validate_foundation_mode.py",)
-    assert args_by_name["foundation_source_control_boundary"][1:] == (
-        "scripts/validate_foundation_source_control_boundary.py",
-    )
-    assert args_by_name["foundation_operator_readiness_boundary"][1:] == (
-        "scripts/validate_foundation_operator_readiness_boundary.py",
-    )
-    assert args_by_name["foundation_solo_daily_loop_boundary"][1:] == (
-        "scripts/validate_foundation_solo_daily_loop_boundary.py",
-    )
-    assert args_by_name["foundation_learning_path_boundary"][1:] == (
-        "scripts/validate_foundation_learning_path_boundary.py",
-    )
-    assert args_by_name["foundation_architecture_map_boundary"][1:] == (
-        "scripts/validate_foundation_architecture_map_boundary.py",
-    )
-    assert args_by_name["foundation_system_boundary_inventory_boundary"][1:] == (
-        "scripts/validate_foundation_system_boundary_inventory_boundary.py",
-    )
-    assert args_by_name["foundation_module_inventory_boundary"][1:] == (
-        "scripts/validate_foundation_module_inventory_boundary.py",
-    )
-    assert args_by_name["foundation_component_contract_boundary"][1:] == (
-        "scripts/validate_foundation_component_contract_boundary.py",
-    )
-    assert args_by_name["foundation_interface_map_boundary"][1:] == (
-        "scripts/validate_foundation_interface_map_boundary.py",
-    )
-    assert args_by_name["foundation_dependency_graph_boundary"][1:] == (
-        "scripts/validate_foundation_dependency_graph_boundary.py",
-    )
-    assert args_by_name["foundation_invariant_map_boundary"][1:] == (
-        "scripts/validate_foundation_invariant_map_boundary.py",
-    )
-    assert args_by_name["foundation_hazard_map_boundary"][1:] == (
-        "scripts/validate_foundation_hazard_map_boundary.py",
-    )
-    assert args_by_name["foundation_proof_reference_boundary"][1:] == (
-        "scripts/validate_foundation_proof_reference_boundary.py",
-    )
-    assert args_by_name["foundation_gap_register_boundary"][1:] == (
-        "scripts/validate_foundation_gap_register_boundary.py",
-    )
-    assert args_by_name["foundation_diff_review_boundary"][1:] == (
-        "scripts/validate_foundation_diff_review_boundary.py",
-    )
-    assert args_by_name["foundation_change_handoff_boundary"][1:] == (
-        "scripts/validate_foundation_change_handoff_boundary.py",
-    )
-    assert args_by_name["foundation_local_workstation_boundary"][1:] == (
-        "scripts/validate_foundation_local_workstation_boundary.py",
-    )
-    assert args_by_name["foundation_documentation_boundary"][1:] == (
-        "scripts/validate_foundation_documentation_boundary.py",
-    )
-    assert args_by_name["foundation_plain_language_status_boundary"][1:] == (
-        "scripts/validate_foundation_plain_language_status_boundary.py",
-    )
-    assert args_by_name["foundation_accessibility_language_boundary"][1:] == (
-        "scripts/validate_foundation_accessibility_language_boundary.py",
-    )
-    assert args_by_name["foundation_claim_boundary"][1:] == (
-        "scripts/validate_foundation_claim_boundary.py",
-    )
-    assert args_by_name["foundation_website_posture_boundary"][1:] == (
-        "scripts/validate_foundation_website_posture_boundary.py",
-    )
-    assert args_by_name["foundation_research_notebook_boundary"][1:] == (
-        "scripts/validate_foundation_research_notebook_boundary.py",
-    )
-    assert args_by_name["foundation_evidence_ledger_boundary"][1:] == (
-        "scripts/validate_foundation_evidence_ledger_boundary.py",
-    )
-    assert args_by_name["foundation_decision_journal_boundary"][1:] == (
-        "scripts/validate_foundation_decision_journal_boundary.py",
-    )
-    assert args_by_name["foundation_next_action_boundary"][1:] == (
-        "scripts/validate_foundation_next_action_boundary.py",
-    )
-    assert args_by_name["foundation_test_evidence_boundary"][1:] == (
-        "scripts/validate_foundation_test_evidence_boundary.py",
-    )
-    assert args_by_name["foundation_local_proof_thread"][1:] == (
-        "scripts/validate_foundation_local_proof_thread.py",
-    )
-    assert args_by_name["foundation_private_recovery_boundary"][1:] == (
-        "scripts/validate_foundation_private_recovery_boundary.py",
-    )
-    assert args_by_name["foundation_private_recovery_rehearsal_boundary"][1:] == (
-        "scripts/validate_foundation_private_recovery_rehearsal_boundary.py",
-    )
-    assert args_by_name["foundation_secrets_credentials_boundary"][1:] == (
-        "scripts/validate_foundation_secrets_credentials_boundary.py",
-    )
-    assert args_by_name["foundation_security_baseline_boundary"][1:] == (
-        "scripts/validate_foundation_security_baseline_boundary.py",
-    )
-    assert args_by_name["foundation_cost_budget_boundary"][1:] == (
-        "scripts/validate_foundation_cost_budget_boundary.py",
-    )
-    assert args_by_name["foundation_payment_provider_boundary"][1:] == (
-        "scripts/validate_foundation_payment_provider_boundary.py",
-    )
-    assert args_by_name["foundation_runtime_environment_boundary"][1:] == (
-        "scripts/validate_foundation_runtime_environment_boundary.py",
-    )
-    assert args_by_name["foundation_backup_export_boundary"][1:] == (
-        "scripts/validate_foundation_backup_export_boundary.py",
-    )
-    assert args_by_name["foundation_deployment_deferral_boundary"][1:] == (
-        "scripts/validate_foundation_deployment_deferral_boundary.py",
-    )
-    assert args_by_name["foundation_external_infrastructure_boundary"][1:] == (
-        "scripts/validate_foundation_external_infrastructure_boundary.py",
-    )
-    assert args_by_name["foundation_domain_email_boundary"][1:] == (
-        "scripts/validate_foundation_domain_email_boundary.py",
-    )
-    assert args_by_name["foundation_legal_business_boundary"][1:] == (
-        "scripts/validate_foundation_legal_business_boundary.py",
-    )
-    assert args_by_name["foundation_legal_business_question_rehearsal_boundary"][1:] == (
-        "scripts/validate_foundation_legal_business_question_rehearsal_boundary.py",
-    )
-    assert args_by_name["foundation_product_scope_boundary"][1:] == (
-        "scripts/validate_foundation_product_scope_boundary.py",
-    )
-    assert args_by_name["foundation_capability_roadmap_boundary"][1:] == (
-        "scripts/validate_foundation_capability_roadmap_boundary.py",
-    )
-    assert args_by_name["foundation_agentic_management_boundary"][1:] == (
-        "scripts/validate_foundation_agentic_management_boundary.py",
-    )
-    assert args_by_name["foundation_operations_runbook_boundary"][1:] == (
-        "scripts/validate_foundation_operations_runbook_boundary.py",
-    )
-    assert args_by_name["foundation_market_research_boundary"][1:] == (
-        "scripts/validate_foundation_market_research_boundary.py",
-    )
-    assert args_by_name["foundation_pilot_deferral_boundary"][1:] == (
-        "scripts/validate_foundation_pilot_deferral_boundary.py",
-    )
-    assert args_by_name["foundation_pilot_deferral_rehearsal_boundary"][1:] == (
-        "scripts/validate_foundation_pilot_deferral_rehearsal_boundary.py",
-    )
-    assert args_by_name["foundation_support_readiness_boundary"][1:] == (
-        "scripts/validate_foundation_support_readiness_boundary.py",
-    )
-    assert args_by_name["foundation_support_triage_rehearsal_boundary"][1:] == (
-        "scripts/validate_foundation_support_triage_rehearsal_boundary.py",
-    )
-    assert args_by_name["foundation_intake_onboarding_boundary"][1:] == (
-        "scripts/validate_foundation_intake_onboarding_boundary.py",
-    )
-    assert args_by_name["foundation_intake_questionnaire_rehearsal_boundary"][1:] == (
-        "scripts/validate_foundation_intake_questionnaire_rehearsal_boundary.py",
-    )
-    assert args_by_name["foundation_customer_access_boundary"][1:] == (
-        "scripts/validate_foundation_customer_access_boundary.py",
-    )
-    assert args_by_name["foundation_customer_access_policy_rehearsal_boundary"][1:] == (
-        "scripts/validate_foundation_customer_access_policy_rehearsal_boundary.py",
-    )
-    assert args_by_name["foundation_github_app_token_format_boundary"][1:] == (
-        "scripts/validate_foundation_github_app_token_format_boundary.py",
-    )
-    assert args_by_name["foundation_privacy_data_boundary"][1:] == (
-        "scripts/validate_foundation_privacy_data_boundary.py",
-    )
-    assert args_by_name["foundation_privacy_minimization_rehearsal_boundary"][1:] == (
-        "scripts/validate_foundation_privacy_minimization_rehearsal_boundary.py",
-    )
-    assert args_by_name["foundation_funding_team_boundary"][1:] == (
-        "scripts/validate_foundation_funding_team_boundary.py",
-    )
-    assert args_by_name["foundation_funding_team_obligation_rehearsal_boundary"][1:] == (
-        "scripts/validate_foundation_funding_team_obligation_rehearsal_boundary.py",
-    )
-    assert args_by_name["foundation_community_network_boundary"][1:] == (
-        "scripts/validate_foundation_community_network_boundary.py",
-    )
-    assert args_by_name["foundation_community_network_no_outreach_rehearsal_boundary"][1:] == (
-        "scripts/validate_foundation_community_network_no_outreach_rehearsal_boundary.py",
-    )
+    for check_name in foundation_phase:
+        if check_name == "foundation_mode":
+            expected_args = ("scripts/validate_foundation_mode.py",)
+        elif check_name == "foundation_local_proof_thread":
+            expected_args = ("scripts/validate_foundation_local_proof_thread.py",)
+        else:
+            expected_args = (f"scripts/validate_{check_name}.py",)
+
+        assert args_by_name[check_name][1:] == expected_args
     assert args_by_name["workspace_governance_inventory_report"][1:] == (
         "scripts/report_workspace_governance_inventory.py",
     )
@@ -344,6 +185,129 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert args_by_name["sdlc_pr_enforcement_validation"][1:] == (
         "scripts/validate_sdlc_pr_enforcement.py",
     )
+
+def test_foundation_boundary_validators_are_preflight_gated_and_tested() -> None:
+    """Every foundation boundary validator must be wired into closure evidence."""
+
+    commands = runner.build_check_commands("python-test")
+    args_by_name = {command.name: command.args for command in commands}
+    boundary_docs = _foundation_boundary_docs()
+    boundary_scripts = _foundation_boundary_validator_scripts()
+
+    assert boundary_scripts
+    assert len(boundary_scripts) == len(boundary_docs)
+    for script_path in boundary_scripts:
+        check_name = script_path.stem.removeprefix("validate_")
+        relative_script_path = script_path.relative_to(runner.WORKSPACE_ROOT).as_posix()
+        paired_test_path = (
+            runner.WORKSPACE_ROOT
+            / "tests"
+            / f"test_{script_path.stem}.py"
+        )
+
+        assert check_name in args_by_name, f"{relative_script_path} missing from workspace preflight"
+        assert args_by_name[check_name][1:] == (relative_script_path,)
+        assert paired_test_path.exists(), f"{relative_script_path} missing paired validator test"
+
+
+def test_foundation_boundary_docs_have_preflight_validators_and_tests() -> None:
+    """Every foundation boundary document must carry executable closure evidence."""
+
+    commands = runner.build_check_commands("python-test")
+    args_by_name = {command.name: command.args for command in commands}
+    boundary_docs = _foundation_boundary_docs()
+    boundary_scripts = _foundation_boundary_validator_scripts()
+    boundary_tests = _foundation_boundary_test_files()
+
+    assert boundary_docs
+    assert len(boundary_scripts) == len(boundary_docs)
+    assert len(boundary_tests) == len(boundary_docs)
+    for doc_path in boundary_docs:
+        check_name = doc_path.stem.lower()
+        validator_path = runner.WORKSPACE_ROOT / "scripts" / f"validate_{check_name}.py"
+        paired_test_path = runner.WORKSPACE_ROOT / "tests" / f"test_validate_{check_name}.py"
+        relative_doc_path = doc_path.relative_to(runner.WORKSPACE_ROOT).as_posix()
+        relative_validator_path = validator_path.relative_to(runner.WORKSPACE_ROOT).as_posix()
+
+        assert validator_path.exists(), f"{relative_doc_path} missing paired validator"
+        assert paired_test_path.exists(), f"{relative_doc_path} missing paired validator test"
+        assert check_name in args_by_name, f"{relative_doc_path} missing from workspace preflight"
+        assert args_by_name[check_name][1:] == (relative_validator_path,)
+
+
+def test_foundation_boundary_example_packets_exist_and_are_validator_referenced() -> None:
+    """Every boundary-owned example packet must be validated by its boundary validator."""
+
+    example_link_pattern = re.compile(r"\.\./examples/([A-Za-z0-9_.-]+\.json)")
+    boundary_docs = _foundation_boundary_docs()
+
+    assert boundary_docs
+    for doc_path in boundary_docs:
+        relative_doc_path = doc_path.relative_to(runner.WORKSPACE_ROOT).as_posix()
+        validator_path = runner.WORKSPACE_ROOT / "scripts" / f"validate_{doc_path.stem.lower()}.py"
+        validator_text = validator_path.read_text(encoding="utf-8-sig")
+        packet_refs = tuple(dict.fromkeys(example_link_pattern.findall(doc_path.read_text(encoding="utf-8-sig"))))
+
+        assert packet_refs, f"{relative_doc_path} does not link any local example packet"
+        for packet_ref in packet_refs:
+            packet_path = runner.WORKSPACE_ROOT / "examples" / packet_ref
+
+            assert packet_path.exists(), f"{relative_doc_path} references missing example packet: {packet_ref}"
+            assert packet_ref in validator_text, f"{validator_path.name} does not validate linked packet: {packet_ref}"
+
+
+def test_foundation_boundary_validators_and_tests_keep_governed_headers() -> None:
+    """Every foundation boundary validator/test module must explain its contract."""
+
+    required_header_fields = ("Purpose:", "Governance scope:", "Dependencies:", "Invariants:")
+    boundary_docs = _foundation_boundary_docs()
+    boundary_scripts = _foundation_boundary_validator_scripts()
+    boundary_tests = _foundation_boundary_test_files()
+    module_paths = boundary_scripts + boundary_tests
+
+    assert boundary_docs
+    assert len(boundary_scripts) == len(boundary_docs)
+    assert len(boundary_tests) == len(boundary_docs)
+    assert len(module_paths) == len(boundary_docs) * 2
+    for module_path in module_paths:
+        relative_module_path = module_path.relative_to(runner.WORKSPACE_ROOT).as_posix()
+        module_docstring = _module_docstring(module_path)
+
+        assert module_docstring, f"{relative_module_path} missing module docstring"
+        for header_field in required_header_fields:
+            assert header_field in module_docstring, f"{relative_module_path} missing {header_field}"
+
+
+def test_ci_runs_full_unsharded_workspace_preflight_receipt() -> None:
+    workflow_text = _ci_workflow_text()
+    preflight_command = (
+        "python scripts/run_workspace_governance_checks.py --json "
+        "--receipt-path .tmp/workspace-governance-preflight-receipt.json"
+    )
+
+    assert preflight_command in workflow_text
+    command_line = next(line.strip() for line in workflow_text.splitlines() if preflight_command in line)
+
+    assert command_line == f"run: {preflight_command}"
+    assert "--check" not in command_line
+    assert "--shard-count" not in command_line
+    assert "--shard-index" not in command_line
+
+
+def test_ci_uploads_workspace_preflight_receipt_artifact() -> None:
+    workflow_text = _ci_workflow_text()
+    preflight_command = (
+        "python scripts/run_workspace_governance_checks.py --json "
+        "--receipt-path .tmp/workspace-governance-preflight-receipt.json"
+    )
+    artifact_name = "name: sdlc-workspace-governance-preflight-receipt"
+    artifact_path = "path: .tmp/workspace-governance-preflight-receipt.json"
+
+    assert workflow_text.find(preflight_command) < workflow_text.find("Upload SDLC workspace preflight receipt")
+    assert "uses: actions/upload-artifact@v6" in workflow_text
+    assert artifact_name in workflow_text
+    assert artifact_path in workflow_text
+    assert workflow_text.find(artifact_name) < workflow_text.find(artifact_path)
 
 
 def test_run_check_preserves_failure_evidence() -> None:

@@ -25,6 +25,11 @@ import re
 import sys
 from typing import Any
 
+try:
+    from run_workspace_governance_checks import build_check_commands
+except ModuleNotFoundError:  # pragma: no cover - exercised when imported as package.
+    from scripts.run_workspace_governance_checks import build_check_commands
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DOC_PATH = REPO_ROOT / "docs" / "FOUNDATION_SOURCE_CONTROL_BOUNDARY.md"
@@ -71,6 +76,7 @@ EXPECTED_CHANGE_FAMILIES = (
     "backup_export_boundary",
     "deployment_deferral_boundary",
     "external_infrastructure_boundary",
+    "runtime_secret_handoff_rehearsal_boundary",
     "domain_email_boundary",
     "legal_business_boundary",
     "product_scope_boundary",
@@ -85,63 +91,32 @@ EXPECTED_CHANGE_FAMILIES = (
     "public_claim_alignment",
     "governance_preflight_wiring",
 )
-EXPECTED_REQUIRED_CHECKS = (
-    "python scripts/validate_foundation_mode.py",
-    "python scripts/validate_foundation_operator_readiness_boundary.py",
-    "python scripts/validate_foundation_learning_path_boundary.py",
-    "python scripts/validate_foundation_architecture_map_boundary.py",
-    "python scripts/validate_foundation_system_boundary_inventory_boundary.py",
-    "python scripts/validate_foundation_module_inventory_boundary.py",
-    "python scripts/validate_foundation_component_contract_boundary.py",
-    "python scripts/validate_foundation_interface_map_boundary.py",
-    "python scripts/validate_foundation_dependency_graph_boundary.py",
-    "python scripts/validate_foundation_invariant_map_boundary.py",
-    "python scripts/validate_foundation_hazard_map_boundary.py",
-    "python scripts/validate_foundation_proof_reference_boundary.py",
-    "python scripts/validate_foundation_gap_register_boundary.py",
-    "python scripts/validate_foundation_diff_review_boundary.py",
-    "python scripts/validate_foundation_change_handoff_boundary.py",
-    "python scripts/validate_foundation_local_workstation_boundary.py",
-    "python scripts/validate_foundation_documentation_boundary.py",
-    "python scripts/validate_foundation_plain_language_status_boundary.py",
-    "python scripts/validate_foundation_accessibility_language_boundary.py",
-    "python scripts/validate_foundation_capability_roadmap_boundary.py",
-    "python scripts/validate_foundation_agentic_management_boundary.py",
-    "python scripts/validate_foundation_operations_runbook_boundary.py",
-    "python scripts/validate_foundation_claim_boundary.py",
-    "python scripts/validate_foundation_website_posture_boundary.py",
-    "python scripts/validate_foundation_research_notebook_boundary.py",
-    "python scripts/validate_foundation_evidence_ledger_boundary.py",
-    "python scripts/validate_foundation_decision_journal_boundary.py",
-    "python scripts/validate_foundation_next_action_boundary.py",
-    "python scripts/validate_foundation_test_evidence_boundary.py",
-    "python scripts/validate_foundation_local_proof_thread.py",
-    "python scripts/validate_foundation_private_recovery_boundary.py",
-    "python scripts/validate_foundation_secrets_credentials_boundary.py",
-    "python scripts/validate_foundation_security_baseline_boundary.py",
-    "python scripts/validate_foundation_cost_budget_boundary.py",
-    "python scripts/validate_foundation_payment_provider_boundary.py",
-    "python scripts/validate_foundation_runtime_environment_boundary.py",
-    "python scripts/validate_foundation_backup_export_boundary.py",
-    "python scripts/validate_foundation_deployment_deferral_boundary.py",
-    "python scripts/validate_foundation_external_infrastructure_boundary.py",
-    "python scripts/validate_foundation_domain_email_boundary.py",
-    "python scripts/validate_foundation_legal_business_boundary.py",
-    "python scripts/validate_foundation_product_scope_boundary.py",
-    "python scripts/validate_foundation_market_research_boundary.py",
-    "python scripts/validate_foundation_pilot_deferral_boundary.py",
-    "python scripts/validate_foundation_support_readiness_boundary.py",
-    "python scripts/validate_foundation_intake_onboarding_boundary.py",
-    "python scripts/validate_foundation_customer_access_boundary.py",
-    "python scripts/validate_foundation_privacy_data_boundary.py",
-    "python scripts/validate_foundation_funding_team_boundary.py",
-    "python scripts/validate_foundation_community_network_boundary.py",
-    "python scripts/validate_foundation_source_control_boundary.py",
-    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json",
-    "python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-receipt.json",
-    "git diff --check",
-    "git status --short",
-)
+
+
+def _command_to_display(args: tuple[str, ...]) -> str:
+    """Render a preflight command with the portable `python` executable label."""
+
+    return " ".join(("python", *args[1:]))
+
+
+def _build_expected_required_checks() -> tuple[str, ...]:
+    """Return source-control checks from the canonical Foundation preflight order."""
+
+    foundation_checks = tuple(
+        _command_to_display(command.args)
+        for command in build_check_commands("python")
+        if command.name == "foundation_mode" or command.name.startswith("foundation_")
+    )
+    return (
+        *foundation_checks,
+        "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json",
+        "python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-receipt.json",
+        "git diff --check",
+        "git status --short",
+    )
+
+
+EXPECTED_REQUIRED_CHECKS = _build_expected_required_checks()
 EXPECTED_ROOT_KEYS = {
     "boundary_id",
     "change_families",
@@ -188,6 +163,7 @@ REQUIRED_DOC_PHRASES = (
     "Test evidence | Local focused-validator",
     "Payment provider | Local provider-selection",
     "Market research | Local problem",
+    "Runtime secret handoff rehearsal | Local runtime-secret-handoff",
     "Customer access | Local access-policy",
     "Funding/team | Local funding-readiness",
     "Community/network | Local relationship",
@@ -241,6 +217,14 @@ def validate_doc_text(text: str) -> list[SourceControlFinding]:
                 SourceControlFinding(
                     "foundation_source_control_doc_phrase_missing",
                     f"source-control boundary doc missing required phrase: {phrase}",
+                )
+            )
+    for command in EXPECTED_REQUIRED_CHECKS:
+        if command not in text:
+            findings.append(
+                SourceControlFinding(
+                    "foundation_source_control_doc_required_check_missing",
+                    f"source-control boundary doc missing required check: {command}",
                 )
             )
     return findings

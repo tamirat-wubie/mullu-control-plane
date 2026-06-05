@@ -1,0 +1,123 @@
+{
+  "blocked_claims": [
+    "reassessment approval",
+    "prerequisite promotion",
+    "deployment start",
+    "pilot start",
+    "external action",
+    "customer access",
+    "personal data collection",
+    "legal clearance",
+    "company formation",
+    "patent claim",
+    "money movement",
+    "secret material",
+    "external publication",
+    "deployment readiness"
+  ],
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "deployment_start_allowed": false,
+  "external_action_allowed": false,
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "choose one local prerequisite only; do not approve reassessment, promote evidence, start deployment prerequisites, advance pilot prerequisites, contact people, collect personal data, claim legal clearance, form a company, claim patent protection, move money, store secret material, publish externally, or deploy",
+  "patent_claimed": false,
+  "personal_data_collection_allowed": false,
+  "pilot_start_allowed": false,
+  "prerequisite_promotion_allowed": false,
+  "reassessment_approved": false,
+  "schema_version": 1,
+  "secret_material_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deployment-start question only; deployment prerequisites remain deferred and runtime exposure remains blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_start_question",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Pilot-start question only; pilot prerequisites remain deferred and participant access remains closed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "pilot_start_question",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Evidence-gap review only; no evidence is promoted and no closure is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_gap_review",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Operator-capacity check only; no schedule, team, support, or incident coverage is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_capacity_check",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Risk stop-rule questions only; irreversible external action remains blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "risk_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "External-boundary questions only; no DNS, runtime, provider, workflow, or service activation is allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "external_boundary_check",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Legal/business stop-rule questions only; no legal clearance, company formation, filing, or patent claim is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "legal_business_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Money/secret stop-rule questions only; no payment method, spend, money movement, credential, or secret material is recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "money_secret_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Customer/data stop-rule questions only; no customer access, intake, participant access, or personal data is opened.",
+      "state": "AwaitingEvidence",
+      "surface_id": "customer_data_stop_rule",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Rollback/recovery check only; no recovery, incident, or restore readiness is claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "rollback_recovery_check",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Next-local-prerequisite selection only; roadmap, deadline, broad execution, and external action remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "next_local_prerequisite_selection",
+      "surface_type": "local_draft"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Non-promotion handoff only; reassessment remains AwaitingEvidence and does not become approval.",
+      "state": "AwaitingEvidence",
+      "surface_id": "non_promotion_handoff",
+      "surface_type": "local_draft"
+    }
+  ],
+  "witness_id": "foundation_reassessment_gate_witness.awaiting_evidence.v1"
+}

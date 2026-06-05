@@ -1,0 +1,175 @@
+{
+  "artifact_publication_allowed": false,
+  "audited_date_value_recorded": false,
+  "blocked_claims": [
+    "public health declaration",
+    "deployment status mutation",
+    "declaration receipt writing",
+    "deployment witness publication claim",
+    "deployment witness state value",
+    "public health endpoint value",
+    "operator approval reference value",
+    "audited date value",
+    "schema validation pass claim",
+    "closure validation pass claim",
+    "endpoint match claim",
+    "dry run result",
+    "status update result",
+    "evidence ledger append",
+    "workflow dispatch",
+    "artifact publication",
+    "readiness claim",
+    "customer access",
+    "personal data collection",
+    "money movement",
+    "legal clearance",
+    "company formation",
+    "patent claim",
+    "external publication",
+    "deployment readiness"
+  ],
+  "closure_validation_pass_claimed": false,
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "declaration_receipt_written": false,
+  "deployment_allowed": false,
+  "deployment_status_mutation_allowed": false,
+  "deployment_witness_publication_claimed": false,
+  "deployment_witness_state_value_recorded": false,
+  "dry_run_result_recorded": false,
+  "endpoint_match_claimed": false,
+  "evidence_ledger_append_allowed": false,
+  "external_publication_allowed": false,
+  "field_labels": [
+    "deployment_status_path_label",
+    "deployment_witness_path_label",
+    "declaration_receipt_path_label",
+    "dry_run_flag_label",
+    "updated_flag_label",
+    "deployment_witness_state_label",
+    "public_health_endpoint_label",
+    "operator_approval_ref_label",
+    "audited_date_label",
+    "schema_validation_result_label",
+    "closure_validation_result_label",
+    "endpoint_match_result_label",
+    "evidence_ledger_route_label",
+    "operator_reassessment_gate"
+  ],
+  "legal_clearance_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "record public-safe public health declaration field labels only; do not declare public health, mutate deployment status, write declaration receipts, claim deployment witness publication, record deployment witness state values, record public health endpoint values, record operator approval references, record audited dates, claim schema validation pass, claim closure validation pass, claim endpoint match, record dry-run results, record status update results, append evidence to a ledger, dispatch workflows, publish artifacts, claim readiness, open customer access, collect personal data, move money, claim legal clearance, form a company, claim patent protection, publish externally, or deploy",
+  "operator_approval_ref_value_recorded": false,
+  "patent_claimed": false,
+  "personal_data_collection_allowed": false,
+  "public_health_declared": false,
+  "public_health_endpoint_value_recorded": false,
+  "readiness_claimed": false,
+  "schema_validation_pass_claimed": false,
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "status_update_result_recorded": false,
+  "surfaces": [
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deployment status path label only; deployment status is not mutated.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_status_path_label",
+      "surface_type": "declaration_field_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deployment witness path label only; deployment witness publication is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_witness_path_label",
+      "surface_type": "declaration_field_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Declaration receipt path label only; declaration receipts are not written.",
+      "state": "AwaitingEvidence",
+      "surface_id": "declaration_receipt_path_label",
+      "surface_type": "declaration_field_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Dry-run flag label only; dry-run results are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dry_run_flag_label",
+      "surface_type": "declaration_field_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Updated flag label only; status update results are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "updated_flag_label",
+      "surface_type": "declaration_field_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Deployment witness state label only; state values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_witness_state_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Public health endpoint label only; endpoint values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_health_endpoint_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Operator approval reference label only; approval references are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_approval_ref_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Audited date label only; dates are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "audited_date_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Schema validation result label only; schema validation pass is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "schema_validation_result_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Closure validation result label only; closure validation pass is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "closure_validation_result_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Endpoint match result label only; endpoint match is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "endpoint_match_result_label",
+      "surface_type": "blocked_external_evidence"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Evidence ledger route label only; evidence is not appended.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_ledger_route_label",
+      "surface_type": "local_route_label"
+    },
+    {
+      "evidence_ref": "manual_preparation_pending",
+      "public_safe_note": "Operator reassessment gate only; public health declaration and deployment are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_reassessment_gate",
+      "surface_type": "local_gate_label"
+    }
+  ],
+  "witness_id": "foundation_public_health_declaration_rehearsal_witness.awaiting_evidence.v1",
+  "workflow_dispatch_allowed": false
+}

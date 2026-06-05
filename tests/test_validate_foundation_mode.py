@@ -11,6 +11,7 @@ customer access, pilot access, beta invitation, waitlist, or deployment claims.
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import sys
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -19,6 +20,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.validate_foundation_mode import (  # noqa: E402
     REQUIRED_PHRASES_BY_FILE,
+    validate_central_table_label_uniqueness,
     validate_forward_text_boundary,
     validate_foundation_mode,
     validate_required_phrases,
@@ -33,6 +35,7 @@ def test_required_phrase_map_covers_current_guidance_surfaces() -> None:
     assert "docs/FOUNDATION_MODE.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/FOUNDATION_PREREQUISITES.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
+    assert "docs/FOUNDATION_SOLO_DAILY_LOOP_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/FOUNDATION_LEARNING_PATH_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/FOUNDATION_SYSTEM_BOUNDARY_INVENTORY_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
@@ -71,6 +74,19 @@ def test_required_phrase_map_covers_current_guidance_surfaces() -> None:
     assert "docs/FOUNDATION_BACKUP_EXPORT_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/FOUNDATION_EXTERNAL_INFRASTRUCTURE_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
+    assert "docs/FOUNDATION_RUNTIME_SECRET_HANDOFF_REHEARSAL_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
+    assert "docs/FOUNDATION_PRODUCTION_DEPENDENCY_EVIDENCE_REHEARSAL_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
+    assert "docs/FOUNDATION_EXTERNAL_EVIDENCE_ACCEPTANCE_REHEARSAL_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
+    assert "docs/FOUNDATION_DEPLOYMENT_UPSTREAM_API_GATE_REHEARSAL_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
+    assert "docs/FOUNDATION_DEPLOYMENT_WITNESS_PREFLIGHT_REHEARSAL_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
+    assert "docs/FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_HANDOFF_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
+    assert "docs/FOUNDATION_DEPLOYMENT_WITNESS_EVIDENCE_LEDGER_ROUTING_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
+    assert "docs/FOUNDATION_GATEWAY_DNS_TARGET_BINDING_REHEARSAL_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
+    assert "docs/FOUNDATION_GATEWAY_DNS_RESOLUTION_RECEIPT_REHEARSAL_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
+    assert "docs/FOUNDATION_GATEWAY_ENDPOINT_REACHABILITY_REHEARSAL_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
+    assert "docs/FOUNDATION_GATEWAY_ENDPOINT_EVIDENCE_RECEIPT_REHEARSAL_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
+    assert "docs/FOUNDATION_PUBLIC_HEALTH_DECLARATION_REHEARSAL_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
+    assert "docs/FOUNDATION_GITHUB_APP_TOKEN_FORMAT_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/FOUNDATION_PILOT_DEFERRAL_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/FOUNDATION_DOMAIN_EMAIL_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
@@ -87,6 +103,194 @@ def test_required_phrase_map_covers_current_guidance_surfaces() -> None:
     assert "docs/WEBSITE_UPDATE_CHECKLIST.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/PUBLIC_NAMING_REVIEW_PACKET.md" in REQUIRED_PHRASES_BY_FILE
     assert "site/mullu/index.html" in REQUIRED_PHRASES_BY_FILE
+
+
+def test_all_foundation_boundary_docs_are_registered_and_routed() -> None:
+    boundary_docs = sorted((REPO_ROOT / "docs").glob("FOUNDATION_*BOUNDARY.md"))
+    routing_surfaces = (
+        REPO_ROOT / "README.md",
+        REPO_ROOT / "docs" / "START_HERE.md",
+        REPO_ROOT / "docs" / "FOUNDATION_MODE.md",
+        REPO_ROOT / "docs" / "CURRENT_READINESS_SNAPSHOT.md",
+    )
+
+    assert boundary_docs
+    for boundary_doc in boundary_docs:
+        required_key = f"docs/{boundary_doc.name}"
+        assert required_key in REQUIRED_PHRASES_BY_FILE
+        for routing_surface in routing_surfaces:
+            assert boundary_doc.name in routing_surface.read_text(encoding="utf-8-sig")
+
+
+def test_central_foundation_docs_list_all_boundary_dependencies() -> None:
+    boundary_docs = sorted((REPO_ROOT / "docs").glob("FOUNDATION_*BOUNDARY.md"))
+    central_docs = (
+        REPO_ROOT / "docs" / "FOUNDATION_MODE.md",
+        REPO_ROOT / "docs" / "FOUNDATION_PREREQUISITES.md",
+    )
+
+    assert boundary_docs
+    for central_doc in central_docs:
+        header = central_doc.read_text(encoding="utf-8-sig").split("-->", 1)[0]
+        for boundary_doc in boundary_docs:
+            assert boundary_doc.name in header
+
+
+def test_all_foundation_boundary_docs_have_status_blocks() -> None:
+    boundary_docs = sorted((REPO_ROOT / "docs").glob("FOUNDATION_*BOUNDARY.md"))
+    required_status_fields = (
+        "STATUS:",
+        "Completeness:",
+        "Invariants verified:",
+        "Open issues:",
+        "Next action:",
+    )
+
+    assert boundary_docs
+    for boundary_doc in boundary_docs:
+        text = boundary_doc.read_text(encoding="utf-8-sig")
+
+        for required_status_field in required_status_fields:
+            assert required_status_field in text, f"{boundary_doc.name} missing {required_status_field}"
+        assert "AwaitingEvidence" in text, f"{boundary_doc.name} missing AwaitingEvidence posture"
+
+
+def test_foundation_navigation_links_stay_repo_local_and_resolve() -> None:
+    link_pattern = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+    navigation_files = (
+        REPO_ROOT / "README.md",
+        REPO_ROOT / "docs" / "START_HERE.md",
+        REPO_ROOT / "docs" / "FOUNDATION_MODE.md",
+        REPO_ROOT / "docs" / "FOUNDATION_PREREQUISITES.md",
+        REPO_ROOT / "docs" / "CURRENT_READINESS_SNAPSHOT.md",
+        *sorted((REPO_ROOT / "docs").glob("FOUNDATION_*BOUNDARY.md")),
+    )
+
+    for navigation_file in navigation_files:
+        text = navigation_file.read_text(encoding="utf-8-sig")
+        for match in link_pattern.finditer(text):
+            target = match.group(1).strip()
+            if (
+                not target
+                or target.startswith("#")
+                or "://" in target
+                or target.startswith("mailto:")
+            ):
+                continue
+            target_path = target.split("#", 1)[0]
+            if not target_path:
+                continue
+            resolved_path = (navigation_file.parent / target_path).resolve()
+
+            assert resolved_path.is_relative_to(REPO_ROOT)
+            assert resolved_path.exists()
+
+
+def test_central_foundation_tables_do_not_repeat_first_column_labels() -> None:
+    findings = validate_central_table_label_uniqueness()
+
+    assert findings == []
+    assert (REPO_ROOT / "docs" / "FOUNDATION_MODE.md").exists()
+    assert (REPO_ROOT / "docs" / "FOUNDATION_PREREQUISITES.md").exists()
+
+
+def test_central_table_duplicate_label_is_reported(tmp_path: Path) -> None:
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    for doc_name in (
+        "START_HERE.md",
+        "FOUNDATION_MODE.md",
+        "FOUNDATION_PREREQUISITES.md",
+        "CURRENT_READINESS_SNAPSHOT.md",
+    ):
+        (docs_dir / doc_name).write_text(
+            "\n".join(
+                (
+                    "| Label | Route |",
+                    "| --- | --- |",
+                    "| Duplicate | first |",
+                    "| Duplicate | second |",
+                )
+            ),
+            encoding="utf-8",
+        )
+
+    findings = validate_central_table_label_uniqueness(tmp_path)
+
+    assert findings
+    assert all(finding.rule_id == "foundation_table_duplicate_label" for finding in findings)
+    assert any("repeats first-column label: Duplicate" in finding.message for finding in findings)
+
+
+def test_start_here_brand_new_path_is_consecutive_and_complete() -> None:
+    text = (REPO_ROOT / "docs" / "START_HERE.md").read_text(encoding="utf-8-sig")
+    section = text.split('## 3. The "I\'m brand new" path (do these in order)', 1)[1]
+    section = section.split("Now you can wander into", 1)[0]
+    entry_pattern = re.compile(
+        r"^(?P<number>\d+)\. \*\*\[[^\]]+\]\((?P<target>[^)]+)\)",
+        re.MULTILINE,
+    )
+    entries = [
+        (int(match.group("number")), match.group("target"))
+        for match in entry_pattern.finditer(section)
+    ]
+    entry_targets = [target for _, target in entries]
+    foundation_targets = {
+        target
+        for _, target in entries
+        if target.startswith("FOUNDATION_")
+    }
+    expected_foundation_targets = {
+        boundary_doc.name
+        for boundary_doc in (REPO_ROOT / "docs").glob("FOUNDATION_*BOUNDARY.md")
+    }
+    expected_foundation_targets.update(
+        {
+            "FOUNDATION_MODE.md",
+            "FOUNDATION_PREREQUISITES.md",
+            "FOUNDATION_LOCAL_PROOF_THREAD.md",
+        }
+    )
+
+    assert entries
+    assert [number for number, _ in entries] == list(range(1, len(entries) + 1))
+    assert len(entry_targets) == len(set(entry_targets))
+    assert foundation_targets == expected_foundation_targets
+    assert len(foundation_targets) == len(expected_foundation_targets)
+
+
+def test_foundation_prerequisites_recommended_order_is_consecutive_and_complete() -> None:
+    text = (REPO_ROOT / "docs" / "FOUNDATION_PREREQUISITES.md").read_text(encoding="utf-8-sig")
+    section = text.split("## Recommended Order", 1)[1]
+    section = section.split("## Narrow Local Proof Thread Definition", 1)[0]
+    numbered_line_pattern = re.compile(r"^(?P<number>\d+)\. .+$", re.MULTILINE)
+    linked_entry_pattern = re.compile(
+        r"^(?P<number>\d+)\. .*?\[[^\]]+\]\((?P<target>FOUNDATION_[^)]+\.md)\)",
+        re.MULTILINE,
+    )
+    numbers = [int(match.group("number")) for match in numbered_line_pattern.finditer(section)]
+    entries = [
+        (int(match.group("number")), match.group("target"))
+        for match in linked_entry_pattern.finditer(section)
+    ]
+    entry_targets = [target for _, target in entries]
+    foundation_targets = {target for _, target in entries if target.startswith("FOUNDATION_")}
+    expected_foundation_targets = {
+        boundary_doc.name
+        for boundary_doc in (REPO_ROOT / "docs").glob("FOUNDATION_*BOUNDARY.md")
+    }
+    expected_foundation_targets.update(
+        {
+            "FOUNDATION_MODE.md",
+            "FOUNDATION_LOCAL_PROOF_THREAD.md",
+        }
+    )
+
+    assert numbers
+    assert numbers == list(range(1, len(numbers) + 1))
+    assert len(entry_targets) == len(set(entry_targets))
+    assert foundation_targets == expected_foundation_targets
+    assert len(foundation_targets) == len(expected_foundation_targets)
 
 
 def test_required_phrase_validator_rejects_missing_foundation_doc(tmp_path: Path) -> None:
