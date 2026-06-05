@@ -1,7 +1,8 @@
 """Purpose: governed Reflex Engine core for bounded runtime self-inspection.
 Governance scope: anomaly detection, diagnosis, eval generation, candidate
     proposal, sandbox/certificate promotion gates, and maturity gap ranking.
-Dependencies: Reflex contracts and change-assurance certificates.
+Dependencies: Reflex contracts, change-assurance certificates, and protected
+    variable monitors.
 Invariants:
   - Reflex outputs are proposals and decisions, never direct runtime mutation.
   - Every generated eval preserves source evidence.
@@ -41,6 +42,11 @@ from mcoi_runtime.contracts.reflex import (
     ReflexSandboxResult,
     ReflexUpgradeCandidate,
     RuntimeHealthSnapshot,
+)
+from mcoi_runtime.governance.protected_variables import (
+    ProtectedVariable,
+    ProtectedVariableMonitor,
+    ProtectionRule,
 )
 
 
@@ -280,6 +286,21 @@ _PROTECTED_SURFACES = frozenset(
         "verification",
     }
 )
+_REFLEX_PROTECTED_SURFACE_FIELD = "protected_surface"
+
+
+def _reflex_protected_surface_monitor() -> ProtectedVariableMonitor:
+    monitor = ProtectedVariableMonitor()
+    monitor.register(
+        ProtectedVariable(
+            name=_REFLEX_PROTECTED_SURFACE_FIELD,
+            rule=ProtectionRule.MUST_REMAIN_TRUE,
+        )
+    )
+    return monitor
+
+
+_REFLEX_PROTECTED_SURFACE_MONITOR = _reflex_protected_surface_monitor()
 
 _REGISTERED_REFLEX_REPLAYS = frozenset(
     replay_id
@@ -375,9 +396,10 @@ def propose_upgrade(
 
 def candidate_requires_human_approval(candidate: ReflexUpgradeCandidate) -> bool:
     """Return whether a candidate requires human approval before promotion."""
-    return candidate.risk in {ReflexRisk.HIGH, ReflexRisk.CRITICAL} or _is_protected_surface(
-        candidate.change_surface
-    )
+    return candidate.risk in {
+        ReflexRisk.HIGH,
+        ReflexRisk.CRITICAL,
+    } or _reflex_protected_surface_flag(candidate.change_surface)
 
 
 def decide_promotion(
@@ -386,7 +408,7 @@ def decide_promotion(
     certificate: ChangeCertificate,
 ) -> ReflexPromotionDecision:
     """Decide canary admission from sandbox and certificate proof."""
-    protected_surface = _is_protected_surface(candidate.change_surface)
+    protected_surface = _reflex_protected_surface_flag(candidate.change_surface)
     if sandbox_result.candidate_id != candidate.candidate_id:
         return ReflexPromotionDecision(
             decision_id=f"decision:{candidate.candidate_id}",
@@ -604,6 +626,7 @@ def build_reflex_change_command(
     """Convert a reflex candidate into a governed evolution ChangeCommand."""
     change_type = _change_type_for_surface(candidate.change_surface)
     change_risk = _change_risk_for_candidate(candidate)
+    protected_surface = _reflex_protected_surface_flag(candidate.change_surface)
     affected_invariants = _invariants_for_surface(candidate.change_surface)
     metadata = {
         "reflex_candidate_id": candidate.candidate_id,
@@ -625,9 +648,9 @@ def build_reflex_change_command(
         affected_invariants=affected_invariants,
         required_replays=candidate.required_replays,
         requires_approval=change_risk in {ChangeRisk.HIGH, ChangeRisk.CRITICAL}
-        or _is_protected_surface(candidate.change_surface),
+        or protected_surface,
         rollback_required=change_risk in {ChangeRisk.HIGH, ChangeRisk.CRITICAL}
-        or _is_protected_surface(candidate.change_surface),
+        or protected_surface,
         created_at=created_at,
         metadata=metadata,
     )
@@ -786,6 +809,19 @@ def _is_protected_surface(surface: str) -> bool:
     return surface in _PROTECTED_SURFACES
 
 
+def _reflex_protected_surface_flag(surface: str) -> bool:
+    protected_surface = _is_protected_surface(surface)
+    if not protected_surface:
+        return False
+    report = _REFLEX_PROTECTED_SURFACE_MONITOR.check(
+        {_REFLEX_PROTECTED_SURFACE_FIELD: True},
+        {_REFLEX_PROTECTED_SURFACE_FIELD: protected_surface},
+    )
+    if not report.ok:
+        raise ValueError("protected reflex surface flag cannot be weakened")
+    return protected_surface
+
+
 def _certificate_passed(certificate: ChangeCertificate) -> bool:
     return (
         certificate.schema_checks_passed
@@ -836,7 +872,7 @@ def _change_type_for_surface(surface: str) -> EvolutionChangeType:
 
 
 def _change_risk_for_candidate(candidate: ReflexUpgradeCandidate) -> ChangeRisk:
-    if _is_protected_surface(candidate.change_surface):
+    if _reflex_protected_surface_flag(candidate.change_surface):
         return ChangeRisk.CRITICAL
     return {
         ReflexRisk.LOW: ChangeRisk.LOW,
@@ -851,7 +887,7 @@ def _invariants_for_surface(surface: str) -> tuple[str, ...]:
         "no_reflex_candidate_enters_runtime_without_change_certificate",
         "no_reflex_candidate_self_certifies_generated_evidence",
     ]
-    if _is_protected_surface(surface):
+    if _reflex_protected_surface_flag(surface):
         invariants.append("no_protected_reflex_surface_without_human_approval")
     if surface in {"proof", "verification"}:
         invariants.append("no_audit_proof_verification_or_command_spine_change_without_critical_risk")

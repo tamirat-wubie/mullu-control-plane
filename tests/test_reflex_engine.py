@@ -146,6 +146,41 @@ def test_low_risk_provider_routing_candidate_can_reach_auto_canary_after_gates()
     assert decision.protected_surface is False
 
 
+def test_low_risk_protected_surface_still_requires_human_approval() -> None:
+    candidate = ReflexUpgradeCandidate(
+        candidate_id="candidate:policy-low-risk",
+        diagnosis_id="diagnosis:policy-low-risk",
+        change_surface="policy",
+        risk=ReflexRisk.LOW,
+        description="bounded policy candidate",
+        affected_files=("governance/policy",),
+        required_replays=("guard_chain_policy", "denial_receipt"),
+        rollback_plan_ref="rollback:policy",
+        eval_ids=("eval:policy-low-risk",),
+    )
+    sandbox_result = ReflexSandboxResult(
+        candidate_id=candidate.candidate_id,
+        passed=True,
+        report_refs=(ReflexEvidenceRef(kind="sandbox_report", ref_id="sandbox-policy"),),
+    )
+
+    decision = decide_promotion(candidate, sandbox_result, _certificate())
+    command = build_reflex_change_command(
+        candidate,
+        author_id="reflex@mullusi.com",
+        branch="codex/reflex-policy",
+        base_commit="a" * 40,
+        head_commit="b" * 40,
+        created_at=DT,
+    )
+
+    assert candidate_requires_human_approval(candidate) is True
+    assert decision.disposition is ReflexPromotionDisposition.HUMAN_APPROVAL_REQUIRED
+    assert decision.protected_surface is True
+    assert command.risk is ChangeRisk.CRITICAL
+    assert command.requires_approval is True
+
+
 def test_low_risk_candidate_builds_non_mutating_canary_handoff() -> None:
     snapshot = _snapshot(premium_model_low_risk_requests=4)
     diagnosis = diagnose_anomaly(detect_anomalies(snapshot)[0], snapshot)
