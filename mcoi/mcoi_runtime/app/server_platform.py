@@ -178,6 +178,7 @@ def bootstrap_governance_runtime(
         connection_string=runtime_env.get("MULLU_DB_URL", ""),
         field_encryptor=field_encryptor,
         pool_size=pool_size,
+        require_available=env.strip().lower() in ("pilot", "production"),
     )
 
     tenant_budget_mgr = tenant_budget_manager_cls(

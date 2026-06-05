@@ -1001,6 +1001,22 @@ class TestG41RBACFailClosedBoot:
         with pytest.raises(RuntimeError, match="production"):
             Platform.from_env()
 
+    def test_pilot_refuses_disconnected_postgresql_governance_stores(self, monkeypatch):
+        import sys
+        from types import SimpleNamespace
+
+        monkeypatch.setenv("MULLU_ENV", "pilot")
+        monkeypatch.setenv("MULLU_DB_BACKEND", "postgresql")
+        monkeypatch.setenv("MULLU_DB_URL", "postgresql://secret-host/governance")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        monkeypatch.setenv("MULLU_CORS_ORIGINS", "https://example.com")
+        monkeypatch.setitem(sys.modules, "psycopg2", SimpleNamespace())
+
+        with pytest.raises(RuntimeError, match=r"^postgresql governance stores unavailable$") as exc_info:
+            Platform.from_env()
+
+        assert "secret-host" not in str(exc_info.value)
+
     def test_local_dev_permits_access_runtime_none(self, monkeypatch):
         """local_dev preserves the optional path for contributors who
         don't have a full environment configured."""

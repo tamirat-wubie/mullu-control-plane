@@ -743,6 +743,24 @@ class TestCreateGovernanceStores:
             create_governance_stores("redis")
         assert "redis" not in str(excinfo.value)
 
+    def test_postgresql_require_available_fails_closed_with_bounded_error(self, monkeypatch):
+        import mcoi_runtime.persistence.postgres_governance_stores as pg
+
+        warnings: list[str] = []
+        monkeypatch.setitem(sys.modules, "psycopg2", SimpleNamespace())
+        monkeypatch.setattr(pg._log, "warning", lambda message, *args: warnings.append(message % args))
+
+        with pytest.raises(RuntimeError, match=r"^postgresql governance stores unavailable$") as excinfo:
+            create_governance_stores(
+                "postgresql",
+                "postgresql://secret-host/governance",
+                require_available=True,
+            )
+
+        assert "secret-host" not in str(excinfo.value)
+        assert warnings
+        assert all("secret-host" not in warning for warning in warnings)
+
     def test_memory_stores_are_independent(self):
         stores = create_governance_stores("memory")
         # Each store should be a distinct object
