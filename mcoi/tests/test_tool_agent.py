@@ -5,7 +5,8 @@ from mcoi_runtime.core.safe_arithmetic import evaluate_expression
 from mcoi_runtime.core.tool_agent import ToolAugmentedAgent
 from mcoi_runtime.core.tool_use import ToolDefinition, ToolParameter, ToolRegistry
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+def FIXED_CLOCK() -> str:
+    return "2026-03-26T12:00:00Z"
 
 
 def _setup():
@@ -28,14 +29,23 @@ def _setup():
 class TestToolAugmentedAgent:
     def test_execute_no_tool_calls(self):
         reg = _setup()
-        agent = ToolAugmentedAgent(tool_registry=reg)
+        agent = ToolAugmentedAgent(tool_registry=reg, dry_run=True)
         result = agent.execute_with_tools("Just answer this question")
         assert result.content
         assert result.total_tool_calls == 0
 
-    def test_execute_with_tools_available(self):
+    def test_missing_llm_requires_explicit_dry_run(self):
         reg = _setup()
         agent = ToolAugmentedAgent(tool_registry=reg)
+
+        with pytest.raises(ValueError, match="requires llm_fn"):
+            agent.execute_with_tools("Just answer this question")
+
+        assert agent.history_count == 0
+
+    def test_execute_with_tools_available(self):
+        reg = _setup()
+        agent = ToolAugmentedAgent(tool_registry=reg, dry_run=True)
         result = agent.execute_with_tools("What is 2+2?")
         assert result.content
         assert result.all_succeeded is True
@@ -59,7 +69,7 @@ class TestToolAugmentedAgent:
 
     def test_filtered_tools(self):
         reg = _setup()
-        agent = ToolAugmentedAgent(tool_registry=reg)
+        agent = ToolAugmentedAgent(tool_registry=reg, dry_run=True)
         result = agent.execute_with_tools("test", tool_ids=["calc"])
         # Only calc should be mentioned in prompt
         assert result.content
@@ -78,14 +88,14 @@ class TestToolAugmentedAgent:
 
     def test_max_tool_calls(self):
         reg = _setup()
-        agent = ToolAugmentedAgent(tool_registry=reg, max_tool_calls=2)
+        agent = ToolAugmentedAgent(tool_registry=reg, dry_run=True, max_tool_calls=2)
         # Agent won't exceed max even if LLM requests more
         result = agent.execute_with_tools("test")
         assert result.total_tool_calls <= 2
 
     def test_summary(self):
         reg = _setup()
-        agent = ToolAugmentedAgent(tool_registry=reg)
+        agent = ToolAugmentedAgent(tool_registry=reg, dry_run=True)
         agent.execute_with_tools("test")
         s = agent.summary()
         assert s["executions"] == 1

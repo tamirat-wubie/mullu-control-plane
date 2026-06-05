@@ -15,7 +15,7 @@ Invariants:
 from __future__ import annotations
 
 import ast
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable
 
 from mcoi_runtime.core.tool_use import ToolRegistry, ToolResult
@@ -56,10 +56,12 @@ class ToolAugmentedAgent:
         *,
         tool_registry: ToolRegistry,
         llm_fn: Callable[[str], Any] | None = None,
+        dry_run: bool = False,
         max_tool_calls: int = 10,
     ) -> None:
         self._tools = tool_registry
         self._llm_fn = llm_fn
+        self._dry_run = dry_run
         self._max_tool_calls = max_tool_calls
         self._history: list[ToolAugmentedResult] = []
 
@@ -95,8 +97,10 @@ class ToolAugmentedAgent:
         if self._llm_fn:
             llm_result = self._llm_fn(augmented_prompt)
             content = getattr(llm_result, "content", str(llm_result))
+        elif self._dry_run:
+            content = f"[dry-run: processed '{prompt[:50]}' with {len(available)} tools available]"
         else:
-            content = f"[stub: processed '{prompt[:50]}' with {len(available)} tools available]"
+            raise ValueError("tool-augmented agent requires llm_fn unless dry_run=True")
 
         # Parse and execute tool calls from response
         tool_calls: list[ToolCallRecord] = []
