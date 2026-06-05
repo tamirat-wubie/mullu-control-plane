@@ -6,13 +6,13 @@ and reports violations; it never mutates and never commits — matching
 the platform's "everything proposes, only Φ_gov commits" principle and
 the reflex "proposals only until a gate passes" pattern.
 
-Today the same idea is reimplemented ad hoc across the codebase: the
-single hardcoded `effect_assurance_required` check in
-`mcoi_runtime/app/profiles.py`, the always-forced
+Today the same idea is still partly reimplemented ad hoc across the
+codebase: `mcoi_runtime/app/profiles.py` now adopts this monitor for the
+`effect_assurance_required` floor, while the always-forced
 `PROTECTED_FORBIDDEN_CAPABILITIES` floor in
 `mcoi_runtime/assistant_kernel/identity.py`, the `protected_surface`
-flag in the reflex contracts, and the protected-checkpoint guards. None
-of those share a declarative registry or a structured, auditable
+flag in the reflex contracts, and the protected-checkpoint guards can
+still migrate onto a declarative registry and structured, auditable
 verdict. This module is the seam those sites *can* adopt — introduced
 the same way `ReceiptStore` was (a contract + default, no forced
 rewiring of existing callers).

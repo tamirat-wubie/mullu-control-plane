@@ -70,6 +70,17 @@ def test_high_risk_profile_cannot_disable_effect_assurance() -> None:
     assert "effect_assurance_required" not in str(exc_info.value)
 
 
+def test_local_dev_profile_can_keep_effect_assurance_disabled() -> None:
+    result = load_profile(
+        ProfileName.LOCAL_DEV,
+        overrides={"effect_assurance_required": False},
+    )
+
+    assert result.config.effect_assurance_required is False
+    assert result.overrides_applied == 1
+    assert result.profile_name == "local-dev"
+
+
 def test_load_profile_with_overrides() -> None:
     result = load_profile(
         ProfileName.LOCAL_DEV,
