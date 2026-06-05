@@ -4165,12 +4165,13 @@
       "audit": "audit_chain",
       "coverage_state": "proven",
       "evidence_files": [
+        "mcoi/mcoi_runtime/app/policy_version_integration.py",
         "mcoi/mcoi_runtime/app/routers/policy_versions.py",
         "mcoi/mcoi_runtime/governance/policy/versioning.py",
         "mcoi/tests/test_policy_version_endpoints.py",
         "mcoi/tests/test_policy_versioning.py"
       ],
-      "notes": "Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation.",
+      "notes": "Policy version routes expose immutable artifact registration, promotion, rollback, diff, shadow evaluation, and env-governed durable registry persistence.",
       "representative_paths": [
         "/api/v1/policies/{policy_id}/versions",
         "/api/v1/policies/{policy_id}/versions/{version}",
@@ -4188,7 +4189,12 @@
         "policy_registry_promotes_and_rolls_back_versions",
         "policy_diff_reports_changed_and_added_rules",
         "shadow_governance_compares_without_promoting",
-        "registry_fails_closed_on_unknown_versions"
+        "registry_fails_closed_on_unknown_versions",
+        "file_policy_registry_persists_versions_and_active_history",
+        "file_policy_registry_rejects_tampered_artifact_hash",
+        "file_policy_registry_rejects_unknown_active_pointer",
+        "policy_version_registry_integration_selects_memory_or_file",
+        "policy_version_registry_path_validation_requires_absolute_json_path"
       ],
       "surface_id": "policy_version_registry"
     },
@@ -9461,8 +9467,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1177,
-    "runtime_witness_count": 1177,
+    "exact_test_anchor_count": 1182,
+    "runtime_witness_count": 1182,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11154,10 +11160,40 @@
               "mcoi/tests/test_policy_versioning.py::test_registry_fails_closed_on_unknown_versions"
             ],
             "witness": "registry_fails_closed_on_unknown_versions"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_versioning.py::test_file_policy_registry_persists_versions_and_active_history"
+            ],
+            "witness": "file_policy_registry_persists_versions_and_active_history"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_versioning.py::test_file_policy_registry_rejects_tampered_artifact_hash"
+            ],
+            "witness": "file_policy_registry_rejects_tampered_artifact_hash"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_versioning.py::test_file_policy_registry_rejects_unknown_active_pointer"
+            ],
+            "witness": "file_policy_registry_rejects_unknown_active_pointer"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_versioning.py::test_policy_version_registry_integration_selects_memory_or_file"
+            ],
+            "witness": "policy_version_registry_integration_selects_memory_or_file"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_policy_versioning.py::test_policy_version_registry_path_validation_requires_absolute_json_path"
+            ],
+            "witness": "policy_version_registry_path_validation_requires_absolute_json_path"
           }
         ],
-        "exact_test_anchor_count": 8,
-        "runtime_witness_count": 8,
+        "exact_test_anchor_count": 13,
+        "runtime_witness_count": 13,
         "surface_id": "policy_version_registry",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

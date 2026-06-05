@@ -2,14 +2,21 @@
 
 Governance scope: policy artifact registration, diff, promotion, rollback, and
 shadow-mode verdict comparison without mutating runtime execution decisions.
-Dependencies: runtime policy engine contracts and deterministic identifiers.
+Dependencies: runtime policy engine contracts, deterministic identifiers, and
+optional local JSON persistence.
 Invariants: artifacts are immutable; active versions are explicit; rollback
-targets must be known; shadow evaluation never promotes a version.
+targets must be known; shadow evaluation never promotes a version; persisted
+registries fail closed on malformed artifacts or active-version pointers.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
+import os
+from pathlib import Path
+import tempfile
+from typing import Any
 from typing import Literal, Protocol
 
 from mcoi_runtime.core.invariants import ensure_non_empty_text, stable_identifier
@@ -249,6 +256,177 @@ class PolicyVersionRegistry:
             changed=any(diff.change != "unchanged" for diff in diffs),
             rule_diffs=tuple(diffs),
         )
+
+
+def _deterministic_json(payload: Any) -> str:
+    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
+
+
+def _bounded_registry_error(summary: str, exc: BaseException) -> str:
+    return f"{summary} ({type(exc).__name__})"
+
+
+def _atomic_write(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        fd, tmp_path = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
+        try:
+            os.write(fd, content.encode("utf-8"))
+            os.close(fd)
+            fd = -1
+            os.replace(tmp_path, str(path))
+        except BaseException:
+            if fd >= 0:
+                os.close(fd)
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+            raise
+    except OSError as exc:
+        raise ValueError(_bounded_registry_error("policy registry persistence failed", exc)) from exc
+
+
+def _rule_to_json(rule: VersionedPolicyRule) -> dict[str, str]:
+    return {
+        "rule_id": rule.rule_id,
+        "description": rule.description,
+        "condition": rule.condition,
+        "action": rule.action,
+    }
+
+
+def _artifact_to_json(artifact: PolicyArtifact) -> dict[str, Any]:
+    return {
+        "policy_id": artifact.policy_id,
+        "version": artifact.version,
+        "artifact_hash": artifact.artifact_hash,
+        "created_at": artifact.created_at,
+        "rules": [_rule_to_json(rule) for rule in artifact.rules],
+    }
+
+
+def _rule_from_json(raw: dict[str, Any]) -> VersionedPolicyRule:
+    try:
+        return VersionedPolicyRule(
+            rule_id=raw["rule_id"],
+            description=raw["description"],
+            condition=raw["condition"],
+            action=raw["action"],
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError(_bounded_registry_error("invalid policy rule payload", exc)) from exc
+
+
+def _artifact_from_json(raw: dict[str, Any]) -> PolicyArtifact:
+    if not isinstance(raw, dict):
+        raise ValueError("policy artifact payload must be an object")
+    try:
+        rules_raw = raw["rules"]
+        if not isinstance(rules_raw, list):
+            raise ValueError("policy artifact rules must be a list")
+        artifact = PolicyArtifact(
+            policy_id=raw["policy_id"],
+            version=raw["version"],
+            rules=tuple(_rule_from_json(rule) for rule in rules_raw),
+            created_at=raw["created_at"],
+            artifact_hash=raw["artifact_hash"],
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError(_bounded_registry_error("invalid policy artifact payload", exc)) from exc
+    if artifact.with_hash().artifact_hash != artifact.artifact_hash:
+        raise ValueError("policy artifact hash mismatch")
+    return artifact
+
+
+class FilePolicyVersionRegistry(PolicyVersionRegistry):
+    """JSON-file backed policy version registry.
+
+    The store rewrites one deterministic JSON document after each successful
+    register, promote, or rollback mutation. Startup loads fail closed when the
+    payload is malformed or active pointers reference unknown artifacts.
+    """
+
+    def __init__(self, path: Path) -> None:
+        if not isinstance(path, Path):
+            raise ValueError("path must be a Path instance")
+        self._path = path
+        super().__init__()
+        self._load_if_present()
+
+    def register(self, artifact: PolicyArtifact) -> PolicyArtifact:
+        stored = super().register(artifact)
+        self._persist()
+        return stored
+
+    def promote(self, policy_id: str, version: str) -> PolicyArtifact:
+        artifact = super().promote(policy_id, version)
+        self._persist()
+        return artifact
+
+    def rollback(self, policy_id: str) -> PolicyArtifact:
+        artifact = super().rollback(policy_id)
+        self._persist()
+        return artifact
+
+    def _persist(self) -> None:
+        payload = {
+            "schema_version": 1,
+            "artifacts": [
+                _artifact_to_json(artifact)
+                for artifact in sorted(
+                    self._artifacts.values(),
+                    key=lambda item: (item.policy_id, item.version),
+                )
+            ],
+            "active_versions": dict(sorted(self._active_versions.items())),
+            "previous_versions": {
+                policy_id: list(versions)
+                for policy_id, versions in sorted(self._previous_versions.items())
+            },
+        }
+        _atomic_write(self._path, _deterministic_json(payload))
+
+    def _load_if_present(self) -> None:
+        if not self._path.exists():
+            return
+        try:
+            raw = json.loads(self._path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
+            raise ValueError(_bounded_registry_error("malformed policy registry file", exc)) from exc
+        if not isinstance(raw, dict):
+            raise ValueError("policy registry payload must be an object")
+        if raw.get("schema_version") != 1:
+            raise ValueError("policy registry schema version unsupported")
+        artifacts_raw = raw.get("artifacts")
+        active_raw = raw.get("active_versions", {})
+        previous_raw = raw.get("previous_versions", {})
+        if not isinstance(artifacts_raw, list):
+            raise ValueError("policy registry artifacts must be a list")
+        if not isinstance(active_raw, dict) or not isinstance(previous_raw, dict):
+            raise ValueError("policy registry version pointers must be objects")
+        for item in artifacts_raw:
+            artifact = _artifact_from_json(item)
+            key = (artifact.policy_id, artifact.version)
+            if key in self._artifacts:
+                raise ValueError("duplicate policy artifact in registry file")
+            self._artifacts[key] = artifact
+            self._previous_versions.setdefault(artifact.policy_id, ())
+        for policy_id, version in active_raw.items():
+            if not isinstance(policy_id, str) or not isinstance(version, str):
+                raise ValueError("policy registry active pointer must use strings")
+            if (policy_id, version) not in self._artifacts:
+                raise ValueError("policy registry active pointer target unavailable")
+            self._active_versions[policy_id] = version
+        for policy_id, versions in previous_raw.items():
+            if not isinstance(policy_id, str) or not isinstance(versions, list):
+                raise ValueError("policy registry previous pointer must be a list")
+            checked_versions: list[str] = []
+            for version in versions:
+                if not isinstance(version, str):
+                    raise ValueError("policy registry previous pointer must use strings")
+                if (policy_id, version) not in self._artifacts:
+                    raise ValueError("policy registry previous pointer target unavailable")
+                checked_versions.append(version)
+            self._previous_versions[policy_id] = tuple(checked_versions)
 
 
 class ShadowGovernanceEvaluator:

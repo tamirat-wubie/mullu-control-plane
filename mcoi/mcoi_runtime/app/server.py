@@ -48,6 +48,9 @@ from mcoi_runtime.app.software_receipt_integration import (
 from mcoi_runtime.app.finance_approval_integration import (
     select_finance_approval_store,
 )
+from mcoi_runtime.app.policy_version_integration import (
+    select_policy_version_registry,
+)
 from mcoi_runtime.app.replay_report_integration import (
     select_replay_report_store,
 )
@@ -250,6 +253,7 @@ app = create_governed_app(
 # =============================================================================
 # Dependency injection - register all subsystems into deps container
 # =============================================================================
+_policy_version_registry_bootstrap = select_policy_version_registry(os.environ)
 _dependency_bootstrap = bootstrap_dependency_registry(
     deps_container=deps,
     clock=_clock,
@@ -270,8 +274,10 @@ _dependency_bootstrap = bootstrap_dependency_registry(
     subsystem_bootstrap=_subsystem_bootstrap,
     operational_bootstrap=_operational_bootstrap,
     capability_bootstrap=_capability_bootstrap,
+    policy_version_registry=_policy_version_registry_bootstrap.registry,
 )
 platform = _dependency_bootstrap.platform
+deps.set("policy_version_registry_bootstrap", _policy_version_registry_bootstrap)
 
 # Cognitive organs (live wiring, Slice 1): mount the reasoning/learning engines
 # into the SERVED runtime (historically CLI-bootstrap only) and register them on

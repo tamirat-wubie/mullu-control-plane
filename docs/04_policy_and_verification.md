@@ -46,6 +46,6 @@ Policy gate precedes execution. Verification closes execution.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: policy gate precedence, immutable policy artifacts, deterministic artifact hashes, explicit promotion, explicit rollback, diff visibility, shadow-mode non-promotion, operator-facing policy version routes
+  Invariants verified: policy gate precedence, immutable policy artifacts, deterministic artifact hashes, explicit promotion, explicit rollback, diff visibility, shadow-mode non-promotion, operator-facing policy version routes, env-governed policy version registry persistence
   Open issues: none
-  Next action: persist policy version registry beyond process memory
+  Next action: configure `MULLU_POLICY_VERSION_REGISTRY_PATH` in hosted operator environments that require durable policy version history
