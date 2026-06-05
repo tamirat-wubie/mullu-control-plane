@@ -19,6 +19,7 @@ binding, and audit-required enforcement.
 | Permission registry | Stores and evaluates permission primitives | tool call request | allow or deny decision |
 | Governed tool registry hook | Enforces permission before execution | invocation context | result with permission decision |
 | Operator API routes | Register, list, and evaluate permission primitives without invoking tools | permission payload or dry-run request | permission read model or decision |
+| Hosted persistence selector | Selects in-memory or JSON-file registry from environment | `MULLU_TOOL_PERMISSION_REGISTRY_PATH` | startup registry posture |
 
 ## Grammar
 
@@ -45,6 +46,22 @@ tenant:tenant-1 may call tool:payments.send with args matching schema:schema-f68
 6. Decisions include `argument_hash`, `schema_hash`, `permission_id`, bounded reason codes, and the published grammar sentence.
 7. Governed tool execution cannot proceed when the permission decision is denied.
 
+## Hosted Persistence
+
+The default registry remains in-memory for foundation-mode local work. Hosted
+operators that require durable permission history set:
+
+```text
+MULLU_TOOL_PERMISSION_REGISTRY_PATH=C:\mullu\stores\tool-permissions.json
+```
+
+Startup path validation requires an absolute `.json` file path, an existing
+writable parent directory, and a non-directory target. When the file exists it
+must carry schema version `1`, a `permissions` list, unique permission ids, and
+records whose stored ids still match the deterministic tenant/tool/schema/
+budget/audit identity. Malformed or tampered durable payloads fail startup
+closed instead of dropping records silently.
+
 ## Reason Codes
 
 | Code | Meaning |
@@ -59,6 +76,6 @@ tenant:tenant-1 may call tool:payments.send with args matching schema:schema-f68
 
 STATUS:
   Completeness: 100%
-  Invariants verified: exact tenant/tool lookup, fail-closed permission absence, bounded schema matching, exact budget binding, audit-required enforcement, deterministic argument hash, operator route exposure without tool execution
+  Invariants verified: exact tenant/tool lookup, fail-closed permission absence, bounded schema matching, exact budget binding, audit-required enforcement, deterministic argument hash, operator route exposure without tool execution, env-governed durable registry backing
   Open issues: none
-  Next action: add durable permission-registry backing only after hosted operator retention requirements are defined
+  Next action: configure MULLU_TOOL_PERMISSION_REGISTRY_PATH in hosted operator environments that require durable tool permission history

@@ -5014,12 +5014,13 @@
       "coverage_state": "proven",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/tool_permissions.py",
+        "mcoi/mcoi_runtime/app/tool_permission_integration.py",
         "mcoi/mcoi_runtime/core/tool_permission_primitives.py",
         "mcoi/mcoi_runtime/core/governed_tool_use.py",
         "mcoi/tests/test_tool_permission_primitives.py",
         "mcoi/tests/test_tool_permission_routes.py"
       ],
-      "notes": "Tool permission registry routes expose tenant-scoped permission registration, bounded listing, and dry-run evaluation without invoking tools; governed execution consumes the same primitive registry.",
+      "notes": "Tool permission registry routes expose tenant-scoped permission registration, bounded listing, dry-run evaluation without invoking tools, and env-governed durable registry persistence; governed execution consumes the same primitive registry.",
       "representative_paths": [
         "/api/v1/tool-permissions",
         "/api/v1/tool-permissions/evaluate"
@@ -5030,6 +5031,10 @@
         "permission_denies_missing_audit_without_executing",
         "permission_denies_schema_violations_fail_closed",
         "governed_tool_registry_applies_bound_permission_registry",
+        "file_tool_permission_registry_persists_and_reloads_permissions",
+        "file_tool_permission_registry_rejects_tampered_permission_identity",
+        "tool_permission_registry_integration_selects_memory_or_file",
+        "tool_permission_registry_path_validation_requires_absolute_json_path",
         "tool_permission_routes_register_list_and_evaluate",
         "tool_permission_routes_reject_duplicate_registration",
         "tool_permission_routes_deny_missing_permission_fail_closed"
@@ -9552,8 +9557,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1196,
-    "runtime_witness_count": 1196,
+    "exact_test_anchor_count": 1200,
+    "runtime_witness_count": 1200,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -12155,6 +12160,30 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_tool_permission_primitives.py::test_file_tool_permission_registry_persists_and_reloads_permissions"
+            ],
+            "witness": "file_tool_permission_registry_persists_and_reloads_permissions"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_tool_permission_primitives.py::test_file_tool_permission_registry_rejects_tampered_permission_identity"
+            ],
+            "witness": "file_tool_permission_registry_rejects_tampered_permission_identity"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_tool_permission_primitives.py::test_tool_permission_registry_integration_selects_memory_or_file"
+            ],
+            "witness": "tool_permission_registry_integration_selects_memory_or_file"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_tool_permission_primitives.py::test_tool_permission_registry_path_validation_requires_absolute_json_path"
+            ],
+            "witness": "tool_permission_registry_path_validation_requires_absolute_json_path"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_tool_permission_routes.py::test_tool_permission_routes_register_list_and_evaluate"
             ],
             "witness": "tool_permission_routes_register_list_and_evaluate"
@@ -12172,8 +12201,8 @@
             "witness": "tool_permission_routes_deny_missing_permission_fail_closed"
           }
         ],
-        "exact_test_anchor_count": 7,
-        "runtime_witness_count": 7,
+        "exact_test_anchor_count": 11,
+        "runtime_witness_count": 11,
         "surface_id": "tool_permission_registry",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
