@@ -74,6 +74,55 @@ def test_assessor_reports_missing_docker_and_wsl(monkeypatch) -> None:  # noqa: 
     assert result.next_action == "resolve blockers before running the WSL strict probe"
 
 
+def test_assessor_local_only_skips_wsl_and_docker(monkeypatch) -> None:  # noqa: ANN001
+    monkeypatch.setattr(Path, "resolve", lambda self, strict=False: PureWindowsPath("C:/Users/tmrtl/repo"))
+    observed_argv: list[list[str]] = []
+
+    def runner(argv, **kwargs):  # noqa: ANN001, ANN202, ARG001
+        observed_argv.append(list(argv))
+        raise AssertionError(f"local-only mode should not run commands: {argv}")
+
+    result = assess_windows_readiness(
+        workspace_root=Path("ignored"),
+        runner=runner,
+        platform_system=lambda: "Windows",
+        local_only=True,
+    )
+
+    assert result.ready_to_launch_strict_probe is False
+    assert result.status == "local_only_ready"
+    assert result.solver_outcome == "AwaitingEvidence"
+    assert result.blockers == ()
+    assert result.strict_probe_argv == ()
+    assert result.docker_cli.status == "skipped"
+    assert result.docker_daemon.status == "skipped"
+    assert result.wsl_cli.status == "skipped"
+    assert result.wsl_distro.status == "skipped"
+    assert result.next_action == "run local governance preflight; strict Linux sandbox evidence remains AwaitingEvidence"
+    assert observed_argv == []
+
+
+def test_assessor_local_only_keeps_non_windows_blocked(monkeypatch) -> None:  # noqa: ANN001
+    monkeypatch.setattr(Path, "resolve", lambda self, strict=False: PureWindowsPath("C:/Users/tmrtl/repo"))
+
+    def runner(argv, **kwargs):  # noqa: ANN001, ANN202, ARG001
+        raise AssertionError(f"local-only mode should not run commands: {argv}")
+
+    result = assess_windows_readiness(
+        workspace_root=Path("ignored"),
+        runner=runner,
+        platform_system=lambda: "Linux",
+        local_only=True,
+    )
+
+    assert result.ready_to_launch_strict_probe is False
+    assert result.status == "blocked"
+    assert result.blockers == ("windows_host_required",)
+    assert result.strict_probe_argv == ()
+    assert result.wsl_cli.status == "skipped"
+    assert result.next_action == "run local-only mode from a Windows host"
+
+
 def test_assessor_keeps_non_windows_host_as_blocked(monkeypatch) -> None:  # noqa: ANN001
     monkeypatch.setattr(Path, "resolve", lambda self, strict=False: PureWindowsPath("C:/Users/tmrtl/repo"))
 
@@ -199,3 +248,45 @@ def test_print_command_json_returns_plan(monkeypatch, capsys) -> None:  # noqa: 
     assert "python3 scripts/probe_governed_code_change_loop_sandbox.py" in streams.out
     assert "docker build -f" not in streams.out
     assert streams.err == ""
+
+
+def test_local_only_print_command_json_does_not_emit_wsl(monkeypatch, capsys) -> None:  # noqa: ANN001
+    monkeypatch.setattr(Path, "resolve", lambda self, strict=False: PureWindowsPath("C:/Users/tmrtl/repo"))
+
+    exit_code = main(["--local-only", "--print-command", "--json"])
+    streams = capsys.readouterr()
+
+    assert exit_code == 0
+    assert '"status": "local_only_ready"' in streams.out
+    assert '"solver_outcome": "AwaitingEvidence"' in streams.out
+    assert '"strict_probe_argv": []' in streams.out
+    assert "run local governance preflight" in streams.out
+    assert "wsl" not in streams.out.lower()
+    assert "python3 scripts/probe_governed_code_change_loop_sandbox.py" not in streams.out
+    assert streams.err == ""
+
+
+def test_local_only_print_command_text_does_not_emit_wsl(monkeypatch, capsys) -> None:  # noqa: ANN001
+    monkeypatch.setattr(Path, "resolve", lambda self, strict=False: PureWindowsPath("C:/Users/tmrtl/repo"))
+
+    exit_code = main(["--local-only", "--print-command"])
+    streams = capsys.readouterr()
+
+    assert exit_code == 0
+    assert streams.out.strip() == "run local governance preflight; strict Linux sandbox evidence remains AwaitingEvidence"
+    assert "wsl" not in streams.out.lower()
+    assert streams.err == ""
+
+
+def test_local_only_json_reports_windows_local_posture(monkeypatch, capsys) -> None:  # noqa: ANN001
+    monkeypatch.setattr(Path, "resolve", lambda self, strict=False: PureWindowsPath("C:/Users/tmrtl/repo"))
+
+    exit_code = main(["--local-only", "--json"])
+    streams = capsys.readouterr()
+
+    assert exit_code == 0
+    assert '"status": "local_only_ready"' in streams.out
+    assert '"solver_outcome": "AwaitingEvidence"' in streams.out
+    assert '"strict_probe_argv": []' in streams.out
+    assert '"status": "skipped"' in streams.out
+    assert "wsl" not in streams.err.lower()
