@@ -74,6 +74,27 @@ def test_hot_reload_metadata_accepts_text_allowed_environment(tmp_path: Path) ->
     assert registry.manifest_count == 1
 
 
+def test_registry_reports_malformed_schema_inventory_without_payload_leak(
+    tmp_path: Path,
+) -> None:
+    manifest_path = _write_manifest_repo(tmp_path)
+    (tmp_path / "schemas" / "broken.schema.json").write_text(
+        "{secret-schema-payload",
+        encoding="utf-8",
+    )
+    registry = CapabilityManifestRegistry(repo_root=tmp_path, clock=lambda: "2026-05-31T00:00:00Z")
+
+    admission = registry.admit_path(manifest_path, environment="local")
+
+    assert admission.status is CapabilityManifestAdmissionStatus.REJECTED
+    assert admission.capability_id == "sample.read"
+    assert admission.errors == (
+        "manifest_validation_error:schema_registry_malformed:schemas/broken.schema.json",
+    )
+    assert "secret-schema-payload" not in repr(admission)
+    assert registry.manifest_count == 0
+
+
 def _write_manifest_repo(
     repo_root: Path,
     *,
