@@ -110,13 +110,14 @@ def assess_windows_readiness(
     with_preflight: bool = False,
     local_only: bool = False,
     runner: CommandRunner = subprocess.run,
-    platform_system: Callable[[], str] = platform.system,
+    platform_system: Callable[[], str] | None = None,
     timeout_seconds: int = 20,
 ) -> WindowsCodeChangeLoopReadiness:
     """Assess Windows host prerequisites without running strict evidence."""
 
     _require_positive_int(timeout_seconds, "timeout_seconds")
-    observed_platform = platform_system()
+    platform_probe = platform_system or platform.system
+    observed_platform = platform_probe()
     blockers: list[str] = []
     if observed_platform.lower() != "windows":
         blockers.append("windows_host_required")

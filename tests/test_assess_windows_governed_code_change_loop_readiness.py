@@ -10,6 +10,7 @@ Invariants:
 
 from __future__ import annotations
 
+import platform
 import subprocess
 from pathlib import Path, PureWindowsPath
 
@@ -280,6 +281,7 @@ def test_local_only_print_command_text_does_not_emit_wsl(monkeypatch, capsys) ->
 
 def test_local_only_json_reports_windows_local_posture(monkeypatch, capsys) -> None:  # noqa: ANN001
     monkeypatch.setattr(Path, "resolve", lambda self, strict=False: PureWindowsPath("C:/Users/tmrtl/repo"))
+    monkeypatch.setattr(platform, "system", lambda: "Windows")
 
     exit_code = main(["--local-only", "--json"])
     streams = capsys.readouterr()
