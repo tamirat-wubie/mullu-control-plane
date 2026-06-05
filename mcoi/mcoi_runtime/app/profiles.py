@@ -14,8 +14,31 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Mapping
 
+from mcoi_runtime.governance.protected_variables import (
+    ProtectedVariable,
+    ProtectedVariableMonitor,
+    ProtectionRule,
+)
+
 from .config import AppConfig
 from .deployment_profiles import BUILTIN_PROFILES
+
+
+_EFFECT_ASSURANCE_REQUIRED = "effect_assurance_required"
+
+
+def _profile_protection_monitor() -> ProtectedVariableMonitor:
+    monitor = ProtectedVariableMonitor()
+    monitor.register(
+        ProtectedVariable(
+            name=_EFFECT_ASSURANCE_REQUIRED,
+            rule=ProtectionRule.MUST_REMAIN_TRUE,
+        )
+    )
+    return monitor
+
+
+_PROFILE_PROTECTION_MONITOR = _profile_protection_monitor()
 
 
 class ProfileName(StrEnum):
@@ -92,10 +115,10 @@ def load_profile(
     if overrides:
         for key, value in overrides.items():
             if key in base:
-                if (
-                    key == "effect_assurance_required"
-                    and deployment_profile.effect_assurance_required
-                    and value is not True
+                if _protected_profile_override_violated(
+                    base,
+                    key=key,
+                    value=value,
                 ):
                     raise ProtectedProfileOverrideError(key)
                 base[key] = value
@@ -115,3 +138,19 @@ def load_profile(
 def list_profiles() -> tuple[str, ...]:
     """List all available profile names."""
     return tuple(sorted(BUILTIN_PROFILES.keys()))
+
+
+def _protected_profile_override_violated(
+    base: Mapping[str, Any],
+    *,
+    key: str,
+    value: Any,
+) -> bool:
+    """Return whether an override weakens a protected profile invariant."""
+    if key != _EFFECT_ASSURANCE_REQUIRED or base.get(key) is not True:
+        return False
+    report = _PROFILE_PROTECTION_MONITOR.check(
+        {_EFFECT_ASSURANCE_REQUIRED: base[key]},
+        {_EFFECT_ASSURANCE_REQUIRED: value},
+    )
+    return not report.ok
