@@ -351,6 +351,13 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_deployment_witness_dispatch_rehearsal_boundary.py"),
         ),
         CheckCommand(
+            "foundation_deployment_witness_artifact_validation_rehearsal_boundary",
+            (
+                python_executable,
+                "scripts/validate_foundation_deployment_witness_artifact_validation_rehearsal_boundary.py",
+            ),
+        ),
+        CheckCommand(
             "foundation_deployment_witness_evidence_handoff_boundary",
             (python_executable, "scripts/validate_foundation_deployment_witness_evidence_handoff_boundary.py"),
         ),

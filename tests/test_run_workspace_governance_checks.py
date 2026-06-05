@@ -130,6 +130,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered(
         "foundation_deployment_witness_dispatch_rehearsal_boundary",
+        "foundation_deployment_witness_artifact_validation_rehearsal_boundary",
+    )
+    assert_ordered(
+        "foundation_deployment_witness_artifact_validation_rehearsal_boundary",
         "foundation_deployment_witness_evidence_handoff_boundary",
     )
     assert_ordered("foundation_deployment_witness_evidence_handoff_boundary", "foundation_deployment_witness_evidence_ledger_routing_boundary")
@@ -429,3 +433,22 @@ def test_main_rejects_saved_receipt_for_selected_or_sharded_runs(capsys: pytest.
     assert "full unsharded preflight run" in sharded_streams.err
     assert not selected_receipt_path.exists()
     assert not sharded_receipt_path.exists()
+
+
+def test_preflight_lock_reclaims_stale_dead_pid_lock(tmp_path: Path) -> None:
+    lock_path = tmp_path / "workspace-governance-preflight.lock"
+    stale_payload = {
+        "lock_id": runner.PREFLIGHT_LOCK_ID,
+        "pid": 0,
+        "created_at_epoch": 1,
+    }
+    lock_path.write_text(json.dumps(stale_payload), encoding="utf-8")
+
+    with runner.PreflightLock(lock_path):
+        observed_payload = json.loads(lock_path.read_text(encoding="utf-8"))
+
+        assert observed_payload["lock_id"] == runner.PREFLIGHT_LOCK_ID
+        assert observed_payload["pid"] != stale_payload["pid"]
+        assert observed_payload["created_at_epoch"] > stale_payload["created_at_epoch"]
+
+    assert not lock_path.exists()
