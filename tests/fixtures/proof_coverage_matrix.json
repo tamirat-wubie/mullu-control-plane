@@ -873,9 +873,9 @@
     "by_coverage_state": {
       "proven": 246,
       "unproven": 0,
-      "witnessed": 149
+      "witnessed": 151
     },
-    "route_count": 395,
+    "route_count": 397,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2186,6 +2186,16 @@
         "coverage_state": "proven",
         "route": "/api/v1/release/latest",
         "surface_id": "operational_health_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/replay/reports",
+        "surface_id": "replay_determinism"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/replay/reports/{replay_id}",
+        "surface_id": "replay_determinism"
       },
       {
         "coverage_state": "witnessed",
@@ -9184,25 +9194,38 @@
       "audit": "audit_chain",
       "coverage_state": "witnessed",
       "evidence_files": [
+        "mcoi/mcoi_runtime/app/replay_report_integration.py",
         "mcoi/mcoi_runtime/app/routers/replay.py",
         "mcoi/mcoi_runtime/core/replay_determinism_harness.py",
+        "mcoi/mcoi_runtime/persistence/replay_report_store.py",
         "mcoi/tests/test_replay_determinism_endpoints.py",
         "mcoi/tests/test_replay_determinism_harness.py",
+        "mcoi/tests/test_replay_report_store.py",
         "docs/03_trace_and_replay.md"
       ],
-      "notes": "Replay determinism route emits governed reports over completed traces with bounded operation specs.",
+      "notes": "Replay determinism routes emit governed reports over completed traces with bounded operation specs, persist report history through env-governed storage, and expose bounded operator report-history read models.",
       "representative_paths": [
-        "/api/v1/replay/{trace_id}/determinism"
+        "/api/v1/replay/{trace_id}/determinism",
+        "/api/v1/replay/reports",
+        "/api/v1/replay/reports/{replay_id}"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
         "replay_determinism_endpoint_returns_match_report",
+        "replay_determinism_endpoint_persists_report_history",
         "replay_determinism_endpoint_reports_unknown_operation",
         "replay_determinism_endpoint_missing_trace_fails_closed",
+        "replay_report_history_missing_id_fails_closed",
         "harness_reports_deterministic_match",
         "harness_report_hash_is_deterministic",
         "harness_reports_sequence_gap_before_replay",
-        "harness_reports_operation_errors_bounded"
+        "harness_reports_operation_errors_bounded",
+        "replay_report_store_appends_lists_and_gets_reports",
+        "replay_report_store_rejects_id_collision",
+        "file_replay_report_store_persists_and_reloads",
+        "file_replay_report_store_rejects_tampered_hash",
+        "replay_report_store_path_validation_requires_absolute_json_path",
+        "replay_report_store_integration_selects_memory_or_file"
       ],
       "surface_id": "replay_determinism"
     },
@@ -9438,8 +9461,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1169,
-    "runtime_witness_count": 1169,
+    "exact_test_anchor_count": 1177,
+    "runtime_witness_count": 1177,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -17374,6 +17397,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_replay_determinism_endpoints.py::test_replay_determinism_endpoint_persists_report_history"
+            ],
+            "witness": "replay_determinism_endpoint_persists_report_history"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_replay_determinism_endpoints.py::test_replay_determinism_endpoint_reports_unknown_operation"
             ],
             "witness": "replay_determinism_endpoint_reports_unknown_operation"
@@ -17383,6 +17412,12 @@
               "mcoi/tests/test_replay_determinism_endpoints.py::test_replay_determinism_endpoint_missing_trace_fails_closed"
             ],
             "witness": "replay_determinism_endpoint_missing_trace_fails_closed"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_replay_determinism_endpoints.py::test_replay_report_history_missing_id_fails_closed"
+            ],
+            "witness": "replay_report_history_missing_id_fails_closed"
           },
           {
             "anchors": [
@@ -17407,10 +17442,46 @@
               "mcoi/tests/test_replay_determinism_harness.py::test_harness_reports_operation_errors_bounded"
             ],
             "witness": "harness_reports_operation_errors_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_replay_report_store.py::test_replay_report_store_appends_lists_and_gets_reports"
+            ],
+            "witness": "replay_report_store_appends_lists_and_gets_reports"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_replay_report_store.py::test_replay_report_store_rejects_id_collision"
+            ],
+            "witness": "replay_report_store_rejects_id_collision"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_replay_report_store.py::test_file_replay_report_store_persists_and_reloads"
+            ],
+            "witness": "file_replay_report_store_persists_and_reloads"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_replay_report_store.py::test_file_replay_report_store_rejects_tampered_hash"
+            ],
+            "witness": "file_replay_report_store_rejects_tampered_hash"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_replay_report_store.py::test_replay_report_store_path_validation_requires_absolute_json_path"
+            ],
+            "witness": "replay_report_store_path_validation_requires_absolute_json_path"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_replay_report_store.py::test_replay_report_store_integration_selects_memory_or_file"
+            ],
+            "witness": "replay_report_store_integration_selects_memory_or_file"
           }
         ],
-        "exact_test_anchor_count": 7,
-        "runtime_witness_count": 7,
+        "exact_test_anchor_count": 15,
+        "runtime_witness_count": 15,
         "surface_id": "replay_determinism",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

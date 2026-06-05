@@ -31,7 +31,9 @@ def client():
     os.environ["MULLU_CERT_INTERVAL"] = "0"
     from mcoi_runtime.app.routers.deps import deps
     from mcoi_runtime.app.server import app
+    from mcoi_runtime.persistence.replay_report_store import ReplayReportStore
 
+    deps.set("replay_report_store", ReplayReportStore())
     trace_id = "replay-http-trace"
     if deps.replay_recorder.get_trace(trace_id) is None:
         deps.replay_recorder.start_trace(trace_id)
@@ -61,6 +63,28 @@ def test_replay_determinism_endpoint_returns_match_report(client) -> None:
     assert data["report"]["report_hash"].startswith("replay-report-")
 
 
+def test_replay_determinism_endpoint_persists_report_history(client) -> None:
+    response = client.post(
+        "/api/v1/replay/replay-http-trace/determinism",
+        json={
+            "replay_id": "replay-http-history",
+            "operations": {
+                "add": {"kind": "add_numbers"},
+                "echo": {"kind": "echo_field", "field": "value"},
+            },
+        },
+    )
+    report = response.json()["report"]
+    list_response = client.get("/api/v1/replay/reports")
+    get_response = client.get("/api/v1/replay/reports/replay-http-history")
+
+    assert response.status_code == 200
+    assert list_response.status_code == 200
+    assert get_response.status_code == 200
+    assert list_response.json()["count"] == 1
+    assert get_response.json()["report"]["report_hash"] == report["report_hash"]
+
+
 def test_replay_determinism_endpoint_reports_unknown_operation(client) -> None:
     response = client.post(
         "/api/v1/replay/replay-http-trace/determinism",
@@ -83,4 +107,13 @@ def test_replay_determinism_endpoint_missing_trace_fails_closed(client) -> None:
 
     assert response.status_code == 404
     assert detail["error_code"] == "replay_trace_not_found"
+    assert detail["governed"] is True
+
+
+def test_replay_report_history_missing_id_fails_closed(client) -> None:
+    response = client.get("/api/v1/replay/reports/missing-report")
+    detail = response.json()["detail"]
+
+    assert response.status_code == 404
+    assert detail["error_code"] == "replay_report_not_found"
     assert detail["governed"] is True

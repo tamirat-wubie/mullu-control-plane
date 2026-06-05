@@ -48,6 +48,6 @@ Trace is the causal record. Replay is a controlled reconstruction of that record
 
 STATUS:
   Completeness: 100%
-  Invariants verified: trace causality, fail-closed replay, deterministic frame hashing, sequence verification, bounded reason codes, deterministic report hashing, operator replay report route
+  Invariants verified: trace causality, fail-closed replay, deterministic frame hashing, sequence verification, bounded reason codes, deterministic report hashing, operator replay report route, env-governed replay report persistence, operator report history queries
   Open issues: none
-  Next action: persist replay reports for operator history queries
+  Next action: configure `MULLU_REPLAY_REPORT_STORE_PATH` in hosted operator environments that require durable replay report history
