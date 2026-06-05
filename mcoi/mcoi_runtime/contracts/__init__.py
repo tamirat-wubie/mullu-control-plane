@@ -90,7 +90,18 @@ from .effect_assurance import (
     ReconciliationStatus,
 )
 from .evidence import EvidenceRecord
-from .execution import AcceptedRiskState, EffectRecord, ExecutionClosure, ExecutionOutcome, ExecutionResult
+from .execution import (
+    AcceptedRiskState,
+    EffectRecord,
+    ExecutionClosure,
+    ExecutionMode,
+    ExecutionOutcome,
+    ExecutionResult,
+    coerce_execution_mode,
+    execution_mode_allows_synthetic_output,
+    execution_mode_requires_backend,
+    execution_mode_requires_replay_evidence,
+)
 from .file_effects import FileEffectOperation, FileWriteReceipt
 from .shell_execution import ShellExecutionReceipt
 from .function import (
@@ -2131,8 +2142,13 @@ __all__ = [
     "ExpectedEffect",
     "EvidenceRecord",
     "ExecutionClosure",
+    "ExecutionMode",
     "ExecutionOutcome",
     "ExecutionResult",
+    "coerce_execution_mode",
+    "execution_mode_allows_synthetic_output",
+    "execution_mode_requires_backend",
+    "execution_mode_requires_replay_evidence",
     "FileEffectOperation",
     "FileWriteReceipt",
     "ShellExecutionReceipt",

@@ -25,6 +25,12 @@ from mcoi_runtime.core.agent_protocol import (
     TaskSpec,
     TaskStatus,
 )
+from mcoi_runtime.contracts.execution import (
+    ExecutionMode,
+    coerce_execution_mode,
+    execution_mode_allows_synthetic_output,
+    execution_mode_requires_replay_evidence,
+)
 from mcoi_runtime.governance.audit.trail import AuditTrail
 from mcoi_runtime.governance.network.webhook import WebhookManager
 
@@ -37,9 +43,21 @@ class NoCapableAgentError(ValueError):
         super().__init__(f"no capable agent for {capability}")
 
 
+class MissingWorkflowBackendError(RuntimeError):
+    """Raised when real workflow execution has no LLM backend."""
+
+
+class MissingWorkflowReplayEvidenceError(RuntimeError):
+    """Raised when replay mode has no replay evidence source."""
+
+
 def _classify_workflow_exception(exc: Exception) -> str:
     """Collapse workflow exceptions into stable, non-leaking error strings."""
     error_type = type(exc).__name__
+    if isinstance(exc, MissingWorkflowBackendError):
+        return "workflow execution backend missing"
+    if isinstance(exc, MissingWorkflowReplayEvidenceError):
+        return "workflow replay evidence missing"
     if isinstance(exc, TimeoutError):
         return f"workflow timeout ({error_type})"
     if isinstance(exc, ConnectionError):
@@ -95,6 +113,7 @@ class AgentWorkflowEngine:
         llm_complete_fn: Callable[[str, str], Any] | None = None,
         webhook_manager: WebhookManager | None = None,
         audit_trail: AuditTrail | None = None,
+        execution_mode: ExecutionMode | str = ExecutionMode.REAL,
         dry_run: bool = False,
     ) -> None:
         self._clock = clock
@@ -102,7 +121,10 @@ class AgentWorkflowEngine:
         self._llm_complete_fn = llm_complete_fn
         self._webhook_mgr = webhook_manager
         self._audit = audit_trail
-        self._dry_run = dry_run
+        supplied_execution_mode = coerce_execution_mode(execution_mode)
+        if dry_run and supplied_execution_mode != ExecutionMode.REAL:
+            raise ValueError("dry_run=True cannot be combined with explicit execution_mode")
+        self._execution_mode = ExecutionMode.DRY_RUN if dry_run else supplied_execution_mode
         self._workflow_counter = AtomicCounter()
         self._history: list[WorkflowResult] = []
 
@@ -158,15 +180,43 @@ class AgentWorkflowEngine:
                         "tokens": getattr(result, "total_tokens", 0),
                         "cost": getattr(result, "cost", 0.0),
                         "succeeded": getattr(result, "succeeded", True),
+                        "execution_mode": self._execution_mode.value,
                     }
                 else:
-                    llm_output = {"result": str(result)}
-                steps.append(WorkflowStep("llm_invoke", "ok", {"model": llm_output.get("model", "")}))
-            elif self._dry_run:
-                llm_output = {"content": "dry_run result", "dry_run": True}
-                steps.append(WorkflowStep("llm_invoke", "dry_run", {"reason": "dry_run enabled"}))
+                    llm_output = {
+                        "result": str(result),
+                        "execution_mode": self._execution_mode.value,
+                    }
+                steps.append(WorkflowStep(
+                    "llm_invoke",
+                    "ok",
+                    {
+                        "model": llm_output.get("model", ""),
+                        "execution_mode": self._execution_mode.value,
+                    },
+                ))
             else:
-                raise ValueError("agent workflow requires llm_complete_fn unless dry_run=True")
+                if execution_mode_requires_replay_evidence(self._execution_mode):
+                    raise MissingWorkflowReplayEvidenceError(
+                        "AgentWorkflowEngine requires replay evidence when execution_mode=replay"
+                    )
+                if not execution_mode_allows_synthetic_output(self._execution_mode):
+                    raise MissingWorkflowBackendError(
+                        f"AgentWorkflowEngine requires llm_complete_fn when execution_mode={self._execution_mode.value}"
+                    )
+                llm_output = {
+                    "content": f"{self._execution_mode.value} result",
+                    "execution_mode": self._execution_mode.value,
+                    "succeeded": True,
+                }
+                steps.append(WorkflowStep(
+                    "llm_invoke",
+                    "skipped",
+                    {
+                        "reason": "no LLM function",
+                        "execution_mode": self._execution_mode.value,
+                    },
+                ))
 
             # Step 5: Complete task
             task_result = self._task_mgr.complete(task_id, llm_output)
@@ -180,7 +230,11 @@ class AgentWorkflowEngine:
                     tenant_id=tenant_id,
                     target=task_id,
                     outcome="success",
-                    detail={"workflow_id": workflow_id, "cost": llm_output.get("cost", 0.0)},
+                    detail={
+                        "workflow_id": workflow_id,
+                        "cost": llm_output.get("cost", 0.0),
+                        "execution_mode": self._execution_mode.value,
+                    },
                 )
                 steps.append(WorkflowStep("audit", "ok", {}))
 
@@ -216,7 +270,11 @@ class AgentWorkflowEngine:
                     tenant_id=tenant_id,
                     target=task_id,
                     outcome="error",
-                    detail={"error": error_message, "workflow_id": workflow_id},
+                    detail={
+                        "error": error_message,
+                        "workflow_id": workflow_id,
+                        "execution_mode": self._execution_mode.value,
+                    },
                 )
 
             if self._webhook_mgr is not None:
@@ -232,7 +290,7 @@ class AgentWorkflowEngine:
                 agent_id=agent_id,
                 status="failed",
                 steps=tuple(steps),
-                output={},
+                output={"execution_mode": self._execution_mode.value},
                 error=error_message,
             )
             self._history.append(result)
@@ -258,4 +316,5 @@ class AgentWorkflowEngine:
             "total": self.total_workflows,
             "completed": self.completed_count,
             "failed": self.failed_count,
+            "execution_mode": self._execution_mode.value,
         }

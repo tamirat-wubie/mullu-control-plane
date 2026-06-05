@@ -18,6 +18,12 @@ import ast
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from mcoi_runtime.contracts.execution import (
+    ExecutionMode,
+    coerce_execution_mode,
+    execution_mode_allows_synthetic_output,
+    execution_mode_requires_replay_evidence,
+)
 from mcoi_runtime.core.tool_use import ToolRegistry, ToolResult
 
 
@@ -41,6 +47,14 @@ class ToolAugmentedResult:
     all_succeeded: bool
 
 
+class MissingToolAgentBackendError(RuntimeError):
+    """Raised when real tool-agent execution has no LLM backend."""
+
+
+class MissingToolAgentReplayEvidenceError(RuntimeError):
+    """Raised when replay mode has no replay evidence source."""
+
+
 class ToolAugmentedAgent:
     """Agent that can invoke tools during LLM-driven workflows.
 
@@ -56,13 +70,17 @@ class ToolAugmentedAgent:
         *,
         tool_registry: ToolRegistry,
         llm_fn: Callable[[str], Any] | None = None,
+        execution_mode: ExecutionMode | str = ExecutionMode.REAL,
         dry_run: bool = False,
         max_tool_calls: int = 10,
     ) -> None:
         self._tools = tool_registry
         self._llm_fn = llm_fn
-        self._dry_run = dry_run
         self._max_tool_calls = max_tool_calls
+        supplied_execution_mode = coerce_execution_mode(execution_mode)
+        if dry_run and supplied_execution_mode != ExecutionMode.REAL:
+            raise ValueError("dry_run=True cannot be combined with explicit execution_mode")
+        self._execution_mode = ExecutionMode.DRY_RUN if dry_run else supplied_execution_mode
         self._history: list[ToolAugmentedResult] = []
 
     def execute_with_tools(
@@ -97,10 +115,19 @@ class ToolAugmentedAgent:
         if self._llm_fn:
             llm_result = self._llm_fn(augmented_prompt)
             content = getattr(llm_result, "content", str(llm_result))
-        elif self._dry_run:
-            content = f"[dry-run: processed '{prompt[:50]}' with {len(available)} tools available]"
+        elif execution_mode_requires_replay_evidence(self._execution_mode):
+            raise MissingToolAgentReplayEvidenceError(
+                "ToolAugmentedAgent requires replay evidence when execution_mode=replay"
+            )
+        elif execution_mode_allows_synthetic_output(self._execution_mode):
+            content = (
+                f"[{self._execution_mode.value}: processed '{prompt[:50]}' "
+                f"with {len(available)} tools available]"
+            )
         else:
-            raise ValueError("tool-augmented agent requires llm_fn unless dry_run=True")
+            raise MissingToolAgentBackendError(
+                f"ToolAugmentedAgent requires llm_fn when execution_mode={self._execution_mode.value}"
+            )
 
         # Parse and execute tool calls from response
         tool_calls: list[ToolCallRecord] = []
@@ -175,4 +202,5 @@ class ToolAugmentedAgent:
             "executions": self.history_count,
             "total_tool_calls": total_tool_calls,
             "available_tools": self._tools.tool_count,
+            "execution_mode": self._execution_mode.value,
         }

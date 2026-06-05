@@ -8,6 +8,7 @@ from mcoi_runtime.governance.audit.trail import AuditTrail
 from mcoi_runtime.governance.network.webhook import WebhookManager, WebhookSubscription
 from mcoi_runtime.core.llm_integration import LLMIntegrationBridge
 from mcoi_runtime.adapters.llm_adapter import StubLLMBackend
+from mcoi_runtime.contracts.execution import ExecutionMode
 from mcoi_runtime.contracts.llm import LLMBudget
 
 
@@ -15,7 +16,14 @@ def fixed_clock() -> str:
     return "2026-03-26T12:00:00Z"
 
 
-def _setup(with_llm=True, with_webhook=True, with_audit=True, llm_fn_override=None, dry_run=False):
+def _setup(
+    with_llm=True,
+    with_webhook=True,
+    with_audit=True,
+    llm_fn_override=None,
+    execution_mode=ExecutionMode.REAL,
+    dry_run=False,
+):
     reg = AgentRegistry()
     reg.register(AgentDescriptor(
         agent_id="llm-agent", name="LLM Agent",
@@ -55,6 +63,7 @@ def _setup(with_llm=True, with_webhook=True, with_audit=True, llm_fn_override=No
         llm_complete_fn=llm_fn,
         webhook_manager=webhook_mgr,
         audit_trail=audit,
+        execution_mode=execution_mode,
         dry_run=dry_run,
     )
     return engine, audit, webhook_mgr
@@ -72,6 +81,7 @@ class TestAgentWorkflowEngine:
         assert result.status == "completed"
         assert result.agent_id == "llm-agent"
         assert result.output["content"]
+        assert result.output["execution_mode"] == "real"
         assert len(result.steps) >= 5
 
     def test_workflow_without_llm_fails_closed(self):
@@ -82,8 +92,8 @@ class TestAgentWorkflowEngine:
             payload={}, tenant_id="t1",
         )
         assert result.status == "failed"
-        assert result.output == {}
-        assert result.error == "workflow validation error (ValueError)"
+        assert result.output["execution_mode"] == "real"
+        assert result.error == "workflow execution backend missing"
         assert all(s.step_name != "complete" for s in result.steps)
 
     def test_workflow_dry_run_requires_explicit_flag(self):
@@ -95,9 +105,46 @@ class TestAgentWorkflowEngine:
         )
         assert result.status == "completed"
         assert result.output["content"] == "dry_run result"
-        assert result.output["dry_run"] is True
+        assert result.output["execution_mode"] == "dry_run"
         assert "test" not in result.output["content"]
-        assert any(s.step_name == "llm_invoke" and s.status == "dry_run" for s in result.steps)
+        assert any(s.step_name == "llm_invoke" and s.status == "skipped" for s in result.steps)
+
+    def test_real_workflow_without_llm_fails_closed(self):
+        engine, audit, webhook = _setup(with_llm=False)
+        result = engine.execute(
+            task_id="t1", description="test",
+            capability=AgentCapability.LLM_COMPLETION,
+            payload={}, tenant_id="t1",
+        )
+        assert result.status == "failed"
+        assert result.error == "workflow execution backend missing"
+        assert result.output["execution_mode"] == "real"
+        assert audit.query(action="workflow.failed")[-1].detail["execution_mode"] == "real"
+        assert webhook.delivery_history()[-1].payload["error"] == "workflow execution backend missing"
+
+    def test_replay_workflow_without_evidence_fails_closed(self):
+        engine, audit, webhook = _setup(with_llm=False, execution_mode=ExecutionMode.REPLAY)
+        result = engine.execute(
+            task_id="t1", description="test",
+            capability=AgentCapability.LLM_COMPLETION,
+            payload={}, tenant_id="t1",
+        )
+        assert result.status == "failed"
+        assert result.error == "workflow replay evidence missing"
+        assert result.output["execution_mode"] == "replay"
+        assert audit.query(action="workflow.failed")[-1].detail["execution_mode"] == "replay"
+        assert webhook.delivery_history()[-1].payload["error"] == "workflow replay evidence missing"
+
+    def test_test_mode_without_llm_is_explicit_synthetic_execution(self):
+        engine, _, _ = _setup(with_llm=False, execution_mode=ExecutionMode.TEST)
+        result = engine.execute(
+            task_id="t1", description="test",
+            capability=AgentCapability.LLM_COMPLETION,
+            payload={}, tenant_id="t1",
+        )
+        assert result.status == "completed"
+        assert result.output["content"] == "test result"
+        assert result.output["execution_mode"] == "test"
 
     def test_workflow_no_capable_agent(self):
         engine, audit, webhook = _setup()
@@ -199,6 +246,7 @@ class TestAgentWorkflowEngine:
         assert summary["total"] == 2
         assert summary["completed"] == 1
         assert summary["failed"] == 1
+        assert summary["execution_mode"] == "real"
 
     def test_step_details(self):
         engine, _, _ = _setup()
