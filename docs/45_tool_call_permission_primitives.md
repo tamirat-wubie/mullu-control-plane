@@ -18,6 +18,7 @@ binding, and audit-required enforcement.
 | Schema matcher | Validates arguments against a bounded JSON-schema subset | schema and arguments | bounded error codes |
 | Permission registry | Stores and evaluates permission primitives | tool call request | allow or deny decision |
 | Governed tool registry hook | Enforces permission before execution | invocation context | result with permission decision |
+| Operator API routes | Register, list, and evaluate permission primitives without invoking tools | permission payload or dry-run request | permission read model or decision |
 
 ## Grammar
 
@@ -58,6 +59,6 @@ tenant:tenant-1 may call tool:payments.send with args matching schema:schema-f68
 
 STATUS:
   Completeness: 100%
-  Invariants verified: exact tenant/tool lookup, fail-closed permission absence, bounded schema matching, exact budget binding, audit-required enforcement, deterministic argument hash
+  Invariants verified: exact tenant/tool lookup, fail-closed permission absence, bounded schema matching, exact budget binding, audit-required enforcement, deterministic argument hash, operator route exposure without tool execution
   Open issues: none
-  Next action: expose permission registry through operator API routes
+  Next action: add durable permission-registry backing only after hosted operator retention requirements are defined
