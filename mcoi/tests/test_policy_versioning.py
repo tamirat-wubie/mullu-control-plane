@@ -9,10 +9,17 @@ shadow evaluation never promotes a policy version.
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
+from mcoi_runtime.app.policy_version_integration import (
+    select_policy_version_registry,
+    validate_policy_version_registry_path,
+)
 from mcoi_runtime.governance.policy.engine import PolicyInput
 from mcoi_runtime.governance.policy.versioning import (
+    FilePolicyVersionRegistry,
     PolicyArtifact,
     PolicyVersionRegistry,
     ShadowGovernanceEvaluator,
@@ -133,3 +140,80 @@ def test_registry_fails_closed_on_unknown_versions() -> None:
         registry.rollback("tenant-governance")
 
     assert registry.get("tenant-governance") is None
+
+
+def test_file_policy_registry_persists_versions_and_active_history(tmp_path) -> None:
+    path = tmp_path / "policy-registry.json"
+    registry = FilePolicyVersionRegistry(path)
+    registry.register(_artifact("v1", (_deny_write_rule(), _allow_read_rule())))
+    registry.register(_artifact("v2", (_escalate_write_rule(), _allow_read_rule())))
+    registry.promote("tenant-governance", "v1")
+    registry.promote("tenant-governance", "v2")
+
+    reloaded = FilePolicyVersionRegistry(path)
+    active = reloaded.get("tenant-governance")
+    rolled_back = reloaded.rollback("tenant-governance")
+
+    assert path.exists()
+    assert active is not None
+    assert active.version == "v2"
+    assert rolled_back.version == "v1"
+    assert reloaded.get_version("tenant-governance", "v2") is not None
+
+
+def test_file_policy_registry_rejects_tampered_artifact_hash(tmp_path) -> None:
+    path = tmp_path / "policy-registry.json"
+    registry = FilePolicyVersionRegistry(path)
+    registry.register(_artifact("v1", (_deny_write_rule(),)))
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["artifacts"][0]["rules"][0]["action"] = "allow"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="hash mismatch"):
+        FilePolicyVersionRegistry(path)
+
+    assert payload["artifacts"][0]["rules"][0]["action"] == "allow"
+    assert payload["artifacts"][0]["artifact_hash"].startswith("policy-artifact-")
+
+
+def test_file_policy_registry_rejects_unknown_active_pointer(tmp_path) -> None:
+    path = tmp_path / "policy-registry.json"
+    registry = FilePolicyVersionRegistry(path)
+    registry.register(_artifact("v1", (_deny_write_rule(),)))
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["active_versions"] = {"tenant-governance": "missing"}
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="active pointer"):
+        FilePolicyVersionRegistry(path)
+
+    assert payload["active_versions"]["tenant-governance"] == "missing"
+    assert len(payload["artifacts"]) == 1
+
+
+def test_policy_version_registry_integration_selects_memory_or_file(tmp_path) -> None:
+    file_path = tmp_path / "policy-registry.json"
+    memory_bootstrap = select_policy_version_registry({})
+    file_bootstrap = select_policy_version_registry({
+        "MULLU_POLICY_VERSION_REGISTRY_PATH": str(file_path),
+    })
+
+    assert isinstance(memory_bootstrap.registry, PolicyVersionRegistry)
+    assert memory_bootstrap.persistent is False
+    assert isinstance(file_bootstrap.registry, FilePolicyVersionRegistry)
+    assert file_bootstrap.persistent is True
+    assert file_bootstrap.path == str(file_path)
+
+
+def test_policy_version_registry_path_validation_requires_absolute_json_path(tmp_path) -> None:
+    valid_path = tmp_path / "policy-registry.json"
+    selected_path = validate_policy_version_registry_path(valid_path)
+
+    with pytest.raises(RuntimeError):
+        validate_policy_version_registry_path("relative.json")
+    with pytest.raises(RuntimeError):
+        validate_policy_version_registry_path(tmp_path / "policy-registry.txt")
+
+    assert selected_path == valid_path
+    assert selected_path.suffix == ".json"
+    assert selected_path.parent == tmp_path

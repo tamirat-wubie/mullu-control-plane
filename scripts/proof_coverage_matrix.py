@@ -1191,12 +1191,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
             "audit_chain",
             "proven",
             [
+                "mcoi/mcoi_runtime/app/policy_version_integration.py",
                 "mcoi/mcoi_runtime/app/routers/policy_versions.py",
                 "mcoi/mcoi_runtime/governance/policy/versioning.py",
                 "mcoi/tests/test_policy_version_endpoints.py",
                 "mcoi/tests/test_policy_versioning.py",
             ],
-            "Policy version routes expose immutable artifact registration, promotion, rollback, diff, and shadow evaluation.",
+            "Policy version routes expose immutable artifact registration, promotion, rollback, diff, shadow evaluation, and env-governed durable registry persistence.",
             [
                 "policy_version_register_and_fetch",
                 "policy_version_promote_diff_shadow_and_rollback",
@@ -1206,6 +1207,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "policy_diff_reports_changed_and_added_rules",
                 "shadow_governance_compares_without_promoting",
                 "registry_fails_closed_on_unknown_versions",
+                "file_policy_registry_persists_versions_and_active_history",
+                "file_policy_registry_rejects_tampered_artifact_hash",
+                "file_policy_registry_rejects_unknown_active_pointer",
+                "policy_version_registry_integration_selects_memory_or_file",
+                "policy_version_registry_path_validation_requires_absolute_json_path",
             ],
         ),
         _surface(

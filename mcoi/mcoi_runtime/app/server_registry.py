@@ -56,6 +56,7 @@ def bootstrap_dependency_registry(
     capability_bootstrap: Any,
     platform_cls: type[Any] = GovernedPlatform,
     policy_version_registry_cls: type[Any] = PolicyVersionRegistry,
+    policy_version_registry: Any | None = None,
     wire_runtime_dependencies_fn: Callable[..., Any] = wire_runtime_dependencies,
     register_dependency_groups_fn: Callable[..., Any] = register_dependency_groups,
 ) -> DependencyRegistryBootstrap:
@@ -154,7 +155,8 @@ def bootstrap_dependency_registry(
     tenant_analytics = capability_bootstrap.tenant_analytics
     wf_templates = capability_bootstrap.wf_templates
     event_store = capability_bootstrap.event_store
-    policy_version_registry = policy_version_registry_cls()
+    if policy_version_registry is None:
+        policy_version_registry = policy_version_registry_cls()
 
     platform = platform_cls(
         clock=clock,
