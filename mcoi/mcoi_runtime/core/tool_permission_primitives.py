@@ -2,7 +2,8 @@
 
 Governance scope: tenant-scoped tool permissions, bounded argument-schema
 matching, budget binding, and audit-required enforcement for agent tool calls.
-Dependencies: runtime invariant helpers and standard deterministic hashing.
+Dependencies: runtime invariant helpers, standard deterministic hashing, and
+optional JSON-file persistence.
 Invariants: permission checks fail closed; argument hashes are stable; schema
 matching is bounded; audit-required permissions cannot execute without audit.
 """
@@ -12,6 +13,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from hashlib import sha256
 import json
+import os
+from pathlib import Path
+import tempfile
 import threading
 from typing import Any, Literal
 
@@ -163,6 +167,52 @@ class ToolPermissionRegistry:
         return _decision(request, permission=permission, allowed=False, reason_codes=reason_codes)
 
 
+class FileToolPermissionRegistry(ToolPermissionRegistry):
+    """JSON-file backed tool permission registry."""
+
+    def __init__(self, path: Path) -> None:
+        if not isinstance(path, Path):
+            raise ValueError("path must be a Path instance")
+        self._path = path
+        super().__init__()
+        self._load_if_present()
+
+    def register(self, permission: ToolCallPermission) -> ToolCallPermission:
+        stored = super().register(permission)
+        self._persist()
+        return stored
+
+    def _persist(self) -> None:
+        with self._lock:
+            permissions = tuple(sorted(self._permissions.values(), key=lambda item: item.permission_id))
+        payload = {
+            "schema_version": 1,
+            "permissions": [_permission_to_json(permission) for permission in permissions],
+        }
+        _atomic_write(self._path, _deterministic_json(payload))
+
+    def _load_if_present(self) -> None:
+        if not self._path.exists():
+            return
+        try:
+            raw = json.loads(self._path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, ValueError) as exc:
+            raise ValueError(_bounded_registry_error("malformed tool permission registry file", exc)) from exc
+        if not isinstance(raw, dict):
+            raise ValueError("tool permission registry payload must be an object")
+        if raw.get("schema_version") != 1:
+            raise ValueError("tool permission registry schema version unsupported")
+        permissions_raw = raw.get("permissions")
+        if not isinstance(permissions_raw, list):
+            raise ValueError("tool permission registry permissions must be a list")
+        with self._lock:
+            for item in permissions_raw:
+                permission = _permission_from_json(item)
+                if permission.permission_id in self._permissions:
+                    raise ValueError("duplicate tool permission in registry file")
+                self._permissions[permission.permission_id] = permission
+
+
 def _evaluate_permission(
     permission: ToolCallPermission,
     request: ToolPermissionRequest,
@@ -202,6 +252,82 @@ def _decision(
         schema_hash=permission.schema_hash() if permission else "",
         grammar=permission.grammar() if permission else "",
     )
+
+
+def _permission_to_json(permission: ToolCallPermission) -> dict[str, Any]:
+    return {
+        "permission_id": permission.permission_id,
+        "tenant_id": permission.tenant_id,
+        "tool_name": permission.tool_name,
+        "argument_schema": permission.argument_schema,
+        "budget_ref": permission.budget_ref,
+        "audit_required": permission.audit_required,
+        "description": permission.description,
+    }
+
+
+def _permission_from_json(raw: Any) -> ToolCallPermission:
+    if not isinstance(raw, dict):
+        raise ValueError("tool permission payload must be an object")
+    try:
+        argument_schema = raw["argument_schema"]
+        if not isinstance(argument_schema, dict) or not argument_schema:
+            raise ValueError("tool permission argument_schema must be a non-empty object")
+        audit_required = raw["audit_required"]
+        if not isinstance(audit_required, bool):
+            raise ValueError("tool permission audit_required must be a bool")
+        description = raw.get("description", "")
+        if not isinstance(description, str):
+            raise ValueError("tool permission description must be a string")
+        permission = ToolCallPermission(
+            tenant_id=ensure_non_empty_text("tenant_id", raw["tenant_id"]),
+            tool_name=ensure_non_empty_text("tool_name", raw["tool_name"]),
+            argument_schema=argument_schema,
+            budget_ref=ensure_non_empty_text("budget_ref", raw["budget_ref"]),
+            audit_required=audit_required,
+            permission_id=ensure_non_empty_text("permission_id", raw["permission_id"]),
+            description=description,
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError(_bounded_registry_error("invalid tool permission payload", exc)) from exc
+    expected = ToolCallPermission(
+        tenant_id=permission.tenant_id,
+        tool_name=permission.tool_name,
+        argument_schema=permission.argument_schema,
+        budget_ref=permission.budget_ref,
+        audit_required=permission.audit_required,
+        description=permission.description,
+    ).permission_id
+    if permission.permission_id != expected:
+        raise ValueError("tool permission identity mismatch")
+    return permission
+
+
+def _deterministic_json(payload: Any) -> str:
+    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
+
+
+def _bounded_registry_error(summary: str, exc: BaseException) -> str:
+    return f"{summary} ({type(exc).__name__})"
+
+
+def _atomic_write(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        fd, tmp_path = tempfile.mkstemp(dir=str(path.parent), suffix=".tmp")
+        try:
+            os.write(fd, content.encode("utf-8"))
+            os.close(fd)
+            fd = -1
+            os.replace(tmp_path, str(path))
+        except BaseException:
+            if fd >= 0:
+                os.close(fd)
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+            raise
+    except OSError as exc:
+        raise ValueError(_bounded_registry_error("tool permission registry persistence failed", exc)) from exc
 
 
 def validate_arguments(schema: dict[str, Any], arguments: dict[str, Any]) -> tuple[str, ...]:

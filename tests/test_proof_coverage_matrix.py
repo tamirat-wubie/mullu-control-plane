@@ -229,7 +229,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["proof_route_gap_triage"]["unanchored_witness_count"] == 0
     assert surfaces["tool_registry_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["tool_permission_registry"]["unanchored_witness_count"] == 0
-    assert surfaces["tool_permission_registry"]["exact_test_anchor_count"] == 7
+    assert surfaces["tool_permission_registry"]["exact_test_anchor_count"] == 11
     assert surfaces["gateway_capability_fabric"]["unanchored_witness_count"] == 0
     assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 15
     assert surfaces["capability_worker_execution"]["unanchored_witness_count"] == 0
@@ -298,6 +298,19 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["production_evidence_plane"]["exact_test_anchor_count"] == 10
     assert surfaces["capability_manifest_registry"]["unanchored_witness_count"] == 0
     assert surfaces["capability_manifest_registry"]["exact_test_anchor_count"] == 9
+
+
+def test_tool_permission_registry_surface_covers_durable_persistence() -> None:
+    matrix = _load_fixture()
+    surface = {item["surface_id"]: item for item in matrix["surfaces"]}["tool_permission_registry"]
+    evidence_files = set(surface["evidence_files"])
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert "mcoi/mcoi_runtime/app/tool_permission_integration.py" in evidence_files
+    assert "file_tool_permission_registry_persists_and_reloads_permissions" in witnesses
+    assert "file_tool_permission_registry_rejects_tampered_permission_identity" in witnesses
+    assert "tool_permission_registry_integration_selects_memory_or_file" in witnesses
+    assert "tool_permission_registry_path_validation_requires_absolute_json_path" in witnesses
 
 
 def test_declared_routes_have_explicit_coverage_classification() -> None:

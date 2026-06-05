@@ -9,8 +9,18 @@ audit presence; argument hashes and schema hashes are deterministic.
 
 from __future__ import annotations
 
+import json
+
+import pytest
+
+from mcoi_runtime.app.tool_permission_integration import (
+    TOOL_PERMISSION_REGISTRY_PATH_ENV,
+    select_tool_permission_registry,
+    validate_tool_permission_registry_path,
+)
 from mcoi_runtime.core.governed_tool_use import GovernedToolRegistry, ToolDefinition
 from mcoi_runtime.core.tool_permission_primitives import (
+    FileToolPermissionRegistry,
     ToolCallPermission,
     ToolPermissionRegistry,
     ToolPermissionRequest,
@@ -119,3 +129,61 @@ def test_governed_tool_registry_applies_bound_permission_registry() -> None:
     assert denied.permission_decision.reason_codes == ("budget_mismatch",)
     assert allowed.allowed is True
     assert allowed.result == {"sent": True}
+
+
+def test_file_tool_permission_registry_persists_and_reloads_permissions(tmp_path) -> None:
+    path = tmp_path / "tool-permissions.json"
+    registry = FileToolPermissionRegistry(path)
+    permission = registry.register(_permission())
+
+    reloaded = FileToolPermissionRegistry(path)
+    permissions = reloaded.list_permissions(tenant_id="tenant-1")
+    decision = reloaded.evaluate(_request())
+
+    assert path.exists()
+    assert len(permissions) == 1
+    assert permissions[0].permission_id == permission.permission_id
+    assert permissions[0].schema_hash() == permission.schema_hash()
+    assert decision.allowed is True
+    assert decision.reason_codes == ("permission_matched",)
+    assert decision.grammar == permission.grammar()
+
+
+def test_file_tool_permission_registry_rejects_tampered_permission_identity(tmp_path) -> None:
+    path = tmp_path / "tool-permissions.json"
+    registry = FileToolPermissionRegistry(path)
+    permission = registry.register(_permission())
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["permissions"][0]["budget_ref"] = "budget-tampered"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="tool permission identity mismatch"):
+        FileToolPermissionRegistry(path)
+
+    assert permission.permission_id
+    assert payload["permissions"][0]["permission_id"] == permission.permission_id
+    assert payload["permissions"][0]["budget_ref"] == "budget-tampered"
+
+
+def test_tool_permission_registry_integration_selects_memory_or_file(tmp_path) -> None:
+    path = tmp_path / "tool-permissions.json"
+
+    memory_bootstrap = select_tool_permission_registry({})
+    file_bootstrap = select_tool_permission_registry({TOOL_PERMISSION_REGISTRY_PATH_ENV: str(path)})
+
+    assert isinstance(memory_bootstrap.registry, ToolPermissionRegistry)
+    assert memory_bootstrap.persistent is False
+    assert memory_bootstrap.path == ""
+    assert isinstance(file_bootstrap.registry, FileToolPermissionRegistry)
+    assert file_bootstrap.persistent is True
+    assert file_bootstrap.path == str(path)
+
+
+def test_tool_permission_registry_path_validation_requires_absolute_json_path(tmp_path) -> None:
+    valid_path = tmp_path / "tool-permissions.json"
+
+    assert validate_tool_permission_registry_path(valid_path) == valid_path
+    with pytest.raises(RuntimeError, match="absolute file path"):
+        validate_tool_permission_registry_path("relative/tool-permissions.json")
+    with pytest.raises(RuntimeError, match="json file extension"):
+        validate_tool_permission_registry_path(tmp_path / "tool-permissions.txt")
