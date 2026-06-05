@@ -18,10 +18,13 @@ from mcoi_runtime.governance.guards.content_safety import (
 )
 from mcoi_runtime.governance.guards.policy_checkpoint import (
     HTTP_POLICY_CHECKPOINTS,
+    PROTECTED_HTTP_CHECKPOINT_IDS,
+    PROTECTED_SESSION_LLM_CHECKPOINT_IDS,
     SESSION_LLM_POLICY_CHECKPOINTS,
     PolicyCheckpoint,
     PolicyCheckpointPhase,
     PolicyCheckpointSurface,
+    assert_protected_checkpoint_ids,
     assert_unique_checkpoint_ids,
     checkpoint_ids,
 )
@@ -29,6 +32,11 @@ from mcoi_runtime.governance.guards.policy_checkpoint import (
 
 def test_http_policy_checkpoints_match_guard_chain_order() -> None:
     assert_unique_checkpoint_ids(HTTP_POLICY_CHECKPOINTS)
+    assert_protected_checkpoint_ids(
+        HTTP_POLICY_CHECKPOINTS,
+        required_ids=PROTECTED_HTTP_CHECKPOINT_IDS,
+        surface_name="http_guard_chain",
+    )
 
     assert checkpoint_ids(HTTP_POLICY_CHECKPOINTS) == (
         "api_key",
@@ -50,6 +58,11 @@ def test_http_policy_checkpoints_match_guard_chain_order() -> None:
 
 def test_session_llm_policy_checkpoints_cover_adjacent_post_dispatch_guards() -> None:
     assert_unique_checkpoint_ids(SESSION_LLM_POLICY_CHECKPOINTS)
+    assert_protected_checkpoint_ids(
+        SESSION_LLM_POLICY_CHECKPOINTS,
+        required_ids=PROTECTED_SESSION_LLM_CHECKPOINT_IDS,
+        surface_name="session_adjacent",
+    )
     ids = checkpoint_ids(SESSION_LLM_POLICY_CHECKPOINTS)
 
     assert ids == (
@@ -104,3 +117,25 @@ def test_duplicate_checkpoint_ids_fail_closed() -> None:
 
     with pytest.raises(ValueError, match="duplicate policy checkpoint ids: proof"):
         assert_unique_checkpoint_ids(duplicate)
+
+
+def test_missing_protected_checkpoint_ids_fail_closed() -> None:
+    missing_proof = tuple(
+        checkpoint
+        for checkpoint in SESSION_LLM_POLICY_CHECKPOINTS
+        if checkpoint.checkpoint_id != "proof"
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="missing protected policy checkpoint ids for session_adjacent",
+    ) as exc_info:
+        assert_protected_checkpoint_ids(
+            missing_proof,
+            required_ids=PROTECTED_SESSION_LLM_CHECKPOINT_IDS,
+            surface_name="session_adjacent",
+        )
+
+    assert "proof" in str(exc_info.value)
+    assert checkpoint_ids(missing_proof) != checkpoint_ids(SESSION_LLM_POLICY_CHECKPOINTS)
+    assert "proof" in PROTECTED_SESSION_LLM_CHECKPOINT_IDS
