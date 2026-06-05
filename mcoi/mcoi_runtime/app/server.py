@@ -48,6 +48,9 @@ from mcoi_runtime.app.software_receipt_integration import (
 from mcoi_runtime.app.finance_approval_integration import (
     select_finance_approval_store,
 )
+from mcoi_runtime.app.replay_report_integration import (
+    select_replay_report_store,
+)
 from mcoi_runtime.app.artifact_lineage_integration import (
     bootstrap_artifact_lineage,
 )
@@ -332,6 +335,10 @@ register_operational_math_observability(
     observability=observability,
     receipt_store=operational_math_receipt_store,
 )
+
+_replay_report_bootstrap = select_replay_report_store(os.environ)
+replay_report_store = _replay_report_bootstrap.store
+deps.set("replay_report_store", replay_report_store)
 
 _temporal_store_bootstrap = select_temporal_scheduler_store(os.environ)
 temporal_scheduler_store = _temporal_store_bootstrap.store
