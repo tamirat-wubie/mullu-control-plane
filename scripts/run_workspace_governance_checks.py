@@ -551,6 +551,26 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_persistence_tenant_guard_coverage.py"),
         ),
         CheckCommand(
+            "mcp_capability_manifest",
+            (
+                python_executable,
+                "scripts/validate_mcp_capability_manifest.py",
+                "--manifest",
+                "examples/mcp_capability_manifest.json",
+                "--json",
+            ),
+        ),
+        CheckCommand(
+            "mcp_operator_checklist",
+            (
+                python_executable,
+                "scripts/validate_mcp_operator_checklist.py",
+                "--checklist",
+                "examples/mcp_operator_handoff_checklist.json",
+                "--json",
+            ),
+        ),
+        CheckCommand(
             "strict_schema_validation",
             (python_executable, "scripts/validate_schemas.py", "--strict"),
         ),
