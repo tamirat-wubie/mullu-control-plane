@@ -24,6 +24,19 @@ import sys
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
+FOUNDATION_CORE_GUIDANCE_SURFACES = (
+    "AGENTS.md",
+    "README.md",
+    "docs/START_HERE.md",
+    "docs/CURRENT_READINESS_SNAPSHOT.md",
+    "docs/FOUNDATION_MODE.md",
+    "docs/FOUNDATION_PREREQUISITES.md",
+    "docs/WEBSITE_UPDATE_CHECKLIST.md",
+    "docs/PUBLIC_NAMING_REVIEW_PACKET.md",
+    "docs/explain/PLAIN_ENGLISH.md",
+    "site/mullu/index.html",
+)
+
 REQUIRED_PHRASES_BY_FILE = {
     "AGENTS.md": (
         "Assume `Foundation Mode` unless the user or a signed status witness explicitly",
@@ -2027,6 +2040,40 @@ def read_required_text(repo_root: Path, relative_path: str) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def validate_core_guidance_surface_registration(
+    repo_root: Path = REPO_ROOT,
+    required_surfaces: tuple[str, ...] = FOUNDATION_CORE_GUIDANCE_SURFACES,
+    phrase_map: dict[str, tuple[str, ...]] = REQUIRED_PHRASES_BY_FILE,
+) -> list[FoundationModeFinding]:
+    """Return findings when canonical Foundation guidance surfaces lose validation coverage."""
+
+    findings: list[FoundationModeFinding] = []
+    for relative_path in required_surfaces:
+        if relative_path not in phrase_map:
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_core_guidance_surface_unregistered",
+                    f"REQUIRED_PHRASES_BY_FILE missing core guidance surface: {relative_path}",
+                )
+            )
+        path = repo_root / relative_path
+        if not path.exists():
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_core_guidance_surface_missing",
+                    f"missing core Foundation guidance surface: {relative_path}",
+                )
+            )
+        elif not path.is_file():
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_core_guidance_surface_not_file",
+                    f"core Foundation guidance surface is not a file: {relative_path}",
+                )
+            )
+    return findings
+
+
 def validate_required_phrases(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
     """Return findings for missing current-posture anchor phrases."""
 
@@ -2359,6 +2406,7 @@ def validate_foundation_mode(repo_root: Path = REPO_ROOT) -> list[FoundationMode
     """Validate the repository Foundation Mode posture and return findings."""
 
     return [
+        *validate_core_guidance_surface_registration(repo_root),
         *validate_required_phrases(repo_root),
         *validate_forbidden_forward_phrases(repo_root),
         *validate_central_table_label_uniqueness(repo_root),

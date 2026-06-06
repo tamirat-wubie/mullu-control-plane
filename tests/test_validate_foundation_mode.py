@@ -19,8 +19,10 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.validate_foundation_mode import (  # noqa: E402
+    FOUNDATION_CORE_GUIDANCE_SURFACES,
     REQUIRED_PHRASES_BY_FILE,
     validate_central_foundation_dependency_headers,
+    validate_core_guidance_surface_registration,
     validate_foundation_boundary_status_blocks,
     validate_foundation_boundary_routing_surfaces,
     validate_central_table_label_uniqueness,
@@ -38,6 +40,11 @@ def test_foundation_mode_posture_passes() -> None:
 
 
 def test_required_phrase_map_covers_current_guidance_surfaces() -> None:
+    findings = validate_core_guidance_surface_registration()
+
+    assert findings == []
+    for relative_path in FOUNDATION_CORE_GUIDANCE_SURFACES:
+        assert relative_path in REQUIRED_PHRASES_BY_FILE
     assert "docs/FOUNDATION_MODE.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/FOUNDATION_PREREQUISITES.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md" in REQUIRED_PHRASES_BY_FILE
@@ -112,6 +119,20 @@ def test_required_phrase_map_covers_current_guidance_surfaces() -> None:
     assert "docs/WEBSITE_UPDATE_CHECKLIST.md" in REQUIRED_PHRASES_BY_FILE
     assert "docs/PUBLIC_NAMING_REVIEW_PACKET.md" in REQUIRED_PHRASES_BY_FILE
     assert "site/mullu/index.html" in REQUIRED_PHRASES_BY_FILE
+
+
+def test_core_guidance_surface_registration_missing_entry_is_reported(tmp_path: Path) -> None:
+    (tmp_path / "README.md").write_text("Foundation Mode\n", encoding="utf-8")
+    findings = validate_core_guidance_surface_registration(
+        tmp_path,
+        required_surfaces=("README.md", "docs/START_HERE.md"),
+        phrase_map={"README.md": ("Foundation Mode",)},
+    )
+
+    assert findings
+    assert any(finding.rule_id == "foundation_core_guidance_surface_unregistered" for finding in findings)
+    assert any(finding.rule_id == "foundation_core_guidance_surface_missing" for finding in findings)
+    assert any("docs/START_HERE.md" in finding.message for finding in findings)
 
 
 def test_all_foundation_boundary_docs_are_registered_and_routed() -> None:
