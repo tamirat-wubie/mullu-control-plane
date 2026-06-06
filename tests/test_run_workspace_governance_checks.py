@@ -77,6 +77,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "route_receipt_coverage",
         "route_guard_chain_coverage",
         "reflective_contract_guard",
+        "strict_schema_validation",
+        "strict_artifact_validation",
     ]
     terminal_protocol_phase = [
         "universal_action_orchestration_contract",
@@ -203,6 +205,14 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["reflective_contract_guard"][1:] == (
         "scripts/validate_reflective_contracts.py",
+    )
+    assert args_by_name["strict_schema_validation"][1:] == (
+        "scripts/validate_schemas.py",
+        "--strict",
+    )
+    assert args_by_name["strict_artifact_validation"][1:] == (
+        "scripts/validate_artifacts.py",
+        "--strict",
     )
     assert args_by_name["sdlc_release_readiness_validation"][1:] == (
         "scripts/validate_sdlc_release_readiness.py",
