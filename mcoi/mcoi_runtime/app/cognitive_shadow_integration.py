@@ -136,8 +136,8 @@ def read_shadow_observations(deps: object, *, limit: int = 50) -> dict[str, obje
     if observer is None:
         return empty
 
-    capped = max(1, int(limit))
-    reports = observer.recent_reports()[-capped:]
+    capped = max(0, int(limit))
+    reports = [] if capped == 0 else observer.recent_reports()[-capped:]
     summary = observer.summary()
     return {
         "enabled": True,

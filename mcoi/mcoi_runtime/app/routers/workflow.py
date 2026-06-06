@@ -5,7 +5,7 @@ Covers governed execution, sessions, ledger, workflow execution
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NoReturn
 
 from fastapi import APIRouter, HTTPException, Header, Request
 from pydantic import BaseModel, Field
@@ -27,10 +27,35 @@ from mcoi_runtime.core.tool_use import certify_tool_capability_policy_receipt
 import hashlib
 
 router = APIRouter()
+_MAX_WORKFLOW_READ_LIMIT = 500
 
 
 def _workflow_error_detail(error: str, error_code: str) -> dict[str, object]:
     return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _raise_workflow_validation_error(error: ValueError) -> NoReturn:
+    raise HTTPException(
+        status_code=422,
+        detail=_workflow_error_detail("invalid workflow read request", "workflow_invalid_read_request"),
+    ) from error
+
+
+def _coerce_workflow_read_limit(limit: object) -> int:
+    if isinstance(limit, bool):
+        raise ValueError("limit must be an integer")
+    if isinstance(limit, int):
+        value = limit
+    elif isinstance(limit, str):
+        normalized = limit.strip()
+        if not normalized.isdecimal():
+            raise ValueError("limit must be an integer")
+        value = int(normalized)
+    else:
+        raise ValueError("limit must be an integer")
+    if value < 0 or value > _MAX_WORKFLOW_READ_LIMIT:
+        raise ValueError("limit is outside the allowed range")
+    return value
 
 
 def _cognitive_block_detail(verdict: str) -> dict[str, object]:
@@ -170,9 +195,13 @@ def create_session(actor_id: str, tenant_id: str, request: Request):
 
 
 @router.get("/api/v1/ledger")
-def get_ledger(request: Request, tenant_id: str = "system", limit: int = 50):
+def get_ledger(request: Request, tenant_id: str = "system", limit: str = "50"):
     tenant_id = scoped_listing_tenant(request, tenant_id)
-    entries = deps.store.query_ledger(tenant_id, limit=limit)
+    try:
+        read_limit = _coerce_workflow_read_limit(limit)
+    except ValueError as error:
+        _raise_workflow_validation_error(error)
+    entries = deps.store.query_ledger(tenant_id, limit=read_limit)
     return {"entries": entries, "count": len(entries), "governed": True}
 
 
@@ -228,19 +257,23 @@ def execute_workflow(req: WorkflowRequest, request: Request):
 
 
 @router.get("/api/v1/workflow/history")
-def workflow_history(limit: int = 50):
+def workflow_history(limit: str = "50"):
     """Workflow execution history."""
+    try:
+        read_limit = _coerce_workflow_read_limit(limit)
+    except ValueError as error:
+        _raise_workflow_validation_error(error)
     return {
         "workflows": [
             {"id": r.workflow_id, "task": r.task_id, "agent": r.agent_id, "status": r.status}
-            for r in deps.workflow_engine.history(limit=limit)
+            for r in deps.workflow_engine.history(limit=read_limit)
         ],
         "summary": deps.workflow_engine.summary(),
     }
 
 
 @router.get("/api/v1/cognitive/shadow/observations")
-def cognitive_shadow_observations(limit: int = 50):
+def cognitive_shadow_observations(limit: str = "50"):
     """Read-only view of the cognitive shadow observer's recorded observations.
 
     Surfaces the evidence the record-only Stage-A shadow gathers on live traffic:
@@ -251,7 +284,11 @@ def cognitive_shadow_observations(limit: int = 50):
     observer is absent and this returns ``enabled: false`` with empty data. This
     endpoint holds NO authority - it only reads what the shadow already recorded.
     """
-    return read_shadow_observations(deps, limit=limit)
+    try:
+        read_limit = _coerce_workflow_read_limit(limit)
+    except ValueError as error:
+        _raise_workflow_validation_error(error)
+    return read_shadow_observations(deps, limit=read_limit)
 
 
 # ═══ Traced Workflow ══════════════════════════════════════════════════════
@@ -394,12 +431,16 @@ def execute_pipeline(req: PipelineRequest, request: Request):
 
 
 @router.get("/api/v1/pipeline/history")
-def pipeline_history(limit: int = 50):
+def pipeline_history(limit: str = "50"):
     """Batch pipeline execution history."""
+    try:
+        read_limit = _coerce_workflow_read_limit(limit)
+    except ValueError as error:
+        _raise_workflow_validation_error(error)
     return {
         "pipelines": [
             {"id": p.pipeline_id, "succeeded": p.succeeded, "steps": len(p.steps), "cost": p.total_cost}
-            for p in deps.batch_pipeline.history(limit=limit)
+            for p in deps.batch_pipeline.history(limit=read_limit)
         ],
         "summary": deps.batch_pipeline.summary(),
     }

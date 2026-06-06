@@ -153,3 +153,17 @@ def test_read_respects_limit():
     assert view["enabled"] is True
     assert len(view["observations"]) == 2  # capped to the most recent 2
     assert view["summary"]["observed"] == 5  # summary still reflects all retained
+
+
+def test_read_zero_limit_returns_no_enabled_observations():
+    organs = bootstrap_cognitive_runtime(clock=_clock)
+    observer = build_shadow_observer({COGNITIVE_LOOP_SHADOW_ENV: "1"}, organs, clock=_clock)
+    for i in range(3):
+        observer.observe(capability_id=f"cap-{i}", live_succeeded=True)
+    deps = _Deps({SHADOW_OBSERVER_DEP: observer})
+
+    view = read_shadow_observations(deps, limit=0)
+
+    assert view["enabled"] is True
+    assert view["observations"] == []
+    assert view["summary"]["observed"] == 3

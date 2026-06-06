@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
+
 from mcoi_runtime.adapters.llm_adapter import StubLLMBackend
 from mcoi_runtime.contracts.effect_assurance import ExpectedEffect, ReconciliationStatus
 from mcoi_runtime.contracts.execution import ExecutionOutcome, ExecutionResult
@@ -183,15 +185,12 @@ def test_workflow_history_bounded(test_client) -> None:
 
     response = test_client.get("/api/v1/workflow/history", params={"limit": 1})
     zero_response = test_client.get("/api/v1/workflow/history", params={"limit": 0})
-    negative_response = test_client.get("/api/v1/workflow/history", params={"limit": -1})
     body = response.json()
     workflow = body["workflows"][0]
     assert response.status_code == 200
     assert zero_response.status_code == 200
-    assert negative_response.status_code == 200
     assert len(body["workflows"]) <= 1
     assert zero_response.json()["workflows"] == []
-    assert negative_response.json()["workflows"] == []
     assert set(workflow) == {"id", "task", "agent", "status"}
     assert body["summary"]["total"] >= len(body["workflows"])
 
@@ -458,6 +457,46 @@ def test_ledger_read_model_bounded(test_client) -> None:
     assert len(body["entries"]) <= 5
 
 
+@pytest.mark.parametrize(
+    ("endpoint", "params"),
+    [
+        ("/api/v1/ledger", {"tenant_id": "tenant-workflow-anchor", "limit": -1}),
+        ("/api/v1/ledger", {"tenant_id": "tenant-workflow-anchor", "limit": "not-a-limit"}),
+        ("/api/v1/ledger", {"tenant_id": "tenant-workflow-anchor", "limit": 501}),
+        ("/api/v1/workflow/history", {"limit": -1}),
+        ("/api/v1/workflow/history", {"limit": "not-a-limit"}),
+        ("/api/v1/workflow/history", {"limit": 501}),
+        ("/api/v1/cognitive/shadow/observations", {"limit": -1}),
+        ("/api/v1/cognitive/shadow/observations", {"limit": "not-a-limit"}),
+        ("/api/v1/cognitive/shadow/observations", {"limit": 501}),
+        ("/api/v1/pipeline/history", {"limit": -1}),
+        ("/api/v1/pipeline/history", {"limit": "not-a-limit"}),
+        ("/api/v1/pipeline/history", {"limit": 501}),
+    ],
+)
+def test_workflow_read_model_invalid_limits_are_bounded(test_client, endpoint, params) -> None:
+    response = test_client.get(endpoint, params=params)
+
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert detail["error"] == "invalid workflow read request"
+    assert detail["error_code"] == "workflow_invalid_read_request"
+    assert detail["governed"] is True
+    assert "not-a-limit" not in str(response.json())
+    assert "-1" not in str(response.json())
+    assert "501" not in str(response.json())
+    assert "limit" not in str(response.json())
+
+
+def test_cognitive_shadow_observations_zero_limit_is_empty_read(test_client) -> None:
+    response = test_client.get("/api/v1/cognitive/shadow/observations", params={"limit": 0})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["enabled"] is False
+    assert body["observations"] == []
+
+
 def test_pipeline_execution_emits_action_proof(test_client) -> None:
     response = test_client.post(
         "/api/v1/pipeline/execute",
@@ -494,15 +533,12 @@ def test_pipeline_history_bounded(test_client) -> None:
 
     response = test_client.get("/api/v1/pipeline/history", params={"limit": 1})
     zero_response = test_client.get("/api/v1/pipeline/history", params={"limit": 0})
-    negative_response = test_client.get("/api/v1/pipeline/history", params={"limit": -1})
     body = response.json()
     pipeline = body["pipelines"][0]
     assert response.status_code == 200
     assert zero_response.status_code == 200
-    assert negative_response.status_code == 200
     assert len(body["pipelines"]) <= 1
     assert zero_response.json()["pipelines"] == []
-    assert negative_response.json()["pipelines"] == []
     assert set(pipeline) == {"id", "succeeded", "steps", "cost"}
     assert body["summary"]["total"] >= len(body["pipelines"])
     assert pipeline["steps"] >= 1
