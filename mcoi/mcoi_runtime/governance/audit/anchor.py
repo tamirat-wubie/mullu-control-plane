@@ -124,6 +124,8 @@ class AuditAnchorStore:
         }
 
     def list_anchors(self, limit: int = 50) -> list[AuditAnchor]:
+        if limit <= 0:
+            return []
         with self._lock:
             return list(reversed(self._anchors[-limit:]))
 
