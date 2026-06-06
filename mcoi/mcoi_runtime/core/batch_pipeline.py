@@ -202,6 +202,8 @@ class BatchPipeline:
         return pipe_result
 
     def history(self, limit: int = 50) -> list[PipelineResult]:
+        if limit <= 0:
+            return []
         return self._history[-limit:]
 
     @property
