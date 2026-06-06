@@ -546,6 +546,26 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "general_agent_promotion_handoff_packet",
+            (
+                python_executable,
+                "scripts/validate_general_agent_promotion_handoff_packet.py",
+                "--packet",
+                "examples/general_agent_promotion_handoff_packet.json",
+                "--json",
+            ),
+        ),
+        CheckCommand(
+            "general_agent_promotion_operator_checklist",
+            (
+                python_executable,
+                "scripts/validate_general_agent_promotion_operator_checklist.py",
+                "--checklist",
+                "examples/general_agent_promotion_operator_checklist.json",
+                "--json",
+            ),
+        ),
+        CheckCommand(
             "route_receipt_coverage",
             (python_executable, "scripts/validate_receipt_coverage.py", "--strict"),
         ),

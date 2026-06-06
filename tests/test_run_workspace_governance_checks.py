@@ -76,6 +76,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "intelligence_coordination_episode_receipt",
         "engineering_puzzle_universality_witness",
         "mil_audit_runbook_operator_checklist",
+        "general_agent_promotion_handoff_packet",
+        "general_agent_promotion_operator_checklist",
         "route_receipt_coverage",
         "route_guard_chain_coverage",
         "reflective_contract_guard",
@@ -214,6 +216,18 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "scripts/validate_mil_audit_runbook_operator_checklist.py",
         "--checklist",
         "examples/mil_audit_runbook_operator_checklist.json",
+        "--json",
+    )
+    assert args_by_name["general_agent_promotion_handoff_packet"][1:] == (
+        "scripts/validate_general_agent_promotion_handoff_packet.py",
+        "--packet",
+        "examples/general_agent_promotion_handoff_packet.json",
+        "--json",
+    )
+    assert args_by_name["general_agent_promotion_operator_checklist"][1:] == (
+        "scripts/validate_general_agent_promotion_operator_checklist.py",
+        "--checklist",
+        "examples/general_agent_promotion_operator_checklist.json",
         "--json",
     )
     assert args_by_name["route_receipt_coverage"][1:] == (

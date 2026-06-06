@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1780664954.505807,
-  "check_count": 120,
+  "check_count": 122,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -1090,6 +1090,34 @@
       ],
       "return_code": 0,
       "stdout": "{\"checklist_id\": \"mil-audit-runbook-operator-v1\", \"checklist_path\": \"examples/mil_audit_runbook_operator_checklist.json\", \"errors\": [], \"step_count\": 5, \"valid\": true}\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "general_agent_promotion_handoff_packet",
+      "args": [
+        "python",
+        "scripts/validate_general_agent_promotion_handoff_packet.py",
+        "--packet",
+        "examples/general_agent_promotion_handoff_packet.json",
+        "--json"
+      ],
+      "return_code": 0,
+      "stdout": "{\"approval_required_count\": 10, \"errors\": [], \"open_blocker_count\": 6, \"packet_id\": \"general-agent-promotion-handoff-v1\", \"packet_path\": \"examples/general_agent_promotion_handoff_packet.json\", \"valid\": true}\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "general_agent_promotion_operator_checklist",
+      "args": [
+        "python",
+        "scripts/validate_general_agent_promotion_operator_checklist.py",
+        "--checklist",
+        "examples/general_agent_promotion_operator_checklist.json",
+        "--json"
+      ],
+      "return_code": 0,
+      "stdout": "{\"checklist_id\": \"general-agent-promotion-operator-v1\", \"checklist_path\": \"examples/general_agent_promotion_operator_checklist.json\", \"errors\": [], \"step_count\": 9, \"valid\": true}\n",
       "stderr": "",
       "passed": true
     },
