@@ -520,6 +520,13 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "intelligence_coordination_episode_receipt",
+            (
+                python_executable,
+                "scripts/validate_intelligence_coordination_episode_receipt.py",
+            ),
+        ),
+        CheckCommand(
             "universal_action_orchestration_contract",
             (python_executable, "scripts/validate_universal_action_orchestration.py"),
         ),
