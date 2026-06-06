@@ -207,6 +207,8 @@ class TraceStore:
     def query(
         self, *, tenant_id: str = "", outcome: str = "", limit: int = 50,
     ) -> list[RequestTrace]:
+        if limit <= 0:
+            return []
         results = list(self._traces)
         if tenant_id:
             results = [t for t in results if t.tenant_id == tenant_id]

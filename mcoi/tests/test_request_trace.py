@@ -3,7 +3,7 @@
 import time
 import pytest
 from mcoi_runtime.core.request_trace import (
-    TraceBuilder, TraceStore, RequestTrace, TraceSpan,
+    TraceBuilder, TraceStore,
 )
 
 
@@ -42,7 +42,7 @@ class TestTraceBuilder:
     def test_span_error_captured(self):
         builder = TraceBuilder(tenant_id="t1", endpoint="/test")
         with pytest.raises(RuntimeError, match="budget exhausted"):
-            with builder.span("guard:budget") as s:
+            with builder.span("guard:budget"):
                 raise RuntimeError("budget exhausted")
         trace = builder.finish(outcome="denied")
         assert trace.spans[0].status == "error"
@@ -117,6 +117,14 @@ class TestTraceStore:
         store.store(TraceBuilder(tenant_id="t1", endpoint="/a").finish(outcome="allowed"))
         store.store(TraceBuilder(tenant_id="t1", endpoint="/b").finish(outcome="denied"))
         assert len(store.query(outcome="denied")) == 1
+
+    def test_query_limit_bounds(self):
+        store = TraceStore()
+        for index in range(3):
+            store.store(TraceBuilder(tenant_id="t1", endpoint=f"/{index}").finish())
+        assert [trace.endpoint for trace in store.query(limit=1)] == ["/2"]
+        assert store.query(limit=0) == []
+        assert store.query(limit=-1) == []
 
     def test_bounded(self):
         store = TraceStore()
