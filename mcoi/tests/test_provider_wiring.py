@@ -140,6 +140,7 @@ def test_integration_rejects_lookalike_base_url_without_adapter_dispatch() -> No
         ),
     )
     adapter = TrackingConnectorAdapter()
+
     engine = IntegrationEngine(clock=lambda: _CLOCK, provider_registry=registry)
     engine.register(
         ConnectorDescriptor(
@@ -176,11 +177,12 @@ def test_integration_rejects_operation_outside_credential_scope() -> None:
         ),
     )
     adapter = TrackingConnectorAdapter()
+
     engine = IntegrationEngine(clock=lambda: _CLOCK, provider_registry=registry)
     engine.register(
         ConnectorDescriptor(
             connector_id="c-1", name="C", provider="p",
-            effect_class=EffectClass.EXTERNAL_WRITE, trust_class=TrustClass.BOUNDED_EXTERNAL,
+            effect_class=EffectClass.EXTERNAL_READ, trust_class=TrustClass.BOUNDED_EXTERNAL,
             credential_scope_id="s-1", enabled=True,
         ),
         adapter,
@@ -189,9 +191,8 @@ def test_integration_rejects_operation_outside_credential_scope() -> None:
 
     result = engine.invoke(InvocationRequest(
         connector_id="c-1", operation="delete",
-        parameters={"url": "https://allowed.com/resource"},
+        parameters={"url": "https://allowed.com/data"},
     ))
-
     assert result.status is ConnectorStatus.FAILED
     assert result.error_code == "credential_operation_scope_exceeded"
     assert adapter.invocation_count == 0

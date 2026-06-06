@@ -128,7 +128,11 @@ class IntegrationEngine:
                 return self._failure_result(request.connector_id, started_at, f"provider:{reason}")
 
             if not self._provider_registry.check_operation_in_scope(provider_id, request.operation):
-                return self._failure_result(request.connector_id, started_at, "credential_operation_scope_exceeded")
+                return self._failure_result(
+                    request.connector_id,
+                    started_at,
+                    "credential_operation_scope_exceeded",
+                )
 
             # URL scope check
             url = request.parameters.get("url", "")

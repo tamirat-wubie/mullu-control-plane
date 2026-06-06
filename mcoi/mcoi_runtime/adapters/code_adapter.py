@@ -15,6 +15,7 @@ Invariants:
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 import subprocess
@@ -34,6 +35,8 @@ from mcoi_runtime.contracts.code import (
     WorkspaceState,
 )
 from mcoi_runtime.core.invariants import ensure_non_empty_text
+
+_LOG = logging.getLogger(__name__)
 
 
 def _is_within_root(root: Path, target: Path) -> bool:
@@ -588,15 +591,21 @@ def _atomic_write_text(path: Path, content: str) -> None:
             handle.flush()
             try:
                 os.fsync(handle.fileno())
-            except OSError:
-                pass
+            except OSError as exc:
+                _LOG.warning(
+                    "code adapter file fsync failed",
+                    extra={"error_type": type(exc).__name__},
+                )
         os.replace(tmp_path, path)
         written = True
         if existing_mode is not None:
             try:
                 os.chmod(path, existing_mode)
-            except OSError:
-                pass
+            except OSError as exc:
+                _LOG.warning(
+                    "code adapter mode preservation failed",
+                    extra={"error_type": type(exc).__name__},
+                )
         if hasattr(os, "O_DIRECTORY"):
             try:
                 dir_fd = os.open(str(parent), os.O_DIRECTORY)
@@ -604,14 +613,20 @@ def _atomic_write_text(path: Path, content: str) -> None:
                     os.fsync(dir_fd)
                 finally:
                     os.close(dir_fd)
-            except OSError:
-                pass
+            except OSError as exc:
+                _LOG.warning(
+                    "code adapter parent fsync failed",
+                    extra={"error_type": type(exc).__name__},
+                )
     finally:
         if not written:
             try:
                 tmp_path.unlink(missing_ok=True)
-            except OSError:
-                pass
+            except OSError as exc:
+                _LOG.warning(
+                    "code adapter temp cleanup failed",
+                    extra={"error_type": type(exc).__name__},
+                )
 
 def _iter_workspace_files(root: Path):
     """Yield each regular file under root that resolves inside root.

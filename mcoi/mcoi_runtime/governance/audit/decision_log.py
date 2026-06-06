@@ -109,6 +109,8 @@ class GovernanceDecisionLog:
         clock: Callable[[], str],
         max_decisions: int = MAX_DECISIONS,
     ) -> None:
+        if max_decisions <= 0:
+            raise ValueError("max_decisions must be positive")
         self._clock = clock
         self._max_decisions = max_decisions
         self._decisions: deque[GovernanceDecision] = deque(maxlen=max_decisions)
@@ -183,6 +185,8 @@ class GovernanceDecisionLog:
         All filters are AND-combined.  Empty string means "any".
         Returns most recent first (reverse chronological).
         """
+        if limit <= 0:
+            return []
         with self._lock:
             results: list[GovernanceDecision] = []
             for decision in reversed(self._decisions):

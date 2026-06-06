@@ -111,7 +111,12 @@ def test_history_bounded() -> None:
             scenario=SimulationScenario.CUSTOM,
             description=f"test-{i}",
         ))
-    assert len(sb.recent_simulations(limit=10)) == 10
+    recent = sb.recent_simulations(limit=10)
+
+    assert len(recent) == 10
+    assert recent[0].simulation_id == "sim-h29"
+    assert sb.recent_simulations(limit=0) == []
+    assert sb.recent_simulations(limit=-1) == []
 
 
 def test_summary() -> None:

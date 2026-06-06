@@ -1,9 +1,10 @@
 """Phase 216B — A/B testing tests."""
 
-import pytest
 from mcoi_runtime.core.ab_testing import ABTestEngine
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+
+def FIXED_CLOCK() -> str:
+    return "2026-03-26T12:00:00Z"
 
 
 class _StubResult:
@@ -67,6 +68,16 @@ class TestABTestEngine:
         eng.run_experiment("b", {"x": lambda p: _StubResult("a", cost=0.001), "y": lambda p: _StubResult("b", cost=0.01)}, criteria="cost")
         rates = eng.win_rates()
         assert rates["x"] == 1.0
+
+    def test_history_bounded(self):
+        eng = ABTestEngine(clock=FIXED_CLOCK)
+        for prompt in ("a", "b", "c"):
+            eng.run_experiment(prompt, {"x": lambda p: _StubResult(p)})
+        recent = eng.history(limit=2)
+        assert len(recent) == 2
+        assert [experiment.experiment_id for experiment in recent] == ["ab-2", "ab-3"]
+        assert eng.history(limit=0) == []
+        assert eng.history(limit=-1) == []
 
     def test_summary(self):
         eng = ABTestEngine(clock=FIXED_CLOCK)

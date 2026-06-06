@@ -223,6 +223,8 @@ class PolicySandbox:
         return f"would be allowed under {scenario.value} scenario"
 
     def recent_simulations(self, limit: int = 20) -> list[SimulationResult]:
+        if limit <= 0:
+            return []
         with self._lock:
             return list(reversed(self._history[-limit:]))
 

@@ -23,7 +23,7 @@ import json
 from typing import Iterator
 
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 
 from mcoi_runtime.app.routers.constructs import (
@@ -85,6 +85,31 @@ def test_encoded_cursor_is_opaque():
     assert cursor != "aaaa-bbbb"
     # But round-trip works
     assert _decode_cursor(cursor) == "aaaa-bbbb"
+
+
+def test_invalid_cursor_reasons_are_bounded():
+    malformed_json = base64.urlsafe_b64encode(b"not-json").rstrip(b"=").decode("ascii")
+    non_object_payload = base64.urlsafe_b64encode(b"[1,2,3]").rstrip(b"=").decode("ascii")
+    missing_after_id = base64.urlsafe_b64encode(
+        json.dumps({"cursor": "x"}, separators=(",", ":")).encode(),
+    ).rstrip(b"=").decode("ascii")
+    invalid_after_id = base64.urlsafe_b64encode(
+        json.dumps({"after_id": ""}, separators=(",", ":")).encode(),
+    ).rstrip(b"=").decode("ascii")
+
+    cases = {
+        malformed_json: "malformed_json",
+        non_object_payload: "non_object_payload",
+        missing_after_id: "missing_after_id",
+        invalid_after_id: "invalid_after_id",
+    }
+    for cursor, expected_reason in cases.items():
+        with pytest.raises(HTTPException) as exc_info:
+            _decode_cursor(cursor)
+        assert exc_info.value.status_code == 400
+        assert exc_info.value.detail["error"] == "invalid_cursor"
+        assert exc_info.value.detail["reason"] == expected_reason
+        assert cursor not in str(exc_info.value.detail)
 
 
 # ============================================================
@@ -274,14 +299,17 @@ def test_cursor_only_no_limit_returns_default_page_size(client):
 
 
 def test_invalid_cursor_returns_400(client):
+    raw_cursor = "this-is-not-base64-json"
     _seed_constructs(client, 5)
     r = client.get(
         "/constructs",
         headers={"X-Tenant-ID": "acme"},
-        params={"cursor": "this-is-not-base64-json"},
+        params={"cursor": raw_cursor},
     )
     assert r.status_code == 400
     assert r.json()["detail"]["error"] == "invalid_cursor"
+    assert r.json()["detail"]["reason"] in {"malformed_base64", "malformed_json"}
+    assert raw_cursor not in str(r.json()["detail"])
 
 
 def test_invalid_limit_returns_400(client):

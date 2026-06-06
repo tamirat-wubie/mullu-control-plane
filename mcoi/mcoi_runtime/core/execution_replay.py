@@ -157,6 +157,8 @@ class ReplayRecorder:
         return None
 
     def list_traces(self, limit: int = 50) -> list[ReplayTrace]:
+        if limit <= 0:
+            return []
         # deque doesn't support slice indexing; materialize then slice.
         # Fine in practice — the deque is bounded so the temporary list
         # cannot exceed max_completed in size.

@@ -37,9 +37,11 @@ runtime does not yet behave as intended by the architecture specification.
   deployment-witness publication entries are now represented as governed
   capability families. Production claims still require live receipts,
   dependency probes, signed worker responses, and deployment witness evidence.
-- **Browser adapter not production-closed:** A restricted Playwright adapter
-  exists, but browser runtime dependencies, browser binaries, sandboxed worker
-  packaging, and live evidence are not yet published.
+- **Browser adapter evidence closed for restricted read-only scope:** The
+  restricted Playwright adapter, browser runtime dependencies, sandboxed worker
+  packaging, and live receipt path are represented through the adapter evidence
+  collector. External browser effects remain no-network/sandbox governed and
+  require separate receipts before any broader production claim.
 - **Document parser adapter evidence closed for parser-first scope:** Optional
   PDF/Office parser implementations, dependency probes, and live parser receipt
   evidence are represented through the adapter evidence collector. External

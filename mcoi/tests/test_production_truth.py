@@ -12,7 +12,7 @@ from dataclasses import dataclass
 import pytest
 
 from mcoi_runtime.governance.audit.anchor import AuditAnchorStore
-from mcoi_runtime.governance.guards.chain import create_api_key_guard, GuardResult
+from mcoi_runtime.governance.guards.chain import create_api_key_guard
 from mcoi_runtime.governance.auth.api_key import APIKeyManager
 
 
@@ -113,9 +113,13 @@ def test_anchor_not_found() -> None:
 def test_list_anchors() -> None:
     store = AuditAnchorStore(clock=lambda: _CLOCK)
     entries = [FakeEntry("h", 0)]
-    store.create_anchor(entries)
-    store.create_anchor(entries)
-    assert len(store.list_anchors()) == 2
+    first = store.create_anchor(entries)
+    second = store.create_anchor(entries)
+
+    assert store.list_anchors() == [second, first]
+    assert store.list_anchors(limit=1) == [second]
+    assert store.list_anchors(limit=0) == []
+    assert store.list_anchors(limit=-1) == []
 
 
 # --- HTTP Endpoint Tests ---

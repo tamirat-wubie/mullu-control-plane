@@ -297,6 +297,8 @@ class AgentWorkflowEngine:
             return result
 
     def history(self, limit: int = 50) -> list[WorkflowResult]:
+        if limit <= 0:
+            return []
         return self._history[-limit:]
 
     @property

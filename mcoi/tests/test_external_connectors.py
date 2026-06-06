@@ -798,7 +798,9 @@ class TestExecution:
 
         assert record.success is False
         assert record.error_message == "connector health not executable"
-        assert reg.get_failures(cid)[0].category is ConnectorFailureCategory.POLICY_BLOCKED
+        failures = reg.get_failures(cid)
+        assert len(failures) == 1
+        assert failures[0].category == ConnectorFailureCategory.POLICY_BLOCKED
 
     def test_execute_provider_exception_is_sanitized(self):
         reg = ExternalConnectorRegistry()
@@ -946,6 +948,7 @@ class TestExecuteWithFallback:
         result = reg.execute_with_fallback("chain-rate-skip", "send", {"body": "hi"})
 
         assert result["record"] is not None
+        assert result["record"].success is True
         assert result["connector_id"] == "sms-2"
         assert result["fallback_used"] is True
         assert len(result["attempts"]) == 1

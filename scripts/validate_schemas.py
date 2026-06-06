@@ -124,6 +124,10 @@ SCHEMA_CONTRACT_MAP: dict[str, tuple[str, str]] = {
         "mcoi_runtime.contracts.environment",
         "EnvironmentFingerprint",
     ),
+    "universal_evidence_graph.schema.json": (
+        "mcoi_runtime.contracts.universal_evidence_graph",
+        "UniversalEvidenceGraph",
+    ),
 }
 
 
@@ -1122,6 +1126,64 @@ def _build_plan(payload: dict[str, Any]) -> Any:
     )
 
 
+def _build_universal_evidence_graph(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.universal_evidence_graph import (
+        UniversalEvidenceGraph,
+        UniversalEvidenceGraphEdge,
+        UniversalEvidenceGraphEdgeKind,
+        UniversalEvidenceGraphNode,
+        UniversalEvidenceGraphNodeKind,
+        UniversalEvidenceQuestionAnswer,
+        UniversalEvidenceQuestionKind,
+    )
+
+    return UniversalEvidenceGraph(
+        graph_id=payload["graph_id"],
+        version=payload["version"],
+        generated_at=payload["generated_at"],
+        nodes=tuple(
+            UniversalEvidenceGraphNode(
+                node_id=node["node_id"],
+                node_kind=UniversalEvidenceGraphNodeKind(node["node_kind"]),
+                label=node["label"],
+                source_ref=node["source_ref"],
+                evidence_refs=tuple(node["evidence_refs"]),
+                confidence=node["confidence"],
+                created_at=node["created_at"],
+                metadata=node["metadata"],
+            )
+            for node in payload["nodes"]
+        ),
+        edges=tuple(
+            UniversalEvidenceGraphEdge(
+                edge_id=edge["edge_id"],
+                edge_kind=UniversalEvidenceGraphEdgeKind(edge["edge_kind"]),
+                source_node_id=edge["source_node_id"],
+                target_node_id=edge["target_node_id"],
+                evidence_refs=tuple(edge["evidence_refs"]),
+                confidence=edge["confidence"],
+                created_at=edge["created_at"],
+                metadata=edge["metadata"],
+            )
+            for edge in payload["edges"]
+        ),
+        questions=tuple(
+            UniversalEvidenceQuestionAnswer(
+                question_id=question["question_id"],
+                question_kind=UniversalEvidenceQuestionKind(question["question_kind"]),
+                target_node_id=question["target_node_id"],
+                answer_node_ids=tuple(question["answer_node_ids"]),
+                answer_edge_ids=tuple(question["answer_edge_ids"]),
+                confidence=question["confidence"],
+                created_at=question["created_at"],
+            )
+            for question in payload["questions"]
+        ),
+        receipt_refs=tuple(payload["receipt_refs"]),
+        metadata=payload["metadata"],
+    )
+
+
 FIXTURE_BUILDERS: dict[str, SharedFixtureBuilder] = {
     "communication_message.schema.json": _build_communication_message,
     "connector_descriptor.schema.json": _build_connector_descriptor,
@@ -1145,6 +1207,7 @@ FIXTURE_BUILDERS: dict[str, SharedFixtureBuilder] = {
     "verification_result.schema.json": _build_verification_result,
     "workflow.schema.json": _build_workflow,
     "learning_admission.schema.json": _build_learning_admission,
+    "universal_evidence_graph.schema.json": _build_universal_evidence_graph,
 }
 
 

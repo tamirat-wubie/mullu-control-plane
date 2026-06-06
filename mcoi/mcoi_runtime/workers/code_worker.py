@@ -747,6 +747,11 @@ def _workspace_snapshot(root: Path) -> dict[str, str]:
         try:
             children = sorted(directory.iterdir(), key=lambda child: child.as_posix())
         except OSError:
+            if directory != root:
+                try:
+                    snapshot[directory.relative_to(root).as_posix()] = "directory:unreadable"
+                except ValueError:
+                    pass
             continue
         for path in children:
             try:

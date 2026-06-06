@@ -13,7 +13,7 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable
 
 
@@ -76,7 +76,7 @@ class ABTestEngine:
                     latency_ms=round(latency, 2),
                     succeeded=getattr(result, "succeeded", True),
                 ))
-            except Exception as exc:
+            except Exception:
                 latency = (time.monotonic() - start) * 1000
                 variants.append(ABVariant(
                     variant_id=variant_id, model_id=variant_id,
@@ -103,6 +103,8 @@ class ABTestEngine:
         return experiment
 
     def history(self, limit: int = 50) -> list[ABExperiment]:
+        if limit <= 0:
+            return []
         return self._history[-limit:]
 
     @property

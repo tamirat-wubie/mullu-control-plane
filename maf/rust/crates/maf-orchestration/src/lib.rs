@@ -282,6 +282,7 @@ pub mod workflow {
     pub struct StageExecutionResult {
         pub stage_id: String,
         pub status: StageStatus,
+        pub execution_mode: ExecutionMode,
         pub output: BTreeMap<String, serde_json::Value>,
         #[serde(default)]
         pub error: Option<serde_json::Value>,
@@ -296,6 +297,7 @@ pub mod workflow {
         pub workflow_id: String,
         pub execution_id: String,
         pub status: WorkflowStatus,
+        pub execution_mode: ExecutionMode,
         pub stage_results: Vec<StageExecutionResult>,
         pub started_at: String,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -868,6 +870,7 @@ mod tests {
         let result = workflow::StageExecutionResult {
             stage_id: "s-ordered".into(),
             status: workflow::StageStatus::Completed,
+            execution_mode: ExecutionMode::Real,
             output,
             error: None,
             started_at: "2025-01-01T00:00:00+00:00".into(),

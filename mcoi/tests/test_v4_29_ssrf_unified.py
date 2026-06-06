@@ -293,8 +293,9 @@ class TestWebhookSSRFAtDelivery:
     def test_dns_rebinding_blocked_at_delivery(self):
         """A subscription registered with a hostname that DNS-resolves
         to public at registration time, then flips to private at delivery
-        time, is silently skipped on emit. The subscription remains
-        registered (no delete-on-block) so operators can investigate."""
+        time, is blocked on emit. The subscription remains registered
+        (no delete-on-block), and the blocked attempt is recorded through
+        bounded delivery history and mutation receipt evidence."""
         from mcoi_runtime.governance.network.webhook import (
             WebhookManager,
             WebhookSubscription,
@@ -322,8 +323,10 @@ class TestWebhookSSRFAtDelivery:
 
         # No delivery queued — caught at delivery time
         assert deliveries == []
-        # Subscription still registered (operator-visible audit signal)
         assert mgr.subscription_count == 1
+        assert mgr.delivery_history()[-1].status == "failed"
+        assert mgr.summary()["failed_deliveries"] == 1
+        assert mgr.mutation_receipts()[-1].effect_name == "webhook_delivery_blocked"
 
 
 # ============================================================

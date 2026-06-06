@@ -1,14 +1,11 @@
 """Phase 201B — World-state persistence store tests."""
 
 import pytest
-from mcoi_runtime.persistence.world_state_store import (
-    WorldStateStore,
-    StoredSnapshot,
-    StoredDelta,
-    EntityHistoryEntry,
-)
+from mcoi_runtime.persistence.world_state_store import WorldStateStore
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+
+def FIXED_CLOCK():
+    return "2026-03-26T12:00:00Z"
 
 
 class TestWorldStateStore:
@@ -63,6 +60,8 @@ class TestWorldStateStore:
         snaps = store.list_snapshots(limit=3)
         assert len(snaps) == 3
         assert snaps[0].snapshot_id == "s4"  # Most recent first
+        assert store.list_snapshots(limit=0) == []
+        assert store.list_snapshots(limit=-1) == []
 
     def test_store_delta(self):
         store = WorldStateStore()
@@ -109,6 +108,9 @@ class TestWorldStateStore:
         store.record_entity_state("e1", "s2", {"v": 2}, 0.8, FIXED_CLOCK())
         history = store.entity_history("e1")
         assert len(history) == 2
+        assert history[-1].snapshot_id == "s2"
+        assert store.entity_history("e1", limit=0) == []
+        assert store.entity_history("e1", limit=-1) == []
 
     def test_entity_at_snapshot(self):
         store = WorldStateStore()

@@ -75,9 +75,20 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "governed_code_change_loop_sandbox_probe_example",
         "governed_code_change_loop_sandbox_readiness_runbook",
         "intelligence_coordination_episode_receipt",
+        "engineering_puzzle_universality_witness",
+        "mil_audit_runbook_operator_checklist",
+        "general_agent_promotion_handoff_packet",
+        "general_agent_promotion_operator_checklist",
         "route_receipt_coverage",
         "route_guard_chain_coverage",
         "reflective_contract_guard",
+        "doc_code_consistency",
+        "tenant_scope_coverage",
+        "persistence_tenant_guard_coverage",
+        "mcp_capability_manifest",
+        "mcp_operator_checklist",
+        "public_naming_readiness",
+        "public_demo_surfaces",
         "strict_schema_validation",
         "strict_artifact_validation",
         "terminal_closure_certificate",
@@ -206,6 +217,29 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert args_by_name["intelligence_coordination_episode_receipt"][1:] == (
         "scripts/validate_intelligence_coordination_episode_receipt.py",
     )
+    assert args_by_name["engineering_puzzle_universality_witness"][1:] == (
+        "scripts/validate_engineering_puzzle_universality_witness.py",
+        "--output",
+        ".tmp/engineering-puzzle-universality-witness.json",
+    )
+    assert args_by_name["mil_audit_runbook_operator_checklist"][1:] == (
+        "scripts/validate_mil_audit_runbook_operator_checklist.py",
+        "--checklist",
+        "examples/mil_audit_runbook_operator_checklist.json",
+        "--json",
+    )
+    assert args_by_name["general_agent_promotion_handoff_packet"][1:] == (
+        "scripts/validate_general_agent_promotion_handoff_packet.py",
+        "--packet",
+        "examples/general_agent_promotion_handoff_packet.json",
+        "--json",
+    )
+    assert args_by_name["general_agent_promotion_operator_checklist"][1:] == (
+        "scripts/validate_general_agent_promotion_operator_checklist.py",
+        "--checklist",
+        "examples/general_agent_promotion_operator_checklist.json",
+        "--json",
+    )
     assert args_by_name["route_receipt_coverage"][1:] == (
         "scripts/validate_receipt_coverage.py",
         "--strict",
@@ -216,6 +250,35 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["reflective_contract_guard"][1:] == (
         "scripts/validate_reflective_contracts.py",
+    )
+    assert args_by_name["doc_code_consistency"][1:] == (
+        "scripts/validate_doc_code_consistency.py",
+    )
+    assert args_by_name["tenant_scope_coverage"][1:] == (
+        "scripts/validate_tenant_scope_coverage.py",
+    )
+    assert args_by_name["persistence_tenant_guard_coverage"][1:] == (
+        "scripts/validate_persistence_tenant_guard_coverage.py",
+    )
+    assert args_by_name["mcp_capability_manifest"][1:] == (
+        "scripts/validate_mcp_capability_manifest.py",
+        "--manifest",
+        "examples/mcp_capability_manifest.json",
+        "--json",
+    )
+    assert args_by_name["mcp_operator_checklist"][1:] == (
+        "scripts/validate_mcp_operator_checklist.py",
+        "--checklist",
+        "examples/mcp_operator_handoff_checklist.json",
+        "--json",
+    )
+    assert args_by_name["public_naming_readiness"][1:] == (
+        "scripts/validate_public_naming_readiness.py",
+    )
+    assert args_by_name["public_demo_surfaces"][1:] == (
+        "scripts/validate_public_demo_surfaces.py",
+        "--output",
+        ".tmp/public-demo-surface-validation.json",
     )
     assert args_by_name["strict_schema_validation"][1:] == (
         "scripts/validate_schemas.py",

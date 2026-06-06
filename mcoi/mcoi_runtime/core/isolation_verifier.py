@@ -79,6 +79,8 @@ class IsolationVerifier:
         return report
 
     def history(self, limit: int = 20) -> list[IsolationReport]:
+        if limit <= 0:
+            return []
         return self._reports[-limit:]
 
     @property

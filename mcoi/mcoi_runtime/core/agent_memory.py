@@ -46,6 +46,8 @@ class AgentMemoryStore:
     """Long-term memory storage for agents."""
 
     def __init__(self, *, clock: Callable[[], str], max_per_agent: int = 1000) -> None:
+        if max_per_agent <= 0:
+            raise ValueError("max_per_agent must be positive")
         self._clock = clock
         self._max = max_per_agent
         self._memories: dict[str, list[MemoryEntry]] = {}  # agent_id -> memories

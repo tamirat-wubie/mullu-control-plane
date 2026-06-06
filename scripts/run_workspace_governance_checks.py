@@ -539,6 +539,45 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "engineering_puzzle_universality_witness",
+            (
+                python_executable,
+                "scripts/validate_engineering_puzzle_universality_witness.py",
+                "--output",
+                ".tmp/engineering-puzzle-universality-witness.json",
+            ),
+        ),
+        CheckCommand(
+            "mil_audit_runbook_operator_checklist",
+            (
+                python_executable,
+                "scripts/validate_mil_audit_runbook_operator_checklist.py",
+                "--checklist",
+                "examples/mil_audit_runbook_operator_checklist.json",
+                "--json",
+            ),
+        ),
+        CheckCommand(
+            "general_agent_promotion_handoff_packet",
+            (
+                python_executable,
+                "scripts/validate_general_agent_promotion_handoff_packet.py",
+                "--packet",
+                "examples/general_agent_promotion_handoff_packet.json",
+                "--json",
+            ),
+        ),
+        CheckCommand(
+            "general_agent_promotion_operator_checklist",
+            (
+                python_executable,
+                "scripts/validate_general_agent_promotion_operator_checklist.py",
+                "--checklist",
+                "examples/general_agent_promotion_operator_checklist.json",
+                "--json",
+            ),
+        ),
+        CheckCommand(
             "route_receipt_coverage",
             (python_executable, "scripts/validate_receipt_coverage.py", "--strict"),
         ),
@@ -549,6 +588,51 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         CheckCommand(
             "reflective_contract_guard",
             (python_executable, "scripts/validate_reflective_contracts.py"),
+        ),
+        CheckCommand(
+            "doc_code_consistency",
+            (python_executable, "scripts/validate_doc_code_consistency.py"),
+        ),
+        CheckCommand(
+            "tenant_scope_coverage",
+            (python_executable, "scripts/validate_tenant_scope_coverage.py"),
+        ),
+        CheckCommand(
+            "persistence_tenant_guard_coverage",
+            (python_executable, "scripts/validate_persistence_tenant_guard_coverage.py"),
+        ),
+        CheckCommand(
+            "mcp_capability_manifest",
+            (
+                python_executable,
+                "scripts/validate_mcp_capability_manifest.py",
+                "--manifest",
+                "examples/mcp_capability_manifest.json",
+                "--json",
+            ),
+        ),
+        CheckCommand(
+            "mcp_operator_checklist",
+            (
+                python_executable,
+                "scripts/validate_mcp_operator_checklist.py",
+                "--checklist",
+                "examples/mcp_operator_handoff_checklist.json",
+                "--json",
+            ),
+        ),
+        CheckCommand(
+            "public_naming_readiness",
+            (python_executable, "scripts/validate_public_naming_readiness.py"),
+        ),
+        CheckCommand(
+            "public_demo_surfaces",
+            (
+                python_executable,
+                "scripts/validate_public_demo_surfaces.py",
+                "--output",
+                ".tmp/public-demo-surface-validation.json",
+            ),
         ),
         CheckCommand(
             "strict_schema_validation",

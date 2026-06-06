@@ -51,7 +51,6 @@ REQUIRED_APPROVAL_BLOCKERS = frozenset({
 })
 REQUIRED_BLOCKING_GAPS = frozenset({
     "adapter_evidence_not_closed",
-    "browser_adapter_not_closed",
     "voice_adapter_not_closed",
     "email_calendar_adapter_not_closed",
     "deployment_witness_not_published",

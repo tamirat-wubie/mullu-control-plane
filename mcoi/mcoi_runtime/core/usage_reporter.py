@@ -33,6 +33,8 @@ class UsageReporter:
     def __init__(self, *, clock: Callable[[], str]) -> None:
         self._clock = clock
         self._data_fns: dict[str, Callable[[str], Any]] = {}
+        self._source_error_counts: dict[str, int] = {}
+        self._last_source_errors: dict[str, str] = {}
 
     def register_source(self, name: str, fn: Callable[[str], Any]) -> None:
         self._data_fns[name] = fn
@@ -42,7 +44,10 @@ class UsageReporter:
         for name, fn in self._data_fns.items():
             try:
                 data[name] = fn(tenant_id)
-            except Exception:
+                self._last_source_errors.pop(name, None)
+            except Exception as exc:
+                self._source_error_counts[name] = self._source_error_counts.get(name, 0) + 1
+                self._last_source_errors[name] = _bounded_usage_source_error(exc)
                 data[name] = 0
 
         return UsageReport(
@@ -59,4 +64,12 @@ class UsageReporter:
         )
 
     def summary(self) -> dict[str, Any]:
-        return {"sources": list(self._data_fns.keys())}
+        return {
+            "sources": list(self._data_fns.keys()),
+            "source_error_count": sum(self._source_error_counts.values()),
+            "source_errors": dict(sorted(self._last_source_errors.items())),
+        }
+
+
+def _bounded_usage_source_error(exc: Exception) -> str:
+    return f"usage source error ({type(exc).__name__})"

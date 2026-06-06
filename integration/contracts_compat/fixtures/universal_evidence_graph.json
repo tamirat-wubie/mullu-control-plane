@@ -1,0 +1,105 @@
+{
+  "graph_id": "ueg-foundation-thread-001",
+  "version": "ueg.v1",
+  "generated_at": "2026-06-06T08:30:00+00:00",
+  "nodes": [
+    {
+      "node_id": "node-claim-sdlc-local-first",
+      "node_kind": "claim",
+      "label": "Foundation Mode keeps SDLC proof local-first",
+      "source_ref": "claim://foundation/sdlc-local-first",
+      "evidence_refs": [
+        "docs/FOUNDATION_MODE.md",
+        "receipt://workspace-governance-preflight"
+      ],
+      "confidence": 0.94,
+      "created_at": "2026-06-06T08:30:00+00:00",
+      "metadata": {
+        "surface": "sdlc"
+      }
+    },
+    {
+      "node_id": "node-receipt-preflight",
+      "node_kind": "receipt",
+      "label": "Workspace governance preflight receipt",
+      "source_ref": "receipt://workspace-governance-preflight",
+      "evidence_refs": [
+        ".tmp/workspace-governance-preflight-receipt.json"
+      ],
+      "confidence": 1.0,
+      "created_at": "2026-06-06T08:30:00+00:00",
+      "metadata": {
+        "check_count": 112
+      }
+    },
+    {
+      "node_id": "node-policy-foundation-mode",
+      "node_kind": "policy",
+      "label": "Foundation Mode policy",
+      "source_ref": "policy://foundation-mode",
+      "evidence_refs": [
+        "docs/FOUNDATION_MODE.md",
+        "AGENTS.md"
+      ],
+      "confidence": 1.0,
+      "created_at": "2026-06-06T08:30:00+00:00",
+      "metadata": {
+        "stage": "foundation"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "edge-receipt-supports-claim",
+      "edge_kind": "supports",
+      "source_node_id": "node-receipt-preflight",
+      "target_node_id": "node-claim-sdlc-local-first",
+      "evidence_refs": [
+        "receipt://workspace-governance-preflight"
+      ],
+      "confidence": 0.94,
+      "created_at": "2026-06-06T08:30:00+00:00",
+      "metadata": {
+        "reason": "receipt anchors local validation"
+      }
+    },
+    {
+      "edge_id": "edge-policy-governs-claim",
+      "edge_kind": "governed_by",
+      "source_node_id": "node-claim-sdlc-local-first",
+      "target_node_id": "node-policy-foundation-mode",
+      "evidence_refs": [
+        "docs/FOUNDATION_MODE.md"
+      ],
+      "confidence": 1.0,
+      "created_at": "2026-06-06T08:30:00+00:00",
+      "metadata": {
+        "law": "UWMA"
+      }
+    }
+  ],
+  "questions": [
+    {
+      "question_id": "question-why-sdlc-local-first",
+      "question_kind": "why",
+      "target_node_id": "node-claim-sdlc-local-first",
+      "answer_node_ids": [
+        "node-receipt-preflight",
+        "node-policy-foundation-mode"
+      ],
+      "answer_edge_ids": [
+        "edge-receipt-supports-claim",
+        "edge-policy-governs-claim"
+      ],
+      "confidence": 0.94,
+      "created_at": "2026-06-06T08:30:00+00:00"
+    }
+  ],
+  "receipt_refs": [
+    "receipt://workspace-governance-preflight"
+  ],
+  "metadata": {
+    "foundation_mode": true,
+    "scope": "universal-evidence-graph-proof"
+  }
+}

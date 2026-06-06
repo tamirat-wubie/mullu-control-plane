@@ -26,6 +26,10 @@ from .resolver import IntentResolver
 logger = logging.getLogger(__name__)
 
 
+def _bounded_ticker_error(exc: BaseException) -> str:
+    return f"intent substrate ticker error ({type(exc).__name__})"
+
+
 class BackgroundTicker:
     def __init__(
         self, resolver: IntentResolver, *, interval_s: float = 0.1
@@ -37,6 +41,9 @@ class BackgroundTicker:
         self._stop = threading.Event()
         self._thread: Optional[threading.Thread] = None
         self._lock = threading.Lock()
+        self._tick_count = 0
+        self._error_count = 0
+        self._last_error = ""
 
     def start(self) -> None:
         with self._lock:
@@ -63,6 +70,18 @@ class BackgroundTicker:
         with self._lock:
             return self._thread is not None and self._thread.is_alive()
 
+    def summary(self) -> dict[str, object]:
+        """Return bounded ticker state for diagnostics and shutdown receipts."""
+        with self._lock:
+            return {
+                "running": self._thread is not None and self._thread.is_alive(),
+                "interval_s": self._interval_s,
+                "tick_count": self._tick_count,
+                "error_count": self._error_count,
+                "last_error": self._last_error,
+                "governed": True,
+            }
+
     def __enter__(self) -> "BackgroundTicker":
         self.start()
         return self
@@ -73,6 +92,14 @@ class BackgroundTicker:
     def _loop(self) -> None:
         while not self._stop.wait(self._interval_s):
             try:
+                with self._lock:
+                    self._tick_count += 1
                 self._resolver.tick()
-            except Exception:
+                with self._lock:
+                    self._last_error = ""
+            except Exception as exc:
+                error = _bounded_ticker_error(exc)
+                with self._lock:
+                    self._error_count += 1
+                    self._last_error = error
                 logger.exception("intent_substrate ticker raised")

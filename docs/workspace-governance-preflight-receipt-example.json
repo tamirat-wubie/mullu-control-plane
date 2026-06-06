@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1780664954.505807,
-  "check_count": 114,
+  "check_count": 122,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -1100,6 +1100,61 @@
       "passed": true
     },
     {
+      "name": "engineering_puzzle_universality_witness",
+      "args": [
+        "python",
+        "scripts/validate_engineering_puzzle_universality_witness.py",
+        "--output",
+        ".tmp/engineering-puzzle-universality-witness.json"
+      ],
+      "return_code": 0,
+      "stdout": "{\"case_count\": 5, \"domains\": [\"finance_operations\", \"legal_compliance\", \"physical_engineering\", \"runtime_operations\", \"software\"], \"errors\": [], \"governed\": true, \"passed\": true}\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "mil_audit_runbook_operator_checklist",
+      "args": [
+        "python",
+        "scripts/validate_mil_audit_runbook_operator_checklist.py",
+        "--checklist",
+        "examples/mil_audit_runbook_operator_checklist.json",
+        "--json"
+      ],
+      "return_code": 0,
+      "stdout": "{\"checklist_id\": \"mil-audit-runbook-operator-v1\", \"checklist_path\": \"examples/mil_audit_runbook_operator_checklist.json\", \"errors\": [], \"step_count\": 5, \"valid\": true}\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "general_agent_promotion_handoff_packet",
+      "args": [
+        "python",
+        "scripts/validate_general_agent_promotion_handoff_packet.py",
+        "--packet",
+        "examples/general_agent_promotion_handoff_packet.json",
+        "--json"
+      ],
+      "return_code": 0,
+      "stdout": "{\"approval_required_count\": 10, \"errors\": [], \"open_blocker_count\": 6, \"packet_id\": \"general-agent-promotion-handoff-v1\", \"packet_path\": \"examples/general_agent_promotion_handoff_packet.json\", \"valid\": true}\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "general_agent_promotion_operator_checklist",
+      "args": [
+        "python",
+        "scripts/validate_general_agent_promotion_operator_checklist.py",
+        "--checklist",
+        "examples/general_agent_promotion_operator_checklist.json",
+        "--json"
+      ],
+      "return_code": 0,
+      "stdout": "{\"checklist_id\": \"general-agent-promotion-operator-v1\", \"checklist_path\": \"examples/general_agent_promotion_operator_checklist.json\", \"errors\": [], \"step_count\": 9, \"valid\": true}\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
       "name": "route_receipt_coverage",
       "args": [
         "python",
@@ -1131,6 +1186,91 @@
       ],
       "return_code": 0,
       "stdout": "TOTAL=0\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "doc_code_consistency",
+      "args": [
+        "python",
+        "scripts/validate_doc_code_consistency.py"
+      ],
+      "return_code": 0,
+      "stdout": "Doc/code consistency check PASSED (333 docs scanned, 46 deferred via baseline).\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "tenant_scope_coverage",
+      "args": [
+        "python",
+        "scripts/validate_tenant_scope_coverage.py"
+      ],
+      "return_code": 0,
+      "stdout": "Tenant-scope coverage PASSED (2 exemptions deferred via baseline).\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "persistence_tenant_guard_coverage",
+      "args": [
+        "python",
+        "scripts/validate_persistence_tenant_guard_coverage.py"
+      ],
+      "return_code": 0,
+      "stdout": "Persistence tenant-guard coverage PASSED (1 exemptions deferred via baseline).\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "mcp_capability_manifest",
+      "args": [
+        "python",
+        "scripts/validate_mcp_capability_manifest.py",
+        "--manifest",
+        "examples/mcp_capability_manifest.json",
+        "--json"
+      ],
+      "return_code": 0,
+      "stdout": "{\"valid\": true, \"capability_count\": 1, \"capability_ids\": [\"mcp.docs_search_docs\"], \"errors\": []}\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "mcp_operator_checklist",
+      "args": [
+        "python",
+        "scripts/validate_mcp_operator_checklist.py",
+        "--checklist",
+        "examples/mcp_operator_handoff_checklist.json",
+        "--json"
+      ],
+      "return_code": 0,
+      "stdout": "{\"valid\": true, \"checklist_id\": \"mcp-operator-handoff-v1\", \"step_count\": 9, \"errors\": []}\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "public_naming_readiness",
+      "args": [
+        "python",
+        "scripts/validate_public_naming_readiness.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "public_demo_surfaces",
+      "args": [
+        "python",
+        "scripts/validate_public_demo_surfaces.py",
+        "--output",
+        ".tmp/public-demo-surface-validation.json"
+      ],
+      "return_code": 0,
+      "stdout": "{\"governed\": true, \"ready\": true, \"check_count\": 6, \"failed_count\": 0}\n",
       "stderr": "",
       "passed": true
     },

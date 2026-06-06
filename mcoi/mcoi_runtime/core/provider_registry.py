@@ -1,4 +1,4 @@
-"""Purpose: provider registry — registration, health tracking, scope enforcement.
+"""Purpose: provider registry - registration, health tracking, scope enforcement.
 Governance scope: provider management core logic only.
 Dependencies: provider contracts, invariant helpers.
 Invariants:
@@ -99,11 +99,11 @@ class ProviderRegistry:
         if scope is None:
             return False
         if not scope.allowed_base_urls:
-            return True  # No URL restrictions
+            return True
         return any(_url_within_base_url(url, base) for base in scope.allowed_base_urls)
 
     def check_operation_in_scope(self, provider_id: str, operation: str) -> bool:
-        """Check if an operation is allowed by the provider credential scope."""
+        """Check if an operation is allowed by the provider's credential scope."""
         ensure_non_empty_text("provider_id", provider_id)
         ensure_non_empty_text("operation", operation)
         scope = self._scopes.get(provider_id)
@@ -114,7 +114,7 @@ class ProviderRegistry:
         return operation in scope.allowed_operations
 
     def record_success(self, provider_id: str) -> ProviderHealthRecord:
-        """Record a successful invocation — update health to healthy."""
+        """Record a successful invocation and update health to healthy."""
         ensure_non_empty_text("provider_id", provider_id)
         record = ProviderHealthRecord(
             provider_id=provider_id,
@@ -127,7 +127,7 @@ class ProviderRegistry:
         return record
 
     def record_failure(self, provider_id: str, reason: str) -> ProviderHealthRecord:
-        """Record a failed invocation — update health, track consecutive failures."""
+        """Record a failed invocation and update health failure counters."""
         ensure_non_empty_text("provider_id", provider_id)
         ensure_non_empty_text("reason", reason)
         existing = self._health.get(provider_id)
@@ -152,6 +152,7 @@ def _url_within_base_url(url: str, base_url: str) -> bool:
         base_port = _effective_port(base.scheme, base.port)
     except ValueError:
         return False
+
     if not target.scheme or not target.hostname:
         return False
     if not base.scheme or not base.hostname:
@@ -162,6 +163,7 @@ def _url_within_base_url(url: str, base_url: str) -> bool:
         return False
     if target_port != base_port:
         return False
+
     base_path = (base.path or "/").rstrip("/")
     target_path = target.path or "/"
     if not base_path:

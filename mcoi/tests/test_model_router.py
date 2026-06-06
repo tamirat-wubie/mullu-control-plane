@@ -128,6 +128,9 @@ class TestModelRouter:
         r.route("a")
         r.route("b")
         assert len(r.history()) == 2
+        assert [decision.model_id for decision in r.history(limit=1)] == ["fast"]
+        assert r.history(limit=0) == []
+        assert r.history(limit=-1) == []
 
     def test_summary(self):
         r = _router()
