@@ -132,6 +132,10 @@ SCHEMA_CONTRACT_MAP: dict[str, tuple[str, str]] = {
         "mcoi_runtime.contracts.symbolic_simulation_engine",
         "SymbolicSimulationEngineRun",
     ),
+    "universal_state_engine.schema.json": (
+        "mcoi_runtime.contracts.universal_state_engine",
+        "UniversalStateEngine",
+    ),
 }
 
 
@@ -1320,6 +1324,111 @@ def _build_symbolic_simulation_engine(payload: dict[str, Any]) -> Any:
     )
 
 
+def _build_universal_state_engine(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.state import StateCategory, StateReference
+    from mcoi_runtime.contracts.state_machine import StateMachineSpec, TransitionRule
+    from mcoi_runtime.contracts.universal_state_engine import (
+        UniversalStateClosure,
+        UniversalStateClosureKind,
+        UniversalStateEngine,
+        UniversalStateGuard,
+        UniversalStateGuardKind,
+        UniversalStateSubject,
+        UniversalStateSubjectKind,
+        UniversalStateTransition,
+    )
+
+    return UniversalStateEngine(
+        engine_id=payload["engine_id"],
+        version=payload["version"],
+        generated_at=payload["generated_at"],
+        subjects=tuple(
+            UniversalStateSubject(
+                subject_id=subject["subject_id"],
+                subject_kind=UniversalStateSubjectKind(subject["subject_kind"]),
+                machine_id=subject["machine_id"],
+                current_state=subject["current_state"],
+                state_ref=StateReference(
+                    state_id=subject["state_ref"]["state_id"],
+                    category=StateCategory(subject["state_ref"]["category"]),
+                    state_hash=subject["state_ref"]["state_hash"],
+                    captured_at=subject["state_ref"]["captured_at"],
+                    metadata=subject["state_ref"]["metadata"],
+                    extensions=subject["state_ref"]["extensions"],
+                ),
+                evidence_refs=tuple(subject["evidence_refs"]),
+                updated_at=subject["updated_at"],
+                metadata=subject["metadata"],
+            )
+            for subject in payload["subjects"]
+        ),
+        state_machines=tuple(
+            StateMachineSpec(
+                machine_id=machine["machine_id"],
+                name=machine["name"],
+                version=machine["version"],
+                states=tuple(machine["states"]),
+                initial_state=machine["initial_state"],
+                terminal_states=tuple(machine["terminal_states"]),
+                transitions=tuple(
+                    TransitionRule(
+                        from_state=transition["from_state"],
+                        to_state=transition["to_state"],
+                        action=transition["action"],
+                        guard_label=transition["guard_label"],
+                        emits=transition["emits"],
+                    )
+                    for transition in machine["transitions"]
+                ),
+            )
+            for machine in payload["state_machines"]
+        ),
+        guards=tuple(
+            UniversalStateGuard(
+                guard_id=guard["guard_id"],
+                guard_kind=UniversalStateGuardKind(guard["guard_kind"]),
+                machine_id=guard["machine_id"],
+                from_state=guard["from_state"],
+                to_state=guard["to_state"],
+                required_refs=tuple(guard["required_refs"]),
+                confidence=guard["confidence"],
+                metadata=guard["metadata"],
+            )
+            for guard in payload["guards"]
+        ),
+        transitions=tuple(
+            UniversalStateTransition(
+                transition_id=transition["transition_id"],
+                subject_id=transition["subject_id"],
+                machine_id=transition["machine_id"],
+                from_state=transition["from_state"],
+                to_state=transition["to_state"],
+                action=transition["action"],
+                guard_ids=tuple(transition["guard_ids"]),
+                receipt_refs=tuple(transition["receipt_refs"]),
+                evidence_refs=tuple(transition["evidence_refs"]),
+                transitioned_at=transition["transitioned_at"],
+                metadata=transition["metadata"],
+            )
+            for transition in payload["transitions"]
+        ),
+        closures=tuple(
+            UniversalStateClosure(
+                closure_id=closure["closure_id"],
+                subject_id=closure["subject_id"],
+                closure_kind=UniversalStateClosureKind(closure["closure_kind"]),
+                terminal_state=closure["terminal_state"],
+                receipt_refs=tuple(closure["receipt_refs"]),
+                closed_at=closure["closed_at"],
+                metadata=closure["metadata"],
+            )
+            for closure in payload["closures"]
+        ),
+        receipt_refs=tuple(payload["receipt_refs"]),
+        metadata=payload["metadata"],
+    )
+
+
 FIXTURE_BUILDERS: dict[str, SharedFixtureBuilder] = {
     "communication_message.schema.json": _build_communication_message,
     "connector_descriptor.schema.json": _build_connector_descriptor,
@@ -1345,6 +1454,7 @@ FIXTURE_BUILDERS: dict[str, SharedFixtureBuilder] = {
     "learning_admission.schema.json": _build_learning_admission,
     "universal_evidence_graph.schema.json": _build_universal_evidence_graph,
     "symbolic_simulation_engine.schema.json": _build_symbolic_simulation_engine,
+    "universal_state_engine.schema.json": _build_universal_state_engine,
 }
 
 

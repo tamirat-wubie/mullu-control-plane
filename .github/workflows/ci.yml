@@ -235,6 +235,9 @@ jobs:
       - name: Test Symbolic Simulation Engine schema contract
         run: python -m pytest tests/test_symbolic_simulation_engine_schema.py -q
 
+      - name: Test Universal State Engine schema contract
+        run: python -m pytest tests/test_universal_state_engine_schema.py -q
+
       - name: Validate doc/code consistency (anti-fabrication gate)
         run: python scripts/validate_doc_code_consistency.py
 

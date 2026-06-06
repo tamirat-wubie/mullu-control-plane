@@ -995,6 +995,12 @@
       "surface": "orchestration"
     },
     {
+      "schema_id": "universal-state-engine",
+      "path": "schemas/universal_state_engine.schema.json",
+      "urn": "urn:mullusi:schema:universal-state-engine:1",
+      "surface": "state"
+    },
+    {
       "schema_id": "verification-result",
       "path": "schemas/verification_result.schema.json",
       "urn": "urn:mullusi:schema:verification-result:1",
