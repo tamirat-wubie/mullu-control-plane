@@ -164,6 +164,8 @@ def test_chain_history_bounded() -> None:
     assert engine.total_chains == 2
     assert history == [second]
     assert first.chain_id == "chain-1"
+    assert engine.history(limit=0) == []
+    assert engine.history(limit=-1) == []
     assert summary["total"] == 2
     assert summary["succeeded"] == 2
     assert summary["failed"] == 0
