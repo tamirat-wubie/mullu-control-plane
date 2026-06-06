@@ -17,7 +17,7 @@ from mcoi_runtime.app.cognitive_shadow_integration import (
     read_shadow_observations,
 )
 from mcoi_runtime.contracts.meta_reasoning import CapabilityConfidence
-from mcoi_runtime.core.cognitive_shadow import CognitiveShadowSummary, ShadowCognitiveObserver
+from mcoi_runtime.core.cognitive_shadow import CognitiveShadowSummary
 
 
 def _clock() -> str:
