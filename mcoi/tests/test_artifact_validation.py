@@ -840,6 +840,7 @@ def test_validate_maf_runtime_fixture_rejects_job_execution_empty_error(tmp_path
                 "job_id": "job-drift",
                 "execution_id": "job-exec-drift",
                 "status": "failed",
+                "execution_mode": "real",
                 "started_at": "2025-01-01T01:20:00+00:00",
                 "outcome_summary": "approval gate blocked rollout completion",
                 "errors": [""],
