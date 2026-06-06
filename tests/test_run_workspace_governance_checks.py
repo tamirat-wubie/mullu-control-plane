@@ -82,6 +82,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "general_agent_promotion_environment_bindings",
         "general_agent_promotion_handoff_preflight",
         "general_agent_promotion_closure_chain",
+        "finance_approval_live_handoff_closure_run",
         "route_receipt_coverage",
         "route_guard_chain_coverage",
         "reflective_contract_guard",
@@ -265,6 +266,12 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "examples/capability_adapter_evidence_blocked.json",
         "--json",
         "--strict",
+    )
+    assert args_by_name["finance_approval_live_handoff_closure_run"][1:] == (
+        "scripts/run_finance_approval_live_handoff_closure.py",
+        "--output",
+        ".tmp/finance-approval-live-handoff-closure-run.json",
+        "--json",
     )
     assert args_by_name["route_receipt_coverage"][1:] == (
         "scripts/validate_receipt_coverage.py",
