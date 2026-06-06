@@ -527,6 +527,15 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "engineering_puzzle_universality_witness",
+            (
+                python_executable,
+                "scripts/validate_engineering_puzzle_universality_witness.py",
+                "--output",
+                ".tmp/engineering-puzzle-universality-witness.json",
+            ),
+        ),
+        CheckCommand(
             "route_receipt_coverage",
             (python_executable, "scripts/validate_receipt_coverage.py", "--strict"),
         ),

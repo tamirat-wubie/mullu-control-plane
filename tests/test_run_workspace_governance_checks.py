@@ -74,6 +74,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "governed_code_change_loop_sandbox_probe_example",
         "governed_code_change_loop_sandbox_readiness_runbook",
         "intelligence_coordination_episode_receipt",
+        "engineering_puzzle_universality_witness",
         "route_receipt_coverage",
         "route_guard_chain_coverage",
         "reflective_contract_guard",
@@ -202,6 +203,11 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["intelligence_coordination_episode_receipt"][1:] == (
         "scripts/validate_intelligence_coordination_episode_receipt.py",
+    )
+    assert args_by_name["engineering_puzzle_universality_witness"][1:] == (
+        "scripts/validate_engineering_puzzle_universality_witness.py",
+        "--output",
+        ".tmp/engineering-puzzle-universality-witness.json",
     )
     assert args_by_name["route_receipt_coverage"][1:] == (
         "scripts/validate_receipt_coverage.py",

@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1780664954.505807,
-  "check_count": 118,
+  "check_count": 119,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -1063,6 +1063,19 @@
       ],
       "return_code": 0,
       "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "engineering_puzzle_universality_witness",
+      "args": [
+        "python",
+        "scripts/validate_engineering_puzzle_universality_witness.py",
+        "--output",
+        ".tmp/engineering-puzzle-universality-witness.json"
+      ],
+      "return_code": 0,
+      "stdout": "{\"case_count\": 5, \"domains\": [\"finance_operations\", \"legal_compliance\", \"physical_engineering\", \"runtime_operations\", \"software\"], \"errors\": [], \"governed\": true, \"passed\": true}\n",
       "stderr": "",
       "passed": true
     },
