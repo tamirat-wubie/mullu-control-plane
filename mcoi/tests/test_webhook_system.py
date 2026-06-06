@@ -196,6 +196,15 @@ class TestWebhookManager:
         mgr.emit("task.completed", {}, tenant_id="t1")
         history = mgr.delivery_history()
         assert len(history) == 2
+        assert mgr.delivery_history(limit=1)[0].delivery_id == history[-1].delivery_id
+        assert mgr.delivery_history(limit=0) == []
+        assert mgr.delivery_history(limit=-1) == []
+
+        receipts = mgr.mutation_receipts()
+        assert len(receipts) == 3
+        assert mgr.mutation_receipts(limit=1)[0].effect_name == "webhook_delivery_queued"
+        assert mgr.mutation_receipts(limit=0) == ()
+        assert mgr.mutation_receipts(limit=-1) == ()
 
     def test_multiple_subscriptions(self):
         mgr = WebhookManager(clock=FIXED_CLOCK)
@@ -225,6 +234,8 @@ class TestWebhookManager:
         assert effects[0].name == "webhook_subscription_registered"
         assert effects[0].details["evidence_ref"].startswith("webhook-mutation:")
         assert effects[0].details["observed_value"]["subject_ref"] == "webhook-subscription:sub-1"
+        assert mgr.effect_records(limit=0) == ()
+        assert mgr.effect_records(limit=-1) == ()
 
     def test_webhook_mutation_receipt_closes_effect_assurance(self):
         mgr = WebhookManager(clock=FIXED_CLOCK)
