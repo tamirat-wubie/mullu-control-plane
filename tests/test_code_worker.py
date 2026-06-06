@@ -353,6 +353,31 @@ def test_workspace_snapshot_records_symlink_without_following_target(
     assert snapshot["linked-outside"] != "unreadable"
 
 
+def test_workspace_snapshot_marks_unreadable_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace = tmp_path / "workspace"
+    unreadable = workspace / "unreadable"
+    workspace.mkdir()
+    unreadable.mkdir()
+    (workspace / "regular.txt").write_text("inside\n", encoding="utf-8")
+    original_iterdir = Path.iterdir
+
+    def guarded_iterdir(path: Path):  # noqa: ANN202
+        if path == unreadable:
+            raise OSError("secret directory path")
+        return original_iterdir(path)
+
+    monkeypatch.setattr(Path, "iterdir", guarded_iterdir)
+
+    snapshot = _workspace_snapshot(workspace)
+
+    assert snapshot["unreadable"] == "directory:unreadable"
+    assert "regular.txt" in snapshot
+    assert all("secret directory path" not in value for value in snapshot.values())
+
+
 def test_sandboxed_code_worker_blocks_denied_executable_without_dispatch(tmp_path: Path) -> None:
     (tmp_path / "src").mkdir()
     dispatched = False
