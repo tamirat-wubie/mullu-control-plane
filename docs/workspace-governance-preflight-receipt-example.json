@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1780664954.505807,
-  "check_count": 111,
+  "check_count": 112,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -1098,6 +1098,17 @@
       ],
       "return_code": 0,
       "stdout": "TOTAL=0\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "doc_code_consistency",
+      "args": [
+        "python",
+        "scripts/validate_doc_code_consistency.py"
+      ],
+      "return_code": 0,
+      "stdout": "Doc/code consistency check PASSED (333 docs scanned, 46 deferred via baseline).\n",
       "stderr": "",
       "passed": true
     },
