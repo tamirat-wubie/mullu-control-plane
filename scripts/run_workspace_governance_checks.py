@@ -536,6 +536,16 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "mil_audit_runbook_operator_checklist",
+            (
+                python_executable,
+                "scripts/validate_mil_audit_runbook_operator_checklist.py",
+                "--checklist",
+                "examples/mil_audit_runbook_operator_checklist.json",
+                "--json",
+            ),
+        ),
+        CheckCommand(
             "route_receipt_coverage",
             (python_executable, "scripts/validate_receipt_coverage.py", "--strict"),
         ),
