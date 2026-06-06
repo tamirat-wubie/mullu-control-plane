@@ -81,6 +81,35 @@ def test_shell_executor_argv_only() -> None:
     assert receipt["command_hash"]
 
 
+def test_shell_executor_default_environment_isolated(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SECRET_TOKEN", "must-not-leak")
+    monkeypatch.setenv("PYTHONPATH", "must-not-leak")
+    captured: dict[str, object] = {}
+
+    def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        captured["env"] = kwargs["env"]
+        return subprocess.CompletedProcess(args[0], 0, stdout="env-ok", stderr="")
+
+    executor = ShellExecutor(
+        runner=fake_runner,
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+    )
+    result = executor.execute(
+        ExecutionRequest(
+            execution_id="execution-env-isolated",
+            goal_id="goal-env-isolated",
+            argv=("echo", "ok"),
+        )
+    )
+
+    runner_env = captured["env"]
+    assert result.status is ExecutionOutcome.SUCCEEDED
+    assert isinstance(runner_env, dict)
+    assert "SECRET_TOKEN" not in runner_env
+    assert "PYTHONPATH" not in runner_env
+    assert runner_env["PYTHONUTF8"] == "1"
+
+
 def test_shell_executor_maps_timeout_to_typed_cancellation() -> None:
     def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
         raise subprocess.TimeoutExpired(cmd=args[0], timeout=kwargs["timeout"])
@@ -373,7 +402,9 @@ def test_shell_executor_sandbox_passes_isolated_environment(tmp_path: Path) -> N
     assert result.status is ExecutionOutcome.SUCCEEDED
     assert result.actual_effects[0].details["stdout"] == "sandboxed"
     assert captured["cwd"] == str(allowed_root)
-    assert captured["env"] == {"MULLU_TRACE_ID": "trace-1"}
+    assert isinstance(captured["env"], dict)
+    assert captured["env"]["MULLU_TRACE_ID"] == "trace-1"
+    assert captured["env"]["PYTHONUTF8"] == "1"
     assert captured["shell"] is False
     receipt = result.actual_effects[0].details["receipt"]
     assert receipt["metadata"]["sandbox_id"] == "sandbox-3"

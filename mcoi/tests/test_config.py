@@ -24,7 +24,7 @@ def test_app_config_uses_explicit_defaults() -> None:
     assert config.shell_sandbox_id == "local"
     assert config.shell_allowed_cwd_roots == ()
     assert config.shell_allowed_environment_keys == ()
-    assert config.shell_allow_inherited_environment is True
+    assert config.shell_allow_inherited_environment is False
     assert config.shell_require_cwd is False
 
 

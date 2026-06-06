@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass
 from pathlib import Path
+import re
 import sys
 
 
@@ -1955,6 +1956,21 @@ CENTRAL_FOUNDATION_TABLE_FILES = (
     "docs/CURRENT_READINESS_SNAPSHOT.md",
 )
 
+FOUNDATION_BOUNDARY_ROUTE_FILES = (
+    "README.md",
+    "docs/START_HERE.md",
+    "docs/FOUNDATION_MODE.md",
+    "docs/CURRENT_READINESS_SNAPSHOT.md",
+)
+
+FOUNDATION_BOUNDARY_STATUS_FIELDS = (
+    "STATUS:",
+    "Completeness:",
+    "Invariants verified:",
+    "Open issues:",
+    "Next action:",
+)
+
 FORBIDDEN_FORWARD_PHRASES = (
     "Request access",
     "request access until",
@@ -2075,6 +2091,113 @@ def validate_central_table_label_uniqueness(repo_root: Path = REPO_ROOT) -> list
     return findings
 
 
+def validate_prerequisite_go_deeper_boundary_links(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
+    """Return findings when the operator navigation table omits a boundary doc."""
+
+    relative_path = "docs/FOUNDATION_PREREQUISITES.md"
+    try:
+        text = read_required_text(repo_root, relative_path)
+    except OSError as exc:
+        return [FoundationModeFinding("foundation_file_missing", str(exc))]
+    if "## Go deeper / where to go next" not in text:
+        return [
+            FoundationModeFinding(
+                "foundation_prerequisite_navigation_missing",
+                f"{relative_path} missing Go deeper navigation section",
+            )
+        ]
+    section = text.split("## Go deeper / where to go next", 1)[1]
+    observed_links = set(re.findall(r"\((FOUNDATION_[^)]+?_BOUNDARY\.md)\)", section))
+    expected_links = {
+        boundary_doc.name
+        for boundary_doc in (repo_root / "docs").glob("FOUNDATION_*_BOUNDARY.md")
+    }
+    missing_links = sorted(expected_links - observed_links)
+    if not missing_links:
+        return []
+    return [
+        FoundationModeFinding(
+            "foundation_prerequisite_navigation_boundary_missing",
+            f"{relative_path} Go deeper navigation missing boundary links: {', '.join(missing_links)}",
+        )
+    ]
+
+
+def validate_foundation_boundary_routing_surfaces(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
+    """Return findings when central route surfaces omit a Foundation boundary."""
+
+    boundary_doc_names = sorted(boundary_doc.name for boundary_doc in (repo_root / "docs").glob("FOUNDATION_*_BOUNDARY.md"))
+    if not boundary_doc_names:
+        return [
+            FoundationModeFinding(
+                "foundation_boundary_inventory_missing",
+                "docs directory has no FOUNDATION_*_BOUNDARY.md files",
+            )
+        ]
+    findings: list[FoundationModeFinding] = []
+    for boundary_doc_name in boundary_doc_names:
+        required_key = f"docs/{boundary_doc_name}"
+        if required_key not in REQUIRED_PHRASES_BY_FILE:
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_boundary_phrase_registration_missing",
+                    f"REQUIRED_PHRASES_BY_FILE missing boundary key: {required_key}",
+                )
+            )
+    for relative_path in FOUNDATION_BOUNDARY_ROUTE_FILES:
+        try:
+            text = read_required_text(repo_root, relative_path)
+        except OSError as exc:
+            findings.append(FoundationModeFinding("foundation_file_missing", str(exc)))
+            continue
+        missing_boundary_doc_names = [boundary_doc_name for boundary_doc_name in boundary_doc_names if boundary_doc_name not in text]
+        if missing_boundary_doc_names:
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_boundary_route_missing",
+                    f"{relative_path} missing boundary links: {', '.join(missing_boundary_doc_names)}",
+                )
+            )
+    return findings
+
+
+def validate_foundation_boundary_status_blocks(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
+    """Return findings when Foundation boundary docs lack terminal status context."""
+
+    boundary_doc_paths = sorted((repo_root / "docs").glob("FOUNDATION_*_BOUNDARY.md"))
+    if not boundary_doc_paths:
+        return [
+            FoundationModeFinding(
+                "foundation_boundary_inventory_missing",
+                "docs directory has no FOUNDATION_*_BOUNDARY.md files",
+            )
+        ]
+    findings: list[FoundationModeFinding] = []
+    for boundary_doc_path in boundary_doc_paths:
+        relative_path = f"docs/{boundary_doc_path.name}"
+        try:
+            text = read_required_text(repo_root, relative_path)
+        except OSError as exc:
+            findings.append(FoundationModeFinding("foundation_file_missing", str(exc)))
+            continue
+        missing_status_fields = [field for field in FOUNDATION_BOUNDARY_STATUS_FIELDS if field not in text]
+        if missing_status_fields:
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_boundary_status_field_missing",
+                    f"{relative_path} missing status fields: {', '.join(missing_status_fields)}",
+                )
+            )
+        if "AwaitingEvidence" not in text:
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_boundary_awaiting_evidence_missing",
+                    f"{relative_path} missing AwaitingEvidence posture",
+                )
+            )
+    return findings
+
+
 def validate_foundation_mode(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
     """Validate the repository Foundation Mode posture and return findings."""
 
@@ -2082,6 +2205,9 @@ def validate_foundation_mode(repo_root: Path = REPO_ROOT) -> list[FoundationMode
         *validate_required_phrases(repo_root),
         *validate_forbidden_forward_phrases(repo_root),
         *validate_central_table_label_uniqueness(repo_root),
+        *validate_prerequisite_go_deeper_boundary_links(repo_root),
+        *validate_foundation_boundary_routing_surfaces(repo_root),
+        *validate_foundation_boundary_status_blocks(repo_root),
     ]
 
 

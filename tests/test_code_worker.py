@@ -19,8 +19,10 @@ import pytest
 
 from mcoi_runtime.contracts.code_worker import (
     CodeWorkerLease,
+    CodeWorkerReceipt,
     CodeWorkerReceiptStatus,
 )
+from mcoi_runtime.contracts.execution import ExecutionMode
 from mcoi_runtime.workers.code_worker import (
     SandboxedCodeWorker,
     _changed_path_violations,
@@ -47,6 +49,27 @@ def _lease(**overrides: object) -> CodeWorkerLease:
     return CodeWorkerLease(**values)
 
 
+def _receipt(**overrides: object) -> CodeWorkerReceipt:
+    values = {
+        "receipt_id": "code-worker-receipt-1",
+        "lease_id": "lease-1",
+        "command_id": "cmd-1",
+        "tenant_id": "tenant-a",
+        "repository": "repo-a",
+        "commit_sha": "abc123",
+        "status": CodeWorkerReceiptStatus.SUCCEEDED,
+        "command_hash": "command-hash",
+        "stdout_hash": "stdout-hash",
+        "stderr_hash": "stderr-hash",
+        "network_enabled": False,
+        "started_at": "2026-05-07T12:00:00+00:00",
+        "finished_at": "2026-05-07T12:00:01+00:00",
+        "evidence_refs": ("code_worker:receipt-1",),
+    }
+    values.update(overrides)
+    return CodeWorkerReceipt(**values)
+
+
 def test_code_worker_lease_contract_is_frozen_and_json_safe() -> None:
     lease = _lease(allowed_paths=("./src", "src"), allowed_commands=(("python", "src/task.py"),))
     payload = lease.to_json_dict()
@@ -62,6 +85,23 @@ def test_code_worker_lease_contract_is_frozen_and_json_safe() -> None:
         _lease(allowed_paths=("C:/outside",))
     with pytest.raises(Exception):
         lease.allowed_paths += ("tests",)  # type: ignore[misc]
+
+
+def test_code_worker_receipt_records_real_execution_mode() -> None:
+    receipt = _receipt()
+
+    assert receipt.execution_mode is ExecutionMode.REAL
+    assert receipt.to_json_dict()["execution_mode"] == "real"
+    assert receipt.evidence_refs == ("code_worker:receipt-1",)
+
+
+def test_code_worker_receipt_rejects_non_real_execution_mode() -> None:
+    with pytest.raises(ValueError, match="^observed effect receipts must use execution_mode=real$") as exc_info:
+        _receipt(execution_mode=ExecutionMode.TEST)
+
+    message = str(exc_info.value)
+    assert "execution_mode=real" in message
+    assert "test" not in message
 
 
 def test_sandboxed_code_worker_executes_exact_lease_command_with_receipt(tmp_path: Path) -> None:

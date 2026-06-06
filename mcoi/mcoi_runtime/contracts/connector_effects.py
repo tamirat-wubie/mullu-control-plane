@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import Any, Mapping
 
 from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text
+from .execution import ExecutionMode, coerce_execution_mode
 from .integration import ConnectorStatus
 
 
@@ -31,6 +32,7 @@ class ConnectorInvocationReceipt(ContractRecord):
     finished_at: str
     status_code: int | None = None
     error_code: str | None = None
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -51,6 +53,10 @@ class ConnectorInvocationReceipt(ContractRecord):
             object.__setattr__(self, field_name, require_non_empty_text(value, field_name))
         if not isinstance(self.status, ConnectorStatus):
             raise ValueError("status must be a ConnectorStatus value")
+        execution_mode = coerce_execution_mode(self.execution_mode)
+        if execution_mode is not ExecutionMode.REAL:
+            raise ValueError("observed effect receipts must use execution_mode=real")
+        object.__setattr__(self, "execution_mode", execution_mode)
         object.__setattr__(self, "started_at", require_datetime_text(self.started_at, "started_at"))
         object.__setattr__(self, "finished_at", require_datetime_text(self.finished_at, "finished_at"))
         if self.status_code is not None and (

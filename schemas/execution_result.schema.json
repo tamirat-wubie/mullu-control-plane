@@ -79,6 +79,17 @@
     "extensions": {
       "type": "object",
       "additionalProperties": true
+    },
+    "execution_mode": {
+      "type": "string",
+      "enum": [
+        "real",
+        "dry_run",
+        "shadow",
+        "simulation",
+        "replay",
+        "test"
+      ]
     }
   }
 }

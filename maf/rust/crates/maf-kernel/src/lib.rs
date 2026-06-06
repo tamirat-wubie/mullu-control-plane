@@ -59,6 +59,17 @@ pub enum ExecutionOutcome {
     Cancelled,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ExecutionMode {
+    Real,
+    DryRun,
+    Shadow,
+    Simulation,
+    Replay,
+    Test,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EffectRecord {
     pub name: String,
@@ -73,6 +84,7 @@ pub struct ExecutionResult {
     pub status: ExecutionOutcome,
     pub actual_effects: Vec<EffectRecord>,
     pub assumed_effects: Vec<EffectRecord>,
+    pub execution_mode: ExecutionMode,
     pub started_at: String,
     pub finished_at: String,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]

@@ -16,6 +16,7 @@ from ._base import (
     require_datetime_text,
     require_non_empty_text,
 )
+from .execution import ExecutionMode, coerce_execution_mode
 
 
 class FileEffectOperation(StrEnum):
@@ -35,6 +36,7 @@ class FileWriteReceipt(ContractRecord):
     atomic_replace: bool
     evidence_ref: str
     written_at: str
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -52,5 +54,9 @@ class FileWriteReceipt(ContractRecord):
             raise ValueError("bytes_written must be a non-negative integer")
         if not isinstance(self.atomic_replace, bool):
             raise ValueError("atomic_replace must be a boolean")
+        execution_mode = coerce_execution_mode(self.execution_mode)
+        if execution_mode is not ExecutionMode.REAL:
+            raise ValueError("observed effect receipts must use execution_mode=real")
+        object.__setattr__(self, "execution_mode", execution_mode)
         object.__setattr__(self, "written_at", require_datetime_text(self.written_at, "written_at"))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))

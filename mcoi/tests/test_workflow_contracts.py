@@ -2,6 +2,7 @@
 
 import pytest
 
+from mcoi_runtime.contracts import ExecutionMode
 from mcoi_runtime.contracts.workflow import (
     StageExecutionResult,
     StageStatus,
@@ -267,6 +268,8 @@ class TestStageExecutionResult:
         )
         assert r.stage_id == "s1"
         assert r.status is StageStatus.COMPLETED
+        assert r.execution_mode is ExecutionMode.REAL
+        assert r.to_json_dict()["execution_mode"] == "real"
         assert r.output["result"] == "ok"
 
     def test_with_error(self):
@@ -312,6 +315,7 @@ class TestWorkflowExecutionRecord:
         )
         assert rec.workflow_id == "wf-001"
         assert rec.status is WorkflowStatus.RUNNING
+        assert rec.execution_mode is ExecutionMode.REAL
         assert rec.completed_at is None
 
     def test_with_stage_results(self):
@@ -330,6 +334,38 @@ class TestWorkflowExecutionRecord:
             completed_at="2025-01-01T00:01:00Z",
         )
         assert len(rec.stage_results) == 1
+
+    def test_execution_mode_is_canonical(self):
+        result = StageExecutionResult(
+            stage_id="s1",
+            status=StageStatus.COMPLETED,
+            started_at=NOW,
+            completed_at=NOW,
+            execution_mode=ExecutionMode.DRY_RUN,
+        )
+        rec = WorkflowExecutionRecord(
+            workflow_id="wf-001",
+            execution_id="exec-001",
+            status=WorkflowStatus.COMPLETED,
+            stage_results=(result,),
+            started_at=NOW,
+            completed_at=NOW,
+            execution_mode=ExecutionMode.DRY_RUN,
+        )
+
+        assert result.execution_mode is ExecutionMode.DRY_RUN
+        assert rec.execution_mode is ExecutionMode.DRY_RUN
+        assert rec.to_json_dict()["execution_mode"] == "dry_run"
+
+    def test_unknown_execution_mode_rejected(self):
+        with pytest.raises(ValueError, match="unknown execution_mode"):
+            WorkflowExecutionRecord(
+                workflow_id="wf-001",
+                execution_id="exec-001",
+                status=WorkflowStatus.RUNNING,
+                started_at=NOW,
+                execution_mode="stub",
+            )
 
     def test_empty_workflow_id_rejected(self):
         with pytest.raises(ValueError, match="workflow_id"):

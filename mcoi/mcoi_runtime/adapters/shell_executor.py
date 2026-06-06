@@ -9,11 +9,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 from typing import Any, Callable, Mapping
 
-from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
+from mcoi_runtime.contracts.execution import EffectRecord, ExecutionMode, ExecutionOutcome, ExecutionResult
 from mcoi_runtime.contracts.shell_execution import ShellExecutionReceipt
 
 from .executor_base import ExecutionFailure, ExecutionRequest, build_execution_result, utc_now_text
@@ -23,6 +24,30 @@ Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 _DEFAULT_MAX_OUTPUT_BYTES: int = 1_048_576  # 1 MB
 _TRUNCATION_MARKER: str = "\n[TRUNCATED at {limit} bytes]"
+
+_LOCALE_BASELINE: dict[str, str] = {
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONIOENCODING": "utf-8",
+    "PYTHONUTF8": "1",
+}
+
+_PLATFORM_PASSTHROUGH_KEYS: tuple[str, ...] = (
+    ("PATH", "SYSTEMROOT", "COMSPEC", "PATHEXT", "TEMP", "TMP", "WINDIR")
+    if os.name == "nt"
+    else ("PATH", "HOME", "TMPDIR")
+)
+
+
+def _minimal_process_environment(extra_env: Mapping[str, str]) -> dict[str, str]:
+    """Build a credential-scrubbed environment for isolated shell execution."""
+    environment: dict[str, str] = dict(_LOCALE_BASELINE)
+    for key in _PLATFORM_PASSTHROUGH_KEYS:
+        value = os.environ.get(key)
+        if value is not None:
+            environment[key] = value
+    environment.update(dict(extra_env))
+    return environment
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,7 +136,9 @@ class ShellSandboxPolicy:
                     **self.metadata(),
                 },
             )
-        return {key: environment[key] for key in sorted(requested_keys)}, None
+        return _minimal_process_environment(
+            {key: environment[key] for key in sorted(requested_keys)}
+        ), None
 
 
 def _classify_spawn_exception(exc: OSError) -> str:
@@ -238,6 +265,7 @@ def _build_shell_failure_result(
         started_at=started_at,
         finished_at=finished_at,
         metadata={"adapter": "shell", "shell_receipt": receipt_payload},
+        execution_mode=ExecutionMode.REAL,
     )
 
 
@@ -253,11 +281,8 @@ class ShellExecutor:
         started_at = self.clock()
         policy_id: str | None = None
         policy_verdict: str | None = None
-        sandbox_metadata: dict[str, Any] = (
-            self.sandbox_policy.metadata()
-            if self.sandbox_policy is not None
-            else {}
-        )
+        sandbox_policy = self.sandbox_policy or ShellSandboxPolicy(sandbox_id="default-local")
+        sandbox_metadata: dict[str, Any] = sandbox_policy.metadata()
 
         # --- Policy gate: deny before any subprocess activity ---
         if self.policy_engine is not None:
@@ -299,57 +324,54 @@ class ShellExecutor:
                     )
 
         runner_environment: dict[str, str] | None
-        if self.sandbox_policy is None:
-            runner_environment = dict(request.environment) if request.environment else None
-        else:
-            cwd_failure = self.sandbox_policy.validate_cwd(request.cwd)
-            if cwd_failure is not None:
-                finished_at = self.clock()
-                receipt = _build_shell_receipt(
-                    request=request,
-                    outcome=ExecutionOutcome.FAILED,
-                    started_at=started_at,
-                    finished_at=finished_at,
-                    stdout="",
-                    stderr="",
-                    returncode=None,
-                    policy_id=policy_id,
-                    policy_verdict=policy_verdict,
-                    metadata={"failure_code": "sandbox_denied", **sandbox_metadata},
-                )
-                return _build_shell_failure_result(
-                    request=request,
-                    started_at=started_at,
-                    finished_at=finished_at,
-                    failure=cwd_failure,
-                    effect_name="sandbox_denied",
-                    receipt=receipt,
-                )
-            runner_environment, environment_failure = self.sandbox_policy.build_environment(
-                request.environment
+        cwd_failure = sandbox_policy.validate_cwd(request.cwd)
+        if cwd_failure is not None:
+            finished_at = self.clock()
+            receipt = _build_shell_receipt(
+                request=request,
+                outcome=ExecutionOutcome.FAILED,
+                started_at=started_at,
+                finished_at=finished_at,
+                stdout="",
+                stderr="",
+                returncode=None,
+                policy_id=policy_id,
+                policy_verdict=policy_verdict,
+                metadata={"failure_code": "sandbox_denied", **sandbox_metadata},
             )
-            if environment_failure is not None:
-                finished_at = self.clock()
-                receipt = _build_shell_receipt(
-                    request=request,
-                    outcome=ExecutionOutcome.FAILED,
-                    started_at=started_at,
-                    finished_at=finished_at,
-                    stdout="",
-                    stderr="",
-                    returncode=None,
-                    policy_id=policy_id,
-                    policy_verdict=policy_verdict,
-                    metadata={"failure_code": "sandbox_denied", **sandbox_metadata},
-                )
-                return _build_shell_failure_result(
-                    request=request,
-                    started_at=started_at,
-                    finished_at=finished_at,
-                    failure=environment_failure,
-                    effect_name="sandbox_denied",
-                    receipt=receipt,
-                )
+            return _build_shell_failure_result(
+                request=request,
+                started_at=started_at,
+                finished_at=finished_at,
+                failure=cwd_failure,
+                effect_name="sandbox_denied",
+                receipt=receipt,
+            )
+        runner_environment, environment_failure = sandbox_policy.build_environment(
+            request.environment
+        )
+        if environment_failure is not None:
+            finished_at = self.clock()
+            receipt = _build_shell_receipt(
+                request=request,
+                outcome=ExecutionOutcome.FAILED,
+                started_at=started_at,
+                finished_at=finished_at,
+                stdout="",
+                stderr="",
+                returncode=None,
+                policy_id=policy_id,
+                policy_verdict=policy_verdict,
+                metadata={"failure_code": "sandbox_denied", **sandbox_metadata},
+            )
+            return _build_shell_failure_result(
+                request=request,
+                started_at=started_at,
+                finished_at=finished_at,
+                failure=environment_failure,
+                effect_name="sandbox_denied",
+                receipt=receipt,
+            )
 
         try:
             completed = self.runner(
@@ -462,4 +484,5 @@ class ShellExecutor:
             started_at=started_at,
             finished_at=finished_at,
             metadata={"adapter": "shell", "shell_receipt": receipt.to_json_dict()},
+            execution_mode=ExecutionMode.REAL,
         )

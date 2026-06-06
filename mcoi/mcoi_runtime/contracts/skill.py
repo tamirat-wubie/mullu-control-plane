@@ -23,6 +23,7 @@ from ._base import (
     require_unit_float,
 )
 from ._shared_enums import EffectClass, TrustClass
+from .execution import ExecutionMode, coerce_execution_mode
 
 TContract = TypeVar("TContract", bound=ContractRecord)
 
@@ -275,11 +276,13 @@ class SkillStepOutcome(ContractRecord):
     verification_id: str | None = None
     error_message: str | None = None
     outputs: Mapping[str, Any] = field(default_factory=dict)
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "step_id", require_non_empty_text(self.step_id, "step_id"))
         if not isinstance(self.status, SkillOutcomeStatus):
             raise ValueError("status must be a SkillOutcomeStatus value")
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         object.__setattr__(self, "outputs", freeze_value(self.outputs))
 
 
@@ -296,11 +299,13 @@ class SkillOutcome(ContractRecord):
     verification_id: str | None = None
     error_message: str | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "skill_id", require_non_empty_text(self.skill_id, "skill_id"))
         if not isinstance(self.status, SkillOutcomeStatus):
             raise ValueError("status must be a SkillOutcomeStatus value")
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         object.__setattr__(
             self,
             "step_outcomes",
@@ -349,12 +354,14 @@ class SkillExecutionRecord(ContractRecord):
     trace_id: str | None = None
     replay_id: str | None = None
     runbook_id: str | None = None
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "record_id", require_non_empty_text(self.record_id, "record_id"))
         object.__setattr__(self, "skill_id", require_non_empty_text(self.skill_id, "skill_id"))
         if not isinstance(self.outcome, SkillOutcome):
             raise ValueError("outcome must be a SkillOutcome instance")
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
 
 
 @dataclass(frozen=True, slots=True)
