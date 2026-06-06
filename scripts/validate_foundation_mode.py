@@ -1956,6 +1956,11 @@ CENTRAL_FOUNDATION_TABLE_FILES = (
     "docs/CURRENT_READINESS_SNAPSHOT.md",
 )
 
+CENTRAL_FOUNDATION_DEPENDENCY_FILES = (
+    "docs/FOUNDATION_MODE.md",
+    "docs/FOUNDATION_PREREQUISITES.md",
+)
+
 FOUNDATION_BOUNDARY_ROUTE_FILES = (
     "README.md",
     "docs/START_HERE.md",
@@ -1969,6 +1974,14 @@ FOUNDATION_BOUNDARY_STATUS_FIELDS = (
     "Invariants verified:",
     "Open issues:",
     "Next action:",
+)
+
+FOUNDATION_NAVIGATION_LINK_FILES = (
+    "README.md",
+    "docs/START_HERE.md",
+    "docs/FOUNDATION_MODE.md",
+    "docs/FOUNDATION_PREREQUISITES.md",
+    "docs/CURRENT_READINESS_SNAPSHOT.md",
 )
 
 FORBIDDEN_FORWARD_PHRASES = (
@@ -2091,6 +2104,44 @@ def validate_central_table_label_uniqueness(repo_root: Path = REPO_ROOT) -> list
     return findings
 
 
+def validate_central_foundation_dependency_headers(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
+    """Return findings when central Foundation headers omit boundary dependencies."""
+
+    boundary_doc_names = sorted(boundary_doc.name for boundary_doc in (repo_root / "docs").glob("FOUNDATION_*_BOUNDARY.md"))
+    if not boundary_doc_names:
+        return [
+            FoundationModeFinding(
+                "foundation_boundary_inventory_missing",
+                "docs directory has no FOUNDATION_*_BOUNDARY.md files",
+            )
+        ]
+    findings: list[FoundationModeFinding] = []
+    for relative_path in CENTRAL_FOUNDATION_DEPENDENCY_FILES:
+        try:
+            text = read_required_text(repo_root, relative_path)
+        except OSError as exc:
+            findings.append(FoundationModeFinding("foundation_file_missing", str(exc)))
+            continue
+        if "-->" not in text:
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_central_dependency_header_missing",
+                    f"{relative_path} missing leading metadata header",
+                )
+            )
+            continue
+        header = text.split("-->", 1)[0]
+        missing_boundary_doc_names = [boundary_doc_name for boundary_doc_name in boundary_doc_names if boundary_doc_name not in header]
+        if missing_boundary_doc_names:
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_central_dependency_missing",
+                    f"{relative_path} header missing boundary dependencies: {', '.join(missing_boundary_doc_names)}",
+                )
+            )
+    return findings
+
+
 def validate_prerequisite_go_deeper_boundary_links(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
     """Return findings when the operator navigation table omits a boundary doc."""
 
@@ -2198,6 +2249,58 @@ def validate_foundation_boundary_status_blocks(repo_root: Path = REPO_ROOT) -> l
     return findings
 
 
+def validate_foundation_navigation_links(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
+    """Return findings for broken or out-of-repository Foundation navigation links."""
+
+    resolved_repo_root = repo_root.resolve()
+    navigation_paths = [
+        *(resolved_repo_root / relative_path for relative_path in FOUNDATION_NAVIGATION_LINK_FILES),
+        *sorted((resolved_repo_root / "docs").glob("FOUNDATION_*_BOUNDARY.md")),
+    ]
+    link_pattern = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+    findings: list[FoundationModeFinding] = []
+    for navigation_path in navigation_paths:
+        try:
+            relative_path = navigation_path.relative_to(resolved_repo_root).as_posix()
+        except ValueError:
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_navigation_surface_outside_repo",
+                    f"navigation surface is outside repository: {navigation_path}",
+                )
+            )
+            continue
+        try:
+            text = read_required_text(resolved_repo_root, relative_path)
+        except OSError as exc:
+            findings.append(FoundationModeFinding("foundation_file_missing", str(exc)))
+            continue
+        for match in link_pattern.finditer(text):
+            target = match.group(1).strip()
+            if _is_external_or_anchor_link(target):
+                continue
+            target_path = target.split("#", 1)[0]
+            if not target_path:
+                continue
+            resolved_target = (navigation_path.parent / target_path).resolve()
+            if not resolved_target.is_relative_to(resolved_repo_root):
+                findings.append(
+                    FoundationModeFinding(
+                        "foundation_navigation_link_outside_repo",
+                        f"{relative_path} links outside repository: {target}",
+                    )
+                )
+                continue
+            if not resolved_target.exists():
+                findings.append(
+                    FoundationModeFinding(
+                        "foundation_navigation_link_missing",
+                        f"{relative_path} has missing local link target: {target}",
+                    )
+                )
+    return findings
+
+
 def validate_foundation_mode(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
     """Validate the repository Foundation Mode posture and return findings."""
 
@@ -2205,10 +2308,18 @@ def validate_foundation_mode(repo_root: Path = REPO_ROOT) -> list[FoundationMode
         *validate_required_phrases(repo_root),
         *validate_forbidden_forward_phrases(repo_root),
         *validate_central_table_label_uniqueness(repo_root),
+        *validate_central_foundation_dependency_headers(repo_root),
         *validate_prerequisite_go_deeper_boundary_links(repo_root),
         *validate_foundation_boundary_routing_surfaces(repo_root),
         *validate_foundation_boundary_status_blocks(repo_root),
+        *validate_foundation_navigation_links(repo_root),
     ]
+
+
+def _is_external_or_anchor_link(target: str) -> bool:
+    if not target or target.startswith("#"):
+        return True
+    return bool(re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", target))
 
 
 def _iter_markdown_tables(text: str) -> list[list[str]]:
