@@ -74,6 +74,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "governed_code_change_loop_sandbox_probe_example",
         "governed_code_change_loop_sandbox_readiness_runbook",
         "intelligence_coordination_episode_receipt",
+        "route_receipt_coverage",
+        "route_guard_chain_coverage",
     ]
     terminal_protocol_phase = [
         "universal_action_orchestration_contract",
@@ -189,6 +191,14 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["intelligence_coordination_episode_receipt"][1:] == (
         "scripts/validate_intelligence_coordination_episode_receipt.py",
+    )
+    assert args_by_name["route_receipt_coverage"][1:] == (
+        "scripts/validate_receipt_coverage.py",
+        "--strict",
+    )
+    assert args_by_name["route_guard_chain_coverage"][1:] == (
+        "scripts/validate_guard_chain_coverage.py",
+        "--strict",
     )
     assert args_by_name["sdlc_release_readiness_validation"][1:] == (
         "scripts/validate_sdlc_release_readiness.py",
