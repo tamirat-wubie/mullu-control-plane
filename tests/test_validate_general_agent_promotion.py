@@ -38,7 +38,7 @@ def test_current_repo_blocks_full_general_agent_claim() -> None:
     assert readiness.readiness_level == "pilot-governed-core"
     assert readiness.capability_count >= 30
     assert readiness.capsule_count >= 7
-    assert "browser_adapter_not_closed" in readiness.blockers
+    assert "browser_adapter_not_closed" not in readiness.blockers
     assert "document_adapter_not_closed" not in readiness.blockers
     assert "voice_adapter_not_closed" in readiness.blockers
     assert "email_calendar_adapter_not_closed" in readiness.blockers
@@ -54,7 +54,10 @@ def test_governed_record_surface_check_passes_before_adapter_closure() -> None:
     mcp_manifest = checks_by_name["MCP governed import manifest"]
     sandbox_contract = checks_by_name["sandboxed computer/code runner contract"]
     email_calendar_adapter = checks_by_name["real email/calendar adapter closure"]
+    browser_adapter = checks_by_name["real browser adapter closure"]
 
+    assert browser_adapter.passed is True
+    assert "closure evidence is present" in browser_adapter.detail
     assert governed_surface.passed is True
     assert "governed capability records" in governed_surface.detail
     assert mcp_manifest.passed is True
@@ -237,7 +240,7 @@ def test_cli_strict_json_blocks_current_repo(tmp_path: Path, capsys) -> None:
     assert exit_code == 2
     assert payload["ready"] is False
     assert payload["readiness_level"] == "pilot-governed-core"
-    assert "browser_adapter_not_closed" in payload["blockers"]
+    assert "browser_adapter_not_closed" not in payload["blockers"]
     assert "email_calendar_adapter_not_closed" in payload["blockers"]
     assert "production_health_not_declared" in payload["blockers"]
     assert captured.err == ""
