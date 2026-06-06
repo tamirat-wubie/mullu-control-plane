@@ -6,6 +6,7 @@ from types import MappingProxyType
 
 import pytest
 
+from mcoi_runtime.contracts.execution import ExecutionMode
 from mcoi_runtime.contracts.knowledge_query import (
     EvidenceBundle,
     EvidenceKind,
@@ -647,6 +648,13 @@ class TestQueryExecutionRecord:
         assert obj.total_results == 3
         assert obj.execution_ms == 12.5
         assert obj.executed_at == TS
+        assert obj.execution_mode is ExecutionMode.REAL
+        assert obj.to_json_dict()["execution_mode"] == "real"
+
+    def test_explicit_execution_mode(self):
+        obj = _qer(execution_mode="test")
+        assert obj.execution_mode is ExecutionMode.TEST
+        assert obj.to_json_dict()["execution_mode"] == "test"
 
     def test_frozen(self):
         obj = _qer()
@@ -664,6 +672,10 @@ class TestQueryExecutionRecord:
     def test_status_invalid(self):
         with pytest.raises(ValueError):
             _qer(status="complete")
+
+    def test_unknown_execution_mode(self):
+        with pytest.raises(ValueError, match="execution_mode"):
+            _qer(execution_mode="stub")
 
     def test_all_result_statuses(self):
         for s in QueryResultStatus:
@@ -1111,7 +1123,8 @@ class TestAllDataclassesToDict:
     def test_query_execution_record_to_dict_keys(self):
         d = _qer().to_dict()
         expected = {"execution_id", "query_id", "status", "total_matches",
-                    "total_results", "execution_ms", "executed_at", "metadata"}
+                    "total_results", "execution_ms", "executed_at", "metadata",
+                    "execution_mode"}
         assert set(d.keys()) == expected
 
     def test_query_snapshot_to_dict_keys(self):

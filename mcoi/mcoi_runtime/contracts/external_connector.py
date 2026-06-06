@@ -28,6 +28,7 @@ from ._base import (
     require_non_negative_int,
     require_unit_float,
 )
+from .execution import ExecutionMode, coerce_execution_mode
 
 
 # ---------------------------------------------------------------------------
@@ -222,12 +223,14 @@ class ConnectorExecutionRecord(ContractRecord):
     correlation_id: str = ""
     executed_at: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(
             self, "execution_id",
             require_non_empty_text(self.execution_id, "execution_id"),
         )
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         object.__setattr__(
             self, "connector_id",
             require_non_empty_text(self.connector_id, "connector_id"),

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import pytest
 
+from mcoi_runtime.contracts.execution import ExecutionMode
 from mcoi_runtime.contracts.file_effects import FileEffectOperation, FileWriteReceipt
 
 
@@ -35,6 +36,8 @@ def test_file_write_receipt_accepts_hashed_evidence() -> None:
     assert receipt.content_hash == "content-hash"
     assert receipt.bytes_written == 12
     assert receipt.atomic_replace is True
+    assert receipt.execution_mode is ExecutionMode.REAL
+    assert receipt.to_json_dict()["execution_mode"] == "real"
 
 
 def test_file_write_receipt_rejects_missing_evidence_ref() -> None:
@@ -56,3 +59,12 @@ def test_file_write_receipt_rejects_invalid_byte_count_and_atomic_flag() -> None
 
     valid_empty = _receipt(bytes_written=0)
     assert valid_empty.bytes_written == 0
+
+
+def test_file_write_receipt_rejects_non_real_execution_mode() -> None:
+    with pytest.raises(ValueError, match="^observed effect receipts must use execution_mode=real$") as exc_info:
+        _receipt(execution_mode=ExecutionMode.SIMULATION)
+
+    message = str(exc_info.value)
+    assert "execution_mode=real" in message
+    assert "simulation" not in message

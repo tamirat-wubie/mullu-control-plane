@@ -28,6 +28,7 @@ from ._base import (
     require_non_negative_int,
     require_unit_float,
 )
+from .execution import ExecutionMode, coerce_execution_mode
 
 
 # ---------------------------------------------------------------------------
@@ -377,11 +378,13 @@ class TemporalSkillStageExecution(ContractRecord):
     input_values: Mapping[str, Any] = field(default_factory=dict)
     output_values: Mapping[str, Any] = field(default_factory=dict)
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "execution_id", require_non_empty_text(self.execution_id, "execution_id"))
         object.__setattr__(self, "plan_id", require_non_empty_text(self.plan_id, "plan_id"))
         object.__setattr__(self, "stage_id", require_non_empty_text(self.stage_id, "stage_id"))
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         if not isinstance(self.stage_type, TemporalSkillStageType):
             raise ValueError("stage_type must be a TemporalSkillStageType")
         if not isinstance(self.verdict, TemporalSkillExecutionVerdict):
@@ -407,11 +410,13 @@ class TemporalSkillPlanExecution(ContractRecord):
     stage_receipts: tuple[TemporalSkillStageExecution, ...] = ()
     terminal_outputs: Mapping[str, Any] = field(default_factory=dict)
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "execution_id", require_non_empty_text(self.execution_id, "execution_id"))
         object.__setattr__(self, "schedule_ref", require_non_empty_text(self.schedule_ref, "schedule_ref"))
         object.__setattr__(self, "plan_id", require_non_empty_text(self.plan_id, "plan_id"))
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         if not isinstance(self.verdict, TemporalSkillExecutionVerdict):
             raise ValueError("verdict must be a TemporalSkillExecutionVerdict")
         object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
@@ -421,6 +426,8 @@ class TemporalSkillPlanExecution(ContractRecord):
         for receipt in receipts:
             if not isinstance(receipt, TemporalSkillStageExecution):
                 raise ValueError("stage_receipts must contain TemporalSkillStageExecution values")
+            if receipt.execution_mode is not self.execution_mode:
+                raise ValueError("stage_receipts execution_mode must match plan execution_mode")
         object.__setattr__(self, "stage_receipts", receipts)
         object.__setattr__(self, "terminal_outputs", _freeze_keyed_mapping(self.terminal_outputs, "terminal_outputs"))
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))

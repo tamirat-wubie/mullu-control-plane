@@ -26,6 +26,7 @@ from ._base import (
     require_positive_int,
     require_unit_float,
 )
+from .execution import ExecutionMode, coerce_execution_mode
 
 
 # ---------------------------------------------------------------------------
@@ -237,10 +238,12 @@ class ReactionExecutionRecord(ContractRecord):
     result_ref_id: str
     execution_notes: str
     executed_at: str
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         for f in ("execution_id", "rule_id", "event_id", "correlation_id"):
             object.__setattr__(self, f, require_non_empty_text(getattr(self, f), f))
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         if not isinstance(self.target, ReactionTarget):
             raise ValueError("target must be a ReactionTarget")
         if not isinstance(self.gate_result, ReactionGateResult):

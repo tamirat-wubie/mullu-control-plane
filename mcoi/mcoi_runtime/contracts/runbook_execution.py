@@ -21,6 +21,7 @@ from ._base import (
     require_non_empty_text,
     require_non_negative_int,
 )
+from .execution import ExecutionMode, coerce_execution_mode
 
 
 ContractT = TypeVar("ContractT")
@@ -139,6 +140,7 @@ class RunbookStepResult(ContractRecord):
     succeeded: bool
     error_message: str | None = None
     execution_id: str | None = None
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "step_index", require_non_negative_int(self.step_index, "step_index"))
@@ -146,6 +148,7 @@ class RunbookStepResult(ContractRecord):
         object.__setattr__(self, "succeeded", _require_bool(self.succeeded, "succeeded"))
         object.__setattr__(self, "error_message", _require_optional_text(self.error_message, "error_message"))
         object.__setattr__(self, "execution_id", _require_optional_text(self.execution_id, "execution_id"))
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
 
 
 @dataclass(frozen=True, slots=True)
@@ -181,11 +184,13 @@ class RunbookExecutionRecord(ContractRecord):
     started_at: str | None = None
     finished_at: str | None = None
     error_message: str | None = None
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "record_id", require_non_empty_text(self.record_id, "record_id"))
         object.__setattr__(self, "runbook_id", require_non_empty_text(self.runbook_id, "runbook_id"))
         object.__setattr__(self, "request_id", require_non_empty_text(self.request_id, "request_id"))
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         if not isinstance(self.status, RunbookExecutionStatus):
             raise ValueError("status must be a RunbookExecutionStatus value")
         if not isinstance(self.context, RunbookExecutionContext):
@@ -200,6 +205,9 @@ class RunbookExecutionRecord(ContractRecord):
                 "RunbookStepResult",
             ),
         )
+        for step_result in self.step_results:
+            if step_result.execution_mode is not self.execution_mode:
+                raise ValueError("step_results execution_mode must match record execution_mode")
         object.__setattr__(
             self,
             "drift_records",

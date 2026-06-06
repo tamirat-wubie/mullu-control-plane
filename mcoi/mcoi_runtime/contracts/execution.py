@@ -98,12 +98,14 @@ class ExecutionResult(ContractRecord):
     finished_at: str
     metadata: Mapping[str, Any] = field(default_factory=dict)
     extensions: Mapping[str, Any] = field(default_factory=dict)
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "execution_id", require_non_empty_text(self.execution_id, "execution_id"))
         object.__setattr__(self, "goal_id", require_non_empty_text(self.goal_id, "goal_id"))
         if not isinstance(self.status, ExecutionOutcome):
             raise ValueError("status must be an ExecutionOutcome value")
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         object.__setattr__(self, "actual_effects", _freeze_effect_records(self.actual_effects, "actual_effects"))
         object.__setattr__(self, "assumed_effects", _freeze_effect_records(self.assumed_effects, "assumed_effects"))
         object.__setattr__(self, "started_at", require_datetime_text(self.started_at, "started_at"))

@@ -22,6 +22,7 @@ from ._base import (
     require_datetime_text,
     require_non_empty_text,
 )
+from .execution import ExecutionMode, coerce_execution_mode
 
 
 # --- Classification enums ---
@@ -255,12 +256,14 @@ class JobExecutionRecord(ContractRecord):
     outcome_summary: str
     errors: tuple[str, ...] = ()
     completed_at: str | None = None
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "job_id", require_non_empty_text(self.job_id, "job_id"))
         object.__setattr__(self, "execution_id", require_non_empty_text(self.execution_id, "execution_id"))
         if not isinstance(self.status, JobStatus):
             raise ValueError("status must be a JobStatus value")
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         object.__setattr__(self, "started_at", require_datetime_text(self.started_at, "started_at"))
         object.__setattr__(self, "outcome_summary", require_non_empty_text(self.outcome_summary, "outcome_summary"))
         object.__setattr__(self, "errors", freeze_value(list(self.errors)))

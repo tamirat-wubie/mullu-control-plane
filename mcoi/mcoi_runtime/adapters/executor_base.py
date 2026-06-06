@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Mapping, Protocol
 
-from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
+from mcoi_runtime.contracts.execution import EffectRecord, ExecutionMode, ExecutionOutcome, ExecutionResult
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, freeze_mapping, stable_identifier
 
 
@@ -95,6 +95,7 @@ def build_execution_result(
     started_at: str,
     finished_at: str,
     metadata: Mapping[str, Any] | None = None,
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL,
 ) -> ExecutionResult:
     return ExecutionResult(
         execution_id=execution_id,
@@ -105,6 +106,7 @@ def build_execution_result(
         started_at=started_at,
         finished_at=finished_at,
         metadata=dict(metadata or {}),
+        execution_mode=execution_mode,
     )
 
 
@@ -118,6 +120,7 @@ def build_failure_result(
     effect_name: str,
     status: ExecutionOutcome = ExecutionOutcome.FAILED,
     metadata: Mapping[str, Any] | None = None,
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL,
 ) -> ExecutionResult:
     return build_execution_result(
         execution_id=execution_id,
@@ -136,4 +139,5 @@ def build_failure_result(
         started_at=started_at,
         finished_at=finished_at,
         metadata=metadata,
+        execution_mode=execution_mode,
     )

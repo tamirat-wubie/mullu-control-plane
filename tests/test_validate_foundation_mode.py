@@ -20,9 +20,12 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.validate_foundation_mode import (  # noqa: E402
     REQUIRED_PHRASES_BY_FILE,
+    validate_foundation_boundary_status_blocks,
+    validate_foundation_boundary_routing_surfaces,
     validate_central_table_label_uniqueness,
     validate_forward_text_boundary,
     validate_foundation_mode,
+    validate_prerequisite_go_deeper_boundary_links,
     validate_required_phrases,
 )
 
@@ -109,6 +112,7 @@ def test_required_phrase_map_covers_current_guidance_surfaces() -> None:
 
 
 def test_all_foundation_boundary_docs_are_registered_and_routed() -> None:
+    findings = validate_foundation_boundary_routing_surfaces()
     boundary_docs = sorted((REPO_ROOT / "docs").glob("FOUNDATION_*BOUNDARY.md"))
     routing_surfaces = (
         REPO_ROOT / "README.md",
@@ -117,12 +121,35 @@ def test_all_foundation_boundary_docs_are_registered_and_routed() -> None:
         REPO_ROOT / "docs" / "CURRENT_READINESS_SNAPSHOT.md",
     )
 
+    assert findings == []
     assert boundary_docs
     for boundary_doc in boundary_docs:
         required_key = f"docs/{boundary_doc.name}"
         assert required_key in REQUIRED_PHRASES_BY_FILE
         for routing_surface in routing_surfaces:
             assert boundary_doc.name in routing_surface.read_text(encoding="utf-8-sig")
+
+
+def test_foundation_boundary_routing_surface_missing_link_is_reported(tmp_path: Path) -> None:
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "FOUNDATION_OPERATOR_BOUNDARY.md").write_text("STATUS:\n", encoding="utf-8")
+    for relative_path in (
+        "README.md",
+        "docs/START_HERE.md",
+        "docs/FOUNDATION_MODE.md",
+        "docs/CURRENT_READINESS_SNAPSHOT.md",
+    ):
+        path = tmp_path / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("FOUNDATION_OPERATOR_BOUNDARY.md\n", encoding="utf-8")
+    (tmp_path / "docs" / "CURRENT_READINESS_SNAPSHOT.md").write_text("missing route\n", encoding="utf-8")
+
+    findings = validate_foundation_boundary_routing_surfaces(tmp_path)
+
+    assert findings
+    assert any(finding.rule_id == "foundation_boundary_route_missing" for finding in findings)
+    assert any("docs/CURRENT_READINESS_SNAPSHOT.md" in finding.message for finding in findings)
 
 
 def test_central_foundation_docs_list_all_boundary_dependencies() -> None:
@@ -140,6 +167,7 @@ def test_central_foundation_docs_list_all_boundary_dependencies() -> None:
 
 
 def test_all_foundation_boundary_docs_have_status_blocks() -> None:
+    findings = validate_foundation_boundary_status_blocks()
     boundary_docs = sorted((REPO_ROOT / "docs").glob("FOUNDATION_*BOUNDARY.md"))
     required_status_fields = (
         "STATUS:",
@@ -149,6 +177,7 @@ def test_all_foundation_boundary_docs_have_status_blocks() -> None:
         "Next action:",
     )
 
+    assert findings == []
     assert boundary_docs
     for boundary_doc in boundary_docs:
         text = boundary_doc.read_text(encoding="utf-8-sig")
@@ -156,6 +185,29 @@ def test_all_foundation_boundary_docs_have_status_blocks() -> None:
         for required_status_field in required_status_fields:
             assert required_status_field in text, f"{boundary_doc.name} missing {required_status_field}"
         assert "AwaitingEvidence" in text, f"{boundary_doc.name} missing AwaitingEvidence posture"
+
+
+def test_foundation_boundary_status_block_missing_posture_is_reported(tmp_path: Path) -> None:
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "FOUNDATION_OPERATOR_BOUNDARY.md").write_text(
+        "\n".join(
+            (
+                "STATUS:",
+                "  Completeness: 100%",
+                "  Invariants verified: local only",
+                "  Open issues: none",
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    findings = validate_foundation_boundary_status_blocks(tmp_path)
+
+    assert findings
+    assert any(finding.rule_id == "foundation_boundary_status_field_missing" for finding in findings)
+    assert any(finding.rule_id == "foundation_boundary_awaiting_evidence_missing" for finding in findings)
+    assert any("Next action:" in finding.message for finding in findings)
 
 
 def test_foundation_navigation_links_stay_repo_local_and_resolve() -> None:
@@ -294,6 +346,41 @@ def test_foundation_prerequisites_recommended_order_is_consecutive_and_complete(
     assert len(entry_targets) == len(set(entry_targets))
     assert foundation_targets == expected_foundation_targets
     assert len(foundation_targets) == len(expected_foundation_targets)
+
+
+def test_foundation_prerequisites_go_deeper_links_all_boundaries() -> None:
+    findings = validate_prerequisite_go_deeper_boundary_links()
+
+    assert findings == []
+    assert (REPO_ROOT / "docs" / "FOUNDATION_GITHUB_APP_TOKEN_FORMAT_BOUNDARY.md").exists()
+    assert "FOUNDATION_GITHUB_APP_TOKEN_FORMAT_BOUNDARY.md" in (
+        REPO_ROOT / "docs" / "FOUNDATION_PREREQUISITES.md"
+    ).read_text(encoding="utf-8-sig").split("## Go deeper / where to go next", 1)[1]
+
+
+def test_foundation_prerequisites_go_deeper_missing_boundary_is_reported(tmp_path: Path) -> None:
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    (docs_dir / "FOUNDATION_ALPHA_BOUNDARY.md").write_text("STATUS:\n", encoding="utf-8")
+    (docs_dir / "FOUNDATION_BETA_BOUNDARY.md").write_text("STATUS:\n", encoding="utf-8")
+    (docs_dir / "FOUNDATION_PREREQUISITES.md").write_text(
+        "\n".join(
+            (
+                "## Go deeper / where to go next",
+                "",
+                "| You now want to... | Go to |",
+                "| --- | --- |",
+                "| Prepare alpha | [Alpha](FOUNDATION_ALPHA_BOUNDARY.md) |",
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    findings = validate_prerequisite_go_deeper_boundary_links(tmp_path)
+
+    assert findings
+    assert findings[0].rule_id == "foundation_prerequisite_navigation_boundary_missing"
+    assert "FOUNDATION_BETA_BOUNDARY.md" in findings[0].message
 
 
 def test_required_phrase_validator_rejects_missing_foundation_doc(tmp_path: Path) -> None:

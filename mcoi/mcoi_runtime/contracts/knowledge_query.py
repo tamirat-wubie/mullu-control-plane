@@ -25,6 +25,7 @@ from ._base import (
     require_non_negative_int,
     require_unit_float,
 )
+from .execution import ExecutionMode, coerce_execution_mode
 
 
 # ---------------------------------------------------------------------------
@@ -224,10 +225,12 @@ class QueryExecutionRecord(ContractRecord):
     execution_ms: float = 0.0
     executed_at: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "execution_id", require_non_empty_text(self.execution_id, "execution_id"))
         object.__setattr__(self, "query_id", require_non_empty_text(self.query_id, "query_id"))
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         if not isinstance(self.status, QueryResultStatus):
             raise ValueError("status must be a QueryResultStatus")
         object.__setattr__(self, "total_matches", require_non_negative_int(self.total_matches, "total_matches"))

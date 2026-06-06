@@ -10,6 +10,7 @@ import pytest
 
 from mcoi_runtime.contracts.communication import CommunicationChannel, DeliveryStatus
 from mcoi_runtime.contracts.communication_effects import CommunicationDeliveryReceipt
+from mcoi_runtime.contracts.execution import ExecutionMode
 
 
 def _receipt(**overrides: object) -> CommunicationDeliveryReceipt:
@@ -39,6 +40,8 @@ def test_communication_delivery_receipt_accepts_hashed_evidence() -> None:
     assert receipt.channel is CommunicationChannel.NOTIFICATION
     assert receipt.provider == "smtp"
     assert receipt.metadata["message_type"] == "notification"
+    assert receipt.execution_mode is ExecutionMode.REAL
+    assert receipt.to_json_dict()["execution_mode"] == "real"
 
 
 def test_communication_delivery_receipt_rejects_missing_body_hash() -> None:
@@ -62,3 +65,12 @@ def test_communication_delivery_receipt_accepts_failed_status_with_error() -> No
     assert receipt.delivered_at is None
     assert receipt.error_code == "smtp_error:SMTPException"
     assert receipt.evidence_ref.startswith("communication-delivery:")
+
+
+def test_communication_delivery_receipt_rejects_non_real_execution_mode() -> None:
+    with pytest.raises(ValueError, match="^observed effect receipts must use execution_mode=real$") as exc_info:
+        _receipt(execution_mode=ExecutionMode.SHADOW)
+
+    message = str(exc_info.value)
+    assert "execution_mode=real" in message
+    assert "shadow" not in message
