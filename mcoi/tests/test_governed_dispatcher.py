@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
-from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
+from mcoi_runtime.contracts.execution import EffectRecord, ExecutionMode, ExecutionOutcome, ExecutionResult
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CapabilityCertificationStatus,
     CapabilityRegistryEntry,
@@ -433,13 +433,48 @@ def test_promotion_boundary_blocks_reality_in_sim() -> None:
     eq = EquilibriumEngine()
     eq.register_agent("actor-1")
     governed, exe = _make_governed(boundary=boundary, equilibrium=eq)
-    ctx = _make_context(mode="reality")
+    ctx = _make_context(mode=ExecutionMode.REAL)
 
     result = governed.governed_dispatch(ctx)
 
     assert result.blocked
     assert "promotion_boundary" in result.block_reason
+    assert result.gates_failed[-1].reason == "mode=simulation, requested=real"
     assert exe.calls == 0
+
+
+def test_promotion_boundary_accepts_legacy_reality_alias() -> None:
+    boundary = SimRealityBoundary()
+
+    eq = EquilibriumEngine()
+    eq.register_agent("actor-1")
+    governed, exe = _make_governed(boundary=boundary, equilibrium=eq)
+    ctx = _make_context(mode="reality")
+
+    result = governed.governed_dispatch(ctx)
+
+    assert ctx.mode == "real"
+    assert result.blocked
+    assert "promotion_boundary" in result.block_reason
+    assert exe.calls == 0
+
+
+def test_promotion_boundary_blocks_shadow_backend_mode_in_simulation() -> None:
+    boundary = SimRealityBoundary()
+
+    eq = EquilibriumEngine()
+    eq.register_agent("actor-1")
+    governed, exe = _make_governed(boundary=boundary, equilibrium=eq)
+    ctx = _make_context(mode=ExecutionMode.SHADOW)
+
+    result = governed.governed_dispatch(ctx)
+
+    assert ctx.mode == "shadow"
+    assert result.blocked
+    assert result.block_reason == "promotion_boundary: not promoted to reality"
+    assert result.gates_failed[-1].reason == "mode=simulation, requested=shadow"
+    assert exe.calls == 0
+    assert governed.ledger[0]["execution_mode"] == "shadow"
 
 
 # ── 7. Verification triggers compensation ──
@@ -520,6 +555,7 @@ def test_ledger_emitted_on_success() -> None:
     assert entry["block_reason"] == ""
     assert entry["gates_passed"] >= 5
     assert entry["gates_failed"] == 0
+    assert entry["execution_mode"] == "simulation"
     assert entry["timestamp"] == "2026-03-26T12:00:00+00:00"
     assert result.ledger_hash != ""
 

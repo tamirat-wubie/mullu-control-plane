@@ -189,13 +189,20 @@ class TestSimRealityBoundary:
     def test_declare_mode(self):
         b = SimRealityBoundary()
         d = b.declare_mode("d1", "sandbox", "test-scope")
-        assert d.mode == "sandbox"
-        assert b.current_mode == "sandbox"
+        assert d.mode == "test"
+        assert b.current_mode == "test"
+
+    def test_legacy_reality_alias_normalizes_to_real(self):
+        b = SimRealityBoundary()
+        d = b.declare_mode("d1", "reality", "prod")
+        assert d.mode == "real"
+        assert b.current_mode == "real"
+        assert b.is_real() is True
 
     def test_promote_sim_to_reality(self):
         b = SimRealityBoundary()
         b.promote_to_reality("d1", "prod")
-        assert b.current_mode == "reality"
+        assert b.current_mode == "real"
         assert b.is_real() is True
 
     def test_cannot_promote_from_reality(self):

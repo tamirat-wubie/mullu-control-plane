@@ -37,6 +37,7 @@ from mcoi_runtime.app.governed_execution import (
 )
 from mcoi_runtime.contracts.execution import (
     EffectRecord,
+    ExecutionMode,
     ExecutionOutcome,
     ExecutionResult,
 )
@@ -287,6 +288,35 @@ def test_universal_action_kernel_dispatches_after_all_certificates_pass() -> Non
     )
     assert result.closure_state == "closed_allowed"
     assert result.proof_hash.startswith("universal-action-proof-")
+
+
+def test_universal_action_request_normalizes_legacy_reality_mode_before_dispatch() -> None:
+    kernel, executor = _kernel_with_capability()
+    request = _action_request(intent_id="intent-real-alias", mode="reality")
+
+    result = kernel.run(request)
+
+    assert request.mode == "real"
+    assert result.blocked is True
+    assert result.block_reason == "promotion_boundary: not promoted to reality"
+    assert result.dispatch_result is not None
+    assert result.dispatch_result.ledger_hash != ""
+    assert executor.calls == 0
+
+
+def test_universal_action_request_blocks_shadow_mode_before_dispatch() -> None:
+    kernel, executor = _kernel_with_capability()
+    request = _action_request(intent_id="intent-shadow-mode", mode=ExecutionMode.SHADOW)
+
+    result = kernel.run(request)
+
+    assert request.mode == "shadow"
+    assert result.blocked is True
+    assert result.block_reason == "promotion_boundary: not promoted to reality"
+    assert result.dispatch_result is not None
+    assert result.dispatch_result.gates_failed[-1].reason == "mode=simulation, requested=shadow"
+    assert result.dispatch_result.ledger_hash != ""
+    assert executor.calls == 0
 
 
 def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
@@ -1815,6 +1845,7 @@ def _action_request(
     intent_id: str = "intent-1",
     risk_level: RiskLevel = RiskLevel.LOW,
     success_probability: float = 0.9,
+    mode: str = "simulation",
     dispatch_request: DispatchRequest | None = None,
     metadata: dict | None = None,
     operating_substrate_projection: OperatingSubstrateSelfModelProjection | None = None,
@@ -1837,6 +1868,7 @@ def _action_request(
         dispatch_request=dispatch_request or _dispatch_request(),
         risk_level=risk_level,
         success_probability=success_probability,
+        mode=mode,
         metadata=request_metadata,
         operating_substrate_projection=operating_substrate_projection,
     )

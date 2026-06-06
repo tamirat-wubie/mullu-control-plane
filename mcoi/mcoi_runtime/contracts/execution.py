@@ -20,6 +20,53 @@ class ExecutionOutcome(StrEnum):
     CANCELLED = "cancelled"
 
 
+class ExecutionMode(StrEnum):
+    """Runtime admission mode for effect-bearing or backend-bearing execution."""
+
+    REAL = "real"
+    DRY_RUN = "dry_run"
+    SHADOW = "shadow"
+    SIMULATION = "simulation"
+    REPLAY = "replay"
+    TEST = "test"
+
+
+def coerce_execution_mode(value: ExecutionMode | str) -> ExecutionMode:
+    """Return a canonical ExecutionMode or raise with causal context."""
+
+    if isinstance(value, ExecutionMode):
+        return value
+    if not isinstance(value, str):
+        raise ValueError("execution_mode must be an ExecutionMode or string value")
+    try:
+        return ExecutionMode(value)
+    except ValueError as exc:
+        allowed = ", ".join(mode.value for mode in ExecutionMode)
+        raise ValueError(f"unknown execution_mode {value!r}; expected one of: {allowed}") from exc
+
+
+def execution_mode_requires_backend(mode: ExecutionMode | str) -> bool:
+    """Return whether the mode must be backed by a real execution provider."""
+
+    return coerce_execution_mode(mode) in {ExecutionMode.REAL, ExecutionMode.SHADOW}
+
+
+def execution_mode_allows_synthetic_output(mode: ExecutionMode | str) -> bool:
+    """Return whether the mode may emit synthetic output without a backend."""
+
+    return coerce_execution_mode(mode) in {
+        ExecutionMode.DRY_RUN,
+        ExecutionMode.SIMULATION,
+        ExecutionMode.TEST,
+    }
+
+
+def execution_mode_requires_replay_evidence(mode: ExecutionMode | str) -> bool:
+    """Return whether the mode must be sourced from existing replay evidence."""
+
+    return coerce_execution_mode(mode) is ExecutionMode.REPLAY
+
+
 @dataclass(frozen=True, slots=True)
 class EffectRecord(ContractRecord):
     name: str

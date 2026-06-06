@@ -26,7 +26,12 @@ from mcoi_runtime.contracts.effect_assurance import (
     ReconciliationStatus,
 )
 from mcoi_runtime.contracts.evidence import EvidenceRecord
-from mcoi_runtime.contracts.execution import ExecutionOutcome, ExecutionResult
+from mcoi_runtime.contracts.execution import (
+    ExecutionMode,
+    ExecutionOutcome,
+    ExecutionResult,
+    coerce_execution_mode,
+)
 from mcoi_runtime.contracts.governed_action import (
     AuthorityProofRecord,
     GovernedAction,
@@ -98,6 +103,16 @@ _BLOCKING_SIMULATION_VERDICTS = frozenset(
 )
 
 
+def _coerce_universal_action_execution_mode(mode: ExecutionMode | str) -> ExecutionMode:
+    """Normalize legacy action-mode labels to the shared ExecutionMode ABI."""
+
+    if mode == "reality":
+        return ExecutionMode.REAL
+    if mode == "sandbox":
+        return ExecutionMode.TEST
+    return coerce_execution_mode(mode)
+
+
 @dataclass(frozen=True, slots=True)
 class UniversalActionRequest:
     """Typed request admitted by the universal action kernel."""
@@ -111,11 +126,12 @@ class UniversalActionRequest:
     estimated_cost: float = 100.0
     estimated_duration_seconds: float = 1.0
     success_probability: float = 0.9
-    mode: str = "simulation"
+    mode: ExecutionMode | str = ExecutionMode.SIMULATION
     metadata: Mapping[str, Any] = field(default_factory=dict)
     operating_substrate_projection: OperatingSubstrateSelfModelProjection | None = None
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "mode", _coerce_universal_action_execution_mode(self.mode).value)
         for field_name in ("actor_id", "tenant_id", "intent_id", "objective", "mode"):
             object.__setattr__(
                 self,
