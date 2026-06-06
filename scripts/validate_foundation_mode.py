@@ -1984,6 +1984,11 @@ FOUNDATION_NAVIGATION_LINK_FILES = (
     "docs/CURRENT_READINESS_SNAPSHOT.md",
 )
 
+START_HERE_ORDER_START = '## 3. The "I\'m brand new" path (do these in order)'
+START_HERE_ORDER_END = "Now you can wander into"
+FOUNDATION_PREREQUISITE_ORDER_START = "## Recommended Order"
+FOUNDATION_PREREQUISITE_ORDER_END = "## Narrow Local Proof Thread Definition"
+
 FORBIDDEN_FORWARD_PHRASES = (
     "Request access",
     "request access until",
@@ -2301,6 +2306,55 @@ def validate_foundation_navigation_links(repo_root: Path = REPO_ROOT) -> list[Fo
     return findings
 
 
+def validate_foundation_ordered_paths(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
+    """Return findings when ordered Foundation paths lose coverage or sequence."""
+
+    boundary_targets = {
+        boundary_doc.name
+        for boundary_doc in (repo_root / "docs").glob("FOUNDATION_*_BOUNDARY.md")
+    }
+    if not boundary_targets:
+        return [
+            FoundationModeFinding(
+                "foundation_boundary_inventory_missing",
+                "docs directory has no FOUNDATION_*_BOUNDARY.md files",
+            )
+        ]
+    findings: list[FoundationModeFinding] = []
+    findings.extend(
+        _validate_ordered_foundation_section(
+            repo_root,
+            "docs/START_HERE.md",
+            START_HERE_ORDER_START,
+            START_HERE_ORDER_END,
+            re.compile(r"^(?P<number>\d+)\. \*\*\[[^\]]+\]\((?P<target>[^)]+)\)", re.MULTILINE),
+            {
+                *boundary_targets,
+                "FOUNDATION_MODE.md",
+                "FOUNDATION_PREREQUISITES.md",
+                "FOUNDATION_LOCAL_PROOF_THREAD.md",
+            },
+            "foundation_start_here_order",
+        )
+    )
+    findings.extend(
+        _validate_ordered_foundation_section(
+            repo_root,
+            "docs/FOUNDATION_PREREQUISITES.md",
+            FOUNDATION_PREREQUISITE_ORDER_START,
+            FOUNDATION_PREREQUISITE_ORDER_END,
+            re.compile(r"^(?P<number>\d+)\. .*?\[[^\]]+\]\((?P<target>FOUNDATION_[^)]+\.md)\)", re.MULTILINE),
+            {
+                *boundary_targets,
+                "FOUNDATION_MODE.md",
+                "FOUNDATION_LOCAL_PROOF_THREAD.md",
+            },
+            "foundation_prerequisite_order",
+        )
+    )
+    return findings
+
+
 def validate_foundation_mode(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
     """Validate the repository Foundation Mode posture and return findings."""
 
@@ -2313,6 +2367,7 @@ def validate_foundation_mode(repo_root: Path = REPO_ROOT) -> list[FoundationMode
         *validate_foundation_boundary_routing_surfaces(repo_root),
         *validate_foundation_boundary_status_blocks(repo_root),
         *validate_foundation_navigation_links(repo_root),
+        *validate_foundation_ordered_paths(repo_root),
     ]
 
 
@@ -2320,6 +2375,79 @@ def _is_external_or_anchor_link(target: str) -> bool:
     if not target or target.startswith("#"):
         return True
     return bool(re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", target))
+
+
+def _validate_ordered_foundation_section(
+    repo_root: Path,
+    relative_path: str,
+    start_marker: str,
+    end_marker: str,
+    entry_pattern: re.Pattern[str],
+    expected_foundation_targets: set[str],
+    rule_prefix: str,
+) -> list[FoundationModeFinding]:
+    findings: list[FoundationModeFinding] = []
+    try:
+        text = read_required_text(repo_root, relative_path)
+    except OSError as exc:
+        return [FoundationModeFinding("foundation_file_missing", str(exc))]
+    if start_marker not in text:
+        return [
+            FoundationModeFinding(
+                f"{rule_prefix}_section_missing",
+                f"{relative_path} missing ordered section start: {start_marker}",
+            )
+        ]
+    section = text.split(start_marker, 1)[1]
+    if end_marker not in section:
+        findings.append(
+            FoundationModeFinding(
+                f"{rule_prefix}_section_end_missing",
+                f"{relative_path} missing ordered section end: {end_marker}",
+            )
+        )
+    else:
+        section = section.split(end_marker, 1)[0]
+    numbered_line_pattern = re.compile(r"^(?P<number>\d+)\. .+$", re.MULTILINE)
+    numbers = [int(match.group("number")) for match in numbered_line_pattern.finditer(section)]
+    entries = [
+        (int(match.group("number")), match.group("target"))
+        for match in entry_pattern.finditer(section)
+    ]
+    entry_targets = [target for _, target in entries]
+    foundation_targets = {target for target in entry_targets if target.startswith("FOUNDATION_")}
+    if not numbers or not entries:
+        findings.append(
+            FoundationModeFinding(
+                f"{rule_prefix}_entries_missing",
+                f"{relative_path} ordered section has no numbered Foundation entries",
+            )
+        )
+    elif numbers != list(range(1, len(numbers) + 1)):
+        findings.append(
+            FoundationModeFinding(
+                f"{rule_prefix}_numbers_not_consecutive",
+                f"{relative_path} ordered section numbers must be consecutive from 1",
+            )
+        )
+    duplicate_targets = sorted({target for target in entry_targets if entry_targets.count(target) > 1})
+    if duplicate_targets:
+        findings.append(
+            FoundationModeFinding(
+                f"{rule_prefix}_duplicate_targets",
+                f"{relative_path} ordered section repeats targets: {', '.join(duplicate_targets)}",
+            )
+        )
+    missing_targets = sorted(expected_foundation_targets - foundation_targets)
+    unexpected_targets = sorted(foundation_targets - expected_foundation_targets)
+    if missing_targets or unexpected_targets:
+        findings.append(
+            FoundationModeFinding(
+                f"{rule_prefix}_foundation_targets_invalid",
+                f"{relative_path} ordered section target drift; missing: {', '.join(missing_targets) or 'none'}; unexpected: {', '.join(unexpected_targets) or 'none'}",
+            )
+        )
+    return findings
 
 
 def _iter_markdown_tables(text: str) -> list[list[str]]:

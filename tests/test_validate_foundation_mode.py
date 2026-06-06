@@ -27,6 +27,7 @@ from scripts.validate_foundation_mode import (  # noqa: E402
     validate_forward_text_boundary,
     validate_foundation_mode,
     validate_foundation_navigation_links,
+    validate_foundation_ordered_paths,
     validate_prerequisite_go_deeper_boundary_links,
     validate_required_phrases,
 )
@@ -325,6 +326,7 @@ def test_central_table_duplicate_label_is_reported(tmp_path: Path) -> None:
 
 
 def test_start_here_brand_new_path_is_consecutive_and_complete() -> None:
+    findings = validate_foundation_ordered_paths()
     text = (REPO_ROOT / "docs" / "START_HERE.md").read_text(encoding="utf-8-sig")
     section = text.split('## 3. The "I\'m brand new" path (do these in order)', 1)[1]
     section = section.split("Now you can wander into", 1)[0]
@@ -354,6 +356,7 @@ def test_start_here_brand_new_path_is_consecutive_and_complete() -> None:
         }
     )
 
+    assert findings == []
     assert entries
     assert [number for number, _ in entries] == list(range(1, len(entries) + 1))
     assert len(entry_targets) == len(set(entry_targets))
@@ -362,6 +365,7 @@ def test_start_here_brand_new_path_is_consecutive_and_complete() -> None:
 
 
 def test_foundation_prerequisites_recommended_order_is_consecutive_and_complete() -> None:
+    findings = validate_foundation_ordered_paths()
     text = (REPO_ROOT / "docs" / "FOUNDATION_PREREQUISITES.md").read_text(encoding="utf-8-sig")
     section = text.split("## Recommended Order", 1)[1]
     section = section.split("## Narrow Local Proof Thread Definition", 1)[0]
@@ -388,11 +392,55 @@ def test_foundation_prerequisites_recommended_order_is_consecutive_and_complete(
         }
     )
 
+    assert findings == []
     assert numbers
     assert numbers == list(range(1, len(numbers) + 1))
     assert len(entry_targets) == len(set(entry_targets))
     assert foundation_targets == expected_foundation_targets
     assert len(foundation_targets) == len(expected_foundation_targets)
+
+
+def test_foundation_ordered_path_missing_entry_is_reported(tmp_path: Path) -> None:
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    for doc_name in (
+        "FOUNDATION_ALPHA_BOUNDARY.md",
+        "FOUNDATION_BETA_BOUNDARY.md",
+        "FOUNDATION_MODE.md",
+        "FOUNDATION_PREREQUISITES.md",
+        "FOUNDATION_LOCAL_PROOF_THREAD.md",
+    ):
+        (docs_dir / doc_name).write_text("STATUS:\nAwaitingEvidence\n", encoding="utf-8")
+    (docs_dir / "START_HERE.md").write_text(
+        "\n".join(
+            (
+                '## 3. The "I\'m brand new" path (do these in order)',
+                "1. **[Foundation Mode](FOUNDATION_MODE.md)**",
+                "3. **[Foundation Alpha Boundary](FOUNDATION_ALPHA_BOUNDARY.md)**",
+                "Now you can wander into other docs.",
+            )
+        ),
+        encoding="utf-8",
+    )
+    (docs_dir / "FOUNDATION_PREREQUISITES.md").write_text(
+        "\n".join(
+            (
+                "## Recommended Order",
+                "1. Keep the current [Foundation Mode](FOUNDATION_MODE.md) boundary intact.",
+                "2. Close one local proof thread using [Foundation Local Proof Thread](FOUNDATION_LOCAL_PROOF_THREAD.md).",
+                "## Narrow Local Proof Thread Definition",
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    findings = validate_foundation_ordered_paths(tmp_path)
+
+    assert findings
+    assert any(finding.rule_id == "foundation_start_here_order_numbers_not_consecutive" for finding in findings)
+    assert any(finding.rule_id == "foundation_start_here_order_foundation_targets_invalid" for finding in findings)
+    assert any(finding.rule_id == "foundation_prerequisite_order_foundation_targets_invalid" for finding in findings)
+    assert any("FOUNDATION_BETA_BOUNDARY.md" in finding.message for finding in findings)
 
 
 def test_foundation_prerequisites_go_deeper_links_all_boundaries() -> None:
