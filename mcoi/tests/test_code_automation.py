@@ -6,12 +6,35 @@ build/test execution, workspace root containment, and code review.
 
 from __future__ import annotations
 
+import logging
 import os
 import subprocess
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch
+
+from mcoi_runtime.contracts.code import (
+    BuildResult,
+    BuildStatus,
+    CodeReviewRecord,
+    PatchProposal,
+    PatchStatus,
+    RepositoryDescriptor,
+    ReviewVerdict,
+    SourceFile,
+    TestResult as CodeTestResult,
+    TestStatus as CodeTestStatus,
+)
+from mcoi_runtime.adapters.code_adapter import (
+    CommandPolicy,
+    LocalCodeAdapter,
+    _is_within_root,
+)
+from mcoi_runtime.core.code import CodeEngine
+
+
+T0 = "2025-01-15T10:00:00+00:00"
 
 
 def _symlinks_supported(tmp_path: Path) -> bool:
@@ -30,30 +53,6 @@ def _symlinks_supported(tmp_path: Path) -> bool:
             except OSError:
                 pass
     return True
-
-from mcoi_runtime.contracts.code import (
-    BuildResult,
-    BuildStatus,
-    CodeReviewRecord,
-    PatchApplicationResult,
-    PatchProposal,
-    PatchStatus,
-    RepositoryDescriptor,
-    ReviewVerdict,
-    SourceFile,
-    TestResult,
-    TestStatus,
-    WorkspaceState,
-)
-from mcoi_runtime.adapters.code_adapter import (
-    CommandPolicy,
-    LocalCodeAdapter,
-    _is_within_root,
-)
-from mcoi_runtime.core.code import CodeEngine
-
-
-T0 = "2025-01-15T10:00:00+00:00"
 
 
 def _setup_workspace(tmp_path: Path) -> Path:
@@ -106,7 +105,7 @@ class TestCodeContracts:
         assert b.succeeded
 
     def test_test_result_all_passed(self):
-        t = TestResult(test_id="t-1", status=TestStatus.ALL_PASSED,
+        t = CodeTestResult(test_id="t-1", status=CodeTestStatus.ALL_PASSED,
                        command="pytest", exit_code=0, passed=10)
         assert t.all_passed
 
@@ -332,6 +331,89 @@ class TestPatchApplication:
         assert result.error_message == "patch error (OSError)"
         assert "secret patch failure" not in (result.error_message or "")
 
+    def test_atomic_write_mode_preservation_failure_is_logged_bounded(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        ws = _setup_workspace(tmp_path)
+        adapter = _adapter(ws)
+        diff = (
+            "--- a/main.py\n"
+            "+++ b/main.py\n"
+            "@@ -1,2 +1,2 @@\n"
+            "-def hello():\n"
+            "+def hello_world():\n"
+            "     return 'world'\n"
+        )
+
+        def fail_chmod(_path, _mode):
+            raise OSError("secret chmod path")
+
+        monkeypatch.setattr("mcoi_runtime.adapters.code_adapter.os.chmod", fail_chmod)
+        with caplog.at_level(
+            logging.WARNING,
+            logger="mcoi_runtime.adapters.code_adapter",
+        ):
+            result = adapter.apply_patch("p-1", "main.py", diff)
+
+        assert result.status is PatchStatus.APPLIED
+        assert "hello_world" in adapter.read_file("main.py")
+        assert any(
+            record.message == "code adapter mode preservation failed"
+            for record in caplog.records
+        )
+        assert any(
+            getattr(record, "error_type", "") == "OSError"
+            for record in caplog.records
+        )
+        assert all("secret chmod path" not in record.message for record in caplog.records)
+
+    def test_atomic_write_temp_cleanup_failure_is_logged_bounded(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        ws = _setup_workspace(tmp_path)
+        adapter = _adapter(ws)
+        diff = (
+            "--- a/main.py\n"
+            "+++ b/main.py\n"
+            "@@ -1,2 +1,2 @@\n"
+            "-def hello():\n"
+            "+def hello_world():\n"
+            "     return 'world'\n"
+        )
+
+        def fail_replace(_source, _target):
+            raise OSError("secret replace path")
+
+        def fail_unlink(self, missing_ok=False):
+            raise OSError("secret cleanup path")
+
+        monkeypatch.setattr("mcoi_runtime.adapters.code_adapter.os.replace", fail_replace)
+        monkeypatch.setattr("mcoi_runtime.adapters.code_adapter.Path.unlink", fail_unlink)
+        with caplog.at_level(
+            logging.WARNING,
+            logger="mcoi_runtime.adapters.code_adapter",
+        ):
+            result = adapter.apply_patch("p-1", "main.py", diff)
+
+        assert result.status is PatchStatus.MALFORMED
+        assert result.error_message == "patch error (OSError)"
+        assert adapter.read_file("main.py") == "def hello():\n    return 'world'\n"
+        assert any(
+            record.message == "code adapter temp cleanup failed"
+            for record in caplog.records
+        )
+        assert any(
+            getattr(record, "error_type", "") == "OSError"
+            for record in caplog.records
+        )
+        assert all("secret cleanup path" not in record.message for record in caplog.records)
+
 
 class TestCodeEngine:
     def test_inspect(self, tmp_path: Path):
@@ -439,6 +521,7 @@ class TestCodeGoldenScenarios:
         result = engine.apply_patch_and_verify(proposal)
         assert not result.succeeded
         after = _adapter(ws).read_file("main.py")
+        assert after == original
         # File should be unchanged or detected as no-effect
         # (adapter may write but content stays same → engine detects)
 
@@ -950,9 +1033,12 @@ class TestCommandPolicy:
 
 class TestProcessExitCodeContract:
     def test_test_result_accepts_minus_one(self):
-        from mcoi_runtime.contracts.code import TestResult, TestStatus
-        result = TestResult(
-            test_id="t-1", status=TestStatus.TIMEOUT,
+        from mcoi_runtime.contracts.code import (
+            TestResult as ContractTestResult,
+            TestStatus as ContractTestStatus,
+        )
+        result = ContractTestResult(
+            test_id="t-1", status=ContractTestStatus.TIMEOUT,
             command="pytest", exit_code=-1,
         )
         assert result.exit_code == -1
@@ -975,10 +1061,13 @@ class TestProcessExitCodeContract:
 
     def test_test_result_rejects_bool(self):
         """exit_code must be int, not bool (which is an int subclass)."""
-        from mcoi_runtime.contracts.code import TestResult, TestStatus
+        from mcoi_runtime.contracts.code import (
+            TestResult as ContractTestResult,
+            TestStatus as ContractTestStatus,
+        )
         with pytest.raises(ValueError):
-            TestResult(
-                test_id="t-1", status=TestStatus.ALL_PASSED,
+            ContractTestResult(
+                test_id="t-1", status=ContractTestStatus.ALL_PASSED,
                 command="pytest", exit_code=True,  # type: ignore[arg-type]
             )
 
@@ -1387,7 +1476,7 @@ class TestAdversarialBoundary:
         TestResult must be constructible (exit_code = -1, status = TIMEOUT).
         This was the F3 audit concern — that the contract rejected -1.
         """
-        from mcoi_runtime.contracts.code import TestStatus
+        from mcoi_runtime.contracts.code import TestStatus as ContractTestStatus
         from mcoi_runtime.core.code import CodeEngine
 
         ws = _setup_workspace(tmp_path)
@@ -1403,7 +1492,7 @@ class TestAdversarialBoundary:
 
         result = engine.run_tests(["pytest", "-q"], timeout_seconds=1)
 
-        assert result.status is TestStatus.TIMEOUT
+        assert result.status is ContractTestStatus.TIMEOUT
         assert result.exit_code == -1
         # Contract requires non-empty test_id and command
         assert result.test_id
