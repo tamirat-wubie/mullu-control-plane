@@ -182,6 +182,14 @@ class TestQuery:
         # Most recent first
         assert results[0].sequence > results[1].sequence
 
+    @pytest.mark.parametrize("limit", [0, -1])
+    def test_query_requires_positive_limit(self, limit):
+        log = self._populated_log()
+        results = log.query(limit=limit)
+        assert results == []
+        assert log.decision_count == 5
+        assert log.summary()["active_entries"] == 5
+
     def test_query_returns_reverse_chronological(self):
         log = self._populated_log()
         results = log.query(limit=100)
@@ -222,10 +230,34 @@ class TestDenialSummary:
         assert summary["total_denials"] == 0
         assert summary["by_guard"] == {}
 
+    def test_denial_summary_with_non_positive_limit_is_empty(self):
+        log = _log()
+        log.record(tenant_id="t1", endpoint="/api/llm", allowed=False, blocking_guard="rbac")
+        log.record(tenant_id="t1", endpoint="/api/exec", allowed=False, blocking_guard="budget")
+        summary = log.denial_summary(tenant_id="t1", limit=0)
+        assert summary["total_denials"] == 0
+        assert summary["by_guard"] == {}
+        assert summary["by_endpoint"] == {}
+
 
 # ── Bounding ───────────────────────────────────────────────────
 
 class TestBounding:
+    @pytest.mark.parametrize("max_decisions", [0, -1])
+    def test_max_decisions_requires_positive_capacity(self, max_decisions):
+        with pytest.raises(ValueError, match="max_decisions must be positive"):
+            _log(max_decisions=max_decisions)
+
+    def test_max_decisions_one_preserves_latest_decision(self):
+        log = _log(max_decisions=1)
+        first = log.record(tenant_id="t1", allowed=True)
+        second = log.record(tenant_id="t1", allowed=False, blocking_guard="rbac")
+        results = log.query(limit=1)
+        assert log.decision_count == 1
+        assert log.get(first.decision_id) is None
+        assert log.get(second.decision_id) == second
+        assert results == [second]
+
     def test_bounded_capacity(self):
         log = _log(max_decisions=10)
         for i in range(20):
