@@ -4,6 +4,7 @@ import pytest
 from mcoi_runtime.contracts.execution import ExecutionOutcome, ExecutionResult
 from mcoi_runtime.contracts.effect_assurance import ExpectedEffect, ReconciliationStatus
 from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
+from mcoi_runtime.governance.network import webhook as webhook_mod
 from mcoi_runtime.governance.network.webhook import WebhookManager, WebhookSubscription
 
 
@@ -67,6 +68,29 @@ class TestWebhookManager:
         assert receipts[-1].effect_name == "webhook_delivery_queued"
         assert receipts[-1].metadata["payload_hash"]
         assert receipts[-1].metadata["signature_present"] is False
+
+    def test_emit_records_delivery_time_ssrf_block(self, monkeypatch):
+        checks = iter((False, True))
+        monkeypatch.setattr(webhook_mod, "_is_private_url", lambda url: next(checks))
+        mgr = WebhookManager(clock=FIXED_CLOCK)
+        mgr.subscribe(WebhookSubscription(
+            subscription_id="sub-1", tenant_id="t1",
+            url="https://example.com/private-after-rebind", events=("task.completed",),
+        ))
+
+        deliveries = mgr.emit("task.completed", {"task_id": "task-secret"}, tenant_id="t1")
+        history = mgr.delivery_history()
+        receipt = mgr.mutation_receipts()[-1]
+        summary = mgr.summary()
+
+        assert deliveries == []
+        assert history[-1].status == "failed"
+        assert history[-1].delivery_id == "wh-1"
+        assert receipt.effect_name == "webhook_delivery_blocked"
+        assert receipt.metadata["block_reason"] == "delivery_url_private"
+        assert receipt.metadata["target_url_hash"]
+        assert summary["failed_deliveries"] == 1
+        assert "private-after-rebind" not in str(receipt.to_dict())
 
     def test_emit_no_match(self):
         mgr = WebhookManager(clock=FIXED_CLOCK)
@@ -139,6 +163,7 @@ class TestWebhookManager:
         summary = mgr.summary()
         assert "subscriptions" in summary
         assert "events" in summary
+        assert summary["failed_deliveries"] == 0
         assert summary["mutation_receipts"] == 0
 
     def test_mutation_receipts_convert_to_effect_records(self):

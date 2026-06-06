@@ -216,11 +216,39 @@ class WebhookManager:
             # not just at registration. A subscription's hostname could
             # have flipped to a private IP since registration (DNS
             # rebinding by an attacker controlling the operator's
-            # subscribed domain). Skip the delivery when this happens —
-            # the subscription stays registered (operators can audit
-            # the failure pattern via delivery_history) but no actual
-            # outbound request fires. DNS lookup -- stays OUTSIDE the lock.
+            # subscribed domain). Block the outbound delivery when this happens:
+            # the subscription stays registered while delivery_history and
+            # mutation receipts retain the blocked attempt. No outbound
+            # request fires. DNS lookup -- stays OUTSIDE the lock.
             if _is_private_url(sub.url):
+                with self._lock:
+                    self._delivery_counter += 1
+                    delivery_id = f"wh-{self._delivery_counter}"
+                    delivery = WebhookDelivery(
+                        delivery_id=delivery_id,
+                        subscription_id=sub.subscription_id,
+                        event=event,
+                        payload=payload,
+                        signature="",
+                        status="failed",
+                        created_at=self._clock(),
+                    )
+                    self._deliveries.append(delivery)
+                    self._record_mutation(
+                        mutation_type="emit_blocked",
+                        effect_name="webhook_delivery_blocked",
+                        tenant_id=sub.tenant_id,
+                        subject_ref=f"webhook-delivery:{delivery_id}",
+                        before_count=len(self._deliveries) - 1,
+                        after_count=len(self._deliveries),
+                        metadata={
+                            "subscription_id_hash": _sha256_text(sub.subscription_id),
+                            "event": event,
+                            "payload_hash": _sha256_json(payload),
+                            "block_reason": "delivery_url_private",
+                            "target_url_hash": _sha256_text(sub.url),
+                        },
+                    )
                 continue
 
             # Compute HMAC signature OUTSIDE the lock (per-delivery CPU work).
@@ -287,10 +315,18 @@ class WebhookManager:
         return len(self._deliveries)
 
     def summary(self) -> dict[str, Any]:
+        with self._lock:
+            subscriptions = len(self._subscriptions)
+            deliveries = len(self._deliveries)
+            mutation_receipts = len(self._mutation_receipts)
+            failed_deliveries = sum(
+                1 for delivery in self._deliveries if delivery.status == "failed"
+            )
         return {
-            "subscriptions": self.subscription_count,
-            "deliveries": self.delivery_count,
-            "mutation_receipts": len(self._mutation_receipts),
+            "subscriptions": subscriptions,
+            "deliveries": deliveries,
+            "failed_deliveries": failed_deliveries,
+            "mutation_receipts": mutation_receipts,
             "events": list(EVENTS.keys()),
         }
 
