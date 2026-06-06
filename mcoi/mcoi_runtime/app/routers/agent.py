@@ -5,7 +5,7 @@ Extracted from workflow.py to keep router files focused.
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NoReturn
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -26,6 +26,13 @@ router = APIRouter()
 
 def _agent_error_detail(error: str, error_code: str) -> dict[str, object]:
     return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _raise_agent_validation_error(error: ValueError) -> NoReturn:
+    raise HTTPException(
+        status_code=422,
+        detail=_agent_error_detail("invalid tracing request", "tracing_invalid_request"),
+    ) from error
 
 
 # ── Pydantic request models ──────────────────────────────────────────────
@@ -364,7 +371,11 @@ def get_tracing_summary():
 def get_slow_traces(threshold_ms: float = 1000.0):
     """Return traces exceeding latency threshold."""
     deps.metrics.inc("requests_governed")
-    return {"slow_traces": deps.request_tracer.slow_traces(threshold_ms), "governed": True}
+    try:
+        slow_traces = deps.request_tracer.slow_traces(threshold_ms)
+    except ValueError as error:
+        _raise_agent_validation_error(error)
+    return {"slow_traces": slow_traces, "governed": True}
 
 
 @router.get("/api/v1/traces/summary")

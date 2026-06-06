@@ -5,6 +5,7 @@ Governance scope: validate trace context propagation, span lifecycle,
 """
 from __future__ import annotations
 
+import math
 import os
 from collections.abc import Iterator
 
@@ -117,6 +118,8 @@ class TestRequestTracer:
         s2 = tracer.start_span(child_ctx, "child")
         assert tracer.trace_count == 1
         assert tracer.total_spans == 2
+        assert s1.operation == "root"
+        assert s2.operation == "child"
         spans = tracer.get_trace(ctx.trace_id)
         assert len(spans) == 2
 
@@ -155,6 +158,21 @@ class TestRequestTracer:
     def test_slow_traces_empty(self):
         tracer = RequestTracer()
         assert tracer.slow_traces() == []
+
+    @pytest.mark.parametrize("threshold_ms", [-1, math.inf, math.nan, "1000", True])
+    def test_slow_traces_rejects_invalid_threshold(self, threshold_ms):
+        tracer = RequestTracer()
+
+        with pytest.raises(ValueError, match="threshold_ms"):
+            tracer.slow_traces(threshold_ms=threshold_ms)
+
+        assert tracer.trace_count == 0
+        assert tracer.total_spans == 0
+
+    @pytest.mark.parametrize("max_traces", [0, -1, math.inf, 1.5, "100", False])
+    def test_constructor_rejects_invalid_max_traces(self, max_traces):
+        with pytest.raises(ValueError, match="max_traces"):
+            RequestTracer(max_traces=max_traces)
 
     def test_get_nonexistent_trace(self):
         tracer = RequestTracer()
@@ -218,6 +236,22 @@ class TestTraceObservabilityEndpoints:
         assert body["governed"] is True
         assert "slow_traces" in body
         assert isinstance(body["slow_traces"], list)
+
+    @pytest.mark.parametrize("threshold_ms", ["-1", "nan", "inf"])
+    def test_slow_trace_route_invalid_threshold_returns_bounded_422(
+        self,
+        client: TestClient,
+        threshold_ms: str,
+    ):
+        response = client.get("/api/v1/traces/slow", params={"threshold_ms": threshold_ms})
+
+        assert response.status_code == 422
+        detail = response.json()["detail"]
+        assert detail["governed"] is True
+        assert detail["error"] == "invalid tracing request"
+        assert detail["error_code"] == "tracing_invalid_request"
+        assert threshold_ms not in str(response.json())
+        assert "threshold_ms" not in str(response.json())
 
     def test_otel_trace_summary_route_bounded(self, client: TestClient):
         response = client.get("/api/v1/traces/summary")
