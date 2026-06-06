@@ -1,0 +1,104 @@
+{
+  "schema_version": "product_dashboard.production_prometheus_scrape_probe_receipt.v1",
+  "receipt_id": "product-dashboard-production-prometheus-scrape-probe-9a6b72f770045d18",
+  "generated_at": "2026-06-04T09:11:50Z",
+  "proof_state": "Fail",
+  "solver_outcome": "AwaitingEvidence",
+  "raw_reasoning_included": false,
+  "probe": {
+    "probe_kind": "public_https_prometheus_scrape",
+    "metrics_endpoint": "https://api.mullusi.com/metrics",
+    "health_endpoint": "https://api.mullusi.com/health",
+    "dns_name": "api.mullusi.com",
+    "observed_at": "2026-06-04T09:11:50Z",
+    "dns_resolution": {
+      "status": "unresolved",
+      "resolver_result_count": 0,
+      "detail": "remote name could not be resolved"
+    },
+    "metrics_http_probe": {
+      "attempted": true,
+      "request_reached_endpoint": false,
+      "status_code": null,
+      "content_type": "",
+      "body_sha256": "",
+      "sample_family_count": 0,
+      "observed_metric_families": [],
+      "missing_metric_families": [
+        "mullu_active_agents",
+        "mullu_active_tenants",
+        "mullu_audit_events_total",
+        "mullu_chain_success_rate",
+        "mullu_circuit_breaker_open",
+        "mullu_errors_total",
+        "mullu_health_score",
+        "mullu_llm_budget_utilization_ratio",
+        "mullu_llm_latency_p99_seconds",
+        "mullu_llm_requests_total",
+        "mullu_llm_tokens_total",
+        "mullu_memory_ops_total",
+        "mullu_policy_violations_total",
+        "mullu_requests_governed_total",
+        "mullu_tasks_completed_total",
+        "mullu_uptime_seconds"
+      ],
+      "error": "dns_unresolved"
+    },
+    "health_http_probe": {
+      "attempted": true,
+      "request_reached_endpoint": false,
+      "status_code": null,
+      "content_type": "",
+      "body_sha256": "",
+      "error": "dns_unresolved"
+    }
+  },
+  "production_boundary": {
+    "public_production_claim": "not_claimed",
+    "deployment_status_ref": "DEPLOYMENT_STATUS.md",
+    "deployment_witness_state": "not-published",
+    "api_health_endpoint_state": "not-declared",
+    "gateway_target_state": "AwaitingEvidence",
+    "required_evidence": [
+      "resolvable_dns_name",
+      "production_https_scrape_sample",
+      "health_endpoint_response_contract",
+      "runtime_conformance_certificate",
+      "deployment_witness",
+      "operator_approval_ref"
+    ]
+  },
+  "blockers": [
+    {
+      "blocker_id": "product-dashboard-production-prometheus-dns-unresolved",
+      "kind": "dns_unresolved",
+      "surface": "api.mullusi.com",
+      "detail": "DNS resolution returned no endpoint, so the production metrics scrape could not collect a sample.",
+      "required_next_action": "publish or repair the api.mullusi.com DNS target, then rerun the production Prometheus scrape probe"
+    },
+    {
+      "blocker_id": "product-dashboard-production-prometheus-endpoint-unreachable",
+      "kind": "endpoint_unreachable",
+      "surface": "https://api.mullusi.com/metrics",
+      "detail": "The metrics endpoint is unreachable until DNS and upstream gateway publication are closed.",
+      "required_next_action": "collect a fresh HTTPS Prometheus sample after deployment witness publication"
+    }
+  ],
+  "summary": {
+    "closure_state": "production_scrape_awaiting_dns",
+    "required_family_count": 16,
+    "observed_family_count": 0,
+    "missing_family_count": 16,
+    "production_claim_closed": false
+  },
+  "lineage": {
+    "accepted_deltas": [
+      {
+        "delta_id": "delta-product-dashboard-production-prometheus-scrape-probe-2026-06-04",
+        "reason": "Recorded a non-mutating production Prometheus scrape probe and preserved the AwaitingEvidence boundary because DNS did not resolve.",
+        "logged_in_lineage": true
+      }
+    ],
+    "rejected_deltas": []
+  }
+}

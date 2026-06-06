@@ -240,6 +240,83 @@ class TestAuditMetrics:
 
 # ── Export format ──────────────────────────────────────────────
 
+class TestDashboardMetricFamilies:
+    def test_default_grafana_metric_families_registered(self):
+        m = _metrics()
+        export = m.export()
+        required = (
+            "mullu_uptime_seconds",
+            "mullu_health_score",
+            "mullu_active_tenants",
+            "mullu_errors_total",
+            "mullu_llm_requests_total",
+            "mullu_llm_latency_p99_seconds",
+            "mullu_llm_tokens_total",
+            "mullu_llm_budget_utilization_ratio",
+            "mullu_requests_governed_total",
+            "mullu_policy_violations_total",
+            "mullu_audit_events_total",
+            "mullu_circuit_breaker_open",
+            "mullu_active_agents",
+            "mullu_tasks_completed_total",
+            "mullu_chain_success_rate",
+            "mullu_memory_ops_total",
+        )
+
+        for metric_name in required:
+            assert metric_name in export
+
+    def test_dashboard_recorders_update_exact_metric_families(self):
+        m = _metrics()
+        m.set_platform_health(uptime_seconds=12.5, health_score=0.75, active_tenants=3)
+        m.record_governed_request()
+        m.record_policy_violation()
+        m.record_llm_invocation(
+            "anthropic",
+            "claude-sonnet",
+            latency_ms=250.0,
+            success=True,
+            input_tokens=10,
+            output_tokens=5,
+        )
+        m.record_llm_invocation("openai", "gpt-4", latency_ms=500.0, success=False)
+        m.set_llm_budget_utilization(0.6)
+        m.record_audit_entry()
+        m.set_circuit_breaker_open(True)
+        m.set_active_agents(2)
+        m.record_task_completed()
+        m.set_chain_success_rate(0.8)
+        m.record_memory_operation()
+
+        export = m.export()
+        assert "mullu_uptime_seconds 12.5" in export
+        assert "mullu_health_score 0.75" in export
+        assert "mullu_active_tenants 3.0" in export
+        assert "mullu_requests_governed_total 1.0" in export
+        assert "mullu_policy_violations_total 1.0" in export
+        assert "mullu_llm_requests_total 2.0" in export
+        assert "mullu_llm_tokens_total 15.0" in export
+        assert "mullu_errors_total 1.0" in export
+        assert "mullu_llm_latency_p99_seconds 0.5" in export
+        assert "mullu_llm_budget_utilization_ratio 0.6" in export
+        assert "mullu_audit_events_total 1.0" in export
+        assert "mullu_circuit_breaker_open 1.0" in export
+        assert "mullu_active_agents 2.0" in export
+        assert "mullu_tasks_completed_total 1.0" in export
+        assert "mullu_chain_success_rate 0.8" in export
+        assert "mullu_memory_ops_total 1.0" in export
+
+    def test_dashboard_recorders_reject_invalid_bounds(self):
+        m = _metrics()
+
+        with pytest.raises(ValueError):
+            m.set_platform_health(health_score=1.1, active_tenants=1)
+        with pytest.raises(ValueError):
+            m.set_active_tenants(-1)
+        with pytest.raises(ValueError):
+            m.set_llm_budget_utilization(float("nan"))
+
+
 class TestExportFormat:
     def test_prometheus_format(self):
         m = _metrics()

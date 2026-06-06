@@ -149,4 +149,4 @@ class TestDefaultDashboard:
         gen = build_default_dashboard()
         j = gen.to_json()
         parsed = json.loads(j)
-        assert parsed["dashboard"]["tags"] == ["mullu", "governed", "ai"]
+        assert parsed["dashboard"]["tags"] == ["mullu", "governed", "symbolic-intelligence"]

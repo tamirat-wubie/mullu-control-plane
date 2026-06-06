@@ -2,6 +2,7 @@
 
 import pytest
 import os
+import re
 
 try:
     from fastapi.testclient import TestClient
@@ -67,6 +68,23 @@ class TestMetricsEndpoint:
         resp = client.get("/api/v1/metrics")
         data = resp.json()
         assert data["counters"]["requests_governed"] >= 2
+
+    def test_prometheus_metrics_project_dashboard_families(self, client):
+        client.post("/api/v1/tenant/budget", json={"tenant_id": "prometheus-tenant"})
+        client.get("/api/v1/tenant/prometheus-tenant/budget")
+
+        resp = client.get("/metrics")
+        text = resp.text
+
+        governed = re.search(r"^mullu_requests_governed_total\s+([0-9.]+)$", text, re.MULTILINE)
+        tenants = re.search(r"^mullu_active_tenants\s+([0-9.]+)$", text, re.MULTILINE)
+
+        assert resp.status_code == 200
+        assert "# TYPE mullu_health_score gauge" in text
+        assert "# TYPE mullu_chain_success_rate gauge" in text
+        assert "# TYPE mullu_llm_budget_utilization_ratio gauge" in text
+        assert governed is not None and float(governed.group(1)) >= 1.0
+        assert tenants is not None and float(tenants.group(1)) >= 1.0
 
 
 class TestRateLimitEndpoint:
