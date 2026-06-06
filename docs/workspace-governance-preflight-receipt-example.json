@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1780664954.505807,
-  "check_count": 127,
+  "check_count": 128,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -1181,6 +1181,23 @@
       ],
       "return_code": 0,
       "stdout": "{\"blockers\": [\"environment binding receipt validation\", \"required environment bindings\", \"adapter closure schema validation\", \"closure plan schema validation\", \"closure plan drift validation\", \"promotion readiness report\"], \"checked_at\": \"2026-05-01T12:00:00+00:00\", \"environment_binding_actions\": [], \"missing_environment_variables\": [\"MULLU_BROWSER_SANDBOX_EVIDENCE\", \"MULLU_VOICE_PROBE_AUDIO\", \"OPENAI_API_KEY\", \"EMAIL_CALENDAR_CONNECTOR_TOKEN\", \"MULLU_GATEWAY_URL\", \"MULLU_RUNTIME_WITNESS_SECRET\", \"MULLU_RUNTIME_CONFORMANCE_SECRET\", \"MULLU_DEPLOYMENT_WITNESS_SECRET\", \"MULLU_AUTHORITY_OPERATOR_SECRET\"], \"production_ready\": false, \"readiness_level\": \"pilot-governed-core\", \"ready\": false, \"step_count\": 10}\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "general_agent_promotion_closure_chain",
+      "args": [
+        "python",
+        "scripts/run_general_agent_promotion_closure_chain.py",
+        "--output-dir",
+        ".tmp/general-agent-promotion-closure-chain",
+        "--adapter-evidence",
+        "examples/capability_adapter_evidence_blocked.json",
+        "--json",
+        "--strict"
+      ],
+      "return_code": 0,
+      "stdout": "{\"artifact_valid\": true, \"include_portfolio\": true, \"live_evidence_queue_ready\": false, \"output_dir\": \".tmp/general-agent-promotion-closure-chain\", \"promotion_ready\": false, \"readiness_level\": \"pilot-governed-core\", \"status\": \"passed_blocked\", \"terminal_certificate_gate_ready\": false, \"terminal_certificate_minting_ready\": false, \"validation_errors\": []}\n",
       "stderr": "",
       "passed": true
     },
