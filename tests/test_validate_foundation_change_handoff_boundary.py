@@ -23,6 +23,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.validate_foundation_change_handoff_boundary import (  # noqa: E402
     DEFAULT_PACKET_PATH,
+    EXPECTED_SURFACE_NOTE_FRAGMENTS,
     EXPECTED_SURFACES,
     EXPECTED_WITNESS_ID,
     load_json_object,
@@ -49,6 +50,30 @@ def test_change_handoff_witness_has_expected_identity_and_blockers() -> None:
     assert payload["validation_complete_claimed"] is False
     assert payload["secret_clearance_claimed"] is False
     assert payload["deployment_allowed"] is False
+
+
+def test_runtime_safety_handoff_fragments_are_present() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "change-handoff witness")
+    surfaces = {surface["surface_id"]: surface for surface in payload["change_handoff_surfaces"]}
+
+    assert EXPECTED_SURFACE_NOTE_FRAGMENTS
+    for surface_id, fragments in EXPECTED_SURFACE_NOTE_FRAGMENTS.items():
+        assert surface_id in surfaces
+        assert fragments
+        assert all(fragment in surfaces[surface_id]["public_safe_note"] for fragment in fragments)
+
+
+def test_witness_rejects_missing_runtime_safety_handoff_fragment() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "change-handoff witness")
+    candidate = deepcopy(payload)
+    candidate["change_handoff_surfaces"][0]["public_safe_note"] = (
+        "Draft change-family summary questions without claiming handoff completeness."
+    )
+
+    findings = validate_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "change_handoff_surface_note_fragment_missing" for finding in findings)
 
 
 def test_witness_rejects_change_handoff_completeness_claim() -> None:

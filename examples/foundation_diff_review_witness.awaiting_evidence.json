@@ -24,28 +24,28 @@
   "diff_review_surfaces": [
     {
       "evidence_ref": "manual_preparation_pending",
-      "public_safe_note": "Draft changed-file inventory questions without claiming diff-review completeness.",
+      "public_safe_note": "Draft changed-file inventory questions for the runtime-safety packet families without claiming diff-review completeness.",
       "state": "AwaitingEvidence",
       "surface_id": "changed_file_inventory_questions",
       "surface_type": "local_draft"
     },
     {
       "evidence_ref": "manual_preparation_pending",
-      "public_safe_note": "Draft untracked-file inventory questions without staging untracked files.",
+      "public_safe_note": "Draft untracked-file inventory questions for validator and test artifacts without staging untracked files.",
       "state": "AwaitingEvidence",
       "surface_id": "untracked_file_inventory_questions",
       "surface_type": "local_draft"
     },
     {
       "evidence_ref": "manual_preparation_pending",
-      "public_safe_note": "Draft unrelated-change classification questions without reverting unrelated work.",
+      "public_safe_note": "Draft unrelated-change classification questions that separate runtime-safety packet work from user or prior work without reverting unrelated work.",
       "state": "AwaitingEvidence",
       "surface_id": "unrelated_change_classification",
       "surface_type": "local_draft"
     },
     {
       "evidence_ref": "manual_preparation_pending",
-      "public_safe_note": "Draft agent-change scope questions without ownership closure.",
+      "public_safe_note": "Draft agent-change scope questions for Phi-GPS, provider, connector, secret, process, pagination, and governance artifact families without ownership closure.",
       "state": "AwaitingEvidence",
       "surface_id": "agent_change_scope_questions",
       "surface_type": "local_draft"
@@ -59,7 +59,7 @@
     },
     {
       "evidence_ref": "manual_preparation_pending",
-      "public_safe_note": "Draft validation-summary questions without broad test-pass claims.",
+      "public_safe_note": "Draft validation-summary questions for focused validators, targeted tests, hygiene scans, and governance receipts without broad test-pass claims.",
       "state": "AwaitingEvidence",
       "surface_id": "validation_summary_questions",
       "surface_type": "local_draft"
@@ -87,7 +87,7 @@
     },
     {
       "evidence_ref": "manual_preparation_pending",
-      "public_safe_note": "Draft handoff-summary questions without release or deployment readiness.",
+      "public_safe_note": "Draft handoff-summary questions linking source-control, change-handoff, and test-evidence boundaries without release or deployment readiness.",
       "state": "AwaitingEvidence",
       "surface_id": "handoff_summary_questions",
       "surface_type": "local_draft"

@@ -161,6 +161,8 @@ class AgentChainEngine:
         return cr
 
     def history(self, limit: int = 50) -> list[AgentChainResult]:
+        if limit <= 0:
+            return []
         return self._history[-limit:]
 
     @property

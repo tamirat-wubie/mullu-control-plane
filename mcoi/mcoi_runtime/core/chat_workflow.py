@@ -139,6 +139,8 @@ class ChatWorkflowEngine:
         return result
 
     def history(self, limit: int = 50) -> list[ChatWorkflowResult]:
+        if limit <= 0:
+            return []
         return self._history[-limit:]
 
     @property

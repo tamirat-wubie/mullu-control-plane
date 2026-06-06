@@ -97,7 +97,83 @@ def test_url_scope_check() -> None:
     reg = ProviderRegistry(clock=lambda: _CLOCK)
     reg.register(_descriptor(), _scope())
     assert reg.check_url_in_scope("prov-1", "https://api.test.com/v1/data") is True
+    assert reg.check_url_in_scope("prov-1", "https://api.test.com.evil/v1/data") is False
     assert reg.check_url_in_scope("prov-1", "https://evil.com/steal") is False
+    assert reg.check_url_in_scope("prov-1", "https://api.test.com.evil/steal") is False
+
+
+def test_path_scoped_url_check_rejects_prefix_confusion() -> None:
+    reg = ProviderRegistry(clock=lambda: _CLOCK)
+    reg.register(
+        _descriptor(),
+        CredentialScope(
+            scope_id="scope-prov-1",
+            provider_id="prov-1",
+            allowed_base_urls=("https://api.test.com/v1",),
+        ),
+    )
+
+    assert reg.check_url_in_scope("prov-1", "https://api.test.com/v1") is True
+    assert reg.check_url_in_scope("prov-1", "https://api.test.com/v1/data") is True
+    assert reg.check_url_in_scope("prov-1", "https://api.test.com/v10/data") is False
+
+
+def test_operation_scope_check() -> None:
+    reg = ProviderRegistry(clock=lambda: _CLOCK)
+    reg.register(_descriptor(), _scope())
+
+    assert reg.check_operation_in_scope("prov-1", "read") is True
+    assert reg.check_operation_in_scope("prov-1", "write") is False
+
+
+def test_credential_scope_freezes_and_validates_scope_arrays() -> None:
+    scope = CredentialScope(
+        scope_id="scope-prov-1",
+        provider_id="prov-1",
+        allowed_base_urls=["https://api.test.com"],
+        allowed_operations=["read"],
+    )
+
+    assert scope.allowed_base_urls == ("https://api.test.com",)
+    assert scope.allowed_operations == ("read",)
+
+    with pytest.raises(ValueError, match="allowed_base_urls must be an array"):
+        CredentialScope(
+            scope_id="scope-prov-2",
+            provider_id="prov-2",
+            allowed_base_urls="https://api.test.com",
+        )
+
+    with pytest.raises(ValueError, match="non-empty string"):
+        CredentialScope(
+            scope_id="scope-prov-3",
+            provider_id="prov-3",
+            allowed_operations=("",),
+        )
+
+
+def test_url_scope_path_boundary_check() -> None:
+    reg = ProviderRegistry(clock=lambda: _CLOCK)
+    reg.register(
+        _descriptor(),
+        CredentialScope(
+            scope_id="scope-prov-1",
+            provider_id="prov-1",
+            allowed_base_urls=("https://api.test.com/v1",),
+        ),
+    )
+
+    assert reg.check_url_in_scope("prov-1", "https://api.test.com/v1") is True
+    assert reg.check_url_in_scope("prov-1", "https://api.test.com/v1/data") is True
+    assert reg.check_url_in_scope("prov-1", "https://api.test.com/v10/data") is False
+
+
+def test_operation_scope_check() -> None:
+    reg = ProviderRegistry(clock=lambda: _CLOCK)
+    reg.register(_descriptor(), _scope())
+    assert reg.check_operation_in_scope("prov-1", "read") is True
+    assert reg.check_operation_in_scope("prov-1", "write") is False
+    assert reg.check_operation_in_scope("missing-provider", "read") is False
 
 
 def test_list_providers_by_class() -> None:

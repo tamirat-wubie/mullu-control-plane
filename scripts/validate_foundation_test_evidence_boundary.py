@@ -36,10 +36,14 @@ DEFAULT_DOC_PATH = REPO_ROOT / "docs" / "FOUNDATION_TEST_EVIDENCE_BOUNDARY.md"
 DEFAULT_PACKET_PATH = REPO_ROOT / "examples" / "foundation_test_evidence_witness.awaiting_evidence.json"
 DEFAULT_ROUTING_PATH = REPO_ROOT / "examples" / "foundation_test_receipt_routing.awaiting_evidence.json"
 DEFAULT_GAP_WARNING_PATH = REPO_ROOT / "examples" / "foundation_test_gap_warning_register.awaiting_evidence.json"
+DEFAULT_VALIDATION_RECEIPT_PATH = (
+    REPO_ROOT / "examples" / "foundation_validation_receipt_current_packet.awaiting_evidence.json"
+)
 
 EXPECTED_WITNESS_ID = "foundation_test_evidence_witness.awaiting_evidence.v1"
 EXPECTED_ROUTING_ID = "foundation_test_receipt_routing.awaiting_evidence.v1"
 EXPECTED_GAP_WARNING_ID = "foundation_test_gap_warning_register.awaiting_evidence.v1"
+EXPECTED_VALIDATION_RECEIPT_APPLICATION_ID = "foundation_validation_receipt_current_packet.awaiting_evidence.v1"
 EXPECTED_BLOCKED_CLAIMS = (
     "full-test pass",
     "complete coverage",
@@ -56,6 +60,13 @@ EXPECTED_BLOCKED_CLAIMS = (
     "external publication",
     "deployment readiness",
 )
+EXPECTED_VALIDATION_RECEIPT_BLOCKED_CLAIMS = (
+    *EXPECTED_BLOCKED_CLAIMS,
+    "receipt freshness",
+    "check-count closure",
+    "failed-check closure",
+    "source-control approval",
+)
 EXPECTED_SURFACES = (
     ("focused_validator_questions", "local_draft", "AwaitingEvidence"),
     ("targeted_pytest_questions", "local_draft", "AwaitingEvidence"),
@@ -68,6 +79,24 @@ EXPECTED_SURFACES = (
     ("reproducibility_questions", "local_draft", "AwaitingEvidence"),
     ("non_terminal_closure_questions", "local_draft", "AwaitingEvidence"),
 )
+EXPECTED_SURFACE_NOTE_FRAGMENTS = {
+    "focused_validator_questions": (
+        "Phi-GPS v3 runtime-safety packet",
+        "without claiming full-test pass",
+    ),
+    "targeted_pytest_questions": (
+        "Phi-GPS, provider, connector, secret, and pagination tests",
+        "without claiming complete coverage",
+    ),
+    "full_preflight_questions": (
+        "registered local governance receipt",
+        "without claiming release readiness",
+    ),
+    "receipt_validation_questions": (
+        "saved local governance receipt",
+        "without claiming terminal closure",
+    ),
+}
 EXPECTED_ROOT_KEYS = {
     "blocked_claims",
     "ci_parity_claimed",
@@ -196,6 +225,82 @@ EXPECTED_GAP_WARNING_ENTRY_KEYS = {
     "state",
     "surface_id",
 }
+EXPECTED_VALIDATION_RECEIPT_ROOT_KEYS = {
+    "application_categories",
+    "application_id",
+    "blocked_claims",
+    "check_count_recorded",
+    "check_stdout_recorded",
+    "ci_parity_claimed",
+    "commit_allowed",
+    "complete_coverage_claimed",
+    "customer_readiness_claimed",
+    "deployment_allowed",
+    "deployment_readiness_claimed",
+    "external_publication_allowed",
+    "failed_check_names_recorded",
+    "flake_free_guarantee_claimed",
+    "freshness_claimed",
+    "full_test_pass_claimed",
+    "generated_at_recorded",
+    "legal_clearance_claimed",
+    "next_action",
+    "performance_readiness_claimed",
+    "private_path_recorded",
+    "pull_request_allowed",
+    "push_allowed",
+    "receipt_content_recorded",
+    "receipt_presence_observed",
+    "receipt_summary_recorded",
+    "release_readiness_claimed",
+    "saved_receipt_ref",
+    "schema_version",
+    "secret_clearance_claimed",
+    "security_clearance_claimed",
+    "solver_outcome",
+    "source_receipt_routing_ref",
+    "source_test_evidence_witness_ref",
+    "staging_allowed",
+    "status",
+    "terminal_closure_claimed",
+    "validation_items",
+    "validator_ref",
+}
+EXPECTED_VALIDATION_RECEIPT_ITEM_KEYS = {
+    "application_note",
+    "state",
+    "validation_id",
+}
+EXPECTED_VALIDATION_RECEIPT_CATEGORIES = (
+    "saved_preflight_receipt_presence_category",
+    "receipt_validation_command_category",
+    "receipt_summary_boundary",
+    "check_count_boundary",
+    "failed_check_name_boundary",
+    "receipt_content_boundary",
+    "freshness_boundary",
+    "promotion_stop_rule",
+)
+EXPECTED_VALIDATION_RECEIPT_ITEMS = (
+    "receipt_presence_review",
+    "receipt_validation_review",
+    "receipt_summary_boundary",
+    "check_count_boundary",
+    "failed_check_name_boundary",
+    "freshness_boundary",
+    "promotion_stop_rule",
+    "git_effect_stop_rule",
+)
+EXPECTED_VALIDATION_RECEIPT_ITEM_NOTE_FRAGMENTS = {
+    "receipt_presence_review": ("receipt content is not copied",),
+    "receipt_validation_review": ("without claiming terminal closure",),
+    "receipt_summary_boundary": ("exact result review remains local",),
+    "check_count_boundary": ("no check-count closure is claimed",),
+    "failed_check_name_boundary": ("no failed-check closure is claimed",),
+    "freshness_boundary": ("freshness remains a local review question",),
+    "promotion_stop_rule": ("deployment promotions remain blocked",),
+    "git_effect_stop_rule": ("pull request remain blocked",),
+}
 ALLOWED_GAP_WARNING_EVIDENCE_REFS = {
     "local_closure_summary_pending",
     "local_gap_summary_pending",
@@ -207,11 +312,13 @@ REQUIRED_DOC_PHRASES = (
     "Witness packet: [`../examples/foundation_test_evidence_witness.awaiting_evidence.json`]",
     "Receipt routing packet: [`../examples/foundation_test_receipt_routing.awaiting_evidence.json`]",
     "Gap/warning register packet: [`../examples/foundation_test_gap_warning_register.awaiting_evidence.json`]",
+    "Validation receipt current packet: [`../examples/foundation_validation_receipt_current_packet.awaiting_evidence.json`]",
     "Rule: Test-evidence preparation is a local planning boundary, not a full-test",
     "No full-test-pass, complete-coverage, CI-parity, release-readiness",
     "test_evidence_boundary_state=AwaitingEvidence",
     "receipt_routing_state=AwaitingEvidence",
     "gap_warning_register_state=AwaitingEvidence",
+    "validation_receipt_current_packet_state=AwaitingEvidence",
     "full_test_pass_claimed=false",
     "complete_coverage_claimed=false",
     "ci_parity_claimed=false",
@@ -227,6 +334,13 @@ REQUIRED_DOC_PHRASES = (
     "Full preflight | `.tmp/workspace-governance-preflight-receipt.json` | `scripts/run_workspace_governance_checks.py` | release readiness",
     "Receipt validation | `.tmp/workspace-governance-preflight-receipt.json` | `scripts/validate_workspace_governance_preflight_receipt.py` | terminal closure",
     "Warning triage unresolved gap | `local_warning_summary_pending` | warning-free claim | `AwaitingEvidence`",
+    "Runtime-safety test evidence routing",
+    "Phi-GPS v3 runtime-safety packet",
+    "Phi-GPS, provider, connector, secret, and pagination tests",
+    "registered local governance receipt",
+    "Current Validation Receipt Application",
+    "Receipt presence review | Saved preflight receipt presence is category-only. | terminal closure",
+    "Check-count boundary | Check counts are not stored in this packet. | check-count closure",
     "python scripts/validate_foundation_test_evidence_boundary.py",
 )
 FORBIDDEN_VALUE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -336,6 +450,18 @@ def validate_gap_warning_packet(payload: dict[str, Any]) -> list[TestEvidenceFin
     return findings
 
 
+def validate_validation_receipt_application(payload: dict[str, Any]) -> list[TestEvidenceFinding]:
+    """Return findings for validation-receipt current-packet drift."""
+
+    findings: list[TestEvidenceFinding] = []
+    findings.extend(validate_validation_receipt_root_contract(payload))
+    findings.extend(validate_validation_receipt_categories(payload.get("application_categories")))
+    findings.extend(validate_validation_receipt_items(payload.get("validation_items")))
+    findings.extend(validate_forbidden_value_patterns(payload))
+    findings.extend(validate_forbidden_promotion_patterns(payload))
+    return findings
+
+
 def validate_root_contract(payload: dict[str, Any]) -> list[TestEvidenceFinding]:
     """Return findings for root-level test-evidence witness drift."""
 
@@ -436,11 +562,23 @@ def validate_test_evidence_surfaces(test_evidence_surfaces: object) -> list[Test
                     f"{surface_id} evidence_ref must stay manual_preparation_pending in the committed packet",
                 )
             )
-        if not isinstance(surface.get("public_safe_note"), str) or not surface["public_safe_note"].strip():
+        public_safe_note = surface.get("public_safe_note")
+        if not isinstance(public_safe_note, str) or not public_safe_note.strip():
             findings.append(
                 TestEvidenceFinding(
                     "test_evidence_surface_note_invalid",
                     f"{surface_id} public_safe_note must be a non-empty string",
+                )
+            )
+            continue
+        missing_fragments = tuple(
+            fragment for fragment in EXPECTED_SURFACE_NOTE_FRAGMENTS.get(surface_id, ()) if fragment not in public_safe_note
+        )
+        if missing_fragments:
+            findings.append(
+                TestEvidenceFinding(
+                    "test_evidence_surface_note_fragment_missing",
+                    f"{surface_id} public_safe_note missing required fragments: {', '.join(missing_fragments)}",
                 )
             )
     return findings
@@ -717,6 +855,145 @@ def validate_gap_warning_entries(gap_warning_entries: object) -> list[TestEviden
     return findings
 
 
+def validate_validation_receipt_root_contract(payload: dict[str, Any]) -> list[TestEvidenceFinding]:
+    """Return findings for validation-receipt current-packet root drift."""
+
+    findings: list[TestEvidenceFinding] = []
+    if set(payload) != EXPECTED_VALIDATION_RECEIPT_ROOT_KEYS:
+        findings.append(
+            TestEvidenceFinding(
+                "validation_receipt_root_keys_invalid",
+                f"root keys must be: {', '.join(sorted(EXPECTED_VALIDATION_RECEIPT_ROOT_KEYS))}",
+            )
+        )
+    expected_values = {
+        "application_id": EXPECTED_VALIDATION_RECEIPT_APPLICATION_ID,
+        "schema_version": 1,
+        "status": "AwaitingEvidence",
+        "solver_outcome": "AwaitingEvidence",
+        "source_test_evidence_witness_ref": "examples/foundation_test_evidence_witness.awaiting_evidence.json",
+        "source_receipt_routing_ref": "examples/foundation_test_receipt_routing.awaiting_evidence.json",
+        "saved_receipt_ref": ".tmp/workspace-governance-preflight-receipt.json",
+        "validator_ref": "scripts/validate_workspace_governance_preflight_receipt.py",
+        "receipt_presence_observed": True,
+        "receipt_summary_recorded": False,
+        "check_count_recorded": False,
+        "check_stdout_recorded": False,
+        "failed_check_names_recorded": False,
+        "receipt_content_recorded": False,
+        "generated_at_recorded": False,
+        "freshness_claimed": False,
+        "private_path_recorded": False,
+        "full_test_pass_claimed": False,
+        "complete_coverage_claimed": False,
+        "ci_parity_claimed": False,
+        "release_readiness_claimed": False,
+        "deployment_readiness_claimed": False,
+        "security_clearance_claimed": False,
+        "secret_clearance_claimed": False,
+        "customer_readiness_claimed": False,
+        "legal_clearance_claimed": False,
+        "performance_readiness_claimed": False,
+        "flake_free_guarantee_claimed": False,
+        "terminal_closure_claimed": False,
+        "external_publication_allowed": False,
+        "deployment_allowed": False,
+        "staging_allowed": False,
+        "commit_allowed": False,
+        "push_allowed": False,
+        "pull_request_allowed": False,
+    }
+    for key, expected_value in expected_values.items():
+        if payload.get(key) != expected_value:
+            findings.append(
+                TestEvidenceFinding(
+                    "validation_receipt_root_value_invalid",
+                    f"{key} must be {expected_value!r}",
+                )
+            )
+    if tuple(payload.get("blocked_claims") or ()) != EXPECTED_VALIDATION_RECEIPT_BLOCKED_CLAIMS:
+        findings.append(
+            TestEvidenceFinding(
+                "validation_receipt_blocked_claims_invalid",
+                f"blocked_claims must be: {', '.join(EXPECTED_VALIDATION_RECEIPT_BLOCKED_CLAIMS)}",
+            )
+        )
+    next_action = payload.get("next_action")
+    if not isinstance(next_action, str) or "category-only evidence" not in next_action:
+        findings.append(
+            TestEvidenceFinding(
+                "validation_receipt_next_action_invalid",
+                "next_action must preserve category-only validation receipt evidence",
+            )
+        )
+    return findings
+
+
+def validate_validation_receipt_categories(application_categories: object) -> list[TestEvidenceFinding]:
+    """Return findings for validation-receipt category drift."""
+
+    if tuple(application_categories or ()) != EXPECTED_VALIDATION_RECEIPT_CATEGORIES:
+        return [
+            TestEvidenceFinding(
+                "validation_receipt_categories_invalid",
+                "application_categories must match the validation receipt current-packet category set",
+            )
+        ]
+    return []
+
+
+def validate_validation_receipt_items(validation_items: object) -> list[TestEvidenceFinding]:
+    """Return findings for validation-receipt item drift."""
+
+    findings: list[TestEvidenceFinding] = []
+    if not isinstance(validation_items, list) or not all(isinstance(item, dict) for item in validation_items):
+        return [TestEvidenceFinding("validation_receipt_items_invalid", "validation_items must be a list of objects")]
+    observed_items = tuple(item.get("validation_id") for item in validation_items)
+    if observed_items != EXPECTED_VALIDATION_RECEIPT_ITEMS:
+        findings.append(
+            TestEvidenceFinding(
+                "validation_receipt_item_inventory_invalid",
+                "validation item inventory does not match the current-packet validation receipt set",
+            )
+        )
+    item_ids = [item.get("validation_id") for item in validation_items]
+    if len(set(item_ids)) != len(item_ids):
+        findings.append(TestEvidenceFinding("validation_receipt_item_duplicate", "validation item ids must be unique"))
+    for item in validation_items:
+        item_id = str(item.get("validation_id", "<missing>"))
+        if set(item) != EXPECTED_VALIDATION_RECEIPT_ITEM_KEYS:
+            findings.append(
+                TestEvidenceFinding(
+                    "validation_receipt_item_keys_invalid",
+                    f"{item_id} item keys must be: {', '.join(sorted(EXPECTED_VALIDATION_RECEIPT_ITEM_KEYS))}",
+                )
+            )
+        if item.get("state") != "AwaitingEvidence":
+            findings.append(
+                TestEvidenceFinding(
+                    "validation_receipt_item_state_invalid",
+                    f"{item_id} state must be AwaitingEvidence",
+                )
+            )
+        note = item.get("application_note")
+        if not isinstance(note, str) or not note.strip():
+            findings.append(
+                TestEvidenceFinding(
+                    "validation_receipt_item_note_invalid",
+                    f"{item_id} application_note must be a non-empty string",
+                )
+            )
+        for fragment in EXPECTED_VALIDATION_RECEIPT_ITEM_NOTE_FRAGMENTS.get(item_id, ()):
+            if not isinstance(note, str) or fragment not in note:
+                findings.append(
+                    TestEvidenceFinding(
+                        "validation_receipt_item_note_fragment_missing",
+                        f"{item_id} note must contain: {fragment}",
+                    )
+                )
+    return findings
+
+
 def validate_forbidden_value_patterns(payload: dict[str, Any]) -> list[TestEvidenceFinding]:
     """Return findings for private, test-result, source-control, customer, or deployment values."""
 
@@ -754,6 +1031,7 @@ def validate_foundation_test_evidence_boundary(
     packet_path: Path = DEFAULT_PACKET_PATH,
     routing_path: Path = DEFAULT_ROUTING_PATH,
     gap_warning_path: Path = DEFAULT_GAP_WARNING_PATH,
+    validation_receipt_path: Path = DEFAULT_VALIDATION_RECEIPT_PATH,
 ) -> list[TestEvidenceFinding]:
     """Validate the Foundation Mode test-evidence boundary artifacts."""
 
@@ -761,11 +1039,16 @@ def validate_foundation_test_evidence_boundary(
     packet_payload = load_json_object(packet_path, "test-evidence witness packet")
     routing_payload = load_json_object(routing_path, "test-evidence receipt routing packet")
     gap_warning_payload = load_json_object(gap_warning_path, "test-evidence gap warning packet")
+    validation_receipt_payload = load_json_object(
+        validation_receipt_path,
+        "test-evidence validation receipt current packet",
+    )
     return [
         *validate_doc_text(doc_text),
         *validate_packet(packet_payload),
         *validate_receipt_routing_packet(routing_payload),
         *validate_gap_warning_packet(gap_warning_payload),
+        *validate_validation_receipt_application(validation_receipt_payload),
     ]
 
 
@@ -777,10 +1060,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--packet", type=Path, default=DEFAULT_PACKET_PATH)
     parser.add_argument("--routing", type=Path, default=DEFAULT_ROUTING_PATH)
     parser.add_argument("--gap-warning", type=Path, default=DEFAULT_GAP_WARNING_PATH)
+    parser.add_argument("--validation-receipt", type=Path, default=DEFAULT_VALIDATION_RECEIPT_PATH)
     args = parser.parse_args(argv)
 
     try:
-        findings = validate_foundation_test_evidence_boundary(args.doc, args.packet, args.routing, args.gap_warning)
+        findings = validate_foundation_test_evidence_boundary(
+            args.doc,
+            args.packet,
+            args.routing,
+            args.gap_warning,
+            args.validation_receipt,
+        )
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"[FAIL] foundation_test_evidence_load: {exc}", file=sys.stderr)
         print("STATUS: failed", file=sys.stderr)
@@ -795,6 +1085,7 @@ def main(argv: list[str] | None = None) -> int:
     print("[PASS] foundation_test_evidence_witness")
     print("[PASS] foundation_test_receipt_routing")
     print("[PASS] foundation_test_gap_warning_register")
+    print("[PASS] foundation_validation_receipt_current_packet")
     print("STATUS: passed")
     return 0
 

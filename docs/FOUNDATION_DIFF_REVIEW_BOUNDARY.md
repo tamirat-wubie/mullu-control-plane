@@ -82,6 +82,18 @@ deployment_allowed=false
 | Rollback and revert questions | Draft questions for possible future rollback paths. | Do not approve a revert. |
 | Handoff-summary questions | Draft questions for a plain-language changed-file summary. | Do not claim release or deployment readiness. |
 
+## Runtime-safety Diff Separation
+
+Runtime-safety diff separation keeps the runtime-safety packet families visible
+without claiming the diff is fully reviewed. It can ask how to group modified
+local work into Phi-GPS, provider, connector, secret, process, pagination, and
+governance artifact families, how to classify validator and test artifacts, and
+how to separate runtime-safety packet work from user or prior work.
+
+This remains local review preparation only. It does not assign ownership,
+approve staging, approve commits, approve reverts, claim broad test pass,
+publish source control, or authorize deployment.
+
 ## Operator Procedure
 
 1. Run local read-only status or diff commands only when review is needed.

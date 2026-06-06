@@ -353,6 +353,49 @@ def test_workspace_snapshot_records_symlink_without_following_target(
     assert snapshot["linked-outside"] != "unreadable"
 
 
+def test_sandboxed_code_worker_blocks_allowed_path_symlink_escape(
+    tmp_path: Path,
+) -> None:
+    workspace = tmp_path / "workspace"
+    outside = tmp_path / "outside"
+    workspace.mkdir()
+    outside.mkdir()
+    (workspace / "src").mkdir()
+    link_path = workspace / "src" / "outside-link"
+    try:
+        link_path.symlink_to(outside, target_is_directory=True)
+    except (NotImplementedError, OSError) as exc:
+        pytest.skip(f"symlink creation unavailable: {type(exc).__name__}")
+    dispatched = False
+
+    def fake_runner(argv, **kwargs):  # noqa: ANN001, ANN202, ARG001
+        nonlocal dispatched
+        dispatched = True
+        return subprocess.CompletedProcess(argv, 0, stdout="should-not-run", stderr="")
+
+    worker = SandboxedCodeWorker(
+        workspace_root=str(workspace),
+        clock=lambda: "2026-05-07T12:00:00+00:00",
+        runner=fake_runner,
+        platform_system=lambda: "Linux",
+    )
+
+    result = worker.execute_command(
+        _lease(allowed_commands=(("python", "-m", "task"),)),
+        command_id="cmd-symlink-escape",
+        argv=("python", "-m", "task"),
+        cwd="src",
+    )
+
+    assert result.status is CodeWorkerReceiptStatus.BLOCKED
+    assert dispatched is False
+    assert result.receipt.sandbox_receipt_id is None
+    assert result.receipt.violation_reasons[0].startswith(
+        "workspace_symlink_outside_repository_boundary:"
+    )
+    assert str(outside) not in result.stderr
+
+
 def test_workspace_snapshot_marks_unreadable_directory(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

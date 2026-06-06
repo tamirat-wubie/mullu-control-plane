@@ -40,3 +40,5 @@ def test_probe_exception_is_bounded_and_recorded() -> None:
     assert report.probes[1].detail == "probe error (RuntimeError)"
     assert "secret probe failure" not in report.probes[1].detail
     assert history[0].probes[1].detail == "probe error (RuntimeError)"
+    assert verifier.history(limit=0) == []
+    assert verifier.history(limit=-1) == []

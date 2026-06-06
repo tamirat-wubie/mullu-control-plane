@@ -124,6 +124,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_source_control_boundary.py"),
         ),
         CheckCommand(
+            "foundation_source_control_review_checklist_boundary",
+            (python_executable, "scripts/validate_foundation_source_control_review_checklist_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_operator_readiness_boundary",
             (python_executable, "scripts/validate_foundation_operator_readiness_boundary.py"),
         ),
@@ -274,6 +278,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         CheckCommand(
             "foundation_runtime_secret_handoff_rehearsal_boundary",
             (python_executable, "scripts/validate_foundation_runtime_secret_handoff_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_runtime_witness_deferral_boundary",
+            (python_executable, "scripts/validate_foundation_runtime_witness_deferral_boundary.py"),
         ),
         CheckCommand(
             "foundation_production_dependency_evidence_rehearsal_boundary",
@@ -470,6 +478,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_logic_governance_application.py"),
         ),
         CheckCommand(
+            "phi_gps_v3_platform_spec",
+            (python_executable, "scripts/validate_phi_gps_v3_platform_spec.py"),
+        ),
+        CheckCommand(
             "public_repository_surface",
             (python_executable, "scripts/validate_public_repository_surface.py"),
         ),
@@ -542,6 +554,26 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
                 "scripts/validate_mil_audit_runbook_operator_checklist.py",
                 "--checklist",
                 "examples/mil_audit_runbook_operator_checklist.json",
+                "--json",
+            ),
+        ),
+        CheckCommand(
+            "general_agent_promotion_handoff_packet",
+            (
+                python_executable,
+                "scripts/validate_general_agent_promotion_handoff_packet.py",
+                "--packet",
+                "examples/general_agent_promotion_handoff_packet.json",
+                "--json",
+            ),
+        ),
+        CheckCommand(
+            "general_agent_promotion_operator_checklist",
+            (
+                python_executable,
+                "scripts/validate_general_agent_promotion_operator_checklist.py",
+                "--checklist",
+                "examples/general_agent_promotion_operator_checklist.json",
                 "--json",
             ),
         ),

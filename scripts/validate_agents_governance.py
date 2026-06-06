@@ -47,6 +47,7 @@ REQUIRED_SECTIONS = (
     RequiredSection("Core Governance Laws", "Ontological Completeness Enforcement"),
     RequiredSection("Phi Traversal Spine", "Distinction: boundaries"),
     RequiredSection("Phi Variant Naming", "All governed state writes route through `Phi_gov`."),
+    RequiredSection("Phi GPS v3 Platform Overlay", "`Phi_gps` v3 is an additive engineering platform"),
     RequiredSection("Universal Action Orchestration", "Every effect-bearing action must pass through"),
     RequiredSection("ProofState Discipline", "Resource pressure never permits"),
     RequiredSection("Solver Outcome Taxonomy", "SolvedVerified"),
@@ -76,6 +77,7 @@ REQUIRED_PHRASES = (
     "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json",
     "python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-receipt.json",
     "python scripts/validate_workspace_governance_preflight_receipt_contract.py",
+    "Treat repository-local v3 runtime contracts as claimable only through named validators and receipts;",
 )
 
 STATUS_CONTRACT_LINES = (

@@ -65,7 +65,7 @@ Apply this order for architecture, design, analysis, and generation unless the t
 ## Phi Variant Naming
 
 - `Phi_gov`: governance operator for state writes, model freeze, norm escalation, and irreversibility authority.
-- `Phi_gps`: problem solver and 13-phase universal engine.
+- `Phi_gps`: problem solver and 13-phase universal engine. Its kernel schema remains `phi2-gps-v2.2`; the accepted platform overlay is `phi2-gps-v3`.
 - `Phi_agent`: single-agent governance loop.
 - `Phi_multi`: multi-agent coexistence and joint execution.
 - `Phi_dyn`: norm evolution and civilization dynamics.
@@ -75,6 +75,19 @@ All governed state writes route through `Phi_gov`.
 `Phi_gov(S, Delta, Ctx, auth) -> <S_prime, Judgment, Delta_reject>`
 
 All rejected deltas must be logged. No silent failures.
+
+## Phi GPS v3 Platform Overlay
+
+`Phi_gps` v3 is an additive engineering platform around the v2.2 kernel, not a replacement for the kernel.
+
+Default v3 handling for unclear, system, research, planning, build, or repair work:
+
+1. Compile raw input into a governed `ProblemStar` object before solver routing.
+2. Separate evidence, assumptions, unknowns, contradictions, goals, constraints, risks, available actions, and proof obligations before execution.
+3. Route through a solver profile, policy synthesis, governed adapter preflight, action classification, counterfactual testing when irreversibility is material, verification, proof receipt emission, and learning consolidation.
+4. Classify actions as epistemic, world-changing, or hybrid. Hybrid actions require stricter preflight because they both reveal and alter state.
+5. Maintain append-only contradiction, belief, trace, failure, and proof receipt ledgers.
+6. Treat repository-local v3 runtime contracts as claimable only through named validators and receipts; treat external deployment, public readiness, and effect-bearing adapter authority as `AwaitingEvidence` until live evidence proves the claim.
 
 ## Universal Action Orchestration
 

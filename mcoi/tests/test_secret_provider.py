@@ -23,6 +23,10 @@ class TestSecretValueSafety:
         s = SecretValue(key="api_key", value="sk-12345", source="file")
         assert "sk-12345" not in str(s)
 
+    def test_empty_secret_value_rejected(self):
+        with pytest.raises(ValueError, match="non-empty string"):
+            SecretValue(key="api_key", value="", source="file")
+
 
 class TestEnvSecretProvider:
     def test_get_existing(self, monkeypatch):
@@ -43,6 +47,14 @@ class TestEnvSecretProvider:
         p = EnvSecretProvider(prefix="MULLU_")
         assert p.exists("api_key") is True
         assert p.exists("nonexistent") is False
+
+    def test_empty_env_secret_is_not_returned(self, monkeypatch):
+        monkeypatch.setenv("MULLU_EMPTY", "")
+        p = EnvSecretProvider(prefix="MULLU_")
+        result = p.get("empty", accessor="test")
+        assert result is None
+        assert p.exists("empty") is False
+        assert p.access_log[-1].found is False
 
     def test_list_keys(self, monkeypatch):
         monkeypatch.setenv("MULLU_SECRET_A", "1")
@@ -92,6 +104,37 @@ class TestFileSecretProvider:
         secrets_file.write_text("not json{{{")
         p = FileSecretProvider(path=str(secrets_file))
         assert p.get("key") is None
+        assert p.last_load_error == "secret file load failed (JSONDecodeError)"
+
+    def test_non_string_file_secret_values_are_rejected_not_coerced(self, tmp_path):
+        secrets_file = tmp_path / "secrets.json"
+        secrets_file.write_text(json.dumps({"api_key": {"nested": "secret"}}))
+        p = FileSecretProvider(path=str(secrets_file))
+
+        result = p.get("api_key")
+
+        assert result is None
+        assert p.exists("api_key") is False
+        assert p.list_keys() == []
+        assert p.last_load_error == "secret file values must be strings"
+
+    def test_empty_file_secret_values_are_rejected(self, tmp_path):
+        secrets_file = tmp_path / "secrets.json"
+        secrets_file.write_text(json.dumps({"api_key": ""}))
+        p = FileSecretProvider(path=str(secrets_file))
+
+        result = p.get("api_key")
+
+        assert result is None
+        assert p.last_load_error.endswith("must be a non-empty string")
+
+    def test_file_secret_payload_must_be_object(self, tmp_path):
+        secrets_file = tmp_path / "secrets.json"
+        secrets_file.write_text(json.dumps(["secret"]))
+        p = FileSecretProvider(path=str(secrets_file))
+
+        assert p.get("api_key") is None
+        assert p.last_load_error == "secret file payload must be an object"
 
     def test_exists(self, tmp_path):
         secrets_file = tmp_path / "secrets.json"

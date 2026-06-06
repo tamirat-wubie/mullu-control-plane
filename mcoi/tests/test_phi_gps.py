@@ -1,28 +1,74 @@
 """Φ_gps Runtime Tests — Phases 0-12."""
 
+import pytest
+
 from mcoi_runtime.core.phi_gps import (
+    AdapterReceipt,
     AgentMode,
     ActionSet,
+    BeliefLedger,
     FeasibilityResult,
     GoalStatus,
     KnowledgeLevel,
     ModelStatus,
     NormKind,
+    PHI_GPS_V3_SCHEMA_VERSION,
+    PROBLEM_STAR_FIELD_NAMES,
+    CompiledProblem,
+    CompilerAssumption,
+    CompilerContradiction,
+    CompilerProofRequirement,
+    CompilerRisk,
+    CompilerUnknown,
+    ContradictionLedger,
+    CounterfactualLab,
+    DeterministicPlatformAdapter,
+    FailureKind,
+    GovernancePreflight,
+    LearningSchemaLibrary,
+    PlatformProofReceipt,
+    PlatformActionClass,
+    PlatformExecutionResult,
+    PlatformPolicy,
+    PlatformTrace,
+    PlatformTraceEventKind,
+    PlatformVerdict,
+    PolicyHint,
+    PolicyClass,
+    ProblemCompiler,
+    ProblemDomainClass,
+    ProblemFieldStatus,
+    ProblemShapeMetrics,
+    ProblemStar,
+    ProblemStarField,
     ProfileVector,
     ProofState,
+    RepresentationLab,
+    RegistryKind,
     ResourceLevel,
+    RequiredCertainty,
+    RawProblemEnvelope,
+    SolverMode,
     SolverOutcome,
     build_proof_sketch,
+    build_platform_registry,
+    build_problem_star,
     check_feasibility,
     compute_voi,
     construct_goal,
     discover_laws,
     distinguish,
+    emit_platform_proof_receipt,
     estimate_belief,
     execute_plan,
     frame_problem,
     freeze_models,
+    repair_for_failure,
+    profile_problem_star,
+    route_solver,
+    run_platform_cycle,
     select_strategies,
+    synthesize_platform_policy,
     verify_and_judge,
 )
 
@@ -131,7 +177,543 @@ class TestProfileVector:
         assert d["mode"] == "cooperative"
 
 
+# ── Phi2-GPS v3 Platform Data Model ───────────────────────────
+
+class TestPhiGpsV3PlatformDataModel:
+    def test_problem_star_builder_preserves_kernel_contract(self):
+        problem = build_problem_star(
+            problem_id="problem-1",
+            values={
+                "W": {"state": "latent"},
+                "B": {"hypothesis": "candidate"},
+                "G": {"done": True},
+                "Lambda": ("no_silent_failure",),
+            },
+            statuses={"G": ProblemFieldStatus.PARTIAL},
+            evidence_refs={"W": ("evidence:world-1",)},
+            input_hash="sha256:input-1",
+        )
+        payload = problem.to_dict()
+
+        assert tuple(payload["fields"]) == PROBLEM_STAR_FIELD_NAMES
+        assert problem.field("W").status == ProblemFieldStatus.KNOWN
+        assert problem.field("G").status == ProblemFieldStatus.PARTIAL
+        assert "O" in problem.unknown_fields
+        assert payload["schema"] == PHI_GPS_V3_SCHEMA_VERSION
+
+    def test_problem_star_rejects_incomplete_or_invalid_fields(self):
+        valid_fields = tuple(
+            ProblemStarField(name=field_name, status=ProblemFieldStatus.UNKNOWN)
+            for field_name in PROBLEM_STAR_FIELD_NAMES
+        )
+
+        try:
+            ProblemStar(problem_id="bad-problem", fields=valid_fields[:-1])
+        except ValueError as exc:
+            observed_message = str(exc)
+        else:
+            observed_message = ""
+
+        assert "canonical P* field order" in observed_message
+        assert len(valid_fields) == len(PROBLEM_STAR_FIELD_NAMES)
+        assert valid_fields[0].name == "W"
+
+    def test_platform_profile_vector_uses_domain_certainty_and_shape(self):
+        problem = build_problem_star(
+            problem_id="problem-profile",
+            values={"W": "observed", "A_e": ("observe",), "A_w": ("commit",), "Pi": ("proof-needed",)},
+            statuses={"A_w": ProblemFieldStatus.HYPOTHESIZED, "T": ProblemFieldStatus.UNKNOWN},
+        )
+        shape = ProblemShapeMetrics(
+            branching_factor=0.2,
+            constraint_density=0.4,
+            uncertainty_density=0.8,
+            irreversibility_score=0.6,
+            goal_sharpness=0.1,
+            adversarial_pressure=0.0,
+            resource_pressure=0.5,
+            proof_burden=0.7,
+            coupling_strength=0.3,
+        )
+        profile = profile_problem_star(
+            problem,
+            domain=ProblemDomainClass.SOFTWARE_REPAIR,
+            required_certainty=RequiredCertainty.FORMAL,
+            shape_metrics=shape,
+        )
+        payload = profile.to_dict()
+
+        assert profile.domain == ProblemDomainClass.SOFTWARE_REPAIR
+        assert profile.required_certainty == RequiredCertainty.FORMAL
+        assert profile.k_actions == ProblemFieldStatus.HYPOTHESIZED
+        assert profile.dominant_shape == "uncertainty_density"
+        assert payload["shape_metrics"]["uncertainty_density"] == 0.8
+
+    def test_platform_trace_records_append_only_events(self):
+        trace = PlatformTrace(problem_id="problem-trace")
+        compiled_trace = trace.record(
+            kind=PlatformTraceEventKind.COMPILED,
+            cause="problem compiler separated evidence from assumptions",
+            payload={"compiled": True},
+            proof_state=ProofState.PASS,
+        )
+        executed_trace = compiled_trace.record(
+            kind=PlatformTraceEventKind.EXECUTED,
+            cause="governed adapter preflight passed",
+            payload={"action": "run_focused_tests"},
+            proof_state=ProofState.PASS,
+        )
+
+        assert trace.event_count == 0
+        assert compiled_trace.event_count == 1
+        assert executed_trace.events[1].event_id == 1
+        assert executed_trace.events_by_kind(PlatformTraceEventKind.EXECUTED)[0].payload["action"] == "run_focused_tests"
+        assert executed_trace.to_dict()["events"][0]["proof_state"] == "pass"
+
+    def test_platform_records_freeze_mapping_payloads(self):
+        trace = PlatformTrace(problem_id="problem-immutable").record(
+            kind=PlatformTraceEventKind.COMPILED,
+            cause="compile trace payload is retained",
+            payload={"count": 1},
+            proof_state=ProofState.PASS,
+        )
+        problem = build_problem_star(
+            problem_id="problem-immutable",
+            values={"W": "known"},
+            confidences={"W": 1.0},
+        )
+        receipt = emit_platform_proof_receipt(
+            problem=problem,
+            trace=trace,
+            terminal_verdict=PlatformVerdict.AWAITING_EVIDENCE,
+            verification_result={"checked": True},
+        )
+        compiled = ProblemCompiler.compile(RawProblemEnvelope(
+            id="problem-compiler-immutable",
+            input_type="text",
+            raw_content="Need verify local proof before any action.",
+            declared_goal="local proof only",
+        ))
+
+        try:
+            trace.events[0].payload["count"] = 2
+        except TypeError as exc:
+            payload_error = str(exc)
+        else:
+            payload_error = ""
+        try:
+            receipt.verification_result["checked"] = False
+        except TypeError as exc:
+            receipt_error = str(exc)
+        else:
+            receipt_error = ""
+        try:
+            compiled.confidence_map["W"] = 0.0
+        except TypeError as exc:
+            confidence_error = str(exc)
+        else:
+            confidence_error = ""
+
+        assert payload_error
+        assert receipt_error
+        assert confidence_error
+        assert trace.to_dict()["events"][0]["payload"]["count"] == 1
+
+    def test_problem_compiler_separates_assumptions_unknowns_risks_and_proof(self):
+        envelope = RawProblemEnvelope(
+            id="problem-compile",
+            input_type="text",
+            raw_content=(
+                "Assumption: maybe the local runtime can deploy safely. "
+                "Need evidence before any irreversible customer deployment. "
+                "This conflicts with no deployment."
+            ),
+            source="local",
+            declared_goal="prepare local proof without deployment",
+            declared_constraints=("no deployment", "no customer access"),
+        )
+
+        compiled = ProblemCompiler.compile(envelope)
+        payload = compiled.to_dict()
+
+        assert isinstance(compiled, CompiledProblem)
+        assert any(isinstance(item, CompilerAssumption) for item in compiled.assumptions)
+        assert any(isinstance(item, CompilerUnknown) for item in compiled.unknowns)
+        assert any(isinstance(item, CompilerRisk) for item in compiled.risks)
+        assert any(isinstance(item, CompilerContradiction) for item in compiled.contradictions)
+        assert any(isinstance(item, CompilerProofRequirement) for item in compiled.proof_requirements)
+        assert compiled.safe_default_policy in (PolicyHint.EPISTEMIC_FIRST, PolicyHint.AUTHORITY_REVIEW)
+        assert compiled.kernel_draft.input_hash == envelope.input_hash
+        assert compiled.trace.event_count == 2
+        assert payload["safe_default_policy"] == compiled.safe_default_policy.value
+
+    def test_platform_proof_receipt_binds_problem_trace_and_verdict(self):
+        problem = build_problem_star(
+            problem_id="problem-receipt",
+            values={"W": "known", "B": "belief", "G": "goal", "A_w": ("commit",), "Pi": ("verification",)},
+            input_hash="sha256:receipt-input",
+        )
+        trace = (
+            PlatformTrace(problem_id=problem.problem_id)
+            .record(
+                kind=PlatformTraceEventKind.EXECUTED,
+                cause="adapter receipt emitted",
+                payload={"action": "commit_change"},
+                proof_state=ProofState.PASS,
+            )
+            .record(
+                kind=PlatformTraceEventKind.VERIFIED,
+                cause="dual verifier passed",
+                payload={"evidence_ref": "receipt:verify-1"},
+                proof_state=ProofState.PASS,
+            )
+        )
+        receipt = emit_platform_proof_receipt(
+            problem=problem,
+            trace=trace,
+            terminal_verdict=PlatformVerdict.SOLVED_VERIFIED,
+            policy_selected="proof_policy",
+            constraints_satisfied=("no_silent_failure",),
+            verification_result={"all_pass": True},
+        )
+        payload = receipt.to_dict()
+
+        assert isinstance(receipt, PlatformProofReceipt)
+        assert receipt.receipt_id.startswith("phi-gps-v3-receipt-")
+        assert payload["input_hash"] == "sha256:receipt-input"
+        assert payload["terminal_verdict"] == "solved_verified"
+        assert payload["action_trace"] == ["commit_change"]
+        assert payload["evidence_trace"] == ["receipt:verify-1"]
+
+
+class TestPhiGpsV3ProblemCompiler:
+    def test_compiler_separates_evidence_assumptions_and_kernel_fields(self):
+        envelope = RawProblemEnvelope(
+            id="compile-1",
+            input_type="natural_language",
+            raw_content=(
+                "Observed state: service failing. "
+                "Assume cache is stale. "
+                "Create repair plan after diagnosis changes to healthy and verify receipt."
+            ),
+            source="unit-test",
+            requester="operator",
+            authority_context="local-proof",
+            declared_goal="restore service health",
+            declared_constraints=("must preserve rollback",),
+        )
+        compiled = ProblemCompiler.compile(envelope)
+
+        assert isinstance(compiled, CompiledProblem)
+        assert any(isinstance(item, CompilerAssumption) for item in compiled.assumptions)
+        assert compiled.kernel_draft.field("W").status == ProblemFieldStatus.PARTIAL
+        assert compiled.kernel_draft.field("G").status == ProblemFieldStatus.KNOWN
+        assert compiled.trace.event_count == 2
+
+    def test_compiler_emits_epistemic_policy_for_vague_problem(self):
+        envelope = RawProblemEnvelope(
+            id="compile-vague",
+            input_type="natural_language",
+            raw_content="make this better",
+            source="unit-test",
+        )
+        compiled = ProblemCompiler.compile(envelope)
+        unknown_dimensions = {unknown.dimension for unknown in compiled.unknowns}
+
+        assert any(isinstance(item, CompilerUnknown) for item in compiled.unknowns)
+        assert {"goal", "world_state", "proof"}.issubset(unknown_dimensions)
+        assert compiled.safe_default_policy == PolicyHint.EPISTEMIC_FIRST
+        assert compiled.required_clarifications
+        assert compiled.kernel_draft.field("G").status == ProblemFieldStatus.UNKNOWN
+
+    def test_compiler_records_declared_constraint_contradiction(self):
+        envelope = RawProblemEnvelope(
+            id="compile-conflict",
+            input_type="natural_language",
+            raw_content="Observed state: release candidate ready. deploy service and verify proof.",
+            source="unit-test",
+            declared_goal="deploy service",
+            declared_constraints=("must deploy", "must not deploy"),
+        )
+        compiled = ProblemCompiler.compile(envelope)
+
+        assert any(isinstance(item, CompilerContradiction) for item in compiled.contradictions)
+        assert compiled.contradictions[0].severity == "critical"
+        assert compiled.safe_default_policy == PolicyHint.AUTHORITY_REVIEW
+        assert compiled.kernel_draft.field("Lambda").status == ProblemFieldStatus.CONFLICTING
+        assert "contradiction_resolution" in {unknown.dimension for unknown in compiled.unknowns}
+
+    def test_compiler_sets_proof_first_for_critical_risk(self):
+        envelope = RawProblemEnvelope(
+            id="compile-risk",
+            input_type="natural_language",
+            raw_content=(
+                "Observed state: invoice approved. "
+                "Send payment after approval changes to paid and verify payment receipt."
+            ),
+            source="unit-test",
+            declared_goal="close approved payment",
+            declared_constraints=("must require approval",),
+        )
+        compiled = ProblemCompiler.compile(envelope)
+
+        assert any(isinstance(item, CompilerRisk) for item in compiled.risks)
+        assert any(isinstance(item, CompilerProofRequirement) for item in compiled.proof_requirements)
+        assert compiled.risks[0].severity == "critical"
+        assert compiled.safe_default_policy == PolicyHint.PROOF_FIRST
+        assert compiled.kernel_draft.field("A_w").status == ProblemFieldStatus.HYPOTHESIZED
+
+    def test_raw_problem_envelope_hash_is_deterministic(self):
+        first = RawProblemEnvelope(
+            id="compile-hash",
+            input_type="json",
+            raw_content={"goal": "verify", "state": "observed"},
+            source="unit-test",
+            declared_constraints=("must verify",),
+        )
+        second = RawProblemEnvelope(
+            id="compile-hash",
+            input_type="json",
+            raw_content={"state": "observed", "goal": "verify"},
+            source="unit-test",
+            declared_constraints=("must verify",),
+        )
+
+        assert first.input_hash == second.input_hash
+        assert first.to_dict()["input_hash"] == first.input_hash
+        assert first.declared_constraints == ("must verify",)
+
+
 # ── Phase 1: DISTINGUISH ──────────────────────────────────────
+
+class TestPhiGpsV3PlatformRuntime:
+    def test_registry_loads_compiler_outputs_and_adapter_contract(self):
+        compiled = ProblemCompiler.compile(RawProblemEnvelope(
+            id="platform-registry",
+            input_type="natural_language",
+            raw_content="Observed state: ServiceAlpha requires approval and validate local proof receipt.",
+            source="unit-test",
+            authority_context="local-proof",
+            declared_goal="validate local proof",
+            declared_constraints=("must preserve audit trail",),
+        ))
+        registry = build_platform_registry(compiled)
+
+        assert registry.latest(RegistryKind.ADAPTER, DeterministicPlatformAdapter.id) is not None
+        assert len(registry.records_by_kind(RegistryKind.PROOF)) >= 1
+        assert len(registry.records_by_kind(RegistryKind.LAW)) >= 1
+        assert registry.register(registry.records[0]).to_dict()["record_count"] == len(registry.records) + 1
+
+    def test_router_prioritizes_uncertainty_and_formal_proof_modes(self):
+        compiled = ProblemCompiler.compile(RawProblemEnvelope(
+            id="platform-route",
+            input_type="natural_language",
+            raw_content="make this better",
+            source="unit-test",
+        ))
+        profile = profile_problem_star(
+            compiled.kernel_draft,
+            required_certainty=RequiredCertainty.FORMAL,
+            domain=ProblemDomainClass.SOFTWARE_REPAIR,
+        )
+        route = route_solver(profile, compiled.kernel_draft)
+
+        assert SolverMode.DIAGNOSIS in route.mode_stack
+        assert SolverMode.PROOF_CONSTRUCTION in route.mode_stack
+        assert SolverMode.SOFTWARE_REPAIR in route.mode_stack
+        assert route.profile_hash
+        assert route.to_dict()["primary_mode"] == route.primary_mode.value
+
+    def test_policy_synthesizer_emits_proof_and_world_action_candidates(self):
+        compiled = ProblemCompiler.compile(RawProblemEnvelope(
+            id="platform-policy",
+            input_type="natural_language",
+            raw_content=(
+                "Observed state: invoice approved. "
+                "Send payment after approval changes to paid and verify payment receipt."
+            ),
+            source="unit-test",
+            authority_context="finance-approval",
+            declared_goal="close approved payment",
+            declared_constraints=("must require approval",),
+        ))
+        profile = profile_problem_star(compiled.kernel_draft)
+        route = route_solver(profile, compiled.kernel_draft)
+        policy = synthesize_platform_policy(compiled, route, profile)
+        action_classes = {action.action_class for action in policy.actions}
+
+        assert isinstance(policy, PlatformPolicy)
+        assert policy.policy_class == PolicyClass.PROOF
+        assert PlatformActionClass.EPISTEMIC in action_classes
+        assert PlatformActionClass.WORLD_CHANGING in action_classes
+        assert policy.requires_counterfactual is True
+
+    def test_counterfactual_and_preflight_block_unsafe_world_action(self):
+        compiled = ProblemCompiler.compile(RawProblemEnvelope(
+            id="platform-unsafe",
+            input_type="natural_language",
+            raw_content=(
+                "Observed state: invoice approved. "
+                "Send payment after approval changes to paid and verify payment receipt."
+            ),
+            source="unit-test",
+            authority_context="finance-approval",
+            declared_goal="close approved payment",
+            declared_constraints=("must require approval",),
+        ))
+        profile = profile_problem_star(compiled.kernel_draft)
+        route = route_solver(profile, compiled.kernel_draft)
+        policy = synthesize_platform_policy(compiled, route, profile)
+        report = CounterfactualLab.test(policy, compiled.kernel_draft)
+        world_action = next(action for action in policy.actions if action.action_class == PlatformActionClass.WORLD_CHANGING)
+        preflight = GovernancePreflight.preflight(world_action, compiled, report)
+
+        assert report.unsafe is True
+        assert report.recommendation == "reject_policy"
+        assert preflight.passed is False
+        assert preflight.proof_state == ProofState.FAIL
+        assert "risk" in preflight.blocked_level or preflight.blocked_level == "permission_check"
+
+    def test_run_platform_cycle_vague_problem_returns_awaiting_evidence(self):
+        compiled = ProblemCompiler.compile(RawProblemEnvelope(
+            id="platform-cycle-vague",
+            input_type="natural_language",
+            raw_content="make this better",
+            source="unit-test",
+        ))
+        result = run_platform_cycle(compiled)
+        event_kinds = {event.kind for event in result.trace.events}
+
+        assert isinstance(result, PlatformExecutionResult)
+        assert result.verdict == PlatformVerdict.AWAITING_EVIDENCE
+        assert PlatformTraceEventKind.ROUTED in event_kinds
+        assert PlatformTraceEventKind.VERIFIED in event_kinds
+        assert result.receipt.policy_selected == result.policy.policy_id
+
+    def test_run_platform_cycle_complete_local_problem_admits_learning_transfer(self):
+        compiled = ProblemCompiler.compile(RawProblemEnvelope(
+            id="platform-cycle-solved",
+            input_type="natural_language",
+            raw_content="Observed state: local proof verified. Proof receipt proves goal.",
+            source="unit-test",
+            authority_context="local-proof",
+            declared_goal="local proof verified",
+            declared_constraints=("must preserve audit trail",),
+        ))
+        result = run_platform_cycle(compiled, learning_library=LearningSchemaLibrary())
+        retrieved = result.learning_library.retrieve(result.route.profile_hash)
+
+        assert result.verdict == PlatformVerdict.SOLVED_VERIFIED
+        assert result.verification.all_pass is True
+        assert len(retrieved) == 1
+        assert retrieved[0].policy_id == result.policy.policy_id
+        assert result.receipt.learning_updates
+
+    def test_representation_lab_accepts_only_governed_mutations(self):
+        accepted_problem = build_problem_star(
+            problem_id="platform-representation",
+            values={"W": "observed", "Lambda": ("must preserve evidence",)},
+            evidence_refs={"W": ("unit-evidence",), "Lambda": ("unit-law",)},
+            input_hash="sha256:representation",
+        )
+        rejected_problem = build_problem_star(
+            problem_id="platform-representation-conflict",
+            values={"W": "observed", "Lambda": ("must deploy", "must not deploy")},
+            statuses={"Lambda": ProblemFieldStatus.CONFLICTING},
+            evidence_refs={"W": ("unit-evidence",), "Lambda": ("unit-law",)},
+            input_hash="sha256:representation-conflict",
+        )
+        accepted = RepresentationLab.mutate(
+            accepted_problem,
+            failure_kind=FailureKind.REPRESENTATION_FAILURE,
+            operator="causalize",
+        )
+        rejected = RepresentationLab.mutate(
+            rejected_problem,
+            failure_kind=FailureKind.REPRESENTATION_FAILURE,
+            operator="causalize",
+        )
+
+        assert accepted.accepted is True
+        assert accepted.search_burden_delta < 0
+        assert rejected.accepted is False
+        assert repair_for_failure(FailureKind.REPRESENTATION_FAILURE) == "representation_mutation"
+
+    def test_ledgers_and_adapter_receipts_reject_missing_identity_or_observation(self):
+        with pytest.raises(ValueError, match="contradiction ledger problem_id"):
+            ContradictionLedger(problem_id="")
+        with pytest.raises(ValueError, match="belief ledger problem_id"):
+            BeliefLedger(problem_id="")
+        with pytest.raises(ValueError, match="adapter receipt observation"):
+            AdapterReceipt(adapter_id="adapter", action_id="action", outcome="ok", observation="")
+
+    def test_policy_synthesizer_preserves_dict_action_values_in_ids(self):
+        kernel = build_problem_star(
+            problem_id="platform-dict-actions",
+            values={
+                "W": "observed",
+                "I": "local authority",
+                "G": "audit records exist",
+                "Lambda": ("must preserve audit trail",),
+                "A_w": {"create": ["invoice record", "audit log"]},
+                "Pi": "receipt proof",
+            },
+            evidence_refs={
+                "W": ("unit-observation",),
+                "I": ("unit-authority",),
+                "G": ("unit-goal",),
+                "Lambda": ("unit-law",),
+                "A_w": ("unit-actions",),
+                "Pi": ("unit-proof",),
+            },
+            input_hash="sha256:dict-actions",
+        )
+        compiled = CompiledProblem(
+            kernel_draft=kernel,
+            symbols=(),
+            assumptions=(),
+            unknowns=(),
+            contradictions=(),
+            risks=(),
+            proof_requirements=(CompilerProofRequirement("proof-1", "Verify receipt"),),
+            confidence_map={"A_w": 1.0},
+            required_clarifications=(),
+            safe_default_policy=PolicyHint.PROOF_FIRST,
+            trace=PlatformTrace(problem_id=kernel.problem_id),
+        )
+        profile = profile_problem_star(kernel)
+        policy = synthesize_platform_policy(compiled, route_solver(profile, kernel), profile)
+        world_action_ids = tuple(
+            action.id for action in policy.actions
+            if action.action_class == PlatformActionClass.WORLD_CHANGING
+        )
+
+        assert "simulate_world:create_invoice_record" in world_action_ids
+        assert "simulate_world:create_audit_log" in world_action_ids
+        assert len(world_action_ids) == 2
+        assert len(set(world_action_ids)) == len(world_action_ids)
+
+    def test_authorized_local_world_actions_require_executed_receipt_coverage(self):
+        compiled = ProblemCompiler.compile(RawProblemEnvelope(
+            id="platform-authorized-world",
+            input_type="natural_language",
+            raw_content=(
+                "Observed state: local record approved. "
+                "Create audit record after approval changes to recorded and verify receipt."
+            ),
+            source="unit-test",
+            authority_context="local-authority",
+            declared_goal="audit record is recorded",
+            declared_constraints=("must preserve audit trail",),
+        ))
+        result = run_platform_cycle(compiled, allow_world_actions=True)
+        executed_events = result.trace.events_by_kind(PlatformTraceEventKind.EXECUTED)
+
+        assert executed_events
+        assert result.verification.pi_side_effect == ProofState.PASS
+        assert result.verdict == PlatformVerdict.SOLVED_VERIFIED
+        assert "world-changing actions have executed adapter receipts" in result.verification.reasons
+
 
 class TestDistinguish:
     def test_extract_entities(self):

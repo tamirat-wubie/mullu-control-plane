@@ -125,6 +125,30 @@ class TestSecretStoreExpiry:
         ref = store.register_secret(desc, "val")
         assert store.is_expired(ref) is True
 
+    def test_resolve_timestamp_expired_secret_raises_and_removes_value(self) -> None:
+        future = _FIXED_NOW + timedelta(days=60)
+        store = SecretStore(clock=_make_clock(future))
+        desc = _make_descriptor(expires_at="2026-04-19T00:00:00+00:00")
+        ref = store.register_secret(desc, "val")
+
+        with pytest.raises(ValueError, match="^secret unavailable$") as exc_info:
+            store.resolve(ref)
+
+        assert "sec-1" not in str(exc_info.value)
+        assert store.is_expired(ref) is True
+        assert "sec-1" not in store._values
+
+    def test_resolve_status_expired_secret_raises_and_removes_value(self) -> None:
+        store = SecretStore(clock=_make_clock())
+        desc = _make_descriptor(status=SecretStatus.EXPIRED)
+        ref = store.register_secret(desc, "val")
+
+        with pytest.raises(ValueError, match="^secret unavailable$"):
+            store.resolve(ref)
+
+        assert store.is_expired(ref) is True
+        assert "sec-1" not in store._values
+
     def test_explicit_now_overrides_clock(self) -> None:
         store = SecretStore(clock=_make_clock())
         desc = _make_descriptor(expires_at="2026-04-01T00:00:00+00:00")

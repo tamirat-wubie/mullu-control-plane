@@ -1,5 +1,5 @@
 {
-  "artifact_count": 315,
+  "artifact_count": 321,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -762,6 +762,11 @@
       "purpose": "Foundation Runtime Secret Handoff Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
     },
     {
+      "name": "foundation_boundary_doc_foundation_runtime_witness_deferral_boundary",
+      "path": "docs/FOUNDATION_RUNTIME_WITNESS_DEFERRAL_BOUNDARY.md",
+      "purpose": "Foundation Runtime Witness Deferral Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
       "name": "foundation_boundary_doc_foundation_secrets_credentials_boundary",
       "path": "docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md",
       "purpose": "Foundation Secrets Credentials Boundary doctrine and Foundation Mode boundary evidence contract."
@@ -780,6 +785,11 @@
       "name": "foundation_boundary_doc_foundation_source_control_boundary",
       "path": "docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md",
       "purpose": "Foundation Source Control Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_source_control_review_checklist_boundary",
+      "path": "docs/FOUNDATION_SOURCE_CONTROL_REVIEW_CHECKLIST_BOUNDARY.md",
+      "purpose": "Foundation Source-Control Review Checklist Boundary doctrine and Foundation Mode boundary evidence contract."
     },
     {
       "name": "foundation_boundary_doc_foundation_support_readiness_boundary",
@@ -1147,6 +1157,11 @@
       "purpose": "Read-only validator for Foundation Runtime Secret Handoff Rehearsal Boundary."
     },
     {
+      "name": "foundation_boundary_validator_foundation_runtime_witness_deferral_boundary",
+      "path": "scripts/validate_foundation_runtime_witness_deferral_boundary.py",
+      "purpose": "Read-only validator for Foundation Runtime Witness Deferral Boundary."
+    },
+    {
       "name": "foundation_boundary_validator_foundation_secrets_credentials_boundary",
       "path": "scripts/validate_foundation_secrets_credentials_boundary.py",
       "purpose": "Read-only validator for Foundation Secrets Credentials Boundary."
@@ -1165,6 +1180,11 @@
       "name": "foundation_boundary_validator_foundation_source_control_boundary",
       "path": "scripts/validate_foundation_source_control_boundary.py",
       "purpose": "Read-only validator for Foundation Source Control Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_source_control_review_checklist_boundary",
+      "path": "scripts/validate_foundation_source_control_review_checklist_boundary.py",
+      "purpose": "Read-only validator for Foundation Source-Control Review Checklist Boundary."
     },
     {
       "name": "foundation_boundary_validator_foundation_support_readiness_boundary",
@@ -1532,6 +1552,11 @@
       "purpose": "Regression tests for Foundation Runtime Secret Handoff Rehearsal Boundary validation."
     },
     {
+      "name": "foundation_boundary_tests_foundation_runtime_witness_deferral_boundary",
+      "path": "tests/test_validate_foundation_runtime_witness_deferral_boundary.py",
+      "purpose": "Regression tests for Foundation Runtime Witness Deferral Boundary validation."
+    },
+    {
       "name": "foundation_boundary_tests_foundation_secrets_credentials_boundary",
       "path": "tests/test_validate_foundation_secrets_credentials_boundary.py",
       "purpose": "Regression tests for Foundation Secrets Credentials Boundary validation."
@@ -1550,6 +1575,11 @@
       "name": "foundation_boundary_tests_foundation_source_control_boundary",
       "path": "tests/test_validate_foundation_source_control_boundary.py",
       "purpose": "Regression tests for Foundation Source Control Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_source_control_review_checklist_boundary",
+      "path": "tests/test_validate_foundation_source_control_review_checklist_boundary.py",
+      "purpose": "Regression tests for Foundation Source-Control Review Checklist Boundary validation."
     },
     {
       "name": "foundation_boundary_tests_foundation_support_readiness_boundary",

@@ -1,0 +1,114 @@
+{
+  "application_id": "foundation_runtime_safety_current_packet.awaiting_evidence.v1",
+  "blocked_claims": [
+    "runtime completion",
+    "runtime readiness",
+    "public readiness",
+    "adapter authority",
+    "provider binding",
+    "connector use",
+    "endpoint target recording",
+    "secret use",
+    "secret value recording",
+    "acceptance-test harness completion",
+    "full coverage",
+    "review-scope closure",
+    "source-control approval",
+    "staging approval",
+    "commit approval",
+    "push approval",
+    "pull request approval",
+    "release readiness",
+    "external publication",
+    "deployment readiness",
+    "customer access",
+    "legal clearance",
+    "company formation",
+    "patent action",
+    "money movement",
+    "secret publication"
+  ],
+  "acceptance_test_harness_complete_claimed": false,
+  "adapter_authority_claimed": false,
+  "changed_file_list_recorded": false,
+  "commit_allowed": false,
+  "company_formation_claimed": false,
+  "connector_use_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "endpoint_target_recorded": false,
+  "external_publication_allowed": false,
+  "full_coverage_claimed": false,
+  "legal_clearance_claimed": false,
+  "money_action_allowed": false,
+  "next_action": "continue local runtime-safety packet review using category-only evidence without runtime, adapter, endpoint, secret, Git, or external effect promotion",
+  "packet_categories": [
+    "phi_gps_v3_platform_overlay_category",
+    "runtime_safety_hardening_category",
+    "problem_compiler_contract_category",
+    "provider_connector_secret_pagination_category",
+    "governance_preflight_coverage_category",
+    "acceptance_test_harness_pending",
+    "runtime_completion_blocked",
+    "adapter_authority_blocked",
+    "no_endpoint_values_recorded",
+    "no_secret_values_recorded",
+    "git_effects_blocked"
+  ],
+  "patent_action_allowed": false,
+  "private_values_recorded": false,
+  "provider_binding_claimed": false,
+  "pull_request_allowed": false,
+  "push_allowed": false,
+  "release_allowed": false,
+  "review_items": [
+    {
+      "application_note": "Phi-GPS v3 platform overlay is recorded as a local specification category only; runtime completion remains unclaimed.",
+      "review_id": "platform_overlay_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Runtime implementation, runtime readiness, public readiness, external deployment, and customer readiness remain AwaitingEvidence.",
+      "review_id": "runtime_completion_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Adapter authority, provider binding, connector use, endpoint targets, and secret use remain blocked.",
+      "review_id": "adapter_authority_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Acceptance-test harness completion and full coverage remain unclaimed.",
+      "review_id": "acceptance_test_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Changed-file lists, private values, endpoint values, provider ids, and secret values are not recorded.",
+      "review_id": "evidence_scope_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Staging, commit, push, and pull request remain blocked.",
+      "review_id": "git_effect_stop_rule",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Publication, deployment, customer access, legal, company, patent, money, and secret-publication actions remain blocked.",
+      "review_id": "external_effect_stop_rule",
+      "state": "AwaitingEvidence"
+    }
+  ],
+  "review_scope_closed_claimed": false,
+  "runtime_completion_claimed": false,
+  "runtime_readiness_claimed": false,
+  "runtime_safety_family_observed": true,
+  "schema_version": 1,
+  "secret_publication_allowed": false,
+  "secret_use_claimed": false,
+  "secret_value_recorded": false,
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_review_checklist_current_packet_ref": "examples/foundation_source_control_review_checklist_current_packet.awaiting_evidence.json",
+  "source_control_review_checklist_witness_ref": "examples/foundation_source_control_review_checklist_witness.awaiting_evidence.json",
+  "staging_allowed": false,
+  "status": "AwaitingEvidence"
+}

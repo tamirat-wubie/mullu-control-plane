@@ -80,7 +80,9 @@ def _workflow_engine(
     if resolved_llm_complete_fn is None:
         bridge = LLMIntegrationBridge(clock=_fixed_clock, default_backend=StubLLMBackend())
         bridge.register_budget(LLMBudget(budget_id="default", tenant_id="system", max_cost=100.0))
-        resolved_llm_complete_fn = lambda prompt, budget_id: bridge.complete(prompt, budget_id=budget_id)
+
+        def resolved_llm_complete_fn(prompt: str, budget_id: str) -> object:
+            return bridge.complete(prompt, budget_id=budget_id)
 
     webhook_manager: WebhookManager | None = None
     if with_webhook:
@@ -180,10 +182,16 @@ def test_workflow_history_bounded(test_client) -> None:
     test_client.post("/api/v1/workflow/execute", json=_workflow_api_payload("wfl-anchor-history"))
 
     response = test_client.get("/api/v1/workflow/history", params={"limit": 1})
+    zero_response = test_client.get("/api/v1/workflow/history", params={"limit": 0})
+    negative_response = test_client.get("/api/v1/workflow/history", params={"limit": -1})
     body = response.json()
     workflow = body["workflows"][0]
     assert response.status_code == 200
+    assert zero_response.status_code == 200
+    assert negative_response.status_code == 200
     assert len(body["workflows"]) <= 1
+    assert zero_response.json()["workflows"] == []
+    assert negative_response.json()["workflows"] == []
     assert set(workflow) == {"id", "task", "agent", "status"}
     assert body["summary"]["total"] >= len(body["workflows"])
 
@@ -485,10 +493,16 @@ def test_pipeline_history_bounded(test_client) -> None:
     )
 
     response = test_client.get("/api/v1/pipeline/history", params={"limit": 1})
+    zero_response = test_client.get("/api/v1/pipeline/history", params={"limit": 0})
+    negative_response = test_client.get("/api/v1/pipeline/history", params={"limit": -1})
     body = response.json()
     pipeline = body["pipelines"][0]
     assert response.status_code == 200
+    assert zero_response.status_code == 200
+    assert negative_response.status_code == 200
     assert len(body["pipelines"]) <= 1
+    assert zero_response.json()["pipelines"] == []
+    assert negative_response.json()["pipelines"] == []
     assert set(pipeline) == {"id", "succeeded", "steps", "cost"}
     assert body["summary"]["total"] >= len(body["pipelines"])
     assert pipeline["steps"] >= 1
