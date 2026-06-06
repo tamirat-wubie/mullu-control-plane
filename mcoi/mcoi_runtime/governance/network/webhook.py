@@ -308,9 +308,13 @@ class WebhookManager:
         return deliveries
 
     def delivery_history(self, limit: int = 50) -> list[WebhookDelivery]:
+        if limit <= 0:
+            return []
         return self._deliveries[-limit:]
 
     def mutation_receipts(self, limit: int = 50) -> tuple[WebhookMutationReceipt, ...]:
+        if limit <= 0:
+            return ()
         return tuple(self._mutation_receipts[-limit:])
 
     def effect_records(self, limit: int = 50) -> tuple[Any, ...]:
