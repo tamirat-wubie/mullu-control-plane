@@ -9,7 +9,9 @@ Invariants: storage is bounded, search is relevance-scored, and summaries stay b
 import pytest
 from mcoi_runtime.core.agent_memory import AgentMemoryStore
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+
+def FIXED_CLOCK() -> str:
+    return "2026-03-26T12:00:00Z"
 
 
 class TestAgentMemory:
@@ -56,6 +58,20 @@ class TestAgentMemory:
         store.store("a1", "t1", "fact", "Medium confidence", confidence=0.5)
         store.store("a1", "t1", "fact", "New entry", confidence=0.8)  # Should evict lowest
         assert store.count("a1", "t1") == 3
+
+    @pytest.mark.parametrize("max_per_agent", [0, -1])
+    def test_capacity_requires_positive_limit(self, max_per_agent):
+        with pytest.raises(ValueError, match="^max_per_agent must be positive$"):
+            AgentMemoryStore(clock=FIXED_CLOCK, max_per_agent=max_per_agent)
+
+    def test_capacity_one_evicts_existing_memory_before_store(self):
+        store = AgentMemoryStore(clock=FIXED_CLOCK, max_per_agent=1)
+        first = store.store("a1", "t1", "fact", "Low confidence", confidence=0.1)
+        second = store.store("a1", "t1", "fact", "New entry", confidence=0.8)
+        memories = store.get_by_category("a1", "t1", "fact")
+        assert first.memory_id != second.memory_id
+        assert store.count("a1", "t1") == 1
+        assert [memory.content for memory in memories] == ["New entry"]
 
     def test_summary(self):
         store = AgentMemoryStore(clock=FIXED_CLOCK)
