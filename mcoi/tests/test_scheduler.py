@@ -170,7 +170,11 @@ def test_history_bounded() -> None:
     s.schedule(_sample_job())
     for _ in range(50):
         s.execute_job("job-1")
-    assert len(s.recent_executions(limit=10)) == 10
+    history = s.recent_executions(limit=10)
+    assert len(history) == 10
+    assert history[0].execution_id == "exec-000050"
+    assert s.recent_executions(limit=0) == []
+    assert s.recent_executions(limit=-1) == []
 
 
 def test_summary() -> None:
