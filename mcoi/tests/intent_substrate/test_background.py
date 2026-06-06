@@ -138,3 +138,30 @@ def test_ticker_survives_resolver_exceptions(caplog):
     assert any(
         "synthetic" in r.getMessage() or r.exc_info for r in caplog.records
     )
+
+
+def test_ticker_summary_records_bounded_error_state():
+    _state, _closure, resolver = _build_resolver()
+    call_count = {"n": 0}
+
+    def failing_tick():
+        call_count["n"] += 1
+        raise RuntimeError("resolver-secret-token")
+
+    resolver.tick = failing_tick  # type: ignore[method-assign]
+    ticker = BackgroundTicker(resolver, interval_s=0.02)
+    ticker.start()
+    try:
+        deadline = time.monotonic() + 1.0
+        while time.monotonic() < deadline and call_count["n"] < 2:
+            time.sleep(0.01)
+    finally:
+        ticker.stop()
+
+    summary = ticker.summary()
+    assert summary["running"] is False
+    assert summary["tick_count"] >= 2
+    assert summary["error_count"] >= 2
+    assert summary["last_error"] == "intent substrate ticker error (RuntimeError)"
+    assert "resolver-secret-token" not in str(summary)
+    assert summary["governed"] is True
