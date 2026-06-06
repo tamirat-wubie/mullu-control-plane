@@ -165,6 +165,8 @@
             "route_guard_chain_coverage",
             "reflective_contract_guard",
             "doc_code_consistency",
+            "tenant_scope_coverage",
+            "persistence_tenant_guard_coverage",
             "strict_schema_validation",
             "strict_artifact_validation",
             "terminal_closure_certificate",
