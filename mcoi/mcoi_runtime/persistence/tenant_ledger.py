@@ -15,6 +15,7 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from numbers import Integral
 from typing import Any, Callable
 from hashlib import sha256
 import json
@@ -119,14 +120,13 @@ class TenantLedger:
         entries = self._entries.get(tenant_id, [])
         if entry_type is not None:
             entries = [e for e in entries if e.entry_type == entry_type]
-        if isinstance(limit, bool):
+        if isinstance(limit, bool) or not isinstance(limit, Integral):
             raise ValueError("tenant ledger query limit must be an integer")
-        normalized_limit = int(limit)
-        if normalized_limit < 0:
+        if limit < 0:
             raise ValueError("tenant ledger query limit must not be negative")
-        if normalized_limit == 0:
+        if limit == 0:
             return []
-        return entries[-normalized_limit:]
+        return entries[-int(limit):]
 
     def count(self, tenant_id: str) -> int:
         """Count of entries for a tenant."""
