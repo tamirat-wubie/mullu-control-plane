@@ -20,6 +20,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
+use maf_kernel::ExecutionMode;
+
 // ===========================================================================
 // Jobs
 // ===========================================================================
@@ -160,6 +162,7 @@ pub mod job {
         pub job_id: String,
         pub execution_id: String,
         pub status: JobStatus,
+        pub execution_mode: ExecutionMode,
         pub started_at: String,
         pub outcome_summary: String,
         #[serde(default)]
