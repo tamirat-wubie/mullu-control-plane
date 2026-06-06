@@ -97,7 +97,32 @@ def test_url_scope_check() -> None:
     reg = ProviderRegistry(clock=lambda: _CLOCK)
     reg.register(_descriptor(), _scope())
     assert reg.check_url_in_scope("prov-1", "https://api.test.com/v1/data") is True
+    assert reg.check_url_in_scope("prov-1", "https://api.test.com.evil/v1/data") is False
     assert reg.check_url_in_scope("prov-1", "https://evil.com/steal") is False
+
+
+def test_url_scope_path_boundary_check() -> None:
+    reg = ProviderRegistry(clock=lambda: _CLOCK)
+    reg.register(
+        _descriptor(),
+        CredentialScope(
+            scope_id="scope-prov-1",
+            provider_id="prov-1",
+            allowed_base_urls=("https://api.test.com/v1",),
+        ),
+    )
+
+    assert reg.check_url_in_scope("prov-1", "https://api.test.com/v1") is True
+    assert reg.check_url_in_scope("prov-1", "https://api.test.com/v1/data") is True
+    assert reg.check_url_in_scope("prov-1", "https://api.test.com/v10/data") is False
+
+
+def test_operation_scope_check() -> None:
+    reg = ProviderRegistry(clock=lambda: _CLOCK)
+    reg.register(_descriptor(), _scope())
+    assert reg.check_operation_in_scope("prov-1", "read") is True
+    assert reg.check_operation_in_scope("prov-1", "write") is False
+    assert reg.check_operation_in_scope("missing-provider", "read") is False
 
 
 def test_list_providers_by_class() -> None:
