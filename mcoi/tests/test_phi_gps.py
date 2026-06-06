@@ -524,6 +524,55 @@ class TestPhiGpsV3PlatformRuntime:
         assert route.profile_hash
         assert route.to_dict()["primary_mode"] == route.primary_mode.value
 
+    def test_router_accepts_inceptadive_advisory_report_without_execution_authority(self):
+        from mcoi_runtime.core.phi_inceptadive_bridge import build_phi_inceptadive_report
+
+        kernel = build_problem_star(
+            problem_id="platform-advisory-route",
+            values={
+                "W": "observed",
+                "G": "verified closure",
+                "Lambda": ("must preserve audit trail",),
+                "Pi": ("receipt proof",),
+            },
+            statuses={
+                "B": ProblemFieldStatus.HYPOTHESIZED,
+                "A_w": ProblemFieldStatus.HYPOTHESIZED,
+                "T": ProblemFieldStatus.UNKNOWN,
+                "Pi": ProblemFieldStatus.PARTIAL,
+            },
+            evidence_refs={"W": ("unit-world",), "Lambda": ("unit-law",), "Pi": ("unit-proof",)},
+            input_hash="sha256:advisory-route",
+        )
+        profile = profile_problem_star(kernel)
+        advisory_report = build_phi_inceptadive_report(kernel, max_findings=10)
+        route = route_solver(profile, kernel, advisory_report=advisory_report)
+        payload = route.to_dict()
+
+        assert advisory_report.execution_approval is False
+        assert advisory_report.report_id in route.advisory_report_ids
+        assert SolverMode.PROOF_CONSTRUCTION in route.mode_stack
+        assert SolverMode.RISK_CONTAINMENT in route.mode_stack
+        assert any("advisory report" in reason for reason in route.routing_reasons)
+        assert payload["advisory_report_ids"] == [advisory_report.report_id]
+
+    def test_router_rejects_advisory_report_with_execution_approval(self):
+        class BadAdvisoryReport:
+            report_id = "bad-report"
+            problem_id = "platform-bad-advisory"
+            execution_approval = True
+            suggested_solver_modes = (SolverMode.SEARCH,)
+            proof_gaps = ()
+            hidden_assumptions = ()
+            repair_recommendations = ()
+            fracture_count = 0
+
+        kernel = build_problem_star(problem_id="platform-bad-advisory", values={"W": "observed"})
+        profile = profile_problem_star(kernel)
+
+        with pytest.raises(ValueError, match="cannot approve execution"):
+            route_solver(profile, kernel, advisory_report=BadAdvisoryReport())
+
     def test_policy_synthesizer_emits_proof_and_world_action_candidates(self):
         compiled = ProblemCompiler.compile(RawProblemEnvelope(
             id="platform-policy",

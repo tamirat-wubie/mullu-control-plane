@@ -2545,6 +2545,7 @@ class SolverRoute:
     fallback_stack: tuple[SolverMode, ...]
     routing_reasons: tuple[str, ...]
     profile_hash: str
+    advisory_report_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.profile_hash:
@@ -2558,6 +2559,11 @@ class SolverRoute:
             for mode in self.fallback_stack
         ))
         object.__setattr__(self, "routing_reasons", _normalize_text_tuple(self.routing_reasons, "routing_reasons"))
+        object.__setattr__(
+            self,
+            "advisory_report_ids",
+            _normalize_text_tuple(self.advisory_report_ids, "advisory_report_ids"),
+        )
 
     @property
     def primary_mode(self) -> SolverMode:
@@ -2570,6 +2576,7 @@ class SolverRoute:
             "routing_reasons": list(self.routing_reasons),
             "profile_hash": self.profile_hash,
             "primary_mode": self.primary_mode.value,
+            "advisory_report_ids": list(self.advisory_report_ids),
         }
 
 
@@ -3180,12 +3187,19 @@ def build_platform_registry(compiled: CompiledProblem) -> PlatformRegistry:
     return registry
 
 
-def route_solver(profile: PlatformProfileVector, problem: ProblemStar) -> SolverRoute:
+def route_solver(
+    profile: PlatformProfileVector,
+    problem: ProblemStar,
+    *,
+    advisory_report: Any | None = None,
+) -> SolverRoute:
     """Route a profiled `ProblemStar` through specialized solver modes."""
 
     modes: list[SolverMode] = []
     reasons: list[str] = []
     shape = profile.shape_metrics
+    advisory_fingerprint: dict[str, Any] = {}
+    advisory_report_ids: tuple[str, ...] = ()
 
     if profile.k_goal == ProblemFieldStatus.CONFLICTING or profile.k_laws == ProblemFieldStatus.CONFLICTING:
         _append_unique_mode(modes, SolverMode.NEGOTIATION)
@@ -3217,6 +3231,14 @@ def route_solver(profile: PlatformProfileVector, problem: ProblemStar) -> Solver
         _append_unique_mode(modes, domain_mode)
         reasons.append(f"domain class routes to {domain_mode.value}")
 
+    if advisory_report is not None:
+        advisory_fingerprint, advisory_report_ids = _apply_advisory_route_report(
+            modes,
+            reasons,
+            advisory_report,
+            problem,
+        )
+
     if not modes:
         _append_unique_mode(modes, SolverMode.SEARCH)
         reasons.append("bounded general search fallback")
@@ -3226,7 +3248,70 @@ def route_solver(profile: PlatformProfileVector, problem: ProblemStar) -> Solver
         mode_stack=tuple(modes),
         fallback_stack=fallback or (SolverMode.SEARCH,),
         routing_reasons=tuple(reasons),
-        profile_hash=_stable_payload_hash(profile.to_dict()),
+        profile_hash=_stable_payload_hash({
+            "profile": profile.to_dict(),
+            "advisory": advisory_fingerprint,
+        }),
+        advisory_report_ids=advisory_report_ids,
+    )
+
+
+def _apply_advisory_route_report(
+    modes: list[SolverMode],
+    reasons: list[str],
+    advisory_report: Any,
+    problem: ProblemStar,
+) -> tuple[dict[str, Any], tuple[str, ...]]:
+    """Apply read-only structural advisory evidence to solver routing."""
+
+    if bool(getattr(advisory_report, "execution_approval", False)):
+        raise ValueError("advisory report cannot approve execution")
+    report_problem_id = getattr(advisory_report, "problem_id", problem.problem_id)
+    if report_problem_id != problem.problem_id:
+        raise ValueError("advisory report problem_id must match ProblemStar")
+    report_id = str(getattr(advisory_report, "report_id", "")).strip()
+    if not report_id:
+        raise ValueError("advisory report requires report_id")
+    suggested_modes = tuple(
+        mode if isinstance(mode, SolverMode) else SolverMode(str(mode))
+        for mode in tuple(getattr(advisory_report, "suggested_solver_modes", ()))
+    )
+    proof_gaps = _normalize_text_tuple(tuple(getattr(advisory_report, "proof_gaps", ())), "advisory.proof_gaps")
+    hidden_assumptions = _normalize_text_tuple(
+        tuple(getattr(advisory_report, "hidden_assumptions", ())),
+        "advisory.hidden_assumptions",
+    )
+    repair_recommendations = _normalize_text_tuple(
+        tuple(getattr(advisory_report, "repair_recommendations", ())),
+        "advisory.repair_recommendations",
+    )
+    fracture_count = int(getattr(advisory_report, "fracture_count", 0))
+
+    for suggested_mode in suggested_modes:
+        _append_unique_mode(modes, suggested_mode)
+        reasons.append(f"advisory report {report_id} recommends {suggested_mode.value}")
+    if proof_gaps:
+        _append_unique_mode(modes, SolverMode.PROOF_CONSTRUCTION)
+        reasons.append(f"advisory report {report_id} identifies {len(proof_gaps)} proof gap(s)")
+    if hidden_assumptions:
+        _append_unique_mode(modes, SolverMode.DIAGNOSIS)
+        reasons.append(f"advisory report {report_id} identifies {len(hidden_assumptions)} hidden assumption(s)")
+    if repair_recommendations or fracture_count > 0:
+        _append_unique_mode(modes, SolverMode.RISK_CONTAINMENT)
+        reasons.append(f"advisory report {report_id} requires repair before action")
+
+    return (
+        {
+            "report_id": report_id,
+            "problem_id": report_problem_id,
+            "suggested_solver_modes": [mode.value for mode in suggested_modes],
+            "proof_gaps": list(proof_gaps),
+            "hidden_assumptions": list(hidden_assumptions),
+            "repair_recommendation_count": len(repair_recommendations),
+            "fracture_count": fracture_count,
+            "execution_approval": False,
+        },
+        (report_id,),
     )
 
 
