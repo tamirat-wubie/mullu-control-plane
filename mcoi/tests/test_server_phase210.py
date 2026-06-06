@@ -49,6 +49,15 @@ class TestChatWorkflowEndpoint:
         resp = client.get("/api/v1/chat/workflow/history")
         assert resp.status_code == 200
         assert resp.json()["summary"]["total"] >= 1
+        zero_resp = client.get("/api/v1/chat/workflow/history", params={"limit": 0})
+        negative_resp = client.get(
+            "/api/v1/chat/workflow/history",
+            params={"limit": -1},
+        )
+        assert zero_resp.status_code == 200
+        assert negative_resp.status_code == 200
+        assert zero_resp.json()["history"] == []
+        assert negative_resp.json()["history"] == []
 
     def test_chat_workflow_bad_capability(self, client):
         resp = client.post("/api/v1/chat/workflow", json={
