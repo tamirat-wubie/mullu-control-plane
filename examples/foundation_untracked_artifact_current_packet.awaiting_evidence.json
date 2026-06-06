@@ -1,0 +1,98 @@
+{
+  "application_id": "foundation_untracked_artifact_current_packet.awaiting_evidence.v1",
+  "artifact_categories": [
+    "new_document_artifact_category",
+    "new_example_packet_category",
+    "new_validator_script_category",
+    "new_test_artifact_category",
+    "source_control_review_category",
+    "no_file_list_recorded",
+    "manual_review_pending"
+  ],
+  "artifact_contents_recorded": false,
+  "artifact_count_recorded": false,
+  "artifact_ownership_closed_claimed": false,
+  "artifact_paths_recorded": false,
+  "artifact_presence_observed": true,
+  "blocked_claims": [
+    "untracked artifact closure",
+    "artifact count closure",
+    "changed-file list closure",
+    "file-list publication",
+    "private path recording",
+    "artifact ownership closure",
+    "artifact content publication",
+    "staging approval",
+    "commit approval",
+    "push approval",
+    "pull request approval",
+    "release readiness",
+    "external publication",
+    "deployment readiness",
+    "customer access",
+    "legal clearance",
+    "company formation",
+    "patent action",
+    "money movement",
+    "secret publication"
+  ],
+  "changed_file_list_recorded": false,
+  "commit_allowed": false,
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "file_list_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "money_action_allowed": false,
+  "next_action": "continue local untracked-artifact review using category-only evidence without staging, committing, or publishing file lists",
+  "patent_action_allowed": false,
+  "private_paths_recorded": false,
+  "pull_request_allowed": false,
+  "push_allowed": false,
+  "release_allowed": false,
+  "schema_version": 1,
+  "secret_publication_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_review_checklist_current_packet_ref": "examples/foundation_source_control_review_checklist_current_packet.awaiting_evidence.json",
+  "source_control_review_checklist_witness_ref": "examples/foundation_source_control_review_checklist_witness.awaiting_evidence.json",
+  "staging_allowed": false,
+  "status": "AwaitingEvidence",
+  "review_items": [
+    {
+      "application_note": "Observed untracked artifact category without claiming untracked artifact closure.",
+      "review_id": "untracked_presence_review",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Artifact count is not recorded in the public packet; no artifact-count closure is claimed.",
+      "review_id": "artifact_count_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Artifact paths and changed-file lists are not recorded in the public packet; private paths remain excluded.",
+      "review_id": "artifact_path_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Artifact contents are not copied into the public packet; content publication remains blocked.",
+      "review_id": "artifact_content_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Artifact ownership and review scope remain manual review questions.",
+      "review_id": "ownership_scope_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Staging, commit, push, and pull request remain blocked.",
+      "review_id": "git_effect_stop_rule",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Publication, deployment, customer access, legal, company, patent, money, and secret-publication actions remain blocked.",
+      "review_id": "external_effect_stop_rule",
+      "state": "AwaitingEvidence"
+    }
+  ]
+}

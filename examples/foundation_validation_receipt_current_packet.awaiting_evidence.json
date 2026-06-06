@@ -1,0 +1,110 @@
+{
+  "application_categories": [
+    "saved_preflight_receipt_presence_category",
+    "receipt_validation_command_category",
+    "receipt_summary_boundary",
+    "check_count_boundary",
+    "failed_check_name_boundary",
+    "receipt_content_boundary",
+    "freshness_boundary",
+    "promotion_stop_rule"
+  ],
+  "application_id": "foundation_validation_receipt_current_packet.awaiting_evidence.v1",
+  "blocked_claims": [
+    "full-test pass",
+    "complete coverage",
+    "CI parity",
+    "release readiness",
+    "deployment readiness",
+    "security clearance",
+    "secret clearance",
+    "customer readiness",
+    "legal clearance",
+    "performance readiness",
+    "flake-free guarantee",
+    "terminal closure",
+    "external publication",
+    "deployment readiness",
+    "receipt freshness",
+    "check-count closure",
+    "failed-check closure",
+    "source-control approval"
+  ],
+  "check_count_recorded": false,
+  "check_stdout_recorded": false,
+  "ci_parity_claimed": false,
+  "commit_allowed": false,
+  "complete_coverage_claimed": false,
+  "customer_readiness_claimed": false,
+  "deployment_allowed": false,
+  "deployment_readiness_claimed": false,
+  "external_publication_allowed": false,
+  "failed_check_names_recorded": false,
+  "flake_free_guarantee_claimed": false,
+  "freshness_claimed": false,
+  "full_test_pass_claimed": false,
+  "generated_at_recorded": false,
+  "legal_clearance_claimed": false,
+  "next_action": "continue local validation-receipt review using category-only evidence without terminal closure or effect promotion",
+  "performance_readiness_claimed": false,
+  "private_path_recorded": false,
+  "pull_request_allowed": false,
+  "push_allowed": false,
+  "receipt_content_recorded": false,
+  "receipt_presence_observed": true,
+  "receipt_summary_recorded": false,
+  "release_readiness_claimed": false,
+  "saved_receipt_ref": ".tmp/workspace-governance-preflight-receipt.json",
+  "schema_version": 1,
+  "secret_clearance_claimed": false,
+  "security_clearance_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "source_receipt_routing_ref": "examples/foundation_test_receipt_routing.awaiting_evidence.json",
+  "source_test_evidence_witness_ref": "examples/foundation_test_evidence_witness.awaiting_evidence.json",
+  "staging_allowed": false,
+  "status": "AwaitingEvidence",
+  "terminal_closure_claimed": false,
+  "validation_items": [
+    {
+      "application_note": "Saved preflight receipt presence is recorded as a category only; receipt content is not copied into the public packet.",
+      "state": "AwaitingEvidence",
+      "validation_id": "receipt_presence_review"
+    },
+    {
+      "application_note": "Receipt-validation command is routed locally without claiming terminal closure.",
+      "state": "AwaitingEvidence",
+      "validation_id": "receipt_validation_review"
+    },
+    {
+      "application_note": "Receipt summary values are not recorded in this packet; exact result review remains local.",
+      "state": "AwaitingEvidence",
+      "validation_id": "receipt_summary_boundary"
+    },
+    {
+      "application_note": "Check counts are not recorded in this packet; no check-count closure is claimed.",
+      "state": "AwaitingEvidence",
+      "validation_id": "check_count_boundary"
+    },
+    {
+      "application_note": "Failed-check names are not recorded in this packet; no failed-check closure is claimed.",
+      "state": "AwaitingEvidence",
+      "validation_id": "failed_check_name_boundary"
+    },
+    {
+      "application_note": "Generated timestamps and freshness values are not recorded; freshness remains a local review question.",
+      "state": "AwaitingEvidence",
+      "validation_id": "freshness_boundary"
+    },
+    {
+      "application_note": "Full-test, coverage, CI, release, security, customer, legal, terminal-closure, publication, and deployment promotions remain blocked.",
+      "state": "AwaitingEvidence",
+      "validation_id": "promotion_stop_rule"
+    },
+    {
+      "application_note": "Staging, commit, push, and pull request remain blocked.",
+      "state": "AwaitingEvidence",
+      "validation_id": "git_effect_stop_rule"
+    }
+  ],
+  "validator_ref": "scripts/validate_workspace_governance_preflight_receipt.py"
+}

@@ -83,6 +83,15 @@ deployment_allowed=false
 | Next-action questions | Draft the next bounded local action. | Do not authorize broad continuation. |
 | Operator-handoff questions | Draft plain-language reviewer notes. | Do not authorize staging, commit, push, pull request, release, publication, or deployment. |
 
+## Runtime-safety Packet Handoff
+
+Runtime-safety packet handoff keeps the Phi-GPS v3 runtime-safety packet category visible without converting it into review closure. The handoff can ask
+how to explain local Phi-GPS, provider, connector, secret, process, and pagination hardening, and how to reference local validators, tests, hygiene scans, and governance receipt checks.
+
+This remains local preparation only. It does not claim changed-file review
+completion, validation completeness, secret clearance, publication, or
+deployment.
+
 ## Operator Procedure
 
 1. Keep the handoff public-safe and local.

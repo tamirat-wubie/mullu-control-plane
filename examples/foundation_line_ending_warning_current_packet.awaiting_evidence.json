@@ -1,0 +1,93 @@
+{
+  "application_id": "foundation_line_ending_warning_current_packet.awaiting_evidence.v1",
+  "blocked_claims": [
+    "warning resolution",
+    "warning hidden",
+    "warning count closure",
+    "changed-file list closure",
+    "line-ending normalization",
+    "Git configuration change",
+    "file rewrite",
+    "staging approval",
+    "commit approval",
+    "push approval",
+    "pull request approval",
+    "release readiness",
+    "external publication",
+    "deployment readiness",
+    "customer access",
+    "legal clearance",
+    "company formation",
+    "patent action",
+    "money movement",
+    "secret publication"
+  ],
+  "changed_file_list_recorded": false,
+  "commit_allowed": false,
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "file_rewrite_allowed": false,
+  "git_config_change_allowed": false,
+  "legal_clearance_claimed": false,
+  "line_ending_normalization_allowed": false,
+  "money_action_allowed": false,
+  "next_action": "continue local line-ending warning triage using category-only evidence without hiding warnings or authorizing Git effects",
+  "patent_action_allowed": false,
+  "private_paths_recorded": false,
+  "pull_request_allowed": false,
+  "push_allowed": false,
+  "release_allowed": false,
+  "schema_version": 1,
+  "secret_publication_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_review_checklist_current_packet_ref": "examples/foundation_source_control_review_checklist_current_packet.awaiting_evidence.json",
+  "source_control_review_checklist_witness_ref": "examples/foundation_source_control_review_checklist_witness.awaiting_evidence.json",
+  "staging_allowed": false,
+  "status": "AwaitingEvidence",
+  "triage_items": [
+    {
+      "application_note": "Observed LF-to-CRLF warning category without claiming warning resolution.",
+      "state": "AwaitingEvidence",
+      "triage_id": "warning_presence_review"
+    },
+    {
+      "application_note": "Warning count is not recorded in the public packet; no warning-count closure is claimed.",
+      "state": "AwaitingEvidence",
+      "triage_id": "warning_count_boundary"
+    },
+    {
+      "application_note": "Changed-file list is not recorded in the public packet; private paths remain excluded.",
+      "state": "AwaitingEvidence",
+      "triage_id": "file_list_boundary"
+    },
+    {
+      "application_note": "Line-ending normalization, Git configuration changes, and file rewrites remain blocked.",
+      "state": "AwaitingEvidence",
+      "triage_id": "mutation_stop_rule"
+    },
+    {
+      "application_note": "Staging, commit, push, and pull request remain blocked.",
+      "state": "AwaitingEvidence",
+      "triage_id": "git_effect_stop_rule"
+    },
+    {
+      "application_note": "Publication, deployment, customer access, legal, company, patent, money, and secret-publication actions remain blocked.",
+      "state": "AwaitingEvidence",
+      "triage_id": "external_effect_stop_rule"
+    }
+  ],
+  "warning_categories": [
+    "lf_to_crlf_warning_category",
+    "diff_check_warning_category",
+    "line_ending_policy_unknown",
+    "manual_triage_pending",
+    "no_file_list_recorded"
+  ],
+  "warning_count_recorded": false,
+  "warning_hidden_claimed": false,
+  "warning_presence_observed": true,
+  "warning_resolution_claimed": false,
+  "warning_text_recorded": false
+}

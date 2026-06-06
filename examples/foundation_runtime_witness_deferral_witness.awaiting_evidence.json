@@ -1,0 +1,119 @@
+{
+  "blocked_claims": [
+    "runtime witness creation",
+    "runtime witness secret binding",
+    "runtime witness endpoint probe",
+    "runtime witness payload recording",
+    "runtime witness signature verification",
+    "runtime witness publication",
+    "runtime conformance claim",
+    "deployment witness collection",
+    "evidence ledger append",
+    "readiness claim",
+    "customer access",
+    "personal data collection",
+    "money movement",
+    "legal clearance",
+    "company formation",
+    "patent claim",
+    "external publication",
+    "deployment readiness"
+  ],
+  "customer_access_allowed": false,
+  "deferral_labels": [
+    "runtime_witness_creation_gate",
+    "runtime_witness_secret_binding_gate",
+    "runtime_witness_endpoint_probe_gate",
+    "runtime_witness_payload_value_gate",
+    "runtime_witness_signature_gate",
+    "runtime_witness_publication_gate",
+    "runtime_conformance_gate",
+    "deployment_witness_collection_gate",
+    "evidence_ledger_routing_gate",
+    "operator_reassessment_gate"
+  ],
+  "deployment_allowed": false,
+  "deployment_witness_collection_allowed": false,
+  "evidence_ledger_append_allowed": false,
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "company_formation_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "keep runtime witness deferral local until operator-owned runtime witness, conformance, deployment witness, and reassessment evidence exist",
+  "patent_claimed": false,
+  "personal_data_collection_allowed": false,
+  "readiness_claimed": false,
+  "runtime_conformance_claimed": false,
+  "runtime_witness_created": false,
+  "runtime_witness_endpoint_probe_allowed": false,
+  "runtime_witness_payload_recorded": false,
+  "runtime_witness_publication_allowed": false,
+  "runtime_witness_secret_bound": false,
+  "runtime_witness_signature_verified": false,
+  "schema_version": "foundation.runtime_witness_deferral.v1",
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "public_safe_note": "Runtime witness creation gate only; no creation is performed or claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_witness_creation_gate",
+      "surface_type": "blocked_witness_creation_label"
+    },
+    {
+      "public_safe_note": "Runtime witness secret binding gate only; no secret binding is recorded or claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_witness_secret_binding_gate",
+      "surface_type": "blocked_secret_binding_label"
+    },
+    {
+      "public_safe_note": "Runtime witness endpoint probe gate only; no endpoint probe is run or recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_witness_endpoint_probe_gate",
+      "surface_type": "blocked_endpoint_probe_label"
+    },
+    {
+      "public_safe_note": "Runtime witness payload value gate only; no witness payload values are recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_witness_payload_value_gate",
+      "surface_type": "blocked_payload_value_label"
+    },
+    {
+      "public_safe_note": "Runtime witness signature gate only; signature verification is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_witness_signature_gate",
+      "surface_type": "blocked_signature_label"
+    },
+    {
+      "public_safe_note": "Runtime witness publication gate only; witness material is not published.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_witness_publication_gate",
+      "surface_type": "blocked_publication_label"
+    },
+    {
+      "public_safe_note": "Runtime conformance gate only; runtime conformance is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "runtime_conformance_gate",
+      "surface_type": "blocked_conformance_label"
+    },
+    {
+      "public_safe_note": "Deployment witness collection gate only; deployment witnesses are not collected.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_witness_collection_gate",
+      "surface_type": "blocked_witness_collection_label"
+    },
+    {
+      "public_safe_note": "Evidence ledger routing gate only; evidence is not appended to the ledger.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_ledger_routing_gate",
+      "surface_type": "blocked_ledger_append_label"
+    },
+    {
+      "public_safe_note": "Operator reassessment gate only; readiness and deployment are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_reassessment_gate",
+      "surface_type": "local_gate_label"
+    }
+  ],
+  "witness_id": "foundation_runtime_witness_deferral_witness.awaiting_evidence.v1"
+}

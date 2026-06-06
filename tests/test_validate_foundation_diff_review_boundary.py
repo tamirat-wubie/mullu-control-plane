@@ -23,6 +23,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.validate_foundation_diff_review_boundary import (  # noqa: E402
     DEFAULT_PACKET_PATH,
+    EXPECTED_SURFACE_NOTE_FRAGMENTS,
     EXPECTED_SURFACES,
     EXPECTED_WITNESS_ID,
     load_json_object,
@@ -51,6 +52,30 @@ def test_diff_review_witness_has_expected_identity_and_blockers() -> None:
     assert payload["push_allowed"] is False
     assert payload["pull_request_allowed"] is False
     assert payload["deployment_allowed"] is False
+
+
+def test_runtime_safety_diff_review_fragments_are_present() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "diff-review witness")
+    surfaces = {surface["surface_id"]: surface for surface in payload["diff_review_surfaces"]}
+
+    assert EXPECTED_SURFACE_NOTE_FRAGMENTS
+    for surface_id, fragments in EXPECTED_SURFACE_NOTE_FRAGMENTS.items():
+        assert surface_id in surfaces
+        assert fragments
+        assert all(fragment in surfaces[surface_id]["public_safe_note"] for fragment in fragments)
+
+
+def test_witness_rejects_missing_runtime_safety_diff_review_fragment() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "diff-review witness")
+    candidate = deepcopy(payload)
+    candidate["diff_review_surfaces"][0]["public_safe_note"] = (
+        "Draft changed-file inventory questions without claiming diff-review completeness."
+    )
+
+    findings = validate_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "diff_review_surface_note_fragment_missing" for finding in findings)
 
 
 def test_witness_rejects_diff_review_completeness_claim() -> None:

@@ -1,8 +1,8 @@
 <!--
 Purpose: define the Foundation Mode secrets and credentials boundary before any real secret storage, credential activation, provider account binding, external call readiness, or deployment claim.
 Governance scope: secrets posture, credential posture, environment-variable posture, provider-access posture, no real secret storage, no credential activation, no private key storage, no external call readiness, and no deployment claim.
-Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, examples/foundation_secrets_credentials_witness.awaiting_evidence.json, scripts/validate_foundation_secrets_credentials_boundary.py.
-Invariants: no real secret storage, no credential activation, no provider account binding, no API key creation, no OAuth app creation, no service account creation, no environment file commit, no private key storage, no secret rotation readiness claim, no external call readiness, no deployment claim.
+Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, examples/foundation_secrets_credentials_witness.awaiting_evidence.json, examples/foundation_secrets_credentials_current_packet.awaiting_evidence.json, scripts/validate_foundation_secrets_credentials_boundary.py.
+Invariants: no real secret storage, no credential activation, no provider account binding, no API key creation, no OAuth app creation, no service account creation, no environment file commit, no private key storage, no secret rotation readiness claim, no secret scan pass claim, no external call readiness, no deployment claim.
 -->
 
 # Foundation Secrets Credentials Boundary
@@ -17,6 +17,8 @@ Invariants: no real secret storage, no credential activation, no provider accoun
 > external calls, or deploy anything.
 
 Witness packet: [`../examples/foundation_secrets_credentials_witness.awaiting_evidence.json`](../examples/foundation_secrets_credentials_witness.awaiting_evidence.json)
+
+Application packet: [`../examples/foundation_secrets_credentials_current_packet.awaiting_evidence.json`](../examples/foundation_secrets_credentials_current_packet.awaiting_evidence.json)
 
 Rule: Secrets/credentials preparation is a local planning boundary, not permission to store or activate real credentials.
 
@@ -55,6 +57,7 @@ service_account_creation_allowed=false
 env_file_commit_allowed=false
 private_key_storage_allowed=false
 secret_rotation_claimed=false
+secret_scan_pass_claimed=false
 external_call_allowed=false
 deployment_allowed=false
 ```
@@ -71,6 +74,27 @@ deployment_allowed=false
 | Service account questions | Role and boundary questions only. | Service account keys or account emails. |
 | Rotation/recovery questions | Recovery procedure questions only. | Rotation-readiness claim or recovery secrets. |
 | Secret scan checklist | Local checklist only. | Scan-pass claim without current validator evidence. |
+
+## Current Packet Screening Application
+
+The current application packet records only public-safe screening categories:
+
+| Category | Meaning |
+| --- | --- |
+| Secret value pattern guard | Secret-shaped value patterns are treated as blocked evidence, not clearance. |
+| Environment assignment guard | Assigned environment values remain outside public artifacts. |
+| Private path guard | Private machine paths remain outside public artifacts. |
+| Token shape guard | Token-shaped values remain blocked from public artifacts. |
+| Provider binding guard | Provider account binding remains blocked. |
+| Source-control publication stop rule | Staging, commit, push, and pull request remain blocked. |
+| Current packet category-only review | The dirty packet is described by categories, not private values or file lists. |
+
+It does not record changed-file lists, secret values, credential values,
+assigned environment values, private paths, account identifiers, provider
+bindings, customer identifiers, legal conclusions, company filings, patent
+filings, payment details, Git refs, endpoint targets, or deployment targets.
+It also does not claim a secret scan pass, secret clearance, credential
+readiness, external-call readiness, or deployment readiness.
 
 ## Operator Procedure
 
@@ -98,7 +122,10 @@ The validator checks that the witness packet:
    creation, environment-file commits, external calls, and deployment;
 3. rejects URL, email, private-path, assignment-shaped, key-shaped, token-shaped,
    or private-key-shaped values; and
-4. rejects secrets/credentials readiness-promotion phrases.
+4. verifies the current-packet screening application remains category-only and
+   keeps scan-pass, Git, publication, deployment, customer, legal, company,
+   patent, money, and credential actions blocked; and
+5. rejects secrets/credentials readiness-promotion phrases.
 
 ## Go Deeper / Where To Go Next
 
@@ -111,6 +138,6 @@ The validator checks that the witness packet:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: real secret storage blocked, credential activation blocked, provider account binding blocked, API key creation blocked, OAuth app creation blocked, service account creation blocked, environment file commit blocked, private key storage blocked, external calls blocked, deployment blocked
-  Open issues: private owner storage procedure, provider account review, key-creation review, OAuth review, service-account review, rotation review, and deployment evidence remain AwaitingEvidence
+  Invariants verified: real secret storage blocked, credential activation blocked, provider account binding blocked, API key creation blocked, OAuth app creation blocked, service account creation blocked, environment file commit blocked, private key storage blocked, secret scan pass blocked, external calls blocked, deployment blocked
+  Open issues: private owner storage procedure, provider account review, key-creation review, OAuth review, service-account review, rotation review, current-packet scan-pass evidence, and deployment evidence remain AwaitingEvidence
   Next action: run the secrets/credentials boundary validator, then keep all real credentials outside public artifacts until private evidence promotes them

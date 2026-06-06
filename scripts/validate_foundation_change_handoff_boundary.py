@@ -62,6 +62,20 @@ EXPECTED_SURFACES = (
     ("next_action_questions", "local_draft", "AwaitingEvidence"),
     ("operator_handoff_questions", "local_draft", "AwaitingEvidence"),
 )
+EXPECTED_SURFACE_NOTE_FRAGMENTS = {
+    "change_family_summary_questions": (
+        "Phi-GPS v3 runtime-safety packet category",
+        "without claiming handoff completeness",
+    ),
+    "constructive_delta_questions": (
+        "local Phi-GPS, provider, connector, secret, process, and pagination hardening",
+        "without claiming full changed-file review",
+    ),
+    "validation_evidence_questions": (
+        "local validators, tests, hygiene scans, and governance receipt checks",
+        "without validation completeness claims",
+    ),
+}
 EXPECTED_ROOT_KEYS = {
     "blocked_claims",
     "branch_switch_allowed",
@@ -112,6 +126,9 @@ REQUIRED_DOC_PHRASES = (
     "pull_request_allowed=false",
     "source_control_publication_allowed=false",
     "deployment_allowed=false",
+    "Runtime-safety packet handoff",
+    "Phi-GPS v3 runtime-safety packet category",
+    "local Phi-GPS, provider, connector, secret, process, and pagination hardening",
     "python scripts/validate_foundation_change_handoff_boundary.py",
 )
 FORBIDDEN_VALUE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -335,11 +352,23 @@ def validate_change_handoff_surfaces(change_handoff_surfaces: object) -> list[Ch
                     f"{surface_id} evidence_ref must stay manual_preparation_pending in the committed packet",
                 )
             )
-        if not isinstance(surface.get("public_safe_note"), str) or not surface["public_safe_note"].strip():
+        public_safe_note = surface.get("public_safe_note")
+        if not isinstance(public_safe_note, str) or not public_safe_note.strip():
             findings.append(
                 ChangeHandoffFinding(
                     "change_handoff_surface_note_invalid",
                     f"{surface_id} public_safe_note must be a non-empty string",
+                )
+            )
+            continue
+        missing_fragments = tuple(
+            fragment for fragment in EXPECTED_SURFACE_NOTE_FRAGMENTS.get(surface_id, ()) if fragment not in public_safe_note
+        )
+        if missing_fragments:
+            findings.append(
+                ChangeHandoffFinding(
+                    "change_handoff_surface_note_fragment_missing",
+                    f"{surface_id} public_safe_note missing required fragments: {', '.join(missing_fragments)}",
                 )
             )
     return findings

@@ -1,7 +1,7 @@
 <!--
 Purpose: define the Foundation Mode test-evidence boundary for recording local validation evidence without claiming full coverage, CI parity, release readiness, security clearance, customer readiness, legal clearance, publication, or deployment.
 Governance scope: focused-validator questions, targeted-pytest questions, full-preflight questions, receipt-validation questions, receipt routing, warning and coverage-gap registration, diff-hygiene questions, failure-case questions, warning-triage questions, coverage-gap questions, reproducibility questions, and non-terminal-closure questions.
-Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, docs/FOUNDATION_LOCAL_PROOF_THREAD.md, docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md, examples/foundation_test_evidence_witness.awaiting_evidence.json, examples/foundation_test_receipt_routing.awaiting_evidence.json, examples/foundation_test_gap_warning_register.awaiting_evidence.json, scripts/validate_foundation_test_evidence_boundary.py.
+Dependencies: docs/FOUNDATION_MODE.md, docs/FOUNDATION_PREREQUISITES.md, docs/FOUNDATION_LOCAL_PROOF_THREAD.md, docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md, examples/foundation_test_evidence_witness.awaiting_evidence.json, examples/foundation_test_receipt_routing.awaiting_evidence.json, examples/foundation_test_gap_warning_register.awaiting_evidence.json, examples/foundation_validation_receipt_current_packet.awaiting_evidence.json, scripts/validate_foundation_test_evidence_boundary.py.
 Invariants: no full-test-pass claim, no complete-coverage claim, no CI-parity claim, no release-readiness claim, no deployment-readiness claim, no security-clearance claim, no secret-clearance claim, no customer-readiness claim, no legal-clearance claim, no performance-readiness claim, no flake-free guarantee, no terminal-closure claim, no external publication, and no deployment claim.
 -->
 
@@ -19,6 +19,7 @@ Invariants: no full-test-pass claim, no complete-coverage claim, no CI-parity cl
 Witness packet: [`../examples/foundation_test_evidence_witness.awaiting_evidence.json`](../examples/foundation_test_evidence_witness.awaiting_evidence.json)
 Receipt routing packet: [`../examples/foundation_test_receipt_routing.awaiting_evidence.json`](../examples/foundation_test_receipt_routing.awaiting_evidence.json)
 Gap/warning register packet: [`../examples/foundation_test_gap_warning_register.awaiting_evidence.json`](../examples/foundation_test_gap_warning_register.awaiting_evidence.json)
+Validation receipt current packet: [`../examples/foundation_validation_receipt_current_packet.awaiting_evidence.json`](../examples/foundation_validation_receipt_current_packet.awaiting_evidence.json)
 
 Rule: Test-evidence preparation is a local planning boundary, not a full-test,
 complete-coverage, CI-parity, release-readiness, deployment-readiness,
@@ -53,6 +54,7 @@ This boundary keeps validation useful without overclaiming:
 test_evidence_boundary_state=AwaitingEvidence
 receipt_routing_state=AwaitingEvidence
 gap_warning_register_state=AwaitingEvidence
+validation_receipt_current_packet_state=AwaitingEvidence
 full_test_pass_claimed=false
 complete_coverage_claimed=false
 ci_parity_claimed=false
@@ -83,6 +85,18 @@ deployment_allowed=false
 | Coverage-gap questions | Draft what the checks do not prove. | Do not claim complete coverage. |
 | Reproducibility questions | Draft which command sequence can be repeated. | Do not claim CI parity. |
 | Non-terminal-closure questions | Draft why passing checks are local evidence only. | Do not claim deployment, customer, legal, or commercial readiness. |
+
+## Runtime-safety Test Evidence Routing
+
+Runtime-safety test evidence routing keeps the Phi-GPS v3 runtime-safety packet
+visible as local validation scope. It can ask which focused validators cover the
+packet, which Phi-GPS, provider, connector, secret, and pagination tests were
+selected, how the registered local governance receipt is produced, and how the
+saved local governance receipt is validated.
+
+This remains evidence preparation only. It does not claim full-test pass,
+complete coverage, release readiness, terminal closure, external publication,
+or deployment.
 
 ## Receipt Routing Packet
 
@@ -122,6 +136,25 @@ publication approval, or deployment approval.
 | Reproducibility replay gap | `local_replay_summary_pending` | CI parity | `AwaitingEvidence` |
 | Non-terminal closure gap | `local_closure_summary_pending` | terminal closure | `AwaitingEvidence` |
 
+## Current Validation Receipt Application
+
+The validation receipt current packet keeps saved preflight receipt evidence
+public-safe before future source-control review. It can record that a local
+receipt route exists and which local validator owns receipt validation, but it
+does not copy receipt content, exact command output, check counts, failed-check
+names, timestamps, private paths, or freshness values into the public packet.
+
+| Application item | Local meaning | Blocked promotion |
+| --- | --- | --- |
+| Receipt presence review | Saved preflight receipt presence is category-only. | terminal closure |
+| Receipt validation review | Receipt validation command is routed locally. | release readiness |
+| Receipt summary boundary | Exact receipt result review remains local. | full-test pass |
+| Check-count boundary | Check counts are not stored in this packet. | check-count closure |
+| Failed-check-name boundary | Failed-check names are not stored in this packet. | failed-check closure |
+| Freshness boundary | Generated timestamps and freshness values stay local. | receipt freshness |
+| Promotion stop rule | Broad validation promotions remain blocked. | deployment readiness |
+| Git-effect stop rule | Staging, commit, push, and pull request remain blocked. | source-control approval |
+
 ## Operator Procedure
 
 1. Record exact command categories, not broad readiness conclusions.
@@ -153,7 +186,11 @@ gap/warning register packet:
    references, or named local review placeholders;
 6. rejects private values, source-control values, endpoint values, customer
    values, secret values, or readiness-shaped values; and
-7. rejects broad test, coverage, CI, release, security, customer, legal,
+7. verifies the validation receipt current packet remains category-only without
+   copying receipt content, exact command output, check counts, failed-check
+   names, timestamps, private paths, freshness values, or authorizing Git
+   effects; and
+8. rejects broad test, coverage, CI, release, security, customer, legal,
    publication, or deployment promotion phrases.
 
 ## Go Deeper / Where To Go Next
@@ -168,5 +205,5 @@ gap/warning register packet:
 STATUS:
   Completeness: 100%
   Invariants verified: full-test pass blocked, complete coverage blocked, CI parity blocked, release readiness blocked, deployment readiness blocked, security clearance blocked, secret clearance blocked, customer readiness blocked, legal clearance blocked, performance readiness blocked, flake-free guarantee blocked, terminal closure blocked, external publication blocked, deployment blocked
-  Open issues: focused-validator evidence, targeted-pytest evidence, full-preflight evidence, receipt-validation evidence, receipt-routing evidence, gap-warning-register evidence, diff-hygiene evidence, failure-case evidence, warning-triage evidence, coverage-gap evidence, reproducibility evidence, and non-terminal-closure evidence remain AwaitingEvidence
+  Open issues: focused-validator evidence, targeted-pytest evidence, full-preflight evidence, receipt-validation evidence, receipt-routing evidence, gap-warning-register evidence, validation-receipt current-packet evidence, diff-hygiene evidence, failure-case evidence, warning-triage evidence, coverage-gap evidence, reproducibility evidence, and non-terminal-closure evidence remain AwaitingEvidence
   Next action: run the test-evidence validator before using validation output as source-control evidence

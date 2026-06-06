@@ -38,6 +38,7 @@ DEFAULT_PACKET_PATH = REPO_ROOT / "examples" / "foundation_source_control_bounda
 EXPECTED_BOUNDARY_ID = "foundation_source_control_boundary.awaiting_commit.v1"
 EXPECTED_CHANGE_FAMILIES = (
     "foundation_posture",
+    "source_control_review_checklist_boundary",
     "operator_readiness_boundary",
     "solo_daily_loop_boundary",
     "learning_path_boundary",
@@ -79,6 +80,7 @@ EXPECTED_CHANGE_FAMILIES = (
     "deployment_deferral_boundary",
     "external_infrastructure_boundary",
     "runtime_secret_handoff_rehearsal_boundary",
+    "runtime_witness_deferral_boundary",
     "production_dependency_evidence_rehearsal_boundary",
     "external_evidence_acceptance_rehearsal_boundary",
     "deployment_upstream_api_gate_rehearsal_boundary",
@@ -116,9 +118,14 @@ EXPECTED_CHANGE_FAMILIES = (
     "community_network_boundary",
     "community_network_no_outreach_rehearsal_boundary",
     "public_claim_alignment",
+    "phi_gps_v3_runtime_safety_packet",
     "governance_preflight_wiring",
 )
-DOC_ONLY_CHANGE_FAMILIES = ("public_claim_alignment", "governance_preflight_wiring")
+DOC_ONLY_CHANGE_FAMILIES = (
+    "public_claim_alignment",
+    "phi_gps_v3_runtime_safety_packet",
+    "governance_preflight_wiring",
+)
 
 
 def _command_to_display(args: tuple[str, ...]) -> str:
@@ -205,6 +212,7 @@ REQUIRED_DOC_PHRASES = (
     "Payment provider | Local provider-selection",
     "Market research | Local problem",
     "Runtime secret handoff rehearsal | Local runtime-secret-handoff",
+    "Runtime witness deferral | Local runtime-witness-deferral",
     "Production dependency evidence rehearsal | Local production-dependency",
     "External evidence acceptance rehearsal | Local evidence-acceptance",
     "Deployment upstream API gate rehearsal | Local upstream-API",
@@ -235,6 +243,8 @@ REQUIRED_DOC_PHRASES = (
     "Community/network | Local relationship",
     "Community/network no-outreach rehearsal | Local no-outreach",
     "python scripts/validate_foundation_source_control_boundary.py",
+    "Phi-GPS v3 runtime safety packet | Local Phi-GPS compiler",
+    "Source-control review checklist | Local review-checklist",
 )
 FORBIDDEN_PACKET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("publication_authorized", re.compile(r"\b(?:push|publish|publication|pull request|release)\s+(?:allowed|authorized|ready)\b", re.IGNORECASE)),

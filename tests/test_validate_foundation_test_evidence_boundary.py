@@ -25,17 +25,23 @@ from scripts.validate_foundation_test_evidence_boundary import (  # noqa: E402
     DEFAULT_GAP_WARNING_PATH,
     DEFAULT_PACKET_PATH,
     DEFAULT_ROUTING_PATH,
+    DEFAULT_VALIDATION_RECEIPT_PATH,
     EXPECTED_GAP_WARNING_ENTRIES,
     EXPECTED_GAP_WARNING_ID,
     EXPECTED_RECEIPT_ROUTES,
     EXPECTED_ROUTING_ID,
+    EXPECTED_SURFACE_NOTE_FRAGMENTS,
     EXPECTED_SURFACES,
+    EXPECTED_VALIDATION_RECEIPT_APPLICATION_ID,
+    EXPECTED_VALIDATION_RECEIPT_CATEGORIES,
+    EXPECTED_VALIDATION_RECEIPT_ITEMS,
     EXPECTED_WITNESS_ID,
     load_json_object,
     validate_foundation_test_evidence_boundary,
     validate_gap_warning_packet,
     validate_packet,
     validate_receipt_routing_packet,
+    validate_validation_receipt_application,
 )
 
 
@@ -57,6 +63,30 @@ def test_test_evidence_witness_has_expected_identity_and_blockers() -> None:
     assert payload["release_readiness_claimed"] is False
     assert payload["terminal_closure_claimed"] is False
     assert payload["deployment_allowed"] is False
+
+
+def test_runtime_safety_test_evidence_fragments_are_present() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "test-evidence witness")
+    surfaces = {surface["surface_id"]: surface for surface in payload["test_evidence_surfaces"]}
+
+    assert EXPECTED_SURFACE_NOTE_FRAGMENTS
+    for surface_id, fragments in EXPECTED_SURFACE_NOTE_FRAGMENTS.items():
+        assert surface_id in surfaces
+        assert fragments
+        assert all(fragment in surfaces[surface_id]["public_safe_note"] for fragment in fragments)
+
+
+def test_witness_rejects_missing_runtime_safety_test_evidence_fragment() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "test-evidence witness")
+    candidate = deepcopy(payload)
+    candidate["test_evidence_surfaces"][0]["public_safe_note"] = (
+        "Draft focused-validator questions without claiming full-test pass."
+    )
+
+    findings = validate_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "test_evidence_surface_note_fragment_missing" for finding in findings)
 
 
 def test_receipt_routing_has_expected_identity_and_routes() -> None:
@@ -98,6 +128,23 @@ def test_gap_warning_register_has_expected_identity_and_entries() -> None:
     assert payload["complete_coverage_claimed"] is False
     assert payload["ci_parity_claimed"] is False
     assert payload["release_readiness_claimed"] is False
+    assert payload["deployment_allowed"] is False
+
+
+def test_validation_receipt_current_packet_has_expected_identity_and_blockers() -> None:
+    payload = load_json_object(DEFAULT_VALIDATION_RECEIPT_PATH, "validation receipt current packet")
+
+    assert payload["application_id"] == EXPECTED_VALIDATION_RECEIPT_APPLICATION_ID
+    assert tuple(payload["application_categories"]) == EXPECTED_VALIDATION_RECEIPT_CATEGORIES
+    assert tuple(item["validation_id"] for item in payload["validation_items"]) == EXPECTED_VALIDATION_RECEIPT_ITEMS
+    assert payload["saved_receipt_ref"] == ".tmp/workspace-governance-preflight-receipt.json"
+    assert payload["validator_ref"] == "scripts/validate_workspace_governance_preflight_receipt.py"
+    assert payload["receipt_presence_observed"] is True
+    assert payload["receipt_summary_recorded"] is False
+    assert payload["check_count_recorded"] is False
+    assert payload["failed_check_names_recorded"] is False
+    assert payload["terminal_closure_claimed"] is False
+    assert payload["staging_allowed"] is False
     assert payload["deployment_allowed"] is False
 
 
@@ -272,4 +319,63 @@ def test_gap_warning_register_rejects_coverage_promotion_phrase() -> None:
 
     assert findings
     assert any(finding.rule_id == "test_gap_warning_next_action_invalid" for finding in findings)
+    assert any(finding.rule_id == "test_evidence_forbidden_promotion_phrase" for finding in findings)
+
+
+def test_validation_receipt_application_rejects_exact_result_and_freshness_claims() -> None:
+    payload = load_json_object(DEFAULT_VALIDATION_RECEIPT_PATH, "validation receipt current packet")
+    candidate = deepcopy(payload)
+    candidate["receipt_summary_recorded"] = True
+    candidate["check_count_recorded"] = True
+    candidate["failed_check_names_recorded"] = True
+    candidate["generated_at_recorded"] = True
+    candidate["freshness_claimed"] = True
+
+    findings = validate_validation_receipt_application(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "validation_receipt_root_value_invalid" for finding in findings)
+
+
+def test_validation_receipt_application_rejects_validation_and_git_promotion() -> None:
+    payload = load_json_object(DEFAULT_VALIDATION_RECEIPT_PATH, "validation receipt current packet")
+    candidate = deepcopy(payload)
+    candidate["full_test_pass_claimed"] = True
+    candidate["release_readiness_claimed"] = True
+    candidate["terminal_closure_claimed"] = True
+    candidate["staging_allowed"] = True
+    candidate["commit_allowed"] = True
+    candidate["push_allowed"] = True
+    candidate["pull_request_allowed"] = True
+
+    findings = validate_validation_receipt_application(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "validation_receipt_root_value_invalid" for finding in findings)
+
+
+def test_validation_receipt_application_rejects_category_and_item_state_drift() -> None:
+    payload = load_json_object(DEFAULT_VALIDATION_RECEIPT_PATH, "validation receipt current packet")
+    candidate = deepcopy(payload)
+    candidate["application_categories"][0] = "live_receipt_summary"
+    candidate["validation_items"][0]["state"] = "Ready"
+
+    findings = validate_validation_receipt_application(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "validation_receipt_categories_invalid" for finding in findings)
+    assert any(finding.rule_id == "validation_receipt_item_state_invalid" for finding in findings)
+
+
+def test_validation_receipt_application_rejects_private_path_and_promotion_phrase() -> None:
+    payload = load_json_object(DEFAULT_VALIDATION_RECEIPT_PATH, "validation receipt current packet")
+    candidate = deepcopy(payload)
+    candidate["validation_items"][0]["application_note"] = (
+        "C:/Users/example/private-receipt.json full test suite passed and release is ready"
+    )
+
+    findings = validate_validation_receipt_application(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "test_evidence_forbidden_private_value_pattern" for finding in findings)
     assert any(finding.rule_id == "test_evidence_forbidden_promotion_phrase" for finding in findings)

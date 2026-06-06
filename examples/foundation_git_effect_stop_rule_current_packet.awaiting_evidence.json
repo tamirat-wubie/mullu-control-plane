@@ -1,0 +1,101 @@
+{
+  "application_id": "foundation_git_effect_stop_rule_current_packet.awaiting_evidence.v1",
+  "approval_claimed": false,
+  "blocked_claims": [
+    "source-control approval",
+    "staging approval",
+    "commit approval",
+    "push approval",
+    "pull request approval",
+    "branch switch approval",
+    "tag creation",
+    "release readiness",
+    "source-control publication",
+    "status-output publication",
+    "changed-file list closure",
+    "exact-diff publication",
+    "private path recording",
+    "Git configuration change",
+    "reset approval",
+    "checkout approval",
+    "revert approval"
+  ],
+  "branch_ref_recorded": false,
+  "branch_switch_allowed": false,
+  "changed_file_list_recorded": false,
+  "checkout_allowed": false,
+  "commit_allowed": false,
+  "commit_ref_recorded": false,
+  "exact_diff_recorded": false,
+  "effect_categories": [
+    "git_effect_stop_rule_category",
+    "source_control_publication_stop_rule",
+    "staging_commit_push_pr_blocked",
+    "branch_ref_commit_ref_pr_ref_blocked",
+    "status_output_and_file_list_blocked",
+    "destructive_git_effects_blocked",
+    "git_config_change_blocked",
+    "manual_review_pending"
+  ],
+  "git_config_change_allowed": false,
+  "next_action": "continue local Git-effect stop-rule review using category-only evidence without source-control approval or effect promotion",
+  "private_paths_recorded": false,
+  "pull_request_allowed": false,
+  "pull_request_ref_recorded": false,
+  "push_allowed": false,
+  "release_allowed": false,
+  "reset_allowed": false,
+  "revert_allowed": false,
+  "review_items": [
+    {
+      "application_note": "Staging remains blocked; no staging approval is claimed.",
+      "review_id": "staging_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Commit remains blocked; no commit approval is claimed.",
+      "review_id": "commit_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Push remains blocked; no push approval is claimed.",
+      "review_id": "push_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Pull request remains blocked; no pull request approval is claimed.",
+      "review_id": "pull_request_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Branch refs, commit refs, and pull request refs are not recorded.",
+      "review_id": "source_control_ref_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Status output, changed-file lists, and exact diffs are not recorded.",
+      "review_id": "status_output_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Reset, checkout, and revert remain blocked.",
+      "review_id": "destructive_effect_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Git configuration changes remain blocked.",
+      "review_id": "git_config_boundary",
+      "state": "AwaitingEvidence"
+    }
+  ],
+  "schema_version": 1,
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_boundary_ref": "examples/foundation_source_control_boundary.awaiting_commit.json",
+  "source_control_publication_allowed": false,
+  "source_control_review_checklist_current_packet_ref": "examples/foundation_source_control_review_checklist_current_packet.awaiting_evidence.json",
+  "source_control_review_checklist_witness_ref": "examples/foundation_source_control_review_checklist_witness.awaiting_evidence.json",
+  "staging_allowed": false,
+  "status": "AwaitingEvidence",
+  "status_output_recorded": false,
+  "tag_allowed": false
+}

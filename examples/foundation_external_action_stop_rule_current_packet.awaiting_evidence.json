@@ -1,0 +1,106 @@
+{
+  "application_id": "foundation_external_action_stop_rule_current_packet.awaiting_evidence.v1",
+  "blocked_claims": [
+    "external action approval",
+    "external publication",
+    "deployment readiness",
+    "customer access",
+    "customer action",
+    "legal clearance",
+    "legal action",
+    "company formation",
+    "company action",
+    "patent action",
+    "money movement",
+    "payment action",
+    "secret publication",
+    "external account activation",
+    "service activation",
+    "provider binding",
+    "endpoint target recording",
+    "personal-data collection"
+  ],
+  "company_action_allowed": false,
+  "company_filing_recorded": false,
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "customer_action_allowed": false,
+  "customer_identifier_recorded": false,
+  "deployment_allowed": false,
+  "deployment_readiness_claimed": false,
+  "endpoint_target_recorded": false,
+  "external_account_activation_allowed": false,
+  "external_action_allowed": false,
+  "external_publication_allowed": false,
+  "legal_action_allowed": false,
+  "legal_clearance_claimed": false,
+  "legal_conclusion_recorded": false,
+  "money_action_allowed": false,
+  "next_action": "continue local external-action stop-rule review using category-only evidence without external approval or readiness promotion",
+  "patent_action_allowed": false,
+  "patent_filing_recorded": false,
+  "payment_detail_recorded": false,
+  "personal_data_collection_allowed": false,
+  "provider_binding_allowed": false,
+  "provider_id_recorded": false,
+  "review_items": [
+    {
+      "application_note": "External action remains blocked; no external approval is claimed.",
+      "review_id": "external_action_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Publication and deployment remain blocked; no readiness claim is made.",
+      "review_id": "publication_deployment_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Customer access and customer action remain blocked; no customer identifiers are recorded.",
+      "review_id": "customer_action_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Legal and company actions remain blocked; no legal conclusions or company filings are recorded.",
+      "review_id": "legal_company_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Patent action remains blocked; no patent filings are recorded.",
+      "review_id": "patent_action_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Money and payment actions remain blocked; no payment details are recorded.",
+      "review_id": "money_payment_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Secret publication remains blocked; no secret values are recorded.",
+      "review_id": "secret_publication_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "External account activation, service activation, provider binding, endpoint target recording, and personal-data collection remain blocked.",
+      "review_id": "external_service_boundary",
+      "state": "AwaitingEvidence"
+    }
+  ],
+  "schema_version": 1,
+  "secret_publication_allowed": false,
+  "secret_value_recorded": false,
+  "service_activation_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_review_checklist_current_packet_ref": "examples/foundation_source_control_review_checklist_current_packet.awaiting_evidence.json",
+  "source_control_review_checklist_witness_ref": "examples/foundation_source_control_review_checklist_witness.awaiting_evidence.json",
+  "status": "AwaitingEvidence",
+  "stop_rule_categories": [
+    "external_action_stop_rule_category",
+    "customer_action_blocked",
+    "legal_company_patent_blocked",
+    "money_payment_blocked",
+    "secret_publication_blocked",
+    "publication_deployment_blocked",
+    "external_account_service_provider_blocked",
+    "no_external_values_recorded"
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "application_id": "foundation_unrelated_work_preservation_current_packet.awaiting_evidence.v1",
+  "blocked_claims": [
+    "unrelated-work closure",
+    "prior-work closure",
+    "ownership assignment",
+    "changed-file list closure",
+    "diff scope closure",
+    "user-change overwrite",
+    "reset approval",
+    "checkout approval",
+    "delete approval",
+    "move approval",
+    "revert approval",
+    "staging approval",
+    "commit approval",
+    "push approval",
+    "pull request approval",
+    "release readiness",
+    "external publication",
+    "deployment readiness",
+    "customer access",
+    "legal clearance",
+    "company formation",
+    "patent action",
+    "money movement",
+    "secret publication"
+  ],
+  "changed_file_list_recorded": false,
+  "checkout_allowed": false,
+  "commit_allowed": false,
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "delete_allowed": false,
+  "deployment_allowed": false,
+  "diff_scope_closed_claimed": false,
+  "exact_diff_recorded": false,
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "money_action_allowed": false,
+  "move_allowed": false,
+  "next_action": "continue local unrelated-work preservation using category-only evidence without reset, checkout, delete, move, revert, staging, committing, or publishing file lists",
+  "ownership_assigned": false,
+  "patent_action_allowed": false,
+  "preservation_required": true,
+  "prior_work_closure_claimed": false,
+  "private_paths_recorded": false,
+  "pull_request_allowed": false,
+  "push_allowed": false,
+  "release_allowed": false,
+  "reset_allowed": false,
+  "revert_allowed": false,
+  "schema_version": 1,
+  "secret_publication_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_review_checklist_current_packet_ref": "examples/foundation_source_control_review_checklist_current_packet.awaiting_evidence.json",
+  "source_control_review_checklist_witness_ref": "examples/foundation_source_control_review_checklist_witness.awaiting_evidence.json",
+  "staging_allowed": false,
+  "status": "AwaitingEvidence",
+  "unrelated_work_categories": [
+    "prior_or_user_work_possible",
+    "ownership_unknown",
+    "manual_review_pending",
+    "no_file_list_recorded",
+    "destructive_git_effects_blocked",
+    "preserve_until_explicit_review"
+  ],
+  "unrelated_work_closure_claimed": false,
+  "user_change_overwrite_allowed": false,
+  "review_items": [
+    {
+      "application_note": "Prior or user work is treated as possible without claiming unrelated-work closure.",
+      "review_id": "prior_or_user_work_presence_review",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Ownership remains unknown until manual review; no ownership assignment is claimed.",
+      "review_id": "ownership_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Changed-file lists and exact diffs are not recorded in this public packet.",
+      "review_id": "file_list_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Reset, checkout, delete, move, and revert remain blocked without explicit review.",
+      "review_id": "destructive_effect_stop_rule",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "User-change overwrite remains blocked; preservation is required until explicit review.",
+      "review_id": "user_change_preservation_rule",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Staging, commit, push, and pull request remain blocked.",
+      "review_id": "git_effect_stop_rule",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Publication, deployment, customer access, legal, company, patent, money, and secret-publication actions remain blocked.",
+      "review_id": "external_effect_stop_rule",
+      "state": "AwaitingEvidence"
+    }
+  ]
+}

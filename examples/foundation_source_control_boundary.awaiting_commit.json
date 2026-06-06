@@ -12,6 +12,28 @@
       "summary": "Foundation Mode and prerequisite ledger are prepared for local-first setup."
     },
     {
+      "family_id": "source_control_review_checklist_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_SOURCE_CONTROL_REVIEW_CHECKLIST_BOUNDARY.md",
+        "examples/foundation_dirty_worktree_snapshot_current_packet.awaiting_evidence.json",
+        "examples/foundation_external_action_stop_rule_current_packet.awaiting_evidence.json",
+        "examples/foundation_git_effect_stop_rule_current_packet.awaiting_evidence.json",
+        "examples/foundation_line_ending_warning_current_packet.awaiting_evidence.json",
+        "examples/foundation_next_action_witness.awaiting_evidence.json",
+        "examples/foundation_runtime_safety_current_packet.awaiting_evidence.json",
+        "examples/foundation_secrets_credentials_current_packet.awaiting_evidence.json",
+        "examples/foundation_source_control_review_checklist_current_packet.awaiting_evidence.json",
+        "examples/foundation_source_control_review_checklist_witness.awaiting_evidence.json",
+        "examples/foundation_unrelated_work_preservation_current_packet.awaiting_evidence.json",
+        "examples/foundation_untracked_artifact_current_packet.awaiting_evidence.json",
+        "examples/foundation_validation_receipt_current_packet.awaiting_evidence.json",
+        "scripts/validate_foundation_source_control_review_checklist_boundary.py",
+        "tests/test_validate_foundation_source_control_review_checklist_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Source-control review checklist preparation drafts local review questions, dirty-worktree snapshot triage, Git-effect stop-rule review, external-action stop-rule review, validation-receipt current-packet review, next-action witness review, runtime-safety current-packet triage, secrets/private-value screening, unrelated-work preservation, and untracked-artifact category triage without checklist completion, clean-worktree claims, status-output publication, receipt-content publication, check-count closure, failed-check closure, terminal closure, broad continuation execution, roadmap commitment, deadline promise, scope closure, ownership assignment, file-list publication, branch switching, tag creation, reset, checkout, delete, move, revert, Git config change, runtime readiness, adapter authority, secret clearance, secret-scan pass, Git effects, customer access, customer action, legal clearance, legal action, company formation, company action, patent action, money movement, payment action, secret publication, external account activation, service activation, provider binding, endpoint target recording, personal-data collection, external publication, or deployment claims."
+    },
+    {
       "family_id": "operator_readiness_boundary",
       "required_evidence": [
         "docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md",
@@ -343,11 +365,12 @@
         "examples/foundation_test_evidence_witness.awaiting_evidence.json",
         "examples/foundation_test_receipt_routing.awaiting_evidence.json",
         "examples/foundation_test_gap_warning_register.awaiting_evidence.json",
+        "examples/foundation_validation_receipt_current_packet.awaiting_evidence.json",
         "scripts/validate_foundation_test_evidence_boundary.py",
         "tests/test_validate_foundation_test_evidence_boundary.py"
       ],
       "state": "AwaitingEvidence",
-      "summary": "Test-evidence preparation drafts focused-validator, targeted-pytest, full-preflight, receipt-validation, diff-hygiene, failure-case, warning-triage, coverage-gap, reproducibility, and non-terminal-closure questions without full-test-pass, complete-coverage, CI-parity, release-readiness, deployment-readiness, security-clearance, secret-clearance, customer-readiness, legal-clearance, performance-readiness, flake-free, terminal-closure, external-publication, or deployment claims."
+      "summary": "Test-evidence preparation drafts focused-validator, targeted-pytest, full-preflight, receipt-validation, validation-receipt current-packet, diff-hygiene, failure-case, warning-triage, coverage-gap, reproducibility, and non-terminal-closure questions without full-test-pass, complete-coverage, CI-parity, release-readiness, deployment-readiness, security-clearance, secret-clearance, customer-readiness, legal-clearance, performance-readiness, flake-free, terminal-closure, external-publication, or deployment claims."
     },
     {
       "family_id": "private_recovery_boundary",
@@ -376,6 +399,7 @@
       "family_id": "secrets_credentials_boundary",
       "required_evidence": [
         "docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md",
+        "examples/foundation_secrets_credentials_current_packet.awaiting_evidence.json",
         "examples/foundation_secrets_credentials_witness.awaiting_evidence.json",
         "scripts/validate_foundation_secrets_credentials_boundary.py",
         "tests/test_validate_foundation_secrets_credentials_boundary.py"
@@ -470,6 +494,17 @@
       ],
       "state": "AwaitingEvidence",
       "summary": "Runtime-secret-handoff rehearsal prepares public-safe gate labels without recording secret names, secret values, private handoff paths, secret-manager target values, operator identities, dual-control proof, secret-presence proof, repository-secret binding, runtime secret-store binding, workflow mounts, readiness, publication, or deployment claims."
+    },
+    {
+      "family_id": "runtime_witness_deferral_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_RUNTIME_WITNESS_DEFERRAL_BOUNDARY.md",
+        "examples/foundation_runtime_witness_deferral_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_runtime_witness_deferral_boundary.py",
+        "tests/test_validate_foundation_runtime_witness_deferral_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Runtime-witness-deferral preparation records local creation, secret-binding, endpoint-probe, payload, signature, publication, conformance, witness-collection, ledger-routing, and reassessment stop rules without runtime-witness creation, secret binding, endpoint probing, payload recording, signature verification, witness publication, runtime conformance, deployment witness collection, evidence-ledger append, readiness, customer access, personal-data collection, money movement, legal/company/patent claims, external publication, or deployment claims."
     },
     {
       "family_id": "production_dependency_evidence_rehearsal_boundary",
@@ -880,6 +915,27 @@
       "summary": "Public-copy claims stay foundation-stage with no access, waitlist, beta, deployment, or paid launch claim."
     },
     {
+      "family_id": "phi_gps_v3_runtime_safety_packet",
+      "required_evidence": [
+        "docs/PHI_CANONICAL_SPEC.md",
+        "examples/foundation_runtime_safety_current_packet.awaiting_evidence.json",
+        "scripts/validate_phi_gps_v3_platform_spec.py",
+        "tests/test_validate_phi_gps_v3_platform_spec.py",
+        "mcoi/mcoi_runtime/core/phi_gps.py",
+        "mcoi/tests/test_phi_gps.py",
+        "mcoi/mcoi_runtime/core/provider_registry.py",
+        "mcoi/tests/test_provider_registry.py",
+        "mcoi/mcoi_runtime/core/external_connectors.py",
+        "mcoi/tests/test_external_connectors.py",
+        "mcoi/mcoi_runtime/core/secrets.py",
+        "mcoi/tests/test_secrets_core.py",
+        "mcoi/mcoi_runtime/app/routers/constructs/_pagination.py",
+        "mcoi/tests/test_v4_23_cursor_pagination.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Phi-GPS v3 platform overlay, runtime-safety current packet, and runtime safety hardening remain local with runtime readiness, endpoint, pagination, provider, connector, secret, customer-access, external publication, and deployment promotion blocked."
+    },
+    {
       "family_id": "governance_preflight_wiring",
       "required_evidence": [
         "scripts/run_workspace_governance_checks.py",
@@ -903,6 +959,7 @@
   "required_checks": [
     "python scripts/validate_foundation_mode.py",
     "python scripts/validate_foundation_source_control_boundary.py",
+    "python scripts/validate_foundation_source_control_review_checklist_boundary.py",
     "python scripts/validate_foundation_operator_readiness_boundary.py",
     "python scripts/validate_foundation_solo_daily_loop_boundary.py",
     "python scripts/validate_foundation_learning_path_boundary.py",
@@ -941,6 +998,7 @@
     "python scripts/validate_foundation_deployment_deferral_boundary.py",
     "python scripts/validate_foundation_external_infrastructure_boundary.py",
     "python scripts/validate_foundation_runtime_secret_handoff_rehearsal_boundary.py",
+    "python scripts/validate_foundation_runtime_witness_deferral_boundary.py",
     "python scripts/validate_foundation_production_dependency_evidence_rehearsal_boundary.py",
     "python scripts/validate_foundation_external_evidence_acceptance_rehearsal_boundary.py",
     "python scripts/validate_foundation_deployment_upstream_api_gate_rehearsal_boundary.py",
