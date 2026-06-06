@@ -12,11 +12,13 @@ Invariants:
 """
 from __future__ import annotations
 
+import math
 import threading
 import uuid
 import time
 from dataclasses import dataclass, field
 from enum import Enum, unique
+from numbers import Real
 from typing import Any, Callable
 
 
@@ -106,7 +108,7 @@ class RequestTracer:
 
     def __init__(self, max_traces: int = 10_000, on_span_finish: Callable[[Span], None] | None = None):
         self._traces: dict[str, list[Span]] = {}
-        self._max_traces = max_traces
+        self._max_traces = _coerce_positive_int(max_traces, field_name="max_traces")
         self._on_span_finish = on_span_finish
         self._total_spans = 0
         # start_span runs on every request (threadpool); it evicts + inserts trace
@@ -163,6 +165,7 @@ class RequestTracer:
 
     def slow_traces(self, threshold_ms: float = 1000.0) -> list[dict[str, Any]]:
         """Return traces with root span duration exceeding threshold."""
+        threshold_ms = _coerce_non_negative_float(threshold_ms, field_name="threshold_ms")
         result = []
         # Snapshot the dict items under the lock so a concurrent start_span insert
         # cannot raise "dictionary changed size during iteration". The per-trace
@@ -181,3 +184,21 @@ class RequestTracer:
                         "span_count": len(spans),
                     })
         return result
+
+
+def _coerce_positive_int(value: Any, *, field_name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ValueError(f"{field_name} must be an integer")
+    numeric_value = float(value)
+    if not math.isfinite(numeric_value) or not numeric_value.is_integer() or numeric_value <= 0:
+        raise ValueError(f"{field_name} must be a positive integer")
+    return int(value)
+
+
+def _coerce_non_negative_float(value: Any, *, field_name: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ValueError(f"{field_name} must be a number")
+    numeric_value = float(value)
+    if not math.isfinite(numeric_value) or numeric_value < 0:
+        raise ValueError(f"{field_name} must be a finite non-negative number")
+    return numeric_value
