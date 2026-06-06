@@ -613,6 +613,16 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "finance_approval_live_handoff_closure_run",
+            (
+                python_executable,
+                "scripts/run_finance_approval_live_handoff_closure.py",
+                "--output",
+                ".tmp/finance-approval-live-handoff-closure-run.json",
+                "--json",
+            ),
+        ),
+        CheckCommand(
             "route_receipt_coverage",
             (python_executable, "scripts/validate_receipt_coverage.py", "--strict"),
         ),

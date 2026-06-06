@@ -38,6 +38,7 @@ def test_current_receipt_contract_passes() -> None:
     assert "general_agent_promotion_environment_bindings" in check_name_enum
     assert "general_agent_promotion_handoff_preflight" in check_name_enum
     assert "general_agent_promotion_closure_chain" in check_name_enum
+    assert "finance_approval_live_handoff_closure_run" in check_name_enum
     assert "route_receipt_coverage" in check_name_enum
     assert "route_guard_chain_coverage" in check_name_enum
     assert "reflective_contract_guard" in check_name_enum
