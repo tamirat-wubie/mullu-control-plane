@@ -172,6 +172,8 @@ class AuditTrail:
         max_entries: int = 500_000,
         store: AuditStore | None = None,
     ) -> None:
+        if max_entries <= 0:
+            raise ValueError("max_entries must be positive")
         self._clock = clock
         self._entries: list[AuditEntry] = []
         self._max_entries = max_entries
@@ -338,6 +340,8 @@ class AuditTrail:
         limit: int = 50,
     ) -> list[AuditEntry]:
         """Query audit entries with optional filters."""
+        if limit <= 0:
+            return []
         with self._lock:
             results = list(self._entries)
         if tenant_id is not None:

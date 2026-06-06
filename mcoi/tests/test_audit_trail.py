@@ -1,9 +1,23 @@
 """Phase 202D — Audit trail tests."""
 
-import pytest
-from mcoi_runtime.governance.audit.trail import AuditTrail, AuditEntry
+from dataclasses import asdict
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+import pytest
+from mcoi_runtime.governance.audit.trail import (
+    GENESIS_HASH,
+    LEDGER_SCHEMA_VERSION_MAX,
+    LEDGER_V1_CONTENT_FIELDS,
+    AuditTrail,
+    ExternalVerifyResult,
+    _canonical_content_v1,
+    _canonical_hash_v1,
+    _recompute_entry_hash,
+    verify_chain_from_entries,
+)
+
+
+def FIXED_CLOCK():
+    return "2026-03-26T12:00:00Z"
 
 
 class TestAuditEntry:
@@ -75,6 +89,14 @@ class TestAuditQueries:
         entries = trail.query(limit=2)
         assert len(entries) == 2
 
+    @pytest.mark.parametrize("limit", [0, -1])
+    def test_query_requires_positive_limit(self, limit):
+        trail = self._setup()
+        entries = trail.query(limit=limit)
+        assert entries == []
+        assert trail.entry_count == 4
+        assert trail.summary()["entry_count"] == 4
+
     def test_query_by_actor(self):
         trail = self._setup()
         entries = trail.query(actor_id="a2")
@@ -107,6 +129,22 @@ class TestChainVerification:
         trail.record(action="a", actor_id="x", tenant_id="t", target="y", outcome="ok")
         assert trail.entry_count == 1
 
+    @pytest.mark.parametrize("max_entries", [0, -1])
+    def test_max_entries_requires_positive_capacity(self, max_entries):
+        with pytest.raises(ValueError, match="max_entries must be positive"):
+            AuditTrail(clock=FIXED_CLOCK, max_entries=max_entries)
+
+    def test_max_entries_one_preserves_verifiable_window(self):
+        trail = AuditTrail(clock=FIXED_CLOCK, max_entries=1)
+        first = trail.record(action="a", actor_id="x", tenant_id="t", target="y", outcome="ok")
+        second = trail.record(action="b", actor_id="x", tenant_id="t", target="z", outcome="ok")
+        valid, checked = trail.verify_chain()
+        assert trail.entry_count == 1
+        assert trail.query(limit=1) == [second]
+        assert trail._anchor_hash == first.entry_hash
+        assert valid is True
+        assert checked == 1
+
 
 class TestAuditSummary:
     def test_summary(self):
@@ -125,14 +163,6 @@ class TestAuditSummary:
 # ═══════════════════════════════════════════
 # G3 — External Verifier (tamper detection)
 # ═══════════════════════════════════════════
-
-from dataclasses import asdict
-from mcoi_runtime.governance.audit.trail import (
-    GENESIS_HASH,
-    ExternalVerifyResult,
-    verify_chain_from_entries,
-)
-
 
 def _trail_to_entries(trail: AuditTrail) -> list[dict]:
     """Convert recorded entries to dicts (as if exported to JSONL)."""
@@ -258,11 +288,9 @@ class TestExternalVerifier:
 # G3.2 — Sequence-monotonicity (deletion-with-rewrite attack)
 # ═══════════════════════════════════════════
 
-from mcoi_runtime.governance.audit.trail import LEDGER_SCHEMA_VERSION_MAX
 # Private helpers stay on the canonical core path (the shim only
 # re-exports public API). Phase 4 of the F7 reorg moves the
 # implementation here, at which point this can collapse to one import.
-from mcoi_runtime.governance.audit.trail import _recompute_entry_hash
 
 
 class TestSequenceMonotonicity:
@@ -474,12 +502,7 @@ class TestSpecDocExists:
 # G3.6 — Writer ↔ Spec drift (no asymmetry)
 # ═══════════════════════════════════════════
 
-from mcoi_runtime.governance.audit.trail import LEDGER_V1_CONTENT_FIELDS
 # Private helpers stay on the canonical core path; see note above.
-from mcoi_runtime.governance.audit.trail import (
-    _canonical_hash_v1,
-    _canonical_content_v1,
-)
 
 
 class TestWriterSpecAlignment:
