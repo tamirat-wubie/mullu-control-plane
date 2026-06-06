@@ -305,6 +305,8 @@ class GovernedConnectorFramework:
             return sorted(self._connectors.values(), key=lambda c: c.definition.connector_id)
 
     def recent_invocations(self, limit: int = 50) -> list[ConnectorInvocation]:
+        if limit <= 0:
+            return []
         with self._lock:
             return list(reversed(self._history[-limit:]))
 
