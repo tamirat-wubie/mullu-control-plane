@@ -671,6 +671,7 @@ def _case_proof_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, 
     summary = proof["summary"]
     plan_step_proof = proof["plan_step_proof"]
     closure_certificate = proof["closure_certificate"]
+    closure_gate_evidence = _closure_gate_evidence_projection(proof)
     evidence_timeline_by_ref = {
         item["ref"]: item
         for item in proof["proof_timeline"]
@@ -748,20 +749,45 @@ def _case_proof_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, 
             "ref": case_id,
             "message": "case has no terminal closure certificate",
         })
-    elif closure_certificate is not None and not closure_certificate["effect_reconciled"]:
-        attention_items.append({
-            "kind": "effect_not_reconciled",
-            "severity": "blocker",
-            "ref": closure_certificate["closure_id"],
-            "message": "terminal closure does not have a reconciled external effect",
-        })
-    elif closure_certificate is not None and not closure_certificate["learning_admitted"]:
-        attention_items.append({
-            "kind": "learning_not_admitted",
-            "severity": "review",
-            "ref": closure_certificate["closure_id"],
-            "message": "closure has not been admitted into reusable learning",
-        })
+        if closure_gate_evidence["required_gate_evidence_refs"]:
+            attention_items.append({
+                "kind": "closure_gate_evidence_required",
+                "severity": "review",
+                "ref": case_id,
+                "message": "terminal closure must include the latest allowed gate evidence refs",
+                "evidence_refs": closure_gate_evidence["required_gate_evidence_refs"],
+            })
+    elif closure_certificate is not None:
+        if closure_gate_evidence["unavailable_gate_evidence_refs"]:
+            attention_items.append({
+                "kind": "closure_gate_evidence_unavailable",
+                "severity": "blocker",
+                "ref": closure_certificate["closure_id"],
+                "message": "latest gate evidence refs are not admitted for this case",
+                "evidence_refs": closure_gate_evidence["unavailable_gate_evidence_refs"],
+            })
+        if closure_gate_evidence["omitted_gate_evidence_refs"]:
+            attention_items.append({
+                "kind": "closure_gate_evidence_omitted",
+                "severity": "blocker",
+                "ref": closure_certificate["closure_id"],
+                "message": "terminal closure evidence packet omits refs used by allowed plan-step gates",
+                "evidence_refs": closure_gate_evidence["omitted_gate_evidence_refs"],
+            })
+        if not closure_certificate["effect_reconciled"]:
+            attention_items.append({
+                "kind": "effect_not_reconciled",
+                "severity": "blocker",
+                "ref": closure_certificate["closure_id"],
+                "message": "terminal closure does not have a reconciled external effect",
+            })
+        if not closure_certificate["learning_admitted"]:
+            attention_items.append({
+                "kind": "learning_not_admitted",
+                "severity": "review",
+                "ref": closure_certificate["closure_id"],
+                "message": "closure has not been admitted into reusable learning",
+            })
 
     proof_sections: dict[str, list[dict[str, Any]]] = {}
     for item in proof["proof_timeline"]:
@@ -811,6 +837,7 @@ def _case_proof_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, 
             ),
         ],
         "attention_items": attention_items,
+        "closure_gate_evidence": closure_gate_evidence,
         "department_lanes": sorted(department_lanes.values(), key=lambda item: item["department_id"]),
         "evidence_matrix": sorted(evidence_requirements.values(), key=lambda item: item["requirement_id"]),
         "proof_sections": {key: proof_sections[key] for key in sorted(proof_sections)},
@@ -1517,10 +1544,54 @@ def _closure_status(closure_certificate: dict[str, Any] | None) -> str:
     return "closed_requires_review"
 
 
+def _closure_gate_evidence_projection(proof: dict[str, Any]) -> dict[str, Any]:
+    required_refs: list[str] = []
+    for step in proof.get("plan_step_proof", []):
+        if not isinstance(step, dict):
+            continue
+        if step.get("gate_status") != PlanStepGateStatus.ALLOWED.value:
+            continue
+        for evidence_ref in step.get("evidence_refs", []):
+            if isinstance(evidence_ref, str) and evidence_ref not in required_refs:
+                required_refs.append(evidence_ref)
+
+    admitted_refs = {
+        item["ref"]
+        for item in proof.get("proof_timeline", [])
+        if isinstance(item, dict)
+        and item.get("kind") == "evidence"
+        and isinstance(item.get("ref"), str)
+    }
+    unavailable_refs = [ref for ref in required_refs if ref not in admitted_refs]
+    closure_certificate = proof.get("closure_certificate")
+    closure_refs: list[str] = []
+    if isinstance(closure_certificate, dict):
+        closure_refs = [
+            str(item)
+            for item in closure_certificate.get("evidence_refs", [])
+            if isinstance(item, str)
+        ]
+    closure_ref_set = set(closure_refs)
+    omitted_refs = [
+        ref for ref in required_refs
+        if isinstance(closure_certificate, dict) and ref not in closure_ref_set
+    ]
+    return {
+        "required_gate_evidence_refs": required_refs,
+        "admitted_gate_evidence_refs": [ref for ref in required_refs if ref in admitted_refs],
+        "unavailable_gate_evidence_refs": unavailable_refs,
+        "closure_evidence_refs": closure_refs,
+        "omitted_gate_evidence_refs": omitted_refs,
+        "closure_packet_present": isinstance(closure_certificate, dict),
+        "ready_for_closure_packet": bool(required_refs) and not unavailable_refs,
+    }
+
+
 def _case_closure_certificate(kernel: OrganizationKernel, case_id: str) -> dict[str, Any]:
     proof = _case_proof_timeline(kernel, case_id)
     closure_certificate = proof["closure_certificate"]
     status = _closure_status(closure_certificate)
+    closure_gate_evidence = _closure_gate_evidence_projection(proof)
     attention_items: list[dict[str, object]] = []
     reconciliation: dict[str, Any] | None = None
     learning_admissions: list[dict[str, Any]] = []
@@ -1533,6 +1604,14 @@ def _case_closure_certificate(kernel: OrganizationKernel, case_id: str) -> dict[
             "ref": case_id,
             "message": "case has no terminal closure certificate",
         })
+        if closure_gate_evidence["required_gate_evidence_refs"]:
+            attention_items.append({
+                "kind": "closure_gate_evidence_required",
+                "severity": "review",
+                "ref": case_id,
+                "message": "terminal closure must include the latest allowed gate evidence refs",
+                "evidence_refs": closure_gate_evidence["required_gate_evidence_refs"],
+            })
     else:
         reconciliation_value = closure_certificate.get("reconciliation")
         if isinstance(reconciliation_value, dict):
@@ -1550,7 +1629,23 @@ def _case_closure_certificate(kernel: OrganizationKernel, case_id: str) -> dict[
                 "ref": closure_certificate["closure_id"],
                 "message": "terminal closure is not bound to an effect reconciliation record",
             })
-        elif not closure_certificate["effect_reconciled"]:
+        if closure_gate_evidence["unavailable_gate_evidence_refs"]:
+            attention_items.append({
+                "kind": "closure_gate_evidence_unavailable",
+                "severity": "blocker",
+                "ref": closure_certificate["closure_id"],
+                "message": "latest gate evidence refs are not admitted for this case",
+                "evidence_refs": closure_gate_evidence["unavailable_gate_evidence_refs"],
+            })
+        if closure_gate_evidence["omitted_gate_evidence_refs"]:
+            attention_items.append({
+                "kind": "closure_gate_evidence_omitted",
+                "severity": "blocker",
+                "ref": closure_certificate["closure_id"],
+                "message": "terminal closure evidence packet omits refs used by allowed plan-step gates",
+                "evidence_refs": closure_gate_evidence["omitted_gate_evidence_refs"],
+            })
+        if not closure_certificate["effect_reconciled"]:
             attention_items.append({
                 "kind": "effect_not_reconciled",
                 "severity": "blocker",
@@ -1574,6 +1669,7 @@ def _case_closure_certificate(kernel: OrganizationKernel, case_id: str) -> dict[
         "case": proof["case"],
         "summary": proof["summary"],
         "closure_certificate": closure_certificate,
+        "closure_gate_evidence": closure_gate_evidence,
         "reconciliation": reconciliation,
         "learning_admissions": learning_admissions,
         "evidence_refs": evidence_refs,
@@ -1610,6 +1706,17 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
         for item in payload.get("attention_items", [])
         if isinstance(item, dict)
     ]
+    closure_gate_evidence = payload.get("closure_gate_evidence")
+    gate_evidence_rows: list[dict[str, object]] = []
+    if isinstance(closure_gate_evidence, dict):
+        for evidence_ref in closure_gate_evidence.get("required_gate_evidence_refs", []):
+            if not isinstance(evidence_ref, str):
+                continue
+            gate_evidence_rows.append({
+                "evidence_ref": evidence_ref,
+                "admitted": evidence_ref in closure_gate_evidence.get("admitted_gate_evidence_refs", []),
+                "in_closure_packet": evidence_ref in closure_gate_evidence.get("closure_evidence_refs", []),
+            })
     reconciliation = payload.get("reconciliation")
     reconciliation_rows: list[dict[str, object]] = []
     if isinstance(reconciliation, dict):
@@ -1668,6 +1775,7 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
     <h2>{title}</h2>
     {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
     {_proof_explorer_table("Certificate", ("field", "value"), certificate_rows)}
+    {_proof_explorer_table("Gate Evidence", ("evidence_ref", "admitted", "in_closure_packet"), gate_evidence_rows)}
     {_proof_explorer_table("Reconciliation", ("field", "value"), reconciliation_rows)}
     {_proof_explorer_table("Evidence Refs", ("evidence_ref",), evidence_rows)}
     {_proof_explorer_table("Learning Admissions", ("binding_id", "decision_id", "admitted", "created_at"), learning_rows)}
@@ -2001,6 +2109,7 @@ def _case_portfolio_terminal_status(proof: dict[str, Any]) -> str:
 def _case_portfolio_attention(case_id: str, proof: dict[str, Any]) -> list[dict[str, object]]:
     summary = proof["summary"]
     closure_certificate = proof["closure_certificate"]
+    closure_gate_evidence = _closure_gate_evidence_projection(proof)
     attention_items: list[dict[str, object]] = []
     if not summary["has_plan"]:
         attention_items.append({
@@ -2024,20 +2133,45 @@ def _case_portfolio_attention(case_id: str, proof: dict[str, Any]) -> list[dict[
             "ref": case_id,
             "message": "case has no terminal closure certificate",
         })
-    elif not closure_certificate["effect_reconciled"]:
-        attention_items.append({
-            "kind": "effect_not_reconciled",
-            "severity": "blocker",
-            "ref": closure_certificate["closure_id"],
-            "message": "terminal closure does not have a reconciled external effect",
-        })
-    elif not closure_certificate["learning_admitted"]:
-        attention_items.append({
-            "kind": "learning_not_admitted",
-            "severity": "review",
-            "ref": closure_certificate["closure_id"],
-            "message": "closure has not been admitted into reusable learning",
-        })
+        if closure_gate_evidence["required_gate_evidence_refs"]:
+            attention_items.append({
+                "kind": "closure_gate_evidence_required",
+                "severity": "review",
+                "ref": case_id,
+                "message": "terminal closure must include the latest allowed gate evidence refs",
+                "evidence_refs": closure_gate_evidence["required_gate_evidence_refs"],
+            })
+    else:
+        if closure_gate_evidence["unavailable_gate_evidence_refs"]:
+            attention_items.append({
+                "kind": "closure_gate_evidence_unavailable",
+                "severity": "blocker",
+                "ref": closure_certificate["closure_id"],
+                "message": "latest gate evidence refs are not admitted for this case",
+                "evidence_refs": closure_gate_evidence["unavailable_gate_evidence_refs"],
+            })
+        if closure_gate_evidence["omitted_gate_evidence_refs"]:
+            attention_items.append({
+                "kind": "closure_gate_evidence_omitted",
+                "severity": "blocker",
+                "ref": closure_certificate["closure_id"],
+                "message": "terminal closure evidence packet omits refs used by allowed plan-step gates",
+                "evidence_refs": closure_gate_evidence["omitted_gate_evidence_refs"],
+            })
+        if not closure_certificate["effect_reconciled"]:
+            attention_items.append({
+                "kind": "effect_not_reconciled",
+                "severity": "blocker",
+                "ref": closure_certificate["closure_id"],
+                "message": "terminal closure does not have a reconciled external effect",
+            })
+        if not closure_certificate["learning_admitted"]:
+            attention_items.append({
+                "kind": "learning_not_admitted",
+                "severity": "review",
+                "ref": closure_certificate["closure_id"],
+                "message": "closure has not been admitted into reusable learning",
+            })
     return attention_items
 
 
@@ -3600,9 +3734,31 @@ def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) ->
         row["step_id"] for row in plan_step_rows
         if row["gate_status"] != PlanStepGateStatus.ALLOWED.value
     ]
+    required_closure_evidence_refs: list[str] = []
+    for row in plan_step_rows:
+        decision = row.get("latest_gate_decision")
+        if row["gate_status"] != PlanStepGateStatus.ALLOWED.value or not isinstance(decision, dict):
+            continue
+        for evidence_ref in decision.get("evidence_refs", []):
+            if isinstance(evidence_ref, str) and evidence_ref not in required_closure_evidence_refs:
+                required_closure_evidence_refs.append(evidence_ref)
     preview_blocked_steps = [
         preview.step_id for preview in gate_preview
         if preview.status is not PlanStepGateStatus.ALLOWED
+    ]
+    preview_required_closure_evidence_refs: list[str] = []
+    for preview in gate_preview:
+        if preview.status is not PlanStepGateStatus.ALLOWED:
+            continue
+        for evidence_ref in preview.evidence_refs:
+            if evidence_ref not in preview_required_closure_evidence_refs:
+                preview_required_closure_evidence_refs.append(evidence_ref)
+    closure_evidence_refs = []
+    if closure is not None:
+        closure_evidence_refs = list(closure.evidence_refs)
+    omitted_closure_gate_evidence_refs = [
+        evidence_ref for evidence_ref in required_closure_evidence_refs
+        if closure is not None and evidence_ref not in closure_evidence_refs
     ]
     ready_to_close = (
         closure is None
@@ -3646,8 +3802,11 @@ def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) ->
         "approval_refs": [approval.approval_id for approval in approvals],
         "plan_steps": plan_step_rows,
         "blocked_steps": blocked_steps,
+        "required_closure_evidence_refs": required_closure_evidence_refs,
         "gate_preview": [_body(preview) for preview in gate_preview],
         "preview_blocked_steps": preview_blocked_steps,
+        "preview_required_closure_evidence_refs": preview_required_closure_evidence_refs,
+        "omitted_closure_gate_evidence_refs": omitted_closure_gate_evidence_refs,
         "ready_to_close": ready_to_close,
         "preview_ready_to_close": preview_ready_to_close,
         "terminal_status": terminal_status,
