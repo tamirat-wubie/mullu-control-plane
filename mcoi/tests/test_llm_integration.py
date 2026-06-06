@@ -3,17 +3,16 @@
 Tests: LLMIntegrationBridge complete/chat, budget management, invocation history.
 """
 
-import pytest
 from mcoi_runtime.contracts.llm import (
     LLMBudget,
     LLMProvider,
-    LLMResult,
 )
 from mcoi_runtime.adapters.llm_adapter import StubLLMBackend
 from mcoi_runtime.core.llm_integration import LLMIntegrationBridge
 
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+def FIXED_CLOCK() -> str:
+    return "2026-03-26T12:00:00Z"
 
 
 class TestLLMIntegrationBridge:
@@ -153,6 +152,9 @@ class TestLLMIntegrationBridge:
             bridge.complete(f"msg-{i}")
         history = bridge.invocation_history(limit=3)
         assert len(history) == 3
+        assert [record["id"] for record in bridge.invocation_history(limit=1)] == ["llm-5"]
+        assert bridge.invocation_history(limit=0) == []
+        assert bridge.invocation_history(limit=-1) == []
 
     # ═══ Ledger ═══
 
