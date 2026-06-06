@@ -543,6 +543,14 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_doc_code_consistency.py"),
         ),
         CheckCommand(
+            "tenant_scope_coverage",
+            (python_executable, "scripts/validate_tenant_scope_coverage.py"),
+        ),
+        CheckCommand(
+            "persistence_tenant_guard_coverage",
+            (python_executable, "scripts/validate_persistence_tenant_guard_coverage.py"),
+        ),
+        CheckCommand(
             "strict_schema_validation",
             (python_executable, "scripts/validate_schemas.py", "--strict"),
         ),
