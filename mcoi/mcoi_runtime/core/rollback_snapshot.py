@@ -143,6 +143,8 @@ class SnapshotManager:
         return result
 
     def list_snapshots(self, limit: int = 10) -> list[Snapshot]:
+        if limit <= 0:
+            return []
         return [_clone_snapshot(self._snapshots[sid]) for sid in reversed(self._order[-limit:])]
 
     def delete_snapshot(self, snapshot_id: str) -> bool:
