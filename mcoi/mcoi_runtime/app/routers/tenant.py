@@ -17,6 +17,7 @@ from mcoi_runtime.app.routers.musia_auth import require_admin
 from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 
 router = APIRouter()
+_MAX_TENANT_LEDGER_READ_LIMIT = 500
 
 
 # ── Helpers & request models ─────────────────────────────────────────────
@@ -38,6 +39,33 @@ def _raise_tenant_validation_error(error: ValueError) -> NoReturn:
             "tenant_analytics_invalid_request",
         ),
     ) from error
+
+
+def _raise_tenant_ledger_validation_error(error: ValueError) -> NoReturn:
+    raise HTTPException(
+        status_code=422,
+        detail=_tenant_error_detail(
+            "invalid tenant ledger request",
+            "tenant_ledger_invalid_request",
+        ),
+    ) from error
+
+
+def _coerce_tenant_ledger_read_limit(limit: object) -> int:
+    if isinstance(limit, bool):
+        raise ValueError("limit must be an integer")
+    if isinstance(limit, int):
+        value = limit
+    elif isinstance(limit, str):
+        normalized = limit.strip()
+        if not normalized.isdecimal():
+            raise ValueError("limit must be an integer")
+        value = int(normalized)
+    else:
+        raise ValueError("limit must be an integer")
+    if value < 0 or value > _MAX_TENANT_LEDGER_READ_LIMIT:
+        raise ValueError("limit is outside the allowed range")
+    return value
 
 
 class TenantBudgetRequest(BaseModel):
@@ -135,11 +163,15 @@ def get_tenant_budget(tenant_id: str, request: Request):
 
 
 @router.get("/api/v1/tenant/{tenant_id}/ledger")
-def get_tenant_ledger(tenant_id: str, request: Request, entry_type: str | None = None, limit: int = 50):
+def get_tenant_ledger(tenant_id: str, request: Request, entry_type: str | None = None, limit: str = "50"):
     """Get a tenant's scoped ledger entries."""
     enforce_tenant_scope(request, tenant_id)
     deps.metrics.inc("requests_governed")
-    entries = deps.tenant_ledger.query(tenant_id, entry_type=entry_type, limit=limit)
+    try:
+        read_limit = _coerce_tenant_ledger_read_limit(limit)
+    except ValueError as error:
+        _raise_tenant_ledger_validation_error(error)
+    entries = deps.tenant_ledger.query(tenant_id, entry_type=entry_type, limit=read_limit)
     return {
         "entries": [{"entry_id": e.entry_id, "type": e.entry_type, "actor": e.actor_id,
                       "content": e.content, "at": e.recorded_at} for e in entries],
