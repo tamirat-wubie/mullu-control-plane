@@ -42,6 +42,24 @@ class TestGovernedCache:
         cache.set("d", 4)  # Should evict LRU
         assert cache.size == 3
 
+    @pytest.mark.parametrize("max_size", [0, -1])
+    def test_max_size_requires_positive_limit(self, max_size):
+        with pytest.raises(ValueError, match="^max_size must be positive$"):
+            GovernedCache(max_size=max_size)
+
+    @pytest.mark.parametrize("default_ttl", [0.0, -1.0])
+    def test_default_ttl_requires_positive_limit(self, default_ttl):
+        with pytest.raises(ValueError, match="^default_ttl must be positive$"):
+            GovernedCache(default_ttl=default_ttl)
+
+    def test_max_size_one_preserves_bounded_capacity(self):
+        cache = GovernedCache(max_size=1)
+        cache.set("a", 1)
+        cache.set("b", 2)
+        assert cache.size == 1
+        assert cache.get("a") is None
+        assert cache.get("b") == 2
+
     def test_get_or_compute(self):
         cache = GovernedCache()
         calls = {"n": 0}
