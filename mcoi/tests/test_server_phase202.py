@@ -53,6 +53,30 @@ class TestTenantBudgetEndpoints:
         assert "tenants" in resp.json()
 
 
+class TestTenantUsageAnalyticsEndpoints:
+    def test_tenant_usage_invalid_tenant_returns_bounded_422(self, client):
+        resp = client.get("/api/v1/usage/%20%20%20")
+
+        assert resp.status_code == 422
+        detail = resp.json()["detail"]
+        assert detail["error"] == "invalid tenant analytics request"
+        assert detail["error_code"] == "tenant_analytics_invalid_request"
+        assert detail["governed"] is True
+        assert "tenant_id" not in str(resp.json())
+        assert "%20" not in str(resp.json())
+
+    def test_tenant_analytics_invalid_tenant_returns_bounded_422(self, client):
+        resp = client.get("/api/v1/analytics/%20%20%20")
+
+        assert resp.status_code == 422
+        detail = resp.json()["detail"]
+        assert detail["error"] == "invalid tenant analytics request"
+        assert detail["error_code"] == "tenant_analytics_invalid_request"
+        assert detail["governed"] is True
+        assert "tenant_id" not in str(resp.json())
+        assert "%20" not in str(resp.json())
+
+
 class TestMetricsEndpoint:
     def test_get_metrics(self, client):
         resp = client.get("/api/v1/metrics")

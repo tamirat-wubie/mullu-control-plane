@@ -5,7 +5,7 @@ isolation verification, quota enforcement, and partition management.
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NoReturn
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
@@ -28,6 +28,16 @@ def _tenant_error_detail(error: str, error_code: str) -> dict[str, Any]:
 
 def _tenant_error_response(exc: TenantGatingError) -> tuple[int, dict[str, Any]]:
     return exc.http_status_code, _tenant_error_detail(exc.public_error, exc.error_code)
+
+
+def _raise_tenant_validation_error(error: ValueError) -> NoReturn:
+    raise HTTPException(
+        status_code=422,
+        detail=_tenant_error_detail(
+            "invalid tenant analytics request",
+            "tenant_analytics_invalid_request",
+        ),
+    ) from error
 
 
 class TenantBudgetRequest(BaseModel):
@@ -173,7 +183,10 @@ def list_tenants(_: str = Depends(require_admin)):
 def tenant_usage(tenant_id: str, request: Request):
     """Per-tenant usage report."""
     enforce_tenant_scope(request, tenant_id)
-    report = deps.usage_reporter.generate(tenant_id)
+    try:
+        report = deps.usage_reporter.generate(tenant_id)
+    except ValueError as error:
+        _raise_tenant_validation_error(error)
     return {
         "tenant_id": report.tenant_id,
         "llm_calls": report.llm_calls,
@@ -189,7 +202,10 @@ def tenant_usage(tenant_id: str, request: Request):
 def tenant_analytics_endpoint(tenant_id: str, request: Request):
     """Per-tenant analytics dashboard."""
     enforce_tenant_scope(request, tenant_id)
-    analytics = deps.tenant_analytics.compute(tenant_id)
+    try:
+        analytics = deps.tenant_analytics.compute(tenant_id)
+    except ValueError as error:
+        _raise_tenant_validation_error(error)
     return {
         "tenant_id": analytics.tenant_id,
         "llm_calls": analytics.llm_calls,

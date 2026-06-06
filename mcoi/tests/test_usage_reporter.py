@@ -22,6 +22,54 @@ class TestUsageReporter:
         assert report.llm_calls == 42
         assert report.total_cost == 1.5
 
+    def test_generate_normalizes_tenant_identity(self):
+        reporter = UsageReporter(clock=FIXED_CLOCK)
+        reporter.register_source("llm_calls", lambda tid: 42 if tid == "t1" else 0)
+
+        report = reporter.generate(" t1 ")
+
+        assert report.tenant_id == "t1"
+        assert report.llm_calls == 42
+        assert report.generated_at == "2026-03-26T12:00:00Z"
+
+    @pytest.mark.parametrize("tenant_id", ["", "   ", 7])
+    def test_generate_rejects_invalid_tenant_identity(self, tenant_id):
+        reporter = UsageReporter(clock=FIXED_CLOCK)
+
+        with pytest.raises(ValueError):
+            reporter.generate(tenant_id)
+
+        assert reporter.summary()["source_error_count"] == 0
+        assert reporter.summary()["source_errors"] == {}
+
+    def test_generate_rejects_invalid_clock_output(self):
+        reporter = UsageReporter(clock=lambda: "   ")
+
+        with pytest.raises(ValueError):
+            reporter.generate("t1")
+
+        assert reporter.summary()["source_error_count"] == 0
+        assert reporter.summary()["source_errors"] == {}
+
+    @pytest.mark.parametrize("source_name", ["", "   ", 7])
+    def test_register_source_rejects_invalid_source_name(self, source_name):
+        reporter = UsageReporter(clock=FIXED_CLOCK)
+
+        with pytest.raises(ValueError):
+            reporter.register_source(source_name, lambda _tid: 1)
+
+        assert reporter.summary()["sources"] == []
+        assert reporter.summary()["source_error_count"] == 0
+
+    def test_register_source_rejects_non_callable(self):
+        reporter = UsageReporter(clock=FIXED_CLOCK)
+
+        with pytest.raises(ValueError):
+            reporter.register_source("llm_calls", 42)
+
+        assert reporter.summary()["sources"] == []
+        assert reporter.summary()["source_errors"] == {}
+
     def test_missing_source(self):
         reporter = UsageReporter(clock=FIXED_CLOCK)
         report = reporter.generate("t1")

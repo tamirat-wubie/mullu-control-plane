@@ -13,6 +13,9 @@ from numbers import Real
 from typing import Any, Callable
 
 
+_MAX_ID_LENGTH = 256
+
+
 @dataclass(frozen=True, slots=True)
 class UsageReport:
     """Complete usage report for a tenant."""
@@ -39,9 +42,13 @@ class UsageReporter:
         self._last_source_errors: dict[str, str] = {}
 
     def register_source(self, name: str, fn: Callable[[str], Any]) -> None:
+        name = _validate_identity(name, field_name="source")
+        if not callable(fn):
+            raise ValueError("usage source must be callable")
         self._data_fns[name] = fn
 
     def generate(self, tenant_id: str, period: str = "current") -> UsageReport:
+        tenant_id = _validate_identity(tenant_id, field_name="tenant_id")
         data: dict[str, Any] = {}
         for name, fn in self._data_fns.items():
             try:
@@ -62,7 +69,7 @@ class UsageReporter:
             tool_invocations=data.get("tool_invocations", 0),
             events_published=data.get("events_published", 0),
             report_period=period,
-            generated_at=self._clock(),
+            generated_at=_validate_timestamp(self._clock()),
         )
 
     def summary(self) -> dict[str, Any]:
@@ -75,6 +82,26 @@ class UsageReporter:
 
 def _bounded_usage_source_error(exc: Exception) -> str:
     return f"usage source error ({type(exc).__name__})"
+
+
+def _validate_identity(value: str, *, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must be a string")
+    normalized = value.strip()
+    if not normalized:
+        raise ValueError(f"{field_name} must be non-empty")
+    if len(normalized) > _MAX_ID_LENGTH:
+        raise ValueError(f"{field_name} exceeds maximum length")
+    return normalized
+
+
+def _validate_timestamp(value: Any) -> str:
+    if not isinstance(value, str):
+        raise ValueError("generated_at must be a string")
+    normalized = value.strip()
+    if not normalized:
+        raise ValueError("generated_at must be non-empty")
+    return normalized
 
 
 def _coerce_source_value(name: str, value: Any) -> int | float | Any:
