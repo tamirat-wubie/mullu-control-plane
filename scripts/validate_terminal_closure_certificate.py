@@ -8,8 +8,8 @@ Dependencies: examples/terminal_closure_certificate.json,
 schemas/terminal_closure_certificate.schema.json.
 Invariants:
   - A certificate must validate against the public terminal closure schema.
-  - Committed closure must not carry compensation or accepted-risk proof.
-  - Non-committed dispositions must carry their required case or recovery proof.
+  - Every disposition must carry its required non-null proof anchors.
+  - Every disposition must reject non-null proof anchors from other closure paths.
   - Evidence references are reported by count only, not dereferenced.
 """
 
@@ -31,6 +31,18 @@ from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 DEFAULT_CERTIFICATE = REPO_ROOT / "examples" / "terminal_closure_certificate.json"
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "terminal_closure_certificate.schema.json"
 VALID_DISPOSITIONS = frozenset({"committed", "compensated", "accepted_risk", "requires_review"})
+DISPOSITION_REQUIRED_ANCHORS: dict[str, tuple[str, ...]] = {
+    "committed": (),
+    "compensated": ("compensation_outcome_id",),
+    "accepted_risk": ("accepted_risk_id", "case_id"),
+    "requires_review": ("case_id",),
+}
+DISPOSITION_FORBIDDEN_ANCHORS: dict[str, tuple[str, ...]] = {
+    "committed": ("compensation_outcome_id", "accepted_risk_id", "case_id"),
+    "compensated": ("accepted_risk_id", "case_id"),
+    "accepted_risk": ("compensation_outcome_id",),
+    "requires_review": ("compensation_outcome_id", "accepted_risk_id"),
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,19 +93,14 @@ def _validate_scalar_fields(certificate: dict[str, Any], errors: list[str]) -> N
 
 def _validate_disposition_semantics(certificate: dict[str, Any], errors: list[str]) -> None:
     disposition = certificate.get("disposition")
-    if disposition == "committed":
-        for field_name in ("compensation_outcome_id", "accepted_risk_id"):
-            if certificate.get(field_name):
-                errors.append(f"committed closure must not include {field_name}")
-    if disposition == "compensated" and not certificate.get("compensation_outcome_id"):
-        errors.append("compensated closure requires compensation_outcome_id")
-    if disposition == "accepted_risk":
-        if not certificate.get("accepted_risk_id"):
-            errors.append("accepted_risk closure requires accepted_risk_id")
-        if not certificate.get("case_id"):
-            errors.append("accepted_risk closure requires case_id")
-    if disposition == "requires_review" and not certificate.get("case_id"):
-        errors.append("requires_review closure requires case_id")
+    if disposition not in VALID_DISPOSITIONS:
+        return
+    for field_name in DISPOSITION_REQUIRED_ANCHORS[disposition]:
+        if not certificate.get(field_name):
+            errors.append(f"{disposition} closure requires {field_name}")
+    for field_name in DISPOSITION_FORBIDDEN_ANCHORS[disposition]:
+        if certificate.get(field_name):
+            errors.append(f"{disposition} closure must not include {field_name}")
 
 
 def _validation_result(

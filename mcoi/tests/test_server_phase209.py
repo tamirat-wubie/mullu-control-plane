@@ -229,6 +229,17 @@ class TestCostAnalyticsEndpoints:
         assert resp.status_code == 200
         assert resp.json()["call_count"] >= 1
 
+    def test_tenant_costs_invalid_tenant_returns_bounded_422(self, client):
+        resp = client.get("/api/v1/costs/%20%20%20")
+
+        assert resp.status_code == 422
+        detail = resp.json()["detail"]
+        assert detail["error"] == "invalid cost analytics request"
+        assert detail["error_code"] == "cost_analytics_invalid_request"
+        assert detail["governed"] is True
+        assert "tenant_id" not in str(resp.json())
+        assert "%20" not in str(resp.json())
+
     def test_cost_projection(self, client):
         client.post("/api/v1/chat", json={
             "conversation_id": "proj-test", "message": "test", "tenant_id": "proj-t",
@@ -242,7 +253,37 @@ class TestCostAnalyticsEndpoints:
         assert resp.status_code == 200
         assert "spenders" in resp.json()
 
+    def test_top_spenders_invalid_limit_returns_bounded_422(self, client):
+        resp = client.get("/api/v1/costs/top-spenders", params={"limit": -1})
+
+        assert resp.status_code == 422
+        detail = resp.json()["detail"]
+        assert detail["error"] == "invalid cost analytics request"
+        assert detail["error_code"] == "cost_analytics_invalid_request"
+        assert detail["governed"] is True
+        assert "-1" not in str(resp.json())
+        assert "finite non-negative integer" not in str(resp.json())
+
     def test_costs_by_model(self, client):
         resp = client.get("/api/v1/costs/by-model")
         assert resp.status_code == 200
         assert "models" in resp.json()
+
+    @pytest.mark.parametrize(
+        "params",
+        [
+            {"budget": -1.0},
+            {"days_elapsed": 0.0},
+            {"days_elapsed": -1.0},
+        ],
+    )
+    def test_cost_projection_invalid_query_returns_bounded_422(self, client, params):
+        resp = client.get("/api/v1/costs/proj-t/projection", params=params)
+
+        assert resp.status_code == 422
+        detail = resp.json()["detail"]
+        assert detail["error"] == "invalid cost analytics request"
+        assert detail["error_code"] == "cost_analytics_invalid_request"
+        assert detail["governed"] is True
+        assert str(next(iter(params.values()))) not in str(resp.json())
+        assert next(iter(params)) not in str(resp.json())

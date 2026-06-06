@@ -18,6 +18,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import stat
 import subprocess
 import tempfile
 import time
@@ -148,6 +149,11 @@ def _content_hash(content: str) -> str:
 def _bounded_code_error(summary: str, exc: Exception) -> str:
     """Return a stable code-adapter failure without raw backend detail."""
     return f"{summary} ({type(exc).__name__})"
+
+
+def _log_bounded_code_warning(message: str, exc: Exception) -> None:
+    """Log filesystem degradation without raw exception text or local paths."""
+    _LOG.warning(message, extra={"error_type": type(exc).__name__})
 
 
 _DEFAULT_MAX_FILE_BYTES: int = 10 * 1024 * 1024  # 10 MB
@@ -574,7 +580,12 @@ def _atomic_write_text(path: Path, content: str) -> None:
     parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        existing_mode: int | None = path.stat().st_mode & 0o7777
+        existing_metadata = os.lstat(path)
+        existing_mode: int | None = (
+            None
+            if stat.S_ISLNK(existing_metadata.st_mode)
+            else existing_metadata.st_mode & 0o7777
+        )
     except OSError:
         existing_mode = None
 
@@ -592,20 +603,14 @@ def _atomic_write_text(path: Path, content: str) -> None:
             try:
                 os.fsync(handle.fileno())
             except OSError as exc:
-                _LOG.warning(
-                    "code adapter file fsync failed",
-                    extra={"error_type": type(exc).__name__},
-                )
-        os.replace(tmp_path, path)
-        written = True
+                _log_bounded_code_warning("code adapter file fsync failed", exc)
         if existing_mode is not None:
             try:
-                os.chmod(path, existing_mode)
+                os.chmod(tmp_path, existing_mode)
             except OSError as exc:
-                _LOG.warning(
-                    "code adapter mode preservation failed",
-                    extra={"error_type": type(exc).__name__},
-                )
+                _log_bounded_code_warning("code adapter mode preservation failed", exc)
+        os.replace(tmp_path, path)
+        written = True
         if hasattr(os, "O_DIRECTORY"):
             try:
                 dir_fd = os.open(str(parent), os.O_DIRECTORY)
@@ -614,19 +619,13 @@ def _atomic_write_text(path: Path, content: str) -> None:
                 finally:
                     os.close(dir_fd)
             except OSError as exc:
-                _LOG.warning(
-                    "code adapter parent fsync failed",
-                    extra={"error_type": type(exc).__name__},
-                )
+                _log_bounded_code_warning("code adapter parent fsync failed", exc)
     finally:
         if not written:
             try:
                 tmp_path.unlink(missing_ok=True)
             except OSError as exc:
-                _LOG.warning(
-                    "code adapter temp cleanup failed",
-                    extra={"error_type": type(exc).__name__},
-                )
+                _log_bounded_code_warning("code adapter temp cleanup failed", exc)
 
 def _iter_workspace_files(root: Path):
     """Yield each regular file under root that resolves inside root.
@@ -783,10 +782,9 @@ class LocalCodeAdapter:
         """Write a file to the workspace. Returns False if path is outside root.
 
         Tightens the prior TOCTOU window (M3): resolves parent directory
-        chain to ensure the actual write target is inside root before any
-        bytes are written. A symlink swap of an existing target between
-        resolve and open is still possible but lands on the resolved-at-
-        check-time path, not the attacker's swapped target.
+        chain to ensure the actual write parent is inside root before any
+        bytes are written. The leaf is then replaced with the workspace atomic
+        writer so an existing symlink leaf is replaced rather than followed.
         """
         target = self._root / relative_path
         try:
@@ -803,8 +801,7 @@ class LocalCodeAdapter:
             return False
         resolved_target = resolved_parent / target.name
         try:
-            resolved_target.parent.mkdir(parents=True, exist_ok=True)
-            resolved_target.write_text(content, encoding="utf-8")
+            _atomic_write_text(resolved_target, content)
             return True
         except OSError:
             return False

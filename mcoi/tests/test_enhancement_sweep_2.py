@@ -1,5 +1,7 @@
 """Enhancement Sweep 2 Tests — Analytics, retry policies, agent capabilities."""
 
+import math
+
 import pytest
 
 
@@ -79,6 +81,73 @@ class TestRequestAnalytics:
 
 
 # ── Retry Policies ─────────────────────────────────────────────
+
+    @pytest.mark.parametrize(
+        ("kwargs", "field_name"),
+        [
+            ({"latency_ms": -1}, "latency_ms"),
+            ({"latency_ms": math.nan}, "latency_ms"),
+            ({"latency_ms": "100"}, "latency_ms"),
+            ({"success": 1}, "success"),
+            ({"success": "true"}, "success"),
+            ({"status_code": 99}, "status_code"),
+            ({"status_code": 600}, "status_code"),
+            ({"status_code": 200.5}, "status_code"),
+            ({"status_code": True}, "status_code"),
+        ],
+    )
+    def test_record_rejects_invalid_samples_without_mutating_state(self, kwargs, field_name):
+        a = self._analytics()
+        sample = {"latency_ms": 100, **kwargs}
+        with pytest.raises(ValueError, match=field_name):
+            a.record("/api", **sample)
+        assert a.endpoint_report("/api") is None
+        assert a.endpoint_count == 0
+        assert a.total_requests == 0
+
+    @pytest.mark.parametrize("endpoint", ["", "   ", 123, "/x" * 2049])
+    def test_record_rejects_invalid_endpoint_identity(self, endpoint):
+        a = self._analytics()
+        with pytest.raises(ValueError, match="endpoint"):
+            a.record(endpoint, latency_ms=100)
+        assert a.endpoint_count == 0
+        assert a.total_requests == 0
+        assert a.summary()["endpoints_tracked"] == 0
+
+    def test_record_normalizes_endpoint_and_integer_like_status_code(self):
+        a = self._analytics()
+        a.record(" /api ", latency_ms=100, success=False, status_code=500.0)
+        report = a.endpoint_report("/api")
+        assert report is not None
+        assert report.endpoint == "/api"
+        assert report.request_count == 1
+        assert report.error_count == 1
+
+    @pytest.mark.parametrize("window_seconds", [0, -1, math.inf, "300", True])
+    def test_window_seconds_must_be_finite_positive(self, window_seconds):
+        from mcoi_runtime.core.request_analytics import RequestAnalytics
+
+        with pytest.raises(ValueError, match="window_seconds"):
+            RequestAnalytics(clock=lambda: 0.0, window_seconds=window_seconds)
+
+    @pytest.mark.parametrize("threshold_ms", [-1, math.inf, "1000", False])
+    def test_slow_endpoint_threshold_rejects_invalid_values(self, threshold_ms):
+        a = self._analytics()
+        a.record("/api", latency_ms=100)
+        with pytest.raises(ValueError, match="threshold_ms"):
+            a.slow_endpoints(threshold_ms=threshold_ms)
+        assert a.endpoint_count == 1
+        assert a.total_requests == 1
+
+    @pytest.mark.parametrize("threshold", [-0.01, 1.01, math.nan, "0.5", True])
+    def test_error_endpoint_threshold_rejects_invalid_values(self, threshold):
+        a = self._analytics()
+        a.record("/api", latency_ms=100, success=False)
+        with pytest.raises(ValueError, match="threshold"):
+            a.error_endpoints(threshold=threshold)
+        assert a.endpoint_count == 1
+        assert a.total_requests == 1
+
 
 class TestRetryPolicy:
     def test_delay_for_attempt(self):

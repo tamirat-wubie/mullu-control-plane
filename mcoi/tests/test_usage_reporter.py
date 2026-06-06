@@ -1,7 +1,11 @@
 """Phase 217 — Usage reporter and rate limit headers tests."""
 
-from mcoi_runtime.core.usage_reporter import UsageReporter
+import math
+
+import pytest
+
 from mcoi_runtime.core.rate_limit_middleware import rate_limit_headers
+from mcoi_runtime.core.usage_reporter import UsageReporter
 
 
 def FIXED_CLOCK() -> str:
@@ -35,6 +39,49 @@ class TestUsageReporter:
         assert summary["source_error_count"] == 1
         assert summary["source_errors"] == {"llm_calls": "usage source error (RuntimeError)"}
         assert "secret failure detail" not in str(summary)
+
+    @pytest.mark.parametrize(("source_name", "bad_value", "field_name"), [
+        ("llm_calls", "secret-count", "llm_calls"),
+        ("conversations", True, "conversations"),
+        ("workflows", -1, "workflows"),
+        ("tool_invocations", 1.5, "tool_invocations"),
+        ("events_published", math.inf, "events_published"),
+        ("total_cost", float("nan"), "total_cost"),
+        ("budget_remaining", -0.01, "budget_remaining"),
+    ])
+    def test_invalid_source_values_fail_closed_bounded(
+        self,
+        source_name,
+        bad_value,
+        field_name,
+    ):
+        reporter = UsageReporter(clock=FIXED_CLOCK)
+        reporter.register_source(source_name, lambda _tid: bad_value)
+
+        report = reporter.generate("t1")
+        summary = reporter.summary()
+
+        assert getattr(report, field_name) == 0
+        assert summary["source_error_count"] == 1
+        assert summary["source_errors"] == {source_name: "usage source error (ValueError)"}
+        assert str(bad_value) not in str(summary)
+        assert "secret-count" not in str(summary)
+
+    def test_valid_numeric_source_values_are_normalized(self):
+        reporter = UsageReporter(clock=FIXED_CLOCK)
+        reporter.register_source("llm_calls", lambda _tid: 42.0)
+        reporter.register_source("total_cost", lambda _tid: 3)
+        reporter.register_source("budget_remaining", lambda _tid: 0.25)
+
+        report = reporter.generate("t1")
+        summary = reporter.summary()
+
+        assert report.llm_calls == 42
+        assert isinstance(report.llm_calls, int)
+        assert report.total_cost == 3.0
+        assert report.budget_remaining == 0.25
+        assert summary["source_error_count"] == 0
+        assert summary["source_errors"] == {}
 
     def test_successful_source_clears_last_error_but_keeps_count(self):
         reporter = UsageReporter(clock=FIXED_CLOCK)

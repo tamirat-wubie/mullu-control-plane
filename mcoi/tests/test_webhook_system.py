@@ -27,6 +27,28 @@ class TestWebhookManager:
         assert receipts[0].before_count == 0
         assert receipts[0].after_count == 1
 
+    @pytest.mark.parametrize("url", [
+        "ftp://example.com/hook",
+        "file:///tmp/hook",
+        "gopher://example.com/hook",
+        "mailto:ops@example.com",
+        "https:///missing-host",
+    ])
+    def test_subscribe_rejects_non_http_webhook_urls(self, url):
+        mgr = WebhookManager(clock=FIXED_CLOCK)
+
+        with pytest.raises(ValueError, match="unsupported scheme or missing host") as excinfo:
+            mgr.subscribe(WebhookSubscription(
+                subscription_id="sub-1",
+                tenant_id="t1",
+                url=url,
+                events=("task.completed",),
+            ))
+
+        assert str(excinfo.value) == "webhook URL rejected: unsupported scheme or missing host"
+        assert url not in str(excinfo.value)
+        assert mgr.subscription_count == 0
+
     def test_duplicate_subscribe_raises(self):
         mgr = WebhookManager(clock=FIXED_CLOCK)
         sub = WebhookSubscription(subscription_id="sub-1", tenant_id="t1", url="https://example.com/hook", events=("task.completed",))
@@ -91,6 +113,30 @@ class TestWebhookManager:
         assert receipt.metadata["target_url_hash"]
         assert summary["failed_deliveries"] == 1
         assert "private-after-rebind" not in str(receipt.to_dict())
+
+    def test_emit_blocks_legacy_invalid_webhook_url(self):
+        mgr = WebhookManager(clock=FIXED_CLOCK)
+        legacy = WebhookSubscription(
+            subscription_id="legacy-invalid",
+            tenant_id="t1",
+            url="ftp://example.com/hook",
+            events=("task.completed",),
+        )
+        mgr._subscriptions[legacy.subscription_id] = legacy
+
+        deliveries = mgr.emit("task.completed", {"task_id": "task-secret"}, tenant_id="t1")
+        history = mgr.delivery_history()
+        receipt = mgr.mutation_receipts()[-1]
+        summary = mgr.summary()
+
+        assert deliveries == []
+        assert history[-1].status == "failed"
+        assert history[-1].subscription_id == "legacy-invalid"
+        assert receipt.effect_name == "webhook_delivery_blocked"
+        assert receipt.metadata["block_reason"] == "delivery_url_invalid"
+        assert receipt.metadata["target_url_hash"]
+        assert summary["failed_deliveries"] == 1
+        assert "ftp://example.com/hook" not in str(receipt.to_dict())
 
     def test_emit_no_match(self):
         mgr = WebhookManager(clock=FIXED_CLOCK)

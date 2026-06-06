@@ -7,7 +7,9 @@ Governance scope: report generation only — read-only.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
+from numbers import Real
 from typing import Any, Callable
 
 
@@ -43,7 +45,7 @@ class UsageReporter:
         data: dict[str, Any] = {}
         for name, fn in self._data_fns.items():
             try:
-                data[name] = fn(tenant_id)
+                data[name] = _coerce_source_value(name, fn(tenant_id))
                 self._last_source_errors.pop(name, None)
             except Exception as exc:
                 self._source_error_counts[name] = self._source_error_counts.get(name, 0) + 1
@@ -73,3 +75,35 @@ class UsageReporter:
 
 def _bounded_usage_source_error(exc: Exception) -> str:
     return f"usage source error ({type(exc).__name__})"
+
+
+def _coerce_source_value(name: str, value: Any) -> int | float | Any:
+    if name in {
+        "llm_calls",
+        "conversations",
+        "workflows",
+        "tool_invocations",
+        "events_published",
+    }:
+        return _coerce_non_negative_int(value)
+    if name in {"total_cost", "budget_remaining"}:
+        return _coerce_non_negative_float(value)
+    return value
+
+
+def _coerce_non_negative_int(value: Any) -> int:
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ValueError("usage source value must be numeric")
+    numeric = float(value)
+    if not math.isfinite(numeric) or numeric < 0 or not numeric.is_integer():
+        raise ValueError("usage source value must be a non-negative integer")
+    return int(numeric)
+
+
+def _coerce_non_negative_float(value: Any) -> float:
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ValueError("usage source value must be numeric")
+    numeric = float(value)
+    if not math.isfinite(numeric) or numeric < 0:
+        raise ValueError("usage source value must be a finite non-negative number")
+    return numeric
