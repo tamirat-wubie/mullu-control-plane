@@ -72,15 +72,37 @@ Shadow path:
 - Deterministic shadow receipts.
 - Feature-flagged application integration facade.
 - Focused tests covering gate, light pass, preflight, receipts, scoring, and disabled integration.
+- Phi-GPS v3 bridge report in `mcoi_runtime.core.phi_inceptadive_bridge` that
+  projects `ProblemStar` fields into Concept Boxes, runs bounded axis
+  traversal, scores findings through the public InceptaMesh guard, and returns
+  solver-mode suggestions without execution approval.
+
+## Phi-GPS bridge boundary
+
+The Phi-GPS bridge is an advisory structure-discovery pass:
+
+```text
+ProblemStar
+-> Concept Boxes
+-> InceptaDive axis findings
+-> InceptaMesh scores
+-> proof gaps, hidden assumptions, solver-mode suggestions
+-> Phi-GPS governance and solver routing
+```
+
+The bridge may recommend diagnosis, proof construction, risk containment, or
+design synthesis. It may not execute actions, approve actions, promote a truth
+claim, bypass `Phi_gov`, or replace the Phi-GPS proof receipt.
 
 ## Deferred surfaces
 
-The deep InceptaDive-M engine remains a dedicated later module. The current
-integration deliberately returns `deep_required` when the gate selects deep mode
-instead of silently pretending the full deep engine has run.
+The full external-effect InceptaDive-M engine remains a dedicated later module.
+The current integration deliberately returns `deep_required` when the gate
+selects deep mode outside the repository-local bridge instead of silently
+pretending the full deep engine has run.
 
 STATUS:
-  Completeness: v1 foundation complete
+  Completeness: v1 foundation complete; repository-local Phi-GPS bridge added
   Invariants verified: no execution authority, strict preflight separation, deterministic receipts, denominator guard
-  Open issues: deep axis traversal integration is intentionally deferred
+  Open issues: external-effect deep engine integration is intentionally deferred
   Next action: merge after CI confirms focused and repository-wide tests
