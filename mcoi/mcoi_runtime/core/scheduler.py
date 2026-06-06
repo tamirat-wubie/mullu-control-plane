@@ -256,6 +256,8 @@ class GovernedScheduler:
     def recent_executions(self, limit: int = 50) -> list[JobExecution]:
         """Return recent execution history."""
         with self._lock:
+            if limit <= 0:
+                return []
             return list(reversed(self._history[-limit:]))
 
     def summary(self) -> dict[str, Any]:
