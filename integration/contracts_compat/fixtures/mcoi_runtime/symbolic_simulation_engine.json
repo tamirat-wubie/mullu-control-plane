@@ -1,0 +1,164 @@
+{
+  "run_id": "sse-run-001",
+  "version": "sse.v1",
+  "generated_at": "2026-06-06T10:00:00+00:00",
+  "action_ref": "uao://action/send-message-001",
+  "action_snapshot_ref": "snapshot://action/send-message-001/pre",
+  "request": {
+    "request_id": "sim-request-001",
+    "context_type": "uao_action",
+    "context_id": "action-send-message-001",
+    "description": "Compare message send against escalation before execution.",
+    "options": [
+      {
+        "option_id": "option-send",
+        "label": "Send governed message",
+        "risk_level": "low",
+        "estimated_cost": 0.1,
+        "estimated_duration_seconds": 3.0,
+        "success_probability": 0.91
+      },
+      {
+        "option_id": "option-escalate",
+        "label": "Escalate to operator",
+        "risk_level": "minimal",
+        "estimated_cost": 0.0,
+        "estimated_duration_seconds": 30.0,
+        "success_probability": 0.99
+      }
+    ]
+  },
+  "branches": [
+    {
+      "branch_id": "branch-send",
+      "option_id": "option-send",
+      "outcome_id": "outcome-send",
+      "predicted_state_refs": ["state://message/sent"],
+      "evidence_refs": ["receipt://simulation/outcome-send"],
+      "risk_level": "low",
+      "confidence": 0.88,
+      "metadata": {
+        "rank": 1
+      }
+    },
+    {
+      "branch_id": "branch-escalate",
+      "option_id": "option-escalate",
+      "outcome_id": "outcome-escalate",
+      "predicted_state_refs": ["state://message/escalated"],
+      "evidence_refs": ["receipt://simulation/outcome-escalate"],
+      "risk_level": "minimal",
+      "confidence": 0.76,
+      "metadata": {
+        "rank": 2
+      }
+    }
+  ],
+  "outcomes": [
+    {
+      "outcome_id": "outcome-send",
+      "option_id": "option-send",
+      "consequence": {
+        "estimate_id": "consequence-option-send",
+        "option_id": "option-send",
+        "affected_node_ids": ["state://message"],
+        "new_edges_count": 1,
+        "new_obligations_count": 0,
+        "blocked_nodes_count": 0,
+        "unblocked_nodes_count": 1
+      },
+      "risk": {
+        "estimate_id": "risk-option-send",
+        "option_id": "option-send",
+        "risk_level": "low",
+        "incident_probability": 0.04,
+        "review_burden": 1,
+        "provider_exposure_count": 0,
+        "verification_difficulty": "bounded",
+        "rationale": "local policy and receipt evidence available"
+      },
+      "obligation_projection": {
+        "projection_id": "obligation-option-send",
+        "option_id": "option-send",
+        "new_obligations": ["receipt://simulation-verification"],
+        "fulfilled_obligations": [],
+        "deadline_pressure": 0
+      },
+      "simulated_at": "2026-06-06T10:00:00+00:00"
+    },
+    {
+      "outcome_id": "outcome-escalate",
+      "option_id": "option-escalate",
+      "consequence": {
+        "estimate_id": "consequence-option-escalate",
+        "option_id": "option-escalate",
+        "affected_node_ids": ["state://message"],
+        "new_edges_count": 1,
+        "new_obligations_count": 1,
+        "blocked_nodes_count": 1,
+        "unblocked_nodes_count": 0
+      },
+      "risk": {
+        "estimate_id": "risk-option-escalate",
+        "option_id": "option-escalate",
+        "risk_level": "minimal",
+        "incident_probability": 0.01,
+        "review_burden": 2,
+        "provider_exposure_count": 0,
+        "verification_difficulty": "low",
+        "rationale": "operator review reduces execution uncertainty"
+      },
+      "obligation_projection": {
+        "projection_id": "obligation-option-escalate",
+        "option_id": "option-escalate",
+        "new_obligations": ["approval://operator/message-send"],
+        "fulfilled_obligations": [],
+        "deadline_pressure": 1
+      },
+      "simulated_at": "2026-06-06T10:00:00+00:00"
+    }
+  ],
+  "comparison": {
+    "comparison_id": "comparison-001",
+    "request_id": "sim-request-001",
+    "ranked_option_ids": ["option-send", "option-escalate"],
+    "scores": {
+      "option-send": 0.88,
+      "option-escalate": 0.76
+    },
+    "top_risk_level": "low",
+    "review_burden": 0.2
+  },
+  "verdict": {
+    "verdict_id": "verdict-001",
+    "comparison_id": "comparison-001",
+    "verdict_type": "proceed_with_caution",
+    "recommended_option_id": "option-send",
+    "confidence": 0.87,
+    "reasons": ["lowest bounded risk with receipt evidence"]
+  },
+  "decision": {
+    "decision_id": "decision-001",
+    "comparison_id": "comparison-001",
+    "verdict_id": "verdict-001",
+    "selected_option_id": "option-send",
+    "decision_kind": "execute",
+    "rationale_refs": ["verdict-001", "comparison-001"],
+    "receipt_refs": ["receipt://sse/decision-001"],
+    "decided_at": "2026-06-06T10:00:00+00:00"
+  },
+  "execution_gate": {
+    "gate_id": "gate-001",
+    "decision_id": "decision-001",
+    "gate_status": "allow",
+    "can_execute": true,
+    "required_approval_refs": [],
+    "evidence_refs": ["receipt://sse/decision-001", "receipt://uao/preflight-001"],
+    "evaluated_at": "2026-06-06T10:00:00+00:00"
+  },
+  "receipt_refs": ["receipt://sse/run-001", "receipt://uao/preflight-001"],
+  "metadata": {
+    "foundation_mode": true,
+    "sequence": "action_simulate_compare_decide_execute_gate"
+  }
+}

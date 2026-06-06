@@ -665,6 +665,12 @@
       "surface": "simulation"
     },
     {
+      "schema_id": "symbolic-simulation-engine",
+      "path": "schemas/symbolic_simulation_engine.schema.json",
+      "urn": "urn:mullusi:schema:symbolic-simulation-engine:1",
+      "surface": "simulation"
+    },
+    {
       "schema_id": "intelligence-coordination-episode-receipt",
       "path": "schemas/intelligence_coordination_episode_receipt.schema.json",
       "urn": "urn:mullusi:schema:intelligence-coordination-episode-receipt:1",
