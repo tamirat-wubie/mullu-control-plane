@@ -62,6 +62,9 @@ class TestTenantLedgerEntry:
         assert [entry.content["i"] for entry in limited_entries] == [3, 4]
         with pytest.raises(ValueError, match="must not be negative"):
             ledger.query("t1", limit=-1)
+        for invalid_limit in (True, 1.5, "2"):
+            with pytest.raises(ValueError, match="must be an integer"):
+                ledger.query("t1", limit=invalid_limit)
 
     def test_count(self):
         ledger = TenantLedger(clock=fixed_clock)
