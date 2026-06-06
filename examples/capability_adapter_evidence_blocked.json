@@ -1,0 +1,42 @@
+{
+  "adapters": [
+    {
+      "adapter_id": "browser.playwright",
+      "blockers": [
+        "browser_live_evidence_missing"
+      ],
+      "status": "blocked"
+    },
+    {
+      "adapter_id": "document.production_parsers",
+      "blockers": [],
+      "status": "closed"
+    },
+    {
+      "adapter_id": "voice.openai",
+      "blockers": [
+        "voice_dependency_missing:OPENAI_API_KEY",
+        "voice_live_evidence_missing"
+      ],
+      "status": "blocked"
+    },
+    {
+      "adapter_id": "communication.email_calendar_worker",
+      "blockers": [
+        "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+        "email_calendar_live_evidence_missing"
+      ],
+      "status": "blocked"
+    }
+  ],
+  "blockers": [
+    "browser_live_evidence_missing",
+    "voice_dependency_missing:OPENAI_API_KEY",
+    "voice_live_evidence_missing",
+    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+    "email_calendar_live_evidence_missing"
+  ],
+  "checked_at": "2026-05-01T12:00:00+00:00",
+  "ready": false,
+  "report_id": "capability-adapter-evidence-blocked-example"
+}

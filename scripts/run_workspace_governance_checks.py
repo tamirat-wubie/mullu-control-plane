@@ -600,6 +600,19 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "general_agent_promotion_closure_chain",
+            (
+                python_executable,
+                "scripts/run_general_agent_promotion_closure_chain.py",
+                "--output-dir",
+                ".tmp/general-agent-promotion-closure-chain",
+                "--adapter-evidence",
+                "examples/capability_adapter_evidence_blocked.json",
+                "--json",
+                "--strict",
+            ),
+        ),
+        CheckCommand(
             "route_receipt_coverage",
             (python_executable, "scripts/validate_receipt_coverage.py", "--strict"),
         ),
