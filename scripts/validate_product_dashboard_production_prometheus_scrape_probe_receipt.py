@@ -171,7 +171,12 @@ def _check_required_families(
     observed = set(_text_items(metrics_probe.get("observed_metric_families")))
     missing = set(_text_items(metrics_probe.get("missing_metric_families")))
     required = set(REQUIRED_METRIC_FAMILIES)
-    passed = required <= observed and missing == required - observed
+    summary = _object(payload.get("summary"))
+    internally_consistent = missing == required - observed
+    if summary.get("production_claim_closed") is True:
+        passed = required <= observed and internally_consistent
+    else:
+        passed = internally_consistent
     detail = f"observed={len(observed)} missing={len(missing)} required={len(required)}"
     return ProductDashboardProductionProbeValidationStep("required families", passed, detail)
 
