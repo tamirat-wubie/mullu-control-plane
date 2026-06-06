@@ -167,6 +167,8 @@
             "doc_code_consistency",
             "tenant_scope_coverage",
             "persistence_tenant_guard_coverage",
+            "mcp_capability_manifest",
+            "mcp_operator_checklist",
             "strict_schema_validation",
             "strict_artifact_validation",
             "terminal_closure_certificate",

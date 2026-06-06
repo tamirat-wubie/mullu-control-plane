@@ -80,6 +80,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "doc_code_consistency",
         "tenant_scope_coverage",
         "persistence_tenant_guard_coverage",
+        "mcp_capability_manifest",
+        "mcp_operator_checklist",
         "strict_schema_validation",
         "strict_artifact_validation",
         "terminal_closure_certificate",
@@ -218,6 +220,18 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["persistence_tenant_guard_coverage"][1:] == (
         "scripts/validate_persistence_tenant_guard_coverage.py",
+    )
+    assert args_by_name["mcp_capability_manifest"][1:] == (
+        "scripts/validate_mcp_capability_manifest.py",
+        "--manifest",
+        "examples/mcp_capability_manifest.json",
+        "--json",
+    )
+    assert args_by_name["mcp_operator_checklist"][1:] == (
+        "scripts/validate_mcp_operator_checklist.py",
+        "--checklist",
+        "examples/mcp_operator_handoff_checklist.json",
+        "--json",
     )
     assert args_by_name["strict_schema_validation"][1:] == (
         "scripts/validate_schemas.py",
