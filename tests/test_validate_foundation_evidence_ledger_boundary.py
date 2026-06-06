@@ -72,6 +72,21 @@ def test_evidence_index_has_expected_identity_and_public_paths() -> None:
     assert payload["deployment_allowed"] is False
 
 
+def test_evidence_index_closes_one_local_no_outreach_proof_without_promotion() -> None:
+    payload = load_json_object(DEFAULT_INDEX_PATH, "evidence index")
+    entries = {entry["entry_id"]: entry for entry in payload["evidence_index_entries"]}
+    local_proof = entries["community_network_no_outreach_rehearsal_local_proof"]
+
+    assert local_proof["state"] == "SolvedVerified"
+    assert local_proof["entry_type"] == "local_rehearsal_proof"
+    assert local_proof["artifact_ref"] == "examples/foundation_community_network_no_outreach_rehearsal_witness.awaiting_evidence.json"
+    assert "does not execute outreach" in local_proof["public_safe_note"]
+    assert payload["status"] == "AwaitingEvidence"
+    assert payload["evidence_promotion_allowed"] is False
+    assert payload["terminal_closure_claimed"] is False
+    assert payload["readiness_claimed"] is False
+
+
 def test_witness_rejects_evidence_promotion() -> None:
     payload = load_json_object(DEFAULT_PACKET_PATH, "evidence-ledger witness")
     candidate = deepcopy(payload)
@@ -143,6 +158,18 @@ def test_index_rejects_entry_state_promotion() -> None:
     payload = load_json_object(DEFAULT_INDEX_PATH, "evidence index")
     candidate = deepcopy(payload)
     candidate["evidence_index_entries"][0]["state"] = "Ready"
+
+    findings = validate_index_packet(candidate)
+
+    assert findings
+    assert any(finding.rule_id == "evidence_index_entry_inventory_invalid" for finding in findings)
+    assert any(finding.rule_id == "evidence_index_entry_state_invalid" for finding in findings)
+
+
+def test_index_rejects_local_proof_state_drift() -> None:
+    payload = load_json_object(DEFAULT_INDEX_PATH, "evidence index")
+    candidate = deepcopy(payload)
+    candidate["evidence_index_entries"][-1]["state"] = "AwaitingEvidence"
 
     findings = validate_index_packet(candidate)
 

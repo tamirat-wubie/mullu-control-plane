@@ -95,6 +95,12 @@ EXPECTED_INDEX_ENTRIES = (
     ("source_control_packet", "source_control_packet", "examples/foundation_source_control_boundary.awaiting_commit.json", "AwaitingEvidence"),
     ("readiness_snapshot", "readiness_snapshot", "docs/CURRENT_READINESS_SNAPSHOT.md", "AwaitingEvidence"),
     ("public_copy_routing_index", "public_copy_routing", "docs/START_HERE.md", "AwaitingEvidence"),
+    (
+        "community_network_no_outreach_rehearsal_local_proof",
+        "local_rehearsal_proof",
+        "examples/foundation_community_network_no_outreach_rehearsal_witness.awaiting_evidence.json",
+        "SolvedVerified",
+    ),
 )
 EXPECTED_INDEX_ROOT_KEYS = {
     "blocked_claims",
@@ -422,11 +428,15 @@ def validate_index_entries(index_entries: object) -> list[EvidenceLedgerFinding]
                     f"{entry_id} entry keys must be: {', '.join(sorted(EXPECTED_INDEX_ENTRY_KEYS))}",
                 )
             )
-        if entry.get("state") != "AwaitingEvidence":
+        expected_state = next(
+            (expected_entry[3] for expected_entry in EXPECTED_INDEX_ENTRIES if expected_entry[0] == entry.get("entry_id")),
+            "AwaitingEvidence",
+        )
+        if entry.get("state") != expected_state:
             findings.append(
                 EvidenceLedgerFinding(
                     "evidence_index_entry_state_invalid",
-                    f"{entry_id} state must be AwaitingEvidence",
+                    f"{entry_id} state must be {expected_state}",
                 )
             )
         artifact_ref = entry.get("artifact_ref")
