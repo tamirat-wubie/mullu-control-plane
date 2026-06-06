@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1780664954.505807,
-  "check_count": 129,
+  "check_count": 130,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -1212,6 +1212,20 @@
       ],
       "return_code": 0,
       "stdout": "{\"blockers\": [\"finance_email_calendar_binding_receipt_not_ready\", \"finance_approval_pilot_readiness_not_ready\"], \"command_count\": 17, \"mode\": \"dry-run\", \"ready_to_execute_live\": false, \"status\": \"blocked\"}\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "finance_approval_live_handoff_chain",
+      "args": [
+        "python",
+        "scripts/run_finance_approval_live_handoff_chain.py",
+        "--output-dir",
+        ".tmp/finance-approval-live-handoff-chain",
+        "--json"
+      ],
+      "return_code": 0,
+      "stdout": "{\"artifact_count\": 10, \"chain_ok\": true, \"mode\": \"dry-run\", \"readiness_blockers\": [\"finance closure run not ready: status=blocked\", \"finance email/calendar live receipt not ready: status=failed blockers=['email_calendar_probe_exception']\", \"finance preflight not ready: blocker_count=2\", \"finance handoff packet not ready: blocker_count=5\"], \"ready\": false, \"schema_ok\": true, \"status\": \"passed_blocked\"}\n",
       "stderr": "",
       "passed": true
     },
