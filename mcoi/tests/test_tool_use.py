@@ -3,10 +3,11 @@
 import pytest
 from mcoi_runtime.core.safe_arithmetic import evaluate_expression
 from mcoi_runtime.core.tool_use import (
-    ToolDefinition, ToolParameter, ToolRegistry, ToolResult,
+    ToolDefinition, ToolParameter, ToolRegistry,
 )
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+def FIXED_CLOCK() -> str:
+    return "2026-03-26T12:00:00Z"
 
 
 def _registry():
@@ -207,6 +208,9 @@ class TestToolRegistry:
         reg.invoke("calculator", {"expression": "2+2"})
         history = reg.invocation_history()
         assert len(history) == 2
+        assert [result.invocation_id for result in reg.invocation_history(limit=1)] == ["inv-2"]
+        assert reg.invocation_history(limit=0) == []
+        assert reg.invocation_history(limit=-1) == []
 
     def test_list_tools(self):
         reg = _registry()

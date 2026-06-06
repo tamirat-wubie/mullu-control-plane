@@ -256,6 +256,8 @@ class ToolRegistry:
         return tools
 
     def invocation_history(self, limit: int = 50) -> list[ToolResult]:
+        if limit <= 0:
+            return []
         return self._invocation_log[-limit:]
 
     @property
