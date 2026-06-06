@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1780664954.505807,
-  "check_count": 104,
+  "check_count": 105,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -1049,6 +1049,17 @@
       "args": [
         "python",
         "scripts/validate_governed_code_change_loop_sandbox_readiness_runbook.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "intelligence_coordination_episode_receipt",
+      "args": [
+        "python",
+        "scripts/validate_intelligence_coordination_episode_receipt.py"
       ],
       "return_code": 0,
       "stdout": "STATUS: passed\n",
