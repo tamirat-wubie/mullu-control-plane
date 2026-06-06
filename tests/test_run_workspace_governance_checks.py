@@ -80,6 +80,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "general_agent_promotion_handoff_packet",
         "general_agent_promotion_operator_checklist",
         "general_agent_promotion_environment_bindings",
+        "general_agent_promotion_handoff_preflight",
         "route_receipt_coverage",
         "route_guard_chain_coverage",
         "reflective_contract_guard",
@@ -247,6 +248,12 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "examples/general_agent_promotion_environment_bindings.json",
         "--checklist",
         "examples/general_agent_promotion_operator_checklist.json",
+        "--json",
+    )
+    assert args_by_name["general_agent_promotion_handoff_preflight"][1:] == (
+        "scripts/preflight_general_agent_promotion_handoff.py",
+        "--output",
+        ".tmp/general-agent-promotion-handoff-preflight.json",
         "--json",
     )
     assert args_by_name["route_receipt_coverage"][1:] == (

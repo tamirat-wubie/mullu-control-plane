@@ -60,6 +60,26 @@ def test_handoff_preflight_blocks_missing_environment_bindings(tmp_path: Path) -
     assert "validate_general_agent_promotion_environment_binding_receipt.py" in gateway_action.verification_command
 
 
+def test_handoff_preflight_missing_readiness_keeps_report_contract(tmp_path: Path) -> None:
+    adapter_schema_validation, schema_validation, drift_validation, _readiness = _write_valid_reports(tmp_path)
+    environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)
+    missing_readiness = tmp_path / "missing-readiness.json"
+
+    report = preflight_general_agent_promotion_handoff(
+        environment_binding_receipt_path=environment_binding_receipt,
+        adapter_schema_validation_path=adapter_schema_validation,
+        schema_validation_path=schema_validation,
+        drift_validation_path=drift_validation,
+        readiness_path=missing_readiness,
+        env_reader=lambda name: "present" if name in REQUIRED_ENV else "",
+    )
+
+    assert report.ready is False
+    assert report.readiness_level == "pilot-governed-core"
+    assert report.production_ready is False
+    assert report.blockers == ("promotion readiness report",)
+
+
 def test_handoff_preflight_accepts_valid_local_state(tmp_path: Path) -> None:
     adapter_schema_validation, schema_validation, drift_validation, readiness = _write_valid_reports(tmp_path)
     environment_binding_receipt = _write_valid_environment_binding_receipt(tmp_path)

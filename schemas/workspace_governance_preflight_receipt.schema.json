@@ -169,6 +169,7 @@
             "general_agent_promotion_handoff_packet",
             "general_agent_promotion_operator_checklist",
             "general_agent_promotion_environment_bindings",
+            "general_agent_promotion_handoff_preflight",
             "route_receipt_coverage",
             "route_guard_chain_coverage",
             "reflective_contract_guard",

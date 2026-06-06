@@ -410,7 +410,7 @@ def _readiness_report_step(
     if error:
         return (
             HandoffPreflightStep(name="promotion readiness report", passed=False, detail=error),
-            "",
+            EXPECTED_READINESS_LEVEL,
             False,
         )
     expected_capability_count, expected_capsule_count, count_error = _default_fabric_counts(
@@ -420,7 +420,7 @@ def _readiness_report_step(
     if count_error:
         return (
             HandoffPreflightStep(name="promotion readiness report", passed=False, detail=count_error),
-            str(payload.get("readiness_level", "")),
+            str(payload.get("readiness_level") or EXPECTED_READINESS_LEVEL),
             payload.get("ready") is True,
         )
     readiness_level = str(payload.get("readiness_level", ""))
