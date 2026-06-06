@@ -91,6 +91,9 @@ class TestReplayRecorder:
             rec.record_frame(f"t{i}", "a", {}, {})
             rec.complete_trace(f"t{i}")
         assert len(rec.list_traces()) == 3
+        assert [trace.trace_id for trace in rec.list_traces(limit=2)] == ["t1", "t2"]
+        assert rec.list_traces(limit=0) == []
+        assert rec.list_traces(limit=-1) == []
 
     def test_counts(self):
         rec = ReplayRecorder(clock=FIXED_CLOCK)
