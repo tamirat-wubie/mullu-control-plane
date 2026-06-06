@@ -1,6 +1,5 @@
 """Tests for Phase 228C — Rollback Snapshot Manager."""
 from __future__ import annotations
-import pytest
 from mcoi_runtime.core.rollback_snapshot import SnapshotManager
 
 
@@ -74,6 +73,9 @@ class TestSnapshotManager:
         recent = mgr.list_snapshots(limit=3)
         assert len(recent) == 3
         assert recent[0].snapshot_id == "s4"  # most recent first
+        assert [snap.snapshot_id for snap in mgr.list_snapshots(limit=1)] == ["s4"]
+        assert mgr.list_snapshots(limit=0) == []
+        assert mgr.list_snapshots(limit=-1) == []
 
     def test_delete_snapshot(self):
         mgr = SnapshotManager()
