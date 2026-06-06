@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1780664954.505807,
-  "check_count": 125,
+  "check_count": 126,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -1151,6 +1151,22 @@
       ],
       "return_code": 0,
       "stdout": "{\"checklist_id\": \"general-agent-promotion-operator-v1\", \"checklist_path\": \"examples/general_agent_promotion_operator_checklist.json\", \"errors\": [], \"step_count\": 9, \"valid\": true}\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "general_agent_promotion_environment_bindings",
+      "args": [
+        "python",
+        "scripts/validate_general_agent_promotion_environment_bindings.py",
+        "--contract",
+        "examples/general_agent_promotion_environment_bindings.json",
+        "--checklist",
+        "examples/general_agent_promotion_operator_checklist.json",
+        "--json"
+      ],
+      "return_code": 0,
+      "stdout": "{\"binding_count\": 9, \"contract_id\": \"general-agent-promotion-environment-bindings-v1\", \"contract_path\": \"examples/general_agent_promotion_environment_bindings.json\", \"errors\": [], \"required_names\": [\"EMAIL_CALENDAR_CONNECTOR_TOKEN\", \"MULLU_AUTHORITY_OPERATOR_SECRET\", \"MULLU_BROWSER_SANDBOX_EVIDENCE\", \"MULLU_DEPLOYMENT_WITNESS_SECRET\", \"MULLU_GATEWAY_URL\", \"MULLU_RUNTIME_CONFORMANCE_SECRET\", \"MULLU_RUNTIME_WITNESS_SECRET\", \"MULLU_VOICE_PROBE_AUDIO\", \"OPENAI_API_KEY\"], \"schema_path\": \"schemas/general_agent_promotion_environment_bindings.schema.json\", \"valid\": true}\n",
       "stderr": "",
       "passed": true
     },

@@ -79,6 +79,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "mil_audit_runbook_operator_checklist",
         "general_agent_promotion_handoff_packet",
         "general_agent_promotion_operator_checklist",
+        "general_agent_promotion_environment_bindings",
         "route_receipt_coverage",
         "route_guard_chain_coverage",
         "reflective_contract_guard",
@@ -236,6 +237,14 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["general_agent_promotion_operator_checklist"][1:] == (
         "scripts/validate_general_agent_promotion_operator_checklist.py",
+        "--checklist",
+        "examples/general_agent_promotion_operator_checklist.json",
+        "--json",
+    )
+    assert args_by_name["general_agent_promotion_environment_bindings"][1:] == (
+        "scripts/validate_general_agent_promotion_environment_bindings.py",
+        "--contract",
+        "examples/general_agent_promotion_environment_bindings.json",
         "--checklist",
         "examples/general_agent_promotion_operator_checklist.json",
         "--json",
