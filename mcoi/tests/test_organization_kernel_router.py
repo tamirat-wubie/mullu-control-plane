@@ -222,6 +222,19 @@ def _allow_all_plan_steps(client: TestClient) -> None:
         assert response.json()["decision"]["status"] == "allowed"
 
 
+def _closure_gate_evidence_refs() -> list[str]:
+    return [
+        "evidence:executive_objective",
+        "evidence:product_launch_boundary",
+        "evidence:engineering_health_endpoint",
+        "evidence:engineering_gateway_witness",
+        "evidence:engineering_runtime_conformance",
+        "evidence:security_public_claim_boundary",
+        "evidence:security_approval",
+        "evidence:finance_budget_check",
+    ]
+
+
 def _record_engineering_dispatch_receipt_for_route(client: TestClient, requirement_id: str) -> tuple[str, str, str]:
     evidence = client.post(
         "/api/v1/cases/case.launch_gateway_pilot/evidence",
@@ -1858,7 +1871,7 @@ def test_case_portfolio_reports_closed_verified_case(tmp_path: Path) -> None:
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": ["evidence:closure:gateway-pilot"],
+            "evidence_refs": _closure_gate_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -1916,7 +1929,7 @@ def test_gateway_pilot_can_close_and_bind_learning(tmp_path: Path) -> None:
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": ["evidence:closure:gateway-pilot"],
+            "evidence_refs": _closure_gate_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -1964,7 +1977,7 @@ def test_case_proof_timeline_reports_closure_certificate_and_learning(tmp_path: 
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": ["evidence:closure:gateway-pilot"],
+            "evidence_refs": _closure_gate_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },
@@ -2029,7 +2042,7 @@ def test_case_closure_certificate_view_is_read_only_and_escaped(tmp_path: Path) 
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": ["evidence:closure:gateway-pilot"],
+            "evidence_refs": _closure_gate_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "<script>alert('terminal')</script>",
         },
@@ -2091,7 +2104,7 @@ def test_case_proof_explorer_reports_closed_verified_case(tmp_path: Path) -> Non
             "observed_effect": "gateway_pilot_ready",
             "reconciliation_status": "match",
             "forbidden_effects_checked": True,
-            "evidence_refs": ["evidence:closure:gateway-pilot"],
+            "evidence_refs": _closure_gate_evidence_refs(),
             "terminal_disposition": "committed",
             "terminal_certificate_id": "terminal:gateway-pilot",
         },

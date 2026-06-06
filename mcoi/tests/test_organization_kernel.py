@@ -117,7 +117,21 @@ def _allow_all_plan_steps(kernel: OrganizationKernel, plan: OrganizationPlan) ->
         assert decision.evidence_refs
 
 
-def _match_reconciliation(case_id: str) -> OrganizationEffectReconciliation:
+def _latest_gate_evidence_refs(kernel: OrganizationKernel, case_id: str) -> tuple[str, ...]:
+    state = kernel.snapshot_state()
+    decisions = {decision.decision_id: decision for decision in state.gate_decisions}
+    refs: list[str] = []
+    for latest in state.latest_gate_decisions:
+        if latest.case_id != case_id:
+            continue
+        decision = decisions[latest.decision_id]
+        for evidence_ref in decision.evidence_refs:
+            if evidence_ref not in refs:
+                refs.append(evidence_ref)
+    return tuple(refs)
+
+
+def _match_reconciliation(case_id: str, evidence_refs: tuple[str, ...]) -> OrganizationEffectReconciliation:
     return OrganizationEffectReconciliation(
         reconciliation_id="recon.launch.match",
         case_id=case_id,
@@ -125,7 +139,7 @@ def _match_reconciliation(case_id: str) -> OrganizationEffectReconciliation:
         observed_effect="gateway_pilot_published",
         status=ReconciliationStatus.MATCH,
         forbidden_effects_checked=True,
-        evidence_refs=("evidence:terminal:gateway-pilot",),
+        evidence_refs=evidence_refs,
         reconciled_at="2026-05-27T17:03:00+00:00",
     )
 
@@ -215,6 +229,7 @@ def test_terminal_closure_requires_reconciliation_match_for_committed_case() -> 
     _admit_all_pilot_evidence(kernel, plan.case_id)
     _record_security_dual_control_approval(kernel, plan.case_id)
     _allow_all_plan_steps(kernel, plan)
+    closure_evidence_refs = _latest_gate_evidence_refs(kernel, plan.case_id)
     mismatch = OrganizationEffectReconciliation(
         reconciliation_id="recon.launch.mismatch",
         case_id=plan.case_id,
@@ -222,7 +237,7 @@ def test_terminal_closure_requires_reconciliation_match_for_committed_case() -> 
         observed_effect="gateway_pilot_pending",
         status=ReconciliationStatus.MISMATCH,
         forbidden_effects_checked=True,
-        evidence_refs=("evidence:terminal:gateway-pilot",),
+        evidence_refs=closure_evidence_refs,
         reconciled_at="2026-05-27T17:03:00+00:00",
     )
 
@@ -233,17 +248,36 @@ def test_terminal_closure_requires_reconciliation_match_for_committed_case() -> 
             terminal_certificate_id="terminal.certificate.gateway-pilot.mismatch",
         )
     closure = kernel.close_case(
-        reconciliation=_match_reconciliation(plan.case_id),
+        reconciliation=_match_reconciliation(plan.case_id, closure_evidence_refs),
         terminal_disposition=TerminalClosureDisposition.COMMITTED,
         terminal_certificate_id="terminal.certificate.gateway-pilot",
     )
     closed_case = kernel.get_case(plan.case_id)
 
     assert closure.terminal_disposition is TerminalClosureDisposition.COMMITTED
-    assert closure.evidence_refs == ("evidence:terminal:gateway-pilot",)
+    assert closure.evidence_refs == closure_evidence_refs
     assert closed_case is not None
     assert closed_case.status.value == "closed"
     assert kernel.closure_count == 1
+
+
+def test_terminal_closure_requires_latest_gate_evidence_refs() -> None:
+    kernel, plan = _pilot()
+    _admit_all_pilot_evidence(kernel, plan.case_id)
+    _record_security_dual_control_approval(kernel, plan.case_id)
+    _allow_all_plan_steps(kernel, plan)
+
+    with pytest.raises(RuntimeCoreInvariantError, match="gate evidence refs"):
+        kernel.close_case(
+            reconciliation=_match_reconciliation(
+                plan.case_id,
+                ("evidence:terminal:gateway-pilot",),
+            ),
+            terminal_disposition=TerminalClosureDisposition.COMMITTED,
+            terminal_certificate_id="terminal.certificate.gateway-pilot",
+        )
+
+    assert kernel.closure_count == 0
 
 
 def test_learning_admission_binding_requires_existing_terminal_closure() -> None:
@@ -263,7 +297,7 @@ def test_learning_admission_binding_requires_existing_terminal_closure() -> None
     _record_security_dual_control_approval(kernel, plan.case_id)
     _allow_all_plan_steps(kernel, plan)
     closure = kernel.close_case(
-        reconciliation=_match_reconciliation(plan.case_id),
+        reconciliation=_match_reconciliation(plan.case_id, _latest_gate_evidence_refs(kernel, plan.case_id)),
         terminal_disposition=TerminalClosureDisposition.COMMITTED,
         terminal_certificate_id="terminal.certificate.gateway-pilot",
     )
@@ -449,6 +483,49 @@ def test_worker_receipts_satisfy_engineering_gate_evidence() -> None:
         "evidence:engineering_gateway_witness",
         "evidence:engineering_runtime_conformance",
     }
+
+
+def test_terminal_closure_requires_worker_bound_gate_evidence_refs() -> None:
+    kernel, plan = _pilot()
+    _bind_engineering_worker_receipts(kernel, plan.case_id)
+    for requirement_id in (
+        "executive_objective",
+        "security_public_claim_boundary",
+        "security_approval",
+        "finance_budget_check",
+    ):
+        kernel.admit_case_evidence(
+            CaseEvidence(
+                evidence_ref=f"evidence:{requirement_id}",
+                case_id=plan.case_id,
+                requirement_id=requirement_id,
+                submitted_by="test-harness",
+                submitted_at="2026-05-27T17:01:00+00:00",
+            )
+        )
+    _record_security_dual_control_approval(kernel, plan.case_id)
+    _allow_all_plan_steps(kernel, plan)
+    closure_evidence_refs = _latest_gate_evidence_refs(kernel, plan.case_id)
+    missing_worker_gateway_witness = tuple(
+        evidence_ref
+        for evidence_ref in closure_evidence_refs
+        if evidence_ref != "evidence:engineering_gateway_witness"
+    )
+
+    with pytest.raises(RuntimeCoreInvariantError, match="gate evidence refs"):
+        kernel.close_case(
+            reconciliation=_match_reconciliation(plan.case_id, missing_worker_gateway_witness),
+            terminal_disposition=TerminalClosureDisposition.COMMITTED,
+            terminal_certificate_id="terminal.certificate.gateway-pilot",
+        )
+    closure = kernel.close_case(
+        reconciliation=_match_reconciliation(plan.case_id, closure_evidence_refs),
+        terminal_disposition=TerminalClosureDisposition.COMMITTED,
+        terminal_certificate_id="terminal.certificate.gateway-pilot",
+    )
+
+    assert "evidence:engineering_gateway_witness" in closure.evidence_refs
+    assert kernel.closure_count == 1
 
 
 def test_worker_receipt_admitted_as_case_evidence_with_provenance() -> None:
