@@ -161,6 +161,8 @@
             "governed_code_change_loop_sandbox_probe_example",
             "governed_code_change_loop_sandbox_readiness_runbook",
             "intelligence_coordination_episode_receipt",
+            "route_receipt_coverage",
+            "route_guard_chain_coverage",
             "universal_action_orchestration_contract",
             "universal_action_orchestration_validation_receipt_contract",
             "universal_action_orchestration_validation_receipt_example",

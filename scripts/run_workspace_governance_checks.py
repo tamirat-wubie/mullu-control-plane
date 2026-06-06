@@ -527,6 +527,14 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "route_receipt_coverage",
+            (python_executable, "scripts/validate_receipt_coverage.py", "--strict"),
+        ),
+        CheckCommand(
+            "route_guard_chain_coverage",
+            (python_executable, "scripts/validate_guard_chain_coverage.py", "--strict"),
+        ),
+        CheckCommand(
             "universal_action_orchestration_contract",
             (python_executable, "scripts/validate_universal_action_orchestration.py"),
         ),
