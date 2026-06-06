@@ -1378,7 +1378,11 @@ class TestM3ResolveBeforeOperate:
         assert outside.read_text(encoding="utf-8") == "outside-secret"
         assert link.read_text(encoding="utf-8") == "inside-content"
         assert not link.is_symlink()
-        assert lstat_calls == [link]
+        # Patching the process-wide os.lstat also observes Path.resolve calls
+        # on POSIX; the contract here is that the leaf symlink itself is
+        # lstat'ed and treated as a symlink before mode preservation.
+        assert link in lstat_calls
+        assert lstat_calls[-1] == link
         assert chmod_calls == []
 
     def test_write_file_existing_directory_symlink_leaf_replaced_not_followed(
