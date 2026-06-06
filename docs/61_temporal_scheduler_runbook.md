@@ -275,6 +275,7 @@ pending -> blocked      temporal_action_blocked
 pending -> expired      temporal_action_expired
 pending -> missed       temporal_action_missed
 pending -> cancelled    temporal_action_cancelled
+running -> pending      temporal_lease_reclaimed
 running -> failed       temporal_action_failed
 ```
 
