@@ -31,6 +31,8 @@ def test_current_receipt_contract_passes() -> None:
     assert "intelligence_coordination_episode_receipt" in check_name_enum
     assert "engineering_puzzle_universality_witness" in check_name_enum
     assert "mil_audit_runbook_operator_checklist" in check_name_enum
+    assert "general_agent_promotion_handoff_packet" in check_name_enum
+    assert "general_agent_promotion_operator_checklist" in check_name_enum
     assert "route_receipt_coverage" in check_name_enum
     assert "route_guard_chain_coverage" in check_name_enum
     assert "reflective_contract_guard" in check_name_enum
