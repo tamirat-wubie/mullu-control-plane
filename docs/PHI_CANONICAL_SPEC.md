@@ -1,6 +1,6 @@
 # Φ — COMPLETE ARCHITECTURE, STRUCTURE, SPECIFICATIONS, AND ALGORITHMS
 
-**Canonical reference document · schema: phi2-gps-v2.2 · USCL v3.2**
+**Canonical reference document · kernel schema: phi2-gps-v2.2 · platform overlay: phi2-gps-v3 · USCL v3.2**
 
 ---
 
@@ -497,6 +497,273 @@ See full specification in sections 5.4 through 5.10 of this document. Key struct
 
 ---
 
+## PART V-A - Phi2-GPS v3: ENGINEERING PLATFORM OVERLAY
+
+---
+
+### 5A.1 Audit Judgment
+
+Phi2-GPS v3 is accepted as an additive engineering platform around the v2.2 kernel.
+It does not replace `P*`, the 13-phase solver, `Phi_gov` call points, ProofState
+discipline, episode model freeze, or the solver outcome taxonomy.
+
+Accepted constructive deltas:
+
+- Problem compiler from raw input into `P*`.
+- Solver router over specialized modes instead of one universal algorithm.
+- Belief ledger, contradiction ledger, constraint registry, proof registry, failure registry, and adapter registry as first-class stores.
+- Action bifurcation gate for epistemic, world-changing, and hybrid actions.
+- Counterfactual lab before irreversible or high-risk execution.
+- Proof receipt system for terminal outcomes, partial outcomes, refusals, and impossibility proofs.
+- Learning and schema library for validated reuse only.
+- Governance and human oversight interface for authority, consent, escalation, reversibility, and red-line refusal.
+
+Blocked fracture deltas:
+
+- No claim that effect-bearing external adapter runtime or open-world autonomy is complete.
+- No world-changing adapter without permission, risk, resource, rollback or compensation, trace, and proof-obligation checks.
+- No representation mutation that violates hard laws, proof obligations, or Mfidel atomicity.
+- No public-readiness, deployment-readiness, or customer-readiness claim from this architecture alone.
+
+Foundation Mode status:
+
+```
+Specification acceptance:                 SolvedVerified
+Repository-local v3 runtime contracts:    SolvedVerified
+Effect-bearing external adapter execution: AwaitingEvidence
+External deployment:                      AwaitingEvidence
+```
+
+### 5A.2 Platform Law
+
+```
+Phi2_GPS_v3(Praw)
+  = Certify(
+      Execute(
+        Route(
+          Compile(Praw -> P*)
+        )
+      )
+    )
+```
+
+Expanded pipeline:
+
+```
+raw problem
+-> intake envelope
+-> problem compiler
+-> P* kernel object
+-> profile vector chi
+-> solver routing
+-> policy synthesis
+-> governed adapter action/test loop
+-> verification and proof receipt
+-> learning consolidation
+-> bounded reframe when needed
+```
+
+### 5A.3 Platform Layers
+
+| Layer | Name | Contract |
+| --- | --- | --- |
+| L0 | Intake Layer | Convert raw content, code, logs, documents, images, events, system state, or instruction into `RawProblemEnvelope`. |
+| L1 | Problem Compiler | Extract symbols, unknowns, constraints, goals, risks, tools, verification needs, evidence, and assumptions. |
+| L2 | Kernel Object Layer | Normalize the draft into `P*` while marking each field known, partial, unknown, conflicting, hypothesized, or forbidden. |
+| L3 | Registry Layer | Store symbol, belief, law, norm, action, transition, invariant, proof, failure, and adapter records. |
+| L4 | Solver Router | Route by profile vector, domain class, certainty level, shape metrics, and resource pressure. |
+| L5 | Policy and Planning Layer | Synthesize exact, robust, anytime, experimental, adversarial, cooperative, proof, or generate-test-refine policies. |
+| L6 | Execution Interface | Execute only through governed adapters after law, norm, resource, risk, proof, and trace checks. |
+| L7 | Counterfactual Lab | Simulate candidate policies, compare side effects, estimate regret, and stress-test uncertainty before irreversible action. |
+| L8 | Verification and Proof Receipt Layer | Emit solution, failure, impossibility, partial-solution, safety-rejection, or authority-blocked certificates. |
+| L9 | Learning and Schema Library | Store validated problem profiles, solver choices, failure signatures, reusable decompositions, and policy traces. |
+| L10 | Governance and Oversight Layer | Manage authority, consent, stakeholder rules, escalation, reversibility, manual approval, explanation, and refusal. |
+
+### 5A.4 Core v3 Objects
+
+```
+RawProblemEnvelope := {
+  id, input_type, raw_content, source, timestamp,
+  requester, authority_context, urgency,
+  declared_goal, declared_constraints
+}
+
+CompiledProblem := {
+  kernel_draft: P*,
+  symbols,
+  assumptions,
+  unknowns,
+  contradictions,
+  risks,
+  proof_requirements,
+  confidence_map
+}
+
+ActionSchema := {
+  id,
+  class: epistemic | world_changing | hybrid,
+  preconditions,
+  predicted_effects,
+  expected_information_gain,
+  cost,
+  risk,
+  reversibility,
+  permission_required,
+  proof_obligation,
+  confidence,
+  adapter
+}
+
+ProofReceipt := {
+  receipt_id,
+  problem_id,
+  terminal_verdict,
+  assumptions_used,
+  unresolved_unknowns,
+  policy_selected,
+  action_trace,
+  evidence_trace,
+  constraints_satisfied,
+  norms_satisfied,
+  resources_used,
+  side_effects,
+  verification_result,
+  residual_risk,
+  learning_updates
+}
+```
+
+### 5A.5 Ledgers and Gates
+
+`ProblemCompiler(raw) -> CompiledProblem` must complete before solver routing. It separates evidence from assumption and records required clarifications without blocking safe epistemic actions.
+
+`ContradictionLedger` is append-only. Each entry records conflicting claims, evidence sources, severity, scope, repair options, and resolution status.
+
+`BeliefLedger` is append-only. Each update records previous belief, new evidence, update rule, resulting belief, confidence delta, and surprise score.
+
+`ActionGate` classifies every proposed action as epistemic, world-changing, or hybrid. Hybrid actions require the stricter preflight path.
+
+`CounterfactualLab` runs before irreversible or high-risk action. It compares plausible worlds, candidate policies, unsafe tails, side effects, and reversibility.
+
+`RepresentationLab` may split, merge, reparameterize, import, elevate, abstract, dualize, invert, temporalize, causalize, geometrize, pixelize, probabilize, or categorify a representation only when the mutation preserves evidence and hard invariants, reduces contradiction or search burden, opens a blocked policy, and does not violate proof obligations.
+
+### 5A.6 Shape-of-Problem Engine
+
+The v3 router computes:
+
+```
+branching_factor
+constraint_density
+uncertainty_density
+irreversibility_score
+goal_sharpness
+adversarial_pressure
+resource_pressure
+proof_burden
+coupling_strength
+```
+
+Routing rules:
+
+- High constraint density selects constraint propagation first.
+- High uncertainty density selects epistemic policy first.
+- High irreversibility selects simulation and approval first.
+- High coupling selects causal decomposition first.
+- High proof burden selects verifier-first solving.
+- High adversarial pressure selects robust or game policy.
+
+### 5A.7 Failure Taxonomy
+
+```
+FailureKind := {
+  bad_frame,
+  missing_state,
+  bad_belief,
+  missing_goal,
+  conflicting_goal,
+  unknown_law,
+  violated_norm,
+  insufficient_action,
+  wrong_transition_model,
+  impossible_goal,
+  resource_shortage,
+  unsafe_policy,
+  verification_failure,
+  authority_blocked,
+  representation_failure
+}
+```
+
+Repair map:
+
+| Failure kind | Required repair |
+| --- | --- |
+| bad_frame | Recompile problem. |
+| missing_state | Observe or query. |
+| bad_belief | Update belief ledger. |
+| missing_goal | Construct measurable goal region. |
+| conflicting_goal | Negotiate priority or return authority-blocked. |
+| unknown_law | Discover or import constraint. |
+| violated_norm | Repair permission or reject policy. |
+| insufficient_action | Synthesize or import action under adapter governance. |
+| wrong_transition_model | Learn transition model from evidence. |
+| impossible_goal | Emit impossibility proof or revise goal. |
+| resource_shortage | Satisfice or return BudgetExhausted. |
+| unsafe_policy | Reject policy or repair it before execution. |
+| verification_failure | Repair failed proof component and re-enter. |
+| authority_blocked | Return GovernanceBlocked with rejection receipt. |
+| representation_failure | Enter RepresentationLab under acceptance constraints. |
+
+### 5A.8 Adapter Contract
+
+Every external capability must implement:
+
+```
+Adapter := {
+  id,
+  domain,
+  observe(query) -> Observation,
+  simulate(action, state) -> Prediction,
+  preflight(action, context) -> PreflightResult,
+  execute(action, context) -> ExecutionResult,
+  rollback_or_compensate(action, result) -> RollbackResult,
+  permissions() -> PermissionSpec,
+  emit_receipt(result) -> AdapterReceipt
+}
+```
+
+No adapter action may bypass Universal Action Orchestration or `Phi_gov` where a state write, authority boundary, exposure boundary, or irreversible effect is present.
+
+### 5A.9 Acceptance Tests
+
+A v3 repository-local implementation is runtime-closed only when it passes these deterministic tests:
+
+| Test | Required outcome |
+| --- | --- |
+| Unknown state | Build belief hypotheses and select epistemic action first when value of information exceeds cost. |
+| Vague goal | Construct measurable target region or request bounded value criteria. |
+| Unknown constraint | Discover constraint through probe or violation pattern, then update registry. |
+| Impossible goal | Return ImpossibleProved with proof, not generic failure. |
+| Unsafe action | Reject unsafe policy or return repaired policy before execution. |
+| Wrong representation | Trigger governed representation mutation and prove improvement. |
+| Verification failure | Diagnose failed proof component and re-enter repair. |
+| Resource limit | Return satisfice result or BudgetExhausted with gap report. |
+| Multi-agent conflict | Separate law, norm, value, and authority; negotiate or return GovernanceBlocked. |
+| Learning transfer | Retrieve prior validated schema and improve routing or policy selection. |
+
+### 5A.10 Engineering Roadmap
+
+1. Kernel skeleton: `ProblemStar`, profile vector, verdict enum, trace model, proof receipt model. Status: implemented as immutable runtime data contracts in `mcoi_runtime.core.phi_gps`.
+2. Compiler: raw parser, symbol extractor, assumption ledger, unknown map, contradiction ledger. Status: implemented as deterministic `ProblemCompiler.compile(...)` data-path in `mcoi_runtime.core.phi_gps`.
+3. Registries: law, norm, action, transition, invariant, proof, failure, and adapter registries. Status: implemented as deterministic `PlatformRegistry`, `RegistryRecord`, `ContradictionLedger`, and `BeliefLedger` contracts.
+4. Solver router: shape metrics, mode selection table, fallback stack. Status: implemented as `route_solver(...)` and `SolverRoute`.
+5. Execution loop: policy selection, preflight, execute or simulate, belief update, surprise detection, model update. Status: implemented as local `run_platform_cycle(...)` with world-changing actions blocked unless explicitly authorized.
+6. Verification: goal, law, norm, resource, side-effect, and explanation verifiers. Status: implemented as `PlatformVerificationCertificate`, `verify_platform_result(...)`, and proof receipt emission.
+7. Labs: counterfactual, representation mutation, geometrization, document-state, visual-state, and causal graph modules. Status: implemented as deterministic `CounterfactualLab` and generic `RepresentationLab` operator acceptance records; specialized domain transforms remain adapter evidence.
+8. Domain adapters: file, document, code repository, simulation, human approval, and governed web research adapters. Status: implemented as `DeterministicPlatformAdapter` contract harness for local simulation; effect-bearing external adapters remain AwaitingEvidence.
+
+---
+
 ## PART VI — Φ_gps PHASE PROTOCOLS (ALL 13 PHASES)
 
 ---
@@ -636,6 +903,7 @@ DMRS                    FIXED POINT
 Ψ judgment kernel       INTEGRATED
 SCCE                    INTEGRATED
 Φ_gps v2.2              NEAR FIXED POINT
+Phi2-GPS v3 overlay     ACCEPTED SPEC
 Φ_agent                 COHERENT
 Φ_multi                 INTERFACE DEFINED
 Φ_dyn                   SPECIFIED
@@ -646,6 +914,9 @@ OPEN BLOCKERS:
   R-03: BCR scenario generation protocol
   R-04: Φ_multi ↔ Φ_gps shared-state contract
   R-05: KnowledgeBase eviction policy
+  R-06: Phi2-GPS v3 router, registries, and execution-loop implementation beyond Milestone 2
+  R-07: Phi2-GPS v3 adapter receipt validators
+  R-08: Phi2-GPS v3 acceptance-test harness
 
 DEPLOYMENT READINESS:    BOUNDED PILOT
 OPEN-WORLD AUTONOMY:     NOT YET
@@ -655,4 +926,4 @@ OPEN-WORLD AUTONOMY:     NOT YET
 
 **This is the single canonical Φ specification.**
 All prior partial documents are superseded by this reference.
-Schema version: `phi2-gps-v2.2` · USCL: `v3.2`
+Kernel schema version: `phi2-gps-v2.2` · Platform overlay: `phi2-gps-v3` · USCL: `v3.2`
