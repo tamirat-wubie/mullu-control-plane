@@ -247,6 +247,8 @@ class ModelRouter:
         return (input_tokens * profile.cost_per_1k_input + max_tokens * profile.cost_per_1k_output) / 1000
 
     def history(self, limit: int = 50) -> list[RoutingDecision]:
+        if limit <= 0:
+            return []
         return self._routing_history[-limit:]
 
     @property
