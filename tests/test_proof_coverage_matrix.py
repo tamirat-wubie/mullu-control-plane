@@ -649,6 +649,7 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
     assert "case_closure_requires_effect_reconciliation_match_for_committed" in witnesses
     assert "terminal_closure_requires_latest_gate_evidence_refs" in witnesses
     assert "terminal_closure_requires_worker_bound_gate_evidence_refs" in witnesses
+    assert "closure_certificate_reports_required_gate_evidence_before_closure" in witnesses
     assert "worker_receipt_requires_recorded_dispatch_receipt" in witnesses
     assert "worker_receipt_rejects_dispatch_identity_mismatch" in witnesses
     assert "worker_receipt_endpoint_rejects_missing_dispatch_receipt" in witnesses
@@ -766,7 +767,7 @@ def test_orgos_case_governance_lifecycle_surface_is_proven() -> None:
         == "orgos_case_governance_lifecycle"
     )
     assert route_records["/api/v1/orgos/read-model"]["coverage_state"] == "proven"
-    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 62
+    assert witness_records["orgos_case_governance_lifecycle"]["exact_test_anchor_count"] == 63
 
 
 def test_webhooks_proof_surface_is_witnessed() -> None:

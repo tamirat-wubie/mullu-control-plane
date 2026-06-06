@@ -1907,6 +1907,47 @@ def test_case_portfolio_reports_closed_verified_case(tmp_path: Path) -> None:
     assert payload["cases"][0]["learning_admitted"] is True
 
 
+def test_closure_certificate_reports_required_gate_evidence_before_closure(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    approval = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/approvals",
+        json={
+            "approval_id": "approval:security-dual-control",
+            "role_id": "executive.owner",
+            "approval_scope": "security_approval",
+            "approved_by": "human-executive",
+        },
+    )
+    _allow_all_plan_steps(client)
+
+    certificate = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-certificate")
+    view = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-certificate/view")
+    explorer = client.get("/api/v1/cases/case.launch_gateway_pilot/proof-explorer")
+    portfolio = client.get("/api/v1/orgs/org-mullu/case-portfolio")
+    readiness = client.get("/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/readiness")
+
+    assert approval.status_code == 200
+    assert certificate.status_code == 200
+    assert certificate.json()["terminal_status"] == "awaiting_closure"
+    assert certificate.json()["closure_gate_evidence"]["required_gate_evidence_refs"] == _closure_gate_evidence_refs()
+    assert certificate.json()["closure_gate_evidence"]["admitted_gate_evidence_refs"] == _closure_gate_evidence_refs()
+    assert certificate.json()["closure_gate_evidence"]["unavailable_gate_evidence_refs"] == []
+    assert certificate.json()["closure_gate_evidence"]["omitted_gate_evidence_refs"] == []
+    assert {item["kind"] for item in certificate.json()["attention_items"]} == {
+        "missing_terminal_closure",
+        "closure_gate_evidence_required",
+    }
+    assert view.status_code == 200
+    assert "Gate Evidence" in view.text
+    assert "evidence:engineering_gateway_witness" in view.text
+    assert "closure_gate_evidence_required" in {item["kind"] for item in explorer.json()["attention_items"]}
+    assert "closure_gate_evidence_required" in {item["kind"] for item in portfolio.json()["attention_items"]}
+    assert readiness.json()["ready_to_close"] is True
+    assert readiness.json()["required_closure_evidence_refs"] == _closure_gate_evidence_refs()
+
+
 def test_gateway_pilot_can_close_and_bind_learning(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     _bootstrap_and_open_pilot(client)
@@ -2069,6 +2110,9 @@ def test_case_closure_certificate_view_is_read_only_and_escaped(tmp_path: Path) 
     assert certificate.json()["terminal_status"] == "closed_verified"
     assert certificate.json()["closure_certificate"]["effect_reconciled"] is True
     assert certificate.json()["closure_certificate"]["learning_admitted"] is True
+    assert certificate.json()["closure_gate_evidence"]["required_gate_evidence_refs"] == _closure_gate_evidence_refs()
+    assert certificate.json()["closure_gate_evidence"]["closure_evidence_refs"] == _closure_gate_evidence_refs()
+    assert certificate.json()["closure_gate_evidence"]["omitted_gate_evidence_refs"] == []
     assert certificate.json()["attention_items"] == []
     assert view.status_code == 200
     assert "text/html" in view.headers["content-type"]
@@ -2355,6 +2399,8 @@ def test_launch_gateway_pilot_gate_preview_allows_without_writing_decisions(
     assert fetched.json()["gate_decisions"] == []
     assert readiness.json()["ready_to_close"] is False
     assert readiness.json()["preview_ready_to_close"] is True
+    assert readiness.json()["required_closure_evidence_refs"] == []
+    assert readiness.json()["preview_required_closure_evidence_refs"]
     assert readiness.json()["terminal_status"] == "awaiting_gate"
     assert readiness.json()["preview_terminal_status"] == "ready_to_close"
 
