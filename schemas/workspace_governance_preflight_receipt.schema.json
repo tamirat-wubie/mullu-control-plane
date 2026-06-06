@@ -164,6 +164,8 @@
             "route_receipt_coverage",
             "route_guard_chain_coverage",
             "reflective_contract_guard",
+            "strict_schema_validation",
+            "strict_artifact_validation",
             "universal_action_orchestration_contract",
             "universal_action_orchestration_validation_receipt_contract",
             "universal_action_orchestration_validation_receipt_example",
