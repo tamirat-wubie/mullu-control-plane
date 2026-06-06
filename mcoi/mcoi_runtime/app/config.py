@@ -72,7 +72,7 @@ class AppConfig:
     shell_sandbox_id: str = "local"
     shell_allowed_cwd_roots: tuple[str, ...] = ()
     shell_allowed_environment_keys: tuple[str, ...] = ()
-    shell_allow_inherited_environment: bool = True
+    shell_allow_inherited_environment: bool = False
     shell_require_cwd: bool = False
 
     def __post_init__(self) -> None:
@@ -160,7 +160,7 @@ class AppConfig:
             shell_allowed_environment_keys=normalized.get("shell_allowed_environment_keys", ()),
             shell_allow_inherited_environment=normalized.get(
                 "shell_allow_inherited_environment",
-                True,
+                False,
             ),
             shell_require_cwd=normalized.get("shell_require_cwd", False),
         )

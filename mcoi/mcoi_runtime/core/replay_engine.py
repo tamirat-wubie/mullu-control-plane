@@ -159,15 +159,19 @@ class ReplayEngine:
         reasons: list[str] = []
 
         # Step 2: state hash comparison
-        if replay_record.state_hash is not None and context.state_hash is not None:
-            if replay_record.state_hash != context.state_hash:
+        if replay_record.state_hash is not None:
+            if context.state_hash is None:
+                reasons.append("state_hash_missing_current_context")
+            elif replay_record.state_hash != context.state_hash:
                 reasons.append(
                     f"state_hash_mismatch:recorded={replay_record.state_hash},current={context.state_hash}"
                 )
 
         # Step 3: environment fingerprint comparison
-        if replay_record.environment_digest is not None and context.environment_digest is not None:
-            if replay_record.environment_digest != context.environment_digest:
+        if replay_record.environment_digest is not None:
+            if context.environment_digest is None:
+                reasons.append("environment_missing_current_context")
+            elif replay_record.environment_digest != context.environment_digest:
                 reasons.append(
                     f"environment_mismatch:recorded={replay_record.environment_digest},current={context.environment_digest}"
                 )
@@ -181,9 +185,9 @@ class ReplayEngine:
             )
 
         # Classify verdict by first mismatch type
-        if any(r.startswith("state_hash_mismatch") for r in reasons):
+        if any(r.startswith("state_hash_") for r in reasons):
             verdict = ReplayVerdict.STATE_MISMATCH
-        elif any(r.startswith("environment_mismatch") for r in reasons):
+        elif any(r.startswith("environment_") for r in reasons):
             verdict = ReplayVerdict.ENVIRONMENT_MISMATCH
         else:
             verdict = ReplayVerdict.INVALID_RECORD

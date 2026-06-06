@@ -2,6 +2,7 @@
 
 import pytest
 
+from mcoi_runtime.contracts import ExecutionMode
 from mcoi_runtime.contracts.job import (
     AssignmentRecord,
     DeadlineRecord,
@@ -462,6 +463,8 @@ class TestJobExecutionRecord:
     def test_valid_minimal(self):
         e = _execution()
         assert e.errors == ()
+        assert e.execution_mode is ExecutionMode.REAL
+        assert e.to_json_dict()["execution_mode"] == "real"
         assert e.completed_at is None
 
     def test_valid_with_errors(self):
@@ -501,6 +504,15 @@ class TestJobExecutionRecord:
     def test_errors_frozen_from_list(self):
         e = _execution(errors=["err1", "err2"])
         assert isinstance(e.errors, tuple)
+
+    def test_execution_mode_is_canonical(self):
+        e = _execution(execution_mode=ExecutionMode.TEST)
+        assert e.execution_mode is ExecutionMode.TEST
+        assert e.to_json_dict()["execution_mode"] == "test"
+
+    def test_unknown_execution_mode_rejected(self):
+        with pytest.raises(ValueError, match="unknown execution_mode"):
+            _execution(execution_mode="stub")
 
 
 # --- JobPauseRecord tests ---

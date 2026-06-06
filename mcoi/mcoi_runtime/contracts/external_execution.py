@@ -24,6 +24,7 @@ from ._base import (
     require_non_negative_int,
     require_unit_float,
 )
+from .execution import ExecutionMode, coerce_execution_mode
 
 
 # ---------------------------------------------------------------------------
@@ -103,6 +104,7 @@ class ExecutionRequest(ContractRecord):
     risk_level: ExecutionRiskLevel = ExecutionRiskLevel.LOW
     requested_at: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "request_id", require_non_empty_text(self.request_id, "request_id"))
@@ -118,6 +120,7 @@ class ExecutionRequest(ContractRecord):
             raise ValueError("credential_mode must be a CredentialMode")
         if not isinstance(self.risk_level, ExecutionRiskLevel):
             raise ValueError("risk_level must be an ExecutionRiskLevel")
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         require_datetime_text(self.requested_at, "requested_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
@@ -167,6 +170,7 @@ class ExecutionReceipt(ContractRecord):
     output_ref: str = ""
     completed_at: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "receipt_id", require_non_empty_text(self.receipt_id, "receipt_id"))
@@ -174,6 +178,7 @@ class ExecutionReceipt(ContractRecord):
         object.__setattr__(self, "tenant_id", require_non_empty_text(self.tenant_id, "tenant_id"))
         if not isinstance(self.status, ExecutionStatus):
             raise ValueError("status must be an ExecutionStatus")
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         object.__setattr__(self, "duration_ms", require_non_negative_float(self.duration_ms, "duration_ms"))
         object.__setattr__(self, "output_ref", require_non_empty_text(self.output_ref, "output_ref"))
         require_datetime_text(self.completed_at, "completed_at")
@@ -223,6 +228,7 @@ class ExecutionResult(ContractRecord):
     confidence: float = 0.0
     created_at: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "result_id", require_non_empty_text(self.result_id, "result_id"))
@@ -230,6 +236,7 @@ class ExecutionResult(ContractRecord):
         object.__setattr__(self, "tenant_id", require_non_empty_text(self.tenant_id, "tenant_id"))
         if not isinstance(self.success, bool):
             raise ValueError("success must be a bool")
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         object.__setattr__(self, "output_summary", require_non_empty_text(self.output_summary, "output_summary"))
         object.__setattr__(self, "confidence", require_unit_float(self.confidence, "confidence"))
         require_datetime_text(self.created_at, "created_at")
@@ -248,6 +255,7 @@ class ExecutionFailure(ContractRecord):
     retry_count: int = 0
     failed_at: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "failure_id", require_non_empty_text(self.failure_id, "failure_id"))
@@ -256,6 +264,7 @@ class ExecutionFailure(ContractRecord):
         object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
         if not isinstance(self.retry_disposition, RetryDisposition):
             raise ValueError("retry_disposition must be a RetryDisposition")
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         object.__setattr__(self, "retry_count", require_non_negative_int(self.retry_count, "retry_count"))
         require_datetime_text(self.failed_at, "failed_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
@@ -273,6 +282,7 @@ class ExecutionTrace(ContractRecord):
     status: ExecutionStatus = ExecutionStatus.COMPLETED
     created_at: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "trace_id", require_non_empty_text(self.trace_id, "trace_id"))
@@ -282,6 +292,7 @@ class ExecutionTrace(ContractRecord):
         object.__setattr__(self, "duration_ms", require_non_negative_float(self.duration_ms, "duration_ms"))
         if not isinstance(self.status, ExecutionStatus):
             raise ValueError("status must be an ExecutionStatus")
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         require_datetime_text(self.created_at, "created_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
@@ -327,6 +338,7 @@ class ExecutionViolation(ContractRecord):
     reason: str = ""
     detected_at: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "violation_id", require_non_empty_text(self.violation_id, "violation_id"))
@@ -334,6 +346,7 @@ class ExecutionViolation(ContractRecord):
         object.__setattr__(self, "request_id", require_non_empty_text(self.request_id, "request_id"))
         object.__setattr__(self, "operation", require_non_empty_text(self.operation, "operation"))
         object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         require_datetime_text(self.detected_at, "detected_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 

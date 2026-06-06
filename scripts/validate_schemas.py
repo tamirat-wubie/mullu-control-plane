@@ -155,7 +155,7 @@ RUST_SCHEMA_CONTRACT_MAP: dict[str, RustContractMapping] = {
     "execution_result.schema.json": RustContractMapping(
         source=REPO_ROOT / "maf" / "rust" / "crates" / "maf-kernel" / "src" / "lib.rs",
         struct_name="ExecutionResult",
-        enum_fields={"status": "ExecutionOutcome"},
+        enum_fields={"status": "ExecutionOutcome", "execution_mode": "ExecutionMode"},
         nested_fields={
             "actual_effects": NestedRustMapping(struct_name="EffectRecord"),
             "assumed_effects": NestedRustMapping(struct_name="EffectRecord"),

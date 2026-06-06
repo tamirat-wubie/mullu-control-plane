@@ -11,6 +11,7 @@ from typing import Any, Mapping
 
 from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text
 from .communication import CommunicationChannel, DeliveryStatus
+from .execution import ExecutionMode, coerce_execution_mode
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +32,7 @@ class CommunicationDeliveryReceipt(ContractRecord):
     delivered_at: str | None = None
     error_code: str | None = None
     transport_security: str | None = None
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -55,6 +57,10 @@ class CommunicationDeliveryReceipt(ContractRecord):
             raise ValueError("channel must be a CommunicationChannel value")
         if not isinstance(self.status, DeliveryStatus):
             raise ValueError("status must be a DeliveryStatus value")
+        execution_mode = coerce_execution_mode(self.execution_mode)
+        if execution_mode is not ExecutionMode.REAL:
+            raise ValueError("observed effect receipts must use execution_mode=real")
+        object.__setattr__(self, "execution_mode", execution_mode)
         object.__setattr__(self, "attempted_at", require_datetime_text(self.attempted_at, "attempted_at"))
         if self.delivered_at is not None:
             object.__setattr__(self, "delivered_at", require_datetime_text(self.delivered_at, "delivered_at"))

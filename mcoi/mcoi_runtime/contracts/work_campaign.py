@@ -26,6 +26,7 @@ from ._base import (
     require_non_negative_int,
     require_unit_float,
 )
+from .execution import ExecutionMode, coerce_execution_mode
 
 
 # ---------------------------------------------------------------------------
@@ -327,12 +328,14 @@ class CampaignExecutionRecord(ContractRecord):
     error_message: str = ""
     executed_at: str = ""
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(
             self, "record_id",
             require_non_empty_text(self.record_id, "record_id"),
         )
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         object.__setattr__(
             self, "campaign_id",
             require_non_empty_text(self.campaign_id, "campaign_id"),

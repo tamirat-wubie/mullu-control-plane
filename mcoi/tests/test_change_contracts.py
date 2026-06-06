@@ -26,6 +26,7 @@ from types import MappingProxyType
 
 import pytest
 
+from mcoi_runtime.contracts.execution import ExecutionMode
 from mcoi_runtime.contracts.change_runtime import (
     ChangeApprovalBinding,
     ChangeEvidence,
@@ -975,6 +976,29 @@ class TestDefaultValues:
         assert ce.steps_completed == 0
         assert ce.steps_failed == 0
         assert ce.completed_at == ""
+        assert ce.execution_mode is ExecutionMode.REAL
+        assert ce.to_json_dict()["execution_mode"] == "real"
+
+    def test_change_execution_accepts_explicit_execution_mode(self):
+        ce = ChangeExecution(
+            execution_id="ex-d",
+            change_id="cr-d",
+            plan_id="pl-d",
+            started_at=_ts(),
+            execution_mode="dry_run",
+        )
+        assert ce.execution_mode is ExecutionMode.DRY_RUN
+        assert ce.to_json_dict()["execution_mode"] == "dry_run"
+
+    def test_change_execution_rejects_unknown_execution_mode(self):
+        with pytest.raises(ValueError, match="execution_mode"):
+            ChangeExecution(
+                execution_id="ex-d",
+                change_id="cr-d",
+                plan_id="pl-d",
+                started_at=_ts(),
+                execution_mode="stub",
+            )
 
     def test_change_approval_binding_defaults(self):
         cab = ChangeApprovalBinding(

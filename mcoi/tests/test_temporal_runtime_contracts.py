@@ -7,6 +7,7 @@ from __future__ import annotations
 import pytest
 from datetime import datetime, timezone
 
+from mcoi_runtime.contracts.execution import ExecutionMode
 from mcoi_runtime.contracts.temporal_runtime import (
     EventSequenceStatus,
     IntervalDisposition,
@@ -248,9 +249,83 @@ class TestTemporalKernelContracts:
         payload = plan_receipt.to_json_dict()
 
         assert payload["verdict"] == "pass"
+        assert payload["execution_mode"] == "real"
         assert payload["stage_receipts"][0]["stage_type"] == "verify"
+        assert payload["stage_receipts"][0]["execution_mode"] == "real"
         assert payload["stage_receipts"][0]["output_values"]["verified"] is True
         assert payload["terminal_outputs"]["verified"] is True
+
+    def test_skill_execution_receipts_accept_explicit_execution_mode(self) -> None:
+        stage_receipt = TemporalSkillStageExecution(
+            execution_id="stage-exec-1",
+            plan_id="plan-1",
+            stage_id="verify",
+            stage_type=TemporalSkillStageType.VERIFY,
+            verdict=TemporalSkillExecutionVerdict.PASS,
+            reason="evidence_verified",
+            executed_at=NOW,
+            execution_mode="simulation",
+        )
+        plan_receipt = TemporalSkillPlanExecution(
+            execution_id="plan-exec-1",
+            schedule_ref="sched-1",
+            plan_id="plan-1",
+            verdict=TemporalSkillExecutionVerdict.PASS,
+            reason="all_stages_passed",
+            started_at=NOW,
+            completed_at=NOW,
+            stage_receipts=(stage_receipt,),
+            execution_mode=ExecutionMode.SIMULATION,
+        )
+
+        assert stage_receipt.execution_mode is ExecutionMode.SIMULATION
+        assert plan_receipt.execution_mode is ExecutionMode.SIMULATION
+        assert plan_receipt.to_json_dict()["execution_mode"] == "simulation"
+
+    def test_skill_execution_receipts_reject_unknown_execution_mode(self) -> None:
+        with pytest.raises(ValueError, match="execution_mode"):
+            TemporalSkillStageExecution(
+                execution_id="stage-exec-1",
+                plan_id="plan-1",
+                stage_id="verify",
+                reason="evidence_verified",
+                executed_at=NOW,
+                execution_mode="stub",
+            )
+        with pytest.raises(ValueError, match="execution_mode"):
+            TemporalSkillPlanExecution(
+                execution_id="plan-exec-1",
+                schedule_ref="sched-1",
+                plan_id="plan-1",
+                reason="all_stages_passed",
+                started_at=NOW,
+                completed_at=NOW,
+                execution_mode="stub",
+            )
+
+    def test_skill_plan_execution_rejects_stage_execution_mode_mismatch(self) -> None:
+        stage_receipt = TemporalSkillStageExecution(
+            execution_id="stage-exec-1",
+            plan_id="plan-1",
+            stage_id="verify",
+            stage_type=TemporalSkillStageType.VERIFY,
+            verdict=TemporalSkillExecutionVerdict.PASS,
+            reason="evidence_verified",
+            executed_at=NOW,
+            execution_mode=ExecutionMode.SIMULATION,
+        )
+        with pytest.raises(ValueError, match="stage_receipts execution_mode"):
+            TemporalSkillPlanExecution(
+                execution_id="plan-exec-1",
+                schedule_ref="sched-1",
+                plan_id="plan-1",
+                verdict=TemporalSkillExecutionVerdict.PASS,
+                reason="all_stages_passed",
+                started_at=NOW,
+                completed_at=NOW,
+                stage_receipts=(stage_receipt,),
+                execution_mode=ExecutionMode.REAL,
+            )
 
     def test_action_request_rejects_untyped_skill_plan(self) -> None:
         with pytest.raises(ValueError, match="skill_plan"):

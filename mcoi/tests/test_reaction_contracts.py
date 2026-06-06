@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import pytest
 
+from mcoi_runtime.contracts.execution import ExecutionMode
 from mcoi_runtime.contracts.reaction import (
     BackpressurePolicy,
     BackpressureStrategy,
@@ -199,6 +200,19 @@ class TestReactionExecutionRecord:
         e = _execution()
         assert e.executed is True
         assert e.rule_id == "r1"
+        assert e.execution_mode is ExecutionMode.REAL
+        assert e.to_json_dict()["execution_mode"] == "real"
+
+    def test_accepts_explicit_execution_mode(self) -> None:
+        e = ReactionExecutionRecord(
+            execution_id="x1", rule_id="r1", event_id="e1", correlation_id="cor-1",
+            target=_target(), gate_result=_gate(),
+            executed=False, result_ref_id="ref-1",
+            execution_notes="deferred", executed_at=NOW,
+            execution_mode="shadow",
+        )
+        assert e.execution_mode is ExecutionMode.SHADOW
+        assert e.to_json_dict()["execution_mode"] == "shadow"
 
     def test_empty_id_raises(self) -> None:
         with pytest.raises(ValueError, match="execution_id"):
@@ -207,6 +221,16 @@ class TestReactionExecutionRecord:
                 target=_target(), gate_result=_gate(),
                 executed=True, result_ref_id="r",
                 execution_notes="ok", executed_at=NOW,
+            )
+
+    def test_unknown_execution_mode_raises(self) -> None:
+        with pytest.raises(ValueError, match="execution_mode"):
+            ReactionExecutionRecord(
+                execution_id="x1", rule_id="r1", event_id="e1", correlation_id="cor-1",
+                target=_target(), gate_result=_gate(),
+                executed=True, result_ref_id="ref-1",
+                execution_notes="ok", executed_at=NOW,
+                execution_mode="stub",
             )
 
 

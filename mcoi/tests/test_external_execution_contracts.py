@@ -300,6 +300,8 @@ class TestExecutionRequest:
         assert r.sandbox is SandboxDisposition.SANDBOXED
         assert r.credential_mode is CredentialMode.NONE
         assert r.risk_level is ExecutionRiskLevel.LOW
+        assert r.execution_mode is ExecutionMode.REAL
+        assert r.to_json_dict()["execution_mode"] == "real"
 
     def test_frozen(self):
         r = _make_request()
@@ -388,6 +390,16 @@ class TestExecutionRequest:
         assert d["sandbox"] is SandboxDisposition.SANDBOXED
         assert d["credential_mode"] is CredentialMode.NONE
         assert d["risk_level"] is ExecutionRiskLevel.LOW
+        assert d["execution_mode"] is ExecutionMode.REAL
+
+    def test_execution_mode_is_canonical(self):
+        r = _make_request(execution_mode=ExecutionMode.DRY_RUN)
+        assert r.execution_mode is ExecutionMode.DRY_RUN
+        assert r.to_json_dict()["execution_mode"] == "dry_run"
+
+    def test_unknown_execution_mode_rejected(self):
+        with pytest.raises(ValueError, match="unknown execution_mode"):
+            _make_request(execution_mode="stub")
 
     def test_z_suffix_datetime(self):
         r = _make_request(requested_at=TS2)
@@ -505,6 +517,7 @@ class TestExecutionReceipt:
         assert r.receipt_id == "rcpt-1"
         assert r.duration_ms == 0.0
         assert r.status is ExecutionStatus.COMPLETED
+        assert r.execution_mode is ExecutionMode.REAL
 
     def test_frozen(self):
         r = _make_receipt()
@@ -582,6 +595,16 @@ class TestExecutionReceipt:
         r = _make_receipt()
         d = r.to_dict()
         assert d["status"] is ExecutionStatus.COMPLETED
+        assert d["execution_mode"] is ExecutionMode.REAL
+
+    def test_execution_mode_is_canonical(self):
+        r = _make_receipt(execution_mode=ExecutionMode.SHADOW)
+        assert r.execution_mode is ExecutionMode.SHADOW
+        assert r.to_json_dict()["execution_mode"] == "shadow"
+
+    def test_unknown_execution_mode_rejected(self):
+        with pytest.raises(ValueError, match="unknown execution_mode"):
+            _make_receipt(execution_mode="stub")
 
     def test_to_dict_metadata_plain(self):
         r = _make_receipt(metadata={"k": 1})
@@ -704,6 +727,7 @@ class TestExecutionResult:
         assert r.result_id == "res-1"
         assert r.success is True
         assert r.confidence == 0.9
+        assert r.execution_mode is ExecutionMode.REAL
 
     def test_frozen(self):
         r = _make_result()
@@ -798,6 +822,15 @@ class TestExecutionResult:
         r = _make_result(metadata={"a": 1})
         assert isinstance(r.to_dict()["metadata"], dict)
 
+    def test_execution_mode_is_canonical(self):
+        r = _make_result(execution_mode=ExecutionMode.SIMULATION)
+        assert r.execution_mode is ExecutionMode.SIMULATION
+        assert r.to_json_dict()["execution_mode"] == "simulation"
+
+    def test_unknown_execution_mode_rejected(self):
+        with pytest.raises(ValueError, match="unknown execution_mode"):
+            _make_result(execution_mode="stub")
+
 
 # ===================================================================
 # ExecutionFailure tests
@@ -811,6 +844,7 @@ class TestExecutionFailure:
         assert f.reason == "timeout"
         assert f.retry_disposition is RetryDisposition.NO_RETRY
         assert f.retry_count == 0
+        assert f.execution_mode is ExecutionMode.REAL
 
     def test_frozen(self):
         f = _make_failure()
@@ -872,6 +906,16 @@ class TestExecutionFailure:
         f = _make_failure()
         d = f.to_dict()
         assert d["retry_disposition"] is RetryDisposition.NO_RETRY
+        assert d["execution_mode"] is ExecutionMode.REAL
+
+    def test_execution_mode_is_canonical(self):
+        f = _make_failure(execution_mode=ExecutionMode.TEST)
+        assert f.execution_mode is ExecutionMode.TEST
+        assert f.to_json_dict()["execution_mode"] == "test"
+
+    def test_unknown_execution_mode_rejected(self):
+        with pytest.raises(ValueError, match="unknown execution_mode"):
+            _make_failure(execution_mode="stub")
 
     def test_to_dict_metadata_plain(self):
         f = _make_failure(metadata={"a": 1})
@@ -890,6 +934,7 @@ class TestExecutionTrace:
         assert t.step_name == "step-a"
         assert t.duration_ms == 0.0
         assert t.status is ExecutionStatus.COMPLETED
+        assert t.execution_mode is ExecutionMode.REAL
 
     def test_frozen(self):
         t = _make_trace()
@@ -967,6 +1012,16 @@ class TestExecutionTrace:
         t = _make_trace()
         d = t.to_dict()
         assert d["status"] is ExecutionStatus.COMPLETED
+        assert d["execution_mode"] is ExecutionMode.REAL
+
+    def test_execution_mode_is_canonical(self):
+        t = _make_trace(execution_mode=ExecutionMode.REPLAY)
+        assert t.execution_mode is ExecutionMode.REPLAY
+        assert t.to_json_dict()["execution_mode"] == "replay"
+
+    def test_unknown_execution_mode_rejected(self):
+        with pytest.raises(ValueError, match="unknown execution_mode"):
+            _make_trace(execution_mode="stub")
 
     def test_to_dict_metadata_plain(self):
         t = _make_trace(metadata={"k": 1})
@@ -1072,6 +1127,7 @@ class TestExecutionViolation:
         assert v.violation_id == "viol-1"
         assert v.operation == "exec"
         assert v.reason == "policy breach"
+        assert v.execution_mode is ExecutionMode.REAL
 
     def test_frozen(self):
         v = _make_violation()
@@ -1107,8 +1163,26 @@ class TestExecutionViolation:
     def test_to_dict_all_fields_present(self):
         v = _make_violation()
         d = v.to_dict()
-        for key in ["violation_id", "tenant_id", "request_id", "operation", "reason", "detected_at", "metadata"]:
+        for key in [
+            "violation_id",
+            "tenant_id",
+            "request_id",
+            "operation",
+            "reason",
+            "detected_at",
+            "metadata",
+            "execution_mode",
+        ]:
             assert key in d
+
+    def test_execution_mode_is_canonical(self):
+        v = _make_violation(execution_mode=ExecutionMode.SHADOW)
+        assert v.execution_mode is ExecutionMode.SHADOW
+        assert v.to_json_dict()["execution_mode"] == "shadow"
+
+    def test_unknown_execution_mode_rejected(self):
+        with pytest.raises(ValueError, match="unknown execution_mode"):
+            _make_violation(execution_mode="stub")
 
 
 # ===================================================================

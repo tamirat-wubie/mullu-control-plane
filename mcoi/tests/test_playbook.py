@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from mcoi_runtime.contracts.execution import ExecutionMode
 from mcoi_runtime.contracts.incident import (
     IncidentRecord,
     IncidentSeverity,
@@ -92,6 +93,8 @@ class TestPlaybookContracts:
             started_at=T0, finished_at=T0,
         )
         assert r.succeeded
+        assert r.execution_mode is ExecutionMode.REAL
+        assert r.to_json_dict()["execution_mode"] == "real"
 
     def test_execution_record_failed(self):
         r = PlaybookExecutionRecord(
@@ -102,6 +105,29 @@ class TestPlaybookContracts:
             started_at=T0, finished_at=T0,
         )
         assert not r.succeeded
+
+    def test_execution_record_accepts_explicit_execution_mode(self):
+        r = PlaybookExecutionRecord(
+            record_id="r-1", playbook_id="pb-1", incident_id="inc-1",
+            outcome=PlaybookOutcome.BLOCKED,
+            steps_completed=1, steps_total=3,
+            review_satisfied=True, approval_satisfied=False,
+            started_at=T0, finished_at=T0,
+            execution_mode="test",
+        )
+        assert r.execution_mode is ExecutionMode.TEST
+        assert r.to_json_dict()["execution_mode"] == "test"
+
+    def test_execution_record_rejects_unknown_execution_mode(self):
+        with pytest.raises(ValueError, match="execution_mode"):
+            PlaybookExecutionRecord(
+                record_id="r-1", playbook_id="pb-1", incident_id="inc-1",
+                outcome=PlaybookOutcome.FAILED,
+                steps_completed=1, steps_total=3,
+                review_satisfied=True, approval_satisfied=True,
+                started_at=T0, finished_at=T0,
+                execution_mode="stub",
+            )
 
 
 # --- Pattern matching ---

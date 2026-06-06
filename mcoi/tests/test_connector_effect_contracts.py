@@ -9,6 +9,7 @@ from __future__ import annotations
 import pytest
 
 from mcoi_runtime.contracts.connector_effects import ConnectorInvocationReceipt
+from mcoi_runtime.contracts.execution import ExecutionMode
 from mcoi_runtime.contracts.integration import ConnectorStatus
 
 
@@ -41,6 +42,8 @@ def test_connector_invocation_receipt_accepts_hashed_evidence() -> None:
     assert receipt.url_hash == "url-hash"
     assert receipt.request_hash == "request-hash"
     assert receipt.response_digest == "response-digest"
+    assert receipt.execution_mode is ExecutionMode.REAL
+    assert receipt.to_json_dict()["execution_mode"] == "real"
 
 
 def test_connector_invocation_receipt_rejects_missing_request_hash() -> None:
@@ -65,3 +68,12 @@ def test_connector_invocation_receipt_rejects_invalid_status_code() -> None:
     )
     assert failed.status is ConnectorStatus.FAILED
     assert failed.error_code == "blocked_private_address"
+
+
+def test_connector_invocation_receipt_rejects_non_real_execution_mode() -> None:
+    with pytest.raises(ValueError, match="^observed effect receipts must use execution_mode=real$") as exc_info:
+        _receipt(execution_mode=ExecutionMode.REPLAY)
+
+    message = str(exc_info.value)
+    assert "execution_mode=real" in message
+    assert "replay" not in message

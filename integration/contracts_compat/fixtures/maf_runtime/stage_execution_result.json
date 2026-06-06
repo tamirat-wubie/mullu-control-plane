@@ -1,6 +1,7 @@
 {
   "stage_id": "stage-verify",
   "status": "failed",
+  "execution_mode": "real",
   "output": {
     "verification_closed": false
   },

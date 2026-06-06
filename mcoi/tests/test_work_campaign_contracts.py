@@ -13,6 +13,7 @@ from types import MappingProxyType
 
 import pytest
 
+from mcoi_runtime.contracts.execution import ExecutionMode
 from mcoi_runtime.contracts.work_campaign import (
     CampaignCheckpoint,
     CampaignClosureReport,
@@ -532,6 +533,13 @@ class TestCampaignExecutionRecordConstruction:
         rec = _make_execution_record()
         assert rec.record_id == "rec-1"
         assert rec.success is True
+        assert rec.execution_mode is ExecutionMode.REAL
+        assert rec.to_json_dict()["execution_mode"] == "real"
+
+    def test_accepts_explicit_execution_mode(self):
+        rec = _make_execution_record(execution_mode="shadow")
+        assert rec.execution_mode is ExecutionMode.SHADOW
+        assert rec.to_json_dict()["execution_mode"] == "shadow"
 
     def test_empty_record_id_raises(self):
         with pytest.raises(ValueError):
@@ -564,6 +572,10 @@ class TestCampaignExecutionRecordConstruction:
     def test_empty_executed_at_raises(self):
         with pytest.raises(ValueError):
             _make_execution_record(executed_at="")
+
+    def test_unknown_execution_mode_raises(self):
+        with pytest.raises(ValueError, match="execution_mode"):
+            _make_execution_record(execution_mode="stub")
 
 
 class TestCampaignExecutionRecordFrozen:

@@ -15,6 +15,7 @@ from enum import StrEnum
 from typing import Any, Mapping, TypeVar, cast
 
 from ._base import ContractRecord, freeze_value, require_datetime_text, require_non_empty_text
+from .execution import ExecutionMode, coerce_execution_mode
 
 # Re-export legacy names for backward compatibility with existing imports.
 # The old Workflow/WorkflowStep types are superseded by WorkflowDescriptor/WorkflowStage.
@@ -235,11 +236,13 @@ class StageExecutionResult(ContractRecord):
     error: Any = None  # StructuredError or None — typed loosely to avoid circular import
     started_at: str = ""
     completed_at: str = ""
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "stage_id", require_non_empty_text(self.stage_id, "stage_id"))
         if not isinstance(self.status, StageStatus):
             raise ValueError("status must be a StageStatus value")
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         object.__setattr__(self, "output", freeze_value(self.output))
         object.__setattr__(self, "started_at", require_datetime_text(self.started_at, "started_at"))
         object.__setattr__(self, "completed_at", require_datetime_text(self.completed_at, "completed_at"))
@@ -255,12 +258,14 @@ class WorkflowExecutionRecord(ContractRecord):
     stage_results: tuple[StageExecutionResult, ...] = ()
     started_at: str = ""
     completed_at: str | None = None
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "workflow_id", require_non_empty_text(self.workflow_id, "workflow_id"))
         object.__setattr__(self, "execution_id", require_non_empty_text(self.execution_id, "execution_id"))
         if not isinstance(self.status, WorkflowStatus):
             raise ValueError("status must be a WorkflowStatus value")
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         object.__setattr__(
             self,
             "stage_results",

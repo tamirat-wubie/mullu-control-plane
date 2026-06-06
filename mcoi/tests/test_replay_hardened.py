@@ -96,8 +96,12 @@ def test_validate_with_context_skips_comparison_when_either_is_none() -> None:
     context = ReplayContext()
 
     result = engine.validate_with_context(record, context)
-    assert result.ready is True
-    assert result.verdict is ReplayVerdict.MATCH
+    assert result.ready is False
+    assert result.verdict is ReplayVerdict.STATE_MISMATCH
+    assert result.reasons == (
+        "state_hash_missing_current_context",
+        "environment_missing_current_context",
+    )
 
 
 def test_validate_with_context_no_hashes_on_record() -> None:

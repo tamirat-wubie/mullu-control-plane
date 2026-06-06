@@ -438,6 +438,7 @@ class GovernedDispatcher:
                     **dict(execution_result.metadata),
                     "effect_assurance": assurance_metadata,
                 },
+                execution_mode=execution_result.execution_mode,
             )
 
         try:
@@ -481,6 +482,7 @@ class GovernedDispatcher:
                 "effect_assurance": assurance_metadata,
             },
             extensions=execution_result.extensions,
+            execution_mode=execution_result.execution_mode,
         )
 
     def _open_reconciliation_case(
@@ -754,6 +756,7 @@ def _append_filesystem_delta_effects(
                 "filesystem_effect_observations": tuple(observation_records),
             },
             extensions=execution_result.extensions,
+            execution_mode=execution_result.execution_mode,
         )
     return ExecutionResult(
         execution_id=execution_result.execution_id,
@@ -768,6 +771,7 @@ def _append_filesystem_delta_effects(
             "filesystem_effect_observations": tuple(observation_records),
         },
         extensions=execution_result.extensions,
+        execution_mode=execution_result.execution_mode,
     )
 
 
