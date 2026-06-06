@@ -427,6 +427,7 @@ class OrganizationKernel:
         self._require_case_plan(organization_case.case_id)
         if not self._all_plan_steps_allowed(organization_case.case_id):
             raise RuntimeCoreInvariantError("case closure requires allowed plan step gates")
+        self._validate_closure_gate_evidence(organization_case.case_id, reconciliation.evidence_refs)
         self._validate_terminal_reconciliation(reconciliation, terminal_disposition)
         self._reconciliations[reconciliation.reconciliation_id] = reconciliation
         certificate_id = ensure_non_empty_text("terminal_certificate_id", terminal_certificate_id)
@@ -1305,6 +1306,33 @@ class OrganizationKernel:
             return
         if terminal_disposition not in _NON_COMMITTED_TERMINAL_DISPOSITIONS:
             raise RuntimeCoreInvariantError("terminal disposition unavailable")
+
+    def _validate_closure_gate_evidence(self, case_id: str, closure_evidence_refs: tuple[str, ...]) -> None:
+        admitted_refs = {
+            evidence.evidence_ref
+            for evidence in self._case_evidence.values()
+            if evidence.case_id == case_id
+        }
+        closure_refs = set(closure_evidence_refs)
+        missing_from_closure: list[str] = []
+        missing_from_case: list[str] = []
+        plan = self._require_case_plan(case_id)
+        for step in plan.steps:
+            decision_id = self._latest_gate_by_step.get((case_id, step.step_id))
+            if decision_id is None:
+                continue
+            decision = self._gate_decisions[decision_id]
+            if decision.status is not PlanStepGateStatus.ALLOWED:
+                continue
+            for evidence_ref in decision.evidence_refs:
+                if evidence_ref not in admitted_refs:
+                    missing_from_case.append(evidence_ref)
+                if evidence_ref not in closure_refs:
+                    missing_from_closure.append(evidence_ref)
+        if missing_from_case:
+            raise RuntimeCoreInvariantError("closure gate evidence unavailable")
+        if missing_from_closure:
+            raise RuntimeCoreInvariantError("closure requires gate evidence refs")
 
     def _all_plan_steps_allowed(self, case_id: str) -> bool:
         plan = self._require_case_plan(case_id)

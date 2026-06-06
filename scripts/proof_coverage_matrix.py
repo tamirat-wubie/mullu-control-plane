@@ -2991,7 +2991,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_organization_kernel_router.py",
                 "mcoi/tests/test_organization_kernel_store.py",
             ],
-            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions, case portfolio, action queue, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
+            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions that must carry the latest admitted gate evidence refs, case portfolio, action queue, authority-map and department-registry views, terminal certificate views, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
             [
                 "orgos_api_runs_launch_gateway_case_control_loop",
                 "orgos_api_denies_unbound_authority_gate",
@@ -3003,6 +3003,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "plan_step_gate_denies_cross_tenant_or_unbound_authority",
                 "plan_step_gate_allows_certified_authorized_gateway_step",
                 "case_closure_requires_effect_reconciliation_match_for_committed",
+                "terminal_closure_requires_latest_gate_evidence_refs",
+                "terminal_closure_requires_worker_bound_gate_evidence_refs",
                 "case_proof_explorer_reports_open_case_attention_without_mutation",
                 "case_proof_explorer_reports_closed_verified_case",
                 "case_proof_explorer_html_view_is_read_only_and_escaped",
