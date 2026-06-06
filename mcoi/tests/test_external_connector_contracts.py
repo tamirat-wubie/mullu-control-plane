@@ -6,6 +6,7 @@ import math
 
 import pytest
 
+from mcoi_runtime.contracts.execution import ExecutionMode
 from mcoi_runtime.contracts.external_connector import (
     ChannelConsentRecord,
     ConsentState,
@@ -282,6 +283,13 @@ class TestConnectorExecutionRecord:
         assert obj.connector_type == ExternalConnectorType.GENERIC_API
         assert obj.success is True
         assert obj.latency_ms == 42.5
+        assert obj.execution_mode is ExecutionMode.REAL
+        assert obj.to_json_dict()["execution_mode"] == "real"
+
+    def test_explicit_execution_mode(self):
+        obj = self._make(execution_mode="simulation")
+        assert obj.execution_mode is ExecutionMode.SIMULATION
+        assert obj.to_json_dict()["execution_mode"] == "simulation"
 
     def test_empty_execution_id_rejected(self):
         with pytest.raises(ValueError):
@@ -298,6 +306,10 @@ class TestConnectorExecutionRecord:
     def test_invalid_connector_type_rejected(self):
         with pytest.raises(ValueError):
             self._make(connector_type="not_an_enum")
+
+    def test_unknown_execution_mode_rejected(self):
+        with pytest.raises(ValueError, match="execution_mode"):
+            self._make(execution_mode="stub")
 
     def test_bool_success_required(self):
         with pytest.raises(ValueError):
@@ -330,6 +342,7 @@ class TestConnectorExecutionRecord:
         assert d["execution_id"] == "exec-1"
         assert d["connector_type"] == ExternalConnectorType.GENERIC_API
         assert d["metadata"] == {"key": "val"}
+        assert d["execution_mode"] is ExecutionMode.REAL
 
 
 # ---------------------------------------------------------------------------

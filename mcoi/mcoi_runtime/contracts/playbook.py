@@ -21,6 +21,7 @@ from ._base import (
     require_non_empty_text,
     require_unit_float,
 )
+from .execution import ExecutionMode, coerce_execution_mode
 
 
 class PlaybookStatus(StrEnum):
@@ -127,11 +128,13 @@ class PlaybookExecutionRecord(ContractRecord):
     started_at: str
     finished_at: str
     error_message: str | None = None
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "record_id", require_non_empty_text(self.record_id, "record_id"))
         object.__setattr__(self, "playbook_id", require_non_empty_text(self.playbook_id, "playbook_id"))
         object.__setattr__(self, "incident_id", require_non_empty_text(self.incident_id, "incident_id"))
+        object.__setattr__(self, "execution_mode", coerce_execution_mode(self.execution_mode))
         if not isinstance(self.outcome, PlaybookOutcome):
             raise ValueError("outcome must be a PlaybookOutcome value")
         object.__setattr__(self, "started_at", require_datetime_text(self.started_at, "started_at"))

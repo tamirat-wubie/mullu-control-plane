@@ -31,5 +31,6 @@
   },
   "extensions": {
     "audit_tag": "canonical_fixture"
-  }
+  },
+  "execution_mode": "real"
 }

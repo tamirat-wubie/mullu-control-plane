@@ -26,6 +26,7 @@ from ._base import (
     require_non_empty_text,
     require_positive_int,
 )
+from .execution import ExecutionMode, coerce_execution_mode
 
 
 class CodeWorkerReceiptStatus(StrEnum):
@@ -153,6 +154,7 @@ class CodeWorkerReceipt(ContractRecord):
     changed_file_refs: tuple[str, ...] = ()
     violation_reasons: tuple[str, ...] = ()
     evidence_refs: tuple[str, ...] = ()
+    execution_mode: ExecutionMode | str = ExecutionMode.REAL
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -172,6 +174,10 @@ class CodeWorkerReceipt(ContractRecord):
             raise ValueError("status must be a CodeWorkerReceiptStatus")
         if not isinstance(self.network_enabled, bool):
             raise ValueError("network_enabled must be a bool")
+        execution_mode = coerce_execution_mode(self.execution_mode)
+        if execution_mode is not ExecutionMode.REAL:
+            raise ValueError("observed effect receipts must use execution_mode=real")
+        object.__setattr__(self, "execution_mode", execution_mode)
         object.__setattr__(self, "started_at", require_datetime_text(self.started_at, "started_at"))
         object.__setattr__(self, "finished_at", require_datetime_text(self.finished_at, "finished_at"))
         if self.returncode is not None and not isinstance(self.returncode, int):

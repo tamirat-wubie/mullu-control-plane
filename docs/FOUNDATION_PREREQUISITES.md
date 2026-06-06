@@ -354,6 +354,7 @@ different target:
 | Prepare intake questionnaire rehearsal without opening intake | [Foundation Intake Questionnaire Rehearsal Boundary](FOUNDATION_INTAKE_QUESTIONNAIRE_REHEARSAL_BOUNDARY.md) |
 | Prepare customer access without opening access | [Foundation Customer Access Boundary](FOUNDATION_CUSTOMER_ACCESS_BOUNDARY.md) |
 | Prepare customer-access policy rehearsal without opening access | [Foundation Customer Access Policy Rehearsal Boundary](FOUNDATION_CUSTOMER_ACCESS_POLICY_REHEARSAL_BOUNDARY.md) |
+| Prepare GitHub App token-format compatibility without handling credentials | [Foundation GitHub App Token Format Boundary](FOUNDATION_GITHUB_APP_TOKEN_FORMAT_BOUNDARY.md) |
 | Prepare privacy/data without handling people data | [Foundation Privacy Data Boundary](FOUNDATION_PRIVACY_DATA_BOUNDARY.md) |
 | Prepare privacy minimization rehearsal without handling people data | [Foundation Privacy Minimization Rehearsal Boundary](FOUNDATION_PRIVACY_MINIMIZATION_REHEARSAL_BOUNDARY.md) |
 | Prepare legal/business questions safely | [Foundation Legal Business Boundary](FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md) |

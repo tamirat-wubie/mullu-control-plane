@@ -2,6 +2,7 @@
 
 import pytest
 
+from mcoi_runtime.contracts import ExecutionMode
 from mcoi_runtime.contracts.skill import (
     DeterminismClass,
     EffectClass,
@@ -236,6 +237,8 @@ class TestSkillStepOutcome:
     def test_success(self):
         o = SkillStepOutcome(step_id="s1", status=SkillOutcomeStatus.SUCCEEDED)
         assert o.status is SkillOutcomeStatus.SUCCEEDED
+        assert o.execution_mode is ExecutionMode.REAL
+        assert o.to_json_dict()["execution_mode"] == "real"
 
     def test_with_outputs(self):
         o = SkillStepOutcome(
@@ -254,6 +257,7 @@ class TestSkillOutcome:
         o = SkillOutcome(skill_id="sk-1", status=SkillOutcomeStatus.SUCCEEDED)
         assert o.preconditions_met is True
         assert o.postconditions_met is True
+        assert o.execution_mode is ExecutionMode.REAL
 
     def test_precondition_failed(self):
         o = SkillOutcome(
@@ -291,6 +295,34 @@ class TestSkillExecutionRecord:
             outcome=outcome,
         )
         assert rec.record_id == "rec-001"
+        assert rec.execution_mode is ExecutionMode.REAL
+
+    def test_execution_record_accepts_explicit_mode(self):
+        outcome = SkillOutcome(
+            skill_id="sk-1",
+            status=SkillOutcomeStatus.SUCCEEDED,
+            execution_mode=ExecutionMode.SHADOW,
+        )
+        rec = SkillExecutionRecord(
+            record_id="rec-001",
+            skill_id="sk-1",
+            outcome=outcome,
+            execution_mode=ExecutionMode.SHADOW,
+        )
+
+        assert outcome.execution_mode is ExecutionMode.SHADOW
+        assert rec.execution_mode is ExecutionMode.SHADOW
+        assert rec.to_json_dict()["execution_mode"] == "shadow"
+
+    def test_execution_record_rejects_unknown_mode(self):
+        outcome = SkillOutcome(skill_id="sk-1", status=SkillOutcomeStatus.SUCCEEDED)
+        with pytest.raises(ValueError, match="unknown execution_mode"):
+            SkillExecutionRecord(
+                record_id="rec-001",
+                skill_id="sk-1",
+                outcome=outcome,
+                execution_mode="stub",
+            )
 
     def test_invalid_outcome_type(self):
         with pytest.raises(ValueError, match="outcome must be"):

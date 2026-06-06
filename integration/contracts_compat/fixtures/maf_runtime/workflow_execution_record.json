@@ -2,10 +2,12 @@
   "workflow_id": "wf-release-42",
   "execution_id": "wf-exec-42",
   "status": "failed",
+  "execution_mode": "real",
   "stage_results": [
     {
       "stage_id": "stage-build",
       "status": "completed",
+      "execution_mode": "real",
       "output": {
         "artifact_id": "artifact-42"
       },
@@ -16,6 +18,7 @@
     {
       "stage_id": "stage-verify",
       "status": "failed",
+      "execution_mode": "real",
       "output": {
         "verification_closed": false
       },

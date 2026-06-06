@@ -1111,6 +1111,7 @@ def _validate_job_execution_record_fixture(path: Path) -> list[str]:
             "job_id",
             "execution_id",
             "status",
+            "execution_mode",
             "started_at",
             "outcome_summary",
             "errors",
@@ -1122,6 +1123,8 @@ def _validate_job_execution_record_fixture(path: Path) -> list[str]:
         return errors
     for field_name in ("job_id", "execution_id", "status", "outcome_summary"):
         errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["execution_mode"] != "real":
+        errors.append(f"{_relative_path(path)}: field 'execution_mode' must be 'real'")
     for field_name in ("started_at", "completed_at"):
         errors.extend(_validate_iso8601_text(payload[field_name], field_name=field_name, path=path))
     errors_list = payload["errors"]
@@ -1482,7 +1485,7 @@ def _validate_stage_execution_result_fixture(path: Path) -> list[str]:
 def _validate_stage_execution_result_dict(payload: object, *, path: Path, field_name: str) -> list[str]:
     if not isinstance(payload, dict):
         return [f"{_relative_path(path)}: field '{field_name}' must be an object"]
-    required_fields = {"stage_id", "status", "output", "started_at", "completed_at"}
+    required_fields = {"stage_id", "status", "execution_mode", "output", "started_at", "completed_at"}
     optional_fields = {"error"}
     actual_fields = set(payload)
     missing_fields = sorted(required_fields - actual_fields)
@@ -1507,6 +1510,8 @@ def _validate_stage_execution_result_dict(payload: object, *, path: Path, field_
                 path=path,
             )
     )
+    if payload["execution_mode"] != "real":
+        errors.append(f"{_relative_path(path)}: field '{f'{prefix}execution_mode'.strip('.')}' must be 'real'")
     if not isinstance(payload["output"], dict):
         errors.append(f"{_relative_path(path)}: field '{f'{prefix}output'.strip('.')}' must be an object")
     if "error" in payload and payload["error"] is not None and isinstance(payload["error"], (str, int, float, bool)):
@@ -1528,13 +1533,23 @@ def _validate_workflow_execution_record_fixture(path: Path) -> list[str]:
     errors = _validate_exact_object_fields(
         payload,
         path=path,
-        expected_fields=("workflow_id", "execution_id", "status", "stage_results", "started_at", "completed_at"),
+        expected_fields=(
+            "workflow_id",
+            "execution_id",
+            "status",
+            "execution_mode",
+            "stage_results",
+            "started_at",
+            "completed_at",
+        ),
         kind="runtime fixture",
     )
     if errors:
         return errors
     for field_name in ("workflow_id", "execution_id", "status"):
         errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
+    if payload["execution_mode"] != "real":
+        errors.append(f"{_relative_path(path)}: field 'execution_mode' must be 'real'")
     stage_results = payload["stage_results"]
     if not isinstance(stage_results, list):
         errors.append(f"{_relative_path(path)}: field 'stage_results' must be an array")

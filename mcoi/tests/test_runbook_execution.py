@@ -16,6 +16,7 @@ from mcoi_runtime.contracts.runbook_execution import (
     RunbookExecutionStatus,
     RunbookStepResult,
 )
+from mcoi_runtime.contracts.execution import ExecutionMode
 from mcoi_runtime.core.runbook import RunbookEntry, RunbookLibrary, RunbookProvenance
 from mcoi_runtime.core.runbook_executor import RunbookExecutor
 from mcoi_runtime.core.persisted_replay import PersistedReplayValidator
@@ -111,6 +112,18 @@ class TestRunbookExecutionContracts:
     def test_step_result_valid(self):
         r = RunbookStepResult(step_index=0, step_name="check", succeeded=True)
         assert r.succeeded
+        assert r.execution_mode is ExecutionMode.REAL
+        assert r.to_json_dict()["execution_mode"] == "real"
+
+    def test_step_result_accepts_explicit_execution_mode(self):
+        r = RunbookStepResult(
+            step_index=0,
+            step_name="check",
+            succeeded=True,
+            execution_mode="dry_run",
+        )
+        assert r.execution_mode is ExecutionMode.DRY_RUN
+        assert r.to_json_dict()["execution_mode"] == "dry_run"
 
     def test_step_result_negative_index_rejected(self):
         with pytest.raises(ValueError):
@@ -123,6 +136,8 @@ class TestRunbookExecutionContracts:
             RunbookStepResult(step_index=0, step_name="x", succeeded=1)  # type: ignore[arg-type]
         with pytest.raises(ValueError, match="error_message"):
             RunbookStepResult(step_index=0, step_name="x", succeeded=False, error_message="")
+        with pytest.raises(ValueError, match="execution_mode"):
+            RunbookStepResult(step_index=0, step_name="x", succeeded=True, execution_mode="stub")
 
     def test_drift_record_valid(self):
         d = DriftRecord(
@@ -164,6 +179,32 @@ class TestRunbookExecutionContracts:
         )
         assert r.succeeded is True
         assert r.has_drift is False
+        assert r.execution_mode is ExecutionMode.REAL
+        assert r.to_json_dict()["execution_mode"] == "real"
+
+    def test_execution_record_accepts_explicit_execution_mode(self):
+        r = RunbookExecutionRecord(
+            record_id="r-1", runbook_id="rb-1", request_id="req-1",
+            status=RunbookExecutionStatus.SUCCEEDED, context=_context(),
+            execution_mode=ExecutionMode.SHADOW,
+        )
+        assert r.execution_mode is ExecutionMode.SHADOW
+        assert r.to_json_dict()["execution_mode"] == "shadow"
+
+    def test_execution_record_rejects_step_execution_mode_mismatch(self):
+        step = RunbookStepResult(
+            step_index=0,
+            step_name="check",
+            succeeded=True,
+            execution_mode=ExecutionMode.DRY_RUN,
+        )
+        with pytest.raises(ValueError, match="step_results execution_mode"):
+            RunbookExecutionRecord(
+                record_id="r-1", runbook_id="rb-1", request_id="req-1",
+                status=RunbookExecutionStatus.SUCCEEDED, context=_context(),
+                step_results=(step,),
+                execution_mode=ExecutionMode.REAL,
+            )
 
     def test_execution_record_with_drift(self):
         drift = DriftRecord(
@@ -196,6 +237,12 @@ class TestRunbookExecutionContracts:
                 record_id="r-1", runbook_id="rb-1", request_id="req-1",
                 status=RunbookExecutionStatus.SUCCEEDED, context=_context(),
                 started_at="bad",
+            )
+        with pytest.raises(ValueError, match="execution_mode"):
+            RunbookExecutionRecord(
+                record_id="r-1", runbook_id="rb-1", request_id="req-1",
+                status=RunbookExecutionStatus.SUCCEEDED, context=_context(),
+                execution_mode="stub",
             )
 
 
