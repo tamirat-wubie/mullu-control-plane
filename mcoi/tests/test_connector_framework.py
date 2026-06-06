@@ -137,7 +137,11 @@ def test_history_bounded() -> None:
     fw.register(_sample_connector(), lambda a, p: {})
     for _ in range(30):
         fw.invoke("c1", "ping", {})
-    assert len(fw.recent_invocations(limit=10)) == 10
+    recent = fw.recent_invocations(limit=10)
+    assert len(recent) == 10
+    assert recent[0].invocation_id == "cinv-000030"
+    assert fw.recent_invocations(limit=0) == []
+    assert fw.recent_invocations(limit=-1) == []
 
 
 def test_summary() -> None:
