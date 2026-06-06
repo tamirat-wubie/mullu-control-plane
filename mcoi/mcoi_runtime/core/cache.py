@@ -37,6 +37,10 @@ class GovernedCache:
     """TTL-based in-memory cache with LRU eviction."""
 
     def __init__(self, *, max_size: int = 1000, default_ttl: float = 300.0) -> None:
+        if max_size <= 0:
+            raise ValueError("max_size must be positive")
+        if default_ttl <= 0:
+            raise ValueError("default_ttl must be positive")
         self._max_size = max_size
         self._default_ttl = default_ttl
         self._entries: dict[str, CacheEntry] = {}
