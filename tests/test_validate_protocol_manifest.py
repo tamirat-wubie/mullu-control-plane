@@ -889,6 +889,7 @@ def test_protocol_manifest_indexes_operational_intelligence_contracts() -> None:
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     action_orchestration_entry = entries["universal-action-orchestration"]
     action_orchestration_validation_receipt_entry = entries["universal-action-orchestration-validation-receipt"]
+    evidence_graph_entry = entries["universal-evidence-graph"]
     goal_entry = entries["goal"]
     simulation_entry = entries["simulation-receipt"]
     coordination_receipt_entry = entries["intelligence-coordination-episode-receipt"]
@@ -905,6 +906,9 @@ def test_protocol_manifest_indexes_operational_intelligence_contracts() -> None:
         "urn:mullusi:schema:universal-action-orchestration-validation-receipt:1"
     )
     assert action_orchestration_validation_receipt_entry["surface"] == "orchestration"
+    assert evidence_graph_entry["path"] == "schemas/universal_evidence_graph.schema.json"
+    assert evidence_graph_entry["urn"] == "urn:mullusi:schema:universal-evidence-graph:1"
+    assert evidence_graph_entry["surface"] == "orchestration"
     assert goal_entry["path"] == "schemas/goal.schema.json"
     assert goal_entry["urn"] == "urn:mullusi:schema:goal:1"
     assert goal_entry["surface"] == "planning"

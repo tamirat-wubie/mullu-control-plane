@@ -5170,6 +5170,91 @@ def _validate_evidence_collection_fixture(path: Path) -> list[str]:
     return errors
 
 
+def _validate_universal_evidence_graph_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    from mcoi_runtime.contracts.universal_evidence_graph import (
+        UniversalEvidenceGraph,
+        UniversalEvidenceGraphEdge,
+        UniversalEvidenceGraphEdgeKind,
+        UniversalEvidenceGraphNode,
+        UniversalEvidenceGraphNodeKind,
+        UniversalEvidenceQuestionAnswer,
+        UniversalEvidenceQuestionKind,
+    )
+
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "graph_id",
+            "version",
+            "generated_at",
+            "nodes",
+            "edges",
+            "questions",
+            "receipt_refs",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    try:
+        contract_record = UniversalEvidenceGraph(
+            graph_id=payload["graph_id"],
+            version=payload["version"],
+            generated_at=payload["generated_at"],
+            nodes=tuple(
+                UniversalEvidenceGraphNode(
+                    node_id=node["node_id"],
+                    node_kind=UniversalEvidenceGraphNodeKind(node["node_kind"]),
+                    label=node["label"],
+                    source_ref=node["source_ref"],
+                    evidence_refs=tuple(node["evidence_refs"]),
+                    confidence=node["confidence"],
+                    created_at=node["created_at"],
+                    metadata=node["metadata"],
+                )
+                for node in payload["nodes"]
+            ),
+            edges=tuple(
+                UniversalEvidenceGraphEdge(
+                    edge_id=edge["edge_id"],
+                    edge_kind=UniversalEvidenceGraphEdgeKind(edge["edge_kind"]),
+                    source_node_id=edge["source_node_id"],
+                    target_node_id=edge["target_node_id"],
+                    evidence_refs=tuple(edge["evidence_refs"]),
+                    confidence=edge["confidence"],
+                    created_at=edge["created_at"],
+                    metadata=edge["metadata"],
+                )
+                for edge in payload["edges"]
+            ),
+            questions=tuple(
+                UniversalEvidenceQuestionAnswer(
+                    question_id=question["question_id"],
+                    question_kind=UniversalEvidenceQuestionKind(question["question_kind"]),
+                    target_node_id=question["target_node_id"],
+                    answer_node_ids=tuple(question["answer_node_ids"]),
+                    answer_edge_ids=tuple(question["answer_edge_ids"]),
+                    confidence=question["confidence"],
+                    created_at=question["created_at"],
+                )
+                for question in payload["questions"]
+            ),
+            receipt_refs=tuple(payload["receipt_refs"]),
+            metadata=payload["metadata"],
+        )
+    except (KeyError, TypeError, ValueError):
+        return [f"{_relative_path(path)}: runtime fixture violates UniversalEvidenceGraph contract"]
+    if contract_record.to_json_dict() != payload:
+        return [
+            f"{_relative_path(path)}: runtime fixture must round-trip exactly through "
+            "UniversalEvidenceGraph"
+        ]
+    return []
+
+
 def _validate_finding_record_fixture(path: Path) -> list[str]:
     payload = _load_json_object(path, kind="MCOI runtime fixture")
     errors = _validate_exact_object_fields(
@@ -10520,6 +10605,7 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "financial_health_snapshot.json": _validate_financial_health_snapshot_fixture,
     "evidence_collection.json": _validate_evidence_collection_fixture,
     "evidence_item.json": _validate_evidence_item_fixture,
+    "universal_evidence_graph.json": _validate_universal_evidence_graph_fixture,
     "failover_record.json": _validate_failover_record_fixture,
     "finding_record.json": _validate_finding_record_fixture,
     "governance_contract_record.json": _validate_governance_contract_record_fixture,
