@@ -539,6 +539,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_reflective_contracts.py"),
         ),
         CheckCommand(
+            "doc_code_consistency",
+            (python_executable, "scripts/validate_doc_code_consistency.py"),
+        ),
+        CheckCommand(
             "strict_schema_validation",
             (python_executable, "scripts/validate_schemas.py", "--strict"),
         ),

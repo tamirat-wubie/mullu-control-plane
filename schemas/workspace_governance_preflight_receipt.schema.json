@@ -164,6 +164,7 @@
             "route_receipt_coverage",
             "route_guard_chain_coverage",
             "reflective_contract_guard",
+            "doc_code_consistency",
             "strict_schema_validation",
             "strict_artifact_validation",
             "terminal_closure_certificate",

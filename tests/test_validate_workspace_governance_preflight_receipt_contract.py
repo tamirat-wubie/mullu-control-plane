@@ -32,6 +32,7 @@ def test_current_receipt_contract_passes() -> None:
     assert "route_receipt_coverage" in check_name_enum
     assert "route_guard_chain_coverage" in check_name_enum
     assert "reflective_contract_guard" in check_name_enum
+    assert "doc_code_consistency" in check_name_enum
     assert "strict_schema_validation" in check_name_enum
     assert "strict_artifact_validation" in check_name_enum
     assert "terminal_closure_certificate" in check_name_enum

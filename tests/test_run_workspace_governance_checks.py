@@ -77,6 +77,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "route_receipt_coverage",
         "route_guard_chain_coverage",
         "reflective_contract_guard",
+        "doc_code_consistency",
         "strict_schema_validation",
         "strict_artifact_validation",
         "terminal_closure_certificate",
@@ -206,6 +207,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["reflective_contract_guard"][1:] == (
         "scripts/validate_reflective_contracts.py",
+    )
+    assert args_by_name["doc_code_consistency"][1:] == (
+        "scripts/validate_doc_code_consistency.py",
     )
     assert args_by_name["strict_schema_validation"][1:] == (
         "scripts/validate_schemas.py",
