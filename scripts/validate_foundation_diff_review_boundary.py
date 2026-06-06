@@ -61,6 +61,32 @@ EXPECTED_SURFACES = (
     ("rollback_revert_questions", "local_draft", "AwaitingEvidence"),
     ("handoff_summary_questions", "local_draft", "AwaitingEvidence"),
 )
+EXPECTED_SURFACE_NOTE_FRAGMENTS = {
+    "changed_file_inventory_questions": (
+        "runtime-safety packet families",
+        "without claiming diff-review completeness",
+    ),
+    "untracked_file_inventory_questions": (
+        "validator and test artifacts",
+        "without staging untracked files",
+    ),
+    "unrelated_change_classification": (
+        "separate runtime-safety packet work from user or prior work",
+        "without reverting unrelated work",
+    ),
+    "agent_change_scope_questions": (
+        "Phi-GPS, provider, connector, secret, process, pagination, and governance artifact families",
+        "without ownership closure",
+    ),
+    "validation_summary_questions": (
+        "focused validators, targeted tests, hygiene scans, and governance receipts",
+        "without broad test-pass claims",
+    ),
+    "handoff_summary_questions": (
+        "source-control, change-handoff, and test-evidence boundaries",
+        "without release or deployment readiness",
+    ),
+}
 EXPECTED_ROOT_KEYS = {
     "blocked_claims",
     "branch_switch_allowed",
@@ -107,6 +133,10 @@ REQUIRED_DOC_PHRASES = (
     "pull_request_allowed=false",
     "source_control_publication_allowed=false",
     "deployment_allowed=false",
+    "Runtime-safety diff separation",
+    "runtime-safety packet families",
+    "validator and test artifacts",
+    "separate runtime-safety packet work from user or prior work",
     "python scripts/validate_foundation_diff_review_boundary.py",
 )
 FORBIDDEN_VALUE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -346,11 +376,23 @@ def validate_diff_review_surfaces(diff_review_surfaces: object) -> list[DiffRevi
                     f"{surface_id} evidence_ref must stay manual_preparation_pending in the committed packet",
                 )
             )
-        if not isinstance(surface.get("public_safe_note"), str) or not surface["public_safe_note"].strip():
+        public_safe_note = surface.get("public_safe_note")
+        if not isinstance(public_safe_note, str) or not public_safe_note.strip():
             findings.append(
                 DiffReviewFinding(
                     "diff_review_surface_note_invalid",
                     f"{surface_id} public_safe_note must be a non-empty string",
+                )
+            )
+            continue
+        missing_fragments = tuple(
+            fragment for fragment in EXPECTED_SURFACE_NOTE_FRAGMENTS.get(surface_id, ()) if fragment not in public_safe_note
+        )
+        if missing_fragments:
+            findings.append(
+                DiffReviewFinding(
+                    "diff_review_surface_note_fragment_missing",
+                    f"{surface_id} public_safe_note missing required fragments: {', '.join(missing_fragments)}",
                 )
             )
     return findings

@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1780664954.505807,
-  "check_count": 122,
+  "check_count": 125,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -46,6 +46,17 @@
       "args": [
         "python",
         "scripts/validate_foundation_source_control_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_source_control_review_checklist_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_source_control_review_checklist_boundary.py"
       ],
       "return_code": 0,
       "stdout": "STATUS: passed\n",
@@ -464,6 +475,17 @@
       "args": [
         "python",
         "scripts/validate_foundation_runtime_secret_handoff_rehearsal_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_runtime_witness_deferral_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_runtime_witness_deferral_boundary.py"
       ],
       "return_code": 0,
       "stdout": "STATUS: passed\n",
@@ -915,6 +937,17 @@
       "args": [
         "python",
         "scripts/validate_logic_governance_application.py"
+      ],
+      "return_code": 0,
+      "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "phi_gps_v3_platform_spec",
+      "args": [
+        "python",
+        "scripts/validate_phi_gps_v3_platform_spec.py"
       ],
       "return_code": 0,
       "stdout": "STATUS: passed\n",

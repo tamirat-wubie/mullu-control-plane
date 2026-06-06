@@ -20,16 +20,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum ExecutionMode {
-    Real,
-    DryRun,
-    Shadow,
-    Simulation,
-    Replay,
-    Test,
-}
+use maf_kernel::ExecutionMode;
 
 // ===========================================================================
 // Jobs

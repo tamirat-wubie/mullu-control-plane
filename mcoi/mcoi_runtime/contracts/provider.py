@@ -43,6 +43,16 @@ class CredentialScope(ContractRecord):
     def __post_init__(self) -> None:
         object.__setattr__(self, "scope_id", require_non_empty_text(self.scope_id, "scope_id"))
         object.__setattr__(self, "provider_id", require_non_empty_text(self.provider_id, "provider_id"))
+        object.__setattr__(
+            self,
+            "allowed_base_urls",
+            _require_optional_text_tuple(self.allowed_base_urls, "allowed_base_urls"),
+        )
+        object.__setattr__(
+            self,
+            "allowed_operations",
+            _require_optional_text_tuple(self.allowed_operations, "allowed_operations"),
+        )
         if self.rate_limit_per_minute is not None:
             if not isinstance(self.rate_limit_per_minute, int) or self.rate_limit_per_minute <= 0:
                 raise ValueError("rate_limit_per_minute must be a positive integer")
@@ -93,3 +103,12 @@ class ProviderHealthRecord(ContractRecord):
         object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
         if not isinstance(self.consecutive_failures, int) or self.consecutive_failures < 0:
             raise ValueError("consecutive_failures must be a non-negative integer")
+
+
+def _require_optional_text_tuple(values: object, field_name: str) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    return tuple(
+        require_non_empty_text(value, f"{field_name}[{index}]")
+        for index, value in enumerate(values)
+    )

@@ -265,6 +265,26 @@ Source-control preparation is bounded by
 [`docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md`](docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md),
 which organizes commit readiness without staging, committing, pushing, opening a
 pull request, publishing a release, deploying, or exposing secrets.
+Source-control review checklist preparation is bounded by
+[`docs/FOUNDATION_SOURCE_CONTROL_REVIEW_CHECKLIST_BOUNDARY.md`](docs/FOUNDATION_SOURCE_CONTROL_REVIEW_CHECKLIST_BOUNDARY.md),
+which drafts dirty-worktree snapshot, runtime-safety current-packet,
+secrets/private-value screening, unrelated-work preservation, untracked-artifact
+current-packet, validation-receipt current-packet review, next-action witness
+review, Git-effect stop-rule review, external-action stop-rule review, warning,
+Git-effect, and external-action review questions without
+claiming checklist completion, claiming a clean worktree, publishing status
+output, publishing receipt content, closing check counts or failed-check names,
+claiming terminal closure, authorizing broad continuation, committing to a
+roadmap or deadline, assigning ownership, claiming runtime readiness, claiming
+adapter authority, recording endpoint values, claiming secret use, claiming
+secret clearance, claiming secret-scan pass, recording private values, binding
+providers, publishing file lists, closing artifact ownership, approving branch
+switching, tag creation, reset/checkout/delete/move/revert, changing Git
+configuration, authorizing Git effects, publishing, deploying, opening customer
+access or customer actions, moving money or payment actions, making legal or
+company claims, filing patent material, activating external accounts or
+services, binding providers, recording endpoint targets, collecting
+personal-data, or exposing secrets.
 Secrets and credentials are bounded by
 [`docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md`](docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md),
 which drafts credential categories, environment-variable names, provider-access
@@ -327,6 +347,14 @@ workflow mount, runtime env binding, preflight secret gate, and reassessment
 labels without recording secret names, secret values, private paths, binding
 repository or runtime secrets, mounting workflow secrets, dispatching
 workflows, publishing artifacts, claiming readiness, opening customer access,
+moving money, publication, or deployment.
+Runtime witness deferral is bounded by
+[`docs/FOUNDATION_RUNTIME_WITNESS_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_RUNTIME_WITNESS_DEFERRAL_BOUNDARY.md),
+which records future witness creation, secret-binding, endpoint-probe,
+payload, signature, publication, conformance, witness-collection,
+ledger-routing, and reassessment stop rules without creating witness evidence,
+binding secrets, probing endpoints, recording payload values, verifying
+signatures, publishing witnesses, claiming readiness, opening customer access,
 moving money, publication, or deployment.
 Deployment witness inputs are bounded by
 [`docs/FOUNDATION_DEPLOYMENT_WITNESS_INPUT_BOUNDARY.md`](docs/FOUNDATION_DEPLOYMENT_WITNESS_INPUT_BOUNDARY.md),

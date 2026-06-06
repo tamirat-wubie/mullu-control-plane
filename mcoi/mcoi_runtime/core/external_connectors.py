@@ -368,9 +368,10 @@ class ExternalConnectorRegistry:
         for entry in entries:
             if not entry.enabled:
                 continue
+            cid = entry.connector_id
             if not self._connector_available_for_fallback(entry):
                 continue
-            return self._connectors[entry.connector_id]
+            return self._connectors[cid]
 
         return None
 
@@ -520,6 +521,41 @@ class ExternalConnectorRegistry:
             "attempts": tuple(attempts),
             "fallback_used": True,
         }
+
+    def _connector_available_for_fallback(self, entry: FallbackChainEntry) -> bool:
+        cid = entry.connector_id
+        if cid not in self._connectors:
+            return False
+        desc = self._descriptors.get(cid)
+        if desc is None or not desc.enabled:
+            return False
+        if not self._connector_health_is_executable(cid):
+            return False
+        snapshot = self._health_snapshots.get(cid)
+        if snapshot and entry.min_reliability > 0:
+            if snapshot.reliability_score < entry.min_reliability:
+                return False
+        if snapshot and entry.max_latency_ms > 0:
+            if snapshot.avg_latency_ms > entry.max_latency_ms:
+                return False
+        if not self.validate_credential(cid):
+            return False
+        if not self.check_rate_limit(cid):
+            return False
+        if not self.check_quota(cid):
+            return False
+        return True
+
+    def _connector_health_is_executable(self, connector_id: str) -> bool:
+        desc = self._descriptors.get(connector_id)
+        if desc is None:
+            return False
+        snapshot = self._health_snapshots.get(connector_id)
+        effective_health = snapshot.health_state if snapshot else desc.health_state
+        return effective_health in (
+            ConnectorHealthState.HEALTHY,
+            ConnectorHealthState.DEGRADED,
+        )
 
     def _record_failure(
         self, connector_id: str, operation: str,

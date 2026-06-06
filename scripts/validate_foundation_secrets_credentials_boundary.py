@@ -6,8 +6,9 @@ storage, credential activation, provider binding, key creation, external calls,
 and deployment claims remain blocked.
 Governance scope: Foundation Mode, secrets posture, credential posture,
 public-safe planning witness, private-value exclusion, and deployment blocking.
-Dependencies: docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md and
-examples/foundation_secrets_credentials_witness.awaiting_evidence.json.
+Dependencies: docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md,
+examples/foundation_secrets_credentials_witness.awaiting_evidence.json, and
+examples/foundation_secrets_credentials_current_packet.awaiting_evidence.json.
 Invariants:
   - Validation is read-only.
   - The witness records local secrets/credentials planning only.
@@ -29,8 +30,10 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DOC_PATH = REPO_ROOT / "docs" / "FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md"
 DEFAULT_PACKET_PATH = REPO_ROOT / "examples" / "foundation_secrets_credentials_witness.awaiting_evidence.json"
+DEFAULT_APPLICATION_PATH = REPO_ROOT / "examples" / "foundation_secrets_credentials_current_packet.awaiting_evidence.json"
 
 EXPECTED_WITNESS_ID = "foundation_secrets_credentials_witness.awaiting_evidence.v1"
+EXPECTED_APPLICATION_ID = "foundation_secrets_credentials_current_packet.awaiting_evidence.v1"
 EXPECTED_BLOCKED_CLAIMS = (
     "real secret storage",
     "credential activation",
@@ -43,6 +46,18 @@ EXPECTED_BLOCKED_CLAIMS = (
     "secret rotation readiness",
     "external call readiness",
     "deployment readiness",
+)
+EXPECTED_APPLICATION_BLOCKED_CLAIMS = (
+    *EXPECTED_BLOCKED_CLAIMS[:-2],
+    "secret scan pass",
+    *EXPECTED_BLOCKED_CLAIMS[-2:],
+    "customer access",
+    "external publication",
+    "legal clearance",
+    "company formation",
+    "patent action",
+    "money movement",
+    "Git effect",
 )
 EXPECTED_SURFACES = (
     ("credential_inventory_draft", "local_draft", "AwaitingEvidence"),
@@ -81,16 +96,118 @@ EXPECTED_SURFACE_KEYS = {
     "surface_id",
     "surface_type",
 }
+EXPECTED_APPLICATION_ROOT_KEYS = {
+    "api_key_creation_allowed",
+    "application_id",
+    "blocked_claims",
+    "commit_allowed",
+    "company_formation_claimed",
+    "credential_activation_allowed",
+    "customer_access_allowed",
+    "deployment_allowed",
+    "env_file_commit_allowed",
+    "external_call_allowed",
+    "external_publication_allowed",
+    "legal_clearance_claimed",
+    "money_action_allowed",
+    "next_action",
+    "oauth_app_creation_allowed",
+    "observed_screening_categories",
+    "patent_action_allowed",
+    "private_key_storage_allowed",
+    "provider_account_binding_allowed",
+    "pull_request_allowed",
+    "push_allowed",
+    "real_secret_storage_allowed",
+    "schema_version",
+    "screening_context",
+    "screening_items",
+    "secret_rotation_claimed",
+    "secret_scan_pass_claimed",
+    "service_account_creation_allowed",
+    "solver_outcome",
+    "source_witness_ref",
+    "staging_allowed",
+    "status",
+}
+EXPECTED_SCREENING_CONTEXT_KEYS = {
+    "account_identifier_recorded",
+    "assigned_environment_value_recorded",
+    "changed_file_list_recorded",
+    "credential_value_recorded",
+    "mode",
+    "private_path_recorded",
+    "private_values_recorded",
+    "provider_binding_recorded",
+    "receipt_is_terminal_closure_claimed",
+    "saved_preflight_receipt_available",
+    "scope",
+    "secret_value_recorded",
+}
+EXPECTED_APPLICATION_ITEM_KEYS = {
+    "application_note",
+    "state",
+    "surface_id",
+}
+EXPECTED_SCREENING_CATEGORIES = (
+    "secret_value_pattern_guard",
+    "environment_assignment_guard",
+    "private_path_guard",
+    "token_shape_guard",
+    "provider_binding_guard",
+    "source_control_publication_stop_rule",
+    "current_packet_category_only_review",
+)
+EXPECTED_APPLICATION_ITEMS = tuple((surface_id, "AwaitingEvidence") for surface_id, _, _ in EXPECTED_SURFACES)
+EXPECTED_APPLICATION_NOTE_FRAGMENTS = {
+    "credential_inventory_draft": (
+        "Credential inventory draft category only",
+        "no real secret values",
+        "live provider bindings",
+    ),
+    "environment_variable_plan": (
+        "Environment variable plan category only",
+        "no environment files or assigned values",
+    ),
+    "provider_access_questions": (
+        "Provider access question category only",
+        "no provider account identifiers",
+    ),
+    "api_key_questions": (
+        "API key question category only",
+        "no created keys",
+        "key readiness is claimed",
+    ),
+    "oauth_app_questions": (
+        "OAuth app question category only",
+        "no client secrets",
+    ),
+    "service_account_questions": (
+        "Service account question category only",
+        "no service account keys",
+    ),
+    "rotation_recovery_questions": (
+        "Rotation and recovery question category only",
+        "no rotation-ready claim",
+    ),
+    "secret_scan_checklist": (
+        "Secret scan checklist category only",
+        "no scan-pass claim",
+    ),
+}
 REQUIRED_DOC_PHRASES = (
     "Foundation Secrets Credentials Boundary",
     "Witness packet: [`../examples/foundation_secrets_credentials_witness.awaiting_evidence.json`]",
+    "Application packet: [`../examples/foundation_secrets_credentials_current_packet.awaiting_evidence.json`]",
     "Rule: Secrets/credentials preparation is a local planning boundary, not permission to store or activate real credentials.",
     "No real-secret storage, credential activation, provider-account binding, API",
     "secrets_credentials_boundary_state=AwaitingEvidence",
     "real_secret_storage_allowed=false",
     "credential_activation_allowed=false",
     "api_key_creation_allowed=false",
+    "secret_scan_pass_claimed=false",
     "deployment_allowed=false",
+    "Current Packet Screening Application",
     "python scripts/validate_foundation_secrets_credentials_boundary.py",
 )
 FORBIDDEN_VALUE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
@@ -173,6 +290,19 @@ def validate_packet(payload: dict[str, Any]) -> list[SecretsCredentialsFinding]:
     return findings
 
 
+def validate_application(payload: dict[str, Any]) -> list[SecretsCredentialsFinding]:
+    """Return findings for current-packet secrets/private-value screening drift."""
+
+    findings: list[SecretsCredentialsFinding] = []
+    findings.extend(validate_application_root_contract(payload))
+    findings.extend(validate_screening_context(payload.get("screening_context")))
+    findings.extend(validate_screening_categories(payload.get("observed_screening_categories")))
+    findings.extend(validate_screening_items(payload.get("screening_items")))
+    findings.extend(validate_forbidden_value_patterns(payload))
+    findings.extend(validate_forbidden_promotion_patterns(payload))
+    return findings
+
+
 def validate_root_contract(payload: dict[str, Any]) -> list[SecretsCredentialsFinding]:
     """Return findings for root-level secrets/credentials witness drift."""
 
@@ -224,6 +354,193 @@ def validate_root_contract(payload: dict[str, Any]) -> list[SecretsCredentialsFi
                 "next_action must preserve the closed credential boundary",
             )
         )
+    return findings
+
+
+def validate_application_root_contract(payload: dict[str, Any]) -> list[SecretsCredentialsFinding]:
+    """Return findings for current-packet secrets screening root drift."""
+
+    findings: list[SecretsCredentialsFinding] = []
+    if set(payload) != EXPECTED_APPLICATION_ROOT_KEYS:
+        findings.append(
+            SecretsCredentialsFinding(
+                "secrets_credentials_application_root_keys_invalid",
+                f"application root keys must be: {', '.join(sorted(EXPECTED_APPLICATION_ROOT_KEYS))}",
+            )
+        )
+    expected_values = {
+        "application_id": EXPECTED_APPLICATION_ID,
+        "schema_version": 1,
+        "status": "AwaitingEvidence",
+        "solver_outcome": "AwaitingEvidence",
+        "source_witness_ref": "examples/foundation_secrets_credentials_witness.awaiting_evidence.json",
+        "real_secret_storage_allowed": False,
+        "credential_activation_allowed": False,
+        "provider_account_binding_allowed": False,
+        "api_key_creation_allowed": False,
+        "oauth_app_creation_allowed": False,
+        "service_account_creation_allowed": False,
+        "env_file_commit_allowed": False,
+        "private_key_storage_allowed": False,
+        "secret_rotation_claimed": False,
+        "secret_scan_pass_claimed": False,
+        "external_call_allowed": False,
+        "deployment_allowed": False,
+        "customer_access_allowed": False,
+        "external_publication_allowed": False,
+        "legal_clearance_claimed": False,
+        "company_formation_claimed": False,
+        "patent_action_allowed": False,
+        "money_action_allowed": False,
+        "staging_allowed": False,
+        "commit_allowed": False,
+        "push_allowed": False,
+        "pull_request_allowed": False,
+    }
+    for key, expected_value in expected_values.items():
+        if payload.get(key) != expected_value:
+            findings.append(
+                SecretsCredentialsFinding(
+                    "secrets_credentials_application_root_value_invalid",
+                    f"{key} must be {expected_value!r}",
+                )
+            )
+    if tuple(payload.get("blocked_claims") or ()) != EXPECTED_APPLICATION_BLOCKED_CLAIMS:
+        findings.append(
+            SecretsCredentialsFinding(
+                "secrets_credentials_application_blocked_claims_invalid",
+                f"application blocked_claims must be: {', '.join(EXPECTED_APPLICATION_BLOCKED_CLAIMS)}",
+            )
+        )
+    next_action = payload.get("next_action")
+    if not isinstance(next_action, str) or "continue local secret and private-value screening" not in next_action:
+        findings.append(
+            SecretsCredentialsFinding(
+                "secrets_credentials_application_next_action_invalid",
+                "application next_action must preserve local screening without clearance or effect promotion",
+            )
+        )
+    return findings
+
+
+def validate_screening_context(screening_context: object) -> list[SecretsCredentialsFinding]:
+    """Return findings for current-packet screening context drift."""
+
+    if not isinstance(screening_context, dict):
+        return [
+            SecretsCredentialsFinding(
+                "secrets_credentials_application_context_invalid",
+                "screening_context must be an object",
+            )
+        ]
+    findings: list[SecretsCredentialsFinding] = []
+    if set(screening_context) != EXPECTED_SCREENING_CONTEXT_KEYS:
+        findings.append(
+            SecretsCredentialsFinding(
+                "secrets_credentials_application_context_keys_invalid",
+                f"screening_context keys must be: {', '.join(sorted(EXPECTED_SCREENING_CONTEXT_KEYS))}",
+            )
+        )
+    expected_values = {
+        "mode": "Foundation Mode",
+        "scope": "current dirty worktree secret and private-value screening categories only",
+        "changed_file_list_recorded": False,
+        "private_values_recorded": False,
+        "secret_value_recorded": False,
+        "credential_value_recorded": False,
+        "assigned_environment_value_recorded": False,
+        "private_path_recorded": False,
+        "account_identifier_recorded": False,
+        "provider_binding_recorded": False,
+        "saved_preflight_receipt_available": True,
+        "receipt_is_terminal_closure_claimed": False,
+    }
+    for key, expected_value in expected_values.items():
+        if screening_context.get(key) != expected_value:
+            findings.append(
+                SecretsCredentialsFinding(
+                    "secrets_credentials_application_context_value_invalid",
+                    f"{key} must be {expected_value!r}",
+                )
+            )
+    return findings
+
+
+def validate_screening_categories(categories: object) -> list[SecretsCredentialsFinding]:
+    """Return findings for current-packet screening category drift."""
+
+    if tuple(categories or ()) != EXPECTED_SCREENING_CATEGORIES:
+        return [
+            SecretsCredentialsFinding(
+                "secrets_credentials_application_categories_invalid",
+                "observed_screening_categories must match the current public-safe screening category set",
+            )
+        ]
+    return []
+
+
+def validate_screening_items(screening_items: object) -> list[SecretsCredentialsFinding]:
+    """Return findings for current-packet screening item drift."""
+
+    findings: list[SecretsCredentialsFinding] = []
+    if not isinstance(screening_items, list) or not all(isinstance(item, dict) for item in screening_items):
+        return [
+            SecretsCredentialsFinding(
+                "secrets_credentials_application_items_invalid",
+                "screening_items must be a list of objects",
+            )
+        ]
+    observed_items = tuple((item.get("surface_id"), item.get("state")) for item in screening_items)
+    if observed_items != EXPECTED_APPLICATION_ITEMS:
+        findings.append(
+            SecretsCredentialsFinding(
+                "secrets_credentials_application_inventory_invalid",
+                "screening item inventory does not match the secrets/credentials surface set",
+            )
+        )
+    surface_ids = [item.get("surface_id") for item in screening_items]
+    if len(set(surface_ids)) != len(surface_ids):
+        findings.append(
+            SecretsCredentialsFinding(
+                "secrets_credentials_application_duplicate",
+                "screening item surface ids must be unique",
+            )
+        )
+    for item in screening_items:
+        surface_id = str(item.get("surface_id", "<missing>"))
+        if set(item) != EXPECTED_APPLICATION_ITEM_KEYS:
+            findings.append(
+                SecretsCredentialsFinding(
+                    "secrets_credentials_application_item_keys_invalid",
+                    f"{surface_id} screening item keys must be: {', '.join(sorted(EXPECTED_APPLICATION_ITEM_KEYS))}",
+                )
+            )
+        if item.get("state") != "AwaitingEvidence":
+            findings.append(
+                SecretsCredentialsFinding(
+                    "secrets_credentials_application_item_state_invalid",
+                    f"{surface_id} screening item state must be AwaitingEvidence",
+                )
+            )
+        application_note = item.get("application_note")
+        if not isinstance(application_note, str) or not application_note.strip():
+            findings.append(
+                SecretsCredentialsFinding(
+                    "secrets_credentials_application_note_invalid",
+                    f"{surface_id} application_note must be a non-empty string",
+                )
+            )
+            continue
+        missing_fragments = tuple(
+            fragment for fragment in EXPECTED_APPLICATION_NOTE_FRAGMENTS.get(surface_id, ()) if fragment not in application_note
+        )
+        if missing_fragments:
+            findings.append(
+                SecretsCredentialsFinding(
+                    "secrets_credentials_application_note_fragment_missing",
+                    f"{surface_id} application_note missing required fragments: {', '.join(missing_fragments)}",
+                )
+            )
     return findings
 
 
@@ -322,14 +639,17 @@ def validate_forbidden_promotion_patterns(payload: dict[str, Any]) -> list[Secre
 def validate_foundation_secrets_credentials_boundary(
     doc_path: Path = DEFAULT_DOC_PATH,
     packet_path: Path = DEFAULT_PACKET_PATH,
+    application_path: Path = DEFAULT_APPLICATION_PATH,
 ) -> list[SecretsCredentialsFinding]:
     """Validate the Foundation Mode secrets/credentials boundary artifacts."""
 
     doc_text = load_text(doc_path, "secrets/credentials boundary doc")
     packet_payload = load_json_object(packet_path, "secrets/credentials witness packet")
+    application_payload = load_json_object(application_path, "secrets/credentials current-packet application")
     return [
         *validate_doc_text(doc_text),
         *validate_packet(packet_payload),
+        *validate_application(application_payload),
     ]
 
 
@@ -339,10 +659,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validate Foundation Mode secrets/credentials boundary artifacts.")
     parser.add_argument("--doc", type=Path, default=DEFAULT_DOC_PATH)
     parser.add_argument("--packet", type=Path, default=DEFAULT_PACKET_PATH)
+    parser.add_argument("--application", type=Path, default=DEFAULT_APPLICATION_PATH)
     args = parser.parse_args(argv)
 
     try:
-        findings = validate_foundation_secrets_credentials_boundary(args.doc, args.packet)
+        findings = validate_foundation_secrets_credentials_boundary(args.doc, args.packet, args.application)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"[FAIL] foundation_secrets_credentials_load: {exc}", file=sys.stderr)
         print("STATUS: failed", file=sys.stderr)
@@ -355,6 +676,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     print("[PASS] foundation_secrets_credentials_doc")
     print("[PASS] foundation_secrets_credentials_witness")
+    print("[PASS] foundation_secrets_credentials_current_packet")
     print("STATUS: passed")
     return 0
 

@@ -919,16 +919,17 @@ class TestExecuteWithFallback:
         reg.register(sms2)
         _set_valid_secret(reg, "sms-1")
         _set_valid_secret(reg, "sms-2")
-        reg.set_rate_limit(ConnectorRateLimitPolicy(
-            policy_id="rl-sms-1",
-            connector_id="sms-1",
-            max_burst_size=0,
-            created_at=NOW,
-        ))
-
+        reg.set_rate_limit(
+            ConnectorRateLimitPolicy(
+                policy_id="rl-primary-zero",
+                connector_id="sms-1",
+                max_burst_size=0,
+                created_at=NOW,
+            )
+        )
         chain = FallbackChain(
             chain_id="chain-rate-skip",
-            name="Rate Skip Chain",
+            name="Rate skip",
             strategy=FallbackStrategy.PRIORITY_ORDER,
             entries=(
                 FallbackChainEntry(
@@ -951,7 +952,8 @@ class TestExecuteWithFallback:
         assert result["connector_id"] == "sms-2"
         assert result["fallback_used"] is True
         assert len(result["attempts"]) == 1
-        assert len(reg.get_executions("sms-1")) == 0
+        assert result["attempts"][0].connector_id == "sms-2"
+        assert reg.get_executions("sms-1") == ()
 
     def test_all_fail(self):
         reg = ExternalConnectorRegistry()

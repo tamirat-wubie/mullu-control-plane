@@ -223,6 +223,18 @@ class SandboxedCodeWorker:
                 violations=violations,
             )
 
+        symlink_violations = _symlink_escape_violations(self._workspace_root, lease.allowed_paths)
+        if symlink_violations:
+            finished_at = self._clock()
+            return self._blocked_result(
+                lease=lease,
+                command_id=normalized_command_id,
+                argv=command,
+                started_at=started_at,
+                finished_at=finished_at,
+                violations=symlink_violations,
+            )
+
         profile = SandboxRunnerProfile(
             image=self._sandbox_image,
             network="none",
@@ -568,6 +580,73 @@ def _path_within_allowed(path_text: str, allowed_paths: tuple[str, ...]) -> bool
     if "." in allowed_paths:
         return True
     return any(normalized_path == allowed_path or normalized_path.startswith(f"{allowed_path}/") for allowed_path in allowed_paths)
+
+
+def _symlink_escape_violations(root: Path, allowed_paths: tuple[str, ...]) -> tuple[str, ...]:
+    violations: list[str] = []
+    scanned_paths: set[str] = set()
+    for allowed_path in allowed_paths:
+        allowed_root = root if allowed_path == "." else root / allowed_path
+        _collect_symlink_escape_violations(
+            root=root,
+            scan_root=allowed_root,
+            scanned_paths=scanned_paths,
+            violations=violations,
+        )
+    return tuple(violations)
+
+
+def _collect_symlink_escape_violations(
+    *,
+    root: Path,
+    scan_root: Path,
+    scanned_paths: set[str],
+    violations: list[str],
+) -> None:
+    pending_paths = [scan_root]
+    while pending_paths:
+        path = pending_paths.pop()
+        path_key = path.resolve(strict=False).as_posix()
+        if path_key in scanned_paths:
+            continue
+        scanned_paths.add(path_key)
+        try:
+            relative_path = path.relative_to(root).as_posix()
+        except ValueError:
+            continue
+        if path.is_symlink():
+            if not _path_resolves_inside_root(path, root):
+                violations.append(
+                    f"workspace_symlink_outside_repository_boundary:{_sha256_text(relative_path)[:16]}"
+                )
+            continue
+        if not path.is_dir():
+            continue
+        try:
+            children = sorted(path.iterdir(), key=lambda child: child.as_posix())
+        except OSError:
+            continue
+        for child in children:
+            if child.is_symlink():
+                try:
+                    child_relative_path = child.relative_to(root).as_posix()
+                except ValueError:
+                    continue
+                if not _path_resolves_inside_root(child, root):
+                    violations.append(
+                        f"workspace_symlink_outside_repository_boundary:{_sha256_text(child_relative_path)[:16]}"
+                    )
+                continue
+            if child.is_dir():
+                pending_paths.append(child)
+
+
+def _path_resolves_inside_root(path: Path, root: Path) -> bool:
+    try:
+        path.resolve(strict=False).relative_to(root)
+    except ValueError:
+        return False
+    return True
 
 
 def _changed_path_violations(

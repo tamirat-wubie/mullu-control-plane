@@ -104,6 +104,7 @@ def test_external_deployment_change_families_cover_required_chain() -> None:
         "deployment_deferral_boundary",
         "external_infrastructure_boundary",
         "runtime_secret_handoff_rehearsal_boundary",
+        "runtime_witness_deferral_boundary",
         "production_dependency_evidence_rehearsal_boundary",
         "external_evidence_acceptance_rehearsal_boundary",
         "deployment_upstream_api_gate_rehearsal_boundary",
@@ -119,7 +120,17 @@ def test_external_deployment_change_families_cover_required_chain() -> None:
     assert tuple(
         family
         for family in EXPECTED_CHANGE_FAMILIES
-        if family.startswith(("deployment_", "external_", "runtime_secret_", "production_", "gateway_", "public_health_"))
+        if family.startswith(
+            (
+                "deployment_",
+                "external_",
+                "runtime_secret_",
+                "runtime_witness_",
+                "production_",
+                "gateway_",
+                "public_health_",
+            )
+        )
     ) == expected_chain + (
         "deployment_witness_input_boundary",
         "deployment_witness_preflight_rehearsal_boundary",
@@ -128,6 +139,105 @@ def test_external_deployment_change_families_cover_required_chain() -> None:
         "deployment_witness_evidence_handoff_boundary",
         "deployment_witness_evidence_ledger_routing_boundary",
     )
+
+
+def test_runtime_witness_deferral_family_is_preflight_covered() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "source-control packet")
+    families = {family["family_id"]: family for family in payload["change_families"]}
+    family = families["runtime_witness_deferral_boundary"]
+
+    assert "runtime_witness_deferral_boundary" in EXPECTED_PREFLIGHT_FAMILY_COVERAGE
+    assert family["state"] == "AwaitingEvidence"
+    assert "docs/FOUNDATION_RUNTIME_WITNESS_DEFERRAL_BOUNDARY.md" in family["required_evidence"]
+    assert "examples/foundation_runtime_witness_deferral_witness.awaiting_evidence.json" in family["required_evidence"]
+    assert "scripts/validate_foundation_runtime_witness_deferral_boundary.py" in family["required_evidence"]
+    assert "tests/test_validate_foundation_runtime_witness_deferral_boundary.py" in family["required_evidence"]
+    assert "Runtime-witness-deferral preparation" in family["summary"]
+    assert "signature verification" in family["summary"]
+    assert "deployment witness collection" in family["summary"]
+    assert "deployment claims" in family["summary"]
+
+
+def test_phi_gps_v3_runtime_safety_packet_is_doc_only_and_local_safe() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "source-control packet")
+    families = {family["family_id"]: family for family in payload["change_families"]}
+    family = families["phi_gps_v3_runtime_safety_packet"]
+
+    assert "phi_gps_v3_runtime_safety_packet" in DOC_ONLY_CHANGE_FAMILIES
+    assert family["state"] == "AwaitingEvidence"
+    assert "docs/PHI_CANONICAL_SPEC.md" in family["required_evidence"]
+    assert "examples/foundation_runtime_safety_current_packet.awaiting_evidence.json" in family["required_evidence"]
+    assert "scripts/validate_phi_gps_v3_platform_spec.py" in family["required_evidence"]
+    assert "mcoi/mcoi_runtime/core/phi_gps.py" in family["required_evidence"]
+    assert "mcoi/mcoi_runtime/app/routers/constructs/_pagination.py" in family["required_evidence"]
+    assert "runtime-safety current packet" in family["summary"]
+    assert "deployment promotion blocked" in family["summary"]
+
+
+def test_source_control_review_checklist_family_is_preflight_covered() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "source-control packet")
+    families = {family["family_id"]: family for family in payload["change_families"]}
+    family = families["source_control_review_checklist_boundary"]
+
+    assert "source_control_review_checklist_boundary" in EXPECTED_PREFLIGHT_FAMILY_COVERAGE
+    assert "source_control_review_checklist_boundary" not in DOC_ONLY_CHANGE_FAMILIES
+    assert family["state"] == "AwaitingEvidence"
+    assert "docs/FOUNDATION_SOURCE_CONTROL_REVIEW_CHECKLIST_BOUNDARY.md" in family["required_evidence"]
+    assert "examples/foundation_dirty_worktree_snapshot_current_packet.awaiting_evidence.json" in family["required_evidence"]
+    assert "examples/foundation_external_action_stop_rule_current_packet.awaiting_evidence.json" in family["required_evidence"]
+    assert "examples/foundation_git_effect_stop_rule_current_packet.awaiting_evidence.json" in family["required_evidence"]
+    assert "examples/foundation_line_ending_warning_current_packet.awaiting_evidence.json" in family["required_evidence"]
+    assert "examples/foundation_next_action_witness.awaiting_evidence.json" in family["required_evidence"]
+    assert "examples/foundation_runtime_safety_current_packet.awaiting_evidence.json" in family["required_evidence"]
+    assert "examples/foundation_secrets_credentials_current_packet.awaiting_evidence.json" in family["required_evidence"]
+    assert "examples/foundation_source_control_review_checklist_current_packet.awaiting_evidence.json" in family["required_evidence"]
+    assert "examples/foundation_unrelated_work_preservation_current_packet.awaiting_evidence.json" in family["required_evidence"]
+    assert "examples/foundation_untracked_artifact_current_packet.awaiting_evidence.json" in family["required_evidence"]
+    assert "examples/foundation_validation_receipt_current_packet.awaiting_evidence.json" in family["required_evidence"]
+    assert "scripts/validate_foundation_source_control_review_checklist_boundary.py" in family["required_evidence"]
+    assert "tests/test_validate_foundation_source_control_review_checklist_boundary.py" in family["required_evidence"]
+    assert "dirty-worktree snapshot triage" in family["summary"]
+    assert "Git-effect stop-rule review" in family["summary"]
+    assert "external-action stop-rule review" in family["summary"]
+    assert "validation-receipt current-packet review" in family["summary"]
+    assert "next-action witness review" in family["summary"]
+    assert "runtime-safety current-packet triage" in family["summary"]
+    assert "secrets/private-value screening" in family["summary"]
+    assert "unrelated-work preservation" in family["summary"]
+    assert "untracked-artifact category triage" in family["summary"]
+    assert "terminal closure" in family["summary"]
+    assert "broad continuation execution" in family["summary"]
+    assert "deadline promise" in family["summary"]
+    assert "Git config change" in family["summary"]
+    assert "Git effects" in family["summary"]
+    assert "customer action" in family["summary"]
+    assert "payment action" in family["summary"]
+    assert "external account activation" in family["summary"]
+    assert "provider binding" in family["summary"]
+    assert "personal-data collection" in family["summary"]
+
+
+def test_secrets_credentials_family_includes_current_packet_screening() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "source-control packet")
+    families = {family["family_id"]: family for family in payload["change_families"]}
+    family = families["secrets_credentials_boundary"]
+
+    assert "secrets_credentials_boundary" in EXPECTED_PREFLIGHT_FAMILY_COVERAGE
+    assert "secrets_credentials_boundary" not in DOC_ONLY_CHANGE_FAMILIES
+    assert family["state"] == "AwaitingEvidence"
+    assert "docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md" in family["required_evidence"]
+    assert "examples/foundation_secrets_credentials_current_packet.awaiting_evidence.json" in family["required_evidence"]
+    assert "scripts/validate_foundation_secrets_credentials_boundary.py" in family["required_evidence"]
+    assert "tests/test_validate_foundation_secrets_credentials_boundary.py" in family["required_evidence"]
+
+
+def test_test_evidence_family_includes_validation_receipt_current_packet() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "source-control packet")
+    families = {family["family_id"]: family for family in payload["change_families"]}
+    family = families["test_evidence_boundary"]
+
+    assert "examples/foundation_validation_receipt_current_packet.awaiting_evidence.json" in family["required_evidence"]
+    assert "validation-receipt current-packet" in family["summary"]
 
 
 def test_packet_rejects_commit_promotion() -> None:

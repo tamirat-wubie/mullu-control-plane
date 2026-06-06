@@ -59,6 +59,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     repository_governance_phase = [
         "protocol_manifest",
         "logic_governance_application",
+        "phi_gps_v3_platform_spec",
         "public_repository_surface",
         "proprietary_boundary",
         "release_status",
@@ -117,10 +118,16 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert names == [command.name for command in runner.build_check_commands("python-test")]
 
     assert foundation_phase[:2] == ["foundation_mode", "foundation_source_control_boundary"]
+    assert_ordered("foundation_source_control_boundary", "foundation_source_control_review_checklist_boundary")
+    assert_ordered("foundation_source_control_review_checklist_boundary", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_source_control_boundary", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_external_infrastructure_boundary", "foundation_runtime_secret_handoff_rehearsal_boundary")
     assert_ordered(
         "foundation_runtime_secret_handoff_rehearsal_boundary",
+        "foundation_runtime_witness_deferral_boundary",
+    )
+    assert_ordered(
+        "foundation_runtime_witness_deferral_boundary",
         "foundation_production_dependency_evidence_rehearsal_boundary",
     )
     assert_ordered(
@@ -172,6 +179,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "--json",
     )
     assert args_by_name["agents_policy"][1:] == ("scripts/validate_agents_governance.py",)
+    assert args_by_name["phi_gps_v3_platform_spec"][1:] == (
+        "scripts/validate_phi_gps_v3_platform_spec.py",
+    )
     for check_name in foundation_phase:
         if check_name == "foundation_mode":
             expected_args = ("scripts/validate_foundation_mode.py",)

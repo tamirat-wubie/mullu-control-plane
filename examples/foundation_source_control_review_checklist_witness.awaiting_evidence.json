@@ -1,0 +1,115 @@
+{
+  "blocked_claims": [
+    "checklist completion",
+    "review-scope closure",
+    "validation completeness",
+    "secret clearance",
+    "staging approval",
+    "commit approval",
+    "push approval",
+    "pull request approval",
+    "release readiness",
+    "external publication",
+    "deployment readiness",
+    "customer access",
+    "legal clearance",
+    "company formation",
+    "patent action",
+    "money movement",
+    "secret publication"
+  ],
+  "checklist_complete_claimed": false,
+  "checklist_items": [
+    {
+      "checklist_id": "dirty_worktree_snapshot_review",
+      "checklist_type": "local_review",
+      "evidence_ref": "manual_review_pending",
+      "public_safe_question": "Draft dirty worktree snapshot review questions without claiming checklist completion.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "checklist_id": "runtime_safety_packet_family_review",
+      "checklist_type": "local_review",
+      "evidence_ref": "manual_review_pending",
+      "public_safe_question": "Draft runtime-safety packet family review questions without claiming review-scope closure.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "checklist_id": "unrelated_or_prior_work_review",
+      "checklist_type": "local_review",
+      "evidence_ref": "manual_review_pending",
+      "public_safe_question": "Draft user or prior work separation questions without reverting unrelated work.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "checklist_id": "untracked_artifact_review",
+      "checklist_type": "local_review",
+      "evidence_ref": "manual_review_pending",
+      "public_safe_question": "Draft validator and test artifact review questions without staging untracked files.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "checklist_id": "validation_receipt_review",
+      "checklist_type": "local_review",
+      "evidence_ref": "manual_review_pending",
+      "public_safe_question": "Draft saved governance receipt review questions without claiming validation completeness.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "checklist_id": "secret_private_value_review",
+      "checklist_type": "local_review",
+      "evidence_ref": "manual_review_pending",
+      "public_safe_question": "Draft secret-shaped or private value screening questions without claiming secret clearance.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "checklist_id": "line_ending_warning_review",
+      "checklist_type": "local_review",
+      "evidence_ref": "manual_review_pending",
+      "public_safe_question": "Draft CRLF warning triage questions without hiding warnings.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "checklist_id": "git_effect_stop_rule_review",
+      "checklist_type": "local_review",
+      "evidence_ref": "manual_review_pending",
+      "public_safe_question": "Draft staging, commit, push, and pull request stop-rule questions without authorizing Git effects.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "checklist_id": "external_action_stop_rule_review",
+      "checklist_type": "local_review",
+      "evidence_ref": "manual_review_pending",
+      "public_safe_question": "Draft customer, legal, company, patent, money, secret, publication, and deployment action stop-rule questions without authorizing external effects.",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "checklist_id": "next_action_review",
+      "checklist_type": "local_review",
+      "evidence_ref": "manual_review_pending",
+      "public_safe_question": "Draft next bounded local action questions without release or deployment promotion.",
+      "state": "AwaitingEvidence"
+    }
+  ],
+  "commit_allowed": false,
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "money_action_allowed": false,
+  "next_action": "continue local source-control review checklist drafting without Git or external effect promotion",
+  "patent_action_allowed": false,
+  "pull_request_allowed": false,
+  "push_allowed": false,
+  "release_allowed": false,
+  "review_scope_closed_claimed": false,
+  "schema_version": 1,
+  "secret_clearance_claimed": false,
+  "secret_publication_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "staging_allowed": false,
+  "status": "AwaitingEvidence",
+  "validation_complete_claimed": false,
+  "witness_id": "foundation_source_control_review_checklist_witness.awaiting_evidence.v1"
+}

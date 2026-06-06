@@ -36,28 +36,28 @@
   "test_evidence_surfaces": [
     {
       "evidence_ref": "manual_preparation_pending",
-      "public_safe_note": "Draft focused-validator questions without claiming full-test pass.",
+      "public_safe_note": "Draft focused-validator questions for the Phi-GPS v3 runtime-safety packet without claiming full-test pass.",
       "state": "AwaitingEvidence",
       "surface_id": "focused_validator_questions",
       "surface_type": "local_draft"
     },
     {
       "evidence_ref": "manual_preparation_pending",
-      "public_safe_note": "Draft targeted-pytest questions without claiming complete coverage.",
+      "public_safe_note": "Draft targeted-pytest questions for Phi-GPS, provider, connector, secret, and pagination tests without claiming complete coverage.",
       "state": "AwaitingEvidence",
       "surface_id": "targeted_pytest_questions",
       "surface_type": "local_draft"
     },
     {
       "evidence_ref": "manual_preparation_pending",
-      "public_safe_note": "Draft full-preflight questions without claiming release readiness.",
+      "public_safe_note": "Draft full-preflight questions for the registered local governance receipt without claiming release readiness.",
       "state": "AwaitingEvidence",
       "surface_id": "full_preflight_questions",
       "surface_type": "local_draft"
     },
     {
       "evidence_ref": "manual_preparation_pending",
-      "public_safe_note": "Draft receipt-validation questions without claiming terminal closure.",
+      "public_safe_note": "Draft receipt-validation questions for the saved local governance receipt without claiming terminal closure.",
       "state": "AwaitingEvidence",
       "surface_id": "receipt_validation_questions",
       "surface_type": "local_draft"

@@ -24,6 +24,19 @@ import sys
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
+FOUNDATION_CORE_GUIDANCE_SURFACES = (
+    "AGENTS.md",
+    "README.md",
+    "docs/START_HERE.md",
+    "docs/CURRENT_READINESS_SNAPSHOT.md",
+    "docs/FOUNDATION_MODE.md",
+    "docs/FOUNDATION_PREREQUISITES.md",
+    "docs/WEBSITE_UPDATE_CHECKLIST.md",
+    "docs/PUBLIC_NAMING_REVIEW_PACKET.md",
+    "docs/explain/PLAIN_ENGLISH.md",
+    "site/mullu/index.html",
+)
+
 REQUIRED_PHRASES_BY_FILE = {
     "AGENTS.md": (
         "Assume `Foundation Mode` unless the user or a signed status witness explicitly",
@@ -67,6 +80,7 @@ REQUIRED_PHRASES_BY_FILE = {
         "[`docs/FOUNDATION_NEXT_ACTION_BOUNDARY.md`](docs/FOUNDATION_NEXT_ACTION_BOUNDARY.md)",
         "[`docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md`](docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md)",
         "[`docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md`](docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md)",
+        "[`docs/FOUNDATION_SOURCE_CONTROL_REVIEW_CHECKLIST_BOUNDARY.md`](docs/FOUNDATION_SOURCE_CONTROL_REVIEW_CHECKLIST_BOUNDARY.md)",
         "[`docs/FOUNDATION_LOCAL_PROOF_THREAD.md`](docs/FOUNDATION_LOCAL_PROOF_THREAD.md)",
         "[`docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md`](docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md)",
         "[`docs/FOUNDATION_SECURITY_BASELINE_BOUNDARY.md`](docs/FOUNDATION_SECURITY_BASELINE_BOUNDARY.md)",
@@ -77,6 +91,7 @@ REQUIRED_PHRASES_BY_FILE = {
         "[`docs/FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md)",
         "[`docs/FOUNDATION_EXTERNAL_INFRASTRUCTURE_BOUNDARY.md`](docs/FOUNDATION_EXTERNAL_INFRASTRUCTURE_BOUNDARY.md)",
         "[`docs/FOUNDATION_RUNTIME_SECRET_HANDOFF_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_RUNTIME_SECRET_HANDOFF_REHEARSAL_BOUNDARY.md)",
+        "[`docs/FOUNDATION_RUNTIME_WITNESS_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_RUNTIME_WITNESS_DEFERRAL_BOUNDARY.md)",
         "[`docs/FOUNDATION_PRODUCTION_DEPENDENCY_EVIDENCE_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_PRODUCTION_DEPENDENCY_EVIDENCE_REHEARSAL_BOUNDARY.md)",
         "[`docs/FOUNDATION_EXTERNAL_EVIDENCE_ACCEPTANCE_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_EXTERNAL_EVIDENCE_ACCEPTANCE_REHEARSAL_BOUNDARY.md)",
         "[`docs/FOUNDATION_DEPLOYMENT_UPSTREAM_API_GATE_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_DEPLOYMENT_UPSTREAM_API_GATE_REHEARSAL_BOUNDARY.md)",
@@ -151,6 +166,7 @@ REQUIRED_PHRASES_BY_FILE = {
         "[Foundation Next Action Boundary](FOUNDATION_NEXT_ACTION_BOUNDARY.md)",
         "[Foundation Test Evidence Boundary](FOUNDATION_TEST_EVIDENCE_BOUNDARY.md)",
         "[Foundation Source Control Boundary](FOUNDATION_SOURCE_CONTROL_BOUNDARY.md)",
+        "[Foundation Source-Control Review Checklist Boundary](FOUNDATION_SOURCE_CONTROL_REVIEW_CHECKLIST_BOUNDARY.md)",
         "[Foundation Secrets Credentials Boundary](FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md)",
         "[Foundation Security Baseline Boundary](FOUNDATION_SECURITY_BASELINE_BOUNDARY.md)",
         "[Foundation Cost Budget Boundary](FOUNDATION_COST_BUDGET_BOUNDARY.md)",
@@ -160,6 +176,7 @@ REQUIRED_PHRASES_BY_FILE = {
         "[Foundation Deployment Deferral Boundary](FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md)",
         "[Foundation External Infrastructure Boundary](FOUNDATION_EXTERNAL_INFRASTRUCTURE_BOUNDARY.md)",
         "[Foundation Runtime Secret Handoff Rehearsal Boundary](FOUNDATION_RUNTIME_SECRET_HANDOFF_REHEARSAL_BOUNDARY.md)",
+        "[Foundation Runtime Witness Deferral Boundary](FOUNDATION_RUNTIME_WITNESS_DEFERRAL_BOUNDARY.md)",
         "[Foundation Production Dependency Evidence Rehearsal Boundary](FOUNDATION_PRODUCTION_DEPENDENCY_EVIDENCE_REHEARSAL_BOUNDARY.md)",
         "[Foundation External Evidence Acceptance Rehearsal Boundary](FOUNDATION_EXTERNAL_EVIDENCE_ACCEPTANCE_REHEARSAL_BOUNDARY.md)",
         "[Foundation Deployment Upstream API Gate Rehearsal Boundary](FOUNDATION_DEPLOYMENT_UPSTREAM_API_GATE_REHEARSAL_BOUNDARY.md)",
@@ -236,6 +253,7 @@ REQUIRED_PHRASES_BY_FILE = {
         "[Foundation Next Action Boundary](FOUNDATION_NEXT_ACTION_BOUNDARY.md)",
         "[Foundation Test Evidence Boundary](FOUNDATION_TEST_EVIDENCE_BOUNDARY.md)",
         "[Foundation Source Control Boundary](FOUNDATION_SOURCE_CONTROL_BOUNDARY.md)",
+        "[Foundation Source-Control Review Checklist Boundary](FOUNDATION_SOURCE_CONTROL_REVIEW_CHECKLIST_BOUNDARY.md)",
         "[Foundation Local Proof Thread](FOUNDATION_LOCAL_PROOF_THREAD.md)",
         "[Foundation Private Recovery Boundary](FOUNDATION_PRIVATE_RECOVERY_BOUNDARY.md)",
         "[Foundation Secrets Credentials Boundary](FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md)",
@@ -294,6 +312,23 @@ REQUIRED_PHRASES_BY_FILE = {
         "Agentic management | Local goal-intake",
         "python scripts/validate_foundation_agentic_management_boundary.py",
         "python scripts/validate_foundation_operations_runbook_boundary.py",
+    ),
+    "docs/FOUNDATION_SOURCE_CONTROL_REVIEW_CHECKLIST_BOUNDARY.md": (
+        "Foundation Source-Control Review Checklist Boundary",
+        "Witness packet: [`../examples/foundation_source_control_review_checklist_witness.awaiting_evidence.json`]",
+        "Rule: Source-control review checklist preparation is a local planning boundary,",
+        "No checklist completion, review-scope closure, staging approval, commit",
+        "source_control_review_checklist_state=AwaitingEvidence",
+        "checklist_complete_claimed=false",
+        "review_scope_closed_claimed=false",
+        "validation_complete_claimed=false",
+        "staging_allowed=false",
+        "commit_allowed=false",
+        "pull_request_allowed=false",
+        "external_publication_allowed=false",
+        "deployment_allowed=false",
+        "secret_publication_allowed=false",
+        "python scripts/validate_foundation_source_control_review_checklist_boundary.py",
     ),
     "docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md": (
         "Foundation Operator Readiness Boundary",
@@ -918,6 +953,32 @@ REQUIRED_PHRASES_BY_FILE = {
         "external_publication_allowed=false",
         "deployment_allowed=false",
         "python scripts/validate_foundation_runtime_secret_handoff_rehearsal_boundary.py",
+    ),
+    "docs/FOUNDATION_RUNTIME_WITNESS_DEFERRAL_BOUNDARY.md": (
+        "Foundation Runtime Witness Deferral Boundary",
+        "Witness packet: [`../examples/foundation_runtime_witness_deferral_witness.awaiting_evidence.json`]",
+        "Rule: Runtime witness deferral is a local stop-rule packet",
+        "No runtime witness creation, runtime witness secret binding, endpoint probe,",
+        "runtime_witness_deferral_state=AwaitingEvidence",
+        "runtime_witness_created=false",
+        "runtime_witness_secret_bound=false",
+        "runtime_witness_endpoint_probe_allowed=false",
+        "runtime_witness_payload_recorded=false",
+        "runtime_witness_signature_verified=false",
+        "runtime_witness_publication_allowed=false",
+        "runtime_conformance_claimed=false",
+        "deployment_witness_collection_allowed=false",
+        "evidence_ledger_append_allowed=false",
+        "readiness_claimed=false",
+        "customer_access_allowed=false",
+        "personal_data_collection_allowed=false",
+        "money_movement_allowed=false",
+        "legal_clearance_claimed=false",
+        "company_formation_claimed=false",
+        "patent_claimed=false",
+        "external_publication_allowed=false",
+        "deployment_allowed=false",
+        "python scripts/validate_foundation_runtime_witness_deferral_boundary.py",
     ),
     "docs/FOUNDATION_PRODUCTION_DEPENDENCY_EVIDENCE_REHEARSAL_BOUNDARY.md": (
         "Foundation Production Dependency Evidence Rehearsal Boundary",
@@ -1779,9 +1840,11 @@ REQUIRED_PHRASES_BY_FILE = {
         "[Foundation Next Action Boundary](FOUNDATION_NEXT_ACTION_BOUNDARY.md)",
         "[Foundation Test Evidence Boundary](FOUNDATION_TEST_EVIDENCE_BOUNDARY.md)",
         "[Foundation Source Control Boundary](FOUNDATION_SOURCE_CONTROL_BOUNDARY.md)",
+        "[Foundation Source-Control Review Checklist Boundary](FOUNDATION_SOURCE_CONTROL_REVIEW_CHECKLIST_BOUNDARY.md)",
         "[Foundation Local Proof Thread](FOUNDATION_LOCAL_PROOF_THREAD.md)",
         "[Foundation Secrets Credentials Boundary](FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md)",
         "[Foundation Runtime Secret Handoff Rehearsal Boundary](FOUNDATION_RUNTIME_SECRET_HANDOFF_REHEARSAL_BOUNDARY.md)",
+        "[Foundation Runtime Witness Deferral Boundary](FOUNDATION_RUNTIME_WITNESS_DEFERRAL_BOUNDARY.md)",
         "[Foundation Security Baseline Boundary](FOUNDATION_SECURITY_BASELINE_BOUNDARY.md)",
         "[Foundation Cost Budget Boundary](FOUNDATION_COST_BUDGET_BOUNDARY.md)",
         "[Foundation Payment Provider Boundary](FOUNDATION_PAYMENT_PROVIDER_BOUNDARY.md)",
@@ -1862,6 +1925,7 @@ REQUIRED_PHRASES_BY_FILE = {
         "`docs/FOUNDATION_NEXT_ACTION_BOUNDARY.md`",
         "`docs/FOUNDATION_TEST_EVIDENCE_BOUNDARY.md`",
         "`docs/FOUNDATION_SOURCE_CONTROL_BOUNDARY.md`",
+        "`docs/FOUNDATION_SOURCE_CONTROL_REVIEW_CHECKLIST_BOUNDARY.md`",
         "`docs/FOUNDATION_SECRETS_CREDENTIALS_BOUNDARY.md`",
         "`docs/FOUNDATION_SECURITY_BASELINE_BOUNDARY.md`",
         "`docs/FOUNDATION_COST_BUDGET_BOUNDARY.md`",
@@ -1871,6 +1935,7 @@ REQUIRED_PHRASES_BY_FILE = {
         "`docs/FOUNDATION_DEPLOYMENT_DEFERRAL_BOUNDARY.md`",
         "`docs/FOUNDATION_EXTERNAL_INFRASTRUCTURE_BOUNDARY.md`",
         "`docs/FOUNDATION_RUNTIME_SECRET_HANDOFF_REHEARSAL_BOUNDARY.md`",
+        "`docs/FOUNDATION_RUNTIME_WITNESS_DEFERRAL_BOUNDARY.md`",
         "`docs/FOUNDATION_PRODUCTION_DEPENDENCY_EVIDENCE_REHEARSAL_BOUNDARY.md`",
         "`docs/FOUNDATION_EXTERNAL_EVIDENCE_ACCEPTANCE_REHEARSAL_BOUNDARY.md`",
         "`docs/FOUNDATION_DEPLOYMENT_UPSTREAM_API_GATE_REHEARSAL_BOUNDARY.md`",
@@ -1956,6 +2021,11 @@ CENTRAL_FOUNDATION_TABLE_FILES = (
     "docs/CURRENT_READINESS_SNAPSHOT.md",
 )
 
+CENTRAL_FOUNDATION_DEPENDENCY_FILES = (
+    "docs/FOUNDATION_MODE.md",
+    "docs/FOUNDATION_PREREQUISITES.md",
+)
+
 FOUNDATION_BOUNDARY_ROUTE_FILES = (
     "README.md",
     "docs/START_HERE.md",
@@ -1970,6 +2040,19 @@ FOUNDATION_BOUNDARY_STATUS_FIELDS = (
     "Open issues:",
     "Next action:",
 )
+
+FOUNDATION_NAVIGATION_LINK_FILES = (
+    "README.md",
+    "docs/START_HERE.md",
+    "docs/FOUNDATION_MODE.md",
+    "docs/FOUNDATION_PREREQUISITES.md",
+    "docs/CURRENT_READINESS_SNAPSHOT.md",
+)
+
+START_HERE_ORDER_START = '## 3. The "I\'m brand new" path (do these in order)'
+START_HERE_ORDER_END = "Now you can wander into"
+FOUNDATION_PREREQUISITE_ORDER_START = "## Recommended Order"
+FOUNDATION_PREREQUISITE_ORDER_END = "## Narrow Local Proof Thread Definition"
 
 FORBIDDEN_FORWARD_PHRASES = (
     "Request access",
@@ -2007,6 +2090,40 @@ def read_required_text(repo_root: Path, relative_path: str) -> str:
     if not path.is_file():
         raise IsADirectoryError(f"Foundation Mode path is not a file: {relative_path}")
     return path.read_text(encoding="utf-8")
+
+
+def validate_core_guidance_surface_registration(
+    repo_root: Path = REPO_ROOT,
+    required_surfaces: tuple[str, ...] = FOUNDATION_CORE_GUIDANCE_SURFACES,
+    phrase_map: dict[str, tuple[str, ...]] = REQUIRED_PHRASES_BY_FILE,
+) -> list[FoundationModeFinding]:
+    """Return findings when canonical Foundation guidance surfaces lose validation coverage."""
+
+    findings: list[FoundationModeFinding] = []
+    for relative_path in required_surfaces:
+        if relative_path not in phrase_map:
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_core_guidance_surface_unregistered",
+                    f"REQUIRED_PHRASES_BY_FILE missing core guidance surface: {relative_path}",
+                )
+            )
+        path = repo_root / relative_path
+        if not path.exists():
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_core_guidance_surface_missing",
+                    f"missing core Foundation guidance surface: {relative_path}",
+                )
+            )
+        elif not path.is_file():
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_core_guidance_surface_not_file",
+                    f"core Foundation guidance surface is not a file: {relative_path}",
+                )
+            )
+    return findings
 
 
 def validate_required_phrases(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
@@ -2088,6 +2205,44 @@ def validate_central_table_label_uniqueness(repo_root: Path = REPO_ROOT) -> list
                         f"{relative_path} table {table_index} repeats first-column label: {duplicate_label}",
                     )
                 )
+    return findings
+
+
+def validate_central_foundation_dependency_headers(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
+    """Return findings when central Foundation headers omit boundary dependencies."""
+
+    boundary_doc_names = sorted(boundary_doc.name for boundary_doc in (repo_root / "docs").glob("FOUNDATION_*_BOUNDARY.md"))
+    if not boundary_doc_names:
+        return [
+            FoundationModeFinding(
+                "foundation_boundary_inventory_missing",
+                "docs directory has no FOUNDATION_*_BOUNDARY.md files",
+            )
+        ]
+    findings: list[FoundationModeFinding] = []
+    for relative_path in CENTRAL_FOUNDATION_DEPENDENCY_FILES:
+        try:
+            text = read_required_text(repo_root, relative_path)
+        except OSError as exc:
+            findings.append(FoundationModeFinding("foundation_file_missing", str(exc)))
+            continue
+        if "-->" not in text:
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_central_dependency_header_missing",
+                    f"{relative_path} missing leading metadata header",
+                )
+            )
+            continue
+        header = text.split("-->", 1)[0]
+        missing_boundary_doc_names = [boundary_doc_name for boundary_doc_name in boundary_doc_names if boundary_doc_name not in header]
+        if missing_boundary_doc_names:
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_central_dependency_missing",
+                    f"{relative_path} header missing boundary dependencies: {', '.join(missing_boundary_doc_names)}",
+                )
+            )
     return findings
 
 
@@ -2198,17 +2353,201 @@ def validate_foundation_boundary_status_blocks(repo_root: Path = REPO_ROOT) -> l
     return findings
 
 
+def validate_foundation_navigation_links(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
+    """Return findings for broken or out-of-repository Foundation navigation links."""
+
+    resolved_repo_root = repo_root.resolve()
+    navigation_paths = [
+        *(resolved_repo_root / relative_path for relative_path in FOUNDATION_NAVIGATION_LINK_FILES),
+        *sorted((resolved_repo_root / "docs").glob("FOUNDATION_*_BOUNDARY.md")),
+    ]
+    link_pattern = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+    findings: list[FoundationModeFinding] = []
+    for navigation_path in navigation_paths:
+        try:
+            relative_path = navigation_path.relative_to(resolved_repo_root).as_posix()
+        except ValueError:
+            findings.append(
+                FoundationModeFinding(
+                    "foundation_navigation_surface_outside_repo",
+                    f"navigation surface is outside repository: {navigation_path}",
+                )
+            )
+            continue
+        try:
+            text = read_required_text(resolved_repo_root, relative_path)
+        except OSError as exc:
+            findings.append(FoundationModeFinding("foundation_file_missing", str(exc)))
+            continue
+        for match in link_pattern.finditer(text):
+            target = match.group(1).strip()
+            if _is_external_or_anchor_link(target):
+                continue
+            target_path = target.split("#", 1)[0]
+            if not target_path:
+                continue
+            resolved_target = (navigation_path.parent / target_path).resolve()
+            if not resolved_target.is_relative_to(resolved_repo_root):
+                findings.append(
+                    FoundationModeFinding(
+                        "foundation_navigation_link_outside_repo",
+                        f"{relative_path} links outside repository: {target}",
+                    )
+                )
+                continue
+            if not resolved_target.exists():
+                findings.append(
+                    FoundationModeFinding(
+                        "foundation_navigation_link_missing",
+                        f"{relative_path} has missing local link target: {target}",
+                    )
+                )
+    return findings
+
+
+def validate_foundation_ordered_paths(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
+    """Return findings when ordered Foundation paths lose coverage or sequence."""
+
+    boundary_targets = {
+        boundary_doc.name
+        for boundary_doc in (repo_root / "docs").glob("FOUNDATION_*_BOUNDARY.md")
+    }
+    if not boundary_targets:
+        return [
+            FoundationModeFinding(
+                "foundation_boundary_inventory_missing",
+                "docs directory has no FOUNDATION_*_BOUNDARY.md files",
+            )
+        ]
+    findings: list[FoundationModeFinding] = []
+    findings.extend(
+        _validate_ordered_foundation_section(
+            repo_root,
+            "docs/START_HERE.md",
+            START_HERE_ORDER_START,
+            START_HERE_ORDER_END,
+            re.compile(r"^(?P<number>\d+)\. \*\*\[[^\]]+\]\((?P<target>[^)]+)\)", re.MULTILINE),
+            {
+                *boundary_targets,
+                "FOUNDATION_MODE.md",
+                "FOUNDATION_PREREQUISITES.md",
+                "FOUNDATION_LOCAL_PROOF_THREAD.md",
+            },
+            "foundation_start_here_order",
+        )
+    )
+    findings.extend(
+        _validate_ordered_foundation_section(
+            repo_root,
+            "docs/FOUNDATION_PREREQUISITES.md",
+            FOUNDATION_PREREQUISITE_ORDER_START,
+            FOUNDATION_PREREQUISITE_ORDER_END,
+            re.compile(r"^(?P<number>\d+)\. .*?\[[^\]]+\]\((?P<target>FOUNDATION_[^)]+\.md)\)", re.MULTILINE),
+            {
+                *boundary_targets,
+                "FOUNDATION_MODE.md",
+                "FOUNDATION_LOCAL_PROOF_THREAD.md",
+            },
+            "foundation_prerequisite_order",
+        )
+    )
+    return findings
+
+
 def validate_foundation_mode(repo_root: Path = REPO_ROOT) -> list[FoundationModeFinding]:
     """Validate the repository Foundation Mode posture and return findings."""
 
     return [
+        *validate_core_guidance_surface_registration(repo_root),
         *validate_required_phrases(repo_root),
         *validate_forbidden_forward_phrases(repo_root),
         *validate_central_table_label_uniqueness(repo_root),
+        *validate_central_foundation_dependency_headers(repo_root),
         *validate_prerequisite_go_deeper_boundary_links(repo_root),
         *validate_foundation_boundary_routing_surfaces(repo_root),
         *validate_foundation_boundary_status_blocks(repo_root),
+        *validate_foundation_navigation_links(repo_root),
+        *validate_foundation_ordered_paths(repo_root),
     ]
+
+
+def _is_external_or_anchor_link(target: str) -> bool:
+    if not target or target.startswith("#"):
+        return True
+    return bool(re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", target))
+
+
+def _validate_ordered_foundation_section(
+    repo_root: Path,
+    relative_path: str,
+    start_marker: str,
+    end_marker: str,
+    entry_pattern: re.Pattern[str],
+    expected_foundation_targets: set[str],
+    rule_prefix: str,
+) -> list[FoundationModeFinding]:
+    findings: list[FoundationModeFinding] = []
+    try:
+        text = read_required_text(repo_root, relative_path)
+    except OSError as exc:
+        return [FoundationModeFinding("foundation_file_missing", str(exc))]
+    if start_marker not in text:
+        return [
+            FoundationModeFinding(
+                f"{rule_prefix}_section_missing",
+                f"{relative_path} missing ordered section start: {start_marker}",
+            )
+        ]
+    section = text.split(start_marker, 1)[1]
+    if end_marker not in section:
+        findings.append(
+            FoundationModeFinding(
+                f"{rule_prefix}_section_end_missing",
+                f"{relative_path} missing ordered section end: {end_marker}",
+            )
+        )
+    else:
+        section = section.split(end_marker, 1)[0]
+    numbered_line_pattern = re.compile(r"^(?P<number>\d+)\. .+$", re.MULTILINE)
+    numbers = [int(match.group("number")) for match in numbered_line_pattern.finditer(section)]
+    entries = [
+        (int(match.group("number")), match.group("target"))
+        for match in entry_pattern.finditer(section)
+    ]
+    entry_targets = [target for _, target in entries]
+    foundation_targets = {target for target in entry_targets if target.startswith("FOUNDATION_")}
+    if not numbers or not entries:
+        findings.append(
+            FoundationModeFinding(
+                f"{rule_prefix}_entries_missing",
+                f"{relative_path} ordered section has no numbered Foundation entries",
+            )
+        )
+    elif numbers != list(range(1, len(numbers) + 1)):
+        findings.append(
+            FoundationModeFinding(
+                f"{rule_prefix}_numbers_not_consecutive",
+                f"{relative_path} ordered section numbers must be consecutive from 1",
+            )
+        )
+    duplicate_targets = sorted({target for target in entry_targets if entry_targets.count(target) > 1})
+    if duplicate_targets:
+        findings.append(
+            FoundationModeFinding(
+                f"{rule_prefix}_duplicate_targets",
+                f"{relative_path} ordered section repeats targets: {', '.join(duplicate_targets)}",
+            )
+        )
+    missing_targets = sorted(expected_foundation_targets - foundation_targets)
+    unexpected_targets = sorted(foundation_targets - expected_foundation_targets)
+    if missing_targets or unexpected_targets:
+        findings.append(
+            FoundationModeFinding(
+                f"{rule_prefix}_foundation_targets_invalid",
+                f"{relative_path} ordered section target drift; missing: {', '.join(missing_targets) or 'none'}; unexpected: {', '.join(unexpected_targets) or 'none'}",
+            )
+        )
+    return findings
 
 
 def _iter_markdown_tables(text: str) -> list[list[str]]:

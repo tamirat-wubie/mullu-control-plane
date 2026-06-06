@@ -1,0 +1,132 @@
+{
+  "application_id": "foundation_source_control_review_checklist_current_packet.awaiting_evidence.v1",
+  "blocked_claims": [
+    "checklist completion",
+    "review-scope closure",
+    "validation completeness",
+    "secret clearance",
+    "staging approval",
+    "commit approval",
+    "push approval",
+    "pull request approval",
+    "release readiness",
+    "external publication",
+    "deployment readiness",
+    "customer access",
+    "legal clearance",
+    "company formation",
+    "patent action",
+    "money movement",
+    "secret publication"
+  ],
+  "checklist_complete_claimed": false,
+  "commit_allowed": false,
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "money_action_allowed": false,
+  "next_action": "continue local packet review using public-safe categories without Git or external effect promotion",
+  "observed_change_categories": [
+    "foundation_posture_and_navigation",
+    "dirty_worktree_snapshot_current_packet_triage",
+    "source_control_review_checklist_boundary",
+    "source_control_boundary_and_preflight_wiring",
+    "diff_review_change_handoff_test_evidence_boundaries",
+    "unrelated_prior_work_preservation_triage",
+    "secrets_credentials_current_packet_screening",
+    "line_ending_warning_current_packet_triage",
+    "untracked_artifact_current_packet_triage",
+    "runtime_safety_current_packet_triage",
+    "phi_gps_v3_runtime_safety_packet",
+    "provider_connector_secret_pagination_hardening",
+    "workspace_governance_receipt_and_witness_contracts",
+    "validation_receipt_current_packet_routing",
+    "untracked_validator_and_test_artifacts"
+  ],
+  "patent_action_allowed": false,
+  "pull_request_allowed": false,
+  "push_allowed": false,
+  "release_allowed": false,
+  "review_context": {
+    "branch_ref_recorded": false,
+    "changed_file_list_recorded": false,
+    "commit_ref_recorded": false,
+    "company_filing_recorded": false,
+    "customer_identifier_recorded": false,
+    "endpoint_target_recorded": false,
+    "legal_conclusion_recorded": false,
+    "mode": "Foundation Mode",
+    "patent_filing_recorded": false,
+    "payment_detail_recorded": false,
+    "private_values_recorded": false,
+    "provider_id_recorded": false,
+    "pull_request_ref_recorded": false,
+    "receipt_is_terminal_closure_claimed": false,
+    "saved_preflight_receipt_available": true,
+    "scope": "current dirty worktree packet categories only",
+    "secret_value_recorded": false
+  },
+  "review_items": [
+    {
+      "application_note": "Observed current dirty worktree categories without claiming checklist completion.",
+      "checklist_id": "dirty_worktree_snapshot_review",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Observed runtime-safety current packet and family category without claiming review-scope closure.",
+      "checklist_id": "runtime_safety_packet_family_review",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Kept user or prior work separation manual without reverting unrelated work.",
+      "checklist_id": "unrelated_or_prior_work_review",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Observed validator and test artifact category without staging untracked files.",
+      "checklist_id": "untracked_artifact_review",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Observed saved governance receipt as local evidence without claiming validation completeness.",
+      "checklist_id": "validation_receipt_review",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Kept secret-shaped or private value screening category-only without claiming secret clearance.",
+      "checklist_id": "secret_private_value_review",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Observed CRLF warning category without hiding warnings.",
+      "checklist_id": "line_ending_warning_review",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Retained staging, commit, push, and pull request stop-rule without authorizing Git effects.",
+      "checklist_id": "git_effect_stop_rule_review",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Retained customer, legal, company, patent, money, secret, publication, and deployment action stop-rule without authorizing external effects.",
+      "checklist_id": "external_action_stop_rule_review",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Kept next bounded local action review-only without release or deployment promotion.",
+      "checklist_id": "next_action_review",
+      "state": "AwaitingEvidence"
+    }
+  ],
+  "review_scope_closed_claimed": false,
+  "schema_version": 1,
+  "secret_clearance_claimed": false,
+  "secret_publication_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_review_checklist_witness_ref": "examples/foundation_source_control_review_checklist_witness.awaiting_evidence.json",
+  "staging_allowed": false,
+  "status": "AwaitingEvidence",
+  "validation_complete_claimed": false
+}

@@ -22,14 +22,14 @@
   "change_handoff_surfaces": [
     {
       "evidence_ref": "manual_preparation_pending",
-      "public_safe_note": "Draft change-family summary questions without claiming handoff completeness.",
+      "public_safe_note": "Draft change-family summary questions, including the Phi-GPS v3 runtime-safety packet category, without claiming handoff completeness.",
       "state": "AwaitingEvidence",
       "surface_id": "change_family_summary_questions",
       "surface_type": "local_draft"
     },
     {
       "evidence_ref": "manual_preparation_pending",
-      "public_safe_note": "Draft constructive-delta questions without claiming full changed-file review.",
+      "public_safe_note": "Draft constructive-delta questions for local Phi-GPS, provider, connector, secret, process, and pagination hardening without claiming full changed-file review.",
       "state": "AwaitingEvidence",
       "surface_id": "constructive_delta_questions",
       "surface_type": "local_draft"
@@ -57,7 +57,7 @@
     },
     {
       "evidence_ref": "manual_preparation_pending",
-      "public_safe_note": "Draft validation-evidence questions without validation completeness claims.",
+      "public_safe_note": "Draft validation-evidence questions for local validators, tests, hygiene scans, and governance receipt checks without validation completeness claims.",
       "state": "AwaitingEvidence",
       "surface_id": "validation_evidence_questions",
       "surface_type": "local_draft"

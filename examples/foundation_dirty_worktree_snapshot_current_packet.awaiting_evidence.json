@@ -1,0 +1,112 @@
+{
+  "application_id": "foundation_dirty_worktree_snapshot_current_packet.awaiting_evidence.v1",
+  "blocked_claims": [
+    "dirty-worktree closure",
+    "clean worktree claim",
+    "changed-file count closure",
+    "changed-file list closure",
+    "exact diff publication",
+    "status-output publication",
+    "branch ref publication",
+    "commit ref publication",
+    "pull request ref publication",
+    "private path recording",
+    "ownership assignment",
+    "source-control approval",
+    "staging approval",
+    "commit approval",
+    "push approval",
+    "pull request approval",
+    "release readiness",
+    "external publication",
+    "deployment readiness",
+    "customer access",
+    "legal clearance",
+    "company formation",
+    "patent action",
+    "money movement",
+    "secret publication"
+  ],
+  "branch_ref_recorded": false,
+  "changed_file_count_recorded": false,
+  "changed_file_list_recorded": false,
+  "clean_worktree_claimed": false,
+  "commit_allowed": false,
+  "commit_ref_recorded": false,
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deployment_allowed": false,
+  "dirty_state_observed": true,
+  "exact_diff_recorded": false,
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "money_action_allowed": false,
+  "next_action": "continue local dirty-worktree review using category-only evidence without publishing status output, file lists, refs, staging, committing, or claiming a clean worktree",
+  "ownership_assigned": false,
+  "patent_action_allowed": false,
+  "private_paths_recorded": false,
+  "pull_request_allowed": false,
+  "pull_request_ref_recorded": false,
+  "push_allowed": false,
+  "release_allowed": false,
+  "schema_version": 1,
+  "secret_publication_allowed": false,
+  "snapshot_categories": [
+    "dirty_worktree_present",
+    "modified_worktree_category",
+    "untracked_artifact_category",
+    "prior_or_user_work_possible",
+    "line_ending_warning_category",
+    "no_file_list_recorded",
+    "manual_review_pending",
+    "git_effects_blocked"
+  ],
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_review_checklist_current_packet_ref": "examples/foundation_source_control_review_checklist_current_packet.awaiting_evidence.json",
+  "source_control_review_checklist_witness_ref": "examples/foundation_source_control_review_checklist_witness.awaiting_evidence.json",
+  "staging_allowed": false,
+  "status": "AwaitingEvidence",
+  "status_output_recorded": false,
+  "review_items": [
+    {
+      "application_note": "Dirty worktree presence is recorded as a category only; no clean worktree claim is made.",
+      "review_id": "dirty_state_presence_review",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Git status output is not copied into the public packet; status-output publication remains blocked.",
+      "review_id": "status_output_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Changed-file counts are not recorded in the public packet; no count closure is claimed.",
+      "review_id": "file_count_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Changed-file lists and exact diffs are not recorded in the public packet; private paths remain excluded.",
+      "review_id": "file_list_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Branch refs, commit refs, and pull request refs are not recorded.",
+      "review_id": "source_control_ref_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Ownership assignment remains blocked until explicit review.",
+      "review_id": "ownership_boundary",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Staging, commit, push, and pull request remain blocked.",
+      "review_id": "git_effect_stop_rule",
+      "state": "AwaitingEvidence"
+    },
+    {
+      "application_note": "Publication, deployment, customer access, legal, company, patent, money, and secret-publication actions remain blocked.",
+      "review_id": "external_effect_stop_rule",
+      "state": "AwaitingEvidence"
+    }
+  ]
+}

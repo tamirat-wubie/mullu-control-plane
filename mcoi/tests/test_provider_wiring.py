@@ -154,8 +154,9 @@ def test_integration_rejects_lookalike_base_url_without_adapter_dispatch() -> No
 
     result = engine.invoke(InvocationRequest(
         connector_id="c-1", operation="fetch",
-        parameters={"url": "https://allowed.com.evil/steal"},
+        parameters={"url": "https://allowed.com.evil.test/steal"},
     ))
+
     assert result.status is ConnectorStatus.FAILED
     assert result.error_code == "credential_scope_exceeded"
     assert adapter.invocation_count == 0
