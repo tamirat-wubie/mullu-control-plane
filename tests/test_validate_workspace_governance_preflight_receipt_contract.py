@@ -37,6 +37,8 @@ def test_current_receipt_contract_passes() -> None:
     assert "persistence_tenant_guard_coverage" in check_name_enum
     assert "mcp_capability_manifest" in check_name_enum
     assert "mcp_operator_checklist" in check_name_enum
+    assert "public_naming_readiness" in check_name_enum
+    assert "public_demo_surfaces" in check_name_enum
     assert "strict_schema_validation" in check_name_enum
     assert "strict_artifact_validation" in check_name_enum
     assert "terminal_closure_certificate" in check_name_enum

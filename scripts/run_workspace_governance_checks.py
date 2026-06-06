@@ -571,6 +571,19 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "public_naming_readiness",
+            (python_executable, "scripts/validate_public_naming_readiness.py"),
+        ),
+        CheckCommand(
+            "public_demo_surfaces",
+            (
+                python_executable,
+                "scripts/validate_public_demo_surfaces.py",
+                "--output",
+                ".tmp/public-demo-surface-validation.json",
+            ),
+        ),
+        CheckCommand(
             "strict_schema_validation",
             (python_executable, "scripts/validate_schemas.py", "--strict"),
         ),

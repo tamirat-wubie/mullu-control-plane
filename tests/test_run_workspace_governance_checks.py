@@ -82,6 +82,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "persistence_tenant_guard_coverage",
         "mcp_capability_manifest",
         "mcp_operator_checklist",
+        "public_naming_readiness",
+        "public_demo_surfaces",
         "strict_schema_validation",
         "strict_artifact_validation",
         "terminal_closure_certificate",
@@ -232,6 +234,14 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "--checklist",
         "examples/mcp_operator_handoff_checklist.json",
         "--json",
+    )
+    assert args_by_name["public_naming_readiness"][1:] == (
+        "scripts/validate_public_naming_readiness.py",
+    )
+    assert args_by_name["public_demo_surfaces"][1:] == (
+        "scripts/validate_public_demo_surfaces.py",
+        "--output",
+        ".tmp/public-demo-surface-validation.json",
     )
     assert args_by_name["strict_schema_validation"][1:] == (
         "scripts/validate_schemas.py",
