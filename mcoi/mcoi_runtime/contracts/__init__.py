@@ -144,6 +144,15 @@ from .graph import (
     OperationalNode,
     StateDelta,
 )
+from .universal_evidence_graph import (
+    UniversalEvidenceGraph,
+    UniversalEvidenceGraphEdge,
+    UniversalEvidenceGraphEdgeKind,
+    UniversalEvidenceGraphNode,
+    UniversalEvidenceGraphNodeKind,
+    UniversalEvidenceQuestionAnswer,
+    UniversalEvidenceQuestionKind,
+)
 from .goal import (
     GoalDependency,
     GoalDescriptor,
@@ -2190,6 +2199,13 @@ __all__ = [
     "OperationalNode",
     "ObservedEffect",
     "StateDelta",
+    "UniversalEvidenceGraph",
+    "UniversalEvidenceGraphEdge",
+    "UniversalEvidenceGraphEdgeKind",
+    "UniversalEvidenceGraphNode",
+    "UniversalEvidenceGraphNodeKind",
+    "UniversalEvidenceQuestionAnswer",
+    "UniversalEvidenceQuestionKind",
     "GoalDependency",
     "GoalDescriptor",
     "GoalExecutionState",

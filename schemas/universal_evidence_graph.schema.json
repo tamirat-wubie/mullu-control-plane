@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:universal-evidence-graph:1",
+  "title": "Universal Evidence Graph",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "graph_id",
+    "version",
+    "generated_at",
+    "nodes",
+    "edges",
+    "questions",
+    "receipt_refs",
+    "metadata"
+  ],
+  "properties": {
+    "graph_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/question"
+      }
+    },
+    "receipt_refs": {
+      "$ref": "#/$defs/non_empty_string_array"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "node_kind": {
+      "type": "string",
+      "enum": [
+        "note",
+        "memory",
+        "receipt",
+        "trace",
+        "policy",
+        "claim",
+        "capability",
+        "deployment",
+        "orgos_case",
+        "skill"
+      ]
+    },
+    "edge_kind": {
+      "type": "string",
+      "enum": [
+        "supports",
+        "contradicts",
+        "derived_from",
+        "governed_by",
+        "verified_by",
+        "produced_by",
+        "depends_on",
+        "answers"
+      ]
+    },
+    "question_kind": {
+      "type": "string",
+      "enum": [
+        "why",
+        "how",
+        "what_supports",
+        "what_contradicts"
+      ]
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "node_id",
+        "node_kind",
+        "label",
+        "source_ref",
+        "evidence_refs",
+        "confidence",
+        "created_at",
+        "metadata"
+      ],
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "node_kind": {
+          "$ref": "#/$defs/node_kind"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "edge_id",
+        "edge_kind",
+        "source_node_id",
+        "target_node_id",
+        "evidence_refs",
+        "confidence",
+        "created_at",
+        "metadata"
+      ],
+      "properties": {
+        "edge_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "edge_kind": {
+          "$ref": "#/$defs/edge_kind"
+        },
+        "source_node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "question_id",
+        "question_kind",
+        "target_node_id",
+        "answer_node_ids",
+        "answer_edge_ids",
+        "confidence",
+        "created_at"
+      ],
+      "properties": {
+        "question_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "question_kind": {
+          "$ref": "#/$defs/question_kind"
+        },
+        "target_node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "answer_node_ids": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "answer_edge_ids": {
+          "$ref": "#/$defs/non_empty_string_array"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}
