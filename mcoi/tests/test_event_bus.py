@@ -1,9 +1,11 @@
 """Phase 205D — Event bus tests."""
 
 import pytest
-from mcoi_runtime.core.event_bus import EventBus, GovernedEvent
+from mcoi_runtime.core.event_bus import EventBus
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+
+def FIXED_CLOCK():
+    return "2026-03-26T12:00:00Z"
 
 
 class TestEventBus:
@@ -64,6 +66,10 @@ class TestEventBus:
         bus.publish("a", payload={})
         assert len(bus.history()) == 3
         assert len(bus.history(event_type="a")) == 2
+        assert bus.history(limit=0) == []
+        assert bus.history(limit=-1) == []
+        assert bus.history(event_type="a", limit=0) == []
+        assert bus.history(event_type="a", limit=-1) == []
 
     def test_event_count(self):
         bus = EventBus(clock=FIXED_CLOCK)

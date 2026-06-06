@@ -139,6 +139,8 @@ class EventBus:
 
     def history(self, event_type: str | None = None, limit: int = 50) -> list[GovernedEvent]:
         """Query event history."""
+        if limit <= 0:
+            return []
         events = self._history
         if event_type is not None:
             events = [e for e in events if e.event_type == event_type]
