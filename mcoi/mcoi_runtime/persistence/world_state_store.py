@@ -13,10 +13,9 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Mapping
 from hashlib import sha256
-import json
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,6 +107,8 @@ class WorldStateStore:
 
     def list_snapshots(self, limit: int = 50) -> list[StoredSnapshot]:
         """List snapshots in reverse chronological order."""
+        if limit <= 0:
+            return []
         ids = self._snapshot_order[-limit:]
         ids.reverse()
         return [self._snapshots[sid] for sid in ids]
@@ -173,6 +174,8 @@ class WorldStateStore:
 
     def entity_history(self, entity_id: str, limit: int = 50) -> list[EntityHistoryEntry]:
         """Get change history for an entity."""
+        if limit <= 0:
+            return []
         entries = self._entity_history.get(entity_id, [])
         return entries[-limit:]
 
