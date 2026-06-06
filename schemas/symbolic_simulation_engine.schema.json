@@ -1,0 +1,295 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:symbolic-simulation-engine:1",
+  "title": "Symbolic Simulation Engine",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "version",
+    "generated_at",
+    "action_ref",
+    "action_snapshot_ref",
+    "request",
+    "branches",
+    "outcomes",
+    "comparison",
+    "verdict",
+    "decision",
+    "execution_gate",
+    "receipt_refs",
+    "metadata"
+  ],
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "action_ref": {"type": "string", "minLength": 1},
+    "action_snapshot_ref": {"type": "string", "minLength": 1},
+    "request": {"$ref": "#/$defs/request"},
+    "branches": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/branch"}
+    },
+    "outcomes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/outcome"}
+    },
+    "comparison": {"$ref": "#/$defs/comparison"},
+    "verdict": {"$ref": "#/$defs/verdict"},
+    "decision": {"$ref": "#/$defs/decision"},
+    "execution_gate": {"$ref": "#/$defs/execution_gate"},
+    "receipt_refs": {"$ref": "#/$defs/non_empty_string_array"},
+    "metadata": {"type": "object"}
+  },
+  "$defs": {
+    "risk_level": {
+      "type": "string",
+      "enum": ["minimal", "low", "moderate", "high", "critical"]
+    },
+    "verdict_type": {
+      "type": "string",
+      "enum": ["proceed", "proceed_with_caution", "approval_required", "escalate", "abort"]
+    },
+    "decision_kind": {
+      "type": "string",
+      "enum": ["execute", "require_approval", "escalate", "abort", "defer"]
+    },
+    "gate_status": {
+      "type": "string",
+      "enum": ["allow", "block", "approval_required", "deferred"]
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "string_array": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "unit_number": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "non_negative_number": {
+      "type": "number",
+      "minimum": 0.0
+    },
+    "non_negative_integer": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "option_id",
+        "label",
+        "risk_level",
+        "estimated_cost",
+        "estimated_duration_seconds",
+        "success_probability"
+      ],
+      "properties": {
+        "option_id": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1},
+        "risk_level": {"$ref": "#/$defs/risk_level"},
+        "estimated_cost": {"$ref": "#/$defs/non_negative_number"},
+        "estimated_duration_seconds": {"$ref": "#/$defs/non_negative_number"},
+        "success_probability": {"$ref": "#/$defs/unit_number"}
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["request_id", "context_type", "context_id", "description", "options"],
+      "properties": {
+        "request_id": {"type": "string", "minLength": 1},
+        "context_type": {"type": "string", "minLength": 1},
+        "context_id": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/option"}
+        }
+      }
+    },
+    "consequence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "estimate_id",
+        "option_id",
+        "affected_node_ids",
+        "new_edges_count",
+        "new_obligations_count",
+        "blocked_nodes_count",
+        "unblocked_nodes_count"
+      ],
+      "properties": {
+        "estimate_id": {"type": "string", "minLength": 1},
+        "option_id": {"type": "string", "minLength": 1},
+        "affected_node_ids": {"$ref": "#/$defs/string_array"},
+        "new_edges_count": {"$ref": "#/$defs/non_negative_integer"},
+        "new_obligations_count": {"$ref": "#/$defs/non_negative_integer"},
+        "blocked_nodes_count": {"$ref": "#/$defs/non_negative_integer"},
+        "unblocked_nodes_count": {"$ref": "#/$defs/non_negative_integer"}
+      }
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "estimate_id",
+        "option_id",
+        "risk_level",
+        "incident_probability",
+        "review_burden",
+        "provider_exposure_count",
+        "verification_difficulty",
+        "rationale"
+      ],
+      "properties": {
+        "estimate_id": {"type": "string", "minLength": 1},
+        "option_id": {"type": "string", "minLength": 1},
+        "risk_level": {"$ref": "#/$defs/risk_level"},
+        "incident_probability": {"$ref": "#/$defs/unit_number"},
+        "review_burden": {"$ref": "#/$defs/non_negative_integer"},
+        "provider_exposure_count": {"$ref": "#/$defs/non_negative_integer"},
+        "verification_difficulty": {"type": "string", "minLength": 1},
+        "rationale": {"type": "string", "minLength": 1}
+      }
+    },
+    "obligation_projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projection_id", "option_id", "new_obligations", "fulfilled_obligations", "deadline_pressure"],
+      "properties": {
+        "projection_id": {"type": "string", "minLength": 1},
+        "option_id": {"type": "string", "minLength": 1},
+        "new_obligations": {"$ref": "#/$defs/string_array"},
+        "fulfilled_obligations": {"$ref": "#/$defs/string_array"},
+        "deadline_pressure": {"$ref": "#/$defs/non_negative_integer"}
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome_id", "option_id", "consequence", "risk", "obligation_projection", "simulated_at"],
+      "properties": {
+        "outcome_id": {"type": "string", "minLength": 1},
+        "option_id": {"type": "string", "minLength": 1},
+        "consequence": {"$ref": "#/$defs/consequence"},
+        "risk": {"$ref": "#/$defs/risk"},
+        "obligation_projection": {"$ref": "#/$defs/obligation_projection"},
+        "simulated_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "branch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "branch_id",
+        "option_id",
+        "outcome_id",
+        "predicted_state_refs",
+        "evidence_refs",
+        "risk_level",
+        "confidence",
+        "metadata"
+      ],
+      "properties": {
+        "branch_id": {"type": "string", "minLength": 1},
+        "option_id": {"type": "string", "minLength": 1},
+        "outcome_id": {"type": "string", "minLength": 1},
+        "predicted_state_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "evidence_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "risk_level": {"$ref": "#/$defs/risk_level"},
+        "confidence": {"$ref": "#/$defs/unit_number"},
+        "metadata": {"type": "object"}
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["comparison_id", "request_id", "ranked_option_ids", "scores", "top_risk_level", "review_burden"],
+      "properties": {
+        "comparison_id": {"type": "string", "minLength": 1},
+        "request_id": {"type": "string", "minLength": 1},
+        "ranked_option_ids": {"$ref": "#/$defs/non_empty_string_array"},
+        "scores": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/unit_number"}
+        },
+        "top_risk_level": {"$ref": "#/$defs/risk_level"},
+        "review_burden": {"$ref": "#/$defs/unit_number"}
+      }
+    },
+    "verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict_id", "comparison_id", "verdict_type", "recommended_option_id", "confidence", "reasons"],
+      "properties": {
+        "verdict_id": {"type": "string", "minLength": 1},
+        "comparison_id": {"type": "string", "minLength": 1},
+        "verdict_type": {"$ref": "#/$defs/verdict_type"},
+        "recommended_option_id": {"type": "string", "minLength": 1},
+        "confidence": {"$ref": "#/$defs/unit_number"},
+        "reasons": {"$ref": "#/$defs/non_empty_string_array"}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "comparison_id",
+        "verdict_id",
+        "selected_option_id",
+        "decision_kind",
+        "rationale_refs",
+        "receipt_refs",
+        "decided_at"
+      ],
+      "properties": {
+        "decision_id": {"type": "string", "minLength": 1},
+        "comparison_id": {"type": "string", "minLength": 1},
+        "verdict_id": {"type": "string", "minLength": 1},
+        "selected_option_id": {"type": "string", "minLength": 1},
+        "decision_kind": {"$ref": "#/$defs/decision_kind"},
+        "rationale_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "receipt_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "decided_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "execution_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gate_id",
+        "decision_id",
+        "gate_status",
+        "can_execute",
+        "required_approval_refs",
+        "evidence_refs",
+        "evaluated_at"
+      ],
+      "properties": {
+        "gate_id": {"type": "string", "minLength": 1},
+        "decision_id": {"type": "string", "minLength": 1},
+        "gate_status": {"$ref": "#/$defs/gate_status"},
+        "can_execute": {"type": "boolean"},
+        "required_approval_refs": {"$ref": "#/$defs/string_array"},
+        "evidence_refs": {"$ref": "#/$defs/non_empty_string_array"},
+        "evaluated_at": {"type": "string", "format": "date-time"}
+      }
+    }
+  }
+}

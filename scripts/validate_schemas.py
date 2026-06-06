@@ -128,6 +128,10 @@ SCHEMA_CONTRACT_MAP: dict[str, tuple[str, str]] = {
         "mcoi_runtime.contracts.universal_evidence_graph",
         "UniversalEvidenceGraph",
     ),
+    "symbolic_simulation_engine.schema.json": (
+        "mcoi_runtime.contracts.symbolic_simulation_engine",
+        "SymbolicSimulationEngineRun",
+    ),
 }
 
 
@@ -1184,6 +1188,138 @@ def _build_universal_evidence_graph(payload: dict[str, Any]) -> Any:
     )
 
 
+def _build_symbolic_simulation_engine(payload: dict[str, Any]) -> Any:
+    from mcoi_runtime.contracts.simulation import (
+        ConsequenceEstimate,
+        ObligationProjection,
+        RiskEstimate,
+        RiskLevel,
+        SimulationComparison,
+        SimulationOption,
+        SimulationOutcome,
+        SimulationRequest,
+        SimulationVerdict,
+        VerdictType,
+    )
+    from mcoi_runtime.contracts.symbolic_simulation_engine import (
+        SymbolicSimulationBranch,
+        SymbolicSimulationDecision,
+        SymbolicSimulationDecisionKind,
+        SymbolicSimulationEngineRun,
+        SymbolicSimulationExecutionGate,
+        SymbolicSimulationGateStatus,
+    )
+
+    return SymbolicSimulationEngineRun(
+        run_id=payload["run_id"],
+        version=payload["version"],
+        generated_at=payload["generated_at"],
+        action_ref=payload["action_ref"],
+        action_snapshot_ref=payload["action_snapshot_ref"],
+        request=SimulationRequest(
+            request_id=payload["request"]["request_id"],
+            context_type=payload["request"]["context_type"],
+            context_id=payload["request"]["context_id"],
+            description=payload["request"]["description"],
+            options=tuple(
+                SimulationOption(
+                    option_id=option["option_id"],
+                    label=option["label"],
+                    risk_level=RiskLevel(option["risk_level"]),
+                    estimated_cost=option["estimated_cost"],
+                    estimated_duration_seconds=option["estimated_duration_seconds"],
+                    success_probability=option["success_probability"],
+                )
+                for option in payload["request"]["options"]
+            ),
+        ),
+        branches=tuple(
+            SymbolicSimulationBranch(
+                branch_id=branch["branch_id"],
+                option_id=branch["option_id"],
+                outcome_id=branch["outcome_id"],
+                predicted_state_refs=tuple(branch["predicted_state_refs"]),
+                evidence_refs=tuple(branch["evidence_refs"]),
+                risk_level=RiskLevel(branch["risk_level"]),
+                confidence=branch["confidence"],
+                metadata=branch["metadata"],
+            )
+            for branch in payload["branches"]
+        ),
+        outcomes=tuple(
+            SimulationOutcome(
+                outcome_id=outcome["outcome_id"],
+                option_id=outcome["option_id"],
+                consequence=ConsequenceEstimate(
+                    estimate_id=outcome["consequence"]["estimate_id"],
+                    option_id=outcome["consequence"]["option_id"],
+                    affected_node_ids=tuple(outcome["consequence"]["affected_node_ids"]),
+                    new_edges_count=outcome["consequence"]["new_edges_count"],
+                    new_obligations_count=outcome["consequence"]["new_obligations_count"],
+                    blocked_nodes_count=outcome["consequence"]["blocked_nodes_count"],
+                    unblocked_nodes_count=outcome["consequence"]["unblocked_nodes_count"],
+                ),
+                risk=RiskEstimate(
+                    estimate_id=outcome["risk"]["estimate_id"],
+                    option_id=outcome["risk"]["option_id"],
+                    risk_level=RiskLevel(outcome["risk"]["risk_level"]),
+                    incident_probability=outcome["risk"]["incident_probability"],
+                    review_burden=outcome["risk"]["review_burden"],
+                    provider_exposure_count=outcome["risk"]["provider_exposure_count"],
+                    verification_difficulty=outcome["risk"]["verification_difficulty"],
+                    rationale=outcome["risk"]["rationale"],
+                ),
+                obligation_projection=ObligationProjection(
+                    projection_id=outcome["obligation_projection"]["projection_id"],
+                    option_id=outcome["obligation_projection"]["option_id"],
+                    new_obligations=tuple(outcome["obligation_projection"]["new_obligations"]),
+                    fulfilled_obligations=tuple(outcome["obligation_projection"]["fulfilled_obligations"]),
+                    deadline_pressure=outcome["obligation_projection"]["deadline_pressure"],
+                ),
+                simulated_at=outcome["simulated_at"],
+            )
+            for outcome in payload["outcomes"]
+        ),
+        comparison=SimulationComparison(
+            comparison_id=payload["comparison"]["comparison_id"],
+            request_id=payload["comparison"]["request_id"],
+            ranked_option_ids=tuple(payload["comparison"]["ranked_option_ids"]),
+            scores=payload["comparison"]["scores"],
+            top_risk_level=RiskLevel(payload["comparison"]["top_risk_level"]),
+            review_burden=payload["comparison"]["review_burden"],
+        ),
+        verdict=SimulationVerdict(
+            verdict_id=payload["verdict"]["verdict_id"],
+            comparison_id=payload["verdict"]["comparison_id"],
+            verdict_type=VerdictType(payload["verdict"]["verdict_type"]),
+            recommended_option_id=payload["verdict"]["recommended_option_id"],
+            confidence=payload["verdict"]["confidence"],
+            reasons=tuple(payload["verdict"]["reasons"]),
+        ),
+        decision=SymbolicSimulationDecision(
+            decision_id=payload["decision"]["decision_id"],
+            comparison_id=payload["decision"]["comparison_id"],
+            verdict_id=payload["decision"]["verdict_id"],
+            selected_option_id=payload["decision"]["selected_option_id"],
+            decision_kind=SymbolicSimulationDecisionKind(payload["decision"]["decision_kind"]),
+            rationale_refs=tuple(payload["decision"]["rationale_refs"]),
+            receipt_refs=tuple(payload["decision"]["receipt_refs"]),
+            decided_at=payload["decision"]["decided_at"],
+        ),
+        execution_gate=SymbolicSimulationExecutionGate(
+            gate_id=payload["execution_gate"]["gate_id"],
+            decision_id=payload["execution_gate"]["decision_id"],
+            gate_status=SymbolicSimulationGateStatus(payload["execution_gate"]["gate_status"]),
+            can_execute=payload["execution_gate"]["can_execute"],
+            required_approval_refs=tuple(payload["execution_gate"]["required_approval_refs"]),
+            evidence_refs=tuple(payload["execution_gate"]["evidence_refs"]),
+            evaluated_at=payload["execution_gate"]["evaluated_at"],
+        ),
+        receipt_refs=tuple(payload["receipt_refs"]),
+        metadata=payload["metadata"],
+    )
+
+
 FIXTURE_BUILDERS: dict[str, SharedFixtureBuilder] = {
     "communication_message.schema.json": _build_communication_message,
     "connector_descriptor.schema.json": _build_connector_descriptor,
@@ -1208,6 +1344,7 @@ FIXTURE_BUILDERS: dict[str, SharedFixtureBuilder] = {
     "workflow.schema.json": _build_workflow,
     "learning_admission.schema.json": _build_learning_admission,
     "universal_evidence_graph.schema.json": _build_universal_evidence_graph,
+    "symbolic_simulation_engine.schema.json": _build_symbolic_simulation_engine,
 }
 
 

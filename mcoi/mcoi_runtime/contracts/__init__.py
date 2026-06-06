@@ -153,6 +153,14 @@ from .universal_evidence_graph import (
     UniversalEvidenceQuestionAnswer,
     UniversalEvidenceQuestionKind,
 )
+from .symbolic_simulation_engine import (
+    SymbolicSimulationBranch,
+    SymbolicSimulationDecision,
+    SymbolicSimulationDecisionKind,
+    SymbolicSimulationEngineRun,
+    SymbolicSimulationExecutionGate,
+    SymbolicSimulationGateStatus,
+)
 from .goal import (
     GoalDependency,
     GoalDescriptor,
@@ -2206,6 +2214,12 @@ __all__ = [
     "UniversalEvidenceGraphNodeKind",
     "UniversalEvidenceQuestionAnswer",
     "UniversalEvidenceQuestionKind",
+    "SymbolicSimulationBranch",
+    "SymbolicSimulationDecision",
+    "SymbolicSimulationDecisionKind",
+    "SymbolicSimulationEngineRun",
+    "SymbolicSimulationExecutionGate",
+    "SymbolicSimulationGateStatus",
     "GoalDependency",
     "GoalDescriptor",
     "GoalExecutionState",
