@@ -80,6 +80,18 @@ class SecretStore:
         desc = self._get_descriptor(reference.secret_id)
         if desc.scope_id != reference.scope_id:
             raise ValueError("scope_id mismatch")
+        if self._descriptor_is_expired(desc):
+            self._descriptors[reference.secret_id] = SecretDescriptor(
+                secret_id=desc.secret_id,
+                source=desc.source,
+                scope_id=desc.scope_id,
+                created_at=desc.created_at,
+                status=SecretStatus.EXPIRED,
+                provider_id=desc.provider_id,
+                expires_at=desc.expires_at,
+            )
+            self._values.pop(reference.secret_id, None)
+            raise ValueError("secret unavailable")
         if desc.status is SecretStatus.REVOKED:
             raise ValueError("secret unavailable")
         if reference.secret_id not in self._values:
@@ -119,6 +131,15 @@ class SecretStore:
             return self._descriptors[secret_id]
         except KeyError:
             raise ValueError("secret reference unavailable") from None
+
+    def _descriptor_is_expired(self, desc: SecretDescriptor, now: datetime | None = None) -> bool:
+        if desc.status is SecretStatus.EXPIRED:
+            return True
+        if desc.expires_at is None:
+            return False
+        effective_now = now or self._clock()
+        expires = datetime.fromisoformat(desc.expires_at.replace("Z", "+00:00"))
+        return effective_now >= expires
 
 
 # ---------------------------------------------------------------------------

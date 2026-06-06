@@ -777,6 +777,29 @@ class TestExecution:
         assert record.success is False
         assert "disabled" in record.error_message
 
+    def test_execute_unhealthy_connector_is_policy_blocked(self):
+        reg, conn = _make_registry_with_sms()
+        cid = conn.connector_id()
+        _set_valid_secret(reg, cid)
+        unhealthy_desc = ExternalConnectorDescriptor(
+            connector_id=cid,
+            name="Unhealthy SMS",
+            connector_type=ExternalConnectorType.SMS_PROVIDER,
+            auth_mode=ConnectorAuthMode.API_KEY,
+            health_state=ConnectorHealthState.UNHEALTHY,
+            provider_name="twilio-test",
+            version="1.0.0",
+            enabled=True,
+            created_at=NOW,
+        )
+        reg._descriptors[cid] = unhealthy_desc
+
+        record = reg.execute(cid, "send", {"body": "x"})
+
+        assert record.success is False
+        assert record.error_message == "connector health not executable"
+        assert reg.get_failures(cid)[0].category is ConnectorFailureCategory.POLICY_BLOCKED
+
     def test_execute_provider_exception_is_sanitized(self):
         reg = ExternalConnectorRegistry()
         conn = SecretRaisingConnector()
@@ -885,6 +908,49 @@ class TestExecuteWithFallback:
         assert result["connector_id"] == "sms-2"
         assert result["fallback_used"] is True
         assert len(result["attempts"]) == 2
+
+    def test_execute_with_fallback_skips_rate_limited_primary(self):
+        reg = ExternalConnectorRegistry()
+        sms1 = SmsProviderTestConnector("sms-1")
+        sms2 = SmsProviderTestConnector("sms-2")
+        reg.register(sms1)
+        reg.register(sms2)
+        _set_valid_secret(reg, "sms-1")
+        _set_valid_secret(reg, "sms-2")
+        reg.set_rate_limit(
+            ConnectorRateLimitPolicy(
+                policy_id="rl-primary-zero",
+                connector_id="sms-1",
+                max_burst_size=0,
+                created_at=NOW,
+            )
+        )
+        chain = FallbackChain(
+            chain_id="chain-rate-skip",
+            name="Rate skip",
+            strategy=FallbackStrategy.PRIORITY_ORDER,
+            entries=(
+                FallbackChainEntry(
+                    entry_id="e1", chain_id="chain-rate-skip",
+                    connector_id="sms-1", priority=0, enabled=True,
+                ),
+                FallbackChainEntry(
+                    entry_id="e2", chain_id="chain-rate-skip",
+                    connector_id="sms-2", priority=1, enabled=True,
+                ),
+            ),
+            created_at=NOW,
+        )
+        reg.add_fallback_chain(chain)
+
+        result = reg.execute_with_fallback("chain-rate-skip", "send", {"body": "hi"})
+
+        assert result["record"] is not None
+        assert result["connector_id"] == "sms-2"
+        assert result["fallback_used"] is True
+        assert len(result["attempts"]) == 1
+        assert result["attempts"][0].connector_id == "sms-2"
+        assert reg.get_executions("sms-1") == ()
 
     def test_all_fail(self):
         reg = ExternalConnectorRegistry()

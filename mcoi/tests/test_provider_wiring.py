@@ -50,6 +50,15 @@ class FakeConnectorAdapter:
         )
 
 
+class TrackingConnectorAdapter(FakeConnectorAdapter):
+    def __init__(self) -> None:
+        self.invocation_count = 0
+
+    def invoke(self, connector: ConnectorDescriptor, request: dict) -> ConnectorResult:
+        self.invocation_count += 1
+        return super().invoke(connector, request)
+
+
 def test_integration_checks_provider_before_invoke() -> None:
     registry = ProviderRegistry(clock=lambda: _CLOCK)
     registry.register(
@@ -115,6 +124,77 @@ def test_integration_rejects_out_of_scope_url() -> None:
     ))
     assert result.status is ConnectorStatus.FAILED
     assert result.error_code == "credential_scope_exceeded"
+
+
+def test_integration_rejects_lookalike_base_url_without_adapter_dispatch() -> None:
+    registry = ProviderRegistry(clock=lambda: _CLOCK)
+    registry.register(
+        ProviderDescriptor(
+            provider_id="prov-1", name="P",
+            provider_class=ProviderClass.INTEGRATION,
+            credential_scope_id="s-1", enabled=True,
+        ),
+        CredentialScope(
+            scope_id="s-1", provider_id="prov-1",
+            allowed_base_urls=("https://allowed.com",),
+        ),
+    )
+    adapter = TrackingConnectorAdapter()
+    engine = IntegrationEngine(clock=lambda: _CLOCK, provider_registry=registry)
+    engine.register(
+        ConnectorDescriptor(
+            connector_id="c-1", name="C", provider="p",
+            effect_class=EffectClass.EXTERNAL_READ, trust_class=TrustClass.BOUNDED_EXTERNAL,
+            credential_scope_id="s-1", enabled=True,
+        ),
+        adapter,
+        provider_id="prov-1",
+    )
+
+    result = engine.invoke(InvocationRequest(
+        connector_id="c-1", operation="fetch",
+        parameters={"url": "https://allowed.com.evil.test/steal"},
+    ))
+
+    assert result.status is ConnectorStatus.FAILED
+    assert result.error_code == "credential_scope_exceeded"
+    assert adapter.invocation_count == 0
+
+
+def test_integration_rejects_operation_outside_credential_scope() -> None:
+    registry = ProviderRegistry(clock=lambda: _CLOCK)
+    registry.register(
+        ProviderDescriptor(
+            provider_id="prov-1", name="P",
+            provider_class=ProviderClass.INTEGRATION,
+            credential_scope_id="s-1", enabled=True,
+        ),
+        CredentialScope(
+            scope_id="s-1", provider_id="prov-1",
+            allowed_base_urls=("https://allowed.com",),
+            allowed_operations=("fetch",),
+        ),
+    )
+    adapter = TrackingConnectorAdapter()
+    engine = IntegrationEngine(clock=lambda: _CLOCK, provider_registry=registry)
+    engine.register(
+        ConnectorDescriptor(
+            connector_id="c-1", name="C", provider="p",
+            effect_class=EffectClass.EXTERNAL_WRITE, trust_class=TrustClass.BOUNDED_EXTERNAL,
+            credential_scope_id="s-1", enabled=True,
+        ),
+        adapter,
+        provider_id="prov-1",
+    )
+
+    result = engine.invoke(InvocationRequest(
+        connector_id="c-1", operation="delete",
+        parameters={"url": "https://allowed.com/resource"},
+    ))
+
+    assert result.status is ConnectorStatus.FAILED
+    assert result.error_code == "credential_operation_scope_exceeded"
+    assert adapter.invocation_count == 0
 
 
 def test_integration_rejects_disabled_provider() -> None:

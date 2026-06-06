@@ -369,38 +369,7 @@ class ExternalConnectorRegistry:
             if not entry.enabled:
                 continue
             cid = entry.connector_id
-            if cid not in self._connectors:
-                continue
-            desc = self._descriptors.get(cid)
-            if desc is None or not desc.enabled:
-                continue
-            # Prefer health snapshot if available, else use descriptor
-            snap = self._health_snapshots.get(cid)
-            effective_health = (
-                snap.health_state if snap else desc.health_state
-            )
-            if effective_health not in (
-                ConnectorHealthState.HEALTHY,
-                ConnectorHealthState.DEGRADED,
-            ):
-                continue
-            # Check reliability threshold
-            snap = self._health_snapshots.get(cid)
-            if snap and entry.min_reliability > 0:
-                if snap.reliability_score < entry.min_reliability:
-                    continue
-            # Check latency threshold
-            if snap and entry.max_latency_ms > 0:
-                if snap.avg_latency_ms > entry.max_latency_ms:
-                    continue
-            # Check credential validity
-            if not self.validate_credential(cid):
-                continue
-            # Check rate limit
-            if not self.check_rate_limit(cid):
-                continue
-            # Check quota
-            if not self.check_quota(cid):
+            if not self._connector_available_for_fallback(entry):
                 continue
             return self._connectors[cid]
 
@@ -423,6 +392,13 @@ class ExternalConnectorRegistry:
                 connector_id, operation,
                 ConnectorFailureCategory.POLICY_BLOCKED,
                 "connector is disabled",
+            )
+
+        if not self._connector_health_is_executable(connector_id):
+            return self._record_failure(
+                connector_id, operation,
+                ConnectorFailureCategory.POLICY_BLOCKED,
+                "connector health not executable",
             )
 
         if not self.validate_credential(connector_id):
@@ -481,12 +457,14 @@ class ExternalConnectorRegistry:
 
         entries = sorted(chain.entries, key=lambda e: e.priority)
         attempts: list[ConnectorExecutionRecord] = []
+        skipped_or_failed_before_success = False
 
         for entry in entries:
             if not entry.enabled:
                 continue
             cid = entry.connector_id
-            if cid not in self._connectors:
+            if not self._connector_available_for_fallback(entry):
+                skipped_or_failed_before_success = True
                 continue
 
             record = self.execute(cid, operation, payload)
@@ -497,8 +475,9 @@ class ExternalConnectorRegistry:
                     "record": record,
                     "connector_id": cid,
                     "attempts": tuple(attempts),
-                    "fallback_used": len(attempts) > 1,
+                    "fallback_used": skipped_or_failed_before_success or len(attempts) > 1,
                 }
+            skipped_or_failed_before_success = True
 
         return {
             "record": None,
@@ -506,6 +485,41 @@ class ExternalConnectorRegistry:
             "attempts": tuple(attempts),
             "fallback_used": True,
         }
+
+    def _connector_available_for_fallback(self, entry: FallbackChainEntry) -> bool:
+        cid = entry.connector_id
+        if cid not in self._connectors:
+            return False
+        desc = self._descriptors.get(cid)
+        if desc is None or not desc.enabled:
+            return False
+        if not self._connector_health_is_executable(cid):
+            return False
+        snapshot = self._health_snapshots.get(cid)
+        if snapshot and entry.min_reliability > 0:
+            if snapshot.reliability_score < entry.min_reliability:
+                return False
+        if snapshot and entry.max_latency_ms > 0:
+            if snapshot.avg_latency_ms > entry.max_latency_ms:
+                return False
+        if not self.validate_credential(cid):
+            return False
+        if not self.check_rate_limit(cid):
+            return False
+        if not self.check_quota(cid):
+            return False
+        return True
+
+    def _connector_health_is_executable(self, connector_id: str) -> bool:
+        desc = self._descriptors.get(connector_id)
+        if desc is None:
+            return False
+        snapshot = self._health_snapshots.get(connector_id)
+        effective_health = snapshot.health_state if snapshot else desc.health_state
+        return effective_health in (
+            ConnectorHealthState.HEALTHY,
+            ConnectorHealthState.DEGRADED,
+        )
 
     def _record_failure(
         self, connector_id: str, operation: str,

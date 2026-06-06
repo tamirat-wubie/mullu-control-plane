@@ -22,6 +22,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
+from mcoi_runtime.core.invariants import ensure_non_empty_text
+
 
 @dataclass(frozen=True, slots=True)
 class SecretValue:
@@ -32,6 +34,15 @@ class SecretValue:
     source: str  # "env", "file", "vault", etc.
     version: str = ""
     expires_at: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "key", ensure_non_empty_text("key", self.key))
+        object.__setattr__(self, "value", ensure_non_empty_text("value", self.value))
+        object.__setattr__(self, "source", ensure_non_empty_text("source", self.source))
+        if not isinstance(self.version, str):
+            raise ValueError("version must be a string")
+        if not isinstance(self.expires_at, str):
+            raise ValueError("expires_at must be a string")
 
     def __repr__(self) -> str:
         """Never expose secret value in repr."""
@@ -75,36 +86,41 @@ class EnvSecretProvider(SecretProvider):
     """
 
     def __init__(self, *, prefix: str = "", clock: Callable[[], str] | None = None) -> None:
+        if not isinstance(prefix, str):
+            raise ValueError("prefix must be a string")
         self._prefix = prefix
         self._clock = clock or (lambda: "")
         self._access_log: list[SecretAccessRecord] = []
         self._lock = threading.Lock()
 
     def _env_key(self, key: str) -> str:
+        ensure_non_empty_text("key", key)
         return f"{self._prefix}{key}".upper()
 
     def get(self, key: str, *, accessor: str = "") -> SecretValue | None:
         env_key = self._env_key(key)
         value = os.environ.get(env_key)
+        found = value is not None and bool(value.strip())
         with self._lock:
             self._access_log.append(SecretAccessRecord(
                 key=key, source="env", accessor=accessor,
-                accessed_at=self._clock(), found=value is not None,
+                accessed_at=self._clock(), found=found,
             ))
-        if value is None:
+        if not found:
             return None
         return SecretValue(key=key, value=value, source="env")
 
     def exists(self, key: str) -> bool:
-        return self._env_key(key) in os.environ
+        value = os.environ.get(self._env_key(key))
+        return value is not None and bool(value.strip())
 
     def list_keys(self) -> list[str]:
         if not self._prefix:
             return []  # Don't enumerate all env vars without prefix
         return [
             k[len(self._prefix):].lower()
-            for k in os.environ
-            if k.startswith(self._prefix.upper())
+            for k, value in os.environ.items()
+            if k.startswith(self._prefix.upper()) and value.strip()
         ]
 
     @property
@@ -124,21 +140,28 @@ class FileSecretProvider(SecretProvider):
         self._path = Path(path).resolve()
         self._clock = clock or (lambda: "")
         self._cache: dict[str, str] | None = None
+        self._last_load_error: str = ""
         self._lock = threading.Lock()
         self._access_log: list[SecretAccessRecord] = []
 
     def _load(self) -> dict[str, str]:
         if self._cache is not None:
             return self._cache
+        self._last_load_error = ""
         try:
             with self._path.open("r") as f:
                 data = json.load(f)
             if isinstance(data, dict):
-                self._cache = {str(k): str(v) for k, v in data.items()}
+                self._cache = _validated_secret_mapping(data)
             else:
                 self._cache = {}
-        except (json.JSONDecodeError, OSError):
+                self._last_load_error = "secret file payload must be an object"
+        except (json.JSONDecodeError, OSError) as exc:
             self._cache = {}
+            self._last_load_error = f"secret file load failed ({type(exc).__name__})"
+        except ValueError as exc:
+            self._cache = {}
+            self._last_load_error = str(exc)
         return self._cache
 
     def get(self, key: str, *, accessor: str = "") -> SecretValue | None:
@@ -165,11 +188,17 @@ class FileSecretProvider(SecretProvider):
         """Force reload from disk."""
         with self._lock:
             self._cache = None
+            self._last_load_error = ""
 
     @property
     def access_log(self) -> list[SecretAccessRecord]:
         with self._lock:
             return list(self._access_log)
+
+    @property
+    def last_load_error(self) -> str:
+        with self._lock:
+            return self._last_load_error
 
 
 class ChainedSecretProvider(SecretProvider):
@@ -204,3 +233,13 @@ class ChainedSecretProvider(SecretProvider):
     @property
     def provider_count(self) -> int:
         return len(self._providers)
+
+
+def _validated_secret_mapping(data: dict[Any, Any]) -> dict[str, str]:
+    secrets: dict[str, str] = {}
+    for raw_key, raw_value in data.items():
+        key = ensure_non_empty_text("secret key", raw_key)
+        if not isinstance(raw_value, str):
+            raise ValueError("secret file values must be strings")
+        secrets[key] = ensure_non_empty_text("secret value", raw_value)
+    return secrets

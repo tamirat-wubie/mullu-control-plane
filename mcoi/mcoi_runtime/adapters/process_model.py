@@ -10,11 +10,13 @@ Invariants:
 
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, Mapping
 
 import hashlib
+import os
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from types import MappingProxyType
 
 from mcoi_runtime.contracts.model import (
     ModelInvocation,
@@ -27,6 +29,17 @@ from mcoi_runtime.core.invariants import ensure_non_empty_text, stable_identifie
 
 _DEFAULT_MAX_OUTPUT_BYTES: int = 1_048_576  # 1 MB
 _TRUNCATION_MARKER: str = "\n[TRUNCATED at {limit} bytes]"
+_LOCALE_BASELINE: dict[str, str] = {
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8",
+    "PYTHONIOENCODING": "utf-8",
+    "PYTHONUTF8": "1",
+}
+_PLATFORM_PASSTHROUGH_KEYS: tuple[str, ...] = (
+    ("PATH", "SYSTEMROOT", "COMSPEC", "PATHEXT", "TEMP", "TMP", "WINDIR")
+    if os.name == "nt"
+    else ("PATH", "HOME", "TMPDIR")
+)
 
 
 def _truncate_output(text: str | None, max_bytes: int) -> str:
@@ -45,6 +58,28 @@ def _bounded_process_error(exc: Exception) -> str:
     return f"process model error ({type(exc).__name__})"
 
 
+def _minimal_process_environment(extra_environment: Mapping[str, str]) -> dict[str, str]:
+    """Build a credential-scrubbed environment for local process model execution."""
+    process_environment: dict[str, str] = dict(_LOCALE_BASELINE)
+    for key in _PLATFORM_PASSTHROUGH_KEYS:
+        value = os.environ.get(key)
+        if value is not None:
+            process_environment[key] = value
+    process_environment.update(dict(extra_environment))
+    return process_environment
+
+
+def _build_process_environment(config: "ProcessModelConfig") -> dict[str, str] | None:
+    explicit_environment = dict(config.environment)
+    if config.allow_inherited_environment:
+        if not explicit_environment:
+            return None
+        inherited_environment = dict(os.environ)
+        inherited_environment.update(explicit_environment)
+        return inherited_environment
+    return _minimal_process_environment(explicit_environment)
+
+
 @dataclass(frozen=True, slots=True)
 class ProcessModelConfig:
     """Configuration for a local process model adapter."""
@@ -53,6 +88,8 @@ class ProcessModelConfig:
     timeout_seconds: float = 60.0
     cost_per_invocation: float = 0.0
     max_output_bytes: int = _DEFAULT_MAX_OUTPUT_BYTES
+    environment: Mapping[str, str] = field(default_factory=dict)
+    allow_inherited_environment: bool = False
 
     def __post_init__(self) -> None:
         if not self.command:
@@ -65,6 +102,17 @@ class ProcessModelConfig:
             raise ValueError("cost_per_invocation must be non-negative")
         if self.max_output_bytes <= 0:
             raise ValueError("max_output_bytes must be positive")
+        if not isinstance(self.allow_inherited_environment, bool):
+            raise ValueError("allow_inherited_environment must be a boolean")
+        if not isinstance(self.environment, Mapping):
+            raise ValueError("environment must be a mapping")
+        normalized_environment: dict[str, str] = {}
+        for key, value in self.environment.items():
+            ensure_non_empty_text("environment key", key)
+            if not isinstance(value, str):
+                raise ValueError("environment values must be strings")
+            normalized_environment[key] = value
+        object.__setattr__(self, "environment", MappingProxyType(normalized_environment))
 
 
 class ProcessModelAdapter:
@@ -89,6 +137,9 @@ class ProcessModelAdapter:
                 list(self._config.command),
                 input=invocation.prompt_hash,
                 capture_output=True,
+                check=False,
+                env=_build_process_environment(self._config),
+                shell=False,
                 text=True,
                 timeout=self._config.timeout_seconds,
             )

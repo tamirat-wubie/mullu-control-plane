@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import smtplib
+import subprocess
 import sys
 
 import pytest
@@ -186,6 +187,76 @@ def test_process_model_config_validates() -> None:
 def test_process_model_config_rejects_empty_command() -> None:
     with pytest.raises(ValueError, match="command"):
         ProcessModelConfig(command=())
+
+
+def test_process_model_config_rejects_invalid_environment() -> None:
+    with pytest.raises(ValueError, match="environment must be a mapping"):
+        ProcessModelConfig(command=("model",), environment="SECRET=value")
+
+    with pytest.raises(ValueError, match="environment values must be strings"):
+        ProcessModelConfig(command=("model",), environment={"MODEL_ENV": 7})
+
+
+def test_process_model_uses_scrubbed_environment_by_default(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    monkeypatch.setenv("MULLUSI_SECRET_TOKEN", "secret-value")
+
+    def fake_run(*args, **kwargs):
+        captured["env"] = kwargs.get("env")
+        captured["shell"] = kwargs.get("shell")
+        captured["check"] = kwargs.get("check")
+        return subprocess.CompletedProcess(args[0], 0, stdout="ok", stderr="")
+
+    monkeypatch.setattr("mcoi_runtime.adapters.process_model.subprocess.run", fake_run)
+    adapter = ProcessModelAdapter(
+        config=ProcessModelConfig(command=("model",), environment={"MODEL_MODE": "local"}),
+        clock=lambda: _CLOCK,
+    )
+    inv = ModelInvocation(
+        invocation_id="inv-env-1", model_id="python-model",
+        prompt_hash="prompt-1", invoked_at=_CLOCK,
+    )
+
+    resp = adapter.invoke(inv)
+    env = captured["env"]
+
+    assert resp.status is ModelStatus.SUCCEEDED
+    assert isinstance(env, dict)
+    assert env["MODEL_MODE"] == "local"
+    assert "MULLUSI_SECRET_TOKEN" not in env
+    assert captured["shell"] is False
+    assert captured["check"] is False
+
+
+def test_process_model_environment_inheritance_requires_explicit_opt_in(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    monkeypatch.setenv("MULLUSI_SECRET_TOKEN", "secret-value")
+
+    def fake_run(*args, **kwargs):
+        captured["env"] = kwargs.get("env")
+        return subprocess.CompletedProcess(args[0], 0, stdout="ok", stderr="")
+
+    monkeypatch.setattr("mcoi_runtime.adapters.process_model.subprocess.run", fake_run)
+    adapter = ProcessModelAdapter(
+        config=ProcessModelConfig(
+            command=("model",),
+            environment={"MODEL_MODE": "local"},
+            allow_inherited_environment=True,
+        ),
+        clock=lambda: _CLOCK,
+    )
+    inv = ModelInvocation(
+        invocation_id="inv-env-2", model_id="python-model",
+        prompt_hash="prompt-1", invoked_at=_CLOCK,
+    )
+
+    resp = adapter.invoke(inv)
+    env = captured["env"]
+
+    assert resp.status is ModelStatus.SUCCEEDED
+    assert isinstance(env, dict)
+    assert env["MODEL_MODE"] == "local"
+    assert env["MULLUSI_SECRET_TOKEN"] == "secret-value"
 
 
 def test_process_model_invokes_portable_python_command() -> None:

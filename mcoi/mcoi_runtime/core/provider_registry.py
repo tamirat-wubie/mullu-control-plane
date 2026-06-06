@@ -11,6 +11,7 @@ Invariants:
 from __future__ import annotations
 
 from typing import Callable
+from urllib.parse import urlsplit
 
 from mcoi_runtime.contracts.provider import (
     CredentialScope,
@@ -92,12 +93,25 @@ class ProviderRegistry:
 
     def check_url_in_scope(self, provider_id: str, url: str) -> bool:
         """Check if a URL falls within the provider's allowed base URLs."""
+        ensure_non_empty_text("provider_id", provider_id)
+        ensure_non_empty_text("url", url)
         scope = self._scopes.get(provider_id)
         if scope is None:
             return False
         if not scope.allowed_base_urls:
             return True  # No URL restrictions
-        return any(url.startswith(base) for base in scope.allowed_base_urls)
+        return any(_url_within_base_url(url, base) for base in scope.allowed_base_urls)
+
+    def check_operation_in_scope(self, provider_id: str, operation: str) -> bool:
+        """Check if an operation is allowed by the provider credential scope."""
+        ensure_non_empty_text("provider_id", provider_id)
+        ensure_non_empty_text("operation", operation)
+        scope = self._scopes.get(provider_id)
+        if scope is None:
+            return False
+        if not scope.allowed_operations:
+            return True
+        return operation in scope.allowed_operations
 
     def record_success(self, provider_id: str) -> ProviderHealthRecord:
         """Record a successful invocation — update health to healthy."""
@@ -128,3 +142,39 @@ class ProviderRegistry:
         )
         self._health[provider_id] = record
         return record
+
+
+def _url_within_base_url(url: str, base_url: str) -> bool:
+    try:
+        target = urlsplit(url.strip())
+        base = urlsplit(base_url.strip())
+        target_port = _effective_port(target.scheme, target.port)
+        base_port = _effective_port(base.scheme, base.port)
+    except ValueError:
+        return False
+    if not target.scheme or not target.hostname:
+        return False
+    if not base.scheme or not base.hostname:
+        return False
+    if target.scheme.lower() != base.scheme.lower():
+        return False
+    if target.hostname.lower() != base.hostname.lower():
+        return False
+    if target_port != base_port:
+        return False
+    base_path = (base.path or "/").rstrip("/")
+    target_path = target.path or "/"
+    if not base_path:
+        return True
+    return target_path == base_path or target_path.startswith(f"{base_path}/")
+
+
+def _effective_port(scheme: str, explicit_port: int | None) -> int | None:
+    if explicit_port is not None:
+        return explicit_port
+    normalized_scheme = scheme.lower()
+    if normalized_scheme == "https":
+        return 443
+    if normalized_scheme == "http":
+        return 80
+    return None
