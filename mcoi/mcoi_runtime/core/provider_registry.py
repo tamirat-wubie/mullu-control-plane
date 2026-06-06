@@ -152,7 +152,6 @@ def _url_within_base_url(url: str, base_url: str) -> bool:
         base_port = _effective_port(base.scheme, base.port)
     except ValueError:
         return False
-
     if not target.scheme or not target.hostname:
         return False
     if not base.scheme or not base.hostname:
@@ -163,7 +162,6 @@ def _url_within_base_url(url: str, base_url: str) -> bool:
         return False
     if target_port != base_port:
         return False
-
     base_path = (base.path or "/").rstrip("/")
     target_path = target.path or "/"
     if not base_path:
