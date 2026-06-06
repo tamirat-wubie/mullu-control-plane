@@ -590,6 +590,16 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "general_agent_promotion_handoff_preflight",
+            (
+                python_executable,
+                "scripts/preflight_general_agent_promotion_handoff.py",
+                "--output",
+                ".tmp/general-agent-promotion-handoff-preflight.json",
+                "--json",
+            ),
+        ),
+        CheckCommand(
             "route_receipt_coverage",
             (python_executable, "scripts/validate_receipt_coverage.py", "--strict"),
         ),
