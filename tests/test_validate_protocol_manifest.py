@@ -893,6 +893,7 @@ def test_protocol_manifest_indexes_operational_intelligence_contracts() -> None:
     goal_entry = entries["goal"]
     simulation_entry = entries["simulation-receipt"]
     symbolic_simulation_entry = entries["symbolic-simulation-engine"]
+    state_engine_entry = entries["universal-state-engine"]
     coordination_receipt_entry = entries["intelligence-coordination-episode-receipt"]
     world_state_entry = entries["world-state"]
 
@@ -919,6 +920,9 @@ def test_protocol_manifest_indexes_operational_intelligence_contracts() -> None:
     assert symbolic_simulation_entry["path"] == "schemas/symbolic_simulation_engine.schema.json"
     assert symbolic_simulation_entry["urn"] == "urn:mullusi:schema:symbolic-simulation-engine:1"
     assert symbolic_simulation_entry["surface"] == "simulation"
+    assert state_engine_entry["path"] == "schemas/universal_state_engine.schema.json"
+    assert state_engine_entry["urn"] == "urn:mullusi:schema:universal-state-engine:1"
+    assert state_engine_entry["surface"] == "state"
     assert coordination_receipt_entry["path"] == "schemas/intelligence_coordination_episode_receipt.schema.json"
     assert coordination_receipt_entry["urn"] == "urn:mullusi:schema:intelligence-coordination-episode-receipt:1"
     assert coordination_receipt_entry["surface"] == "coordination"

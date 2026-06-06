@@ -161,6 +161,16 @@ from .symbolic_simulation_engine import (
     SymbolicSimulationExecutionGate,
     SymbolicSimulationGateStatus,
 )
+from .universal_state_engine import (
+    UniversalStateClosure,
+    UniversalStateClosureKind,
+    UniversalStateEngine,
+    UniversalStateGuard,
+    UniversalStateGuardKind,
+    UniversalStateSubject,
+    UniversalStateSubjectKind,
+    UniversalStateTransition,
+)
 from .goal import (
     GoalDependency,
     GoalDescriptor,
@@ -2220,6 +2230,14 @@ __all__ = [
     "SymbolicSimulationEngineRun",
     "SymbolicSimulationExecutionGate",
     "SymbolicSimulationGateStatus",
+    "UniversalStateClosure",
+    "UniversalStateClosureKind",
+    "UniversalStateEngine",
+    "UniversalStateGuard",
+    "UniversalStateGuardKind",
+    "UniversalStateSubject",
+    "UniversalStateSubjectKind",
+    "UniversalStateTransition",
     "GoalDependency",
     "GoalDescriptor",
     "GoalExecutionState",

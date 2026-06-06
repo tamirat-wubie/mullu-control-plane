@@ -5297,6 +5297,44 @@ def _validate_symbolic_simulation_engine_fixture(path: Path) -> list[str]:
     return []
 
 
+def _validate_universal_state_engine_fixture(path: Path) -> list[str]:
+    payload = _load_json_object(path, kind="MCOI runtime fixture")
+    try:
+        from scripts.validate_schemas import _build_universal_state_engine
+    except ModuleNotFoundError:
+        from validate_schemas import _build_universal_state_engine
+
+    errors = _validate_exact_object_fields(
+        payload,
+        path=path,
+        expected_fields=(
+            "engine_id",
+            "version",
+            "generated_at",
+            "subjects",
+            "state_machines",
+            "guards",
+            "transitions",
+            "closures",
+            "receipt_refs",
+            "metadata",
+        ),
+        kind="runtime fixture",
+    )
+    if errors:
+        return errors
+    try:
+        contract_record = _build_universal_state_engine(payload)
+    except (KeyError, TypeError, ValueError):
+        return [f"{_relative_path(path)}: runtime fixture violates UniversalStateEngine contract"]
+    if contract_record.to_json_dict() != payload:
+        return [
+            f"{_relative_path(path)}: runtime fixture must round-trip exactly through "
+            "UniversalStateEngine"
+        ]
+    return []
+
+
 def _validate_finding_record_fixture(path: Path) -> list[str]:
     payload = _load_json_object(path, kind="MCOI runtime fixture")
     errors = _validate_exact_object_fields(
@@ -10649,6 +10687,7 @@ MCOI_RUNTIME_FIXTURE_VALIDATORS: dict[str, MCOIRuntimeFixtureValidator] = {
     "evidence_item.json": _validate_evidence_item_fixture,
     "universal_evidence_graph.json": _validate_universal_evidence_graph_fixture,
     "symbolic_simulation_engine.json": _validate_symbolic_simulation_engine_fixture,
+    "universal_state_engine.json": _validate_universal_state_engine_fixture,
     "failover_record.json": _validate_failover_record_fixture,
     "finding_record.json": _validate_finding_record_fixture,
     "governance_contract_record.json": _validate_governance_contract_record_fixture,

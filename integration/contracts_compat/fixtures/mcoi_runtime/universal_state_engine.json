@@ -1,0 +1,110 @@
+{
+  "engine_id": "use-foundation-thread-001",
+  "version": "use.v1",
+  "generated_at": "2026-06-06T11:00:00+00:00",
+  "subjects": [
+    {
+      "subject_id": "workflow://foundation-proof-thread-001",
+      "subject_kind": "workflow",
+      "machine_id": "machine://workflow-closure-v1",
+      "current_state": "closed",
+      "state_ref": {
+        "state_id": "state://workflow/foundation-proof-thread-001/closed",
+        "category": "runtime",
+        "state_hash": "sha256:use-foundation-proof-thread-001",
+        "captured_at": "2026-06-06T11:00:00+00:00",
+        "metadata": {
+          "source": "universal-state-engine-fixture"
+        },
+        "extensions": {}
+      },
+      "evidence_refs": ["evidence://state/workflow-closure-verified"],
+      "updated_at": "2026-06-06T11:00:00+00:00",
+      "metadata": {
+        "domain": "foundation_mode"
+      }
+    }
+  ],
+  "state_machines": [
+    {
+      "machine_id": "machine://workflow-closure-v1",
+      "name": "Workflow Closure Lifecycle",
+      "version": "1.0.0",
+      "states": ["opened", "verified", "closed", "rolled_back"],
+      "initial_state": "opened",
+      "terminal_states": ["closed", "rolled_back"],
+      "transitions": [
+        {
+          "from_state": "opened",
+          "to_state": "verified",
+          "action": "verify",
+          "guard_label": "evidence_required",
+          "emits": "workflow_verified"
+        },
+        {
+          "from_state": "verified",
+          "to_state": "closed",
+          "action": "close",
+          "guard_label": "receipt_required",
+          "emits": "workflow_closed"
+        },
+        {
+          "from_state": "verified",
+          "to_state": "rolled_back",
+          "action": "rollback",
+          "guard_label": "authority_required",
+          "emits": "workflow_rolled_back"
+        }
+      ]
+    }
+  ],
+  "guards": [
+    {
+      "guard_id": "guard://workflow-close-receipt",
+      "guard_kind": "receipt_required",
+      "machine_id": "machine://workflow-closure-v1",
+      "from_state": "verified",
+      "to_state": "closed",
+      "required_refs": ["receipt://workflow/closure-proof-001"],
+      "confidence": 1.0,
+      "metadata": {
+        "guard_label": "receipt_required"
+      }
+    }
+  ],
+  "transitions": [
+    {
+      "transition_id": "transition://workflow/foundation-proof-thread-001/close",
+      "subject_id": "workflow://foundation-proof-thread-001",
+      "machine_id": "machine://workflow-closure-v1",
+      "from_state": "verified",
+      "to_state": "closed",
+      "action": "close",
+      "guard_ids": ["guard://workflow-close-receipt"],
+      "receipt_refs": ["receipt://workflow/closure-proof-001"],
+      "evidence_refs": ["evidence://state/workflow-closure-verified"],
+      "transitioned_at": "2026-06-06T11:00:00+00:00",
+      "metadata": {
+        "cause": "verified proof thread reached terminal closure"
+      }
+    }
+  ],
+  "closures": [
+    {
+      "closure_id": "closure://workflow/foundation-proof-thread-001",
+      "subject_id": "workflow://foundation-proof-thread-001",
+      "closure_kind": "completed",
+      "terminal_state": "closed",
+      "receipt_refs": ["receipt://workflow/closure-proof-001"],
+      "closed_at": "2026-06-06T11:00:00+00:00",
+      "metadata": {
+        "solver_outcome": "SolvedVerified"
+      }
+    }
+  ],
+  "receipt_refs": ["receipt://workflow/closure-proof-001", "receipt://use/engine-001"],
+  "metadata": {
+    "sequence": "state_transition_guard_receipt_closure",
+    "foundation_mode": true
+  }
+}
