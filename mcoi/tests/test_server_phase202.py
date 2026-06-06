@@ -42,6 +42,23 @@ class TestTenantBudgetEndpoints:
         assert resp.status_code == 200
         assert "entries" in resp.json()
 
+    def test_get_tenant_ledger_zero_limit_returns_no_entries(self, client):
+        resp = client.get("/api/v1/tenant/t1/ledger", params={"limit": "0"})
+
+        assert resp.status_code == 200
+        assert resp.json()["entries"] == []
+        assert resp.json()["count"] == 0
+
+    @pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+    def test_get_tenant_ledger_invalid_limit_returns_bounded_422(self, client, limit):
+        resp = client.get("/api/v1/tenant/t1/ledger", params={"limit": limit})
+
+        assert resp.status_code == 422
+        detail = resp.json()["detail"]
+        assert detail["error"] == "invalid tenant ledger request"
+        assert detail["error_code"] == "tenant_ledger_invalid_request"
+        assert detail["governed"] is True
+
     def test_get_tenant_summary(self, client):
         resp = client.get("/api/v1/tenant/t1/summary")
         assert resp.status_code == 200

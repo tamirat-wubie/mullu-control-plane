@@ -50,6 +50,19 @@ class TestTenantLedgerEntry:
         entries = ledger.query("t1", limit=3)
         assert len(entries) == 3
 
+    def test_query_limit_boundaries(self):
+        ledger = TenantLedger(clock=fixed_clock)
+        for i in range(5):
+            ledger.append("t1", "llm", "a1", {"i": i})
+
+        limited_entries = ledger.query("t1", limit=2)
+
+        assert ledger.query("t1", limit=0) == []
+        assert len(limited_entries) == 2
+        assert [entry.content["i"] for entry in limited_entries] == [3, 4]
+        with pytest.raises(ValueError, match="must not be negative"):
+            ledger.query("t1", limit=-1)
+
     def test_count(self):
         ledger = TenantLedger(clock=fixed_clock)
         assert ledger.count("t1") == 0

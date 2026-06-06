@@ -119,7 +119,14 @@ class TenantLedger:
         entries = self._entries.get(tenant_id, [])
         if entry_type is not None:
             entries = [e for e in entries if e.entry_type == entry_type]
-        return entries[-limit:]
+        if isinstance(limit, bool):
+            raise ValueError("tenant ledger query limit must be an integer")
+        normalized_limit = int(limit)
+        if normalized_limit < 0:
+            raise ValueError("tenant ledger query limit must not be negative")
+        if normalized_limit == 0:
+            return []
+        return entries[-normalized_limit:]
 
     def count(self, tenant_id: str) -> int:
         """Count of entries for a tenant."""
