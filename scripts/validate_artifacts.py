@@ -1123,8 +1123,8 @@ def _validate_job_execution_record_fixture(path: Path) -> list[str]:
         return errors
     for field_name in ("job_id", "execution_id", "status", "outcome_summary"):
         errors.extend(_require_non_empty_text(payload[field_name], field_name=field_name, path=path))
-    if payload["execution_mode"] != "real":
-        errors.append(f"{_relative_path(path)}: field 'execution_mode' must be 'real'")
+    if payload["execution_mode"] not in {"real", "dry_run", "shadow", "simulation", "replay", "test"}:
+        errors.append(f"{_relative_path(path)}: field 'execution_mode' must be a canonical execution mode")
     for field_name in ("started_at", "completed_at"):
         errors.extend(_validate_iso8601_text(payload[field_name], field_name=field_name, path=path))
     errors_list = payload["errors"]
