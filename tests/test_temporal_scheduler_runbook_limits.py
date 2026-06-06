@@ -2,10 +2,11 @@
 Governance scope: temporal scheduler documentation, persistence evidence, and
 lease-boundary status.
 Dependencies: docs/61_temporal_scheduler_runbook.md and temporal scheduler
-runtime/store source.
+runtime/store/proof source.
 Invariants:
   - The runbook distinguishes persisted action snapshots from lease ownership.
   - The runbook keeps multi-process lease ownership outside current closure.
+  - The runbook lists every certified scheduler repair transition.
   - The runtime evidence remains aligned with the documented boundary.
 """
 from __future__ import annotations
@@ -16,6 +17,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RUNBOOK = REPO_ROOT / "docs" / "61_temporal_scheduler_runbook.md"
 SCHEDULER = REPO_ROOT / "mcoi" / "mcoi_runtime" / "core" / "temporal_scheduler.py"
+PROOF_BRIDGE_TESTS = REPO_ROOT / "mcoi" / "tests" / "test_proof_bridge.py"
 STORE = (
     REPO_ROOT
     / "mcoi"
@@ -51,6 +53,17 @@ def test_runbook_keeps_multi_process_lease_ownership_as_current_limit() -> None:
     assert "multi-process lease ownership persistence or recovery" in current_limits
     assert "external handler plugin loading" in current_limits
     assert "The remaining scheduler limits are later layers" in current_limits
+
+
+def test_runbook_documents_reclaimed_lease_proof_transition() -> None:
+    runbook = _read(RUNBOOK)
+    proof_bridge_tests = _read(PROOF_BRIDGE_TESTS)
+
+    assert "running -> pending      temporal_lease_reclaimed" in runbook
+    assert "test_reclaimed_lease_receipt_certifies_running_to_pending_transition" in proof_bridge_tests
+    assert 'proof.capsule.receipt.from_state == "running"' in proof_bridge_tests
+    assert 'proof.capsule.receipt.to_state == "pending"' in proof_bridge_tests
+    assert 'proof.capsule.receipt.action == "temporal_lease_reclaimed"' in proof_bridge_tests
 
 
 def test_runtime_surface_matches_documented_persistence_boundary() -> None:
