@@ -87,6 +87,12 @@ publication, terminal-closure, or deployment readiness.
 | Source-control packet | `examples/foundation_source_control_boundary.awaiting_commit.json` | `AwaitingEvidence` |
 | Readiness snapshot | `docs/CURRENT_READINESS_SNAPSHOT.md` | `AwaitingEvidence` |
 | Public-copy routing index | `docs/START_HERE.md` | `AwaitingEvidence` |
+| Community/network no-outreach local proof | `examples/foundation_community_network_no_outreach_rehearsal_witness.awaiting_evidence.json` | `SolvedVerified` |
+
+`SolvedVerified` in this table means only that the named repository-local
+artifact is present and validator-covered. It does not promote the Foundation
+ledger, execute outreach, contact people, publish externally, open customer
+access, or deploy.
 
 ## Operator Procedure
 
@@ -109,7 +115,8 @@ python scripts/validate_foundation_evidence_ledger_boundary.py
 
 The validator checks that the evidence-ledger witness and evidence index packet:
 
-1. keeps every ledger entry in `AwaitingEvidence`;
+1. keeps the ledger root in `AwaitingEvidence` and allows only explicitly named
+   repository-local proof rows to use `SolvedVerified`;
 2. keeps evidence promotion, terminal closure, readiness, legal clearance,
    patent protection, customer readiness, paid launch, secret evidence, external
    publication, and deployment blocked;
@@ -131,5 +138,5 @@ The validator checks that the evidence-ledger witness and evidence index packet:
 STATUS:
   Completeness: 100%
   Invariants verified: evidence promotion blocked, terminal closure not claimed, readiness not claimed, legal clearance not claimed, patent protection not claimed, customer readiness not claimed, paid launch blocked, secret evidence not recorded, external publication blocked, deployment blocked
-  Open issues: boundary-doc evidence, witness-packet evidence, evidence-index evidence, validator evidence, test evidence, preflight-receipt evidence, source-control-packet evidence, readiness-snapshot evidence, and public-copy-routing evidence remain AwaitingEvidence
-  Next action: run the evidence-ledger boundary validator before any future evidence-promotion or closure claim
+  Open issues: boundary-doc evidence, witness-packet evidence, evidence-index evidence, validator evidence, test evidence, preflight-receipt evidence, source-control-packet evidence, readiness-snapshot evidence, and public-copy-routing evidence remain AwaitingEvidence; community/network no-outreach local proof is SolvedVerified only for repository-local artifact presence
+  Next action: pick another local evidence-index row or run the evidence-ledger boundary validator before any future evidence-promotion or closure claim

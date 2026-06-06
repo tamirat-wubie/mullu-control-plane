@@ -69,6 +69,13 @@
       "entry_type": "public_copy_routing",
       "public_safe_note": "Public-copy routing path only; it does not publish externally, invite access, open a waitlist, start a beta, start a pilot, or deploy.",
       "state": "AwaitingEvidence"
+    },
+    {
+      "artifact_ref": "examples/foundation_community_network_no_outreach_rehearsal_witness.awaiting_evidence.json",
+      "entry_id": "community_network_no_outreach_rehearsal_local_proof",
+      "entry_type": "local_rehearsal_proof",
+      "public_safe_note": "Local validator-covered no-outreach rehearsal witness only; it does not execute outreach, post publicly, contact people, send messages, collect personal data, open customer access, publish externally, or deploy.",
+      "state": "SolvedVerified"
     }
   ],
   "evidence_promotion_allowed": false,
