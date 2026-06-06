@@ -83,6 +83,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "general_agent_promotion_handoff_preflight",
         "general_agent_promotion_closure_chain",
         "finance_approval_live_handoff_closure_run",
+        "finance_approval_live_handoff_chain",
         "route_receipt_coverage",
         "route_guard_chain_coverage",
         "reflective_contract_guard",
@@ -271,6 +272,12 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "scripts/run_finance_approval_live_handoff_closure.py",
         "--output",
         ".tmp/finance-approval-live-handoff-closure-run.json",
+        "--json",
+    )
+    assert args_by_name["finance_approval_live_handoff_chain"][1:] == (
+        "scripts/run_finance_approval_live_handoff_chain.py",
+        "--output-dir",
+        ".tmp/finance-approval-live-handoff-chain",
         "--json",
     )
     assert args_by_name["route_receipt_coverage"][1:] == (

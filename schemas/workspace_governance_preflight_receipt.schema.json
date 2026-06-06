@@ -172,6 +172,7 @@
             "general_agent_promotion_handoff_preflight",
             "general_agent_promotion_closure_chain",
             "finance_approval_live_handoff_closure_run",
+            "finance_approval_live_handoff_chain",
             "route_receipt_coverage",
             "route_guard_chain_coverage",
             "reflective_contract_guard",
