@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import base64
+import binascii
 import json
 
 from fastapi import HTTPException
@@ -10,6 +11,7 @@ from mcoi_runtime.substrate.constructs import ConstructBase
 
 
 PAGE_SIZE_MAX = 1000
+INVALID_CURSOR_ERROR = "invalid_cursor"
 
 
 # ---- Offset pagination (v4.14.0) ----
@@ -85,19 +87,31 @@ def _decode_cursor(cursor: str) -> str:
     exactly what the server emitted, so corruption indicates client
     bug or intentional tampering.
     """
+    def _raise_invalid_cursor(reason: str) -> None:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": INVALID_CURSOR_ERROR, "reason": reason},
+        )
+
     try:
         padded = cursor + "=" * (-len(cursor) % 4)
         decoded = base64.urlsafe_b64decode(padded.encode())
+    except (binascii.Error, ValueError):
+        _raise_invalid_cursor("malformed_base64")
+
+    try:
         payload = json.loads(decoded)
-        after_id = payload["after_id"]
-        if not isinstance(after_id, str) or not after_id:
-            raise ValueError("empty after_id")
-        return after_id
-    except Exception:
-        raise HTTPException(
-            status_code=400,
-            detail={"error": "invalid_cursor"},
-        )
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        _raise_invalid_cursor("malformed_json")
+
+    if not isinstance(payload, dict):
+        _raise_invalid_cursor("non_object_payload")
+    if "after_id" not in payload:
+        _raise_invalid_cursor("missing_after_id")
+    after_id = payload.get("after_id")
+    if not isinstance(after_id, str) or not after_id:
+        _raise_invalid_cursor("invalid_after_id")
+    return after_id
 
 
 def _validate_cursor_limit(limit: int | None) -> int | None:
