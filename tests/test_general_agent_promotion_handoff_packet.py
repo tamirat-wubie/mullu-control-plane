@@ -66,7 +66,6 @@ def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
     aggregate_closure_actions = packet["aggregate_closure_actions"]
     expected_blockers = {
         "adapter_evidence_not_closed",
-        "browser_adapter_not_closed",
         "voice_adapter_not_closed",
         "email_calendar_adapter_not_closed",
         "deployment_witness_not_published",
