@@ -34,6 +34,7 @@ def test_current_receipt_contract_passes() -> None:
     assert "reflective_contract_guard" in check_name_enum
     assert "strict_schema_validation" in check_name_enum
     assert "strict_artifact_validation" in check_name_enum
+    assert "terminal_closure_certificate" in check_name_enum
     assert validator.DEFAULT_SCHEMA_PATH.exists()
     assert validator.DEFAULT_SCHEMA_PATH.name == "workspace_governance_preflight_receipt.schema.json"
 
