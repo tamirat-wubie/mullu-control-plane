@@ -547,6 +547,14 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_artifacts.py", "--strict"),
         ),
         CheckCommand(
+            "terminal_closure_certificate",
+            (
+                python_executable,
+                "scripts/validate_terminal_closure_certificate.py",
+                "--json",
+            ),
+        ),
+        CheckCommand(
             "universal_action_orchestration_contract",
             (python_executable, "scripts/validate_universal_action_orchestration.py"),
         ),
