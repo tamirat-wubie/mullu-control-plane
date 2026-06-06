@@ -15,7 +15,11 @@ import random
 import time
 from dataclasses import dataclass, field
 from enum import Enum, unique
+from hashlib import sha256
 from typing import Any, Callable
+from urllib.parse import urlparse
+
+from mcoi_runtime.governance.network.ssrf import is_private_url as _is_private_url
 
 
 @unique
@@ -74,7 +78,8 @@ class WebhookDelivery:
     def to_dict(self) -> dict[str, Any]:
         return {
             "delivery_id": self.delivery_id,
-            "webhook_url": self.webhook_url,
+            "webhook_url_hash": _sha256_text(self.webhook_url),
+            "webhook_url_redacted": True,
             "event_type": self.event_type,
             "status": self.status.value,
             "attempt_count": self.attempt_count,
@@ -84,6 +89,23 @@ class WebhookDelivery:
 
 def _bounded_delivery_error(exc: Exception) -> str:
     return f"delivery error ({type(exc).__name__})"
+
+
+def _sha256_text(value: str) -> str:
+    return sha256(value.encode("utf-8", errors="replace")).hexdigest()
+
+
+def _webhook_retry_url_rejection_reason(url: str) -> str | None:
+    """Return a bounded rejection reason for retry delivery targets."""
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return "invalid"
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
+        return "invalid"
+    if _is_private_url(url):
+        return "private_internal_address"
+    return None
 
 
 class WebhookRetryEngine:
@@ -104,6 +126,27 @@ class WebhookRetryEngine:
         """Attempt delivery with retries per policy."""
         self._deliveries[delivery.delivery_id] = delivery
         delivery.status = DeliveryStatus.RETRYING
+
+        rejection_reason = _webhook_retry_url_rejection_reason(delivery.webhook_url)
+        if rejection_reason is not None:
+            error = (
+                "delivery blocked (private/internal URL)"
+                if rejection_reason == "private_internal_address"
+                else "delivery blocked (invalid URL)"
+            )
+            delivery.attempts.append(DeliveryAttempt(
+                attempt_number=0,
+                timestamp=time.time(),
+                success=False,
+                status_code=None,
+                error=error,
+                duration_ms=0.0,
+            ))
+            delivery.status = DeliveryStatus.DEAD_LETTER
+            self._dead_letters.append(delivery)
+            self._total_attempts += 1
+            self._total_failed += 1
+            return delivery
 
         for attempt in range(self._policy.max_retries + 1):
             start = time.monotonic()

@@ -51,6 +51,11 @@ compensation outcome, accepted risk, and case.
 6. No terminal certificate without evidence references.
 7. A terminal certificate records final disposition; it does not invent missing
    lower-layer proof.
+8. A terminal certificate carries only non-null proof anchors for its selected
+   disposition path: committed certificates carry no compensation, accepted-risk,
+   or case anchor; compensated certificates carry no accepted-risk or case
+   anchor; accepted-risk certificates carry no compensation anchor; review
+   certificates carry no compensation or accepted-risk anchor.
 
 ## Closure Shape
 

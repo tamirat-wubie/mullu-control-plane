@@ -13,11 +13,16 @@ Invariants:
 
 from __future__ import annotations
 
+import math
 import threading
 import time
 from collections import deque
 from dataclasses import dataclass
+from numbers import Real
 from typing import Any, Callable
+
+
+_MAX_ENDPOINT_LENGTH = 2048
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,7 +97,7 @@ class RequestAnalytics:
         window_seconds: float = DEFAULT_WINDOW_SECONDS,
     ) -> None:
         self._clock = clock or time.monotonic
-        self._window_seconds = window_seconds
+        self._window_seconds = _coerce_positive_float(window_seconds, field_name="window_seconds")
         self._samples: dict[str, deque[RequestSample]] = {}
         self._lock = threading.Lock()
         self._total_requests = 0
@@ -106,8 +111,12 @@ class RequestAnalytics:
         status_code: int = 200,
     ) -> None:
         """Record a request observation for an endpoint."""
+        endpoint = _validate_endpoint(endpoint)
+        latency_ms = _coerce_non_negative_float(latency_ms, field_name="latency_ms")
+        success = _coerce_bool(success, field_name="success")
+        status_code = _coerce_status_code(status_code)
         sample = RequestSample(
-            timestamp=self._clock(),
+            timestamp=_coerce_finite_float(self._clock(), field_name="timestamp"),
             latency_ms=latency_ms,
             success=success,
             status_code=status_code,
@@ -161,6 +170,7 @@ class RequestAnalytics:
 
     def endpoint_report(self, endpoint: str) -> EndpointAnalytics | None:
         """Get analytics for a specific endpoint."""
+        endpoint = _validate_endpoint(endpoint)
         with self._lock:
             samples = list(self._samples.get(endpoint, []))
         if not samples:
@@ -175,11 +185,13 @@ class RequestAnalytics:
 
     def slow_endpoints(self, *, threshold_ms: float = 1000.0) -> list[EndpointAnalytics]:
         """List endpoints with P95 latency above threshold."""
+        threshold_ms = _coerce_non_negative_float(threshold_ms, field_name="threshold_ms")
         reports = self.all_endpoints()
         return [r for r in reports if r.p95_latency_ms > threshold_ms]
 
     def error_endpoints(self, *, threshold: float = 0.05) -> list[EndpointAnalytics]:
         """List endpoints with error rate above threshold."""
+        threshold = _coerce_error_threshold(threshold)
         reports = self.all_endpoints()
         return [r for r in reports if r.error_rate > threshold]
 
@@ -197,3 +209,69 @@ class RequestAnalytics:
             "total_requests": self._total_requests,
             "window_seconds": self._window_seconds,
         }
+
+
+def _validate_endpoint(endpoint: str) -> str:
+    """Validate endpoint identity before it becomes an analytics partition key."""
+    if not isinstance(endpoint, str):
+        raise ValueError("endpoint must be a string")
+    normalized = endpoint.strip()
+    if not normalized:
+        raise ValueError("endpoint must be non-empty")
+    if len(normalized) > _MAX_ENDPOINT_LENGTH:
+        raise ValueError("endpoint exceeds maximum length")
+    return normalized
+
+
+def _coerce_bool(value: Any, *, field_name: str) -> bool:
+    """Validate explicit boolean flags."""
+    if not isinstance(value, bool):
+        raise ValueError(f"{field_name} must be a boolean")
+    return value
+
+
+def _coerce_finite_float(value: Any, *, field_name: str) -> float:
+    """Validate a finite numeric scalar."""
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ValueError(f"{field_name} must be a number")
+    numeric_value = float(value)
+    if not math.isfinite(numeric_value):
+        raise ValueError(f"{field_name} must be finite")
+    return numeric_value
+
+
+def _coerce_non_negative_float(value: Any, *, field_name: str) -> float:
+    """Validate a finite non-negative numeric scalar."""
+    numeric_value = _coerce_finite_float(value, field_name=field_name)
+    if numeric_value < 0:
+        raise ValueError(f"{field_name} must be non-negative")
+    return numeric_value
+
+
+def _coerce_positive_float(value: Any, *, field_name: str) -> float:
+    """Validate a finite positive numeric scalar."""
+    numeric_value = _coerce_finite_float(value, field_name=field_name)
+    if numeric_value <= 0:
+        raise ValueError(f"{field_name} must be positive")
+    return numeric_value
+
+
+def _coerce_status_code(value: Any) -> int:
+    """Validate an HTTP status code boundary."""
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ValueError("status_code must be an integer")
+    numeric_value = float(value)
+    if not math.isfinite(numeric_value) or not numeric_value.is_integer():
+        raise ValueError("status_code must be a finite integer")
+    status_code = int(value)
+    if status_code < 100 or status_code > 599:
+        raise ValueError("status_code must be between 100 and 599")
+    return status_code
+
+
+def _coerce_error_threshold(value: Any) -> float:
+    """Validate error-rate threshold bounds."""
+    threshold = _coerce_non_negative_float(value, field_name="threshold")
+    if threshold > 1:
+        raise ValueError("threshold must be between 0 and 1")
+    return threshold

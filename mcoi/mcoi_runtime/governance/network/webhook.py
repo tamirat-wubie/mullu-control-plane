@@ -20,6 +20,7 @@ from typing import Any, Callable
 import hmac
 import json
 import threading
+from urllib.parse import urlparse
 
 from mcoi_runtime.governance.network.ssrf import is_private_url as _is_private_url
 
@@ -140,8 +141,11 @@ class WebhookManager:
         # SSRF check is a DNS lookup -- keep it OUTSIDE the lock. (A private URL
         # paired with a duplicate id now reports the URL rejection first; both
         # are rejections, so the precedence is immaterial.)
-        if _is_private_url(sub.url):
+        rejection_reason = _webhook_url_rejection_reason(sub.url)
+        if rejection_reason == "private_internal_address":
             raise ValueError("webhook URL rejected: private/internal address not allowed")
+        if rejection_reason is not None:
+            raise ValueError("webhook URL rejected: unsupported scheme or missing host")
         with self._lock:
             if sub.subscription_id in self._subscriptions:
                 raise ValueError("subscription already exists")
@@ -220,7 +224,13 @@ class WebhookManager:
             # the subscription stays registered while delivery_history and
             # mutation receipts retain the blocked attempt. No outbound
             # request fires. DNS lookup -- stays OUTSIDE the lock.
-            if _is_private_url(sub.url):
+            rejection_reason = _webhook_url_rejection_reason(sub.url)
+            if rejection_reason is not None:
+                block_reason = (
+                    "delivery_url_private"
+                    if rejection_reason == "private_internal_address"
+                    else "delivery_url_invalid"
+                )
                 with self._lock:
                     self._delivery_counter += 1
                     delivery_id = f"wh-{self._delivery_counter}"
@@ -245,7 +255,7 @@ class WebhookManager:
                             "subscription_id_hash": _sha256_text(sub.subscription_id),
                             "event": event,
                             "payload_hash": _sha256_json(payload),
-                            "block_reason": "delivery_url_private",
+                            "block_reason": block_reason,
                             "target_url_hash": _sha256_text(sub.url),
                         },
                     )
@@ -375,3 +385,16 @@ def _sha256_text(value: str) -> str:
 
 def _sha256_json(value: Any) -> str:
     return _sha256_text(json.dumps(value, sort_keys=True, default=str, separators=(",", ":")))
+
+
+def _webhook_url_rejection_reason(url: str) -> str | None:
+    """Return a bounded rejection reason for webhook target URLs."""
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return "invalid"
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
+        return "invalid"
+    if _is_private_url(url):
+        return "private_internal_address"
+    return None

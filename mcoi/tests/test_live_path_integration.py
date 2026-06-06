@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import os
 import pytest
-from datetime import datetime, timezone
 
 from mcoi_runtime.app.llm_bootstrap import LLMConfig, bootstrap_llm
 from mcoi_runtime.contracts.llm import LLMBudget, LLMProvider
@@ -23,7 +22,8 @@ from mcoi_runtime.core.cost_analytics import CostAnalyticsEngine
 from mcoi_runtime.governance.guards.budget import TenantBudgetManager, TenantBudgetPolicy
 
 
-FIXED_CLOCK = lambda: "2026-03-27T12:00:00Z"
+def fixed_clock() -> str:
+    return "2026-03-27T12:00:00Z"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -37,17 +37,17 @@ def ledger_entries():
 
 @pytest.fixture
 def audit_trail():
-    return AuditTrail(clock=FIXED_CLOCK)
+    return AuditTrail(clock=fixed_clock)
 
 
 @pytest.fixture
 def cost_analytics():
-    return CostAnalyticsEngine(clock=FIXED_CLOCK)
+    return CostAnalyticsEngine(clock=fixed_clock)
 
 
 @pytest.fixture
 def tenant_budget_mgr():
-    return TenantBudgetManager(clock=FIXED_CLOCK)
+    return TenantBudgetManager(clock=fixed_clock)
 
 
 @pytest.fixture
@@ -60,7 +60,7 @@ def bootstrap_stub(ledger_entries):
         max_tokens_per_call=4096,
     )
     return bootstrap_llm(
-        clock=FIXED_CLOCK,
+        clock=fixed_clock,
         config=config,
         ledger_sink=ledger_entries.append,
     )
@@ -178,7 +178,7 @@ class TestBudgetEnforcement:
             default_budget_max_cost=0.00001,  # Extremely tiny
             max_tokens_per_call=4096,
         )
-        result = bootstrap_llm(clock=FIXED_CLOCK, config=config, ledger_sink=entries.append)
+        result = bootstrap_llm(clock=fixed_clock, config=config, ledger_sink=entries.append)
         bridge = result.bridge
 
         # Make calls until budget fails
@@ -246,7 +246,7 @@ class TestAuditTrailIntegration:
             default_backend="stub", default_model="stub",
             default_budget_max_cost=0.0005,  # Very tiny
         )
-        result = bootstrap_llm(clock=FIXED_CLOCK, config=config, ledger_sink=entries.append)
+        result = bootstrap_llm(clock=fixed_clock, config=config, ledger_sink=entries.append)
         bridge = result.bridge
 
         # Exhaust budget then record denial
@@ -506,7 +506,7 @@ class TestAnthropicLiveProvider:
             default_model="claude-haiku-4-5-20251001",
             default_budget_max_cost=0.10,
         )
-        result = bootstrap_llm(clock=FIXED_CLOCK, config=config, ledger_sink=entries.append)
+        result = bootstrap_llm(clock=fixed_clock, config=config, ledger_sink=entries.append)
         return result.bridge, entries
 
     def test_real_anthropic_completion(self, live_bridge):
@@ -546,7 +546,7 @@ class TestOpenAILiveProvider:
             default_model="gpt-4o-mini",
             default_budget_max_cost=0.10,
         )
-        result = bootstrap_llm(clock=FIXED_CLOCK, config=config, ledger_sink=entries.append)
+        result = bootstrap_llm(clock=fixed_clock, config=config, ledger_sink=entries.append)
         return result.bridge, entries
 
     def test_real_openai_completion(self, live_bridge):

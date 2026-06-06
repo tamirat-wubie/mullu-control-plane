@@ -136,6 +136,17 @@
                   "minLength": 1
                 }
               }
+            },
+            {
+              "required": [
+                "case_id"
+              ],
+              "properties": {
+                "case_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
             }
           ]
         }
@@ -158,6 +169,32 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "accepted_risk_id"
+              ],
+              "properties": {
+                "accepted_risk_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "case_id"
+              ],
+              "properties": {
+                "case_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          ]
         }
       }
     },
@@ -183,6 +220,17 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "not": {
+          "required": [
+            "compensation_outcome_id"
+          ],
+          "properties": {
+            "compensation_outcome_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
         }
       }
     },
@@ -203,6 +251,32 @@
             "type": "string",
             "minLength": 1
           }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "compensation_outcome_id"
+              ],
+              "properties": {
+                "compensation_outcome_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "accepted_risk_id"
+              ],
+              "properties": {
+                "accepted_risk_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          ]
         }
       }
     }

@@ -1,7 +1,9 @@
 """Tenant Usage Tracker Tests."""
 
+import math
+
 import pytest
-from mcoi_runtime.core.tenant_usage_tracker import TenantUsage, TenantUsageTracker
+from mcoi_runtime.core.tenant_usage_tracker import TenantUsageTracker
 
 
 class TestRecording:
@@ -50,6 +52,60 @@ class TestRecording:
         assert t.get("t1").llm_calls == 5
         assert t.get("t1").llm_cost == pytest.approx(0.5)
 
+    @pytest.mark.parametrize(
+        ("kwargs", "field_name"),
+        [
+            ({"tokens_in": -1}, "tokens_in"),
+            ({"tokens_in": 1.5}, "tokens_in"),
+            ({"tokens_in": True}, "tokens_in"),
+            ({"tokens_out": math.inf}, "tokens_out"),
+            ({"tokens_out": "7"}, "tokens_out"),
+            ({"cost": -0.01}, "cost"),
+            ({"cost": math.nan}, "cost"),
+            ({"cost": False}, "cost"),
+        ],
+    )
+    def test_record_llm_rejects_invalid_usage_values_without_mutating_state(self, kwargs, field_name):
+        t = TenantUsageTracker()
+        with pytest.raises(ValueError, match=field_name):
+            t.record_llm("t1", **kwargs)
+        assert t.get("t1") is None
+        assert t.summary()["tenants"] == 0
+
+    def test_record_llm_normalizes_integral_numeric_values(self):
+        t = TenantUsageTracker()
+        t.record_llm(" t1 ", tokens_in=100.0, tokens_out=50, cost=1)
+        usage = t.get("t1")
+        assert usage.llm_calls == 1
+        assert usage.llm_tokens_input == 100
+        assert usage.llm_tokens_output == 50
+        assert usage.llm_cost == 1.0
+
+    @pytest.mark.parametrize("tenant_id", ["", "   ", 12, "t" * 257])
+    def test_recording_rejects_invalid_tenant_identity(self, tenant_id):
+        t = TenantUsageTracker()
+        with pytest.raises(ValueError, match="tenant_id"):
+            t.record_message(tenant_id)
+        assert t.tenant_count == 0
+        assert t.summary()["total_messages"] == 0
+
+    @pytest.mark.parametrize(
+        ("method_name", "kwargs", "field_name"),
+        [
+            ("record_message", {"error": 1}, "error"),
+            ("record_message", {"error": "true"}, "error"),
+            ("record_skill", {"success": 1}, "success"),
+            ("record_skill", {"success": "false"}, "success"),
+        ],
+    )
+    def test_boolean_flags_must_be_explicit_booleans(self, method_name, kwargs, field_name):
+        t = TenantUsageTracker()
+        method = getattr(t, method_name)
+        with pytest.raises(ValueError, match=field_name):
+            method("t1", **kwargs)
+        assert t.get("t1") is None
+        assert t.summary()["tenants"] == 0
+
 
 class TestTopTenants:
     def test_top_by_cost(self):
@@ -69,6 +125,16 @@ class TestTopTenants:
             t.record_message("t2")
         top = t.top_by_volume(limit=1)
         assert top[0].tenant_id == "t1"
+
+    @pytest.mark.parametrize("limit", [-1, 1.5, True, math.inf])
+    def test_top_tenant_limits_reject_invalid_values(self, limit):
+        t = TenantUsageTracker()
+        t.record_llm("t1", cost=1.0)
+        with pytest.raises(ValueError, match="limit"):
+            t.top_by_cost(limit=limit)
+        with pytest.raises(ValueError, match="limit"):
+            t.top_by_volume(limit=limit)
+        assert t.tenant_count == 1
 
     def test_with_errors(self):
         t = TenantUsageTracker()

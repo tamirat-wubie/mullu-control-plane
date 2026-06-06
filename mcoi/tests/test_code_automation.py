@@ -29,6 +29,7 @@ from mcoi_runtime.contracts.code import (
 from mcoi_runtime.adapters.code_adapter import (
     CommandPolicy,
     LocalCodeAdapter,
+    _atomic_write_text,
     _is_within_root,
 )
 from mcoi_runtime.core.code import CodeEngine
@@ -284,6 +285,60 @@ class TestPatchApplication:
         assert result.status is PatchStatus.BLOCKED
         assert "outside workspace" in result.error_message
 
+    def test_apply_patch_outside_root_via_symlink_leaf_blocked(self, tmp_path: Path):
+        if not _symlinks_supported(tmp_path):
+            pytest.skip("symlinks not supported in this environment")
+
+        ws = _setup_workspace(tmp_path)
+        outside = tmp_path / "outside_main.py"
+        outside.write_text("secret\n", encoding="utf-8")
+        link = ws / "linked_main.py"
+        try:
+            link.symlink_to(outside)
+        except OSError:
+            pytest.skip("symlinks not supported in this environment")
+
+        adapter = _adapter(ws)
+        diff = (
+            "--- a/linked_main.py\n"
+            "+++ b/linked_main.py\n"
+            "@@ -1 +1 @@\n"
+            "-secret\n"
+            "+changed\n"
+        )
+
+        result = adapter.apply_patch("p-link-outside", "linked_main.py", diff)
+
+        assert result.status is PatchStatus.BLOCKED
+        assert "outside workspace" in (result.error_message or "")
+        assert outside.read_text(encoding="utf-8") == "secret\n"
+        assert link.is_symlink()
+
+    def test_apply_patch_outside_root_via_symlink_parent_blocked(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        outside_dir = tmp_path / "outside_dir"
+        outside_dir.mkdir()
+        link = ws / "linked"
+        try:
+            link.symlink_to(outside_dir, target_is_directory=True)
+        except OSError:
+            pytest.skip("directory symlinks not supported in this environment")
+
+        adapter = _adapter(ws)
+        diff = (
+            "--- /dev/null\n"
+            "+++ b/linked/created.py\n"
+            "@@ -0,0 +1 @@\n"
+            "+created\n"
+        )
+
+        result = adapter.apply_patch("p-parent-outside", "linked/created.py", diff)
+
+        assert result.status is PatchStatus.BLOCKED
+        assert "outside workspace" in (result.error_message or "")
+        assert not (outside_dir / "created.py").exists()
+        assert link.is_symlink()
+
     def test_apply_patch_nonexistent_file(self, tmp_path: Path):
         ws = _setup_workspace(tmp_path)
         adapter = _adapter(ws)
@@ -369,6 +424,40 @@ class TestPatchApplication:
             for record in caplog.records
         )
         assert all("secret chmod path" not in record.message for record in caplog.records)
+        assert all(str(ws) not in record.message for record in caplog.records)
+
+    def test_atomic_write_preserves_regular_file_mode_from_lstat(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        ws = _setup_workspace(tmp_path)
+        target = ws / "mode.txt"
+        target.write_text("old", encoding="utf-8")
+        expected_mode = os.lstat(target).st_mode & 0o7777
+        lstat_calls: list[Path] = []
+        chmod_calls: list[tuple[Path, int]] = []
+        real_lstat = os.lstat
+
+        def record_lstat(path):
+            lstat_calls.append(Path(path))
+            return real_lstat(path)
+
+        def record_chmod(path, mode):
+            chmod_calls.append((Path(path), mode))
+
+        monkeypatch.setattr("mcoi_runtime.adapters.code_adapter.os.lstat", record_lstat)
+        monkeypatch.setattr("mcoi_runtime.adapters.code_adapter.os.chmod", record_chmod)
+
+        _atomic_write_text(target, "new")
+
+        assert target.read_text(encoding="utf-8") == "new"
+        assert lstat_calls == [target]
+        assert len(chmod_calls) == 1
+        assert chmod_calls[0][0].parent == target.parent
+        assert chmod_calls[0][0].name.startswith(f".{target.name}.")
+        assert chmod_calls[0][0] != target
+        assert chmod_calls[0][1] == expected_mode
 
     def test_atomic_write_temp_cleanup_failure_is_logged_bounded(
         self,
@@ -413,6 +502,7 @@ class TestPatchApplication:
             for record in caplog.records
         )
         assert all("secret cleanup path" not in record.message for record in caplog.records)
+        assert all(str(ws) not in record.message for record in caplog.records)
 
 
 class TestCodeEngine:
@@ -1254,6 +1344,75 @@ class TestM3ResolveBeforeOperate:
         ok = adapter.write_file("linked/escape.txt", "should not write")
         assert ok is False
         assert not (outside_dir / "escape.txt").exists()
+
+    def test_write_file_existing_symlink_leaf_replaced_not_followed(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        ws = _setup_workspace(tmp_path)
+        outside = tmp_path / "secret.txt"
+        outside.write_text("outside-secret", encoding="utf-8")
+        link = ws / "linked_leaf.txt"
+        chmod_calls: list[tuple[Path, int]] = []
+        lstat_calls: list[Path] = []
+        try:
+            link.symlink_to(outside)
+        except (OSError, NotImplementedError):
+            pytest.skip("symlinks not supported in this environment")
+        adapter = _adapter(ws)
+        real_lstat = os.lstat
+
+        def record_lstat(path):
+            lstat_calls.append(Path(path))
+            return real_lstat(path)
+
+        def record_chmod(path: Path, mode: int) -> None:
+            chmod_calls.append((path, mode))
+
+        monkeypatch.setattr("mcoi_runtime.adapters.code_adapter.os.lstat", record_lstat)
+        monkeypatch.setattr("mcoi_runtime.adapters.code_adapter.os.chmod", record_chmod)
+        ok = adapter.write_file("linked_leaf.txt", "inside-content")
+
+        assert ok is True
+        assert outside.read_text(encoding="utf-8") == "outside-secret"
+        assert link.read_text(encoding="utf-8") == "inside-content"
+        assert not link.is_symlink()
+        # Patching the process-wide os.lstat also observes Path.resolve calls
+        # on POSIX; the contract here is that the leaf symlink itself is
+        # lstat'ed and treated as a symlink before mode preservation.
+        assert link in lstat_calls
+        assert lstat_calls[-1] == link
+        assert chmod_calls == []
+
+    def test_write_file_existing_directory_symlink_leaf_replaced_not_followed(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ):
+        ws = _setup_workspace(tmp_path)
+        outside_dir = tmp_path / "secret_dir"
+        outside_dir.mkdir()
+        (outside_dir / "secret.txt").write_text("outside-secret", encoding="utf-8")
+        link = ws / "linked_leaf_dir"
+        chmod_calls: list[tuple[Path, int]] = []
+        try:
+            link.symlink_to(outside_dir, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            pytest.skip("directory symlinks not supported in this environment")
+        adapter = _adapter(ws)
+
+        def record_chmod(path: Path, mode: int) -> None:
+            chmod_calls.append((path, mode))
+
+        monkeypatch.setattr("mcoi_runtime.adapters.code_adapter.os.chmod", record_chmod)
+        ok = adapter.write_file("linked_leaf_dir", "inside-content")
+
+        assert ok is True
+        assert (outside_dir / "secret.txt").read_text(encoding="utf-8") == "outside-secret"
+        assert link.read_text(encoding="utf-8") == "inside-content"
+        assert not link.is_symlink()
+        assert chmod_calls == []
 
     def test_read_file_in_workspace_symlink_still_works(self, tmp_path: Path):
         ws = _setup_workspace(tmp_path)

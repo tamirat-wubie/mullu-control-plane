@@ -12,9 +12,14 @@ Invariants:
 
 from __future__ import annotations
 
+import math
 import threading
 from dataclasses import dataclass
+from numbers import Real
 from typing import Any
+
+
+_MAX_TENANT_ID_LENGTH = 256
 
 
 @dataclass
@@ -57,6 +62,7 @@ class TenantUsageTracker:
         self._lock = threading.Lock()
 
     def _get(self, tenant_id: str) -> TenantUsage:
+        tenant_id = _validate_tenant_id(tenant_id)
         if tenant_id not in self._usage:
             if len(self._usage) >= self.MAX_TENANTS:
                 lowest = min(self._usage, key=lambda t: self._usage[t].llm_calls + self._usage[t].gateway_messages)
@@ -65,6 +71,9 @@ class TenantUsageTracker:
         return self._usage[tenant_id]
 
     def record_llm(self, tenant_id: str, *, tokens_in: int = 0, tokens_out: int = 0, cost: float = 0.0) -> None:
+        tokens_in = _coerce_non_negative_int(tokens_in, field_name="tokens_in")
+        tokens_out = _coerce_non_negative_int(tokens_out, field_name="tokens_out")
+        cost = _coerce_non_negative_float(cost, field_name="cost")
         with self._lock:
             u = self._get(tenant_id)
             u.llm_calls += 1
@@ -73,6 +82,7 @@ class TenantUsageTracker:
             u.llm_cost += cost
 
     def record_message(self, tenant_id: str, *, error: bool = False) -> None:
+        error = _coerce_bool(error, field_name="error")
         with self._lock:
             u = self._get(tenant_id)
             u.gateway_messages += 1
@@ -80,6 +90,7 @@ class TenantUsageTracker:
                 u.gateway_errors += 1
 
     def record_skill(self, tenant_id: str, *, success: bool = True) -> None:
+        success = _coerce_bool(success, field_name="success")
         with self._lock:
             u = self._get(tenant_id)
             u.skill_executions += 1
@@ -95,14 +106,17 @@ class TenantUsageTracker:
             self._get(tenant_id).rate_limit_denials += 1
 
     def get(self, tenant_id: str) -> TenantUsage | None:
+        tenant_id = _validate_tenant_id(tenant_id)
         with self._lock:
             return self._usage.get(tenant_id)
 
     def top_by_cost(self, limit: int = 10) -> list[TenantUsage]:
+        limit = _coerce_limit(limit)
         with self._lock:
             return sorted(self._usage.values(), key=lambda u: -u.llm_cost)[:limit]
 
     def top_by_volume(self, limit: int = 10) -> list[TenantUsage]:
+        limit = _coerce_limit(limit)
         with self._lock:
             return sorted(self._usage.values(), key=lambda u: -(u.llm_calls + u.gateway_messages))[:limit]
 
@@ -111,6 +125,7 @@ class TenantUsageTracker:
             return [u for u in self._usage.values() if u.gateway_errors > 0 or u.skill_errors > 0]
 
     def reset(self, tenant_id: str) -> bool:
+        tenant_id = _validate_tenant_id(tenant_id)
         with self._lock:
             if tenant_id in self._usage:
                 self._usage[tenant_id] = TenantUsage(tenant_id=tenant_id)
@@ -129,3 +144,50 @@ class TenantUsageTracker:
                 "total_calls": sum(u.llm_calls for u in self._usage.values()),
                 "total_messages": sum(u.gateway_messages for u in self._usage.values()),
             }
+
+
+def _validate_tenant_id(tenant_id: str) -> str:
+    """Validate tenant identity before it becomes a metric partition key."""
+    if not isinstance(tenant_id, str):
+        raise ValueError("tenant_id must be a string")
+    normalized = tenant_id.strip()
+    if not normalized:
+        raise ValueError("tenant_id must be non-empty")
+    if len(normalized) > _MAX_TENANT_ID_LENGTH:
+        raise ValueError("tenant_id exceeds maximum length")
+    return normalized
+
+
+def _coerce_bool(value: Any, *, field_name: str) -> bool:
+    """Validate explicit boolean flags."""
+    if not isinstance(value, bool):
+        raise ValueError(f"{field_name} must be a boolean")
+    return value
+
+
+def _coerce_non_negative_int(value: Any, *, field_name: str) -> int:
+    """Validate integer usage increments."""
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ValueError(f"{field_name} must be a non-negative integer")
+    numeric_value = float(value)
+    if not math.isfinite(numeric_value) or numeric_value < 0 or not numeric_value.is_integer():
+        raise ValueError(f"{field_name} must be a finite non-negative integer")
+    return int(value)
+
+
+def _coerce_non_negative_float(value: Any, *, field_name: str) -> float:
+    """Validate cost increments before they affect billing evidence."""
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ValueError(f"{field_name} must be a non-negative number")
+    numeric_value = float(value)
+    if not math.isfinite(numeric_value) or numeric_value < 0:
+        raise ValueError(f"{field_name} must be a finite non-negative number")
+    return numeric_value
+
+
+def _coerce_limit(value: Any) -> int:
+    """Validate ranking limits so callers cannot get Python slice surprises."""
+    limit = _coerce_non_negative_int(value, field_name="limit")
+    if limit == 0:
+        return 0
+    return limit

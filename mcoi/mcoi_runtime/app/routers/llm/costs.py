@@ -1,13 +1,29 @@
 """LLM cost analytics endpoints."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request
+from typing import Any, NoReturn
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.app.routers.llm._common import deps
 from mcoi_runtime.app.routers.musia_auth import require_admin
 
 router = APIRouter()
+
+
+def _cost_error_detail(error: str, error_code: str) -> dict[str, Any]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _raise_cost_validation_error(error: ValueError) -> NoReturn:
+    raise HTTPException(
+        status_code=422,
+        detail=_cost_error_detail(
+            "invalid cost analytics request",
+            "cost_analytics_invalid_request",
+        ),
+    ) from error
 
 
 @router.get("/api/v1/costs")
@@ -19,10 +35,14 @@ def cost_summary():
 @router.get("/api/v1/costs/top-spenders")
 def top_spenders(limit: int = 10, _: str = Depends(require_admin)):
     """Top spending tenants."""
+    try:
+        spenders = deps.cost_analytics.top_spenders(limit=limit)
+    except ValueError as error:
+        _raise_cost_validation_error(error)
     return {
         "spenders": [
             {"tenant_id": b.tenant_id, "total_cost": b.total_cost, "calls": b.call_count}
-            for b in deps.cost_analytics.top_spenders(limit=limit)
+            for b in spenders
         ],
     }
 
@@ -37,7 +57,10 @@ def costs_by_model():
 def tenant_costs(tenant_id: str, request: Request):
     """Cost breakdown for a specific tenant."""
     enforce_tenant_scope(request, tenant_id)
-    breakdown = deps.cost_analytics.tenant_breakdown(tenant_id)
+    try:
+        breakdown = deps.cost_analytics.tenant_breakdown(tenant_id)
+    except ValueError as error:
+        _raise_cost_validation_error(error)
     return {
         "tenant_id": breakdown.tenant_id,
         "total_cost": breakdown.total_cost,
@@ -53,7 +76,10 @@ def tenant_costs(tenant_id: str, request: Request):
 def cost_projection(tenant_id: str, request: Request, budget: float = 0.0, days_elapsed: float = 1.0):
     """Cost projection for a tenant."""
     enforce_tenant_scope(request, tenant_id)
-    proj = deps.cost_analytics.project(tenant_id, budget=budget, days_elapsed=days_elapsed)
+    try:
+        proj = deps.cost_analytics.project(tenant_id, budget=budget, days_elapsed=days_elapsed)
+    except ValueError as error:
+        _raise_cost_validation_error(error)
     return {
         "tenant_id": proj.tenant_id,
         "current_daily_rate": proj.current_daily_rate,

@@ -12,8 +12,13 @@ Invariants:
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
+from numbers import Real
 from typing import Any, Callable
+
+
+_MAX_ID_LENGTH = 256
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,15 +65,21 @@ class CostAnalyticsEngine:
 
     def record(self, tenant_id: str, model: str, cost: float, tokens: int) -> CostEntry:
         """Record a cost event."""
+        tenant_id = _validate_identity(tenant_id, field_name="tenant_id")
+        model = _validate_identity(model, field_name="model")
+        cost = _coerce_non_negative_float(cost, field_name="cost")
+        tokens = _coerce_non_negative_int(tokens, field_name="tokens")
+        timestamp = _validate_timestamp(self._clock())
         entry = CostEntry(
             tenant_id=tenant_id, model=model, cost=cost,
-            tokens=tokens, timestamp=self._clock(),
+            tokens=tokens, timestamp=timestamp,
         )
         self._entries.append(entry)
         return entry
 
     def tenant_breakdown(self, tenant_id: str) -> TenantCostBreakdown:
         """Compute cost breakdown for a tenant."""
+        tenant_id = _validate_identity(tenant_id, field_name="tenant_id")
         entries = [e for e in self._entries if e.tenant_id == tenant_id]
         if not entries:
             return TenantCostBreakdown(
@@ -96,8 +107,11 @@ class CostAnalyticsEngine:
 
     def project(self, tenant_id: str, budget: float = 0.0, days_elapsed: float = 1.0) -> CostProjection:
         """Project future costs based on current spending."""
+        tenant_id = _validate_identity(tenant_id, field_name="tenant_id")
+        budget = _coerce_non_negative_float(budget, field_name="budget")
+        days_elapsed = _coerce_positive_float(days_elapsed, field_name="days_elapsed")
         breakdown = self.tenant_breakdown(tenant_id)
-        daily_rate = breakdown.total_cost / max(days_elapsed, 0.01)
+        daily_rate = breakdown.total_cost / days_elapsed
         monthly = daily_rate * 30
 
         days_left = -1.0
@@ -115,6 +129,7 @@ class CostAnalyticsEngine:
 
     def top_spenders(self, limit: int = 10) -> list[TenantCostBreakdown]:
         """Top spending tenants."""
+        limit = _coerce_non_negative_int(limit, field_name="limit")
         tenant_ids = set(e.tenant_id for e in self._entries)
         breakdowns = [self.tenant_breakdown(tid) for tid in tenant_ids]
         breakdowns.sort(key=lambda b: b.total_cost, reverse=True)
@@ -144,3 +159,61 @@ class CostAnalyticsEngine:
             "tenant_count": tenant_count,
             "model_count": len(set(e.model for e in self._entries)),
         }
+
+
+def _validate_identity(value: str, *, field_name: str) -> str:
+    """Validate partition identifiers before they enter financial evidence."""
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must be a string")
+    normalized = value.strip()
+    if not normalized:
+        raise ValueError(f"{field_name} must be non-empty")
+    if len(normalized) > _MAX_ID_LENGTH:
+        raise ValueError(f"{field_name} exceeds maximum length")
+    return normalized
+
+
+def _validate_timestamp(value: Any) -> str:
+    """Validate clock output for cost evidence timestamps."""
+    if not isinstance(value, str):
+        raise ValueError("timestamp must be a string")
+    normalized = value.strip()
+    if not normalized:
+        raise ValueError("timestamp must be non-empty")
+    return normalized
+
+
+def _coerce_finite_float(value: Any, *, field_name: str) -> float:
+    """Validate a finite numeric scalar."""
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ValueError(f"{field_name} must be a number")
+    numeric_value = float(value)
+    if not math.isfinite(numeric_value):
+        raise ValueError(f"{field_name} must be finite")
+    return numeric_value
+
+
+def _coerce_non_negative_float(value: Any, *, field_name: str) -> float:
+    """Validate a finite non-negative numeric scalar."""
+    numeric_value = _coerce_finite_float(value, field_name=field_name)
+    if numeric_value < 0:
+        raise ValueError(f"{field_name} must be non-negative")
+    return numeric_value
+
+
+def _coerce_positive_float(value: Any, *, field_name: str) -> float:
+    """Validate a finite positive numeric scalar."""
+    numeric_value = _coerce_finite_float(value, field_name=field_name)
+    if numeric_value <= 0:
+        raise ValueError(f"{field_name} must be positive")
+    return numeric_value
+
+
+def _coerce_non_negative_int(value: Any, *, field_name: str) -> int:
+    """Validate a finite non-negative integer scalar."""
+    if isinstance(value, bool) or not isinstance(value, Real):
+        raise ValueError(f"{field_name} must be an integer")
+    numeric_value = float(value)
+    if not math.isfinite(numeric_value) or numeric_value < 0 or not numeric_value.is_integer():
+        raise ValueError(f"{field_name} must be a finite non-negative integer")
+    return int(value)
