@@ -1568,6 +1568,11 @@ def capability_passport_for(intent_name: str) -> CapabilityPassport:
     return passport
 
 
+def _native_capability_passport_for(intent_name: str) -> CapabilityPassport | None:
+    """Return a built-in passport without consulting fabric registry entries."""
+    return _CAPABILITY_PASSPORTS.get(intent_name) or _restricted_worker_passport_for(intent_name)
+
+
 def _restricted_worker_passport_for(intent_name: str) -> CapabilityPassport | None:
     """Return a fail-closed passport for worker-bound adapter capabilities."""
     domain, separator, _action = intent_name.partition(".")
@@ -2377,11 +2382,15 @@ class CommandLedger:
                 )
             capability_registry_entry = self._capability_admission_gate.capability_for_intent(typed_intent.name)
 
-        passport = (
-            capability_passport_from_registry_entry(capability_registry_entry)
-            if capability_registry_entry is not None
-            else capability_passport_for(typed_intent.name)
-        )
+        native_passport = _native_capability_passport_for(typed_intent.name)
+        passport_source = "native"
+        if native_passport is not None:
+            passport = native_passport
+        elif capability_registry_entry is not None:
+            passport = capability_passport_from_registry_entry(capability_registry_entry)
+            passport_source = "fabric"
+        else:
+            passport = capability_passport_for(typed_intent.name)
         self.transition(
             command.command_id,
             CommandState.CAPABILITY_BOUND,
@@ -2391,6 +2400,7 @@ class CommandLedger:
                 "capability": passport.capability,
                 "capability_version": passport.version,
                 "capability_passport_hash": canonical_hash(asdict(passport)),
+                "capability_passport_source": passport_source,
                 "authority_required": list(passport.authority_required),
                 "capability_admission_status": (
                     capability_admission.status.value if capability_admission is not None else "not_configured"

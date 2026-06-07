@@ -24,6 +24,7 @@ from gateway.authority_obligation_mesh import (  # noqa: E402
     TeamOwnership,
 )
 from gateway.capability_isolation import CapabilityExecutionReceipt  # noqa: E402
+from gateway.capability_fabric import build_default_capability_admission_gate  # noqa: E402
 from gateway.command_spine import CommandLedger, CommandState, GovernedAction, InMemoryCommandLedgerStore  # noqa: E402
 from gateway.router import GatewayMessage, GatewayRouter, TenantMapping  # noqa: E402
 from gateway.skill_dispatch import (  # noqa: E402
@@ -510,6 +511,54 @@ class TestMessageRouting:
         assert response.metadata["total_chunks_searched"] == 0
         assert response.metadata["receipt_status"] == "executor_unavailable"
         assert response.metadata["terminal_certificate_id"]
+
+    def test_knowledge_search_fabric_admission_uses_native_read_only_passport(self):
+        platform = StubPlatform(llm_response="fallback")
+        router = GatewayRouter(
+            platform=platform,
+            capability_dispatcher=build_capability_dispatcher_from_platform(platform),
+            command_ledger=CommandLedger(
+                clock=lambda: "2026-04-29T12:00:00+00:00",
+                capability_admission_gate=build_default_capability_admission_gate(
+                    clock=lambda: "2026-04-29T12:00:00+00:00"
+                ),
+            ),
+            clock=lambda: "2026-04-29T12:00:00+00:00",
+        )
+        router.register_tenant_mapping(TenantMapping(
+            channel="test",
+            sender_id="user1",
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+        ))
+
+        response = router.handle_message(GatewayMessage(
+            message_id="msg-knowledge-fabric-unavailable-1",
+            channel="test",
+            sender_id="user1",
+            body="/run enterprise.knowledge_search {\"query\":\"deployment witness canary\"}",
+            conversation_id="conversation-1",
+        ))
+        command_id = response.metadata["command_id"]
+        prediction = router._commands.effect_prediction_for(command_id)
+        events = router._commands.events_for(command_id)
+        bound_event = next(
+            event for event in events
+            if event.next_state is CommandState.CAPABILITY_BOUND
+        )
+        reconciled_event = next(
+            event for event in events
+            if event.next_state is CommandState.RECONCILED
+        )
+
+        assert response.body == "Knowledge search is not available right now."
+        assert response.metadata["closure_disposition"] == "committed"
+        assert response.metadata["success_claim_allowed"] is True
+        assert prediction is not None
+        assert prediction.expected_mutations == ()
+        assert bound_event.detail["capability_admission_status"] == "accepted"
+        assert bound_event.detail["capability_passport_source"] == "native"
+        assert reconciled_event.detail["mcoi_reconciliation"]["status"] == "match"
 
     def test_router_stores_capability_intent_with_legacy_alias(self):
         dispatcher = SkillDispatcher()
