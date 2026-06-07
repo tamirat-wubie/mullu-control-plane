@@ -26,7 +26,11 @@ from gateway.authority_obligation_mesh import (  # noqa: E402
 from gateway.capability_isolation import CapabilityExecutionReceipt  # noqa: E402
 from gateway.command_spine import CommandLedger, CommandState, GovernedAction, InMemoryCommandLedgerStore  # noqa: E402
 from gateway.router import GatewayMessage, GatewayRouter, TenantMapping  # noqa: E402
-from gateway.skill_dispatch import FunctionCapabilityHandler, SkillDispatcher  # noqa: E402
+from gateway.skill_dispatch import (  # noqa: E402
+    FunctionCapabilityHandler,
+    SkillDispatcher,
+    build_capability_dispatcher_from_platform,
+)
 
 
 class StubPlatform:
@@ -477,6 +481,35 @@ class TestMessageRouting:
         assert captured_contexts[0].metadata["budget_reservation_id"].startswith("budget-reservation-")
         assert captured_contexts[0].metadata["isolation_boundary_id"].startswith("isolation-boundary-")
         assert captured_contexts[0].metadata["isolation_boundary"]["execution_plane"] == "gateway_process"
+
+    def test_knowledge_search_unavailable_backend_still_emits_required_receipt(self):
+        platform = StubPlatform(llm_response="fallback")
+        router = GatewayRouter(
+            platform=platform,
+            capability_dispatcher=build_capability_dispatcher_from_platform(platform),
+            clock=lambda: "2026-04-29T12:00:00+00:00",
+        )
+        router.register_tenant_mapping(TenantMapping(
+            channel="test",
+            sender_id="user1",
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+        ))
+
+        response = router.handle_message(GatewayMessage(
+            message_id="msg-knowledge-unavailable-1",
+            channel="test",
+            sender_id="user1",
+            body="/run enterprise.knowledge_search {\"query\":\"deployment witness canary\"}",
+            conversation_id="conversation-1",
+        ))
+
+        assert response.body == "Knowledge search is not available right now."
+        assert response.metadata["closure_disposition"] == "committed"
+        assert response.metadata["success_claim_allowed"] is True
+        assert response.metadata["total_chunks_searched"] == 0
+        assert response.metadata["receipt_status"] == "executor_unavailable"
+        assert response.metadata["terminal_certificate_id"]
 
     def test_router_stores_capability_intent_with_legacy_alias(self):
         dispatcher = SkillDispatcher()
