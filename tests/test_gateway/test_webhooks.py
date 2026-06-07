@@ -425,6 +425,62 @@ class TestHealth:
         assert "gateway" in data
 
 
+class TestDeploymentTenantMappings:
+    def test_deployment_tenant_mapping_requires_authority(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "pilot")
+        monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
+        monkeypatch.delenv("MULLU_DEPLOYMENT_AUTHORITY_SECRET", raising=False)
+        app = create_gateway_app(platform=StubPlatform())
+        local_client = TestClient(app)
+
+        resp = local_client.post(
+            "/deployment/tenant-mappings",
+            json={
+                "channel": "web",
+                "sender_id": "deployment-canary-session",
+                "tenant_id": "tenant-canary",
+                "identity_id": "identity-canary",
+            },
+        )
+
+        assert resp.status_code == 403
+        assert resp.json()["detail"] == "Deployment authority access not authorized"
+        assert app.state.tenant_identity_store.count() == 0
+
+    def test_deployment_tenant_mapping_persists_authorized_binding(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "pilot")
+        monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
+        monkeypatch.setenv("MULLU_DEPLOYMENT_AUTHORITY_SECRET", "deployment-secret")
+        app = create_gateway_app(platform=StubPlatform())
+        local_client = TestClient(app)
+
+        resp = local_client.post(
+            "/deployment/tenant-mappings",
+            headers={"X-Mullu-Deployment-Secret": "deployment-secret"},
+            json={
+                "channel": "web",
+                "sender_id": "deployment-canary-session",
+                "tenant_id": "tenant-canary",
+                "identity_id": "identity-canary",
+                "roles": ["deployment_canary"],
+                "metadata": {"purpose": "deployment_witness_canary"},
+            },
+        )
+
+        data = resp.json()
+        mapping = app.state.tenant_identity_store.resolve(
+            "web",
+            "deployment-canary-session",
+        )
+        assert resp.status_code == 200
+        assert data["status"] == "stored"
+        assert data["active_mappings"] == 1
+        assert data["roles"] == ["deployment_canary"]
+        assert mapping is not None
+        assert mapping.tenant_id == "tenant-canary"
+        assert mapping.metadata["purpose"] == "deployment_witness_canary"
+
+
 # ═══ WhatsApp ═══
 
 

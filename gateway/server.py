@@ -118,7 +118,7 @@ from gateway.physical_capability_promotion_store import build_physical_capabilit
 from gateway.signature_verification import (
     ChannelVerifierConfig, VerificationMethod, WebhookVerifier,
 )
-from gateway.tenant_identity import build_tenant_identity_store_from_env
+from gateway.tenant_identity import TenantMapping, build_tenant_identity_store_from_env
 from mcoi_runtime.contracts.governed_capability_fabric import CapabilityRegistryEntry, DomainCapsule
 
 _log = logging.getLogger(__name__)
@@ -3045,6 +3045,53 @@ def create_gateway_app(
             "signature": f"hmac-sha256:{anchor.signature}",
             "signature_key_id": anchor.signature_key_id,
             "anchored_at": anchor.anchored_at,
+            "governed": True,
+        }
+
+    @app.post("/deployment/tenant-mappings")
+    async def deployment_tenant_mapping(request: Request):
+        """Persist a deployment-authorized channel-to-tenant binding."""
+        _require_deployment_authority(request)
+        payload = await _request_json_mapping(request)
+        raw_roles = payload.get("roles", ())
+        if isinstance(raw_roles, str) or not isinstance(raw_roles, (list, tuple)):
+            raise HTTPException(400, detail="roles must be an array")
+        try:
+            mapping = TenantMapping(
+                channel=_required_text(payload, "channel"),
+                sender_id=_required_text(payload, "sender_id"),
+                tenant_id=_required_text(payload, "tenant_id"),
+                identity_id=_required_text(payload, "identity_id"),
+                roles=tuple(str(role).strip() for role in raw_roles if str(role).strip()),
+                approval_authority=_payload_bool(
+                    payload,
+                    "approval_authority",
+                    default=False,
+                ),
+                policy_version=_optional_text(
+                    payload,
+                    "policy_version",
+                    default="tenant-identity-v1",
+                ),
+                metadata=dict(_optional_mapping(payload, "metadata")),
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        tenant_identity_store.save(mapping)
+        resolved = tenant_identity_store.resolve(mapping.channel, mapping.sender_id)
+        if resolved is None:
+            raise HTTPException(500, detail="tenant mapping persistence failed")
+        return {
+            "status": "stored",
+            "channel": resolved.channel,
+            "sender_id": resolved.sender_id,
+            "tenant_id": resolved.tenant_id,
+            "identity_id": resolved.identity_id,
+            "roles": list(resolved.roles),
+            "approval_authority": resolved.approval_authority,
+            "policy_version": resolved.policy_version,
+            "created_at": resolved.created_at,
+            "active_mappings": tenant_identity_store.count(),
             "governed": True,
         }
 
