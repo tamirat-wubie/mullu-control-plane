@@ -32,6 +32,7 @@ import urllib.request
 
 DEFAULT_OUTPUT_PATH = Path(".change_assurance") / "deployment_witness.json"
 DEFAULT_GATEWAY_URL = "http://localhost:8001"
+LIVE_EVIDENCE_HTTP_TIMEOUT_SECONDS = 30
 REQUIRED_WITNESS_FIELDS = (
     "witness_id",
     "environment",
@@ -559,7 +560,7 @@ def _get_json(url: str) -> tuple[int, dict[str, Any]]:
 
 def _get_json_with_digest(url: str) -> tuple[int, dict[str, Any], str]:
     try:
-        with urllib.request.urlopen(url, timeout=10) as response:
+        with urllib.request.urlopen(url, timeout=LIVE_EVIDENCE_HTTP_TIMEOUT_SECONDS) as response:
             raw = response.read()
             return response.status, _loads_json(raw), _response_digest(raw)
     except urllib.error.HTTPError as exc:
