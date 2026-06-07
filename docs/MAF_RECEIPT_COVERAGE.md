@@ -127,9 +127,9 @@ consumers that need per-action proof.
 
 ### Gateway entry-point coverage (G10.1 — closed)
 
-Gateway webhook, authority, capability-fabric, and capability-plan recovery endpoints are now certified by
+Gateway webhook, authority, capability-fabric, capability-plan recovery, and deployment-authority endpoints are now certified by
 `GatewayReceiptMiddleware` in `gateway/receipt_middleware.py`. Every
-POST to a `/webhook/*`, `/authority/*`, `/capability-fabric/*`, or `/capability-plans/*` path produces a receipt
+POST to a `/webhook/*`, `/authority/*`, `/capability-fabric/*`, `/capability-plans/*`, or `/deployment/*` path produces a receipt
 regardless of which handler runs:
 
 | Endpoint | Receipt status |
@@ -145,6 +145,7 @@ regardless of which handler runs:
 | `POST /authority/obligations/escalate-overdue` | Certified (G10.1). |
 | `POST /capability-fabric/capsule-admissions` | Certified (capsule admission extension). |
 | `POST /capability-plans/{plan_id}/recover` | Certified (plan recovery extension). |
+| `POST /deployment/tenant-mappings` | Certified (deployment authority extension). |
 
 The middleware certifies the **boundary decision** (was this request
 admitted, denied, or did the handler error?), not the business

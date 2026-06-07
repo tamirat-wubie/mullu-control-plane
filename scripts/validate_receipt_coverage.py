@@ -86,6 +86,7 @@ GATEWAY_CERTIFIED_PREFIXES = (
     "/capability/",
     "/capability-fabric/",
     "/capability-plans/",
+    "/deployment/",
 )
 
 # Mirrors mcoi/mcoi_runtime/app/musia_receipt_middleware.py::_CERTIFIED_PREFIXES.
