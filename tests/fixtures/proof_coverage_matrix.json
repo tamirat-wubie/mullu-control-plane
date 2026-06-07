@@ -887,9 +887,9 @@
     "by_coverage_state": {
       "proven": 256,
       "unproven": 0,
-      "witnessed": 151
+      "witnessed": 152
     },
-    "route_count": 407,
+    "route_count": 408,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2655,6 +2655,11 @@
         "coverage_state": "witnessed",
         "route": "/authority/approval-chains",
         "surface_id": "gateway_approval_resolution"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/authority/approval-chains/close-expired",
+        "surface_id": "authority_operator_controls"
       },
       {
         "coverage_state": "witnessed",
@@ -5950,13 +5955,14 @@
         "tests/test_gateway/test_webhooks.py",
         "tests/test_gateway/test_authority_obligation_mesh.py"
       ],
-      "notes": "Authority operator controls bind guarded operator access, audit events, ownership and policy read models, overdue approval expiration, and obligation satisfaction/escalation controls.",
+      "notes": "Authority operator controls bind guarded operator access, audit events, ownership and policy read models, overdue approval expiration, expired approval closure, and obligation satisfaction/escalation controls.",
       "representative_paths": [
         "/authority/operator",
         "/authority/operator-audit",
         "/authority/ownership",
         "/authority/policies",
         "/authority/approval-chains/expire-overdue",
+        "/authority/approval-chains/close-expired",
         "/authority/obligations/{obligation_id}/satisfy",
         "/authority/obligations/escalate-overdue"
       ],
@@ -5964,7 +5970,12 @@
       "runtime_witness_anchor_aliases": {
         "approval_expiration_witness": [
           "expire_overdue_authority_approval_chains_records_transition",
+          "overdue_approval_chain_expires_when_command_ledger_lost_state",
           "overdue_approval_chain_expires_and_emits_escalation_event"
+        ],
+        "expired_approval_chain_closure_witness": [
+          "close_expired_authority_approval_chains_clears_debt",
+          "expired_approval_chain_closure_clears_active_debt"
         ],
         "obligation_satisfaction_escalation_witness": [
           "authority_obligation_and_escalation_read_models",
@@ -5991,6 +6002,7 @@
         "operator_audit_events",
         "ownership_policy_read_models",
         "approval_expiration_witness",
+        "expired_approval_chain_closure_witness",
         "obligation_satisfaction_escalation_witness"
       ],
       "surface_id": "authority_operator_controls"
@@ -9614,8 +9626,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1217,
-    "runtime_witness_count": 1217,
+    "exact_test_anchor_count": 1218,
+    "runtime_witness_count": 1218,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -13359,9 +13371,17 @@
           {
             "anchors": [
               "tests/test_gateway/test_webhooks.py::test_expire_overdue_authority_approval_chains_records_transition",
+              "tests/test_gateway/test_authority_obligation_mesh.py::test_overdue_approval_chain_expires_when_command_ledger_lost_state",
               "tests/test_gateway/test_authority_obligation_mesh.py::test_overdue_approval_chain_expires_and_emits_escalation_event"
             ],
             "witness": "approval_expiration_witness"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_close_expired_authority_approval_chains_clears_debt",
+              "tests/test_gateway/test_authority_obligation_mesh.py::test_expired_approval_chain_closure_clears_active_debt"
+            ],
+            "witness": "expired_approval_chain_closure_witness"
           },
           {
             "anchors": [
@@ -13373,8 +13393,8 @@
             "witness": "obligation_satisfaction_escalation_witness"
           }
         ],
-        "exact_test_anchor_count": 5,
-        "runtime_witness_count": 5,
+        "exact_test_anchor_count": 6,
+        "runtime_witness_count": 6,
         "surface_id": "authority_operator_controls",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

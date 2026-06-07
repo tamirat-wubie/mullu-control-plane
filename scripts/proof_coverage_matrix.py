@@ -2877,6 +2877,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/authority/ownership",
                 "/authority/policies",
                 "/authority/approval-chains/expire-overdue",
+                "/authority/approval-chains/close-expired",
                 "/authority/obligations/{obligation_id}/satisfy",
                 "/authority/obligations/escalate-overdue",
             ],
@@ -2892,12 +2893,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_webhooks.py",
                 "tests/test_gateway/test_authority_obligation_mesh.py",
             ],
-            "Authority operator controls bind guarded operator access, audit events, ownership and policy read models, overdue approval expiration, and obligation satisfaction/escalation controls.",
+            "Authority operator controls bind guarded operator access, audit events, ownership and policy read models, overdue approval expiration, expired approval closure, and obligation satisfaction/escalation controls.",
             [
                 "operator_access_guard",
                 "operator_audit_events",
                 "ownership_policy_read_models",
                 "approval_expiration_witness",
+                "expired_approval_chain_closure_witness",
                 "obligation_satisfaction_escalation_witness",
             ],
             runtime_witness_anchor_aliases={
@@ -2916,7 +2918,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "approval_expiration_witness": [
                     "expire_overdue_authority_approval_chains_records_transition",
+                    "overdue_approval_chain_expires_when_command_ledger_lost_state",
                     "overdue_approval_chain_expires_and_emits_escalation_event",
+                ],
+                "expired_approval_chain_closure_witness": [
+                    "close_expired_authority_approval_chains_clears_debt",
+                    "expired_approval_chain_closure_clears_active_debt",
                 ],
                 "obligation_satisfaction_escalation_witness": [
                     "authority_obligation_and_escalation_read_models",
