@@ -3,15 +3,15 @@ Purpose: Public deployment-health witness for GitHub-visible state.
 Governance scope: runtime endpoint publication, health evidence, and closure
   obligations for production deployment reflection.
 Dependencies: STATUS.md, GITHUB_SURFACE.md, DEPLOYMENT.md, RUNBOOK.md.
-Invariants: Absence of live deployment evidence is explicit; no production health
-  claim is made without named endpoint evidence.
+Invariants: Live deployment evidence is named; no production health claim is made
+  without matching endpoint evidence.
 -->
 
 # Deployment Status Witness
 
-**Last audited:** 2026-05-28
-**Deployment witness state:** `not-published`
-**Public production health endpoint:** `not-declared`
+**Last audited:** 2026-06-07
+**Deployment witness state:** `published`
+**Public production health endpoint:** `https://mullu-gateway.onrender.com/health`
 **Gateway health endpoint:** `/health`
 **Gateway runtime witness endpoint:** `/gateway/witness`
 **Restricted capability worker health endpoint:** `/health`
@@ -88,7 +88,7 @@ Invariants: Absence of live deployment evidence is explicit; no production healt
 | General-agent promotion validator | `scripts/validate_general_agent_promotion.py --strict` blocks production general-agent claims until governed capability records, real browser/document/voice adapters, sandbox runner evidence, MCP import governance, deployment witness publication, and public health evidence all pass | Reflected |
 | Governed runtime promotion validator | `scripts/validate_governed_runtime_promotion.py --strict` provides the domain-neutral terminal validator while preserving the existing promotion readiness evidence contract | Reflected |
 | Governed swarm extension-health pilot gate | `scripts/collect_governed_swarm_staging_activation_witness.py` now probes `/api/v1/health/extensions`; staging evidence bundles and pilot promotion readiness require the governed swarm extension to be registered, enabled, mounted, and audit-store-configured without exposing raw filesystem paths | Reflected |
-| Public production health | No governed production endpoint is declared in this repository | Not reflected |
+| Public production health | `https://mullu-gateway.onrender.com/health` is declared from the published deployment witness collected on 2026-06-07 | Reflected |
 | Deployment badge | No GitHub-visible deployment badge is declared | Not reflected |
 
 ## GitHub Runtime Input State

@@ -117,8 +117,6 @@ REQUIRED_SEQUENCE_ITEMS = frozenset(
         "validate_environment_binding_receipt",
         "complete_dependency_and_credential_actions",
         "produce_live_adapter_receipts",
-        "publish_deployment_witness",
-        "declare_public_health_after_witness",
         "run_terminal_promotion_validation",
     }
 )

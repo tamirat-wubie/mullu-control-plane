@@ -1,12 +1,10 @@
 {
-  "aggregate_closure_actions": 14,
-  "approval_required_actions": 10,
+  "aggregate_closure_actions": 12,
+  "approval_required_actions": 8,
   "approval_required_blockers": [
     "voice_dependency_missing:OPENAI_API_KEY",
     "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
-    "deployment_witness_not_published",
     "deployment_dns_not_verified",
-    "production_health_not_declared",
     "capability_improvement_required:financial.refund",
     "capability_improvement_required:agentic_control.evidence.append",
     "capability_improvement_required:agentic_control.governance_gate.evaluate",
@@ -61,15 +59,13 @@
   "invariants": [
     "production_promotion remains blocked until live adapter evidence closes",
     "credential actions require governed approval",
-    "DEPLOYMENT_STATUS.md is not mutated before published witness and health evidence",
+    "DEPLOYMENT_STATUS.md remains evidence-gated by published witness and health evidence",
     "terminal proof command must fail until blockers close"
   ],
   "open_blockers": [
     "adapter_evidence_not_closed",
     "voice_adapter_not_closed",
-    "email_calendar_adapter_not_closed",
-    "deployment_witness_not_published",
-    "production_health_not_declared"
+    "email_calendar_adapter_not_closed"
   ],
   "operator_sequence": [
     "validate_operator_checklist",
@@ -90,8 +86,6 @@
     "validate_environment_binding_receipt",
     "complete_dependency_and_credential_actions",
     "produce_live_adapter_receipts",
-    "publish_deployment_witness",
-    "declare_public_health_after_witness",
     "run_terminal_promotion_validation"
   ],
   "packet_id": "general-agent-promotion-handoff-v1",

@@ -43,8 +43,8 @@ def test_current_repo_blocks_full_general_agent_claim() -> None:
     assert "voice_adapter_not_closed" in readiness.blockers
     assert "email_calendar_adapter_not_closed" in readiness.blockers
     assert "adapter_evidence_not_closed" in readiness.blockers
-    assert "deployment_witness_not_published" in readiness.blockers
-    assert "production_health_not_declared" in readiness.blockers
+    assert "deployment_witness_not_published" not in readiness.blockers
+    assert "production_health_not_declared" not in readiness.blockers
 
 
 def test_governed_record_surface_check_passes_before_adapter_closure() -> None:
@@ -137,15 +137,18 @@ def test_promotion_rejects_nonfinite_adapter_evidence_json(tmp_path: Path) -> No
 def test_deployment_publication_checks_accept_published_witness(tmp_path: Path) -> None:
     deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
     deployment_witness = tmp_path / "deployment_witness.json"
+    declaration_receipt = tmp_path / "public_production_health_declaration.json"
     deployment_status.write_text(
         _deployment_status("published", "https://gateway.example/health"),
         encoding="utf-8",
     )
     deployment_witness.write_text(json.dumps(_published_witness()), encoding="utf-8")
+    declaration_receipt.write_text(json.dumps(_declaration_receipt()), encoding="utf-8")
 
     checks = evaluate_deployment_publication(
         deployment_status_path=deployment_status,
         deployment_witness_path=deployment_witness,
+        declaration_receipt_path=declaration_receipt,
     )
     witness_check = checks[0]
     runtime_debt_check = checks[1]
@@ -257,7 +260,7 @@ def test_write_general_agent_promotion_readiness_persists_report(tmp_path: Path)
     assert payload["ready"] is False
     assert payload["readiness_level"] == "pilot-governed-core"
     assert payload["capability_count"] == readiness.capability_count
-    assert "deployment_witness_not_published" in payload["blockers"]
+    assert "deployment_witness_not_published" not in payload["blockers"]
 
 
 def test_cli_output_writes_readiness_artifact(tmp_path: Path, capsys) -> None:
@@ -278,7 +281,7 @@ def test_cli_output_writes_readiness_artifact(tmp_path: Path, capsys) -> None:
     assert "promotion_readiness_written:" in captured.out
     assert payload["ready"] is False
     assert payload["capability_count"] >= 52
-    assert "production_health_not_declared" in payload["blockers"]
+    assert "production_health_not_declared" not in payload["blockers"]
 
 
 def _deployment_status(state: str, public_health_endpoint: str) -> str:
@@ -296,6 +299,7 @@ def _deployment_status(state: str, public_health_endpoint: str) -> str:
 def _published_witness() -> dict[str, object]:
     return {
         "witness_id": "deployment-witness-0123456789abcdef",
+        "collected_at": "2026-05-15T00:00:00+00:00",
         "gateway_url": "https://gateway.example",
         "public_health_endpoint": "https://gateway.example/health",
         "health_http_status": 200,
@@ -327,5 +331,18 @@ def _published_witness() -> dict[str, object]:
             {"name": "gateway runtime witness", "passed": True, "detail": "ok"},
             {"name": "runtime conformance signature", "passed": True, "detail": "ok"},
         ],
+        "errors": [],
+    }
+
+
+def _declaration_receipt() -> dict[str, object]:
+    return {
+        "deployment_status_path": "provided_deployment_status",
+        "witness_path": "provided_witness",
+        "dry_run": False,
+        "updated": True,
+        "deployment_witness_state": "published",
+        "public_health_endpoint": "https://gateway.example/health",
+        "operator_approval_ref": "approval://deployment/publication/001",
         "errors": [],
     }

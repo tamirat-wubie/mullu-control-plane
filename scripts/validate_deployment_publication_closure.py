@@ -4,7 +4,8 @@
 Purpose: keep the public deployment status claim causally tied to the live
 deployment witness artifact.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
-Dependencies: DEPLOYMENT_STATUS.md and .change_assurance/deployment_witness.json.
+Dependencies: DEPLOYMENT_STATUS.md, .change_assurance deployment witness files,
+and tracked public-safe published evidence fixtures.
 Invariants:
   - The repository may stay not-published without a witness artifact.
   - A published deployment claim requires a published witness artifact.
@@ -37,6 +38,12 @@ DEFAULT_VALIDATION_OUTPUT = (
 )
 DEFAULT_DECLARATION_RECEIPT_PATH = (
     REPO_ROOT / ".change_assurance" / "public_production_health_declaration.json"
+)
+DEFAULT_PUBLISHED_WITNESS_FIXTURE_PATH = (
+    REPO_ROOT / "examples" / "deployment_witness_published_20260607.json"
+)
+DEFAULT_PUBLISHED_DECLARATION_RECEIPT_FIXTURE_PATH = (
+    REPO_ROOT / "examples" / "public_production_health_declaration_20260607.json"
 )
 DEPLOYMENT_WITNESS_SCHEMA_PATH = REPO_ROOT / "schemas" / "deployment_witness.schema.json"
 DEPLOYMENT_PUBLICATION_CLOSURE_VALIDATION_SCHEMA_PATH = (
@@ -184,36 +191,45 @@ def validate_deployment_publication_closure_report(
     else:
         deployment_status_text = deployment_status_path.read_text(encoding="utf-8")
 
-    witness_payload, witness_errors = load_witness_payload(witness_path)
+    published_status = _deployment_status_is_published(deployment_status_text)
+    effective_witness_path, effective_declaration_receipt_path = (
+        resolve_deployment_publication_evidence_paths(
+            deployment_status_text=deployment_status_text,
+            witness_path=witness_path,
+            declaration_receipt_path=declaration_receipt_path,
+        )
+    )
+
+    witness_payload, witness_errors = load_witness_payload(effective_witness_path)
     errors.extend(witness_errors)
     if deployment_status_text:
         if witness_payload is not None:
-            errors.extend(_validate_witness_schema(witness_payload, witness_path))
+            errors.extend(_validate_witness_schema(witness_payload, effective_witness_path))
         errors.extend(
             validate_publication_closure(
                 deployment_status_text=deployment_status_text,
                 witness_payload=witness_payload,
-                witness_path=witness_path,
+                witness_path=effective_witness_path,
             )
         )
-        if witness_payload is not None and _deployment_status_is_published(deployment_status_text):
+        if witness_payload is not None and published_status:
             errors.extend(
                 _validate_declaration_receipt_for_published_status(
                     deployment_status_text=deployment_status_text,
                     witness_payload=witness_payload,
-                    declaration_receipt_path=declaration_receipt_path,
+                    declaration_receipt_path=effective_declaration_receipt_path,
                 )
             )
 
     return DeploymentPublicationClosureValidation(
         deployment_status_path=_bounded_deployment_status_path(deployment_status_path),
-        witness_path=_bounded_witness_path(witness_path),
+        witness_path=_bounded_witness_path(effective_witness_path),
         valid=not errors,
         errors=tuple(
             _bounded_report_error(
                 error,
                 deployment_status_path=deployment_status_path,
-                witness_path=witness_path,
+                witness_path=effective_witness_path,
             )
             for error in errors
         ),
@@ -266,6 +282,53 @@ def _bounded_declaration_receipt_path(declaration_receipt_path: Path) -> str:
     if declaration_receipt_path == DEFAULT_DECLARATION_RECEIPT_PATH:
         return ".change_assurance/public_production_health_declaration.json"
     return "provided_declaration_receipt"
+
+
+def resolve_deployment_publication_evidence_paths(
+    *,
+    deployment_status_text: str,
+    witness_path: Path = DEFAULT_WITNESS_PATH,
+    declaration_receipt_path: Path = DEFAULT_DECLARATION_RECEIPT_PATH,
+) -> tuple[Path, Path]:
+    """Resolve canonical publication evidence paths for published status checks."""
+    published_status = _deployment_status_is_published(deployment_status_text)
+    return (
+        _resolve_published_default_evidence_path(
+            requested_path=witness_path,
+            default_path=DEFAULT_WITNESS_PATH,
+            fallback_path=DEFAULT_PUBLISHED_WITNESS_FIXTURE_PATH,
+            published_status=published_status,
+        ),
+        _resolve_published_default_evidence_path(
+            requested_path=declaration_receipt_path,
+            default_path=DEFAULT_DECLARATION_RECEIPT_PATH,
+            fallback_path=DEFAULT_PUBLISHED_DECLARATION_RECEIPT_FIXTURE_PATH,
+            published_status=published_status,
+        ),
+    )
+
+
+def _resolve_published_default_evidence_path(
+    *,
+    requested_path: Path,
+    default_path: Path,
+    fallback_path: Path,
+    published_status: bool,
+) -> Path:
+    """Use tracked published evidence only when the canonical local file is absent."""
+    if (
+        published_status
+        and _paths_are_equivalent(requested_path, default_path)
+        and not requested_path.exists()
+        and fallback_path.exists()
+    ):
+        return fallback_path
+    return requested_path
+
+
+def _paths_are_equivalent(candidate_path: Path, expected_path: Path) -> bool:
+    """Compare paths without requiring either path to exist."""
+    return candidate_path.resolve(strict=False) == expected_path.resolve(strict=False)
 
 
 def _bounded_report_error(

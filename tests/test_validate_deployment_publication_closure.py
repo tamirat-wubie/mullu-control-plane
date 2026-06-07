@@ -52,6 +52,7 @@ def test_closure_validation_report_matches_public_schema_for_not_published(
     validation = validate_deployment_publication_closure_report(
         deployment_status_path=deployment_status,
         witness_path=witness_path,
+        declaration_receipt_path=tmp_path / "missing_public_production_health_declaration.json",
     )
     write_deployment_publication_closure_validation_report(validation, output_path)
     schema = _load_schema(
@@ -110,6 +111,7 @@ def test_closure_validation_report_matches_public_schema_for_failed_closure(
     validation = validate_deployment_publication_closure_report(
         deployment_status_path=deployment_status,
         witness_path=witness_path,
+        declaration_receipt_path=tmp_path / "missing_public_production_health_declaration.json",
     )
     schema = _load_schema(
         Path("schemas/deployment_publication_closure_validation.schema.json")
@@ -137,6 +139,7 @@ def test_closure_validation_report_bounds_noncanonical_paths(
     validation = validate_deployment_publication_closure_report(
         deployment_status_path=deployment_status,
         witness_path=witness_path,
+        declaration_receipt_path=tmp_path / "missing_public_production_health_declaration.json",
     )
     serialized = str(validation.to_json_dict())
 
@@ -161,6 +164,7 @@ def test_closure_validation_report_bounds_witness_values(tmp_path: Path) -> None
     validation = validate_deployment_publication_closure_report(
         deployment_status_path=deployment_status,
         witness_path=witness_path,
+        declaration_receipt_path=tmp_path / "missing_public_production_health_declaration.json",
     )
     serialized = str(validation.to_json_dict())
 
@@ -296,6 +300,39 @@ def test_published_status_report_accepts_declaration_receipt(tmp_path: Path) -> 
     assert validation.valid is True
     assert validation.errors == ()
     assert validation.witness_path == "provided_witness"
+
+
+def test_published_status_report_uses_tracked_fixture_when_default_evidence_absent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
+    deployment_status.write_text(
+        _deployment_status("published", "https://mullu-gateway.onrender.com/health"),
+        encoding="utf-8",
+    )
+    absent_witness = tmp_path / ".change_assurance" / "deployment_witness.json"
+    absent_declaration_receipt = (
+        tmp_path / ".change_assurance" / "public_production_health_declaration.json"
+    )
+    monkeypatch.setattr(closure_validator, "DEFAULT_WITNESS_PATH", absent_witness)
+    monkeypatch.setattr(
+        closure_validator,
+        "DEFAULT_DECLARATION_RECEIPT_PATH",
+        absent_declaration_receipt,
+    )
+
+    validation = validate_deployment_publication_closure_report(
+        deployment_status_path=deployment_status,
+        witness_path=absent_witness,
+        declaration_receipt_path=absent_declaration_receipt,
+    )
+
+    assert validation.valid is True
+    assert validation.errors == ()
+    assert validation.witness_path == "provided_witness"
+    assert not absent_witness.exists()
+    assert not absent_declaration_receipt.exists()
 
 
 def test_published_status_report_rejects_dry_run_declaration_receipt(
