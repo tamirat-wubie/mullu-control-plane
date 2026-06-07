@@ -9,6 +9,8 @@ RUN mkdir -p /app/render-bin
 
 COPY mcoi/ ./mcoi/
 COPY gateway/ ./gateway/
+COPY capsules/ ./capsules/
+COPY capabilities/ ./capabilities/
 COPY skills/ ./skills/
 COPY installer/ ./installer/
 COPY scripts/ ./scripts/
