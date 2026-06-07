@@ -6274,6 +6274,9 @@
         "runtime_conformance_endpoint_returns_signed_gap_certificate",
         "runtime_witness_endpoints_match_public_schema",
         "runtime_conformance_certificate_matches_schema",
+        "isolation_canary_passes_locally_without_worker",
+        "isolation_canary_fails_closed_when_worker_unconfigured",
+        "isolation_canary_requires_live_isolated_worker_receipt",
         "collect_runtime_conformance_rejects_schema_invalid_certificate",
         "runtime_conformance_surfaces_unclassified_proof_routes",
         "collect_runtime_conformance_rejects_failed_core_canary",
@@ -9626,8 +9629,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1218,
-    "runtime_witness_count": 1218,
+    "exact_test_anchor_count": 1221,
+    "runtime_witness_count": 1221,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -14045,6 +14048,24 @@
           },
           {
             "anchors": [
+              "tests/test_gateway/test_conformance.py::test_isolation_canary_passes_locally_without_worker"
+            ],
+            "witness": "isolation_canary_passes_locally_without_worker"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_conformance.py::test_isolation_canary_fails_closed_when_worker_unconfigured"
+            ],
+            "witness": "isolation_canary_fails_closed_when_worker_unconfigured"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_conformance.py::test_isolation_canary_requires_live_isolated_worker_receipt"
+            ],
+            "witness": "isolation_canary_requires_live_isolated_worker_receipt"
+          },
+          {
+            "anchors": [
               "tests/test_collect_runtime_conformance.py::test_collect_runtime_conformance_rejects_schema_invalid_certificate"
             ],
             "witness": "collect_runtime_conformance_rejects_schema_invalid_certificate"
@@ -14134,8 +14155,8 @@
             "witness": "write_runtime_conformance_rejects_collection_schema_drift"
           }
         ],
-        "exact_test_anchor_count": 18,
-        "runtime_witness_count": 18,
+        "exact_test_anchor_count": 21,
+        "runtime_witness_count": 21,
         "surface_id": "runtime_conformance_attestation",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

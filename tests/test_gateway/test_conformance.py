@@ -36,6 +36,7 @@ from gateway.conformance import (  # noqa: E402
     _known_limitations_aligned,
     issue_conformance_certificate,
 )
+from gateway.capability_isolation import CapabilityExecutionReceipt  # noqa: E402
 from gateway.server import create_gateway_app  # noqa: E402
 from scripts.validate_schemas import _validate_schema_instance  # noqa: E402
 
@@ -119,6 +120,54 @@ def test_runtime_conformance_certificate_matches_schema(monkeypatch) -> None:
     assert errors == []
     assert payload["checks"]
     assert all(check["evidence_ref"] for check in payload["checks"])
+
+
+def test_isolation_canary_passes_locally_without_worker(monkeypatch) -> None:
+    monkeypatch.delenv("MULLU_CAPABILITY_WORKER_URL", raising=False)
+    monkeypatch.delenv("MULLU_CAPABILITY_WORKER_SECRET", raising=False)
+
+    result = conformance._isolation_canary("test")
+
+    assert result.passed is True
+    assert "local/test" in result.detail
+    assert "restricted worker" in result.detail
+
+
+def test_isolation_canary_fails_closed_when_worker_unconfigured(monkeypatch) -> None:
+    monkeypatch.delenv("MULLU_CAPABILITY_WORKER_URL", raising=False)
+    monkeypatch.delenv("MULLU_CAPABILITY_WORKER_SECRET", raising=False)
+
+    result = conformance._isolation_canary("pilot")
+
+    assert result.passed is False
+    assert "URL" in result.detail
+    assert "signing secret" in result.detail
+
+
+def test_isolation_canary_requires_live_isolated_worker_receipt(monkeypatch) -> None:
+    class StubExecutor:
+        def execute(self, *, intent, tenant_id, identity_id, boundary, command_id="", conversation_id="", metadata=None):
+            receipt = CapabilityExecutionReceipt(
+                receipt_id="capability-receipt-live-canary",
+                capability_id=boundary.capability_id,
+                execution_plane=boundary.execution_plane,
+                isolation_required=boundary.isolation_required,
+                worker_id="restricted-worker-live-canary",
+                input_hash="input-hash-live-canary",
+                output_hash="output-hash-live-canary",
+                evidence_refs=("restricted_worker:live_canary",),
+            )
+            return {"status": "succeeded", "governed": True}, receipt
+
+    monkeypatch.setenv("MULLU_CAPABILITY_WORKER_URL", "https://worker.example/capability/execute")
+    monkeypatch.setenv("MULLU_CAPABILITY_WORKER_SECRET", "worker-secret")
+    monkeypatch.setattr(conformance, "build_isolated_capability_executor_from_env", lambda: StubExecutor())
+
+    result = conformance._isolation_canary("pilot")
+
+    assert result.passed is True
+    assert "isolated_worker receipt" in result.detail
+    assert "restricted-worker-live-canary" in result.detail
 
 
 def test_runtime_conformance_surfaces_unclassified_proof_routes(tmp_path, monkeypatch) -> None:
