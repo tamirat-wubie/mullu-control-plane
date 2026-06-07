@@ -10,6 +10,10 @@ COPY gateway/ ./gateway/
 COPY skills/ ./skills/
 COPY installer/ ./installer/
 COPY scripts/ ./scripts/
+COPY schemas/ ./schemas/
+COPY docs/ ./docs/
+COPY tests/fixtures/ ./tests/fixtures/
+COPY DEPLOYMENT_STATUS.md KNOWN_LIMITATIONS_v0.1.md SECURITY_MODEL_v0.1.md ./
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/* && \
     if [ "$MULLU_INSTALL_WORKER_DEPS" = "true" ]; then \
