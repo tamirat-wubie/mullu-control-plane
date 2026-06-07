@@ -172,6 +172,67 @@ def test_runtime_conformance_accepts_fully_classified_proof_routes(tmp_path, mon
     assert "proof_coverage_declared_routes_unclassified" not in payload["open_conformance_gaps"]
 
 
+def test_runtime_conformance_keeps_route_classification_independent_from_matrix_currency(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        conformance,
+        "_proof_coverage_status",
+        lambda _repo_root: ProofCoverageStatus(
+            matrix_current=False,
+            declared_route_count=12,
+            unclassified_route_count=0,
+        ),
+    )
+
+    certificate = _issue_test_conformance(repo_root=tmp_path)
+    payload = certificate.to_json_dict()
+    matrix_check = next(
+        check for check in payload["checks"]
+        if check["check_id"] == "proof_coverage_matrix_current"
+    )
+    route_check = next(
+        check for check in payload["checks"]
+        if check["check_id"] == "proof_coverage_declared_routes_classified"
+    )
+
+    assert payload["proof_coverage_matrix_current"] is False
+    assert payload["proof_coverage_declared_routes_classified"] is True
+    assert matrix_check["passed"] is False
+    assert route_check["passed"] is True
+    assert "proof_coverage_matrix_not_current" in payload["open_conformance_gaps"]
+    assert "proof_coverage_declared_routes_unclassified" not in payload["open_conformance_gaps"]
+
+
+def test_runtime_conformance_fails_route_classification_without_route_evidence(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        conformance,
+        "_proof_coverage_status",
+        lambda _repo_root: ProofCoverageStatus(
+            matrix_current=False,
+            declared_route_count=0,
+            unclassified_route_count=0,
+        ),
+    )
+
+    certificate = _issue_test_conformance(repo_root=tmp_path)
+    payload = certificate.to_json_dict()
+    route_check = next(
+        check for check in payload["checks"]
+        if check["check_id"] == "proof_coverage_declared_routes_classified"
+    )
+
+    assert payload["proof_coverage_declared_route_count"] == 0
+    assert payload["proof_coverage_unclassified_route_count"] == 0
+    assert payload["proof_coverage_declared_routes_classified"] is False
+    assert route_check["passed"] is False
+    assert "proof_coverage_declared_routes_unclassified" in payload["open_conformance_gaps"]
+
+
 def test_runtime_conformance_certificate_schema_gate_fails_closed(tmp_path, monkeypatch) -> None:
     def reject_schema(_schema, _payload):
         return ["$.signature: forced schema failure"]

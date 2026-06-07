@@ -89,7 +89,7 @@ class ProofCoverageStatus:
     @property
     def declared_routes_classified(self) -> bool:
         """Return whether every proof-relevant declared route is classified."""
-        return self.matrix_current and self.unclassified_route_count == 0
+        return self.declared_route_count > 0 and self.unclassified_route_count == 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -759,7 +759,7 @@ def _proof_coverage_status(repo_root: Path) -> ProofCoverageStatus:
         generated = proof_coverage_matrix()
     except (ImportError, json.JSONDecodeError, OSError):
         return ProofCoverageStatus(matrix_current=False, declared_route_count=0, unclassified_route_count=0)
-    route_coverage = canonical.get("route_coverage", {}) if isinstance(canonical, dict) else {}
+    route_coverage = generated.get("route_coverage", {}) if isinstance(generated, dict) else {}
     return ProofCoverageStatus(
         matrix_current=canonical == generated,
         declared_route_count=_int_count(route_coverage, "route_count"),
