@@ -1,0 +1,52 @@
+{
+  "approval_policies": [
+    {
+      "capability": "enterprise.knowledge_search",
+      "escalation_policy_id": "render-pilot-escalation",
+      "policy_id": "render-pilot-knowledge-search",
+      "required_approver_count": 1,
+      "required_roles": [
+        "operator"
+      ],
+      "risk_tier": "medium",
+      "separation_of_duty": false,
+      "timeout_seconds": 3600
+    }
+  ],
+  "batch_id": "directory-batch-render-pilot-20260607",
+  "escalation_policies": [
+    {
+      "escalate_after_seconds": 7200,
+      "escalation_team": "render-pilot-ops",
+      "fallback_owner_id": "identity-render-pilot-canary",
+      "incident_after_seconds": 14400,
+      "notify_after_seconds": 1800,
+      "policy_id": "render-pilot-escalation"
+    }
+  ],
+  "ownership_bindings": [
+    {
+      "escalation_team": "render-pilot-ops",
+      "fallback_owner_id": "identity-render-pilot-canary",
+      "owner_team": "render-pilot-ops",
+      "primary_owner_id": "identity-render-pilot-canary",
+      "resource_ref": "enterprise.knowledge_search"
+    }
+  ],
+  "people": [
+    {
+      "identity_id": "identity-render-pilot-canary",
+      "roles": [
+        "operator"
+      ]
+    }
+  ],
+  "source_ref": "examples/authority_directory_sync_render_pilot.json",
+  "source_system": "static_render_pilot",
+  "teams": [
+    {
+      "team_id": "render-pilot-ops"
+    }
+  ],
+  "tenant_id": "tenant-render-pilot-canary"
+}
