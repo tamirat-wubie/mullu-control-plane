@@ -140,6 +140,14 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_learning_path_boundary.py"),
         ),
         CheckCommand(
+            "foundation_learning_loop_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_learning_loop_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_concept_glossary_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_concept_glossary_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_architecture_map_boundary",
             (python_executable, "scripts/validate_foundation_architecture_map_boundary.py"),
         ),
@@ -387,6 +395,18 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         CheckCommand(
             "foundation_legal_business_question_rehearsal_boundary",
             (python_executable, "scripts/validate_foundation_legal_business_question_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_legal_review_deferral_boundary",
+            (python_executable, "scripts/validate_foundation_legal_review_deferral_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_company_formation_deferral_boundary",
+            (python_executable, "scripts/validate_foundation_company_formation_deferral_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_patent_disclosure_deferral_boundary",
+            (python_executable, "scripts/validate_foundation_patent_disclosure_deferral_boundary.py"),
         ),
         CheckCommand(
             "foundation_product_scope_boundary",

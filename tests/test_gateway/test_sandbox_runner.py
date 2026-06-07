@@ -131,6 +131,18 @@ def test_workspace_snapshot_records_symlink_without_reading_target(tmp_path: Pat
     ).hexdigest()
 
 
+def test_workspace_snapshot_marks_oversized_file_without_reading_content(tmp_path: Path) -> None:
+    oversized = tmp_path / "large.bin"
+    with oversized.open("wb") as handle:
+        handle.truncate((10 * 1024 * 1024) + 1)
+
+    snapshot = _workspace_snapshot(tmp_path)
+
+    assert "large.bin" in snapshot
+    assert snapshot["large.bin"].startswith("file:too_large:")
+    assert "unreadable" not in snapshot["large.bin"]
+
+
 def test_sandbox_runner_blocks_on_non_linux_without_launch(tmp_path: Path) -> None:
     launched = False
 
@@ -248,6 +260,16 @@ def test_sandbox_runner_rejects_profile_that_keeps_capabilities() -> None:
 def test_sandbox_runner_rejects_seccomp_profile_with_control_characters() -> None:
     with pytest.raises(ValueError, match="^seccomp_profile contains forbidden characters$"):
         SandboxRunnerProfile(seccomp_profile="/etc/seccomp\nmalicious.json")
+
+
+def test_sandbox_runner_rejects_seccomp_profile_that_disables_seccomp() -> None:
+    with pytest.raises(ValueError, match="^seccomp_profile cannot disable seccomp$"):
+        SandboxRunnerProfile(seccomp_profile="unconfined")
+
+
+def test_sandbox_runner_rejects_seccomp_profile_with_option_delimiter() -> None:
+    with pytest.raises(ValueError, match="^seccomp_profile contains forbidden characters$"):
+        SandboxRunnerProfile(seccomp_profile="/profiles/strict.json,seccomp=unconfined")
 
 
 def test_sandbox_runner_applies_pinned_seccomp_profile(tmp_path: Path) -> None:

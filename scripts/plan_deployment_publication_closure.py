@@ -251,8 +251,11 @@ def _action_for(blocker: str) -> DeploymentClosureAction:
             blocker=blocker,
             action_type="upstream-gate-closure",
             command=(
+                "Collect the upstream API production readiness JSON into "
+                "UPSTREAM_API_READINESS_REPORT, then run "
                 "python scripts/emit_deployment_upstream_blocker_receipt.py "
                 "--target-gateway-url \"$MULLU_GATEWAY_URL\" "
+                "--upstream-readiness-report \"$UPSTREAM_API_READINESS_REPORT\" "
                 "--output .change_assurance/deployment_upstream_blocker_receipt.json && "
                 "python scripts/validate_deployment_upstream_blocker_receipt.py "
                 "--receipt .change_assurance/deployment_upstream_blocker_receipt.json "
@@ -260,6 +263,7 @@ def _action_for(blocker: str) -> DeploymentClosureAction:
                 "--require-ready"
             ),
             evidence_required=(
+                "upstream_api_production_readiness_report",
                 "deployment_upstream_blocker_receipt",
                 "deployment_upstream_blocker_validation",
                 "upstream_recovery_completion_witness",

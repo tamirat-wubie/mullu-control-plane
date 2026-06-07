@@ -40,6 +40,145 @@ def _bounded_bundle_read_error(exc: Exception) -> str:
     return f"cannot read bundle ({type(exc).__name__})"
 
 
+def _invalid_manifest(message: str, *, manifest_id: str | None = None) -> ImportValidationResult:
+    return ImportValidationResult(
+        status=ImportStatus.INVALID_MANIFEST,
+        manifest_id=manifest_id,
+        error_message=message,
+    )
+
+
+def _required_non_negative_int(value: object, field_name: str) -> int | None:
+    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+        return None
+    return value
+
+
+def _required_non_empty_string(value: object) -> str | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    return value
+
+
+def _required_artifact_type(value: object) -> ArtifactType | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        return ArtifactType(value)
+    except ValueError:
+        return None
+
+
+def _artifact_data_from_bundle(raw: object) -> Mapping[str, Any] | None:
+    if not isinstance(raw, dict):
+        return None
+    artifacts = raw.get("artifacts")
+    if not isinstance(artifacts, dict):
+        return None
+    loaded: dict[str, Any] = {}
+    for artifact_id, entry in artifacts.items():
+        if not isinstance(artifact_id, str) or not artifact_id.strip():
+            return None
+        if not isinstance(entry, dict) or "data" not in entry:
+            return None
+        loaded[artifact_id] = entry["data"]
+    return loaded
+
+
+def _validate_bundle_raw(raw: object) -> ImportValidationResult:
+    if not isinstance(raw, dict) or "manifest" not in raw or "artifacts" not in raw:
+        return _invalid_manifest("bundle missing manifest or artifacts section")
+
+    manifest = raw["manifest"]
+    artifacts = raw["artifacts"]
+    if not isinstance(manifest, dict):
+        return _invalid_manifest("bundle manifest must be an object")
+    if not isinstance(artifacts, dict):
+        return _invalid_manifest("bundle artifacts must be an object")
+
+    manifest_id = manifest.get("manifest_id") if isinstance(manifest.get("manifest_id"), str) else None
+    expected_count = _required_non_negative_int(manifest.get("artifact_count"), "artifact_count")
+    if expected_count is None:
+        return _invalid_manifest("bundle artifact_count must be a non-negative integer", manifest_id=manifest_id)
+    declared_artifacts = manifest.get("artifacts", [])
+    if not isinstance(declared_artifacts, list):
+        return _invalid_manifest("bundle artifacts manifest must be an array", manifest_id=manifest_id)
+    if expected_count != len(declared_artifacts):
+        return _invalid_manifest("bundle artifact_count does not match manifest entries", manifest_id=manifest_id)
+    if expected_count != len(artifacts):
+        return _invalid_manifest("bundle artifact_count does not match artifact entries", manifest_id=manifest_id)
+
+    bundle_version = manifest.get("platform_version", "")
+    if bundle_version != PLATFORM_VERSION:
+        return ImportValidationResult(
+            status=ImportStatus.VERSION_MISMATCH,
+            manifest_id=manifest_id,
+            expected_count=expected_count,
+            found_count=len(artifacts),
+            error_message=f"version mismatch: bundle={bundle_version}, platform={PLATFORM_VERSION}",
+        )
+
+    missing: list[str] = []
+    integrity_failures: list[str] = []
+    seen_artifact_ids: set[str] = set()
+
+    for ref in declared_artifacts:
+        if not isinstance(ref, dict):
+            return _invalid_manifest("bundle artifact manifest entries must be objects", manifest_id=manifest_id)
+        aid = _required_non_empty_string(ref.get("artifact_id"))
+        expected_hash = _required_non_empty_string(ref.get("content_hash"))
+        expected_type = _required_artifact_type(ref.get("artifact_type"))
+        if aid is None or expected_hash is None or expected_type is None:
+            return _invalid_manifest("bundle artifact manifest entry is incomplete", manifest_id=manifest_id)
+        if aid in seen_artifact_ids:
+            return _invalid_manifest("bundle artifact manifest contains duplicate ids", manifest_id=manifest_id)
+        seen_artifact_ids.add(aid)
+        if aid not in artifacts:
+            missing.append(aid)
+            continue
+        entry = artifacts[aid]
+        if not isinstance(entry, dict) or "data" not in entry:
+            return _invalid_manifest("bundle artifact entry is malformed", manifest_id=manifest_id)
+        entry_type = _required_artifact_type(entry.get("type"))
+        if entry_type is None or entry_type is not expected_type:
+            return _invalid_manifest("bundle artifact entry type mismatch", manifest_id=manifest_id)
+        entry_hash = entry.get("content_hash")
+        if not isinstance(entry_hash, str) or not entry_hash.strip():
+            return _invalid_manifest("bundle artifact entry missing content_hash", manifest_id=manifest_id)
+        if entry_hash != expected_hash:
+            integrity_failures.append(aid)
+            continue
+        actual_data = json.dumps(entry["data"], sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+        actual_hash = _content_hash(actual_data)
+        if actual_hash != expected_hash:
+            integrity_failures.append(aid)
+
+    if missing:
+        return ImportValidationResult(
+            status=ImportStatus.MISSING_ARTIFACTS,
+            manifest_id=manifest_id,
+            expected_count=expected_count,
+            found_count=len(artifacts),
+            missing_ids=tuple(missing),
+        )
+
+    if integrity_failures:
+        return ImportValidationResult(
+            status=ImportStatus.INTEGRITY_FAILURE,
+            manifest_id=manifest_id,
+            expected_count=expected_count,
+            found_count=len(artifacts),
+            integrity_failures=tuple(integrity_failures),
+        )
+
+    return ImportValidationResult(
+        status=ImportStatus.VALID,
+        manifest_id=manifest_id,
+        expected_count=expected_count,
+        found_count=len(artifacts),
+    )
+
+
 class ExportEngine:
     """Exports platform artifacts to a JSON bundle with manifest."""
 
@@ -135,10 +274,16 @@ class ImportEngine:
 
     def validate_bundle(self, bundle_path: Path) -> ImportValidationResult:
         """Validate a bundle file without applying it."""
-        if not bundle_path.exists():
+        try:
+            if not bundle_path.exists():
+                return ImportValidationResult(
+                    status=ImportStatus.MISSING_ARTIFACTS,
+                    error_message="bundle file not found",
+                )
+        except OSError as exc:
             return ImportValidationResult(
-                status=ImportStatus.MISSING_ARTIFACTS,
-                error_message="bundle file not found",
+                status=ImportStatus.INVALID_MANIFEST,
+                error_message=_bounded_bundle_read_error(exc),
             )
 
         try:
@@ -149,79 +294,15 @@ class ImportEngine:
                 error_message=_bounded_bundle_read_error(exc),
             )
 
-        if not isinstance(raw, dict) or "manifest" not in raw or "artifacts" not in raw:
-            return ImportValidationResult(
-                status=ImportStatus.INVALID_MANIFEST,
-                error_message="bundle missing manifest or artifacts section",
-            )
-
-        manifest = raw["manifest"]
-        artifacts = raw["artifacts"]
-
-        manifest_id = manifest.get("manifest_id")
-        expected_count = manifest.get("artifact_count", 0)
-        declared_artifacts = manifest.get("artifacts", [])
-
-        # Check version
-        bundle_version = manifest.get("platform_version", "")
-        if bundle_version != PLATFORM_VERSION:
-            return ImportValidationResult(
-                status=ImportStatus.VERSION_MISMATCH,
-                manifest_id=manifest_id,
-                expected_count=expected_count,
-                found_count=len(artifacts),
-                error_message=f"version mismatch: bundle={bundle_version}, platform={PLATFORM_VERSION}",
-            )
-
-        # Check artifact presence and integrity
-        missing: list[str] = []
-        integrity_failures: list[str] = []
-
-        for ref in declared_artifacts:
-            aid = ref.get("artifact_id", "")
-            expected_hash = ref.get("content_hash", "")
-            if aid not in artifacts:
-                missing.append(aid)
-                continue
-            # Verify content hash
-            actual_data = json.dumps(artifacts[aid].get("data", {}), sort_keys=True, ensure_ascii=True, separators=(",", ":"))
-            actual_hash = _content_hash(actual_data)
-            if actual_hash != expected_hash:
-                integrity_failures.append(aid)
-
-        if missing:
-            return ImportValidationResult(
-                status=ImportStatus.MISSING_ARTIFACTS,
-                manifest_id=manifest_id,
-                expected_count=expected_count,
-                found_count=len(artifacts),
-                missing_ids=tuple(missing),
-            )
-
-        if integrity_failures:
-            return ImportValidationResult(
-                status=ImportStatus.INTEGRITY_FAILURE,
-                manifest_id=manifest_id,
-                expected_count=expected_count,
-                found_count=len(artifacts),
-                integrity_failures=tuple(integrity_failures),
-            )
-
-        return ImportValidationResult(
-            status=ImportStatus.VALID,
-            manifest_id=manifest_id,
-            expected_count=expected_count,
-            found_count=len(artifacts),
-        )
+        return _validate_bundle_raw(raw)
 
     def load_bundle(self, bundle_path: Path) -> Mapping[str, Any] | None:
         """Load a validated bundle's artifacts. Returns None if validation fails."""
-        validation = self.validate_bundle(bundle_path)
+        try:
+            raw = json.loads(bundle_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            return None
+        validation = _validate_bundle_raw(raw)
         if not validation.is_valid:
             return None
-
-        raw = json.loads(bundle_path.read_text(encoding="utf-8"))
-        return {
-            aid: entry["data"]
-            for aid, entry in raw["artifacts"].items()
-        }
+        return _artifact_data_from_bundle(raw)

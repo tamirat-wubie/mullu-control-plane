@@ -190,6 +190,28 @@ def test_protocol_manifest_indexes_deployment_publication_closure_plan() -> None
     assert plan_entry["surface"] == "deployment"
 
 
+def test_protocol_manifest_indexes_deployment_publication_evidence_packet() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    packet_entry = entries["deployment-publication-evidence-packet"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert packet_entry["path"] == "schemas/deployment_publication_evidence_packet.schema.json"
+    assert packet_entry["urn"] == "urn:mullusi:schema:deployment-publication-evidence-packet:1"
+    assert packet_entry["surface"] == "deployment"
+
+
+def test_protocol_manifest_indexes_deployment_publication_operator_input_request() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    request_entry = entries["deployment-publication-operator-input-request"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert request_entry["path"] == "schemas/deployment_publication_operator_input_request.schema.json"
+    assert request_entry["urn"] == "urn:mullusi:schema:deployment-publication-operator-input-request:1"
+    assert request_entry["surface"] == "deployment"
+
+
 def test_protocol_manifest_indexes_deployment_upstream_blocker_receipt() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

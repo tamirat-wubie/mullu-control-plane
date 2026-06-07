@@ -9,6 +9,8 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+import pytest
+
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
 from mcoi_runtime.contracts.execution import EffectRecord, ExecutionMode, ExecutionOutcome, ExecutionResult
 from mcoi_runtime.contracts.governed_capability_fabric import (
@@ -21,6 +23,7 @@ from mcoi_runtime.core.command_capability_admission import CommandCapabilityAdmi
 from mcoi_runtime.core.dispatcher import DispatchRequest, Dispatcher
 from mcoi_runtime.core.domain_capsule_compiler import DomainCapsuleCompiler
 from mcoi_runtime.core.effect_assurance import EffectAssuranceGate
+import mcoi_runtime.core.governed_dispatcher as governed_dispatcher_module
 from mcoi_runtime.core.governed_capability_registry import GovernedCapabilityRegistry
 from mcoi_runtime.core.governed_dispatcher import (
     GovernedDispatchContext,
@@ -748,3 +751,68 @@ def test_effect_assurance_rejects_missing_declared_filesystem_delta(tmp_path: Pa
         == "partial_match"
     )
     assert result.execution_result.metadata["filesystem_effect_observations"][0]["changed"] is False
+
+
+def test_filesystem_observation_marks_oversize_file_failed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target = tmp_path / "large.txt"
+    target.write_text("x" * 9, encoding="utf-8")
+    monkeypatch.setattr(governed_dispatcher_module, "_MAX_OBSERVED_FILE_BYTES", 8)
+
+    snapshot = governed_dispatcher_module._capture_filesystem_snapshot(str(target))
+
+    assert snapshot.exists is True
+    assert snapshot.is_file is True
+    assert snapshot.size_bytes == 9
+    assert snapshot.content_hash is None
+    assert snapshot.error_code == "filesystem_observation_too_large"
+
+
+def test_effect_assurance_records_oversize_filesystem_observation_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target = tmp_path / "large.txt"
+    target.write_text("x" * 9, encoding="utf-8")
+    monkeypatch.setattr(governed_dispatcher_module, "_MAX_OBSERVED_FILE_BYTES", 8)
+    executor = FakeExecutor()
+    dispatcher = Dispatcher(
+        template_validator=TemplateValidator(),
+        executors={"shell_command": executor},
+        clock=fixed_clock,
+    )
+    governed = GovernedDispatcher(
+        dispatcher,
+        effect_assurance=EffectAssuranceGate(clock=fixed_clock, graph=OperationalGraph(clock=fixed_clock)),
+        clock=fixed_clock,
+    )
+    request = DispatchRequest(
+        goal_id="goal-file-observation-too-large",
+        route="shell_command",
+        template={
+            "template_id": "tpl-file-effect-large",
+            "action_type": "shell_command",
+            "command_argv": ("echo", "no-change"),
+            "effect_observation_paths": ("{target}",),
+        },
+        bindings={"target": str(target)},
+    )
+
+    result = governed.governed_dispatch(
+        GovernedDispatchContext(
+            actor_id="actor-file",
+            intent_id="intent-file-observation-too-large",
+            request=request,
+        )
+    )
+
+    assert result.execution_result is not None
+    assert result.execution_result.status is ExecutionOutcome.FAILED
+    effect_names = tuple(effect.name for effect in result.execution_result.actual_effects)
+    assert "effect_reconciliation_mismatch" in effect_names
+    observations = result.execution_result.metadata["filesystem_effect_observations"]
+    assert observations[0]["before"]["error_code"] == "filesystem_observation_too_large"
+    assert observations[0]["after"]["error_code"] == "filesystem_observation_too_large"
+    assert observations[0]["before"]["content_hash"] is None

@@ -54,6 +54,20 @@ readiness, training completion, certification, paid-course activation, mentor
 assignment, hiring readiness, delegation readiness, public tutorial
 publication, curriculum completion, production operation readiness,
 customer-support readiness, external account use, or deployment readiness.
+Learning-loop rehearsal is bounded by
+[`docs/FOUNDATION_LEARNING_LOOP_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_LEARNING_LOOP_REHEARSAL_BOUNDARY.md),
+which keeps one atomic local practice loop public-safe without claiming skill
+readiness, training completion, certification, paid-course activation, mentor
+assignment, hiring readiness, delegation readiness, support readiness,
+publication, external-account use, private schedule recording, private health
+recording, spending, legal/business action, source-control publication, or
+deployment readiness.
+Concept-glossary rehearsal is bounded by
+[`docs/FOUNDATION_CONCEPT_GLOSSARY_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_CONCEPT_GLOSSARY_REHEARSAL_BOUNDARY.md),
+which keeps one local vocabulary clarification from becoming a canonical
+definition, mastery proof, documentation-completeness claim, publication,
+source-control publication, legal/business action, spending, customer access,
+or deployment readiness.
 Community/network preparation is bounded by
 [`docs/FOUNDATION_COMMUNITY_NETWORK_BOUNDARY.md`](docs/FOUNDATION_COMMUNITY_NETWORK_BOUNDARY.md),
 which drafts local community, forum, social, collaborator, partner, mentor,
@@ -547,6 +561,24 @@ deploying;
 for legal/business question drafting without legal conclusions, review
 completion, filings, company formation, customer access, paid launch, money
 movement, publication, or deployment;
+[`docs/FOUNDATION_LEGAL_REVIEW_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_LEGAL_REVIEW_DEFERRAL_BOUNDARY.md)
+for legal-review stop-rule labels without review completion, reviewer identity
+recording, legal conclusions, legal clearance, trademark clearance, patent
+protection, formation, tax readiness, terms/privacy approval, compliance
+clearance, contractors, payments, customer access, personal data, money
+movement, publication, or deployment;
+[`docs/FOUNDATION_COMPANY_FORMATION_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_COMPANY_FORMATION_DEFERRAL_BOUNDARY.md)
+for company-formation stop-rule labels without entity registration, names,
+identifiers, tax records, registered-agent records, business-address records,
+bank or processor accounts, payroll, contractor or investor agreements,
+ownership/equity allocation, accounting, insurance, money movement, customer
+access, publication, or deployment;
+[`docs/FOUNDATION_PATENT_DISCLOSURE_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_PATENT_DISCLOSURE_DEFERRAL_BOUNDARY.md)
+for patent/disclosure stop-rule labels without patent filing, patent
+protection, invention finality, authorship finality, ownership finality,
+prior-art conclusions, novelty, patentability, disclosure approval,
+publication, secrecy protection, legal clearance, company formation, paid
+launch, money movement, customer access, or deployment;
 [`docs/FOUNDATION_FUNDING_TEAM_OBLIGATION_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_FUNDING_TEAM_OBLIGATION_REHEARSAL_BOUNDARY.md)
 for obligation mapping without fundraising, investor outreach, grants, hiring,
 contractors, advisors, compensation, equity, payroll, budgets, contact lists,
@@ -595,7 +627,23 @@ Legal and business uncertainty is bounded by
 [`docs/FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md`](docs/FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md),
 which keeps legal, company, patent, tax, terms, compliance, payment, and launch
 questions in `AwaitingEvidence` until qualified review or signed witness
-evidence exists.
+evidence exists. Legal-review deferral is bounded by
+[`docs/FOUNDATION_LEGAL_REVIEW_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_LEGAL_REVIEW_DEFERRAL_BOUNDARY.md),
+which keeps review completion, reviewer identity recording, conclusions,
+clearance, filings, formation, payment, customer access, publication, and
+deployment blocked until future evidence exists. Company-formation deferral is
+bounded by
+[`docs/FOUNDATION_COMPANY_FORMATION_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_COMPANY_FORMATION_DEFERRAL_BOUNDARY.md),
+which keeps entity registration, identifiers, tax records, banking, payment
+processors, payroll, contracts, ownership/equity allocation, money movement,
+customer access, publication, and deployment blocked.
+Patent/disclosure deferral is bounded by
+[`docs/FOUNDATION_PATENT_DISCLOSURE_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_PATENT_DISCLOSURE_DEFERRAL_BOUNDARY.md),
+which keeps patent filing, patent protection, invention finality, authorship
+finality, ownership finality, prior-art conclusions, novelty, patentability,
+disclosure approval, publication, secrecy protection, legal clearance, company
+formation, paid launch, money movement, customer access, and deployment
+blocked.
 Funding and team preparation is bounded by
 [`docs/FOUNDATION_FUNDING_TEAM_BOUNDARY.md`](docs/FOUNDATION_FUNDING_TEAM_BOUNDARY.md),
 which drafts funding-readiness, investor-boundary, grant, pitch, hiring,

@@ -14,8 +14,9 @@ from typing import Callable
 import hashlib
 import json
 import os
+import re
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from mcoi_runtime.contracts.communication import (
     CommunicationMessage,
@@ -28,6 +29,28 @@ from mcoi_runtime.core.invariants import stable_identifier
 
 def _sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
+
+
+_SAFE_MESSAGE_ID_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+
+
+def _safe_message_filename(message_id: str) -> str | None:
+    """Return a flat JSON filename for message_id, or None if it is unsafe."""
+    if "\0" in message_id or not _SAFE_MESSAGE_ID_PATTERN.fullmatch(message_id):
+        return None
+    posix_path = PurePosixPath(message_id)
+    windows_path = PureWindowsPath(message_id)
+    if (
+        posix_path.is_absolute()
+        or windows_path.is_absolute()
+        or windows_path.drive
+        or len(posix_path.parts) != 1
+        or len(windows_path.parts) != 1
+        or posix_path.name != message_id
+        or windows_path.name != message_id
+    ):
+        return None
+    return f"{message_id}.json"
 
 
 def _build_file_write_receipt(
@@ -79,12 +102,21 @@ class FileCommunicationAdapter:
         })
 
         self._outbox.mkdir(parents=True, exist_ok=True)
-        file_path = self._outbox / f"{message.message_id}.json"
+        safe_filename = _safe_message_filename(message.message_id)
 
-        # message_id is only validated as non-empty text, so a value containing
-        # path separators ("../") or an absolute path would steer the write
-        # outside the outbox (arbitrary file write). Fail closed when the
-        # resolved destination escapes the outbox directory.
+        # message_id is only validated as non-empty text. File-backed delivery
+        # treats it as a filename, so require a single safe path component before
+        # building the destination path.
+        if safe_filename is None:
+            return DeliveryResult(
+                delivery_id=delivery_id,
+                message_id=message.message_id,
+                status=DeliveryStatus.FAILED,
+                channel=message.channel,
+                error_code="unsafe_message_id_path",
+            )
+        file_path = self._outbox / safe_filename
+
         if not file_path.resolve().is_relative_to(self._outbox.resolve()):
             return DeliveryResult(
                 delivery_id=delivery_id,

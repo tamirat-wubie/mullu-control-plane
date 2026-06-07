@@ -248,6 +248,45 @@ def test_unsupported_action_fails_closed_before_transport() -> None:
     assert transport.calls == []
 
 
+def test_messaging_credential_rejects_secret_bearing_base_url() -> None:
+    rejected_urls = (
+        "https://user:secret@slack.example",
+        "https://slack.example?token=secret",
+        "https://slack.example#secret-fragment",
+        "http://slack.example",
+    )
+    errors: list[str] = []
+    for base_url in rejected_urls:
+        try:
+            MessagingConnectorCredential(
+                connector_id="slack",
+                access_token="xoxb-slack-token",
+                base_url=base_url,
+                scope_id="scope:slack",
+            )
+        except ValueError as exc:
+            errors.append(str(exc))
+
+    assert len(errors) == len(rejected_urls)
+    assert any("credentials" in error for error in errors)
+    assert any("query or fragment" in error for error in errors)
+    assert any("HTTPS" in error for error in errors)
+    assert "secret" not in " ".join(errors)
+
+
+def test_messaging_credential_allows_loopback_http_for_local_fixture() -> None:
+    credential = MessagingConnectorCredential(
+        connector_id="slack",
+        access_token="xoxb-slack-token",
+        base_url="HTTP://LOCALHOST:9090/local/",
+        scope_id="scope:slack",
+    )
+
+    assert credential.base_url == "http://localhost:9090/local"
+    assert credential.connector_id == "slack"
+    assert credential.access_token == "xoxb-slack-token"
+
+
 def test_env_builder_loads_twilio_and_slack_credentials(monkeypatch) -> None:
     for env in (
         "TWILIO_AUTH_TOKEN",

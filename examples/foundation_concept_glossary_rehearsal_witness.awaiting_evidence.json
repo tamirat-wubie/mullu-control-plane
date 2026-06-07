@@ -1,0 +1,116 @@
+{
+  "blocked_claims": [
+    "canonical definition",
+    "glossary completeness",
+    "concept mastery",
+    "technical readiness",
+    "training completion",
+    "comprehension proof",
+    "public docs readiness",
+    "product readiness",
+    "customer readiness",
+    "private value recording",
+    "legal/business action",
+    "spending",
+    "money movement",
+    "source-control publication",
+    "external publication",
+    "deployment readiness"
+  ],
+  "canonical_definition_claimed": false,
+  "comprehension_proven": false,
+  "concept_mastery_claimed": false,
+  "customer_readiness_claimed": false,
+  "deferral_labels": [
+    "term_selection_rehearsal",
+    "source_doc_reference_rehearsal",
+    "plain_definition_rehearsal",
+    "boundary_example_rehearsal",
+    "non_goal_rehearsal",
+    "evidence_reference_rehearsal",
+    "confusion_note_rehearsal",
+    "cross_link_rehearsal",
+    "validator_pairing_rehearsal",
+    "stop_rule_rehearsal"
+  ],
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "glossary_complete_claimed": false,
+  "glossary_entry_published": false,
+  "legal_business_action_allowed": false,
+  "money_movement_allowed": false,
+  "next_action": "keep concept glossary rehearsal local until repeated explanation, validator evidence, and operator reassessment evidence exist",
+  "private_value_recording_allowed": false,
+  "product_readiness_claimed": false,
+  "public_docs_readiness_claimed": false,
+  "schema_version": "foundation.concept_glossary_rehearsal.v1",
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_publication_allowed": false,
+  "spending_allowed": false,
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "public_safe_note": "Term selection rehearsal only; concept mastery is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "term_selection_rehearsal",
+      "surface_type": "local_term_label"
+    },
+    {
+      "public_safe_note": "Source document reference rehearsal only; private paths and external URLs are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "source_doc_reference_rehearsal",
+      "surface_type": "local_doc_label"
+    },
+    {
+      "public_safe_note": "Plain definition rehearsal only; canonical definition is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "plain_definition_rehearsal",
+      "surface_type": "local_definition_label"
+    },
+    {
+      "public_safe_note": "Boundary example rehearsal only; product behavior is not promised.",
+      "state": "AwaitingEvidence",
+      "surface_id": "boundary_example_rehearsal",
+      "surface_type": "local_example_label"
+    },
+    {
+      "public_safe_note": "Non-goal rehearsal only; limitations remain explicit.",
+      "state": "AwaitingEvidence",
+      "surface_id": "non_goal_rehearsal",
+      "surface_type": "local_non_goal_label"
+    },
+    {
+      "public_safe_note": "Evidence reference rehearsal only; AwaitingEvidence is not promoted to closure.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_reference_rehearsal",
+      "surface_type": "local_evidence_label"
+    },
+    {
+      "public_safe_note": "Confusion note rehearsal only; private schedule, health, account, and secret values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "confusion_note_rehearsal",
+      "surface_type": "public_safe_confusion_label"
+    },
+    {
+      "public_safe_note": "Cross-link rehearsal only; documentation completeness is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "cross_link_rehearsal",
+      "surface_type": "local_link_label"
+    },
+    {
+      "public_safe_note": "Validator pairing rehearsal only; training completion and certification are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "validator_pairing_rehearsal",
+      "surface_type": "local_validator_label"
+    },
+    {
+      "public_safe_note": "Stop-rule rehearsal only; publication, source control, legal/business action, spending, customer access, and deployment are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "stop_rule_rehearsal",
+      "surface_type": "local_stop_rule_label"
+    }
+  ],
+  "technical_readiness_claimed": false,
+  "training_completion_claimed": false,
+  "witness_id": "foundation_concept_glossary_rehearsal_witness.awaiting_evidence.v1"
+}

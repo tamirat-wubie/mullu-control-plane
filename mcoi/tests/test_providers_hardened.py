@@ -189,12 +189,34 @@ def test_process_model_config_rejects_empty_command() -> None:
         ProcessModelConfig(command=())
 
 
+def test_process_model_config_rejects_non_tuple_command() -> None:
+    with pytest.raises(ValueError, match="command must be an argv tuple"):
+        ProcessModelConfig(command="model")  # type: ignore[arg-type]
+
+    with pytest.raises(ValueError, match="command must be an argv tuple"):
+        ProcessModelConfig(command=["model"])  # type: ignore[arg-type]
+
+
+def test_process_model_config_rejects_command_nul_byte() -> None:
+    with pytest.raises(ValueError, match="command entries must not contain NUL"):
+        ProcessModelConfig(command=("model\x00bad",))
+
+
 def test_process_model_config_rejects_invalid_environment() -> None:
     with pytest.raises(ValueError, match="environment must be a mapping"):
         ProcessModelConfig(command=("model",), environment="SECRET=value")
 
     with pytest.raises(ValueError, match="environment values must be strings"):
         ProcessModelConfig(command=("model",), environment={"MODEL_ENV": 7})
+
+    with pytest.raises(ValueError, match="environment key must not contain '=' or NUL"):
+        ProcessModelConfig(command=("model",), environment={"MODEL=ENV": "local"})
+
+    with pytest.raises(ValueError, match="environment key must not contain '=' or NUL"):
+        ProcessModelConfig(command=("model",), environment={"MODEL\x00ENV": "local"})
+
+    with pytest.raises(ValueError, match="environment value must not contain NUL"):
+        ProcessModelConfig(command=("model",), environment={"MODEL_ENV": "local\x00"})
 
 
 def test_process_model_uses_scrubbed_environment_by_default(monkeypatch) -> None:

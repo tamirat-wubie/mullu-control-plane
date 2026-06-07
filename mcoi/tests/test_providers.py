@@ -134,6 +134,42 @@ def test_file_communication_rejects_message_id_path_traversal(tmp_path: Path) ->
     assert (outbox / "msg-safe.json").exists()
 
 
+def test_file_communication_rejects_nested_message_id_path(tmp_path: Path) -> None:
+    outbox = tmp_path / "outbox"
+    (outbox / "nested").mkdir(parents=True)
+    adapter = FileCommunicationAdapter(outbox_path=outbox, clock=lambda: _CLOCK)
+
+    result = adapter.deliver(_outbox_message("nested/msg"))
+
+    assert result.status is DeliveryStatus.FAILED
+    assert result.error_code == "unsafe_message_id_path"
+    assert not (outbox / "nested" / "msg.json").exists()
+    assert list((outbox / "nested").iterdir()) == []
+
+
+def test_file_communication_rejects_windows_separator_message_id(tmp_path: Path) -> None:
+    outbox = tmp_path / "outbox"
+    adapter = FileCommunicationAdapter(outbox_path=outbox, clock=lambda: _CLOCK)
+
+    result = adapter.deliver(_outbox_message(r"nested\msg"))
+
+    assert result.status is DeliveryStatus.FAILED
+    assert result.error_code == "unsafe_message_id_path"
+    assert not (outbox / "nested" / "msg.json").exists()
+    assert list(outbox.glob("*.json")) == []
+
+
+def test_file_communication_rejects_non_filename_message_id(tmp_path: Path) -> None:
+    outbox = tmp_path / "outbox"
+    adapter = FileCommunicationAdapter(outbox_path=outbox, clock=lambda: _CLOCK)
+
+    result = adapter.deliver(_outbox_message("msg:stream"))
+
+    assert result.status is DeliveryStatus.FAILED
+    assert result.error_code == "unsafe_message_id_path"
+    assert list(outbox.glob("*.json")) == []
+
+
 def test_file_communication_multiple_messages(tmp_path: Path) -> None:
     adapter = FileCommunicationAdapter(outbox_path=tmp_path / "outbox", clock=lambda: _CLOCK)
     for i in range(3):

@@ -1,5 +1,5 @@
 {
-  "artifact_count": 321,
+  "artifact_count": 336,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -642,6 +642,16 @@
       "purpose": "Foundation Learning Path Boundary doctrine and Foundation Mode boundary evidence contract."
     },
     {
+      "name": "foundation_boundary_doc_foundation_learning_loop_rehearsal_boundary",
+      "path": "docs/FOUNDATION_LEARNING_LOOP_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Learning Loop Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_concept_glossary_rehearsal_boundary",
+      "path": "docs/FOUNDATION_CONCEPT_GLOSSARY_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Concept Glossary Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
       "name": "foundation_boundary_doc_foundation_legal_business_boundary",
       "path": "docs/FOUNDATION_LEGAL_BUSINESS_BOUNDARY.md",
       "purpose": "Foundation Legal Business Boundary doctrine and Foundation Mode boundary evidence contract."
@@ -650,6 +660,21 @@
       "name": "foundation_boundary_doc_foundation_legal_business_question_rehearsal_boundary",
       "path": "docs/FOUNDATION_LEGAL_BUSINESS_QUESTION_REHEARSAL_BOUNDARY.md",
       "purpose": "Foundation Legal Business Question Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_legal_review_deferral_boundary",
+      "path": "docs/FOUNDATION_LEGAL_REVIEW_DEFERRAL_BOUNDARY.md",
+      "purpose": "Foundation Legal Review Deferral Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_company_formation_deferral_boundary",
+      "path": "docs/FOUNDATION_COMPANY_FORMATION_DEFERRAL_BOUNDARY.md",
+      "purpose": "Foundation Company Formation Deferral Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_patent_disclosure_deferral_boundary",
+      "path": "docs/FOUNDATION_PATENT_DISCLOSURE_DEFERRAL_BOUNDARY.md",
+      "purpose": "Foundation Patent Disclosure Deferral Boundary doctrine and Foundation Mode boundary evidence contract."
     },
     {
       "name": "foundation_boundary_doc_foundation_local_workstation_boundary",
@@ -1037,6 +1062,16 @@
       "purpose": "Read-only validator for Foundation Learning Path Boundary."
     },
     {
+      "name": "foundation_boundary_validator_foundation_learning_loop_rehearsal_boundary",
+      "path": "scripts/validate_foundation_learning_loop_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Learning Loop Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_concept_glossary_rehearsal_boundary",
+      "path": "scripts/validate_foundation_concept_glossary_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Concept Glossary Rehearsal Boundary."
+    },
+    {
       "name": "foundation_boundary_validator_foundation_legal_business_boundary",
       "path": "scripts/validate_foundation_legal_business_boundary.py",
       "purpose": "Read-only validator for Foundation Legal Business Boundary."
@@ -1045,6 +1080,21 @@
       "name": "foundation_boundary_validator_foundation_legal_business_question_rehearsal_boundary",
       "path": "scripts/validate_foundation_legal_business_question_rehearsal_boundary.py",
       "purpose": "Read-only validator for Foundation Legal Business Question Rehearsal Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_legal_review_deferral_boundary",
+      "path": "scripts/validate_foundation_legal_review_deferral_boundary.py",
+      "purpose": "Read-only validator for Foundation Legal Review Deferral Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_company_formation_deferral_boundary",
+      "path": "scripts/validate_foundation_company_formation_deferral_boundary.py",
+      "purpose": "Read-only validator for Foundation Company Formation Deferral Boundary."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_patent_disclosure_deferral_boundary",
+      "path": "scripts/validate_foundation_patent_disclosure_deferral_boundary.py",
+      "purpose": "Read-only validator for Foundation Patent Disclosure Deferral Boundary."
     },
     {
       "name": "foundation_boundary_validator_foundation_local_workstation_boundary",
@@ -1432,6 +1482,16 @@
       "purpose": "Regression tests for Foundation Learning Path Boundary validation."
     },
     {
+      "name": "foundation_boundary_tests_foundation_learning_loop_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_learning_loop_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Learning Loop Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_concept_glossary_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_concept_glossary_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Concept Glossary Rehearsal Boundary validation."
+    },
+    {
       "name": "foundation_boundary_tests_foundation_legal_business_boundary",
       "path": "tests/test_validate_foundation_legal_business_boundary.py",
       "purpose": "Regression tests for Foundation Legal Business Boundary validation."
@@ -1440,6 +1500,21 @@
       "name": "foundation_boundary_tests_foundation_legal_business_question_rehearsal_boundary",
       "path": "tests/test_validate_foundation_legal_business_question_rehearsal_boundary.py",
       "purpose": "Regression tests for Foundation Legal Business Question Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_legal_review_deferral_boundary",
+      "path": "tests/test_validate_foundation_legal_review_deferral_boundary.py",
+      "purpose": "Regression tests for Foundation Legal Review Deferral Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_company_formation_deferral_boundary",
+      "path": "tests/test_validate_foundation_company_formation_deferral_boundary.py",
+      "purpose": "Regression tests for Foundation Company Formation Deferral Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_patent_disclosure_deferral_boundary",
+      "path": "tests/test_validate_foundation_patent_disclosure_deferral_boundary.py",
+      "purpose": "Regression tests for Foundation Patent Disclosure Deferral Boundary validation."
     },
     {
       "name": "foundation_boundary_tests_foundation_local_workstation_boundary",

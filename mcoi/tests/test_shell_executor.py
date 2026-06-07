@@ -445,6 +445,57 @@ def test_shell_executor_sandbox_rejects_unapproved_environment_key(tmp_path: Pat
     assert receipt["metadata"]["environment_isolated"] is True
 
 
+def test_shell_executor_sandbox_rejects_invalid_environment_value(tmp_path: Path) -> None:
+    allowed_root = tmp_path / "allowed"
+    allowed_root.mkdir()
+    called = False
+
+    def fake_runner(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        nonlocal called
+        called = True
+        return subprocess.CompletedProcess(("echo",), 0, stdout="should-not-run", stderr="")
+
+    executor = ShellExecutor(
+        runner=fake_runner,
+        clock=lambda: "2026-03-18T12:00:00+00:00",
+        sandbox_policy=ShellSandboxPolicy(
+            sandbox_id="sandbox-invalid-env",
+            allowed_cwd_roots=(str(allowed_root),),
+            allowed_environment_keys=("MULLU_TRACE_ID",),
+            require_cwd=True,
+        ),
+    )
+
+    result = executor.execute(
+        ExecutionRequest(
+            execution_id="execution-invalid-env",
+            goal_id="goal-invalid-env",
+            argv=("echo", "blocked"),
+            cwd=str(allowed_root),
+            environment={"MULLU_TRACE_ID": "trace\0bad"},
+        )
+    )
+
+    details = result.actual_effects[0].details
+    receipt = details["details"]["receipt"]
+    assert called is False
+    assert result.status is ExecutionOutcome.FAILED
+    assert result.actual_effects[0].name == "sandbox_denied"
+    assert details["code"] == "sandbox_denied"
+    assert details["details"]["reason"] == "environment_value_invalid"
+    assert details["details"]["environment_keys"] == ("MULLU_TRACE_ID",)
+    assert receipt["metadata"]["failure_code"] == "sandbox_denied"
+    assert receipt["metadata"]["sandbox_id"] == "sandbox-invalid-env"
+
+
+def test_shell_sandbox_policy_rejects_invalid_allowed_environment_key() -> None:
+    with pytest.raises(ValueError, match="^allowed_environment_keys contains invalid key$"):
+        ShellSandboxPolicy(
+            sandbox_id="sandbox-invalid-key",
+            allowed_environment_keys=("BAD=KEY",),
+        )
+
+
 def test_shell_receipt_becomes_effect_assurance_evidence_ref() -> None:
     def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
         return subprocess.CompletedProcess(args[0], 0, stdout="observed", stderr="")

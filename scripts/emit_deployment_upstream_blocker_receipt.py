@@ -65,6 +65,11 @@ DEFAULT_NEXT_ACTIONS = (
 READY_NEXT_ACTIONS = (
     "continue with gateway DNS target binding and resolution receipts",
 )
+UPSTREAM_REPORT_NEXT_ACTIONS = (
+    "close upstream API production readiness report blockers",
+    "rerun upstream check-api-production-readiness with --require-ready",
+    "publish api.mullusi.com DNS only after upstream readiness passes",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -173,6 +178,40 @@ def write_deployment_upstream_blocker_receipt(
     return output_path
 
 
+def derive_receipt_inputs_from_upstream_readiness_report(
+    report_path: Path,
+) -> dict[str, Any]:
+    """Translate an upstream API readiness JSON report into receipt inputs."""
+    report = _load_json_object(report_path, "upstream readiness report")
+    upstream_state = _solver_outcome_from_report(report)
+    api_provisioning_allowed = _require_bool(
+        report.get("apiProvisioningAllowed"),
+        "apiProvisioningAllowed",
+    )
+    dns_publication_allowed = _require_bool(
+        report.get("apiDnsPublicationAllowed"),
+        "apiDnsPublicationAllowed",
+    )
+    blockers = _blockers_from_upstream_report(report)
+    ready = (
+        upstream_state == "SolvedVerified"
+        and api_provisioning_allowed
+        and dns_publication_allowed
+        and not blockers
+    )
+    return {
+        "upstream_state": upstream_state,
+        "api_provisioning_allowed": api_provisioning_allowed,
+        "dns_publication_allowed": dns_publication_allowed,
+        "blockers": blockers,
+        "evidence_refs": (
+            *DEFAULT_EVIDENCE_REFS,
+            f"upstream-readiness-report:{_receipt_path_label(report_path)}",
+        ),
+        "next_actions": READY_NEXT_ACTIONS if ready else UPSTREAM_REPORT_NEXT_ACTIONS,
+    }
+
+
 def _require_gateway_url(gateway_url: str) -> str:
     parsed = urlparse(gateway_url.strip())
     if parsed.scheme != "https" or not parsed.hostname:
@@ -238,6 +277,64 @@ def _format_utc(value: datetime) -> str:
     return value.astimezone(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
+def _load_json_object(path: Path, label: str) -> dict[str, Any]:
+    try:
+        raw_text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise RuntimeError(f"failed to read {label}") from exc
+    try:
+        payload = json.loads(raw_text)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"{label} returned invalid JSON") from exc
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"{label} must be a JSON object")
+    return payload
+
+
+def _solver_outcome_from_report(report: dict[str, Any]) -> str:
+    solver_outcome = report.get("solverOutcome")
+    if isinstance(solver_outcome, str) and solver_outcome.strip():
+        return _require_upstream_state(_map_upstream_solver_outcome(solver_outcome))
+    readiness_state = report.get("apiProductionReadinessState")
+    if isinstance(readiness_state, str) and readiness_state.strip():
+        mapped = {
+            "ReadyForDns": "SolvedVerified",
+            "Blocked": "AwaitingEvidence",
+            "AwaitingEvidence": "AwaitingEvidence",
+            "GovernanceBlocked": "GovernanceBlocked",
+            "SafeHalt": "SafeHalt",
+        }.get(readiness_state.strip())
+        if mapped:
+            return _require_upstream_state(mapped)
+    raise RuntimeError("upstream readiness report missing solver outcome")
+
+
+def _map_upstream_solver_outcome(solver_outcome: str) -> str:
+    normalized = solver_outcome.strip()
+    if normalized in {"SolvedVerified", "AwaitingEvidence", "GovernanceBlocked", "SafeHalt"}:
+        return normalized
+    if normalized == "SolvedUnverified":
+        return "AwaitingEvidence"
+    raise RuntimeError("upstream readiness report uses unsupported solver outcome")
+
+
+def _require_bool(value: Any, label: str) -> bool:
+    if not isinstance(value, bool):
+        raise RuntimeError(f"upstream readiness report field {label} must be boolean")
+    return value
+
+
+def _blockers_from_upstream_report(report: dict[str, Any]) -> tuple[str, ...]:
+    raw_blockers = report.get("blockers", [])
+    if not isinstance(raw_blockers, list) or not all(isinstance(item, str) for item in raw_blockers):
+        raise RuntimeError("upstream readiness report blockers must be a string list")
+    return _unique_nonempty(tuple(raw_blockers))
+
+
+def _receipt_path_label(path: Path) -> str:
+    return path.name
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse deployment upstream blocker receipt arguments."""
     parser = argparse.ArgumentParser(description="Emit a deployment upstream blocker receipt.")
@@ -257,6 +354,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--blocker", action="append", default=[])
     parser.add_argument("--evidence-ref", action="append", default=[])
     parser.add_argument("--next-action", action="append", default=[])
+    parser.add_argument(
+        "--upstream-readiness-report",
+        default="",
+        help="Public-safe JSON output from check-api-production-readiness.mjs",
+    )
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
@@ -269,22 +371,50 @@ def main(
 ) -> int:
     """CLI entry point for deployment upstream blocker receipt emission."""
     args = parse_args(argv)
+    report_inputs: dict[str, Any] = {}
+    try:
+        if args.upstream_readiness_report:
+            report_inputs = derive_receipt_inputs_from_upstream_readiness_report(
+                Path(args.upstream_readiness_report)
+            )
+    except RuntimeError as exc:
+        print(f"deployment upstream blocker receipt emission failed: {exc}", file=sys.stderr)
+        return 1
     ready_requested = (
-        args.upstream_state == "SolvedVerified"
-        and args.api_provisioning_allowed
-        and args.dns_publication_allowed
+        (report_inputs.get("upstream_state", args.upstream_state) == "SolvedVerified")
+        and bool(report_inputs.get("api_provisioning_allowed", args.api_provisioning_allowed))
+        and bool(report_inputs.get("dns_publication_allowed", args.dns_publication_allowed))
     )
-    blockers = tuple(args.blocker) if args.blocker else (() if ready_requested else DEFAULT_BLOCKERS)
-    evidence_refs = tuple(args.evidence_ref) if args.evidence_ref else DEFAULT_EVIDENCE_REFS
-    next_actions = tuple(args.next_action) if args.next_action else (READY_NEXT_ACTIONS if ready_requested else DEFAULT_NEXT_ACTIONS)
+    blockers = (
+        tuple(args.blocker)
+        if args.blocker
+        else tuple(report_inputs.get("blockers", (() if ready_requested else DEFAULT_BLOCKERS)))
+    )
+    evidence_refs = (
+        tuple(args.evidence_ref)
+        if args.evidence_ref
+        else tuple(report_inputs.get("evidence_refs", DEFAULT_EVIDENCE_REFS))
+    )
+    next_actions = (
+        tuple(args.next_action)
+        if args.next_action
+        else tuple(report_inputs.get(
+            "next_actions",
+            READY_NEXT_ACTIONS if ready_requested else DEFAULT_NEXT_ACTIONS,
+        ))
+    )
     try:
         receipt = emit_deployment_upstream_blocker_receipt(
             target_gateway_url=args.target_gateway_url,
             upstream_repository=args.upstream_repository,
             upstream_gate=args.upstream_gate,
-            upstream_state=args.upstream_state,
-            api_provisioning_allowed=args.api_provisioning_allowed,
-            dns_publication_allowed=args.dns_publication_allowed,
+            upstream_state=str(report_inputs.get("upstream_state", args.upstream_state)),
+            api_provisioning_allowed=bool(
+                report_inputs.get("api_provisioning_allowed", args.api_provisioning_allowed)
+            ),
+            dns_publication_allowed=bool(
+                report_inputs.get("dns_publication_allowed", args.dns_publication_allowed)
+            ),
             blockers=blockers,
             evidence_refs=evidence_refs,
             next_actions=next_actions,

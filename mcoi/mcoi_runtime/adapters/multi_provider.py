@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import os
 from typing import Any, Mapping
+from urllib.parse import urlsplit
 
 from mcoi_runtime.contracts.llm import (
     LLMInvocationParams,
@@ -25,6 +26,56 @@ from mcoi_runtime.contracts.llm import (
 )
 
 _HOSTED_PROVIDER_STUB_DENY_ENVS = frozenset({"pilot", "production", "prod"})
+
+
+def _validate_provider_base_url(base_url: str) -> str:
+    """Return a structurally valid provider base URL without credentials."""
+
+    value = str(base_url or "").strip().rstrip("/")
+    if not value:
+        raise ValueError("provider base_url must be a non-empty string")
+    if any(ord(ch) < 32 or ord(ch) == 127 for ch in value):
+        raise ValueError("provider base_url must not contain control characters")
+    parsed = urlsplit(value)
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc or not parsed.hostname:
+        raise ValueError("provider base_url must be an absolute http(s) URL")
+    if parsed.username or parsed.password:
+        raise ValueError("provider base_url must not include credentials")
+    if parsed.query or parsed.fragment:
+        raise ValueError("provider base_url must not include query or fragment")
+    return value
+
+
+def _response_status_code(response: Any) -> int:
+    status_code = getattr(response, "status_code", 200)
+    if not isinstance(status_code, int):
+        raise ValueError("provider response status_code must be an integer")
+    return status_code
+
+
+def _response_json_payload(response: Any) -> Any:
+    try:
+        return response.json()
+    except Exception as exc:
+        raise ValueError("provider response must contain valid JSON") from exc
+
+
+def _provider_failure(
+    *,
+    model: str,
+    provider: LLMProvider,
+    error: str,
+) -> LLMResult:
+    return LLMResult(
+        content="",
+        input_tokens=0,
+        output_tokens=0,
+        cost=0.0,
+        model_name=model,
+        provider=provider,
+        finished=False,
+        error=error,
+    )
 
 
 def _hosted_provider_stub_denial() -> str | None:
@@ -72,6 +123,38 @@ def _classify_provider_payload_error(error_payload: Any) -> str:
     return "provider rejected request"
 
 
+def _response_choice_content(data: Mapping[str, Any]) -> str:
+    """Return validated assistant content from one provider response."""
+
+    choices = data.get("choices")
+    if not isinstance(choices, list) or not choices:
+        raise ValueError("provider response invalid")
+    choice = choices[0]
+    if not isinstance(choice, Mapping):
+        raise ValueError("provider response invalid")
+    message = choice.get("message")
+    if not isinstance(message, Mapping):
+        raise ValueError("provider response invalid")
+    content = message.get("content", "")
+    if not isinstance(content, str):
+        raise ValueError("provider response invalid")
+    return content
+
+
+def _response_usage_tokens(data: Mapping[str, Any], field_name: str) -> int:
+    """Return one non-negative integer usage counter from provider response."""
+
+    usage = data.get("usage", {})
+    if usage is None:
+        return 0
+    if not isinstance(usage, Mapping):
+        raise ValueError("provider response invalid")
+    value = usage.get(field_name, 0)
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError("provider response invalid")
+    return value
+
+
 def _openai_compatible_call(
     *,
     base_url: str,
@@ -89,17 +172,26 @@ def _openai_compatible_call(
     Most modern LLM providers use the same chat/completions endpoint format.
     This function handles the common pattern.
     """
+    try:
+        provider_base_url = _validate_provider_base_url(base_url)
+    except ValueError:
+        return _provider_failure(
+            model=model,
+            provider=provider,
+            error="provider base_url invalid",
+        )
+
     if not api_key:
-        return LLMResult(
-            content="", input_tokens=0, output_tokens=0, cost=0.0,
-            model_name=model, provider=provider, finished=False,
+        return _provider_failure(
+            model=model,
+            provider=provider,
             error="provider credentials unavailable",
         )
 
     try:
         import httpx
         response = httpx.post(
-            f"{base_url}/chat/completions",
+            f"{provider_base_url}/chat/completions",
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
             json={
                 "model": model,
@@ -109,20 +201,47 @@ def _openai_compatible_call(
             },
             timeout=60.0,
         )
-        data = response.json()
+        status_code = _response_status_code(response)
+        try:
+            data = _response_json_payload(response)
+        except ValueError:
+            return _provider_failure(
+                model=model,
+                provider=provider,
+                error="provider response invalid",
+            )
+        if not isinstance(data, dict):
+            return _provider_failure(
+                model=model,
+                provider=provider,
+                error="provider response invalid",
+            )
+
+        if status_code < 200 or status_code >= 300:
+            payload_error = data.get("error", data)
+            return _provider_failure(
+                model=model,
+                provider=provider,
+                error=_classify_provider_payload_error(payload_error),
+            )
 
         if "error" in data:
-            return LLMResult(
-                content="", input_tokens=0, output_tokens=0, cost=0.0,
-                model_name=model, provider=provider, finished=False,
+            return _provider_failure(
+                model=model,
+                provider=provider,
                 error=_classify_provider_payload_error(data["error"]),
             )
 
-        choice = data.get("choices", [{}])[0]
-        content = choice.get("message", {}).get("content", "")
-        usage = data.get("usage", {})
-        input_tokens = usage.get("prompt_tokens", 0)
-        output_tokens = usage.get("completion_tokens", 0)
+        try:
+            content = _response_choice_content(data)
+            input_tokens = _response_usage_tokens(data, "prompt_tokens")
+            output_tokens = _response_usage_tokens(data, "completion_tokens")
+        except ValueError:
+            return _provider_failure(
+                model=model,
+                provider=provider,
+                error="provider response invalid",
+            )
         cost = (input_tokens * cost_per_1m_input + output_tokens * cost_per_1m_output) / 1_000_000
 
         return LLMResult(

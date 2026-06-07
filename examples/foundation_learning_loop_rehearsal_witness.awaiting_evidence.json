@@ -1,0 +1,120 @@
+{
+  "blocked_claims": [
+    "skill readiness",
+    "training completion",
+    "certification",
+    "paid course activation",
+    "mentor assignment",
+    "hiring readiness",
+    "delegation readiness",
+    "public tutorial publication",
+    "curriculum completion",
+    "production operation readiness",
+    "customer support readiness",
+    "external account use",
+    "private schedule recording",
+    "private health recording",
+    "spending",
+    "legal/business action",
+    "source-control publication",
+    "deployment readiness"
+  ],
+  "certification_claimed": false,
+  "curriculum_completion_claimed": false,
+  "customer_support_readiness_claimed": false,
+  "deferral_labels": [
+    "topic_selection_rehearsal",
+    "local_doc_reading_rehearsal",
+    "glossary_lookup_rehearsal",
+    "harmless_command_rehearsal",
+    "expected_output_rehearsal",
+    "error_category_rehearsal",
+    "validator_pairing_rehearsal",
+    "handoff_note_rehearsal",
+    "next_loop_selection_rehearsal",
+    "stop_rule_rehearsal"
+  ],
+  "delegation_readiness_claimed": false,
+  "deployment_allowed": false,
+  "external_account_use_allowed": false,
+  "hiring_readiness_claimed": false,
+  "legal_business_action_allowed": false,
+  "loop_rehearsal_executed": false,
+  "mentor_assignment_allowed": false,
+  "next_action": "keep learning-loop rehearsal local until repeated practice, validator evidence, and operator reassessment evidence exist",
+  "paid_course_allowed": false,
+  "private_health_recording_allowed": false,
+  "private_schedule_recording_allowed": false,
+  "production_operation_readiness_claimed": false,
+  "public_tutorial_publication_allowed": false,
+  "schema_version": "foundation.learning_loop_rehearsal.v1",
+  "skill_readiness_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_publication_allowed": false,
+  "spending_allowed": false,
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "public_safe_note": "Topic selection rehearsal only; skill readiness is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "topic_selection_rehearsal",
+      "surface_type": "local_topic_label"
+    },
+    {
+      "public_safe_note": "Local doc reading rehearsal only; training completion is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "local_doc_reading_rehearsal",
+      "surface_type": "local_doc_label"
+    },
+    {
+      "public_safe_note": "Glossary lookup rehearsal only; curriculum completion is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "glossary_lookup_rehearsal",
+      "surface_type": "local_glossary_label"
+    },
+    {
+      "public_safe_note": "Harmless command rehearsal only; services, accounts, and deployment state are not mutated.",
+      "state": "AwaitingEvidence",
+      "surface_id": "harmless_command_rehearsal",
+      "surface_type": "local_command_label"
+    },
+    {
+      "public_safe_note": "Expected output rehearsal only; verification closure is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "expected_output_rehearsal",
+      "surface_type": "local_expected_output_label"
+    },
+    {
+      "public_safe_note": "Error category rehearsal only; private paths, accounts, schedules, health details, and secrets are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "error_category_rehearsal",
+      "surface_type": "public_safe_error_label"
+    },
+    {
+      "public_safe_note": "Validator pairing rehearsal only; certification is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "validator_pairing_rehearsal",
+      "surface_type": "local_validator_label"
+    },
+    {
+      "public_safe_note": "Handoff note rehearsal only; support readiness and team coverage are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "handoff_note_rehearsal",
+      "surface_type": "public_safe_handoff_label"
+    },
+    {
+      "public_safe_note": "Next loop selection rehearsal only; deadlines and roadmap delivery are not promised.",
+      "state": "AwaitingEvidence",
+      "surface_id": "next_loop_selection_rehearsal",
+      "surface_type": "local_next_loop_label"
+    },
+    {
+      "public_safe_note": "Stop-rule rehearsal only; external action, spending, legal/business action, source-control publication, and deployment are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "stop_rule_rehearsal",
+      "surface_type": "local_stop_rule_label"
+    }
+  ],
+  "training_completion_claimed": false,
+  "witness_id": "foundation_learning_loop_rehearsal_witness.awaiting_evidence.v1"
+}

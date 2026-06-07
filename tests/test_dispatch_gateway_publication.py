@@ -21,6 +21,7 @@ import pytest
 
 from scripts.dispatch_gateway_publication import (
     DEFAULT_REPOSITORY,
+    build_gateway_publication_dispatch_plan,
     dispatch_gateway_publication,
     main,
 )
@@ -309,6 +310,30 @@ def test_dispatch_gateway_publication_command_failure_is_bounded(tmp_path: Path)
     assert not (tmp_path / "artifact").exists()
 
 
+def test_build_gateway_publication_dispatch_plan_is_non_effecting(tmp_path: Path) -> None:
+    plan = build_gateway_publication_dispatch_plan(
+        gateway_host="Gateway.Mullusi.Com",
+        gateway_url="https://Gateway.Mullusi.Com/",
+        expected_environment="production",
+        apply_ingress=True,
+        dispatch_witness=True,
+        skip_preflight_endpoint_probes=True,
+        download_dir=tmp_path / "artifact",
+    )
+
+    assert plan.gateway_host == "gateway.mullusi.com"
+    assert plan.gateway_url == "https://gateway.mullusi.com"
+    assert plan.expected_environment == "production"
+    assert plan.apply_ingress is True
+    assert plan.dispatch_witness is True
+    assert plan.skip_preflight_endpoint_probes is True
+    assert "gateway_host=gateway.mullusi.com" in plan.dispatch_command
+    assert "gateway_url=https://gateway.mullusi.com" in plan.dispatch_command
+    assert "apply_ingress=true" in plan.dispatch_command
+    assert plan.artifact_name == "gateway-publication-witness"
+    assert plan.artifact_dir == tmp_path / "artifact"
+
+
 def test_cli_reports_missing_host(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
         "scripts.dispatch_gateway_publication.subprocess.run",
@@ -321,6 +346,43 @@ def test_cli_reports_missing_host(monkeypatch, capsys) -> None:
     assert exit_code == 1
     assert "gateway publication dispatch failed" in captured.out
     assert "gateway host is required" not in captured.out
+
+
+def test_cli_dry_run_prints_dispatch_plan_without_remote_calls(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    runner = FakeRunner()
+    monkeypatch.setattr(
+        "scripts.dispatch_gateway_publication.subprocess.run",
+        runner,
+    )
+
+    exit_code = main(
+        [
+            "--dry-run",
+            "--gateway-host",
+            "gateway.mullusi.com",
+            "--gateway-url",
+            "https://gateway.mullusi.com",
+            "--expected-environment",
+            "pilot",
+            "--dispatch-witness",
+            "--download-dir",
+            str(tmp_path / "artifact"),
+        ]
+    )
+    captured = capsys.readouterr()
+    payload = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert runner.commands == []
+    assert payload["gateway_host"] == "gateway.mullusi.com"
+    assert payload["gateway_url"] == "https://gateway.mullusi.com"
+    assert payload["dispatch_witness"] is True
+    assert "dispatch_witness=true" in payload["dispatch_command"]
+    assert payload["artifact_dir"] == str(tmp_path / "artifact")
 
 
 def test_cli_dispatches_from_ready_readiness_report(

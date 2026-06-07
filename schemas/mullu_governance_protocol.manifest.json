@@ -221,6 +221,18 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "deployment-publication-evidence-packet",
+      "path": "schemas/deployment_publication_evidence_packet.schema.json",
+      "urn": "urn:mullusi:schema:deployment-publication-evidence-packet:1",
+      "surface": "deployment"
+    },
+    {
+      "schema_id": "deployment-publication-operator-input-request",
+      "path": "schemas/deployment_publication_operator_input_request.schema.json",
+      "urn": "urn:mullusi:schema:deployment-publication-operator-input-request:1",
+      "surface": "deployment"
+    },
+    {
       "schema_id": "deployment-upstream-blocker-receipt",
       "path": "schemas/deployment_upstream_blocker_receipt.schema.json",
       "urn": "urn:mullusi:schema:deployment-upstream-blocker-receipt:1",

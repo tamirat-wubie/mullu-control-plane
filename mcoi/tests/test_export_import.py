@@ -159,6 +159,139 @@ class TestImportEngine:
         result = importer.validate_bundle(bad)
         assert result.status is ImportStatus.INVALID_MANIFEST
 
+    def test_validate_rejects_non_object_manifest(self, tmp_path: Path):
+        bad = tmp_path / "bad.json"
+        bad.write_text(
+            json.dumps({"manifest": [], "artifacts": {}}),
+            encoding="utf-8",
+        )
+        importer = ImportEngine()
+
+        result = importer.validate_bundle(bad)
+
+        assert result.status is ImportStatus.INVALID_MANIFEST
+        assert result.error_message == "bundle manifest must be an object"
+
+    def test_validate_rejects_non_object_artifacts(self, tmp_path: Path):
+        bad = tmp_path / "bad.json"
+        bad.write_text(
+            json.dumps({
+                "manifest": {
+                    "manifest_id": "m-1",
+                    "platform_version": "0.1.0",
+                    "artifact_count": 0,
+                    "artifacts": [],
+                },
+                "artifacts": [],
+            }),
+            encoding="utf-8",
+        )
+        importer = ImportEngine()
+
+        result = importer.validate_bundle(bad)
+
+        assert result.status is ImportStatus.INVALID_MANIFEST
+        assert result.error_message == "bundle artifacts must be an object"
+
+    def test_validate_rejects_artifact_count_mismatch(self, tmp_path: Path):
+        bad = tmp_path / "bad.json"
+        bad.write_text(
+            json.dumps({
+                "manifest": {
+                    "manifest_id": "m-1",
+                    "platform_version": "0.1.0",
+                    "artifact_count": 2,
+                    "artifacts": [],
+                },
+                "artifacts": {},
+            }),
+            encoding="utf-8",
+        )
+        importer = ImportEngine()
+
+        result = importer.validate_bundle(bad)
+
+        assert result.status is ImportStatus.INVALID_MANIFEST
+        assert result.error_message == "bundle artifact_count does not match manifest entries"
+
+    def test_validate_rejects_malformed_artifact_ref(self, tmp_path: Path):
+        bad = tmp_path / "bad.json"
+        bad.write_text(
+            json.dumps({
+                "manifest": {
+                    "manifest_id": "m-1",
+                    "platform_version": "0.1.0",
+                    "artifact_count": 1,
+                    "artifacts": ["not-an-object"],
+                },
+                "artifacts": {"a-1": {"content_hash": "hash", "data": {}}},
+            }),
+            encoding="utf-8",
+        )
+        importer = ImportEngine()
+
+        result = importer.validate_bundle(bad)
+
+        assert result.status is ImportStatus.INVALID_MANIFEST
+        assert result.error_message == "bundle artifact manifest entries must be objects"
+
+    def test_validate_rejects_malformed_artifact_entry(self, tmp_path: Path):
+        bad = tmp_path / "bad.json"
+        bad.write_text(
+            json.dumps({
+                "manifest": {
+                    "manifest_id": "m-1",
+                    "platform_version": "0.1.0",
+                    "artifact_count": 1,
+                    "artifacts": [{"artifact_id": "a-1", "artifact_type": "config", "content_hash": "hash"}],
+                },
+                "artifacts": {"a-1": []},
+            }),
+            encoding="utf-8",
+        )
+        importer = ImportEngine()
+
+        result = importer.validate_bundle(bad)
+
+        assert result.status is ImportStatus.INVALID_MANIFEST
+        assert result.error_message == "bundle artifact entry is malformed"
+
+    def test_validate_rejects_missing_artifact_type(self, tmp_path: Path):
+        bad = tmp_path / "bad.json"
+        bad.write_text(
+            json.dumps({
+                "manifest": {
+                    "manifest_id": "m-1",
+                    "platform_version": "0.1.0",
+                    "artifact_count": 1,
+                    "artifacts": [{"artifact_id": "a-1", "content_hash": "hash"}],
+                },
+                "artifacts": {"a-1": {"type": "config", "content_hash": "hash", "data": {}}},
+            }),
+            encoding="utf-8",
+        )
+        importer = ImportEngine()
+
+        result = importer.validate_bundle(bad)
+
+        assert result.status is ImportStatus.INVALID_MANIFEST
+        assert result.error_message == "bundle artifact manifest entry is incomplete"
+
+    def test_validate_rejects_artifact_type_mismatch(self, tmp_path: Path):
+        export = ExportEngine(clock=lambda: FIXED_CLOCK)
+        artifacts = {"cfg-1": (ArtifactType.CONFIG, json.dumps({"key": "value"}))}
+        bundle_path = tmp_path / "bundle.json"
+        export.export_bundle(artifacts=artifacts, output_path=bundle_path)
+        raw = json.loads(bundle_path.read_text(encoding="utf-8"))
+        raw["artifacts"]["cfg-1"]["type"] = ArtifactType.RUNBOOK.value
+        bundle_path.write_text(json.dumps(raw), encoding="utf-8")
+        importer = ImportEngine()
+
+        result = importer.validate_bundle(bundle_path)
+
+        assert result.status is ImportStatus.INVALID_MANIFEST
+        assert result.error_message == "bundle artifact entry type mismatch"
+
     def test_validate_integrity_failure(self, tmp_path: Path):
         # Create valid bundle then tamper
         export = ExportEngine(clock=lambda: FIXED_CLOCK)
@@ -196,6 +329,28 @@ class TestImportEngine:
         bad.write_text("bad", encoding="utf-8")
         importer = ImportEngine()
         assert importer.load_bundle(bad) is None
+
+    def test_load_bundle_uses_single_validated_read(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+        export = ExportEngine(clock=lambda: FIXED_CLOCK)
+        artifacts = {"cfg-1": (ArtifactType.CONFIG, json.dumps({"key": "value"}))}
+        bundle_path = tmp_path / "bundle.json"
+        export.export_bundle(artifacts=artifacts, output_path=bundle_path)
+        original_read_text = Path.read_text
+        calls = 0
+
+        def read_then_fail(self: Path, *args, **kwargs):
+            nonlocal calls
+            if self == bundle_path:
+                calls += 1
+                if calls > 1:
+                    raise OSError("secret second read")
+            return original_read_text(self, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "read_text", read_then_fail)
+        importer = ImportEngine()
+
+        assert importer.load_bundle(bundle_path) == {"cfg-1": {"key": "value"}}
+        assert calls == 1
 
     def test_round_trip(self, tmp_path: Path):
         """Export then import preserves data exactly."""

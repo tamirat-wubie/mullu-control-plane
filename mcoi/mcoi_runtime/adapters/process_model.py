@@ -69,6 +69,18 @@ def _minimal_process_environment(extra_environment: Mapping[str, str]) -> dict[s
     return process_environment
 
 
+def _validate_process_environment_entry(key: str, value: str) -> tuple[str, str]:
+    """Validate an environment entry before it can reach subprocess spawning."""
+    normalized_key = ensure_non_empty_text("environment key", key)
+    if "=" in normalized_key or "\x00" in normalized_key:
+        raise ValueError("environment key must not contain '=' or NUL")
+    if not isinstance(value, str):
+        raise ValueError("environment values must be strings")
+    if "\x00" in value:
+        raise ValueError("environment value must not contain NUL")
+    return normalized_key, value
+
+
 def _build_process_environment(config: "ProcessModelConfig") -> dict[str, str] | None:
     explicit_environment = dict(config.environment)
     if config.allow_inherited_environment:
@@ -92,10 +104,14 @@ class ProcessModelConfig:
     allow_inherited_environment: bool = False
 
     def __post_init__(self) -> None:
+        if not isinstance(self.command, tuple):
+            raise ValueError("command must be an argv tuple")
         if not self.command:
             raise ValueError("command must contain at least one element")
         for i, part in enumerate(self.command):
             ensure_non_empty_text(f"command[{i}]", part)
+            if "\x00" in part:
+                raise ValueError("command entries must not contain NUL")
         if self.timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
         if self.cost_per_invocation < 0:
@@ -108,10 +124,8 @@ class ProcessModelConfig:
             raise ValueError("environment must be a mapping")
         normalized_environment: dict[str, str] = {}
         for key, value in self.environment.items():
-            ensure_non_empty_text("environment key", key)
-            if not isinstance(value, str):
-                raise ValueError("environment values must be strings")
-            normalized_environment[key] = value
+            normalized_key, normalized_value = _validate_process_environment_entry(key, value)
+            normalized_environment[normalized_key] = normalized_value
         object.__setattr__(self, "environment", MappingProxyType(normalized_environment))
 
 

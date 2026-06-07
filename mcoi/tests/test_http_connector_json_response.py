@@ -124,6 +124,26 @@ def test_connector_result_metadata_has_digest_not_raw_body() -> None:
     assert "response_digest" in outcome.connector_result.metadata["connector_receipt"]
 
 
+def test_connector_result_metadata_hashes_url_query_secrets() -> None:
+    connector = HttpConnector(clock=_clock)
+
+    outcome, _fake_opener = _invoke_with_response(
+        connector,
+        {"url": "https://nested.example/status?token=secret-query-token", "method": "GET"},
+        _fake_response(body=b'{"status":"ok"}'),
+    )
+
+    metadata = outcome.connector_result.metadata
+    metadata_text = str(metadata)
+    receipt_text = str(metadata["connector_receipt"])
+
+    assert outcome.connector_result.status is ConnectorStatus.SUCCEEDED
+    assert "url_hash" in metadata
+    assert "url" not in metadata
+    assert "secret-query-token" not in metadata_text
+    assert "secret-query-token" not in receipt_text
+
+
 def test_invalid_json_response_returns_failed_outcome() -> None:
     connector = HttpConnector(clock=_clock)
 

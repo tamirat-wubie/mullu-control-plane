@@ -155,6 +155,7 @@ def _validate_action_proof_contract(
                 errors.append(f"repository-variable action {index} missing variable presence evidence")
         if action_type == "upstream-gate-closure":
             required_evidence = {
+                "upstream_api_production_readiness_report",
                 "deployment_upstream_blocker_receipt",
                 "deployment_upstream_blocker_validation",
                 "upstream_recovery_completion_witness",
@@ -168,6 +169,7 @@ def _validate_action_proof_contract(
                 )
             for token in (
                 "emit_deployment_upstream_blocker_receipt.py",
+                "--upstream-readiness-report",
                 "validate_deployment_upstream_blocker_receipt.py",
                 "--require-ready",
             ):

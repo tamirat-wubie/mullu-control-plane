@@ -41,6 +41,16 @@ def test_runbook_names_required_closure_artifacts_and_counts() -> None:
     assert "adapter`, `deployment`, `portfolio" in runbook_text
     assert "run_general_agent_promotion_closure_chain.py" in runbook_text
     assert "emit_deployment_upstream_blocker_receipt.py" in runbook_text
+    assert "collect_deployment_publication_evidence_packet.py" in runbook_text
+    assert "validate_deployment_publication_evidence_packet.py" in runbook_text
+    assert "emit_deployment_publication_operator_input_request.py" in runbook_text
+    assert "validate_deployment_publication_operator_input_request.py" in runbook_text
+    assert ".change_assurance\\deployment_publication_evidence_packet\\deployment_publication_evidence_packet.json" in runbook_text
+    assert ".change_assurance\\deployment_publication_evidence_packet\\deployment_publication_evidence_packet_validation.json" in runbook_text
+    assert ".change_assurance\\deployment_publication_evidence_packet\\deployment_publication_operator_input_request.json" in runbook_text
+    assert ".change_assurance\\deployment_publication_evidence_packet\\deployment_publication_operator_input_request_validation.json" in runbook_text
+    assert "UPSTREAM_API_READINESS_REPORT" in runbook_text
+    assert "--upstream-readiness-report \"$env:UPSTREAM_API_READINESS_REPORT\"" in runbook_text
     assert "validate_deployment_upstream_blocker_receipt.py" in runbook_text
     assert ".change_assurance\\deployment_upstream_blocker_receipt.json" in runbook_text
     assert ".change_assurance\\deployment_upstream_blocker_receipt_validation.json" in runbook_text
@@ -85,7 +95,13 @@ def test_runbook_keeps_status_mutation_evidence_gated() -> None:
     runbook_text = _runbook_text()
 
     assert "Do not update `DEPLOYMENT_STATUS.md`" in runbook_text
-    assert "The upstream blocker validation must report `valid=true` with `--require-ready`" in runbook_text
+    assert "The deployment publication evidence packet validation must report `valid=true`" in runbook_text
+    assert "validate_deployment_publication_evidence_packet.py --require-ready" in runbook_text
+    assert "deployment publication evidence packet require-ready gate" in runbook_text
+    assert "Deployment publication evidence packet is not ready" in runbook_text
+    assert "emit `deployment_publication_operator_input_request.json`" in runbook_text
+    assert "The upstream blocker" in runbook_text
+    assert "validation must report `valid=true` with `--require-ready`" in runbook_text
     assert "validate_deployment_upstream_blocker_receipt.py --require-ready" in runbook_text
     assert "upstream API/DNS validation require-ready gate" in runbook_text
     assert "Upstream API/DNS readiness is not ready" in runbook_text

@@ -1,0 +1,182 @@
+{
+  "blocked_claims": [
+    "patent filing",
+    "patent protection",
+    "invention-boundary finality",
+    "invention authorship finality",
+    "ownership finality",
+    "prior-art conclusion",
+    "novelty claim",
+    "patentability claim",
+    "disclosure approval",
+    "public research publication",
+    "external publication",
+    "secret/trade-secret protection",
+    "legal clearance",
+    "company formation",
+    "paid launch",
+    "money movement",
+    "customer access",
+    "deployment readiness"
+  ],
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deferral_labels": [
+    "patent_filing_gate",
+    "patent_protection_gate",
+    "invention_boundary_gate",
+    "invention_authorship_gate",
+    "ownership_claim_gate",
+    "prior_art_review_gate",
+    "novelty_claim_gate",
+    "patentability_claim_gate",
+    "disclosure_approval_gate",
+    "public_research_publication_gate",
+    "external_publication_gate",
+    "secret_protection_claim_gate",
+    "legal_clearance_gate",
+    "company_formation_gate",
+    "paid_launch_gate",
+    "money_movement_gate",
+    "customer_access_gate",
+    "deployment_gate",
+    "operator_reassessment_gate"
+  ],
+  "deployment_allowed": false,
+  "disclosure_approval_claimed": false,
+  "external_publication_allowed": false,
+  "invention_authorship_final_claimed": false,
+  "invention_boundary_final_claimed": false,
+  "legal_clearance_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "keep patent/disclosure deferral local until qualified review, permitted storage rules, disclosure handling, publication handling, and operator reassessment evidence exist",
+  "novelty_claimed": false,
+  "ownership_claim_finalized": false,
+  "paid_launch_allowed": false,
+  "patent_filing_allowed": false,
+  "patent_protection_claimed": false,
+  "patentability_claimed": false,
+  "prior_art_conclusion_recorded": false,
+  "public_research_publication_allowed": false,
+  "schema_version": "foundation.patent_disclosure_deferral.v1",
+  "secret_or_trade_secret_protection_claimed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "public_safe_note": "Patent filing gate only; patent filing is not allowed or claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "patent_filing_gate",
+      "surface_type": "blocked_patent_filing_label"
+    },
+    {
+      "public_safe_note": "Patent protection gate only; patent protection is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "patent_protection_gate",
+      "surface_type": "blocked_patent_protection_label"
+    },
+    {
+      "public_safe_note": "Invention boundary gate only; invention-boundary finality is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "invention_boundary_gate",
+      "surface_type": "blocked_invention_boundary_label"
+    },
+    {
+      "public_safe_note": "Invention authorship gate only; invention authorship finality is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "invention_authorship_gate",
+      "surface_type": "blocked_invention_authorship_label"
+    },
+    {
+      "public_safe_note": "Ownership claim gate only; ownership finality is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "ownership_claim_gate",
+      "surface_type": "blocked_ownership_claim_label"
+    },
+    {
+      "public_safe_note": "Prior-art review gate only; prior-art conclusions are not recorded or claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "prior_art_review_gate",
+      "surface_type": "blocked_prior_art_review_label"
+    },
+    {
+      "public_safe_note": "Novelty claim gate only; novelty is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "novelty_claim_gate",
+      "surface_type": "blocked_novelty_claim_label"
+    },
+    {
+      "public_safe_note": "Patentability claim gate only; patentability is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "patentability_claim_gate",
+      "surface_type": "blocked_patentability_claim_label"
+    },
+    {
+      "public_safe_note": "Disclosure approval gate only; disclosure approval is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "disclosure_approval_gate",
+      "surface_type": "blocked_disclosure_approval_label"
+    },
+    {
+      "public_safe_note": "Public research publication gate only; public research publication is not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_research_publication_gate",
+      "surface_type": "blocked_public_research_publication_label"
+    },
+    {
+      "public_safe_note": "External publication gate only; external publication is not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "external_publication_gate",
+      "surface_type": "blocked_external_publication_label"
+    },
+    {
+      "public_safe_note": "Secret protection claim gate only; secret or trade-secret protection is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "secret_protection_claim_gate",
+      "surface_type": "blocked_secret_protection_claim_label"
+    },
+    {
+      "public_safe_note": "Legal clearance gate only; legal clearance is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "legal_clearance_gate",
+      "surface_type": "blocked_legal_clearance_label"
+    },
+    {
+      "public_safe_note": "Company formation gate only; company formation is not performed or claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "company_formation_gate",
+      "surface_type": "blocked_company_formation_label"
+    },
+    {
+      "public_safe_note": "Paid launch gate only; paid launch is not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "paid_launch_gate",
+      "surface_type": "blocked_paid_launch_label"
+    },
+    {
+      "public_safe_note": "Money movement gate only; money movement is not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "money_movement_gate",
+      "surface_type": "blocked_money_movement_label"
+    },
+    {
+      "public_safe_note": "Customer access gate only; customer access is not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "customer_access_gate",
+      "surface_type": "blocked_customer_access_label"
+    },
+    {
+      "public_safe_note": "Deployment gate only; deployment is not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "deployment_gate",
+      "surface_type": "blocked_deployment_label"
+    },
+    {
+      "public_safe_note": "Operator reassessment gate only; patent/disclosure promotion is not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_reassessment_gate",
+      "surface_type": "local_gate_label"
+    }
+  ],
+  "witness_id": "foundation_patent_disclosure_deferral_witness.awaiting_evidence.v1"
+}

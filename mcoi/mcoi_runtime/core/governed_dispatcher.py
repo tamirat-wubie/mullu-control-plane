@@ -50,6 +50,7 @@ from mcoi_runtime.core.system_stabilization import (
 
 _DEFAULT_DISPATCH_ECONOMIC_COST = 1.0
 _DEFAULT_DISPATCH_ECONOMIC_VALUE = 1.0
+_MAX_OBSERVED_FILE_BYTES = 10 * 1024 * 1024
 
 
 def _bounded_gate_error(summary: str, _exc: Exception) -> str:
@@ -681,6 +682,21 @@ def _capture_filesystem_snapshot(path_text: str) -> _FilesystemSnapshot:
         is_file = path.is_file()
         is_dir = path.is_dir()
         stat_result = path.stat()
+        if is_file and stat_result.st_size > _MAX_OBSERVED_FILE_BYTES:
+            return _FilesystemSnapshot(
+                path_hash=path_hash,
+                exists=True,
+                is_file=True,
+                is_dir=False,
+                size_bytes=stat_result.st_size,
+                modified_time_ns=stat_result.st_mtime_ns,
+                content_hash=None,
+                error_code="filesystem_observation_too_large",
+            )
+        content_hash = None
+        error_code = None
+        if is_file:
+            content_hash, error_code = _file_content_hash(path)
         return _FilesystemSnapshot(
             path_hash=path_hash,
             exists=True,
@@ -688,9 +704,10 @@ def _capture_filesystem_snapshot(path_text: str) -> _FilesystemSnapshot:
             is_dir=is_dir,
             size_bytes=stat_result.st_size,
             modified_time_ns=stat_result.st_mtime_ns,
-            content_hash=_file_content_hash(path) if is_file else None,
+            content_hash=content_hash,
+            error_code=error_code,
         )
-    except OSError:
+    except (OSError, RuntimeError, ValueError):
         return _FilesystemSnapshot(
             path_hash=path_hash,
             exists=False,
@@ -837,14 +854,21 @@ def _filesystem_snapshot_changed(before: _FilesystemSnapshot, after: _Filesystem
 def _path_hash(path_text: str) -> str:
     try:
         material = str(Path(path_text).resolve(strict=False))
-    except OSError:
+    except (OSError, RuntimeError, ValueError):
         material = path_text
     return sha256(material.encode("utf-8", errors="replace")).hexdigest()
 
 
-def _file_content_hash(path: Path) -> str:
+def _file_content_hash(path: Path) -> tuple[str | None, str | None]:
     digest = sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+    total_bytes = 0
+    try:
+        with path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                total_bytes += len(chunk)
+                if total_bytes > _MAX_OBSERVED_FILE_BYTES:
+                    return None, "filesystem_observation_too_large"
+                digest.update(chunk)
+    except (OSError, RuntimeError, ValueError):
+        return None, "filesystem_observation_error"
+    return digest.hexdigest(), None

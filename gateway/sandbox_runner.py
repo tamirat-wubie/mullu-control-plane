@@ -38,6 +38,8 @@ Runner = Callable[..., subprocess.CompletedProcess[str]]
 # layered on top of --cap-drop ALL and no-new-privileges as defense-in-depth.
 _DEFAULT_SECCOMP_PROFILE = str(Path(__file__).resolve().with_name("sandbox_seccomp.json"))
 _DOCKER_DESKTOP_WSL_MARKER = Path("/mnt/wsl/docker-desktop")
+_MAX_WORKSPACE_SNAPSHOT_FILE_BYTES = 10 * 1024 * 1024
+_SNAPSHOT_HASH_CHUNK_BYTES = 1024 * 1024
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,8 +96,15 @@ class SandboxRunnerProfile:
             raise ValueError("sandbox must drop all capabilities")
         if not isinstance(self.seccomp_profile, str):
             raise ValueError("seccomp_profile must be a string")
-        if self.seccomp_profile and any(ord(character) < 32 for character in self.seccomp_profile):
-            raise ValueError("seccomp_profile contains forbidden characters")
+        if self.seccomp_profile:
+            if self.seccomp_profile.strip() != self.seccomp_profile or any(
+                ord(character) < 32 for character in self.seccomp_profile
+            ):
+                raise ValueError("seccomp_profile contains forbidden characters")
+            if self.seccomp_profile.lower() == "unconfined":
+                raise ValueError("seccomp_profile cannot disable seccomp")
+            if "," in self.seccomp_profile:
+                raise ValueError("seccomp_profile contains forbidden characters")
         if self.workspace_mount != "/workspace":
             raise ValueError("workspace mount must be /workspace")
         _require_text(self.max_cpu, "max_cpu")
@@ -525,11 +534,29 @@ def _workspace_snapshot(root: Path) -> dict[str, str]:
                 continue
             if not path.is_file():
                 continue
-            try:
-                snapshot[relative_path_text] = hashlib.sha256(path.read_bytes()).hexdigest()
-            except OSError:
-                snapshot[relative_path_text] = "unreadable"
+            snapshot[relative_path_text] = _file_snapshot_value(path)
     return snapshot
+
+
+def _file_snapshot_value(path: Path) -> str:
+    try:
+        stat = path.stat()
+    except OSError:
+        return "file:unreadable"
+    if stat.st_size > _MAX_WORKSPACE_SNAPSHOT_FILE_BYTES:
+        return f"file:too_large:{stat.st_size}:{stat.st_mtime_ns}"
+    digest = hashlib.sha256()
+    observed_bytes = 0
+    try:
+        with path.open("rb") as handle:
+            while chunk := handle.read(_SNAPSHOT_HASH_CHUNK_BYTES):
+                observed_bytes += len(chunk)
+                if observed_bytes > _MAX_WORKSPACE_SNAPSHOT_FILE_BYTES:
+                    return f"file:too_large_during_hash:{observed_bytes}"
+                digest.update(chunk)
+    except OSError:
+        return "file:unreadable"
+    return digest.hexdigest()
 
 
 def _symlink_snapshot_value(path: Path) -> str:

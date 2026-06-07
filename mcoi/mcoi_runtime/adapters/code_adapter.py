@@ -54,6 +54,45 @@ def _is_within_root(root: Path, target: Path) -> bool:
         return False
 
 
+def _resolve_workspace_mutation_target(
+    root: Path,
+    target: Path,
+    *,
+    allow_missing_leaf: bool,
+) -> Path | None:
+    """Resolve a mutation target and verify the real write path is in root."""
+    try:
+        resolved_root = root.resolve(strict=True)
+    except (OSError, ValueError):
+        return None
+
+    try:
+        leaf_present = target.exists() or target.is_symlink()
+    except OSError:
+        return None
+
+    if leaf_present:
+        try:
+            resolved_target = target.resolve(strict=True)
+        except (OSError, ValueError):
+            return None
+    else:
+        if not allow_missing_leaf:
+            return None
+        try:
+            resolved_parent = target.parent.resolve(strict=False)
+        except (OSError, ValueError):
+            return None
+        resolved_target = resolved_parent / target.name
+
+    try:
+        if not resolved_target.is_relative_to(resolved_root):
+            return None
+    except (OSError, ValueError):
+        return None
+    return resolved_target
+
+
 _DEFAULT_MAX_OUTPUT_BYTES: int = 1_048_576  # 1 MB
 _TRUNCATION_MARKER: str = "\n[TRUNCATED at {limit} bytes]"
 
@@ -787,19 +826,11 @@ class LocalCodeAdapter:
         writer so an existing symlink leaf is replaced rather than followed.
         """
         target = self._root / relative_path
-        try:
-            resolved_root = self._root.resolve(strict=True)
-        except (OSError, ValueError):
+        resolved_target = _resolve_workspace_mutation_target(
+            self._root, target, allow_missing_leaf=True,
+        )
+        if resolved_target is None:
             return False
-        # Resolve as far as the path exists; nonexistent leaf is fine for
-        # write_file's create-or-overwrite contract.
-        resolved_parent = (target.parent).resolve(strict=False)
-        try:
-            if not resolved_parent.is_relative_to(resolved_root):
-                return False
-        except (OSError, ValueError):
-            return False
-        resolved_target = resolved_parent / target.name
         try:
             _atomic_write_text(resolved_target, content)
             return True
@@ -820,18 +851,21 @@ class LocalCodeAdapter:
         """
         ensure_non_empty_text("patch_id", patch_id)
         target = self._root / target_file
+        resolved_target = _resolve_workspace_mutation_target(
+            self._root, target, allow_missing_leaf=True,
+        )
 
-        if not _is_within_root(self._root, target):
+        if resolved_target is None:
             return PatchApplicationResult(
                 patch_id=patch_id, status=PatchStatus.BLOCKED,
                 target_file=target_file, error_message="path outside workspace root",
             )
 
-        target_exists = False
         try:
-            target_exists = target.is_file()
+            target_leaf_present = target.exists() or target.is_symlink()
         except OSError:
-            target_exists = False
+            target_leaf_present = False
+        target_exists = target_leaf_present and resolved_target.is_file()
 
         try:
             peek_kind = _peek_diff_kind(unified_diff, target_file)
@@ -852,7 +886,7 @@ class LocalCodeAdapter:
                 patch_id=patch_id, status=PatchStatus.FAILED,
                 target_file=target_file, error_message="target file not found",
             )
-        if peek_kind == "create" and target_exists:
+        if peek_kind == "create" and target_leaf_present:
             return PatchApplicationResult(
                 patch_id=patch_id, status=PatchStatus.MALFORMED,
                 target_file=target_file,
@@ -861,7 +895,7 @@ class LocalCodeAdapter:
 
         try:
             original = (
-                target.read_bytes().decode("utf-8") if target_exists else ""
+                resolved_target.read_bytes().decode("utf-8") if target_exists else ""
             )
         except (OSError, UnicodeDecodeError) as exc:
             return PatchApplicationResult(
@@ -885,9 +919,9 @@ class LocalCodeAdapter:
 
         try:
             if kind == "delete":
-                target.unlink()
+                resolved_target.unlink()
             else:
-                _atomic_write_text(target, new_content)
+                _atomic_write_text(resolved_target, new_content)
         except (OSError, IndexError) as exc:
             return PatchApplicationResult(
                 patch_id=patch_id, status=PatchStatus.MALFORMED,

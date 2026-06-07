@@ -39,6 +39,8 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `data_governance_snapshot.schema.json` | Canonical data governance lifecycle snapshot with decisions and retention controls |
 | `deployment_orchestration_receipt.schema.json` | Canonical gateway deployment handoff receipt |
 | `deployment_publication_closure_plan.schema.json` | Canonical deployment publication closure action plan |
+| `deployment_publication_evidence_packet.schema.json` | Canonical non-effecting deployment publication evidence packet summary |
+| `deployment_publication_operator_input_request.schema.json` | Canonical public-safe request for missing deployment publication operator inputs |
 | `deployment_upstream_blocker_receipt.schema.json` | Canonical upstream API/DNS readiness blocker receipt for deployment publication |
 | `public_production_health_declaration.schema.json` | Canonical evidence-gated public production health declaration receipt |
 | `deployment_witness.schema.json` | Canonical live gateway deployment witness artifact |
