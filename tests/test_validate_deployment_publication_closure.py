@@ -302,6 +302,39 @@ def test_published_status_report_accepts_declaration_receipt(tmp_path: Path) -> 
     assert validation.witness_path == "provided_witness"
 
 
+def test_published_status_report_uses_tracked_fixture_when_default_evidence_absent(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
+    deployment_status.write_text(
+        _deployment_status("published", "https://mullu-gateway.onrender.com/health"),
+        encoding="utf-8",
+    )
+    absent_witness = tmp_path / ".change_assurance" / "deployment_witness.json"
+    absent_declaration_receipt = (
+        tmp_path / ".change_assurance" / "public_production_health_declaration.json"
+    )
+    monkeypatch.setattr(closure_validator, "DEFAULT_WITNESS_PATH", absent_witness)
+    monkeypatch.setattr(
+        closure_validator,
+        "DEFAULT_DECLARATION_RECEIPT_PATH",
+        absent_declaration_receipt,
+    )
+
+    validation = validate_deployment_publication_closure_report(
+        deployment_status_path=deployment_status,
+        witness_path=absent_witness,
+        declaration_receipt_path=absent_declaration_receipt,
+    )
+
+    assert validation.valid is True
+    assert validation.errors == ()
+    assert validation.witness_path == "provided_witness"
+    assert not absent_witness.exists()
+    assert not absent_declaration_receipt.exists()
+
+
 def test_published_status_report_rejects_dry_run_declaration_receipt(
     tmp_path: Path,
 ) -> None:
