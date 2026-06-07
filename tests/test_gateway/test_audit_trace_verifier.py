@@ -124,6 +124,93 @@ def test_verifier_global_chain_passes_canonical_lifecycle():
     assert verification.failures == ()
 
 
+def test_verifier_global_chain_accepts_restart_prefix_boundary():
+    store = InMemoryCommandLedgerStore()
+    first = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=store,
+    )
+    first_command = first.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-before-restart",
+        intent="llm_completion",
+        payload={"body": "before restart"},
+    )
+    first_event_hash = store.events_for(first_command.command_id)[-1].event_hash
+    restarted = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:01+00:00",
+        store=store,
+    )
+    restarted_command = restarted.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-2",
+        idempotency_key="idem-after-restart",
+        intent="llm_completion",
+        payload={"body": "after restart"},
+    )
+
+    verification = AuditTraceVerifier(restarted).verify_global_event_chain()
+
+    assert restarted._events[0].command_id == restarted_command.command_id
+    assert restarted._events[0].prev_event_hash == first_event_hash
+    assert verification.event_count == 1
+    assert verification.chain_intact is True
+    assert verification.failures == ()
+
+
+def test_verifier_global_chain_detects_restart_suffix_internal_break():
+    store = InMemoryCommandLedgerStore()
+    first = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=store,
+    )
+    first.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-before-restart",
+        intent="llm_completion",
+        payload={"body": "before restart"},
+    )
+    restarted = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:01+00:00",
+        store=store,
+    )
+    first_after_restart = restarted.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-2",
+        idempotency_key="idem-after-restart-1",
+        intent="llm_completion",
+        payload={"body": "after restart 1"},
+    )
+    restarted.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-3",
+        idempotency_key="idem-after-restart-2",
+        intent="llm_completion",
+        payload={"body": "after restart 2"},
+    )
+    target_index = 1
+    bad = replace(restarted._events[target_index], prev_event_hash="0" * 64)
+    restarted._events[target_index] = bad
+
+    verification = AuditTraceVerifier(restarted).verify_global_event_chain()
+
+    assert restarted._events[0].command_id == first_after_restart.command_id
+    assert verification.chain_intact is False
+    assert any(failure.startswith("global_chain_break:") for failure in verification.failures)
+
+
 def test_verifier_global_chain_detects_break():
     # If any event's prev_event_hash no longer matches the previous event's
     # event_hash, the global chain is broken at that event.

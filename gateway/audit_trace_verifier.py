@@ -289,7 +289,7 @@ class AuditTraceVerifier:
         """Verify the ledger's append-order event chain end-to-end."""
         events = list(self._ledger._events)
         failures: list[str] = []
-        previous_hash = ""
+        previous_hash = events[0].prev_event_hash if events else ""
         for event in events:
             if event.prev_event_hash != previous_hash:
                 failures.append(f"global_chain_break:{event.event_id}")
