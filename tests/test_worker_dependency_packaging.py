@@ -41,6 +41,15 @@ def test_dockerfile_packages_worker_dependencies_with_guarded_browser_install() 
 
     assert "ARG MULLU_INSTALL_WORKER_DEPS=true" in dockerfile
     assert "ARG MULLU_INSTALL_PLAYWRIGHT_BROWSERS=true" in dockerfile
+    assert "RUN mkdir -p /app/render-bin /app/.change_assurance /app/examples" in dockerfile
+    assert (
+        "COPY .change_assurance/authority_directory_sync.json "
+        "./.change_assurance/authority_directory_sync.json"
+    ) in dockerfile
+    assert (
+        "COPY examples/authority_directory_sync_render_pilot.json "
+        "./examples/authority_directory_sync_render_pilot.json"
+    ) in dockerfile
     assert 'pip install --no-cache-dir -e "mcoi[all]"' in dockerfile
     assert 'pip install --no-cache-dir -e "mcoi[persistence,encryption,gateway,voice-worker]" anthropic' in dockerfile
     assert '[ "$MULLU_INSTALL_WORKER_DEPS" = "true" ] && [ "$MULLU_INSTALL_PLAYWRIGHT_BROWSERS" = "true" ]' in dockerfile
