@@ -226,9 +226,9 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
     ),
     "DEPLOYMENT_STATUS.md": (
         "Deployment Status Witness",
-        "**Deployment witness state:** `not-published`",
-        "**Public production health endpoint:** `not-declared`",
-        "No governed production endpoint is declared in this repository",
+        "**Deployment witness state:** `published`",
+        "**Public production health endpoint:** `https://mullu-gateway.onrender.com/health`",
+        "https://mullu-gateway.onrender.com/health",
         "python scripts/validate_gateway_deployment_env.py --strict",
         "python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json",
         "python scripts/collect_runtime_conformance.py --gateway-url \"$MULLU_GATEWAY_URL\" --conformance-secret \"$MULLU_RUNTIME_CONFORMANCE_SECRET\" --authority-operator-secret \"$MULLU_AUTHORITY_OPERATOR_SECRET\" --output .change_assurance/runtime_conformance_certificate.json",

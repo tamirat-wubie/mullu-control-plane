@@ -68,8 +68,6 @@ def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
         "adapter_evidence_not_closed",
         "voice_adapter_not_closed",
         "email_calendar_adapter_not_closed",
-        "deployment_witness_not_published",
-        "production_health_not_declared",
     }
 
     assert expected_blockers <= set(packet_text.split())

@@ -11,8 +11,8 @@ STATUS.md, GitHub REST endpoints, and optional authenticated GitHub CLI access.
 Invariants:
   - Repository metadata must match the versioned proprietary witness.
   - Latest release must match the governed release tag.
-  - Deployment health must remain explicitly not-published until endpoint
-    evidence is declared.
+  - Deployment health must match the governed endpoint evidence declared in
+    DEPLOYMENT_STATUS.md.
   - No required proprietary witness document may be absent.
   - Private repository metadata must be verified through authenticated access,
     not treated as a public endpoint.
@@ -117,9 +117,9 @@ PRODUCT_BOUNDARY_REQUIRED_LITERALS = (
 )
 DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "Deployment Status Witness",
-    "**Deployment witness state:** `not-published`",
-    "**Public production health endpoint:** `not-declared`",
-    "No governed production endpoint is declared in this repository",
+    "**Deployment witness state:** `published`",
+    "**Public production health endpoint:** `https://mullu-gateway.onrender.com/health`",
+    "https://mullu-gateway.onrender.com/health",
     "python scripts/validate_gateway_deployment_env.py --strict",
     "python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json",
     "python scripts/collect_runtime_conformance.py --gateway-url \"$MULLU_GATEWAY_URL\" --conformance-secret \"$MULLU_RUNTIME_CONFORMANCE_SECRET\" --authority-operator-secret \"$MULLU_AUTHORITY_OPERATOR_SECRET\" --output .change_assurance/runtime_conformance_certificate.json",

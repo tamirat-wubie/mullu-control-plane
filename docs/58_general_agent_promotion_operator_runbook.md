@@ -40,8 +40,8 @@ The current expected aggregate plan contains:
 
 | Measure | Value |
 | --- | ---: |
-| Total closure actions | 14 |
-| Approval-required actions | 10 |
+| Total closure actions | 12 |
+| Approval-required actions | 8 |
 | Source plan types | `adapter`, `deployment`, `portfolio` |
 | Current readiness level | `pilot-governed-core` |
 
@@ -136,8 +136,7 @@ The executor must produce `terminal_certificates_minted=true` only when every em
 ```text
 voice_dependency_missing:OPENAI_API_KEY
 email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN
-deployment_witness_not_published
-production_health_not_declared
+deployment_dns_not_verified
 ```
 
 12. Produce live adapter receipts:

@@ -52,6 +52,7 @@ def test_closure_validation_report_matches_public_schema_for_not_published(
     validation = validate_deployment_publication_closure_report(
         deployment_status_path=deployment_status,
         witness_path=witness_path,
+        declaration_receipt_path=tmp_path / "missing_public_production_health_declaration.json",
     )
     write_deployment_publication_closure_validation_report(validation, output_path)
     schema = _load_schema(
@@ -110,6 +111,7 @@ def test_closure_validation_report_matches_public_schema_for_failed_closure(
     validation = validate_deployment_publication_closure_report(
         deployment_status_path=deployment_status,
         witness_path=witness_path,
+        declaration_receipt_path=tmp_path / "missing_public_production_health_declaration.json",
     )
     schema = _load_schema(
         Path("schemas/deployment_publication_closure_validation.schema.json")
@@ -137,6 +139,7 @@ def test_closure_validation_report_bounds_noncanonical_paths(
     validation = validate_deployment_publication_closure_report(
         deployment_status_path=deployment_status,
         witness_path=witness_path,
+        declaration_receipt_path=tmp_path / "missing_public_production_health_declaration.json",
     )
     serialized = str(validation.to_json_dict())
 
@@ -161,6 +164,7 @@ def test_closure_validation_report_bounds_witness_values(tmp_path: Path) -> None
     validation = validate_deployment_publication_closure_report(
         deployment_status_path=deployment_status,
         witness_path=witness_path,
+        declaration_receipt_path=tmp_path / "missing_public_production_health_declaration.json",
     )
     serialized = str(validation.to_json_dict())
 
