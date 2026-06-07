@@ -1,0 +1,20 @@
+{
+  "applied_approval_policy_count": 1,
+  "applied_escalation_policy_count": 1,
+  "applied_ownership_count": 1,
+  "apply_mode": "dry_run",
+  "batch_id": "directory-batch-render-pilot-20260607",
+  "evidence_refs": [
+    "authority:ownership_read_model",
+    "authority:policy_read_model",
+    "runtime_conformance:authority_configuration"
+  ],
+  "persisted": false,
+  "receipt_id": "authority-directory-sync-5675c06d57d5dc00",
+  "rejected_record_count": 0,
+  "rejected_records": [],
+  "source_hash": "sha256:fe06167c2bed2f06d448d644b6d2e6fd7a4b2e0c501e3d7879eb939509341e92",
+  "source_ref": "examples/authority_directory_sync_render_pilot.json",
+  "source_system": "static_render_pilot",
+  "tenant_id": "tenant-render-pilot-canary"
+}
