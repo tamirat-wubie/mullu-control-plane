@@ -78,7 +78,7 @@ from gateway.code_intelligence_read_model import (
     build_code_intelligence_operator_read_model,
     parse_affected_files,
 )
-from gateway.command_spine import build_command_ledger_from_env
+from gateway.command_spine import build_command_ledger_from_env, canonical_hash
 from gateway.conformance import issue_conformance_certificate
 from gateway.enterprise_authority import AuthorityDecision
 from gateway.evidence_bundle import build_command_trust_bundle
@@ -280,6 +280,87 @@ def create_gateway_app(
         authorized = _deployment_authority_authorized(request)
         if not authorized:
             raise HTTPException(403, detail="Deployment authority access not authorized")
+
+    def _seed_platform_identity_for_mapping(
+        mapping: TenantMapping,
+        *,
+        platform_roles: tuple[str, ...],
+    ) -> dict[str, Any]:
+        """Seed the current platform RBAC identity for a deployment mapping."""
+        access_runtime = getattr(platform, "_access_runtime", None)
+        if access_runtime is None:
+            return {
+                "available": False,
+                "identity_registered": False,
+                "identity_enabled": False,
+                "roles_bound": [],
+                "skipped_roles": list(platform_roles),
+                "reason": "platform_access_runtime_not_available",
+            }
+
+        from mcoi_runtime.contracts.access_runtime import AuthContextKind, IdentityKind
+        from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+
+        identity_registered = False
+        identity_enabled = False
+        try:
+            identity = access_runtime.get_identity(mapping.identity_id)
+        except RuntimeCoreInvariantError:
+            identity = access_runtime.register_identity(
+                mapping.identity_id,
+                mapping.identity_id,
+                kind=IdentityKind.SERVICE,
+                tenant_id=mapping.tenant_id,
+                enabled=True,
+            )
+            identity_registered = True
+
+        identity_tenant_id = getattr(identity, "tenant_id", "")
+        if identity_tenant_id and identity_tenant_id != mapping.tenant_id:
+            raise HTTPException(409, detail="platform identity tenant mismatch")
+
+        if getattr(identity, "enabled", False) is not True:
+            identity = access_runtime.enable_identity(mapping.identity_id)
+            identity_enabled = True
+
+        existing_bindings = {
+            (binding.role_id, binding.scope_kind, binding.scope_ref_id)
+            for binding in access_runtime.bindings_for_identity(mapping.identity_id)
+        }
+        roles_bound: list[str] = []
+        skipped_roles: list[str] = []
+        for role in platform_roles:
+            if not role:
+                continue
+            if not access_runtime.has_role(role):
+                skipped_roles.append(role)
+                continue
+            binding_key = (role, AuthContextKind.TENANT, mapping.tenant_id)
+            if binding_key in existing_bindings:
+                continue
+            binding_id = f"deploy-bind-{canonical_hash({
+                'identity_id': mapping.identity_id,
+                'role_id': role,
+                'tenant_id': mapping.tenant_id,
+            })[:16]}"
+            access_runtime.bind_role(
+                binding_id,
+                mapping.identity_id,
+                role,
+                scope_kind=AuthContextKind.TENANT,
+                scope_ref_id=mapping.tenant_id,
+            )
+            roles_bound.append(role)
+            existing_bindings.add(binding_key)
+
+        return {
+            "available": True,
+            "identity_registered": identity_registered,
+            "identity_enabled": identity_enabled,
+            "roles_bound": roles_bound,
+            "skipped_roles": skipped_roles,
+            "reason": "platform_identity_seeded",
+        }
 
     def _require_reflex_deployment_witness_log_backed() -> None:
         if reflex_deployment_witness_log_backed or reflex_ephemeral_witness_log_allowed:
@@ -3056,6 +3137,9 @@ def create_gateway_app(
         raw_roles = payload.get("roles", ())
         if isinstance(raw_roles, str) or not isinstance(raw_roles, (list, tuple)):
             raise HTTPException(400, detail="roles must be an array")
+        raw_platform_roles = payload.get("platform_roles", raw_roles)
+        if isinstance(raw_platform_roles, str) or not isinstance(raw_platform_roles, (list, tuple)):
+            raise HTTPException(400, detail="platform_roles must be an array")
         try:
             mapping = TenantMapping(
                 channel=_required_text(payload, "channel"),
@@ -3077,6 +3161,10 @@ def create_gateway_app(
             )
         except ValueError as exc:
             raise HTTPException(400, detail=str(exc)) from exc
+        platform_identity = _seed_platform_identity_for_mapping(
+            mapping,
+            platform_roles=tuple(str(role).strip() for role in raw_platform_roles if str(role).strip()),
+        )
         tenant_identity_store.save(mapping)
         resolved = tenant_identity_store.resolve(mapping.channel, mapping.sender_id)
         if resolved is None:
@@ -3092,6 +3180,7 @@ def create_gateway_app(
             "policy_version": resolved.policy_version,
             "created_at": resolved.created_at,
             "active_mappings": tenant_identity_store.count(),
+            "platform_identity": platform_identity,
             "governed": True,
         }
 
