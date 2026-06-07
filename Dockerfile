@@ -5,6 +5,8 @@ ARG MULLU_INSTALL_PLAYWRIGHT_BROWSERS=true
 
 WORKDIR /app
 
+RUN mkdir -p /app/render-bin
+
 COPY mcoi/ ./mcoi/
 COPY gateway/ ./gateway/
 COPY skills/ ./skills/
@@ -14,8 +16,10 @@ COPY schemas/ ./schemas/
 COPY docs/ ./docs/
 COPY tests/fixtures/ ./tests/fixtures/
 COPY DEPLOYMENT_STATUS.md KNOWN_LIMITATIONS_v0.1.md SECURITY_MODEL_v0.1.md ./
+COPY docker/render-uvicorn-wrapper.sh ./render-bin/uvicorn
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/* && \
+    chmod +x /app/render-bin/uvicorn && \
     if [ "$MULLU_INSTALL_WORKER_DEPS" = "true" ]; then \
       pip install --no-cache-dir -e "mcoi[all]"; \
     else \
@@ -29,6 +33,7 @@ ENV MULLU_ENV=pilot
 ENV PYTHONPATH=/app:/app/mcoi
 ENV MULLU_STATE_DIR=/data/state
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV PATH=/app/render-bin:$PATH
 
 # Run as non-root for security
 RUN adduser --disabled-password --gecos "" mullu && \
