@@ -362,6 +362,60 @@ def create_gateway_app(
             "reason": "platform_identity_seeded",
         }
 
+    def _seed_platform_tenant_gate_for_mapping(mapping: TenantMapping) -> dict[str, Any]:
+        """Seed the current platform tenant gate for a deployment mapping."""
+        tenant_gating = getattr(platform, "_tenant_gating", None)
+        if tenant_gating is None:
+            return {
+                "available": False,
+                "tenant_registered": False,
+                "status_updated": False,
+                "status": "unavailable",
+                "reason": "platform_tenant_gating_not_available",
+            }
+        if not hasattr(tenant_gating, "get_status") or not hasattr(tenant_gating, "register"):
+            return {
+                "available": False,
+                "tenant_registered": False,
+                "status_updated": False,
+                "status": "unavailable",
+                "reason": "platform_tenant_gating_registry_not_available",
+            }
+
+        from mcoi_runtime.governance.guards.tenant_gating import TenantGatingError, TenantStatus
+
+        gate = tenant_gating.get_status(mapping.tenant_id)
+        tenant_registered = False
+        status_updated = False
+        try:
+            if gate is None:
+                gate = tenant_gating.register(
+                    mapping.tenant_id,
+                    status=TenantStatus.ACTIVE,
+                    reason="deployment tenant mapping bootstrap",
+                )
+                tenant_registered = True
+            elif gate.status == TenantStatus.ONBOARDING and hasattr(tenant_gating, "update_status"):
+                gate = tenant_gating.update_status(
+                    mapping.tenant_id,
+                    TenantStatus.ACTIVE,
+                    reason="deployment tenant mapping bootstrap",
+                )
+                status_updated = True
+        except TenantGatingError as exc:
+            raise HTTPException(409, detail="platform tenant gate bootstrap rejected") from exc
+
+        if gate.status != TenantStatus.ACTIVE:
+            raise HTTPException(409, detail="platform tenant gate not active")
+
+        return {
+            "available": True,
+            "tenant_registered": tenant_registered,
+            "status_updated": status_updated,
+            "status": gate.status.value,
+            "reason": "platform_tenant_gate_seeded",
+        }
+
     def _require_reflex_deployment_witness_log_backed() -> None:
         if reflex_deployment_witness_log_backed or reflex_ephemeral_witness_log_allowed:
             return
@@ -3161,6 +3215,7 @@ def create_gateway_app(
             )
         except ValueError as exc:
             raise HTTPException(400, detail=str(exc)) from exc
+        platform_tenant = _seed_platform_tenant_gate_for_mapping(mapping)
         platform_identity = _seed_platform_identity_for_mapping(
             mapping,
             platform_roles=tuple(str(role).strip() for role in raw_platform_roles if str(role).strip()),
@@ -3180,6 +3235,7 @@ def create_gateway_app(
             "policy_version": resolved.policy_version,
             "created_at": resolved.created_at,
             "active_mappings": tenant_identity_store.count(),
+            "platform_tenant": platform_tenant,
             "platform_identity": platform_identity,
             "governed": True,
         }
