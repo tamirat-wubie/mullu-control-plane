@@ -30,6 +30,12 @@ from typing import Any, Callable
 
 from mcoi_runtime.core.lineage_query import parse_lineage_uri
 from gateway.audit_trace_verifier import AuditTraceVerifier
+from gateway.capability_dispatch import CapabilityIntent
+from gateway.capability_isolation import (
+    CapabilityIsolationPolicy,
+    build_isolated_capability_executor_from_env,
+)
+from gateway.command_spine import CapabilityPassport
 from gateway.physical_worker_canary import run_physical_worker_canary
 from scripts.validate_mcp_capability_manifest import validate_mcp_capability_manifest
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
@@ -75,6 +81,14 @@ class ConformanceCheck:
     check_id: str
     passed: bool
     evidence_ref: str
+    detail: str
+
+
+@dataclass(frozen=True, slots=True)
+class IsolationCanaryResult:
+    """Live restricted-worker canary result."""
+
+    passed: bool
     detail: str
 
 
@@ -249,12 +263,13 @@ def issue_conformance_certificate(
         "fabric admission requires certified capsule and capability sources",
     ))
 
-    dangerous_capability_isolation_canary_passed = _isolation_canary(environment)
+    isolation_canary = _isolation_canary(environment)
+    dangerous_capability_isolation_canary_passed = isolation_canary.passed
     checks.append(_check(
         "dangerous_capability_isolation_canary",
         dangerous_capability_isolation_canary_passed,
         "capability_isolation:execution_boundary",
-        "dangerous capability isolation has an acceptable execution plane for this environment",
+        isolation_canary.detail,
     ))
 
     streaming_budget_canary_passed = _streaming_budget_canary(repository_root)
@@ -555,13 +570,79 @@ def _fabric_read_model(capability_admission_gate: Any | None) -> dict[str, Any]:
     return {"enabled": True, **capability_admission_gate.read_model()}
 
 
-def _isolation_canary(environment: str) -> bool:
+def _isolation_canary(environment: str) -> IsolationCanaryResult:
     normalized = environment.strip().lower() or "local_dev"
     if normalized in {"local_dev", "test"}:
-        return True
-    return bool(
-        os.environ.get("MULLU_CAPABILITY_WORKER_URL", "").strip()
-        and os.environ.get("MULLU_CAPABILITY_WORKER_SECRET", "").strip()
+        return IsolationCanaryResult(
+            passed=True,
+            detail="local/test runtime does not require a live restricted worker",
+        )
+    endpoint_url = os.environ.get("MULLU_CAPABILITY_WORKER_URL", "").strip()
+    signing_secret = os.environ.get("MULLU_CAPABILITY_WORKER_SECRET", "").strip()
+    if not endpoint_url or not signing_secret:
+        return IsolationCanaryResult(
+            passed=False,
+            detail="restricted capability worker URL and signing secret are not both configured",
+        )
+    try:
+        executor = build_isolated_capability_executor_from_env()
+        if executor is None:
+            return IsolationCanaryResult(
+                passed=False,
+                detail="restricted capability worker executor could not be built",
+            )
+        passport = CapabilityPassport(
+            capability="financial.send_payment",
+            version="1",
+            risk_tier="high",
+            input_schema="financial_send_payment_input",
+            output_schema="financial_send_payment_output",
+            authority_required=("financial_admin",),
+            requires=("payment_provider",),
+            mutates_world=True,
+            external_system="payment_provider",
+            rollback_type="compensation",
+            proof_required_fields=("receipt_status",),
+            declared_effects=("payment_execution_probe",),
+            forbidden_effects=("unisolated_payment_execution",),
+            evidence_required=("restricted_worker_receipt",),
+        )
+        boundary = CapabilityIsolationPolicy(environment=normalized).boundary_for(passport)
+        result, receipt = executor.execute(
+            intent=CapabilityIntent("financial", "send_payment", {"amount": "0", "currency": "USD"}),
+            tenant_id="runtime-conformance-canary",
+            identity_id="runtime-conformance-canary",
+            boundary=boundary,
+            command_id="runtime-conformance-isolation-canary",
+            conversation_id="runtime-conformance",
+            metadata={"canary": "dangerous_capability_isolation"},
+        )
+    except Exception as exc:  # defensive: runtime certificate must surface bounded evidence.
+        return IsolationCanaryResult(
+            passed=False,
+            detail=f"restricted capability worker probe failed: {type(exc).__name__}",
+        )
+    passed = bool(
+        result is not None
+        and receipt.execution_plane == "isolated_worker"
+        and receipt.isolation_required is True
+        and bool(receipt.worker_id.strip())
+        and bool(receipt.evidence_refs)
+    )
+    if not passed:
+        return IsolationCanaryResult(
+            passed=False,
+            detail=(
+                "restricted capability worker probe returned incomplete isolation receipt "
+                f"execution_plane={receipt.execution_plane} evidence_count={len(receipt.evidence_refs)}"
+            ),
+        )
+    return IsolationCanaryResult(
+        passed=True,
+        detail=(
+            "restricted capability worker probe returned signed isolated_worker receipt "
+            f"worker_id={receipt.worker_id} evidence_count={len(receipt.evidence_refs)}"
+        ),
     )
 
 
