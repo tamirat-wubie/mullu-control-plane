@@ -225,6 +225,7 @@ class TestMiddlewareCertifies:
             "/authority/obligations/escalate-overdue",
             "/capability-fabric/capsule-admissions",
             "/capability-plans/plan-1/recover",
+            "/deployment/tenant-mappings",
         ]
         for p in certified_paths:
             client.post(p, json={})
