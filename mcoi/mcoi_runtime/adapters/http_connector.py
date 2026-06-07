@@ -102,7 +102,7 @@ class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         raise urllib.error.HTTPError(
-            newurl, code, f"redirect_blocked:{code}:{newurl}", headers, fp
+            newurl, code, f"redirect_blocked:{code}", headers, fp
         )
 
 
@@ -646,7 +646,7 @@ class HttpConnector:
                         finished_at=finished_at,
                         error_code=None if status is ConnectorStatus.SUCCEEDED else f"http_{response.status}",
                         metadata={
-                            "url": normalized_url,
+                            "url_hash": _sha256_text(normalized_url),
                             "method": method,
                             "status_code": response.status,
                             "content_type": content_type,

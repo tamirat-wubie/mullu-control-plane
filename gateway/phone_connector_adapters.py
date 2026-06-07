@@ -64,10 +64,8 @@ class PhoneConnectorCredential:
     def __post_init__(self) -> None:
         _require_text(self.connector_id, "connector_id")
         _require_text(self.access_token, "access_token")
-        _require_text(self.base_url, "base_url")
         _require_text(self.scope_id, "scope_id")
-        if not self.base_url.startswith(("https://", "http://")):
-            raise ValueError("base_url must be an HTTP(S) URL")
+        object.__setattr__(self, "base_url", _normalize_connector_base_url(self.base_url))
         object.__setattr__(self, "extra", dict(self.extra))
 
 
@@ -478,3 +476,30 @@ def _require_text(value: str, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field_name} must be a non-empty string")
     return value.strip()
+
+
+def _normalize_connector_base_url(base_url: str) -> str:
+    """Return a credential-safe connector base URL."""
+
+    value = _require_text(base_url, "base_url").rstrip("/")
+    if any(ord(ch) < 32 or ord(ch) == 127 for ch in value):
+        raise ValueError("base_url must not contain control characters")
+    parsed = urllib.parse.urlsplit(value)
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc or not parsed.hostname:
+        raise ValueError("base_url must be an absolute HTTP(S) URL")
+    if parsed.username or parsed.password:
+        raise ValueError("base_url must not include credentials")
+    if parsed.query or parsed.fragment:
+        raise ValueError("base_url must not include query or fragment")
+    hostname = parsed.hostname.lower()
+    if parsed.scheme.lower() == "http" and hostname not in {"localhost", "127.0.0.1", "::1"}:
+        raise ValueError("base_url must use HTTPS unless targeting loopback")
+    return urllib.parse.urlunsplit(
+        (
+            parsed.scheme.lower(),
+            parsed.netloc.lower(),
+            parsed.path.rstrip("/"),
+            "",
+            "",
+        )
+    )

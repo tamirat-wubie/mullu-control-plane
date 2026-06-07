@@ -1,0 +1,166 @@
+# Purpose: Render pilot deployment blueprint for the public Mullu gateway.
+# Governance scope: deployment topology, managed PostgreSQL binding, private capability worker binding, and public gateway witness endpoints.
+# Dependencies: Dockerfile, gateway.server, gateway.worker, gateway.capability_worker, Render managed PostgreSQL, and operator-provided secrets.
+# Invariants: no secret values are committed; gateway remains the only public service; private worker traffic stays internal.
+
+databases:
+  - name: mullu-pilot-postgres
+    databaseName: mullu
+    user: mullu
+    plan: basic-256mb
+    region: ohio
+    postgresMajorVersion: "16"
+    ipAllowList: []
+
+services:
+  - type: pserv
+    runtime: docker
+    name: mullu-capability-worker
+    plan: starter
+    region: ohio
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: python -m uvicorn gateway.capability_worker:app --host 0.0.0.0 --port 10000
+    envVars:
+      - key: MULLU_ENV
+        value: pilot
+      - key: MULLU_DB_BACKEND
+        value: postgresql
+      - key: MULLU_DB_URL
+        fromDatabase:
+          name: mullu-pilot-postgres
+          property: connectionString
+      - key: MULLU_CAPABILITY_WORKER_SECRET
+        generateValue: true
+      - key: MULLU_LLM_BACKEND
+        value: stub
+      - key: MULLU_PII_SCAN
+        value: "true"
+
+  - type: web
+    runtime: docker
+    name: mullu-gateway
+    plan: starter
+    region: ohio
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: /bin/sh -c "python -m uvicorn gateway.server:app --host 0.0.0.0 --port ${PORT:-10000}"
+    healthCheckPath: /health
+    domains:
+      - api.mullusi.com
+    disk:
+      name: mullu-gateway-state
+      mountPath: /data/state
+      sizeGB: 1
+    envVars:
+      - key: MULLU_ENV
+        value: pilot
+      - key: MULLU_API_AUTH_REQUIRED
+        value: "true"
+      - key: MULLU_DB_BACKEND
+        value: postgresql
+      - key: MULLU_DB_URL
+        fromDatabase:
+          name: mullu-pilot-postgres
+          property: connectionString
+      - key: MULLU_CORS_ORIGINS
+        value: https://dashboard.mullusi.com,https://mullusi.com,https://www.mullusi.com
+      - key: MULLU_ENCRYPTION_KEY
+        generateValue: true
+      - key: MULLU_STATE_DIR
+        value: /data/state
+      - key: MULLU_COMMAND_LEDGER_BACKEND
+        value: postgresql
+      - key: MULLU_COMMAND_LEDGER_DB_URL
+        fromDatabase:
+          name: mullu-pilot-postgres
+          property: connectionString
+      - key: MULLU_TENANT_IDENTITY_BACKEND
+        value: postgresql
+      - key: MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY
+        value: "true"
+      - key: MULLU_GATEWAY_DEFER_APPROVED_EXECUTION
+        value: "true"
+      - key: MULLU_COMMAND_ANCHOR_KEY_ID
+        value: render-pilot-command-anchor
+      - key: MULLU_COMMAND_ANCHOR_SECRET
+        generateValue: true
+      - key: MULLU_REQUIRE_COMMAND_ANCHOR
+        value: "true"
+      - key: MULLU_GATEWAY_APPROVAL_SECRET
+        generateValue: true
+      - key: MULLU_RUNTIME_WITNESS_KEY_ID
+        value: render-pilot-runtime-witness
+      - key: MULLU_RUNTIME_WITNESS_SECRET
+        sync: false
+      - key: MULLU_RUNTIME_CONFORMANCE_SECRET
+        sync: false
+      - key: MULLU_DEPLOYMENT_WITNESS_SECRET
+        sync: false
+      - key: MULLU_CAPABILITY_WORKER_URL
+        value: http://mullu-capability-worker:10000/capability/execute
+      - key: MULLU_CAPABILITY_WORKER_SECRET
+        fromService:
+          name: mullu-capability-worker
+          type: pserv
+          envVarKey: MULLU_CAPABILITY_WORKER_SECRET
+      - key: MULLU_LLM_BACKEND
+        value: anthropic
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: MULLU_PII_SCAN
+        value: "true"
+
+  - type: worker
+    runtime: docker
+    name: mullu-gateway-worker
+    plan: starter
+    region: ohio
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: python -m gateway.worker
+    envVars:
+      - key: MULLU_ENV
+        value: pilot
+      - key: MULLU_DB_BACKEND
+        value: postgresql
+      - key: MULLU_DB_URL
+        fromDatabase:
+          name: mullu-pilot-postgres
+          property: connectionString
+      - key: MULLU_COMMAND_LEDGER_BACKEND
+        value: postgresql
+      - key: MULLU_COMMAND_LEDGER_DB_URL
+        fromDatabase:
+          name: mullu-pilot-postgres
+          property: connectionString
+      - key: MULLU_TENANT_IDENTITY_BACKEND
+        value: postgresql
+      - key: MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY
+        value: "true"
+      - key: MULLU_GATEWAY_WORKER_ID
+        value: render-pilot-gateway-worker
+      - key: MULLU_COMMAND_ANCHOR_KEY_ID
+        value: render-pilot-command-anchor
+      - key: MULLU_COMMAND_ANCHOR_SECRET
+        fromService:
+          name: mullu-gateway
+          type: web
+          envVarKey: MULLU_COMMAND_ANCHOR_SECRET
+      - key: MULLU_REQUIRE_COMMAND_ANCHOR
+        value: "true"
+      - key: MULLU_CAPABILITY_WORKER_URL
+        value: http://mullu-capability-worker:10000/capability/execute
+      - key: MULLU_CAPABILITY_WORKER_SECRET
+        fromService:
+          name: mullu-capability-worker
+          type: pserv
+          envVarKey: MULLU_CAPABILITY_WORKER_SECRET
+      - key: MULLU_LLM_BACKEND
+        value: anthropic
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false

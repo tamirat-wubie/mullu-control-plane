@@ -26,6 +26,7 @@ from scripts.emit_deployment_upstream_blocker_receipt import (  # noqa: E402
     DEFAULT_BLOCKERS,
     DEFAULT_EVIDENCE_REFS,
     DEFAULT_NEXT_ACTIONS,
+    derive_receipt_inputs_from_upstream_readiness_report,
     emit_deployment_upstream_blocker_receipt,
     main,
     write_deployment_upstream_blocker_receipt,
@@ -97,6 +98,78 @@ def test_deployment_upstream_blocker_receipt_rejects_bad_gateway_url() -> None:
     assert "private_recovery_inventory_missing" not in str(excinfo.value)
 
 
+def test_upstream_readiness_report_derives_blocked_receipt_inputs(tmp_path: Path) -> None:
+    report_path = tmp_path / "upstream_api_readiness.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "apiProductionReadinessState": "Blocked",
+                "solverOutcome": "AwaitingEvidence",
+                "apiDnsPublicationAllowed": False,
+                "apiProvisioningAllowed": False,
+                "blockers": [
+                    "recovery_witness_not_ready",
+                    "manual_evidence_missing:runtime_host_ready",
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    inputs = derive_receipt_inputs_from_upstream_readiness_report(report_path)
+
+    assert inputs["upstream_state"] == "AwaitingEvidence"
+    assert inputs["api_provisioning_allowed"] is False
+    assert inputs["dns_publication_allowed"] is False
+    assert inputs["blockers"] == (
+        "recovery_witness_not_ready",
+        "manual_evidence_missing:runtime_host_ready",
+    )
+    assert "upstream-readiness-report:upstream_api_readiness.json" in inputs["evidence_refs"]
+
+
+def test_upstream_readiness_report_derives_ready_receipt_inputs(tmp_path: Path) -> None:
+    report_path = tmp_path / "upstream_ready.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "apiProductionReadinessState": "ReadyForDns",
+                "solverOutcome": "SolvedVerified",
+                "apiDnsPublicationAllowed": True,
+                "apiProvisioningAllowed": True,
+                "blockers": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    inputs = derive_receipt_inputs_from_upstream_readiness_report(report_path)
+
+    assert inputs["upstream_state"] == "SolvedVerified"
+    assert inputs["api_provisioning_allowed"] is True
+    assert inputs["dns_publication_allowed"] is True
+    assert inputs["blockers"] == ()
+    assert inputs["next_actions"] == ("continue with gateway DNS target binding and resolution receipts",)
+
+
+def test_upstream_readiness_report_rejects_malformed_blockers(tmp_path: Path) -> None:
+    report_path = tmp_path / "upstream_bad.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "solverOutcome": "AwaitingEvidence",
+                "apiDnsPublicationAllowed": False,
+                "apiProvisioningAllowed": False,
+                "blockers": ["ok", {"bad": "shape"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(RuntimeError, match="blockers must be a string list"):
+        derive_receipt_inputs_from_upstream_readiness_report(report_path)
+
+
 def test_deployment_upstream_blocker_cli_writes_blocked_receipt(tmp_path: Path, capsys) -> None:
     output_path = tmp_path / "deployment_upstream_blocker_receipt.json"
 
@@ -124,6 +197,51 @@ def test_deployment_upstream_blocker_cli_writes_blocked_receipt(tmp_path: Path, 
     assert "runtime_witness_registry_has_no_closed_products" in payload["blockers"]
     assert "mullusi-site-pr-58" in payload["evidence_refs"]
     assert "upstream-script:scripts/check-api-production-readiness.mjs" in payload["evidence_refs"]
+
+
+def test_deployment_upstream_blocker_cli_uses_upstream_readiness_report(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    report_path = tmp_path / "upstream_api_readiness.json"
+    output_path = tmp_path / "deployment_upstream_blocker_receipt.json"
+    report_path.write_text(
+        json.dumps(
+            {
+                "apiProductionReadinessState": "Blocked",
+                "solverOutcome": "AwaitingEvidence",
+                "apiDnsPublicationAllowed": False,
+                "apiProvisioningAllowed": False,
+                "blockers": ["recovery_witness_not_ready"],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    exit_code = main(
+        [
+            "--target-gateway-url",
+            "https://api.mullusi.com",
+            "--upstream-readiness-report",
+            str(report_path),
+            "--output",
+            str(output_path),
+            "--json",
+        ],
+        now_utc=datetime(2026, 5, 24, 12, 0, tzinfo=UTC),
+    )
+    captured = capsys.readouterr()
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    stdout_payload = json.loads(captured.out)
+
+    assert exit_code == 1
+    assert payload["ready"] is False
+    assert payload["upstream_state"] == "AwaitingEvidence"
+    assert payload["api_provisioning_allowed"] is False
+    assert payload["dns_publication_allowed"] is False
+    assert payload["blockers"] == ["recovery_witness_not_ready"]
+    assert "upstream-readiness-report:upstream_api_readiness.json" in payload["evidence_refs"]
+    assert stdout_payload["receipt_id"] == payload["receipt_id"]
 
 
 def test_deployment_upstream_blocker_cli_can_emit_ready_receipt(tmp_path: Path, capsys) -> None:

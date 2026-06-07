@@ -126,6 +126,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert_ordered("foundation_source_control_boundary", "foundation_source_control_review_checklist_boundary")
     assert_ordered("foundation_source_control_review_checklist_boundary", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_source_control_boundary", "foundation_operator_readiness_boundary")
+    assert_ordered("foundation_learning_path_boundary", "foundation_learning_loop_rehearsal_boundary")
+    assert_ordered("foundation_learning_loop_rehearsal_boundary", "foundation_concept_glossary_rehearsal_boundary")
+    assert_ordered("foundation_concept_glossary_rehearsal_boundary", "foundation_architecture_map_boundary")
     assert_ordered("foundation_external_infrastructure_boundary", "foundation_runtime_secret_handoff_rehearsal_boundary")
     assert_ordered(
         "foundation_runtime_secret_handoff_rehearsal_boundary",
@@ -168,6 +171,10 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert_ordered("foundation_deployment_witness_evidence_handoff_boundary", "foundation_deployment_witness_evidence_ledger_routing_boundary")
     assert_ordered("foundation_legal_business_boundary", "foundation_legal_business_question_rehearsal_boundary")
+    assert_ordered("foundation_legal_business_question_rehearsal_boundary", "foundation_legal_review_deferral_boundary")
+    assert_ordered("foundation_legal_review_deferral_boundary", "foundation_company_formation_deferral_boundary")
+    assert_ordered("foundation_company_formation_deferral_boundary", "foundation_patent_disclosure_deferral_boundary")
+    assert_ordered("foundation_patent_disclosure_deferral_boundary", "foundation_product_scope_boundary")
     assert_ordered("foundation_pilot_deferral_boundary", "foundation_pilot_deferral_rehearsal_boundary")
     assert_ordered("foundation_pilot_deferral_rehearsal_boundary", "foundation_reassessment_gate_boundary")
     assert_ordered("foundation_support_readiness_boundary", "foundation_support_triage_rehearsal_boundary")

@@ -141,6 +141,8 @@ class SnapshotStore:
         )
 
         snap_dir = self._snapshot_dir(snapshot_id)
+        if snap_dir.exists():
+            raise PersistenceWriteError("snapshot already exists")
         metadata_dict = {
             "snapshot_id": metadata.snapshot_id,
             "created_at": metadata.created_at,

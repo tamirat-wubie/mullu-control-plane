@@ -50,6 +50,34 @@ def _minimal_process_environment(extra_env: Mapping[str, str]) -> dict[str, str]
     return environment
 
 
+def _environment_key_invalid(key: object) -> bool:
+    return not isinstance(key, str) or not key or "=" in key or "\0" in key
+
+
+def _environment_value_invalid(value: object) -> bool:
+    return not isinstance(value, str) or "\0" in value
+
+
+def _invalid_environment_key_labels(environment: Mapping[object, object]) -> tuple[str, ...]:
+    return tuple(
+        sorted(
+            key if isinstance(key, str) else "<non_string_key>"
+            for key in environment
+            if _environment_key_invalid(key)
+        )
+    )
+
+
+def _invalid_environment_value_key_labels(environment: Mapping[object, object]) -> tuple[str, ...]:
+    return tuple(
+        sorted(
+            key if isinstance(key, str) else "<non_string_key>"
+            for key, value in environment.items()
+            if _environment_value_invalid(value)
+        )
+    )
+
+
 @dataclass(frozen=True, slots=True)
 class ShellSandboxPolicy:
     """Deterministic filesystem and environment boundary for shell execution."""
@@ -69,6 +97,8 @@ class ShellSandboxPolicy:
         for key in self.allowed_environment_keys:
             if not isinstance(key, str) or not key.strip():
                 raise ValueError("allowed_environment_keys must contain non-empty strings")
+            if _environment_key_invalid(key):
+                raise ValueError("allowed_environment_keys contains invalid key")
         if not isinstance(self.allow_inherited_environment, bool):
             raise ValueError("allow_inherited_environment must be a boolean")
         if not isinstance(self.require_cwd, bool):
@@ -120,6 +150,30 @@ class ShellSandboxPolicy:
         self,
         environment: Mapping[str, str],
     ) -> tuple[dict[str, str] | None, ExecutionFailure | None]:
+        invalid_keys = _invalid_environment_key_labels(environment)
+        if invalid_keys:
+            return None, ExecutionFailure(
+                code="sandbox_denied",
+                message="shell sandbox denied",
+                details={
+                    "reason": "environment_key_invalid",
+                    "environment_keys": invalid_keys,
+                    **self.metadata(),
+                },
+            )
+
+        invalid_value_keys = _invalid_environment_value_key_labels(environment)
+        if invalid_value_keys:
+            return None, ExecutionFailure(
+                code="sandbox_denied",
+                message="shell sandbox denied",
+                details={
+                    "reason": "environment_value_invalid",
+                    "environment_keys": invalid_value_keys,
+                    **self.metadata(),
+                },
+            )
+
         if self.allow_inherited_environment:
             return (dict(environment) if environment else None), None
 

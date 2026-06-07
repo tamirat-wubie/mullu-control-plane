@@ -1,0 +1,186 @@
+{
+  "accounting_readiness_claimed": false,
+  "blocked_claims": [
+    "company formation",
+    "entity registration",
+    "entity name reservation",
+    "legal entity identifier",
+    "tax identifier recording",
+    "registered agent record",
+    "business address record",
+    "business bank account",
+    "payment processor account",
+    "payroll setup",
+    "contractor agreement",
+    "investor agreement",
+    "ownership/equity allocation",
+    "accounting readiness",
+    "insurance readiness",
+    "legal clearance",
+    "money movement",
+    "customer access",
+    "external publication",
+    "deployment readiness"
+  ],
+  "business_address_recorded": false,
+  "business_bank_account_allowed": false,
+  "company_formation_claimed": false,
+  "contractor_agreement_allowed": false,
+  "customer_access_allowed": false,
+  "deferral_labels": [
+    "formation_scope_gate",
+    "entity_registration_gate",
+    "entity_name_reservation_gate",
+    "legal_entity_identifier_gate",
+    "tax_identifier_gate",
+    "registered_agent_address_gate",
+    "business_bank_account_gate",
+    "payment_processor_account_gate",
+    "payroll_setup_gate",
+    "contractor_agreement_gate",
+    "investor_agreement_gate",
+    "ownership_equity_gate",
+    "accounting_readiness_gate",
+    "insurance_readiness_gate",
+    "legal_clearance_gate",
+    "money_movement_gate",
+    "customer_access_gate",
+    "publication_deployment_gate",
+    "operator_reassessment_gate"
+  ],
+  "deployment_allowed": false,
+  "entity_name_reserved": false,
+  "entity_registration_allowed": false,
+  "external_publication_allowed": false,
+  "insurance_readiness_claimed": false,
+  "investor_agreement_allowed": false,
+  "legal_clearance_claimed": false,
+  "legal_entity_identifier_recorded": false,
+  "money_movement_allowed": false,
+  "next_action": "keep company-formation deferral local until qualified review, permitted storage rules, formation evidence handling, and operator reassessment evidence exist",
+  "ownership_equity_allocation_claimed": false,
+  "payment_processor_account_allowed": false,
+  "payroll_setup_allowed": false,
+  "registered_agent_recorded": false,
+  "schema_version": "foundation.company_formation_deferral.v1",
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "public_safe_note": "Formation scope gate only; formation scope closure is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "formation_scope_gate",
+      "surface_type": "blocked_formation_scope_label"
+    },
+    {
+      "public_safe_note": "Entity registration gate only; entity registration is not performed or claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "entity_registration_gate",
+      "surface_type": "blocked_entity_registration_label"
+    },
+    {
+      "public_safe_note": "Entity name reservation gate only; entity names are not reserved or recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "entity_name_reservation_gate",
+      "surface_type": "blocked_entity_name_label"
+    },
+    {
+      "public_safe_note": "Legal entity identifier gate only; legal-entity identifiers are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "legal_entity_identifier_gate",
+      "surface_type": "blocked_legal_entity_identifier_label"
+    },
+    {
+      "public_safe_note": "Tax identifier gate only; tax identifiers are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "tax_identifier_gate",
+      "surface_type": "blocked_tax_identifier_label"
+    },
+    {
+      "public_safe_note": "Registered-agent/address gate only; registered-agent and business-address facts are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "registered_agent_address_gate",
+      "surface_type": "blocked_registered_agent_address_label"
+    },
+    {
+      "public_safe_note": "Business bank account gate only; business bank accounts are not opened or claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "business_bank_account_gate",
+      "surface_type": "blocked_business_bank_account_label"
+    },
+    {
+      "public_safe_note": "Payment processor account gate only; payment processor accounts are not activated or claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "payment_processor_account_gate",
+      "surface_type": "blocked_payment_processor_account_label"
+    },
+    {
+      "public_safe_note": "Payroll setup gate only; payroll setup is not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "payroll_setup_gate",
+      "surface_type": "blocked_payroll_setup_label"
+    },
+    {
+      "public_safe_note": "Contractor agreement gate only; contractor agreements are not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "contractor_agreement_gate",
+      "surface_type": "blocked_contractor_agreement_label"
+    },
+    {
+      "public_safe_note": "Investor agreement gate only; investor agreements are not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "investor_agreement_gate",
+      "surface_type": "blocked_investor_agreement_label"
+    },
+    {
+      "public_safe_note": "Ownership/equity gate only; ownership and equity allocation closure is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "ownership_equity_gate",
+      "surface_type": "blocked_ownership_equity_label"
+    },
+    {
+      "public_safe_note": "Accounting readiness gate only; accounting readiness is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "accounting_readiness_gate",
+      "surface_type": "blocked_accounting_readiness_label"
+    },
+    {
+      "public_safe_note": "Insurance readiness gate only; insurance readiness is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "insurance_readiness_gate",
+      "surface_type": "blocked_insurance_readiness_label"
+    },
+    {
+      "public_safe_note": "Legal clearance gate only; legal clearance is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "legal_clearance_gate",
+      "surface_type": "blocked_legal_clearance_label"
+    },
+    {
+      "public_safe_note": "Money movement gate only; money movement is not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "money_movement_gate",
+      "surface_type": "blocked_money_movement_label"
+    },
+    {
+      "public_safe_note": "Customer access gate only; customer access is not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "customer_access_gate",
+      "surface_type": "blocked_customer_access_label"
+    },
+    {
+      "public_safe_note": "Publication/deployment gate only; external publication and deployment are not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "publication_deployment_gate",
+      "surface_type": "blocked_publication_deployment_label"
+    },
+    {
+      "public_safe_note": "Operator reassessment gate only; company-formation promotion is not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_reassessment_gate",
+      "surface_type": "local_gate_label"
+    }
+  ],
+  "tax_identifier_recorded": false,
+  "witness_id": "foundation_company_formation_deferral_witness.awaiting_evidence.v1"
+}

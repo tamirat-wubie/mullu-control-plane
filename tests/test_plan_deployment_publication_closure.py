@@ -263,7 +263,10 @@ def test_deployment_closure_plan_maps_upstream_blocker_receipt(tmp_path: Path) -
     assert action.action_type == "upstream-gate-closure"
     assert action.approval_required is True
     assert "emit_deployment_upstream_blocker_receipt.py" in action.command
+    assert "--upstream-readiness-report" in action.command
+    assert "UPSTREAM_API_READINESS_REPORT" in action.command
     assert "validate_deployment_upstream_blocker_receipt.py" in action.command
+    assert "upstream_api_production_readiness_report" in action.evidence_required
     assert "deployment_upstream_blocker_receipt" in action.evidence_required
     assert "dns_publication_authority" in action.evidence_required
 

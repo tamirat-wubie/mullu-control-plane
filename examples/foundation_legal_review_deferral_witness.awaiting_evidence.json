@@ -1,0 +1,161 @@
+{
+  "blocked_claims": [
+    "legal review completion",
+    "qualified reviewer identity recording",
+    "legal conclusion",
+    "legal clearance",
+    "trademark clearance",
+    "patent protection",
+    "company formation",
+    "tax readiness",
+    "terms/privacy approval",
+    "compliance clearance",
+    "contractor agreement",
+    "paid launch",
+    "payment processing",
+    "customer access",
+    "personal data collection",
+    "money movement",
+    "external publication",
+    "deployment readiness"
+  ],
+  "company_formation_allowed": false,
+  "compliance_clearance_claimed": false,
+  "contractor_agreement_allowed": false,
+  "customer_access_allowed": false,
+  "deferral_labels": [
+    "qualified_review_scope_gate",
+    "reviewer_identity_privacy_gate",
+    "legal_conclusion_gate",
+    "legal_clearance_gate",
+    "trademark_clearance_gate",
+    "patent_protection_gate",
+    "company_formation_gate",
+    "tax_readiness_gate",
+    "terms_privacy_gate",
+    "compliance_clearance_gate",
+    "contractor_agreement_gate",
+    "paid_launch_gate",
+    "payment_processing_gate",
+    "customer_data_gate",
+    "publication_deployment_gate",
+    "operator_reassessment_gate"
+  ],
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "legal_clearance_claimed": false,
+  "legal_conclusion_recorded": false,
+  "legal_review_complete_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "keep legal-review deferral local until qualified review, permitted storage rules, reviewer handoff, conclusion handling, and operator reassessment evidence exist",
+  "paid_launch_allowed": false,
+  "patent_protection_claimed": false,
+  "payment_processing_allowed": false,
+  "personal_data_collection_allowed": false,
+  "qualified_reviewer_identity_recorded": false,
+  "schema_version": "foundation.legal_review_deferral.v1",
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "public_safe_note": "Qualified review scope gate only; review scope closure is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "qualified_review_scope_gate",
+      "surface_type": "blocked_review_scope_label"
+    },
+    {
+      "public_safe_note": "Reviewer identity privacy gate only; reviewer identity is not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "reviewer_identity_privacy_gate",
+      "surface_type": "blocked_reviewer_identity_label"
+    },
+    {
+      "public_safe_note": "Legal conclusion gate only; legal conclusions are not recorded or claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "legal_conclusion_gate",
+      "surface_type": "blocked_conclusion_label"
+    },
+    {
+      "public_safe_note": "Legal clearance gate only; legal clearance is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "legal_clearance_gate",
+      "surface_type": "blocked_legal_clearance_label"
+    },
+    {
+      "public_safe_note": "Trademark clearance gate only; trademark clearance is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "trademark_clearance_gate",
+      "surface_type": "blocked_trademark_clearance_label"
+    },
+    {
+      "public_safe_note": "Patent protection gate only; patent protection is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "patent_protection_gate",
+      "surface_type": "blocked_patent_protection_label"
+    },
+    {
+      "public_safe_note": "Company formation gate only; company formation is not performed or claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "company_formation_gate",
+      "surface_type": "blocked_company_formation_label"
+    },
+    {
+      "public_safe_note": "Tax readiness gate only; tax readiness is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "tax_readiness_gate",
+      "surface_type": "blocked_tax_readiness_label"
+    },
+    {
+      "public_safe_note": "Terms/privacy gate only; terms and privacy readiness are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "terms_privacy_gate",
+      "surface_type": "blocked_terms_privacy_label"
+    },
+    {
+      "public_safe_note": "Compliance clearance gate only; compliance clearance is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "compliance_clearance_gate",
+      "surface_type": "blocked_compliance_clearance_label"
+    },
+    {
+      "public_safe_note": "Contractor agreement gate only; contractor agreements are not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "contractor_agreement_gate",
+      "surface_type": "blocked_contractor_agreement_label"
+    },
+    {
+      "public_safe_note": "Paid launch gate only; paid launch is not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "paid_launch_gate",
+      "surface_type": "blocked_paid_launch_label"
+    },
+    {
+      "public_safe_note": "Payment processing gate only; payment processing is not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "payment_processing_gate",
+      "surface_type": "blocked_payment_processing_label"
+    },
+    {
+      "public_safe_note": "Customer data gate only; customer access and personal data collection are not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "customer_data_gate",
+      "surface_type": "blocked_customer_data_label"
+    },
+    {
+      "public_safe_note": "Publication/deployment gate only; external publication and deployment are not allowed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "publication_deployment_gate",
+      "surface_type": "blocked_publication_deployment_label"
+    },
+    {
+      "public_safe_note": "Operator reassessment gate only; legal/business promotion is not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_reassessment_gate",
+      "surface_type": "local_gate_label"
+    }
+  ],
+  "tax_readiness_claimed": false,
+  "terms_privacy_approved": false,
+  "trademark_clearance_claimed": false,
+  "witness_id": "foundation_legal_review_deferral_witness.awaiting_evidence.v1"
+}

@@ -156,6 +156,7 @@ class TestRedirectBlocking:
                 "http://127.0.0.1/admin",
             )
         assert "redirect_blocked" in str(exc_info.value.msg)
+        assert "127.0.0.1" not in str(exc_info.value.msg)
 
     def test_connector_surfaces_redirect_blocked_error(self):
         """When opener raises redirect_blocked HTTPError, connector returns it.
@@ -169,7 +170,7 @@ class TestRedirectBlocking:
         fake_opener = MagicMock()
         fake_opener.open.side_effect = urllib.error.HTTPError(
             "http://evil.com/internal", 302,
-            "redirect_blocked:302:http://127.0.0.1/admin",
+            "redirect_blocked:302",
             {}, None,
         )
         with (
@@ -187,6 +188,7 @@ class TestRedirectBlocking:
             result = connector.invoke(desc, {"url": "https://legit.example.com/page"})
         assert result.status is ConnectorStatus.FAILED
         assert "redirect_blocked" in result.error_code
+        assert "127.0.0.1" not in result.error_code
 
 
 # ---------------------------------------------------------------------------

@@ -69,7 +69,15 @@ def test_deployment_status_requires_orchestration_receipt_validation() -> None:
     assert "python scripts/validate_deployment_publication_closure_plan_schema.py --strict" in content
     assert "python scripts/validate_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_validation.json" in content
     assert ".change_assurance/deployment_publication_closure_validation.json" in content
-    assert "python scripts/emit_deployment_upstream_blocker_receipt.py --target-gateway-url \"$MULLU_GATEWAY_URL\" --output .change_assurance/deployment_upstream_blocker_receipt.json --json" in content
+    assert "collect_deployment_publication_evidence_packet.py" in content
+    assert "validate_deployment_publication_evidence_packet.py" in content
+    assert "emit_deployment_publication_operator_input_request.py" in content
+    assert "validate_deployment_publication_operator_input_request.py" in content
+    assert "UPSTREAM_API_READINESS_REPORT" in content
+    assert "deployment_publication_operator_input_request.json" in content
+    assert "deployment_publication_operator_input_request_validation.json" in content
+    assert "--upstream-readiness-report \"$env:UPSTREAM_API_READINESS_REPORT\"" in content
+    assert "python scripts/emit_deployment_upstream_blocker_receipt.py --target-gateway-url \"$env:MULLU_GATEWAY_URL\" --upstream-readiness-report \"$env:UPSTREAM_API_READINESS_REPORT\" --output .change_assurance\\deployment_upstream_blocker_receipt.json --json" in content
     assert "python scripts/validate_deployment_upstream_blocker_receipt.py --receipt .change_assurance/deployment_upstream_blocker_receipt.json --output .change_assurance/deployment_upstream_blocker_receipt_validation.json --require-ready" in content
     assert "`api.mullusi.com` remains `AwaitingEvidence` until upstream recovery" in content
     assert "python scripts/emit_gateway_dns_target_binding_receipt.py --gateway-host \"$MULLU_GATEWAY_HOST\" --gateway-url \"$MULLU_GATEWAY_URL\" --expected-environment \"$MULLU_EXPECTED_RUNTIME_ENV\" --record-type \"$MULLU_GATEWAY_DNS_RECORD_TYPE\" --target \"$MULLU_GATEWAY_DNS_TARGET\" --provider \"$MULLU_DNS_PROVIDER\" --output .change_assurance/gateway_dns_target_binding_receipt.json --json" in content

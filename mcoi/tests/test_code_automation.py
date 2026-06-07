@@ -1426,6 +1426,52 @@ class TestM3ResolveBeforeOperate:
         content = adapter.read_file("alias.py")
         assert content == "ALIASED\n"
 
+    def test_apply_patch_outside_root_via_symlink_file_blocked(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        outside = tmp_path / "secret.py"
+        outside.write_text("VALUE = 'secret'\n", encoding="utf-8")
+        try:
+            (ws / "leak.py").symlink_to(outside)
+        except (OSError, NotImplementedError):
+            pytest.skip("symlinks not supported in this environment")
+        adapter = _adapter(ws)
+        diff = (
+            "--- a/leak.py\n"
+            "+++ b/leak.py\n"
+            "@@ -1,1 +1,1 @@\n"
+            "-VALUE = 'secret'\n"
+            "+VALUE = 'changed'\n"
+        )
+
+        result = adapter.apply_patch("p-symlink-outside", "leak.py", diff)
+
+        assert result.status is PatchStatus.BLOCKED
+        assert outside.read_text(encoding="utf-8") == "VALUE = 'secret'\n"
+        assert (ws / "leak.py").is_symlink()
+
+    def test_apply_patch_in_workspace_symlink_file_updates_resolved_target(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        target = ws / "src" / "real.py"
+        target.write_text("VALUE = 'old'\n", encoding="utf-8")
+        try:
+            (ws / "alias.py").symlink_to(target)
+        except (OSError, NotImplementedError):
+            pytest.skip("symlinks not supported in this environment")
+        adapter = _adapter(ws)
+        diff = (
+            "--- a/alias.py\n"
+            "+++ b/alias.py\n"
+            "@@ -1,1 +1,1 @@\n"
+            "-VALUE = 'old'\n"
+            "+VALUE = 'new'\n"
+        )
+
+        result = adapter.apply_patch("p-symlink-inside", "alias.py", diff)
+
+        assert result.status is PatchStatus.APPLIED
+        assert target.read_text(encoding="utf-8") == "VALUE = 'new'\n"
+        assert (ws / "alias.py").is_symlink()
+
 
 # --- Structured truncation flags (M9) ---
 

@@ -69,6 +69,28 @@
       "summary": "Learning-path preparation drafts local learning goals, glossary loops, command practice, reading queues, exercises, error logs, verification habits, and help-request boundaries without skill-readiness, training-completion, certification, paid-course, mentor, hiring, delegation, public-tutorial, curriculum-completion, production-operation, customer-support, external-account, or deployment claims."
     },
     {
+      "family_id": "learning_loop_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_LEARNING_LOOP_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_learning_loop_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_learning_loop_rehearsal_boundary.py",
+        "tests/test_validate_foundation_learning_loop_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Learning-loop rehearsal records one local practice-loop label set without skill readiness, training completion, certification, paid-course activation, mentor assignment, hiring readiness, delegation readiness, support readiness, publication, external-account use, private schedule recording, private health recording, spending, legal/business action, source-control publication, or deployment claims."
+    },
+    {
+      "family_id": "concept_glossary_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_CONCEPT_GLOSSARY_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_concept_glossary_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_concept_glossary_rehearsal_boundary.py",
+        "tests/test_validate_foundation_concept_glossary_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Concept glossary rehearsal records one local vocabulary clarification label set without canonical definition, glossary completeness, concept mastery, technical readiness, training completion, comprehension proof, public docs readiness, product readiness, customer readiness, private-value recording, legal/business action, spending, money movement, source-control publication, external publication, or deployment claims."
+    },
+    {
       "family_id": "architecture_map_boundary",
       "required_evidence": [
         "docs/FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md",
@@ -705,6 +727,39 @@
       "summary": "Legal-business-question rehearsal records local legal question labels without legal conclusions, company formation, patent claims, trademark claims, contract commitments, tax filings, regulatory conclusions, external publication, or deployment claims."
     },
     {
+      "family_id": "legal_review_deferral_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_LEGAL_REVIEW_DEFERRAL_BOUNDARY.md",
+        "examples/foundation_legal_review_deferral_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_legal_review_deferral_boundary.py",
+        "tests/test_validate_foundation_legal_review_deferral_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Legal-review deferral records local stop-rule labels without review completion, reviewer identity recording, legal conclusions, legal clearance, trademark clearance, patent protection, company formation, tax readiness, terms/privacy approval, compliance clearance, contractor agreements, paid launch, payment processing, customer access, personal data, money movement, external publication, or deployment claims."
+    },
+    {
+      "family_id": "company_formation_deferral_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_COMPANY_FORMATION_DEFERRAL_BOUNDARY.md",
+        "examples/foundation_company_formation_deferral_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_company_formation_deferral_boundary.py",
+        "tests/test_validate_foundation_company_formation_deferral_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Company-formation deferral records local stop-rule labels without formation, registration, names, identifiers, tax records, registered-agent records, business-address records, bank accounts, payment processor accounts, payroll, contractor agreements, investor agreements, ownership/equity allocation, accounting readiness, insurance readiness, legal clearance, money movement, customer access, external publication, or deployment claims."
+    },
+    {
+      "family_id": "patent_disclosure_deferral_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_PATENT_DISCLOSURE_DEFERRAL_BOUNDARY.md",
+        "examples/foundation_patent_disclosure_deferral_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_patent_disclosure_deferral_boundary.py",
+        "tests/test_validate_foundation_patent_disclosure_deferral_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Patent/disclosure deferral records local stop-rule labels without patent filing, patent protection, invention finality, authorship finality, ownership finality, prior-art conclusions, novelty, patentability, disclosure approval, publication, secrecy protection, legal clearance, company formation, paid launch, money movement, customer access, or deployment claims."
+    },
+    {
       "family_id": "product_scope_boundary",
       "required_evidence": [
         "docs/FOUNDATION_PRODUCT_SCOPE_BOUNDARY.md",
@@ -963,6 +1018,8 @@
     "python scripts/validate_foundation_operator_readiness_boundary.py",
     "python scripts/validate_foundation_solo_daily_loop_boundary.py",
     "python scripts/validate_foundation_learning_path_boundary.py",
+    "python scripts/validate_foundation_learning_loop_rehearsal_boundary.py",
+    "python scripts/validate_foundation_concept_glossary_rehearsal_boundary.py",
     "python scripts/validate_foundation_architecture_map_boundary.py",
     "python scripts/validate_foundation_system_boundary_inventory_boundary.py",
     "python scripts/validate_foundation_module_inventory_boundary.py",
@@ -1017,6 +1074,9 @@
     "python scripts/validate_foundation_domain_email_boundary.py",
     "python scripts/validate_foundation_legal_business_boundary.py",
     "python scripts/validate_foundation_legal_business_question_rehearsal_boundary.py",
+    "python scripts/validate_foundation_legal_review_deferral_boundary.py",
+    "python scripts/validate_foundation_company_formation_deferral_boundary.py",
+    "python scripts/validate_foundation_patent_disclosure_deferral_boundary.py",
     "python scripts/validate_foundation_product_scope_boundary.py",
     "python scripts/validate_foundation_capability_roadmap_boundary.py",
     "python scripts/validate_foundation_agentic_management_boundary.py",

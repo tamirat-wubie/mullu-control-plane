@@ -24,7 +24,7 @@ import re
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
@@ -90,6 +90,23 @@ class GatewayPublicationDispatch:
 
 
 @dataclass(frozen=True, slots=True)
+class GatewayPublicationDispatchPlan:
+    """Non-effecting gateway publication workflow dispatch plan."""
+
+    repository: str
+    workflow_file: str
+    gateway_host: str
+    gateway_url: str
+    expected_environment: str
+    apply_ingress: bool
+    dispatch_witness: bool
+    skip_preflight_endpoint_probes: bool
+    dispatch_command: list[str]
+    artifact_name: str
+    artifact_dir: Path
+
+
+@dataclass(frozen=True, slots=True)
 class GatewayPublicationDispatchInputs:
     """Validated inputs used for one gateway publication dispatch."""
 
@@ -100,6 +117,48 @@ class GatewayPublicationDispatchInputs:
     apply_ingress: bool
     dispatch_witness: bool
     skip_preflight_endpoint_probes: bool
+
+
+def build_gateway_publication_dispatch_plan(
+    *,
+    gateway_host: str,
+    expected_environment: str,
+    gateway_url: str = "",
+    apply_ingress: bool = False,
+    dispatch_witness: bool = False,
+    skip_preflight_endpoint_probes: bool = False,
+    repository: str = DEFAULT_REPOSITORY,
+    workflow_file: str = DEFAULT_WORKFLOW_FILE,
+    artifact_name: str = DEFAULT_ARTIFACT_NAME,
+    download_dir: Path = DEFAULT_DOWNLOAD_DIR,
+) -> GatewayPublicationDispatchPlan:
+    """Build the workflow dispatch command without remote reads or writes."""
+    normalized_host = _require_gateway_host(gateway_host)
+    normalized_gateway_url = _require_gateway_url(gateway_url) if gateway_url else ""
+    _require_expected_environment(expected_environment)
+    dispatch_command = _build_gateway_publication_dispatch_command(
+        repository=repository,
+        workflow_file=workflow_file,
+        gateway_host=normalized_host,
+        gateway_url=normalized_gateway_url,
+        expected_environment=expected_environment,
+        apply_ingress=apply_ingress,
+        dispatch_witness=dispatch_witness,
+        skip_preflight_endpoint_probes=skip_preflight_endpoint_probes,
+    )
+    return GatewayPublicationDispatchPlan(
+        repository=repository,
+        workflow_file=workflow_file,
+        gateway_host=normalized_host,
+        gateway_url=normalized_gateway_url,
+        expected_environment=expected_environment,
+        apply_ingress=apply_ingress,
+        dispatch_witness=dispatch_witness,
+        skip_preflight_endpoint_probes=skip_preflight_endpoint_probes,
+        dispatch_command=dispatch_command,
+        artifact_name=artifact_name,
+        artifact_dir=download_dir,
+    )
 
 
 def dispatch_gateway_publication(
@@ -142,28 +201,16 @@ def dispatch_gateway_publication(
     )
 
     dispatched_at = _utc_now()
-    command = [
-        "gh",
-        "workflow",
-        "run",
-        workflow_file,
-        "--repo",
-        repository,
-        "--ref",
-        "main",
-        "--field",
-        f"gateway_host={normalized_host}",
-        "--field",
-        f"expected_environment={expected_environment}",
-        "--field",
-        f"apply_ingress={_bool_field(apply_ingress)}",
-        "--field",
-        f"dispatch_witness={_bool_field(dispatch_witness)}",
-        "--field",
-        f"skip_preflight_endpoint_probes={_bool_field(skip_preflight_endpoint_probes)}",
-    ]
-    if normalized_gateway_url:
-        command.extend(["--field", f"gateway_url={normalized_gateway_url}"])
+    command = _build_gateway_publication_dispatch_command(
+        repository=repository,
+        workflow_file=workflow_file,
+        gateway_host=normalized_host,
+        gateway_url=normalized_gateway_url,
+        expected_environment=expected_environment,
+        apply_ingress=apply_ingress,
+        dispatch_witness=dispatch_witness,
+        skip_preflight_endpoint_probes=skip_preflight_endpoint_probes,
+    )
     _run_checked(command_runner, command)
 
     run_id = _wait_for_dispatched_run(
@@ -231,6 +278,42 @@ def _require_expected_environment(expected_environment: str) -> None:
         raise RuntimeError(
             f"expected environment must be one of {list(VALID_ENVIRONMENTS)}"
         )
+
+
+def _build_gateway_publication_dispatch_command(
+    *,
+    repository: str,
+    workflow_file: str,
+    gateway_host: str,
+    gateway_url: str,
+    expected_environment: str,
+    apply_ingress: bool,
+    dispatch_witness: bool,
+    skip_preflight_endpoint_probes: bool,
+) -> list[str]:
+    command = [
+        "gh",
+        "workflow",
+        "run",
+        workflow_file,
+        "--repo",
+        repository,
+        "--ref",
+        "main",
+        "--field",
+        f"gateway_host={gateway_host}",
+        "--field",
+        f"expected_environment={expected_environment}",
+        "--field",
+        f"apply_ingress={_bool_field(apply_ingress)}",
+        "--field",
+        f"dispatch_witness={_bool_field(dispatch_witness)}",
+        "--field",
+        f"skip_preflight_endpoint_probes={_bool_field(skip_preflight_endpoint_probes)}",
+    ]
+    if gateway_url:
+        command.extend(["--field", f"gateway_url={gateway_url}"])
+    return command
 
 
 def _read_secret_names(*, repository: str, runner: CommandRunner) -> frozenset[str]:
@@ -533,6 +616,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--download-dir", default=str(DEFAULT_DOWNLOAD_DIR))
     parser.add_argument("--timeout-seconds", type=int, default=900)
     parser.add_argument("--poll-seconds", type=int, default=10)
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the non-effecting dispatch plan and do not call GitHub.",
+    )
     return parser.parse_args(argv)
 
 
@@ -548,6 +636,25 @@ def main(argv: list[str] | None = None) -> int:
             if args.readiness_report
             else _cli_dispatch_inputs(args)
         )
+        if args.dry_run:
+            plan = build_gateway_publication_dispatch_plan(
+                gateway_host=dispatch_inputs.gateway_host,
+                gateway_url=dispatch_inputs.gateway_url,
+                expected_environment=dispatch_inputs.expected_environment,
+                apply_ingress=dispatch_inputs.apply_ingress,
+                dispatch_witness=dispatch_inputs.dispatch_witness,
+                skip_preflight_endpoint_probes=(
+                    dispatch_inputs.skip_preflight_endpoint_probes
+                ),
+                repository=dispatch_inputs.repository,
+                workflow_file=args.workflow_file,
+                artifact_name=args.artifact_name,
+                download_dir=Path(args.download_dir),
+            )
+            payload = asdict(plan)
+            payload["artifact_dir"] = str(plan.artifact_dir)
+            print(json.dumps(payload, indent=2, sort_keys=True))
+            return 0
         result = dispatch_gateway_publication(
             gateway_host=dispatch_inputs.gateway_host,
             gateway_url=dispatch_inputs.gateway_url,

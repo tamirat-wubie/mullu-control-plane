@@ -58,6 +58,8 @@ deployment_allowed=false
 | Operator readiness | Local solo-operator questions with capacity, schedule, skill, team, hiring, delegation, coverage, authority, and deployment claims blocked. |
 | Solo daily loop | Local solo-loop cadence labels with external action, publication, spending, customer action, legal/business action, claim promotion, secret use, credential use, service activation, and deployment blocked. |
 | Learning path | Local learning goal, glossary, command practice, reading queue, exercise, error log, verification habit, and help-request questions with skill readiness, training completion, certification, paid course, mentor, hiring, delegation, public tutorial, curriculum, production-operation, customer-support, external-account, and deployment claims blocked. |
+| Learning-loop rehearsal | Local learning-loop labels with skill readiness, training completion, certification, paid course, mentor, hiring, delegation, support, publication, external-account, private schedule, private health, spending, legal/business, source-control publication, and deployment claims blocked. |
+| Concept glossary rehearsal | Local concept-glossary labels with canonical definition, glossary completeness, concept mastery, technical readiness, training completion, comprehension proof, public docs readiness, product readiness, customer readiness, private-value recording, legal/business action, spending, money movement, source-control publication, external publication, and deployment blocked. |
 | Architecture map | Local system boundary, module, interface, dependency, invariant, hazard, proof-reference, and gap mapping with architecture completeness, module inventory completeness, interface readiness, dependency readiness, invariant closure, hazard closure, proof closure, integration readiness, runtime readiness, refactor approval, implementation approval, publication, and deployment claims blocked. |
 | System-boundary inventory | Local public product, control-plane, gateway, runtime, data, tenant, trust, and external-dependency boundary questions with inventory completeness, ownership closure, trust closure, tenant readiness, data classification closure, endpoint readiness, service binding, integration readiness, runtime readiness, exposure approval, implementation approval, publication, and deployment claims blocked. |
 | Module inventory | Local product, control-plane, gateway, runtime, governance, evidence, data, and operator module questions with inventory completeness, ownership assignment, contract readiness, interface readiness, dependency readiness, integration readiness, runtime readiness, refactor approval, implementation approval, publication, and deployment claims blocked. |
@@ -115,6 +117,9 @@ deployment_allowed=false
 | Domain/email | Public-safe domain and email labels with DNS/email readiness blocked. |
 | Legal/business | Question-only packet with qualified-review gating. |
 | Legal/business question rehearsal | Local legal-question labels with legal conclusion, company formation, patent claim, trademark claim, contract commitment, tax filing, regulatory conclusion, external publication, and deployment blocked. |
+| Legal-review deferral | Local legal-review-deferral labels with review completion, reviewer identity, legal conclusions, legal clearance, trademark clearance, patent protection, company formation, tax readiness, terms/privacy approval, compliance clearance, contractor agreement, paid launch, payment processing, customer access, personal data, money movement, publication, and deployment blocked. |
+| Company-formation deferral | Local company-formation-deferral labels with formation, registration, names, identifiers, tax records, registered-agent records, business-address records, bank accounts, payment processor accounts, payroll, contractor agreements, investor agreements, ownership/equity allocation, accounting, insurance, legal clearance, money movement, customer access, publication, and deployment blocked. |
+| Patent/disclosure deferral | Local patent-disclosure-deferral labels with filing, protection, invention finality, authorship finality, ownership finality, prior-art conclusions, novelty, patentability, disclosure approval, publication, secrecy protection, legal clearance, company formation, paid launch, money movement, customer access, and deployment blocked. |
 | Product scope | Selected local learning lane with platform non-restriction and pilot/customer claims blocked. |
 | Market research | Local problem, target-user, market-category, similar-platform, differentiation, pricing, validation, public-claim, risk, and evidence-promotion questions with customer research, surveys, waitlists, outreach, market validation, product-market fit, competitor superiority, pricing readiness, investor materials, personal-data collection, customer access, money movement, external publication, and deployment blocked. |
 | Pilot deferral | Local pilot purpose, participant-boundary, access-channel, consent/privacy, support, rollback, success-metric, legal/terms, and public-claim questions with pilot execution, participant invitation, access channels, waitlists, beta, customer access, personal-data collection, market validation, support readiness, legal clearance, paid pilot, external publication, and deployment blocked. |
@@ -148,6 +153,8 @@ python scripts/validate_foundation_source_control_review_checklist_boundary.py
 python scripts/validate_foundation_operator_readiness_boundary.py
 python scripts/validate_foundation_solo_daily_loop_boundary.py
 python scripts/validate_foundation_learning_path_boundary.py
+python scripts/validate_foundation_learning_loop_rehearsal_boundary.py
+python scripts/validate_foundation_concept_glossary_rehearsal_boundary.py
 python scripts/validate_foundation_architecture_map_boundary.py
 python scripts/validate_foundation_system_boundary_inventory_boundary.py
 python scripts/validate_foundation_module_inventory_boundary.py
@@ -202,6 +209,9 @@ python scripts/validate_foundation_deployment_witness_evidence_ledger_routing_bo
 python scripts/validate_foundation_domain_email_boundary.py
 python scripts/validate_foundation_legal_business_boundary.py
 python scripts/validate_foundation_legal_business_question_rehearsal_boundary.py
+python scripts/validate_foundation_legal_review_deferral_boundary.py
+python scripts/validate_foundation_company_formation_deferral_boundary.py
+python scripts/validate_foundation_patent_disclosure_deferral_boundary.py
 python scripts/validate_foundation_product_scope_boundary.py
 python scripts/validate_foundation_capability_roadmap_boundary.py
 python scripts/validate_foundation_agentic_management_boundary.py

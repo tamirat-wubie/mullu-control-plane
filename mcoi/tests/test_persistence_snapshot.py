@@ -15,6 +15,7 @@ import pytest
 from mcoi_runtime.persistence import (
     CorruptedDataError,
     PersistenceError,
+    PersistenceWriteError,
     SnapshotNotFoundError,
     SnapshotStore,
 )
@@ -76,6 +77,19 @@ def test_snapshot_exists(tmp_path: Path) -> None:
     assert store.snapshot_exists("snap-1") is False
     store.save_snapshot("snap-1", {"k": "v"})
     assert store.snapshot_exists("snap-1") is True
+
+
+def test_save_snapshot_rejects_duplicate_id_without_overwrite(tmp_path: Path) -> None:
+    store = SnapshotStore(tmp_path / "snapshots")
+    original = store.save_snapshot("snap-1", {"k": "original"}, description="first")
+
+    with pytest.raises(PersistenceWriteError, match=r"^snapshot already exists$"):
+        store.save_snapshot("snap-1", {"k": "replacement"}, description="second")
+
+    loaded_meta, loaded_data = store.load_snapshot("snap-1")
+    assert loaded_meta.description == "first"
+    assert loaded_meta.content_hash == original.content_hash
+    assert loaded_data == {"k": "original"}
 
 
 def test_malformed_metadata_raises_corrupted(tmp_path: Path) -> None:

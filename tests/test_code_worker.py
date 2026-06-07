@@ -421,6 +421,22 @@ def test_workspace_snapshot_marks_unreadable_directory(
     assert all("secret directory path" not in value for value in snapshot.values())
 
 
+def test_workspace_snapshot_marks_oversized_file_without_reading_content(
+    tmp_path: Path,
+) -> None:
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    oversized = workspace / "large.bin"
+    with oversized.open("wb") as handle:
+        handle.truncate((10 * 1024 * 1024) + 1)
+
+    snapshot = _workspace_snapshot(workspace)
+
+    assert "large.bin" in snapshot
+    assert snapshot["large.bin"].startswith("file:too_large:")
+    assert "unreadable" not in snapshot["large.bin"]
+
+
 def test_sandboxed_code_worker_blocks_denied_executable_without_dispatch(tmp_path: Path) -> None:
     (tmp_path / "src").mkdir()
     dispatched = False

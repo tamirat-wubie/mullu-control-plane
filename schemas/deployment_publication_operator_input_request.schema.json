@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:deployment-publication-operator-input-request:1",
+  "title": "Deployment Publication Operator Input Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "packet_id",
+    "gateway_host",
+    "gateway_url",
+    "ready",
+    "publication_allowed",
+    "solver_outcome",
+    "proof_state",
+    "required_inputs",
+    "blocked_actions",
+    "source_artifacts",
+    "no_secret_values_serialized",
+    "next_action"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "pattern": "^deployment-publication-operator-input-request-[0-9a-f]{16}$"
+    },
+    "packet_id": {
+      "type": "string",
+      "pattern": "^deployment-publication-evidence-packet-[0-9a-f]{16}$"
+    },
+    "gateway_host": {
+      "type": "string",
+      "pattern": "^[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])$"
+    },
+    "gateway_url": {
+      "type": "string",
+      "pattern": "^https://[a-z0-9](?:[a-z0-9.-]{0,251}[a-z0-9])$"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "publication_allowed": {
+      "type": "boolean"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["AwaitingEvidence", "SolvedVerified"]
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": ["Unknown", "Pass"]
+    },
+    "required_inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "input_id",
+          "blocker",
+          "input_kind",
+          "required_name",
+          "current_state",
+          "evidence_source",
+          "next_action"
+        ],
+        "properties": {
+          "input_id": {
+            "type": "string",
+            "pattern": "^deployment-publication-input-[0-9a-f]{12}$"
+          },
+          "blocker": {
+            "type": "string",
+            "minLength": 1
+          },
+          "input_kind": {
+            "type": "string",
+            "enum": [
+              "dns_origin_target",
+              "dns_provider",
+              "dns_record_type",
+              "public_dns_resolution",
+              "upstream_evidence",
+              "upstream_readiness_report"
+            ]
+          },
+          "required_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "current_state": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "next_action": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "deployment_status_publication_claim",
+          "dns_publication",
+          "gateway_publication_workflow_dispatch"
+        ]
+      }
+    },
+    "source_artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deployment_publication_evidence_packet"],
+      "properties": {
+        "deployment_publication_evidence_packet": {
+          "type": "string",
+          "minLength": 1
+        },
+        "deployment_upstream_blocker_receipt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gateway_dns_resolution_receipt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gateway_dns_target_binding_receipt": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "no_secret_values_serialized": {
+      "type": "boolean",
+      "const": true
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

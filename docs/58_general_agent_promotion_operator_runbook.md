@@ -6,7 +6,7 @@
 
 Purpose: Operator runbook for executing the governed general-agent promotion closure plan.
 Governance scope: Adapter evidence, credential binding, upstream API/DNS readiness, deployment witness publication, health declaration, and promotion validation.
-Dependencies: scripts/collect_capability_adapter_evidence.py, scripts/run_general_agent_promotion_closure_chain.py, scripts/plan_general_agent_promotion_closure.py, scripts/plan_general_agent_promotion_live_evidence_queue.py, scripts/validate_general_agent_promotion_terminal_approvals.py, scripts/plan_general_agent_promotion_terminal_certificate_gate.py, scripts/plan_general_agent_promotion_terminal_certificate_candidates.py, scripts/reconcile_general_agent_promotion_terminal_evidence.py, scripts/emit_deployment_upstream_blocker_receipt.py, scripts/validate_deployment_upstream_blocker_receipt.py, scripts/emit_gateway_dns_target_binding_receipt.py, scripts/validate_gateway_dns_target_binding_receipt.py, scripts/collect_gateway_dns_resolution_receipt.py, scripts/validate_gateway_dns_resolution_receipt.py, scripts/validate_general_agent_promotion_closure_plan_schema.py, scripts/validate_general_agent_promotion_closure_plan.py, DEPLOYMENT_STATUS.md.
+Dependencies: scripts/collect_capability_adapter_evidence.py, scripts/run_general_agent_promotion_closure_chain.py, scripts/plan_general_agent_promotion_closure.py, scripts/plan_general_agent_promotion_live_evidence_queue.py, scripts/validate_general_agent_promotion_terminal_approvals.py, scripts/plan_general_agent_promotion_terminal_certificate_gate.py, scripts/plan_general_agent_promotion_terminal_certificate_candidates.py, scripts/reconcile_general_agent_promotion_terminal_evidence.py, scripts/collect_deployment_publication_evidence_packet.py, scripts/validate_deployment_publication_evidence_packet.py, scripts/emit_deployment_publication_operator_input_request.py, scripts/validate_deployment_publication_operator_input_request.py, scripts/emit_deployment_upstream_blocker_receipt.py, scripts/validate_deployment_upstream_blocker_receipt.py, scripts/emit_gateway_dns_target_binding_receipt.py, scripts/validate_gateway_dns_target_binding_receipt.py, scripts/collect_gateway_dns_resolution_receipt.py, scripts/validate_gateway_dns_resolution_receipt.py, scripts/validate_general_agent_promotion_closure_plan_schema.py, scripts/validate_general_agent_promotion_closure_plan.py, DEPLOYMENT_STATUS.md.
 Invariants: Does not claim production readiness before live evidence, approval, and publication closure validate.
 -->
 
@@ -53,7 +53,7 @@ The current expected aggregate plan contains:
 | Document worker | Parser imports and live parser receipt already closed; external effects remain approval-gated |
 | Voice worker | OpenAI provider client, governed `OPENAI_API_KEY`, approved audio sample |
 | Email/calendar worker | One scoped connector token and read-only probe target |
-| Deployment publication | `MULLU_GATEWAY_URL`, upstream API/DNS readiness receipt, `MULLU_GATEWAY_DNS_TARGET`, `MULLU_GATEWAY_DNS_RECORD_TYPE`, `MULLU_DNS_PROVIDER`, gateway DNS target-binding receipt, gateway DNS resolution receipt, runtime witness secret, conformance secret, deployment witness secret, runtime responsibility debt clear, authority responsibility debt clear, operator approval |
+| Deployment publication | `MULLU_GATEWAY_URL`, `UPSTREAM_API_READINESS_REPORT`, upstream API/DNS readiness receipt, deployment publication evidence packet, deployment publication operator input request, `MULLU_GATEWAY_DNS_TARGET`, `MULLU_GATEWAY_DNS_RECORD_TYPE`, `MULLU_DNS_PROVIDER`, gateway DNS target-binding receipt, gateway DNS resolution receipt, runtime witness secret, conformance secret, deployment witness secret, runtime responsibility debt clear, authority responsibility debt clear, operator approval |
 | Public health declaration | Published deployment witness and HTTPS health probe receipt |
 
 Secrets must be bound through the governed worker or deployment secret store. Do not print secret values in receipts, logs, status files, or closure plans.
@@ -165,9 +165,14 @@ The generic sandbox receipt gate must also report `valid=true`; it proves the ne
 
 ```powershell
 # From the upstream mullusi-site checkout, this must pass before DNS work.
-node scripts\check-api-production-readiness.mjs --require-ready --production-image-published --runtime-host-ready --managed-postgres-ready --schema-applied --production-secrets-stored --deploy-env-ready --release-preflight-ready --persistence-ready --host-firewall-configured --tls-certificate-ready --rollback-path-defined --private-runtime-witness-ready --dns-authority-ready
+node scripts\check-api-production-readiness.mjs --require-ready --production-image-published --runtime-host-ready --managed-postgres-ready --schema-applied --production-secrets-stored --deploy-env-ready --release-preflight-ready --persistence-ready --host-firewall-configured --tls-certificate-ready --rollback-path-defined --private-runtime-witness-ready --dns-authority-ready --output "$env:UPSTREAM_API_READINESS_REPORT"
 
-python scripts\emit_deployment_upstream_blocker_receipt.py --target-gateway-url "$env:MULLU_GATEWAY_URL" --output .change_assurance\deployment_upstream_blocker_receipt.json --json
+python scripts\collect_deployment_publication_evidence_packet.py --output-dir .change_assurance\deployment_publication_evidence_packet --gateway-url "$env:MULLU_GATEWAY_URL" --expected-environment "$env:MULLU_EXPECTED_RUNTIME_ENV" --upstream-readiness-report "$env:UPSTREAM_API_READINESS_REPORT" --dns-record-type "$env:MULLU_GATEWAY_DNS_RECORD_TYPE" --dns-target "$env:MULLU_GATEWAY_DNS_TARGET" --dns-provider "$env:MULLU_DNS_PROVIDER" --dispatch-witness --json
+python scripts\validate_deployment_publication_evidence_packet.py --packet .change_assurance\deployment_publication_evidence_packet\deployment_publication_evidence_packet.json --output .change_assurance\deployment_publication_evidence_packet\deployment_publication_evidence_packet_validation.json --require-ready --json
+python scripts\emit_deployment_publication_operator_input_request.py --packet .change_assurance\deployment_publication_evidence_packet\deployment_publication_evidence_packet.json --output .change_assurance\deployment_publication_evidence_packet\deployment_publication_operator_input_request.json --json
+python scripts\validate_deployment_publication_operator_input_request.py --request .change_assurance\deployment_publication_evidence_packet\deployment_publication_operator_input_request.json --output .change_assurance\deployment_publication_evidence_packet\deployment_publication_operator_input_request_validation.json --json
+
+python scripts\emit_deployment_upstream_blocker_receipt.py --target-gateway-url "$env:MULLU_GATEWAY_URL" --upstream-readiness-report "$env:UPSTREAM_API_READINESS_REPORT" --output .change_assurance\deployment_upstream_blocker_receipt.json --json
 python scripts\validate_deployment_upstream_blocker_receipt.py --receipt .change_assurance\deployment_upstream_blocker_receipt.json --output .change_assurance\deployment_upstream_blocker_receipt_validation.json --require-ready
 python scripts\emit_gateway_dns_target_binding_receipt.py --gateway-host "$env:MULLU_GATEWAY_HOST" --gateway-url "$env:MULLU_GATEWAY_URL" --expected-environment "$env:MULLU_EXPECTED_RUNTIME_ENV" --record-type "$env:MULLU_GATEWAY_DNS_RECORD_TYPE" --target "$env:MULLU_GATEWAY_DNS_TARGET" --provider "$env:MULLU_DNS_PROVIDER" --output .change_assurance\gateway_dns_target_binding_receipt.json --json
 python scripts\validate_gateway_dns_target_binding_receipt.py --receipt .change_assurance\gateway_dns_target_binding_receipt.json --output .change_assurance\gateway_dns_target_binding_receipt_validation.json --require-ready
@@ -178,9 +183,11 @@ python scripts\validate_gateway_publication_receipt.py --receipt .change_assuran
 python scripts\validate_deployment_publication_closure.py
 ```
 
-The upstream blocker validation must report `valid=true` with `--require-ready`
-before DNS target selection is treated as actionable. The upstream API reporter
-must also report ready before DNS target selection is treated as actionable.
+The deployment publication evidence packet validation must report `valid=true`
+with `--require-ready` before publication is actionable. The upstream blocker
+validation must report `valid=true` with `--require-ready` before DNS target
+selection is treated as actionable. The upstream API reporter must also report
+ready before DNS target selection is treated as actionable.
 The target-binding validation must report `valid=true` with `--require-ready`
 before DNS publication is treated as actionable.
 The DNS receipt validation must report `valid=true` with `--require-resolved`
@@ -208,7 +215,8 @@ python scripts\validate_general_agent_promotion.py --strict --output .change_ass
 | Credential action lacks approval | Do not bind the secret and keep promotion blocked |
 | Live receipt fails | Preserve the failed receipt and blocker |
 | Deployment witness is not published | Do not update `DEPLOYMENT_STATUS.md` |
-| Upstream API/DNS readiness is not ready | Do not publish DNS; complete upstream recovery, runtime host, managed PostgreSQL, schema, secret store, preflight, persistence, firewall, TLS, rollback, private runtime witness, runtime witness closure, and DNS publication authority gates, then rerun the upstream `check-api-production-readiness.mjs --require-ready` command plus `emit_deployment_upstream_blocker_receipt.py` and `validate_deployment_upstream_blocker_receipt.py --require-ready` |
+| Deployment publication evidence packet is not ready | Do not publish DNS or dispatch workflows; inspect `deployment_publication_evidence_packet_validation.json`, emit `deployment_publication_operator_input_request.json`, close the named inputs, then rerun `collect_deployment_publication_evidence_packet.py` plus `validate_deployment_publication_evidence_packet.py --require-ready` |
+| Upstream API/DNS readiness is not ready | Do not publish DNS; complete upstream recovery, runtime host, managed PostgreSQL, schema, secret store, preflight, persistence, firewall, TLS, rollback, private runtime witness, runtime witness closure, and DNS publication authority gates, then rerun the upstream `check-api-production-readiness.mjs --require-ready --output "$env:UPSTREAM_API_READINESS_REPORT"` command plus `emit_deployment_upstream_blocker_receipt.py --upstream-readiness-report "$env:UPSTREAM_API_READINESS_REPORT"` and `validate_deployment_upstream_blocker_receipt.py --require-ready` |
 | Gateway DNS target-binding receipt is not ready | Do not publish DNS; select `MULLU_GATEWAY_DNS_TARGET`, `MULLU_GATEWAY_DNS_RECORD_TYPE`, and `MULLU_DNS_PROVIDER`, then rerun `emit_gateway_dns_target_binding_receipt.py` plus `validate_gateway_dns_target_binding_receipt.py --require-ready` |
 | Gateway DNS receipt is unresolved | Do not publish deployment witness; publish DNS and rerun `collect_gateway_dns_resolution_receipt.py` plus `validate_gateway_dns_resolution_receipt.py --require-resolved` |
 | Runtime or authority responsibility debt is not clear | Do not publish deployment witness and inspect `/authority/responsibility` |
@@ -216,6 +224,6 @@ python scripts\validate_general_agent_promotion.py --strict --output .change_ass
 
 STATUS:
   Completeness: 99%
-  Invariants verified: [aggregate plan validation before execution, live-evidence queue classified before execution, terminal approval receipt schema-validated when present, terminal certificate gate checked before execution, terminal certificate candidates are non-minting, terminal evidence reconciliation gates minting readiness, terminal minting gate requires explicit authority, terminal certificate minting executor requires ready gate, credential approval required, live receipts required, upstream API/DNS validation require-ready gate, gateway DNS target-binding validation require-ready gate, gateway DNS receipt validation require-resolved gate, deployment status mutation evidence-gated, production promotion validation terminal]
+  Invariants verified: [aggregate plan validation before execution, live-evidence queue classified before execution, terminal approval receipt schema-validated when present, terminal certificate gate checked before execution, terminal certificate candidates are non-minting, terminal evidence reconciliation gates minting readiness, terminal minting gate requires explicit authority, terminal certificate minting executor requires ready gate, credential approval required, live receipts required, deployment publication evidence packet require-ready gate, upstream API/DNS validation require-ready gate, gateway DNS target-binding validation require-ready gate, gateway DNS receipt validation require-resolved gate, deployment status mutation evidence-gated, production promotion validation terminal]
   Open issues: [external dependencies, governed credentials, live deployment witness, public health probe]
   Next action: execute this runbook in the credentialed adapter-worker and deployment environment

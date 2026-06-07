@@ -65,6 +65,7 @@ from mcoi_runtime.adapters.multi_provider import (
     ScalewayBackend,
     SiliconFlowBackend,
     TogetherBackend,
+    VLLMBackend,
     VeniceBackend,
     WaveSpeedBackend,
     ZAIBackend,
@@ -241,6 +242,101 @@ class TestGroqBackend:
         result = backend.call(_params("test"))
         assert result.error == "provider error (RuntimeError)"
         assert "upstream secret" not in result.error
+
+    def test_http_status_error_payload_is_bounded(self, monkeypatch):
+        backend = GroqBackend(api_key="test-key")
+
+        class _Response:
+            status_code = 401
+
+            @staticmethod
+            def json():
+                return {"error": {"message": "invalid API key sk-secret", "type": "auth"}}
+
+        _install_fake_httpx(monkeypatch, lambda *args, **kwargs: _Response())
+
+        result = backend.call(_params("test"))
+
+        assert result.finished is False
+        assert result.error == "provider authentication failed"
+        assert "sk-secret" not in str(result)
+
+    def test_invalid_json_response_is_bounded(self, monkeypatch):
+        backend = GroqBackend(api_key="test-key")
+
+        class _Response:
+            status_code = 200
+
+            @staticmethod
+            def json():
+                raise ValueError("raw upstream secret")
+
+        _install_fake_httpx(monkeypatch, lambda *args, **kwargs: _Response())
+
+        result = backend.call(_params("test"))
+
+        assert result.finished is False
+        assert result.error == "provider response invalid"
+        assert "raw upstream secret" not in str(result)
+
+    def test_non_string_response_content_is_bounded(self, monkeypatch):
+        backend = GroqBackend(api_key="test-key")
+
+        class _Response:
+            status_code = 200
+
+            @staticmethod
+            def json():
+                return {
+                    "choices": [{"message": {"content": {"secret": "payload"}}}],
+                    "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+                }
+
+        _install_fake_httpx(monkeypatch, lambda *args, **kwargs: _Response())
+
+        result = backend.call(_params("test"))
+
+        assert result.finished is False
+        assert result.error == "provider response invalid"
+        assert "payload" not in str(result)
+
+    def test_invalid_usage_tokens_are_bounded(self, monkeypatch):
+        backend = GroqBackend(api_key="test-key")
+
+        class _Response:
+            status_code = 200
+
+            @staticmethod
+            def json():
+                return {
+                    "choices": [{"message": {"content": "ok"}}],
+                    "usage": {"prompt_tokens": -1, "completion_tokens": "secret-token-count"},
+                }
+
+        _install_fake_httpx(monkeypatch, lambda *args, **kwargs: _Response())
+
+        result = backend.call(_params("test"))
+
+        assert result.finished is False
+        assert result.error == "provider response invalid"
+        assert "secret-token-count" not in str(result)
+
+    def test_invalid_provider_base_url_is_blocked_before_dispatch(self, monkeypatch):
+        calls: list[object] = []
+        backend = VLLMBackend(base_url="https://user:secret@example.com/v1", api_key="test-key")
+
+        def _post(*args, **kwargs):
+            calls.append((args, kwargs))
+            raise AssertionError("dispatch must not run")
+
+        _install_fake_httpx(monkeypatch, _post)
+
+        result = backend.call(_params("test"))
+
+        assert result.finished is False
+        assert result.error == "provider base_url invalid"
+        assert calls == []
+        assert "secret" not in str(result)
 
     def test_stub_response_is_bounded_when_httpx_missing(self, monkeypatch):
         backend = GroqBackend()
