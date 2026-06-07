@@ -917,7 +917,11 @@ def _knowledge_search(
     if not query:
         return {"response": "Knowledge search requires a query.", "receipt_status": "missing_query"}
     if knowledge_base is None:
-        return {"response": "Knowledge search is not available right now.", "receipt_status": "executor_unavailable"}
+        return {
+            "response": "Knowledge search is not available right now.",
+            "total_chunks_searched": 0,
+            "receipt_status": "executor_unavailable",
+        }
     result = knowledge_base.query(context.tenant_id, query, top_k=int(params.get("top_k", 5)))
     return {
         "response": f"Found {len(result.chunks)} knowledge result(s).",
