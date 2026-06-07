@@ -592,24 +592,31 @@ def _isolation_canary(environment: str) -> IsolationCanaryResult:
                 detail="restricted capability worker executor could not be built",
             )
         passport = CapabilityPassport(
-            capability="financial.send_payment",
+            capability="enterprise.notification_send",
             version="1",
-            risk_tier="high",
-            input_schema="financial_send_payment_input",
-            output_schema="financial_send_payment_output",
-            authority_required=("financial_admin",),
-            requires=("payment_provider",),
+            risk_tier="medium",
+            input_schema="EnterpriseNotificationSendIntent.v1",
+            output_schema="EnterpriseNotificationReceipt.v1",
+            authority_required=("operator",),
+            requires=("tenant_bound", "budget_reserved", "idempotency_key"),
             mutates_world=True,
-            external_system="payment_provider",
-            rollback_type="compensation",
+            external_system="external_webhook",
+            rollback_type="compensatable",
             proof_required_fields=("receipt_status",),
-            declared_effects=("payment_execution_probe",),
-            forbidden_effects=("unisolated_payment_execution",),
+            declared_effects=("isolated_notification_probe",),
+            forbidden_effects=("unisolated_notification_execution", "payment_created"),
             evidence_required=("restricted_worker_receipt",),
         )
         boundary = CapabilityIsolationPolicy(environment=normalized).boundary_for(passport)
         result, receipt = executor.execute(
-            intent=CapabilityIntent("financial", "send_payment", {"amount": "0", "currency": "USD"}),
+            intent=CapabilityIntent(
+                "enterprise",
+                "notification_send",
+                {
+                    "title": "Runtime conformance canary",
+                    "body": "restricted worker isolation probe",
+                },
+            ),
             tenant_id="runtime-conformance-canary",
             identity_id="runtime-conformance-canary",
             boundary=boundary,
