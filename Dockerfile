@@ -5,7 +5,7 @@ ARG MULLU_INSTALL_PLAYWRIGHT_BROWSERS=true
 
 WORKDIR /app
 
-RUN mkdir -p /app/render-bin
+RUN mkdir -p /app/render-bin /app/.change_assurance /app/examples
 
 COPY mcoi/ ./mcoi/
 COPY gateway/ ./gateway/
@@ -17,6 +17,8 @@ COPY scripts/ ./scripts/
 COPY schemas/ ./schemas/
 COPY docs/ ./docs/
 COPY tests/fixtures/ ./tests/fixtures/
+COPY .change_assurance/authority_directory_sync.json ./.change_assurance/authority_directory_sync.json
+COPY examples/authority_directory_sync_render_pilot.json ./examples/authority_directory_sync_render_pilot.json
 COPY DEPLOYMENT_STATUS.md KNOWN_LIMITATIONS_v0.1.md SECURITY_MODEL_v0.1.md ./
 COPY docker/render-uvicorn-wrapper.sh ./render-bin/uvicorn
 
