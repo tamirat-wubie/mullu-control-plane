@@ -761,10 +761,35 @@ def _proof_coverage_status(repo_root: Path) -> ProofCoverageStatus:
         return ProofCoverageStatus(matrix_current=False, declared_route_count=0, unclassified_route_count=0)
     route_coverage = generated.get("route_coverage", {}) if isinstance(generated, dict) else {}
     return ProofCoverageStatus(
-        matrix_current=canonical == generated,
+        matrix_current=_runtime_stable_proof_matrix(canonical) == _runtime_stable_proof_matrix(generated),
         declared_route_count=_int_count(route_coverage, "route_count"),
         unclassified_route_count=_int_count(route_coverage, "unclassified_route_count"),
     )
+
+
+def _runtime_stable_proof_matrix(matrix: dict[str, Any]) -> dict[str, Any]:
+    """Return proof matrix sections that can be regenerated in deployment.
+
+    The complete proof matrix fixture remains a workspace-preflight artifact:
+    it includes exact test-function witness anchors. A deployed Render service
+    may not carry the full test tree, so live runtime conformance compares the
+    route, surface, evidence, and closure sections that are stable in a service
+    package and leaves full witness-integrity parity to the local preflight.
+    """
+    return {
+        key: matrix.get(key)
+        for key in (
+            "schema_version",
+            "generated_by",
+            "coverage_levels",
+            "coverage_states",
+            "coverage_summary",
+            "evidence_quality",
+            "surfaces",
+            "route_coverage",
+            "closure_actions",
+        )
+    }
 
 
 def _proof_coverage_matrix_current(repo_root: Path) -> bool:

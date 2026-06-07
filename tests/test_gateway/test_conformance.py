@@ -233,6 +233,124 @@ def test_runtime_conformance_fails_route_classification_without_route_evidence(
     assert "proof_coverage_declared_routes_unclassified" in payload["open_conformance_gaps"]
 
 
+def test_proof_coverage_status_accepts_deployment_missing_witness_integrity(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    import scripts.proof_coverage_matrix as proof_matrix
+
+    canonical = {
+        "schema_version": 1,
+        "generated_by": "scripts/proof_coverage_matrix.py",
+        "coverage_levels": ["gap", "read_model", "request_proof", "action_proof", "audit_chain"],
+        "coverage_states": ["proven", "witnessed", "unproven"],
+        "coverage_summary": {"surface_count": 1},
+        "evidence_quality": {"quality_gap_count": 0},
+        "surfaces": [{"surface_id": "gateway_webhook_ingress"}],
+        "route_coverage": {
+            "route_count": 2,
+            "unclassified_route_count": 0,
+            "routes": [
+                {
+                    "route": "/webhook/web",
+                    "surface_id": "gateway_webhook_ingress",
+                    "coverage_state": "witnessed",
+                },
+            ],
+        },
+        "closure_actions": [{"action_id": "closed", "status": "closed"}],
+        "witness_integrity": {
+            "runtime_witness_count": 1,
+            "exact_test_anchor_count": 1,
+            "unanchored_witness_count": 0,
+        },
+    }
+    generated = {
+        **canonical,
+        "witness_integrity": {
+            "runtime_witness_count": 1,
+            "exact_test_anchor_count": 0,
+            "unanchored_witness_count": 1,
+        },
+    }
+    canonical_path = tmp_path / "proof_coverage_matrix.json"
+    canonical_path.write_text(json.dumps(canonical), encoding="utf-8")
+    monkeypatch.setattr(proof_matrix, "CANONICAL_OUTPUT", canonical_path)
+    monkeypatch.setattr(proof_matrix, "proof_coverage_matrix", lambda: generated)
+
+    status = conformance._proof_coverage_status(tmp_path)
+
+    assert status.matrix_current is True
+    assert status.declared_route_count == 2
+    assert status.unclassified_route_count == 0
+    assert status.declared_routes_classified is True
+
+
+def test_proof_coverage_status_rejects_deployment_runtime_section_drift(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    import scripts.proof_coverage_matrix as proof_matrix
+
+    canonical = {
+        "schema_version": 1,
+        "generated_by": "scripts/proof_coverage_matrix.py",
+        "coverage_levels": ["gap", "read_model", "request_proof", "action_proof", "audit_chain"],
+        "coverage_states": ["proven", "witnessed", "unproven"],
+        "coverage_summary": {"surface_count": 1},
+        "evidence_quality": {"quality_gap_count": 0},
+        "surfaces": [{"surface_id": "gateway_webhook_ingress"}],
+        "route_coverage": {
+            "route_count": 1,
+            "unclassified_route_count": 0,
+            "routes": [
+                {
+                    "route": "/webhook/web",
+                    "surface_id": "gateway_webhook_ingress",
+                    "coverage_state": "witnessed",
+                },
+            ],
+        },
+        "closure_actions": [{"action_id": "closed", "status": "closed"}],
+        "witness_integrity": {
+            "runtime_witness_count": 1,
+            "exact_test_anchor_count": 1,
+            "unanchored_witness_count": 0,
+        },
+    }
+    generated = {
+        **canonical,
+        "route_coverage": {
+            "route_count": 2,
+            "unclassified_route_count": 1,
+            "routes": [
+                *canonical["route_coverage"]["routes"],
+                {
+                    "route": "/runtime/conformance",
+                    "surface_id": "unclassified_declared_route",
+                    "coverage_state": "unproven",
+                },
+            ],
+        },
+        "witness_integrity": {
+            "runtime_witness_count": 1,
+            "exact_test_anchor_count": 0,
+            "unanchored_witness_count": 1,
+        },
+    }
+    canonical_path = tmp_path / "proof_coverage_matrix.json"
+    canonical_path.write_text(json.dumps(canonical), encoding="utf-8")
+    monkeypatch.setattr(proof_matrix, "CANONICAL_OUTPUT", canonical_path)
+    monkeypatch.setattr(proof_matrix, "proof_coverage_matrix", lambda: generated)
+
+    status = conformance._proof_coverage_status(tmp_path)
+
+    assert status.matrix_current is False
+    assert status.declared_route_count == 2
+    assert status.unclassified_route_count == 1
+    assert status.declared_routes_classified is False
+
+
 def test_runtime_conformance_certificate_schema_gate_fails_closed(tmp_path, monkeypatch) -> None:
     def reject_schema(_schema, _payload):
         return ["$.signature: forced schema failure"]
