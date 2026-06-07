@@ -29,6 +29,7 @@ from gateway.command_spine import (  # noqa: E402
     compile_typed_intent,
     redact_payload,
 )
+from gateway.capability_fabric import build_default_capability_admission_gate  # noqa: E402
 
 
 class _RollbackFailingConnection:
@@ -668,6 +669,58 @@ def test_command_ledger_reconciles_read_only_effect_observation():
     assert events[-1].detail["effect_assurance_reconciliation"]["status"] == "match"
     assert events[-1].detail["mcoi_verification"]["status"] == "pass"
     assert events[-1].detail["mcoi_reconciliation"]["status"] == "match"
+
+
+def test_command_ledger_keeps_native_passport_for_builtin_fabric_capability():
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=InMemoryCommandLedgerStore(),
+        capability_admission_gate=build_default_capability_admission_gate(
+            clock=lambda: "2026-04-24T12:00:00+00:00"
+        ),
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-native-fabric",
+        intent="enterprise.knowledge_search",
+        payload={
+            "body": "/run enterprise.knowledge_search {\"query\":\"deployment witness canary\"}",
+            "capability_intent": {
+                "skill": "enterprise",
+                "action": "knowledge_search",
+                "params": {"query": "deployment witness canary"},
+            },
+        },
+    )
+
+    action = ledger.bind_governed_action(command.command_id)
+    prediction = ledger.effect_prediction_for(command.command_id)
+    reconciliation = ledger.observe_and_reconcile_effect(
+        command.command_id,
+        output={
+            "response": "Knowledge search is not available right now.",
+            "total_chunks_searched": 0,
+            "receipt_status": "executor_unavailable",
+        },
+    )
+    events = ledger.events_for(command.command_id)
+    bound_event = next(
+        event for event in events
+        if event.next_state is CommandState.CAPABILITY_BOUND
+    )
+
+    assert action.capability == "enterprise.knowledge_search"
+    assert action.risk_tier == "low"
+    assert prediction is not None
+    assert prediction.expected_mutations == ()
+    assert prediction.expected_receipts == ("total_chunks_searched",)
+    assert reconciliation.reconciled is True
+    assert bound_event.detail["capability_admission_status"] == "accepted"
+    assert bound_event.detail["capability_passport_source"] == "native"
+    assert bound_event.detail["capability_registry_entry"]["capability_id"] == "enterprise.knowledge_search"
 
 
 def test_command_ledger_records_evidence_backed_claim():
