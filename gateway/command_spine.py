@@ -3321,6 +3321,7 @@ class CommandLedger:
 
     def latest_terminal_certificate(self) -> TerminalClosureCertificate | None:
         """Return the latest terminal certificate witnessed by the command ledger."""
+        self._rehydrate_closure_artifacts()
         for event in reversed(self._events):
             raw = event.detail.get("terminal_closure_certificate")
             if not isinstance(raw, dict):
@@ -3329,6 +3330,62 @@ class CommandLedger:
         for command_id in reversed(tuple(self._terminal_certificates)):
             return self._terminal_certificates[command_id]
         return None
+
+    def _rehydrate_closure_artifacts(self, *, limit: int = 1000) -> None:
+        """Rebuild closure proof caches from persisted event details."""
+        if (
+            self._terminal_certificates
+            and self._closure_memory
+            and self._closure_learning
+        ):
+            return
+        commands = self._store.list_commands(limit=limit)
+        for command in reversed(commands):
+            self._commands.setdefault(command.command_id, command)
+            for event in self.events_for(command.command_id):
+                self._rehydrate_closure_artifact_event(event)
+
+    def _rehydrate_closure_artifact_event(self, event: CommandEvent) -> None:
+        """Load terminal closure artifacts from one persisted event."""
+        certificate_raw = event.detail.get("terminal_closure_certificate")
+        if isinstance(certificate_raw, dict):
+            self.terminal_certificate_for(event.command_id)
+
+        memory_raw = event.detail.get("closure_memory_entry")
+        if isinstance(memory_raw, dict) and event.command_id not in self._closure_memory:
+            try:
+                self._closure_memory[event.command_id] = ClosureMemoryEntry(
+                    entry_id=str(memory_raw["entry_id"]),
+                    command_id=str(memory_raw["command_id"]),
+                    terminal_certificate_id=str(memory_raw["terminal_certificate_id"]),
+                    category=str(memory_raw["category"]),
+                    trust_class=str(memory_raw["trust_class"]),
+                    evidence_refs=tuple(memory_raw["evidence_refs"]),
+                    admitted_at=str(memory_raw["admitted_at"]),
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                _log.warning(
+                    "closure memory rehydration skipped malformed event (%s)",
+                    type(exc).__name__,
+                )
+
+        learning_raw = event.detail.get("closure_learning_decision")
+        if isinstance(learning_raw, dict) and event.command_id not in self._closure_learning:
+            try:
+                self._closure_learning[event.command_id] = ClosureLearningDecision(
+                    admission_id=str(learning_raw["admission_id"]),
+                    command_id=str(learning_raw["command_id"]),
+                    terminal_certificate_id=str(learning_raw["terminal_certificate_id"]),
+                    memory_entry_id=str(learning_raw["memory_entry_id"]),
+                    status=str(learning_raw["status"]),
+                    reasons=tuple(learning_raw["reasons"]),
+                    decided_at=str(learning_raw["decided_at"]),
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                _log.warning(
+                    "closure learning rehydration skipped malformed event (%s)",
+                    type(exc).__name__,
+                )
 
     def promote_closure_memory(self, command_id: str) -> ClosureMemoryEntry:
         """Promote terminal closure into append-only episodic memory."""
@@ -3416,6 +3473,7 @@ class CommandLedger:
 
     def assert_success_response_allowed(self, command_id: str) -> TerminalClosureCertificate:
         """Return the certificate required before a success response can be sent."""
+        self._rehydrate_closure_artifacts()
         certificate = self.terminal_certificate_for(command_id)
         if certificate is None:
             raise ValueError("success response requires terminal closure certificate")
@@ -3636,6 +3694,7 @@ class CommandLedger:
 
     def summary(self) -> dict[str, Any]:
         """Return ledger counters for health/status surfaces."""
+        self._rehydrate_closure_artifacts()
         state_counts: dict[str, int] = {}
         for command in self._commands.values():
             state_counts[command.state.value] = state_counts.get(command.state.value, 0) + 1
