@@ -19,11 +19,13 @@ from pathlib import Path
 from typing import Any
 
 from scripts.collect_deployment_witness import (
+    LIVE_EVIDENCE_HTTP_TIMEOUT_SECONDS,
     REQUIRED_PHYSICAL_LIVE_EVIDENCE_FIELDS,
     collect_deployment_witness,
     main,
     write_deployment_witness,
     _evaluate_physical_capability_policy,
+    _get_json_with_digest,
 )
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
@@ -49,6 +51,27 @@ class StubHttpResponse:
 
     def read(self) -> bytes:
         return self._body
+
+
+def test_get_json_with_digest_uses_live_evidence_timeout(monkeypatch) -> None:
+    observed_call: dict[str, Any] = {}
+
+    def fake_urlopen(url, timeout):
+        observed_call["url"] = url
+        observed_call["timeout"] = timeout
+        return StubHttpResponse(status=200, payload={"ok": True})
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    status, payload, response_digest = _get_json_with_digest(
+        "https://gateway.example/proof/verify"
+    )
+
+    assert status == 200
+    assert payload == {"ok": True}
+    assert observed_call["url"] == "https://gateway.example/proof/verify"
+    assert observed_call["timeout"] == LIVE_EVIDENCE_HTTP_TIMEOUT_SECONDS
+    assert response_digest.startswith("sha256:")
 
 
 def test_collect_deployment_witness_publishes_with_verified_signature(monkeypatch) -> None:
