@@ -986,6 +986,62 @@ def test_success_response_requires_full_post_cert_bookkeeping():
     assert allowed == certificate
 
 
+def test_command_ledger_rehydrates_closure_artifacts_from_store_after_restart():
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=store,
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-restart-closure-proof",
+        intent="llm_completion",
+        payload={"body": "hello"},
+    )
+    ledger.bind_governed_action(command.command_id)
+    ledger.observe_and_reconcile_effect(
+        command.command_id,
+        output={"content": "hello", "succeeded": True},
+    )
+    ledger.promote_provider_receipts_to_graph(command.command_id)
+    claim = ledger.record_operational_claim(
+        command.command_id,
+        text="Command llm_completion completed.",
+        verified=True,
+    )
+    closure = ledger.close_success_response_evidence(
+        command.command_id,
+        claim_id=claim.claim_id,
+    )
+    certificate = ledger.certify_terminal_closure(
+        command.command_id,
+        disposition=ClosureDisposition.COMMITTED,
+        response_evidence_closure=closure,
+    )
+    memory_entry = ledger.promote_closure_memory(command.command_id)
+    learning = ledger.decide_closure_learning(command.command_id)
+
+    restarted = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:01+00:00",
+        store=store,
+    )
+    restarted_summary = restarted.summary()
+    restarted_latest = restarted.latest_terminal_certificate()
+    allowed = restarted.assert_success_response_allowed(command.command_id)
+
+    assert restarted_summary["terminal_certificates"] == 1
+    assert restarted_summary["closure_memory_entries"] == 1
+    assert restarted_summary["closure_learning_decisions"] == 1
+    assert restarted_latest is not None
+    assert restarted_latest.certificate_id == certificate.certificate_id
+    assert allowed.certificate_id == certificate.certificate_id
+    assert memory_entry.terminal_certificate_id == certificate.certificate_id
+    assert learning.memory_entry_id == memory_entry.entry_id
+
+
 def test_bind_governed_action_is_idempotent_to_preserve_freeze():
     # I-PRED-2 freeze: the governed action is captured at first bind and is
     # immutable for the lifetime of the command. A second bind would let the
