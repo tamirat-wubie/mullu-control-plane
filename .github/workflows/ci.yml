@@ -384,6 +384,9 @@ jobs:
       - name: Run governed code-change loop tests
         run: python -m pytest tests/test_governed_code_change_loop.py tests/test_probe_governed_code_change_loop_sandbox.py tests/test_run_governed_code_change_loop_script.py tests/test_run_wsl_governed_code_change_loop_sandbox_probe.py tests/test_assess_windows_governed_code_change_loop_readiness.py tests/test_validate_governed_code_change_loop_receipt.py tests/test_validate_governed_code_change_loop_sandbox_probe.py tests/test_validate_governed_code_change_loop_sandbox_readiness_runbook.py -q
 
+      - name: Run deployment publication evidence tests
+        run: python -m pytest tests/test_collect_deployment_publication_evidence_packet.py tests/test_validate_deployment_publication_evidence_packet.py tests/test_emit_deployment_publication_operator_input_request.py tests/test_validate_deployment_publication_operator_input_request.py -q
+
       - name: Run test-coverage contract tests
         # Enforce the test-execution coverage invariants in CI: the MCOI shard
         # inventory (every mcoi/tests file is in exactly one shard) and the

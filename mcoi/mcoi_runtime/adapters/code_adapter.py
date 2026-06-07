@@ -59,6 +59,7 @@ def _resolve_workspace_mutation_target(
     target: Path,
     *,
     allow_missing_leaf: bool,
+    follow_existing_leaf: bool = True,
 ) -> Path | None:
     """Resolve a mutation target and verify the real write path is in root."""
     try:
@@ -71,13 +72,13 @@ def _resolve_workspace_mutation_target(
     except OSError:
         return None
 
-    if leaf_present:
+    if leaf_present and follow_existing_leaf:
         try:
             resolved_target = target.resolve(strict=True)
         except (OSError, ValueError):
             return None
     else:
-        if not allow_missing_leaf:
+        if not leaf_present and not allow_missing_leaf:
             return None
         try:
             resolved_parent = target.parent.resolve(strict=False)
@@ -827,7 +828,10 @@ class LocalCodeAdapter:
         """
         target = self._root / relative_path
         resolved_target = _resolve_workspace_mutation_target(
-            self._root, target, allow_missing_leaf=True,
+            self._root,
+            target,
+            allow_missing_leaf=True,
+            follow_existing_leaf=False,
         )
         if resolved_target is None:
             return False
