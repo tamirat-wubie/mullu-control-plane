@@ -38,7 +38,10 @@ from gateway.skill_dispatch import FunctionCapabilityHandler  # noqa: E402
 from mcoi_runtime.contracts.governed_capability_fabric import (  # noqa: E402
     CommandCapabilityAdmissionStatus,
 )
+from mcoi_runtime.core.event_spine import EventSpineEngine  # noqa: E402
 from mcoi_runtime.core.invariants import stable_identifier  # noqa: E402
+from mcoi_runtime.core.rbac_defaults import seed_default_permissions  # noqa: E402
+from mcoi_runtime.governance.guards.access import AccessRuntimeEngine  # noqa: E402
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
 
@@ -57,6 +60,13 @@ class StubPlatform:
 
     def connect(self, *, identity_id, tenant_id):
         return StubSession(self._response)
+
+
+class AccessRuntimePlatform(StubPlatform):
+    def __init__(self, response="Governed response"):
+        super().__init__(response)
+        self._access_runtime = AccessRuntimeEngine(EventSpineEngine())
+        seed_default_permissions(self._access_runtime)
 
 
 class StubSession:
@@ -479,6 +489,77 @@ class TestDeploymentTenantMappings:
         assert mapping is not None
         assert mapping.tenant_id == "tenant-canary"
         assert mapping.metadata["purpose"] == "deployment_witness_canary"
+        assert data["platform_identity"]["available"] is False
+        assert data["platform_identity"]["reason"] == "platform_access_runtime_not_available"
+
+    def test_deployment_tenant_mapping_seeds_platform_rbac_identity(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "pilot")
+        monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
+        monkeypatch.setenv("MULLU_DEPLOYMENT_AUTHORITY_SECRET", "deployment-secret")
+        platform = AccessRuntimePlatform()
+        app = create_gateway_app(platform=platform)
+        local_client = TestClient(app)
+
+        resp = local_client.post(
+            "/deployment/tenant-mappings",
+            headers={"X-Mullu-Deployment-Secret": "deployment-secret"},
+            json={
+                "channel": "web",
+                "sender_id": "deployment-canary-session",
+                "tenant_id": "tenant-canary",
+                "identity_id": "identity-canary",
+                "roles": ["deployment_canary", "operator"],
+                "platform_roles": ["operator", "deployment_canary"],
+                "metadata": {"purpose": "deployment_witness_canary"},
+            },
+        )
+
+        data = resp.json()
+        identity = platform._access_runtime.get_identity("identity-canary")
+        bindings = platform._access_runtime.bindings_for_identity("identity-canary")
+        mapping = app.state.tenant_identity_store.resolve("web", "deployment-canary-session")
+        assert resp.status_code == 200
+        assert data["status"] == "stored"
+        assert data["platform_identity"]["available"] is True
+        assert data["platform_identity"]["identity_registered"] is True
+        assert data["platform_identity"]["roles_bound"] == ["operator"]
+        assert data["platform_identity"]["skipped_roles"] == ["deployment_canary"]
+        assert identity.tenant_id == "tenant-canary"
+        assert identity.enabled is True
+        assert len(bindings) == 1
+        assert bindings[0].role_id == "operator"
+        assert bindings[0].scope_ref_id == "tenant-canary"
+        assert mapping is not None
+        assert mapping.roles == ("deployment_canary", "operator")
+
+    def test_deployment_tenant_mapping_rejects_platform_identity_tenant_mismatch(self, monkeypatch):
+        monkeypatch.setenv("MULLU_ENV", "pilot")
+        monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
+        monkeypatch.setenv("MULLU_DEPLOYMENT_AUTHORITY_SECRET", "deployment-secret")
+        platform = AccessRuntimePlatform()
+        platform._access_runtime.register_identity(
+            "identity-canary",
+            "identity-canary",
+            tenant_id="other-tenant",
+        )
+        app = create_gateway_app(platform=platform)
+        local_client = TestClient(app)
+
+        resp = local_client.post(
+            "/deployment/tenant-mappings",
+            headers={"X-Mullu-Deployment-Secret": "deployment-secret"},
+            json={
+                "channel": "web",
+                "sender_id": "deployment-canary-session",
+                "tenant_id": "tenant-canary",
+                "identity_id": "identity-canary",
+                "roles": ["operator"],
+            },
+        )
+
+        assert resp.status_code == 409
+        assert resp.json()["detail"] == "platform identity tenant mismatch"
+        assert app.state.tenant_identity_store.count() == 0
 
 
 # ═══ WhatsApp ═══
