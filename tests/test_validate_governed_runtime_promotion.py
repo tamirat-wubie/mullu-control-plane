@@ -40,7 +40,7 @@ def test_governed_runtime_promotion_alias_matches_existing_readiness() -> None:
     assert governed.as_dict() == compatibility.as_dict()
     assert governed.readiness_level == "pilot-governed-core"
     assert governed.capability_count >= 52
-    assert "deployment_witness_not_published" in governed.blockers
+    assert "deployment_witness_not_published" not in governed.blockers
 
 
 def test_governed_runtime_cli_json_fails_closed_in_strict_mode(tmp_path: Path, capsys) -> None:
@@ -97,4 +97,4 @@ def test_write_governed_runtime_promotion_readiness_persists_report(tmp_path: Pa
     assert written == output_path
     assert payload == json.loads(json.dumps(readiness.as_dict()))
     assert payload["readiness_level"] == "pilot-governed-core"
-    assert "deployment_witness_not_published" in payload["blockers"]
+    assert "deployment_witness_not_published" not in payload["blockers"]

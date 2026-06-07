@@ -33,7 +33,8 @@ if str(MCOI_ROOT) not in sys.path:
 from gateway.capability_fabric import build_default_capability_admission_gate  # noqa: E402
 from scripts.validate_deployment_publication_closure import (  # noqa: E402
     load_witness_payload,
-    validate_publication_closure,
+    resolve_deployment_publication_evidence_paths,
+    validate_deployment_publication_closure_report,
 )
 from scripts.validate_mcp_capability_manifest import (  # noqa: E402
     validate_mcp_capability_manifest,
@@ -43,6 +44,9 @@ DEFAULT_DEPLOYMENT_STATUS_PATH = REPO_ROOT / "DEPLOYMENT_STATUS.md"
 DEFAULT_KNOWN_LIMITATIONS_PATH = REPO_ROOT / "KNOWN_LIMITATIONS_v0.1.md"
 DEFAULT_MCP_MANIFEST_PATH = REPO_ROOT / "examples" / "mcp_capability_manifest.json"
 DEFAULT_WITNESS_PATH = REPO_ROOT / ".change_assurance" / "deployment_witness.json"
+DEFAULT_DECLARATION_RECEIPT_PATH = (
+    REPO_ROOT / ".change_assurance" / "public_production_health_declaration.json"
+)
 DEFAULT_ADAPTER_EVIDENCE_PATH = REPO_ROOT / ".change_assurance" / "capability_adapter_evidence.json"
 
 REQUIRED_DOMAINS = frozenset(
@@ -186,6 +190,7 @@ def validate_general_agent_promotion(
     repo_root: Path = REPO_ROOT,
     deployment_status_path: Path | None = None,
     deployment_witness_path: Path | None = None,
+    declaration_receipt_path: Path | None = None,
     mcp_manifest_path: Path | None = None,
     adapter_evidence_path: Path | None = None,
     clock: Callable[[], str] | None = None,
@@ -196,6 +201,9 @@ def validate_general_agent_promotion(
     resolved_status_path = deployment_status_path or resolved_repo_root / "DEPLOYMENT_STATUS.md"
     resolved_witness_path = deployment_witness_path or (
         resolved_repo_root / ".change_assurance" / "deployment_witness.json"
+    )
+    resolved_declaration_receipt_path = declaration_receipt_path or (
+        resolved_repo_root / ".change_assurance" / "public_production_health_declaration.json"
     )
     resolved_manifest_path = mcp_manifest_path or (
         resolved_repo_root / "examples" / "mcp_capability_manifest.json"
@@ -223,6 +231,7 @@ def validate_general_agent_promotion(
         *evaluate_deployment_publication(
             deployment_status_path=resolved_status_path,
             deployment_witness_path=resolved_witness_path,
+            declaration_receipt_path=resolved_declaration_receipt_path,
         ),
     ]
     blockers = tuple(
@@ -246,17 +255,26 @@ def evaluate_deployment_publication(
     *,
     deployment_status_path: Path,
     deployment_witness_path: Path,
+    declaration_receipt_path: Path = DEFAULT_DECLARATION_RECEIPT_PATH,
 ) -> tuple[PromotionCheck, ...]:
     """Evaluate deployment witness and public health evidence for promotion."""
     status_text = _read_text_optional(deployment_status_path)
     deployment_state = _extract_field(status_text, DEPLOYMENT_STATE_PATTERN)
     public_health_endpoint = _extract_field(status_text, PUBLIC_HEALTH_PATTERN)
-    witness_payload, witness_errors = load_witness_payload(deployment_witness_path)
-    closure_errors = validate_publication_closure(
-        deployment_status_text=status_text,
-        witness_payload=witness_payload,
-        witness_path=deployment_witness_path,
+    effective_witness_path, _effective_declaration_receipt_path = (
+        resolve_deployment_publication_evidence_paths(
+            deployment_status_text=status_text,
+            witness_path=deployment_witness_path,
+            declaration_receipt_path=declaration_receipt_path,
+        )
     )
+    witness_payload, witness_errors = load_witness_payload(effective_witness_path)
+    closure_report = validate_deployment_publication_closure_report(
+        deployment_status_path=deployment_status_path,
+        witness_path=deployment_witness_path,
+        declaration_receipt_path=declaration_receipt_path,
+    )
+    closure_errors = list(closure_report.errors)
     witness_published = bool(
         witness_payload
         and witness_payload.get("deployment_claim") == "published"
@@ -313,7 +331,7 @@ def evaluate_deployment_publication(
             detail=witness_detail,
             evidence_refs=(
                 _path_label(deployment_status_path),
-                _path_label(deployment_witness_path),
+                _path_label(effective_witness_path),
             ),
             blocker_id="" if witness_published else "deployment_witness_not_published",
         ),
@@ -325,7 +343,7 @@ def evaluate_deployment_publication(
                 if runtime_debt_clear
                 else "deployment witness has runtime_responsibility_debt_clear=false"
             ),
-            evidence_refs=(_path_label(deployment_witness_path),),
+            evidence_refs=(_path_label(effective_witness_path),),
             blocker_id=(
                 "" if runtime_debt_clear else "deployment_runtime_responsibility_debt_present"
             ),
@@ -338,7 +356,7 @@ def evaluate_deployment_publication(
                 if authority_debt_clear
                 else "deployment witness has authority_responsibility_debt_clear=false"
             ),
-            evidence_refs=(_path_label(deployment_witness_path),),
+            evidence_refs=(_path_label(effective_witness_path),),
             blocker_id=(
                 "" if authority_debt_clear else "deployment_authority_responsibility_debt_present"
             ),

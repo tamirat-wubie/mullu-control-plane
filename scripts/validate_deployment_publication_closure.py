@@ -192,17 +192,12 @@ def validate_deployment_publication_closure_report(
         deployment_status_text = deployment_status_path.read_text(encoding="utf-8")
 
     published_status = _deployment_status_is_published(deployment_status_text)
-    effective_witness_path = _resolve_published_default_evidence_path(
-        requested_path=witness_path,
-        default_path=DEFAULT_WITNESS_PATH,
-        fallback_path=DEFAULT_PUBLISHED_WITNESS_FIXTURE_PATH,
-        published_status=published_status,
-    )
-    effective_declaration_receipt_path = _resolve_published_default_evidence_path(
-        requested_path=declaration_receipt_path,
-        default_path=DEFAULT_DECLARATION_RECEIPT_PATH,
-        fallback_path=DEFAULT_PUBLISHED_DECLARATION_RECEIPT_FIXTURE_PATH,
-        published_status=published_status,
+    effective_witness_path, effective_declaration_receipt_path = (
+        resolve_deployment_publication_evidence_paths(
+            deployment_status_text=deployment_status_text,
+            witness_path=witness_path,
+            declaration_receipt_path=declaration_receipt_path,
+        )
     )
 
     witness_payload, witness_errors = load_witness_payload(effective_witness_path)
@@ -287,6 +282,30 @@ def _bounded_declaration_receipt_path(declaration_receipt_path: Path) -> str:
     if declaration_receipt_path == DEFAULT_DECLARATION_RECEIPT_PATH:
         return ".change_assurance/public_production_health_declaration.json"
     return "provided_declaration_receipt"
+
+
+def resolve_deployment_publication_evidence_paths(
+    *,
+    deployment_status_text: str,
+    witness_path: Path = DEFAULT_WITNESS_PATH,
+    declaration_receipt_path: Path = DEFAULT_DECLARATION_RECEIPT_PATH,
+) -> tuple[Path, Path]:
+    """Resolve canonical publication evidence paths for published status checks."""
+    published_status = _deployment_status_is_published(deployment_status_text)
+    return (
+        _resolve_published_default_evidence_path(
+            requested_path=witness_path,
+            default_path=DEFAULT_WITNESS_PATH,
+            fallback_path=DEFAULT_PUBLISHED_WITNESS_FIXTURE_PATH,
+            published_status=published_status,
+        ),
+        _resolve_published_default_evidence_path(
+            requested_path=declaration_receipt_path,
+            default_path=DEFAULT_DECLARATION_RECEIPT_PATH,
+            fallback_path=DEFAULT_PUBLISHED_DECLARATION_RECEIPT_FIXTURE_PATH,
+            published_status=published_status,
+        ),
+    )
 
 
 def _resolve_published_default_evidence_path(
