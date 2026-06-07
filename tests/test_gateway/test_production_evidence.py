@@ -13,6 +13,7 @@ Invariants:
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -23,6 +24,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from gateway.server import create_gateway_app  # noqa: E402
+from gateway.tenant_identity import TenantMapping  # noqa: E402
 from scripts.collect_deployment_witness import _evaluate_physical_capability_policy  # noqa: E402
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
@@ -204,6 +206,68 @@ def test_audit_and_proof_verify_surface_anchor_gap(monkeypatch) -> None:
     assert "audit_anchor_verification" in proof_payload["checks_missing"]
     assert _validate_schema_instance(_load_schema(AUDIT_VERIFICATION_SCHEMA), audit_payload) == []
     assert _validate_schema_instance(_load_schema(PROOF_VERIFICATION_SCHEMA), proof_payload) == []
+
+
+def test_deployment_witness_uses_latest_command_anchor(monkeypatch) -> None:
+    monkeypatch.setenv("MULLU_RUNTIME_CONFORMANCE_SECRET", "conformance-secret")
+    monkeypatch.setenv("MULLU_DEPLOYMENT_WITNESS_SECRET", "deployment-secret")
+    monkeypatch.setenv("MULLU_COMMAND_ANCHOR_SECRET", "anchor-secret")
+    app = create_gateway_app(platform=StubPlatform())
+    app.state.router.register_tenant_mapping(
+        TenantMapping(
+            channel="web",
+            sender_id="deployment-witness-canary-session",
+            tenant_id="tenant-render-pilot-canary",
+            identity_id="deployment-witness-canary-session",
+            roles=(
+                "deployment_authority",
+                "platform_operator",
+                "operator",
+                "knowledge_operator",
+                "deployment_canary",
+            ),
+            approval_authority=True,
+        )
+    )
+    client = TestClient(app)
+
+    response = client.post(
+        "/webhook/web?canary=terminal-success-test",
+        content=json.dumps(
+            {
+                "body": "/run enterprise.knowledge_search {\"query\":\"deployment witness canary\"}",
+                "user_id": "deployment-witness-canary-session",
+                "conversation_id": "deployment-witness-terminal-success-conversation",
+                "message_id": "deployment-witness-terminal-success-message",
+            }
+        ),
+        headers={
+            "X-Session-Token": "deployment-witness-canary-session",
+            "X-Mullu-Authority-Channel": "web",
+            "X-Mullu-Authority-Sender-Id": "deployment-witness-canary-session",
+            "X-Mullu-Authority-Tenant-Id": "tenant-render-pilot-canary",
+        },
+    )
+    app.state.command_ledger.anchor_unanchored_events(
+        signing_secret="anchor-secret",
+        signature_key_id="test-command-anchor",
+    )
+    audit_payload = client.get("/audit/verify").json()
+    proof_payload = client.get("/proof/verify").json()
+    deployment_payload = client.get("/deployment/witness").json()
+    audit_anchor_check = next(
+        check for check in deployment_payload["checks"] if check["check_id"] == "audit_anchor"
+    )
+
+    assert response.status_code == 200
+    assert response.json()["metadata"]["closure_disposition"] == "committed"
+    assert audit_payload["valid"] is True
+    assert proof_payload["valid"] is True
+    assert audit_anchor_check["passed"] is True
+    assert audit_anchor_check["detail"] == audit_payload["latest_anchor_id"]
+    assert "audit_anchor" in deployment_payload["checks_passed"]
+    assert "audit_anchor" not in deployment_payload["checks_missing"]
+    assert _validate_schema_instance(_load_schema(PRODUCTION_EVIDENCE_SCHEMA), deployment_payload) == []
 
 
 def _physical_capability(

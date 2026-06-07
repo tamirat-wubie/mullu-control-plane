@@ -593,6 +593,8 @@ def create_gateway_app(
         conformance = runtime_conformance()
         capability_projection = _capability_evidence_projection()
         command_summary = command_ledger.summary()
+        latest_anchors = command_ledger.list_anchors(limit=1)
+        latest_anchor_id = latest_anchors[0].anchor_id if latest_anchors else ""
         checks = [
             {
                 "check_id": "gateway_health",
@@ -614,8 +616,8 @@ def create_gateway_app(
             },
             {
                 "check_id": "audit_anchor",
-                "passed": bool(command_summary.get("latest_anchor_id")),
-                "detail": str(command_summary.get("latest_anchor_id") or "anchor_missing"),
+                "passed": bool(latest_anchor_id),
+                "detail": latest_anchor_id or "anchor_missing",
             },
             {
                 "check_id": "proof_store",
