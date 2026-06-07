@@ -2103,6 +2103,27 @@ def create_gateway_app(
             "authority_witness": asdict(authority_obligation_mesh.responsibility_witness()),
         }
 
+    @app.post("/authority/approval-chains/close-expired")
+    async def close_expired_authority_approval_chains(request: Request):
+        _require_authority_operator(request)
+        try:
+            payload = await _request_json_mapping(request)
+            evidence_refs = _payload_text_tuple(payload, "evidence_refs")
+            chains = authority_obligation_mesh.close_expired_approval_chains(
+                evidence_refs=evidence_refs,
+                tenant_id=str(payload.get("tenant_id", "")).strip(),
+                command_id=str(payload.get("command_id", "")).strip(),
+            )
+        except ValueError as exc:
+            raise HTTPException(400, detail=str(exc)) from exc
+        return {
+            "status": "closed",
+            "approval_chains": [asdict(chain) for chain in chains],
+            "count": len(chains),
+            "evidence_refs": list(evidence_refs),
+            "authority_witness": asdict(authority_obligation_mesh.responsibility_witness()),
+        }
+
     @app.get("/authority/obligations")
     def authority_obligations(
         request: Request,

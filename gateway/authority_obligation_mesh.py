@@ -1311,14 +1311,59 @@ class AuthorityObligationMesh:
                 body=f"Approval chain {updated.chain_id} expired for command {updated.command_id}.",
                 metadata=event,
             )
-            self._commands.transition(
-                updated.command_id,
-                CommandState.DENIED,
-                approval_id=updated.chain_id,
-                detail={"cause": "approval_chain_expired_escalated", "escalation_event": event},
-            )
+            if self._commands.get(updated.command_id) is not None:
+                self._commands.transition(
+                    updated.command_id,
+                    CommandState.DENIED,
+                    approval_id=updated.chain_id,
+                    detail={"cause": "approval_chain_expired_escalated", "escalation_event": event},
+                )
             expired.append(updated)
         return tuple(expired)
+
+    def close_expired_approval_chains(
+        self,
+        *,
+        evidence_refs: tuple[str, ...],
+        tenant_id: str = "",
+        command_id: str = "",
+    ) -> tuple[ApprovalChain, ...]:
+        """Terminally close expired approval chains with explicit evidence refs."""
+        if not evidence_refs:
+            raise ValueError("expired approval chain closure requires evidence_refs")
+        closed: list[ApprovalChain] = []
+        for chain in self._store.list_approval_chains():
+            if chain.status is not ApprovalChainStatus.EXPIRED:
+                continue
+            if tenant_id and chain.tenant_id != tenant_id:
+                continue
+            if command_id and chain.command_id != command_id:
+                continue
+            updated = self._replace_chain(chain, status=ApprovalChainStatus.DENIED)
+            event = {
+                "event_id": f"approval-chain-closed-{uuid4().hex[:16]}",
+                "event_type": "approval_chain_closure_recorded",
+                "obligation_id": "",
+                "approval_chain_id": updated.chain_id,
+                "command_id": updated.command_id,
+                "tenant_id": updated.tenant_id,
+                "owner_id": "",
+                "owner_team": "",
+                "escalated_at": self._clock(),
+                "previous_status": ApprovalChainStatus.EXPIRED.value,
+                "next_status": ApprovalChainStatus.DENIED.value,
+                "evidence_refs": list(evidence_refs),
+            }
+            self._store.append_escalation_event(event)
+            if self._commands.get(updated.command_id) is not None:
+                self._commands.transition(
+                    updated.command_id,
+                    CommandState.DENIED,
+                    approval_id=updated.chain_id,
+                    detail={"cause": "expired_approval_chain_closed", "closure_event": event},
+                )
+            closed.append(updated)
+        return tuple(closed)
 
     def obligations_for(self, command_id: str) -> tuple[Obligation, ...]:
         """Return obligations opened for one command."""

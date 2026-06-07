@@ -2408,6 +2408,52 @@ class TestGatewayStatus:
         assert updated.status.value == "expired"
         assert events[-1].next_state is CommandState.DENIED
 
+    def test_close_expired_authority_approval_chains_clears_debt(
+        self, gateway_app, client
+    ):
+        msg_resp = client.post(
+            "/webhook/web",
+            content=json.dumps(
+                {"body": "make a payment of $50", "user_id": "web-user"}
+            ),
+            headers={"X-Session-Token": "authority-close-chain-token"},
+        )
+        command_id = msg_resp.json()["metadata"]["command_id"]
+        chain = gateway_app.state.authority_obligation_mesh.approval_chain_for(
+            command_id
+        )
+        assert chain is not None
+        gateway_app.state.authority_mesh_store.save_approval_chain(ApprovalChain(
+            chain_id=chain.chain_id,
+            command_id=chain.command_id,
+            tenant_id=chain.tenant_id,
+            policy_id=chain.policy_id,
+            required_roles=chain.required_roles,
+            required_approver_count=chain.required_approver_count,
+            approvals_received=chain.approvals_received,
+            status=ApprovalChainStatus.EXPIRED,
+            due_at="2026-04-24T12:00:00+00:00",
+        ))
+
+        resp = client.post(
+            "/authority/approval-chains/close-expired",
+            json={
+                "evidence_refs": ["authority:expired_approval_chain_closure"],
+                "command_id": command_id,
+            },
+        )
+        updated = gateway_app.state.authority_obligation_mesh.approval_chain_for(
+            command_id
+        )
+
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "closed"
+        assert resp.json()["count"] == 1
+        assert resp.json()["approval_chains"][0]["status"] == "denied"
+        assert resp.json()["authority_witness"]["expired_approval_chain_count"] == 0
+        assert updated is not None
+        assert updated.status is ApprovalChainStatus.DENIED
+
     def test_command_closure_read_model(self, gateway_app, client):
         msg_resp = client.post(
             "/webhook/web",

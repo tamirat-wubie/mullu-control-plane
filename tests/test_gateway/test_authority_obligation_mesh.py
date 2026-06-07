@@ -16,6 +16,7 @@ if str(_ROOT) not in sys.path:
 
 import gateway.authority_obligation_mesh as authority_mesh_module  # noqa: E402
 from gateway.authority_obligation_mesh import (  # noqa: E402
+    ApprovalChain,
     ApprovalChainStatus,
     ApprovalPolicy,
     AuthorityObligationMesh,
@@ -254,6 +255,68 @@ def test_overdue_approval_chain_expires_and_emits_escalation_event():
     assert mesh.escalation_events()[0]["event_type"] == "approval_chain_expired"
     assert events[-1].next_state is CommandState.DENIED
     assert events[-1].detail["cause"] == "approval_chain_expired_escalated"
+
+
+def test_overdue_approval_chain_expires_when_command_ledger_lost_state():
+    current_time = {"value": "2026-04-24T12:05:01+00:00"}
+
+    def clock() -> str:
+        return current_time["value"]
+
+    store = InMemoryAuthorityObligationMeshStore()
+    store.save_approval_chain(ApprovalChain(
+        chain_id="approval-chain-persisted",
+        command_id="cmd-persisted-after-restart",
+        tenant_id="tenant-1",
+        policy_id="policy-persisted",
+        required_roles=("financial_admin",),
+        required_approver_count=1,
+        approvals_received=(),
+        status=ApprovalChainStatus.PENDING,
+        due_at="2026-04-24T12:00:00+00:00",
+    ))
+    mesh = AuthorityObligationMesh(commands=_ledger(clock=clock), clock=clock, store=store)
+
+    expired = mesh.expire_overdue_approval_chains()
+    witness = mesh.responsibility_witness()
+
+    assert len(expired) == 1
+    assert expired[0].status is ApprovalChainStatus.EXPIRED
+    assert expired[0].command_id == "cmd-persisted-after-restart"
+    assert mesh.escalation_events()[0]["event_type"] == "approval_chain_expired"
+    assert witness.pending_approval_chain_count == 0
+    assert witness.expired_approval_chain_count == 1
+    assert witness.responsibility_debt_clear is False
+
+
+def test_expired_approval_chain_closure_clears_active_debt():
+    current_time = {"value": "2026-04-24T12:00:00+00:00"}
+
+    def clock() -> str:
+        return current_time["value"]
+
+    ledger = _ledger(clock=clock)
+    command = _payment_command(ledger)
+    mesh = AuthorityObligationMesh(commands=ledger, clock=clock)
+    _register_payment_owner(mesh)
+    mesh.prepare_authority(command.command_id)
+
+    current_time["value"] = "2026-04-24T12:05:01+00:00"
+    expired = mesh.expire_overdue_approval_chains()
+    closed = mesh.close_expired_approval_chains(
+        evidence_refs=("authority:expired_approval_chain_closure",),
+    )
+    witness = mesh.responsibility_witness()
+    events = ledger.events_for(command.command_id)
+
+    assert len(expired) == 1
+    assert len(closed) == 1
+    assert closed[0].status is ApprovalChainStatus.DENIED
+    assert witness.pending_approval_chain_count == 0
+    assert witness.expired_approval_chain_count == 0
+    assert witness.responsibility_debt_clear is True
+    assert mesh.escalation_events()[-1]["event_type"] == "approval_chain_closure_recorded"
+    assert events[-1].detail["cause"] == "expired_approval_chain_closed"
 
 
 def test_mesh_store_reloads_ownership_policies_and_approval_chain_across_instances():
