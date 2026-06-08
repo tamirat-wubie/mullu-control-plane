@@ -610,6 +610,11 @@ def create_gateway_app(
         command_summary = command_ledger.summary()
         latest_anchors = command_ledger.list_anchors(limit=1)
         latest_anchor_id = latest_anchors[0].anchor_id if latest_anchors else ""
+        latest_command_event_hash = str(
+            command_summary.get("last_event_hash")
+            or command_summary.get("latest_event_hash")
+            or ""
+        )
         checks = [
             {
                 "check_id": "gateway_health",
@@ -651,7 +656,7 @@ def create_gateway_app(
             "api_health": "pass",
             "db_health": _status_from_bool(command_summary.get("store", {}).get("available", True)),
             "policy_engine": "pass",
-            "audit_store": _status_from_bool(bool(command_summary.get("latest_event_hash"))),
+            "audit_store": _status_from_bool(bool(latest_command_event_hash or latest_anchor_id)),
             "proof_store": _status_from_bool(int(command_summary.get("terminal_certificates", 0)) > 0),
             "capability_evidence": capability_projection["capability_evidence"],
             "live_capabilities": capability_projection["live_capabilities"],
