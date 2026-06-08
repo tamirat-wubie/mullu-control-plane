@@ -31,6 +31,7 @@ from gateway.conformance import (  # noqa: E402
     ConformanceClass,
     ConformanceStatus,
     ProofCoverageStatus,
+    _collect_gaps,
     _decide_class,
     _has_stale_limitation_claim,
     _known_limitations_aligned,
@@ -777,6 +778,68 @@ def _real_command_ledger():
     )
     ledger.transition(command.command_id, CommandState.ALLOWED, risk_tier="low")
     return ledger
+
+
+def _write_deployment_status(
+    repo_root: Path,
+    *,
+    witness_state: str = "published",
+    public_health_endpoint: str = "https://mullu-gateway.onrender.com/health",
+) -> None:
+    repo_root.joinpath("DEPLOYMENT_STATUS.md").write_text(
+        "\n".join(
+            (
+                "# Deployment Status Witness",
+                f"**Deployment witness state:** `{witness_state}`",
+                f"**Public production health endpoint:** `{public_health_endpoint}`",
+                "**API health endpoint:** `not-declared`",
+                "Public production health is declared from the exact field above.",
+            )
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_collect_gaps_uses_exact_public_health_declaration_field(tmp_path) -> None:
+    _write_deployment_status(tmp_path)
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    docs_dir.joinpath("42_lineage_query_api.md").write_text(
+        "The policy-version index is implemented by the policy-version read model.",
+        encoding="utf-8",
+    )
+
+    gaps = _collect_gaps([], repository_root=tmp_path)
+
+    assert "public_production_health_not_declared" not in gaps
+    assert "deployment_witness_not_published" not in gaps
+    assert "lineage_policy_version_index_projected_only" not in gaps
+
+
+def test_collect_gaps_flags_specific_public_health_field_when_not_declared(tmp_path) -> None:
+    _write_deployment_status(tmp_path, public_health_endpoint="not-declared")
+
+    gaps = _collect_gaps([], repository_root=tmp_path)
+
+    assert "public_production_health_not_declared" in gaps
+    assert "deployment_witness_not_published" not in gaps
+    assert len(gaps) == 1
+
+
+def test_collect_gaps_flags_stale_lineage_policy_index_claim(tmp_path) -> None:
+    _write_deployment_status(tmp_path)
+    docs_dir = tmp_path / "docs"
+    docs_dir.mkdir()
+    docs_dir.joinpath("42_lineage_query_api.md").write_text(
+        "The policy-version index is not yet implemented.",
+        encoding="utf-8",
+    )
+
+    gaps = _collect_gaps([], repository_root=tmp_path)
+
+    assert "lineage_policy_version_index_projected_only" in gaps
+    assert "public_production_health_not_declared" not in gaps
+    assert len(gaps) == 1
 
 
 def test_decide_class_is_strict_function_of_status() -> None:
