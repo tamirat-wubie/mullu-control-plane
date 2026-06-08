@@ -26,14 +26,14 @@ def test_validate_promotion_operator_checklist_accepts_example() -> None:
 def test_validate_promotion_operator_checklist_rejects_missing_approval_blocker(tmp_path: Path) -> None:
     checklist_path = tmp_path / "promotion_operator_checklist.json"
     payload = json.loads(CHECKLIST_PATH.read_text(encoding="utf-8"))
-    payload["approval_required_blockers"].remove("deployment_dns_not_verified")
+    payload["approval_required_blockers"].remove("voice_dependency_missing:OPENAI_API_KEY")
     checklist_path.write_text(json.dumps(payload), encoding="utf-8")
 
     result = validate_general_agent_promotion_operator_checklist(checklist_path)
 
     assert result.valid is False
     assert any("approval_required_blockers missing" in error for error in result.errors)
-    assert any("deployment_dns_not_verified" in error for error in result.errors)
+    assert any("OPENAI_API_KEY" in error for error in result.errors)
 
 
 def test_validate_promotion_operator_checklist_rejects_missing_conditional_blocker(tmp_path: Path) -> None:

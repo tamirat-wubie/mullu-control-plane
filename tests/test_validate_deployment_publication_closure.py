@@ -308,7 +308,7 @@ def test_published_status_report_uses_tracked_fixture_when_default_evidence_abse
 ) -> None:
     deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
     deployment_status.write_text(
-        _deployment_status("published", "https://mullu-gateway.onrender.com/health"),
+        _deployment_status("published", "https://api.mullusi.com/health"),
         encoding="utf-8",
     )
     absent_witness = tmp_path / ".change_assurance" / "deployment_witness.json"

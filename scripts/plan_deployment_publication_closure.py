@@ -36,6 +36,9 @@ DEFAULT_DNS_TARGET_BINDING_RECEIPT = (
 DEFAULT_DNS_RESOLUTION_RECEIPT = (
     REPO_ROOT / ".change_assurance" / "gateway_dns_resolution_receipt.json"
 )
+DEFAULT_DEPLOYMENT_PUBLICATION_CLOSURE_VALIDATION = (
+    REPO_ROOT / ".change_assurance" / "deployment_publication_closure_validation.json"
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,16 +91,28 @@ def plan_deployment_publication_closure(
     upstream_blocker_receipt_path: Path = DEFAULT_UPSTREAM_BLOCKER_RECEIPT,
     dns_target_binding_receipt_path: Path = DEFAULT_DNS_TARGET_BINDING_RECEIPT,
     dns_resolution_receipt_path: Path = DEFAULT_DNS_RESOLUTION_RECEIPT,
+    deployment_publication_closure_validation_path: Path = (
+        DEFAULT_DEPLOYMENT_PUBLICATION_CLOSURE_VALIDATION
+    ),
 ) -> DeploymentPublicationClosurePlan:
     """Build a deterministic plan for deployment publication blockers."""
     readiness = _load_json_object(readiness_path, "promotion readiness")
+    publication_closure_valid = _deployment_publication_closure_is_valid(
+        deployment_publication_closure_validation_path
+    )
     blockers = tuple(
         dict.fromkeys(
             [
                 *_deployment_readiness_blockers(readiness),
                 *_deployment_upstream_blockers(upstream_blocker_receipt_path),
-                *_deployment_dns_target_binding_blockers(dns_target_binding_receipt_path),
-                *_deployment_dns_resolution_blockers(dns_resolution_receipt_path),
+                *_deployment_dns_target_binding_blockers(
+                    dns_target_binding_receipt_path,
+                    publication_closure_valid=publication_closure_valid,
+                ),
+                *_deployment_dns_resolution_blockers(
+                    dns_resolution_receipt_path,
+                    publication_closure_valid=publication_closure_valid,
+                ),
             ]
         )
     )
@@ -458,7 +473,13 @@ def _deployment_upstream_blockers(receipt_path: Path) -> tuple[str, ...]:
     return ()
 
 
-def _deployment_dns_target_binding_blockers(receipt_path: Path) -> tuple[str, ...]:
+def _deployment_dns_target_binding_blockers(
+    receipt_path: Path,
+    *,
+    publication_closure_valid: bool = False,
+) -> tuple[str, ...]:
+    if publication_closure_valid:
+        return ()
     if not receipt_path.exists():
         return ("deployment_dns_not_verified",)
     try:
@@ -470,7 +491,13 @@ def _deployment_dns_target_binding_blockers(receipt_path: Path) -> tuple[str, ..
     return ("deployment_dns_not_verified",)
 
 
-def _deployment_dns_resolution_blockers(receipt_path: Path) -> tuple[str, ...]:
+def _deployment_dns_resolution_blockers(
+    receipt_path: Path,
+    *,
+    publication_closure_valid: bool = False,
+) -> tuple[str, ...]:
+    if publication_closure_valid:
+        return ()
     if not receipt_path.exists():
         return ("deployment_dns_not_verified",)
     try:
@@ -480,6 +507,17 @@ def _deployment_dns_resolution_blockers(receipt_path: Path) -> tuple[str, ...]:
     if receipt.get("resolved") is True and receipt.get("addresses"):
         return ()
     return ("deployment_dns_not_verified",)
+
+
+def _deployment_publication_closure_is_valid(receipt_path: Path) -> bool:
+    """Return true only for an explicit valid deployment publication closure receipt."""
+    if not receipt_path.exists():
+        return False
+    try:
+        receipt = _load_json_object(receipt_path, "deployment publication closure validation")
+    except (FileNotFoundError, ValueError):
+        return False
+    return receipt.get("valid") is True and receipt.get("errors") == []
 
 
 def _blockers_for_failed_step(step: dict[str, Any]) -> tuple[str, ...]:
@@ -568,6 +606,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--upstream-blocker-receipt", default=str(DEFAULT_UPSTREAM_BLOCKER_RECEIPT))
     parser.add_argument("--dns-target-binding-receipt", default=str(DEFAULT_DNS_TARGET_BINDING_RECEIPT))
     parser.add_argument("--dns-resolution-receipt", default=str(DEFAULT_DNS_RESOLUTION_RECEIPT))
+    parser.add_argument(
+        "--deployment-publication-closure-validation",
+        default=str(DEFAULT_DEPLOYMENT_PUBLICATION_CLOSURE_VALIDATION),
+    )
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
@@ -583,6 +625,9 @@ def main(argv: list[str] | None = None) -> int:
             upstream_blocker_receipt_path=Path(args.upstream_blocker_receipt),
             dns_target_binding_receipt_path=Path(args.dns_target_binding_receipt),
             dns_resolution_receipt_path=Path(args.dns_resolution_receipt),
+            deployment_publication_closure_validation_path=Path(
+                args.deployment_publication_closure_validation
+            ),
         )
     except (FileNotFoundError, ValueError) as exc:
         error = _bounded_cli_error(exc)

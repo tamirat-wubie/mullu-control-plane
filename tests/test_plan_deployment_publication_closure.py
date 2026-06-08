@@ -250,6 +250,9 @@ def test_deployment_closure_plan_maps_upstream_blocker_receipt(tmp_path: Path) -
         upstream_blocker_receipt_path=upstream_receipt_path,
         dns_target_binding_receipt_path=tmp_path / "missing_dns_target_binding_receipt.json",
         dns_resolution_receipt_path=tmp_path / "missing_dns_resolution_receipt.json",
+        deployment_publication_closure_validation_path=(
+            tmp_path / "missing_deployment_publication_closure_validation.json"
+        ),
     )
     actions_by_blocker = {action.blocker: action for action in plan.actions}
     action = actions_by_blocker["deployment_upstream_api_gate_not_ready"]
@@ -292,6 +295,8 @@ def test_deployment_closure_plan_writer_and_cli_emit_json(tmp_path: Path, capsys
             str(tmp_path / "missing_dns_target_binding_receipt.json"),
             "--dns-resolution-receipt",
             str(tmp_path / "missing_dns_resolution_receipt.json"),
+            "--deployment-publication-closure-validation",
+            str(tmp_path / "missing_deployment_publication_closure_validation.json"),
             "--output",
             str(output_path),
             "--json",
@@ -412,6 +417,9 @@ def test_deployment_closure_plan_maps_not_ready_dns_receipts(tmp_path: Path) -> 
         upstream_blocker_receipt_path=tmp_path / "missing_upstream_receipt.json",
         dns_target_binding_receipt_path=dns_target_receipt_path,
         dns_resolution_receipt_path=dns_resolution_receipt_path,
+        deployment_publication_closure_validation_path=(
+            tmp_path / "missing_deployment_publication_closure_validation.json"
+        ),
     )
     action = plan.actions[0]
 
@@ -437,12 +445,47 @@ def test_deployment_closure_plan_skips_ready_dns_receipts(tmp_path: Path) -> Non
         upstream_blocker_receipt_path=tmp_path / "missing_upstream_receipt.json",
         dns_target_binding_receipt_path=dns_target_receipt_path,
         dns_resolution_receipt_path=dns_resolution_receipt_path,
+        deployment_publication_closure_validation_path=(
+            tmp_path / "missing_deployment_publication_closure_validation.json"
+        ),
     )
 
     assert plan.action_count == 0
     assert plan.blockers == ()
     assert plan.source_ready is False
     assert str(tmp_path) not in json.dumps(plan.as_dict(), sort_keys=True)
+
+
+def test_deployment_closure_plan_skips_dns_when_publication_closure_valid(
+    tmp_path: Path,
+) -> None:
+    readiness_path = tmp_path / "general_agent_promotion_readiness.json"
+    closure_validation_path = tmp_path / "deployment_publication_closure_validation.json"
+    readiness_path.write_text(json.dumps({"ready": False, "blockers": []}), encoding="utf-8")
+    closure_validation_path.write_text(
+        json.dumps(
+            {
+                "deployment_status_path": "DEPLOYMENT_STATUS.md",
+                "errors": [],
+                "valid": True,
+                "witness_path": "provided_witness",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    plan = plan_deployment_publication_closure(
+        readiness_path,
+        upstream_blocker_receipt_path=tmp_path / "missing_upstream_receipt.json",
+        dns_target_binding_receipt_path=tmp_path / "missing_dns_target_binding_receipt.json",
+        dns_resolution_receipt_path=tmp_path / "missing_dns_resolution_receipt.json",
+        deployment_publication_closure_validation_path=closure_validation_path,
+    )
+
+    assert plan.action_count == 0
+    assert plan.blockers == ()
+    assert plan.source_ready is False
+    assert "deployment_dns_not_verified" not in json.dumps(plan.as_dict(), sort_keys=True)
 
 
 def test_deployment_closure_plan_rejects_nonfinite_readiness_json(tmp_path: Path) -> None:
@@ -473,6 +516,9 @@ def _missing_receipt_paths(tmp_path: Path) -> dict[str, Path]:
         "upstream_blocker_receipt_path": tmp_path / "missing_upstream_receipt.json",
         "dns_target_binding_receipt_path": tmp_path / "missing_dns_target_binding_receipt.json",
         "dns_resolution_receipt_path": tmp_path / "missing_dns_resolution_receipt.json",
+        "deployment_publication_closure_validation_path": (
+            tmp_path / "missing_deployment_publication_closure_validation.json"
+        ),
     }
 
 

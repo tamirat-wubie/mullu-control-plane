@@ -56,8 +56,8 @@ DEFAULT_CAPABILITY_ROOT = REPO_ROOT / "capabilities"
 DEFAULT_CAPSULE_ROOT = REPO_ROOT / "capsules"
 EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT = 4
 EXPECTED_READINESS_LEVEL = "pilot-governed-core"
-EXPECTED_SOURCE_PLAN_TYPES = ("adapter", "deployment")
-OPTIONAL_SOURCE_PLAN_TYPES = ("portfolio",)
+EXPECTED_SOURCE_PLAN_TYPES = ("adapter",)
+OPTIONAL_SOURCE_PLAN_TYPES = ("deployment", "portfolio")
 
 EnvReader = Callable[[str], str | None]
 

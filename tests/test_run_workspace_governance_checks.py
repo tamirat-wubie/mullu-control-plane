@@ -456,7 +456,16 @@ def test_ci_runs_full_unsharded_workspace_preflight_receipt() -> None:
     assert preflight_command in workflow_text
     command_line = next(line.strip() for line in workflow_text.splitlines() if preflight_command in line)
 
-    assert command_line == f"run: {preflight_command}"
+    assert command_line == (
+        f"{preflight_command} > .tmp/workspace-governance-preflight-stdout.json"
+    )
+    receipt_validator_command = (
+        "python scripts/validate_workspace_governance_preflight_receipt.py "
+        "--receipt .tmp/workspace-governance-preflight-receipt.json"
+    )
+
+    assert receipt_validator_command in workflow_text
+    assert "workspace governance preflight: status={status} checks={check_count}" in workflow_text
     assert "--check" not in command_line
     assert "--shard-count" not in command_line
     assert "--shard-index" not in command_line

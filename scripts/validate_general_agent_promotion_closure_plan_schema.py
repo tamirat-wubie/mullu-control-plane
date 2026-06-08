@@ -11,7 +11,8 @@ Invariants:
   - Adapter closure actions carry verification commands and receipt validators.
   - Action counts are derived from the action list, not trusted blindly.
   - Approval-required counts are recomputed from action payloads.
-  - Non-empty plans must contain adapter and deployment source actions.
+  - Non-empty plans must contain adapter source actions; deployment actions may
+    be absent after deployment publication closure is verified.
   - Portfolio source actions must carry approval and proof fields.
 """
 
@@ -84,8 +85,8 @@ def validate_general_agent_promotion_closure_plan_schema(
         errors.append("approval_required_action_count does not match actions")
     if approval_required_count > action_count:
         errors.append("approval_required_action_count cannot exceed total_action_count")
-    if action_count and {"adapter", "deployment"} - set(source_plan_types):
-        errors.append("non-empty promotion closure plan must include adapter and deployment source actions")
+    if action_count and "adapter" not in set(source_plan_types):
+        errors.append("non-empty promotion closure plan must include adapter source actions")
     for index, action in enumerate(actions):
         source_plan_type = action.get("source_plan_type")
         if source_plan_type in {"adapter", "portfolio"}:

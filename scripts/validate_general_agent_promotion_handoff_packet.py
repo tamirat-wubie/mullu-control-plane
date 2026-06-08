@@ -307,12 +307,17 @@ def _derive_current_closure_plan() -> dict[str, Any]:
     from scripts.plan_deployment_publication_closure import plan_deployment_publication_closure
     from scripts.plan_general_agent_promotion_closure import plan_general_agent_promotion_closure
     from scripts.produce_capability_improvement_portfolio import produce_capability_improvement_portfolio
+    from scripts.validate_deployment_publication_closure import (
+        validate_deployment_publication_closure_report,
+        write_deployment_publication_closure_validation_report,
+    )
 
     with tempfile.TemporaryDirectory(prefix="mullu-handoff-closure-") as raw_tmp_dir:
         tmp_dir = Path(raw_tmp_dir)
         readiness_path = tmp_dir / "general_agent_promotion_readiness.json"
         adapter_evidence_path = tmp_dir / "capability_adapter_evidence.json"
         adapter_plan_path = tmp_dir / "capability_adapter_closure_plan.json"
+        deployment_closure_validation_path = tmp_dir / "deployment_publication_closure_validation.json"
         deployment_plan_path = tmp_dir / "deployment_publication_closure_plan.json"
         portfolio_path = tmp_dir / "capability_improvement_portfolio.json"
 
@@ -338,11 +343,16 @@ def _derive_current_closure_plan() -> dict[str, Any]:
             adapter_plan_path,
             plan_capability_adapter_closure(evidence_path=adapter_evidence_path).as_dict(),
         )
+        write_deployment_publication_closure_validation_report(
+            validate_deployment_publication_closure_report(),
+            deployment_closure_validation_path,
+        )
         _write_json_payload(
             deployment_plan_path,
             plan_deployment_publication_closure(
                 readiness_path=readiness_path,
                 upstream_blocker_receipt_path=tmp_dir / "deployment_upstream_blocker_receipt.absent.json",
+                deployment_publication_closure_validation_path=deployment_closure_validation_path,
             ).as_dict(),
         )
         portfolio_run = produce_capability_improvement_portfolio(output_path=portfolio_path)

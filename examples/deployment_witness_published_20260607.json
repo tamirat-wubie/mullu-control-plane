@@ -1,33 +1,33 @@
 {
   "authority_escalated_obligation_count": 0,
-  "authority_open_obligation_count": 2,
+  "authority_open_obligation_count": 0,
   "authority_overdue_approval_chain_count": 0,
   "authority_overdue_obligation_count": 0,
   "authority_pending_approval_chain_count": 0,
   "authority_responsibility_debt_clear": true,
   "authority_unowned_high_risk_capability_count": 0,
-  "collected_at": "2026-06-07T19:16:02.581205+00:00",
+  "collected_at": "2026-06-08T15:33:26.949954+00:00",
   "conformance_signature_status": "verified",
-  "conformance_status": "conformant_with_gaps",
+  "conformance_status": "conformant",
   "deployment_claim": "published",
   "errors": [],
-  "gateway_url": "https://mullu-gateway.onrender.com",
+  "gateway_url": "https://api.mullusi.com",
   "health_http_status": 200,
-  "health_response_digest": "sha256:9eea1fa3b44f0cf41577088d63566aa83643820292cbf6a84d7d42efd62dbce0",
+  "health_response_digest": "sha256:16754037bf9dfbca0dfd5cbe9902547be71f55e38bef80f951c77a1ce350bdd3",
   "health_status": "healthy",
-  "latest_command_event_hash": "ba98411b50133ea2d88fffc2813932b472db827a5f73bbeb63ec855d183ea5ae",
-  "latest_conformance_certificate_id": "conf-d85f34680f4c7c72",
+  "latest_command_event_hash": "cecec6a05fee9fb095e2f99a036980c9dc67ae1dfa3817809752de7876ccf734",
+  "latest_conformance_certificate_id": "conf-a8687956951e707d",
   "latest_terminal_certificate_id": "terminal-closure-157fbd6bc29250ff",
-  "public_health_endpoint": "https://mullu-gateway.onrender.com/health",
+  "public_health_endpoint": "https://api.mullusi.com/health",
   "runtime_environment": "pilot",
   "runtime_responsibility_debt_clear": true,
   "runtime_signature_key_id": "render-pilot-runtime-witness",
-  "runtime_witness_id": "runtime-witness-16f4b3bdbe911473",
+  "runtime_witness_id": "runtime-witness-3647aeead25cce39",
   "runtime_witness_status": "healthy",
   "signature_status": "verified",
   "steps": [
     {
-      "detail": "endpoint=https://mullu-gateway.onrender.com/health status=200 body_status=healthy response_digest=sha256:9eea1fa3b44f0cf41577088d63566aa83643820292cbf6a84d7d42efd62dbce0",
+      "detail": "endpoint=https://api.mullusi.com/health status=200 body_status=healthy response_digest=sha256:16754037bf9dfbca0dfd5cbe9902547be71f55e38bef80f951c77a1ce350bdd3",
       "name": "gateway health",
       "passed": true
     },
@@ -47,7 +47,7 @@
       "passed": true
     },
     {
-      "detail": "status=200 terminal_status=conformant_with_gaps environment=pilot fresh=True responsibility_debt_clear=True mcp_manifest_configured=False mcp_manifest_valid=True plan_bundle_passed=True physical_worker_canary_passed=True physical_worker_canary_evidence_count=3 proof_route_unclassified_count=0 failed_core_canaries=[] missing=[]",
+      "detail": "status=200 terminal_status=conformant environment=pilot fresh=True responsibility_debt_clear=True mcp_manifest_configured=False mcp_manifest_valid=True plan_bundle_passed=True physical_worker_canary_passed=True physical_worker_canary_evidence_count=3 proof_route_unclassified_count=0 failed_core_canaries=[] missing=[]",
       "name": "runtime conformance certificate",
       "passed": true
     },
@@ -57,7 +57,7 @@
       "passed": true
     },
     {
-      "detail": "status=200 signature=verified deployment_id=dep_pilot_unpublished checks_missing=[] physical_policy_passed=True live_physical_capabilities=[] sandbox_physical_capabilities=[] physical_blockers=[]",
+      "detail": "status=200 signature=verified deployment_id=dep_render_srv_d8id2tj7uimc73ako7q0_7d28319075d2 checks_missing=[] physical_policy_passed=True live_physical_capabilities=[] sandbox_physical_capabilities=[] physical_blockers=[]",
       "name": "production evidence witness",
       "passed": true
     },
@@ -67,7 +67,7 @@
       "passed": true
     },
     {
-      "detail": "status=200 valid=True reason=verified entries_checked=1",
+      "detail": "status=200 valid=True reason=verified entries_checked=2",
       "name": "audit verification endpoint",
       "passed": true
     },
@@ -77,5 +77,5 @@
       "passed": true
     }
   ],
-  "witness_id": "deployment-witness-c1686ca2185ee4d9"
+  "witness_id": "deployment-witness-13b4008d2e0ddc08"
 }

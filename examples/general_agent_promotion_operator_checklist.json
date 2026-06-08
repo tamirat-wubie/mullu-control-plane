@@ -1,8 +1,7 @@
 {
   "approval_required_blockers": [
     "voice_dependency_missing:OPENAI_API_KEY",
-    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
-    "deployment_dns_not_verified"
+    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN"
   ],
   "blocking_gap_ids": [
     "adapter_evidence_not_closed",
@@ -12,8 +11,7 @@
   "checklist_id": "general-agent-promotion-operator-v1",
   "conditional_approval_blockers": [
     "voice_dependency_missing:OPENAI_API_KEY",
-    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
-    "deployment_dns_not_verified"
+    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN"
   ],
   "required_commands": [
     {
@@ -41,9 +39,9 @@
       "command": "python scripts\\plan_capability_adapter_closure.py --output .change_assurance\\capability_adapter_closure_plan.json && python scripts\\plan_deployment_publication_closure.py --output .change_assurance\\deployment_publication_closure_plan.json",
       "required_evidence": [
         "capability_adapter_closure_plan.json action_count=5",
-        "deployment_publication_closure_plan.json action_count=3",
+        "deployment_publication_closure_plan.json action_count=0",
         "credential actions approval_required=true",
-        "deployment actions approval_required=true"
+        "deployment publication closure already validated"
       ],
       "step_id": "write_source_closure_plans"
     },
@@ -60,7 +58,7 @@
     {
       "command": "python scripts\\run_general_agent_promotion_closure_chain.py --json --strict",
       "required_evidence": [
-        "general_agent_promotion_closure_plan.json total_action_count=12",
+        "general_agent_promotion_closure_plan.json total_action_count=11",
         "general_agent_promotion_closure_plan_schema_validation.json ok=true",
         "general_agent_promotion_closure_plan_validation.json ok=true",
         "capability_improvement_portfolio.json plan_count=5",
@@ -75,8 +73,8 @@
         "terminal_evidence_reconciliation ready_for_terminal_certificate_minting=false",
         "general_agent_promotion_terminal_minting_gate.json schema_valid=true",
         "terminal_minting_gate ready_for_terminal_certificate_minting=false",
-        "approval_required_action_count=8",
-        "source_plan_type includes adapter, deployment, and portfolio",
+        "approval_required_action_count=7",
+        "source_plan_type includes adapter and portfolio; deployment source actions may be closed",
         "closure_chain status=passed_blocked",
         "closure_chain artifact_valid=true"
       ],

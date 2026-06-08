@@ -20,8 +20,8 @@ This packet is the operator entry point for the remaining promotion work. It bin
 | Readiness level | `pilot-governed-core` |
 | Capability capsules | 13 |
 | Governed capabilities | 80 |
-| Aggregate closure actions | 12 |
-| Approval-required actions | 8 |
+| Aggregate closure actions | 11 |
+| Approval-required actions | 7 |
 | Closure plan schema validation | `ok=true` |
 | Closure plan drift validation | `ok=true` |
 | Production promotion | blocked |
@@ -75,12 +75,6 @@ This packet is the operator entry point for the remaining promotion work. It bin
 adapter_evidence_not_closed
 voice_adapter_not_closed
 email_calendar_adapter_not_closed
-deployment_dns_not_verified
-capability_improvement_required:financial.refund
-capability_improvement_required:agentic_control.evidence.append
-capability_improvement_required:agentic_control.governance_gate.evaluate
-capability_improvement_required:agentic_control.code_change.plan
-capability_improvement_required:agentic_control.incident_recovery.plan
 ```
 
 ## Approval-Required Actions
@@ -88,7 +82,6 @@ capability_improvement_required:agentic_control.incident_recovery.plan
 ```text
 voice_dependency_missing:OPENAI_API_KEY
 email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN
-deployment_dns_not_verified
 capability_improvement_required:financial.refund
 capability_improvement_required:agentic_control.evidence.append
 capability_improvement_required:agentic_control.governance_gate.evaluate
