@@ -111,6 +111,28 @@ def test_deployment_witness_is_signed_and_reports_missing_runtime_evidence(monke
     assert _validate_schema_instance(_load_schema(PRODUCTION_EVIDENCE_SCHEMA), payload) == []
 
 
+def test_deployment_witness_derives_render_identity_from_public_runtime_metadata(monkeypatch) -> None:
+    monkeypatch.delenv("MULLU_DEPLOYMENT_ID", raising=False)
+    monkeypatch.delenv("MULLU_DEPLOYED_COMMIT_SHA", raising=False)
+    monkeypatch.setenv("RENDER_SERVICE_ID", "srv-d8id2tj7uimc73ako7q0")
+    monkeypatch.setenv(
+        "RENDER_GIT_COMMIT",
+        "5dbfea27592a19f6cba1b6301703d695d0c41f85",
+    )
+    monkeypatch.setenv("MULLU_DEPLOYMENT_WITNESS_SECRET", "deployment-secret")
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get("/deployment/witness")
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert payload["deployment_id"] == "dep_render_srv_d8id2tj7uimc73ako7q0_5dbfea27592a"
+    assert payload["commit_sha"] == "5dbfea27592a19f6cba1b6301703d695d0c41f85"
+    assert payload["signature"].startswith("hmac-sha256:")
+    assert _validate_schema_instance(_load_schema(PRODUCTION_EVIDENCE_SCHEMA), payload) == []
+
+
 def test_capabilities_evidence_reports_disabled_registry() -> None:
     app = create_gateway_app(platform=StubPlatform())
     client = TestClient(app)
