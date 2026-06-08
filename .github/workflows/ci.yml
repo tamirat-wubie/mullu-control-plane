@@ -367,7 +367,22 @@ jobs:
         run: python scripts/validate_public_demo_surfaces.py --output .change_assurance/public_demo_surface_validation.json
 
       - name: Run workspace governance preflight receipt
-        run: python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json
+        run: |
+          mkdir -p .tmp
+          python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json > .tmp/workspace-governance-preflight-stdout.json
+          python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-receipt.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          receipt_path = Path(".tmp/workspace-governance-preflight-receipt.json")
+          receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+          status = receipt.get("status")
+          check_count = receipt.get("check_count")
+          print(f"workspace governance preflight: status={status} checks={check_count}")
+          if status != "passed":
+              raise SystemExit(f"workspace governance preflight did not pass: {status}")
+          PY
         env:
           GITHUB_TOKEN: ${{ github.token }}
           GH_TOKEN: ${{ github.token }}
@@ -408,6 +423,7 @@ jobs:
           path: .change_assurance/public_demo_surface_validation.json
 
       - name: Upload SDLC workspace preflight receipt
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: sdlc-workspace-governance-preflight-receipt

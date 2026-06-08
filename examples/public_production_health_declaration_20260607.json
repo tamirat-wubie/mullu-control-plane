@@ -3,8 +3,8 @@
   "deployment_witness_state": "published",
   "dry_run": false,
   "errors": [],
-  "operator_approval_ref": "approval://codex-thread/user-continue/2026-06-07-deployment-publication",
-  "public_health_endpoint": "https://mullu-gateway.onrender.com/health",
+  "operator_approval_ref": "operator-chat-2026-06-08-api-domain-publication",
+  "public_health_endpoint": "https://api.mullusi.com/health",
   "updated": true,
-  "witness_path": "provided_witness"
+  "witness_path": ".change_assurance/deployment_witness.json"
 }

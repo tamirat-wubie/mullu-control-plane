@@ -69,7 +69,7 @@ def test_promotion_closure_chain_writes_valid_portfolio_backed_artifacts(tmp_pat
     assert run.terminal_minting_gate_blocked_candidate_count == terminal_minting_gate["blocked_candidate_count"]
     assert run.validation_errors == ()
     assert "portfolio" in source_plan_types
-    assert {"adapter", "deployment"}.issubset(source_plan_types)
+    assert "adapter" in source_plan_types
     assert schema_validation["ok"] is True
     assert drift_validation["ok"] is True
     assert live_evidence_queue["metadata"]["queue_is_not_execution"] is True
@@ -112,7 +112,7 @@ def test_promotion_closure_chain_can_skip_portfolio(tmp_path: Path) -> None:
     assert "terminal_evidence_reconciliation" in run.artifacts
     assert "terminal_minting_gate" in run.artifacts
     assert "portfolio" not in source_plan_types
-    assert {"adapter", "deployment"} == source_plan_types
+    assert source_plan_types == {"adapter"}
 
 
 def test_promotion_closure_chain_cli_strict_and_require_ready(tmp_path: Path, capsys) -> None:

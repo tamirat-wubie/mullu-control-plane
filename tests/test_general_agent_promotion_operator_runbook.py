@@ -38,7 +38,7 @@ def test_runbook_names_required_closure_artifacts_and_counts() -> None:
     assert ".change_assurance\\general_agent_promotion_closure_plan_validation.json" in runbook_text
     assert f"Total closure actions | {aggregate_closure_actions}" in runbook_text
     assert f"Approval-required actions | {handoff_packet['approval_required_actions']}" in runbook_text
-    assert "adapter`, `deployment`, `portfolio" in runbook_text
+    assert "`adapter`, `portfolio`; `deployment` source actions may be closed" in runbook_text
     assert "run_general_agent_promotion_closure_chain.py" in runbook_text
     assert "emit_deployment_upstream_blocker_receipt.py" in runbook_text
     assert "collect_deployment_publication_evidence_packet.py" in runbook_text

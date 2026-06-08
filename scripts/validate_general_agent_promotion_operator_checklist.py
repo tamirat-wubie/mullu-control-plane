@@ -45,7 +45,6 @@ REQUIRED_STEP_IDS = frozenset({
 REQUIRED_APPROVAL_BLOCKERS = frozenset({
     "voice_dependency_missing:OPENAI_API_KEY",
     "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
-    "deployment_dns_not_verified",
 })
 REQUIRED_BLOCKING_GAPS = frozenset({
     "adapter_evidence_not_closed",
@@ -102,7 +101,7 @@ REQUIRED_STEP_EVIDENCE = {
         "adapter action receipt_validator present",
     }),
     "validate_aggregate_closure_plan": frozenset({
-        "general_agent_promotion_closure_plan.json total_action_count=12",
+        "general_agent_promotion_closure_plan.json total_action_count=11",
         "general_agent_promotion_closure_plan_schema_validation.json ok=true",
         "general_agent_promotion_closure_plan_validation.json ok=true",
         "capability_improvement_portfolio.json plan_count=5",
@@ -117,8 +116,8 @@ REQUIRED_STEP_EVIDENCE = {
         "terminal_evidence_reconciliation ready_for_terminal_certificate_minting=false",
         "general_agent_promotion_terminal_minting_gate.json schema_valid=true",
         "terminal_minting_gate ready_for_terminal_certificate_minting=false",
-        "approval_required_action_count=8",
-        "source_plan_type includes adapter, deployment, and portfolio",
+        "approval_required_action_count=7",
+        "source_plan_type includes adapter and portfolio; deployment source actions may be closed",
         "closure_chain status=passed_blocked",
         "closure_chain artifact_valid=true",
     }),

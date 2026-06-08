@@ -9,9 +9,9 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 
 # Deployment Status Witness
 
-**Last audited:** 2026-06-07
+**Last audited:** 2026-06-08
 **Deployment witness state:** `published`
-**Public production health endpoint:** `https://mullu-gateway.onrender.com/health`
+**Public production health endpoint:** `https://api.mullusi.com/health`
 **Gateway health endpoint:** `/health`
 **Gateway runtime witness endpoint:** `/gateway/witness`
 **Restricted capability worker health endpoint:** `/health`
@@ -88,7 +88,7 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 | General-agent promotion validator | `scripts/validate_general_agent_promotion.py --strict` blocks production general-agent claims until governed capability records, real browser/document/voice adapters, sandbox runner evidence, MCP import governance, deployment witness publication, and public health evidence all pass | Reflected |
 | Governed runtime promotion validator | `scripts/validate_governed_runtime_promotion.py --strict` provides the domain-neutral terminal validator while preserving the existing promotion readiness evidence contract | Reflected |
 | Governed swarm extension-health pilot gate | `scripts/collect_governed_swarm_staging_activation_witness.py` now probes `/api/v1/health/extensions`; staging evidence bundles and pilot promotion readiness require the governed swarm extension to be registered, enabled, mounted, and audit-store-configured without exposing raw filesystem paths | Reflected |
-| Public production health | `https://mullu-gateway.onrender.com/health` is declared from the published deployment witness collected on 2026-06-07 | Reflected |
+| Public production health | `https://api.mullusi.com/health` is declared from the published deployment witness collected on 2026-06-08 after Cloudflare DNS and Render custom-domain verification | Reflected |
 | Deployment badge | No GitHub-visible deployment badge is declared | Not reflected |
 
 ## GitHub Runtime Input State
@@ -101,7 +101,7 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 | Authority operator secret | GitHub Actions secret name `MULLU_AUTHORITY_OPERATOR_SECRET` is present; secret value is not printed |
 | Deployment target variables | GitHub repository variables `MULLU_GATEWAY_URL=https://api.mullusi.com` and `MULLU_EXPECTED_RUNTIME_ENV=pilot` are set |
 | Upstream API readiness | `api.mullusi.com` remains `AwaitingEvidence` until upstream recovery, runtime host, managed PostgreSQL, secret store, TLS, rollback, and DNS publication authority gates are closed; merged upstream reporter `mullusi-site/scripts/check-api-production-readiness.mjs` also blocks DNS until schema, preflight, persistence, firewall, private runtime witness, and runtime witness closure evidence are closed |
-| Deployment witness workflow runs | No `deployment-witness.yml` workflow runs are currently recorded |
+| Deployment witness workflow runs | `deployment-witness.yml` run `27148629126` completed successfully on 2026-06-08 for `https://api.mullusi.com` |
 | Gateway publication workflow runs | No `gateway-publication.yml` workflow runs are currently recorded |
 
 ## Closure Requirements
