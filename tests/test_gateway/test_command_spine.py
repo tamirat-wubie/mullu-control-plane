@@ -314,6 +314,50 @@ def test_command_ledger_exports_and_verifies_anchor_proof():
     assert verification.reason == "verified"
 
 
+def test_command_ledger_exports_anchor_proof_from_store_after_restart():
+    store = InMemoryCommandLedgerStore()
+    ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:00:00+00:00",
+        store=store,
+    )
+    command = ledger.create_command(
+        tenant_id="tenant-1",
+        actor_id="identity-1",
+        source="web",
+        conversation_id="conversation-1",
+        idempotency_key="idem-anchor-restart",
+        intent="llm_completion",
+        payload={"body": "anchor restart proof"},
+    )
+    ledger.transition(command.command_id, CommandState.ALLOWED)
+    ledger.transition(command.command_id, CommandState.RESPONDED, output={"body": "done"})
+    anchor = ledger.anchor_unanchored_events(
+        signing_secret="test-secret",
+        signature_key_id="test-key",
+    )
+
+    restarted_ledger = CommandLedger(
+        clock=lambda: "2026-04-24T12:01:00+00:00",
+        store=store,
+    )
+    proof = restarted_ledger.export_anchor_proof(anchor.anchor_id if anchor is not None else "")
+    verification = restarted_ledger.verify_anchor_proof(proof, signing_secret="test-secret")
+    anchored_events = store.events_between_hashes(
+        anchor.from_event_hash if anchor is not None else "",
+        anchor.to_event_hash if anchor is not None else "",
+    )
+    command_events = store.events_for(command.command_id)
+
+    assert anchor is not None
+    assert proof is not None
+    assert len(proof.event_hashes) == anchor.event_count
+    assert proof.event_hashes == tuple(event.event_hash for event in anchored_events)
+    assert anchored_events[-1].next_state == CommandState.RESPONDED
+    assert command_events[-1].next_state == CommandState.ANCHORED
+    assert verification.valid is True
+    assert verification.reason == "verified"
+
+
 def test_command_ledger_anchor_proof_detects_tampering():
     ledger = CommandLedger(
         clock=lambda: "2026-04-24T12:00:00+00:00",
