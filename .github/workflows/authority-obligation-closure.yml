@@ -1,0 +1,81 @@
+name: Authority Obligation Closure
+
+on:
+  workflow_dispatch:
+    inputs:
+      gateway_url:
+        description: "Gateway base URL"
+        required: true
+        default: "https://mullu-gateway.onrender.com"
+        type: string
+      expected_environment:
+        description: "Expected runtime environment"
+        required: true
+        default: "pilot"
+        type: choice
+        options:
+          - pilot
+          - production
+      closure_ref:
+        description: "Operator evidence reference for satisfying overdue obligations"
+        required: true
+        type: string
+      require_clear:
+        description: "Fail if authority debt remains after closure"
+        required: true
+        default: true
+        type: boolean
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  close-overdue-obligations:
+    name: Close Overdue Authority Obligations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Satisfy overdue authority obligations
+        env:
+          MULLU_GATEWAY_URL: ${{ inputs.gateway_url }}
+          MULLU_AUTHORITY_OPERATOR_SECRET: ${{ secrets.MULLU_AUTHORITY_OPERATOR_SECRET }}
+        run: |
+          args=(
+            --gateway-url "$MULLU_GATEWAY_URL"
+            --closure-ref "${{ inputs.closure_ref }}"
+            --output .change_assurance/authority_obligation_overdue_closure.json
+            --json
+          )
+          if [ "${{ inputs.require_clear }}" = "true" ]; then
+            args+=(--require-clear)
+          fi
+          python scripts/satisfy_overdue_authority_obligations.py "${args[@]}"
+
+      - name: Collect runtime conformance after closure
+        env:
+          MULLU_RUNTIME_CONFORMANCE_SECRET: ${{ secrets.MULLU_RUNTIME_CONFORMANCE_SECRET }}
+          MULLU_AUTHORITY_OPERATOR_SECRET: ${{ secrets.MULLU_AUTHORITY_OPERATOR_SECRET }}
+        run: |
+          python scripts/collect_runtime_conformance.py \
+            --gateway-url "${{ inputs.gateway_url }}" \
+            --conformance-secret "$MULLU_RUNTIME_CONFORMANCE_SECRET" \
+            --authority-operator-secret "$MULLU_AUTHORITY_OPERATOR_SECRET" \
+            --expected-environment "${{ inputs.expected_environment }}" \
+            --output .change_assurance/runtime_conformance_after_obligation_closure.json
+
+      - name: Upload authority obligation closure evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: authority-obligation-closure-evidence
+          path: |
+            .change_assurance/authority_obligation_overdue_closure.json
+            .change_assurance/runtime_conformance_after_obligation_closure.json
+          if-no-files-found: warn
