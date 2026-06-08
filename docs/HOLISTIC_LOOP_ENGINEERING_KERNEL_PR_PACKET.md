@@ -1,0 +1,219 @@
+# Mullu Holistic Loop Engineering Kernel v1 PR Packet
+
+Purpose: provide a scoped PR handoff packet for the holistic loop kernel slice.
+Governance scope: loop contract, registry, read model, HTTP projection,
+validators, schema manifest, evidence blockers, and rollback boundary.
+Dependencies: `docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md`, holistic loop source
+files, read-model schema, report and validation scripts, focused tests, SDLC
+validators, release validators, and workspace governance preflight.
+Invariants: this packet is local-only; it does not stage, commit, push, deploy,
+or claim terminal closure.
+
+## Scope
+
+Change ID: `holistic-loop-kernel-v1`
+
+Outcome term: `SolvedVerified` locally.
+
+Release target: repository-local PR review.
+
+Publication boundary: no public deployment, no live loop execution, no external
+mutation, no remote merge claim.
+
+## Scoped File Set
+
+New files:
+
+```text
+docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md
+mcoi/mcoi_runtime/app/routers/loops.py
+mcoi/mcoi_runtime/contracts/holistic_loop.py
+mcoi/mcoi_runtime/core/holistic_loop_registry.py
+mcoi/tests/test_holistic_loop_kernel.py
+mcoi/tests/test_holistic_loop_router.py
+schemas/holistic_loop_read_model.schema.json
+scripts/report_holistic_loop_read_model.py
+scripts/validate_holistic_loop_http_surface.py
+scripts/validate_holistic_loop_read_model.py
+tests/test_report_holistic_loop_read_model.py
+tests/test_validate_holistic_loop_http_surface.py
+tests/test_validate_holistic_loop_read_model.py
+```
+
+Tracked edits:
+
+```text
+docs/52_mullu_governance_protocol.md
+docs/63_finance_approval_packet_pilot.md
+mcoi/mcoi_runtime/app/server_http.py
+schemas/mullu_governance_protocol.manifest.json
+```
+
+Unrelated dirty files in the workspace are outside this packet and must not be
+staged into the holistic loop PR.
+
+## Constructive Deltas
+
+1. Added typed loop contracts:
+   `LoopManifest`, `LoopState`, `LoopStepReceipt`, `LoopClosureReport`,
+   `LoopRegistry`, and bounded `LoopReadModel`.
+2. Registered four existing loops without changing runtime behavior:
+   `deployment_witness_loop`, `runtime_conformance_loop`,
+   `cognitive_outcome_loop`, and `governed_code_change_loop`.
+3. Added read-only reporting through
+   `scripts/report_holistic_loop_read_model.py`.
+4. Added schema-backed read-model validation through
+   `schemas/holistic_loop_read_model.schema.json` and
+   `scripts/validate_holistic_loop_read_model.py`.
+5. Added `GET /api/v1/loops/read-model` as a read-only default HTTP
+   projection.
+6. Added HTTP-surface validation through
+   `scripts/validate_holistic_loop_http_surface.py`.
+7. Indexed the new schema in the governance protocol manifest and updated
+   schema-count references from 183 to 184.
+
+## Fracture Deltas
+
+None intended.
+
+No deployment behavior changed. No cognitive behavior changed. No proof
+verification behavior changed. No public mutation route was added.
+
+## Evidence Summary
+
+Focused tests:
+
+```powershell
+python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py -q
+```
+
+Observed result:
+
+```text
+30 passed
+```
+
+Focused validators:
+
+```powershell
+python scripts/validate_holistic_loop_read_model.py
+python scripts/validate_holistic_loop_http_surface.py
+```
+
+Observed result:
+
+```text
+STATUS: passed
+```
+
+Release and SDLC validators:
+
+```powershell
+python scripts/validate_artifacts.py --strict
+python scripts/validate_release_status.py --strict
+python scripts/validate_sdlc_artifact.py
+python scripts/validate_sdlc_state_machine.py
+python scripts/validate_sdlc_release_readiness.py --strict
+python scripts/validate_sdlc_security_review.py --strict
+python scripts/validate_sdlc_pr_enforcement.py
+python scripts/validate_public_repository_surface.py
+```
+
+Observed result:
+
+```text
+All listed validators passed.
+```
+
+Workspace governance preflight:
+
+```powershell
+python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt.json
+python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-receipt.json
+```
+
+Observed result:
+
+```text
+135 checks passed
+preflight receipt validation passed
+```
+
+Diff hygiene:
+
+```powershell
+git diff --check -- docs/52_mullu_governance_protocol.md docs/63_finance_approval_packet_pilot.md mcoi/mcoi_runtime/app/server_http.py schemas/mullu_governance_protocol.manifest.json
+```
+
+Observed result:
+
+```text
+No whitespace errors. Existing CRLF conversion warnings only.
+```
+
+## PR Summary Draft
+
+Summary:
+
+```text
+Add the Mullu Holistic Loop Engineering Kernel v1 as a non-invasive read-model
+contract layer for existing governed loops.
+```
+
+Governance Scope:
+
+```text
+Laws verified: OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS
+Phi traversal layers touched: 2, 3, 6, 7, 8, 10, 11, 12, 13
+Invariants preserved: read-only projection, no mutation route, no runtime loop
+behavior rewrite, missing evidence blocks closure, non-terminal closure boundary
+Invariants modified: none
+```
+
+Changes:
+
+```text
+Constructive deltas:
+- Add typed holistic loop contracts and immutable registry.
+- Register deployment witness, runtime conformance, cognitive outcome, and
+  governed code-change loops.
+- Add bounded report, schema, validators, tests, and read-only HTTP projection.
+- Add protocol manifest entry for the holistic loop read-model schema.
+
+Fracture deltas:
+- none
+```
+
+Testing:
+
+```text
+Tests added/modified: focused holistic loop kernel, router, report, validator,
+and HTTP-surface tests.
+Assertions passing: focused suite passed with 30 tests.
+Edge cases covered: missing evidence blockers, complete evidence verification,
+explicit blockers, invalid limits, mutation method rejection, schema drift, and
+non-terminal closure flags.
+Warnings: zero test warnings observed in focused suite.
+```
+
+Rollback:
+
+```text
+Remove the holistic loop files, remove the router import/include from
+server_http.py, remove the schema manifest entry, and revert the schema count
+references from 184 to 183. No runtime state migration is required.
+```
+
+## Residual Risk
+
+1. Remote checks have not been run in this local session.
+2. The workspace contains unrelated dirty files that must remain outside the
+   scoped PR.
+3. The read model is intentionally descriptive; live loop evidence adapters are
+   a later integration step.
+
+STATUS:
+  Completeness: 99%
+  Invariants verified: scoped file set, read-only projection, missing-evidence blockers, non-terminal closure boundary, validation evidence, rollback path
+  Open issues: remote checks not run; unrelated dirty worktree remains
+  Next action: stage only the scoped file set when commit approval is given

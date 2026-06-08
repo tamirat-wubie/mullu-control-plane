@@ -6532,6 +6532,69 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "server_wires_operational_math_store_into_dashboard",
             ],
         ),
+        _surface(
+            "holistic_loop_read_model_kernel",
+            [
+                "/api/v1/loops/read-model",
+                "LoopRegistry",
+                "LoopReadModel",
+                "LoopClosureReport",
+            ],
+            "read_model",
+            "read_model",
+            "audit_chain",
+            "witnessed",
+            [
+                "docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md",
+                "docs/HOLISTIC_LOOP_ENGINEERING_KERNEL_PR_PACKET.md",
+                "mcoi/mcoi_runtime/contracts/holistic_loop.py",
+                "mcoi/mcoi_runtime/core/holistic_loop_registry.py",
+                "mcoi/mcoi_runtime/app/routers/loops.py",
+                "schemas/holistic_loop_read_model.schema.json",
+                "scripts/report_holistic_loop_read_model.py",
+                "scripts/validate_holistic_loop_read_model.py",
+                "scripts/validate_holistic_loop_http_surface.py",
+                "mcoi/tests/test_holistic_loop_kernel.py",
+                "mcoi/tests/test_holistic_loop_router.py",
+                "tests/test_report_holistic_loop_read_model.py",
+                "tests/test_validate_holistic_loop_read_model.py",
+                "tests/test_validate_holistic_loop_http_surface.py",
+            ],
+            (
+                "Holistic loop engineering exposes existing governed loops through "
+                "one read-only loop contract, registry, schema-backed summary, "
+                "and HTTP read model. Missing evidence remains an explicit blocker "
+                "and no mutation route is introduced."
+            ),
+            [
+                "registered_loops_expose_governed_manifest_fields",
+                "missing_required_evidence_is_reported_as_blocker",
+                "closure_report_blocks_incomplete_evidence",
+                "loop_registry_rejects_duplicate_loop_ids",
+                "loop_read_model_endpoint_is_read_only",
+                "loop_http_surface_validator_rejects_mutation_routes",
+            ],
+            runtime_witness_anchor_aliases={
+                "registered_loops_expose_governed_manifest_fields": [
+                    "default_registry_exposes_first_four_loop_manifests"
+                ],
+                "missing_required_evidence_is_reported_as_blocker": [
+                    "missing_evidence_is_reported_as_blocker_not_success"
+                ],
+                "closure_report_blocks_incomplete_evidence": [
+                    "loop_receipt_and_closure_report_contracts_are_explicit"
+                ],
+                "loop_registry_rejects_duplicate_loop_ids": [
+                    "loop_registry_rejects_duplicate_loop_ids"
+                ],
+                "loop_read_model_endpoint_is_read_only": [
+                    "loop_read_model_has_no_mutation_companion"
+                ],
+                "loop_http_surface_validator_rejects_mutation_routes": [
+                    "route_method_validation_rejects_mutation_route"
+                ],
+            },
+        ),
     ]
     closure_actions = [
         {
@@ -6542,6 +6605,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "anchor_operational_math_loop_receipts_and_projection",
             "surfaces": ["operational_math_loop"],
+            "status": "closed",
+        },
+        {
+            "action_id": "register_holistic_loop_read_model_kernel",
+            "surfaces": ["holistic_loop_read_model_kernel"],
             "status": "closed",
         },
         {

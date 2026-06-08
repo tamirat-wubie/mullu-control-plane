@@ -1,0 +1,418 @@
+"""Purpose: shared contracts for holistic governed loop read models.
+Governance scope: loop manifests, loop state, step receipts, closure reports,
+    and bounded read-model summaries.
+Dependencies: Python standard library dataclasses, enum, and shared contract
+    serialization helpers.
+Invariants:
+  - Loop contracts describe existing governed loops without executing them.
+  - Missing required evidence is represented as a blocker, never as closure.
+  - Loop modes, statuses, and phases are typed and deterministic.
+  - Read-model records are immutable and JSON-serializable.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from enum import StrEnum
+from typing import Any, Mapping, Sequence, TypeVar, cast
+
+from ._base import (
+    ContractRecord,
+    freeze_value,
+    require_datetime_text,
+    require_non_empty_text,
+)
+
+
+ContractT = TypeVar("ContractT")
+
+
+class LoopMode(StrEnum):
+    """Execution posture a governed loop may run under."""
+
+    REAL = "real"
+    DRY_RUN = "dry_run"
+    SHADOW = "shadow"
+    SIMULATION = "simulation"
+    REPLAY = "replay"
+
+
+class LoopStatus(StrEnum):
+    """Read-model status for a governed loop."""
+
+    OPEN = "open"
+    BLOCKED = "blocked"
+    VERIFIED = "verified"
+    CLOSED = "closed"
+
+
+class LoopPhase(StrEnum):
+    """Canonical holistic loop phase."""
+
+    OBSERVE = "observe"
+    DECIDE = "decide"
+    ACT = "act"
+    VERIFY = "verify"
+    RECORD_RECEIPT = "record_receipt"
+    UPDATE_STATE = "update_state"
+    LEARN = "learn"
+    AUDIT = "audit"
+    CLOSE = "close"
+
+
+@dataclass(frozen=True, slots=True)
+class LoopManifest(ContractRecord):
+    """Static contract that describes one governed loop."""
+
+    loop_id: str
+    name: str
+    purpose: str
+    owner: str
+    risk_class: str
+    allowed_modes: tuple[LoopMode, ...]
+    required_authority: tuple[str, ...]
+    required_evidence: tuple[str, ...]
+    closure_conditions: tuple[str, ...]
+    rollback_policy: str
+    learning_policy: str
+    canonical_steps: tuple[LoopPhase, ...] = (
+        LoopPhase.OBSERVE,
+        LoopPhase.DECIDE,
+        LoopPhase.ACT,
+        LoopPhase.VERIFY,
+        LoopPhase.RECORD_RECEIPT,
+        LoopPhase.UPDATE_STATE,
+        LoopPhase.LEARN,
+        LoopPhase.AUDIT,
+    )
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "loop_id",
+            "name",
+            "purpose",
+            "owner",
+            "risk_class",
+            "rollback_policy",
+            "learning_policy",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                require_non_empty_text(getattr(self, field_name), field_name),
+            )
+        object.__setattr__(
+            self,
+            "allowed_modes",
+            _freeze_enum_tuple(self.allowed_modes, "allowed_modes", LoopMode, "LoopMode"),
+        )
+        object.__setattr__(
+            self,
+            "required_authority",
+            _freeze_text_tuple(self.required_authority, "required_authority"),
+        )
+        object.__setattr__(
+            self,
+            "required_evidence",
+            _freeze_text_tuple(self.required_evidence, "required_evidence"),
+        )
+        object.__setattr__(
+            self,
+            "closure_conditions",
+            _freeze_text_tuple(self.closure_conditions, "closure_conditions"),
+        )
+        object.__setattr__(
+            self,
+            "canonical_steps",
+            _freeze_enum_tuple(self.canonical_steps, "canonical_steps", LoopPhase, "LoopPhase"),
+        )
+        object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
+class LoopState(ContractRecord):
+    """Read-only current state projection for one governed loop."""
+
+    loop_id: str
+    status: LoopStatus
+    current_step: LoopPhase
+    mode: LoopMode
+    updated_at: str
+    last_receipt: str = ""
+    open_blockers: tuple[str, ...] = ()
+    evidence_refs: tuple[str, ...] = ()
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "loop_id", require_non_empty_text(self.loop_id, "loop_id"))
+        if not isinstance(self.status, LoopStatus):
+            raise ValueError("status must be a LoopStatus value")
+        if not isinstance(self.current_step, LoopPhase):
+            raise ValueError("current_step must be a LoopPhase value")
+        if not isinstance(self.mode, LoopMode):
+            raise ValueError("mode must be a LoopMode value")
+        object.__setattr__(self, "updated_at", require_datetime_text(self.updated_at, "updated_at"))
+        if self.last_receipt:
+            object.__setattr__(
+                self,
+                "last_receipt",
+                require_non_empty_text(self.last_receipt, "last_receipt"),
+            )
+        object.__setattr__(
+            self,
+            "open_blockers",
+            _freeze_text_tuple(self.open_blockers, "open_blockers", allow_empty=True),
+        )
+        object.__setattr__(
+            self,
+            "evidence_refs",
+            _freeze_text_tuple(self.evidence_refs, "evidence_refs", allow_empty=True),
+        )
+        object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
+class LoopStepReceipt(ContractRecord):
+    """Receipt for one observe/decide/act/verify loop step."""
+
+    loop_id: str
+    step: LoopPhase
+    input_hash: str
+    output_hash: str
+    decision: str
+    evidence_refs: tuple[str, ...]
+    status: LoopStatus
+    errors: tuple[str, ...]
+    timestamp: str
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for field_name in ("loop_id", "input_hash", "output_hash", "decision"):
+            object.__setattr__(
+                self,
+                field_name,
+                require_non_empty_text(getattr(self, field_name), field_name),
+            )
+        if not isinstance(self.step, LoopPhase):
+            raise ValueError("step must be a LoopPhase value")
+        if not isinstance(self.status, LoopStatus):
+            raise ValueError("status must be a LoopStatus value")
+        object.__setattr__(
+            self,
+            "evidence_refs",
+            _freeze_text_tuple(self.evidence_refs, "evidence_refs", allow_empty=True),
+        )
+        object.__setattr__(
+            self,
+            "errors",
+            _freeze_text_tuple(self.errors, "errors", allow_empty=True),
+        )
+        object.__setattr__(self, "timestamp", require_datetime_text(self.timestamp, "timestamp"))
+        object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
+class LoopClosureReport(ContractRecord):
+    """Closure assessment for one governed loop."""
+
+    loop_id: str
+    closed: bool
+    closure_reason: str
+    evidence_complete: bool
+    unresolved_gaps: tuple[str, ...]
+    rollback_available: bool
+    learning_candidates: tuple[str, ...]
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "loop_id", require_non_empty_text(self.loop_id, "loop_id"))
+        if not isinstance(self.closed, bool):
+            raise ValueError("closed must be a bool")
+        object.__setattr__(
+            self,
+            "closure_reason",
+            require_non_empty_text(self.closure_reason, "closure_reason"),
+        )
+        if not isinstance(self.evidence_complete, bool):
+            raise ValueError("evidence_complete must be a bool")
+        if not isinstance(self.rollback_available, bool):
+            raise ValueError("rollback_available must be a bool")
+        object.__setattr__(
+            self,
+            "unresolved_gaps",
+            _freeze_text_tuple(self.unresolved_gaps, "unresolved_gaps", allow_empty=True),
+        )
+        object.__setattr__(
+            self,
+            "learning_candidates",
+            _freeze_text_tuple(
+                self.learning_candidates,
+                "learning_candidates",
+                allow_empty=True,
+            ),
+        )
+        if self.closed and self.unresolved_gaps:
+            raise ValueError("closed loop cannot carry unresolved gaps")
+        if self.closed and not self.evidence_complete:
+            raise ValueError("closed loop requires complete evidence")
+        object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
+class LoopSummary(ContractRecord):
+    """Bounded read-model summary for one registered governed loop."""
+
+    loop_id: str
+    name: str
+    purpose: str
+    owner: str
+    risk_class: str
+    status: LoopStatus
+    mode: LoopMode
+    current_step: LoopPhase
+    required_authority: tuple[str, ...]
+    required_evidence: tuple[str, ...]
+    evidence_refs: tuple[str, ...]
+    missing_evidence: tuple[str, ...]
+    closure_conditions: tuple[str, ...]
+    open_blockers: tuple[str, ...]
+    rollback_policy: str
+    learning_policy: str
+    updated_at: str
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "loop_id",
+            "name",
+            "purpose",
+            "owner",
+            "risk_class",
+            "rollback_policy",
+            "learning_policy",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                require_non_empty_text(getattr(self, field_name), field_name),
+            )
+        if not isinstance(self.status, LoopStatus):
+            raise ValueError("status must be a LoopStatus value")
+        if not isinstance(self.mode, LoopMode):
+            raise ValueError("mode must be a LoopMode value")
+        if not isinstance(self.current_step, LoopPhase):
+            raise ValueError("current_step must be a LoopPhase value")
+        for field_name in (
+            "required_authority",
+            "required_evidence",
+            "evidence_refs",
+            "missing_evidence",
+            "closure_conditions",
+            "open_blockers",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(
+                    getattr(self, field_name),
+                    field_name,
+                    allow_empty=field_name in {"evidence_refs", "missing_evidence", "open_blockers"},
+                ),
+            )
+        object.__setattr__(self, "updated_at", require_datetime_text(self.updated_at, "updated_at"))
+        if self.status in {LoopStatus.VERIFIED, LoopStatus.CLOSED} and self.open_blockers:
+            raise ValueError("verified or closed summary cannot carry blockers")
+
+
+@dataclass(frozen=True, slots=True)
+class LoopReadModel(ContractRecord):
+    """Bounded read model over registered governed loops."""
+
+    generated_at: str
+    loops: tuple[LoopSummary, ...]
+    total_count: int
+    returned_count: int
+    truncated: bool
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "generated_at", require_datetime_text(self.generated_at, "generated_at"))
+        object.__setattr__(
+            self,
+            "loops",
+            _freeze_contract_tuple(self.loops, "loops", LoopSummary, "LoopSummary"),
+        )
+        if not isinstance(self.total_count, int) or isinstance(self.total_count, bool):
+            raise ValueError("total_count must be an int")
+        if not isinstance(self.returned_count, int) or isinstance(self.returned_count, bool):
+            raise ValueError("returned_count must be an int")
+        if self.total_count < 0 or self.returned_count < 0:
+            raise ValueError("counts must be non-negative")
+        if self.returned_count != len(self.loops):
+            raise ValueError("returned_count must equal loop summary count")
+        if self.returned_count > self.total_count:
+            raise ValueError("returned_count cannot exceed total_count")
+        if not isinstance(self.truncated, bool):
+            raise ValueError("truncated must be a bool")
+
+
+def _freeze_text_tuple(
+    values: Sequence[str],
+    field_name: str,
+    *,
+    allow_empty: bool = False,
+) -> tuple[str, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    if not values and not allow_empty:
+        raise ValueError(f"{field_name} must contain at least one item")
+    normalized: list[str] = []
+    for value in values:
+        normalized.append(require_non_empty_text(value, f"{field_name} element"))
+    return cast(tuple[str, ...], freeze_value(normalized))
+
+
+def _freeze_enum_tuple(
+    values: Sequence[ContractT],
+    field_name: str,
+    enum_type: type[ContractT],
+    enum_type_name: str,
+) -> tuple[ContractT, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    if not values:
+        raise ValueError(f"{field_name} must contain at least one item")
+    normalized: list[ContractT] = []
+    for value in values:
+        if not isinstance(value, enum_type):
+            raise ValueError(f"{field_name} must contain only {enum_type_name} values")
+        normalized.append(value)
+    return cast(tuple[ContractT, ...], freeze_value(normalized))
+
+
+def _freeze_contract_tuple(
+    values: Sequence[ContractT],
+    field_name: str,
+    record_type: type[ContractT],
+    record_type_name: str,
+) -> tuple[ContractT, ...]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (tuple, list)):
+        raise ValueError(f"{field_name} must be an array")
+    normalized: list[ContractT] = []
+    for value in values:
+        if not isinstance(value, record_type):
+            raise ValueError(f"{field_name} must contain only {record_type_name} values")
+        normalized.append(value)
+    return cast(tuple[ContractT, ...], freeze_value(normalized))
+
+
+__all__ = [
+    "LoopClosureReport",
+    "LoopManifest",
+    "LoopMode",
+    "LoopPhase",
+    "LoopReadModel",
+    "LoopState",
+    "LoopStatus",
+    "LoopStepReceipt",
+    "LoopSummary",
+]

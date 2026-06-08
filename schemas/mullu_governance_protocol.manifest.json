@@ -1091,6 +1091,12 @@
       "surface": "governance"
     },
     {
+      "schema_id": "holistic-loop-read-model",
+      "path": "schemas/holistic_loop_read_model.schema.json",
+      "urn": "urn:mullusi:schema:holistic-loop-read-model:1",
+      "surface": "governance"
+    },
+    {
       "schema_id": "workspace-governance-inventory-report",
       "path": "schemas/workspace_governance_inventory_report.schema.json",
       "urn": "urn:mullusi:schema:workspace-governance-inventory-report:1",

@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:holistic-loop-read-model:1",
+  "title": "Holistic Loop Read Model",
+  "description": "Read-only bounded summary of registered governed loop contracts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "status",
+    "generated_at",
+    "loop_count",
+    "returned_count",
+    "blocked_count",
+    "verified_count",
+    "truncated",
+    "report_is_not_terminal_closure",
+    "terminal_closure_required",
+    "loops"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "const": "holistic_loop_read_model"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["blocked", "verified"]
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "loop_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "returned_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blocked_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "verified_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "report_is_not_terminal_closure": {
+      "type": "boolean",
+      "const": true
+    },
+    "terminal_closure_required": {
+      "type": "boolean",
+      "const": true
+    },
+    "loops": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/loop_summary"
+      }
+    }
+  },
+  "$defs": {
+    "loop_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "loop_id",
+        "name",
+        "purpose",
+        "owner",
+        "risk_class",
+        "status",
+        "mode",
+        "current_step",
+        "required_authority",
+        "required_evidence",
+        "evidence_refs",
+        "missing_evidence",
+        "closure_conditions",
+        "open_blockers",
+        "rollback_policy",
+        "learning_policy",
+        "updated_at"
+      ],
+      "properties": {
+        "loop_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "risk_class": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": ["open", "blocked", "verified", "closed"]
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["real", "dry_run", "shadow", "simulation", "replay"]
+        },
+        "current_step": {
+          "type": "string",
+          "enum": [
+            "observe",
+            "decide",
+            "act",
+            "verify",
+            "record_receipt",
+            "update_state",
+            "learn",
+            "audit",
+            "close"
+          ]
+        },
+        "required_authority": {
+          "$ref": "#/$defs/text_list"
+        },
+        "required_evidence": {
+          "$ref": "#/$defs/text_list"
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "missing_evidence": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "closure_conditions": {
+          "$ref": "#/$defs/text_list"
+        },
+        "open_blockers": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "rollback_policy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "learning_policy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "text_list": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "possibly_empty_text_list": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}
