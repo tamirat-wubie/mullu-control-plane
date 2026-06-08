@@ -431,6 +431,10 @@ class CommandLedgerStore:
         """Load transition events for one command."""
         raise NotImplementedError
 
+    def events_between_hashes(self, from_event_hash: str, to_event_hash: str) -> list[CommandEvent]:
+        """Load the inclusive global event span covered by one anchor."""
+        return []
+
     def latest_event_hash(self) -> str:
         """Return the latest global event hash for hash-chain continuation."""
         return ""
@@ -496,6 +500,20 @@ class InMemoryCommandLedgerStore(CommandLedgerStore):
 
     def events_for(self, command_id: str) -> list[CommandEvent]:
         return [event for event in self._events if event.command_id == command_id]
+
+    def events_between_hashes(self, from_event_hash: str, to_event_hash: str) -> list[CommandEvent]:
+        if not from_event_hash or not to_event_hash:
+            return []
+        events: list[CommandEvent] = []
+        recording = False
+        for event in self._events:
+            if event.event_hash == from_event_hash:
+                recording = True
+            if recording:
+                events.append(event)
+            if recording and event.event_hash == to_event_hash:
+                return events
+        return []
 
     def latest_event_hash(self) -> str:
         if not self._events:
@@ -892,6 +910,51 @@ class PostgresCommandLedgerStore(CommandLedgerStore):
                     detail=dict(detail),
                 ))
             return events
+
+        result = self._safe_execute(_read)
+        return result if isinstance(result, list) else []
+
+    def events_between_hashes(self, from_event_hash: str, to_event_hash: str) -> list[CommandEvent]:
+        if not from_event_hash or not to_event_hash:
+            return []
+
+        def _read() -> list[CommandEvent]:
+            with self._lock:
+                with self._conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT timestamp, event_id FROM gateway_command_events "
+                        "WHERE event_hash = %s LIMIT 1",
+                        (from_event_hash,),
+                    )
+                    start_row = cur.fetchone()
+                    cur.execute(
+                        "SELECT timestamp, event_id FROM gateway_command_events "
+                        "WHERE event_hash = %s LIMIT 1",
+                        (to_event_hash,),
+                    )
+                    end_row = cur.fetchone()
+                    if start_row is None or end_row is None:
+                        return []
+                    start_key = (str(start_row[0]), str(start_row[1]))
+                    end_key = (str(end_row[0]), str(end_row[1]))
+                    if start_key > end_key:
+                        return []
+                    cur.execute(
+                        "SELECT event_id, command_id, tenant_id, actor_id, source_channel, "
+                        "idempotency_key, previous_state, next_state, policy_version, risk_tier, "
+                        "budget_decision, approval_id, tool_name, input_hash, output_hash, "
+                        "trace_id, prev_event_hash, event_hash, timestamp, detail "
+                        "FROM gateway_command_events "
+                        "WHERE ((timestamp > %s) OR (timestamp = %s AND event_id >= %s)) "
+                        "AND ((timestamp < %s) OR (timestamp = %s AND event_id <= %s)) "
+                        "ORDER BY timestamp, event_id",
+                        (
+                            start_key[0], start_key[0], start_key[1],
+                            end_key[0], end_key[0], end_key[1],
+                        ),
+                    )
+                    rows = cur.fetchall()
+            return [self._row_to_event(row) for row in rows]
 
         result = self._safe_execute(_read)
         return result if isinstance(result, list) else []
@@ -3869,24 +3932,25 @@ class CommandLedger:
         anchor = next((item for item in self._store.list_anchors(limit=10_000) if item.anchor_id == anchor_id), None)
         if anchor is None:
             return None
-        event_hashes: list[str] = []
-        recording = False
-        for event in self._events:
-            if event.event_hash == anchor.from_event_hash:
-                recording = True
-            if recording:
-                event_hashes.append(event.event_hash)
-            if event.event_hash == anchor.to_event_hash:
-                break
+        event_hashes = [
+            event.event_hash
+            for event in self._store.events_between_hashes(anchor.from_event_hash, anchor.to_event_hash)
+        ]
+        if not event_hashes:
+            event_hashes = list(self._event_hashes_between(
+                self._events,
+                from_event_hash=anchor.from_event_hash,
+                to_event_hash=anchor.to_event_hash,
+            ))
         if not event_hashes:
             for command in self._commands:
-                for event in self._store.events_for(command):
-                    if event.event_hash == anchor.from_event_hash:
-                        recording = True
-                    if recording:
-                        event_hashes.append(event.event_hash)
-                    if event.event_hash == anchor.to_event_hash:
-                        break
+                event_hashes = list(self._event_hashes_between(
+                    self._store.events_for(command),
+                    from_event_hash=anchor.from_event_hash,
+                    to_event_hash=anchor.to_event_hash,
+                ))
+                if event_hashes:
+                    break
         exported_at = self._clock()
         proof_hash = canonical_hash({
             "anchor": asdict(anchor),
@@ -3899,6 +3963,27 @@ class CommandLedger:
             proof_hash=proof_hash,
             exported_at=exported_at,
         )
+
+    @staticmethod
+    def _event_hashes_between(
+        events: list[CommandEvent],
+        *,
+        from_event_hash: str,
+        to_event_hash: str,
+    ) -> tuple[str, ...]:
+        """Return an inclusive event hash span only when both boundaries exist."""
+        if not from_event_hash or not to_event_hash:
+            return ()
+        event_hashes: list[str] = []
+        recording = False
+        for event in events:
+            if event.event_hash == from_event_hash:
+                recording = True
+            if recording:
+                event_hashes.append(event.event_hash)
+            if recording and event.event_hash == to_event_hash:
+                return tuple(event_hashes)
+        return ()
 
     def verify_anchor_proof(
         self,
