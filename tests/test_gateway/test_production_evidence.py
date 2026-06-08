@@ -285,6 +285,7 @@ def test_deployment_witness_uses_latest_command_anchor(monkeypatch) -> None:
     assert response.json()["metadata"]["closure_disposition"] == "committed"
     assert audit_payload["valid"] is True
     assert proof_payload["valid"] is True
+    assert deployment_payload["audit_store"] == "pass"
     assert audit_anchor_check["passed"] is True
     assert audit_anchor_check["detail"] == audit_payload["latest_anchor_id"]
     assert "audit_anchor" in deployment_payload["checks_passed"]
