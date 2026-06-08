@@ -986,18 +986,37 @@ def _collect_gaps(checks: list[ConformanceCheck], *, repository_root: Path) -> l
     gaps = [gap_by_check[check.check_id] for check in checks if not check.passed and check.check_id in gap_by_check]
     deployment_status = repository_root / "DEPLOYMENT_STATUS.md"
     if deployment_status.exists():
-        text = deployment_status.read_text(encoding="utf-8").lower()
-        if "not-published" in text:
+        text = deployment_status.read_text(encoding="utf-8")
+        witness_state = _deployment_status_field(text, "Deployment witness state")
+        public_health_endpoint = _deployment_status_field(text, "Public production health endpoint")
+        if (witness_state or "").lower() == "not-published":
             gaps.append("deployment_witness_not_published")
-        if "public production health" in text and "not-declared" in text:
+        normalized_public_health = (public_health_endpoint or "").lower()
+        if public_health_endpoint is not None and (
+            not normalized_public_health
+            or normalized_public_health == "not-declared"
+            or not normalized_public_health.startswith("https://")
+        ):
             gaps.append("public_production_health_not_declared")
     docs_41 = repository_root / "docs" / "41_streaming_budget_enforcement.md"
     if docs_41.exists() and "provider-native token streams are not enabled" in docs_41.read_text(encoding="utf-8").lower():
         gaps.append("provider_native_streaming_tokens_not_enabled")
     docs_42 = repository_root / "docs" / "42_lineage_query_api.md"
-    if docs_42.exists() and "policy-version index" in docs_42.read_text(encoding="utf-8").lower():
+    if docs_42.exists() and _has_stale_limitation_claim(
+        docs_42.read_text(encoding="utf-8"),
+        ("policy-version index", "policy-version read model", "policy registry"),
+    ):
         gaps.append("lineage_policy_version_index_projected_only")
     return sorted(set(gaps))
+
+
+def _deployment_status_field(text: str, label: str) -> str | None:
+    """Extract one backtick-delimited DEPLOYMENT_STATUS.md field by label."""
+    pattern = rf"^\*\*{re.escape(label)}:\*\*\s*`([^`]*)`\s*$"
+    match = re.search(pattern, text, flags=re.MULTILINE)
+    if match is None:
+        return None
+    return match.group(1).strip()
 
 
 def _decide_status(
