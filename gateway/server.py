@@ -478,13 +478,28 @@ def create_gateway_app(
         """Map a witnessed boolean to public health status text."""
         return "pass" if passed else "missing"
 
+    def _deployment_identity_token(value: str) -> str:
+        """Return a public-safe deployment identity token."""
+        normalized = "".join(character.lower() if character.isalnum() else "_" for character in value.strip())
+        compact = "_".join(part for part in normalized.split("_") if part)
+        return compact[:64]
+
     def _deployment_id() -> str:
-        """Return configured deployment id or a bounded local placeholder."""
-        return os.environ.get("MULLU_DEPLOYMENT_ID", "").strip() or f"dep_{gateway_env}_unpublished"
+        """Return configured deployment id or derive one from public Render metadata."""
+        configured = os.environ.get("MULLU_DEPLOYMENT_ID", "").strip()
+        if configured:
+            return configured
+        render_service_id = _deployment_identity_token(os.environ.get("RENDER_SERVICE_ID", ""))
+        render_commit_sha = _deployment_identity_token(os.environ.get("RENDER_GIT_COMMIT", ""))[:12]
+        if render_service_id and render_commit_sha:
+            return f"dep_render_{render_service_id}_{render_commit_sha}"
+        if render_service_id:
+            return f"dep_render_{render_service_id}"
+        return f"dep_{gateway_env}_unpublished"
 
     def _commit_sha() -> str:
         """Return configured commit sha without reading deployment host state."""
-        for name in ("MULLU_DEPLOYED_COMMIT_SHA", "GITHUB_SHA", "COMMIT_SHA", "SOURCE_VERSION"):
+        for name in ("MULLU_DEPLOYED_COMMIT_SHA", "RENDER_GIT_COMMIT", "GITHUB_SHA", "COMMIT_SHA", "SOURCE_VERSION"):
             value = os.environ.get(name, "").strip()
             if value:
                 return value
