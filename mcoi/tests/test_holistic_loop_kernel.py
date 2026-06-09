@@ -21,6 +21,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopEvidenceBinding,
     LoopLearningBinding,
     LoopMode,
+    LoopModeBinding,
     LoopPhase,
     LoopRiskBinding,
     LoopRollbackBinding,
@@ -212,6 +213,41 @@ def test_loop_learning_bindings_cover_learning_policy_without_execution() -> Non
         assert binding.proof_surface_refs
 
 
+def test_loop_mode_bindings_cover_allowed_modes_without_execution() -> None:
+    registry = build_default_loop_registry()
+
+    for manifest in registry.list_manifests():
+        summary = registry.summarize(manifest.loop_id)
+        binding = summary.mode_binding
+
+        assert binding.projected_mode == summary.mode
+        assert binding.allowed_modes == manifest.allowed_modes
+        assert summary.mode in binding.allowed_modes
+        assert binding.read_only is True
+        assert binding.mode_transition is False
+        assert binding.terminal_closure is False
+        assert binding.separation_refs
+        assert binding.real_execution_guard_refs
+        assert binding.source_refs
+        assert binding.validator_refs
+        assert binding.proof_surface_refs
+
+
+def test_loop_mode_binding_local_refs_resolve_to_existing_artifacts() -> None:
+    read_model = build_default_loop_read_model()
+    file_refs = {
+        ref
+        for summary in read_model.loops
+        for ref in (*summary.mode_binding.source_refs, *summary.mode_binding.validator_refs)
+        if "/" in ref
+    }
+
+    assert "scripts/preflight_deployment_witness.py" in file_refs
+    assert "mcoi/mcoi_runtime/core/governed_code_change_loop.py" in file_refs
+    assert "schemas/runtime_conformance_certificate.schema.json" in file_refs
+    assert all((REPO_ROOT / ref).exists() for ref in file_refs)
+
+
 def test_loop_learning_binding_local_refs_resolve_to_existing_artifacts() -> None:
     read_model = build_default_loop_read_model()
     file_refs = {
@@ -272,6 +308,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             risk_binding=summary.risk_binding,
             status=summary.status,
             mode=summary.mode,
+            mode_binding=summary.mode_binding,
             current_step=summary.current_step,
             required_authority=summary.required_authority,
             authority_bindings=summary.authority_bindings,
@@ -302,6 +339,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             risk_binding=summary.risk_binding,
             status=summary.status,
             mode=summary.mode,
+            mode_binding=summary.mode_binding,
             current_step=summary.current_step,
             required_authority=summary.required_authority,
             authority_bindings=summary.authority_bindings,
@@ -409,6 +447,32 @@ def test_loop_learning_binding_rejects_mutation_or_terminal_closure_claim() -> N
         LoopLearningBinding(**kwargs, terminal_closure=True)
 
 
+def test_loop_mode_binding_rejects_transition_or_terminal_closure_claim() -> None:
+    kwargs = {
+        "projected_mode": LoopMode.DRY_RUN,
+        "allowed_modes": (LoopMode.DRY_RUN, LoopMode.REPLAY),
+        "purpose": "bind dry-run and replay mode separation",
+        "separation_refs": ("dry_run_without_effect",),
+        "real_execution_guard_refs": ("real_mode_not_registered",),
+        "source_refs": ("scripts/run_governed_code_change_loop.py",),
+        "validator_refs": ("tests/test_run_governed_code_change_loop_script.py",),
+        "proof_surface_refs": ("software_dev_capability_pack",),
+    }
+
+    with pytest.raises(ValueError, match="read-only"):
+        LoopModeBinding(**kwargs, read_only=False)
+
+    with pytest.raises(ValueError, match="mode transition"):
+        LoopModeBinding(**kwargs, mode_transition=True)
+
+    with pytest.raises(ValueError, match="terminal closure"):
+        LoopModeBinding(**kwargs, terminal_closure=True)
+
+    mismatched_kwargs = {**kwargs, "projected_mode": LoopMode.REAL}
+    with pytest.raises(ValueError, match="projected_mode"):
+        LoopModeBinding(**mismatched_kwargs)
+
+
 def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
     summary = build_default_loop_read_model().loops[0]
     terminal_report = LoopClosureReport(
@@ -431,6 +495,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             risk_binding=summary.risk_binding,
             status=summary.status,
             mode=summary.mode,
+            mode_binding=summary.mode_binding,
             current_step=summary.current_step,
             required_authority=summary.required_authority,
             authority_bindings=summary.authority_bindings,
@@ -471,6 +536,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             risk_binding=summary.risk_binding,
             status=summary.status,
             mode=summary.mode,
+            mode_binding=summary.mode_binding,
             current_step=summary.current_step,
             required_authority=summary.required_authority,
             authority_bindings=summary.authority_bindings,
@@ -584,6 +650,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_step_receipts() -> None:
             risk_binding=summary.risk_binding,
             status=summary.status,
             mode=summary.mode,
+            mode_binding=summary.mode_binding,
             current_step=summary.current_step,
             required_authority=summary.required_authority,
             authority_bindings=summary.authority_bindings,

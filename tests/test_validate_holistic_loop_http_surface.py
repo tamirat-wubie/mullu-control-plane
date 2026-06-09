@@ -238,6 +238,40 @@ def test_payload_validation_rejects_learning_binding_terminal_closure_claim() ->
     assert invalid_binding["terminal_closure"] is True
 
 
+def test_payload_validation_requires_mode_binding_to_match_projected_mode() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_payload["loops"][0]["mode_binding"]["projected_mode"] = "real"
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("mode_binding projected_mode must match mode" in error for error in errors)
+    assert invalid_payload["loops"][0]["mode_binding"]["projected_mode"] == "real"
+    assert invalid_payload["loops"][0]["mode"] != "real"
+
+
+def test_payload_validation_rejects_mode_binding_transition_or_terminal_closure_claim() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_binding = invalid_payload["loops"][0]["mode_binding"]
+    invalid_binding["read_only"] = False
+    invalid_binding["mode_transition"] = True
+    invalid_binding["terminal_closure"] = True
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("mode_binding read_only must be true" in error for error in errors)
+    assert any("mode_binding mode_transition must be false" in error for error in errors)
+    assert any("mode_binding terminal_closure must be false" in error for error in errors)
+    assert invalid_binding["mode_transition"] is True
+
+
 def test_payload_validation_rejects_step_receipt_terminal_closure_claim() -> None:
     app = FastAPI()
     app.include_router(router)
