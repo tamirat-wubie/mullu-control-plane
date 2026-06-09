@@ -37,6 +37,7 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
     assert all(loop["authority_bindings"] for loop in loops)
     assert all(loop["missing_authority"] for loop in loops)
     assert all(loop["evidence_bindings"] for loop in loops)
+    assert all(loop["closure_condition_bindings"] for loop in loops)
     assert all(loop["rollback_binding"] for loop in loops)
     assert all(loop["learning_binding"] for loop in loops)
     assert all(loop["step_receipts"] for loop in loops)
@@ -48,6 +49,11 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
     assert all(
         {binding["evidence_ref"] for binding in loop["evidence_bindings"]}
         == set(loop["required_evidence"])
+        for loop in loops
+    )
+    assert all(
+        {binding["closure_ref"] for binding in loop["closure_condition_bindings"]}
+        == set(loop["closure_conditions"])
         for loop in loops
     )
     assert all(
@@ -78,6 +84,14 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
         binding["read_only"] is True and binding["terminal_closure"] is False
         for loop in loops
         for binding in loop["evidence_bindings"]
+    )
+    assert all(
+        binding["read_only"] is True
+        and binding["terminal_closure"] is False
+        and binding["required_evidence_refs"]
+        and binding["required_authority_refs"]
+        for loop in loops
+        for binding in loop["closure_condition_bindings"]
     )
     assert all(
         loop["rollback_binding"]["rollback_ref"] == loop["rollback_policy"]
@@ -141,6 +155,7 @@ def test_report_accepts_complete_observed_authority_and_evidence_refs() -> None:
     assert all(loop["mode_binding"] for loop in report["loops"])
     assert all(loop["risk_binding"] for loop in report["loops"])
     assert all(loop["evidence_bindings"] for loop in report["loops"])
+    assert all(loop["closure_condition_bindings"] for loop in report["loops"])
     assert all(loop["rollback_binding"] for loop in report["loops"])
     assert all(loop["learning_binding"] for loop in report["loops"])
     assert all(loop["step_receipts"] for loop in report["loops"])

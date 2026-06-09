@@ -17,6 +17,7 @@ import pytest
 
 from mcoi_runtime.contracts.holistic_loop import (
     LoopAuthorityBinding,
+    LoopClosureConditionBinding,
     LoopClosureReport,
     LoopEvidenceBinding,
     LoopLearningBinding,
@@ -248,6 +249,48 @@ def test_loop_mode_binding_local_refs_resolve_to_existing_artifacts() -> None:
     assert all((REPO_ROOT / ref).exists() for ref in file_refs)
 
 
+def test_loop_closure_condition_bindings_cover_conditions_without_execution() -> None:
+    read_model = build_default_loop_read_model()
+
+    for summary in read_model.loops:
+        binding_refs = {binding.closure_ref for binding in summary.closure_condition_bindings}
+
+        assert binding_refs == set(summary.closure_conditions)
+        assert len(summary.closure_condition_bindings) == len(summary.closure_conditions)
+        assert all(binding.read_only is True for binding in summary.closure_condition_bindings)
+        assert all(binding.terminal_closure is False for binding in summary.closure_condition_bindings)
+        assert all(binding.required_evidence_refs for binding in summary.closure_condition_bindings)
+        assert all(binding.required_authority_refs for binding in summary.closure_condition_bindings)
+        assert all(
+            set(binding.required_evidence_refs) <= set(summary.required_evidence)
+            for binding in summary.closure_condition_bindings
+        )
+        assert all(
+            set(binding.required_authority_refs) <= set(summary.required_authority)
+            for binding in summary.closure_condition_bindings
+        )
+        assert all(binding.source_refs for binding in summary.closure_condition_bindings)
+        assert all(binding.validator_refs for binding in summary.closure_condition_bindings)
+        assert all(binding.proof_surface_refs for binding in summary.closure_condition_bindings)
+
+
+def test_loop_closure_condition_binding_local_refs_resolve_to_existing_artifacts() -> None:
+    read_model = build_default_loop_read_model()
+    file_refs = {
+        ref
+        for summary in read_model.loops
+        for binding in summary.closure_condition_bindings
+        for ref in (*binding.source_refs, *binding.validator_refs)
+        if "/" in ref
+    }
+
+    assert "scripts/preflight_deployment_witness.py" in file_refs
+    assert "schemas/runtime_conformance_certificate.schema.json" in file_refs
+    assert "mcoi/mcoi_runtime/core/cognitive_loop.py" in file_refs
+    assert "schemas/sdlc_verification_receipt.schema.json" in file_refs
+    assert all((REPO_ROOT / ref).exists() for ref in file_refs)
+
+
 def test_loop_learning_binding_local_refs_resolve_to_existing_artifacts() -> None:
     read_model = build_default_loop_read_model()
     file_refs = {
@@ -320,6 +363,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
+            closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
@@ -351,6 +395,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
+            closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
@@ -473,6 +518,24 @@ def test_loop_mode_binding_rejects_transition_or_terminal_closure_claim() -> Non
         LoopModeBinding(**mismatched_kwargs)
 
 
+def test_loop_closure_condition_binding_rejects_mutation_or_terminal_closure_claim() -> None:
+    kwargs = {
+        "closure_ref": "verification_receipt_present",
+        "purpose": "bind verification receipt closure condition",
+        "required_evidence_refs": ("verification_receipt",),
+        "required_authority_refs": ("sdlc_closure_authority",),
+        "source_refs": ("schemas/sdlc_verification_receipt.schema.json",),
+        "validator_refs": ("scripts/validate_sdlc_artifact.py",),
+        "proof_surface_refs": ("software_dev_capability_pack",),
+    }
+
+    with pytest.raises(ValueError, match="read-only"):
+        LoopClosureConditionBinding(**kwargs, read_only=False)
+
+    with pytest.raises(ValueError, match="terminal closure"):
+        LoopClosureConditionBinding(**kwargs, terminal_closure=True)
+
+
 def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
     summary = build_default_loop_read_model().loops[0]
     terminal_report = LoopClosureReport(
@@ -507,6 +570,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
+            closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=terminal_report,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
@@ -548,6 +612,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
+            closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=mismatched_report,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
@@ -662,6 +727,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_step_receipts() -> None:
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
+            closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,

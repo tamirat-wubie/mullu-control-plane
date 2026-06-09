@@ -35,6 +35,7 @@ def test_current_holistic_loop_read_model_contract_passes() -> None:
     assert all(loop["missing_authority"] for loop in report["loops"])
     assert all(loop["rollback_binding"] for loop in report["loops"])
     assert all(loop["learning_binding"] for loop in report["loops"])
+    assert all(loop["closure_condition_bindings"] for loop in report["loops"])
     assert all(loop["step_receipts"] for loop in report["loops"])
 
 
@@ -136,6 +137,22 @@ def test_schema_requires_mode_binding() -> None:
     assert len(errors) >= 1
 
 
+def test_schema_requires_closure_condition_bindings() -> None:
+    schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
+    invalid_schema = copy.deepcopy(schema)
+    invalid_schema["$defs"]["loop_summary"]["required"] = [
+        field
+        for field in invalid_schema["$defs"]["loop_summary"]["required"]
+        if field != "closure_condition_bindings"
+    ]
+
+    errors = validator.validate_schema_artifact(invalid_schema)
+
+    assert any("schema missing required loop field: closure_condition_bindings" in error for error in errors)
+    assert "closure_condition_bindings" not in invalid_schema["$defs"]["loop_summary"]["required"]
+    assert len(errors) >= 1
+
+
 def test_blocked_count_mismatch_is_reported() -> None:
     report = validator.build_report()
     invalid_report = copy.deepcopy(report)
@@ -217,6 +234,62 @@ def test_duplicate_authority_binding_is_reported() -> None:
     assert len(invalid_report["loops"][0]["authority_bindings"]) > len(
         invalid_report["loops"][0]["required_authority"]
     )
+
+
+def test_missing_closure_condition_binding_is_reported() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    missing_binding = invalid_report["loops"][0]["closure_condition_bindings"].pop()
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("missing closure condition binding" in error for error in errors)
+    assert missing_binding["closure_ref"] in invalid_report["loops"][0]["closure_conditions"]
+    assert missing_binding not in invalid_report["loops"][0]["closure_condition_bindings"]
+
+
+def test_duplicate_closure_condition_binding_is_reported() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_report["loops"][0]["closure_condition_bindings"].append(
+        copy.deepcopy(invalid_report["loops"][0]["closure_condition_bindings"][0])
+    )
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("duplicate closure condition binding" in error for error in errors)
+    assert invalid_report["loops"][0]["closure_condition_bindings"][0]["closure_ref"]
+    assert len(invalid_report["loops"][0]["closure_condition_bindings"]) > len(
+        invalid_report["loops"][0]["closure_conditions"]
+    )
+
+
+def test_closure_condition_binding_cannot_claim_mutation_or_terminal_closure() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_binding = invalid_report["loops"][0]["closure_condition_bindings"][0]
+    invalid_binding["read_only"] = False
+    invalid_binding["terminal_closure"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("closure condition binding 0 read_only must be true" in error for error in errors)
+    assert any("closure condition binding 0 terminal_closure must be false" in error for error in errors)
+    assert invalid_binding["terminal_closure"] is True
+
+
+def test_closure_condition_binding_refs_must_be_declared() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_binding = invalid_report["loops"][0]["closure_condition_bindings"][0]
+    invalid_binding["required_evidence_refs"] = ["undeclared_evidence"]
+    invalid_binding["required_authority_refs"] = ["undeclared_authority"]
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("unexpected evidence ref: undeclared_evidence" in error for error in errors)
+    assert any("unexpected authority ref: undeclared_authority" in error for error in errors)
+    assert "undeclared_evidence" not in invalid_report["loops"][0]["required_evidence"]
 
 
 def test_authority_binding_cannot_claim_mutation_or_terminal_closure() -> None:

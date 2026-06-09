@@ -3,7 +3,7 @@
 Purpose: provide a scoped PR handoff packet for the holistic loop kernel slice.
 Governance scope: loop contract, registry, read model, HTTP projection,
 validators, schema manifest, evidence blockers, mode catalog, risk catalog,
-rollback boundary, and learning catalog.
+closure condition catalog, rollback boundary, and learning catalog.
 Dependencies: `docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md`, holistic loop source
 files, read-model schema, report and validation scripts, focused tests, SDLC
 validators, release validators, and workspace governance preflight.
@@ -92,6 +92,24 @@ The catalog does not promote dry-run to real execution, switch modes, mutate
 loop state, or close a loop. It only tells operators where mode-separation and
 real-execution-admission proof must come from when a later loop-specific
 workflow runs.
+
+The read model now exposes `LoopClosureConditionBinding` entries for every
+declared `closure_conditions` label. The catalog maps each closure condition to
+required evidence refs, required authority refs, existing source refs,
+validator refs, and proof-matrix surface refs. It remains read-only and
+non-terminal:
+
+```text
+set(closure_condition_bindings[*].closure_ref) == set(closure_conditions)
+closure_condition_bindings[*].required_evidence_refs subset required_evidence
+closure_condition_bindings[*].required_authority_refs subset required_authority
+closure_condition_bindings[*].read_only == true
+closure_condition_bindings[*].terminal_closure == false
+```
+
+The catalog does not mark conditions satisfied, clear blockers, execute
+validators, or close a loop. It only tells operators where closure-condition
+proof must come from when a later loop-specific closure workflow runs.
 
 The read model now exposes `LoopAuthorityBinding` entries for every
 `required_authority` label. The catalog maps each authority label to existing

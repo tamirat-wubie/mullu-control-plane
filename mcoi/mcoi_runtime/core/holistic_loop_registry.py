@@ -17,6 +17,7 @@ from typing import Mapping, Sequence
 from mcoi_runtime.contracts._base import freeze_value, require_datetime_text
 from mcoi_runtime.contracts.holistic_loop import (
     LoopAuthorityBinding,
+    LoopClosureConditionBinding,
     LoopClosureReport,
     LoopEvidenceBinding,
     LoopLearningBinding,
@@ -376,6 +377,7 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         evidence_refs=state.evidence_refs,
         missing_evidence=missing,
         closure_conditions=manifest.closure_conditions,
+        closure_condition_bindings=_closure_condition_bindings_for(manifest.loop_id),
         closure_report=_closure_report_for(manifest, blockers, missing),
         open_blockers=blockers,
         rollback_policy=manifest.rollback_policy,
@@ -483,6 +485,13 @@ def _mode_binding_for(
         validator_refs=defaults.validator_refs,
         proof_surface_refs=defaults.proof_surface_refs,
     )
+
+
+def _closure_condition_bindings_for(loop_id: str) -> tuple[LoopClosureConditionBinding, ...]:
+    try:
+        return _DEFAULT_CLOSURE_CONDITION_BINDINGS[loop_id]
+    except KeyError as exc:
+        raise ValueError(f"loop closure condition catalog missing: {loop_id}") from exc
 
 
 def _closure_report_for(
@@ -638,6 +647,27 @@ def _mode_binding(
     )
 
 
+def _closure_condition_binding(
+    closure_ref: str,
+    purpose: str,
+    *,
+    required_evidence_refs: Sequence[str],
+    required_authority_refs: Sequence[str],
+    source_refs: Sequence[str],
+    validator_refs: Sequence[str],
+    proof_surface_refs: Sequence[str],
+) -> LoopClosureConditionBinding:
+    return LoopClosureConditionBinding(
+        closure_ref=closure_ref,
+        purpose=purpose,
+        required_evidence_refs=tuple(required_evidence_refs),
+        required_authority_refs=tuple(required_authority_refs),
+        source_refs=tuple(source_refs),
+        validator_refs=tuple(validator_refs),
+        proof_surface_refs=tuple(proof_surface_refs),
+    )
+
+
 _DEPLOYMENT_WITNESS_SOURCES = (
     "scripts/collect_deployment_witness.py",
     "schemas/deployment_witness.schema.json",
@@ -672,6 +702,200 @@ _GOVERNED_CODE_CHANGE_VALIDATORS = (
     "tests/test_governed_code_change_loop.py",
     "tests/test_validate_governed_code_change_loop_receipt.py",
 )
+
+
+_DEFAULT_CLOSURE_CONDITION_BINDINGS: Mapping[str, tuple[LoopClosureConditionBinding, ...]] = {
+    "deployment_witness_loop": (
+        _closure_condition_binding(
+            "deployment_witness_state_published",
+            "Require a published deployment witness before publication closure can be described.",
+            required_evidence_refs=("deployment_witness_published",),
+            required_authority_refs=("deployment_publication_authority",),
+            source_refs=(
+                "scripts/collect_deployment_witness.py",
+                "scripts/preflight_deployment_witness.py",
+            ),
+            validator_refs=(
+                "tests/test_collect_deployment_witness.py",
+                "tests/test_preflight_deployment_witness.py",
+            ),
+            proof_surface_refs=("production_evidence_plane",),
+        ),
+        _closure_condition_binding(
+            "runtime_responsibility_debt_clear",
+            "Require runtime witness and conformance evidence before runtime debt is cleared.",
+            required_evidence_refs=("runtime_witness_valid", "runtime_conformance_verified"),
+            required_authority_refs=("deployment_publication_authority",),
+            source_refs=("scripts/preflight_deployment_witness.py",),
+            validator_refs=("tests/test_preflight_deployment_witness.py",),
+            proof_surface_refs=("gateway_runtime_witness", "runtime_conformance_attestation"),
+        ),
+        _closure_condition_binding(
+            "authority_responsibility_debt_clear",
+            "Require operator and publication authority evidence before authority debt is cleared.",
+            required_evidence_refs=("authority_obligations_clear",),
+            required_authority_refs=("operator_approval_ref", "deployment_publication_authority"),
+            source_refs=("scripts/emit_deployment_publication_operator_input_request.py",),
+            validator_refs=("tests/test_emit_deployment_publication_operator_input_request.py",),
+            proof_surface_refs=("authority_obligation_mesh",),
+        ),
+        _closure_condition_binding(
+            "public_health_endpoint_matches_declared_gateway",
+            "Require declared public endpoint evidence to match the publication witness.",
+            required_evidence_refs=("public_endpoint_declared", "deployment_witness_published"),
+            required_authority_refs=("deployment_publication_authority",),
+            source_refs=("schemas/gateway_publication_readiness.schema.json",),
+            validator_refs=("tests/test_plan_deployment_publication_closure.py",),
+            proof_surface_refs=("production_evidence_plane", "gateway_runtime_witness"),
+        ),
+        _closure_condition_binding(
+            "proof_and_audit_verification_pass",
+            "Require proof verification and audit anchor evidence before closure can be considered.",
+            required_evidence_refs=("audit_anchor_verified", "proof_verification_passed"),
+            required_authority_refs=("operator_approval_ref",),
+            source_refs=("scripts/validate_release_status.py",),
+            validator_refs=("tests/test_validate_release_status.py",),
+            proof_surface_refs=("audit_chain_api", "proof_route_gap_triage"),
+        ),
+    ),
+    "runtime_conformance_loop": (
+        _closure_condition_binding(
+            "accepted_conformance_status",
+            "Require schema, signature, and issuer evidence before conformance status is accepted.",
+            required_evidence_refs=("certificate_schema_valid", "certificate_signature_verified"),
+            required_authority_refs=("runtime_conformance_issuer",),
+            source_refs=("scripts/collect_runtime_conformance.py",),
+            validator_refs=("tests/test_collect_runtime_conformance.py",),
+            proof_surface_refs=("runtime_conformance_attestation",),
+        ),
+        _closure_condition_binding(
+            "gateway_witness_valid",
+            "Require authority-directory and certificate evidence before gateway witness validity is described.",
+            required_evidence_refs=("authority_directory_sync_valid", "certificate_signature_verified"),
+            required_authority_refs=("conformance_secret_handoff_ref",),
+            source_refs=("schemas/runtime_conformance_certificate.schema.json",),
+            validator_refs=("tests/test_collect_runtime_conformance_cli.py",),
+            proof_surface_refs=("runtime_conformance_attestation",),
+        ),
+        _closure_condition_binding(
+            "runtime_witness_valid",
+            "Require core canary and certificate evidence before runtime witness validity is described.",
+            required_evidence_refs=("core_canaries_passed", "certificate_schema_valid"),
+            required_authority_refs=("runtime_conformance_issuer",),
+            source_refs=("scripts/collect_runtime_conformance.py",),
+            validator_refs=("tests/test_gateway/test_conformance.py",),
+            proof_surface_refs=("runtime_conformance_attestation", "gateway_runtime_witness"),
+        ),
+        _closure_condition_binding(
+            "core_canary_set_passed",
+            "Require the runtime canary set to pass before conformance closure can advance.",
+            required_evidence_refs=("core_canaries_passed",),
+            required_authority_refs=("runtime_conformance_issuer",),
+            source_refs=("schemas/runtime_conformance_collection.schema.json",),
+            validator_refs=("tests/test_collect_runtime_conformance.py",),
+            proof_surface_refs=("runtime_conformance_attestation",),
+        ),
+        _closure_condition_binding(
+            "known_limitations_and_security_model_aligned",
+            "Require bounded conformance gaps and proof coverage before limitation alignment is described.",
+            required_evidence_refs=("proof_coverage_matrix_current", "open_conformance_gaps_bounded"),
+            required_authority_refs=("conformance_secret_handoff_ref",),
+            source_refs=("docs/40_proof_coverage_matrix.md",),
+            validator_refs=("tests/test_proof_coverage_matrix.py",),
+            proof_surface_refs=("proof_route_gap_triage",),
+        ),
+    ),
+    "cognitive_outcome_loop": (
+        _closure_condition_binding(
+            "hard_constraints_proven_or_blocked",
+            "Require governed dispatch and verification evidence before hard constraints can be described as resolved or blocked.",
+            required_evidence_refs=("governed_dispatch_trace", "mechanical_verification_result"),
+            required_authority_refs=("governed_dispatch_policy_decision",),
+            source_refs=("mcoi/mcoi_runtime/core/cognitive_loop.py",),
+            validator_refs=("mcoi/tests/test_cognitive_loop.py",),
+            proof_surface_refs=("software_outcome_learning",),
+        ),
+        _closure_condition_binding(
+            "mechanical_verification_completed",
+            "Require mechanical verification evidence before outcome verification can be described.",
+            required_evidence_refs=("mechanical_verification_result",),
+            required_authority_refs=("governed_dispatch_policy_decision",),
+            source_refs=("mcoi/mcoi_runtime/core/mil_learning_admission.py",),
+            validator_refs=("mcoi/tests/test_whqr_mil_learning_admission.py",),
+            proof_surface_refs=("software_outcome_learning",),
+        ),
+        _closure_condition_binding(
+            "critic_did_not_upgrade_failed_proof",
+            "Require critic verdict evidence before failed proof upgrade prevention can be described.",
+            required_evidence_refs=("critic_verdict_or_null_critic",),
+            required_authority_refs=("learning_admission_decision",),
+            source_refs=("schemas/learning_admission.schema.json",),
+            validator_refs=("mcoi/tests/test_learning_loop.py",),
+            proof_surface_refs=("software_outcome_learning",),
+        ),
+        _closure_condition_binding(
+            "learning_admitted_only_from_verified_evidence",
+            "Require learning admission and episodic outcome anchors before learning closure can be described.",
+            required_evidence_refs=("learning_admission_recorded", "episodic_outcome_anchor"),
+            required_authority_refs=("learning_admission_decision",),
+            source_refs=("mcoi/mcoi_runtime/persistence/cognitive_outcome_ledger.py",),
+            validator_refs=("mcoi/tests/test_cognitive_outcome_ledger.py",),
+            proof_surface_refs=("software_outcome_learning",),
+        ),
+    ),
+    "governed_code_change_loop": (
+        _closure_condition_binding(
+            "worker_receipt_not_terminal_closure",
+            "Require code-worker receipt evidence while preserving the non-terminal worker boundary.",
+            required_evidence_refs=("code_worker_receipt",),
+            required_authority_refs=("code_worker_lease",),
+            source_refs=("mcoi/mcoi_runtime/core/governed_code_change_loop.py",),
+            validator_refs=("tests/test_governed_code_change_loop.py",),
+            proof_surface_refs=("software_dev_capability_pack",),
+        ),
+        _closure_condition_binding(
+            "implementation_receipt_present",
+            "Require implementation receipt evidence before code-change closure can advance.",
+            required_evidence_refs=("implementation_receipt",),
+            required_authority_refs=("uao_ref",),
+            source_refs=("schemas/sdlc_implementation_receipt.schema.json",),
+            validator_refs=("scripts/validate_sdlc_artifact.py",),
+            proof_surface_refs=("software_dev_capability_pack",),
+        ),
+        _closure_condition_binding(
+            "verification_receipt_present",
+            "Require verification receipt evidence before code-change closure can advance.",
+            required_evidence_refs=("verification_receipt",),
+            required_authority_refs=("sdlc_closure_authority",),
+            source_refs=("schemas/sdlc_verification_receipt.schema.json",),
+            validator_refs=("scripts/validate_sdlc_artifact.py",),
+            proof_surface_refs=("software_dev_capability_pack",),
+        ),
+        _closure_condition_binding(
+            "recovery_handoff_present",
+            "Require recovery handoff evidence before code-change closure can advance.",
+            required_evidence_refs=("recovery_handoff",),
+            required_authority_refs=("sdlc_closure_authority",),
+            source_refs=("schemas/sdlc_recovery_handoff_receipt.schema.json",),
+            validator_refs=("scripts/validate_sdlc_artifact.py",),
+            proof_surface_refs=("software_dev_capability_pack",),
+        ),
+        _closure_condition_binding(
+            "closure_blockers_empty",
+            "Require all governed code-change receipts before empty blockers can be described.",
+            required_evidence_refs=(
+                "code_worker_receipt",
+                "implementation_receipt",
+                "verification_receipt",
+                "recovery_handoff",
+            ),
+            required_authority_refs=("uao_ref", "code_worker_lease", "sdlc_closure_authority"),
+            source_refs=("scripts/run_governed_code_change_loop.py",),
+            validator_refs=("tests/test_validate_governed_code_change_loop_receipt.py",),
+            proof_surface_refs=("software_dev_capability_pack",),
+        ),
+    ),
+}
 
 
 _DEFAULT_MODE_BINDINGS: Mapping[str, LoopModeBinding] = {
