@@ -55,6 +55,52 @@ operators and downstream systems can inspect.
 - Python scaffold lives under `mcoi/`.
 - Cross-runtime compatibility work lives under `integration/`.
 
+## Repository Topology Decision
+
+The current topology is one repository:
+
+```text
+repository: mullu-control-plane
+product: Mullu Govern
+company: Mullusi
+```
+
+This repository may contain governance engine, policy engine, witness engine,
+receipt engine, deployment engine, agent runtime, skills, gateway, SDK, APIs,
+documentation, tests, and operations while the project remains in Foundation
+Mode. That is an intentional monorepo posture, not a final service boundary.
+
+Do not split this repository while the active blocker is deployment evidence.
+Repository splitting is deferred until public runtime evidence and usage create
+real coordination pressure.
+
+Split triggers:
+
+1. Issue `#330` is closed by signed deployment witness evidence.
+2. Deployment witness publication passes.
+3. Public runtime health is verified by witness, conformance, proof, and audit
+   endpoints.
+4. First external users have arrived and the operator has evidence that repo
+   size, review ownership, or deployable-service boundaries are causing real
+   friction.
+5. At least one scale trigger exists: 50+ active users, multiple teams, or
+   multiple independently deployable services.
+
+Possible future repositories, only after those triggers:
+
+```text
+mullu-govern-web
+mullu-govern-api
+mullu-control-plane-core
+mullu-control-plane-sdk
+mullusi-docs
+```
+
+Until then, Render or any other host may point at the current
+`mullu-control-plane` runtime as the current platform runtime. That deployment
+target does not by itself prove the final product architecture, public runtime
+health, or repository-split readiness.
+
 ## Status (2026-04-26)
 
 Milestone 0 is complete. The platform now implements the governed

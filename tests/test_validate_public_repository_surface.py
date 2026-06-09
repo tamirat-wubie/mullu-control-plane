@@ -31,6 +31,7 @@ from scripts.validate_public_repository_surface import (
     GOVERNANCE_PROTOCOL_REQUIRED_LITERALS,
     LOGIC_GOVERNANCE_DOC_PATH,
     LOGIC_GOVERNANCE_REQUIRED_LITERALS,
+    PLATFORM_OVERVIEW_REQUIRED_LITERALS,
     PRODUCT_BOUNDARY_REQUIRED_LITERALS,
     REPO_ROOT,
     STATUS_REQUIRED_LITERALS,
@@ -103,7 +104,7 @@ def test_deployment_status_requires_orchestration_receipt_validation() -> None:
     assert "examples/general_agent_promotion_handoff_packet.json" in content
     assert "examples/general_agent_promotion_environment_bindings.json" in content
     assert ".change_assurance/general_agent_promotion_environment_binding_receipt.json" in content
-    assert "No `deployment-witness.yml` workflow runs are currently recorded" in content
+    assert "`deployment-witness.yml` run `27148629126` completed successfully on 2026-06-08 for `https://api.mullusi.com`" in content
 
 
 def test_status_witness_requires_protocol_manifest_anchor() -> None:
@@ -117,6 +118,8 @@ def test_status_witness_requires_protocol_manifest_anchor() -> None:
 
     assert errors == []
     assert "Protocol witness" in content
+    assert "Repository topology witness" in content
+    assert "docs/00_platform_overview.md" in content
     assert "docs/52_mullu_governance_protocol.md" in content
     assert "docs/60_logic_governance_application.md" in content
     assert "validate_logic_governance_application.py" in content
@@ -135,6 +138,7 @@ def test_github_surface_requires_protocol_document_anchor() -> None:
 
     assert errors == []
     assert "docs/52_mullu_governance_protocol.md" in content
+    assert "docs/00_platform_overview.md" in content
     assert "docs/PRODUCT_BOUNDARY.md" in content
     assert "python scripts/validate_protocol_manifest.py" in content
     assert "Public protocol schema index" in content
@@ -153,6 +157,27 @@ def test_product_boundary_names_product_and_launch_constraints() -> None:
     assert "Mullu Govern is the public product" in content
     assert "Mullu Control Plane" in content
     assert "Launch Constraint" in content
+    assert "This rename target is not a repository-split trigger" in content
+    assert "developers should continue working in `mullu-control-plane`" in content
+
+
+def test_platform_overview_requires_repository_topology_decision() -> None:
+    content = (REPO_ROOT / "docs" / "00_platform_overview.md").read_text(encoding="utf-8")
+
+    errors = validate_required_document_text(
+        document_name="docs/00_platform_overview.md",
+        content=content,
+        required_literals=PLATFORM_OVERVIEW_REQUIRED_LITERALS,
+    )
+
+    assert errors == []
+    assert "Repository Topology Decision" in content
+    assert "repository: mullu-control-plane" in content
+    assert "product: Mullu Govern" in content
+    assert "company: Mullusi" in content
+    assert "Do not split this repository while the active blocker is deployment evidence." in content
+    assert "Issue `#330` is closed by signed deployment witness evidence." in content
+    assert "multiple independently deployable services." in content
 
 
 def test_gateway_publication_workflow_requires_receipt_validator() -> None:

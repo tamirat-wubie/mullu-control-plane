@@ -18,7 +18,7 @@ The system is documented as numbered `NN_*.md` files in the parent
 
 | # | Subsystem | What it pins down |
 | --- | --- | --- |
-| [00](../00_platform_overview.md) | Platform Overview | Where each responsibility lives; naming boundaries |
+| [00](../00_platform_overview.md) | Platform Overview | Where each responsibility lives; naming and repository-topology boundaries |
 | [01](../01_shared_invariants.md) | Shared Invariants | The rules that are always true (the safety guarantees) |
 | [02](../02_shared_contracts.md) | Shared Contracts | Exact data shapes shared across components |
 | [03](../03_trace_and_replay.md) | Trace & Replay | How actions are recorded and re-run |

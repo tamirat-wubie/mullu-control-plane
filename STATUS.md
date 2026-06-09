@@ -27,6 +27,7 @@ Invariants: Claims are bounded to named witnesses; gaps are explicit; status
 | Governance witness | `scripts/validate_release_status.py --strict` validates release documents, schemas, protocol manifest, logic governance doctrine, artifacts, CI literals, source hygiene, and metadata alignment | Reflected |
 | Protocol witness | `docs/52_mullu_governance_protocol.md` and `scripts/validate_protocol_manifest.py` bind the open schema surface, closed runtime boundary, and 32-schema public contract index | Reflected |
 | Logic governance witness | `docs/60_logic_governance_application.md` and `scripts/validate_logic_governance_application.py` bind formal logic practice to governance package rules, proof coverage, Phi traversal, Mfidel atomicity, public schemas, closure, promotion, halt conditions, and proof-of-resolution stamping | Reflected |
+| Repository topology witness | `docs/00_platform_overview.md`, `docs/PRODUCT_BOUNDARY.md`, `README.md`, and `scripts/validate_public_repository_surface.py` bind the current single-repository posture, product/repository/company boundary, future split triggers, and rename-not-split-trigger rule | Reflected |
 | Gateway closure witness | CI runs `python -m pytest tests/test_gateway -q` and `python scripts/validate_gateway_deployment_env.py --strict` | Reflected |
 | Deployment runtime input witness | `DEPLOYMENT_STATUS.md` records `MULLU_RUNTIME_WITNESS_SECRET`, `MULLU_RUNTIME_CONFORMANCE_SECRET`, `MULLU_DEPLOYMENT_WITNESS_SECRET`, and `MULLU_AUTHORITY_OPERATOR_SECRET` presence, `MULLU_GATEWAY_URL=https://api.mullusi.com`, `MULLU_EXPECTED_RUNTIME_ENV=pilot`, and absent `deployment-witness.yml` workflow runs | Reflected |
 | README production claim boundary | `README.md` names the latest tagged release, bounds v4.x release-note files as mainline records, and points live-runtime claims to `DEPLOYMENT_STATUS.md` | Reflected |
@@ -42,19 +43,20 @@ The GitHub page is sufficient only when these anchors are present and current:
 1. README links to this status witness.
 2. `GITHUB_SURFACE.md` mirrors GitHub metadata expectations.
 3. `DEPLOYMENT_STATUS.md` names deployment-health evidence state.
-4. `docs/PRODUCT_BOUNDARY.md` names product, company, control-plane, and launch boundaries.
-5. `docs/52_mullu_governance_protocol.md` names the public protocol contract boundary.
-6. `docs/60_logic_governance_application.md` names the formal logic application boundary.
-7. CI keeps `python scripts/validate_protocol_manifest.py`.
-8. CI keeps `python scripts/validate_logic_governance_application.py`.
-9. CI keeps `python scripts/validate_public_repository_surface.py`.
-10. CI keeps `python scripts/validate_release_status.py --strict`.
-11. CI keeps `python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md`.
-12. CI keeps `python scripts/validate_gateway_deployment_env.py --strict`.
-13. Deployment runbooks keep `python scripts/gateway_runtime_smoke.py`.
-14. Release metadata in `RELEASE_NOTES_v0.1.md`, `KNOWN_LIMITATIONS_v0.1.md`, and `SECURITY_MODEL_v0.1.md` remains aligned.
-15. General-agent promotion handoff remains anchored by `docs/59_general_agent_promotion_handoff_packet.md` and `examples/general_agent_promotion_handoff_packet.json`.
-16. Known reflection gaps are named instead of implied.
+4. `docs/00_platform_overview.md` names the product/repository/company topology, current single-repository posture, and future split triggers.
+5. `docs/PRODUCT_BOUNDARY.md` names product, company, control-plane, rename, launch, and rename-not-split-trigger boundaries.
+6. `docs/52_mullu_governance_protocol.md` names the public protocol contract boundary.
+7. `docs/60_logic_governance_application.md` names the formal logic application boundary.
+8. CI keeps `python scripts/validate_protocol_manifest.py`.
+9. CI keeps `python scripts/validate_logic_governance_application.py`.
+10. CI keeps `python scripts/validate_public_repository_surface.py`.
+11. CI keeps `python scripts/validate_release_status.py --strict`.
+12. CI keeps `python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md`.
+13. CI keeps `python scripts/validate_gateway_deployment_env.py --strict`.
+14. Deployment runbooks keep `python scripts/gateway_runtime_smoke.py`.
+15. Release metadata in `RELEASE_NOTES_v0.1.md`, `KNOWN_LIMITATIONS_v0.1.md`, and `SECURITY_MODEL_v0.1.md` remains aligned.
+16. General-agent promotion handoff remains anchored by `docs/59_general_agent_promotion_handoff_packet.md` and `examples/general_agent_promotion_handoff_packet.json`.
+17. Known reflection gaps are named instead of implied.
 
 ## Known Reflection Gaps
 

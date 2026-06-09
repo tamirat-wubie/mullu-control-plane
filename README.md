@@ -660,7 +660,10 @@ generation, data analysis -- under deterministic governance: 8-guard chain,
 hash-chain audit trails, financial spend budgets, and skill boundary
 enforcement.
 
-Product naming boundaries are recorded in [`docs/PRODUCT_BOUNDARY.md`](docs/PRODUCT_BOUNDARY.md).
+Product naming boundaries are recorded in
+[`docs/PRODUCT_BOUNDARY.md`](docs/PRODUCT_BOUNDARY.md). Repository topology,
+including the current single-repository posture and future split triggers, is
+recorded in [`docs/00_platform_overview.md`](docs/00_platform_overview.md).
 
 ## Public Naming Gate
 
@@ -913,10 +916,12 @@ mullu-control-plane/
 `-- docker-compose.yml            # Local compose deployment profile.
 ```
 
-This map is a layout and boundary map, not a readiness certificate. Foundation
-Mode still blocks deployment, customer access, fundraising, hiring, money
-movement, and external publication unless a later signed witness promotes one
-bounded action.
+This map is a layout and boundary map, not a readiness certificate. The current
+posture remains one repository for the platform runtime; repository splitting is
+deferred until deployment evidence, public runtime evidence, first-user
+evidence, and coordination-pressure triggers close. Foundation Mode still blocks
+deployment, customer access, fundraising, hiring, money movement, and external
+publication unless a later signed witness promotes one bounded action.
 
 ## Legacy Architecture Snapshot
 
