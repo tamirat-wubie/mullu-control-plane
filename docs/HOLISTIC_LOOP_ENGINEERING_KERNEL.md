@@ -30,6 +30,7 @@ The kernel models the common contract through:
 | `LoopStepReceipt` | Step-level input hash, output hash, decision, evidence, status, errors, and timestamp. |
 | `LoopClosureReport` | Closure assessment with unresolved gaps, rollback availability, and learning candidates. |
 | `LoopAuthorityBinding` | Read-only map from each required authority label to source refs, validator refs, and proof surfaces. |
+| `LoopRollbackBinding` | Read-only map from the rollback policy to recovery source refs, validator refs, and proof surfaces. |
 | `LoopEvidenceBinding` | Read-only map from each required evidence label to source refs, validator refs, and proof surfaces. |
 | `LoopRegistry` | Immutable registry binding manifests to read-only states. |
 | `LoopReadModel` | Bounded loop summary projection for dashboards, docs, and validators. |
@@ -81,6 +82,32 @@ set(authority_bindings[*].authority_ref) == set(required_authority)
 Missing, duplicate, or extra authority bindings are validation failures. The
 catalog does not grant authority. It only tells operators where authority proof
 must come from when a later loop-specific workflow runs.
+
+## Rollback Catalog
+
+Each loop summary includes `rollback_binding`. A binding is a read-only catalog
+entry for the loop's `rollback_policy`:
+
+| Field | Meaning |
+| --- | --- |
+| `rollback_ref` | The rollback policy label the binding explains. |
+| `purpose` | Why the rollback path exists and what recovery boundary it describes. |
+| `source_refs` | Existing files, schemas, or scripts that define the recovery path. |
+| `validator_refs` | Existing tests or validators that check the referenced recovery surface. |
+| `proof_surface_refs` | Proof-matrix surface IDs related to rollback or recovery. |
+| `read_only` | Always `true`; bindings do not execute rollback. |
+| `terminal_closure` | Always `false`; bindings are not closure certificates. |
+
+The catalog is exact by contract:
+
+```text
+rollback_binding.rollback_ref == rollback_policy
+rollback_binding.read_only == true
+rollback_binding.terminal_closure == false
+```
+
+The rollback catalog does not restore snapshots, invalidate claims, or open
+recovery handoffs. It only tells operators where recovery proof must come from.
 
 ## Evidence Catalog
 
@@ -182,10 +209,11 @@ This kernel is intentionally non-invasive:
 4. It does not dispatch governed code-change workers.
 5. It does not create a public mutation route.
 6. It does not grant authority or execute authority checks referenced by the catalog.
-7. It does not execute evidence validators referenced by the catalog.
-8. It does not emit live runtime execution receipts.
-9. It does not mark any loop closed.
-10. It only exposes typed read-model contracts that other surfaces can adopt later.
+7. It does not execute rollback or recovery actions referenced by the catalog.
+8. It does not execute evidence validators referenced by the catalog.
+9. It does not emit live runtime execution receipts.
+10. It does not mark any loop closed.
+11. It only exposes typed read-model contracts that other surfaces can adopt later.
 
 ## Read-Only Exposure
 
@@ -205,6 +233,7 @@ script:
 | `status` | `blocked` while any returned loop has blockers; otherwise `verified`. |
 | `loops` | Bounded registered loop summaries. |
 | `loops[].authority_bindings` | Read-only authority catalog entries covering every required authority label. |
+| `loops[].rollback_binding` | Read-only recovery catalog entry matching the loop rollback policy. |
 | `loops[].evidence_bindings` | Read-only evidence catalog entries covering every required evidence label. |
 | `loops[].step_receipts` | Read-only synthetic receipt trail for the canonical loop phases. |
 | `loops[].closure_report` | Read-only non-terminal closure-readiness report for each loop summary. |
@@ -253,6 +282,7 @@ The tests verify:
 6. Step receipts and closure reports are typed and immutable.
 7. The HTTP read-model route is mounted read-only and has no mutation companion.
 8. Authority bindings cover every required authority label and cannot claim terminal closure.
-9. Evidence bindings cover every required evidence label and cannot claim terminal closure.
-10. Step receipt trails are read-only synthetic projections and must match blockers.
-11. Closure reports cannot claim terminal closure and must match blockers.
+9. Rollback bindings cover each recovery policy and cannot execute rollback or claim closure.
+10. Evidence bindings cover every required evidence label and cannot claim terminal closure.
+11. Step receipt trails are read-only synthetic projections and must match blockers.
+12. Closure reports cannot claim terminal closure and must match blockers.

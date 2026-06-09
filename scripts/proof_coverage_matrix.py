@@ -6539,6 +6539,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "LoopRegistry",
                 "LoopReadModel",
                 "LoopAuthorityBinding",
+                "LoopRollbackBinding",
                 "LoopStepReceipt",
                 "LoopClosureReport",
             ],
@@ -6565,9 +6566,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
             (
                 "Holistic loop engineering exposes existing governed loops through "
                 "one read-only loop contract, registry, schema-backed summary, "
-                "authority catalog, bounded receipt trail, and HTTP read model. "
-                "Missing authority or evidence remains an explicit blocker and no "
-                "mutation route is introduced."
+                "authority catalog, rollback catalog, bounded receipt trail, and "
+                "HTTP read model. Missing authority or evidence remains an explicit "
+                "blocker and no mutation route is introduced."
             ),
             [
                 "registered_loops_expose_governed_manifest_fields",
@@ -6575,6 +6576,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "closure_report_blocks_incomplete_evidence",
                 "loop_registry_rejects_duplicate_loop_ids",
                 "loop_authority_bindings_cover_required_authority",
+                "loop_rollback_bindings_cover_recovery_policy",
                 "loop_evidence_bindings_cover_required_evidence",
                 "loop_step_receipt_trail_is_read_only",
                 "loop_closure_report_blocks_terminal_closure",
@@ -6596,6 +6598,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "loop_authority_bindings_cover_required_authority": [
                     "loop_authority_bindings_cover_required_authority_without_execution"
+                ],
+                "loop_rollback_bindings_cover_recovery_policy": [
+                    "loop_rollback_bindings_cover_recovery_policy_without_execution"
                 ],
                 "loop_evidence_bindings_cover_required_evidence": [
                     "loop_evidence_bindings_cover_required_evidence_without_execution"

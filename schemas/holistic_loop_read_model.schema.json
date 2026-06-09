@@ -91,6 +91,7 @@
         "closure_report",
         "open_blockers",
         "rollback_policy",
+        "rollback_binding",
         "learning_policy",
         "updated_at"
       ],
@@ -188,6 +189,9 @@
         "rollback_policy": {
           "type": "string",
           "minLength": 1
+        },
+        "rollback_binding": {
+          "$ref": "#/$defs/rollback_binding"
         },
         "learning_policy": {
           "type": "string",
@@ -326,6 +330,46 @@
               "const": false
             }
           }
+        }
+      }
+    },
+    "rollback_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rollback_ref",
+        "purpose",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "read_only",
+        "terminal_closure"
+      ],
+      "properties": {
+        "rollback_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "validator_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "proof_surface_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
         }
       }
     },

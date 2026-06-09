@@ -95,6 +95,21 @@ The catalog does not grant authority and does not close a loop. It only tells
 operators where authority proof must come from when a later loop-specific
 workflow runs.
 
+The read model now exposes one `LoopRollbackBinding` entry for every loop
+summary. The binding maps `rollback_policy` to existing recovery source refs,
+validator refs, and proof-matrix surface refs. It remains read-only and
+non-terminal:
+
+```text
+rollback_binding.rollback_ref == rollback_policy
+rollback_binding.read_only == true
+rollback_binding.terminal_closure == false
+```
+
+The catalog does not execute rollback, restore snapshots, invalidate claims, or
+open recovery handoffs. It only tells operators where recovery proof must come
+from when a later loop-specific recovery workflow runs.
+
 The read model now exposes `LoopEvidenceBinding` entries for every
 `required_evidence` label. The catalog maps each evidence label to existing
 source refs, validator refs, and proof-matrix surface refs. It remains

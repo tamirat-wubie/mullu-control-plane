@@ -142,6 +142,38 @@ def test_payload_validation_rejects_authority_binding_terminal_closure_claim() -
     assert invalid_binding["terminal_closure"] is True
 
 
+def test_payload_validation_requires_rollback_binding_to_match_policy() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_payload["loops"][0]["rollback_binding"]["rollback_ref"] = "different_policy"
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("rollback_binding rollback_ref must match rollback_policy" in error for error in errors)
+    assert invalid_payload["loops"][0]["rollback_binding"]["rollback_ref"] == "different_policy"
+    assert invalid_payload["loops"][0]["rollback_policy"] != "different_policy"
+
+
+def test_payload_validation_rejects_rollback_binding_terminal_closure_claim() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_binding = invalid_payload["loops"][0]["rollback_binding"]
+    invalid_binding["read_only"] = False
+    invalid_binding["terminal_closure"] = True
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("rollback_binding read_only must be true" in error for error in errors)
+    assert any("rollback_binding terminal_closure must be false" in error for error in errors)
+    assert invalid_binding["terminal_closure"] is True
+
+
 def test_payload_validation_rejects_step_receipt_terminal_closure_claim() -> None:
     app = FastAPI()
     app.include_router(router)
