@@ -15,6 +15,7 @@ from typing import Mapping, Sequence
 
 from mcoi_runtime.contracts._base import freeze_value, require_datetime_text
 from mcoi_runtime.contracts.holistic_loop import (
+    LoopEvidenceBinding,
     LoopManifest,
     LoopMode,
     LoopPhase,
@@ -345,6 +346,7 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         current_step=state.current_step,
         required_authority=manifest.required_authority,
         required_evidence=manifest.required_evidence,
+        evidence_bindings=_evidence_bindings_for(manifest.loop_id),
         evidence_refs=state.evidence_refs,
         missing_evidence=missing,
         closure_conditions=manifest.closure_conditions,
@@ -353,6 +355,250 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         learning_policy=manifest.learning_policy,
         updated_at=state.updated_at,
     )
+
+
+def _evidence_bindings_for(loop_id: str) -> tuple[LoopEvidenceBinding, ...]:
+    try:
+        return _DEFAULT_EVIDENCE_BINDINGS[loop_id]
+    except KeyError as exc:
+        raise ValueError(f"loop evidence catalog missing: {loop_id}") from exc
+
+
+def _binding(
+    evidence_ref: str,
+    purpose: str,
+    *,
+    source_refs: Sequence[str],
+    validator_refs: Sequence[str],
+    proof_surface_refs: Sequence[str],
+) -> LoopEvidenceBinding:
+    return LoopEvidenceBinding(
+        evidence_ref=evidence_ref,
+        purpose=purpose,
+        source_refs=tuple(source_refs),
+        validator_refs=tuple(validator_refs),
+        proof_surface_refs=tuple(proof_surface_refs),
+    )
+
+
+_DEPLOYMENT_WITNESS_SOURCES = (
+    "scripts/collect_deployment_witness.py",
+    "schemas/deployment_witness.schema.json",
+)
+_DEPLOYMENT_WITNESS_VALIDATORS = (
+    "tests/test_collect_deployment_witness.py",
+    "tests/test_deployment_witness_schema.py",
+)
+_RUNTIME_CONFORMANCE_SOURCES = (
+    "scripts/collect_runtime_conformance.py",
+    "schemas/runtime_conformance_certificate.schema.json",
+)
+_RUNTIME_CONFORMANCE_VALIDATORS = (
+    "tests/test_collect_runtime_conformance.py",
+    "tests/test_gateway/test_conformance.py",
+)
+_COGNITIVE_OUTCOME_SOURCES = (
+    "mcoi/mcoi_runtime/core/cognitive_loop.py",
+    "mcoi/mcoi_runtime/persistence/cognitive_outcome_ledger.py",
+    "schemas/learning_admission.schema.json",
+)
+_COGNITIVE_OUTCOME_VALIDATORS = (
+    "mcoi/tests/test_cognitive_loop.py",
+    "mcoi/tests/test_cognitive_outcome_ledger.py",
+    "tests/test_cognitive_outcome_ledger_doc_status.py",
+)
+_GOVERNED_CODE_CHANGE_SOURCES = (
+    "mcoi/mcoi_runtime/core/governed_code_change_loop.py",
+    "scripts/run_governed_code_change_loop.py",
+)
+_GOVERNED_CODE_CHANGE_VALIDATORS = (
+    "tests/test_governed_code_change_loop.py",
+    "tests/test_validate_governed_code_change_loop_receipt.py",
+)
+
+
+_DEFAULT_EVIDENCE_BINDINGS: Mapping[str, tuple[LoopEvidenceBinding, ...]] = {
+    "deployment_witness_loop": (
+        _binding(
+            "deployment_witness_published",
+            "Deployment witness envelope has been produced and schema validated.",
+            source_refs=_DEPLOYMENT_WITNESS_SOURCES,
+            validator_refs=_DEPLOYMENT_WITNESS_VALIDATORS,
+            proof_surface_refs=("production_evidence_plane",),
+        ),
+        _binding(
+            "runtime_witness_valid",
+            "Runtime witness fields in the deployment witness are present and valid.",
+            source_refs=(
+                "scripts/collect_deployment_witness.py",
+                "schemas/runtime_witness.schema.json",
+            ),
+            validator_refs=("tests/test_collect_deployment_witness.py",),
+            proof_surface_refs=("gateway_runtime_witness",),
+        ),
+        _binding(
+            "runtime_conformance_verified",
+            "Runtime conformance certificate has passed its collection and schema checks.",
+            source_refs=_RUNTIME_CONFORMANCE_SOURCES,
+            validator_refs=_RUNTIME_CONFORMANCE_VALIDATORS,
+            proof_surface_refs=("runtime_conformance_attestation",),
+        ),
+        _binding(
+            "audit_anchor_verified",
+            "Audit anchor verification surface is available for deployment closure proof.",
+            source_refs=(
+                "gateway/audit_trace_verifier.py",
+                "schemas/audit_verification_endpoint.schema.json",
+            ),
+            validator_refs=("tests/test_gateway/test_audit_trace_verifier.py",),
+            proof_surface_refs=("audit_chain_api",),
+        ),
+        _binding(
+            "proof_verification_passed",
+            "Proof verification endpoint contract is present for deployment proof checks.",
+            source_refs=("schemas/proof_verification_endpoint.schema.json",),
+            validator_refs=("tests/test_gateway/test_production_evidence.py",),
+            proof_surface_refs=("proof_route_gap_triage", "production_evidence_plane"),
+        ),
+        _binding(
+            "authority_obligations_clear",
+            "Authority obligation mesh exposes responsibility debt before closure.",
+            source_refs=("gateway/authority_obligation_mesh.py",),
+            validator_refs=("tests/test_gateway/test_authority_obligation_mesh.py",),
+            proof_surface_refs=("authority_obligation_mesh",),
+        ),
+        _binding(
+            "public_endpoint_declared",
+            "Public endpoint declaration is bound to gateway publication readiness evidence.",
+            source_refs=(
+                "schemas/public_production_health_declaration.schema.json",
+                "schemas/gateway_publication_readiness.schema.json",
+            ),
+            validator_refs=(
+                "tests/test_validate_gateway_publication_receipt.py",
+                "tests/test_report_gateway_publication_readiness.py",
+            ),
+            proof_surface_refs=("production_evidence_plane",),
+        ),
+    ),
+    "runtime_conformance_loop": (
+        _binding(
+            "certificate_schema_valid",
+            "Runtime conformance certificate schema validates before a claim is accepted.",
+            source_refs=_RUNTIME_CONFORMANCE_SOURCES,
+            validator_refs=_RUNTIME_CONFORMANCE_VALIDATORS,
+            proof_surface_refs=("runtime_conformance_attestation",),
+        ),
+        _binding(
+            "certificate_signature_verified",
+            "Runtime conformance certificate signature verification is represented.",
+            source_refs=_RUNTIME_CONFORMANCE_SOURCES,
+            validator_refs=_RUNTIME_CONFORMANCE_VALIDATORS,
+            proof_surface_refs=("runtime_conformance_attestation",),
+        ),
+        _binding(
+            "core_canaries_passed",
+            "Runtime conformance collection records core canary status.",
+            source_refs=_RUNTIME_CONFORMANCE_SOURCES,
+            validator_refs=_RUNTIME_CONFORMANCE_VALIDATORS,
+            proof_surface_refs=("runtime_conformance_attestation",),
+        ),
+        _binding(
+            "authority_directory_sync_valid",
+            "Authority directory sync evidence is checked by runtime conformance.",
+            source_refs=(
+                "scripts/collect_runtime_conformance.py",
+                "gateway/authority_obligation_mesh.py",
+            ),
+            validator_refs=("tests/test_gateway/test_conformance.py",),
+            proof_surface_refs=("runtime_conformance_attestation", "authority_obligation_mesh"),
+        ),
+        _binding(
+            "proof_coverage_matrix_current",
+            "Proof coverage matrix currency is available as runtime conformance input.",
+            source_refs=("scripts/proof_coverage_matrix.py",),
+            validator_refs=("tests/test_proof_coverage_matrix.py",),
+            proof_surface_refs=("proof_route_gap_triage",),
+        ),
+        _binding(
+            "open_conformance_gaps_bounded",
+            "Open conformance gaps are explicit and bounded rather than silently closed.",
+            source_refs=_RUNTIME_CONFORMANCE_SOURCES,
+            validator_refs=_RUNTIME_CONFORMANCE_VALIDATORS,
+            proof_surface_refs=("runtime_conformance_attestation",),
+        ),
+    ),
+    "cognitive_outcome_loop": (
+        _binding(
+            "governed_dispatch_trace",
+            "Cognitive loop dispatch trace is available before learning admission.",
+            source_refs=_COGNITIVE_OUTCOME_SOURCES,
+            validator_refs=_COGNITIVE_OUTCOME_VALIDATORS,
+            proof_surface_refs=("software_outcome_learning",),
+        ),
+        _binding(
+            "mechanical_verification_result",
+            "Mechanical verification result is bound to the outcome record.",
+            source_refs=_COGNITIVE_OUTCOME_SOURCES,
+            validator_refs=_COGNITIVE_OUTCOME_VALIDATORS,
+            proof_surface_refs=("software_outcome_learning",),
+        ),
+        _binding(
+            "critic_verdict_or_null_critic",
+            "Critic verdict state is explicit and cannot upgrade failed proof silently.",
+            source_refs=_COGNITIVE_OUTCOME_SOURCES,
+            validator_refs=_COGNITIVE_OUTCOME_VALIDATORS,
+            proof_surface_refs=("software_outcome_learning",),
+        ),
+        _binding(
+            "learning_admission_recorded",
+            "Learning admission record exists before memory promotion is described.",
+            source_refs=(
+                "mcoi/mcoi_runtime/core/learning.py",
+                "schemas/learning_admission.schema.json",
+            ),
+            validator_refs=("mcoi/tests/test_learning_loop.py",),
+            proof_surface_refs=("software_outcome_learning",),
+        ),
+        _binding(
+            "episodic_outcome_anchor",
+            "Outcome ledger anchor is available for replay and later audit.",
+            source_refs=("mcoi/mcoi_runtime/persistence/cognitive_outcome_ledger.py",),
+            validator_refs=("mcoi/tests/test_cognitive_outcome_ledger.py",),
+            proof_surface_refs=("software_outcome_learning",),
+        ),
+    ),
+    "governed_code_change_loop": (
+        _binding(
+            "code_worker_receipt",
+            "Code worker execution receipt is present but not terminal closure.",
+            source_refs=_GOVERNED_CODE_CHANGE_SOURCES,
+            validator_refs=_GOVERNED_CODE_CHANGE_VALIDATORS,
+            proof_surface_refs=("software_dev_capability_pack",),
+        ),
+        _binding(
+            "implementation_receipt",
+            "SDLC implementation receipt exists for the repository mutation boundary.",
+            source_refs=("schemas/sdlc_implementation_receipt.schema.json",),
+            validator_refs=("scripts/validate_sdlc_artifact.py",),
+            proof_surface_refs=("software_dev_capability_pack",),
+        ),
+        _binding(
+            "verification_receipt",
+            "SDLC verification receipt exists for test and validator evidence.",
+            source_refs=("schemas/sdlc_verification_receipt.schema.json",),
+            validator_refs=("scripts/validate_sdlc_artifact.py",),
+            proof_surface_refs=("software_dev_capability_pack",),
+        ),
+        _binding(
+            "recovery_handoff",
+            "Recovery handoff receipt exists for rollback or incident continuation.",
+            source_refs=("schemas/sdlc_recovery_handoff_receipt.schema.json",),
+            validator_refs=("scripts/validate_sdlc_artifact.py",),
+            proof_surface_refs=("software_dev_capability_pack",),
+        ),
+    ),
+}
 
 
 def _stable_unique_tuple(values: Sequence[str]) -> tuple[str, ...]:

@@ -164,6 +164,7 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
     for field_name in (
         "loop_id",
         "required_evidence",
+        "evidence_bindings",
         "missing_evidence",
         "open_blockers",
         "closure_conditions",
@@ -182,6 +183,48 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         errors.append(f"loop {index} must expose closure conditions")
     if not loop.get("required_evidence"):
         errors.append(f"loop {index} must expose required evidence")
+    errors.extend(
+        _validate_evidence_bindings(
+            loop.get("evidence_bindings"),
+            loop.get("required_evidence"),
+            index,
+        )
+    )
+    return errors
+
+
+def _validate_evidence_bindings(evidence_bindings: Any, required_evidence: Any, index: int) -> list[str]:
+    if not isinstance(evidence_bindings, list):
+        return [f"loop {index} evidence_bindings must be a list"]
+    if not isinstance(required_evidence, list):
+        return [f"loop {index} required_evidence must be a list before binding validation"]
+    errors: list[str] = []
+    binding_refs: list[str] = []
+    for binding_index, binding in enumerate(evidence_bindings):
+        if not isinstance(binding, dict):
+            errors.append(f"loop {index} evidence binding {binding_index} must be an object")
+            continue
+        evidence_ref = binding.get("evidence_ref")
+        if not isinstance(evidence_ref, str) or not evidence_ref:
+            errors.append(f"loop {index} evidence binding {binding_index} evidence_ref must be non-empty")
+        else:
+            binding_refs.append(evidence_ref)
+        for field_name in ("source_refs", "validator_refs", "proof_surface_refs"):
+            refs = binding.get(field_name)
+            if not isinstance(refs, list) or not refs or not all(isinstance(ref, str) and ref for ref in refs):
+                errors.append(f"loop {index} evidence binding {binding_index} {field_name} must be non-empty")
+        if binding.get("read_only") is not True:
+            errors.append(f"loop {index} evidence binding {binding_index} read_only must be true")
+        if binding.get("terminal_closure") is not False:
+            errors.append(f"loop {index} evidence binding {binding_index} terminal_closure must be false")
+    required_refs = set(required_evidence)
+    binding_ref_set = set(binding_refs)
+    for evidence_name in sorted(required_refs - binding_ref_set):
+        errors.append(f"loop {index} missing evidence binding: {evidence_name}")
+    for evidence_name in sorted(binding_ref_set - required_refs):
+        errors.append(f"loop {index} unexpected evidence binding: {evidence_name}")
+    if len(binding_refs) != len(binding_ref_set):
+        errors.append(f"loop {index} evidence bindings must not contain duplicates")
     return errors
 
 

@@ -11,13 +11,16 @@ Invariants:
 from __future__ import annotations
 
 import dataclasses
+from pathlib import Path
 
 import pytest
 
 from mcoi_runtime.contracts.holistic_loop import (
     LoopClosureReport,
+    LoopEvidenceBinding,
     LoopMode,
     LoopPhase,
+    LoopSummary,
     LoopState,
     LoopStatus,
     LoopStepReceipt,
@@ -34,6 +37,7 @@ EXPECTED_LOOP_IDS = {
     "cognitive_outcome_loop",
     "governed_code_change_loop",
 }
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_default_registry_exposes_first_four_loop_manifests() -> None:
@@ -77,6 +81,101 @@ def test_complete_evidence_verifies_read_model_without_runtime_mutation() -> Non
     assert all(summary.status is LoopStatus.VERIFIED for summary in read_model.loops)
     assert all(summary.missing_evidence == () for summary in read_model.loops)
     assert all(summary.open_blockers == () for summary in read_model.loops)
+
+
+def test_loop_evidence_bindings_cover_required_evidence_without_execution() -> None:
+    read_model = build_default_loop_read_model()
+
+    for summary in read_model.loops:
+        binding_refs = {binding.evidence_ref for binding in summary.evidence_bindings}
+        required_refs = set(summary.required_evidence)
+
+        assert binding_refs == required_refs
+        assert len(summary.evidence_bindings) == len(summary.required_evidence)
+        assert all(binding.read_only is True for binding in summary.evidence_bindings)
+        assert all(binding.terminal_closure is False for binding in summary.evidence_bindings)
+        assert all(binding.proof_surface_refs for binding in summary.evidence_bindings)
+
+
+def test_loop_evidence_binding_local_refs_resolve_to_existing_artifacts() -> None:
+    read_model = build_default_loop_read_model()
+    file_refs = {
+        ref
+        for summary in read_model.loops
+        for binding in summary.evidence_bindings
+        for ref in (*binding.source_refs, *binding.validator_refs)
+        if "/" in ref
+    }
+
+    assert "scripts/collect_deployment_witness.py" in file_refs
+    assert "schemas/runtime_conformance_certificate.schema.json" in file_refs
+    assert "mcoi/mcoi_runtime/core/governed_code_change_loop.py" in file_refs
+    assert all((REPO_ROOT / ref).exists() for ref in file_refs)
+
+
+def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
+    summary = build_default_loop_read_model().loops[0]
+    duplicate_binding = summary.evidence_bindings[0]
+
+    with pytest.raises(ValueError, match="duplicate evidence refs"):
+        LoopSummary(
+            loop_id=summary.loop_id,
+            name=summary.name,
+            purpose=summary.purpose,
+            owner=summary.owner,
+            risk_class=summary.risk_class,
+            status=summary.status,
+            mode=summary.mode,
+            current_step=summary.current_step,
+            required_authority=summary.required_authority,
+            required_evidence=summary.required_evidence,
+            evidence_bindings=(duplicate_binding, duplicate_binding),
+            evidence_refs=summary.evidence_refs,
+            missing_evidence=summary.missing_evidence,
+            closure_conditions=summary.closure_conditions,
+            open_blockers=summary.open_blockers,
+            rollback_policy=summary.rollback_policy,
+            learning_policy=summary.learning_policy,
+            updated_at=summary.updated_at,
+        )
+
+    with pytest.raises(ValueError, match="cover required evidence exactly"):
+        LoopSummary(
+            loop_id=summary.loop_id,
+            name=summary.name,
+            purpose=summary.purpose,
+            owner=summary.owner,
+            risk_class=summary.risk_class,
+            status=summary.status,
+            mode=summary.mode,
+            current_step=summary.current_step,
+            required_authority=summary.required_authority,
+            required_evidence=summary.required_evidence,
+            evidence_bindings=summary.evidence_bindings[:-1],
+            evidence_refs=summary.evidence_refs,
+            missing_evidence=summary.missing_evidence,
+            closure_conditions=summary.closure_conditions,
+            open_blockers=summary.open_blockers,
+            rollback_policy=summary.rollback_policy,
+            learning_policy=summary.learning_policy,
+            updated_at=summary.updated_at,
+        )
+
+
+def test_loop_evidence_binding_rejects_mutation_or_terminal_closure_claim() -> None:
+    kwargs = {
+        "evidence_ref": "runtime_witness_valid",
+        "purpose": "bind runtime witness proof surface",
+        "source_refs": ("scripts/collect_deployment_witness.py",),
+        "validator_refs": ("tests/test_collect_deployment_witness.py",),
+        "proof_surface_refs": ("gateway_runtime_witness",),
+    }
+
+    with pytest.raises(ValueError, match="read-only"):
+        LoopEvidenceBinding(**kwargs, read_only=False)
+
+    with pytest.raises(ValueError, match="terminal closure"):
+        LoopEvidenceBinding(**kwargs, terminal_closure=True)
 
 
 def test_registry_preserves_explicit_blockers_even_when_evidence_exists() -> None:

@@ -32,6 +32,17 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
         "governed_code_change_loop",
     }
     assert all(loop["open_blockers"] for loop in loops)
+    assert all(loop["evidence_bindings"] for loop in loops)
+    assert all(
+        {binding["evidence_ref"] for binding in loop["evidence_bindings"]}
+        == set(loop["required_evidence"])
+        for loop in loops
+    )
+    assert all(
+        binding["read_only"] is True and binding["terminal_closure"] is False
+        for loop in loops
+        for binding in loop["evidence_bindings"]
+    )
 
 
 def test_report_accepts_complete_observed_evidence_refs() -> None:
@@ -48,6 +59,7 @@ def test_report_accepts_complete_observed_evidence_refs() -> None:
     assert report["verified_count"] == 4
     assert all(loop["missing_evidence"] == [] for loop in report["loops"])
     assert all(loop["status"] == "verified" for loop in report["loops"])
+    assert all(loop["evidence_bindings"] for loop in report["loops"])
 
 
 def test_parse_evidence_refs_groups_repeatable_args() -> None:

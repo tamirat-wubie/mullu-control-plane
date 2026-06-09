@@ -72,6 +72,22 @@ staged into the holistic loop PR.
 7. Indexed the new schema in the governance protocol manifest and updated
    schema-count references from 183 to 184.
 
+## Evidence Catalog Follow-Up
+
+The read model now exposes `LoopEvidenceBinding` entries for every
+`required_evidence` label. The catalog maps each evidence label to existing
+source refs, validator refs, and proof-matrix surface refs. It remains
+read-only and non-terminal:
+
+```text
+set(evidence_bindings[*].evidence_ref) == set(required_evidence)
+read_only == true
+terminal_closure == false
+```
+
+Missing, duplicate, or extra bindings are validator failures. The catalog does
+not collect live evidence and does not close a loop.
+
 ## Fracture Deltas
 
 None intended.

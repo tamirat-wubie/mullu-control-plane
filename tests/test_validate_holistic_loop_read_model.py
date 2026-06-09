@@ -81,6 +81,48 @@ def test_missing_evidence_requires_matching_blocker() -> None:
     assert invalid_report["loops"][0]["open_blockers"] == []
 
 
+def test_missing_evidence_binding_is_reported() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    missing_binding = invalid_report["loops"][0]["evidence_bindings"].pop()
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("missing evidence binding" in error for error in errors)
+    assert missing_binding["evidence_ref"] in invalid_report["loops"][0]["required_evidence"]
+    assert missing_binding not in invalid_report["loops"][0]["evidence_bindings"]
+
+
+def test_duplicate_evidence_binding_is_reported() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_report["loops"][0]["evidence_bindings"].append(
+        copy.deepcopy(invalid_report["loops"][0]["evidence_bindings"][0])
+    )
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("duplicate evidence binding" in error for error in errors)
+    assert invalid_report["loops"][0]["evidence_bindings"][0]["evidence_ref"]
+    assert len(invalid_report["loops"][0]["evidence_bindings"]) > len(
+        invalid_report["loops"][0]["required_evidence"]
+    )
+
+
+def test_evidence_binding_cannot_claim_mutation_or_terminal_closure() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_binding = invalid_report["loops"][0]["evidence_bindings"][0]
+    invalid_binding["read_only"] = False
+    invalid_binding["terminal_closure"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("read_only must be true" in error for error in errors)
+    assert any("terminal_closure must be false" in error for error in errors)
+    assert invalid_binding["read_only"] is False
+
+
 def test_verified_loop_cannot_miss_evidence() -> None:
     report = validator.build_report()
     invalid_report = copy.deepcopy(report)

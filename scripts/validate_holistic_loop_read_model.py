@@ -53,6 +53,7 @@ REQUIRED_LOOP_FIELDS = (
     "current_step",
     "required_authority",
     "required_evidence",
+    "evidence_bindings",
     "evidence_refs",
     "missing_evidence",
     "closure_conditions",
@@ -233,6 +234,7 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
         "open_blockers",
     ):
         errors.extend(_validate_text_list(loop[field_name], f"loop {index} {field_name}"))
+    errors.extend(_validate_evidence_bindings(loop["evidence_bindings"], loop["required_evidence"], index))
     if loop["open_blockers"] and loop["status"] != "blocked":
         errors.append(f"loop {index} with blockers must be blocked")
     if loop["status"] in {"verified", "closed"} and loop["missing_evidence"]:
@@ -241,6 +243,73 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
         expected_blocker = f"missing_evidence:{evidence_name}"
         if expected_blocker not in loop["open_blockers"]:
             errors.append(f"loop {index} missing evidence lacks blocker: {evidence_name}")
+    return errors
+
+
+def _validate_evidence_bindings(
+    evidence_bindings: Any,
+    required_evidence: Any,
+    index: int,
+) -> list[str]:
+    if not isinstance(evidence_bindings, list):
+        return [f"loop {index} evidence_bindings must be a list"]
+    if not isinstance(required_evidence, list):
+        return [f"loop {index} required_evidence must be a list before binding validation"]
+    errors: list[str] = []
+    binding_refs: list[str] = []
+    required_binding_fields = {
+        "evidence_ref",
+        "purpose",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "read_only",
+        "terminal_closure",
+    }
+    for binding_index, binding in enumerate(evidence_bindings):
+        if not isinstance(binding, dict):
+            errors.append(f"loop {index} evidence binding {binding_index} must be an object")
+            continue
+        missing = sorted(required_binding_fields - set(binding))
+        errors.extend(
+            f"loop {index} evidence binding {binding_index} missing field: {field_name}"
+            for field_name in missing
+        )
+        extra = sorted(set(binding) - required_binding_fields)
+        errors.extend(
+            f"loop {index} evidence binding {binding_index} has unexpected field: {field_name}"
+            for field_name in extra
+        )
+        if missing:
+            continue
+        evidence_ref = binding["evidence_ref"]
+        if not isinstance(evidence_ref, str) or not evidence_ref:
+            errors.append(f"loop {index} evidence binding {binding_index} evidence_ref must be non-empty")
+        else:
+            binding_refs.append(evidence_ref)
+        if not isinstance(binding["purpose"], str) or not binding["purpose"]:
+            errors.append(f"loop {index} evidence binding {binding_index} purpose must be non-empty")
+        for field_name in ("source_refs", "validator_refs", "proof_surface_refs"):
+            errors.extend(
+                _validate_text_list(
+                    binding[field_name],
+                    f"loop {index} evidence binding {binding_index} {field_name}",
+                )
+            )
+        if binding["read_only"] is not True:
+            errors.append(f"loop {index} evidence binding {binding_index} read_only must be true")
+        if binding["terminal_closure"] is not False:
+            errors.append(
+                f"loop {index} evidence binding {binding_index} terminal_closure must be false"
+            )
+    duplicate_refs = sorted({ref for ref in binding_refs if binding_refs.count(ref) > 1})
+    errors.extend(f"loop {index} duplicate evidence binding: {ref}" for ref in duplicate_refs)
+    required_refs = set(required_evidence)
+    binding_ref_set = set(binding_refs)
+    for evidence_name in sorted(required_refs - binding_ref_set):
+        errors.append(f"loop {index} missing evidence binding: {evidence_name}")
+    for evidence_name in sorted(binding_ref_set - required_refs):
+        errors.append(f"loop {index} unexpected evidence binding: {evidence_name}")
     return errors
 
 
