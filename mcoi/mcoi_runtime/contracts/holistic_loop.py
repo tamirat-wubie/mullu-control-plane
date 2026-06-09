@@ -521,6 +521,55 @@ class LoopModeBinding(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class LoopStatusBinding(ContractRecord):
+    """Read-only reference map for projected loop status boundaries."""
+
+    projected_status: LoopStatus
+    status_reason: str
+    blocker_refs: tuple[str, ...]
+    verification_refs: tuple[str, ...]
+    closure_gate_refs: tuple[str, ...]
+    source_refs: tuple[str, ...]
+    validator_refs: tuple[str, ...]
+    proof_surface_refs: tuple[str, ...]
+    read_only: bool = True
+    status_transition: bool = False
+    terminal_closure: bool = False
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.projected_status, LoopStatus):
+            raise ValueError("projected_status must be a LoopStatus value")
+        object.__setattr__(
+            self,
+            "status_reason",
+            require_non_empty_text(self.status_reason, "status_reason"),
+        )
+        object.__setattr__(
+            self,
+            "blocker_refs",
+            _freeze_text_tuple(self.blocker_refs, "blocker_refs", allow_empty=True),
+        )
+        for field_name in (
+            "verification_refs",
+            "closure_gate_refs",
+            "source_refs",
+            "validator_refs",
+            "proof_surface_refs",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name),
+            )
+        if self.read_only is not True:
+            raise ValueError("status binding must be read-only")
+        if self.status_transition is not False:
+            raise ValueError("status binding cannot authorize status transition")
+        if self.terminal_closure is not False:
+            raise ValueError("status binding cannot be terminal closure")
+
+
+@dataclass(frozen=True, slots=True)
 class LoopClosureConditionBinding(ContractRecord):
     """Read-only reference map for one loop closure condition."""
 
@@ -570,6 +619,7 @@ class LoopSummary(ContractRecord):
     risk_class: str
     risk_binding: LoopRiskBinding
     status: LoopStatus
+    status_binding: LoopStatusBinding
     mode: LoopMode
     mode_binding: LoopModeBinding
     current_step: LoopPhase
@@ -609,6 +659,10 @@ class LoopSummary(ContractRecord):
             )
         if not isinstance(self.status, LoopStatus):
             raise ValueError("status must be a LoopStatus value")
+        if not isinstance(self.status_binding, LoopStatusBinding):
+            raise ValueError("status_binding must be a LoopStatusBinding")
+        if self.status_binding.projected_status != self.status:
+            raise ValueError("status_binding projected_status must match status")
         if not isinstance(self.mode, LoopMode):
             raise ValueError("mode must be a LoopMode value")
         if not isinstance(self.mode_binding, LoopModeBinding):
@@ -702,6 +756,10 @@ class LoopSummary(ContractRecord):
         if self.closure_report.closed:
             raise ValueError("summary closure_report cannot claim terminal closure")
         object.__setattr__(self, "updated_at", require_datetime_text(self.updated_at, "updated_at"))
+        if set(self.status_binding.blocker_refs) != set(self.open_blockers):
+            raise ValueError("status_binding blocker_refs must match open blockers")
+        if self.status in {LoopStatus.VERIFIED, LoopStatus.CLOSED} and self.status_binding.blocker_refs:
+            raise ValueError("verified or closed status binding cannot carry blockers")
         if self.status in {LoopStatus.VERIFIED, LoopStatus.CLOSED} and self.open_blockers:
             raise ValueError("verified or closed summary cannot carry blockers")
         authority_binding_refs = [binding.authority_ref for binding in self.authority_bindings]
@@ -840,6 +898,7 @@ __all__ = [
     "LoopReadModel",
     "LoopState",
     "LoopStatus",
+    "LoopStatusBinding",
     "LoopStepReceipt",
     "LoopSummary",
 ]

@@ -285,6 +285,55 @@ def test_payload_validation_requires_mode_binding_to_match_projected_mode() -> N
     assert invalid_payload["loops"][0]["mode"] != "real"
 
 
+def test_payload_validation_requires_status_binding_to_match_projected_status() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_payload["loops"][0]["status_binding"]["projected_status"] = "verified"
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("status_binding projected_status must match status" in error for error in errors)
+    assert invalid_payload["loops"][0]["status"] == "blocked"
+    assert invalid_payload["loops"][0]["status_binding"]["projected_status"] == "verified"
+
+
+def test_payload_validation_requires_status_binding_blockers_to_match() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_payload["loops"][0]["status_binding"]["blocker_refs"] = ["different_gap"]
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("status_binding blocker_refs must match open blockers" in error for error in errors)
+    assert invalid_payload["loops"][0]["open_blockers"]
+    assert invalid_payload["loops"][0]["status_binding"]["blocker_refs"] == ["different_gap"]
+
+
+def test_payload_validation_rejects_status_binding_transition_or_terminal_closure_claim() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_binding = invalid_payload["loops"][0]["status_binding"]
+    invalid_binding["read_only"] = False
+    invalid_binding["status_transition"] = True
+    invalid_binding["terminal_closure"] = True
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("status_binding read_only must be true" in error for error in errors)
+    assert any("status_binding status_transition must be false" in error for error in errors)
+    assert any("status_binding terminal_closure must be false" in error for error in errors)
+    assert invalid_binding["status_transition"] is True
+
+
 def test_payload_validation_rejects_mode_binding_transition_or_terminal_closure_claim() -> None:
     app = FastAPI()
     app.include_router(router)

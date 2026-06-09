@@ -30,6 +30,7 @@ def test_current_holistic_loop_read_model_contract_passes() -> None:
     assert report["report_is_not_terminal_closure"] is True
     assert report["terminal_closure_required"] is True
     assert all(loop["risk_binding"] for loop in report["loops"])
+    assert all(loop["status_binding"] for loop in report["loops"])
     assert all(loop["mode_binding"] for loop in report["loops"])
     assert all(loop["authority_bindings"] for loop in report["loops"])
     assert all(loop["missing_authority"] for loop in report["loops"])
@@ -137,6 +138,20 @@ def test_schema_requires_mode_binding() -> None:
     assert len(errors) >= 1
 
 
+def test_schema_requires_status_binding() -> None:
+    schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
+    invalid_schema = copy.deepcopy(schema)
+    invalid_schema["$defs"]["loop_summary"]["required"] = [
+        field for field in invalid_schema["$defs"]["loop_summary"]["required"] if field != "status_binding"
+    ]
+
+    errors = validator.validate_schema_artifact(invalid_schema)
+
+    assert any("schema missing required loop field: status_binding" in error for error in errors)
+    assert "status_binding" not in invalid_schema["$defs"]["loop_summary"]["required"]
+    assert len(errors) >= 1
+
+
 def test_schema_requires_closure_condition_bindings() -> None:
     schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
     invalid_schema = copy.deepcopy(schema)
@@ -175,6 +190,61 @@ def test_status_mismatch_is_reported() -> None:
     assert any("report status must be blocked" in error for error in errors)
     assert invalid_report["status"] == "verified"
     assert invalid_report["blocked_count"] == report["blocked_count"]
+
+
+def test_status_binding_must_match_projected_status() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_report["loops"][0]["status_binding"]["projected_status"] = "verified"
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("status_binding projected_status must match status" in error for error in errors)
+    assert invalid_report["loops"][0]["status"] == "blocked"
+    assert invalid_report["loops"][0]["status_binding"]["projected_status"] == "verified"
+
+
+def test_status_binding_blockers_must_match_open_blockers() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_report["loops"][0]["status_binding"]["blocker_refs"] = ["different_gap"]
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("status_binding blocker_refs must match open blockers" in error for error in errors)
+    assert invalid_report["loops"][0]["open_blockers"]
+    assert invalid_report["loops"][0]["status_binding"]["blocker_refs"] == ["different_gap"]
+
+
+def test_status_binding_cannot_claim_transition_or_terminal_closure() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_binding = invalid_report["loops"][0]["status_binding"]
+    invalid_binding["read_only"] = False
+    invalid_binding["status_transition"] = True
+    invalid_binding["terminal_closure"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("status_binding read_only must be true" in error for error in errors)
+    assert any("status_binding status_transition must be false" in error for error in errors)
+    assert any("status_binding terminal_closure must be false" in error for error in errors)
+    assert invalid_binding["status_transition"] is True
+
+
+def test_status_binding_requires_verification_and_closure_refs() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_binding = invalid_report["loops"][0]["status_binding"]
+    invalid_binding["verification_refs"] = []
+    invalid_binding["closure_gate_refs"] = []
+    invalid_binding["source_refs"] = []
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("status_binding verification_refs" in error for error in errors)
+    assert any("status_binding closure_gate_refs" in error for error in errors)
+    assert any("status_binding source_refs" in error for error in errors)
 
 
 def test_missing_evidence_requires_matching_blocker() -> None:

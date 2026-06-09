@@ -42,6 +42,7 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
     }
     assert all(loop["open_blockers"] for loop in payload["loops"])
     assert all(loop["risk_binding"] for loop in payload["loops"])
+    assert all(loop["status_binding"] for loop in payload["loops"])
     assert all(loop["mode_binding"] for loop in payload["loops"])
     assert all(loop["authority_bindings"] for loop in payload["loops"])
     assert all(loop["missing_authority"] for loop in payload["loops"])
@@ -72,6 +73,16 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
         and loop["risk_binding"]["hazard_refs"]
         and loop["risk_binding"]["mitigation_refs"]
         and loop["risk_binding"]["monitor_refs"]
+        for loop in payload["loops"]
+    )
+    assert all(
+        loop["status_binding"]["projected_status"] == loop["status"]
+        and set(loop["status_binding"]["blocker_refs"]) == set(loop["open_blockers"])
+        and loop["status_binding"]["read_only"] is True
+        and loop["status_binding"]["status_transition"] is False
+        and loop["status_binding"]["terminal_closure"] is False
+        and loop["status_binding"]["verification_refs"]
+        and loop["status_binding"]["closure_gate_refs"]
         for loop in payload["loops"]
     )
     assert all(
