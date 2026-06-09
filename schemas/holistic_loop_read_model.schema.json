@@ -80,6 +80,7 @@
         "current_step",
         "required_authority",
         "required_evidence",
+        "evidence_bindings",
         "evidence_refs",
         "missing_evidence",
         "closure_conditions",
@@ -137,6 +138,13 @@
         "required_evidence": {
           "$ref": "#/$defs/text_list"
         },
+        "evidence_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidence_binding"
+          }
+        },
         "evidence_refs": {
           "$ref": "#/$defs/possibly_empty_text_list"
         },
@@ -160,6 +168,46 @@
         "updated_at": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "evidence_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_ref",
+        "purpose",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "read_only",
+        "terminal_closure"
+      ],
+      "properties": {
+        "evidence_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "validator_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "proof_surface_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
         }
       }
     },

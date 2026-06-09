@@ -9671,6 +9671,9 @@
         "closure_report_blocks_incomplete_evidence": [
           "loop_receipt_and_closure_report_contracts_are_explicit"
         ],
+        "loop_evidence_bindings_cover_required_evidence": [
+          "loop_evidence_bindings_cover_required_evidence_without_execution"
+        ],
         "loop_http_surface_validator_rejects_mutation_routes": [
           "route_method_validation_rejects_mutation_route"
         ],
@@ -9692,6 +9695,7 @@
         "missing_required_evidence_is_reported_as_blocker",
         "closure_report_blocks_incomplete_evidence",
         "loop_registry_rejects_duplicate_loop_ids",
+        "loop_evidence_bindings_cover_required_evidence",
         "loop_read_model_endpoint_is_read_only",
         "loop_http_surface_validator_rejects_mutation_routes"
       ],
@@ -9699,8 +9703,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1227,
-    "runtime_witness_count": 1227,
+    "exact_test_anchor_count": 1228,
+    "runtime_witness_count": 1228,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -18408,6 +18412,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_holistic_loop_kernel.py::test_loop_evidence_bindings_cover_required_evidence_without_execution"
+            ],
+            "witness": "loop_evidence_bindings_cover_required_evidence"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_holistic_loop_router.py::test_loop_read_model_has_no_mutation_companion"
             ],
             "witness": "loop_read_model_endpoint_is_read_only"
@@ -18419,8 +18429,8 @@
             "witness": "loop_http_surface_validator_rejects_mutation_routes"
           }
         ],
-        "exact_test_anchor_count": 6,
-        "runtime_witness_count": 6,
+        "exact_test_anchor_count": 7,
+        "runtime_witness_count": 7,
         "surface_id": "holistic_loop_read_model_kernel",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

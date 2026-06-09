@@ -1,7 +1,7 @@
 # Mullu Holistic Loop Engineering Kernel v1
 
 Purpose: define the shared governed loop contract used to describe existing Mullu loops without changing their runtime behavior.
-Governance scope: loop manifests, loop state projections, step receipts, closure reports, registry exposure, evidence blockers, rollback policy, and learning policy.
+Governance scope: loop manifests, loop state projections, step receipts, closure reports, registry exposure, evidence bindings, evidence blockers, rollback policy, and learning policy.
 Dependencies: `mcoi_runtime.contracts.holistic_loop`, `mcoi_runtime.core.holistic_loop_registry`, existing deployment witness, runtime conformance, cognitive outcome, and governed code-change surfaces.
 Invariants: this is a read-model-first contract layer; it adds no public mutation route; it does not rewrite deployment, cognitive, proof verification, or code-change behavior.
 
@@ -29,6 +29,7 @@ The kernel models the common contract through:
 | `LoopState` | Current read-only status, phase, mode, receipt, blockers, and evidence refs. |
 | `LoopStepReceipt` | Step-level input hash, output hash, decision, evidence, status, errors, and timestamp. |
 | `LoopClosureReport` | Closure assessment with unresolved gaps, rollback availability, and learning candidates. |
+| `LoopEvidenceBinding` | Read-only map from each required evidence label to source refs, validator refs, and proof surfaces. |
 | `LoopRegistry` | Immutable registry binding manifests to read-only states. |
 | `LoopReadModel` | Bounded loop summary projection for dashboards, docs, and validators. |
 
@@ -53,6 +54,31 @@ open_blockers != empty -> status = blocked
 
 This prevents fake closure. A loop may report runtime health or worker execution evidence, but the read model remains blocked until the manifest's evidence requirements and closure conditions are satisfied.
 
+## Evidence Catalog
+
+Each loop summary includes `evidence_bindings`. A binding is a read-only catalog
+entry for one `required_evidence` label:
+
+| Field | Meaning |
+| --- | --- |
+| `evidence_ref` | The required evidence label the binding explains. |
+| `purpose` | Why the evidence is required for loop closure. |
+| `source_refs` | Existing files, schemas, or scripts that define or collect the evidence. |
+| `validator_refs` | Existing tests or validators that check the referenced evidence surface. |
+| `proof_surface_refs` | Proof-matrix surface IDs related to the evidence. |
+| `read_only` | Always `true`; bindings do not execute collection or validation. |
+| `terminal_closure` | Always `false`; bindings are not closure certificates. |
+
+The catalog is exact by contract:
+
+```text
+set(evidence_bindings[*].evidence_ref) == set(required_evidence)
+```
+
+Missing, duplicate, or extra bindings are validation failures. The catalog does
+not replace live evidence. It only tells operators where proof must come from
+when a later loop-specific adapter or closure workflow runs.
+
 ## Boundary
 
 This kernel is intentionally non-invasive:
@@ -62,7 +88,8 @@ This kernel is intentionally non-invasive:
 3. It does not construct or run the cognitive loop.
 4. It does not dispatch governed code-change workers.
 5. It does not create a public mutation route.
-6. It only exposes typed read-model contracts that other surfaces can adopt later.
+6. It does not execute evidence validators referenced by the catalog.
+7. It only exposes typed read-model contracts that other surfaces can adopt later.
 
 ## Read-Only Exposure
 
@@ -81,6 +108,7 @@ script:
 | `read_model_version` | Contract version: `holistic_loop_kernel.v1`. |
 | `status` | `blocked` while any returned loop has blockers; otherwise `verified`. |
 | `loops` | Bounded registered loop summaries. |
+| `loops[].evidence_bindings` | Read-only evidence catalog entries covering every required evidence label. |
 | `blocked_count` | Count of returned summaries carrying blockers. |
 | `verified_count` | Count of returned summaries marked verified. |
 | `read_only` | Always `true`. |
@@ -95,7 +123,7 @@ the registry contract, not an execution surface.
 Focused tests:
 
 ```powershell
-python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_validate_holistic_loop_read_model.py
+python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_proof_coverage_matrix.py
 ```
 
 Read-only report:
@@ -125,3 +153,4 @@ The tests verify:
 5. Explicit blockers override complete evidence.
 6. Step receipts and closure reports are typed and immutable.
 7. The HTTP read-model route is mounted read-only and has no mutation companion.
+8. Evidence bindings cover every required evidence label and cannot claim terminal closure.

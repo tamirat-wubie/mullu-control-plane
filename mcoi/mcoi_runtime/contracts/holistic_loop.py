@@ -1,6 +1,6 @@
 """Purpose: shared contracts for holistic governed loop read models.
 Governance scope: loop manifests, loop state, step receipts, closure reports,
-    and bounded read-model summaries.
+    bounded read-model summaries, and read-only evidence bindings.
 Dependencies: Python standard library dataclasses, enum, and shared contract
     serialization helpers.
 Invariants:
@@ -260,6 +260,46 @@ class LoopClosureReport(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class LoopEvidenceBinding(ContractRecord):
+    """Read-only reference map for one required loop evidence label."""
+
+    evidence_ref: str
+    purpose: str
+    source_refs: tuple[str, ...]
+    validator_refs: tuple[str, ...]
+    proof_surface_refs: tuple[str, ...]
+    read_only: bool = True
+    terminal_closure: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "evidence_ref",
+            require_non_empty_text(self.evidence_ref, "evidence_ref"),
+        )
+        object.__setattr__(self, "purpose", require_non_empty_text(self.purpose, "purpose"))
+        object.__setattr__(
+            self,
+            "source_refs",
+            _freeze_text_tuple(self.source_refs, "source_refs"),
+        )
+        object.__setattr__(
+            self,
+            "validator_refs",
+            _freeze_text_tuple(self.validator_refs, "validator_refs"),
+        )
+        object.__setattr__(
+            self,
+            "proof_surface_refs",
+            _freeze_text_tuple(self.proof_surface_refs, "proof_surface_refs"),
+        )
+        if self.read_only is not True:
+            raise ValueError("evidence binding must be read-only")
+        if self.terminal_closure is not False:
+            raise ValueError("evidence binding cannot be terminal closure")
+
+
+@dataclass(frozen=True, slots=True)
 class LoopSummary(ContractRecord):
     """Bounded read-model summary for one registered governed loop."""
 
@@ -273,6 +313,7 @@ class LoopSummary(ContractRecord):
     current_step: LoopPhase
     required_authority: tuple[str, ...]
     required_evidence: tuple[str, ...]
+    evidence_bindings: tuple[LoopEvidenceBinding, ...]
     evidence_refs: tuple[str, ...]
     missing_evidence: tuple[str, ...]
     closure_conditions: tuple[str, ...]
@@ -319,9 +360,24 @@ class LoopSummary(ContractRecord):
                     allow_empty=field_name in {"evidence_refs", "missing_evidence", "open_blockers"},
                 ),
             )
+        object.__setattr__(
+            self,
+            "evidence_bindings",
+            _freeze_contract_tuple(
+                self.evidence_bindings,
+                "evidence_bindings",
+                LoopEvidenceBinding,
+                "LoopEvidenceBinding",
+            ),
+        )
         object.__setattr__(self, "updated_at", require_datetime_text(self.updated_at, "updated_at"))
         if self.status in {LoopStatus.VERIFIED, LoopStatus.CLOSED} and self.open_blockers:
             raise ValueError("verified or closed summary cannot carry blockers")
+        binding_refs = [binding.evidence_ref for binding in self.evidence_bindings]
+        if len(binding_refs) != len(set(binding_refs)):
+            raise ValueError("evidence bindings must not contain duplicate evidence refs")
+        if set(binding_refs) != set(self.required_evidence):
+            raise ValueError("evidence bindings must cover required evidence exactly")
 
 
 @dataclass(frozen=True, slots=True)
@@ -407,6 +463,7 @@ def _freeze_contract_tuple(
 
 __all__ = [
     "LoopClosureReport",
+    "LoopEvidenceBinding",
     "LoopManifest",
     "LoopMode",
     "LoopPhase",
