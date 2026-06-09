@@ -32,6 +32,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from scripts.proxy_policy import ProxyEnvironmentBlocked, assert_proxy_environment_allowed
 from scripts.validate_governed_swarm_staging_activation_witness import validate_witness_payload
 
 
@@ -312,6 +313,7 @@ def _json_request(url: str, *, method: str, payload: dict[str, object]) -> urlli
 
 def _http_json(request: urllib.request.Request | str, timeout_seconds: float) -> HttpResult:
     try:
+        assert_proxy_environment_allowed()
         with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
             body = response.read()
             payload = json.loads(body.decode("utf-8")) if body else {}
@@ -322,6 +324,8 @@ def _http_json(request: urllib.request.Request | str, timeout_seconds: float) ->
         return HttpResult(status=int(exc.code), payload={}, error=str(exc))
     except urllib.error.URLError as exc:
         return HttpResult(status=0, payload={}, error=str(exc.reason))
+    except ProxyEnvironmentBlocked as exc:
+        return HttpResult(status=0, payload={}, error=str(exc))
     except (json.JSONDecodeError, OSError) as exc:
         return HttpResult(status=0, payload={}, error=str(exc))
 

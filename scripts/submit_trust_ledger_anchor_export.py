@@ -36,6 +36,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
+from scripts.proxy_policy import ProxyEnvironmentBlocked, assert_proxy_environment_allowed  # noqa: E402
 from scripts.verify_anchor_receipt import verify_anchor_receipt_files  # noqa: E402
 
 
@@ -513,6 +514,7 @@ def _submit_remote_transparency_log(
         },
     )
     try:
+        assert_proxy_environment_allowed()
         with urlopen(request, timeout=timeout_seconds) as response:
             status_code = int(getattr(response, "status", getattr(response, "code", 0)) or 0)
             body = response.read(MAX_REMOTE_RESPONSE_BYTES + 1)
@@ -521,6 +523,12 @@ def _submit_remote_transparency_log(
             valid=False,
             reason="remote_http_error",
             status_code=int(exc.code),
+            submission_payload_hash=submission_payload_hash,
+        )
+    except ProxyEnvironmentBlocked:
+        return _remote_submission_report(
+            valid=False,
+            reason="remote_proxy_environment_blocked",
             submission_payload_hash=submission_payload_hash,
         )
     except (TimeoutError, OSError, ValueError, urllib.error.URLError) as exc:

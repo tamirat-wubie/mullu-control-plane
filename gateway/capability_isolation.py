@@ -23,6 +23,7 @@ from typing import Any, Protocol
 
 from gateway.capability_dispatch import CapabilityDispatcher, CapabilityIntent
 from gateway.command_spine import CapabilityPassport, canonical_hash
+from gateway.proxy_policy import assert_proxy_environment_allowed
 
 
 @dataclass(frozen=True, slots=True)
@@ -321,6 +322,7 @@ class HttpCapabilityWorkerTransport:
             method="POST",
         )
         try:
+            assert_proxy_environment_allowed()
             with urllib.request.urlopen(http_request, timeout=self._timeout_seconds) as response:
                 response_body = response.read()
                 response_signature = response.headers.get("X-Mullu-Capability-Response-Signature", "")

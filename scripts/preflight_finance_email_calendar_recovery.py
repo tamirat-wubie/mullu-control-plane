@@ -32,6 +32,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.produce_capability_adapter_live_receipts import DEFAULT_EMAIL_CALENDAR_RECEIPT  # noqa: E402
+from scripts.proxy_policy import ProxyEnvironmentBlocked, assert_proxy_environment_allowed  # noqa: E402
 
 EnvReader = Callable[[str], str | None]
 WorkerProbe = Callable[[str], bool]
@@ -277,12 +278,13 @@ def _env_present(env_reader: EnvReader, name: str) -> bool:
 def _default_worker_probe(endpoint: str) -> bool:
     request = urllib.request.Request(endpoint, method="GET")
     try:
+        assert_proxy_environment_allowed()
         with urllib.request.urlopen(request, timeout=5.0) as response:
             response.read(1)
         return True
     except urllib.error.HTTPError:
         return True
-    except (OSError, urllib.error.URLError, ValueError):
+    except (OSError, urllib.error.URLError, ValueError, ProxyEnvironmentBlocked):
         return False
 
 

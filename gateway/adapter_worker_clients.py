@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from gateway.capability_isolation import sign_capability_payload, verify_capability_signature
+from gateway.proxy_policy import assert_proxy_environment_allowed
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,6 +94,7 @@ class SignedAdapterWorkerTransport:
             method="POST",
         )
         try:
+            assert_proxy_environment_allowed()
             with urllib.request.urlopen(http_request, timeout=self._timeout_seconds) as response:
                 response_body = response.read()
                 response_signature = response.headers.get(self._response_signature_header, "")

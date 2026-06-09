@@ -29,6 +29,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Callable, Mapping
 
+try:
+    from scripts.proxy_policy import ProxyEnvironmentBlocked, assert_proxy_environment_allowed
+except ModuleNotFoundError:  # pragma: no cover - direct script execution path.
+    from proxy_policy import ProxyEnvironmentBlocked, assert_proxy_environment_allowed
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUTPUT = REPO_ROOT / "examples" / "product_dashboard_production_prometheus_scrape_probe_receipt.json"
 DEFAULT_GATEWAY_URL = "https://api.mullusi.com"
@@ -216,6 +221,7 @@ def _socket_resolver(host: str) -> tuple[str, ...]:
 def _urlopen_getter(url: str) -> HttpProbeResult:
     request = urllib.request.Request(url, headers={"User-Agent": "mullusi-product-dashboard-probe/1.0"})
     try:
+        assert_proxy_environment_allowed()
         with urllib.request.urlopen(request, timeout=10) as response:
             body = response.read(MAX_BODY_BYTES)
             return HttpProbeResult(
@@ -233,6 +239,8 @@ def _urlopen_getter(url: str) -> HttpProbeResult:
             reached_endpoint=True,
             error="http_error",
         )
+    except ProxyEnvironmentBlocked:
+        return HttpProbeResult(None, {}, b"", False, "proxy_environment_blocked")
     except (OSError, TimeoutError, urllib.error.URLError):
         return HttpProbeResult(None, {}, b"", False, "request_error")
 

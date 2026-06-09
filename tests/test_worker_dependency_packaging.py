@@ -36,6 +36,23 @@ def test_worker_dependency_extras_are_declared() -> None:
     assert "openai>=1.0" in optional_dependencies["all"]
 
 
+def test_no_direct_socks_proxy_dependencies_are_declared() -> None:
+    pyproject = tomllib.loads((_ROOT / "mcoi" / "pyproject.toml").read_text(encoding="utf-8"))
+    direct_dependencies = tuple(pyproject["project"].get("dependencies", ()))
+    optional_dependencies = tuple(
+        dependency
+        for dependency_group in pyproject["project"]["optional-dependencies"].values()
+        for dependency in dependency_group
+    )
+    dependency_text = "\n".join(direct_dependencies + optional_dependencies).lower()
+
+    assert "python-socks" not in dependency_text
+    assert "python_socks" not in dependency_text
+    assert "aiohttp-socks" not in dependency_text
+    assert "httpx-socks" not in dependency_text
+    assert "socks" not in dependency_text
+
+
 def test_dockerfile_packages_worker_dependencies_with_guarded_browser_install() -> None:
     dockerfile = (_ROOT / "Dockerfile").read_text(encoding="utf-8")
 
@@ -56,6 +73,9 @@ def test_dockerfile_packages_worker_dependencies_with_guarded_browser_install() 
     assert "python -m playwright install --with-deps chromium" in dockerfile
     assert "ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright" in dockerfile
     assert "EXPOSE 8000 8001 8010 8020 8030 8040 8050" in dockerfile
+    assert "HTTP_PROXY" not in dockerfile
+    assert "HTTPS_PROXY" not in dockerfile
+    assert "ALL_PROXY" not in dockerfile
 
 
 def test_compose_profiles_adapter_workers_without_gateway_dependency() -> None:
