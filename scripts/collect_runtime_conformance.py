@@ -37,6 +37,7 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
+from scripts.proxy_policy import ProxyEnvironmentBlocked, assert_proxy_environment_allowed  # noqa: E402
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
 DEFAULT_GATEWAY_URL = "http://localhost:8001"
@@ -472,11 +473,12 @@ def _get_json(url: str, *, headers: dict[str, str] | None = None) -> tuple[int, 
     request: str | urllib.request.Request
     request = urllib.request.Request(url, headers=headers or {}) if headers else url
     try:
+        assert_proxy_environment_allowed()
         with urllib.request.urlopen(request, timeout=10) as response:
             return response.status, _loads_json(response.read())
     except urllib.error.HTTPError as exc:
         return exc.code, _loads_json(exc.read())
-    except urllib.error.URLError:
+    except (urllib.error.URLError, ProxyEnvironmentBlocked):
         return 0, {}
     except TimeoutError:
         return 0, {}

@@ -31,6 +31,7 @@ from .pilot_init import PilotInitRequest, initialize_pilot
 from .policy_packs import PolicyPackRegistry
 from .profiles import ProfileLoadError, load_profile, list_profiles
 from .view_models import ExecutionSummaryView, RunSummaryView
+from mcoi_runtime.adapters.proxy_policy import assert_proxy_environment_allowed
 from mcoi_runtime.contracts.learning import LearningAdmissionDecision, LearningAdmissionStatus
 from mcoi_runtime.contracts.policy import DecisionReason
 from mcoi_runtime.contracts.software_dev_loop import SoftwareChangeReceiptStage
@@ -125,6 +126,8 @@ def _classify_cli_http_error(exc: Exception) -> str:
     """Return a bounded HTTP or transport failure message."""
     import urllib.error
 
+    if isinstance(exc, RuntimeError) and str(exc).startswith("proxy environment blocked:"):
+        return str(exc)
     if isinstance(exc, urllib.error.HTTPError):
         return f"http request failed ({exc.code})"
     if isinstance(exc, TimeoutError):
@@ -1210,6 +1213,7 @@ def demo_command(args: argparse.Namespace) -> int:
 
     # Check server
     try:
+        assert_proxy_environment_allowed()
         with urllib.request.urlopen(f"{base}/health", timeout=3) as resp:
             resp.read()
     except Exception as exc:
@@ -1221,6 +1225,7 @@ def demo_command(args: argparse.Namespace) -> int:
         body = _json.dumps(data).encode()
         req = urllib.request.Request(f"{base}{path}", data=body, headers={"Content-Type": "application/json"})
         try:
+            assert_proxy_environment_allowed()
             with urllib.request.urlopen(req, timeout=10) as resp:
                 return resp.status, _load_demo_json_object(resp.read())
         except urllib.error.HTTPError as exc:
@@ -1291,6 +1296,7 @@ def demo_command(args: argparse.Namespace) -> int:
 
     # 4. Check audit trail
     try:
+        assert_proxy_environment_allowed()
         with urllib.request.urlopen(
             f"{base}/api/v1/audit?action=agent.adapter.action_request&limit=5",
             timeout=5,

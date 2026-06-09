@@ -19,6 +19,11 @@ import urllib.request
 import urllib.error
 from dataclasses import dataclass
 
+try:
+    from scripts.proxy_policy import assert_proxy_environment_allowed
+except ModuleNotFoundError:  # pragma: no cover - direct script execution path.
+    from proxy_policy import assert_proxy_environment_allowed
+
 
 @dataclass
 class DrillResult:
@@ -30,6 +35,7 @@ class DrillResult:
 
 def _get(url: str) -> tuple[int, dict]:
     try:
+        assert_proxy_environment_allowed()
         resp = urllib.request.urlopen(url, timeout=10)
         return resp.status, json.loads(resp.read())
     except urllib.error.HTTPError as e:
@@ -44,6 +50,7 @@ def _get(url: str) -> tuple[int, dict]:
 
 def _post(url: str, data: dict) -> tuple[int, dict]:
     try:
+        assert_proxy_environment_allowed()
         body = json.dumps(data).encode()
         req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
         resp = urllib.request.urlopen(req, timeout=30)
@@ -273,6 +280,7 @@ if __name__ == "__main__":
 
     # Check if server is reachable
     try:
+        assert_proxy_environment_allowed()
         urllib.request.urlopen(f"{base_url}/health", timeout=5)
     except Exception:
         print(f"ERROR: Server not reachable at {base_url}")

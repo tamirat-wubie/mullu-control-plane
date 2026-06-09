@@ -30,6 +30,11 @@ from typing import Any, Callable
 import urllib.error
 import urllib.request
 
+try:
+    from scripts.proxy_policy import ProxyEnvironmentBlocked, assert_proxy_environment_allowed
+except ModuleNotFoundError:  # pragma: no cover - direct script execution path.
+    from proxy_policy import ProxyEnvironmentBlocked, assert_proxy_environment_allowed
+
 DEFAULT_OUTPUT_PATH = Path(".change_assurance") / "deployment_witness.json"
 DEFAULT_GATEWAY_URL = "http://localhost:8001"
 LIVE_EVIDENCE_HTTP_TIMEOUT_SECONDS = 30
@@ -560,13 +565,14 @@ def _get_json(url: str) -> tuple[int, dict[str, Any]]:
 
 def _get_json_with_digest(url: str) -> tuple[int, dict[str, Any], str]:
     try:
+        assert_proxy_environment_allowed()
         with urllib.request.urlopen(url, timeout=LIVE_EVIDENCE_HTTP_TIMEOUT_SECONDS) as response:
             raw = response.read()
             return response.status, _loads_json(raw), _response_digest(raw)
     except urllib.error.HTTPError as exc:
         raw = exc.read()
         return exc.code, _loads_json(raw), _response_digest(raw)
-    except urllib.error.URLError:
+    except (urllib.error.URLError, ProxyEnvironmentBlocked):
         return 0, {}, _response_digest(b"")
     except TimeoutError:
         return 0, {}, _response_digest(b"")

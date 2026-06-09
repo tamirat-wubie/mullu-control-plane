@@ -27,6 +27,11 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+try:
+    from scripts.proxy_policy import ProxyEnvironmentBlocked, assert_proxy_environment_allowed
+except ModuleNotFoundError:  # pragma: no cover - direct script execution path.
+    from proxy_policy import ProxyEnvironmentBlocked, assert_proxy_environment_allowed
+
 DEFAULT_API_BASE = "https://api.github.com"
 DEFAULT_OUTPUT_PATH = Path(".change_assurance") / "github_teams_export.json"
 DEFAULT_PAGE_SIZE = 100
@@ -180,12 +185,15 @@ def _get_json(url: str, *, token: str) -> Any:
         },
     )
     try:
+        assert_proxy_environment_allowed()
         with urllib.request.urlopen(request, timeout=20) as response:
             return json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         raise ValueError(f"GitHub endpoint returned HTTP {exc.code}") from exc
     except urllib.error.URLError as exc:
         raise ValueError("GitHub endpoint unavailable") from exc
+    except ProxyEnvironmentBlocked as exc:
+        raise ValueError("GitHub endpoint blocked by proxy policy") from exc
     except json.JSONDecodeError as exc:
         raise ValueError("GitHub endpoint returned invalid JSON") from exc
 

@@ -32,6 +32,7 @@ from gateway.messaging_worker import (
     MessagingActionObservation,
     MessagingActionRequest,
 )
+from gateway.proxy_policy import assert_proxy_environment_allowed
 
 
 READ_ACTIONS = frozenset({"messaging.thread.read"})
@@ -122,6 +123,7 @@ class HttpMessagingAdapter:
         try:
             operation = _operation_for(request, credential)
             http_request = _http_request(operation, credential)
+            assert_proxy_environment_allowed()
             response = self._urlopen(http_request, timeout=self._timeout_seconds)
             try:
                 response_body = response.read()

@@ -37,6 +37,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.collect_deployment_witness import REQUIRED_CONFORMANCE_FIELDS, REQUIRED_WITNESS_FIELDS  # noqa: E402
+from scripts.proxy_policy import ProxyEnvironmentBlocked, assert_proxy_environment_allowed  # noqa: E402
 from scripts.dispatch_deployment_witness import (  # noqa: E402
     DEFAULT_CONFORMANCE_SECRET_NAME,
     DEFAULT_DEPLOYMENT_WITNESS_SECRET_NAME,
@@ -463,11 +464,12 @@ def _resolve_host(host: str) -> tuple[str, ...]:
 
 def _get_json(url: str) -> tuple[int, dict[str, Any]]:
     try:
+        assert_proxy_environment_allowed()
         with urllib.request.urlopen(url, timeout=10) as response:
             return response.status, _loads_json(response.read())
     except urllib.error.HTTPError as exc:
         return exc.code, _loads_json(exc.read())
-    except (urllib.error.URLError, TimeoutError):
+    except (urllib.error.URLError, TimeoutError, ProxyEnvironmentBlocked):
         return 0, {}
 
 

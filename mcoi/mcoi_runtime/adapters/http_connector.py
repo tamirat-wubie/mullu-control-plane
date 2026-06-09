@@ -36,6 +36,7 @@ from mcoi_runtime.contracts.connector_effects import ConnectorInvocationReceipt
 from mcoi_runtime.contracts._shared_enums import EffectClass, TrustClass
 from mcoi_runtime.contracts.integration import ConnectorDescriptor, ConnectorResult, ConnectorStatus
 from mcoi_runtime.contracts.provider_policy import HttpProviderPolicy
+from mcoi_runtime.adapters.proxy_policy import assert_proxy_environment_allowed
 from mcoi_runtime.core.invariants import stable_identifier
 
 
@@ -548,6 +549,7 @@ class HttpConnector:
             # preserving the original hostname for TLS SNI / Host header.
             # The default ``self._opener`` (built once at __init__) is
             # kept around for tests / explicit non-pinned use only.
+            assert_proxy_environment_allowed()
             opener = _build_pinned_opener(pinned_ip)
             with opener.open(req, timeout=self._config.timeout_seconds) as response:
                 # Content-type check

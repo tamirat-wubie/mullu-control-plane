@@ -31,6 +31,7 @@ from gateway.phone_worker import (
     PhoneActionObservation,
     PhoneActionRequest,
 )
+from gateway.proxy_policy import assert_proxy_environment_allowed
 
 
 READ_ACTIONS = frozenset({"phone.call.receive", "phone.call.transcript_record"})
@@ -122,6 +123,7 @@ class HttpPhoneAdapter:
         try:
             operation = _operation_for(request, credential)
             http_request = _http_request(operation, credential)
+            assert_proxy_environment_allowed()
             response = self._urlopen(http_request, timeout=self._timeout_seconds)
             try:
                 response_body = response.read()

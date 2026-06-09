@@ -33,6 +33,7 @@ from mcoi_runtime.contracts.model import (
     ModelStatus,
     ValidationStatus,
 )
+from mcoi_runtime.adapters.proxy_policy import assert_proxy_environment_allowed
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 
 
@@ -157,6 +158,7 @@ class AnthropicBackend:
             if not self._api_key:
                 raise RuntimeCoreInvariantError("ANTHROPIC_API_KEY not set")
             import anthropic
+            assert_proxy_environment_allowed()
             self._client = anthropic.Anthropic(api_key=self._api_key)
         return self._client
 
@@ -268,6 +270,7 @@ class OpenAIBackend:
             if not self._api_key:
                 raise RuntimeCoreInvariantError("OPENAI_API_KEY not set")
             import openai
+            assert_proxy_environment_allowed()
             self._client = openai.OpenAI(api_key=self._api_key)
         return self._client
 
@@ -374,6 +377,7 @@ class GeminiBackend:
         if not self._api_key:
             raise RuntimeCoreInvariantError("GEMINI_API_KEY not set")
         import google.generativeai as genai
+        assert_proxy_environment_allowed()
         genai.configure(api_key=self._api_key)
         return genai.GenerativeModel(model_name)
 
@@ -516,6 +520,7 @@ class OllamaBackend:
                 data=payload,
                 headers={"Content-Type": "application/json"},
             )
+            assert_proxy_environment_allowed()
             resp = urllib.request.urlopen(req, timeout=60)
             data = _json.loads(resp.read())
 

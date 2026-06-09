@@ -104,6 +104,7 @@ class DallEProvider(ImageProvider):
                 headers={"Authorization": f"Bearer {api_key}"},
                 json={"model": model, "prompt": prompt, "size": size, "n": 1},
                 timeout=60.0,
+                trust_env=False,
             )
             data = response.json()
             if "error" in data:

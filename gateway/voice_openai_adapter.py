@@ -21,6 +21,7 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
+from gateway.proxy_policy import assert_proxy_environment_allowed
 from gateway.voice_worker import (
     VoiceActionRequest,
     VoiceSynthesisObservation,
@@ -141,6 +142,7 @@ class OpenAIVoiceAdapter:
             from openai import OpenAI
         except ImportError as exc:
             raise RuntimeError("openai package is required for OpenAI voice adapter") from exc
+        assert_proxy_environment_allowed()
         self._client = OpenAI(api_key=self._api_key)
         return self._client
 

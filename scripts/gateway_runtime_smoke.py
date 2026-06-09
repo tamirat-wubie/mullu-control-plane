@@ -38,6 +38,7 @@ from gateway.capability_isolation import (  # noqa: E402
 )
 from gateway.command_spine import capability_passport_for  # noqa: E402
 from gateway.skill_dispatch import SkillIntent  # noqa: E402
+from scripts.proxy_policy import ProxyEnvironmentBlocked, assert_proxy_environment_allowed  # noqa: E402
 
 
 @dataclass(frozen=True, slots=True)
@@ -167,6 +168,7 @@ def main(argv: list[str] | None = None) -> int:
 
 def _get_json(url: str) -> tuple[int, dict[str, Any], dict[str, str]]:
     try:
+        assert_proxy_environment_allowed()
         with urllib.request.urlopen(url, timeout=10) as response:
             raw = response.read()
             return response.status, _loads_json(raw), dict(response.headers)
@@ -191,6 +193,7 @@ def _post_signed_json(
         method="POST",
     )
     try:
+        assert_proxy_environment_allowed()
         with urllib.request.urlopen(request, timeout=20) as response:
             raw = response.read()
             return response.status, _loads_json(raw), dict(response.headers), raw
@@ -213,6 +216,8 @@ def _bounded_probe_error(exc: Exception) -> str:
         return "probe_timeout"
     if isinstance(exc, urllib.error.URLError):
         return "probe_transport_error"
+    if isinstance(exc, ProxyEnvironmentBlocked):
+        return str(exc)
     if isinstance(exc, OSError):
         return "probe_os_error"
     return "probe_unexpected_error"

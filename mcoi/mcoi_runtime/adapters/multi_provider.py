@@ -24,6 +24,7 @@ from mcoi_runtime.contracts.llm import (
     LLMProvider,
     LLMResult,
 )
+from mcoi_runtime.adapters.proxy_policy import assert_proxy_environment_allowed
 
 _HOSTED_PROVIDER_STUB_DENY_ENVS = frozenset({"pilot", "production", "prod"})
 
@@ -190,6 +191,7 @@ def _openai_compatible_call(
 
     try:
         import httpx
+        assert_proxy_environment_allowed()
         response = httpx.post(
             f"{provider_base_url}/chat/completions",
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
@@ -200,6 +202,7 @@ def _openai_compatible_call(
                 "temperature": temperature,
             },
             timeout=60.0,
+            trust_env=False,
         )
         status_code = _response_status_code(response)
         try:

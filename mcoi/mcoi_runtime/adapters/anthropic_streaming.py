@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Iterator
 
 from mcoi_runtime.contracts.llm import LLMProvider, LLMResult
+from mcoi_runtime.adapters.proxy_policy import assert_proxy_environment_allowed
 from mcoi_runtime.app.streaming import (
     StreamCutoffSemantic,
     StreamEvent,
@@ -84,6 +85,7 @@ class AnthropicStreamingAdapter:
         if api_key:
             try:
                 import anthropic
+                assert_proxy_environment_allowed()
                 self._client = anthropic.Anthropic(api_key=api_key)
                 self._available = True
             except ImportError:
