@@ -23,6 +23,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopMode,
     LoopPhase,
     LoopReadModel,
+    LoopRiskBinding,
     LoopRollbackBinding,
     LoopState,
     LoopStatus,
@@ -358,6 +359,7 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         purpose=manifest.purpose,
         owner=manifest.owner,
         risk_class=manifest.risk_class,
+        risk_binding=_risk_binding_for(manifest.loop_id),
         status=status,
         mode=state.mode,
         current_step=state.current_step,
@@ -442,6 +444,13 @@ def _rollback_binding_for(loop_id: str) -> LoopRollbackBinding:
         return _DEFAULT_ROLLBACK_BINDINGS[loop_id]
     except KeyError as exc:
         raise ValueError(f"loop rollback catalog missing: {loop_id}") from exc
+
+
+def _risk_binding_for(loop_id: str) -> LoopRiskBinding:
+    try:
+        return _DEFAULT_RISK_BINDINGS[loop_id]
+    except KeyError as exc:
+        raise ValueError(f"loop risk catalog missing: {loop_id}") from exc
 
 
 def _closure_report_for(
@@ -530,6 +539,29 @@ def _rollback_binding(
     )
 
 
+def _risk_binding(
+    risk_ref: str,
+    purpose: str,
+    *,
+    hazard_refs: Sequence[str],
+    mitigation_refs: Sequence[str],
+    monitor_refs: Sequence[str],
+    source_refs: Sequence[str],
+    validator_refs: Sequence[str],
+    proof_surface_refs: Sequence[str],
+) -> LoopRiskBinding:
+    return LoopRiskBinding(
+        risk_ref=risk_ref,
+        purpose=purpose,
+        hazard_refs=tuple(hazard_refs),
+        mitigation_refs=tuple(mitigation_refs),
+        monitor_refs=tuple(monitor_refs),
+        source_refs=tuple(source_refs),
+        validator_refs=tuple(validator_refs),
+        proof_surface_refs=tuple(proof_surface_refs),
+    )
+
+
 _DEPLOYMENT_WITNESS_SOURCES = (
     "scripts/collect_deployment_witness.py",
     "schemas/deployment_witness.schema.json",
@@ -564,6 +596,114 @@ _GOVERNED_CODE_CHANGE_VALIDATORS = (
     "tests/test_governed_code_change_loop.py",
     "tests/test_validate_governed_code_change_loop_receipt.py",
 )
+
+
+_DEFAULT_RISK_BINDINGS: Mapping[str, LoopRiskBinding] = {
+    "deployment_witness_loop": _risk_binding(
+        "release_publication",
+        "Publication risk covers public endpoint claims, witness freshness, and responsibility debt.",
+        hazard_refs=(
+            "public_endpoint_overclaim",
+            "stale_or_unverified_deployment_witness",
+            "authority_responsibility_debt",
+        ),
+        mitigation_refs=(
+            "block_terminal_closure_until_publication_evidence_passes",
+            "retain_last_verified_witness_boundary",
+            "surface_authority_debt_as_blocker",
+        ),
+        monitor_refs=(
+            "gateway_publication_readiness",
+            "deployment_publication_closure_validation",
+            "authority_obligation_mesh",
+        ),
+        source_refs=(
+            "schemas/gateway_publication_readiness.schema.json",
+            "schemas/deployment_publication_closure_validation.schema.json",
+            "gateway/authority_obligation_mesh.py",
+        ),
+        validator_refs=(
+            "tests/test_report_gateway_publication_readiness.py",
+            "tests/test_validate_gateway_publication_receipt.py",
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+        ),
+        proof_surface_refs=("production_evidence_plane", "authority_obligation_mesh"),
+    ),
+    "runtime_conformance_loop": _risk_binding(
+        "runtime_attestation",
+        "Runtime attestation risk covers unsigned claims, failed canaries, and unbounded gaps.",
+        hazard_refs=(
+            "unsigned_or_stale_conformance_certificate",
+            "core_canary_regression",
+            "unclassified_runtime_gap",
+        ),
+        mitigation_refs=(
+            "reject_schema_invalid_certificate",
+            "retain_failed_collection_evidence",
+            "surface_open_conformance_gaps",
+        ),
+        monitor_refs=(
+            "runtime_conformance_collection",
+            "runtime_conformance_certificate",
+            "proof_coverage_matrix",
+        ),
+        source_refs=_RUNTIME_CONFORMANCE_SOURCES,
+        validator_refs=_RUNTIME_CONFORMANCE_VALIDATORS,
+        proof_surface_refs=("runtime_conformance_attestation", "proof_route_gap_triage"),
+    ),
+    "cognitive_outcome_loop": _risk_binding(
+        "learning_admission",
+        "Learning admission risk covers unverified outcome promotion and failed proof upgrades.",
+        hazard_refs=(
+            "unverified_outcome_memory_promotion",
+            "critic_verdict_upgrades_failed_proof",
+            "missing_episodic_outcome_anchor",
+        ),
+        mitigation_refs=(
+            "require_mechanical_verification_before_learning",
+            "record_learning_admission_decision",
+            "defer_learning_when_evidence_is_missing",
+        ),
+        monitor_refs=(
+            "learning_admission_record",
+            "cognitive_outcome_ledger",
+            "governed_dispatch_trace",
+        ),
+        source_refs=_COGNITIVE_OUTCOME_SOURCES,
+        validator_refs=_COGNITIVE_OUTCOME_VALIDATORS,
+        proof_surface_refs=("software_outcome_learning",),
+    ),
+    "governed_code_change_loop": _risk_binding(
+        "repository_mutation",
+        "Repository mutation risk covers unorchestrated edits, stale leases, and missing recovery proof.",
+        hazard_refs=(
+            "unorchestrated_repository_mutation",
+            "code_worker_lease_expired",
+            "missing_recovery_handoff",
+        ),
+        mitigation_refs=(
+            "require_uao_reference",
+            "enforce_code_worker_lease",
+            "block_closure_until_recovery_handoff_exists",
+        ),
+        monitor_refs=(
+            "governed_code_change_receipt",
+            "sdlc_verification_receipt",
+            "sdlc_recovery_handoff_receipt",
+        ),
+        source_refs=(
+            "mcoi/mcoi_runtime/core/governed_code_change_loop.py",
+            "schemas/sdlc_verification_receipt.schema.json",
+            "schemas/sdlc_recovery_handoff_receipt.schema.json",
+        ),
+        validator_refs=(
+            "tests/test_governed_code_change_loop.py",
+            "tests/test_validate_governed_code_change_loop_receipt.py",
+            "scripts/validate_sdlc_artifact.py",
+        ),
+        proof_surface_refs=("software_dev_capability_pack",),
+    ),
+}
 
 
 _DEFAULT_ROLLBACK_BINDINGS: Mapping[str, LoopRollbackBinding] = {

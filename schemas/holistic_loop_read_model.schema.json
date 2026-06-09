@@ -75,6 +75,7 @@
         "purpose",
         "owner",
         "risk_class",
+        "risk_binding",
         "status",
         "mode",
         "current_step",
@@ -115,6 +116,9 @@
         "risk_class": {
           "type": "string",
           "minLength": 1
+        },
+        "risk_binding": {
+          "$ref": "#/$defs/risk_binding"
         },
         "status": {
           "type": "string",
@@ -200,6 +204,58 @@
         "updated_at": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "risk_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "risk_ref",
+        "purpose",
+        "hazard_refs",
+        "mitigation_refs",
+        "monitor_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "read_only",
+        "terminal_closure"
+      ],
+      "properties": {
+        "risk_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hazard_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "mitigation_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "monitor_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "source_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "validator_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "proof_surface_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
         }
       }
     },

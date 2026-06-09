@@ -21,6 +21,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopEvidenceBinding,
     LoopMode,
     LoopPhase,
+    LoopRiskBinding,
     LoopRollbackBinding,
     LoopSummary,
     LoopState,
@@ -131,6 +132,38 @@ def test_loop_authority_bindings_cover_required_authority_without_execution() ->
         assert all(binding.proof_surface_refs for binding in summary.authority_bindings)
 
 
+def test_loop_risk_bindings_cover_risk_class_without_execution() -> None:
+    read_model = build_default_loop_read_model()
+
+    for summary in read_model.loops:
+        binding = summary.risk_binding
+
+        assert binding.risk_ref == summary.risk_class
+        assert binding.read_only is True
+        assert binding.terminal_closure is False
+        assert binding.hazard_refs
+        assert binding.mitigation_refs
+        assert binding.monitor_refs
+        assert binding.source_refs
+        assert binding.validator_refs
+        assert binding.proof_surface_refs
+
+
+def test_loop_risk_binding_local_refs_resolve_to_existing_artifacts() -> None:
+    read_model = build_default_loop_read_model()
+    file_refs = {
+        ref
+        for summary in read_model.loops
+        for ref in (*summary.risk_binding.source_refs, *summary.risk_binding.validator_refs)
+        if "/" in ref
+    }
+
+    assert "schemas/gateway_publication_readiness.schema.json" in file_refs
+    assert "schemas/sdlc_recovery_handoff_receipt.schema.json" in file_refs
+    assert "mcoi/mcoi_runtime/core/cognitive_loop.py" in file_refs
+    assert all((REPO_ROOT / ref).exists() for ref in file_refs)
+
+
 def test_loop_authority_binding_local_refs_resolve_to_existing_artifacts() -> None:
     read_model = build_default_loop_read_model()
     file_refs = {
@@ -203,6 +236,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             purpose=summary.purpose,
             owner=summary.owner,
             risk_class=summary.risk_class,
+            risk_binding=summary.risk_binding,
             status=summary.status,
             mode=summary.mode,
             current_step=summary.current_step,
@@ -231,6 +265,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             purpose=summary.purpose,
             owner=summary.owner,
             risk_class=summary.risk_class,
+            risk_binding=summary.risk_binding,
             status=summary.status,
             mode=summary.mode,
             current_step=summary.current_step,
@@ -301,6 +336,25 @@ def test_loop_rollback_binding_rejects_mutation_or_terminal_closure_claim() -> N
         LoopRollbackBinding(**kwargs, terminal_closure=True)
 
 
+def test_loop_risk_binding_rejects_mutation_or_terminal_closure_claim() -> None:
+    kwargs = {
+        "risk_ref": "repository_mutation",
+        "purpose": "bind repository mutation risk proof surface",
+        "hazard_refs": ("unorchestrated_repository_mutation",),
+        "mitigation_refs": ("require_uao_reference",),
+        "monitor_refs": ("sdlc_recovery_handoff_receipt",),
+        "source_refs": ("schemas/sdlc_recovery_handoff_receipt.schema.json",),
+        "validator_refs": ("scripts/validate_sdlc_artifact.py",),
+        "proof_surface_refs": ("software_dev_capability_pack",),
+    }
+
+    with pytest.raises(ValueError, match="read-only"):
+        LoopRiskBinding(**kwargs, read_only=False)
+
+    with pytest.raises(ValueError, match="terminal closure"):
+        LoopRiskBinding(**kwargs, terminal_closure=True)
+
+
 def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
     summary = build_default_loop_read_model().loops[0]
     terminal_report = LoopClosureReport(
@@ -320,6 +374,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             purpose=summary.purpose,
             owner=summary.owner,
             risk_class=summary.risk_class,
+            risk_binding=summary.risk_binding,
             status=summary.status,
             mode=summary.mode,
             current_step=summary.current_step,
@@ -358,6 +413,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             purpose=summary.purpose,
             owner=summary.owner,
             risk_class=summary.risk_class,
+            risk_binding=summary.risk_binding,
             status=summary.status,
             mode=summary.mode,
             current_step=summary.current_step,
@@ -469,6 +525,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_step_receipts() -> None:
             purpose=summary.purpose,
             owner=summary.owner,
             risk_class=summary.risk_class,
+            risk_binding=summary.risk_binding,
             status=summary.status,
             mode=summary.mode,
             current_step=summary.current_step,

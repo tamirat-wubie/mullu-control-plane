@@ -142,6 +142,38 @@ def test_payload_validation_rejects_authority_binding_terminal_closure_claim() -
     assert invalid_binding["terminal_closure"] is True
 
 
+def test_payload_validation_requires_risk_binding_to_match_risk_class() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_payload["loops"][0]["risk_binding"]["risk_ref"] = "different_risk"
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("risk_binding risk_ref must match risk_class" in error for error in errors)
+    assert invalid_payload["loops"][0]["risk_binding"]["risk_ref"] == "different_risk"
+    assert invalid_payload["loops"][0]["risk_class"] != "different_risk"
+
+
+def test_payload_validation_rejects_risk_binding_terminal_closure_claim() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_binding = invalid_payload["loops"][0]["risk_binding"]
+    invalid_binding["read_only"] = False
+    invalid_binding["terminal_closure"] = True
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("risk_binding read_only must be true" in error for error in errors)
+    assert any("risk_binding terminal_closure must be false" in error for error in errors)
+    assert invalid_binding["terminal_closure"] is True
+
+
 def test_payload_validation_requires_rollback_binding_to_match_policy() -> None:
     app = FastAPI()
     app.include_router(router)

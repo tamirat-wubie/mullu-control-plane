@@ -32,6 +32,7 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
         "governed_code_change_loop",
     }
     assert all(loop["open_blockers"] for loop in loops)
+    assert all(loop["risk_binding"] for loop in loops)
     assert all(loop["authority_bindings"] for loop in loops)
     assert all(loop["missing_authority"] for loop in loops)
     assert all(loop["evidence_bindings"] for loop in loops)
@@ -45,6 +46,15 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
     assert all(
         {binding["evidence_ref"] for binding in loop["evidence_bindings"]}
         == set(loop["required_evidence"])
+        for loop in loops
+    )
+    assert all(
+        loop["risk_binding"]["risk_ref"] == loop["risk_class"]
+        and loop["risk_binding"]["read_only"] is True
+        and loop["risk_binding"]["terminal_closure"] is False
+        and loop["risk_binding"]["hazard_refs"]
+        and loop["risk_binding"]["mitigation_refs"]
+        and loop["risk_binding"]["monitor_refs"]
         for loop in loops
     )
     assert all(
@@ -107,6 +117,7 @@ def test_report_accepts_complete_observed_authority_and_evidence_refs() -> None:
     assert all(loop["missing_evidence"] == [] for loop in report["loops"])
     assert all(loop["status"] == "verified" for loop in report["loops"])
     assert all(loop["authority_bindings"] for loop in report["loops"])
+    assert all(loop["risk_binding"] for loop in report["loops"])
     assert all(loop["evidence_bindings"] for loop in report["loops"])
     assert all(loop["rollback_binding"] for loop in report["loops"])
     assert all(loop["step_receipts"] for loop in report["loops"])

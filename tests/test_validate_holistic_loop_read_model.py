@@ -29,6 +29,7 @@ def test_current_holistic_loop_read_model_contract_passes() -> None:
     assert report["report_id"] == "holistic_loop_read_model"
     assert report["report_is_not_terminal_closure"] is True
     assert report["terminal_closure_required"] is True
+    assert all(loop["risk_binding"] for loop in report["loops"])
     assert all(loop["authority_bindings"] for loop in report["loops"])
     assert all(loop["missing_authority"] for loop in report["loops"])
     assert all(loop["rollback_binding"] for loop in report["loops"])
@@ -88,6 +89,20 @@ def test_schema_requires_rollback_binding() -> None:
 
     assert any("schema missing required loop field: rollback_binding" in error for error in errors)
     assert "rollback_binding" not in invalid_schema["$defs"]["loop_summary"]["required"]
+    assert len(errors) >= 1
+
+
+def test_schema_requires_risk_binding() -> None:
+    schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
+    invalid_schema = copy.deepcopy(schema)
+    invalid_schema["$defs"]["loop_summary"]["required"] = [
+        field for field in invalid_schema["$defs"]["loop_summary"]["required"] if field != "risk_binding"
+    ]
+
+    errors = validator.validate_schema_artifact(invalid_schema)
+
+    assert any("schema missing required loop field: risk_binding" in error for error in errors)
+    assert "risk_binding" not in invalid_schema["$defs"]["loop_summary"]["required"]
     assert len(errors) >= 1
 
 
@@ -186,6 +201,49 @@ def test_authority_binding_cannot_claim_mutation_or_terminal_closure() -> None:
     assert any("authority binding 0 read_only must be true" in error for error in errors)
     assert any("authority binding 0 terminal_closure must be false" in error for error in errors)
     assert invalid_binding["read_only"] is False
+
+
+def test_risk_binding_must_match_risk_class() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_report["loops"][0]["risk_binding"]["risk_ref"] = "different_risk"
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("risk_binding risk_ref must match risk_class" in error for error in errors)
+    assert invalid_report["loops"][0]["risk_class"] != invalid_report["loops"][0]["risk_binding"][
+        "risk_ref"
+    ]
+    assert invalid_report["loops"][0]["risk_binding"]["risk_ref"] == "different_risk"
+
+
+def test_risk_binding_cannot_claim_mutation_or_terminal_closure() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_binding = invalid_report["loops"][0]["risk_binding"]
+    invalid_binding["read_only"] = False
+    invalid_binding["terminal_closure"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("risk_binding read_only must be true" in error for error in errors)
+    assert any("risk_binding terminal_closure must be false" in error for error in errors)
+    assert invalid_binding["read_only"] is False
+
+
+def test_risk_binding_requires_hazards_mitigations_and_monitors() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_binding = invalid_report["loops"][0]["risk_binding"]
+    invalid_binding["hazard_refs"] = []
+    invalid_binding["mitigation_refs"] = []
+    invalid_binding["monitor_refs"] = []
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("risk_binding hazard_refs" in error for error in errors)
+    assert any("risk_binding mitigation_refs" in error for error in errors)
+    assert any("risk_binding monitor_refs" in error for error in errors)
 
 
 def test_rollback_binding_must_match_policy() -> None:
