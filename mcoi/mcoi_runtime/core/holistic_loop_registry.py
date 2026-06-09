@@ -16,6 +16,7 @@ from typing import Mapping, Sequence
 
 from mcoi_runtime.contracts._base import freeze_value, require_datetime_text
 from mcoi_runtime.contracts.holistic_loop import (
+    LoopAuthorityBinding,
     LoopClosureReport,
     LoopEvidenceBinding,
     LoopManifest,
@@ -112,6 +113,7 @@ class LoopRegistry:
 
 def build_default_loop_registry(
     *,
+    observed_authority_refs: Mapping[str, Sequence[str]] | None = None,
     observed_evidence_refs: Mapping[str, Sequence[str]] | None = None,
     updated_at: str = DEFAULT_LOOP_UPDATED_AT,
 ) -> LoopRegistry:
@@ -119,11 +121,13 @@ def build_default_loop_registry(
 
     require_datetime_text(updated_at, "updated_at")
     manifests = _default_manifests()
+    authority_by_loop = observed_authority_refs or {}
     evidence_by_loop = observed_evidence_refs or {}
     states = {
         loop_id: _default_open_state(
             loop_id,
             updated_at,
+            authority_refs=tuple(authority_by_loop.get(loop_id, ())),
             evidence_refs=tuple(evidence_by_loop.get(loop_id, ())),
         )
         for loop_id in manifests
@@ -133,6 +137,7 @@ def build_default_loop_registry(
 
 def build_default_loop_read_model(
     *,
+    observed_authority_refs: Mapping[str, Sequence[str]] | None = None,
     observed_evidence_refs: Mapping[str, Sequence[str]] | None = None,
     generated_at: str = DEFAULT_LOOP_UPDATED_AT,
     limit: int = DEFAULT_READ_MODEL_LIMIT,
@@ -140,6 +145,7 @@ def build_default_loop_read_model(
     """Build the bounded default read model for existing governed loops."""
 
     registry = build_default_loop_registry(
+        observed_authority_refs=observed_authority_refs,
         observed_evidence_refs=observed_evidence_refs,
         updated_at=generated_at,
     )
@@ -318,6 +324,7 @@ def _default_open_state(
     loop_id: str,
     updated_at: str,
     *,
+    authority_refs: Sequence[str] = (),
     evidence_refs: Sequence[str] = (),
 ) -> LoopState:
     return LoopState(
@@ -325,16 +332,22 @@ def _default_open_state(
         status=LoopStatus.OPEN,
         current_step=LoopPhase.OBSERVE,
         mode=LoopMode.DRY_RUN,
+        authority_refs=tuple(authority_refs),
         evidence_refs=tuple(evidence_refs),
         updated_at=updated_at,
     )
 
 
 def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopSummary:
+    observed_authority = set(state.authority_refs)
     observed = set(state.evidence_refs)
+    missing_authority = tuple(
+        authority for authority in manifest.required_authority if authority not in observed_authority
+    )
+    authority_blockers = tuple(f"missing_authority:{authority}" for authority in missing_authority)
     missing = tuple(evidence for evidence in manifest.required_evidence if evidence not in observed)
     missing_blockers = tuple(f"missing_evidence:{evidence}" for evidence in missing)
-    blockers = _stable_unique_tuple((*state.open_blockers, *missing_blockers))
+    blockers = _stable_unique_tuple((*state.open_blockers, *authority_blockers, *missing_blockers))
     status = LoopStatus.BLOCKED if blockers else state.status
     if not blockers and status == LoopStatus.OPEN:
         status = LoopStatus.VERIFIED
@@ -348,6 +361,9 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         mode=state.mode,
         current_step=state.current_step,
         required_authority=manifest.required_authority,
+        authority_bindings=_authority_bindings_for(manifest.loop_id),
+        authority_refs=state.authority_refs,
+        missing_authority=missing_authority,
         required_evidence=manifest.required_evidence,
         evidence_bindings=_evidence_bindings_for(manifest.loop_id),
         step_receipts=_step_receipts_for(manifest, state, blockers),
@@ -412,6 +428,13 @@ def _receipt_hash(loop_id: str, step: str, boundary: str) -> str:
     return f"sha256:{digest}"
 
 
+def _authority_bindings_for(loop_id: str) -> tuple[LoopAuthorityBinding, ...]:
+    try:
+        return _DEFAULT_AUTHORITY_BINDINGS[loop_id]
+    except KeyError as exc:
+        raise ValueError(f"loop authority catalog missing: {loop_id}") from exc
+
+
 def _closure_report_for(
     manifest: LoopManifest,
     blockers: Sequence[str],
@@ -464,6 +487,23 @@ def _binding(
     )
 
 
+def _authority_binding(
+    authority_ref: str,
+    purpose: str,
+    *,
+    source_refs: Sequence[str],
+    validator_refs: Sequence[str],
+    proof_surface_refs: Sequence[str],
+) -> LoopAuthorityBinding:
+    return LoopAuthorityBinding(
+        authority_ref=authority_ref,
+        purpose=purpose,
+        source_refs=tuple(source_refs),
+        validator_refs=tuple(validator_refs),
+        proof_surface_refs=tuple(proof_surface_refs),
+    )
+
+
 _DEPLOYMENT_WITNESS_SOURCES = (
     "scripts/collect_deployment_witness.py",
     "schemas/deployment_witness.schema.json",
@@ -498,6 +538,129 @@ _GOVERNED_CODE_CHANGE_VALIDATORS = (
     "tests/test_governed_code_change_loop.py",
     "tests/test_validate_governed_code_change_loop_receipt.py",
 )
+
+
+_DEFAULT_AUTHORITY_BINDINGS: Mapping[str, tuple[LoopAuthorityBinding, ...]] = {
+    "deployment_witness_loop": (
+        _authority_binding(
+            "operator_approval_ref",
+            "Operator approval reference authorizes deployment-publication closure review.",
+            source_refs=(
+                "schemas/deployment_publication_operator_input_request.schema.json",
+                "scripts/emit_deployment_publication_operator_input_request.py",
+            ),
+            validator_refs=(
+                "tests/test_emit_deployment_publication_operator_input_request.py",
+                "tests/test_validate_deployment_publication_operator_input_request.py",
+            ),
+            proof_surface_refs=("production_evidence_plane", "authority_obligation_mesh"),
+        ),
+        _authority_binding(
+            "deployment_publication_authority",
+            "Publication authority binds deployment status changes to responsibility debt.",
+            source_refs=(
+                "gateway/authority_obligation_mesh.py",
+                "scripts/apply_deployment_publication_status.py",
+            ),
+            validator_refs=(
+                "tests/test_apply_deployment_publication_status.py",
+                "tests/test_gateway/test_authority_obligation_mesh.py",
+            ),
+            proof_surface_refs=("authority_obligation_mesh", "production_evidence_plane"),
+        ),
+    ),
+    "runtime_conformance_loop": (
+        _authority_binding(
+            "runtime_conformance_issuer",
+            "Runtime conformance issuer authority signs and bounds certificate claims.",
+            source_refs=_RUNTIME_CONFORMANCE_SOURCES,
+            validator_refs=_RUNTIME_CONFORMANCE_VALIDATORS,
+            proof_surface_refs=("runtime_conformance_attestation",),
+        ),
+        _authority_binding(
+            "conformance_secret_handoff_ref",
+            "Secret handoff reference prevents unsigned or stale conformance closure.",
+            source_refs=(
+                "schemas/runtime_conformance_certificate.schema.json",
+                "scripts/collect_runtime_conformance.py",
+            ),
+            validator_refs=(
+                "tests/test_collect_runtime_conformance.py",
+                "tests/test_gateway/test_conformance.py",
+            ),
+            proof_surface_refs=("runtime_conformance_attestation", "authority_obligation_mesh"),
+        ),
+    ),
+    "cognitive_outcome_loop": (
+        _authority_binding(
+            "governed_dispatch_policy_decision",
+            "Governed dispatch policy decision authorizes cognitive loop action admission.",
+            source_refs=(
+                "mcoi/mcoi_runtime/core/cognitive_loop.py",
+                "mcoi/mcoi_runtime/core/universal_action_kernel.py",
+            ),
+            validator_refs=(
+                "mcoi/tests/test_cognitive_loop.py",
+                "mcoi/tests/test_universal_action_kernel.py",
+            ),
+            proof_surface_refs=("software_outcome_learning",),
+        ),
+        _authority_binding(
+            "learning_admission_decision",
+            "Learning admission decision authorizes promotion from outcome to memory.",
+            source_refs=(
+                "schemas/learning_admission.schema.json",
+                "mcoi/mcoi_runtime/core/mil_learning_admission.py",
+            ),
+            validator_refs=(
+                "mcoi/tests/test_learning_loop.py",
+                "mcoi/tests/test_whqr_mil_learning_admission.py",
+            ),
+            proof_surface_refs=("software_outcome_learning",),
+        ),
+    ),
+    "governed_code_change_loop": (
+        _authority_binding(
+            "uao_ref",
+            "Universal Action Orchestration reference authorizes repository mutation routing.",
+            source_refs=(
+                "schemas/universal_action_orchestration.schema.json",
+                "mcoi/mcoi_runtime/core/universal_action_kernel.py",
+            ),
+            validator_refs=(
+                "tests/test_validate_universal_action_orchestration.py",
+                "mcoi/tests/test_universal_action_kernel.py",
+            ),
+            proof_surface_refs=("software_dev_capability_pack",),
+        ),
+        _authority_binding(
+            "code_worker_lease",
+            "Code-worker lease authority bounds worker execution and replay windows.",
+            source_refs=(
+                "mcoi/mcoi_runtime/swarm/lease_manager.py",
+                "schemas/temporal_lease_window_receipt.schema.json",
+            ),
+            validator_refs=(
+                "tests/test_gateway/test_temporal_lease_window.py",
+                "tests/test_governed_code_change_loop.py",
+            ),
+            proof_surface_refs=("software_dev_capability_pack",),
+        ),
+        _authority_binding(
+            "sdlc_closure_authority",
+            "SDLC closure authority separates implementation proof from terminal closure.",
+            source_refs=(
+                "schemas/sdlc_closure_receipt.schema.json",
+                "scripts/emit_sdlc_closure_receipt.py",
+            ),
+            validator_refs=(
+                "scripts/validate_sdlc_artifact.py",
+                "tests/test_validate_sdlc_release_readiness.py",
+            ),
+            proof_surface_refs=("software_dev_capability_pack",),
+        ),
+    ),
+}
 
 
 _DEFAULT_EVIDENCE_BINDINGS: Mapping[str, tuple[LoopEvidenceBinding, ...]] = {

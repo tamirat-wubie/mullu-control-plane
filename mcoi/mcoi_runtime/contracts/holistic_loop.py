@@ -141,6 +141,7 @@ class LoopState(ContractRecord):
     updated_at: str
     last_receipt: str = ""
     open_blockers: tuple[str, ...] = ()
+    authority_refs: tuple[str, ...] = ()
     evidence_refs: tuple[str, ...] = ()
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
@@ -163,6 +164,11 @@ class LoopState(ContractRecord):
             self,
             "open_blockers",
             _freeze_text_tuple(self.open_blockers, "open_blockers", allow_empty=True),
+        )
+        object.__setattr__(
+            self,
+            "authority_refs",
+            _freeze_text_tuple(self.authority_refs, "authority_refs", allow_empty=True),
         )
         object.__setattr__(
             self,
@@ -306,6 +312,46 @@ class LoopEvidenceBinding(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class LoopAuthorityBinding(ContractRecord):
+    """Read-only reference map for one required loop authority label."""
+
+    authority_ref: str
+    purpose: str
+    source_refs: tuple[str, ...]
+    validator_refs: tuple[str, ...]
+    proof_surface_refs: tuple[str, ...]
+    read_only: bool = True
+    terminal_closure: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "authority_ref",
+            require_non_empty_text(self.authority_ref, "authority_ref"),
+        )
+        object.__setattr__(self, "purpose", require_non_empty_text(self.purpose, "purpose"))
+        object.__setattr__(
+            self,
+            "source_refs",
+            _freeze_text_tuple(self.source_refs, "source_refs"),
+        )
+        object.__setattr__(
+            self,
+            "validator_refs",
+            _freeze_text_tuple(self.validator_refs, "validator_refs"),
+        )
+        object.__setattr__(
+            self,
+            "proof_surface_refs",
+            _freeze_text_tuple(self.proof_surface_refs, "proof_surface_refs"),
+        )
+        if self.read_only is not True:
+            raise ValueError("authority binding must be read-only")
+        if self.terminal_closure is not False:
+            raise ValueError("authority binding cannot be terminal closure")
+
+
+@dataclass(frozen=True, slots=True)
 class LoopSummary(ContractRecord):
     """Bounded read-model summary for one registered governed loop."""
 
@@ -318,6 +364,9 @@ class LoopSummary(ContractRecord):
     mode: LoopMode
     current_step: LoopPhase
     required_authority: tuple[str, ...]
+    authority_bindings: tuple[LoopAuthorityBinding, ...]
+    authority_refs: tuple[str, ...]
+    missing_authority: tuple[str, ...]
     required_evidence: tuple[str, ...]
     evidence_bindings: tuple[LoopEvidenceBinding, ...]
     step_receipts: tuple[LoopStepReceipt, ...]
@@ -353,6 +402,8 @@ class LoopSummary(ContractRecord):
             raise ValueError("current_step must be a LoopPhase value")
         for field_name in (
             "required_authority",
+            "authority_refs",
+            "missing_authority",
             "required_evidence",
             "evidence_refs",
             "missing_evidence",
@@ -365,9 +416,26 @@ class LoopSummary(ContractRecord):
                 _freeze_text_tuple(
                     getattr(self, field_name),
                     field_name,
-                    allow_empty=field_name in {"evidence_refs", "missing_evidence", "open_blockers"},
+                    allow_empty=field_name
+                    in {
+                        "authority_refs",
+                        "missing_authority",
+                        "evidence_refs",
+                        "missing_evidence",
+                        "open_blockers",
+                    },
                 ),
             )
+        object.__setattr__(
+            self,
+            "authority_bindings",
+            _freeze_contract_tuple(
+                self.authority_bindings,
+                "authority_bindings",
+                LoopAuthorityBinding,
+                "LoopAuthorityBinding",
+            ),
+        )
         object.__setattr__(
             self,
             "evidence_bindings",
@@ -397,6 +465,11 @@ class LoopSummary(ContractRecord):
         object.__setattr__(self, "updated_at", require_datetime_text(self.updated_at, "updated_at"))
         if self.status in {LoopStatus.VERIFIED, LoopStatus.CLOSED} and self.open_blockers:
             raise ValueError("verified or closed summary cannot carry blockers")
+        authority_binding_refs = [binding.authority_ref for binding in self.authority_bindings]
+        if len(authority_binding_refs) != len(set(authority_binding_refs)):
+            raise ValueError("authority bindings must not contain duplicate authority refs")
+        if set(authority_binding_refs) != set(self.required_authority):
+            raise ValueError("authority bindings must cover required authority exactly")
         binding_refs = [binding.evidence_ref for binding in self.evidence_bindings]
         if len(binding_refs) != len(set(binding_refs)):
             raise ValueError("evidence bindings must not contain duplicate evidence refs")
@@ -501,6 +574,7 @@ def _freeze_contract_tuple(
 
 __all__ = [
     "LoopClosureReport",
+    "LoopAuthorityBinding",
     "LoopEvidenceBinding",
     "LoopManifest",
     "LoopMode",

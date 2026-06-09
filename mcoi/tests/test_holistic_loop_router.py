@@ -41,12 +41,24 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
         "governed_code_change_loop",
     }
     assert all(loop["open_blockers"] for loop in payload["loops"])
+    assert all(loop["authority_bindings"] for loop in payload["loops"])
+    assert all(loop["missing_authority"] for loop in payload["loops"])
     assert all(loop["evidence_bindings"] for loop in payload["loops"])
     assert all(loop["step_receipts"] for loop in payload["loops"])
+    assert all(
+        {binding["authority_ref"] for binding in loop["authority_bindings"]}
+        == set(loop["required_authority"])
+        for loop in payload["loops"]
+    )
     assert all(
         {binding["evidence_ref"] for binding in loop["evidence_bindings"]}
         == set(loop["required_evidence"])
         for loop in payload["loops"]
+    )
+    assert all(
+        binding["read_only"] is True and binding["terminal_closure"] is False
+        for loop in payload["loops"]
+        for binding in loop["authority_bindings"]
     )
     assert all(
         binding["read_only"] is True and binding["terminal_closure"] is False

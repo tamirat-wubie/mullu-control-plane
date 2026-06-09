@@ -29,6 +29,7 @@ The kernel models the common contract through:
 | `LoopState` | Current read-only status, phase, mode, receipt, blockers, and evidence refs. |
 | `LoopStepReceipt` | Step-level input hash, output hash, decision, evidence, status, errors, and timestamp. |
 | `LoopClosureReport` | Closure assessment with unresolved gaps, rollback availability, and learning candidates. |
+| `LoopAuthorityBinding` | Read-only map from each required authority label to source refs, validator refs, and proof surfaces. |
 | `LoopEvidenceBinding` | Read-only map from each required evidence label to source refs, validator refs, and proof surfaces. |
 | `LoopRegistry` | Immutable registry binding manifests to read-only states. |
 | `LoopReadModel` | Bounded loop summary projection for dashboards, docs, and validators. |
@@ -44,15 +45,42 @@ The kernel models the common contract through:
 
 ## Evidence Rule
 
-Missing required evidence is a blocker:
+Missing required authority or evidence is a blocker:
 
 ```text
+required_authority - authority_refs -> missing_authority
+missing_authority -> open_blockers: missing_authority:<name>
 required_evidence - evidence_refs -> missing_evidence
 missing_evidence -> open_blockers: missing_evidence:<name>
 open_blockers != empty -> status = blocked
 ```
 
-This prevents fake closure. A loop may report runtime health or worker execution evidence, but the read model remains blocked until the manifest's evidence requirements and closure conditions are satisfied.
+This prevents fake closure. A loop may report runtime health or worker execution evidence, but the read model remains blocked until the manifest's authority requirements, evidence requirements, and closure conditions are satisfied.
+
+## Authority Catalog
+
+Each loop summary includes `authority_bindings`. A binding is a read-only
+catalog entry for one `required_authority` label:
+
+| Field | Meaning |
+| --- | --- |
+| `authority_ref` | The required authority label the binding explains. |
+| `purpose` | Why the authority is required for loop closure or execution admission. |
+| `source_refs` | Existing files, schemas, or scripts that define the authority surface. |
+| `validator_refs` | Existing tests or validators that check the referenced authority surface. |
+| `proof_surface_refs` | Proof-matrix surface IDs related to the authority. |
+| `read_only` | Always `true`; bindings do not grant approval or execute authority checks. |
+| `terminal_closure` | Always `false`; bindings are not closure certificates. |
+
+The catalog is exact by contract:
+
+```text
+set(authority_bindings[*].authority_ref) == set(required_authority)
+```
+
+Missing, duplicate, or extra authority bindings are validation failures. The
+catalog does not grant authority. It only tells operators where authority proof
+must come from when a later loop-specific workflow runs.
 
 ## Evidence Catalog
 
@@ -153,10 +181,11 @@ This kernel is intentionally non-invasive:
 3. It does not construct or run the cognitive loop.
 4. It does not dispatch governed code-change workers.
 5. It does not create a public mutation route.
-6. It does not execute evidence validators referenced by the catalog.
-7. It does not emit live runtime execution receipts.
-8. It does not mark any loop closed.
-9. It only exposes typed read-model contracts that other surfaces can adopt later.
+6. It does not grant authority or execute authority checks referenced by the catalog.
+7. It does not execute evidence validators referenced by the catalog.
+8. It does not emit live runtime execution receipts.
+9. It does not mark any loop closed.
+10. It only exposes typed read-model contracts that other surfaces can adopt later.
 
 ## Read-Only Exposure
 
@@ -175,6 +204,7 @@ script:
 | `read_model_version` | Contract version: `holistic_loop_kernel.v1`. |
 | `status` | `blocked` while any returned loop has blockers; otherwise `verified`. |
 | `loops` | Bounded registered loop summaries. |
+| `loops[].authority_bindings` | Read-only authority catalog entries covering every required authority label. |
 | `loops[].evidence_bindings` | Read-only evidence catalog entries covering every required evidence label. |
 | `loops[].step_receipts` | Read-only synthetic receipt trail for the canonical loop phases. |
 | `loops[].closure_report` | Read-only non-terminal closure-readiness report for each loop summary. |
@@ -222,6 +252,7 @@ The tests verify:
 5. Explicit blockers override complete evidence.
 6. Step receipts and closure reports are typed and immutable.
 7. The HTTP read-model route is mounted read-only and has no mutation companion.
-8. Evidence bindings cover every required evidence label and cannot claim terminal closure.
-9. Step receipt trails are read-only synthetic projections and must match blockers.
-10. Closure reports cannot claim terminal closure and must match blockers.
+8. Authority bindings cover every required authority label and cannot claim terminal closure.
+9. Evidence bindings cover every required evidence label and cannot claim terminal closure.
+10. Step receipt trails are read-only synthetic projections and must match blockers.
+11. Closure reports cannot claim terminal closure and must match blockers.

@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 
 from mcoi_runtime.contracts.holistic_loop import (
+    LoopAuthorityBinding,
     LoopClosureReport,
     LoopEvidenceBinding,
     LoopMode,
@@ -65,6 +66,8 @@ def test_missing_evidence_is_reported_as_blocker_not_success() -> None:
     assert read_model.returned_count == 4
     assert read_model.truncated is False
     assert deployment_summary.status is LoopStatus.BLOCKED
+    assert "operator_approval_ref" in deployment_summary.missing_authority
+    assert "missing_authority:operator_approval_ref" in deployment_summary.open_blockers
     assert "deployment_witness_published" in deployment_summary.missing_evidence
     assert "missing_evidence:deployment_witness_published" in deployment_summary.open_blockers
     assert deployment_summary.closure_report.closed is False
@@ -76,14 +79,22 @@ def test_missing_evidence_is_reported_as_blocker_not_success() -> None:
 
 def test_complete_evidence_verifies_read_model_without_runtime_mutation() -> None:
     registry = build_default_loop_registry()
+    authority_refs = {
+        manifest.loop_id: tuple(manifest.required_authority)
+        for manifest in registry.list_manifests()
+    }
     evidence_refs = {
         manifest.loop_id: tuple(manifest.required_evidence)
         for manifest in registry.list_manifests()
     }
-    read_model = build_default_loop_read_model(observed_evidence_refs=evidence_refs)
+    read_model = build_default_loop_read_model(
+        observed_authority_refs=authority_refs,
+        observed_evidence_refs=evidence_refs,
+    )
 
     assert {summary.loop_id for summary in read_model.loops} == EXPECTED_LOOP_IDS
     assert all(summary.status is LoopStatus.VERIFIED for summary in read_model.loops)
+    assert all(summary.missing_authority == () for summary in read_model.loops)
     assert all(summary.missing_evidence == () for summary in read_model.loops)
     assert all(summary.open_blockers == () for summary in read_model.loops)
     assert all(summary.closure_report.closed is False for summary in read_model.loops)
@@ -103,6 +114,36 @@ def test_loop_evidence_bindings_cover_required_evidence_without_execution() -> N
         assert all(binding.read_only is True for binding in summary.evidence_bindings)
         assert all(binding.terminal_closure is False for binding in summary.evidence_bindings)
         assert all(binding.proof_surface_refs for binding in summary.evidence_bindings)
+
+
+def test_loop_authority_bindings_cover_required_authority_without_execution() -> None:
+    read_model = build_default_loop_read_model()
+
+    for summary in read_model.loops:
+        binding_refs = {binding.authority_ref for binding in summary.authority_bindings}
+        required_refs = set(summary.required_authority)
+
+        assert binding_refs == required_refs
+        assert len(summary.authority_bindings) == len(summary.required_authority)
+        assert all(binding.read_only is True for binding in summary.authority_bindings)
+        assert all(binding.terminal_closure is False for binding in summary.authority_bindings)
+        assert all(binding.proof_surface_refs for binding in summary.authority_bindings)
+
+
+def test_loop_authority_binding_local_refs_resolve_to_existing_artifacts() -> None:
+    read_model = build_default_loop_read_model()
+    file_refs = {
+        ref
+        for summary in read_model.loops
+        for binding in summary.authority_bindings
+        for ref in (*binding.source_refs, *binding.validator_refs)
+        if "/" in ref
+    }
+
+    assert "scripts/emit_deployment_publication_operator_input_request.py" in file_refs
+    assert "schemas/universal_action_orchestration.schema.json" in file_refs
+    assert "mcoi/mcoi_runtime/swarm/lease_manager.py" in file_refs
+    assert all((REPO_ROOT / ref).exists() for ref in file_refs)
 
 
 def test_loop_evidence_binding_local_refs_resolve_to_existing_artifacts() -> None:
@@ -136,6 +177,9 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             mode=summary.mode,
             current_step=summary.current_step,
             required_authority=summary.required_authority,
+            authority_bindings=summary.authority_bindings,
+            authority_refs=summary.authority_refs,
+            missing_authority=summary.missing_authority,
             required_evidence=summary.required_evidence,
             evidence_bindings=(duplicate_binding, duplicate_binding),
             step_receipts=summary.step_receipts,
@@ -160,6 +204,9 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             mode=summary.mode,
             current_step=summary.current_step,
             required_authority=summary.required_authority,
+            authority_bindings=summary.authority_bindings,
+            authority_refs=summary.authority_refs,
+            missing_authority=summary.missing_authority,
             required_evidence=summary.required_evidence,
             evidence_bindings=summary.evidence_bindings[:-1],
             step_receipts=summary.step_receipts,
@@ -190,6 +237,22 @@ def test_loop_evidence_binding_rejects_mutation_or_terminal_closure_claim() -> N
         LoopEvidenceBinding(**kwargs, terminal_closure=True)
 
 
+def test_loop_authority_binding_rejects_mutation_or_terminal_closure_claim() -> None:
+    kwargs = {
+        "authority_ref": "operator_approval_ref",
+        "purpose": "bind operator approval authority",
+        "source_refs": ("scripts/emit_deployment_publication_operator_input_request.py",),
+        "validator_refs": ("tests/test_emit_deployment_publication_operator_input_request.py",),
+        "proof_surface_refs": ("authority_obligation_mesh",),
+    }
+
+    with pytest.raises(ValueError, match="read-only"):
+        LoopAuthorityBinding(**kwargs, read_only=False)
+
+    with pytest.raises(ValueError, match="terminal closure"):
+        LoopAuthorityBinding(**kwargs, terminal_closure=True)
+
+
 def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
     summary = build_default_loop_read_model().loops[0]
     terminal_report = LoopClosureReport(
@@ -213,6 +276,9 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             mode=summary.mode,
             current_step=summary.current_step,
             required_authority=summary.required_authority,
+            authority_bindings=summary.authority_bindings,
+            authority_refs=summary.authority_refs,
+            missing_authority=summary.missing_authority,
             required_evidence=summary.required_evidence,
             evidence_bindings=summary.evidence_bindings,
             step_receipts=summary.step_receipts,
@@ -247,6 +313,9 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             mode=summary.mode,
             current_step=summary.current_step,
             required_authority=summary.required_authority,
+            authority_bindings=summary.authority_bindings,
+            authority_refs=summary.authority_refs,
+            missing_authority=summary.missing_authority,
             required_evidence=summary.required_evidence,
             evidence_bindings=summary.evidence_bindings,
             step_receipts=summary.step_receipts,
@@ -269,6 +338,7 @@ def test_registry_preserves_explicit_blockers_even_when_evidence_exists() -> Non
         status=LoopStatus.OPEN,
         current_step=LoopPhase.VERIFY,
         mode=LoopMode.DRY_RUN,
+        authority_refs=manifest.required_authority,
         evidence_refs=manifest.required_evidence,
         open_blockers=("signature_key_rotation_pending",),
         updated_at="2026-06-08T00:00:00+00:00",
@@ -353,6 +423,9 @@ def test_loop_summary_rejects_terminal_or_mismatched_step_receipts() -> None:
             mode=summary.mode,
             current_step=summary.current_step,
             required_authority=summary.required_authority,
+            authority_bindings=summary.authority_bindings,
+            authority_refs=summary.authority_refs,
+            missing_authority=summary.missing_authority,
             required_evidence=summary.required_evidence,
             evidence_bindings=summary.evidence_bindings,
             step_receipts=(mismatched_receipt,),
