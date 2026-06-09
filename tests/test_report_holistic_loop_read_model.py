@@ -43,6 +43,12 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
         for loop in loops
         for binding in loop["evidence_bindings"]
     )
+    assert all(loop["closure_report"]["closed"] is False for loop in loops)
+    assert all(loop["closure_report"]["evidence_complete"] is False for loop in loops)
+    assert all(
+        set(loop["closure_report"]["unresolved_gaps"]) == set(loop["open_blockers"])
+        for loop in loops
+    )
 
 
 def test_report_accepts_complete_observed_evidence_refs() -> None:
@@ -60,6 +66,9 @@ def test_report_accepts_complete_observed_evidence_refs() -> None:
     assert all(loop["missing_evidence"] == [] for loop in report["loops"])
     assert all(loop["status"] == "verified" for loop in report["loops"])
     assert all(loop["evidence_bindings"] for loop in report["loops"])
+    assert all(loop["closure_report"]["closed"] is False for loop in report["loops"])
+    assert all(loop["closure_report"]["evidence_complete"] is True for loop in report["loops"])
+    assert all(loop["closure_report"]["unresolved_gaps"] == [] for loop in report["loops"])
 
 
 def test_parse_evidence_refs_groups_repeatable_args() -> None:

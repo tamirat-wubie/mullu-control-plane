@@ -52,6 +52,11 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
         for loop in payload["loops"]
         for binding in loop["evidence_bindings"]
     )
+    assert all(loop["closure_report"]["closed"] is False for loop in payload["loops"])
+    assert all(
+        set(loop["closure_report"]["unresolved_gaps"]) == set(loop["open_blockers"])
+        for loop in payload["loops"]
+    )
     assert payload["read_only"] is True
     assert payload["report_is_not_terminal_closure"] is True
 

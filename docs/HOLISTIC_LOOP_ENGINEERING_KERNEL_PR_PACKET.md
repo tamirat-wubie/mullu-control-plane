@@ -88,6 +88,23 @@ terminal_closure == false
 Missing, duplicate, or extra bindings are validator failures. The catalog does
 not collect live evidence and does not close a loop.
 
+## Closure Readiness Follow-Up
+
+The read model now exposes a derived `closure_report` on every loop summary.
+The report is computed from missing evidence and blockers. It remains
+read-only and non-terminal:
+
+```text
+closure_report.closed == false
+closure_report.unresolved_gaps == open_blockers
+closure_report.evidence_complete == (missing_evidence == [])
+closure_report.metadata.read_only == true
+closure_report.metadata.terminal_closure == false
+```
+
+This makes closure readiness visible without allowing the read model to become
+a closure certificate.
+
 ## Fracture Deltas
 
 None intended.

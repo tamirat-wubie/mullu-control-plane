@@ -6572,6 +6572,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "closure_report_blocks_incomplete_evidence",
                 "loop_registry_rejects_duplicate_loop_ids",
                 "loop_evidence_bindings_cover_required_evidence",
+                "loop_closure_report_blocks_terminal_closure",
                 "loop_read_model_endpoint_is_read_only",
                 "loop_http_surface_validator_rejects_mutation_routes",
             ],
@@ -6590,6 +6591,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "loop_evidence_bindings_cover_required_evidence": [
                     "loop_evidence_bindings_cover_required_evidence_without_execution"
+                ],
+                "loop_closure_report_blocks_terminal_closure": [
+                    "loop_summary_rejects_terminal_or_mismatched_closure_report"
                 ],
                 "loop_read_model_endpoint_is_read_only": [
                     "loop_read_model_has_no_mutation_companion"

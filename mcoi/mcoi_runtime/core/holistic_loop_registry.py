@@ -15,6 +15,7 @@ from typing import Mapping, Sequence
 
 from mcoi_runtime.contracts._base import freeze_value, require_datetime_text
 from mcoi_runtime.contracts.holistic_loop import (
+    LoopClosureReport,
     LoopEvidenceBinding,
     LoopManifest,
     LoopMode,
@@ -350,10 +351,39 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         evidence_refs=state.evidence_refs,
         missing_evidence=missing,
         closure_conditions=manifest.closure_conditions,
+        closure_report=_closure_report_for(manifest, blockers, missing),
         open_blockers=blockers,
         rollback_policy=manifest.rollback_policy,
         learning_policy=manifest.learning_policy,
         updated_at=state.updated_at,
+    )
+
+
+def _closure_report_for(
+    manifest: LoopManifest,
+    blockers: Sequence[str],
+    missing_evidence: Sequence[str],
+) -> LoopClosureReport:
+    evidence_complete = not missing_evidence
+    closure_reason = (
+        "read_model_verified_terminal_closure_required"
+        if evidence_complete and not blockers
+        else "read_model_blocked_by_unresolved_gaps"
+    )
+    learning_candidates = (manifest.learning_policy,) if blockers else ()
+    return LoopClosureReport(
+        loop_id=manifest.loop_id,
+        closed=False,
+        closure_reason=closure_reason,
+        evidence_complete=evidence_complete,
+        unresolved_gaps=tuple(blockers),
+        rollback_available=bool(manifest.rollback_policy),
+        learning_candidates=learning_candidates,
+        metadata={
+            "read_only": True,
+            "terminal_closure": False,
+            "closure_conditions": manifest.closure_conditions,
+        },
     )
 
 
