@@ -176,7 +176,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["job_engine_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["authority_obligation_mesh"]["exact_test_anchor_count"] == 5
     assert surfaces["authority_obligation_mesh"]["unanchored_witness_count"] == 0
-    assert surfaces["authority_operator_controls"]["exact_test_anchor_count"] == 5
+    assert surfaces["authority_operator_controls"]["exact_test_anchor_count"] == 6
     assert surfaces["authority_operator_controls"]["unanchored_witness_count"] == 0
     assert surfaces["agent_identity"]["exact_test_anchor_count"] == 8
     assert surfaces["agent_identity"]["unanchored_witness_count"] == 0
@@ -298,6 +298,42 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["production_evidence_plane"]["exact_test_anchor_count"] == 10
     assert surfaces["capability_manifest_registry"]["unanchored_witness_count"] == 0
     assert surfaces["capability_manifest_registry"]["exact_test_anchor_count"] == 9
+
+
+def test_holistic_loop_kernel_witness_labels_have_exact_anchors() -> None:
+    matrix = _load_fixture()
+    integrity = {
+        record["surface_id"]: record
+        for record in matrix["witness_integrity"]["surfaces"]
+    }
+    holistic_integrity = integrity["holistic_loop_read_model_kernel"]
+    anchors_by_witness = {
+        record["witness"]: set(record["anchors"])
+        for record in holistic_integrity["anchored_witnesses"]
+    }
+
+    assert holistic_integrity["runtime_witness_count"] == 6
+    assert holistic_integrity["exact_test_anchor_count"] == 6
+    assert holistic_integrity["unanchored_witness_count"] == 0
+    assert holistic_integrity["unanchored_witnesses"] == []
+    assert anchors_by_witness["registered_loops_expose_governed_manifest_fields"] == {
+        "mcoi/tests/test_holistic_loop_kernel.py::test_default_registry_exposes_first_four_loop_manifests"
+    }
+    assert anchors_by_witness["missing_required_evidence_is_reported_as_blocker"] == {
+        "mcoi/tests/test_holistic_loop_kernel.py::test_missing_evidence_is_reported_as_blocker_not_success"
+    }
+    assert anchors_by_witness["closure_report_blocks_incomplete_evidence"] == {
+        "mcoi/tests/test_holistic_loop_kernel.py::test_loop_receipt_and_closure_report_contracts_are_explicit"
+    }
+    assert anchors_by_witness["loop_registry_rejects_duplicate_loop_ids"] == {
+        "mcoi/tests/test_holistic_loop_kernel.py::test_loop_registry_rejects_duplicate_loop_ids"
+    }
+    assert anchors_by_witness["loop_read_model_endpoint_is_read_only"] == {
+        "mcoi/tests/test_holistic_loop_router.py::test_loop_read_model_has_no_mutation_companion"
+    }
+    assert anchors_by_witness["loop_http_surface_validator_rejects_mutation_routes"] == {
+        "tests/test_validate_holistic_loop_http_surface.py::test_route_method_validation_rejects_mutation_route"
+    }
 
 
 def test_tool_permission_registry_surface_covers_durable_persistence() -> None:
