@@ -77,6 +77,7 @@
         "risk_class",
         "risk_binding",
         "status",
+        "status_binding",
         "mode",
         "mode_binding",
         "current_step",
@@ -126,6 +127,9 @@
         "status": {
           "type": "string",
           "enum": ["open", "blocked", "verified", "closed"]
+        },
+        "status_binding": {
+          "$ref": "#/$defs/status_binding"
         },
         "mode": {
           "type": "string",
@@ -220,6 +224,63 @@
         "updated_at": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "status_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "projected_status",
+        "status_reason",
+        "blocker_refs",
+        "verification_refs",
+        "closure_gate_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "read_only",
+        "status_transition",
+        "terminal_closure"
+      ],
+      "properties": {
+        "projected_status": {
+          "type": "string",
+          "enum": ["open", "blocked", "verified", "closed"]
+        },
+        "status_reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blocker_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "verification_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "closure_gate_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "source_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "validator_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "proof_surface_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "status_transition": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
         }
       }
     },

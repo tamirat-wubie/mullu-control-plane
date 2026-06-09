@@ -1,7 +1,7 @@
 # Mullu Holistic Loop Engineering Kernel v1
 
 Purpose: define the shared governed loop contract used to describe existing Mullu loops without changing their runtime behavior.
-Governance scope: loop manifests, loop state projections, step receipts, closure reports, registry exposure, mode bindings, closure condition bindings, risk bindings, evidence bindings, evidence blockers, rollback policy, learning bindings, and learning policy.
+Governance scope: loop manifests, loop state projections, step receipts, closure reports, registry exposure, status bindings, mode bindings, closure condition bindings, risk bindings, evidence bindings, evidence blockers, rollback policy, learning bindings, and learning policy.
 Dependencies: `mcoi_runtime.contracts.holistic_loop`, `mcoi_runtime.core.holistic_loop_registry`, existing deployment witness, runtime conformance, cognitive outcome, and governed code-change surfaces.
 Invariants: this is a read-model-first contract layer; it adds no public mutation route; it does not rewrite deployment, cognitive, proof verification, or code-change behavior.
 
@@ -29,6 +29,7 @@ The kernel models the common contract through:
 | `LoopState` | Current read-only status, phase, mode, receipt, blockers, and evidence refs. |
 | `LoopStepReceipt` | Step-level input hash, output hash, decision, evidence, status, errors, and timestamp. |
 | `LoopClosureReport` | Closure assessment with unresolved gaps, rollback availability, and learning candidates. |
+| `LoopStatusBinding` | Read-only map from projected status to blockers, verification refs, closure gates, validators, and proof surfaces. |
 | `LoopModeBinding` | Read-only map from projected mode to allowed modes, separation refs, real-execution guards, validators, and proof surfaces. |
 | `LoopClosureConditionBinding` | Read-only map from each closure condition to required evidence refs, authority refs, validators, and proof surfaces. |
 | `LoopAuthorityBinding` | Read-only map from each required authority label to source refs, validator refs, and proof surfaces. |
@@ -61,6 +62,40 @@ open_blockers != empty -> status = blocked
 ```
 
 This prevents fake closure. A loop may report runtime health or worker execution evidence, but the read model remains blocked until the manifest's authority requirements, evidence requirements, and closure conditions are satisfied.
+
+## Status Catalog
+
+Each loop summary includes `status_binding`. A binding is a read-only catalog
+entry for the loop's projected status:
+
+| Field | Meaning |
+| --- | --- |
+| `projected_status` | The current read-model status for this loop summary. |
+| `status_reason` | Why the summary is blocked or verified while terminal closure remains separate. |
+| `blocker_refs` | The unresolved blocker labels that explain a blocked status. |
+| `verification_refs` | Required verification labels that must be observed before status can be verified. |
+| `closure_gate_refs` | Closure condition labels that remain external gates for terminal closure. |
+| `source_refs` | Existing files, schemas, or scripts that define the status proof surface. |
+| `validator_refs` | Existing tests or validators that check the referenced status surface. |
+| `proof_surface_refs` | Proof-matrix surface IDs related to the status projection. |
+| `read_only` | Always `true`; bindings do not update status or execute loops. |
+| `status_transition` | Always `false`; bindings do not authorize status transitions. |
+| `terminal_closure` | Always `false`; bindings are not closure certificates. |
+
+The catalog is exact by contract:
+
+```text
+status_binding.projected_status == status
+set(status_binding.blocker_refs) == set(open_blockers)
+status_binding.read_only == true
+status_binding.status_transition == false
+status_binding.terminal_closure == false
+```
+
+The status catalog does not clear blockers, mark a loop verified, transition
+state, execute validators, or close loops. It only tells operators which
+blockers, verification refs, closure gates, validators, and proof surfaces
+explain the current projected status.
 
 ## Mode Catalog
 
@@ -343,10 +378,11 @@ This kernel is intentionally non-invasive:
 7. It does not score risk or execute risk admission referenced by the catalog.
 8. It does not execute rollback or recovery actions referenced by the catalog.
 9. It does not admit learning, write memory, mutate tests, or update gates referenced by the catalog.
-10. It does not execute evidence validators referenced by the catalog.
-11. It does not emit live runtime execution receipts.
-12. It does not mark any loop closed.
-13. It only exposes typed read-model contracts that other surfaces can adopt later.
+10. It does not update loop status or execute status validators referenced by the catalog.
+11. It does not execute evidence validators referenced by the catalog.
+12. It does not emit live runtime execution receipts.
+13. It does not mark any loop closed.
+14. It only exposes typed read-model contracts that other surfaces can adopt later.
 
 ## Read-Only Exposure
 
@@ -365,6 +401,7 @@ script:
 | `read_model_version` | Contract version: `holistic_loop_kernel.v1`. |
 | `status` | `blocked` while any returned loop has blockers; otherwise `verified`. |
 | `loops` | Bounded registered loop summaries. |
+| `loops[].status_binding` | Read-only status catalog entry matching the projected loop status and blockers. |
 | `loops[].mode_binding` | Read-only mode catalog entry matching the projected loop mode and allowed modes. |
 | `loops[].closure_condition_bindings` | Read-only closure condition catalog entries covering every declared closure condition. |
 | `loops[].authority_bindings` | Read-only authority catalog entries covering every required authority label. |

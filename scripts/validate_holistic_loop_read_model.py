@@ -50,6 +50,7 @@ REQUIRED_LOOP_FIELDS = (
     "risk_class",
     "risk_binding",
     "status",
+    "status_binding",
     "mode",
     "mode_binding",
     "current_step",
@@ -248,6 +249,7 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
         errors.extend(_validate_text_list(loop[field_name], f"loop {index} {field_name}"))
     errors.extend(_validate_evidence_bindings(loop["evidence_bindings"], loop["required_evidence"], index))
     errors.extend(_validate_authority_bindings(loop["authority_bindings"], loop["required_authority"], index))
+    errors.extend(_validate_status_binding(loop["status_binding"], loop, index))
     errors.extend(_validate_mode_binding(loop["mode_binding"], loop, index))
     errors.extend(_validate_risk_binding(loop["risk_binding"], loop, index))
     errors.extend(_validate_closure_condition_bindings(loop["closure_condition_bindings"], loop, index))
@@ -269,6 +271,62 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
     errors.extend(_validate_rollback_binding(loop["rollback_binding"], loop, index))
     errors.extend(_validate_learning_binding(loop["learning_binding"], loop, index))
     errors.extend(_validate_closure_report(loop["closure_report"], loop, index))
+    return errors
+
+
+def _validate_status_binding(status_binding: Any, loop: dict[str, Any], index: int) -> list[str]:
+    if not isinstance(status_binding, dict):
+        return [f"loop {index} status_binding must be an object"]
+    errors: list[str] = []
+    required_fields = {
+        "projected_status",
+        "status_reason",
+        "blocker_refs",
+        "verification_refs",
+        "closure_gate_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "read_only",
+        "status_transition",
+        "terminal_closure",
+    }
+    missing = sorted(required_fields - set(status_binding))
+    errors.extend(f"loop {index} status_binding missing field: {field_name}" for field_name in missing)
+    extra = sorted(set(status_binding) - required_fields)
+    errors.extend(f"loop {index} status_binding has unexpected field: {field_name}" for field_name in extra)
+    if missing:
+        return errors
+    if status_binding["projected_status"] != loop["status"]:
+        errors.append(f"loop {index} status_binding projected_status must match status")
+    if not isinstance(status_binding["status_reason"], str) or not status_binding["status_reason"]:
+        errors.append(f"loop {index} status_binding status_reason must be non-empty")
+    for field_name in (
+        "blocker_refs",
+        "verification_refs",
+        "closure_gate_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+    ):
+        errors.extend(
+            _validate_text_list(
+                status_binding[field_name],
+                f"loop {index} status_binding {field_name}",
+            )
+        )
+        if field_name != "blocker_refs" and isinstance(status_binding[field_name], list) and not status_binding[field_name]:
+            errors.append(f"loop {index} status_binding {field_name} must be non-empty")
+    if isinstance(status_binding["blocker_refs"], list) and set(status_binding["blocker_refs"]) != set(loop["open_blockers"]):
+        errors.append(f"loop {index} status_binding blocker_refs must match open blockers")
+    if loop["status"] in {"verified", "closed"} and status_binding["blocker_refs"]:
+        errors.append(f"loop {index} verified or closed status_binding cannot carry blockers")
+    if status_binding["read_only"] is not True:
+        errors.append(f"loop {index} status_binding read_only must be true")
+    if status_binding["status_transition"] is not False:
+        errors.append(f"loop {index} status_binding status_transition must be false")
+    if status_binding["terminal_closure"] is not False:
+        errors.append(f"loop {index} status_binding terminal_closure must be false")
     return errors
 
 

@@ -30,6 +30,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopRollbackBinding,
     LoopState,
     LoopStatus,
+    LoopStatusBinding,
     LoopStepReceipt,
     LoopSummary,
 )
@@ -364,6 +365,7 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         risk_class=manifest.risk_class,
         risk_binding=_risk_binding_for(manifest.loop_id),
         status=status,
+        status_binding=_status_binding_for(manifest.loop_id, status, blockers),
         mode=state.mode,
         mode_binding=_mode_binding_for(manifest.loop_id, state.mode, manifest.allowed_modes),
         current_step=state.current_step,
@@ -481,6 +483,32 @@ def _mode_binding_for(
         purpose=defaults.purpose,
         separation_refs=defaults.separation_refs,
         real_execution_guard_refs=defaults.real_execution_guard_refs,
+        source_refs=defaults.source_refs,
+        validator_refs=defaults.validator_refs,
+        proof_surface_refs=defaults.proof_surface_refs,
+    )
+
+
+def _status_binding_for(
+    loop_id: str,
+    projected_status: LoopStatus,
+    blockers: Sequence[str],
+) -> LoopStatusBinding:
+    try:
+        defaults = _DEFAULT_STATUS_BINDINGS[loop_id]
+    except KeyError as exc:
+        raise ValueError(f"loop status catalog missing: {loop_id}") from exc
+    status_reason = (
+        "read_model_blocked_by_unresolved_gaps"
+        if blockers
+        else "read_model_verified_terminal_closure_required"
+    )
+    return LoopStatusBinding(
+        projected_status=projected_status,
+        status_reason=status_reason,
+        blocker_refs=tuple(blockers),
+        verification_refs=defaults.verification_refs,
+        closure_gate_refs=defaults.closure_gate_refs,
         source_refs=defaults.source_refs,
         validator_refs=defaults.validator_refs,
         proof_surface_refs=defaults.proof_surface_refs,
@@ -647,6 +675,27 @@ def _mode_binding(
     )
 
 
+def _status_binding(
+    purpose: str,
+    *,
+    verification_refs: Sequence[str],
+    closure_gate_refs: Sequence[str],
+    source_refs: Sequence[str],
+    validator_refs: Sequence[str],
+    proof_surface_refs: Sequence[str],
+) -> LoopStatusBinding:
+    return LoopStatusBinding(
+        projected_status=LoopStatus.BLOCKED,
+        status_reason=purpose,
+        blocker_refs=("default_status_projection",),
+        verification_refs=tuple(verification_refs),
+        closure_gate_refs=tuple(closure_gate_refs),
+        source_refs=tuple(source_refs),
+        validator_refs=tuple(validator_refs),
+        proof_surface_refs=tuple(proof_surface_refs),
+    )
+
+
 def _closure_condition_binding(
     closure_ref: str,
     purpose: str,
@@ -702,6 +751,117 @@ _GOVERNED_CODE_CHANGE_VALIDATORS = (
     "tests/test_governed_code_change_loop.py",
     "tests/test_validate_governed_code_change_loop_receipt.py",
 )
+
+
+_DEFAULT_STATUS_BINDINGS: Mapping[str, LoopStatusBinding] = {
+    "deployment_witness_loop": _status_binding(
+        "Bind deployment witness status to unresolved publication, runtime, audit, proof, and authority gaps.",
+        verification_refs=(
+            "required_authority_observed",
+            "required_evidence_observed",
+            "deployment_witness_and_release_validators_passed",
+        ),
+        closure_gate_refs=(
+            "deployment_witness_state_published",
+            "runtime_responsibility_debt_clear",
+            "authority_responsibility_debt_clear",
+            "public_health_endpoint_matches_declared_gateway",
+            "proof_and_audit_verification_pass",
+        ),
+        source_refs=(
+            "scripts/preflight_deployment_witness.py",
+            "scripts/collect_deployment_witness.py",
+            "scripts/validate_release_status.py",
+        ),
+        validator_refs=(
+            "tests/test_preflight_deployment_witness.py",
+            "tests/test_collect_deployment_witness.py",
+            "tests/test_validate_release_status.py",
+        ),
+        proof_surface_refs=(
+            "production_evidence_plane",
+            "gateway_runtime_witness",
+            "authority_obligation_mesh",
+        ),
+    ),
+    "runtime_conformance_loop": _status_binding(
+        "Bind runtime conformance status to unresolved certificate, signature, canary, and proof-coverage gaps.",
+        verification_refs=(
+            "required_authority_observed",
+            "required_evidence_observed",
+            "runtime_conformance_validators_passed",
+        ),
+        closure_gate_refs=(
+            "accepted_conformance_status",
+            "gateway_witness_valid",
+            "runtime_witness_valid",
+            "core_canary_set_passed",
+            "known_limitations_and_security_model_aligned",
+        ),
+        source_refs=(
+            "scripts/collect_runtime_conformance.py",
+            "schemas/runtime_conformance_collection.schema.json",
+            "schemas/runtime_conformance_certificate.schema.json",
+        ),
+        validator_refs=(
+            "tests/test_collect_runtime_conformance.py",
+            "tests/test_collect_runtime_conformance_cli.py",
+            "tests/test_gateway/test_conformance.py",
+        ),
+        proof_surface_refs=("runtime_conformance_attestation", "proof_route_gap_triage"),
+    ),
+    "cognitive_outcome_loop": _status_binding(
+        "Bind cognitive outcome status to unresolved dispatch, verification, critic, learning, and ledger gaps.",
+        verification_refs=(
+            "required_authority_observed",
+            "required_evidence_observed",
+            "cognitive_outcome_validators_passed",
+        ),
+        closure_gate_refs=(
+            "hard_constraints_proven_or_blocked",
+            "mechanical_verification_completed",
+            "critic_did_not_upgrade_failed_proof",
+            "learning_admitted_only_from_verified_evidence",
+        ),
+        source_refs=(
+            "mcoi/mcoi_runtime/core/cognitive_loop.py",
+            "mcoi/mcoi_runtime/core/mil_learning_admission.py",
+            "mcoi/mcoi_runtime/persistence/cognitive_outcome_ledger.py",
+        ),
+        validator_refs=(
+            "mcoi/tests/test_cognitive_loop.py",
+            "mcoi/tests/test_learning_loop.py",
+            "mcoi/tests/test_cognitive_outcome_ledger.py",
+        ),
+        proof_surface_refs=("software_outcome_learning",),
+    ),
+    "governed_code_change_loop": _status_binding(
+        "Bind governed code-change status to unresolved orchestration, lease, implementation, verification, and recovery gaps.",
+        verification_refs=(
+            "required_authority_observed",
+            "required_evidence_observed",
+            "governed_code_change_validators_passed",
+        ),
+        closure_gate_refs=(
+            "worker_receipt_not_terminal_closure",
+            "implementation_receipt_present",
+            "verification_receipt_present",
+            "recovery_handoff_present",
+            "closure_blockers_empty",
+        ),
+        source_refs=(
+            "mcoi/mcoi_runtime/core/governed_code_change_loop.py",
+            "scripts/run_governed_code_change_loop.py",
+            "schemas/sdlc_verification_receipt.schema.json",
+        ),
+        validator_refs=(
+            "tests/test_governed_code_change_loop.py",
+            "tests/test_validate_governed_code_change_loop_receipt.py",
+            "scripts/validate_sdlc_artifact.py",
+        ),
+        proof_surface_refs=("software_dev_capability_pack",),
+    ),
+}
 
 
 _DEFAULT_CLOSURE_CONDITION_BINDINGS: Mapping[str, tuple[LoopClosureConditionBinding, ...]] = {

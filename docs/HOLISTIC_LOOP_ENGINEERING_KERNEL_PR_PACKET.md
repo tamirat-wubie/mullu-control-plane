@@ -2,8 +2,9 @@
 
 Purpose: provide a scoped PR handoff packet for the holistic loop kernel slice.
 Governance scope: loop contract, registry, read model, HTTP projection,
-validators, schema manifest, evidence blockers, mode catalog, risk catalog,
-closure condition catalog, rollback boundary, and learning catalog.
+validators, schema manifest, evidence blockers, status catalog, mode catalog,
+risk catalog, closure condition catalog, rollback boundary, and learning
+catalog.
 Dependencies: `docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md`, holistic loop source
 files, read-model schema, report and validation scripts, focused tests, SDLC
 validators, release validators, and workspace governance preflight.
@@ -74,6 +75,23 @@ staged into the holistic loop PR.
    schema-count references from 183 to 184.
 
 ## Evidence Catalog Follow-Up
+
+The read model now exposes one `LoopStatusBinding` entry for every loop
+summary. The binding maps projected status to unresolved blockers,
+verification refs, closure gates, existing source refs, validator refs, and
+proof-matrix surface refs. It remains read-only and non-terminal:
+
+```text
+status_binding.projected_status == status
+set(status_binding.blocker_refs) == set(open_blockers)
+status_binding.read_only == true
+status_binding.status_transition == false
+status_binding.terminal_closure == false
+```
+
+The catalog does not clear blockers, mark status verified, execute validators,
+authorize transitions, or close a loop. It only tells operators where status
+projection proof must come from when a later loop-specific workflow runs.
 
 The read model now exposes one `LoopModeBinding` entry for every loop summary.
 The binding maps the projected mode to the manifest's allowed modes, separation

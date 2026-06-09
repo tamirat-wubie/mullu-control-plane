@@ -164,6 +164,8 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
     errors: list[str] = []
     for field_name in (
         "loop_id",
+        "status",
+        "status_binding",
         "mode",
         "mode_binding",
         "risk_class",
@@ -206,6 +208,7 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         errors.append(f"loop {index} must expose required evidence")
     if loop.get("mode") not in LOOP_MODES:
         errors.append(f"loop {index} mode is invalid")
+    errors.extend(_validate_status_binding(loop.get("status_binding"), loop, index))
     errors.extend(_validate_mode_binding(loop.get("mode_binding"), loop, index))
     errors.extend(_validate_risk_binding(loop.get("risk_binding"), loop, index))
     errors.extend(_validate_closure_report(loop.get("closure_report"), loop, index))
@@ -227,6 +230,40 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
     errors.extend(_validate_rollback_binding(loop.get("rollback_binding"), loop, index))
     errors.extend(_validate_learning_binding(loop.get("learning_binding"), loop, index))
     errors.extend(_validate_step_receipts(loop.get("step_receipts"), loop, index))
+    return errors
+
+
+def _validate_status_binding(status_binding: Any, loop: dict[str, Any], index: int) -> list[str]:
+    if not isinstance(status_binding, dict):
+        return [f"loop {index} status_binding must be an object"]
+    errors: list[str] = []
+    if status_binding.get("projected_status") != loop.get("status"):
+        errors.append(f"loop {index} status_binding projected_status must match status")
+    if not isinstance(status_binding.get("status_reason"), str) or not status_binding.get("status_reason"):
+        errors.append(f"loop {index} status_binding status_reason must be non-empty")
+    blocker_refs = status_binding.get("blocker_refs")
+    if not isinstance(blocker_refs, list):
+        errors.append(f"loop {index} status_binding blocker_refs must be a list")
+    elif set(blocker_refs) != set(loop.get("open_blockers", ())):
+        errors.append(f"loop {index} status_binding blocker_refs must match open blockers")
+    if loop.get("status") in {"verified", "closed"} and blocker_refs:
+        errors.append(f"loop {index} verified or closed status_binding cannot carry blockers")
+    for field_name in (
+        "verification_refs",
+        "closure_gate_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+    ):
+        refs = status_binding.get(field_name)
+        if not isinstance(refs, list) or not refs or not all(isinstance(ref, str) and ref for ref in refs):
+            errors.append(f"loop {index} status_binding {field_name} must be non-empty")
+    if status_binding.get("read_only") is not True:
+        errors.append(f"loop {index} status_binding read_only must be true")
+    if status_binding.get("status_transition") is not False:
+        errors.append(f"loop {index} status_binding status_transition must be false")
+    if status_binding.get("terminal_closure") is not False:
+        errors.append(f"loop {index} status_binding terminal_closure must be false")
     return errors
 
 
