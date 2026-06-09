@@ -22,6 +22,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopLearningBinding,
     LoopManifest,
     LoopMode,
+    LoopModeBinding,
     LoopPhase,
     LoopReadModel,
     LoopRiskBinding,
@@ -363,6 +364,7 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         risk_binding=_risk_binding_for(manifest.loop_id),
         status=status,
         mode=state.mode,
+        mode_binding=_mode_binding_for(manifest.loop_id, state.mode, manifest.allowed_modes),
         current_step=state.current_step,
         required_authority=manifest.required_authority,
         authority_bindings=_authority_bindings_for(manifest.loop_id),
@@ -460,6 +462,27 @@ def _learning_binding_for(loop_id: str) -> LoopLearningBinding:
         return _DEFAULT_LEARNING_BINDINGS[loop_id]
     except KeyError as exc:
         raise ValueError(f"loop learning catalog missing: {loop_id}") from exc
+
+
+def _mode_binding_for(
+    loop_id: str,
+    projected_mode: LoopMode,
+    allowed_modes: Sequence[LoopMode],
+) -> LoopModeBinding:
+    try:
+        defaults = _DEFAULT_MODE_BINDINGS[loop_id]
+    except KeyError as exc:
+        raise ValueError(f"loop mode catalog missing: {loop_id}") from exc
+    return LoopModeBinding(
+        projected_mode=projected_mode,
+        allowed_modes=tuple(allowed_modes),
+        purpose=defaults.purpose,
+        separation_refs=defaults.separation_refs,
+        real_execution_guard_refs=defaults.real_execution_guard_refs,
+        source_refs=defaults.source_refs,
+        validator_refs=defaults.validator_refs,
+        proof_surface_refs=defaults.proof_surface_refs,
+    )
 
 
 def _closure_report_for(
@@ -594,6 +617,27 @@ def _learning_binding(
     )
 
 
+def _mode_binding(
+    purpose: str,
+    *,
+    separation_refs: Sequence[str],
+    real_execution_guard_refs: Sequence[str],
+    source_refs: Sequence[str],
+    validator_refs: Sequence[str],
+    proof_surface_refs: Sequence[str],
+) -> LoopModeBinding:
+    return LoopModeBinding(
+        projected_mode=LoopMode.DRY_RUN,
+        allowed_modes=(LoopMode.DRY_RUN,),
+        purpose=purpose,
+        separation_refs=tuple(separation_refs),
+        real_execution_guard_refs=tuple(real_execution_guard_refs),
+        source_refs=tuple(source_refs),
+        validator_refs=tuple(validator_refs),
+        proof_surface_refs=tuple(proof_surface_refs),
+    )
+
+
 _DEPLOYMENT_WITNESS_SOURCES = (
     "scripts/collect_deployment_witness.py",
     "schemas/deployment_witness.schema.json",
@@ -628,6 +672,108 @@ _GOVERNED_CODE_CHANGE_VALIDATORS = (
     "tests/test_governed_code_change_loop.py",
     "tests/test_validate_governed_code_change_loop_receipt.py",
 )
+
+
+_DEFAULT_MODE_BINDINGS: Mapping[str, LoopModeBinding] = {
+    "deployment_witness_loop": _mode_binding(
+        "Expose deployment witness dry-run, shadow, simulation, replay, and real-mode boundaries without changing publication state.",
+        separation_refs=(
+            "dry_run_preflight_without_publication",
+            "shadow_observation_without_gateway_mutation",
+            "simulation_and_replay_are_non_effect_bearing",
+            "real_mode_requires_publication_authority_and_complete_witnesses",
+        ),
+        real_execution_guard_refs=(
+            "operator_approval_ref",
+            "deployment_publication_authority",
+            "proof_and_audit_verification_pass",
+        ),
+        source_refs=(
+            "scripts/preflight_deployment_witness.py",
+            "scripts/collect_deployment_witness.py",
+            "scripts/validate_release_status.py",
+        ),
+        validator_refs=(
+            "tests/test_preflight_deployment_witness.py",
+            "tests/test_collect_deployment_witness.py",
+            "tests/test_validate_release_status.py",
+        ),
+        proof_surface_refs=("production_evidence_plane", "gateway_runtime_witness"),
+    ),
+    "runtime_conformance_loop": _mode_binding(
+        "Expose runtime conformance dry-run, shadow, replay, and real-mode boundaries without changing conformance issuance.",
+        separation_refs=(
+            "dry_run_collection_without_certificate_promotion",
+            "shadow_validation_without_endpoint_mutation",
+            "replay_uses_retained_conformance_collection",
+            "real_mode_requires_issuer_and_secret_handoff",
+        ),
+        real_execution_guard_refs=(
+            "runtime_conformance_issuer",
+            "conformance_secret_handoff_ref",
+            "certificate_signature_verified",
+        ),
+        source_refs=(
+            "scripts/collect_runtime_conformance.py",
+            "schemas/runtime_conformance_collection.schema.json",
+            "schemas/runtime_conformance_certificate.schema.json",
+        ),
+        validator_refs=(
+            "tests/test_collect_runtime_conformance.py",
+            "tests/test_collect_runtime_conformance_cli.py",
+            "tests/test_gateway/test_conformance.py",
+        ),
+        proof_surface_refs=("runtime_conformance_attestation", "proof_route_gap_triage"),
+    ),
+    "cognitive_outcome_loop": _mode_binding(
+        "Expose cognitive dry-run, shadow, simulation, and replay boundaries without admitting memory promotion.",
+        separation_refs=(
+            "dry_run_dispatch_without_memory_write",
+            "shadow_outcome_projection_without_learning_admission",
+            "simulation_and_replay_do_not_mutate_episodic_memory",
+        ),
+        real_execution_guard_refs=(
+            "real_mode_not_registered_for_cognitive_outcome_loop",
+            "learning_admission_decision_required_before_memory_promotion",
+        ),
+        source_refs=(
+            "mcoi/mcoi_runtime/core/cognitive_loop.py",
+            "mcoi/mcoi_runtime/core/mil_learning_admission.py",
+            "mcoi/mcoi_runtime/persistence/cognitive_outcome_ledger.py",
+        ),
+        validator_refs=(
+            "mcoi/tests/test_cognitive_loop.py",
+            "mcoi/tests/test_learning_loop.py",
+            "mcoi/tests/test_cognitive_outcome_ledger.py",
+        ),
+        proof_surface_refs=("software_outcome_learning",),
+    ),
+    "governed_code_change_loop": _mode_binding(
+        "Expose governed code-change dry-run, simulation, and replay boundaries without granting repository mutation authority.",
+        separation_refs=(
+            "dry_run_plan_without_workspace_write",
+            "simulation_without_worker_lease",
+            "replay_uses_retained_worker_receipts",
+            "real_mode_not_registered_for_governed_code_change_loop",
+        ),
+        real_execution_guard_refs=(
+            "uao_ref_required_for_effect_bearing_change",
+            "code_worker_lease_required_for_workspace_write",
+            "sdlc_closure_authority_required_after_verification",
+        ),
+        source_refs=(
+            "mcoi/mcoi_runtime/core/governed_code_change_loop.py",
+            "scripts/run_governed_code_change_loop.py",
+            "schemas/sdlc_verification_receipt.schema.json",
+        ),
+        validator_refs=(
+            "tests/test_governed_code_change_loop.py",
+            "tests/test_validate_governed_code_change_loop_receipt.py",
+            "scripts/validate_sdlc_artifact.py",
+        ),
+        proof_surface_refs=("software_dev_capability_pack",),
+    ),
+}
 
 
 _DEFAULT_LEARNING_BINDINGS: Mapping[str, LoopLearningBinding] = {

@@ -51,6 +51,7 @@ REQUIRED_LOOP_FIELDS = (
     "risk_binding",
     "status",
     "mode",
+    "mode_binding",
     "current_step",
     "required_authority",
     "authority_bindings",
@@ -246,6 +247,7 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
         errors.extend(_validate_text_list(loop[field_name], f"loop {index} {field_name}"))
     errors.extend(_validate_evidence_bindings(loop["evidence_bindings"], loop["required_evidence"], index))
     errors.extend(_validate_authority_bindings(loop["authority_bindings"], loop["required_authority"], index))
+    errors.extend(_validate_mode_binding(loop["mode_binding"], loop, index))
     errors.extend(_validate_risk_binding(loop["risk_binding"], loop, index))
     errors.extend(_validate_step_receipts(loop["step_receipts"], loop, index))
     if loop["open_blockers"] and loop["status"] != "blocked":
@@ -265,6 +267,60 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
     errors.extend(_validate_rollback_binding(loop["rollback_binding"], loop, index))
     errors.extend(_validate_learning_binding(loop["learning_binding"], loop, index))
     errors.extend(_validate_closure_report(loop["closure_report"], loop, index))
+    return errors
+
+
+def _validate_mode_binding(mode_binding: Any, loop: dict[str, Any], index: int) -> list[str]:
+    if not isinstance(mode_binding, dict):
+        return [f"loop {index} mode_binding must be an object"]
+    errors: list[str] = []
+    required_fields = {
+        "projected_mode",
+        "allowed_modes",
+        "purpose",
+        "separation_refs",
+        "real_execution_guard_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "read_only",
+        "mode_transition",
+        "terminal_closure",
+    }
+    missing = sorted(required_fields - set(mode_binding))
+    errors.extend(f"loop {index} mode_binding missing field: {field_name}" for field_name in missing)
+    extra = sorted(set(mode_binding) - required_fields)
+    errors.extend(f"loop {index} mode_binding has unexpected field: {field_name}" for field_name in extra)
+    if missing:
+        return errors
+    if mode_binding["projected_mode"] != loop["mode"]:
+        errors.append(f"loop {index} mode_binding projected_mode must match mode")
+    errors.extend(_validate_mode_list(mode_binding["allowed_modes"], f"loop {index} mode_binding allowed_modes"))
+    if isinstance(mode_binding["allowed_modes"], list) and mode_binding["projected_mode"] not in mode_binding["allowed_modes"]:
+        errors.append(f"loop {index} mode_binding projected_mode must be allowed")
+    if not isinstance(mode_binding["purpose"], str) or not mode_binding["purpose"]:
+        errors.append(f"loop {index} mode_binding purpose must be non-empty")
+    for field_name in (
+        "separation_refs",
+        "real_execution_guard_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+    ):
+        errors.extend(
+            _validate_text_list(
+                mode_binding[field_name],
+                f"loop {index} mode_binding {field_name}",
+            )
+        )
+        if isinstance(mode_binding[field_name], list) and not mode_binding[field_name]:
+            errors.append(f"loop {index} mode_binding {field_name} must be non-empty")
+    if mode_binding["read_only"] is not True:
+        errors.append(f"loop {index} mode_binding read_only must be true")
+    if mode_binding["mode_transition"] is not False:
+        errors.append(f"loop {index} mode_binding mode_transition must be false")
+    if mode_binding["terminal_closure"] is not False:
+        errors.append(f"loop {index} mode_binding terminal_closure must be false")
     return errors
 
 
@@ -700,6 +756,19 @@ def _validate_text_list(value: Any, label: str) -> list[str]:
         if not isinstance(item, str) or not item:
             errors.append(f"{label} must contain only non-empty strings")
             break
+    return errors
+
+
+def _validate_mode_list(value: Any, label: str) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(value, list):
+        return [f"{label} must be a list"]
+    if not value:
+        errors.append(f"{label} must be non-empty")
+    valid_modes = set(LOOP_MODES)
+    for item in value:
+        if item not in valid_modes:
+            errors.append(f"{label} item is invalid: {item!r}")
     return errors
 
 

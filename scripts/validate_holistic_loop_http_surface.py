@@ -38,6 +38,7 @@ from mcoi_runtime.app.server_http import include_default_routers  # noqa: E402
 LOOP_READ_MODEL_PATH = "/api/v1/loops/read-model"
 ALLOWED_METHODS = frozenset({"GET", "HEAD"})
 MUTATION_METHODS = ("POST", "PUT", "PATCH", "DELETE")
+LOOP_MODES = ("real", "dry_run", "shadow", "simulation", "replay")
 REQUIRED_PAYLOAD_FIELDS = (
     "read_model_id",
     "read_model_version",
@@ -163,6 +164,8 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
     errors: list[str] = []
     for field_name in (
         "loop_id",
+        "mode",
+        "mode_binding",
         "risk_class",
         "risk_binding",
         "required_authority",
@@ -200,6 +203,9 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         errors.append(f"loop {index} must expose required authority")
     if not loop.get("required_evidence"):
         errors.append(f"loop {index} must expose required evidence")
+    if loop.get("mode") not in LOOP_MODES:
+        errors.append(f"loop {index} mode is invalid")
+    errors.extend(_validate_mode_binding(loop.get("mode_binding"), loop, index))
     errors.extend(_validate_risk_binding(loop.get("risk_binding"), loop, index))
     errors.extend(_validate_closure_report(loop.get("closure_report"), loop, index))
     errors.extend(
@@ -219,6 +225,40 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
     errors.extend(_validate_rollback_binding(loop.get("rollback_binding"), loop, index))
     errors.extend(_validate_learning_binding(loop.get("learning_binding"), loop, index))
     errors.extend(_validate_step_receipts(loop.get("step_receipts"), loop, index))
+    return errors
+
+
+def _validate_mode_binding(mode_binding: Any, loop: dict[str, Any], index: int) -> list[str]:
+    if not isinstance(mode_binding, dict):
+        return [f"loop {index} mode_binding must be an object"]
+    errors: list[str] = []
+    if mode_binding.get("projected_mode") != loop.get("mode"):
+        errors.append(f"loop {index} mode_binding projected_mode must match mode")
+    allowed_modes = mode_binding.get("allowed_modes")
+    if not isinstance(allowed_modes, list) or not allowed_modes:
+        errors.append(f"loop {index} mode_binding allowed_modes must be non-empty")
+    else:
+        if mode_binding.get("projected_mode") not in allowed_modes:
+            errors.append(f"loop {index} mode_binding projected_mode must be allowed")
+        for mode in allowed_modes:
+            if mode not in LOOP_MODES:
+                errors.append(f"loop {index} mode_binding allowed_modes item is invalid: {mode!r}")
+    for field_name in (
+        "separation_refs",
+        "real_execution_guard_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+    ):
+        refs = mode_binding.get(field_name)
+        if not isinstance(refs, list) or not refs or not all(isinstance(ref, str) and ref for ref in refs):
+            errors.append(f"loop {index} mode_binding {field_name} must be non-empty")
+    if mode_binding.get("read_only") is not True:
+        errors.append(f"loop {index} mode_binding read_only must be true")
+    if mode_binding.get("mode_transition") is not False:
+        errors.append(f"loop {index} mode_binding mode_transition must be false")
+    if mode_binding.get("terminal_closure") is not False:
+        errors.append(f"loop {index} mode_binding terminal_closure must be false")
     return errors
 
 

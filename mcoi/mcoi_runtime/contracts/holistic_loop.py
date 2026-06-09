@@ -474,6 +474,53 @@ class LoopLearningBinding(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class LoopModeBinding(ContractRecord):
+    """Read-only reference map for loop execution mode boundaries."""
+
+    projected_mode: LoopMode
+    allowed_modes: tuple[LoopMode, ...]
+    purpose: str
+    separation_refs: tuple[str, ...]
+    real_execution_guard_refs: tuple[str, ...]
+    source_refs: tuple[str, ...]
+    validator_refs: tuple[str, ...]
+    proof_surface_refs: tuple[str, ...]
+    read_only: bool = True
+    mode_transition: bool = False
+    terminal_closure: bool = False
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.projected_mode, LoopMode):
+            raise ValueError("projected_mode must be a LoopMode value")
+        object.__setattr__(
+            self,
+            "allowed_modes",
+            _freeze_enum_tuple(self.allowed_modes, "allowed_modes", LoopMode, "LoopMode"),
+        )
+        if self.projected_mode not in self.allowed_modes:
+            raise ValueError("projected_mode must be included in allowed_modes")
+        object.__setattr__(self, "purpose", require_non_empty_text(self.purpose, "purpose"))
+        for field_name in (
+            "separation_refs",
+            "real_execution_guard_refs",
+            "source_refs",
+            "validator_refs",
+            "proof_surface_refs",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name),
+            )
+        if self.read_only is not True:
+            raise ValueError("mode binding must be read-only")
+        if self.mode_transition is not False:
+            raise ValueError("mode binding cannot authorize mode transition")
+        if self.terminal_closure is not False:
+            raise ValueError("mode binding cannot be terminal closure")
+
+
+@dataclass(frozen=True, slots=True)
 class LoopSummary(ContractRecord):
     """Bounded read-model summary for one registered governed loop."""
 
@@ -485,6 +532,7 @@ class LoopSummary(ContractRecord):
     risk_binding: LoopRiskBinding
     status: LoopStatus
     mode: LoopMode
+    mode_binding: LoopModeBinding
     current_step: LoopPhase
     required_authority: tuple[str, ...]
     authority_bindings: tuple[LoopAuthorityBinding, ...]
@@ -523,6 +571,10 @@ class LoopSummary(ContractRecord):
             raise ValueError("status must be a LoopStatus value")
         if not isinstance(self.mode, LoopMode):
             raise ValueError("mode must be a LoopMode value")
+        if not isinstance(self.mode_binding, LoopModeBinding):
+            raise ValueError("mode_binding must be a LoopModeBinding")
+        if self.mode_binding.projected_mode != self.mode:
+            raise ValueError("mode_binding projected_mode must match mode")
         if not isinstance(self.current_step, LoopPhase):
             raise ValueError("current_step must be a LoopPhase value")
         for field_name in (
@@ -714,6 +766,7 @@ __all__ = [
     "LoopAuthorityBinding",
     "LoopEvidenceBinding",
     "LoopLearningBinding",
+    "LoopModeBinding",
     "LoopRiskBinding",
     "LoopRollbackBinding",
     "LoopManifest",

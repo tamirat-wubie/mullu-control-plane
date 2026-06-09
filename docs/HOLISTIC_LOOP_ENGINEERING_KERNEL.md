@@ -1,7 +1,7 @@
 # Mullu Holistic Loop Engineering Kernel v1
 
 Purpose: define the shared governed loop contract used to describe existing Mullu loops without changing their runtime behavior.
-Governance scope: loop manifests, loop state projections, step receipts, closure reports, registry exposure, risk bindings, evidence bindings, evidence blockers, rollback policy, learning bindings, and learning policy.
+Governance scope: loop manifests, loop state projections, step receipts, closure reports, registry exposure, mode bindings, risk bindings, evidence bindings, evidence blockers, rollback policy, learning bindings, and learning policy.
 Dependencies: `mcoi_runtime.contracts.holistic_loop`, `mcoi_runtime.core.holistic_loop_registry`, existing deployment witness, runtime conformance, cognitive outcome, and governed code-change surfaces.
 Invariants: this is a read-model-first contract layer; it adds no public mutation route; it does not rewrite deployment, cognitive, proof verification, or code-change behavior.
 
@@ -29,6 +29,7 @@ The kernel models the common contract through:
 | `LoopState` | Current read-only status, phase, mode, receipt, blockers, and evidence refs. |
 | `LoopStepReceipt` | Step-level input hash, output hash, decision, evidence, status, errors, and timestamp. |
 | `LoopClosureReport` | Closure assessment with unresolved gaps, rollback availability, and learning candidates. |
+| `LoopModeBinding` | Read-only map from projected mode to allowed modes, separation refs, real-execution guards, validators, and proof surfaces. |
 | `LoopAuthorityBinding` | Read-only map from each required authority label to source refs, validator refs, and proof surfaces. |
 | `LoopRiskBinding` | Read-only map from the risk class to hazards, mitigations, monitors, source refs, validator refs, and proof surfaces. |
 | `LoopRollbackBinding` | Read-only map from the rollback policy to recovery source refs, validator refs, and proof surfaces. |
@@ -59,6 +60,40 @@ open_blockers != empty -> status = blocked
 ```
 
 This prevents fake closure. A loop may report runtime health or worker execution evidence, but the read model remains blocked until the manifest's authority requirements, evidence requirements, and closure conditions are satisfied.
+
+## Mode Catalog
+
+Each loop summary includes `mode_binding`. A binding is a read-only catalog
+entry for the loop's projected execution posture:
+
+| Field | Meaning |
+| --- | --- |
+| `projected_mode` | The current read-model mode for this loop summary. |
+| `allowed_modes` | Manifest modes that the loop is allowed to describe. |
+| `purpose` | Why these mode boundaries exist for the loop. |
+| `separation_refs` | Named dry-run, shadow, simulation, replay, or real-mode separation rules. |
+| `real_execution_guard_refs` | Authority, witness, or policy labels required before real execution can be claimed. |
+| `source_refs` | Existing files, schemas, or scripts that define mode separation. |
+| `validator_refs` | Existing tests or validators that check the referenced mode boundary. |
+| `proof_surface_refs` | Proof-matrix surface IDs related to mode separation. |
+| `read_only` | Always `true`; bindings do not switch modes or execute loops. |
+| `mode_transition` | Always `false`; bindings do not authorize mode transitions. |
+| `terminal_closure` | Always `false`; bindings are not closure certificates. |
+
+The catalog is exact by contract:
+
+```text
+mode_binding.projected_mode == mode
+mode in mode_binding.allowed_modes
+mode_binding.read_only == true
+mode_binding.mode_transition == false
+mode_binding.terminal_closure == false
+```
+
+The mode catalog does not promote dry-run to real execution, authorize mode
+switching, mutate loop state, or close loops. It only tells operators which mode
+separation rules, real-execution guards, validators, and proof surfaces matter
+for later loop-specific execution admission.
 
 ## Authority Catalog
 
@@ -297,6 +332,7 @@ script:
 | `read_model_version` | Contract version: `holistic_loop_kernel.v1`. |
 | `status` | `blocked` while any returned loop has blockers; otherwise `verified`. |
 | `loops` | Bounded registered loop summaries. |
+| `loops[].mode_binding` | Read-only mode catalog entry matching the projected loop mode and allowed modes. |
 | `loops[].authority_bindings` | Read-only authority catalog entries covering every required authority label. |
 | `loops[].risk_binding` | Read-only risk catalog entry matching the loop risk class. |
 | `loops[].rollback_binding` | Read-only recovery catalog entry matching the loop rollback policy. |

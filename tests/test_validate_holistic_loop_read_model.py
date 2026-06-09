@@ -30,6 +30,7 @@ def test_current_holistic_loop_read_model_contract_passes() -> None:
     assert report["report_is_not_terminal_closure"] is True
     assert report["terminal_closure_required"] is True
     assert all(loop["risk_binding"] for loop in report["loops"])
+    assert all(loop["mode_binding"] for loop in report["loops"])
     assert all(loop["authority_bindings"] for loop in report["loops"])
     assert all(loop["missing_authority"] for loop in report["loops"])
     assert all(loop["rollback_binding"] for loop in report["loops"])
@@ -118,6 +119,20 @@ def test_schema_requires_learning_binding() -> None:
 
     assert any("schema missing required loop field: learning_binding" in error for error in errors)
     assert "learning_binding" not in invalid_schema["$defs"]["loop_summary"]["required"]
+    assert len(errors) >= 1
+
+
+def test_schema_requires_mode_binding() -> None:
+    schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
+    invalid_schema = copy.deepcopy(schema)
+    invalid_schema["$defs"]["loop_summary"]["required"] = [
+        field for field in invalid_schema["$defs"]["loop_summary"]["required"] if field != "mode_binding"
+    ]
+
+    errors = validator.validate_schema_artifact(invalid_schema)
+
+    assert any("schema missing required loop field: mode_binding" in error for error in errors)
+    assert "mode_binding" not in invalid_schema["$defs"]["loop_summary"]["required"]
     assert len(errors) >= 1
 
 
@@ -316,6 +331,51 @@ def test_learning_binding_requires_input_admission_and_retention_refs() -> None:
     assert any("learning_binding evidence_input_refs" in error for error in errors)
     assert any("learning_binding admission_refs" in error for error in errors)
     assert any("learning_binding retention_refs" in error for error in errors)
+
+
+def test_mode_binding_must_match_projected_mode() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_report["loops"][0]["mode_binding"]["projected_mode"] = "real"
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("mode_binding projected_mode must match mode" in error for error in errors)
+    assert invalid_report["loops"][0]["mode"] != invalid_report["loops"][0]["mode_binding"][
+        "projected_mode"
+    ]
+    assert invalid_report["loops"][0]["mode_binding"]["projected_mode"] == "real"
+
+
+def test_mode_binding_cannot_claim_transition_or_terminal_closure() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_binding = invalid_report["loops"][0]["mode_binding"]
+    invalid_binding["read_only"] = False
+    invalid_binding["mode_transition"] = True
+    invalid_binding["terminal_closure"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("mode_binding read_only must be true" in error for error in errors)
+    assert any("mode_binding mode_transition must be false" in error for error in errors)
+    assert any("mode_binding terminal_closure must be false" in error for error in errors)
+    assert invalid_binding["mode_transition"] is True
+
+
+def test_mode_binding_requires_allowed_mode_and_separation_guards() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_binding = invalid_report["loops"][0]["mode_binding"]
+    invalid_binding["allowed_modes"] = ["real"]
+    invalid_binding["separation_refs"] = []
+    invalid_binding["real_execution_guard_refs"] = []
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("mode_binding projected_mode must be allowed" in error for error in errors)
+    assert any("mode_binding separation_refs" in error for error in errors)
+    assert any("mode_binding real_execution_guard_refs" in error for error in errors)
 
 
 def test_rollback_binding_cannot_claim_mutation_or_terminal_closure() -> None:
