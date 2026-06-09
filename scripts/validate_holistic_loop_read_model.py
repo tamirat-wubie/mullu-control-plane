@@ -57,6 +57,7 @@ REQUIRED_LOOP_FIELDS = (
     "evidence_refs",
     "missing_evidence",
     "closure_conditions",
+    "closure_report",
     "open_blockers",
     "rollback_policy",
     "learning_policy",
@@ -243,6 +244,69 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
         expected_blocker = f"missing_evidence:{evidence_name}"
         if expected_blocker not in loop["open_blockers"]:
             errors.append(f"loop {index} missing evidence lacks blocker: {evidence_name}")
+    errors.extend(_validate_closure_report(loop["closure_report"], loop, index))
+    return errors
+
+
+def _validate_closure_report(closure_report: Any, loop: dict[str, Any], index: int) -> list[str]:
+    if not isinstance(closure_report, dict):
+        return [f"loop {index} closure_report must be an object"]
+    errors: list[str] = []
+    required_fields = {
+        "loop_id",
+        "closed",
+        "closure_reason",
+        "evidence_complete",
+        "unresolved_gaps",
+        "rollback_available",
+        "learning_candidates",
+        "metadata",
+    }
+    missing = sorted(required_fields - set(closure_report))
+    errors.extend(f"loop {index} closure_report missing field: {field_name}" for field_name in missing)
+    extra = sorted(set(closure_report) - required_fields)
+    errors.extend(f"loop {index} closure_report has unexpected field: {field_name}" for field_name in extra)
+    if missing:
+        return errors
+    if closure_report["loop_id"] != loop["loop_id"]:
+        errors.append(f"loop {index} closure_report loop_id must match loop_id")
+    if closure_report["closed"] is not False:
+        errors.append(f"loop {index} closure_report closed must be false")
+    if not isinstance(closure_report["closure_reason"], str) or not closure_report["closure_reason"]:
+        errors.append(f"loop {index} closure_report closure_reason must be non-empty")
+    expected_evidence_complete = not bool(loop["missing_evidence"])
+    if closure_report["evidence_complete"] is not expected_evidence_complete:
+        errors.append(f"loop {index} closure_report evidence_complete does not match missing evidence")
+    errors.extend(
+        _validate_text_list(
+            closure_report["unresolved_gaps"],
+            f"loop {index} closure_report unresolved_gaps",
+        )
+    )
+    if set(closure_report["unresolved_gaps"]) != set(loop["open_blockers"]):
+        errors.append(f"loop {index} closure_report unresolved_gaps must match open blockers")
+    if not isinstance(closure_report["rollback_available"], bool):
+        errors.append(f"loop {index} closure_report rollback_available must be boolean")
+    errors.extend(
+        _validate_text_list(
+            closure_report["learning_candidates"],
+            f"loop {index} closure_report learning_candidates",
+        )
+    )
+    metadata = closure_report["metadata"]
+    if not isinstance(metadata, dict):
+        errors.append(f"loop {index} closure_report metadata must be an object")
+        return errors
+    if metadata.get("read_only") is not True:
+        errors.append(f"loop {index} closure_report metadata read_only must be true")
+    if metadata.get("terminal_closure") is not False:
+        errors.append(f"loop {index} closure_report metadata terminal_closure must be false")
+    errors.extend(
+        _validate_text_list(
+            metadata.get("closure_conditions"),
+            f"loop {index} closure_report metadata closure_conditions",
+        )
+    )
     return errors
 
 

@@ -84,6 +84,7 @@
         "evidence_refs",
         "missing_evidence",
         "closure_conditions",
+        "closure_report",
         "open_blockers",
         "rollback_policy",
         "learning_policy",
@@ -154,6 +155,9 @@
         "closure_conditions": {
           "$ref": "#/$defs/text_list"
         },
+        "closure_report": {
+          "$ref": "#/$defs/closure_report"
+        },
         "open_blockers": {
           "$ref": "#/$defs/possibly_empty_text_list"
         },
@@ -168,6 +172,68 @@
         "updated_at": {
           "type": "string",
           "format": "date-time"
+        }
+      }
+    },
+    "closure_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "loop_id",
+        "closed",
+        "closure_reason",
+        "evidence_complete",
+        "unresolved_gaps",
+        "rollback_available",
+        "learning_candidates",
+        "metadata"
+      ],
+      "properties": {
+        "loop_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "closed": {
+          "type": "boolean",
+          "const": false
+        },
+        "closure_reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_complete": {
+          "type": "boolean"
+        },
+        "unresolved_gaps": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "rollback_available": {
+          "type": "boolean"
+        },
+        "learning_candidates": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "read_only",
+            "terminal_closure",
+            "closure_conditions"
+          ],
+          "properties": {
+            "read_only": {
+              "type": "boolean",
+              "const": true
+            },
+            "terminal_closure": {
+              "type": "boolean",
+              "const": false
+            },
+            "closure_conditions": {
+              "$ref": "#/$defs/text_list"
+            }
+          }
         }
       }
     },

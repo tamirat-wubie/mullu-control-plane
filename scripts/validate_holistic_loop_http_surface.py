@@ -168,6 +168,7 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         "missing_evidence",
         "open_blockers",
         "closure_conditions",
+        "closure_report",
     ):
         if field_name not in loop:
             errors.append(f"loop {index} missing field: {field_name}")
@@ -183,6 +184,7 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         errors.append(f"loop {index} must expose closure conditions")
     if not loop.get("required_evidence"):
         errors.append(f"loop {index} must expose required evidence")
+    errors.extend(_validate_closure_report(loop.get("closure_report"), loop, index))
     errors.extend(
         _validate_evidence_bindings(
             loop.get("evidence_bindings"),
@@ -190,6 +192,38 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
             index,
         )
     )
+    return errors
+
+
+def _validate_closure_report(closure_report: Any, loop: dict[str, Any], index: int) -> list[str]:
+    if not isinstance(closure_report, dict):
+        return [f"loop {index} closure_report must be an object"]
+    errors: list[str] = []
+    if closure_report.get("loop_id") != loop.get("loop_id"):
+        errors.append(f"loop {index} closure_report loop_id must match loop_id")
+    if closure_report.get("closed") is not False:
+        errors.append(f"loop {index} closure_report closed must be false")
+    expected_evidence_complete = not bool(loop.get("missing_evidence"))
+    if closure_report.get("evidence_complete") is not expected_evidence_complete:
+        errors.append(f"loop {index} closure_report evidence_complete does not match missing evidence")
+    unresolved_gaps = closure_report.get("unresolved_gaps")
+    if not isinstance(unresolved_gaps, list):
+        errors.append(f"loop {index} closure_report unresolved_gaps must be a list")
+    elif set(unresolved_gaps) != set(loop.get("open_blockers", ())):
+        errors.append(f"loop {index} closure_report unresolved_gaps must match open blockers")
+    if not isinstance(closure_report.get("rollback_available"), bool):
+        errors.append(f"loop {index} closure_report rollback_available must be boolean")
+    metadata = closure_report.get("metadata")
+    if not isinstance(metadata, dict):
+        errors.append(f"loop {index} closure_report metadata must be an object")
+        return errors
+    if metadata.get("read_only") is not True:
+        errors.append(f"loop {index} closure_report metadata read_only must be true")
+    if metadata.get("terminal_closure") is not False:
+        errors.append(f"loop {index} closure_report metadata terminal_closure must be false")
+    closure_conditions = metadata.get("closure_conditions")
+    if not isinstance(closure_conditions, list) or not closure_conditions:
+        errors.append(f"loop {index} closure_report metadata closure_conditions must be non-empty")
     return errors
 
 

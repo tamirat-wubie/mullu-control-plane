@@ -88,6 +88,38 @@ def test_payload_validation_rejects_binding_terminal_closure_claim() -> None:
     assert invalid_binding["terminal_closure"] is True
 
 
+def test_payload_validation_rejects_terminal_closure_report() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_closure = invalid_payload["loops"][0]["closure_report"]
+    invalid_closure["closed"] = True
+    invalid_closure["metadata"]["terminal_closure"] = True
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("closure_report closed must be false" in error for error in errors)
+    assert any("terminal_closure must be false" in error for error in errors)
+    assert invalid_closure["closed"] is True
+
+
+def test_payload_validation_requires_closure_gaps_to_match_blockers() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_payload["loops"][0]["closure_report"]["unresolved_gaps"] = ["different_gap"]
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("unresolved_gaps must match open blockers" in error for error in errors)
+    assert invalid_payload["loops"][0]["open_blockers"]
+    assert invalid_payload["loops"][0]["closure_report"]["unresolved_gaps"] == ["different_gap"]
+
+
 def test_payload_validation_requires_non_terminal_flags() -> None:
     app = FastAPI()
     app.include_router(router)

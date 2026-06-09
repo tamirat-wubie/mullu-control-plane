@@ -79,6 +79,36 @@ Missing, duplicate, or extra bindings are validation failures. The catalog does
 not replace live evidence. It only tells operators where proof must come from
 when a later loop-specific adapter or closure workflow runs.
 
+## Closure Readiness
+
+Each loop summary also includes a derived `closure_report`. This report is a
+read-only closure-readiness assessment, not a closure certificate:
+
+| Field | Meaning |
+| --- | --- |
+| `closed` | Always `false` in the read model. |
+| `closure_reason` | Explains whether the summary is blocked by gaps or verified but still awaiting terminal closure. |
+| `evidence_complete` | `true` only when no required evidence is missing. |
+| `unresolved_gaps` | Must match `open_blockers` exactly. |
+| `rollback_available` | `true` when the manifest has a rollback policy. |
+| `learning_candidates` | Learning policy candidates emitted when blockers remain. |
+| `metadata.read_only` | Always `true`. |
+| `metadata.terminal_closure` | Always `false`. |
+
+The closure report prevents an evidence-complete read model from being confused
+with loop closure:
+
+```text
+evidence_complete == true
+open_blockers == []
+status == verified
+closed == false
+terminal_closure_required == true
+```
+
+Terminal closure remains a loop-specific proof workflow outside this read-model
+surface.
+
 ## Boundary
 
 This kernel is intentionally non-invasive:
@@ -89,7 +119,8 @@ This kernel is intentionally non-invasive:
 4. It does not dispatch governed code-change workers.
 5. It does not create a public mutation route.
 6. It does not execute evidence validators referenced by the catalog.
-7. It only exposes typed read-model contracts that other surfaces can adopt later.
+7. It does not mark any loop closed.
+8. It only exposes typed read-model contracts that other surfaces can adopt later.
 
 ## Read-Only Exposure
 
@@ -109,6 +140,7 @@ script:
 | `status` | `blocked` while any returned loop has blockers; otherwise `verified`. |
 | `loops` | Bounded registered loop summaries. |
 | `loops[].evidence_bindings` | Read-only evidence catalog entries covering every required evidence label. |
+| `loops[].closure_report` | Read-only non-terminal closure-readiness report for each loop summary. |
 | `blocked_count` | Count of returned summaries carrying blockers. |
 | `verified_count` | Count of returned summaries marked verified. |
 | `read_only` | Always `true`. |
@@ -154,3 +186,4 @@ The tests verify:
 6. Step receipts and closure reports are typed and immutable.
 7. The HTTP read-model route is mounted read-only and has no mutation companion.
 8. Evidence bindings cover every required evidence label and cannot claim terminal closure.
+9. Closure reports cannot claim terminal closure and must match blockers.

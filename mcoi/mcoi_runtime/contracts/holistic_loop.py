@@ -317,6 +317,7 @@ class LoopSummary(ContractRecord):
     evidence_refs: tuple[str, ...]
     missing_evidence: tuple[str, ...]
     closure_conditions: tuple[str, ...]
+    closure_report: LoopClosureReport
     open_blockers: tuple[str, ...]
     rollback_policy: str
     learning_policy: str
@@ -370,6 +371,12 @@ class LoopSummary(ContractRecord):
                 "LoopEvidenceBinding",
             ),
         )
+        if not isinstance(self.closure_report, LoopClosureReport):
+            raise ValueError("closure_report must be a LoopClosureReport")
+        if self.closure_report.loop_id != self.loop_id:
+            raise ValueError("closure_report loop_id must match summary loop_id")
+        if self.closure_report.closed:
+            raise ValueError("summary closure_report cannot claim terminal closure")
         object.__setattr__(self, "updated_at", require_datetime_text(self.updated_at, "updated_at"))
         if self.status in {LoopStatus.VERIFIED, LoopStatus.CLOSED} and self.open_blockers:
             raise ValueError("verified or closed summary cannot carry blockers")
@@ -378,6 +385,10 @@ class LoopSummary(ContractRecord):
             raise ValueError("evidence bindings must not contain duplicate evidence refs")
         if set(binding_refs) != set(self.required_evidence):
             raise ValueError("evidence bindings must cover required evidence exactly")
+        if set(self.closure_report.unresolved_gaps) != set(self.open_blockers):
+            raise ValueError("closure_report unresolved gaps must match open blockers")
+        if self.closure_report.evidence_complete != (not self.missing_evidence):
+            raise ValueError("closure_report evidence_complete must match missing evidence")
 
 
 @dataclass(frozen=True, slots=True)

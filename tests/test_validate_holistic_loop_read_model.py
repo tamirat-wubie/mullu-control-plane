@@ -123,6 +123,44 @@ def test_evidence_binding_cannot_claim_mutation_or_terminal_closure() -> None:
     assert invalid_binding["read_only"] is False
 
 
+def test_closure_report_cannot_claim_terminal_closure() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_closure = invalid_report["loops"][0]["closure_report"]
+    invalid_closure["closed"] = True
+    invalid_closure["metadata"]["terminal_closure"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("closure_report closed must be false" in error for error in errors)
+    assert any("terminal_closure must be false" in error for error in errors)
+    assert invalid_closure["closed"] is True
+
+
+def test_closure_report_gaps_must_match_open_blockers() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_report["loops"][0]["closure_report"]["unresolved_gaps"] = ["different_gap"]
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("unresolved_gaps must match open blockers" in error for error in errors)
+    assert invalid_report["loops"][0]["open_blockers"]
+    assert invalid_report["loops"][0]["closure_report"]["unresolved_gaps"] == ["different_gap"]
+
+
+def test_closure_report_evidence_complete_must_match_missing_evidence() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_report["loops"][0]["closure_report"]["evidence_complete"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("evidence_complete does not match missing evidence" in error for error in errors)
+    assert invalid_report["loops"][0]["missing_evidence"]
+    assert invalid_report["loops"][0]["closure_report"]["evidence_complete"] is True
+
+
 def test_verified_loop_cannot_miss_evidence() -> None:
     report = validator.build_report()
     invalid_report = copy.deepcopy(report)

@@ -67,6 +67,11 @@ def test_missing_evidence_is_reported_as_blocker_not_success() -> None:
     assert deployment_summary.status is LoopStatus.BLOCKED
     assert "deployment_witness_published" in deployment_summary.missing_evidence
     assert "missing_evidence:deployment_witness_published" in deployment_summary.open_blockers
+    assert deployment_summary.closure_report.closed is False
+    assert deployment_summary.closure_report.evidence_complete is False
+    assert set(deployment_summary.closure_report.unresolved_gaps) == set(
+        deployment_summary.open_blockers
+    )
 
 
 def test_complete_evidence_verifies_read_model_without_runtime_mutation() -> None:
@@ -81,6 +86,9 @@ def test_complete_evidence_verifies_read_model_without_runtime_mutation() -> Non
     assert all(summary.status is LoopStatus.VERIFIED for summary in read_model.loops)
     assert all(summary.missing_evidence == () for summary in read_model.loops)
     assert all(summary.open_blockers == () for summary in read_model.loops)
+    assert all(summary.closure_report.closed is False for summary in read_model.loops)
+    assert all(summary.closure_report.evidence_complete is True for summary in read_model.loops)
+    assert all(summary.closure_report.unresolved_gaps == () for summary in read_model.loops)
 
 
 def test_loop_evidence_bindings_cover_required_evidence_without_execution() -> None:
@@ -133,6 +141,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
+            closure_report=summary.closure_report,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             learning_policy=summary.learning_policy,
@@ -155,6 +164,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
+            closure_report=summary.closure_report,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             learning_policy=summary.learning_policy,
@@ -178,6 +188,75 @@ def test_loop_evidence_binding_rejects_mutation_or_terminal_closure_claim() -> N
         LoopEvidenceBinding(**kwargs, terminal_closure=True)
 
 
+def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
+    summary = build_default_loop_read_model().loops[0]
+    terminal_report = LoopClosureReport(
+        loop_id=summary.loop_id,
+        closed=True,
+        closure_reason="terminal_claim_forbidden",
+        evidence_complete=True,
+        unresolved_gaps=(),
+        rollback_available=True,
+        learning_candidates=(),
+    )
+
+    with pytest.raises(ValueError, match="terminal closure"):
+        LoopSummary(
+            loop_id=summary.loop_id,
+            name=summary.name,
+            purpose=summary.purpose,
+            owner=summary.owner,
+            risk_class=summary.risk_class,
+            status=summary.status,
+            mode=summary.mode,
+            current_step=summary.current_step,
+            required_authority=summary.required_authority,
+            required_evidence=summary.required_evidence,
+            evidence_bindings=summary.evidence_bindings,
+            evidence_refs=summary.evidence_refs,
+            missing_evidence=summary.missing_evidence,
+            closure_conditions=summary.closure_conditions,
+            closure_report=terminal_report,
+            open_blockers=summary.open_blockers,
+            rollback_policy=summary.rollback_policy,
+            learning_policy=summary.learning_policy,
+            updated_at=summary.updated_at,
+        )
+
+    mismatched_report = LoopClosureReport(
+        loop_id=summary.loop_id,
+        closed=False,
+        closure_reason="missing_gap",
+        evidence_complete=False,
+        unresolved_gaps=("different_gap",),
+        rollback_available=True,
+        learning_candidates=(),
+    )
+
+    with pytest.raises(ValueError, match="unresolved gaps"):
+        LoopSummary(
+            loop_id=summary.loop_id,
+            name=summary.name,
+            purpose=summary.purpose,
+            owner=summary.owner,
+            risk_class=summary.risk_class,
+            status=summary.status,
+            mode=summary.mode,
+            current_step=summary.current_step,
+            required_authority=summary.required_authority,
+            required_evidence=summary.required_evidence,
+            evidence_bindings=summary.evidence_bindings,
+            evidence_refs=summary.evidence_refs,
+            missing_evidence=summary.missing_evidence,
+            closure_conditions=summary.closure_conditions,
+            closure_report=mismatched_report,
+            open_blockers=summary.open_blockers,
+            rollback_policy=summary.rollback_policy,
+            learning_policy=summary.learning_policy,
+            updated_at=summary.updated_at,
+        )
+
+
 def test_registry_preserves_explicit_blockers_even_when_evidence_exists() -> None:
     registry = build_default_loop_registry()
     manifest = registry.get_manifest("runtime_conformance_loop")
@@ -199,6 +278,8 @@ def test_registry_preserves_explicit_blockers_even_when_evidence_exists() -> Non
     assert summary.status is LoopStatus.BLOCKED
     assert summary.missing_evidence == ()
     assert summary.open_blockers == ("signature_key_rotation_pending",)
+    assert summary.closure_report.closed is False
+    assert summary.closure_report.unresolved_gaps == ("signature_key_rotation_pending",)
     assert "accepted_conformance_status" in summary.closure_conditions
 
 
