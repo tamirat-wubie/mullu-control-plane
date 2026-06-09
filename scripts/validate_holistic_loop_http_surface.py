@@ -163,6 +163,9 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
     errors: list[str] = []
     for field_name in (
         "loop_id",
+        "required_authority",
+        "authority_bindings",
+        "missing_authority",
         "required_evidence",
         "evidence_bindings",
         "step_receipts",
@@ -181,11 +184,24 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         expected_blocker = f"missing_evidence:{evidence_name}"
         if expected_blocker not in loop.get("open_blockers", ()):
             errors.append(f"loop {index} missing evidence lacks blocker: {evidence_name}")
+    for authority_name in loop.get("missing_authority", ()):
+        expected_blocker = f"missing_authority:{authority_name}"
+        if expected_blocker not in loop.get("open_blockers", ()):
+            errors.append(f"loop {index} missing authority lacks blocker: {authority_name}")
     if not loop.get("closure_conditions"):
         errors.append(f"loop {index} must expose closure conditions")
+    if not loop.get("required_authority"):
+        errors.append(f"loop {index} must expose required authority")
     if not loop.get("required_evidence"):
         errors.append(f"loop {index} must expose required evidence")
     errors.extend(_validate_closure_report(loop.get("closure_report"), loop, index))
+    errors.extend(
+        _validate_authority_bindings(
+            loop.get("authority_bindings"),
+            loop.get("required_authority"),
+            index,
+        )
+    )
     errors.extend(
         _validate_evidence_bindings(
             loop.get("evidence_bindings"),
@@ -194,6 +210,41 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         )
     )
     errors.extend(_validate_step_receipts(loop.get("step_receipts"), loop, index))
+    return errors
+
+
+def _validate_authority_bindings(authority_bindings: Any, required_authority: Any, index: int) -> list[str]:
+    if not isinstance(authority_bindings, list):
+        return [f"loop {index} authority_bindings must be a list"]
+    if not isinstance(required_authority, list):
+        return [f"loop {index} required_authority must be a list before binding validation"]
+    errors: list[str] = []
+    binding_refs: list[str] = []
+    for binding_index, binding in enumerate(authority_bindings):
+        if not isinstance(binding, dict):
+            errors.append(f"loop {index} authority binding {binding_index} must be an object")
+            continue
+        authority_ref = binding.get("authority_ref")
+        if not isinstance(authority_ref, str) or not authority_ref:
+            errors.append(f"loop {index} authority binding {binding_index} authority_ref must be non-empty")
+        else:
+            binding_refs.append(authority_ref)
+        for field_name in ("source_refs", "validator_refs", "proof_surface_refs"):
+            refs = binding.get(field_name)
+            if not isinstance(refs, list) or not refs or not all(isinstance(ref, str) and ref for ref in refs):
+                errors.append(f"loop {index} authority binding {binding_index} {field_name} must be non-empty")
+        if binding.get("read_only") is not True:
+            errors.append(f"loop {index} authority binding {binding_index} read_only must be true")
+        if binding.get("terminal_closure") is not False:
+            errors.append(f"loop {index} authority binding {binding_index} terminal_closure must be false")
+    required_refs = set(required_authority)
+    binding_ref_set = set(binding_refs)
+    for authority_name in sorted(required_refs - binding_ref_set):
+        errors.append(f"loop {index} missing authority binding: {authority_name}")
+    for authority_name in sorted(binding_ref_set - required_refs):
+        errors.append(f"loop {index} unexpected authority binding: {authority_name}")
+    if len(binding_refs) != len(binding_ref_set):
+        errors.append(f"loop {index} authority bindings must not contain duplicates")
     return errors
 
 

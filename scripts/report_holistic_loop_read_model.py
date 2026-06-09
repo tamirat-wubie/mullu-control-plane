@@ -35,6 +35,7 @@ from mcoi_runtime.core.holistic_loop_registry import (  # noqa: E402
 
 def build_report(
     *,
+    observed_authority_refs: dict[str, tuple[str, ...]] | None = None,
     observed_evidence_refs: dict[str, tuple[str, ...]] | None = None,
     generated_at: str = DEFAULT_LOOP_UPDATED_AT,
     limit: int = 20,
@@ -42,6 +43,7 @@ def build_report(
     """Build a machine-readable holistic loop read-model report."""
 
     read_model = build_default_loop_read_model(
+        observed_authority_refs=observed_authority_refs,
         observed_evidence_refs=observed_evidence_refs,
         generated_at=generated_at,
         limit=limit,
@@ -110,6 +112,22 @@ def parse_evidence_refs(values: tuple[str, ...]) -> dict[str, tuple[str, ...]]:
     return {loop_id: tuple(refs) for loop_id, refs in evidence_by_loop.items()}
 
 
+def parse_authority_refs(values: tuple[str, ...]) -> dict[str, tuple[str, ...]]:
+    """Parse loop_id=authority_ref arguments into grouped authority refs."""
+
+    authority_by_loop: dict[str, list[str]] = {}
+    for value in values:
+        if "=" not in value:
+            raise ValueError("authority refs must use loop_id=authority_ref form")
+        loop_id, authority_ref = value.split("=", 1)
+        loop_id = loop_id.strip()
+        authority_ref = authority_ref.strip()
+        if not loop_id or not authority_ref:
+            raise ValueError("loop_id and authority_ref must be non-empty")
+        authority_by_loop.setdefault(loop_id, []).append(authority_ref)
+    return {loop_id: tuple(refs) for loop_id, refs in authority_by_loop.items()}
+
+
 def main(argv: list[str] | None = None) -> int:
     """Report the holistic governed loop read model."""
 
@@ -127,10 +145,17 @@ def main(argv: list[str] | None = None) -> int:
         default=[],
         help="observed evidence ref in loop_id=evidence_ref form; repeatable",
     )
+    parser.add_argument(
+        "--authority-ref",
+        action="append",
+        default=[],
+        help="observed authority ref in loop_id=authority_ref form; repeatable",
+    )
     args = parser.parse_args(argv)
 
     try:
         report = build_report(
+            observed_authority_refs=parse_authority_refs(tuple(args.authority_ref)),
             observed_evidence_refs=parse_evidence_refs(tuple(args.evidence_ref)),
             generated_at=args.generated_at,
             limit=args.limit,

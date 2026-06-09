@@ -29,6 +29,8 @@ def test_current_holistic_loop_read_model_contract_passes() -> None:
     assert report["report_id"] == "holistic_loop_read_model"
     assert report["report_is_not_terminal_closure"] is True
     assert report["terminal_closure_required"] is True
+    assert all(loop["authority_bindings"] for loop in report["loops"])
+    assert all(loop["missing_authority"] for loop in report["loops"])
     assert all(loop["step_receipts"] for loop in report["loops"])
 
 
@@ -57,6 +59,20 @@ def test_schema_requires_step_receipts() -> None:
 
     assert any("schema missing required loop field: step_receipts" in error for error in errors)
     assert "step_receipts" not in invalid_schema["$defs"]["loop_summary"]["required"]
+    assert len(errors) >= 1
+
+
+def test_schema_requires_authority_bindings() -> None:
+    schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
+    invalid_schema = copy.deepcopy(schema)
+    invalid_schema["$defs"]["loop_summary"]["required"] = [
+        field for field in invalid_schema["$defs"]["loop_summary"]["required"] if field != "authority_bindings"
+    ]
+
+    errors = validator.validate_schema_artifact(invalid_schema)
+
+    assert any("schema missing required loop field: authority_bindings" in error for error in errors)
+    assert "authority_bindings" not in invalid_schema["$defs"]["loop_summary"]["required"]
     assert len(errors) >= 1
 
 
@@ -94,6 +110,67 @@ def test_missing_evidence_requires_matching_blocker() -> None:
     assert any("missing evidence lacks blocker" in error for error in errors)
     assert invalid_report["loops"][0]["missing_evidence"]
     assert invalid_report["loops"][0]["open_blockers"] == []
+
+
+def test_missing_authority_requires_matching_blocker() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_report["loops"][0]["open_blockers"] = [
+        blocker
+        for blocker in invalid_report["loops"][0]["open_blockers"]
+        if not blocker.startswith("missing_authority:")
+    ]
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("missing authority lacks blocker" in error for error in errors)
+    assert invalid_report["loops"][0]["missing_authority"]
+    assert all(
+        not blocker.startswith("missing_authority:")
+        for blocker in invalid_report["loops"][0]["open_blockers"]
+    )
+
+
+def test_missing_authority_binding_is_reported() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    missing_binding = invalid_report["loops"][0]["authority_bindings"].pop()
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("missing authority binding" in error for error in errors)
+    assert missing_binding["authority_ref"] in invalid_report["loops"][0]["required_authority"]
+    assert missing_binding not in invalid_report["loops"][0]["authority_bindings"]
+
+
+def test_duplicate_authority_binding_is_reported() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_report["loops"][0]["authority_bindings"].append(
+        copy.deepcopy(invalid_report["loops"][0]["authority_bindings"][0])
+    )
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("duplicate authority binding" in error for error in errors)
+    assert invalid_report["loops"][0]["authority_bindings"][0]["authority_ref"]
+    assert len(invalid_report["loops"][0]["authority_bindings"]) > len(
+        invalid_report["loops"][0]["required_authority"]
+    )
+
+
+def test_authority_binding_cannot_claim_mutation_or_terminal_closure() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_binding = invalid_report["loops"][0]["authority_bindings"][0]
+    invalid_binding["read_only"] = False
+    invalid_binding["terminal_closure"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("authority binding 0 read_only must be true" in error for error in errors)
+    assert any("authority binding 0 terminal_closure must be false" in error for error in errors)
+    assert invalid_binding["read_only"] is False
 
 
 def test_missing_evidence_binding_is_reported() -> None:
@@ -212,6 +289,18 @@ def test_verified_loop_cannot_miss_evidence() -> None:
     assert any("verified or closed loop cannot miss evidence" in error for error in errors)
     assert invalid_report["loops"][0]["status"] == "verified"
     assert invalid_report["loops"][0]["missing_evidence"]
+
+
+def test_verified_loop_cannot_miss_authority() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_report["loops"][0]["status"] = "verified"
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("verified or closed loop cannot miss authority" in error for error in errors)
+    assert invalid_report["loops"][0]["status"] == "verified"
+    assert invalid_report["loops"][0]["missing_authority"]
 
 
 def test_unexpected_report_field_is_reported() -> None:

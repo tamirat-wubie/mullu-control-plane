@@ -32,12 +32,24 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
         "governed_code_change_loop",
     }
     assert all(loop["open_blockers"] for loop in loops)
+    assert all(loop["authority_bindings"] for loop in loops)
+    assert all(loop["missing_authority"] for loop in loops)
     assert all(loop["evidence_bindings"] for loop in loops)
     assert all(loop["step_receipts"] for loop in loops)
+    assert all(
+        {binding["authority_ref"] for binding in loop["authority_bindings"]}
+        == set(loop["required_authority"])
+        for loop in loops
+    )
     assert all(
         {binding["evidence_ref"] for binding in loop["evidence_bindings"]}
         == set(loop["required_evidence"])
         for loop in loops
+    )
+    assert all(
+        binding["read_only"] is True and binding["terminal_closure"] is False
+        for loop in loops
+        for binding in loop["authority_bindings"]
     )
     assert all(
         binding["read_only"] is True and binding["terminal_closure"] is False
@@ -64,20 +76,30 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
     )
 
 
-def test_report_accepts_complete_observed_evidence_refs() -> None:
+def test_report_accepts_complete_observed_authority_and_evidence_refs() -> None:
     baseline = reporter.build_report()
-    observed = {
+    observed_authority = {
+        loop["loop_id"]: tuple(loop["required_authority"])
+        for loop in baseline["loops"]
+        if isinstance(loop, dict)
+    }
+    observed_evidence = {
         loop["loop_id"]: tuple(loop["required_evidence"])
         for loop in baseline["loops"]
         if isinstance(loop, dict)
     }
-    report = reporter.build_report(observed_evidence_refs=observed)
+    report = reporter.build_report(
+        observed_authority_refs=observed_authority,
+        observed_evidence_refs=observed_evidence,
+    )
 
     assert report["status"] == "verified"
     assert report["blocked_count"] == 0
     assert report["verified_count"] == 4
+    assert all(loop["missing_authority"] == [] for loop in report["loops"])
     assert all(loop["missing_evidence"] == [] for loop in report["loops"])
     assert all(loop["status"] == "verified" for loop in report["loops"])
+    assert all(loop["authority_bindings"] for loop in report["loops"])
     assert all(loop["evidence_bindings"] for loop in report["loops"])
     assert all(loop["step_receipts"] for loop in report["loops"])
     assert all(loop["closure_report"]["closed"] is False for loop in report["loops"])
@@ -104,6 +126,23 @@ def test_parse_evidence_refs_groups_repeatable_args() -> None:
     assert len(parsed) == 2
 
 
+def test_parse_authority_refs_groups_repeatable_args() -> None:
+    parsed = reporter.parse_authority_refs(
+        (
+            "deployment_witness_loop=operator_approval_ref",
+            "deployment_witness_loop=deployment_publication_authority",
+            "governed_code_change_loop=uao_ref",
+        )
+    )
+
+    assert parsed["deployment_witness_loop"] == (
+        "operator_approval_ref",
+        "deployment_publication_authority",
+    )
+    assert parsed["governed_code_change_loop"] == ("uao_ref",)
+    assert len(parsed) == 2
+
+
 def test_main_emits_json_report(capsys) -> None:  # noqa: ANN001
     exit_code = reporter.main(["--json", "--limit", "2"])
     captured = capsys.readouterr()
@@ -121,4 +160,13 @@ def test_main_rejects_malformed_evidence_ref(capsys) -> None:  # noqa: ANN001
 
     assert exit_code == 1
     assert "loop_id=evidence_ref" in captured.err
+    assert "STATUS: failed" in captured.err
+
+
+def test_main_rejects_malformed_authority_ref(capsys) -> None:  # noqa: ANN001
+    exit_code = reporter.main(["--authority-ref", "missing-separator"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert "loop_id=authority_ref" in captured.err
     assert "STATUS: failed" in captured.err

@@ -74,6 +74,27 @@ staged into the holistic loop PR.
 
 ## Evidence Catalog Follow-Up
 
+The read model now exposes `LoopAuthorityBinding` entries for every
+`required_authority` label. The catalog maps each authority label to existing
+source refs, validator refs, and proof-matrix surface refs. It remains
+read-only and non-terminal:
+
+```text
+set(authority_bindings[*].authority_ref) == set(required_authority)
+read_only == true
+terminal_closure == false
+```
+
+Missing authority appears as a blocker:
+
+```text
+missing_authority -> open_blockers: missing_authority:<name>
+```
+
+The catalog does not grant authority and does not close a loop. It only tells
+operators where authority proof must come from when a later loop-specific
+workflow runs.
+
 The read model now exposes `LoopEvidenceBinding` entries for every
 `required_evidence` label. The catalog maps each evidence label to existing
 source refs, validator refs, and proof-matrix surface refs. It remains
