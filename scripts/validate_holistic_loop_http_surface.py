@@ -173,6 +173,8 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         "open_blockers",
         "closure_conditions",
         "closure_report",
+        "rollback_policy",
+        "rollback_binding",
     ):
         if field_name not in loop:
             errors.append(f"loop {index} missing field: {field_name}")
@@ -209,7 +211,25 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
             index,
         )
     )
+    errors.extend(_validate_rollback_binding(loop.get("rollback_binding"), loop, index))
     errors.extend(_validate_step_receipts(loop.get("step_receipts"), loop, index))
+    return errors
+
+
+def _validate_rollback_binding(rollback_binding: Any, loop: dict[str, Any], index: int) -> list[str]:
+    if not isinstance(rollback_binding, dict):
+        return [f"loop {index} rollback_binding must be an object"]
+    errors: list[str] = []
+    if rollback_binding.get("rollback_ref") != loop.get("rollback_policy"):
+        errors.append(f"loop {index} rollback_binding rollback_ref must match rollback_policy")
+    for field_name in ("source_refs", "validator_refs", "proof_surface_refs"):
+        refs = rollback_binding.get(field_name)
+        if not isinstance(refs, list) or not refs or not all(isinstance(ref, str) and ref for ref in refs):
+            errors.append(f"loop {index} rollback_binding {field_name} must be non-empty")
+    if rollback_binding.get("read_only") is not True:
+        errors.append(f"loop {index} rollback_binding read_only must be true")
+    if rollback_binding.get("terminal_closure") is not False:
+        errors.append(f"loop {index} rollback_binding terminal_closure must be false")
     return errors
 
 

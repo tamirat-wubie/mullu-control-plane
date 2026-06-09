@@ -64,6 +64,7 @@ REQUIRED_LOOP_FIELDS = (
     "closure_report",
     "open_blockers",
     "rollback_policy",
+    "rollback_binding",
     "learning_policy",
     "updated_at",
 )
@@ -258,7 +259,45 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
         expected_blocker = f"missing_authority:{authority_name}"
         if expected_blocker not in loop["open_blockers"]:
             errors.append(f"loop {index} missing authority lacks blocker: {authority_name}")
+    errors.extend(_validate_rollback_binding(loop["rollback_binding"], loop, index))
     errors.extend(_validate_closure_report(loop["closure_report"], loop, index))
+    return errors
+
+
+def _validate_rollback_binding(rollback_binding: Any, loop: dict[str, Any], index: int) -> list[str]:
+    if not isinstance(rollback_binding, dict):
+        return [f"loop {index} rollback_binding must be an object"]
+    errors: list[str] = []
+    required_fields = {
+        "rollback_ref",
+        "purpose",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "read_only",
+        "terminal_closure",
+    }
+    missing = sorted(required_fields - set(rollback_binding))
+    errors.extend(f"loop {index} rollback_binding missing field: {field_name}" for field_name in missing)
+    extra = sorted(set(rollback_binding) - required_fields)
+    errors.extend(f"loop {index} rollback_binding has unexpected field: {field_name}" for field_name in extra)
+    if missing:
+        return errors
+    if rollback_binding["rollback_ref"] != loop["rollback_policy"]:
+        errors.append(f"loop {index} rollback_binding rollback_ref must match rollback_policy")
+    if not isinstance(rollback_binding["purpose"], str) or not rollback_binding["purpose"]:
+        errors.append(f"loop {index} rollback_binding purpose must be non-empty")
+    for field_name in ("source_refs", "validator_refs", "proof_surface_refs"):
+        errors.extend(
+            _validate_text_list(
+                rollback_binding[field_name],
+                f"loop {index} rollback_binding {field_name}",
+            )
+        )
+    if rollback_binding["read_only"] is not True:
+        errors.append(f"loop {index} rollback_binding read_only must be true")
+    if rollback_binding["terminal_closure"] is not False:
+        errors.append(f"loop {index} rollback_binding terminal_closure must be false")
     return errors
 
 

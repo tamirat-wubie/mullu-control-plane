@@ -35,6 +35,7 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
     assert all(loop["authority_bindings"] for loop in loops)
     assert all(loop["missing_authority"] for loop in loops)
     assert all(loop["evidence_bindings"] for loop in loops)
+    assert all(loop["rollback_binding"] for loop in loops)
     assert all(loop["step_receipts"] for loop in loops)
     assert all(
         {binding["authority_ref"] for binding in loop["authority_bindings"]}
@@ -55,6 +56,12 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
         binding["read_only"] is True and binding["terminal_closure"] is False
         for loop in loops
         for binding in loop["evidence_bindings"]
+    )
+    assert all(
+        loop["rollback_binding"]["rollback_ref"] == loop["rollback_policy"]
+        and loop["rollback_binding"]["read_only"] is True
+        and loop["rollback_binding"]["terminal_closure"] is False
+        for loop in loops
     )
     assert all(
         receipt["metadata"]["read_only"] is True
@@ -101,6 +108,7 @@ def test_report_accepts_complete_observed_authority_and_evidence_refs() -> None:
     assert all(loop["status"] == "verified" for loop in report["loops"])
     assert all(loop["authority_bindings"] for loop in report["loops"])
     assert all(loop["evidence_bindings"] for loop in report["loops"])
+    assert all(loop["rollback_binding"] for loop in report["loops"])
     assert all(loop["step_receipts"] for loop in report["loops"])
     assert all(loop["closure_report"]["closed"] is False for loop in report["loops"])
     assert all(loop["closure_report"]["evidence_complete"] is True for loop in report["loops"])

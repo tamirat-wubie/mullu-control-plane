@@ -23,6 +23,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopMode,
     LoopPhase,
     LoopReadModel,
+    LoopRollbackBinding,
     LoopState,
     LoopStatus,
     LoopStepReceipt,
@@ -373,6 +374,7 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         closure_report=_closure_report_for(manifest, blockers, missing),
         open_blockers=blockers,
         rollback_policy=manifest.rollback_policy,
+        rollback_binding=_rollback_binding_for(manifest.loop_id),
         learning_policy=manifest.learning_policy,
         updated_at=state.updated_at,
     )
@@ -433,6 +435,13 @@ def _authority_bindings_for(loop_id: str) -> tuple[LoopAuthorityBinding, ...]:
         return _DEFAULT_AUTHORITY_BINDINGS[loop_id]
     except KeyError as exc:
         raise ValueError(f"loop authority catalog missing: {loop_id}") from exc
+
+
+def _rollback_binding_for(loop_id: str) -> LoopRollbackBinding:
+    try:
+        return _DEFAULT_ROLLBACK_BINDINGS[loop_id]
+    except KeyError as exc:
+        raise ValueError(f"loop rollback catalog missing: {loop_id}") from exc
 
 
 def _closure_report_for(
@@ -504,6 +513,23 @@ def _authority_binding(
     )
 
 
+def _rollback_binding(
+    rollback_ref: str,
+    purpose: str,
+    *,
+    source_refs: Sequence[str],
+    validator_refs: Sequence[str],
+    proof_surface_refs: Sequence[str],
+) -> LoopRollbackBinding:
+    return LoopRollbackBinding(
+        rollback_ref=rollback_ref,
+        purpose=purpose,
+        source_refs=tuple(source_refs),
+        validator_refs=tuple(validator_refs),
+        proof_surface_refs=tuple(proof_surface_refs),
+    )
+
+
 _DEPLOYMENT_WITNESS_SOURCES = (
     "scripts/collect_deployment_witness.py",
     "schemas/deployment_witness.schema.json",
@@ -538,6 +564,59 @@ _GOVERNED_CODE_CHANGE_VALIDATORS = (
     "tests/test_governed_code_change_loop.py",
     "tests/test_validate_governed_code_change_loop_receipt.py",
 )
+
+
+_DEFAULT_ROLLBACK_BINDINGS: Mapping[str, LoopRollbackBinding] = {
+    "deployment_witness_loop": _rollback_binding(
+        "revert_publication_status_and_restore_last_verified_witness",
+        "Rollback deployment publication status and restore the last verified witness boundary.",
+        source_refs=(
+            "scripts/apply_deployment_publication_status.py",
+            "schemas/deployment_publication_closure_plan.schema.json",
+            "schemas/deployment_witness.schema.json",
+        ),
+        validator_refs=(
+            "tests/test_apply_deployment_publication_status.py",
+            "tests/test_plan_deployment_publication_closure.py",
+            "tests/test_collect_deployment_witness.py",
+        ),
+        proof_surface_refs=("production_evidence_plane", "authority_obligation_mesh"),
+    ),
+    "runtime_conformance_loop": _rollback_binding(
+        "invalidate_conformance_claim_and_retain_failed_collection",
+        "Rollback runtime conformance by invalidating the claim while retaining failed collection proof.",
+        source_refs=_RUNTIME_CONFORMANCE_SOURCES,
+        validator_refs=_RUNTIME_CONFORMANCE_VALIDATORS,
+        proof_surface_refs=("runtime_conformance_attestation",),
+    ),
+    "cognitive_outcome_loop": _rollback_binding(
+        "defer_or_reject_learning_admission_without_memory_promotion",
+        "Rollback cognitive outcome learning by deferring or rejecting admission without memory promotion.",
+        source_refs=(
+            "schemas/learning_admission.schema.json",
+            "mcoi/mcoi_runtime/core/mil_learning_admission.py",
+        ),
+        validator_refs=(
+            "mcoi/tests/test_learning_loop.py",
+            "mcoi/tests/test_whqr_mil_learning_admission.py",
+        ),
+        proof_surface_refs=("software_outcome_learning",),
+    ),
+    "governed_code_change_loop": _rollback_binding(
+        "restore_workspace_snapshot_or_open_recovery_handoff",
+        "Rollback governed code changes by restoring a workspace snapshot or opening recovery handoff.",
+        source_refs=(
+            "mcoi/mcoi_runtime/core/governed_code_change_loop.py",
+            "schemas/sdlc_recovery_handoff_receipt.schema.json",
+        ),
+        validator_refs=(
+            "tests/test_governed_code_change_loop.py",
+            "tests/test_validate_governed_code_change_loop_receipt.py",
+            "scripts/validate_sdlc_artifact.py",
+        ),
+        proof_surface_refs=("software_dev_capability_pack",),
+    ),
+}
 
 
 _DEFAULT_AUTHORITY_BINDINGS: Mapping[str, tuple[LoopAuthorityBinding, ...]] = {

@@ -44,6 +44,7 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
     assert all(loop["authority_bindings"] for loop in payload["loops"])
     assert all(loop["missing_authority"] for loop in payload["loops"])
     assert all(loop["evidence_bindings"] for loop in payload["loops"])
+    assert all(loop["rollback_binding"] for loop in payload["loops"])
     assert all(loop["step_receipts"] for loop in payload["loops"])
     assert all(
         {binding["authority_ref"] for binding in loop["authority_bindings"]}
@@ -64,6 +65,12 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
         binding["read_only"] is True and binding["terminal_closure"] is False
         for loop in payload["loops"]
         for binding in loop["evidence_bindings"]
+    )
+    assert all(
+        loop["rollback_binding"]["rollback_ref"] == loop["rollback_policy"]
+        and loop["rollback_binding"]["read_only"] is True
+        and loop["rollback_binding"]["terminal_closure"] is False
+        for loop in payload["loops"]
     )
     assert all(
         receipt["metadata"]["read_only"] is True
