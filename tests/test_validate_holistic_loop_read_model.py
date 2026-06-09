@@ -29,6 +29,7 @@ def test_current_holistic_loop_read_model_contract_passes() -> None:
     assert report["report_id"] == "holistic_loop_read_model"
     assert report["report_is_not_terminal_closure"] is True
     assert report["terminal_closure_required"] is True
+    assert all(loop["step_receipts"] for loop in report["loops"])
 
 
 def test_schema_rejects_missing_required_loop_field() -> None:
@@ -42,6 +43,20 @@ def test_schema_rejects_missing_required_loop_field() -> None:
 
     assert any("schema missing required loop field: open_blockers" in error for error in errors)
     assert "open_blockers" not in invalid_schema["$defs"]["loop_summary"]["required"]
+    assert len(errors) >= 1
+
+
+def test_schema_requires_step_receipts() -> None:
+    schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
+    invalid_schema = copy.deepcopy(schema)
+    invalid_schema["$defs"]["loop_summary"]["required"] = [
+        field for field in invalid_schema["$defs"]["loop_summary"]["required"] if field != "step_receipts"
+    ]
+
+    errors = validator.validate_schema_artifact(invalid_schema)
+
+    assert any("schema missing required loop field: step_receipts" in error for error in errors)
+    assert "step_receipts" not in invalid_schema["$defs"]["loop_summary"]["required"]
     assert len(errors) >= 1
 
 
@@ -121,6 +136,32 @@ def test_evidence_binding_cannot_claim_mutation_or_terminal_closure() -> None:
     assert any("read_only must be true" in error for error in errors)
     assert any("terminal_closure must be false" in error for error in errors)
     assert invalid_binding["read_only"] is False
+
+
+def test_step_receipts_cannot_claim_mutation_or_terminal_closure() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_receipt = invalid_report["loops"][0]["step_receipts"][0]
+    invalid_receipt["metadata"]["read_only"] = False
+    invalid_receipt["metadata"]["terminal_closure"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("step receipt 0 read_only must be true" in error for error in errors)
+    assert any("step receipt 0 terminal_closure must be false" in error for error in errors)
+    assert invalid_receipt["metadata"]["read_only"] is False
+
+
+def test_step_receipt_errors_must_match_open_blockers() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_report["loops"][0]["step_receipts"][0]["errors"] = ["different_gap"]
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("step receipt 0 errors must match open blockers" in error for error in errors)
+    assert invalid_report["loops"][0]["open_blockers"]
+    assert invalid_report["loops"][0]["step_receipts"][0]["errors"] == ["different_gap"]
 
 
 def test_closure_report_cannot_claim_terminal_closure() -> None:

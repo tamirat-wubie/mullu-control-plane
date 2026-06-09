@@ -6538,6 +6538,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/loops/read-model",
                 "LoopRegistry",
                 "LoopReadModel",
+                "LoopStepReceipt",
                 "LoopClosureReport",
             ],
             "read_model",
@@ -6563,8 +6564,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
             (
                 "Holistic loop engineering exposes existing governed loops through "
                 "one read-only loop contract, registry, schema-backed summary, "
-                "and HTTP read model. Missing evidence remains an explicit blocker "
-                "and no mutation route is introduced."
+                "bounded receipt trail, and HTTP read model. Missing evidence remains "
+                "an explicit blocker and no mutation route is introduced."
             ),
             [
                 "registered_loops_expose_governed_manifest_fields",
@@ -6572,6 +6573,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "closure_report_blocks_incomplete_evidence",
                 "loop_registry_rejects_duplicate_loop_ids",
                 "loop_evidence_bindings_cover_required_evidence",
+                "loop_step_receipt_trail_is_read_only",
                 "loop_closure_report_blocks_terminal_closure",
                 "loop_read_model_endpoint_is_read_only",
                 "loop_http_surface_validator_rejects_mutation_routes",
@@ -6591,6 +6593,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "loop_evidence_bindings_cover_required_evidence": [
                     "loop_evidence_bindings_cover_required_evidence_without_execution"
+                ],
+                "loop_step_receipt_trail_is_read_only": [
+                    "loop_summary_exposes_read_only_step_receipt_trail"
                 ],
                 "loop_closure_report_blocks_terminal_closure": [
                     "loop_summary_rejects_terminal_or_mismatched_closure_report"

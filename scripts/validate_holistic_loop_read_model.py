@@ -54,6 +54,7 @@ REQUIRED_LOOP_FIELDS = (
     "required_authority",
     "required_evidence",
     "evidence_bindings",
+    "step_receipts",
     "evidence_refs",
     "missing_evidence",
     "closure_conditions",
@@ -236,6 +237,7 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
     ):
         errors.extend(_validate_text_list(loop[field_name], f"loop {index} {field_name}"))
     errors.extend(_validate_evidence_bindings(loop["evidence_bindings"], loop["required_evidence"], index))
+    errors.extend(_validate_step_receipts(loop["step_receipts"], loop, index))
     if loop["open_blockers"] and loop["status"] != "blocked":
         errors.append(f"loop {index} with blockers must be blocked")
     if loop["status"] in {"verified", "closed"} and loop["missing_evidence"]:
@@ -245,6 +247,99 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
         if expected_blocker not in loop["open_blockers"]:
             errors.append(f"loop {index} missing evidence lacks blocker: {evidence_name}")
     errors.extend(_validate_closure_report(loop["closure_report"], loop, index))
+    return errors
+
+
+def _validate_step_receipts(step_receipts: Any, loop: dict[str, Any], index: int) -> list[str]:
+    if not isinstance(step_receipts, list):
+        return [f"loop {index} step_receipts must be a list"]
+    if not step_receipts:
+        return [f"loop {index} step_receipts must not be empty"]
+    errors: list[str] = []
+    seen_steps: list[str] = []
+    required_fields = {
+        "loop_id",
+        "step",
+        "input_hash",
+        "output_hash",
+        "decision",
+        "evidence_refs",
+        "status",
+        "errors",
+        "timestamp",
+        "metadata",
+    }
+    for receipt_index, receipt in enumerate(step_receipts):
+        if not isinstance(receipt, dict):
+            errors.append(f"loop {index} step receipt {receipt_index} must be an object")
+            continue
+        missing = sorted(required_fields - set(receipt))
+        errors.extend(
+            f"loop {index} step receipt {receipt_index} missing field: {field_name}"
+            for field_name in missing
+        )
+        extra = sorted(set(receipt) - required_fields)
+        errors.extend(
+            f"loop {index} step receipt {receipt_index} has unexpected field: {field_name}"
+            for field_name in extra
+        )
+        if missing:
+            continue
+        if receipt["loop_id"] != loop["loop_id"]:
+            errors.append(f"loop {index} step receipt {receipt_index} loop_id must match loop_id")
+        step = receipt["step"]
+        if step not in LOOP_STEPS:
+            errors.append(f"loop {index} step receipt {receipt_index} step is invalid")
+        else:
+            seen_steps.append(step)
+        for field_name in ("input_hash", "output_hash"):
+            value = receipt[field_name]
+            if (
+                not isinstance(value, str)
+                or len(value) != 71
+                or not value.startswith("sha256:")
+            ):
+                errors.append(
+                    f"loop {index} step receipt {receipt_index} {field_name} must be sha256"
+                )
+        if not isinstance(receipt["decision"], str) or not receipt["decision"]:
+            errors.append(f"loop {index} step receipt {receipt_index} decision must be non-empty")
+        errors.extend(
+            _validate_text_list(
+                receipt["evidence_refs"],
+                f"loop {index} step receipt {receipt_index} evidence_refs",
+            )
+        )
+        if receipt["status"] not in {"open", "blocked", "verified"}:
+            errors.append(f"loop {index} step receipt {receipt_index} status is invalid")
+        if receipt["status"] == "blocked" and not loop["open_blockers"]:
+            errors.append(f"loop {index} step receipt {receipt_index} blocked without loop blockers")
+        errors.extend(
+            _validate_text_list(
+                receipt["errors"],
+                f"loop {index} step receipt {receipt_index} errors",
+            )
+        )
+        if set(receipt["errors"]) != set(loop["open_blockers"]):
+            errors.append(f"loop {index} step receipt {receipt_index} errors must match open blockers")
+        if not isinstance(receipt["timestamp"], str) or not receipt["timestamp"]:
+            errors.append(f"loop {index} step receipt {receipt_index} timestamp must be non-empty")
+        metadata = receipt["metadata"]
+        if not isinstance(metadata, dict):
+            errors.append(f"loop {index} step receipt {receipt_index} metadata must be an object")
+            continue
+        if metadata.get("read_only") is not True:
+            errors.append(f"loop {index} step receipt {receipt_index} read_only must be true")
+        if metadata.get("synthetic_projection") is not True:
+            errors.append(
+                f"loop {index} step receipt {receipt_index} synthetic_projection must be true"
+            )
+        if metadata.get("terminal_closure") is not False:
+            errors.append(f"loop {index} step receipt {receipt_index} terminal_closure must be false")
+        if metadata.get("behavior_rewrite") is not False:
+            errors.append(f"loop {index} step receipt {receipt_index} behavior_rewrite must be false")
+    duplicate_steps = sorted({step for step in seen_steps if seen_steps.count(step) > 1})
+    errors.extend(f"loop {index} duplicate step receipt: {step}" for step in duplicate_steps)
     return errors
 
 

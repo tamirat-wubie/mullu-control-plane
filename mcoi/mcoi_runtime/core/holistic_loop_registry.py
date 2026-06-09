@@ -10,6 +10,7 @@ Invariants:
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
 from typing import Mapping, Sequence
 
@@ -23,6 +24,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopReadModel,
     LoopState,
     LoopStatus,
+    LoopStepReceipt,
     LoopSummary,
 )
 
@@ -348,6 +350,7 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         required_authority=manifest.required_authority,
         required_evidence=manifest.required_evidence,
         evidence_bindings=_evidence_bindings_for(manifest.loop_id),
+        step_receipts=_step_receipts_for(manifest, state, blockers),
         evidence_refs=state.evidence_refs,
         missing_evidence=missing,
         closure_conditions=manifest.closure_conditions,
@@ -357,6 +360,56 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         learning_policy=manifest.learning_policy,
         updated_at=state.updated_at,
     )
+
+
+def _step_receipts_for(
+    manifest: LoopManifest,
+    state: LoopState,
+    blockers: Sequence[str],
+) -> tuple[LoopStepReceipt, ...]:
+    status = LoopStatus.BLOCKED if blockers else LoopStatus.VERIFIED
+    receipts: list[LoopStepReceipt] = []
+    for step in manifest.canonical_steps:
+        decision = _step_decision(step, bool(blockers))
+        receipts.append(
+            LoopStepReceipt(
+                loop_id=manifest.loop_id,
+                step=step,
+                input_hash=_receipt_hash(manifest.loop_id, step.value, "input"),
+                output_hash=_receipt_hash(manifest.loop_id, step.value, "output"),
+                decision=decision,
+                evidence_refs=state.evidence_refs,
+                status=status,
+                errors=tuple(blockers),
+                timestamp=state.updated_at,
+                metadata={
+                    "read_only": True,
+                    "synthetic_projection": True,
+                    "terminal_closure": False,
+                    "behavior_rewrite": False,
+                },
+            )
+        )
+    return tuple(receipts)
+
+
+def _step_decision(step: LoopPhase, blocked: bool) -> str:
+    if blocked and step in {
+        LoopPhase.VERIFY,
+        LoopPhase.RECORD_RECEIPT,
+        LoopPhase.UPDATE_STATE,
+        LoopPhase.LEARN,
+        LoopPhase.AUDIT,
+    }:
+        return "block_until_required_evidence_observed"
+    if step is LoopPhase.ACT:
+        return "project_existing_behavior_without_execution"
+    return f"project_read_model_{step.value}"
+
+
+def _receipt_hash(loop_id: str, step: str, boundary: str) -> str:
+    digest = hashlib.sha256(f"{loop_id}:{step}:{boundary}:read_model_v1".encode("utf-8")).hexdigest()
+    return f"sha256:{digest}"
 
 
 def _closure_report_for(

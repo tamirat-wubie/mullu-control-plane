@@ -42,6 +42,7 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
     }
     assert all(loop["open_blockers"] for loop in payload["loops"])
     assert all(loop["evidence_bindings"] for loop in payload["loops"])
+    assert all(loop["step_receipts"] for loop in payload["loops"])
     assert all(
         {binding["evidence_ref"] for binding in loop["evidence_bindings"]}
         == set(loop["required_evidence"])
@@ -51,6 +52,18 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
         binding["read_only"] is True and binding["terminal_closure"] is False
         for loop in payload["loops"]
         for binding in loop["evidence_bindings"]
+    )
+    assert all(
+        receipt["metadata"]["read_only"] is True
+        and receipt["metadata"]["synthetic_projection"] is True
+        and receipt["metadata"]["terminal_closure"] is False
+        for loop in payload["loops"]
+        for receipt in loop["step_receipts"]
+    )
+    assert all(
+        set(receipt["errors"]) == set(loop["open_blockers"])
+        for loop in payload["loops"]
+        for receipt in loop["step_receipts"]
     )
     assert all(loop["closure_report"]["closed"] is False for loop in payload["loops"])
     assert all(

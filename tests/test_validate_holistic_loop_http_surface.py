@@ -88,6 +88,38 @@ def test_payload_validation_rejects_binding_terminal_closure_claim() -> None:
     assert invalid_binding["terminal_closure"] is True
 
 
+def test_payload_validation_rejects_step_receipt_terminal_closure_claim() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_receipt = invalid_payload["loops"][0]["step_receipts"][0]
+    invalid_receipt["metadata"]["read_only"] = False
+    invalid_receipt["metadata"]["terminal_closure"] = True
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("step receipt 0 read_only must be true" in error for error in errors)
+    assert any("step receipt 0 terminal_closure must be false" in error for error in errors)
+    assert invalid_receipt["metadata"]["terminal_closure"] is True
+
+
+def test_payload_validation_requires_step_receipt_errors_to_match_blockers() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_payload["loops"][0]["step_receipts"][0]["errors"] = ["different_gap"]
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("step receipt 0 errors must match open blockers" in error for error in errors)
+    assert invalid_payload["loops"][0]["open_blockers"]
+    assert invalid_payload["loops"][0]["step_receipts"][0]["errors"] == ["different_gap"]
+
+
 def test_payload_validation_rejects_terminal_closure_report() -> None:
     app = FastAPI()
     app.include_router(router)

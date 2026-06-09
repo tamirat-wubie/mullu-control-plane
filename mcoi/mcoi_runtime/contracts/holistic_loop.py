@@ -208,8 +208,14 @@ class LoopStepReceipt(ContractRecord):
             "errors",
             _freeze_text_tuple(self.errors, "errors", allow_empty=True),
         )
+        if self.status is LoopStatus.CLOSED:
+            raise ValueError("step receipt cannot claim terminal closure")
         object.__setattr__(self, "timestamp", require_datetime_text(self.timestamp, "timestamp"))
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
+        if self.metadata.get("read_only") is not True:
+            raise ValueError("step receipt metadata read_only must be true")
+        if self.metadata.get("terminal_closure") is not False:
+            raise ValueError("step receipt metadata terminal_closure must be false")
 
 
 @dataclass(frozen=True, slots=True)
@@ -314,6 +320,7 @@ class LoopSummary(ContractRecord):
     required_authority: tuple[str, ...]
     required_evidence: tuple[str, ...]
     evidence_bindings: tuple[LoopEvidenceBinding, ...]
+    step_receipts: tuple[LoopStepReceipt, ...]
     evidence_refs: tuple[str, ...]
     missing_evidence: tuple[str, ...]
     closure_conditions: tuple[str, ...]
@@ -371,6 +378,16 @@ class LoopSummary(ContractRecord):
                 "LoopEvidenceBinding",
             ),
         )
+        object.__setattr__(
+            self,
+            "step_receipts",
+            _freeze_contract_tuple(
+                self.step_receipts,
+                "step_receipts",
+                LoopStepReceipt,
+                "LoopStepReceipt",
+            ),
+        )
         if not isinstance(self.closure_report, LoopClosureReport):
             raise ValueError("closure_report must be a LoopClosureReport")
         if self.closure_report.loop_id != self.loop_id:
@@ -385,6 +402,16 @@ class LoopSummary(ContractRecord):
             raise ValueError("evidence bindings must not contain duplicate evidence refs")
         if set(binding_refs) != set(self.required_evidence):
             raise ValueError("evidence bindings must cover required evidence exactly")
+        if not self.step_receipts:
+            raise ValueError("step_receipts must contain at least one receipt")
+        receipt_steps = [receipt.step for receipt in self.step_receipts]
+        if len(receipt_steps) != len(set(receipt_steps)):
+            raise ValueError("step_receipts must not contain duplicate steps")
+        for receipt in self.step_receipts:
+            if receipt.loop_id != self.loop_id:
+                raise ValueError("step receipt loop_id must match summary loop_id")
+            if receipt.status is LoopStatus.CLOSED:
+                raise ValueError("step receipt cannot claim terminal closure")
         if set(self.closure_report.unresolved_gaps) != set(self.open_blockers):
             raise ValueError("closure_report unresolved gaps must match open blockers")
         if self.closure_report.evidence_complete != (not self.missing_evidence):

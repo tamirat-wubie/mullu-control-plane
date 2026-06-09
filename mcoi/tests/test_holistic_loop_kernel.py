@@ -138,6 +138,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             required_authority=summary.required_authority,
             required_evidence=summary.required_evidence,
             evidence_bindings=(duplicate_binding, duplicate_binding),
+            step_receipts=summary.step_receipts,
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
@@ -161,6 +162,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             required_authority=summary.required_authority,
             required_evidence=summary.required_evidence,
             evidence_bindings=summary.evidence_bindings[:-1],
+            step_receipts=summary.step_receipts,
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
@@ -213,6 +215,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             required_authority=summary.required_authority,
             required_evidence=summary.required_evidence,
             evidence_bindings=summary.evidence_bindings,
+            step_receipts=summary.step_receipts,
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
@@ -246,6 +249,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             required_authority=summary.required_authority,
             required_evidence=summary.required_evidence,
             evidence_bindings=summary.evidence_bindings,
+            step_receipts=summary.step_receipts,
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
@@ -283,6 +287,86 @@ def test_registry_preserves_explicit_blockers_even_when_evidence_exists() -> Non
     assert "accepted_conformance_status" in summary.closure_conditions
 
 
+def test_loop_summary_exposes_read_only_step_receipt_trail() -> None:
+    read_model = build_default_loop_read_model()
+    expected_steps = (
+        LoopPhase.OBSERVE,
+        LoopPhase.DECIDE,
+        LoopPhase.ACT,
+        LoopPhase.VERIFY,
+        LoopPhase.RECORD_RECEIPT,
+        LoopPhase.UPDATE_STATE,
+        LoopPhase.LEARN,
+        LoopPhase.AUDIT,
+    )
+
+    for summary in read_model.loops:
+        assert tuple(receipt.step for receipt in summary.step_receipts) == expected_steps
+        assert len(summary.step_receipts) == 8
+        assert all(receipt.loop_id == summary.loop_id for receipt in summary.step_receipts)
+        assert all(receipt.status is LoopStatus.BLOCKED for receipt in summary.step_receipts)
+        assert all(set(receipt.errors) == set(summary.open_blockers) for receipt in summary.step_receipts)
+        assert all(receipt.metadata["read_only"] is True for receipt in summary.step_receipts)
+        assert all(receipt.metadata["synthetic_projection"] is True for receipt in summary.step_receipts)
+        assert all(receipt.metadata["terminal_closure"] is False for receipt in summary.step_receipts)
+        assert all(receipt.metadata["behavior_rewrite"] is False for receipt in summary.step_receipts)
+
+
+def test_loop_summary_rejects_terminal_or_mismatched_step_receipts() -> None:
+    summary = build_default_loop_read_model().loops[0]
+
+    with pytest.raises(ValueError, match="terminal_closure"):
+        LoopStepReceipt(
+            loop_id=summary.loop_id,
+            step=LoopPhase.VERIFY,
+            input_hash="sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            output_hash="sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            decision="terminal_step_claim_forbidden",
+            evidence_refs=(),
+            status=LoopStatus.VERIFIED,
+            errors=(),
+            timestamp=summary.updated_at,
+            metadata={"read_only": True, "terminal_closure": True},
+        )
+
+    mismatched_receipt = LoopStepReceipt(
+        loop_id="different_loop",
+        step=LoopPhase.OBSERVE,
+        input_hash="sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        output_hash="sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        decision="mismatched_loop_forbidden",
+        evidence_refs=(),
+        status=LoopStatus.BLOCKED,
+        errors=summary.open_blockers,
+        timestamp=summary.updated_at,
+        metadata={"read_only": True, "terminal_closure": False},
+    )
+
+    with pytest.raises(ValueError, match="step receipt loop_id"):
+        LoopSummary(
+            loop_id=summary.loop_id,
+            name=summary.name,
+            purpose=summary.purpose,
+            owner=summary.owner,
+            risk_class=summary.risk_class,
+            status=summary.status,
+            mode=summary.mode,
+            current_step=summary.current_step,
+            required_authority=summary.required_authority,
+            required_evidence=summary.required_evidence,
+            evidence_bindings=summary.evidence_bindings,
+            step_receipts=(mismatched_receipt,),
+            evidence_refs=summary.evidence_refs,
+            missing_evidence=summary.missing_evidence,
+            closure_conditions=summary.closure_conditions,
+            closure_report=summary.closure_report,
+            open_blockers=summary.open_blockers,
+            rollback_policy=summary.rollback_policy,
+            learning_policy=summary.learning_policy,
+            updated_at=summary.updated_at,
+        )
+
+
 def test_loop_registry_rejects_duplicate_loop_ids() -> None:
     registry = build_default_loop_registry()
     manifest = registry.get_manifest("deployment_witness_loop")
@@ -310,6 +394,7 @@ def test_loop_receipt_and_closure_report_contracts_are_explicit() -> None:
         status=LoopStatus.BLOCKED,
         errors=("missing_evidence:verification_receipt",),
         timestamp="2026-06-08T00:00:00+00:00",
+        metadata={"read_only": True, "terminal_closure": False},
     )
     report = LoopClosureReport(
         loop_id="governed_code_change_loop",
