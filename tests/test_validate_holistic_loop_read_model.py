@@ -33,6 +33,7 @@ def test_current_holistic_loop_read_model_contract_passes() -> None:
     assert all(loop["authority_bindings"] for loop in report["loops"])
     assert all(loop["missing_authority"] for loop in report["loops"])
     assert all(loop["rollback_binding"] for loop in report["loops"])
+    assert all(loop["learning_binding"] for loop in report["loops"])
     assert all(loop["step_receipts"] for loop in report["loops"])
 
 
@@ -103,6 +104,20 @@ def test_schema_requires_risk_binding() -> None:
 
     assert any("schema missing required loop field: risk_binding" in error for error in errors)
     assert "risk_binding" not in invalid_schema["$defs"]["loop_summary"]["required"]
+    assert len(errors) >= 1
+
+
+def test_schema_requires_learning_binding() -> None:
+    schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
+    invalid_schema = copy.deepcopy(schema)
+    invalid_schema["$defs"]["loop_summary"]["required"] = [
+        field for field in invalid_schema["$defs"]["loop_summary"]["required"] if field != "learning_binding"
+    ]
+
+    errors = validator.validate_schema_artifact(invalid_schema)
+
+    assert any("schema missing required loop field: learning_binding" in error for error in errors)
+    assert "learning_binding" not in invalid_schema["$defs"]["loop_summary"]["required"]
     assert len(errors) >= 1
 
 
@@ -258,6 +273,49 @@ def test_rollback_binding_must_match_policy() -> None:
         "rollback_ref"
     ]
     assert invalid_report["loops"][0]["rollback_binding"]["rollback_ref"] == "different_policy"
+
+
+def test_learning_binding_must_match_policy() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_report["loops"][0]["learning_binding"]["learning_ref"] = "different_policy"
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("learning_binding learning_ref must match learning_policy" in error for error in errors)
+    assert invalid_report["loops"][0]["learning_policy"] != invalid_report["loops"][0]["learning_binding"][
+        "learning_ref"
+    ]
+    assert invalid_report["loops"][0]["learning_binding"]["learning_ref"] == "different_policy"
+
+
+def test_learning_binding_cannot_claim_mutation_or_terminal_closure() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_binding = invalid_report["loops"][0]["learning_binding"]
+    invalid_binding["read_only"] = False
+    invalid_binding["terminal_closure"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("learning_binding read_only must be true" in error for error in errors)
+    assert any("learning_binding terminal_closure must be false" in error for error in errors)
+    assert invalid_binding["read_only"] is False
+
+
+def test_learning_binding_requires_input_admission_and_retention_refs() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_binding = invalid_report["loops"][0]["learning_binding"]
+    invalid_binding["evidence_input_refs"] = []
+    invalid_binding["admission_refs"] = []
+    invalid_binding["retention_refs"] = []
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("learning_binding evidence_input_refs" in error for error in errors)
+    assert any("learning_binding admission_refs" in error for error in errors)
+    assert any("learning_binding retention_refs" in error for error in errors)
 
 
 def test_rollback_binding_cannot_claim_mutation_or_terminal_closure() -> None:

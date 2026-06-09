@@ -312,8 +312,8 @@ def test_holistic_loop_kernel_witness_labels_have_exact_anchors() -> None:
         for record in holistic_integrity["anchored_witnesses"]
     }
 
-    assert holistic_integrity["runtime_witness_count"] == 12
-    assert holistic_integrity["exact_test_anchor_count"] == 12
+    assert holistic_integrity["runtime_witness_count"] == 13
+    assert holistic_integrity["exact_test_anchor_count"] == 13
     assert holistic_integrity["unanchored_witness_count"] == 0
     assert holistic_integrity["unanchored_witnesses"] == []
     assert anchors_by_witness["registered_loops_expose_governed_manifest_fields"] == {
@@ -344,6 +344,12 @@ def test_holistic_loop_kernel_witness_labels_have_exact_anchors() -> None:
         (
             "mcoi/tests/test_holistic_loop_kernel.py::"
             "test_loop_rollback_bindings_cover_recovery_policy_without_execution"
+        )
+    }
+    assert anchors_by_witness["loop_learning_bindings_cover_learning_policy"] == {
+        (
+            "mcoi/tests/test_holistic_loop_kernel.py::"
+            "test_loop_learning_bindings_cover_learning_policy_without_execution"
         )
     }
     assert anchors_by_witness["loop_evidence_bindings_cover_required_evidence"] == {

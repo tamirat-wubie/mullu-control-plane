@@ -19,6 +19,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopAuthorityBinding,
     LoopClosureReport,
     LoopEvidenceBinding,
+    LoopLearningBinding,
     LoopMode,
     LoopPhase,
     LoopRiskBinding,
@@ -194,6 +195,38 @@ def test_loop_rollback_bindings_cover_recovery_policy_without_execution() -> Non
         assert binding.proof_surface_refs
 
 
+def test_loop_learning_bindings_cover_learning_policy_without_execution() -> None:
+    read_model = build_default_loop_read_model()
+
+    for summary in read_model.loops:
+        binding = summary.learning_binding
+
+        assert binding.learning_ref == summary.learning_policy
+        assert binding.read_only is True
+        assert binding.terminal_closure is False
+        assert binding.evidence_input_refs
+        assert binding.admission_refs
+        assert binding.retention_refs
+        assert binding.source_refs
+        assert binding.validator_refs
+        assert binding.proof_surface_refs
+
+
+def test_loop_learning_binding_local_refs_resolve_to_existing_artifacts() -> None:
+    read_model = build_default_loop_read_model()
+    file_refs = {
+        ref
+        for summary in read_model.loops
+        for ref in (*summary.learning_binding.source_refs, *summary.learning_binding.validator_refs)
+        if "/" in ref
+    }
+
+    assert "scripts/preflight_deployment_witness.py" in file_refs
+    assert "mcoi/mcoi_runtime/persistence/cognitive_outcome_ledger.py" in file_refs
+    assert "schemas/sdlc_verification_receipt.schema.json" in file_refs
+    assert all((REPO_ROOT / ref).exists() for ref in file_refs)
+
+
 def test_loop_rollback_binding_local_refs_resolve_to_existing_artifacts() -> None:
     read_model = build_default_loop_read_model()
     file_refs = {
@@ -255,6 +288,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
             learning_policy=summary.learning_policy,
+            learning_binding=summary.learning_binding,
             updated_at=summary.updated_at,
         )
 
@@ -284,6 +318,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
             learning_policy=summary.learning_policy,
+            learning_binding=summary.learning_binding,
             updated_at=summary.updated_at,
         )
 
@@ -355,6 +390,25 @@ def test_loop_risk_binding_rejects_mutation_or_terminal_closure_claim() -> None:
         LoopRiskBinding(**kwargs, terminal_closure=True)
 
 
+def test_loop_learning_binding_rejects_mutation_or_terminal_closure_claim() -> None:
+    kwargs = {
+        "learning_ref": "promote failure diagnosis into tests or SDLC gate evidence",
+        "purpose": "bind code-change failure diagnosis to later SDLC proof",
+        "evidence_input_refs": ("verification_receipt",),
+        "admission_refs": ("diagnosis_requires_worker_or_verification_receipt",),
+        "retention_refs": ("sdlc_verification_receipt",),
+        "source_refs": ("schemas/sdlc_verification_receipt.schema.json",),
+        "validator_refs": ("scripts/validate_sdlc_artifact.py",),
+        "proof_surface_refs": ("software_dev_capability_pack",),
+    }
+
+    with pytest.raises(ValueError, match="read-only"):
+        LoopLearningBinding(**kwargs, read_only=False)
+
+    with pytest.raises(ValueError, match="terminal closure"):
+        LoopLearningBinding(**kwargs, terminal_closure=True)
+
+
 def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
     summary = build_default_loop_read_model().loops[0]
     terminal_report = LoopClosureReport(
@@ -393,6 +447,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
             learning_policy=summary.learning_policy,
+            learning_binding=summary.learning_binding,
             updated_at=summary.updated_at,
         )
 
@@ -432,6 +487,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
             learning_policy=summary.learning_policy,
+            learning_binding=summary.learning_binding,
             updated_at=summary.updated_at,
         )
 
@@ -544,6 +600,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_step_receipts() -> None:
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
             learning_policy=summary.learning_policy,
+            learning_binding=summary.learning_binding,
             updated_at=summary.updated_at,
         )
 

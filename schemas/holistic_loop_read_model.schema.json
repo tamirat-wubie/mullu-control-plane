@@ -94,6 +94,7 @@
         "rollback_policy",
         "rollback_binding",
         "learning_policy",
+        "learning_binding",
         "updated_at"
       ],
       "properties": {
@@ -201,6 +202,9 @@
           "type": "string",
           "minLength": 1
         },
+        "learning_binding": {
+          "$ref": "#/$defs/learning_binding"
+        },
         "updated_at": {
           "type": "string",
           "format": "date-time"
@@ -238,6 +242,58 @@
           "$ref": "#/$defs/text_list"
         },
         "monitor_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "source_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "validator_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "proof_surface_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "learning_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "learning_ref",
+        "purpose",
+        "evidence_input_refs",
+        "admission_refs",
+        "retention_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "read_only",
+        "terminal_closure"
+      ],
+      "properties": {
+        "learning_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_input_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "admission_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "retention_refs": {
           "$ref": "#/$defs/text_list"
         },
         "source_refs": {

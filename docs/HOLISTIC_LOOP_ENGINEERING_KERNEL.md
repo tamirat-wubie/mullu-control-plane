@@ -1,7 +1,7 @@
 # Mullu Holistic Loop Engineering Kernel v1
 
 Purpose: define the shared governed loop contract used to describe existing Mullu loops without changing their runtime behavior.
-Governance scope: loop manifests, loop state projections, step receipts, closure reports, registry exposure, risk bindings, evidence bindings, evidence blockers, rollback policy, and learning policy.
+Governance scope: loop manifests, loop state projections, step receipts, closure reports, registry exposure, risk bindings, evidence bindings, evidence blockers, rollback policy, learning bindings, and learning policy.
 Dependencies: `mcoi_runtime.contracts.holistic_loop`, `mcoi_runtime.core.holistic_loop_registry`, existing deployment witness, runtime conformance, cognitive outcome, and governed code-change surfaces.
 Invariants: this is a read-model-first contract layer; it adds no public mutation route; it does not rewrite deployment, cognitive, proof verification, or code-change behavior.
 
@@ -32,6 +32,7 @@ The kernel models the common contract through:
 | `LoopAuthorityBinding` | Read-only map from each required authority label to source refs, validator refs, and proof surfaces. |
 | `LoopRiskBinding` | Read-only map from the risk class to hazards, mitigations, monitors, source refs, validator refs, and proof surfaces. |
 | `LoopRollbackBinding` | Read-only map from the rollback policy to recovery source refs, validator refs, and proof surfaces. |
+| `LoopLearningBinding` | Read-only map from the learning policy to evidence inputs, admission refs, retention refs, validators, and proof surfaces. |
 | `LoopEvidenceBinding` | Read-only map from each required evidence label to source refs, validator refs, and proof surfaces. |
 | `LoopRegistry` | Immutable registry binding manifests to read-only states. |
 | `LoopReadModel` | Bounded loop summary projection for dashboards, docs, and validators. |
@@ -140,6 +141,37 @@ rollback_binding.terminal_closure == false
 The rollback catalog does not restore snapshots, invalidate claims, or open
 recovery handoffs. It only tells operators where recovery proof must come from.
 
+## Learning Catalog
+
+Each loop summary includes `learning_binding`. A binding is a read-only catalog
+entry for the loop's `learning_policy`:
+
+| Field | Meaning |
+| --- | --- |
+| `learning_ref` | The learning policy label the binding explains. |
+| `purpose` | Why this learning path exists. |
+| `evidence_input_refs` | Required evidence labels that may feed later learning. |
+| `admission_refs` | Named admission rules that prevent uncontrolled learning. |
+| `retention_refs` | Records or ledgers where validated learning evidence is retained. |
+| `source_refs` | Existing files, schemas, or scripts that define the learning surface. |
+| `validator_refs` | Existing tests or validators that check the referenced learning surface. |
+| `proof_surface_refs` | Proof-matrix surface IDs related to learning. |
+| `read_only` | Always `true`; bindings do not write memory or update policy. |
+| `terminal_closure` | Always `false`; bindings are not closure certificates. |
+
+The catalog is exact by contract:
+
+```text
+learning_binding.learning_ref == learning_policy
+learning_binding.read_only == true
+learning_binding.terminal_closure == false
+```
+
+The learning catalog does not admit learning, write memory, mutate tests, or
+update SDLC gates. It only tells operators which evidence inputs, admission
+rules, retention surfaces, and proof surfaces matter for later loop-specific
+learning workflows.
+
 ## Evidence Catalog
 
 Each loop summary includes `evidence_bindings`. A binding is a read-only catalog
@@ -242,10 +274,11 @@ This kernel is intentionally non-invasive:
 6. It does not grant authority or execute authority checks referenced by the catalog.
 7. It does not score risk or execute risk admission referenced by the catalog.
 8. It does not execute rollback or recovery actions referenced by the catalog.
-9. It does not execute evidence validators referenced by the catalog.
-10. It does not emit live runtime execution receipts.
-11. It does not mark any loop closed.
-12. It only exposes typed read-model contracts that other surfaces can adopt later.
+9. It does not admit learning, write memory, mutate tests, or update gates referenced by the catalog.
+10. It does not execute evidence validators referenced by the catalog.
+11. It does not emit live runtime execution receipts.
+12. It does not mark any loop closed.
+13. It only exposes typed read-model contracts that other surfaces can adopt later.
 
 ## Read-Only Exposure
 
@@ -267,6 +300,7 @@ script:
 | `loops[].authority_bindings` | Read-only authority catalog entries covering every required authority label. |
 | `loops[].risk_binding` | Read-only risk catalog entry matching the loop risk class. |
 | `loops[].rollback_binding` | Read-only recovery catalog entry matching the loop rollback policy. |
+| `loops[].learning_binding` | Read-only learning catalog entry matching the loop learning policy. |
 | `loops[].evidence_bindings` | Read-only evidence catalog entries covering every required evidence label. |
 | `loops[].step_receipts` | Read-only synthetic receipt trail for the canonical loop phases. |
 | `loops[].closure_report` | Read-only non-terminal closure-readiness report for each loop summary. |
@@ -317,6 +351,7 @@ The tests verify:
 8. Authority bindings cover every required authority label and cannot claim terminal closure.
 9. Risk bindings cover each risk class and cannot score risk, admit execution, or claim closure.
 10. Rollback bindings cover each recovery policy and cannot execute rollback or claim closure.
-11. Evidence bindings cover every required evidence label and cannot claim terminal closure.
-12. Step receipt trails are read-only synthetic projections and must match blockers.
-13. Closure reports cannot claim terminal closure and must match blockers.
+11. Learning bindings cover each learning policy and cannot admit learning, write memory, mutate tests, or claim closure.
+12. Evidence bindings cover every required evidence label and cannot claim terminal closure.
+13. Step receipt trails are read-only synthetic projections and must match blockers.
+14. Closure reports cannot claim terminal closure and must match blockers.

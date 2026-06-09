@@ -433,6 +433,47 @@ class LoopRiskBinding(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class LoopLearningBinding(ContractRecord):
+    """Read-only reference map for one loop learning policy."""
+
+    learning_ref: str
+    purpose: str
+    evidence_input_refs: tuple[str, ...]
+    admission_refs: tuple[str, ...]
+    retention_refs: tuple[str, ...]
+    source_refs: tuple[str, ...]
+    validator_refs: tuple[str, ...]
+    proof_surface_refs: tuple[str, ...]
+    read_only: bool = True
+    terminal_closure: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "learning_ref",
+            require_non_empty_text(self.learning_ref, "learning_ref"),
+        )
+        object.__setattr__(self, "purpose", require_non_empty_text(self.purpose, "purpose"))
+        for field_name in (
+            "evidence_input_refs",
+            "admission_refs",
+            "retention_refs",
+            "source_refs",
+            "validator_refs",
+            "proof_surface_refs",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name),
+            )
+        if self.read_only is not True:
+            raise ValueError("learning binding must be read-only")
+        if self.terminal_closure is not False:
+            raise ValueError("learning binding cannot be terminal closure")
+
+
+@dataclass(frozen=True, slots=True)
 class LoopSummary(ContractRecord):
     """Bounded read-model summary for one registered governed loop."""
 
@@ -460,6 +501,7 @@ class LoopSummary(ContractRecord):
     rollback_policy: str
     rollback_binding: LoopRollbackBinding
     learning_policy: str
+    learning_binding: LoopLearningBinding
     updated_at: str
 
     def __post_init__(self) -> None:
@@ -549,6 +591,10 @@ class LoopSummary(ContractRecord):
             raise ValueError("rollback_binding must be a LoopRollbackBinding")
         if self.rollback_binding.rollback_ref != self.rollback_policy:
             raise ValueError("rollback_binding rollback_ref must match rollback_policy")
+        if not isinstance(self.learning_binding, LoopLearningBinding):
+            raise ValueError("learning_binding must be a LoopLearningBinding")
+        if self.learning_binding.learning_ref != self.learning_policy:
+            raise ValueError("learning_binding learning_ref must match learning_policy")
         if self.closure_report.loop_id != self.loop_id:
             raise ValueError("closure_report loop_id must match summary loop_id")
         if self.closure_report.closed:
@@ -667,6 +713,7 @@ __all__ = [
     "LoopClosureReport",
     "LoopAuthorityBinding",
     "LoopEvidenceBinding",
+    "LoopLearningBinding",
     "LoopRiskBinding",
     "LoopRollbackBinding",
     "LoopManifest",

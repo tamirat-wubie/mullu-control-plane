@@ -19,6 +19,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopAuthorityBinding,
     LoopClosureReport,
     LoopEvidenceBinding,
+    LoopLearningBinding,
     LoopManifest,
     LoopMode,
     LoopPhase,
@@ -378,6 +379,7 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         rollback_policy=manifest.rollback_policy,
         rollback_binding=_rollback_binding_for(manifest.loop_id),
         learning_policy=manifest.learning_policy,
+        learning_binding=_learning_binding_for(manifest.loop_id),
         updated_at=state.updated_at,
     )
 
@@ -451,6 +453,13 @@ def _risk_binding_for(loop_id: str) -> LoopRiskBinding:
         return _DEFAULT_RISK_BINDINGS[loop_id]
     except KeyError as exc:
         raise ValueError(f"loop risk catalog missing: {loop_id}") from exc
+
+
+def _learning_binding_for(loop_id: str) -> LoopLearningBinding:
+    try:
+        return _DEFAULT_LEARNING_BINDINGS[loop_id]
+    except KeyError as exc:
+        raise ValueError(f"loop learning catalog missing: {loop_id}") from exc
 
 
 def _closure_report_for(
@@ -562,6 +571,29 @@ def _risk_binding(
     )
 
 
+def _learning_binding(
+    learning_ref: str,
+    purpose: str,
+    *,
+    evidence_input_refs: Sequence[str],
+    admission_refs: Sequence[str],
+    retention_refs: Sequence[str],
+    source_refs: Sequence[str],
+    validator_refs: Sequence[str],
+    proof_surface_refs: Sequence[str],
+) -> LoopLearningBinding:
+    return LoopLearningBinding(
+        learning_ref=learning_ref,
+        purpose=purpose,
+        evidence_input_refs=tuple(evidence_input_refs),
+        admission_refs=tuple(admission_refs),
+        retention_refs=tuple(retention_refs),
+        source_refs=tuple(source_refs),
+        validator_refs=tuple(validator_refs),
+        proof_surface_refs=tuple(proof_surface_refs),
+    )
+
+
 _DEPLOYMENT_WITNESS_SOURCES = (
     "scripts/collect_deployment_witness.py",
     "schemas/deployment_witness.schema.json",
@@ -596,6 +628,124 @@ _GOVERNED_CODE_CHANGE_VALIDATORS = (
     "tests/test_governed_code_change_loop.py",
     "tests/test_validate_governed_code_change_loop_receipt.py",
 )
+
+
+_DEFAULT_LEARNING_BINDINGS: Mapping[str, LoopLearningBinding] = {
+    "deployment_witness_loop": _learning_binding(
+        "promote deployment blockers into release preflight checks",
+        "Bind deployment witness blockers to later release preflight and publication readiness checks.",
+        evidence_input_refs=(
+            "deployment_witness_published",
+            "runtime_witness_valid",
+            "authority_obligations_clear",
+        ),
+        admission_refs=(
+            "blocker_promoted_only_after_failed_witness_validation",
+            "publication_claim_remains_non_terminal_until_reverified",
+        ),
+        retention_refs=(
+            "deployment_publication_closure_validation",
+            "gateway_publication_readiness",
+        ),
+        source_refs=(
+            "scripts/preflight_deployment_witness.py",
+            "scripts/validate_release_status.py",
+            "schemas/deployment_publication_closure_validation.schema.json",
+        ),
+        validator_refs=(
+            "tests/test_preflight_deployment_witness.py",
+            "tests/test_validate_release_status.py",
+            "tests/test_plan_deployment_publication_closure.py",
+        ),
+        proof_surface_refs=("production_evidence_plane", "gateway_runtime_witness"),
+    ),
+    "runtime_conformance_loop": _learning_binding(
+        "convert failed conformance checks into explicit canaries or docs gaps",
+        "Bind runtime conformance failures to later canary additions or bounded documentation gaps.",
+        evidence_input_refs=(
+            "certificate_schema_valid",
+            "core_canaries_passed",
+            "open_conformance_gaps_bounded",
+        ),
+        admission_refs=(
+            "failed_conformance_collection_retained",
+            "new_canary_requires_validator_anchor",
+        ),
+        retention_refs=(
+            "runtime_conformance_collection",
+            "runtime_conformance_certificate",
+        ),
+        source_refs=(
+            "scripts/collect_runtime_conformance.py",
+            "schemas/runtime_conformance_collection.schema.json",
+            "schemas/runtime_conformance_certificate.schema.json",
+        ),
+        validator_refs=(
+            "tests/test_collect_runtime_conformance.py",
+            "tests/test_collect_runtime_conformance_cli.py",
+            "tests/test_gateway/test_conformance.py",
+        ),
+        proof_surface_refs=("runtime_conformance_attestation", "proof_route_gap_triage"),
+    ),
+    "cognitive_outcome_loop": _learning_binding(
+        "admit only verified outcomes into episodic memory",
+        "Bind cognitive outcomes to learning admission and episodic retention proof.",
+        evidence_input_refs=(
+            "governed_dispatch_trace",
+            "mechanical_verification_result",
+            "learning_admission_recorded",
+            "episodic_outcome_anchor",
+        ),
+        admission_refs=(
+            "mechanical_verification_required",
+            "critic_cannot_upgrade_failed_proof",
+            "learning_admission_record_required",
+        ),
+        retention_refs=(
+            "episodic_outcome_anchor",
+            "cognitive_outcome_ledger",
+        ),
+        source_refs=(
+            "mcoi/mcoi_runtime/core/mil_learning_admission.py",
+            "mcoi/mcoi_runtime/persistence/cognitive_outcome_ledger.py",
+            "schemas/learning_admission.schema.json",
+        ),
+        validator_refs=(
+            "mcoi/tests/test_learning_loop.py",
+            "mcoi/tests/test_whqr_mil_learning_admission.py",
+            "mcoi/tests/test_cognitive_outcome_ledger.py",
+        ),
+        proof_surface_refs=("software_outcome_learning",),
+    ),
+    "governed_code_change_loop": _learning_binding(
+        "promote failure diagnosis into tests or SDLC gate evidence",
+        "Bind governed code-change failures to later tests, verification receipts, or SDLC gate evidence.",
+        evidence_input_refs=(
+            "code_worker_receipt",
+            "verification_receipt",
+            "recovery_handoff",
+        ),
+        admission_refs=(
+            "diagnosis_requires_worker_or_verification_receipt",
+            "new_gate_evidence_requires_sdlc_validator",
+        ),
+        retention_refs=(
+            "sdlc_verification_receipt",
+            "sdlc_recovery_handoff_receipt",
+        ),
+        source_refs=(
+            "mcoi/mcoi_runtime/core/governed_code_change_loop.py",
+            "schemas/sdlc_verification_receipt.schema.json",
+            "schemas/sdlc_recovery_handoff_receipt.schema.json",
+        ),
+        validator_refs=(
+            "tests/test_governed_code_change_loop.py",
+            "tests/test_validate_governed_code_change_loop_receipt.py",
+            "scripts/validate_sdlc_artifact.py",
+        ),
+        proof_surface_refs=("software_dev_capability_pack",),
+    ),
+}
 
 
 _DEFAULT_RISK_BINDINGS: Mapping[str, LoopRiskBinding] = {
