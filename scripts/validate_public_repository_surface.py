@@ -7,7 +7,8 @@ Governance scope: repository description, topics, latest release, deployment
 status witness, authenticated metadata access, and required proprietary
 documents.
 Dependencies: Python standard library, GITHUB_SURFACE.md, DEPLOYMENT_STATUS.md,
-STATUS.md, GitHub REST endpoints, and optional authenticated GitHub CLI access.
+STATUS.md, docs/00_platform_overview.md, GitHub REST endpoints, and optional
+authenticated GitHub CLI access.
 Invariants:
   - Repository metadata must match the versioned proprietary witness.
   - Latest release must match the governed release tag.
@@ -73,6 +74,7 @@ REQUIRED_PUBLIC_DOCUMENTS = (
     "STATUS.md",
     "GITHUB_SURFACE.md",
     "DEPLOYMENT_STATUS.md",
+    "docs/00_platform_overview.md",
     "docs/PRODUCT_BOUNDARY.md",
     "docs/52_mullu_governance_protocol.md",
     "docs/60_logic_governance_application.md",
@@ -86,6 +88,7 @@ GITHUB_SURFACE_REQUIRED_LITERALS = (
     EXPECTED_DESCRIPTION,
     EXPECTED_LATEST_RELEASE,
     "symbolic-intelligence",
+    "docs/00_platform_overview.md",
     "docs/PRODUCT_BOUNDARY.md",
     "docs/52_mullu_governance_protocol.md",
     "python scripts/validate_protocol_manifest.py",
@@ -101,6 +104,7 @@ STATUS_REQUIRED_LITERALS = (
     "Known Reflection Gaps",
     "GITHUB_SURFACE.md",
     "DEPLOYMENT_STATUS.md",
+    "docs/00_platform_overview.md",
     "docs/PRODUCT_BOUNDARY.md",
     "docs/52_mullu_governance_protocol.md",
     "docs/60_logic_governance_application.md",
@@ -114,6 +118,20 @@ PRODUCT_BOUNDARY_REQUIRED_LITERALS = (
     "Mullu Platform",
     "Mullusi",
     "Launch Constraint",
+    "This rename target is not a repository-split trigger",
+    "developers should continue working in `mullu-control-plane`",
+)
+PLATFORM_OVERVIEW_REQUIRED_LITERALS = (
+    "Platform Overview",
+    "Repository Topology Decision",
+    "repository: mullu-control-plane",
+    "product: Mullu Govern",
+    "company: Mullusi",
+    "Do not split this repository while the active blocker is deployment evidence.",
+    "Issue `#330` is closed by signed deployment witness evidence.",
+    "50+ active users, multiple teams, or",
+    "multiple independently deployable services.",
+    "target does not by itself prove the final product architecture",
 )
 DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "Deployment Status Witness",
@@ -564,6 +582,16 @@ def validate_local_public_documents() -> list[str]:
                 document_name="docs/PRODUCT_BOUNDARY.md",
                 content=product_boundary_path.read_text(encoding="utf-8"),
                 required_literals=PRODUCT_BOUNDARY_REQUIRED_LITERALS,
+            )
+        )
+
+    platform_overview_path = REPO_ROOT / "docs" / "00_platform_overview.md"
+    if platform_overview_path.exists():
+        errors.extend(
+            validate_required_document_text(
+                document_name="docs/00_platform_overview.md",
+                content=platform_overview_path.read_text(encoding="utf-8"),
+                required_literals=PLATFORM_OVERVIEW_REQUIRED_LITERALS,
             )
         )
 

@@ -57,6 +57,14 @@ The current `mullu-control-plane` repository and local directory may remain
 until a separate migration updates remotes, deployment references, CI secrets,
 and release evidence paths.
 
+This rename target is not a repository-split trigger. During Foundation Mode,
+the intended posture remains one repository for the current platform runtime.
+Any later split into web, API, core, SDK, or docs repositories requires signed
+deployment witness evidence, public runtime evidence, first-user evidence, and
+real coordination pressure. Until those gates close, users should see the
+product as `Mullu Govern`, operators should treat the company boundary as
+`Mullusi`, and developers should continue working in `mullu-control-plane`.
+
 ## Blocked Public Names
 
 Do not introduce these as product names:

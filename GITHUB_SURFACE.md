@@ -35,7 +35,8 @@ Invariants: Metadata claims are explicit, machine-checkable, and bounded to the
 |---|---|
 | `STATUS.md` | Branch, release, CI, governance, and known reflection gaps |
 | `DEPLOYMENT_STATUS.md` | Deployment-health witness state and closure path |
-| `docs/PRODUCT_BOUNDARY.md` | Product naming, company boundary, control-plane identity, and launch constraint |
+| `docs/00_platform_overview.md` | Product/repository/company topology, current single-repository posture, and future split triggers |
+| `docs/PRODUCT_BOUNDARY.md` | Product naming, company boundary, control-plane identity, launch constraint, and rename-not-split-trigger rule |
 | `docs/52_mullu_governance_protocol.md` | Public protocol schema index and closed runtime boundary |
 | `docs/CURRENT_READINESS_SNAPSHOT.md` | Compact public claim boundary for repository, release, deployment, pilot, and launch posture |
 | `docs/EVIDENCE_CLASSIFICATION.md` | Evidence-class rules that prevent fixtures and examples from supporting production claims |

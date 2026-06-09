@@ -95,13 +95,21 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
     product_boundary_literals = PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS[
         "docs/PRODUCT_BOUNDARY.md"
     ]
+    platform_overview_literals = PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS[
+        "docs/00_platform_overview.md"
+    ]
 
     assert errors == []
+    assert "docs/00_platform_overview.md" in github_literals
     assert "docs/PRODUCT_BOUNDARY.md" in github_literals
     assert "docs/52_mullu_governance_protocol.md" in github_literals
     assert "python scripts/validate_protocol_manifest.py" in github_literals
+    assert "Repository Topology Decision" in platform_overview_literals
+    assert "repository: mullu-control-plane" in platform_overview_literals
+    assert "target does not by itself prove the final product architecture" in platform_overview_literals
     assert "Mullu Control Plane" in product_boundary_literals
     assert "Launch Constraint" in product_boundary_literals
+    assert "This rename target is not a repository-split trigger" in product_boundary_literals
     assert ".github/workflows/gateway-publication.yml" in deployment_literals
     assert "## GitHub Runtime Input State" in deployment_literals
     assert any("orchestrate_deployment_witness.py" in literal for literal in deployment_literals)
@@ -167,6 +175,8 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "Deployment runtime input witness" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "Protocol witness" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "Logic governance witness" in STATUS_DOCUMENT_REQUIRED_LITERALS
+    assert "Repository topology witness" in STATUS_DOCUMENT_REQUIRED_LITERALS
+    assert "docs/00_platform_overview.md" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "docs/PRODUCT_BOUNDARY.md" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "docs/52_mullu_governance_protocol.md" in STATUS_DOCUMENT_REQUIRED_LITERALS
     assert "docs/60_logic_governance_application.md" in STATUS_DOCUMENT_REQUIRED_LITERALS
@@ -193,6 +203,8 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "validate_governed_runtime_promotion.py" in content
     assert "Protocol witness" in content
     assert "Logic governance witness" in content
+    assert "Repository topology witness" in content
+    assert "docs/00_platform_overview.md" in content
     assert "32-schema public contract index" in content
     assert "python scripts/validate_protocol_manifest.py" in content
     assert "python scripts/validate_logic_governance_application.py" in content
