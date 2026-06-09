@@ -48,6 +48,7 @@ REQUIRED_LOOP_FIELDS = (
     "purpose",
     "owner",
     "risk_class",
+    "risk_binding",
     "status",
     "mode",
     "current_step",
@@ -244,6 +245,7 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
         errors.extend(_validate_text_list(loop[field_name], f"loop {index} {field_name}"))
     errors.extend(_validate_evidence_bindings(loop["evidence_bindings"], loop["required_evidence"], index))
     errors.extend(_validate_authority_bindings(loop["authority_bindings"], loop["required_authority"], index))
+    errors.extend(_validate_risk_binding(loop["risk_binding"], loop, index))
     errors.extend(_validate_step_receipts(loop["step_receipts"], loop, index))
     if loop["open_blockers"] and loop["status"] != "blocked":
         errors.append(f"loop {index} with blockers must be blocked")
@@ -261,6 +263,55 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
             errors.append(f"loop {index} missing authority lacks blocker: {authority_name}")
     errors.extend(_validate_rollback_binding(loop["rollback_binding"], loop, index))
     errors.extend(_validate_closure_report(loop["closure_report"], loop, index))
+    return errors
+
+
+def _validate_risk_binding(risk_binding: Any, loop: dict[str, Any], index: int) -> list[str]:
+    if not isinstance(risk_binding, dict):
+        return [f"loop {index} risk_binding must be an object"]
+    errors: list[str] = []
+    required_fields = {
+        "risk_ref",
+        "purpose",
+        "hazard_refs",
+        "mitigation_refs",
+        "monitor_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "read_only",
+        "terminal_closure",
+    }
+    missing = sorted(required_fields - set(risk_binding))
+    errors.extend(f"loop {index} risk_binding missing field: {field_name}" for field_name in missing)
+    extra = sorted(set(risk_binding) - required_fields)
+    errors.extend(f"loop {index} risk_binding has unexpected field: {field_name}" for field_name in extra)
+    if missing:
+        return errors
+    if risk_binding["risk_ref"] != loop["risk_class"]:
+        errors.append(f"loop {index} risk_binding risk_ref must match risk_class")
+    if not isinstance(risk_binding["purpose"], str) or not risk_binding["purpose"]:
+        errors.append(f"loop {index} risk_binding purpose must be non-empty")
+    for field_name in (
+        "hazard_refs",
+        "mitigation_refs",
+        "monitor_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+    ):
+        errors.extend(
+            _validate_text_list(
+                risk_binding[field_name],
+                f"loop {index} risk_binding {field_name}",
+            )
+        )
+        if isinstance(risk_binding[field_name], list) and not risk_binding[field_name]:
+            errors.append(f"loop {index} risk_binding {field_name} must be non-empty")
+    if risk_binding["read_only"] is not True:
+        errors.append(f"loop {index} risk_binding read_only must be true")
+    if risk_binding["terminal_closure"] is not False:
+        errors.append(f"loop {index} risk_binding terminal_closure must be false")
     return errors
 
 

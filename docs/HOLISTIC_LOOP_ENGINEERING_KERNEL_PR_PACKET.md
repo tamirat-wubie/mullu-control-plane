@@ -2,7 +2,7 @@
 
 Purpose: provide a scoped PR handoff packet for the holistic loop kernel slice.
 Governance scope: loop contract, registry, read model, HTTP projection,
-validators, schema manifest, evidence blockers, and rollback boundary.
+validators, schema manifest, evidence blockers, risk catalog, and rollback boundary.
 Dependencies: `docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md`, holistic loop source
 files, read-model schema, report and validation scripts, focused tests, SDLC
 validators, release validators, and workspace governance preflight.
@@ -94,6 +94,21 @@ missing_authority -> open_blockers: missing_authority:<name>
 The catalog does not grant authority and does not close a loop. It only tells
 operators where authority proof must come from when a later loop-specific
 workflow runs.
+
+The read model now exposes one `LoopRiskBinding` entry for every loop summary.
+The binding maps `risk_class` to named hazards, mitigations, monitor refs,
+existing source refs, validator refs, and proof-matrix surface refs. It remains
+read-only and non-terminal:
+
+```text
+risk_binding.risk_ref == risk_class
+risk_binding.read_only == true
+risk_binding.terminal_closure == false
+```
+
+The catalog does not score risk, admit execution, mutate policy, or close a
+loop. It only tells operators which hazards, mitigations, monitors, and proof
+surfaces matter for a loop's declared risk class.
 
 The read model now exposes one `LoopRollbackBinding` entry for every loop
 summary. The binding maps `rollback_policy` to existing recovery source refs,

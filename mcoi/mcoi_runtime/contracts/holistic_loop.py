@@ -392,6 +392,47 @@ class LoopRollbackBinding(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class LoopRiskBinding(ContractRecord):
+    """Read-only reference map for one loop risk class."""
+
+    risk_ref: str
+    purpose: str
+    hazard_refs: tuple[str, ...]
+    mitigation_refs: tuple[str, ...]
+    monitor_refs: tuple[str, ...]
+    source_refs: tuple[str, ...]
+    validator_refs: tuple[str, ...]
+    proof_surface_refs: tuple[str, ...]
+    read_only: bool = True
+    terminal_closure: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "risk_ref",
+            require_non_empty_text(self.risk_ref, "risk_ref"),
+        )
+        object.__setattr__(self, "purpose", require_non_empty_text(self.purpose, "purpose"))
+        for field_name in (
+            "hazard_refs",
+            "mitigation_refs",
+            "monitor_refs",
+            "source_refs",
+            "validator_refs",
+            "proof_surface_refs",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name),
+            )
+        if self.read_only is not True:
+            raise ValueError("risk binding must be read-only")
+        if self.terminal_closure is not False:
+            raise ValueError("risk binding cannot be terminal closure")
+
+
+@dataclass(frozen=True, slots=True)
 class LoopSummary(ContractRecord):
     """Bounded read-model summary for one registered governed loop."""
 
@@ -400,6 +441,7 @@ class LoopSummary(ContractRecord):
     purpose: str
     owner: str
     risk_class: str
+    risk_binding: LoopRiskBinding
     status: LoopStatus
     mode: LoopMode
     current_step: LoopPhase
@@ -497,6 +539,10 @@ class LoopSummary(ContractRecord):
                 "LoopStepReceipt",
             ),
         )
+        if not isinstance(self.risk_binding, LoopRiskBinding):
+            raise ValueError("risk_binding must be a LoopRiskBinding")
+        if self.risk_binding.risk_ref != self.risk_class:
+            raise ValueError("risk_binding risk_ref must match risk_class")
         if not isinstance(self.closure_report, LoopClosureReport):
             raise ValueError("closure_report must be a LoopClosureReport")
         if not isinstance(self.rollback_binding, LoopRollbackBinding):
@@ -621,6 +667,7 @@ __all__ = [
     "LoopClosureReport",
     "LoopAuthorityBinding",
     "LoopEvidenceBinding",
+    "LoopRiskBinding",
     "LoopRollbackBinding",
     "LoopManifest",
     "LoopMode",

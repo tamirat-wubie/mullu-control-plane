@@ -163,6 +163,8 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
     errors: list[str] = []
     for field_name in (
         "loop_id",
+        "risk_class",
+        "risk_binding",
         "required_authority",
         "authority_bindings",
         "missing_authority",
@@ -196,6 +198,7 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         errors.append(f"loop {index} must expose required authority")
     if not loop.get("required_evidence"):
         errors.append(f"loop {index} must expose required evidence")
+    errors.extend(_validate_risk_binding(loop.get("risk_binding"), loop, index))
     errors.extend(_validate_closure_report(loop.get("closure_report"), loop, index))
     errors.extend(
         _validate_authority_bindings(
@@ -213,6 +216,30 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
     )
     errors.extend(_validate_rollback_binding(loop.get("rollback_binding"), loop, index))
     errors.extend(_validate_step_receipts(loop.get("step_receipts"), loop, index))
+    return errors
+
+
+def _validate_risk_binding(risk_binding: Any, loop: dict[str, Any], index: int) -> list[str]:
+    if not isinstance(risk_binding, dict):
+        return [f"loop {index} risk_binding must be an object"]
+    errors: list[str] = []
+    if risk_binding.get("risk_ref") != loop.get("risk_class"):
+        errors.append(f"loop {index} risk_binding risk_ref must match risk_class")
+    for field_name in (
+        "hazard_refs",
+        "mitigation_refs",
+        "monitor_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+    ):
+        refs = risk_binding.get(field_name)
+        if not isinstance(refs, list) or not refs or not all(isinstance(ref, str) and ref for ref in refs):
+            errors.append(f"loop {index} risk_binding {field_name} must be non-empty")
+    if risk_binding.get("read_only") is not True:
+        errors.append(f"loop {index} risk_binding read_only must be true")
+    if risk_binding.get("terminal_closure") is not False:
+        errors.append(f"loop {index} risk_binding terminal_closure must be false")
     return errors
 
 
