@@ -258,6 +258,26 @@ def test_scheduler_lifecycle_and_history_endpoints(client) -> None:
     assert history.json()["count"] >= 2
 
 
+@pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+def test_scheduler_history_invalid_limit_returns_bounded_422(client, limit) -> None:
+    resp = client.get("/api/v1/scheduler/history", params={"limit": limit})
+
+    assert resp.status_code == 422
+    detail = resp.json()["detail"]
+    assert detail["error"] == "invalid scheduler history request"
+    assert detail["error_code"] == "scheduler_history_invalid_request"
+    assert detail["governed"] is True
+
+
+def test_scheduler_history_zero_limit_is_empty_read(client) -> None:
+    resp = client.get("/api/v1/scheduler/history", params={"limit": "0"})
+
+    assert resp.status_code == 200
+    assert resp.json()["executions"] == []
+    assert resp.json()["count"] == 0
+    assert resp.json()["governed"] is True
+
+
 def test_invalid_schedule_type_400(client) -> None:
     resp = client.post("/api/v1/scheduler/jobs", json={
         "job_id": "bad",

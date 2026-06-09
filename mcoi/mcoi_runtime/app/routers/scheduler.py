@@ -5,7 +5,7 @@ governed background jobs. Every job goes through the guard chain.
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NoReturn
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -14,10 +14,38 @@ from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_
 from mcoi_runtime.app.routers.deps import deps
 
 router = APIRouter()
+_MAX_SCHEDULER_HISTORY_READ_LIMIT = 500
 
 
 def _scheduler_error_detail(error: str, error_code: str) -> dict[str, object]:
     return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _raise_scheduler_validation_error(error: ValueError) -> NoReturn:
+    raise HTTPException(
+        status_code=422,
+        detail=_scheduler_error_detail(
+            "invalid scheduler history request",
+            "scheduler_history_invalid_request",
+        ),
+    ) from error
+
+
+def _coerce_scheduler_history_limit(limit: object) -> int:
+    if isinstance(limit, bool):
+        raise ValueError("limit must be an integer")
+    if isinstance(limit, int):
+        value = limit
+    elif isinstance(limit, str):
+        normalized = limit.strip()
+        if not normalized.isdecimal():
+            raise ValueError("limit must be an integer")
+        value = int(normalized)
+    else:
+        raise ValueError("limit must be an integer")
+    if value < 0 or value > _MAX_SCHEDULER_HISTORY_READ_LIMIT:
+        raise ValueError("limit is outside the allowed range")
+    return value
 
 
 def _enforce_job_tenant(request: Request, job_id: str) -> None:
@@ -161,10 +189,14 @@ def unschedule_job(job_id: str, request: Request):
 
 
 @router.get("/api/v1/scheduler/history")
-def job_history(limit: int = 50):
+def job_history(limit: str = "50"):
     """Recent job execution history."""
     deps.metrics.inc("requests_governed")
-    executions = deps.scheduler.recent_executions(limit=limit)
+    try:
+        read_limit = _coerce_scheduler_history_limit(limit)
+    except ValueError as error:
+        _raise_scheduler_validation_error(error)
+    executions = deps.scheduler.recent_executions(limit=read_limit)
     return {
         "executions": [
             {
