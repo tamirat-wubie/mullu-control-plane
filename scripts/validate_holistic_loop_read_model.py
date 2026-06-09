@@ -67,6 +67,7 @@ REQUIRED_LOOP_FIELDS = (
     "rollback_policy",
     "rollback_binding",
     "learning_policy",
+    "learning_binding",
     "updated_at",
 )
 REPORT_STATUSES = ("blocked", "verified")
@@ -262,7 +263,57 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
         if expected_blocker not in loop["open_blockers"]:
             errors.append(f"loop {index} missing authority lacks blocker: {authority_name}")
     errors.extend(_validate_rollback_binding(loop["rollback_binding"], loop, index))
+    errors.extend(_validate_learning_binding(loop["learning_binding"], loop, index))
     errors.extend(_validate_closure_report(loop["closure_report"], loop, index))
+    return errors
+
+
+def _validate_learning_binding(learning_binding: Any, loop: dict[str, Any], index: int) -> list[str]:
+    if not isinstance(learning_binding, dict):
+        return [f"loop {index} learning_binding must be an object"]
+    errors: list[str] = []
+    required_fields = {
+        "learning_ref",
+        "purpose",
+        "evidence_input_refs",
+        "admission_refs",
+        "retention_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "read_only",
+        "terminal_closure",
+    }
+    missing = sorted(required_fields - set(learning_binding))
+    errors.extend(f"loop {index} learning_binding missing field: {field_name}" for field_name in missing)
+    extra = sorted(set(learning_binding) - required_fields)
+    errors.extend(f"loop {index} learning_binding has unexpected field: {field_name}" for field_name in extra)
+    if missing:
+        return errors
+    if learning_binding["learning_ref"] != loop["learning_policy"]:
+        errors.append(f"loop {index} learning_binding learning_ref must match learning_policy")
+    if not isinstance(learning_binding["purpose"], str) or not learning_binding["purpose"]:
+        errors.append(f"loop {index} learning_binding purpose must be non-empty")
+    for field_name in (
+        "evidence_input_refs",
+        "admission_refs",
+        "retention_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+    ):
+        errors.extend(
+            _validate_text_list(
+                learning_binding[field_name],
+                f"loop {index} learning_binding {field_name}",
+            )
+        )
+        if isinstance(learning_binding[field_name], list) and not learning_binding[field_name]:
+            errors.append(f"loop {index} learning_binding {field_name} must be non-empty")
+    if learning_binding["read_only"] is not True:
+        errors.append(f"loop {index} learning_binding read_only must be true")
+    if learning_binding["terminal_closure"] is not False:
+        errors.append(f"loop {index} learning_binding terminal_closure must be false")
     return errors
 
 

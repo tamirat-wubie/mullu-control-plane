@@ -2,7 +2,8 @@
 
 Purpose: provide a scoped PR handoff packet for the holistic loop kernel slice.
 Governance scope: loop contract, registry, read model, HTTP projection,
-validators, schema manifest, evidence blockers, risk catalog, and rollback boundary.
+validators, schema manifest, evidence blockers, risk catalog, rollback boundary,
+and learning catalog.
 Dependencies: `docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md`, holistic loop source
 files, read-model schema, report and validation scripts, focused tests, SDLC
 validators, release validators, and workspace governance preflight.
@@ -124,6 +125,21 @@ rollback_binding.terminal_closure == false
 The catalog does not execute rollback, restore snapshots, invalidate claims, or
 open recovery handoffs. It only tells operators where recovery proof must come
 from when a later loop-specific recovery workflow runs.
+
+The read model now exposes one `LoopLearningBinding` entry for every loop
+summary. The binding maps `learning_policy` to evidence inputs, admission
+rules, retention refs, existing source refs, validator refs, and proof-matrix
+surface refs. It remains read-only and non-terminal:
+
+```text
+learning_binding.learning_ref == learning_policy
+learning_binding.read_only == true
+learning_binding.terminal_closure == false
+```
+
+The catalog does not admit learning, write memory, mutate tests, update gates,
+or close a loop. It only tells operators where learning proof must come from
+when a later loop-specific learning workflow runs.
 
 The read model now exposes `LoopEvidenceBinding` entries for every
 `required_evidence` label. The catalog maps each evidence label to existing

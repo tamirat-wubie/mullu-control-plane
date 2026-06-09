@@ -177,6 +177,8 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         "closure_report",
         "rollback_policy",
         "rollback_binding",
+        "learning_policy",
+        "learning_binding",
     ):
         if field_name not in loop:
             errors.append(f"loop {index} missing field: {field_name}")
@@ -215,7 +217,32 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         )
     )
     errors.extend(_validate_rollback_binding(loop.get("rollback_binding"), loop, index))
+    errors.extend(_validate_learning_binding(loop.get("learning_binding"), loop, index))
     errors.extend(_validate_step_receipts(loop.get("step_receipts"), loop, index))
+    return errors
+
+
+def _validate_learning_binding(learning_binding: Any, loop: dict[str, Any], index: int) -> list[str]:
+    if not isinstance(learning_binding, dict):
+        return [f"loop {index} learning_binding must be an object"]
+    errors: list[str] = []
+    if learning_binding.get("learning_ref") != loop.get("learning_policy"):
+        errors.append(f"loop {index} learning_binding learning_ref must match learning_policy")
+    for field_name in (
+        "evidence_input_refs",
+        "admission_refs",
+        "retention_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+    ):
+        refs = learning_binding.get(field_name)
+        if not isinstance(refs, list) or not refs or not all(isinstance(ref, str) and ref for ref in refs):
+            errors.append(f"loop {index} learning_binding {field_name} must be non-empty")
+    if learning_binding.get("read_only") is not True:
+        errors.append(f"loop {index} learning_binding read_only must be true")
+    if learning_binding.get("terminal_closure") is not False:
+        errors.append(f"loop {index} learning_binding terminal_closure must be false")
     return errors
 
 
