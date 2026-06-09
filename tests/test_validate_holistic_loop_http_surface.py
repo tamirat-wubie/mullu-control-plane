@@ -108,6 +108,38 @@ def test_payload_validation_requires_evidence_bindings() -> None:
     assert removed_binding not in invalid_payload["loops"][0]["evidence_bindings"]
 
 
+def test_payload_validation_requires_closure_condition_bindings() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    removed_binding = invalid_payload["loops"][0]["closure_condition_bindings"].pop()
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("missing closure condition binding" in error for error in errors)
+    assert removed_binding["closure_ref"] in invalid_payload["loops"][0]["closure_conditions"]
+    assert removed_binding not in invalid_payload["loops"][0]["closure_condition_bindings"]
+
+
+def test_payload_validation_rejects_closure_condition_binding_terminal_closure_claim() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_binding = invalid_payload["loops"][0]["closure_condition_bindings"][0]
+    invalid_binding["read_only"] = False
+    invalid_binding["terminal_closure"] = True
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("closure condition binding 0 read_only must be true" in error for error in errors)
+    assert any("closure condition binding 0 terminal_closure must be false" in error for error in errors)
+    assert invalid_binding["terminal_closure"] is True
+
+
 def test_payload_validation_rejects_binding_terminal_closure_claim() -> None:
     app = FastAPI()
     app.include_router(router)

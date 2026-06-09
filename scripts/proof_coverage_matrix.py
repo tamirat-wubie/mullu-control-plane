@@ -6539,6 +6539,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "LoopRegistry",
                 "LoopReadModel",
                 "LoopModeBinding",
+                "LoopClosureConditionBinding",
                 "LoopAuthorityBinding",
                 "LoopRiskBinding",
                 "LoopRollbackBinding",
@@ -6569,10 +6570,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             (
                 "Holistic loop engineering exposes existing governed loops through "
                 "one read-only loop contract, registry, schema-backed summary, "
-                "mode catalog, authority catalog, risk catalog, rollback "
-                "catalog, learning catalog, bounded receipt trail, and HTTP "
-                "read model. Missing authority or evidence remains an explicit "
-                "blocker and no mutation route is introduced."
+                "mode catalog, closure condition catalog, authority catalog, "
+                "risk catalog, rollback catalog, learning catalog, bounded "
+                "receipt trail, and HTTP read model. Missing authority or "
+                "evidence remains an explicit blocker and no mutation route is "
+                "introduced."
             ),
             [
                 "registered_loops_expose_governed_manifest_fields",
@@ -6580,6 +6582,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "closure_report_blocks_incomplete_evidence",
                 "loop_registry_rejects_duplicate_loop_ids",
                 "loop_mode_bindings_cover_allowed_modes",
+                "loop_closure_condition_bindings_cover_conditions",
                 "loop_authority_bindings_cover_required_authority",
                 "loop_risk_bindings_cover_risk_class",
                 "loop_rollback_bindings_cover_recovery_policy",
@@ -6605,6 +6608,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "loop_mode_bindings_cover_allowed_modes": [
                     "loop_mode_bindings_cover_allowed_modes_without_execution"
+                ],
+                "loop_closure_condition_bindings_cover_conditions": [
+                    "loop_closure_condition_bindings_cover_conditions_without_execution"
                 ],
                 "loop_authority_bindings_cover_required_authority": [
                     "loop_authority_bindings_cover_required_authority_without_execution"

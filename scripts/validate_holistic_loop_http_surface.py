@@ -177,6 +177,7 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         "missing_evidence",
         "open_blockers",
         "closure_conditions",
+        "closure_condition_bindings",
         "closure_report",
         "rollback_policy",
         "rollback_binding",
@@ -222,6 +223,7 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
             index,
         )
     )
+    errors.extend(_validate_closure_condition_bindings(loop.get("closure_condition_bindings"), loop, index))
     errors.extend(_validate_rollback_binding(loop.get("rollback_binding"), loop, index))
     errors.extend(_validate_learning_binding(loop.get("learning_binding"), loop, index))
     errors.extend(_validate_step_receipts(loop.get("step_receipts"), loop, index))
@@ -259,6 +261,61 @@ def _validate_mode_binding(mode_binding: Any, loop: dict[str, Any], index: int) 
         errors.append(f"loop {index} mode_binding mode_transition must be false")
     if mode_binding.get("terminal_closure") is not False:
         errors.append(f"loop {index} mode_binding terminal_closure must be false")
+    return errors
+
+
+def _validate_closure_condition_bindings(
+    closure_condition_bindings: Any,
+    loop: dict[str, Any],
+    index: int,
+) -> list[str]:
+    if not isinstance(closure_condition_bindings, list):
+        return [f"loop {index} closure_condition_bindings must be a list"]
+    errors: list[str] = []
+    binding_refs: list[str] = []
+    closure_conditions = set(loop.get("closure_conditions", ()))
+    required_evidence = set(loop.get("required_evidence", ()))
+    required_authority = set(loop.get("required_authority", ()))
+    for binding_index, binding in enumerate(closure_condition_bindings):
+        if not isinstance(binding, dict):
+            errors.append(f"loop {index} closure condition binding {binding_index} must be an object")
+            continue
+        closure_ref = binding.get("closure_ref")
+        if not isinstance(closure_ref, str) or not closure_ref:
+            errors.append(f"loop {index} closure condition binding {binding_index} closure_ref must be non-empty")
+        else:
+            binding_refs.append(closure_ref)
+        for field_name in (
+            "required_evidence_refs",
+            "required_authority_refs",
+            "source_refs",
+            "validator_refs",
+            "proof_surface_refs",
+        ):
+            refs = binding.get(field_name)
+            if not isinstance(refs, list) or not refs or not all(isinstance(ref, str) and ref for ref in refs):
+                errors.append(f"loop {index} closure condition binding {binding_index} {field_name} must be non-empty")
+        for evidence_ref in binding.get("required_evidence_refs", ()) if isinstance(binding.get("required_evidence_refs"), list) else ():
+            if evidence_ref not in required_evidence:
+                errors.append(
+                    f"loop {index} closure condition binding {binding_index} unexpected evidence ref: {evidence_ref}"
+                )
+        for authority_ref in binding.get("required_authority_refs", ()) if isinstance(binding.get("required_authority_refs"), list) else ():
+            if authority_ref not in required_authority:
+                errors.append(
+                    f"loop {index} closure condition binding {binding_index} unexpected authority ref: {authority_ref}"
+                )
+        if binding.get("read_only") is not True:
+            errors.append(f"loop {index} closure condition binding {binding_index} read_only must be true")
+        if binding.get("terminal_closure") is not False:
+            errors.append(f"loop {index} closure condition binding {binding_index} terminal_closure must be false")
+    duplicate_refs = sorted({ref for ref in binding_refs if binding_refs.count(ref) > 1})
+    errors.extend(f"loop {index} duplicate closure condition binding: {ref}" for ref in duplicate_refs)
+    binding_ref_set = set(binding_refs)
+    for closure_ref in sorted(closure_conditions - binding_ref_set):
+        errors.append(f"loop {index} missing closure condition binding: {closure_ref}")
+    for closure_ref in sorted(binding_ref_set - closure_conditions):
+        errors.append(f"loop {index} unexpected closure condition binding: {closure_ref}")
     return errors
 
 

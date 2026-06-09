@@ -521,6 +521,45 @@ class LoopModeBinding(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class LoopClosureConditionBinding(ContractRecord):
+    """Read-only reference map for one loop closure condition."""
+
+    closure_ref: str
+    purpose: str
+    required_evidence_refs: tuple[str, ...]
+    required_authority_refs: tuple[str, ...]
+    source_refs: tuple[str, ...]
+    validator_refs: tuple[str, ...]
+    proof_surface_refs: tuple[str, ...]
+    read_only: bool = True
+    terminal_closure: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "closure_ref",
+            require_non_empty_text(self.closure_ref, "closure_ref"),
+        )
+        object.__setattr__(self, "purpose", require_non_empty_text(self.purpose, "purpose"))
+        for field_name in (
+            "required_evidence_refs",
+            "required_authority_refs",
+            "source_refs",
+            "validator_refs",
+            "proof_surface_refs",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name),
+            )
+        if self.read_only is not True:
+            raise ValueError("closure condition binding must be read-only")
+        if self.terminal_closure is not False:
+            raise ValueError("closure condition binding cannot be terminal closure")
+
+
+@dataclass(frozen=True, slots=True)
 class LoopSummary(ContractRecord):
     """Bounded read-model summary for one registered governed loop."""
 
@@ -544,6 +583,7 @@ class LoopSummary(ContractRecord):
     evidence_refs: tuple[str, ...]
     missing_evidence: tuple[str, ...]
     closure_conditions: tuple[str, ...]
+    closure_condition_bindings: tuple[LoopClosureConditionBinding, ...]
     closure_report: LoopClosureReport
     open_blockers: tuple[str, ...]
     rollback_policy: str
@@ -633,6 +673,16 @@ class LoopSummary(ContractRecord):
                 "LoopStepReceipt",
             ),
         )
+        object.__setattr__(
+            self,
+            "closure_condition_bindings",
+            _freeze_contract_tuple(
+                self.closure_condition_bindings,
+                "closure_condition_bindings",
+                LoopClosureConditionBinding,
+                "LoopClosureConditionBinding",
+            ),
+        )
         if not isinstance(self.risk_binding, LoopRiskBinding):
             raise ValueError("risk_binding must be a LoopRiskBinding")
         if self.risk_binding.risk_ref != self.risk_class:
@@ -664,6 +714,20 @@ class LoopSummary(ContractRecord):
             raise ValueError("evidence bindings must not contain duplicate evidence refs")
         if set(binding_refs) != set(self.required_evidence):
             raise ValueError("evidence bindings must cover required evidence exactly")
+        closure_binding_refs = [
+            binding.closure_ref for binding in self.closure_condition_bindings
+        ]
+        if len(closure_binding_refs) != len(set(closure_binding_refs)):
+            raise ValueError("closure condition bindings must not contain duplicate closure refs")
+        if set(closure_binding_refs) != set(self.closure_conditions):
+            raise ValueError("closure condition bindings must cover closure conditions exactly")
+        required_evidence_refs = set(self.required_evidence)
+        required_authority_refs = set(self.required_authority)
+        for binding in self.closure_condition_bindings:
+            if not set(binding.required_evidence_refs) <= required_evidence_refs:
+                raise ValueError("closure condition binding evidence refs must be required evidence")
+            if not set(binding.required_authority_refs) <= required_authority_refs:
+                raise ValueError("closure condition binding authority refs must be required authority")
         if not self.step_receipts:
             raise ValueError("step_receipts must contain at least one receipt")
         receipt_steps = [receipt.step for receipt in self.step_receipts]
@@ -764,6 +828,7 @@ def _freeze_contract_tuple(
 __all__ = [
     "LoopClosureReport",
     "LoopAuthorityBinding",
+    "LoopClosureConditionBinding",
     "LoopEvidenceBinding",
     "LoopLearningBinding",
     "LoopModeBinding",
