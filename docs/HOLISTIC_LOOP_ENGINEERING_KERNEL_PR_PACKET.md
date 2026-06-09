@@ -105,6 +105,24 @@ closure_report.metadata.terminal_closure == false
 This makes closure readiness visible without allowing the read model to become
 a closure certificate.
 
+## Step Receipt Trail Follow-Up
+
+The read model now exposes `step_receipts` on every loop summary. These entries
+are deterministic read-model projections over canonical loop phases. They do
+not execute runtime behavior and do not replace live receipts:
+
+```text
+step_receipts[*].metadata.read_only == true
+step_receipts[*].metadata.synthetic_projection == true
+step_receipts[*].metadata.terminal_closure == false
+step_receipts[*].metadata.behavior_rewrite == false
+step_receipts[*].errors == open_blockers
+```
+
+The trail gives validators a common phase-by-phase receipt shape while keeping
+deployment, runtime conformance, cognitive, proof verification, and governed
+code-change behavior unchanged.
+
 ## Fracture Deltas
 
 None intended.

@@ -79,6 +79,41 @@ Missing, duplicate, or extra bindings are validation failures. The catalog does
 not replace live evidence. It only tells operators where proof must come from
 when a later loop-specific adapter or closure workflow runs.
 
+## Step Receipt Trail
+
+Each loop summary includes `step_receipts`, a bounded read-only projection over
+the manifest's canonical loop phases. These receipts are not runtime execution
+receipts. They give operators and validators a common shape for asking whether
+each phase is blocked or verified:
+
+| Field | Meaning |
+| --- | --- |
+| `loop_id` | The registered loop the receipt describes. |
+| `step` | One canonical phase: observe, decide, act, verify, record_receipt, update_state, learn, or audit. |
+| `input_hash` | Deterministic read-model input boundary hash. |
+| `output_hash` | Deterministic read-model output boundary hash. |
+| `decision` | Projection decision for the phase. |
+| `evidence_refs` | Evidence refs observed by the read model. |
+| `status` | `blocked` while unresolved gaps exist; otherwise `verified`. |
+| `errors` | Must match `open_blockers` exactly. |
+| `metadata.read_only` | Always `true`. |
+| `metadata.synthetic_projection` | Always `true`; this is not a live runtime receipt. |
+| `metadata.terminal_closure` | Always `false`. |
+| `metadata.behavior_rewrite` | Always `false`. |
+
+The receipt trail is exact by contract:
+
+```text
+all(step_receipts[*].loop_id == loop_id)
+set(step_receipts[*].errors) == set(open_blockers)
+step_receipts[*].metadata.read_only == true
+step_receipts[*].metadata.terminal_closure == false
+```
+
+The `act` receipt explicitly describes existing behavior without executing it.
+The read model can therefore expose loop phases without changing deployment,
+runtime conformance, cognitive, proof, or code-change behavior.
+
 ## Closure Readiness
 
 Each loop summary also includes a derived `closure_report`. This report is a
@@ -119,8 +154,9 @@ This kernel is intentionally non-invasive:
 4. It does not dispatch governed code-change workers.
 5. It does not create a public mutation route.
 6. It does not execute evidence validators referenced by the catalog.
-7. It does not mark any loop closed.
-8. It only exposes typed read-model contracts that other surfaces can adopt later.
+7. It does not emit live runtime execution receipts.
+8. It does not mark any loop closed.
+9. It only exposes typed read-model contracts that other surfaces can adopt later.
 
 ## Read-Only Exposure
 
@@ -140,6 +176,7 @@ script:
 | `status` | `blocked` while any returned loop has blockers; otherwise `verified`. |
 | `loops` | Bounded registered loop summaries. |
 | `loops[].evidence_bindings` | Read-only evidence catalog entries covering every required evidence label. |
+| `loops[].step_receipts` | Read-only synthetic receipt trail for the canonical loop phases. |
 | `loops[].closure_report` | Read-only non-terminal closure-readiness report for each loop summary. |
 | `blocked_count` | Count of returned summaries carrying blockers. |
 | `verified_count` | Count of returned summaries marked verified. |
@@ -186,4 +223,5 @@ The tests verify:
 6. Step receipts and closure reports are typed and immutable.
 7. The HTTP read-model route is mounted read-only and has no mutation companion.
 8. Evidence bindings cover every required evidence label and cannot claim terminal closure.
-9. Closure reports cannot claim terminal closure and must match blockers.
+9. Step receipt trails are read-only synthetic projections and must match blockers.
+10. Closure reports cannot claim terminal closure and must match blockers.
