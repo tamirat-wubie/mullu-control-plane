@@ -58,6 +58,17 @@ The current expected aggregate plan contains:
 
 Secrets must be bound through the governed worker or deployment secret store. Do not print secret values in receipts, logs, status files, or closure plans.
 
+For GitHub-hosted live adapter evidence, use the manual
+`Capability Adapter Live Evidence` workflow. The workflow expects
+`EMAIL_CALENDAR_CONNECTOR_TOKEN` as a repository secret for email/calendar
+evidence and `MULLU_VOICE_PROBE_AUDIO_B64` as a repository secret containing
+the approved audio sample bytes encoded with base64. The workflow decodes that
+audio only inside the runner, sets `MULLU_VOICE_PROBE_AUDIO` to the temporary
+runner path, and uploads only JSON evidence artifacts. It does not upload raw
+audio or print secret values. The uploaded live receipts must still be reviewed
+and merged into the current `.change_assurance` evidence packet before terminal
+promotion validation is claimed.
+
 The deployment witness publication path requires all of these bound names before
 the handoff preflight can pass: `OPENAI_API_KEY`,
 `EMAIL_CALENDAR_CONNECTOR_TOKEN`, `MULLU_GATEWAY_URL`,
