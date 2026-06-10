@@ -7,7 +7,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from mcoi_runtime.app.readiness import production_readiness_checks
 from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.core.spatial_governance import build_gateway_spatial_map
 
 router = APIRouter()
 
@@ -77,26 +79,26 @@ def list_capabilities():
 @router.get("/api/v1/readiness")
 def production_readiness():
     """Production readiness checks -- verifies all subsystems are operational."""
-    checks = {
-        "llm_bridge": deps.llm_bridge.invocation_count >= 0,
-        "store": deps.store.ledger_count() >= 0,
-        "audit_trail": deps.audit_trail.entry_count >= 0,
-        "event_bus": deps.event_bus.event_count >= 0,
-        "metrics": deps.metrics.counter("requests_total") >= 0,
-        "config": deps.config_manager.version >= 1,
-        "tool_registry": deps.tool_registry.tool_count >= 1,
-        "model_router": deps.model_router.model_count >= 1,
-        "plugins": deps.plugin_registry.count >= 1,
-        "health_agg": deps.health_agg.component_count >= 1,
-        "schema_validator": deps.schema_validator.count >= 1,
-        "guard_chain": deps.guard_chain.guard_count >= 1,
-    }
+    checks = production_readiness_checks()
     all_ready = all(checks.values())
     return {
         "ready": all_ready,
         "checks": checks,
         "version": "1.3.0",
         "subsystems": len(checks),
+        "governed": True,
+    }
+
+
+# ═══ Spatial Governance ═══
+
+
+@router.get("/api/v1/spatial-map")
+def read_spatial_map():
+    """Return the bounded gateway spatial-causal governance map."""
+    deps.metrics.inc("requests_governed")
+    return {
+        "spatial_map": build_gateway_spatial_map(production_readiness_checks()).to_dict(),
         "governed": True,
     }
 

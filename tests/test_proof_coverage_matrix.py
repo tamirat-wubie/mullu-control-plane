@@ -134,7 +134,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["cost_budget_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 5
     assert surfaces["assistant_kernel_planning"]["unanchored_witness_count"] == 0
-    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 9
+    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 10
     assert surfaces["operator_console_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["model_experiment_control"]["exact_test_anchor_count"] == 7
     assert surfaces["model_experiment_control"]["unanchored_witness_count"] == 0
@@ -574,6 +574,7 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/health/shadow"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/health/v3"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/readiness"]["surface_id"] == "operational_health_read_models"
+    assert classified_routes["/api/v1/spatial-map"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/deploy/readiness"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/release/latest"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/snapshot"]["surface_id"] == "operational_health_read_models"
@@ -2954,6 +2955,7 @@ def test_operational_health_surface_exposes_bounded_read_models() -> None:
     assert "/api/v1/health/v2" in health_surface["representative_paths"]
     assert "/api/v1/health/v3" in health_surface["representative_paths"]
     assert "/api/v1/readiness" in health_surface["representative_paths"]
+    assert "/api/v1/spatial-map" in health_surface["representative_paths"]
     assert "/api/v1/deploy/readiness" in health_surface["representative_paths"]
     assert "/api/v1/release/latest" in health_surface["representative_paths"]
     assert "/api/v1/snapshot" in health_surface["representative_paths"]
@@ -2967,6 +2969,7 @@ def test_operational_health_surface_exposes_bounded_read_models() -> None:
     assert "mcoi/mcoi_runtime/core/health_aggregator.py" in health_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/health_check_agg.py" in health_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/health_v3.py" in health_surface["evidence_files"]
+    assert "mcoi/mcoi_runtime/core/spatial_governance.py" in health_surface["evidence_files"]
     assert "mcoi/tests/test_deep_health.py" in health_surface["evidence_files"]
     assert "mcoi/tests/test_health_aggregator.py" in health_surface["evidence_files"]
     assert "mcoi/tests/test_health_check_agg.py" in health_surface["evidence_files"]
@@ -2983,6 +2986,8 @@ def test_operational_health_surface_exposes_bounded_read_models() -> None:
     assert "health_v2_exception_sanitized" in witnesses
     assert "health_v3_recovery_tracking" in witnesses
     assert "production_readiness_checks_bounded" in witnesses
+    assert "spatial_map_read_model_bounded" in witnesses
+    assert "spatial_path_missing_boundary_blocks_explicitly" in witnesses
     assert "deployment_readiness_read_model_bounded" in witnesses
     assert "release_info_read_model_bounded" in witnesses
     assert "system_snapshot_read_model_bounded" in witnesses
@@ -2993,6 +2998,7 @@ def test_operational_health_surface_exposes_bounded_read_models() -> None:
     assert route_records["/api/v1/health/v3"]["coverage_state"] == "proven"
     assert route_records["/api/v1/health/v3"]["surface_id"] == "operational_health_read_models"
     assert route_records["/api/v1/readiness"]["surface_id"] == "operational_health_read_models"
+    assert route_records["/api/v1/spatial-map"]["surface_id"] == "operational_health_read_models"
     assert route_records["/api/v1/release/latest"]["surface_id"] == "operational_health_read_models"
     assert closure_actions["classify_operational_health_read_model_routes"]["status"] == "closed"
 

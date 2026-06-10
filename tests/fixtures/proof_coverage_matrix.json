@@ -892,11 +892,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 256,
+      "proven": 257,
       "unproven": 0,
       "witnessed": 153
     },
-    "route_count": 409,
+    "route_count": 410,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2426,6 +2426,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/snapshots",
+        "surface_id": "operational_health_read_models"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/spatial-map",
         "surface_id": "operational_health_read_models"
       },
       {
@@ -4034,9 +4039,11 @@
       "coverage_state": "witnessed",
       "evidence_files": [
         "mcoi/mcoi_runtime/app/routers/console.py",
+        "mcoi/mcoi_runtime/app/readiness.py",
         "mcoi/mcoi_runtime/app/routers/shadow.py",
         "mcoi/mcoi_runtime/app/console.py",
         "mcoi/mcoi_runtime/app/view_models.py",
+        "mcoi/mcoi_runtime/core/spatial_governance.py",
         "mcoi/tests/test_operator_console.py",
         "mcoi/tests/test_console.py",
         "mcoi/tests/test_inceptadive_shadow_routes.py"
@@ -4082,6 +4089,9 @@
         "console_runs_bounds_recent_audit_entries": [
           "console_runs"
         ],
+        "full_console_includes_spatial_map_read_model": [
+          "full_console"
+        ],
         "shadow_console_route_returns_counts_without_raw_text": [
           "shadow_console_route_returns_counts_without_raw_text"
         ]
@@ -4095,7 +4105,8 @@
         "shadow_console_route_returns_counts_without_raw_text",
         "console_note_memory_returns_read_only_lifecycle_summary",
         "console_note_memory_html_escapes_read_model",
-        "console_note_memory_fails_closed_without_store_path"
+        "console_note_memory_fails_closed_without_store_path",
+        "full_console_includes_spatial_map_read_model"
       ],
       "surface_id": "operator_console_read_models"
     },
@@ -5148,11 +5159,13 @@
         "mcoi/mcoi_runtime/app/routers/health.py",
         "mcoi/mcoi_runtime/app/routers/health_remote.py",
         "mcoi/mcoi_runtime/app/health_external.py",
+        "mcoi/mcoi_runtime/app/readiness.py",
         "mcoi/mcoi_runtime/app/routers/shadow.py",
         "mcoi/mcoi_runtime/core/deep_health.py",
         "mcoi/mcoi_runtime/core/health_aggregator.py",
         "mcoi/mcoi_runtime/core/health_check_agg.py",
         "mcoi/mcoi_runtime/core/health_v3.py",
+        "mcoi/mcoi_runtime/core/spatial_governance.py",
         "mcoi/mcoi_runtime/app/routers/ops/summaries.py",
         "mcoi/mcoi_runtime/app/routers/ops/release.py",
         "mcoi/mcoi_runtime/app/routers/ops/snapshots.py",
@@ -5184,6 +5197,7 @@
         "/api/v1/guards",
         "/api/v1/capabilities",
         "/api/v1/readiness",
+        "/api/v1/spatial-map",
         "/api/v1/monitor",
         "/api/v1/shutdown/info",
         "/api/v1/correlation/active",
@@ -5227,6 +5241,8 @@
         "health_routes_return_read_models",
         "ops_dashboard_read_model_bounded",
         "production_readiness_checks_bounded",
+        "spatial_map_read_model_bounded",
+        "spatial_path_missing_boundary_blocks_explicitly",
         "monitoring_vitals_read_model_bounded",
         "shutdown_info_read_model_bounded",
         "correlation_summary_read_model_bounded",
@@ -9762,8 +9778,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1240,
-    "runtime_witness_count": 1240,
+    "exact_test_anchor_count": 1243,
+    "runtime_witness_count": 1243,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11250,10 +11266,16 @@
               "mcoi/tests/test_operator_console.py::test_console_note_memory_mounted_without_store_path_fails_closed"
             ],
             "witness": "console_note_memory_fails_closed_without_store_path"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operator_console.py::test_full_console"
+            ],
+            "witness": "full_console_includes_spatial_map_read_model"
           }
         ],
-        "exact_test_anchor_count": 9,
-        "runtime_witness_count": 9,
+        "exact_test_anchor_count": 10,
+        "runtime_witness_count": 10,
         "surface_id": "operator_console_read_models",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
@@ -12576,6 +12598,18 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_spatial_map_read_model_bounded"
+            ],
+            "witness": "spatial_map_read_model_bounded"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_health_read_models.py::test_spatial_path_missing_boundary_blocks_explicitly"
+            ],
+            "witness": "spatial_path_missing_boundary_blocks_explicitly"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_operational_health_read_models.py::test_monitoring_vitals_read_model_bounded"
             ],
             "witness": "monitoring_vitals_read_model_bounded"
@@ -12617,8 +12651,8 @@
             "witness": "system_snapshot_read_model_bounded"
           }
         ],
-        "exact_test_anchor_count": 24,
-        "runtime_witness_count": 24,
+        "exact_test_anchor_count": 26,
+        "runtime_witness_count": 26,
         "surface_id": "operational_health_read_models",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

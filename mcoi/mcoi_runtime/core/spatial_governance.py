@@ -1,0 +1,257 @@
+"""Mullusi universal spatial-causal governance read model.
+
+Purpose: map gateway entities, regions, boundaries, paths, metrics, blockers,
+and judgments into a bounded operator-visible spatial map.
+Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
+Dependencies: Python standard library dataclasses and enum support.
+Invariants:
+  - Every path crossing is witnessed.
+  - Missing boundaries are reported as explicit blockers.
+  - The model returns no secrets or runtime credential values.
+  - Reachability is never claimed when evidence is required.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from dataclasses import asdict, dataclass
+from enum import StrEnum
+from typing import Any
+
+
+class BoundaryRule(StrEnum):
+    """Boundary crossing rule."""
+
+    ALLOW = "allow"
+    BLOCK = "block"
+    REQUIRES_EVIDENCE = "requires_evidence"
+
+
+class SpatialStatus(StrEnum):
+    """Spatial path judgment status."""
+
+    ALLOWED = "allowed"
+    BLOCKED = "blocked"
+    UNKNOWN = "unknown"
+
+
+@dataclass(frozen=True)
+class SpatialEntity:
+    """Entity located in a governed control-plane region."""
+
+    id: str
+    kind: str
+    region: str
+
+
+@dataclass(frozen=True)
+class SpatialRegion:
+    """Named region inside the gateway spatial frame."""
+
+    id: str
+    kind: str
+    trust: str
+
+
+@dataclass(frozen=True)
+class SpatialBoundary:
+    """Boundary separating two regions."""
+
+    id: str
+    separates: tuple[str, str]
+    rule: BoundaryRule
+
+
+@dataclass(frozen=True)
+class SpatialPath:
+    """Path from a source entity or region to a target."""
+
+    id: str
+    source: str
+    target: str
+    crosses: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class SpatialMetric:
+    """Symbolic metric for an observed spatial relation."""
+
+    id: str
+    kind: str
+    value: str
+
+
+@dataclass(frozen=True)
+class SpatialJudgment:
+    """Judgment for one path."""
+
+    path_id: str
+    status: SpatialStatus
+    reasons: tuple[str, ...]
+    witness: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class SpatialMap:
+    """Complete bounded spatial governance map."""
+
+    frame: str
+    entities: tuple[SpatialEntity, ...]
+    regions: tuple[SpatialRegion, ...]
+    boundaries: tuple[SpatialBoundary, ...]
+    paths: tuple[SpatialPath, ...]
+    metrics: tuple[SpatialMetric, ...]
+    judgments: tuple[SpatialJudgment, ...]
+    blockers: tuple[str, ...]
+    witness: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-safe read model with enum values expanded."""
+        payload = asdict(self)
+        for boundary in payload["boundaries"]:
+            boundary["rule"] = str(boundary["rule"])
+        for judgment in payload["judgments"]:
+            judgment["status"] = str(judgment["status"])
+        return payload
+
+
+def judge_path(path: SpatialPath, boundaries: Mapping[str, SpatialBoundary]) -> SpatialJudgment:
+    """Judge a path against declared boundaries.
+
+    Input contract: path crossings name boundary IDs, and boundaries maps those
+    IDs to crossing rules.
+    Output contract: one allowed, blocked, or unknown judgment.
+    Error contract: missing boundary IDs are returned as explicit blockers.
+    """
+    reasons: list[str] = []
+    witness: list[str] = [
+        f"path:{path.id}",
+        f"source:{path.source}",
+        f"target:{path.target}",
+    ]
+
+    for boundary_id in path.crosses:
+        boundary = boundaries.get(boundary_id)
+        if boundary is None:
+            witness.append(f"missing_boundary:{boundary_id}")
+            reasons.append(f"dependency_missing:{boundary_id}")
+            continue
+
+        witness.append(f"crosses:{boundary.id}")
+        if boundary.rule == BoundaryRule.BLOCK:
+            reasons.append(f"blocked_boundary:{boundary.id}")
+        elif boundary.rule == BoundaryRule.REQUIRES_EVIDENCE:
+            reasons.append(f"evidence_required:{boundary.id}")
+
+    if any(reason.startswith(("blocked_boundary", "dependency_missing")) for reason in reasons):
+        return SpatialJudgment(path.id, SpatialStatus.BLOCKED, tuple(reasons), tuple(witness))
+
+    if any(reason.startswith("evidence_required") for reason in reasons):
+        return SpatialJudgment(path.id, SpatialStatus.UNKNOWN, tuple(reasons), tuple(witness))
+
+    return SpatialJudgment(
+        path.id,
+        SpatialStatus.ALLOWED,
+        tuple(),
+        tuple([*witness, "path_valid"]),
+    )
+
+
+def build_gateway_spatial_map(readiness_checks: Mapping[str, bool]) -> SpatialMap:
+    """Build the gateway spatial governance read model.
+
+    Input contract: readiness_checks maps subsystem names to pass/fail booleans.
+    Output contract: deterministic spatial map with explicit launch blockers.
+    Error contract: non-boolean readiness values are treated as blocked evidence.
+    """
+    readiness_blockers = tuple(
+        f"readiness_check:{name}"
+        for name, passed in sorted(readiness_checks.items())
+        if passed is not True
+    )
+
+    entities = (
+        SpatialEntity("public_user", "actor", "public_browser"),
+        SpatialEntity("browser", "client_runtime", "public_browser"),
+        SpatialEntity("dashboard", "operator_surface", "dashboard_surface"),
+        SpatialEntity("gateway_api", "fastapi_service", "api_boundary"),
+        SpatialEntity("cors_policy", "boundary_policy", "api_boundary"),
+        SpatialEntity("request_validator", "contract", "validation_zone"),
+        SpatialEntity("governance_guard_chain", "decision_engine", "governance_core"),
+        SpatialEntity("readiness_contract", "launch_contract", "readiness_zone"),
+        SpatialEntity("command_ledger", "persistence_runtime", "persistence_zone"),
+        SpatialEntity("tenant_identity", "identity_runtime", "identity_zone"),
+        SpatialEntity("capability_worker", "private_worker", "private_worker_zone"),
+        SpatialEntity("secret_rotation", "secret_control", "secret_zone"),
+        SpatialEntity("render_host", "deployment_host", "deployment_zone"),
+        SpatialEntity("custom_domains", "external_authority", "dns_authority_zone"),
+    )
+
+    regions = (
+        SpatialRegion("public_browser", "client", "untrusted"),
+        SpatialRegion("dashboard_surface", "operator_ui", "semi_trusted"),
+        SpatialRegion("api_boundary", "http_gateway", "guarded"),
+        SpatialRegion("validation_zone", "schema_boundary", "guarded"),
+        SpatialRegion("governance_core", "decision_boundary", "trusted"),
+        SpatialRegion("readiness_zone", "launch_boundary", "guarded"),
+        SpatialRegion("persistence_zone", "state_boundary", "guarded"),
+        SpatialRegion("identity_zone", "authority_boundary", "guarded"),
+        SpatialRegion("private_worker_zone", "execution_boundary", "private"),
+        SpatialRegion("secret_zone", "credential_boundary", "restricted"),
+        SpatialRegion("deployment_zone", "host_boundary", "external"),
+        SpatialRegion("dns_authority_zone", "domain_boundary", "external"),
+    )
+
+    boundaries = (
+        SpatialBoundary("cors", ("dashboard_surface", "api_boundary"), BoundaryRule.ALLOW),
+        SpatialBoundary("validation", ("api_boundary", "validation_zone"), BoundaryRule.ALLOW),
+        SpatialBoundary("governance", ("validation_zone", "governance_core"), BoundaryRule.ALLOW),
+        SpatialBoundary("readiness", ("api_boundary", "readiness_zone"), BoundaryRule.REQUIRES_EVIDENCE),
+        SpatialBoundary("persistence", ("api_boundary", "persistence_zone"), BoundaryRule.REQUIRES_EVIDENCE),
+        SpatialBoundary("identity", ("public_browser", "identity_zone"), BoundaryRule.REQUIRES_EVIDENCE),
+        SpatialBoundary("worker_private", ("api_boundary", "private_worker_zone"), BoundaryRule.REQUIRES_EVIDENCE),
+        SpatialBoundary("secrets", ("source_code", "secret_zone"), BoundaryRule.BLOCK),
+        SpatialBoundary("dns", ("deployment_zone", "dns_authority_zone"), BoundaryRule.REQUIRES_EVIDENCE),
+    )
+    boundary_index = {boundary.id: boundary for boundary in boundaries}
+
+    paths = (
+        SpatialPath("dashboard_health_check", "dashboard", "gateway_api.health", ("cors",)),
+        SpatialPath("governed_request_flow", "dashboard", "governance_guard_chain", ("cors", "validation", "governance")),
+        SpatialPath("readiness_launch_gate", "gateway_api", "public_launch", ("readiness", "dns", "identity")),
+        SpatialPath("stateful_command_path", "gateway_api", "command_ledger", ("persistence",)),
+        SpatialPath("capability_execution_path", "gateway_api", "capability_worker", ("worker_private",)),
+        SpatialPath("source_to_secret", "source_code", "secret_rotation", ("secrets",)),
+    )
+
+    judgments = tuple(judge_path(path, boundary_index) for path in paths)
+    unresolved_paths = tuple(
+        f"path:{judgment.path_id}:{judgment.status}"
+        for judgment in judgments
+        if judgment.status != SpatialStatus.ALLOWED
+    )
+
+    return SpatialMap(
+        frame=(
+            "gateway_architecture_space+security_boundary_space+deployment_topology_space+"
+            "runtime_request_flow_space+governance_proof_space"
+        ),
+        entities=entities,
+        regions=regions,
+        boundaries=boundaries,
+        paths=paths,
+        metrics=(
+            SpatialMetric("readiness_subsystems", "count", str(len(readiness_checks))),
+            SpatialMetric("readiness_blockers", "count", str(len(readiness_blockers))),
+            SpatialMetric("unresolved_paths", "count", str(len(unresolved_paths))),
+        ),
+        judgments=judgments,
+        blockers=tuple([*readiness_blockers, *unresolved_paths]),
+        witness=(
+            "spatial_frame:gateway_control_plane_architecture",
+            "health_is_not_launch_readiness",
+            "every_path_crossing_is_witnessed",
+            "secret_boundary_blocks_source_to_secret_path",
+            "evidence_required_boundaries_are_unknown_not_allowed",
+        ),
+    )
