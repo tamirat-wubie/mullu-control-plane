@@ -1,7 +1,7 @@
 # Mullu Holistic Loop Engineering Kernel v1
 
 Purpose: define the shared governed loop contract used to describe existing Mullu loops without changing their runtime behavior.
-Governance scope: loop manifests, loop state projections, step receipts, closure reports, registry exposure, status bindings, mode bindings, closure condition bindings, risk bindings, evidence bindings, evidence blockers, rollback policy, learning bindings, and learning policy.
+Governance scope: loop manifests, loop state projections, step receipts, closure reports, registry exposure, status bindings, transition bindings, mode bindings, closure condition bindings, risk bindings, evidence bindings, evidence blockers, rollback policy, learning bindings, and learning policy.
 Dependencies: `mcoi_runtime.contracts.holistic_loop`, `mcoi_runtime.core.holistic_loop_registry`, existing deployment witness, runtime conformance, cognitive outcome, and governed code-change surfaces.
 Invariants: this is a read-model-first contract layer; it adds no public mutation route; it does not rewrite deployment, cognitive, proof verification, or code-change behavior.
 
@@ -30,6 +30,7 @@ The kernel models the common contract through:
 | `LoopStepReceipt` | Step-level input hash, output hash, decision, evidence, status, errors, and timestamp. |
 | `LoopClosureReport` | Closure assessment with unresolved gaps, rollback availability, and learning candidates. |
 | `LoopStatusBinding` | Read-only map from projected status to blockers, verification refs, closure gates, validators, and proof surfaces. |
+| `LoopTransitionBinding` | Read-only map from possible status and phase transitions to required evidence, authority, blockers, receipts, rollback refs, validators, and proof surfaces. |
 | `LoopModeBinding` | Read-only map from projected mode to allowed modes, separation refs, real-execution guards, validators, and proof surfaces. |
 | `LoopClosureConditionBinding` | Read-only map from each closure condition to required evidence refs, authority refs, validators, and proof surfaces. |
 | `LoopAuthorityBinding` | Read-only map from each required authority label to source refs, validator refs, and proof surfaces. |
@@ -96,6 +97,48 @@ The status catalog does not clear blockers, mark a loop verified, transition
 state, execute validators, or close loops. It only tells operators which
 blockers, verification refs, closure gates, validators, and proof surfaces
 explain the current projected status.
+
+## Transition Catalog
+
+Each loop summary includes `transition_bindings`. A binding is a read-only
+catalog entry for a possible status and phase transition:
+
+| Field | Meaning |
+| --- | --- |
+| `transition_ref` | Stable transition label. |
+| `from_status` | Source status boundary. |
+| `to_status` | Target status boundary. |
+| `from_step` | Source loop phase boundary. |
+| `to_step` | Target loop phase boundary. |
+| `required_authority_refs` | Authority labels required before the transition can be executed by a later workflow. |
+| `required_evidence_refs` | Evidence labels required before the transition can be executed by a later workflow. |
+| `blocker_refs` | Current blockers that prevent transition readiness. |
+| `receipt_refs` | Receipts that would prove later transition execution. |
+| `rollback_refs` | Rollback or recovery policy refs for failed transition execution. |
+| `source_refs` | Existing files, schemas, or scripts that define the transition proof surface. |
+| `validator_refs` | Existing tests or validators that check the referenced transition surface. |
+| `proof_surface_refs` | Proof-matrix surface IDs related to transition readiness. |
+| `read_only` | Always `true`; bindings do not update status or phase. |
+| `executes_transition` | Always `false`; bindings do not execute transition behavior. |
+| `terminal_closure` | Always `false`; bindings are not closure certificates. |
+
+The catalog is exact by contract:
+
+```text
+set(transition_bindings[*].blocker_refs) == set(open_blockers)
+transition_bindings[*].required_evidence_refs subset required_evidence
+transition_bindings[*].required_authority_refs subset required_authority
+rollback_policy in transition_bindings[*].rollback_refs
+transition_bindings[*].read_only == true
+transition_bindings[*].executes_transition == false
+transition_bindings[*].terminal_closure == false
+```
+
+The transition catalog does not clear blockers, update loop status, advance
+phase, execute validators, run rollback, or close loops. It only tells
+operators which evidence, authority, receipt, rollback, validator, and proof
+surfaces are required before a later loop-specific workflow may execute or
+prove a transition.
 
 ## Mode Catalog
 
@@ -379,10 +422,11 @@ This kernel is intentionally non-invasive:
 8. It does not execute rollback or recovery actions referenced by the catalog.
 9. It does not admit learning, write memory, mutate tests, or update gates referenced by the catalog.
 10. It does not update loop status or execute status validators referenced by the catalog.
-11. It does not execute evidence validators referenced by the catalog.
-12. It does not emit live runtime execution receipts.
-13. It does not mark any loop closed.
-14. It only exposes typed read-model contracts that other surfaces can adopt later.
+11. It does not execute status or phase transitions referenced by the catalog.
+12. It does not execute evidence validators referenced by the catalog.
+13. It does not emit live runtime execution receipts.
+14. It does not mark any loop closed.
+15. It only exposes typed read-model contracts that other surfaces can adopt later.
 
 ## Read-Only Exposure
 
@@ -402,6 +446,7 @@ script:
 | `status` | `blocked` while any returned loop has blockers; otherwise `verified`. |
 | `loops` | Bounded registered loop summaries. |
 | `loops[].status_binding` | Read-only status catalog entry matching the projected loop status and blockers. |
+| `loops[].transition_bindings` | Read-only transition catalog entries describing allowed status and phase transition gates. |
 | `loops[].mode_binding` | Read-only mode catalog entry matching the projected loop mode and allowed modes. |
 | `loops[].closure_condition_bindings` | Read-only closure condition catalog entries covering every declared closure condition. |
 | `loops[].authority_bindings` | Read-only authority catalog entries covering every required authority label. |

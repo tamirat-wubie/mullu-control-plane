@@ -43,6 +43,7 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
     assert all(loop["open_blockers"] for loop in payload["loops"])
     assert all(loop["risk_binding"] for loop in payload["loops"])
     assert all(loop["status_binding"] for loop in payload["loops"])
+    assert all(loop["transition_bindings"] for loop in payload["loops"])
     assert all(loop["mode_binding"] for loop in payload["loops"])
     assert all(loop["authority_bindings"] for loop in payload["loops"])
     assert all(loop["missing_authority"] for loop in payload["loops"])
@@ -84,6 +85,26 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
         and loop["status_binding"]["verification_refs"]
         and loop["status_binding"]["closure_gate_refs"]
         for loop in payload["loops"]
+    )
+    assert all(
+        {binding["transition_ref"] for binding in loop["transition_bindings"]}
+        == {
+            "open_to_blocked_on_missing_requirements",
+            "blocked_to_verified_after_requirements",
+            "verified_to_closed_requires_terminal_closure",
+        }
+        for loop in payload["loops"]
+    )
+    assert all(
+        set(binding["blocker_refs"]) == set(loop["open_blockers"])
+        and set(binding["required_authority_refs"]) <= set(loop["required_authority"])
+        and set(binding["required_evidence_refs"]) <= set(loop["required_evidence"])
+        and loop["rollback_policy"] in binding["rollback_refs"]
+        and binding["read_only"] is True
+        and binding["executes_transition"] is False
+        and binding["terminal_closure"] is False
+        for loop in payload["loops"]
+        for binding in loop["transition_bindings"]
     )
     assert all(
         loop["mode_binding"]["projected_mode"] == loop["mode"]

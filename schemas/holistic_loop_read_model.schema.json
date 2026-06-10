@@ -78,6 +78,7 @@
         "risk_binding",
         "status",
         "status_binding",
+        "transition_bindings",
         "mode",
         "mode_binding",
         "current_step",
@@ -130,6 +131,13 @@
         },
         "status_binding": {
           "$ref": "#/$defs/status_binding"
+        },
+        "transition_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/transition_binding"
+          }
         },
         "mode": {
           "type": "string",
@@ -275,6 +283,106 @@
           "const": true
         },
         "status_transition": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "transition_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transition_ref",
+        "from_status",
+        "to_status",
+        "from_step",
+        "to_step",
+        "required_authority_refs",
+        "required_evidence_refs",
+        "blocker_refs",
+        "receipt_refs",
+        "rollback_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "read_only",
+        "executes_transition",
+        "terminal_closure"
+      ],
+      "properties": {
+        "transition_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from_status": {
+          "type": "string",
+          "enum": ["open", "blocked", "verified", "closed"]
+        },
+        "to_status": {
+          "type": "string",
+          "enum": ["open", "blocked", "verified", "closed"]
+        },
+        "from_step": {
+          "type": "string",
+          "enum": [
+            "observe",
+            "decide",
+            "act",
+            "verify",
+            "record_receipt",
+            "update_state",
+            "learn",
+            "audit",
+            "close"
+          ]
+        },
+        "to_step": {
+          "type": "string",
+          "enum": [
+            "observe",
+            "decide",
+            "act",
+            "verify",
+            "record_receipt",
+            "update_state",
+            "learn",
+            "audit",
+            "close"
+          ]
+        },
+        "required_authority_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "required_evidence_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "blocker_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "receipt_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "rollback_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "source_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "validator_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "proof_surface_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "executes_transition": {
           "type": "boolean",
           "const": false
         },

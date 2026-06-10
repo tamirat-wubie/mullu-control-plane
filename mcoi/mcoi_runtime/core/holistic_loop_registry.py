@@ -33,6 +33,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopStatusBinding,
     LoopStepReceipt,
     LoopSummary,
+    LoopTransitionBinding,
 )
 
 
@@ -366,6 +367,7 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         risk_binding=_risk_binding_for(manifest.loop_id),
         status=status,
         status_binding=_status_binding_for(manifest.loop_id, status, blockers),
+        transition_bindings=_transition_bindings_for(manifest.loop_id, blockers),
         mode=state.mode,
         mode_binding=_mode_binding_for(manifest.loop_id, state.mode, manifest.allowed_modes),
         current_step=state.current_step,
@@ -512,6 +514,34 @@ def _status_binding_for(
         source_refs=defaults.source_refs,
         validator_refs=defaults.validator_refs,
         proof_surface_refs=defaults.proof_surface_refs,
+    )
+
+
+def _transition_bindings_for(
+    loop_id: str,
+    blockers: Sequence[str],
+) -> tuple[LoopTransitionBinding, ...]:
+    try:
+        defaults = _DEFAULT_TRANSITION_BINDINGS[loop_id]
+    except KeyError as exc:
+        raise ValueError(f"loop transition catalog missing: {loop_id}") from exc
+    return tuple(
+        LoopTransitionBinding(
+            transition_ref=binding.transition_ref,
+            from_status=binding.from_status,
+            to_status=binding.to_status,
+            from_step=binding.from_step,
+            to_step=binding.to_step,
+            required_authority_refs=binding.required_authority_refs,
+            required_evidence_refs=binding.required_evidence_refs,
+            blocker_refs=tuple(blockers),
+            receipt_refs=binding.receipt_refs,
+            rollback_refs=binding.rollback_refs,
+            source_refs=binding.source_refs,
+            validator_refs=binding.validator_refs,
+            proof_surface_refs=binding.proof_surface_refs,
+        )
+        for binding in defaults
     )
 
 
@@ -696,6 +726,86 @@ def _status_binding(
     )
 
 
+def _transition_binding(
+    transition_ref: str,
+    *,
+    from_status: LoopStatus,
+    to_status: LoopStatus,
+    from_step: LoopPhase,
+    to_step: LoopPhase,
+    required_authority_refs: Sequence[str],
+    required_evidence_refs: Sequence[str],
+    receipt_refs: Sequence[str],
+    rollback_refs: Sequence[str],
+    source_refs: Sequence[str],
+    validator_refs: Sequence[str],
+    proof_surface_refs: Sequence[str],
+) -> LoopTransitionBinding:
+    return LoopTransitionBinding(
+        transition_ref=transition_ref,
+        from_status=from_status,
+        to_status=to_status,
+        from_step=from_step,
+        to_step=to_step,
+        required_authority_refs=tuple(required_authority_refs),
+        required_evidence_refs=tuple(required_evidence_refs),
+        blocker_refs=("default_transition_projection",),
+        receipt_refs=tuple(receipt_refs),
+        rollback_refs=tuple(rollback_refs),
+        source_refs=tuple(source_refs),
+        validator_refs=tuple(validator_refs),
+        proof_surface_refs=tuple(proof_surface_refs),
+    )
+
+
+def _transition_catalog(
+    *,
+    required_authority_refs: Sequence[str],
+    required_evidence_refs: Sequence[str],
+    rollback_ref: str,
+    source_refs: Sequence[str],
+    validator_refs: Sequence[str],
+    proof_surface_refs: Sequence[str],
+) -> tuple[LoopTransitionBinding, ...]:
+    common = {
+        "required_authority_refs": tuple(required_authority_refs),
+        "required_evidence_refs": tuple(required_evidence_refs),
+        "rollback_refs": (rollback_ref,),
+        "source_refs": tuple(source_refs),
+        "validator_refs": tuple(validator_refs),
+        "proof_surface_refs": tuple(proof_surface_refs),
+    }
+    return (
+        _transition_binding(
+            "open_to_blocked_on_missing_requirements",
+            from_status=LoopStatus.OPEN,
+            to_status=LoopStatus.BLOCKED,
+            from_step=LoopPhase.OBSERVE,
+            to_step=LoopPhase.VERIFY,
+            receipt_refs=("observe_receipt", "verification_receipt", "closure_report"),
+            **common,
+        ),
+        _transition_binding(
+            "blocked_to_verified_after_requirements",
+            from_status=LoopStatus.BLOCKED,
+            to_status=LoopStatus.VERIFIED,
+            from_step=LoopPhase.VERIFY,
+            to_step=LoopPhase.RECORD_RECEIPT,
+            receipt_refs=("verification_receipt", "record_receipt", "closure_report"),
+            **common,
+        ),
+        _transition_binding(
+            "verified_to_closed_requires_terminal_closure",
+            from_status=LoopStatus.VERIFIED,
+            to_status=LoopStatus.CLOSED,
+            from_step=LoopPhase.AUDIT,
+            to_step=LoopPhase.CLOSE,
+            receipt_refs=("audit_receipt", "terminal_closure_certificate", "closure_report"),
+            **common,
+        ),
+    )
+
+
 def _closure_condition_binding(
     closure_ref: str,
     purpose: str,
@@ -849,6 +959,100 @@ _DEFAULT_STATUS_BINDINGS: Mapping[str, LoopStatusBinding] = {
             "recovery_handoff_present",
             "closure_blockers_empty",
         ),
+        source_refs=(
+            "mcoi/mcoi_runtime/core/governed_code_change_loop.py",
+            "scripts/run_governed_code_change_loop.py",
+            "schemas/sdlc_verification_receipt.schema.json",
+        ),
+        validator_refs=(
+            "tests/test_governed_code_change_loop.py",
+            "tests/test_validate_governed_code_change_loop_receipt.py",
+            "scripts/validate_sdlc_artifact.py",
+        ),
+        proof_surface_refs=("software_dev_capability_pack",),
+    ),
+}
+
+
+_DEFAULT_TRANSITION_BINDINGS: Mapping[str, tuple[LoopTransitionBinding, ...]] = {
+    "deployment_witness_loop": _transition_catalog(
+        required_authority_refs=("operator_approval_ref", "deployment_publication_authority"),
+        required_evidence_refs=(
+            "deployment_witness_published",
+            "runtime_witness_valid",
+            "runtime_conformance_verified",
+            "audit_anchor_verified",
+            "proof_verification_passed",
+            "authority_obligations_clear",
+            "public_endpoint_declared",
+        ),
+        rollback_ref="revert_publication_status_and_restore_last_verified_witness",
+        source_refs=(
+            "scripts/preflight_deployment_witness.py",
+            "scripts/collect_deployment_witness.py",
+            "scripts/validate_release_status.py",
+        ),
+        validator_refs=(
+            "tests/test_preflight_deployment_witness.py",
+            "tests/test_collect_deployment_witness.py",
+            "tests/test_validate_release_status.py",
+        ),
+        proof_surface_refs=("production_evidence_plane", "gateway_runtime_witness"),
+    ),
+    "runtime_conformance_loop": _transition_catalog(
+        required_authority_refs=("runtime_conformance_issuer", "conformance_secret_handoff_ref"),
+        required_evidence_refs=(
+            "certificate_schema_valid",
+            "certificate_signature_verified",
+            "core_canaries_passed",
+            "authority_directory_sync_valid",
+            "proof_coverage_matrix_current",
+            "open_conformance_gaps_bounded",
+        ),
+        rollback_ref="invalidate_conformance_claim_and_retain_failed_collection",
+        source_refs=(
+            "scripts/collect_runtime_conformance.py",
+            "schemas/runtime_conformance_collection.schema.json",
+            "schemas/runtime_conformance_certificate.schema.json",
+        ),
+        validator_refs=(
+            "tests/test_collect_runtime_conformance.py",
+            "tests/test_collect_runtime_conformance_cli.py",
+            "tests/test_gateway/test_conformance.py",
+        ),
+        proof_surface_refs=("runtime_conformance_attestation", "proof_route_gap_triage"),
+    ),
+    "cognitive_outcome_loop": _transition_catalog(
+        required_authority_refs=("governed_dispatch_policy_decision", "learning_admission_decision"),
+        required_evidence_refs=(
+            "governed_dispatch_trace",
+            "mechanical_verification_result",
+            "critic_verdict_or_null_critic",
+            "learning_admission_recorded",
+            "episodic_outcome_anchor",
+        ),
+        rollback_ref="defer_or_reject_learning_admission_without_memory_promotion",
+        source_refs=(
+            "mcoi/mcoi_runtime/core/cognitive_loop.py",
+            "mcoi/mcoi_runtime/core/mil_learning_admission.py",
+            "mcoi/mcoi_runtime/persistence/cognitive_outcome_ledger.py",
+        ),
+        validator_refs=(
+            "mcoi/tests/test_cognitive_loop.py",
+            "mcoi/tests/test_learning_loop.py",
+            "mcoi/tests/test_cognitive_outcome_ledger.py",
+        ),
+        proof_surface_refs=("software_outcome_learning",),
+    ),
+    "governed_code_change_loop": _transition_catalog(
+        required_authority_refs=("uao_ref", "code_worker_lease", "sdlc_closure_authority"),
+        required_evidence_refs=(
+            "code_worker_receipt",
+            "implementation_receipt",
+            "verification_receipt",
+            "recovery_handoff",
+        ),
+        rollback_ref="restore_workspace_snapshot_or_open_recovery_handoff",
         source_refs=(
             "mcoi/mcoi_runtime/core/governed_code_change_loop.py",
             "scripts/run_governed_code_change_loop.py",

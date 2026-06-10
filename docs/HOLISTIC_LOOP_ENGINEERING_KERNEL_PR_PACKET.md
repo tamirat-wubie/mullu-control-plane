@@ -2,9 +2,9 @@
 
 Purpose: provide a scoped PR handoff packet for the holistic loop kernel slice.
 Governance scope: loop contract, registry, read model, HTTP projection,
-validators, schema manifest, evidence blockers, status catalog, mode catalog,
-risk catalog, closure condition catalog, rollback boundary, and learning
-catalog.
+validators, schema manifest, evidence blockers, status catalog, transition
+catalog, mode catalog, risk catalog, closure condition catalog, rollback
+boundary, and learning catalog.
 Dependencies: `docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md`, holistic loop source
 files, read-model schema, report and validation scripts, focused tests, SDLC
 validators, release validators, and workspace governance preflight.
@@ -92,6 +92,26 @@ status_binding.terminal_closure == false
 The catalog does not clear blockers, mark status verified, execute validators,
 authorize transitions, or close a loop. It only tells operators where status
 projection proof must come from when a later loop-specific workflow runs.
+
+The read model now exposes `LoopTransitionBinding` entries for every loop
+summary. The catalog maps status and phase transition labels to required
+authority refs, required evidence refs, blockers, receipt refs, rollback refs,
+existing source refs, validator refs, and proof-matrix surface refs. It remains
+read-only and non-terminal:
+
+```text
+set(transition_bindings[*].blocker_refs) == set(open_blockers)
+transition_bindings[*].required_evidence_refs subset required_evidence
+transition_bindings[*].required_authority_refs subset required_authority
+rollback_policy in transition_bindings[*].rollback_refs
+transition_bindings[*].read_only == true
+transition_bindings[*].executes_transition == false
+transition_bindings[*].terminal_closure == false
+```
+
+The catalog does not update status, advance phase, execute validators, run
+rollback, or close a loop. It only tells operators where transition proof must
+come from when a later loop-specific workflow runs.
 
 The read model now exposes one `LoopModeBinding` entry for every loop summary.
 The binding maps the projected mode to the manifest's allowed modes, separation

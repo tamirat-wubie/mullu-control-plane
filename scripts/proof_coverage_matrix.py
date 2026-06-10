@@ -6539,6 +6539,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "LoopRegistry",
                 "LoopReadModel",
                 "LoopStatusBinding",
+                "LoopTransitionBinding",
                 "LoopModeBinding",
                 "LoopClosureConditionBinding",
                 "LoopAuthorityBinding",
@@ -6571,11 +6572,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
             (
                 "Holistic loop engineering exposes existing governed loops through "
                 "one read-only loop contract, registry, schema-backed summary, "
-                "status catalog, mode catalog, closure condition catalog, "
-                "authority catalog, risk catalog, rollback catalog, learning "
-                "catalog, bounded receipt trail, and HTTP read model. Missing "
-                "authority or evidence remains an explicit blocker and no "
-                "mutation route is introduced."
+                "status catalog, transition catalog, mode catalog, closure "
+                "condition catalog, authority catalog, risk catalog, rollback "
+                "catalog, learning catalog, bounded receipt trail, and HTTP "
+                "read model. Missing authority or evidence remains an explicit "
+                "blocker and no mutation route is introduced."
             ),
             [
                 "registered_loops_expose_governed_manifest_fields",
@@ -6583,6 +6584,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "closure_report_blocks_incomplete_evidence",
                 "loop_registry_rejects_duplicate_loop_ids",
                 "loop_status_bindings_explain_projected_status",
+                "loop_transition_bindings_describe_allowed_transitions",
                 "loop_mode_bindings_cover_allowed_modes",
                 "loop_closure_condition_bindings_cover_conditions",
                 "loop_authority_bindings_cover_required_authority",
@@ -6610,6 +6612,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "loop_status_bindings_explain_projected_status": [
                     "loop_status_bindings_explain_projected_status_without_execution"
+                ],
+                "loop_transition_bindings_describe_allowed_transitions": [
+                    "loop_transition_bindings_describe_allowed_transitions_without_execution"
                 ],
                 "loop_mode_bindings_cover_allowed_modes": [
                     "loop_mode_bindings_cover_allowed_modes_without_execution"
