@@ -62,6 +62,7 @@ REQUIRED_LOOP_FIELDS = (
     "required_evidence",
     "evidence_bindings",
     "step_receipts",
+    "receipt_lineage_bindings",
     "evidence_refs",
     "missing_evidence",
     "closure_conditions",
@@ -256,6 +257,7 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
     errors.extend(_validate_risk_binding(loop["risk_binding"], loop, index))
     errors.extend(_validate_closure_condition_bindings(loop["closure_condition_bindings"], loop, index))
     errors.extend(_validate_step_receipts(loop["step_receipts"], loop, index))
+    errors.extend(_validate_receipt_lineage_bindings(loop["receipt_lineage_bindings"], loop, index))
     if loop["open_blockers"] and loop["status"] != "blocked":
         errors.append(f"loop {index} with blockers must be blocked")
     if loop["status"] in {"verified", "closed"} and loop["missing_evidence"]:
@@ -872,6 +874,131 @@ def _validate_step_receipts(step_receipts: Any, loop: dict[str, Any], index: int
             errors.append(f"loop {index} step receipt {receipt_index} behavior_rewrite must be false")
     duplicate_steps = sorted({step for step in seen_steps if seen_steps.count(step) > 1})
     errors.extend(f"loop {index} duplicate step receipt: {step}" for step in duplicate_steps)
+    return errors
+
+
+def _validate_receipt_lineage_bindings(
+    lineage_bindings: Any,
+    loop: dict[str, Any],
+    index: int,
+) -> list[str]:
+    if not isinstance(lineage_bindings, list):
+        return [f"loop {index} receipt_lineage_bindings must be a list"]
+    if not lineage_bindings:
+        return [f"loop {index} receipt_lineage_bindings must not be empty"]
+    errors: list[str] = []
+    required_fields = {
+        "lineage_ref",
+        "step",
+        "receipt_ref",
+        "receipt_hash",
+        "required_evidence_refs",
+        "observed_evidence_refs",
+        "blocker_refs",
+        "source_receipt_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "read_only",
+        "emits_receipt",
+        "terminal_closure",
+    }
+    lineage_refs: list[str] = []
+    lineage_steps: list[str] = []
+    step_receipts = {
+        receipt.get("step"): receipt
+        for receipt in loop.get("step_receipts", [])
+        if isinstance(receipt, dict)
+    }
+    required_evidence = set(loop["required_evidence"])
+    for binding_index, binding in enumerate(lineage_bindings):
+        if not isinstance(binding, dict):
+            errors.append(f"loop {index} receipt lineage binding {binding_index} must be an object")
+            continue
+        missing = sorted(required_fields - set(binding))
+        errors.extend(
+            f"loop {index} receipt lineage binding {binding_index} missing field: {field_name}"
+            for field_name in missing
+        )
+        extra = sorted(set(binding) - required_fields)
+        errors.extend(
+            f"loop {index} receipt lineage binding {binding_index} has unexpected field: {field_name}"
+            for field_name in extra
+        )
+        if missing:
+            continue
+        lineage_ref = binding["lineage_ref"]
+        if not isinstance(lineage_ref, str) or not lineage_ref:
+            errors.append(f"loop {index} receipt lineage binding {binding_index} lineage_ref must be non-empty")
+        else:
+            lineage_refs.append(lineage_ref)
+        step = binding["step"]
+        if step not in LOOP_STEPS:
+            errors.append(f"loop {index} receipt lineage binding {binding_index} step is invalid")
+        else:
+            lineage_steps.append(step)
+            receipt = step_receipts.get(step)
+            if receipt is None:
+                errors.append(f"loop {index} receipt lineage binding {binding_index} step lacks receipt")
+            elif binding["receipt_hash"] != receipt.get("output_hash"):
+                errors.append(
+                    f"loop {index} receipt lineage binding {binding_index} receipt_hash must match step receipt"
+                )
+        receipt_ref = binding["receipt_ref"]
+        if not isinstance(receipt_ref, str) or not receipt_ref:
+            errors.append(f"loop {index} receipt lineage binding {binding_index} receipt_ref must be non-empty")
+        receipt_hash = binding["receipt_hash"]
+        if (
+            not isinstance(receipt_hash, str)
+            or len(receipt_hash) != 71
+            or not receipt_hash.startswith("sha256:")
+        ):
+            errors.append(f"loop {index} receipt lineage binding {binding_index} receipt_hash must be sha256")
+        for field_name in (
+            "required_evidence_refs",
+            "observed_evidence_refs",
+            "blocker_refs",
+            "source_receipt_refs",
+            "source_refs",
+            "validator_refs",
+            "proof_surface_refs",
+        ):
+            errors.extend(
+                _validate_text_list(
+                    binding[field_name],
+                    f"loop {index} receipt lineage binding {binding_index} {field_name}",
+                )
+            )
+            if field_name not in {"observed_evidence_refs", "blocker_refs"} and isinstance(binding[field_name], list) and not binding[field_name]:
+                errors.append(f"loop {index} receipt lineage binding {binding_index} {field_name} must be non-empty")
+        if isinstance(binding["required_evidence_refs"], list):
+            for evidence_ref in binding["required_evidence_refs"]:
+                if evidence_ref not in required_evidence:
+                    errors.append(
+                        f"loop {index} receipt lineage binding {binding_index} unexpected evidence ref: {evidence_ref}"
+                    )
+        if isinstance(binding["observed_evidence_refs"], list) and set(binding["observed_evidence_refs"]) != set(loop["evidence_refs"]):
+            errors.append(
+                f"loop {index} receipt lineage binding {binding_index} observed_evidence_refs must match evidence_refs"
+            )
+        if isinstance(binding["blocker_refs"], list) and set(binding["blocker_refs"]) != set(loop["open_blockers"]):
+            errors.append(f"loop {index} receipt lineage binding {binding_index} blocker_refs must match open blockers")
+        if isinstance(binding["source_receipt_refs"], list) and receipt_ref not in binding["source_receipt_refs"]:
+            errors.append(
+                f"loop {index} receipt lineage binding {binding_index} source_receipt_refs must include receipt_ref"
+            )
+        if binding["read_only"] is not True:
+            errors.append(f"loop {index} receipt lineage binding {binding_index} read_only must be true")
+        if binding["emits_receipt"] is not False:
+            errors.append(f"loop {index} receipt lineage binding {binding_index} emits_receipt must be false")
+        if binding["terminal_closure"] is not False:
+            errors.append(f"loop {index} receipt lineage binding {binding_index} terminal_closure must be false")
+    duplicate_refs = sorted({ref for ref in lineage_refs if lineage_refs.count(ref) > 1})
+    errors.extend(f"loop {index} duplicate receipt lineage binding: {ref}" for ref in duplicate_refs)
+    receipt_steps = set(step_receipts)
+    lineage_step_set = set(lineage_steps)
+    if lineage_step_set != receipt_steps:
+        errors.append(f"loop {index} receipt lineage bindings must cover step receipts exactly")
     return errors
 
 

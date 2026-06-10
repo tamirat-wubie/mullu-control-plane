@@ -39,6 +39,7 @@ def test_current_holistic_loop_read_model_contract_passes() -> None:
     assert all(loop["learning_binding"] for loop in report["loops"])
     assert all(loop["closure_condition_bindings"] for loop in report["loops"])
     assert all(loop["step_receipts"] for loop in report["loops"])
+    assert all(loop["receipt_lineage_bindings"] for loop in report["loops"])
 
 
 def test_schema_rejects_missing_required_loop_field() -> None:
@@ -66,6 +67,22 @@ def test_schema_requires_step_receipts() -> None:
 
     assert any("schema missing required loop field: step_receipts" in error for error in errors)
     assert "step_receipts" not in invalid_schema["$defs"]["loop_summary"]["required"]
+    assert len(errors) >= 1
+
+
+def test_schema_requires_receipt_lineage_bindings() -> None:
+    schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
+    invalid_schema = copy.deepcopy(schema)
+    invalid_schema["$defs"]["loop_summary"]["required"] = [
+        field
+        for field in invalid_schema["$defs"]["loop_summary"]["required"]
+        if field != "receipt_lineage_bindings"
+    ]
+
+    errors = validator.validate_schema_artifact(invalid_schema)
+
+    assert any("schema missing required loop field: receipt_lineage_bindings" in error for error in errors)
+    assert "receipt_lineage_bindings" not in invalid_schema["$defs"]["loop_summary"]["required"]
     assert len(errors) >= 1
 
 
@@ -315,6 +332,65 @@ def test_transition_binding_cannot_claim_execution_or_terminal_closure() -> None
     assert any("transition binding 0 read_only must be true" in error for error in errors)
     assert any("transition binding 0 executes_transition must be false" in error for error in errors)
     assert any("transition binding 0 terminal_closure must be false" in error for error in errors)
+
+
+def test_receipt_lineage_binding_must_match_step_receipt_and_blockers() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_binding = invalid_report["loops"][0]["receipt_lineage_bindings"][0]
+    invalid_binding["receipt_hash"] = "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+    invalid_binding["blocker_refs"] = ["different_gap"]
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("receipt_hash must match step receipt" in error for error in errors)
+    assert any("receipt lineage binding 0 blocker_refs must match open blockers" in error for error in errors)
+    assert invalid_report["loops"][0]["open_blockers"]
+
+
+def test_receipt_lineage_binding_refs_must_be_declared_and_observed() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_binding = invalid_report["loops"][0]["receipt_lineage_bindings"][0]
+    invalid_binding["required_evidence_refs"] = ["undeclared_evidence"]
+    invalid_binding["observed_evidence_refs"] = ["unexpected_observed_evidence"]
+    invalid_binding["source_receipt_refs"] = ["different_receipt"]
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("unexpected evidence ref: undeclared_evidence" in error for error in errors)
+    assert any("observed_evidence_refs must match evidence_refs" in error for error in errors)
+    assert any("source_receipt_refs must include receipt_ref" in error for error in errors)
+
+
+def test_duplicate_receipt_lineage_binding_is_reported() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_report["loops"][0]["receipt_lineage_bindings"].append(
+        copy.deepcopy(invalid_report["loops"][0]["receipt_lineage_bindings"][0])
+    )
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("duplicate receipt lineage binding" in error for error in errors)
+    assert len(invalid_report["loops"][0]["receipt_lineage_bindings"]) > len(
+        invalid_report["loops"][0]["step_receipts"]
+    )
+
+
+def test_receipt_lineage_binding_cannot_emit_or_claim_terminal_closure() -> None:
+    report = validator.build_report()
+    invalid_report = copy.deepcopy(report)
+    invalid_binding = invalid_report["loops"][0]["receipt_lineage_bindings"][0]
+    invalid_binding["read_only"] = False
+    invalid_binding["emits_receipt"] = True
+    invalid_binding["terminal_closure"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("receipt lineage binding 0 read_only must be true" in error for error in errors)
+    assert any("receipt lineage binding 0 emits_receipt must be false" in error for error in errors)
+    assert any("receipt lineage binding 0 terminal_closure must be false" in error for error in errors)
 
 
 def test_missing_evidence_requires_matching_blocker() -> None:

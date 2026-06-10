@@ -4,7 +4,7 @@ Purpose: provide a scoped PR handoff packet for the holistic loop kernel slice.
 Governance scope: loop contract, registry, read model, HTTP projection,
 validators, schema manifest, evidence blockers, status catalog, transition
 catalog, mode catalog, risk catalog, closure condition catalog, rollback
-boundary, and learning catalog.
+boundary, learning catalog, and receipt lineage catalog.
 Dependencies: `docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md`, holistic loop source
 files, read-model schema, report and validation scripts, focused tests, SDLC
 validators, release validators, and workspace governance preflight.
@@ -58,7 +58,7 @@ staged into the holistic loop PR.
 
 1. Added typed loop contracts:
    `LoopManifest`, `LoopState`, `LoopStepReceipt`, `LoopClosureReport`,
-   `LoopRegistry`, and bounded `LoopReadModel`.
+   `LoopReceiptLineageBinding`, `LoopRegistry`, and bounded `LoopReadModel`.
 2. Registered four existing loops without changing runtime behavior:
    `deployment_witness_loop`, `runtime_conformance_loop`,
    `cognitive_outcome_loop`, and `governed_code_change_loop`.
@@ -263,6 +263,27 @@ step_receipts[*].errors == open_blockers
 The trail gives validators a common phase-by-phase receipt shape while keeping
 deployment, runtime conformance, cognitive, proof verification, and governed
 code-change behavior unchanged.
+
+## Receipt Lineage Follow-Up
+
+The read model now exposes `receipt_lineage_bindings` on every loop summary.
+These entries bind each synthetic step receipt to its hash, required evidence,
+observed evidence, blockers, source receipts, validators, and proof surfaces.
+They do not emit live receipts and do not claim closure:
+
+```text
+set(receipt_lineage_bindings[*].step) == set(step_receipts[*].step)
+receipt_lineage_bindings[*].receipt_hash == matching_step_receipt.output_hash
+set(receipt_lineage_bindings[*].blocker_refs) == set(open_blockers)
+set(receipt_lineage_bindings[*].observed_evidence_refs) == set(evidence_refs)
+receipt_lineage_bindings[*].read_only == true
+receipt_lineage_bindings[*].emits_receipt == false
+receipt_lineage_bindings[*].terminal_closure == false
+```
+
+The catalog makes receipt provenance inspectable without writing runtime
+receipts or changing deployment, runtime conformance, cognitive, proof
+verification, or governed code-change behavior.
 
 ## Fracture Deltas
 

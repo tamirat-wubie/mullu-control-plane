@@ -1,7 +1,7 @@
 # Mullu Holistic Loop Engineering Kernel v1
 
 Purpose: define the shared governed loop contract used to describe existing Mullu loops without changing their runtime behavior.
-Governance scope: loop manifests, loop state projections, step receipts, closure reports, registry exposure, status bindings, transition bindings, mode bindings, closure condition bindings, risk bindings, evidence bindings, evidence blockers, rollback policy, learning bindings, and learning policy.
+Governance scope: loop manifests, loop state projections, step receipts, receipt lineage bindings, closure reports, registry exposure, status bindings, transition bindings, mode bindings, closure condition bindings, risk bindings, evidence bindings, evidence blockers, rollback policy, learning bindings, and learning policy.
 Dependencies: `mcoi_runtime.contracts.holistic_loop`, `mcoi_runtime.core.holistic_loop_registry`, existing deployment witness, runtime conformance, cognitive outcome, and governed code-change surfaces.
 Invariants: this is a read-model-first contract layer; it adds no public mutation route; it does not rewrite deployment, cognitive, proof verification, or code-change behavior.
 
@@ -28,6 +28,7 @@ The kernel models the common contract through:
 | `LoopManifest` | Static purpose, owner, authority, evidence, closure, rollback, and learning contract. |
 | `LoopState` | Current read-only status, phase, mode, receipt, blockers, and evidence refs. |
 | `LoopStepReceipt` | Step-level input hash, output hash, decision, evidence, status, errors, and timestamp. |
+| `LoopReceiptLineageBinding` | Read-only map from each synthetic step receipt to its receipt hash, required evidence, observed evidence, blockers, source receipts, validators, and proof surfaces. |
 | `LoopClosureReport` | Closure assessment with unresolved gaps, rollback availability, and learning candidates. |
 | `LoopStatusBinding` | Read-only map from projected status to blockers, verification refs, closure gates, validators, and proof surfaces. |
 | `LoopTransitionBinding` | Read-only map from possible status and phase transitions to required evidence, authority, blockers, receipts, rollback refs, validators, and proof surfaces. |
@@ -378,6 +379,41 @@ The `act` receipt explicitly describes existing behavior without executing it.
 The read model can therefore expose loop phases without changing deployment,
 runtime conformance, cognitive, proof, or code-change behavior.
 
+## Receipt Lineage Catalog
+
+Each loop summary includes `receipt_lineage_bindings`, one lineage entry for
+each synthetic `step_receipts` item. The catalog links a receipt projection to
+the evidence, blocker, validator, and proof surfaces that explain the receipt.
+It does not emit a live receipt.
+
+| Field | Meaning |
+| --- | --- |
+| `lineage_ref` | Stable lineage label for the synthetic receipt. |
+| `step` | Canonical loop phase covered by the lineage entry. |
+| `receipt_ref` | Receipt label used by transition and closure proof surfaces. |
+| `receipt_hash` | Must match the corresponding step receipt `output_hash`. |
+| `required_evidence_refs` | Required evidence labels that must exist before the receipt can prove readiness. |
+| `observed_evidence_refs` | Evidence refs observed by the read model. |
+| `blocker_refs` | Must match `open_blockers` exactly. |
+| `source_receipt_refs` | Prior or related receipt labels; must include `receipt_ref`. |
+| `source_refs` | Existing files, schemas, or scripts that define the receipt lineage surface. |
+| `validator_refs` | Existing tests or validators that check the referenced receipt surface. |
+| `proof_surface_refs` | Proof-matrix surface IDs related to receipt lineage. |
+| `read_only` | Always `true`. |
+| `emits_receipt` | Always `false`; this catalog does not write runtime receipts. |
+| `terminal_closure` | Always `false`; lineage is not a closure certificate. |
+
+The receipt lineage catalog is exact by contract:
+
+```text
+set(receipt_lineage_bindings[*].step) == set(step_receipts[*].step)
+receipt_lineage_bindings[*].receipt_hash == matching_step_receipt.output_hash
+set(receipt_lineage_bindings[*].blocker_refs) == set(open_blockers)
+set(receipt_lineage_bindings[*].observed_evidence_refs) == set(evidence_refs)
+receipt_lineage_bindings[*].emits_receipt == false
+receipt_lineage_bindings[*].terminal_closure == false
+```
+
 ## Closure Readiness
 
 Each loop summary also includes a derived `closure_report`. This report is a
@@ -425,8 +461,9 @@ This kernel is intentionally non-invasive:
 11. It does not execute status or phase transitions referenced by the catalog.
 12. It does not execute evidence validators referenced by the catalog.
 13. It does not emit live runtime execution receipts.
-14. It does not mark any loop closed.
-15. It only exposes typed read-model contracts that other surfaces can adopt later.
+14. It does not emit receipt lineage records into runtime stores.
+15. It does not mark any loop closed.
+16. It only exposes typed read-model contracts that other surfaces can adopt later.
 
 ## Read-Only Exposure
 
@@ -455,6 +492,7 @@ script:
 | `loops[].learning_binding` | Read-only learning catalog entry matching the loop learning policy. |
 | `loops[].evidence_bindings` | Read-only evidence catalog entries covering every required evidence label. |
 | `loops[].step_receipts` | Read-only synthetic receipt trail for the canonical loop phases. |
+| `loops[].receipt_lineage_bindings` | Read-only lineage catalog entries linking synthetic receipts to evidence, blockers, validators, and proof surfaces. |
 | `loops[].closure_report` | Read-only non-terminal closure-readiness report for each loop summary. |
 | `blocked_count` | Count of returned summaries carrying blockers. |
 | `verified_count` | Count of returned summaries marked verified. |
@@ -506,4 +544,5 @@ The tests verify:
 11. Learning bindings cover each learning policy and cannot admit learning, write memory, mutate tests, or claim closure.
 12. Evidence bindings cover every required evidence label and cannot claim terminal closure.
 13. Step receipt trails are read-only synthetic projections and must match blockers.
-14. Closure reports cannot claim terminal closure and must match blockers.
+14. Receipt lineage bindings cover step receipts exactly and cannot emit receipts.
+15. Closure reports cannot claim terminal closure and must match blockers.

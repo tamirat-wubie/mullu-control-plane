@@ -6541,6 +6541,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "LoopStatusBinding",
                 "LoopTransitionBinding",
                 "LoopModeBinding",
+                "LoopReceiptLineageBinding",
                 "LoopClosureConditionBinding",
                 "LoopAuthorityBinding",
                 "LoopRiskBinding",
@@ -6574,7 +6575,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "one read-only loop contract, registry, schema-backed summary, "
                 "status catalog, transition catalog, mode catalog, closure "
                 "condition catalog, authority catalog, risk catalog, rollback "
-                "catalog, learning catalog, bounded receipt trail, and HTTP "
+                "catalog, learning catalog, bounded receipt trail, receipt "
+                "lineage catalog, and HTTP "
                 "read model. Missing authority or evidence remains an explicit "
                 "blocker and no mutation route is introduced."
             ),
@@ -6593,6 +6595,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "loop_learning_bindings_cover_learning_policy",
                 "loop_evidence_bindings_cover_required_evidence",
                 "loop_step_receipt_trail_is_read_only",
+                "loop_receipt_lineage_bindings_cover_step_receipts",
                 "loop_closure_report_blocks_terminal_closure",
                 "loop_read_model_endpoint_is_read_only",
                 "loop_http_surface_validator_rejects_mutation_routes",
@@ -6615,6 +6618,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "loop_transition_bindings_describe_allowed_transitions": [
                     "loop_transition_bindings_describe_allowed_transitions_without_execution"
+                ],
+                "loop_receipt_lineage_bindings_cover_step_receipts": [
+                    "loop_receipt_lineage_bindings_cover_step_receipts_without_emission"
                 ],
                 "loop_mode_bindings_cover_allowed_modes": [
                     "loop_mode_bindings_cover_allowed_modes_without_execution"

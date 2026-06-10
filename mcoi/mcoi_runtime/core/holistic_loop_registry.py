@@ -26,6 +26,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopModeBinding,
     LoopPhase,
     LoopReadModel,
+    LoopReceiptLineageBinding,
     LoopRiskBinding,
     LoopRollbackBinding,
     LoopState,
@@ -358,6 +359,7 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
     status = LoopStatus.BLOCKED if blockers else state.status
     if not blockers and status == LoopStatus.OPEN:
         status = LoopStatus.VERIFIED
+    step_receipts = _step_receipts_for(manifest, state, blockers)
     return LoopSummary(
         loop_id=manifest.loop_id,
         name=manifest.name,
@@ -377,7 +379,13 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         missing_authority=missing_authority,
         required_evidence=manifest.required_evidence,
         evidence_bindings=_evidence_bindings_for(manifest.loop_id),
-        step_receipts=_step_receipts_for(manifest, state, blockers),
+        step_receipts=step_receipts,
+        receipt_lineage_bindings=_receipt_lineage_bindings_for(
+            manifest,
+            state,
+            blockers,
+            step_receipts,
+        ),
         evidence_refs=state.evidence_refs,
         missing_evidence=missing,
         closure_conditions=manifest.closure_conditions,
@@ -435,6 +443,55 @@ def _step_decision(step: LoopPhase, blocked: bool) -> str:
     if step is LoopPhase.ACT:
         return "project_existing_behavior_without_execution"
     return f"project_read_model_{step.value}"
+
+
+_RECEIPT_REF_BY_STEP: Mapping[LoopPhase, str] = {
+    LoopPhase.OBSERVE: "observe_receipt",
+    LoopPhase.DECIDE: "decision_receipt",
+    LoopPhase.ACT: "action_projection_receipt",
+    LoopPhase.VERIFY: "verification_receipt",
+    LoopPhase.RECORD_RECEIPT: "record_receipt",
+    LoopPhase.UPDATE_STATE: "state_update_projection_receipt",
+    LoopPhase.LEARN: "learning_projection_receipt",
+    LoopPhase.AUDIT: "audit_projection_receipt",
+}
+
+
+def _receipt_lineage_bindings_for(
+    manifest: LoopManifest,
+    state: LoopState,
+    blockers: Sequence[str],
+    step_receipts: Sequence[LoopStepReceipt],
+) -> tuple[LoopReceiptLineageBinding, ...]:
+    catalog = _lineage_catalog_for(manifest.loop_id)
+    bindings: list[LoopReceiptLineageBinding] = []
+    for receipt in step_receipts:
+        receipt_ref = _RECEIPT_REF_BY_STEP[receipt.step]
+        bindings.append(
+            LoopReceiptLineageBinding(
+                lineage_ref=f"{receipt_ref}_lineage",
+                step=receipt.step,
+                receipt_ref=receipt_ref,
+                receipt_hash=receipt.output_hash,
+                required_evidence_refs=manifest.required_evidence,
+                observed_evidence_refs=state.evidence_refs,
+                blocker_refs=tuple(blockers),
+                source_receipt_refs=_source_receipt_refs_for(receipt.step, receipt_ref),
+                source_refs=catalog["source_refs"],
+                validator_refs=catalog["validator_refs"],
+                proof_surface_refs=catalog["proof_surface_refs"],
+            )
+        )
+    return tuple(bindings)
+
+
+def _source_receipt_refs_for(step: LoopPhase, receipt_ref: str) -> tuple[str, ...]:
+    if step is LoopPhase.OBSERVE:
+        return (receipt_ref, "loop_manifest", "loop_state_projection")
+    previous_steps = list(_RECEIPT_REF_BY_STEP)
+    previous_index = previous_steps.index(step) - 1
+    previous_receipt_ref = _RECEIPT_REF_BY_STEP[previous_steps[previous_index]]
+    return (receipt_ref, previous_receipt_ref, "closure_report")
 
 
 def _receipt_hash(loop_id: str, step: str, boundary: str) -> str:
@@ -543,6 +600,13 @@ def _transition_bindings_for(
         )
         for binding in defaults
     )
+
+
+def _lineage_catalog_for(loop_id: str) -> Mapping[str, tuple[str, ...]]:
+    try:
+        return _DEFAULT_RECEIPT_LINEAGE_CATALOG[loop_id]
+    except KeyError as exc:
+        raise ValueError(f"loop receipt lineage catalog missing: {loop_id}") from exc
 
 
 def _closure_condition_bindings_for(loop_id: str) -> tuple[LoopClosureConditionBinding, ...]:
@@ -861,6 +925,38 @@ _GOVERNED_CODE_CHANGE_VALIDATORS = (
     "tests/test_governed_code_change_loop.py",
     "tests/test_validate_governed_code_change_loop_receipt.py",
 )
+
+
+_DEFAULT_RECEIPT_LINEAGE_CATALOG: Mapping[str, Mapping[str, tuple[str, ...]]] = {
+    "deployment_witness_loop": {
+        "source_refs": _DEPLOYMENT_WITNESS_SOURCES,
+        "validator_refs": _DEPLOYMENT_WITNESS_VALIDATORS,
+        "proof_surface_refs": ("production_evidence_plane", "gateway_runtime_witness"),
+    },
+    "runtime_conformance_loop": {
+        "source_refs": _RUNTIME_CONFORMANCE_SOURCES,
+        "validator_refs": _RUNTIME_CONFORMANCE_VALIDATORS,
+        "proof_surface_refs": ("runtime_conformance_attestation",),
+    },
+    "cognitive_outcome_loop": {
+        "source_refs": _COGNITIVE_OUTCOME_SOURCES,
+        "validator_refs": _COGNITIVE_OUTCOME_VALIDATORS,
+        "proof_surface_refs": ("software_outcome_learning",),
+    },
+    "governed_code_change_loop": {
+        "source_refs": (
+            *_GOVERNED_CODE_CHANGE_SOURCES,
+            "schemas/sdlc_implementation_receipt.schema.json",
+            "schemas/sdlc_verification_receipt.schema.json",
+            "schemas/sdlc_recovery_handoff_receipt.schema.json",
+        ),
+        "validator_refs": (
+            *_GOVERNED_CODE_CHANGE_VALIDATORS,
+            "scripts/validate_sdlc_artifact.py",
+        ),
+        "proof_surface_refs": ("software_dev_capability_pack",),
+    },
+}
 
 
 _DEFAULT_STATUS_BINDINGS: Mapping[str, LoopStatusBinding] = {
