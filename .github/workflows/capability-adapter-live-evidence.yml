@@ -147,6 +147,8 @@ jobs:
         if: ${{ inputs.target == 'all' || inputs.target == 'email-calendar' }}
         env:
           EMAIL_CALENDAR_CONNECTOR_TOKEN: ${{ secrets.EMAIL_CALENDAR_CONNECTOR_TOKEN }}
+          EMAIL_CALENDAR_CONNECTOR_ID: ${{ inputs.email_calendar_connector_id }}
+          MULLU_EMAIL_CALENDAR_WORKER_ADAPTER: production
         run: |
           args=(
             --target email-calendar
@@ -164,6 +166,8 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           EMAIL_CALENDAR_CONNECTOR_TOKEN: ${{ secrets.EMAIL_CALENDAR_CONNECTOR_TOKEN }}
+          EMAIL_CALENDAR_CONNECTOR_ID: ${{ inputs.email_calendar_connector_id }}
+          MULLU_EMAIL_CALENDAR_WORKER_ADAPTER: production
         run: |
           python scripts/collect_capability_adapter_evidence.py \
             --output .change_assurance/capability_adapter_evidence.json \
