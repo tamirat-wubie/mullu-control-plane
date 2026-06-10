@@ -334,6 +334,57 @@ def test_payload_validation_rejects_status_binding_transition_or_terminal_closur
     assert invalid_binding["status_transition"] is True
 
 
+def test_payload_validation_requires_transition_binding_blockers_to_match() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_payload["loops"][0]["transition_bindings"][0]["blocker_refs"] = ["different_gap"]
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("transition binding 0 blocker_refs must match open blockers" in error for error in errors)
+    assert invalid_payload["loops"][0]["open_blockers"]
+    assert invalid_payload["loops"][0]["transition_bindings"][0]["blocker_refs"] == ["different_gap"]
+
+
+def test_payload_validation_requires_transition_binding_declared_refs_and_rollback() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_binding = invalid_payload["loops"][0]["transition_bindings"][0]
+    invalid_binding["required_authority_refs"] = ["undeclared_authority"]
+    invalid_binding["required_evidence_refs"] = ["undeclared_evidence"]
+    invalid_binding["rollback_refs"] = ["different_policy"]
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("unexpected authority ref: undeclared_authority" in error for error in errors)
+    assert any("unexpected evidence ref: undeclared_evidence" in error for error in errors)
+    assert any("rollback_refs must include rollback_policy" in error for error in errors)
+
+
+def test_payload_validation_rejects_transition_binding_execution_or_terminal_closure_claim() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_binding = invalid_payload["loops"][0]["transition_bindings"][0]
+    invalid_binding["read_only"] = False
+    invalid_binding["executes_transition"] = True
+    invalid_binding["terminal_closure"] = True
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("transition binding 0 read_only must be true" in error for error in errors)
+    assert any("transition binding 0 executes_transition must be false" in error for error in errors)
+    assert any("transition binding 0 terminal_closure must be false" in error for error in errors)
+
+
 def test_payload_validation_rejects_mode_binding_transition_or_terminal_closure_claim() -> None:
     app = FastAPI()
     app.include_router(router)

@@ -31,6 +31,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopStatus,
     LoopStatusBinding,
     LoopStepReceipt,
+    LoopTransitionBinding,
 )
 from mcoi_runtime.core.holistic_loop_registry import (
     build_default_loop_read_model,
@@ -307,6 +308,46 @@ def test_loop_status_binding_local_refs_resolve_to_existing_artifacts() -> None:
     assert all((REPO_ROOT / ref).exists() for ref in file_refs)
 
 
+def test_loop_transition_bindings_describe_allowed_transitions_without_execution() -> None:
+    read_model = build_default_loop_read_model()
+    expected_transitions = {
+        "open_to_blocked_on_missing_requirements",
+        "blocked_to_verified_after_requirements",
+        "verified_to_closed_requires_terminal_closure",
+    }
+
+    for summary in read_model.loops:
+        binding_refs = {binding.transition_ref for binding in summary.transition_bindings}
+
+        assert binding_refs == expected_transitions
+        assert len(summary.transition_bindings) == 3
+        assert all(set(binding.blocker_refs) == set(summary.open_blockers) for binding in summary.transition_bindings)
+        assert all(set(binding.required_authority_refs) <= set(summary.required_authority) for binding in summary.transition_bindings)
+        assert all(set(binding.required_evidence_refs) <= set(summary.required_evidence) for binding in summary.transition_bindings)
+        assert all(summary.rollback_policy in binding.rollback_refs for binding in summary.transition_bindings)
+        assert all(binding.receipt_refs for binding in summary.transition_bindings)
+        assert all(binding.read_only is True for binding in summary.transition_bindings)
+        assert all(binding.executes_transition is False for binding in summary.transition_bindings)
+        assert all(binding.terminal_closure is False for binding in summary.transition_bindings)
+
+
+def test_loop_transition_binding_local_refs_resolve_to_existing_artifacts() -> None:
+    read_model = build_default_loop_read_model()
+    file_refs = {
+        ref
+        for summary in read_model.loops
+        for binding in summary.transition_bindings
+        for ref in (*binding.source_refs, *binding.validator_refs)
+        if "/" in ref
+    }
+
+    assert "scripts/preflight_deployment_witness.py" in file_refs
+    assert "schemas/runtime_conformance_certificate.schema.json" in file_refs
+    assert "mcoi/mcoi_runtime/core/cognitive_loop.py" in file_refs
+    assert "schemas/sdlc_verification_receipt.schema.json" in file_refs
+    assert all((REPO_ROOT / ref).exists() for ref in file_refs)
+
+
 def test_loop_closure_condition_bindings_cover_conditions_without_execution() -> None:
     read_model = build_default_loop_read_model()
 
@@ -409,6 +450,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             risk_binding=summary.risk_binding,
             status=summary.status,
             status_binding=summary.status_binding,
+            transition_bindings=summary.transition_bindings,
             mode=summary.mode,
             mode_binding=summary.mode_binding,
             current_step=summary.current_step,
@@ -442,6 +484,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             risk_binding=summary.risk_binding,
             status=summary.status,
             status_binding=summary.status_binding,
+            transition_bindings=summary.transition_bindings,
             mode=summary.mode,
             mode_binding=summary.mode_binding,
             current_step=summary.current_step,
@@ -604,6 +647,37 @@ def test_loop_status_binding_rejects_transition_or_terminal_closure_claim() -> N
         LoopStatusBinding(**mismatched_kwargs)
 
 
+def test_loop_transition_binding_rejects_execution_or_terminal_closure_claim() -> None:
+    kwargs = {
+        "transition_ref": "blocked_to_verified_after_requirements",
+        "from_status": LoopStatus.BLOCKED,
+        "to_status": LoopStatus.VERIFIED,
+        "from_step": LoopPhase.VERIFY,
+        "to_step": LoopPhase.RECORD_RECEIPT,
+        "required_authority_refs": ("sdlc_closure_authority",),
+        "required_evidence_refs": ("verification_receipt",),
+        "blocker_refs": ("missing_evidence:verification_receipt",),
+        "receipt_refs": ("verification_receipt", "closure_report"),
+        "rollback_refs": ("restore_workspace_snapshot_or_open_recovery_handoff",),
+        "source_refs": ("schemas/sdlc_verification_receipt.schema.json",),
+        "validator_refs": ("scripts/validate_sdlc_artifact.py",),
+        "proof_surface_refs": ("software_dev_capability_pack",),
+    }
+
+    with pytest.raises(ValueError, match="read-only"):
+        LoopTransitionBinding(**kwargs, read_only=False)
+
+    with pytest.raises(ValueError, match="execute transition"):
+        LoopTransitionBinding(**kwargs, executes_transition=True)
+
+    with pytest.raises(ValueError, match="terminal closure"):
+        LoopTransitionBinding(**kwargs, terminal_closure=True)
+
+    mismatched_kwargs = {**kwargs, "from_status": "blocked"}
+    with pytest.raises(ValueError, match="from_status"):
+        LoopTransitionBinding(**mismatched_kwargs)
+
+
 def test_loop_closure_condition_binding_rejects_mutation_or_terminal_closure_claim() -> None:
     kwargs = {
         "closure_ref": "verification_receipt_present",
@@ -645,6 +719,60 @@ def test_loop_summary_rejects_mismatched_status_binding() -> None:
             risk_binding=summary.risk_binding,
             status=summary.status,
             status_binding=mismatched_binding,
+            transition_bindings=summary.transition_bindings,
+            mode=summary.mode,
+            mode_binding=summary.mode_binding,
+            current_step=summary.current_step,
+            required_authority=summary.required_authority,
+            authority_bindings=summary.authority_bindings,
+            authority_refs=summary.authority_refs,
+            missing_authority=summary.missing_authority,
+            required_evidence=summary.required_evidence,
+            evidence_bindings=summary.evidence_bindings,
+            step_receipts=summary.step_receipts,
+            evidence_refs=summary.evidence_refs,
+            missing_evidence=summary.missing_evidence,
+            closure_conditions=summary.closure_conditions,
+            closure_condition_bindings=summary.closure_condition_bindings,
+            closure_report=summary.closure_report,
+            open_blockers=summary.open_blockers,
+            rollback_policy=summary.rollback_policy,
+            rollback_binding=summary.rollback_binding,
+            learning_policy=summary.learning_policy,
+            learning_binding=summary.learning_binding,
+            updated_at=summary.updated_at,
+        )
+
+
+def test_loop_summary_rejects_mismatched_transition_binding() -> None:
+    summary = build_default_loop_read_model().loops[0]
+    mismatched_binding = LoopTransitionBinding(
+        transition_ref="blocked_to_verified_after_requirements",
+        from_status=LoopStatus.BLOCKED,
+        to_status=LoopStatus.VERIFIED,
+        from_step=LoopPhase.VERIFY,
+        to_step=LoopPhase.RECORD_RECEIPT,
+        required_authority_refs=summary.required_authority,
+        required_evidence_refs=summary.required_evidence,
+        blocker_refs=("different_blocker",),
+        receipt_refs=("verification_receipt", "closure_report"),
+        rollback_refs=(summary.rollback_policy,),
+        source_refs=summary.transition_bindings[0].source_refs,
+        validator_refs=summary.transition_bindings[0].validator_refs,
+        proof_surface_refs=summary.transition_bindings[0].proof_surface_refs,
+    )
+
+    with pytest.raises(ValueError, match="transition binding blocker_refs"):
+        LoopSummary(
+            loop_id=summary.loop_id,
+            name=summary.name,
+            purpose=summary.purpose,
+            owner=summary.owner,
+            risk_class=summary.risk_class,
+            risk_binding=summary.risk_binding,
+            status=summary.status,
+            status_binding=summary.status_binding,
+            transition_bindings=(mismatched_binding,),
             mode=summary.mode,
             mode_binding=summary.mode_binding,
             current_step=summary.current_step,
@@ -691,6 +819,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             risk_binding=summary.risk_binding,
             status=summary.status,
             status_binding=summary.status_binding,
+            transition_bindings=summary.transition_bindings,
             mode=summary.mode,
             mode_binding=summary.mode_binding,
             current_step=summary.current_step,
@@ -734,6 +863,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             risk_binding=summary.risk_binding,
             status=summary.status,
             status_binding=summary.status_binding,
+            transition_bindings=summary.transition_bindings,
             mode=summary.mode,
             mode_binding=summary.mode_binding,
             current_step=summary.current_step,
@@ -850,6 +980,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_step_receipts() -> None:
             risk_binding=summary.risk_binding,
             status=summary.status,
             status_binding=summary.status_binding,
+            transition_bindings=summary.transition_bindings,
             mode=summary.mode,
             mode_binding=summary.mode_binding,
             current_step=summary.current_step,

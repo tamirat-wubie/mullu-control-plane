@@ -166,6 +166,7 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         "loop_id",
         "status",
         "status_binding",
+        "transition_bindings",
         "mode",
         "mode_binding",
         "risk_class",
@@ -209,6 +210,7 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
     if loop.get("mode") not in LOOP_MODES:
         errors.append(f"loop {index} mode is invalid")
     errors.extend(_validate_status_binding(loop.get("status_binding"), loop, index))
+    errors.extend(_validate_transition_bindings(loop.get("transition_bindings"), loop, index))
     errors.extend(_validate_mode_binding(loop.get("mode_binding"), loop, index))
     errors.extend(_validate_risk_binding(loop.get("risk_binding"), loop, index))
     errors.extend(_validate_closure_report(loop.get("closure_report"), loop, index))
@@ -264,6 +266,73 @@ def _validate_status_binding(status_binding: Any, loop: dict[str, Any], index: i
         errors.append(f"loop {index} status_binding status_transition must be false")
     if status_binding.get("terminal_closure") is not False:
         errors.append(f"loop {index} status_binding terminal_closure must be false")
+    return errors
+
+
+def _validate_transition_bindings(transition_bindings: Any, loop: dict[str, Any], index: int) -> list[str]:
+    if not isinstance(transition_bindings, list):
+        return [f"loop {index} transition_bindings must be a list"]
+    if not transition_bindings:
+        return [f"loop {index} transition_bindings must not be empty"]
+    errors: list[str] = []
+    transition_refs: list[str] = []
+    required_authority = set(loop.get("required_authority", ()))
+    required_evidence = set(loop.get("required_evidence", ()))
+    for binding_index, binding in enumerate(transition_bindings):
+        if not isinstance(binding, dict):
+            errors.append(f"loop {index} transition binding {binding_index} must be an object")
+            continue
+        transition_ref = binding.get("transition_ref")
+        if not isinstance(transition_ref, str) or not transition_ref:
+            errors.append(f"loop {index} transition binding {binding_index} transition_ref must be non-empty")
+        else:
+            transition_refs.append(transition_ref)
+        if binding.get("from_status") not in {"open", "blocked", "verified", "closed"}:
+            errors.append(f"loop {index} transition binding {binding_index} from_status is invalid")
+        if binding.get("to_status") not in {"open", "blocked", "verified", "closed"}:
+            errors.append(f"loop {index} transition binding {binding_index} to_status is invalid")
+        if not isinstance(binding.get("from_step"), str) or not binding.get("from_step"):
+            errors.append(f"loop {index} transition binding {binding_index} from_step must be non-empty")
+        if not isinstance(binding.get("to_step"), str) or not binding.get("to_step"):
+            errors.append(f"loop {index} transition binding {binding_index} to_step must be non-empty")
+        for field_name in (
+            "required_authority_refs",
+            "required_evidence_refs",
+            "receipt_refs",
+            "rollback_refs",
+            "source_refs",
+            "validator_refs",
+            "proof_surface_refs",
+        ):
+            refs = binding.get(field_name)
+            if not isinstance(refs, list) or not refs or not all(isinstance(ref, str) and ref for ref in refs):
+                errors.append(f"loop {index} transition binding {binding_index} {field_name} must be non-empty")
+        blocker_refs = binding.get("blocker_refs")
+        if not isinstance(blocker_refs, list):
+            errors.append(f"loop {index} transition binding {binding_index} blocker_refs must be a list")
+        elif set(blocker_refs) != set(loop.get("open_blockers", ())):
+            errors.append(f"loop {index} transition binding {binding_index} blocker_refs must match open blockers")
+        for authority_ref in binding.get("required_authority_refs", ()) if isinstance(binding.get("required_authority_refs"), list) else ():
+            if authority_ref not in required_authority:
+                errors.append(
+                    f"loop {index} transition binding {binding_index} unexpected authority ref: {authority_ref}"
+                )
+        for evidence_ref in binding.get("required_evidence_refs", ()) if isinstance(binding.get("required_evidence_refs"), list) else ():
+            if evidence_ref not in required_evidence:
+                errors.append(
+                    f"loop {index} transition binding {binding_index} unexpected evidence ref: {evidence_ref}"
+                )
+        rollback_refs = binding.get("rollback_refs")
+        if isinstance(rollback_refs, list) and loop.get("rollback_policy") not in rollback_refs:
+            errors.append(f"loop {index} transition binding {binding_index} rollback_refs must include rollback_policy")
+        if binding.get("read_only") is not True:
+            errors.append(f"loop {index} transition binding {binding_index} read_only must be true")
+        if binding.get("executes_transition") is not False:
+            errors.append(f"loop {index} transition binding {binding_index} executes_transition must be false")
+        if binding.get("terminal_closure") is not False:
+            errors.append(f"loop {index} transition binding {binding_index} terminal_closure must be false")
+    if len(transition_refs) != len(set(transition_refs)):
+        errors.append(f"loop {index} transition bindings must not contain duplicates")
     return errors
 
 

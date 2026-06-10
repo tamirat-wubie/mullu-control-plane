@@ -570,6 +570,68 @@ class LoopStatusBinding(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class LoopTransitionBinding(ContractRecord):
+    """Read-only reference map for loop status and phase transition boundaries."""
+
+    transition_ref: str
+    from_status: LoopStatus
+    to_status: LoopStatus
+    from_step: LoopPhase
+    to_step: LoopPhase
+    required_authority_refs: tuple[str, ...]
+    required_evidence_refs: tuple[str, ...]
+    blocker_refs: tuple[str, ...]
+    receipt_refs: tuple[str, ...]
+    rollback_refs: tuple[str, ...]
+    source_refs: tuple[str, ...]
+    validator_refs: tuple[str, ...]
+    proof_surface_refs: tuple[str, ...]
+    read_only: bool = True
+    executes_transition: bool = False
+    terminal_closure: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "transition_ref",
+            require_non_empty_text(self.transition_ref, "transition_ref"),
+        )
+        if not isinstance(self.from_status, LoopStatus):
+            raise ValueError("from_status must be a LoopStatus value")
+        if not isinstance(self.to_status, LoopStatus):
+            raise ValueError("to_status must be a LoopStatus value")
+        if not isinstance(self.from_step, LoopPhase):
+            raise ValueError("from_step must be a LoopPhase value")
+        if not isinstance(self.to_step, LoopPhase):
+            raise ValueError("to_step must be a LoopPhase value")
+        for field_name in (
+            "required_authority_refs",
+            "required_evidence_refs",
+            "receipt_refs",
+            "rollback_refs",
+            "source_refs",
+            "validator_refs",
+            "proof_surface_refs",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name),
+            )
+        object.__setattr__(
+            self,
+            "blocker_refs",
+            _freeze_text_tuple(self.blocker_refs, "blocker_refs", allow_empty=True),
+        )
+        if self.read_only is not True:
+            raise ValueError("transition binding must be read-only")
+        if self.executes_transition is not False:
+            raise ValueError("transition binding cannot execute transition")
+        if self.terminal_closure is not False:
+            raise ValueError("transition binding cannot be terminal closure")
+
+
+@dataclass(frozen=True, slots=True)
 class LoopClosureConditionBinding(ContractRecord):
     """Read-only reference map for one loop closure condition."""
 
@@ -620,6 +682,7 @@ class LoopSummary(ContractRecord):
     risk_binding: LoopRiskBinding
     status: LoopStatus
     status_binding: LoopStatusBinding
+    transition_bindings: tuple[LoopTransitionBinding, ...]
     mode: LoopMode
     mode_binding: LoopModeBinding
     current_step: LoopPhase
@@ -737,6 +800,16 @@ class LoopSummary(ContractRecord):
                 "LoopClosureConditionBinding",
             ),
         )
+        object.__setattr__(
+            self,
+            "transition_bindings",
+            _freeze_contract_tuple(
+                self.transition_bindings,
+                "transition_bindings",
+                LoopTransitionBinding,
+                "LoopTransitionBinding",
+            ),
+        )
         if not isinstance(self.risk_binding, LoopRiskBinding):
             raise ValueError("risk_binding must be a LoopRiskBinding")
         if self.risk_binding.risk_ref != self.risk_class:
@@ -762,6 +835,16 @@ class LoopSummary(ContractRecord):
             raise ValueError("verified or closed status binding cannot carry blockers")
         if self.status in {LoopStatus.VERIFIED, LoopStatus.CLOSED} and self.open_blockers:
             raise ValueError("verified or closed summary cannot carry blockers")
+        if not self.transition_bindings:
+            raise ValueError("transition_bindings must contain at least one binding")
+        transition_refs = [binding.transition_ref for binding in self.transition_bindings]
+        if len(transition_refs) != len(set(transition_refs)):
+            raise ValueError("transition bindings must not contain duplicate transition refs")
+        for binding in self.transition_bindings:
+            if set(binding.blocker_refs) != set(self.open_blockers):
+                raise ValueError("transition binding blocker_refs must match open blockers")
+            if self.rollback_policy not in binding.rollback_refs:
+                raise ValueError("transition binding rollback_refs must include rollback policy")
         authority_binding_refs = [binding.authority_ref for binding in self.authority_bindings]
         if len(authority_binding_refs) != len(set(authority_binding_refs)):
             raise ValueError("authority bindings must not contain duplicate authority refs")
@@ -786,6 +869,11 @@ class LoopSummary(ContractRecord):
                 raise ValueError("closure condition binding evidence refs must be required evidence")
             if not set(binding.required_authority_refs) <= required_authority_refs:
                 raise ValueError("closure condition binding authority refs must be required authority")
+        for binding in self.transition_bindings:
+            if not set(binding.required_evidence_refs) <= required_evidence_refs:
+                raise ValueError("transition binding evidence refs must be required evidence")
+            if not set(binding.required_authority_refs) <= required_authority_refs:
+                raise ValueError("transition binding authority refs must be required authority")
         if not self.step_receipts:
             raise ValueError("step_receipts must contain at least one receipt")
         receipt_steps = [receipt.step for receipt in self.step_receipts]
@@ -901,4 +989,5 @@ __all__ = [
     "LoopStatusBinding",
     "LoopStepReceipt",
     "LoopSummary",
+    "LoopTransitionBinding",
 ]
