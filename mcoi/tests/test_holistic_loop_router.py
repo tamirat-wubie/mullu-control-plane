@@ -52,6 +52,7 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
     assert all(loop["rollback_binding"] for loop in payload["loops"])
     assert all(loop["learning_binding"] for loop in payload["loops"])
     assert all(loop["step_receipts"] for loop in payload["loops"])
+    assert all(loop["receipt_lineage_bindings"] for loop in payload["loops"])
     assert all(
         {binding["authority_ref"] for binding in loop["authority_bindings"]}
         == set(loop["required_authority"])
@@ -155,6 +156,28 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
         and receipt["metadata"]["terminal_closure"] is False
         for loop in payload["loops"]
         for receipt in loop["step_receipts"]
+    )
+    assert all(
+        {
+            binding["step"]: binding["receipt_hash"]
+            for binding in loop["receipt_lineage_bindings"]
+        }
+        == {
+            receipt["step"]: receipt["output_hash"]
+            for receipt in loop["step_receipts"]
+        }
+        for loop in payload["loops"]
+    )
+    assert all(
+        set(binding["blocker_refs"]) == set(loop["open_blockers"])
+        and set(binding["observed_evidence_refs"]) == set(loop["evidence_refs"])
+        and set(binding["required_evidence_refs"]) <= set(loop["required_evidence"])
+        and binding["receipt_ref"] in binding["source_receipt_refs"]
+        and binding["read_only"] is True
+        and binding["emits_receipt"] is False
+        and binding["terminal_closure"] is False
+        for loop in payload["loops"]
+        for binding in loop["receipt_lineage_bindings"]
     )
     assert all(
         set(receipt["errors"]) == set(loop["open_blockers"])

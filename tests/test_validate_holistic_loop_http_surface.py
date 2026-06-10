@@ -385,6 +385,59 @@ def test_payload_validation_rejects_transition_binding_execution_or_terminal_clo
     assert any("transition binding 0 terminal_closure must be false" in error for error in errors)
 
 
+def test_payload_validation_requires_receipt_lineage_to_match_receipts_and_blockers() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_binding = invalid_payload["loops"][0]["receipt_lineage_bindings"][0]
+    invalid_binding["receipt_hash"] = "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+    invalid_binding["blocker_refs"] = ["different_gap"]
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("receipt_hash must match step receipt" in error for error in errors)
+    assert any("receipt lineage binding 0 blocker_refs must match open blockers" in error for error in errors)
+    assert invalid_payload["loops"][0]["open_blockers"]
+
+
+def test_payload_validation_requires_receipt_lineage_declared_refs() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_binding = invalid_payload["loops"][0]["receipt_lineage_bindings"][0]
+    invalid_binding["required_evidence_refs"] = ["undeclared_evidence"]
+    invalid_binding["observed_evidence_refs"] = ["unexpected_observed_evidence"]
+    invalid_binding["source_receipt_refs"] = ["different_receipt"]
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("unexpected evidence ref: undeclared_evidence" in error for error in errors)
+    assert any("observed_evidence_refs must match evidence_refs" in error for error in errors)
+    assert any("source_receipt_refs must include receipt_ref" in error for error in errors)
+
+
+def test_payload_validation_rejects_receipt_lineage_emission_or_terminal_closure_claim() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    invalid_binding = invalid_payload["loops"][0]["receipt_lineage_bindings"][0]
+    invalid_binding["read_only"] = False
+    invalid_binding["emits_receipt"] = True
+    invalid_binding["terminal_closure"] = True
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("receipt lineage binding 0 read_only must be true" in error for error in errors)
+    assert any("receipt lineage binding 0 emits_receipt must be false" in error for error in errors)
+    assert any("receipt lineage binding 0 terminal_closure must be false" in error for error in errors)
+
+
 def test_payload_validation_rejects_mode_binding_transition_or_terminal_closure_claim() -> None:
     app = FastAPI()
     app.include_router(router)

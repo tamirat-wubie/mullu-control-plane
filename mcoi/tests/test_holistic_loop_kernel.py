@@ -24,6 +24,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopMode,
     LoopModeBinding,
     LoopPhase,
+    LoopReceiptLineageBinding,
     LoopRiskBinding,
     LoopRollbackBinding,
     LoopSummary,
@@ -348,6 +349,42 @@ def test_loop_transition_binding_local_refs_resolve_to_existing_artifacts() -> N
     assert all((REPO_ROOT / ref).exists() for ref in file_refs)
 
 
+def test_loop_receipt_lineage_bindings_cover_step_receipts_without_emission() -> None:
+    read_model = build_default_loop_read_model()
+
+    for summary in read_model.loops:
+        receipts_by_step = {receipt.step: receipt for receipt in summary.step_receipts}
+        lineage_by_step = {binding.step: binding for binding in summary.receipt_lineage_bindings}
+
+        assert set(lineage_by_step) == set(receipts_by_step)
+        assert len(summary.receipt_lineage_bindings) == len(summary.step_receipts)
+        assert all(binding.receipt_hash == receipts_by_step[binding.step].output_hash for binding in summary.receipt_lineage_bindings)
+        assert all(set(binding.required_evidence_refs) <= set(summary.required_evidence) for binding in summary.receipt_lineage_bindings)
+        assert all(set(binding.observed_evidence_refs) == set(summary.evidence_refs) for binding in summary.receipt_lineage_bindings)
+        assert all(set(binding.blocker_refs) == set(summary.open_blockers) for binding in summary.receipt_lineage_bindings)
+        assert all(binding.receipt_ref in binding.source_receipt_refs for binding in summary.receipt_lineage_bindings)
+        assert all(binding.read_only is True for binding in summary.receipt_lineage_bindings)
+        assert all(binding.emits_receipt is False for binding in summary.receipt_lineage_bindings)
+        assert all(binding.terminal_closure is False for binding in summary.receipt_lineage_bindings)
+
+
+def test_loop_receipt_lineage_binding_local_refs_resolve_to_existing_artifacts() -> None:
+    read_model = build_default_loop_read_model()
+    file_refs = {
+        ref
+        for summary in read_model.loops
+        for binding in summary.receipt_lineage_bindings
+        for ref in (*binding.source_refs, *binding.validator_refs)
+        if "/" in ref
+    }
+
+    assert "scripts/collect_deployment_witness.py" in file_refs
+    assert "schemas/runtime_conformance_certificate.schema.json" in file_refs
+    assert "mcoi/mcoi_runtime/persistence/cognitive_outcome_ledger.py" in file_refs
+    assert "schemas/sdlc_verification_receipt.schema.json" in file_refs
+    assert all((REPO_ROOT / ref).exists() for ref in file_refs)
+
+
 def test_loop_closure_condition_bindings_cover_conditions_without_execution() -> None:
     read_model = build_default_loop_read_model()
 
@@ -461,6 +498,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             required_evidence=summary.required_evidence,
             evidence_bindings=(duplicate_binding, duplicate_binding),
             step_receipts=summary.step_receipts,
+            receipt_lineage_bindings=summary.receipt_lineage_bindings,
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
@@ -495,6 +533,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             required_evidence=summary.required_evidence,
             evidence_bindings=summary.evidence_bindings[:-1],
             step_receipts=summary.step_receipts,
+            receipt_lineage_bindings=summary.receipt_lineage_bindings,
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
@@ -678,6 +717,39 @@ def test_loop_transition_binding_rejects_execution_or_terminal_closure_claim() -
         LoopTransitionBinding(**mismatched_kwargs)
 
 
+def test_loop_receipt_lineage_binding_rejects_emission_or_terminal_closure_claim() -> None:
+    kwargs = {
+        "lineage_ref": "verification_receipt_lineage",
+        "step": LoopPhase.VERIFY,
+        "receipt_ref": "verification_receipt",
+        "receipt_hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "required_evidence_refs": ("verification_receipt",),
+        "observed_evidence_refs": (),
+        "blocker_refs": ("missing_evidence:verification_receipt",),
+        "source_receipt_refs": ("verification_receipt", "action_projection_receipt"),
+        "source_refs": ("schemas/sdlc_verification_receipt.schema.json",),
+        "validator_refs": ("scripts/validate_sdlc_artifact.py",),
+        "proof_surface_refs": ("software_dev_capability_pack",),
+    }
+
+    with pytest.raises(ValueError, match="read-only"):
+        LoopReceiptLineageBinding(**kwargs, read_only=False)
+
+    with pytest.raises(ValueError, match="emit receipt"):
+        LoopReceiptLineageBinding(**kwargs, emits_receipt=True)
+
+    with pytest.raises(ValueError, match="terminal closure"):
+        LoopReceiptLineageBinding(**kwargs, terminal_closure=True)
+
+    missing_receipt_ref = {**kwargs, "source_receipt_refs": ("action_projection_receipt",)}
+    with pytest.raises(ValueError, match="include receipt_ref"):
+        LoopReceiptLineageBinding(**missing_receipt_ref)
+
+    mismatched_step = {**kwargs, "step": "verify"}
+    with pytest.raises(ValueError, match="step"):
+        LoopReceiptLineageBinding(**mismatched_step)
+
+
 def test_loop_closure_condition_binding_rejects_mutation_or_terminal_closure_claim() -> None:
     kwargs = {
         "closure_ref": "verification_receipt_present",
@@ -730,6 +802,7 @@ def test_loop_summary_rejects_mismatched_status_binding() -> None:
             required_evidence=summary.required_evidence,
             evidence_bindings=summary.evidence_bindings,
             step_receipts=summary.step_receipts,
+            receipt_lineage_bindings=summary.receipt_lineage_bindings,
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
@@ -783,6 +856,60 @@ def test_loop_summary_rejects_mismatched_transition_binding() -> None:
             required_evidence=summary.required_evidence,
             evidence_bindings=summary.evidence_bindings,
             step_receipts=summary.step_receipts,
+            receipt_lineage_bindings=summary.receipt_lineage_bindings,
+            evidence_refs=summary.evidence_refs,
+            missing_evidence=summary.missing_evidence,
+            closure_conditions=summary.closure_conditions,
+            closure_condition_bindings=summary.closure_condition_bindings,
+            closure_report=summary.closure_report,
+            open_blockers=summary.open_blockers,
+            rollback_policy=summary.rollback_policy,
+            rollback_binding=summary.rollback_binding,
+            learning_policy=summary.learning_policy,
+            learning_binding=summary.learning_binding,
+            updated_at=summary.updated_at,
+        )
+
+
+def test_loop_summary_rejects_mismatched_receipt_lineage_binding() -> None:
+    summary = build_default_loop_read_model().loops[0]
+    original_binding = summary.receipt_lineage_bindings[0]
+    mismatched_binding = LoopReceiptLineageBinding(
+        lineage_ref=original_binding.lineage_ref,
+        step=original_binding.step,
+        receipt_ref=original_binding.receipt_ref,
+        receipt_hash="sha256:9999999999999999999999999999999999999999999999999999999999999999",
+        required_evidence_refs=original_binding.required_evidence_refs,
+        observed_evidence_refs=original_binding.observed_evidence_refs,
+        blocker_refs=original_binding.blocker_refs,
+        source_receipt_refs=original_binding.source_receipt_refs,
+        source_refs=original_binding.source_refs,
+        validator_refs=original_binding.validator_refs,
+        proof_surface_refs=original_binding.proof_surface_refs,
+    )
+
+    with pytest.raises(ValueError, match="receipt_hash"):
+        LoopSummary(
+            loop_id=summary.loop_id,
+            name=summary.name,
+            purpose=summary.purpose,
+            owner=summary.owner,
+            risk_class=summary.risk_class,
+            risk_binding=summary.risk_binding,
+            status=summary.status,
+            status_binding=summary.status_binding,
+            transition_bindings=summary.transition_bindings,
+            mode=summary.mode,
+            mode_binding=summary.mode_binding,
+            current_step=summary.current_step,
+            required_authority=summary.required_authority,
+            authority_bindings=summary.authority_bindings,
+            authority_refs=summary.authority_refs,
+            missing_authority=summary.missing_authority,
+            required_evidence=summary.required_evidence,
+            evidence_bindings=summary.evidence_bindings,
+            step_receipts=summary.step_receipts,
+            receipt_lineage_bindings=(mismatched_binding, *summary.receipt_lineage_bindings[1:]),
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
@@ -830,6 +957,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             required_evidence=summary.required_evidence,
             evidence_bindings=summary.evidence_bindings,
             step_receipts=summary.step_receipts,
+            receipt_lineage_bindings=summary.receipt_lineage_bindings,
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
@@ -874,6 +1002,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             required_evidence=summary.required_evidence,
             evidence_bindings=summary.evidence_bindings,
             step_receipts=summary.step_receipts,
+            receipt_lineage_bindings=summary.receipt_lineage_bindings,
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,
@@ -991,6 +1120,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_step_receipts() -> None:
             required_evidence=summary.required_evidence,
             evidence_bindings=summary.evidence_bindings,
             step_receipts=(mismatched_receipt,),
+            receipt_lineage_bindings=summary.receipt_lineage_bindings,
             evidence_refs=summary.evidence_refs,
             missing_evidence=summary.missing_evidence,
             closure_conditions=summary.closure_conditions,

@@ -89,6 +89,7 @@
         "required_evidence",
         "evidence_bindings",
         "step_receipts",
+        "receipt_lineage_bindings",
         "evidence_refs",
         "missing_evidence",
         "closure_conditions",
@@ -191,6 +192,13 @@
           "minItems": 1,
           "items": {
             "$ref": "#/$defs/step_receipt"
+          }
+        },
+        "receipt_lineage_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/receipt_lineage_binding"
           }
         },
         "evidence_refs": {
@@ -716,6 +724,87 @@
         "read_only": {
           "type": "boolean",
           "const": true
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "receipt_lineage_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lineage_ref",
+        "step",
+        "receipt_ref",
+        "receipt_hash",
+        "required_evidence_refs",
+        "observed_evidence_refs",
+        "blocker_refs",
+        "source_receipt_refs",
+        "source_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "read_only",
+        "emits_receipt",
+        "terminal_closure"
+      ],
+      "properties": {
+        "lineage_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "step": {
+          "type": "string",
+          "enum": [
+            "observe",
+            "decide",
+            "act",
+            "verify",
+            "record_receipt",
+            "update_state",
+            "learn",
+            "audit",
+            "close"
+          ]
+        },
+        "receipt_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receipt_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "required_evidence_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "observed_evidence_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "blocker_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "source_receipt_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "source_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "validator_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "proof_surface_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "emits_receipt": {
+          "type": "boolean",
+          "const": false
         },
         "terminal_closure": {
           "type": "boolean",

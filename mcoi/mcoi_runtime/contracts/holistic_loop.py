@@ -1,6 +1,7 @@
 """Purpose: shared contracts for holistic governed loop read models.
-Governance scope: loop manifests, loop state, step receipts, closure reports,
-    bounded read-model summaries, and read-only evidence bindings.
+Governance scope: loop manifests, loop state, step receipts, receipt lineage,
+    closure reports, bounded read-model summaries, and read-only evidence
+    bindings.
 Dependencies: Python standard library dataclasses, enum, and shared contract
     serialization helpers.
 Invariants:
@@ -632,6 +633,85 @@ class LoopTransitionBinding(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class LoopReceiptLineageBinding(ContractRecord):
+    """Read-only provenance map for one synthetic loop step receipt."""
+
+    lineage_ref: str
+    step: LoopPhase
+    receipt_ref: str
+    receipt_hash: str
+    required_evidence_refs: tuple[str, ...]
+    observed_evidence_refs: tuple[str, ...]
+    blocker_refs: tuple[str, ...]
+    source_receipt_refs: tuple[str, ...]
+    source_refs: tuple[str, ...]
+    validator_refs: tuple[str, ...]
+    proof_surface_refs: tuple[str, ...]
+    read_only: bool = True
+    emits_receipt: bool = False
+    terminal_closure: bool = False
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "lineage_ref",
+            require_non_empty_text(self.lineage_ref, "lineage_ref"),
+        )
+        if not isinstance(self.step, LoopPhase):
+            raise ValueError("step must be a LoopPhase value")
+        object.__setattr__(
+            self,
+            "receipt_ref",
+            require_non_empty_text(self.receipt_ref, "receipt_ref"),
+        )
+        object.__setattr__(
+            self,
+            "receipt_hash",
+            require_non_empty_text(self.receipt_hash, "receipt_hash"),
+        )
+        if not self.receipt_hash.startswith("sha256:"):
+            raise ValueError("receipt_hash must be a sha256 reference")
+        object.__setattr__(
+            self,
+            "required_evidence_refs",
+            _freeze_text_tuple(self.required_evidence_refs, "required_evidence_refs"),
+        )
+        object.__setattr__(
+            self,
+            "observed_evidence_refs",
+            _freeze_text_tuple(
+                self.observed_evidence_refs,
+                "observed_evidence_refs",
+                allow_empty=True,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "blocker_refs",
+            _freeze_text_tuple(self.blocker_refs, "blocker_refs", allow_empty=True),
+        )
+        for field_name in (
+            "source_receipt_refs",
+            "source_refs",
+            "validator_refs",
+            "proof_surface_refs",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name),
+            )
+        if self.receipt_ref not in self.source_receipt_refs:
+            raise ValueError("source_receipt_refs must include receipt_ref")
+        if self.read_only is not True:
+            raise ValueError("receipt lineage binding must be read-only")
+        if self.emits_receipt is not False:
+            raise ValueError("receipt lineage binding cannot emit receipt")
+        if self.terminal_closure is not False:
+            raise ValueError("receipt lineage binding cannot be terminal closure")
+
+
+@dataclass(frozen=True, slots=True)
 class LoopClosureConditionBinding(ContractRecord):
     """Read-only reference map for one loop closure condition."""
 
@@ -693,6 +773,7 @@ class LoopSummary(ContractRecord):
     required_evidence: tuple[str, ...]
     evidence_bindings: tuple[LoopEvidenceBinding, ...]
     step_receipts: tuple[LoopStepReceipt, ...]
+    receipt_lineage_bindings: tuple[LoopReceiptLineageBinding, ...]
     evidence_refs: tuple[str, ...]
     missing_evidence: tuple[str, ...]
     closure_conditions: tuple[str, ...]
@@ -792,6 +873,16 @@ class LoopSummary(ContractRecord):
         )
         object.__setattr__(
             self,
+            "receipt_lineage_bindings",
+            _freeze_contract_tuple(
+                self.receipt_lineage_bindings,
+                "receipt_lineage_bindings",
+                LoopReceiptLineageBinding,
+                "LoopReceiptLineageBinding",
+            ),
+        )
+        object.__setattr__(
+            self,
             "closure_condition_bindings",
             _freeze_contract_tuple(
                 self.closure_condition_bindings,
@@ -884,6 +975,25 @@ class LoopSummary(ContractRecord):
                 raise ValueError("step receipt loop_id must match summary loop_id")
             if receipt.status is LoopStatus.CLOSED:
                 raise ValueError("step receipt cannot claim terminal closure")
+        if not self.receipt_lineage_bindings:
+            raise ValueError("receipt_lineage_bindings must contain at least one binding")
+        lineage_refs = [binding.lineage_ref for binding in self.receipt_lineage_bindings]
+        if len(lineage_refs) != len(set(lineage_refs)):
+            raise ValueError("receipt lineage bindings must not contain duplicate lineage refs")
+        lineage_by_step = {binding.step: binding for binding in self.receipt_lineage_bindings}
+        receipt_by_step = {receipt.step: receipt for receipt in self.step_receipts}
+        if set(lineage_by_step) != set(receipt_by_step):
+            raise ValueError("receipt lineage bindings must cover step receipts exactly")
+        for step, binding in lineage_by_step.items():
+            receipt = receipt_by_step[step]
+            if binding.receipt_hash != receipt.output_hash:
+                raise ValueError("receipt lineage binding receipt_hash must match step receipt output_hash")
+            if set(binding.blocker_refs) != set(self.open_blockers):
+                raise ValueError("receipt lineage binding blocker_refs must match open blockers")
+            if set(binding.observed_evidence_refs) != set(self.evidence_refs):
+                raise ValueError("receipt lineage binding observed_evidence_refs must match evidence refs")
+            if not set(binding.required_evidence_refs) <= required_evidence_refs:
+                raise ValueError("receipt lineage binding evidence refs must be required evidence")
         if set(self.closure_report.unresolved_gaps) != set(self.open_blockers):
             raise ValueError("closure_report unresolved gaps must match open blockers")
         if self.closure_report.evidence_complete != (not self.missing_evidence):
@@ -978,6 +1088,7 @@ __all__ = [
     "LoopEvidenceBinding",
     "LoopLearningBinding",
     "LoopModeBinding",
+    "LoopReceiptLineageBinding",
     "LoopRiskBinding",
     "LoopRollbackBinding",
     "LoopManifest",
