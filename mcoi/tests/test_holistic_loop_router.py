@@ -49,6 +49,7 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
     assert all(loop["missing_authority"] for loop in payload["loops"])
     assert all(loop["evidence_bindings"] for loop in payload["loops"])
     assert all(loop["closure_condition_bindings"] for loop in payload["loops"])
+    assert all(loop["closure_evidence_pack"] for loop in payload["loops"])
     assert all(loop["rollback_binding"] for loop in payload["loops"])
     assert all(loop["learning_binding"] for loop in payload["loops"])
     assert all(loop["step_receipts"] for loop in payload["loops"])
@@ -178,6 +179,30 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
         and binding["terminal_closure"] is False
         for loop in payload["loops"]
         for binding in loop["receipt_lineage_bindings"]
+    )
+    assert all(
+        set(loop["closure_evidence_pack"]["required_evidence_refs"])
+        == set(loop["required_evidence"])
+        and set(loop["closure_evidence_pack"]["observed_evidence_refs"])
+        == set(loop["evidence_refs"])
+        and set(loop["closure_evidence_pack"]["missing_evidence_refs"])
+        == set(loop["missing_evidence"])
+        and set(loop["closure_evidence_pack"]["required_authority_refs"])
+        == set(loop["required_authority"])
+        and set(loop["closure_evidence_pack"]["observed_authority_refs"])
+        == set(loop["authority_refs"])
+        and set(loop["closure_evidence_pack"]["missing_authority_refs"])
+        == set(loop["missing_authority"])
+        and set(loop["closure_evidence_pack"]["blocker_refs"])
+        == set(loop["open_blockers"])
+        and set(loop["closure_evidence_pack"]["closure_condition_refs"])
+        == set(loop["closure_conditions"])
+        and set(loop["closure_evidence_pack"]["receipt_lineage_refs"])
+        == {binding["lineage_ref"] for binding in loop["receipt_lineage_bindings"]}
+        and loop["closure_evidence_pack"]["read_only"] is True
+        and loop["closure_evidence_pack"]["emits_receipt"] is False
+        and loop["closure_evidence_pack"]["terminal_closure"] is False
+        for loop in payload["loops"]
     )
     assert all(
         set(receipt["errors"]) == set(loop["open_blockers"])

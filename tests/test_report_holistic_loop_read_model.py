@@ -40,6 +40,7 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
     assert all(loop["missing_authority"] for loop in loops)
     assert all(loop["evidence_bindings"] for loop in loops)
     assert all(loop["closure_condition_bindings"] for loop in loops)
+    assert all(loop["closure_evidence_pack"] for loop in loops)
     assert all(loop["rollback_binding"] for loop in loops)
     assert all(loop["learning_binding"] for loop in loops)
     assert all(loop["step_receipts"] for loop in loops)
@@ -175,6 +176,33 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
         for loop in loops
         for binding in loop["receipt_lineage_bindings"]
     )
+    assert all(
+        set(loop["closure_evidence_pack"]["required_evidence_refs"])
+        == set(loop["required_evidence"])
+        and set(loop["closure_evidence_pack"]["observed_evidence_refs"])
+        == set(loop["evidence_refs"])
+        and set(loop["closure_evidence_pack"]["missing_evidence_refs"])
+        == set(loop["missing_evidence"])
+        and set(loop["closure_evidence_pack"]["required_authority_refs"])
+        == set(loop["required_authority"])
+        and set(loop["closure_evidence_pack"]["observed_authority_refs"])
+        == set(loop["authority_refs"])
+        and set(loop["closure_evidence_pack"]["missing_authority_refs"])
+        == set(loop["missing_authority"])
+        and set(loop["closure_evidence_pack"]["blocker_refs"])
+        == set(loop["open_blockers"])
+        and set(loop["closure_evidence_pack"]["closure_condition_refs"])
+        == set(loop["closure_conditions"])
+        and set(loop["closure_evidence_pack"]["receipt_lineage_refs"])
+        == {binding["lineage_ref"] for binding in loop["receipt_lineage_bindings"]}
+        and loop["closure_evidence_pack"]["evidence_complete"]
+        is loop["closure_report"]["evidence_complete"]
+        and loop["closure_evidence_pack"]["closure_blocked"] is True
+        and loop["closure_evidence_pack"]["read_only"] is True
+        and loop["closure_evidence_pack"]["emits_receipt"] is False
+        and loop["closure_evidence_pack"]["terminal_closure"] is False
+        for loop in loops
+    )
     assert all(loop["closure_report"]["closed"] is False for loop in loops)
     assert all(loop["closure_report"]["evidence_complete"] is False for loop in loops)
     assert all(
@@ -213,11 +241,18 @@ def test_report_accepts_complete_observed_authority_and_evidence_refs() -> None:
     assert all(loop["risk_binding"] for loop in report["loops"])
     assert all(loop["evidence_bindings"] for loop in report["loops"])
     assert all(loop["closure_condition_bindings"] for loop in report["loops"])
+    assert all(loop["closure_evidence_pack"] for loop in report["loops"])
     assert all(loop["rollback_binding"] for loop in report["loops"])
     assert all(loop["learning_binding"] for loop in report["loops"])
     assert all(loop["step_receipts"] for loop in report["loops"])
     assert all(loop["receipt_lineage_bindings"] for loop in report["loops"])
     assert all(loop["closure_report"]["closed"] is False for loop in report["loops"])
+    assert all(
+        loop["closure_evidence_pack"]["authority_complete"] is True
+        and loop["closure_evidence_pack"]["evidence_complete"] is True
+        and loop["closure_evidence_pack"]["closure_blocked"] is False
+        for loop in report["loops"]
+    )
     assert all(loop["closure_report"]["evidence_complete"] is True for loop in report["loops"])
     assert all(loop["closure_report"]["unresolved_gaps"] == [] for loop in report["loops"])
     assert all(loop["status_binding"]["projected_status"] == "verified" for loop in report["loops"])

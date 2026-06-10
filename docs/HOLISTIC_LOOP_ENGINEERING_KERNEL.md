@@ -30,6 +30,7 @@ The kernel models the common contract through:
 | `LoopStepReceipt` | Step-level input hash, output hash, decision, evidence, status, errors, and timestamp. |
 | `LoopReceiptLineageBinding` | Read-only map from each synthetic step receipt to its receipt hash, required evidence, observed evidence, blockers, source receipts, validators, and proof surfaces. |
 | `LoopClosureReport` | Closure assessment with unresolved gaps, rollback availability, and learning candidates. |
+| `LoopClosureEvidencePack` | Read-only aggregate of required evidence, observed evidence, authority, blockers, closure conditions, receipt lineage, rollback, validators, and proof surfaces needed to evaluate closure readiness. |
 | `LoopStatusBinding` | Read-only map from projected status to blockers, verification refs, closure gates, validators, and proof surfaces. |
 | `LoopTransitionBinding` | Read-only map from possible status and phase transitions to required evidence, authority, blockers, receipts, rollback refs, validators, and proof surfaces. |
 | `LoopModeBinding` | Read-only map from projected mode to allowed modes, separation refs, real-execution guards, validators, and proof surfaces. |
@@ -414,6 +415,53 @@ receipt_lineage_bindings[*].emits_receipt == false
 receipt_lineage_bindings[*].terminal_closure == false
 ```
 
+## Closure Evidence Pack
+
+Each loop summary includes `closure_evidence_pack`, one aggregate view of the
+inputs needed to evaluate closure readiness. The pack is derived from existing
+loop fields; it does not replace `closure_report`, does not emit receipts, and
+does not certify terminal closure.
+
+| Field | Meaning |
+| --- | --- |
+| `pack_ref` | Stable read-model label for the closure evidence pack. |
+| `loop_id` | Loop identity covered by the pack. |
+| `required_evidence_refs` | Must match `required_evidence`. |
+| `observed_evidence_refs` | Must match `evidence_refs`. |
+| `missing_evidence_refs` | Must match `missing_evidence`. |
+| `required_authority_refs` | Must match `required_authority`. |
+| `observed_authority_refs` | Must match `authority_refs`. |
+| `missing_authority_refs` | Must match `missing_authority`. |
+| `blocker_refs` | Must match `open_blockers`. |
+| `closure_condition_refs` | Must match `closure_conditions`. |
+| `receipt_lineage_refs` | Must match `receipt_lineage_bindings[*].lineage_ref`. |
+| `closure_report_ref` | Stable pointer to the loop `closure_report`. |
+| `rollback_ref` | Must match `rollback_policy`. |
+| `validator_refs` | Validators that check the aggregate read-model contract. |
+| `proof_surface_refs` | Proof-matrix surfaces related to the aggregate. |
+| `evidence_complete` | Must match `closure_report.evidence_complete`. |
+| `authority_complete` | `true` only when `missing_authority` is empty. |
+| `closure_blocked` | `true` exactly when `open_blockers` is non-empty. |
+| `rollback_available` | Must match `closure_report.rollback_available`. |
+| `read_only` | Always `true`. |
+| `emits_receipt` | Always `false`; this pack does not write runtime receipts. |
+| `terminal_closure` | Always `false`; this pack is not a closure certificate. |
+
+The pack is exact by contract:
+
+```text
+set(closure_evidence_pack.required_evidence_refs) == set(required_evidence)
+set(closure_evidence_pack.observed_evidence_refs) == set(evidence_refs)
+set(closure_evidence_pack.missing_evidence_refs) == set(missing_evidence)
+set(closure_evidence_pack.required_authority_refs) == set(required_authority)
+set(closure_evidence_pack.observed_authority_refs) == set(authority_refs)
+set(closure_evidence_pack.missing_authority_refs) == set(missing_authority)
+set(closure_evidence_pack.blocker_refs) == set(open_blockers)
+set(closure_evidence_pack.receipt_lineage_refs) == set(receipt_lineage_bindings[*].lineage_ref)
+closure_evidence_pack.emits_receipt == false
+closure_evidence_pack.terminal_closure == false
+```
+
 ## Closure Readiness
 
 Each loop summary also includes a derived `closure_report`. This report is a
@@ -462,8 +510,9 @@ This kernel is intentionally non-invasive:
 12. It does not execute evidence validators referenced by the catalog.
 13. It does not emit live runtime execution receipts.
 14. It does not emit receipt lineage records into runtime stores.
-15. It does not mark any loop closed.
-16. It only exposes typed read-model contracts that other surfaces can adopt later.
+15. It does not emit closure evidence packs into runtime stores.
+16. It does not mark any loop closed.
+17. It only exposes typed read-model contracts that other surfaces can adopt later.
 
 ## Read-Only Exposure
 
@@ -494,6 +543,7 @@ script:
 | `loops[].step_receipts` | Read-only synthetic receipt trail for the canonical loop phases. |
 | `loops[].receipt_lineage_bindings` | Read-only lineage catalog entries linking synthetic receipts to evidence, blockers, validators, and proof surfaces. |
 | `loops[].closure_report` | Read-only non-terminal closure-readiness report for each loop summary. |
+| `loops[].closure_evidence_pack` | Read-only aggregate of evidence, authority, blockers, closure conditions, lineage refs, rollback, validators, and proof surfaces. |
 | `blocked_count` | Count of returned summaries carrying blockers. |
 | `verified_count` | Count of returned summaries marked verified. |
 | `read_only` | Always `true`. |
@@ -545,4 +595,5 @@ The tests verify:
 12. Evidence bindings cover every required evidence label and cannot claim terminal closure.
 13. Step receipt trails are read-only synthetic projections and must match blockers.
 14. Receipt lineage bindings cover step receipts exactly and cannot emit receipts.
-15. Closure reports cannot claim terminal closure and must match blockers.
+15. Closure evidence packs aggregate closure inputs exactly and cannot emit receipts.
+16. Closure reports cannot claim terminal closure and must match blockers.

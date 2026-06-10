@@ -40,6 +40,7 @@ def test_current_holistic_loop_read_model_contract_passes() -> None:
     assert all(loop["closure_condition_bindings"] for loop in report["loops"])
     assert all(loop["step_receipts"] for loop in report["loops"])
     assert all(loop["receipt_lineage_bindings"] for loop in report["loops"])
+    assert all(loop["closure_evidence_pack"] for loop in report["loops"])
 
 
 def test_schema_rejects_missing_required_loop_field() -> None:
@@ -83,6 +84,22 @@ def test_schema_requires_receipt_lineage_bindings() -> None:
 
     assert any("schema missing required loop field: receipt_lineage_bindings" in error for error in errors)
     assert "receipt_lineage_bindings" not in invalid_schema["$defs"]["loop_summary"]["required"]
+    assert len(errors) >= 1
+
+
+def test_schema_requires_closure_evidence_pack() -> None:
+    schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
+    invalid_schema = copy.deepcopy(schema)
+    invalid_schema["$defs"]["loop_summary"]["required"] = [
+        field
+        for field in invalid_schema["$defs"]["loop_summary"]["required"]
+        if field != "closure_evidence_pack"
+    ]
+
+    errors = validator.validate_schema_artifact(invalid_schema)
+
+    assert any("schema missing required loop field: closure_evidence_pack" in error for error in errors)
+    assert "closure_evidence_pack" not in invalid_schema["$defs"]["loop_summary"]["required"]
     assert len(errors) >= 1
 
 
@@ -391,6 +408,44 @@ def test_receipt_lineage_binding_cannot_emit_or_claim_terminal_closure() -> None
     assert any("receipt lineage binding 0 read_only must be true" in error for error in errors)
     assert any("receipt lineage binding 0 emits_receipt must be false" in error for error in errors)
     assert any("receipt lineage binding 0 terminal_closure must be false" in error for error in errors)
+
+
+def test_closure_evidence_pack_must_match_loop_closure_inputs() -> None:
+    invalid_report = copy.deepcopy(validator.build_report())
+    pack = invalid_report["loops"][0]["closure_evidence_pack"]
+    pack["required_evidence_refs"] = ["undeclared_evidence"]
+    pack["observed_evidence_refs"] = ["unexpected_evidence"]
+    pack["missing_authority_refs"] = ["different_authority"]
+    pack["blocker_refs"] = ["different_gap"]
+    pack["receipt_lineage_refs"] = ["different_lineage"]
+    pack["evidence_complete"] = True
+    pack["authority_complete"] = True
+    pack["closure_blocked"] = False
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("required_evidence_refs must match required_evidence" in error for error in errors)
+    assert any("observed_evidence_refs must match evidence_refs" in error for error in errors)
+    assert any("missing_authority_refs must match missing_authority" in error for error in errors)
+    assert any("blocker_refs must match open_blockers" in error for error in errors)
+    assert any("receipt_lineage_refs must match receipt lineage bindings" in error for error in errors)
+    assert any("evidence_complete must match closure_report" in error for error in errors)
+    assert any("authority_complete must match missing_authority" in error for error in errors)
+    assert any("closure_blocked must match open_blockers" in error for error in errors)
+
+
+def test_closure_evidence_pack_cannot_emit_or_claim_terminal_closure() -> None:
+    invalid_report = copy.deepcopy(validator.build_report())
+    pack = invalid_report["loops"][0]["closure_evidence_pack"]
+    pack["read_only"] = False
+    pack["emits_receipt"] = True
+    pack["terminal_closure"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("closure_evidence_pack read_only must be true" in error for error in errors)
+    assert any("closure_evidence_pack emits_receipt must be false" in error for error in errors)
+    assert any("closure_evidence_pack terminal_closure must be false" in error for error in errors)
 
 
 def test_missing_evidence_requires_matching_blocker() -> None:

@@ -95,6 +95,7 @@
         "closure_conditions",
         "closure_condition_bindings",
         "closure_report",
+        "closure_evidence_pack",
         "open_blockers",
         "rollback_policy",
         "rollback_binding",
@@ -219,6 +220,9 @@
         },
         "closure_report": {
           "$ref": "#/$defs/closure_report"
+        },
+        "closure_evidence_pack": {
+          "$ref": "#/$defs/closure_evidence_pack"
         },
         "open_blockers": {
           "$ref": "#/$defs/possibly_empty_text_list"
@@ -919,6 +923,109 @@
               "$ref": "#/$defs/text_list"
             }
           }
+        }
+      }
+    },
+    "closure_evidence_pack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pack_ref",
+        "loop_id",
+        "required_evidence_refs",
+        "observed_evidence_refs",
+        "missing_evidence_refs",
+        "required_authority_refs",
+        "observed_authority_refs",
+        "missing_authority_refs",
+        "blocker_refs",
+        "closure_condition_refs",
+        "receipt_lineage_refs",
+        "closure_report_ref",
+        "rollback_ref",
+        "validator_refs",
+        "proof_surface_refs",
+        "evidence_complete",
+        "authority_complete",
+        "closure_blocked",
+        "rollback_available",
+        "read_only",
+        "emits_receipt",
+        "terminal_closure"
+      ],
+      "properties": {
+        "pack_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "loop_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_evidence_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "observed_evidence_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "missing_evidence_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "required_authority_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "observed_authority_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "missing_authority_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "blocker_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "closure_condition_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "receipt_lineage_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "closure_report_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rollback_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "validator_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "proof_surface_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "evidence_complete": {
+          "type": "boolean"
+        },
+        "authority_complete": {
+          "type": "boolean"
+        },
+        "closure_blocked": {
+          "type": "boolean"
+        },
+        "rollback_available": {
+          "type": "boolean"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "emits_receipt": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
         }
       }
     },
