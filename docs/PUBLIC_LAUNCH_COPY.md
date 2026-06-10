@@ -1,55 +1,71 @@
 # Public Launch Copy
 
-Purpose: provide first-pass public copy for Mullu Govern as the governed execution product by Mullusi.
-Governance scope: homepage hero, first-reference wording, product surfaces, trust language, and launch constraints.
-Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/NAMING_MIGRATION_PLAN.md`, `docs/NAME_CLEARANCE_PRELIMINARY.md`.
-Invariants: use `Mullu Govern` as the public product name; use `Mullu` as the suite/family name; use `Mullusi` as the company and governance authority; avoid generic product names; public launch remains blocked until clearance gates close.
+Purpose: provide mission-first public copy for Mullu Govern as the governed AI-action infrastructure product by Mullusi.
+Governance scope: homepage hero, mission statement, problem framing, product surfaces, trust language, AGI/ASI fear response, and launch constraints.
+Dependencies: `docs/PRODUCT_IDENTITY.md`, `docs/PUBLIC_MISSION_STATEMENT.md`, `docs/NAMING_MIGRATION_PLAN.md`, `docs/NAME_CLEARANCE_PRELIMINARY.md`.
+Invariants: use `Mullu Govern` as the public product name; use `Mullu` as the suite/family name; use `Mullusi` as the company and governance authority; public copy must explain mission before technical proof; public launch remains blocked until clearance and readiness gates close.
+
+## Homepage Narrative Order
+
+Public pages should explain the reason for the system before exposing the technical proof surface.
+
+```text
+1. Mission
+2. Problem
+3. Solution
+4. Trust model
+5. Market role
+6. Product surfaces
+7. Current Foundation Mode status
+8. Proof and documentation routes
+```
+
+Technical terms such as symbolic execution, proof stamps, runtime conformance, deployment witnesses, schemas, and Foundation boundary documents remain important, but they should support the story instead of replacing it.
 
 ## Hero
 
 ```text
 Mullu Govern, by Mullusi
 
-Symbols are atomic. Meaning is relational.
-Traversal is governed. Judgment is earned.
+Make AI action governable.
 
-Govern every symbolic action before it runs.
-
-Governed symbolic execution for workflows, approvals, budgets, audit trails,
-lineage, deployment controls, and proof-backed actions.
+Mullu Govern is governance infrastructure for AI systems that need policy checks,
+approval gates, budget limits, evidence, receipts, audit trails, and rollback
+before important actions run.
 ```
 
-## Short Product Description
+## Mission Statement
 
 ```text
-Mullu Govern helps people and organizations turn goals into governed work. It
-routes symbolic workflows through explicit authority, policy gates, budgets,
-audit receipts, and bounded capability surfaces before execution.
+Mullusi exists to make powerful AI systems safe enough to trust.
+
+As AI moves from answering questions to taking actions, organizations need more
+than intelligence. They need control, proof, approval, budget limits, audit
+trails, rollback paths, and clear responsibility.
+
+Mullu Govern turns AI-driven work into governed proposals and proof-backed
+outcomes. The goal is accountable automation: useful AI action that can be
+limited, reviewed, approved, blocked, and audited.
 ```
 
-## Longer Product Description
+## Problem Statement
 
 ```text
-Mullu Govern is the governed execution product by Mullusi for symbolic
-workflows, approvals, budgets, audit trails, lineage, deployment controls,
-policy enforcement, skill boundaries, and proof-backed actions.
-
-Mullu Govern is not loose automation. Every meaningful effect passes through
-authority, constraint, verification, and memory admission.
+AI systems are becoming capable of acting across tools, files, APIs, workflows,
+messages, budgets, and business processes. Without governance, that creates a
+simple risk: nobody can confidently answer what the system did, why it did it,
+who approved it, what evidence supported it, or how to stop and recover when a
+boundary is crossed.
 ```
 
-## Surface Copy
+## Solution Statement
 
-| Surface | Public copy |
-| --- | --- |
-| Mullu Govern | Governed execution across symbolic workflows, approvals, budgets, traces, audit, lineage, deployment controls, and proof-backed actions |
-| Mullu Proof | Evidence, receipts, proof stamps, lineage packages, and compliance exports |
-| Mullu Ledger | Budgets, spend limits, payment states, settlements, and financial audit evidence |
-| Mullu Inspect | Symbolic browser inspection and evidence capture |
-| Mullu CLI | Terminal-native governed execution |
-| Mullu Code | Repository work, code authoring, review, tests, and release support |
-| Mullu Desk | Computer-use workflows across documents, local apps, and workspace actions |
-| Mullu Control Plane | Internal/admin governance, approval, audit, budgets, lineage, and deployment controls |
+```text
+Mullu Govern places a control plane around consequential AI work. Before action,
+the system checks authority, policy, budget, evidence, risk, and approval. If a
+step is blocked, it records why. If a step is allowed, it emits receipts and
+keeps the result auditable.
+```
 
 ## Trust Copy
 
@@ -60,8 +76,63 @@ approval-gated when risk requires it.
 
 ```text
 Mullu Govern preserves the causal chain behind work: who asked, what changed,
-which constraints applied, what evidence closed the task, and what memory was
-admitted afterward.
+which constraints applied, what evidence closed the task, which receipts were
+emitted, and what rollback path exists if the result must be reviewed or undone.
+```
+
+## AGI/ASI Fear Response
+
+```text
+Mullu Govern is not built to unleash unchecked machine autonomy.
+
+It is built to limit, verify, and govern AI-driven action with human approval,
+policy checks, budget boundaries, evidence, receipts, and rollback paths.
+```
+
+Use this framing when a public surface mentions advanced AI, agentic systems, AGI, or ASI fear. Do not claim that Mullu Govern creates AGI, prevents every AI risk, guarantees safety, or certifies deployment readiness.
+
+## Short Product Description
+
+```text
+Mullu Govern helps people and organizations turn AI-driven goals into governed
+work. It routes consequential actions through explicit authority, policy gates,
+budgets, evidence, approval, receipts, and bounded capability surfaces before
+execution.
+```
+
+## Longer Product Description
+
+```text
+Mullu Govern is the governed execution product by Mullusi for AI-assisted work:
+approvals, budgets, audit trails, lineage, deployment controls, policy
+enforcement, skill boundaries, and proof-backed actions.
+
+Mullu Govern is not loose automation. Every meaningful effect must pass through
+authority, constraints, verification, and evidence before it can be treated as a
+trusted outcome.
+```
+
+## Surface Copy
+
+| Surface | Public copy |
+| --- | --- |
+| Mullu Govern | Governable AI action across workflows, approvals, budgets, traces, audit, lineage, deployment controls, and proof-backed outcomes |
+| Mullu Proof | Evidence, receipts, proof stamps, lineage packages, and compliance exports |
+| Mullu Ledger | Budgets, spend limits, payment states, settlements, and financial audit evidence |
+| Mullu Inspect | Symbolic browser inspection and evidence capture |
+| Mullu CLI | Terminal-native governed execution |
+| Mullu Code | Repository work, code authoring, review, tests, and release support |
+| Mullu Desk | Computer-use workflows across documents, local apps, and workspace actions |
+| Mullu Control Plane | Internal/admin governance, approval, audit, budgets, lineage, and deployment controls |
+
+## Market Role
+
+```text
+Mullu Govern is a trust layer for AI actions.
+
+It does not compete mainly as a foundation model or chatbot. It sits around
+AI-driven work so that organizations can limit authority, inspect evidence,
+require approval, enforce budget and policy, and export proof.
 ```
 
 ## First-Reference Rule
@@ -87,8 +158,43 @@ Mullusi Operator
 Mullu Generic
 ```
 
+## Foundation Status Copy
+
+```text
+Current status: Foundation Mode.
+
+This means local proof, documentation, tests, architecture hardening, and claim
+boundaries come before deployment, customer access, paid infrastructure, company
+formation, legal claims, or patent filing.
+```
+
+## Public Claim Boundary
+
+This copy may claim:
+
+```text
+mission: make AI action governable, auditable, and accountable
+product direction: governed AI-action infrastructure
+control model: policy, approval, budget, evidence, receipt, audit, rollback
+current posture: Foundation Mode, local proof first
+```
+
+This copy must not claim:
+
+```text
+public deployment readiness
+customer access readiness
+paid-use readiness
+production runtime health
+live endpoint readiness
+legal or company readiness
+patent protection
+AGI or ASI creation
+complete AI safety guarantee
+live payment execution
+live email delivery
+```
+
 ## Launch Constraint
 
-This copy is approved for internal planning. Public paid-user launch remains
-blocked until the trademark and domain clearance gates in
-`docs/NAME_CLEARANCE_PRELIMINARY.md` close.
+This copy is approved for internal planning and bounded public-review drafts. Public paid-user launch remains blocked until the trademark, domain, legal, deployment, customer-access, support, privacy, security, and readiness gates close through named evidence.
