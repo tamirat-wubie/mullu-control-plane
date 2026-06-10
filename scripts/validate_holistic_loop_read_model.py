@@ -68,6 +68,7 @@ REQUIRED_LOOP_FIELDS = (
     "closure_conditions",
     "closure_condition_bindings",
     "closure_report",
+    "closure_evidence_pack",
     "open_blockers",
     "rollback_policy",
     "rollback_binding",
@@ -258,6 +259,7 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
     errors.extend(_validate_closure_condition_bindings(loop["closure_condition_bindings"], loop, index))
     errors.extend(_validate_step_receipts(loop["step_receipts"], loop, index))
     errors.extend(_validate_receipt_lineage_bindings(loop["receipt_lineage_bindings"], loop, index))
+    errors.extend(_validate_closure_evidence_pack(loop["closure_evidence_pack"], loop, index))
     if loop["open_blockers"] and loop["status"] != "blocked":
         errors.append(f"loop {index} with blockers must be blocked")
     if loop["status"] in {"verified", "closed"} and loop["missing_evidence"]:
@@ -999,6 +1001,130 @@ def _validate_receipt_lineage_bindings(
     lineage_step_set = set(lineage_steps)
     if lineage_step_set != receipt_steps:
         errors.append(f"loop {index} receipt lineage bindings must cover step receipts exactly")
+    return errors
+
+
+def _validate_closure_evidence_pack(
+    evidence_pack: Any,
+    loop: dict[str, Any],
+    index: int,
+) -> list[str]:
+    if not isinstance(evidence_pack, dict):
+        return [f"loop {index} closure_evidence_pack must be an object"]
+    errors: list[str] = []
+    required_fields = {
+        "pack_ref",
+        "loop_id",
+        "required_evidence_refs",
+        "observed_evidence_refs",
+        "missing_evidence_refs",
+        "required_authority_refs",
+        "observed_authority_refs",
+        "missing_authority_refs",
+        "blocker_refs",
+        "closure_condition_refs",
+        "receipt_lineage_refs",
+        "closure_report_ref",
+        "rollback_ref",
+        "validator_refs",
+        "proof_surface_refs",
+        "evidence_complete",
+        "authority_complete",
+        "closure_blocked",
+        "rollback_available",
+        "read_only",
+        "emits_receipt",
+        "terminal_closure",
+    }
+    missing = sorted(required_fields - set(evidence_pack))
+    errors.extend(f"loop {index} closure_evidence_pack missing field: {field_name}" for field_name in missing)
+    extra = sorted(set(evidence_pack) - required_fields)
+    errors.extend(f"loop {index} closure_evidence_pack has unexpected field: {field_name}" for field_name in extra)
+    if missing:
+        return errors
+    for field_name in ("pack_ref", "loop_id", "closure_report_ref", "rollback_ref"):
+        if not isinstance(evidence_pack[field_name], str) or not evidence_pack[field_name]:
+            errors.append(f"loop {index} closure_evidence_pack {field_name} must be non-empty")
+    for field_name in (
+        "required_evidence_refs",
+        "observed_evidence_refs",
+        "missing_evidence_refs",
+        "required_authority_refs",
+        "observed_authority_refs",
+        "missing_authority_refs",
+        "blocker_refs",
+        "closure_condition_refs",
+        "receipt_lineage_refs",
+        "validator_refs",
+        "proof_surface_refs",
+    ):
+        errors.extend(
+            _validate_text_list(
+                evidence_pack[field_name],
+                f"loop {index} closure_evidence_pack {field_name}",
+            )
+        )
+        if (
+            field_name
+            in {
+                "required_evidence_refs",
+                "required_authority_refs",
+                "closure_condition_refs",
+                "receipt_lineage_refs",
+                "validator_refs",
+                "proof_surface_refs",
+            }
+            and isinstance(evidence_pack[field_name], list)
+            and not evidence_pack[field_name]
+        ):
+            errors.append(f"loop {index} closure_evidence_pack {field_name} must be non-empty")
+    if evidence_pack["loop_id"] != loop["loop_id"]:
+        errors.append(f"loop {index} closure_evidence_pack loop_id must match loop_id")
+    if set(evidence_pack["required_evidence_refs"]) != set(loop["required_evidence"]):
+        errors.append(f"loop {index} closure_evidence_pack required_evidence_refs must match required_evidence")
+    if set(evidence_pack["observed_evidence_refs"]) != set(loop["evidence_refs"]):
+        errors.append(f"loop {index} closure_evidence_pack observed_evidence_refs must match evidence_refs")
+    if set(evidence_pack["missing_evidence_refs"]) != set(loop["missing_evidence"]):
+        errors.append(f"loop {index} closure_evidence_pack missing_evidence_refs must match missing_evidence")
+    if set(evidence_pack["required_authority_refs"]) != set(loop["required_authority"]):
+        errors.append(f"loop {index} closure_evidence_pack required_authority_refs must match required_authority")
+    if set(evidence_pack["observed_authority_refs"]) != set(loop["authority_refs"]):
+        errors.append(f"loop {index} closure_evidence_pack observed_authority_refs must match authority_refs")
+    if set(evidence_pack["missing_authority_refs"]) != set(loop["missing_authority"]):
+        errors.append(f"loop {index} closure_evidence_pack missing_authority_refs must match missing_authority")
+    if set(evidence_pack["blocker_refs"]) != set(loop["open_blockers"]):
+        errors.append(f"loop {index} closure_evidence_pack blocker_refs must match open_blockers")
+    if set(evidence_pack["closure_condition_refs"]) != set(loop["closure_conditions"]):
+        errors.append(f"loop {index} closure_evidence_pack closure_condition_refs must match closure_conditions")
+    lineage_refs = {
+        binding.get("lineage_ref")
+        for binding in loop["receipt_lineage_bindings"]
+        if isinstance(binding, dict)
+    }
+    if set(evidence_pack["receipt_lineage_refs"]) != lineage_refs:
+        errors.append(f"loop {index} closure_evidence_pack receipt_lineage_refs must match receipt lineage bindings")
+    closure_report = loop["closure_report"]
+    if not isinstance(closure_report, dict):
+        errors.append(f"loop {index} closure_evidence_pack requires closure_report object")
+        closure_report = {}
+    if evidence_pack["closure_report_ref"] != "closure_report":
+        errors.append(f"loop {index} closure_evidence_pack closure_report_ref must be closure_report")
+    if evidence_pack["rollback_ref"] != loop["rollback_policy"]:
+        errors.append(f"loop {index} closure_evidence_pack rollback_ref must match rollback_policy")
+    if evidence_pack["evidence_complete"] != closure_report.get("evidence_complete"):
+        errors.append(f"loop {index} closure_evidence_pack evidence_complete must match closure_report")
+    if evidence_pack["authority_complete"] != (not loop["missing_authority"]):
+        errors.append(f"loop {index} closure_evidence_pack authority_complete must match missing_authority")
+    if evidence_pack["closure_blocked"] != bool(loop["open_blockers"]):
+        errors.append(f"loop {index} closure_evidence_pack closure_blocked must match open_blockers")
+    if evidence_pack["rollback_available"] != closure_report.get("rollback_available"):
+        errors.append(f"loop {index} closure_evidence_pack rollback_available must match closure_report")
+    if evidence_pack["read_only"] is not True:
+        errors.append(f"loop {index} closure_evidence_pack read_only must be true")
+    if evidence_pack["emits_receipt"] is not False:
+        errors.append(f"loop {index} closure_evidence_pack emits_receipt must be false")
+    if evidence_pack["terminal_closure"] is not False:
+        errors.append(f"loop {index} closure_evidence_pack terminal_closure must be false")
     return errors
 
 

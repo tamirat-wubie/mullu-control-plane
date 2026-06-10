@@ -751,6 +751,92 @@ class LoopClosureConditionBinding(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class LoopClosureEvidencePack(ContractRecord):
+    """Read-only aggregate of evidence needed to evaluate loop closure."""
+
+    pack_ref: str
+    loop_id: str
+    required_evidence_refs: tuple[str, ...]
+    observed_evidence_refs: tuple[str, ...]
+    missing_evidence_refs: tuple[str, ...]
+    required_authority_refs: tuple[str, ...]
+    observed_authority_refs: tuple[str, ...]
+    missing_authority_refs: tuple[str, ...]
+    blocker_refs: tuple[str, ...]
+    closure_condition_refs: tuple[str, ...]
+    receipt_lineage_refs: tuple[str, ...]
+    closure_report_ref: str
+    rollback_ref: str
+    validator_refs: tuple[str, ...]
+    proof_surface_refs: tuple[str, ...]
+    evidence_complete: bool
+    authority_complete: bool
+    closure_blocked: bool
+    rollback_available: bool
+    read_only: bool = True
+    emits_receipt: bool = False
+    terminal_closure: bool = False
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "pack_ref",
+            "loop_id",
+            "closure_report_ref",
+            "rollback_ref",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                require_non_empty_text(getattr(self, field_name), field_name),
+            )
+        for field_name in (
+            "required_evidence_refs",
+            "required_authority_refs",
+            "closure_condition_refs",
+            "receipt_lineage_refs",
+            "validator_refs",
+            "proof_surface_refs",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name),
+            )
+        for field_name in (
+            "observed_evidence_refs",
+            "missing_evidence_refs",
+            "observed_authority_refs",
+            "missing_authority_refs",
+            "blocker_refs",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name, allow_empty=True),
+            )
+        for field_name in (
+            "evidence_complete",
+            "authority_complete",
+            "closure_blocked",
+            "rollback_available",
+        ):
+            if not isinstance(getattr(self, field_name), bool):
+                raise ValueError(f"{field_name} must be boolean")
+        if self.evidence_complete != (not self.missing_evidence_refs):
+            raise ValueError("evidence_complete must match missing evidence refs")
+        if self.authority_complete != (not self.missing_authority_refs):
+            raise ValueError("authority_complete must match missing authority refs")
+        if self.closure_blocked != bool(self.blocker_refs):
+            raise ValueError("closure_blocked must match blocker refs")
+        if self.read_only is not True:
+            raise ValueError("closure evidence pack must be read-only")
+        if self.emits_receipt is not False:
+            raise ValueError("closure evidence pack cannot emit receipt")
+        if self.terminal_closure is not False:
+            raise ValueError("closure evidence pack cannot be terminal closure")
+
+
+@dataclass(frozen=True, slots=True)
 class LoopSummary(ContractRecord):
     """Bounded read-model summary for one registered governed loop."""
 
@@ -779,6 +865,7 @@ class LoopSummary(ContractRecord):
     closure_conditions: tuple[str, ...]
     closure_condition_bindings: tuple[LoopClosureConditionBinding, ...]
     closure_report: LoopClosureReport
+    closure_evidence_pack: LoopClosureEvidencePack
     open_blockers: tuple[str, ...]
     rollback_policy: str
     rollback_binding: LoopRollbackBinding
@@ -907,6 +994,8 @@ class LoopSummary(ContractRecord):
             raise ValueError("risk_binding risk_ref must match risk_class")
         if not isinstance(self.closure_report, LoopClosureReport):
             raise ValueError("closure_report must be a LoopClosureReport")
+        if not isinstance(self.closure_evidence_pack, LoopClosureEvidencePack):
+            raise ValueError("closure_evidence_pack must be a LoopClosureEvidencePack")
         if not isinstance(self.rollback_binding, LoopRollbackBinding):
             raise ValueError("rollback_binding must be a LoopRollbackBinding")
         if self.rollback_binding.rollback_ref != self.rollback_policy:
@@ -919,6 +1008,8 @@ class LoopSummary(ContractRecord):
             raise ValueError("closure_report loop_id must match summary loop_id")
         if self.closure_report.closed:
             raise ValueError("summary closure_report cannot claim terminal closure")
+        if self.closure_evidence_pack.loop_id != self.loop_id:
+            raise ValueError("closure_evidence_pack loop_id must match summary loop_id")
         object.__setattr__(self, "updated_at", require_datetime_text(self.updated_at, "updated_at"))
         if set(self.status_binding.blocker_refs) != set(self.open_blockers):
             raise ValueError("status_binding blocker_refs must match open blockers")
@@ -998,6 +1089,34 @@ class LoopSummary(ContractRecord):
             raise ValueError("closure_report unresolved gaps must match open blockers")
         if self.closure_report.evidence_complete != (not self.missing_evidence):
             raise ValueError("closure_report evidence_complete must match missing evidence")
+        if set(self.closure_evidence_pack.required_evidence_refs) != set(self.required_evidence):
+            raise ValueError("closure evidence pack required evidence refs must match required evidence")
+        if set(self.closure_evidence_pack.observed_evidence_refs) != set(self.evidence_refs):
+            raise ValueError("closure evidence pack observed evidence refs must match evidence refs")
+        if set(self.closure_evidence_pack.missing_evidence_refs) != set(self.missing_evidence):
+            raise ValueError("closure evidence pack missing evidence refs must match missing evidence")
+        if set(self.closure_evidence_pack.required_authority_refs) != set(self.required_authority):
+            raise ValueError("closure evidence pack required authority refs must match required authority")
+        if set(self.closure_evidence_pack.observed_authority_refs) != set(self.authority_refs):
+            raise ValueError("closure evidence pack observed authority refs must match authority refs")
+        if set(self.closure_evidence_pack.missing_authority_refs) != set(self.missing_authority):
+            raise ValueError("closure evidence pack missing authority refs must match missing authority")
+        if set(self.closure_evidence_pack.blocker_refs) != set(self.open_blockers):
+            raise ValueError("closure evidence pack blocker refs must match open blockers")
+        if set(self.closure_evidence_pack.closure_condition_refs) != set(self.closure_conditions):
+            raise ValueError("closure evidence pack closure condition refs must match closure conditions")
+        if set(self.closure_evidence_pack.receipt_lineage_refs) != set(lineage_refs):
+            raise ValueError("closure evidence pack receipt lineage refs must match receipt lineage bindings")
+        if self.closure_evidence_pack.evidence_complete != self.closure_report.evidence_complete:
+            raise ValueError("closure evidence pack evidence_complete must match closure report")
+        if self.closure_evidence_pack.authority_complete != (not self.missing_authority):
+            raise ValueError("closure evidence pack authority_complete must match missing authority")
+        if self.closure_evidence_pack.closure_blocked != bool(self.open_blockers):
+            raise ValueError("closure evidence pack closure_blocked must match open blockers")
+        if self.closure_evidence_pack.rollback_available != self.closure_report.rollback_available:
+            raise ValueError("closure evidence pack rollback_available must match closure report")
+        if self.closure_evidence_pack.rollback_ref != self.rollback_policy:
+            raise ValueError("closure evidence pack rollback_ref must match rollback policy")
 
 
 @dataclass(frozen=True, slots=True)
@@ -1085,6 +1204,7 @@ __all__ = [
     "LoopClosureReport",
     "LoopAuthorityBinding",
     "LoopClosureConditionBinding",
+    "LoopClosureEvidencePack",
     "LoopEvidenceBinding",
     "LoopLearningBinding",
     "LoopModeBinding",

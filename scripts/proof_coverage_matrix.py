@@ -6543,6 +6543,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "LoopModeBinding",
                 "LoopReceiptLineageBinding",
                 "LoopClosureConditionBinding",
+                "LoopClosureEvidencePack",
                 "LoopAuthorityBinding",
                 "LoopRiskBinding",
                 "LoopRollbackBinding",
@@ -6576,7 +6577,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "status catalog, transition catalog, mode catalog, closure "
                 "condition catalog, authority catalog, risk catalog, rollback "
                 "catalog, learning catalog, bounded receipt trail, receipt "
-                "lineage catalog, and HTTP "
+                "lineage catalog, closure evidence pack, and HTTP "
                 "read model. Missing authority or evidence remains an explicit "
                 "blocker and no mutation route is introduced."
             ),
@@ -6589,6 +6590,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "loop_transition_bindings_describe_allowed_transitions",
                 "loop_mode_bindings_cover_allowed_modes",
                 "loop_closure_condition_bindings_cover_conditions",
+                "loop_closure_evidence_pack_aggregates_closure_inputs",
                 "loop_authority_bindings_cover_required_authority",
                 "loop_risk_bindings_cover_risk_class",
                 "loop_rollback_bindings_cover_recovery_policy",
@@ -6627,6 +6629,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "loop_closure_condition_bindings_cover_conditions": [
                     "loop_closure_condition_bindings_cover_conditions_without_execution"
+                ],
+                "loop_closure_evidence_pack_aggregates_closure_inputs": [
+                    "loop_closure_evidence_pack_aggregates_required_closure_inputs"
                 ],
                 "loop_authority_bindings_cover_required_authority": [
                     "loop_authority_bindings_cover_required_authority_without_execution"

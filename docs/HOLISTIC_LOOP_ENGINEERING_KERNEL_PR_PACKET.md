@@ -4,7 +4,7 @@ Purpose: provide a scoped PR handoff packet for the holistic loop kernel slice.
 Governance scope: loop contract, registry, read model, HTTP projection,
 validators, schema manifest, evidence blockers, status catalog, transition
 catalog, mode catalog, risk catalog, closure condition catalog, rollback
-boundary, learning catalog, and receipt lineage catalog.
+boundary, learning catalog, receipt lineage catalog, and closure evidence pack.
 Dependencies: `docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md`, holistic loop source
 files, read-model schema, report and validation scripts, focused tests, SDLC
 validators, release validators, and workspace governance preflight.
@@ -58,7 +58,8 @@ staged into the holistic loop PR.
 
 1. Added typed loop contracts:
    `LoopManifest`, `LoopState`, `LoopStepReceipt`, `LoopClosureReport`,
-   `LoopReceiptLineageBinding`, `LoopRegistry`, and bounded `LoopReadModel`.
+   `LoopReceiptLineageBinding`, `LoopClosureEvidencePack`, `LoopRegistry`,
+   and bounded `LoopReadModel`.
 2. Registered four existing loops without changing runtime behavior:
    `deployment_witness_loop`, `runtime_conformance_loop`,
    `cognitive_outcome_loop`, and `governed_code_change_loop`.
@@ -285,6 +286,35 @@ The catalog makes receipt provenance inspectable without writing runtime
 receipts or changing deployment, runtime conformance, cognitive, proof
 verification, or governed code-change behavior.
 
+## Closure Evidence Pack Follow-Up
+
+The read model now exposes `closure_evidence_pack` on every loop summary. The
+pack aggregates existing closure inputs into one read-only object:
+
+```text
+required_evidence_refs == required_evidence
+observed_evidence_refs == evidence_refs
+missing_evidence_refs == missing_evidence
+required_authority_refs == required_authority
+observed_authority_refs == authority_refs
+missing_authority_refs == missing_authority
+blocker_refs == open_blockers
+closure_condition_refs == closure_conditions
+receipt_lineage_refs == receipt_lineage_bindings[*].lineage_ref
+evidence_complete == closure_report.evidence_complete
+authority_complete == (missing_authority == [])
+closure_blocked == (open_blockers != [])
+rollback_available == closure_report.rollback_available
+read_only == true
+emits_receipt == false
+terminal_closure == false
+```
+
+The pack does not replace `closure_report`, emit a receipt, grant authority,
+clear blockers, execute rollback, or claim terminal closure. It gives
+validators and operator views one bounded closure-input packet while preserving
+the non-invasive read-model boundary.
+
 ## Fracture Deltas
 
 None intended.
@@ -297,13 +327,13 @@ verification behavior changed. No public mutation route was added.
 Focused tests:
 
 ```powershell
-python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py -q
+python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_proof_coverage_matrix.py -q
 ```
 
 Observed result:
 
 ```text
-30 passed
+276 passed
 ```
 
 Focused validators:

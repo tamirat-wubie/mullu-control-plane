@@ -18,6 +18,7 @@ import pytest
 from mcoi_runtime.contracts.holistic_loop import (
     LoopAuthorityBinding,
     LoopClosureConditionBinding,
+    LoopClosureEvidencePack,
     LoopClosureReport,
     LoopEvidenceBinding,
     LoopLearningBinding,
@@ -368,6 +369,93 @@ def test_loop_receipt_lineage_bindings_cover_step_receipts_without_emission() ->
         assert all(binding.terminal_closure is False for binding in summary.receipt_lineage_bindings)
 
 
+def test_loop_closure_evidence_pack_aggregates_required_closure_inputs() -> None:
+    read_model = build_default_loop_read_model()
+
+    for summary in read_model.loops:
+        pack = summary.closure_evidence_pack
+        assert pack.loop_id == summary.loop_id
+        assert set(pack.required_evidence_refs) == set(summary.required_evidence)
+        assert set(pack.observed_evidence_refs) == set(summary.evidence_refs)
+        assert set(pack.missing_evidence_refs) == set(summary.missing_evidence)
+        assert set(pack.required_authority_refs) == set(summary.required_authority)
+        assert set(pack.observed_authority_refs) == set(summary.authority_refs)
+        assert set(pack.missing_authority_refs) == set(summary.missing_authority)
+        assert set(pack.blocker_refs) == set(summary.open_blockers)
+        assert set(pack.closure_condition_refs) == set(summary.closure_conditions)
+        assert set(pack.receipt_lineage_refs) == {
+            binding.lineage_ref for binding in summary.receipt_lineage_bindings
+        }
+        assert pack.evidence_complete is summary.closure_report.evidence_complete
+        assert pack.authority_complete is False
+        assert pack.closure_blocked is True
+        assert pack.rollback_available is summary.closure_report.rollback_available
+        assert pack.rollback_ref == summary.rollback_policy
+        assert pack.read_only is True
+        assert pack.emits_receipt is False
+        assert pack.terminal_closure is False
+
+
+def test_loop_closure_evidence_pack_rejects_emission_or_terminal_closure_claim() -> None:
+    summary = build_default_loop_read_model().loops[0]
+    kwargs = dataclasses.asdict(summary.closure_evidence_pack)
+
+    with pytest.raises(ValueError, match="read-only"):
+        LoopClosureEvidencePack(**{**kwargs, "read_only": False})
+    with pytest.raises(ValueError, match="emit receipt"):
+        LoopClosureEvidencePack(**{**kwargs, "emits_receipt": True})
+    with pytest.raises(ValueError, match="terminal closure"):
+        LoopClosureEvidencePack(**{**kwargs, "terminal_closure": True})
+
+
+def test_loop_summary_rejects_mismatched_closure_evidence_pack() -> None:
+    summary = build_default_loop_read_model().loops[0]
+    pack_kwargs = dataclasses.asdict(summary.closure_evidence_pack)
+    mismatched_pack = LoopClosureEvidencePack(
+        **{
+            **pack_kwargs,
+            "blocker_refs": ("different_gap",),
+            "closure_blocked": True,
+        }
+    )
+
+    with pytest.raises(ValueError, match="blocker refs"):
+        LoopSummary(
+            loop_id=summary.loop_id,
+            name=summary.name,
+            purpose=summary.purpose,
+            owner=summary.owner,
+            risk_class=summary.risk_class,
+            risk_binding=summary.risk_binding,
+            status=summary.status,
+            status_binding=summary.status_binding,
+            transition_bindings=summary.transition_bindings,
+            mode=summary.mode,
+            mode_binding=summary.mode_binding,
+            current_step=summary.current_step,
+            required_authority=summary.required_authority,
+            authority_bindings=summary.authority_bindings,
+            authority_refs=summary.authority_refs,
+            missing_authority=summary.missing_authority,
+            required_evidence=summary.required_evidence,
+            evidence_bindings=summary.evidence_bindings,
+            step_receipts=summary.step_receipts,
+            receipt_lineage_bindings=summary.receipt_lineage_bindings,
+            evidence_refs=summary.evidence_refs,
+            missing_evidence=summary.missing_evidence,
+            closure_conditions=summary.closure_conditions,
+            closure_condition_bindings=summary.closure_condition_bindings,
+            closure_report=summary.closure_report,
+            closure_evidence_pack=mismatched_pack,
+            open_blockers=summary.open_blockers,
+            rollback_policy=summary.rollback_policy,
+            rollback_binding=summary.rollback_binding,
+            learning_policy=summary.learning_policy,
+            learning_binding=summary.learning_binding,
+            updated_at=summary.updated_at,
+        )
+
+
 def test_loop_receipt_lineage_binding_local_refs_resolve_to_existing_artifacts() -> None:
     read_model = build_default_loop_read_model()
     file_refs = {
@@ -504,6 +592,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             closure_conditions=summary.closure_conditions,
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
+            closure_evidence_pack=summary.closure_evidence_pack,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
@@ -539,6 +628,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             closure_conditions=summary.closure_conditions,
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
+            closure_evidence_pack=summary.closure_evidence_pack,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
@@ -808,6 +898,7 @@ def test_loop_summary_rejects_mismatched_status_binding() -> None:
             closure_conditions=summary.closure_conditions,
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
+            closure_evidence_pack=summary.closure_evidence_pack,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
@@ -862,6 +953,7 @@ def test_loop_summary_rejects_mismatched_transition_binding() -> None:
             closure_conditions=summary.closure_conditions,
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
+            closure_evidence_pack=summary.closure_evidence_pack,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
@@ -915,6 +1007,7 @@ def test_loop_summary_rejects_mismatched_receipt_lineage_binding() -> None:
             closure_conditions=summary.closure_conditions,
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
+            closure_evidence_pack=summary.closure_evidence_pack,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
@@ -963,6 +1056,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             closure_conditions=summary.closure_conditions,
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=terminal_report,
+            closure_evidence_pack=summary.closure_evidence_pack,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
@@ -1008,6 +1102,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             closure_conditions=summary.closure_conditions,
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=mismatched_report,
+            closure_evidence_pack=summary.closure_evidence_pack,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
@@ -1126,6 +1221,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_step_receipts() -> None:
             closure_conditions=summary.closure_conditions,
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
+            closure_evidence_pack=summary.closure_evidence_pack,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,

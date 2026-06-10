@@ -438,6 +438,52 @@ def test_payload_validation_rejects_receipt_lineage_emission_or_terminal_closure
     assert any("receipt lineage binding 0 terminal_closure must be false" in error for error in errors)
 
 
+def test_payload_validation_requires_closure_evidence_pack_to_match_loop_inputs() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    pack = invalid_payload["loops"][0]["closure_evidence_pack"]
+    pack["required_evidence_refs"] = ["undeclared_evidence"]
+    pack["observed_evidence_refs"] = ["unexpected_evidence"]
+    pack["missing_authority_refs"] = ["different_authority"]
+    pack["blocker_refs"] = ["different_gap"]
+    pack["receipt_lineage_refs"] = ["different_lineage"]
+    pack["evidence_complete"] = True
+    pack["authority_complete"] = True
+    pack["closure_blocked"] = False
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("required_evidence_refs must match required_evidence" in error for error in errors)
+    assert any("observed_evidence_refs must match evidence_refs" in error for error in errors)
+    assert any("missing_authority_refs must match missing_authority" in error for error in errors)
+    assert any("blocker_refs must match open_blockers" in error for error in errors)
+    assert any("receipt_lineage_refs must match receipt lineage bindings" in error for error in errors)
+    assert any("evidence_complete must match closure_report" in error for error in errors)
+    assert any("authority_complete must match missing_authority" in error for error in errors)
+    assert any("closure_blocked must match open_blockers" in error for error in errors)
+
+
+def test_payload_validation_rejects_closure_evidence_pack_emission_or_terminal_closure_claim() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    pack = invalid_payload["loops"][0]["closure_evidence_pack"]
+    pack["read_only"] = False
+    pack["emits_receipt"] = True
+    pack["terminal_closure"] = True
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("closure_evidence_pack read_only must be true" in error for error in errors)
+    assert any("closure_evidence_pack emits_receipt must be false" in error for error in errors)
+    assert any("closure_evidence_pack terminal_closure must be false" in error for error in errors)
+
+
 def test_payload_validation_rejects_mode_binding_transition_or_terminal_closure_claim() -> None:
     app = FastAPI()
     app.include_router(router)

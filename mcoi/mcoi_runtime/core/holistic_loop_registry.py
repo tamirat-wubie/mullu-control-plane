@@ -18,6 +18,7 @@ from mcoi_runtime.contracts._base import freeze_value, require_datetime_text
 from mcoi_runtime.contracts.holistic_loop import (
     LoopAuthorityBinding,
     LoopClosureConditionBinding,
+    LoopClosureEvidencePack,
     LoopClosureReport,
     LoopEvidenceBinding,
     LoopLearningBinding,
@@ -360,6 +361,14 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
     if not blockers and status == LoopStatus.OPEN:
         status = LoopStatus.VERIFIED
     step_receipts = _step_receipts_for(manifest, state, blockers)
+    receipt_lineage_bindings = _receipt_lineage_bindings_for(
+        manifest,
+        state,
+        blockers,
+        step_receipts,
+    )
+    closure_condition_bindings = _closure_condition_bindings_for(manifest.loop_id)
+    closure_report = _closure_report_for(manifest, blockers, missing)
     return LoopSummary(
         loop_id=manifest.loop_id,
         name=manifest.name,
@@ -380,17 +389,21 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         required_evidence=manifest.required_evidence,
         evidence_bindings=_evidence_bindings_for(manifest.loop_id),
         step_receipts=step_receipts,
-        receipt_lineage_bindings=_receipt_lineage_bindings_for(
-            manifest,
-            state,
-            blockers,
-            step_receipts,
-        ),
+        receipt_lineage_bindings=receipt_lineage_bindings,
         evidence_refs=state.evidence_refs,
         missing_evidence=missing,
         closure_conditions=manifest.closure_conditions,
-        closure_condition_bindings=_closure_condition_bindings_for(manifest.loop_id),
-        closure_report=_closure_report_for(manifest, blockers, missing),
+        closure_condition_bindings=closure_condition_bindings,
+        closure_report=closure_report,
+        closure_evidence_pack=_closure_evidence_pack_for(
+            manifest,
+            state,
+            blockers,
+            missing_authority,
+            missing,
+            receipt_lineage_bindings,
+            closure_report,
+        ),
         open_blockers=blockers,
         rollback_policy=manifest.rollback_policy,
         rollback_binding=_rollback_binding_for(manifest.loop_id),
@@ -641,6 +654,46 @@ def _closure_report_for(
             "terminal_closure": False,
             "closure_conditions": manifest.closure_conditions,
         },
+    )
+
+
+def _closure_evidence_pack_for(
+    manifest: LoopManifest,
+    state: LoopState,
+    blockers: Sequence[str],
+    missing_authority: Sequence[str],
+    missing_evidence: Sequence[str],
+    receipt_lineage_bindings: Sequence[LoopReceiptLineageBinding],
+    closure_report: LoopClosureReport,
+) -> LoopClosureEvidencePack:
+    catalog = _lineage_catalog_for(manifest.loop_id)
+    return LoopClosureEvidencePack(
+        pack_ref=f"{manifest.loop_id}_closure_evidence_pack",
+        loop_id=manifest.loop_id,
+        required_evidence_refs=manifest.required_evidence,
+        observed_evidence_refs=state.evidence_refs,
+        missing_evidence_refs=tuple(missing_evidence),
+        required_authority_refs=manifest.required_authority,
+        observed_authority_refs=state.authority_refs,
+        missing_authority_refs=tuple(missing_authority),
+        blocker_refs=tuple(blockers),
+        closure_condition_refs=manifest.closure_conditions,
+        receipt_lineage_refs=tuple(binding.lineage_ref for binding in receipt_lineage_bindings),
+        closure_report_ref="closure_report",
+        rollback_ref=manifest.rollback_policy,
+        validator_refs=(
+            "scripts/validate_holistic_loop_read_model.py",
+            "scripts/validate_holistic_loop_http_surface.py",
+            "scripts/proof_coverage_matrix.py",
+        ),
+        proof_surface_refs=(
+            "holistic_loop_read_model_kernel",
+            *catalog["proof_surface_refs"],
+        ),
+        evidence_complete=closure_report.evidence_complete,
+        authority_complete=not missing_authority,
+        closure_blocked=bool(blockers),
+        rollback_available=closure_report.rollback_available,
     )
 
 
