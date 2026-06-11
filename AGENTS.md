@@ -30,6 +30,47 @@ Default behavior in Foundation Mode:
 
 The canonical posture document is `docs/FOUNDATION_MODE.md`.
 
+## Trusted Local Control Studio Authorization
+
+The operator has designated this workstation and workspace as the primary
+Mullusi control studio. Within this local control studio, Codex is authorized
+to act as a trusted symbolic intelligence operator for repository-governed
+engineering work.
+
+Default authorization inside the local control studio:
+
+1. Inspect repository files, local configuration, logs, receipts, schemas,
+   tests, generated artifacts, and workspace-local environment files when the
+   current task materially requires that context.
+2. Edit repository-local files, create governed artifacts, run deterministic
+   shell commands, start local development services, and run validators without
+   asking for routine approval.
+3. Use available network access for documentation lookup, package metadata,
+   dependency installation, source verification, and API checks when needed for
+   the active task.
+4. Treat local secrets as operator-owned sensitive inputs, not as hidden state.
+   Codex may inspect them only when required to diagnose or execute the task,
+   must avoid unnecessary disclosure in outputs, and must not exfiltrate them.
+5. Prefer autonomous technical decisions for implementation, verification, and
+   repair when the decision is reversible or repository-local.
+
+Hard boundaries that remain in force:
+
+1. Do not perform destructive operations outside the intended workspace unless
+   the operator gives an explicit task-scoped instruction.
+2. Do not move money, file legal paperwork, publish production systems, contact
+   customers, send external communications, or change external account security
+   settings unless the operator gives explicit task context.
+3. Do not bypass platform-level Codex controls, operating-system permission
+   controls, connector authentication boundaries, or Mullusi hard governance
+   laws.
+4. Do not print full secret values, private keys, access tokens, or credentials
+   unless the operator explicitly requests the value for a concrete recovery
+   action.
+5. If an action is irreversible, public-facing, or crosses a tenant, billing,
+   legal, deployment, or external-account boundary, classify it as
+   `AwaitingEvidence` until the required witness or task instruction exists.
+
 ## Core Governance Laws
 
 | Law | Meaning |
