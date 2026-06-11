@@ -9689,6 +9689,7 @@
         "mcoi/mcoi_runtime/app/routers/loops.py",
         "schemas/holistic_loop_read_model.schema.json",
         "tests/fixtures/holistic_loop_read_model_v1_golden.json",
+        "scripts/report_holistic_loop_candidate_map.py",
         "scripts/report_holistic_loop_read_model.py",
         "scripts/validate_holistic_loop_extension_admission.py",
         "scripts/validate_holistic_loop_kernel_freeze.py",
@@ -9696,13 +9697,14 @@
         "scripts/validate_holistic_loop_http_surface.py",
         "mcoi/tests/test_holistic_loop_kernel.py",
         "mcoi/tests/test_holistic_loop_router.py",
+        "tests/test_report_holistic_loop_candidate_map.py",
         "tests/test_report_holistic_loop_read_model.py",
         "tests/test_validate_holistic_loop_extension_admission.py",
         "tests/test_validate_holistic_loop_kernel_freeze.py",
         "tests/test_validate_holistic_loop_read_model.py",
         "tests/test_validate_holistic_loop_http_surface.py"
       ],
-      "notes": "Holistic loop engineering exposes existing governed loops through one read-only loop contract, registry, schema-backed summary, status catalog, transition catalog, mode catalog, closure condition catalog, authority catalog, risk catalog, rollback catalog, learning catalog, bounded receipt trail, receipt lineage catalog, closure evidence pack, operator closure readiness view, proof obligation view, audit evolution view, recovery readiness view, and HTTP read model. The v1 freeze validator pins a golden snapshot, schema/report/HTTP parity, additive-only extension policy, zero-unanchored proof-label guard, and extension admission guard for default registry additions. Missing authority or evidence remains an explicit blocker and no mutation route is introduced.",
+      "notes": "Holistic loop engineering exposes existing governed loops through one read-only loop contract, registry, schema-backed summary, status catalog, transition catalog, mode catalog, closure condition catalog, authority catalog, risk catalog, rollback catalog, learning catalog, bounded receipt trail, receipt lineage catalog, closure evidence pack, operator closure readiness view, proof obligation view, audit evolution view, recovery readiness view, and HTTP read model. The v1 freeze validator pins a golden snapshot, schema/report/HTTP parity, additive-only extension policy, zero-unanchored proof-label guard, and extension admission guard for default registry additions. The candidate map lists unregistered future loop surfaces without admitting them. Missing authority or evidence remains an explicit blocker and no mutation route is introduced.",
       "representative_paths": [
         "/api/v1/loops/read-model",
         "LoopRegistry",
@@ -9728,6 +9730,12 @@
       "runtime_witness_anchor_aliases": {
         "closure_report_blocks_incomplete_evidence": [
           "loop_receipt_and_closure_report_contracts_are_explicit"
+        ],
+        "holistic_loop_candidate_map_is_read_only_non_terminal": [
+          "holistic_loop_candidate_map_is_read_only_non_terminal"
+        ],
+        "holistic_loop_candidate_map_lists_unregistered_surfaces": [
+          "holistic_loop_candidate_map_lists_unregistered_surfaces"
         ],
         "holistic_loop_extension_admission_guards_default_registry": [
           "holistic_loop_extension_admission_guards_default_registry"
@@ -9839,14 +9847,16 @@
         "loop_kernel_v1_report_schema_http_parity_holds",
         "loop_kernel_v1_extension_policy_is_documented",
         "holistic_loop_witness_integrity_has_zero_unanchored_labels",
-        "holistic_loop_extension_admission_guards_default_registry"
+        "holistic_loop_extension_admission_guards_default_registry",
+        "holistic_loop_candidate_map_lists_unregistered_surfaces",
+        "holistic_loop_candidate_map_is_read_only_non_terminal"
       ],
       "surface_id": "holistic_loop_read_model_kernel"
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1255,
-    "runtime_witness_count": 1255,
+    "exact_test_anchor_count": 1257,
+    "runtime_witness_count": 1257,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -18732,10 +18742,22 @@
               "tests/test_validate_holistic_loop_extension_admission.py::test_holistic_loop_extension_admission_guards_default_registry"
             ],
             "witness": "holistic_loop_extension_admission_guards_default_registry"
+          },
+          {
+            "anchors": [
+              "tests/test_report_holistic_loop_candidate_map.py::test_holistic_loop_candidate_map_lists_unregistered_surfaces"
+            ],
+            "witness": "holistic_loop_candidate_map_lists_unregistered_surfaces"
+          },
+          {
+            "anchors": [
+              "tests/test_report_holistic_loop_candidate_map.py::test_holistic_loop_candidate_map_is_read_only_non_terminal"
+            ],
+            "witness": "holistic_loop_candidate_map_is_read_only_non_terminal"
           }
         ],
-        "exact_test_anchor_count": 28,
-        "runtime_witness_count": 28,
+        "exact_test_anchor_count": 30,
+        "runtime_witness_count": 30,
         "surface_id": "holistic_loop_read_model_kernel",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

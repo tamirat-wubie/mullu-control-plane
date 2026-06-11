@@ -717,6 +717,42 @@ Admission passing means a loop is structurally eligible for the read model. It
 does not mean the loop is verified, closed, authorized for real execution, or
 allowed to mutate runtime behavior.
 
+### Candidate Map
+
+The candidate map lists existing loop-like surfaces that may be considered for
+future admission. It does not register them and does not execute their behavior.
+
+Run:
+
+```powershell
+python scripts/report_holistic_loop_candidate_map.py
+```
+
+The current candidate map includes:
+
+| Candidate ID | Boundary |
+| --- | --- |
+| `audit_proof_verification_loop` | Audit, proof, and trust-ledger anchor verification surfaces. |
+| `authority_obligation_loop` | Authority debt detection, satisfaction, and closure evidence surfaces. |
+| `universal_action_orchestration_loop` | Effect-bearing action admission, receipt, replay, and no-bypass surfaces. |
+| `workflow_execution_loop` | Workflow descriptor, run, orchestration, and replay surfaces. |
+
+Every candidate is projected as:
+
+```text
+registered == false
+admission_status == blocked
+admission_blockers include not_registered
+admission_blockers include requires_operator_registration_decision
+read_only == true
+mutation_route == false
+terminal_closure == false
+behavior_rewrite == false
+```
+
+This preserves the extension boundary: candidate discovery is not registration,
+verification, closure, or runtime migration.
+
 ### Extension Checklist
 
 Before adding a future v1.x loop view or field:
@@ -838,6 +874,12 @@ Extension admission validation:
 python scripts/validate_holistic_loop_extension_admission.py
 ```
 
+Candidate map validation:
+
+```powershell
+python scripts/report_holistic_loop_candidate_map.py
+```
+
 The tests verify:
 
 1. The first four loops are registered.
@@ -861,3 +903,4 @@ The tests verify:
 19. The normalized HTTP payload matches the local report contract.
 20. The holistic proof matrix surface has zero unanchored witness labels.
 21. Extension admission keeps default loop registrations read-only, blocker-aware, non-terminal, and proof-anchored.
+22. The candidate map lists unregistered loop-like surfaces without registering, verifying, closing, or mutating them.

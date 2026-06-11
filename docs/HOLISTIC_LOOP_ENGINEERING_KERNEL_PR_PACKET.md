@@ -102,6 +102,9 @@ staged into the holistic loop PR.
     manifest completeness, behavior-rewrite rejection, blocker preservation,
     non-terminal nested read-model boundaries, and proof-matrix admission
     anchoring.
+14. Added the candidate map for future loop registration planning. It lists
+    unregistered evidence-backed loop-like surfaces without admitting,
+    verifying, closing, mutating, or migrating them.
 
 ## Evidence Catalog Follow-Up
 
@@ -436,6 +439,26 @@ holistic admission witness has an exact test anchor
 Admission passing is not terminal closure. It only means the registration can be
 described by the v1 kernel without weakening the read-only contract.
 
+## Candidate Map Follow-Up
+
+The candidate map lists future loop candidates before registration. It is a
+planning read model only:
+
+```text
+candidate.registered == false
+candidate.admission_status == blocked
+not_registered in candidate.admission_blockers
+requires_operator_registration_decision in candidate.admission_blockers
+candidate.read_only == true
+candidate.mutation_route == false
+candidate.terminal_closure == false
+candidate.behavior_rewrite == false
+```
+
+The map currently covers audit/proof verification, authority obligations,
+universal action orchestration, and workflow execution. None are added to the
+default registry by this slice.
+
 ## Fracture Deltas
 
 None intended.
@@ -448,13 +471,13 @@ verification behavior changed. No public mutation route was added.
 Focused tests:
 
 ```powershell
-python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py tests/test_proof_coverage_matrix.py -q
+python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_report_holistic_loop_candidate_map.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py tests/test_proof_coverage_matrix.py -q
 ```
 
 Observed result:
 
 ```text
-326 passed
+332 passed
 ```
 
 Focused validators:
@@ -464,6 +487,7 @@ python scripts/validate_holistic_loop_read_model.py
 python scripts/validate_holistic_loop_http_surface.py
 python scripts/validate_holistic_loop_kernel_freeze.py
 python scripts/validate_holistic_loop_extension_admission.py
+python scripts/report_holistic_loop_candidate_map.py
 python scripts/proof_coverage_matrix.py --check
 ```
 

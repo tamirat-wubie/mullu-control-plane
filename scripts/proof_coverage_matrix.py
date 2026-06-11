@@ -6590,6 +6590,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/app/routers/loops.py",
                 "schemas/holistic_loop_read_model.schema.json",
                 "tests/fixtures/holistic_loop_read_model_v1_golden.json",
+                "scripts/report_holistic_loop_candidate_map.py",
                 "scripts/report_holistic_loop_read_model.py",
                 "scripts/validate_holistic_loop_extension_admission.py",
                 "scripts/validate_holistic_loop_kernel_freeze.py",
@@ -6597,6 +6598,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/validate_holistic_loop_http_surface.py",
                 "mcoi/tests/test_holistic_loop_kernel.py",
                 "mcoi/tests/test_holistic_loop_router.py",
+                "tests/test_report_holistic_loop_candidate_map.py",
                 "tests/test_report_holistic_loop_read_model.py",
                 "tests/test_validate_holistic_loop_extension_admission.py",
                 "tests/test_validate_holistic_loop_kernel_freeze.py",
@@ -6615,7 +6617,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "read model. The v1 freeze validator pins a golden snapshot, "
                 "schema/report/HTTP parity, additive-only extension policy, "
                 "zero-unanchored proof-label guard, and extension admission "
-                "guard for default registry additions. Missing authority or "
+                "guard for default registry additions. The candidate map lists "
+                "unregistered future loop surfaces without admitting them. "
+                "Missing authority or "
                 "evidence remains an explicit blocker and no mutation route is "
                 "introduced."
             ),
@@ -6648,6 +6652,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "loop_kernel_v1_extension_policy_is_documented",
                 "holistic_loop_witness_integrity_has_zero_unanchored_labels",
                 "holistic_loop_extension_admission_guards_default_registry",
+                "holistic_loop_candidate_map_lists_unregistered_surfaces",
+                "holistic_loop_candidate_map_is_read_only_non_terminal",
             ],
             runtime_witness_anchor_aliases={
                 "registered_loops_expose_governed_manifest_fields": [
@@ -6733,6 +6739,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "holistic_loop_extension_admission_guards_default_registry": [
                     "holistic_loop_extension_admission_guards_default_registry"
+                ],
+                "holistic_loop_candidate_map_lists_unregistered_surfaces": [
+                    "holistic_loop_candidate_map_lists_unregistered_surfaces"
+                ],
+                "holistic_loop_candidate_map_is_read_only_non_terminal": [
+                    "holistic_loop_candidate_map_is_read_only_non_terminal"
                 ],
             },
         ),
