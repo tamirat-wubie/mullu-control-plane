@@ -31,6 +31,12 @@ def test_current_witness_contract_passes() -> None:
     assert len(validator.REQUIRED_ARTIFACT_NAMES) == witness["artifact_count"]
     assert validator.REQUIRED_ARTIFACT_NAMES == artifact_names
     assert "workspace_governance_witness_validator" in artifact_names
+    assert "life_continuity_conflict_doctrine_document" in artifact_names
+    assert "life_meaning_governance_kernel_document" in artifact_names
+    assert "life_meaning_judgment_schema" in artifact_names
+    assert "life_meaning_governance_kernel_runtime" in artifact_names
+    assert "life_meaning_governance_validator" in artifact_names
+    assert "life_meaning_governance_tests" in artifact_names
     assert "universal_action_orchestration_document" in artifact_names
     assert "universal_action_orchestration_allowed_example" in artifact_names
     assert "universal_action_orchestration_gateway_replay_tests" in artifact_names
@@ -42,6 +48,10 @@ def test_current_witness_contract_passes() -> None:
     assert "universal_action_orchestration" in witness["governance_scope"]
     assert (
         "workspace governance witness omits Universal Action Orchestration artifacts"
+        in witness["block_conditions"]
+    )
+    assert (
+        "workspace governance witness omits Life-Meaning Governance Kernel artifacts"
         in witness["block_conditions"]
     )
     assert (

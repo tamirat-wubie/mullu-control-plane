@@ -1,0 +1,33 @@
+{
+  "judgment_id": "life-meaning:foundation-local-proof",
+  "action_id": "foundation-local-proof",
+  "decision": "pass",
+  "affected_symbols": [
+    {
+      "symbol_id": "local-proof-document",
+      "symbol_kind": "local_artifact",
+      "life_status": "not_life",
+      "feeling_status": "not_feeling",
+      "meaning_bearing": "none",
+      "fragility_level": 1,
+      "agency_level": 0
+    }
+  ],
+  "life_impact": "none",
+  "feeling_impact": "none",
+  "meaning_impact": "none",
+  "truth_preserved": true,
+  "dignity_boundary": "pass",
+  "consent_required": false,
+  "consent_present": false,
+  "love_delta": "neutral",
+  "resonance_delta": "positive",
+  "domination_risk": false,
+  "justice_repair_required": false,
+  "continuity_delta": "positive",
+  "irreversible": false,
+  "reasons": ["life_meaning_governance_passed"],
+  "evidence_refs": ["evidence:foundation-local-proof"],
+  "approval_required": false,
+  "rollback_required": false
+}

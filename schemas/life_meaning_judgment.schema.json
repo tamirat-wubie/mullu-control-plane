@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:life-meaning-judgment:1",
+  "title": "LifeMeaningJudgment",
+  "description": "Machine-readable Mullu Life-Meaning Governance Kernel judgment for effect-bearing action preflight.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "judgment_id",
+    "action_id",
+    "decision",
+    "affected_symbols",
+    "life_impact",
+    "feeling_impact",
+    "meaning_impact",
+    "truth_preserved",
+    "dignity_boundary",
+    "consent_required",
+    "consent_present",
+    "love_delta",
+    "resonance_delta",
+    "domination_risk",
+    "justice_repair_required",
+    "continuity_delta",
+    "irreversible",
+    "reasons",
+    "evidence_refs",
+    "approval_required",
+    "rollback_required"
+  ],
+  "properties": {
+    "judgment_id": { "type": "string", "minLength": 1 },
+    "action_id": { "type": "string", "minLength": 1 },
+    "decision": {
+      "type": "string",
+      "enum": ["pass", "pause", "block", "escalate"]
+    },
+    "affected_symbols": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/affected_symbol" }
+    },
+    "life_impact": { "$ref": "#/$defs/impact_level" },
+    "feeling_impact": { "$ref": "#/$defs/impact_level" },
+    "meaning_impact": { "$ref": "#/$defs/impact_level" },
+    "truth_preserved": { "type": "boolean" },
+    "dignity_boundary": { "$ref": "#/$defs/boundary_state" },
+    "consent_required": { "type": "boolean" },
+    "consent_present": { "type": "boolean" },
+    "love_delta": { "$ref": "#/$defs/delta" },
+    "resonance_delta": { "$ref": "#/$defs/delta" },
+    "domination_risk": { "type": "boolean" },
+    "justice_repair_required": { "type": "boolean" },
+    "continuity_delta": { "$ref": "#/$defs/delta" },
+    "irreversible": { "type": "boolean" },
+    "reasons": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "approval_required": { "type": "boolean" },
+    "rollback_required": { "type": "boolean" }
+  },
+  "$defs": {
+    "affected_symbol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "symbol_id",
+        "symbol_kind",
+        "life_status",
+        "feeling_status",
+        "meaning_bearing",
+        "fragility_level",
+        "agency_level"
+      ],
+      "properties": {
+        "symbol_id": { "type": "string", "minLength": 1 },
+        "symbol_kind": { "type": "string", "minLength": 1 },
+        "life_status": {
+          "type": "string",
+          "enum": ["not_life", "life", "unknown"]
+        },
+        "feeling_status": {
+          "type": "string",
+          "enum": ["not_feeling", "feeling", "unknown"]
+        },
+        "meaning_bearing": { "$ref": "#/$defs/impact_level" },
+        "fragility_level": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "agency_level": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        }
+      }
+    },
+    "impact_level": {
+      "type": "string",
+      "enum": ["none", "indirect", "direct", "unknown"]
+    },
+    "delta": {
+      "type": "string",
+      "enum": ["positive", "neutral", "negative", "unknown"]
+    },
+    "boundary_state": {
+      "type": "string",
+      "enum": ["pass", "fail", "unknown"]
+    }
+  }
+}

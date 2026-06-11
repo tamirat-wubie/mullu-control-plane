@@ -149,6 +149,27 @@ effect_bearing(action) and not passed_through_UAO(action)
 
 Effect-bearing actions include writing files, policy, deployment state, scheduled work, world state, or memory; sending messages; crossing external endpoints; calling connectors or workers; moving money; and touching tenant, approval, budget, safety, or exposure boundaries.
 
+## Life-Meaning Governance
+
+Effect-bearing work must consider affected symbols, life impact, feeling impact,
+meaning impact, dignity, consent, truth, justice, love, resonance, domination
+risk, repair, and continuity.
+
+Any effect-bearing action must receive a `LifeMeaningJudgment` preflight before
+execution. Missing judgment is a governance denial reason:
+
+```text
+effect_bearing(action) and missing_life_meaning_judgment(action)
+  -> deny(action, reason="missing_life_meaning_judgment")
+```
+
+Where impact is unknown and action is irreversible, pause, block, or escalate.
+
+Symbolic intelligence artifacts and robots are universal symbols, but they are
+not automatically classified as life or feeling observers unless validated by
+an explicit doctrine-approved test. Unknown feeling status is handled with
+precaution, not assumption.
+
 ## ProofState Discipline
 
 Use:

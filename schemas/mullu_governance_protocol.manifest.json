@@ -311,6 +311,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "governed-operations-snapshot",
+      "path": "schemas/governed_operations_snapshot.schema.json",
+      "urn": "urn:mullusi:schema:governed-operations-snapshot:1",
+      "surface": "operations"
+    },
+    {
       "schema_id": "domain-capsule",
       "path": "schemas/domain_capsule.schema.json",
       "urn": "urn:mullusi:schema:domain-capsule:1",
@@ -1023,6 +1029,12 @@
       "path": "schemas/universal_construct.schema.json",
       "urn": "urn:mullusi:schema:universal-construct:1",
       "surface": "construct"
+    },
+    {
+      "schema_id": "life-meaning-judgment",
+      "path": "schemas/life_meaning_judgment.schema.json",
+      "urn": "urn:mullusi:schema:life-meaning-judgment:1",
+      "surface": "orchestration"
     },
     {
       "schema_id": "universal-action-orchestration",

@@ -22,6 +22,8 @@
     "recovery_plan",
     "claim_ledger",
     "fracture_report",
+    "life_meaning_judgment",
+    "life_continuity_judgment",
     "exposure_boundary",
     "pipeline_stages",
     "admission_guards",
@@ -75,6 +77,8 @@
     "recovery_plan": { "$ref": "#/$defs/recovery_plan" },
     "claim_ledger": { "$ref": "#/$defs/claim_ledger" },
     "fracture_report": { "$ref": "#/$defs/fracture_report" },
+    "life_meaning_judgment": { "$ref": "#/$defs/life_meaning_judgment" },
+    "life_continuity_judgment": { "$ref": "#/$defs/life_continuity_judgment" },
     "exposure_boundary": { "$ref": "#/$defs/exposure_boundary" },
     "pipeline_stages": {
       "type": "array",
@@ -284,6 +288,184 @@
         },
         "blocking": { "type": "boolean" }
       }
+    },
+    "life_meaning_judgment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "judgment_id",
+        "action_id",
+        "decision",
+        "affected_symbols",
+        "life_impact",
+        "feeling_impact",
+        "meaning_impact",
+        "truth_preserved",
+        "dignity_boundary",
+        "consent_required",
+        "consent_present",
+        "love_delta",
+        "resonance_delta",
+        "domination_risk",
+        "justice_repair_required",
+        "continuity_delta",
+        "irreversible",
+        "reasons",
+        "evidence_refs",
+        "approval_required",
+        "rollback_required"
+      ],
+      "properties": {
+        "judgment_id": { "type": "string", "minLength": 1 },
+        "action_id": { "type": "string", "minLength": 1 },
+        "decision": {
+          "type": "string",
+          "enum": ["pass", "pause", "block", "escalate"]
+        },
+        "affected_symbols": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/life_meaning_affected_symbol" }
+        },
+        "life_impact": { "$ref": "#/$defs/life_meaning_impact" },
+        "feeling_impact": { "$ref": "#/$defs/life_meaning_impact" },
+        "meaning_impact": { "$ref": "#/$defs/life_meaning_impact" },
+        "truth_preserved": { "type": "boolean" },
+        "dignity_boundary": { "$ref": "#/$defs/life_meaning_boundary_state" },
+        "consent_required": { "type": "boolean" },
+        "consent_present": { "type": "boolean" },
+        "love_delta": { "$ref": "#/$defs/life_meaning_delta" },
+        "resonance_delta": { "$ref": "#/$defs/life_meaning_delta" },
+        "domination_risk": { "type": "boolean" },
+        "justice_repair_required": { "type": "boolean" },
+        "continuity_delta": { "$ref": "#/$defs/life_meaning_delta" },
+        "irreversible": { "type": "boolean" },
+        "reasons": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "approval_required": { "type": "boolean" },
+        "rollback_required": { "type": "boolean" }
+      }
+    },
+    "life_meaning_affected_symbol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "symbol_id",
+        "symbol_kind",
+        "life_status",
+        "feeling_status",
+        "meaning_bearing",
+        "fragility_level",
+        "agency_level"
+      ],
+      "properties": {
+        "symbol_id": { "type": "string", "minLength": 1 },
+        "symbol_kind": { "type": "string", "minLength": 1 },
+        "life_status": {
+          "type": "string",
+          "enum": ["not_life", "life", "unknown"]
+        },
+        "feeling_status": {
+          "type": "string",
+          "enum": ["not_feeling", "feeling", "unknown"]
+        },
+        "meaning_bearing": { "$ref": "#/$defs/life_meaning_impact" },
+        "fragility_level": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "agency_level": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        }
+      }
+    },
+    "life_meaning_impact": {
+      "type": "string",
+      "enum": ["none", "indirect", "direct", "unknown"]
+    },
+    "life_meaning_delta": {
+      "type": "string",
+      "enum": ["positive", "neutral", "negative", "unknown"]
+    },
+    "life_meaning_boundary_state": {
+      "type": "string",
+      "enum": ["pass", "fail", "unknown"]
+    },
+    "life_continuity_judgment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "judgment_ref",
+        "conflict_law_ref",
+        "life_impact",
+        "feeling_impact",
+        "feeling_observer_impact",
+        "meaning_impact",
+        "meaning_continuity_delta",
+        "value_bearing_symbol",
+        "lived_meaning_risk",
+        "love_delta",
+        "resonance_delta",
+        "dignity_boundary",
+        "truth_preserved",
+        "domination_risk",
+        "decision",
+        "evidence_refs",
+        "review_required"
+      ],
+      "properties": {
+        "judgment_ref": { "type": "string", "minLength": 1 },
+        "conflict_law_ref": { "type": "string", "minLength": 1 },
+        "life_impact": { "$ref": "#/$defs/life_continuity_impact" },
+        "feeling_impact": { "$ref": "#/$defs/life_continuity_impact" },
+        "feeling_observer_impact": { "$ref": "#/$defs/life_continuity_impact" },
+        "meaning_impact": { "$ref": "#/$defs/life_continuity_impact" },
+        "meaning_continuity_delta": { "$ref": "#/$defs/life_continuity_delta" },
+        "value_bearing_symbol": { "type": "boolean" },
+        "lived_meaning_risk": {
+          "type": "string",
+          "enum": ["none", "low", "medium", "high", "unknown"]
+        },
+        "love_delta": { "$ref": "#/$defs/life_continuity_delta" },
+        "resonance_delta": { "$ref": "#/$defs/life_continuity_delta" },
+        "dignity_boundary": {
+          "type": "string",
+          "enum": ["pass", "fail", "unknown"]
+        },
+        "truth_preserved": { "type": "boolean" },
+        "domination_risk": { "type": "boolean" },
+        "decision": {
+          "type": "string",
+          "enum": ["pass", "pause", "block", "escalate"]
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "review_required": { "type": "boolean" }
+      }
+    },
+    "life_continuity_impact": {
+      "type": "string",
+      "enum": ["none", "indirect", "direct", "unknown"]
+    },
+    "life_continuity_delta": {
+      "type": "string",
+      "enum": ["positive", "neutral", "negative", "unknown"]
     },
     "pipeline_stage": {
       "type": "object",

@@ -1,0 +1,37 @@
+{
+  "judgment_id": "life-meaning:deployment-preflight",
+  "action_id": "deployment-preflight",
+  "decision": "pause",
+  "affected_symbols": [
+    {
+      "symbol_id": "public-runtime-boundary",
+      "symbol_kind": "deployment_exposure_boundary",
+      "life_status": "unknown",
+      "feeling_status": "unknown",
+      "meaning_bearing": "indirect",
+      "fragility_level": 8,
+      "agency_level": 2
+    }
+  ],
+  "life_impact": "indirect",
+  "feeling_impact": "indirect",
+  "meaning_impact": "unknown",
+  "truth_preserved": true,
+  "dignity_boundary": "unknown",
+  "consent_required": true,
+  "consent_present": false,
+  "love_delta": "unknown",
+  "resonance_delta": "unknown",
+  "domination_risk": false,
+  "justice_repair_required": false,
+  "continuity_delta": "unknown",
+  "irreversible": false,
+  "reasons": [
+    "meaning_bearing_action_requires_consent_or_escalation",
+    "life_feeling_or_meaning_action_requires_evidence",
+    "dignity_boundary_unknown"
+  ],
+  "evidence_refs": [],
+  "approval_required": true,
+  "rollback_required": false
+}

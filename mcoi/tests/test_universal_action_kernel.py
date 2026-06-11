@@ -71,7 +71,7 @@ from mcoi_runtime.core.dispatcher import DispatchRequest, Dispatcher
 from mcoi_runtime.core.domain_capsule_compiler import DomainCapsuleCompiler
 from mcoi_runtime.core.governed_capability_registry import GovernedCapabilityRegistry
 from mcoi_runtime.core.governed_dispatcher import GovernedDispatcher
-from mcoi_runtime.core.invariants import stable_identifier
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.core.operational_graph import OperationalGraph
 from mcoi_runtime.core.simulation import SimulationEngine
 from mcoi_runtime.core.system_stabilization import EquilibriumEngine
@@ -340,6 +340,34 @@ def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
     assert record["fracture_report"]["report_ref"].startswith("fracture-report://")
     assert record["fracture_report"]["status"] == "passed"
     assert record["fracture_report"]["blocking_check_ids"] == []
+    assert record["life_meaning_judgment"]["judgment_id"].startswith(
+        "life-meaning:"
+    )
+    assert record["life_meaning_judgment"]["action_id"] == result.action_id
+    assert record["life_meaning_judgment"]["decision"] == "pass"
+    assert record["life_meaning_judgment"]["truth_preserved"] is True
+    assert record["life_meaning_judgment"]["dignity_boundary"] == "pass"
+    assert record["life_meaning_judgment"]["domination_risk"] is False
+    assert record["life_meaning_judgment"]["consent_required"] is True
+    assert record["life_meaning_judgment"]["consent_present"] is True
+    assert record["life_meaning_judgment"]["evidence_refs"]
+    assert record["life_continuity_judgment"]["judgment_ref"].startswith(
+        "life-continuity://"
+    )
+    assert record["life_continuity_judgment"]["conflict_law_ref"] == (
+        "doctrine://life-continuity-conflict-law/v1"
+    )
+    assert record["life_continuity_judgment"]["decision"] == "pass"
+    assert record["life_continuity_judgment"]["truth_preserved"] is True
+    assert record["life_continuity_judgment"]["dignity_boundary"] == "pass"
+    assert record["life_continuity_judgment"]["domination_risk"] is False
+    assert record["life_continuity_judgment"]["meaning_impact"] == record[
+        "life_meaning_judgment"
+    ]["meaning_impact"]
+    assert (
+        record["life_continuity_judgment"]["meaning_continuity_delta"]
+        == record["life_meaning_judgment"]["continuity_delta"]
+    )
     assert _pipeline_stage(record, "fracture")["stage_order"] < _pipeline_stage(
         record, "execution"
     )["stage_order"]
@@ -359,6 +387,56 @@ def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
     assert record["lineage"]["accepted_deltas"]
     assert record["lineage"]["rejected_deltas"] == []
     assert any(ref.startswith("world-state://snapshot/") for ref in record["input_refs"])
+
+
+def test_universal_action_record_rejects_malformed_life_meaning_evidence_refs() -> None:
+    kernel, _executor = _kernel_with_capability()
+    request = _action_request(
+        intent_id="intent-life-meaning-bad-evidence",
+        metadata={"life_meaning_judgment": {"evidence_refs": ["trace://valid", 7]}},
+    )
+    result = kernel.run(request)
+
+    try:
+        build_universal_action_orchestration_record(request=request, result=result)
+    except RuntimeCoreInvariantError as exc:
+        assert "life_meaning_judgment.evidence_refs" in str(exc)
+        assert "non-empty strings" in str(exc)
+        assert result.dispatched is True
+    else:
+        raise AssertionError("malformed life-meaning evidence refs were accepted")
+
+
+def test_universal_action_record_rejects_boolean_life_meaning_symbol_levels() -> None:
+    kernel, _executor = _kernel_with_capability()
+    request = _action_request(
+        intent_id="intent-life-meaning-bool-level",
+        metadata={
+            "life_meaning_judgment": {
+                "affected_symbols": [
+                    {
+                        "symbol_id": "symbol-bool-level",
+                        "symbol_kind": "effect_bearing_action_target",
+                        "life_status": "unknown",
+                        "feeling_status": "unknown",
+                        "meaning_bearing": "indirect",
+                        "fragility_level": True,
+                        "agency_level": 2,
+                    }
+                ]
+            }
+        },
+    )
+    result = kernel.run(request)
+
+    try:
+        build_universal_action_orchestration_record(request=request, result=result)
+    except RuntimeCoreInvariantError as exc:
+        assert "fragility_level must be an integer in [0,10]" in str(exc)
+        assert result.dispatched is True
+        assert result.proof_hash.startswith("universal-action-proof-")
+    else:
+        raise AssertionError("boolean life-meaning symbol level was accepted")
 
 
 def test_universal_action_record_binds_operating_substrate_projection_evidence() -> None:

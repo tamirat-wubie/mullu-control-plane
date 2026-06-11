@@ -152,6 +152,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_concept_glossary_rehearsal_boundary.py"),
         ),
         CheckCommand(
+            "foundation_life_meaning_doctrine_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_life_meaning_doctrine_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
             "foundation_architecture_map_boundary",
             (python_executable, "scripts/validate_foundation_architecture_map_boundary.py"),
         ),
@@ -500,6 +504,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         CheckCommand(
             "logic_governance_application",
             (python_executable, "scripts/validate_logic_governance_application.py"),
+        ),
+        CheckCommand(
+            "life_meaning_governance",
+            (python_executable, "scripts/validate_life_meaning_governance.py"),
         ),
         CheckCommand(
             "phi_gps_v3_platform_spec",

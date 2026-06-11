@@ -209,6 +209,66 @@
       "closure:closed_simulated"
     ]
   },
+  "life_meaning_judgment": {
+    "judgment_id": "life-meaning:act_preview_status_summary",
+    "action_id": "act_preview_status_summary",
+    "decision": "pass",
+    "affected_symbols": [
+      {
+        "symbol_id": "status-preview-document",
+        "symbol_kind": "local_artifact",
+        "life_status": "not_life",
+        "feeling_status": "not_feeling",
+        "meaning_bearing": "none",
+        "fragility_level": 1,
+        "agency_level": 0
+      }
+    ],
+    "life_impact": "none",
+    "feeling_impact": "none",
+    "meaning_impact": "none",
+    "truth_preserved": true,
+    "dignity_boundary": "pass",
+    "consent_required": false,
+    "consent_present": false,
+    "love_delta": "neutral",
+    "resonance_delta": "neutral",
+    "domination_risk": false,
+    "justice_repair_required": false,
+    "continuity_delta": "neutral",
+    "irreversible": false,
+    "reasons": [
+      "life_meaning_governance_passed"
+    ],
+    "evidence_refs": [
+      "trace://cdt_simulated_low_risk_readonly_001",
+      "policy://status-page/read-only-preview"
+    ],
+    "approval_required": false,
+    "rollback_required": false
+  },
+  "life_continuity_judgment": {
+    "judgment_ref": "life-continuity://uao_status_preview",
+    "conflict_law_ref": "doctrine://life-continuity-conflict-law/v1",
+    "life_impact": "none",
+    "feeling_impact": "none",
+    "feeling_observer_impact": "none",
+    "meaning_impact": "none",
+    "meaning_continuity_delta": "neutral",
+    "value_bearing_symbol": false,
+    "lived_meaning_risk": "none",
+    "love_delta": "neutral",
+    "resonance_delta": "neutral",
+    "dignity_boundary": "pass",
+    "truth_preserved": true,
+    "domination_risk": false,
+    "decision": "pass",
+    "evidence_refs": [
+      "trace://cdt_simulated_low_risk_readonly_001",
+      "policy://status-page/read-only-preview"
+    ],
+    "review_required": false
+  },
   "exposure_boundary": {
     "redaction_level": "user_safe",
     "allowed_audiences": [

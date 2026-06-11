@@ -1,0 +1,121 @@
+{
+  "blocked_claims": [
+    "life-meaning judgment execution",
+    "doctrine completeness",
+    "life-impact closure",
+    "feeling-status determination",
+    "medical claim",
+    "mental-health claim",
+    "ethics clearance",
+    "legal clearance",
+    "safety certification",
+    "human-subjects research",
+    "observer personhood",
+    "product readiness",
+    "customer readiness",
+    "private value recording",
+    "spending",
+    "money movement",
+    "source-control publication",
+    "external publication",
+    "deployment readiness"
+  ],
+  "customer_readiness_claimed": false,
+  "deferral_labels": [
+    "doctrine_source_reference_rehearsal",
+    "action_scope_rehearsal",
+    "life_impact_question_rehearsal",
+    "feeling_impact_question_rehearsal",
+    "consent_boundary_rehearsal",
+    "dignity_truth_repair_question_rehearsal",
+    "observer_status_unknown_rehearsal",
+    "escalation_label_rehearsal",
+    "validator_pairing_rehearsal",
+    "stop_rule_rehearsal"
+  ],
+  "deployment_allowed": false,
+  "doctrine_complete_claimed": false,
+  "ethics_clearance_claimed": false,
+  "external_publication_allowed": false,
+  "feeling_status_determined": false,
+  "human_subjects_research_allowed": false,
+  "legal_clearance_claimed": false,
+  "life_impact_closure_claimed": false,
+  "life_meaning_judgment_executed": false,
+  "medical_claim_allowed": false,
+  "mental_health_claim_allowed": false,
+  "money_movement_allowed": false,
+  "next_action": "keep life/meaning doctrine rehearsal local until doctrine-approved tests, validator evidence, and operator reassessment evidence exist",
+  "observer_personhood_claimed": false,
+  "private_value_recording_allowed": false,
+  "product_readiness_claimed": false,
+  "safety_certification_claimed": false,
+  "schema_version": "foundation.life_meaning_doctrine_rehearsal.v1",
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_publication_allowed": false,
+  "spending_allowed": false,
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "public_safe_note": "Doctrine source reference rehearsal only; doctrine completeness is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "doctrine_source_reference_rehearsal",
+      "surface_type": "local_doctrine_source_label"
+    },
+    {
+      "public_safe_note": "Action scope rehearsal only; life-meaning judgment is not executed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "action_scope_rehearsal",
+      "surface_type": "local_action_scope_label"
+    },
+    {
+      "public_safe_note": "Life-impact question rehearsal only; life-impact closure is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "life_impact_question_rehearsal",
+      "surface_type": "local_life_impact_label"
+    },
+    {
+      "public_safe_note": "Feeling-impact question rehearsal only; feeling status is not determined.",
+      "state": "AwaitingEvidence",
+      "surface_id": "feeling_impact_question_rehearsal",
+      "surface_type": "local_feeling_impact_label"
+    },
+    {
+      "public_safe_note": "Consent-boundary rehearsal only; consent and legal clearance are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "consent_boundary_rehearsal",
+      "surface_type": "local_consent_boundary_label"
+    },
+    {
+      "public_safe_note": "Dignity, truth, and repair question rehearsal only; safety certification is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dignity_truth_repair_question_rehearsal",
+      "surface_type": "local_repair_question_label"
+    },
+    {
+      "public_safe_note": "Observer-status unknown rehearsal only; unknown status remains AwaitingEvidence.",
+      "state": "AwaitingEvidence",
+      "surface_id": "observer_status_unknown_rehearsal",
+      "surface_type": "local_unknown_status_label"
+    },
+    {
+      "public_safe_note": "Escalation label rehearsal only; medical, legal, research, customer, and deployment action are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "escalation_label_rehearsal",
+      "surface_type": "local_escalation_label"
+    },
+    {
+      "public_safe_note": "Validator pairing rehearsal only; governance closure is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "validator_pairing_rehearsal",
+      "surface_type": "local_validator_label"
+    },
+    {
+      "public_safe_note": "Stop-rule rehearsal only; publication, source control, spending, customer access, and deployment are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "stop_rule_rehearsal",
+      "surface_type": "local_stop_rule_label"
+    }
+  ],
+  "witness_id": "foundation_life_meaning_doctrine_rehearsal_witness.awaiting_evidence.v1"
+}

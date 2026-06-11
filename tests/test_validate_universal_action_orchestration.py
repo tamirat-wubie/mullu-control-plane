@@ -99,11 +99,23 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn("claim", schema["$defs"])
         self.assertIn("fracture_report", schema["$defs"])
         self.assertIn("fracture_check", schema["$defs"])
+        self.assertIn("life_meaning_judgment", schema["$defs"])
+        self.assertIn("life_meaning_affected_symbol", schema["$defs"])
+        self.assertIn("life_meaning_impact", schema["$defs"])
+        self.assertIn("life_meaning_delta", schema["$defs"])
+        self.assertIn("life_meaning_boundary_state", schema["$defs"])
+        self.assertIn("life_continuity_judgment", schema["$defs"])
+        self.assertIn("life_continuity_impact", schema["$defs"])
+        self.assertIn("life_continuity_delta", schema["$defs"])
         self.assertIn("memory_constitution", schema["$defs"])
         self.assertIn("pipeline_stage", schema["$defs"])
         self.assertIn("action_envelope", schema["required"])
         self.assertIn("claim_ledger", schema["required"])
         self.assertIn("fracture_report", schema["required"])
+        self.assertIn("life_meaning_judgment", schema["properties"])
+        self.assertIn("life_meaning_judgment", schema["required"])
+        self.assertIn("life_continuity_judgment", schema["properties"])
+        self.assertIn("life_continuity_judgment", schema["required"])
         self.assertIn("admission_guards", schema["required"])
         self.assertIn("closure_state", schema["required"])
         self.assertIn("raw_reasoning_included", schema["required"])
@@ -168,6 +180,99 @@ class UniversalActionOrchestrationContractTests(unittest.TestCase):
         self.assertIn("memory_update.learning_allowed = true", document_text)
         self.assertIn("Every UAO record must expose a `fracture_report`", document_text)
         self.assertIn("decision.execution_allowed -> fracture_report.status = passed", document_text)
+        self.assertIn("Every canonical UAO record must expose a `life_meaning_judgment`", document_text)
+        self.assertIn("docs/LIFE_MEANING_GOVERNANCE_KERNEL.md", document_text)
+        self.assertIn("Every canonical UAO record must expose a `life_continuity_judgment`", document_text)
+        self.assertIn("docs/LIFE_CONTINUITY_CONFLICT_DOCTRINE.md", document_text)
+
+    def test_allowed_action_requires_life_meaning_pass(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["life_meaning_judgment"]["decision"] = "pause"
+        invalid_record["life_meaning_judgment"]["approval_required"] = True
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertIn(
+            "allow decision requires life_meaning_judgment.decision pass",
+            errors,
+        )
+
+    def test_life_meaning_pass_rejects_domination_risk(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["life_meaning_judgment"]["domination_risk"] = True
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertIn(
+            "life_meaning_judgment.decision pass requires domination_risk false",
+            errors,
+        )
+
+    def test_life_meaning_unknown_meaning_impact_pauses_effect_bearing_action(
+        self,
+    ) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["life_meaning_judgment"]["meaning_impact"] = "unknown"
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertIn(
+            "effect-bearing pass requires known life_meaning_judgment.meaning_impact",
+            errors,
+        )
+
+    def test_allowed_action_requires_life_continuity_pass(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["life_continuity_judgment"]["decision"] = "pause"
+        invalid_record["life_continuity_judgment"]["review_required"] = True
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertIn(
+            "allow decision requires life_continuity_judgment.decision pass",
+            errors,
+        )
+
+    def test_life_continuity_pass_rejects_domination_risk(self) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["life_continuity_judgment"]["domination_risk"] = True
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 1)
+        self.assertIn(
+            "life_continuity_judgment.decision pass requires domination_risk false",
+            errors,
+        )
+
+    def test_life_continuity_unknown_meaning_impact_pauses_effect_bearing_action(
+        self,
+    ) -> None:
+        record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")
+        invalid_record = copy.deepcopy(record)
+        invalid_record["life_continuity_judgment"]["meaning_impact"] = "unknown"
+        invalid_record["life_continuity_judgment"]["lived_meaning_risk"] = "unknown"
+
+        errors = VALIDATOR.validate_orchestration(invalid_record)
+
+        self.assertGreaterEqual(len(errors), 2)
+        self.assertIn(
+            "effect-bearing pass requires known life_continuity_judgment.meaning_impact",
+            errors,
+        )
+        self.assertIn(
+            "unknown meaning-impact on effect-bearing action cannot pass life-continuity judgment",
+            errors,
+        )
 
     def test_claim_ledger_rejects_verified_claim_without_evidence(self) -> None:
         record = VALIDATOR.load_json_object(ALLOWED_EXAMPLE_PATH, "allowed UAO")

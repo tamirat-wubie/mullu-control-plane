@@ -1,0 +1,37 @@
+{
+  "judgment_id": "life-meaning:finance-payment-handoff",
+  "action_id": "finance-payment-handoff",
+  "decision": "pass",
+  "affected_symbols": [
+    {
+      "symbol_id": "vendor-payment-continuity",
+      "symbol_kind": "economic_life_support_relation",
+      "life_status": "unknown",
+      "feeling_status": "unknown",
+      "meaning_bearing": "indirect",
+      "fragility_level": 6,
+      "agency_level": 3
+    }
+  ],
+  "life_impact": "indirect",
+  "feeling_impact": "indirect",
+  "meaning_impact": "indirect",
+  "truth_preserved": true,
+  "dignity_boundary": "pass",
+  "consent_required": true,
+  "consent_present": true,
+  "love_delta": "neutral",
+  "resonance_delta": "positive",
+  "domination_risk": false,
+  "justice_repair_required": false,
+  "continuity_delta": "positive",
+  "irreversible": false,
+  "reasons": ["life_meaning_governance_passed"],
+  "evidence_refs": [
+    "evidence:budget",
+    "evidence:approval",
+    "evidence:vendor"
+  ],
+  "approval_required": false,
+  "rollback_required": false
+}

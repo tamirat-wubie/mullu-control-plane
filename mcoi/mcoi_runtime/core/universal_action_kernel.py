@@ -38,6 +38,14 @@ from mcoi_runtime.contracts.governed_action import (
     GovernedActionState,
     build_capability_passport,
 )
+from mcoi_runtime.contracts.life_meaning import (
+    AffectedSymbol,
+    BoundaryState,
+    Delta,
+    FeelingStatus,
+    ImpactLevel,
+    LifeStatus,
+)
 from mcoi_runtime.contracts.goal import GoalDescriptor, GoalPriority
 from mcoi_runtime.contracts.governed_capability_fabric import (
     CommandCapabilityAdmissionDecision,
@@ -92,6 +100,7 @@ from mcoi_runtime.core.invariants import (
     ensure_non_empty_text,
     stable_identifier,
 )
+from mcoi_runtime.core.life_meaning_governance import judge_life_meaning
 from mcoi_runtime.core.memory import MemoryEntry, MemoryTier
 from mcoi_runtime.core.simulation import SimulationEngine
 from mcoi_runtime.core.terminal_closure import TerminalClosureCertifier
@@ -1188,6 +1197,7 @@ def build_universal_action_orchestration_record(
     policy_refs = _uao_record_policy_refs(request=request, result=result)
     temporal_refs = _uao_record_temporal_refs(result=result, created_at=created_at)
     recovery_plan = _uao_record_recovery_plan(result)
+    effect_classes = _uao_record_effect_classes(result)
     outcome_ref = _uao_record_outcome_ref(result)
     reconciliation_ref = _uao_record_reconciliation_ref(result)
     memory_ref = _uao_record_memory_ref(result)
@@ -1215,6 +1225,23 @@ def build_universal_action_orchestration_record(
         policy_refs=policy_refs,
         evidence_refs=evidence_refs,
     )
+    life_meaning_judgment = _uao_record_life_meaning_judgment(
+        request=request,
+        result=result,
+        decision=decision,
+        effect_classes=effect_classes,
+        evidence_refs=evidence_refs,
+        policy_refs=policy_refs,
+    )
+    life_continuity_judgment = _uao_record_life_continuity_judgment(
+        request=request,
+        result=result,
+        decision=decision,
+        effect_classes=effect_classes,
+        evidence_refs=evidence_refs,
+        policy_refs=policy_refs,
+        life_meaning_judgment=life_meaning_judgment,
+    )
     return {
         "orchestration_id": stable_identifier(
             "universal-action-orchestration",
@@ -1231,7 +1258,7 @@ def build_universal_action_orchestration_record(
         "created_at": created_at,
         "action_envelope": action_envelope,
         "effect_bearing": True,
-        "effect_classes": _uao_record_effect_classes(result),
+        "effect_classes": effect_classes,
         "input_refs": input_refs,
         "policy_refs": policy_refs,
         "capability_refs": capability_refs,
@@ -1239,6 +1266,8 @@ def build_universal_action_orchestration_record(
         "recovery_plan": recovery_plan,
         "claim_ledger": claim_ledger,
         "fracture_report": fracture_report,
+        "life_meaning_judgment": life_meaning_judgment,
+        "life_continuity_judgment": life_continuity_judgment,
         "exposure_boundary": {
             "redaction_level": "audit",
             "allowed_audiences": ["operator", "auditor"],
@@ -2065,6 +2094,583 @@ def _uao_fracture_check(
         "evidence_refs": _unique_text_list(evidence_refs or [result.trace_ref]),
         "blocking": failed,
     }
+
+
+def _uao_record_life_meaning_judgment(
+    *,
+    request: UniversalActionRequest,
+    result: UniversalActionResult,
+    decision: Mapping[str, Any],
+    effect_classes: list[str],
+    evidence_refs: list[str],
+    policy_refs: list[str],
+) -> dict[str, Any]:
+    """Build the canonical LifeMeaningJudgment for a UAO record."""
+
+    override = request.metadata.get("life_meaning_judgment", {})
+    if override is None:
+        override = {}
+    if not isinstance(override, Mapping):
+        raise RuntimeCoreInvariantError(
+            "life_meaning_judgment metadata override must be a mapping"
+        )
+
+    default_life_decision = _uao_life_continuity_decision(decision)
+    default_impact = _uao_life_continuity_default_impact(
+        decision=decision,
+        result=result,
+        effect_classes=effect_classes,
+    )
+    default_meaning_impact = (
+        "unknown" if str(decision.get("proof_state")) == "Unknown" else default_impact
+    )
+    reason_code = str(decision.get("reason_code", ""))
+    default_domination_risk = "approval" in reason_code or "authority" in reason_code
+    default_dignity_boundary = (
+        "unknown"
+        if default_domination_risk or default_meaning_impact == "unknown"
+        else "pass"
+    )
+    default_continuity_delta = (
+        "positive"
+        if decision.get("status") == "allow"
+        else "neutral"
+        if decision.get("status") == "simulate"
+        else "unknown"
+    )
+    default_resonance_delta = (
+        "positive"
+        if decision.get("status") == "allow"
+        else "neutral"
+        if decision.get("status") == "simulate"
+        else "unknown"
+    )
+    default_evidence_refs = _uao_life_meaning_evidence_refs_override(
+        override,
+        (
+            result.trace_ref,
+            result.admission_receipt_ref,
+            *(policy_refs[:2]),
+            *(evidence_refs[:2]),
+        ),
+    )
+    default_irreversible = _uao_life_meaning_bool_override(
+        override,
+        "irreversible",
+        decision.get("status") == "escalate",
+    )
+    affected_symbols = _uao_life_meaning_affected_symbols_override(
+        override,
+        default_impact=default_impact,
+        default_meaning_impact=default_meaning_impact,
+        default_irreversible=default_irreversible,
+        result=result,
+    )
+    consent_present = _uao_life_meaning_bool_override(
+        override,
+        "consent_present",
+        default_life_decision == "pass" and default_meaning_impact != "unknown",
+    )
+    judgment = judge_life_meaning(
+        action_id=result.action_id,
+        affected_symbols=affected_symbols,
+        life_impact=ImpactLevel(
+            _uao_life_meaning_enum_override(
+                override,
+                "life_impact",
+                {"none", "indirect", "direct", "unknown"},
+                default_impact,
+            )
+        ),
+        feeling_impact=ImpactLevel(
+            _uao_life_meaning_enum_override(
+                override,
+                "feeling_impact",
+                {"none", "indirect", "direct", "unknown"},
+                default_meaning_impact,
+            )
+        ),
+        meaning_impact=ImpactLevel(
+            _uao_life_meaning_enum_override(
+                override,
+                "meaning_impact",
+                {"none", "indirect", "direct", "unknown"},
+                default_meaning_impact,
+            )
+        ),
+        truth_preserved=_uao_life_meaning_bool_override(
+            override,
+            "truth_preserved",
+            True,
+        ),
+        dignity_boundary=BoundaryState(
+            _uao_life_meaning_enum_override(
+                override,
+                "dignity_boundary",
+                {"pass", "fail", "unknown"},
+                default_dignity_boundary,
+            )
+        ),
+        consent_present=consent_present,
+        love_delta=Delta(
+            _uao_life_meaning_enum_override(
+                override,
+                "love_delta",
+                {"positive", "neutral", "negative", "unknown"},
+                "neutral",
+            )
+        ),
+        resonance_delta=Delta(
+            _uao_life_meaning_enum_override(
+                override,
+                "resonance_delta",
+                {"positive", "neutral", "negative", "unknown"},
+                default_resonance_delta,
+            )
+        ),
+        domination_risk=_uao_life_meaning_bool_override(
+            override,
+            "domination_risk",
+            default_domination_risk,
+        ),
+        continuity_delta=Delta(
+            _uao_life_meaning_enum_override(
+                override,
+                "continuity_delta",
+                {"positive", "neutral", "negative", "unknown"},
+                default_continuity_delta,
+            )
+        ),
+        irreversible=default_irreversible,
+        evidence_refs=tuple(default_evidence_refs),
+    )
+    if "decision" in override and override["decision"] != judgment.decision.value:
+        raise RuntimeCoreInvariantError(
+            "life_meaning_judgment.decision override conflicts with deterministic judgment"
+        )
+    if decision.get("status") == "escalate" and judgment.decision.value != "escalate":
+        raise RuntimeCoreInvariantError(
+            "life_meaning_judgment must escalate when action decision escalates"
+        )
+    return judgment.as_dict()
+
+
+def _uao_record_life_continuity_judgment(
+    *,
+    request: UniversalActionRequest,
+    result: UniversalActionResult,
+    decision: Mapping[str, Any],
+    effect_classes: list[str],
+    evidence_refs: list[str],
+    policy_refs: list[str],
+    life_meaning_judgment: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Build the life-continuity conflict-law judgment for a UAO record."""
+
+    override = request.metadata.get("life_continuity_judgment", {})
+    if override is None:
+        override = {}
+    if not isinstance(override, Mapping):
+        raise RuntimeCoreInvariantError(
+            "life_continuity_judgment metadata override must be a mapping"
+        )
+
+    default_life_decision = str(life_meaning_judgment["decision"])
+    default_impact = str(life_meaning_judgment["life_impact"])
+    default_meaning_impact = str(life_meaning_judgment["meaning_impact"])
+    default_domination_risk = bool(life_meaning_judgment["domination_risk"])
+    default_dignity_boundary = str(life_meaning_judgment["dignity_boundary"])
+    default_lived_risk = _uao_lived_meaning_default_risk(
+        decision=decision,
+        result=result,
+        domination_risk=default_domination_risk,
+    )
+    judgment_ref = "life-continuity://" + stable_identifier(
+        "universal-action-life-continuity-judgment",
+        {
+            "action_id": result.action_id,
+            "trace_ref": result.trace_ref,
+            "decision_status": str(decision.get("status")),
+        },
+    )
+    judgment_evidence_refs = _uao_life_evidence_refs_override(
+        override,
+        (
+            result.trace_ref,
+            result.admission_receipt_ref,
+            *(policy_refs[:2]),
+            *(evidence_refs[:2]),
+        ),
+    )
+    if not judgment_evidence_refs:
+        judgment_evidence_refs = [result.trace_ref]
+
+    return {
+        "judgment_ref": _uao_life_text_override(
+            override,
+            "judgment_ref",
+            judgment_ref,
+        ),
+        "conflict_law_ref": _uao_life_text_override(
+            override,
+            "conflict_law_ref",
+            "doctrine://life-continuity-conflict-law/v1",
+        ),
+        "life_impact": _uao_life_enum_override(
+            override,
+            "life_impact",
+            {"none", "indirect", "direct", "unknown"},
+            default_impact,
+        ),
+        "feeling_impact": _uao_life_enum_override(
+            override,
+            "feeling_impact",
+            {"none", "indirect", "direct", "unknown"},
+            str(life_meaning_judgment["feeling_impact"]),
+        ),
+        "feeling_observer_impact": _uao_life_enum_override(
+            override,
+            "feeling_observer_impact",
+            {"none", "indirect", "direct", "unknown"},
+            default_meaning_impact,
+        ),
+        "meaning_impact": _uao_life_enum_override(
+            override,
+            "meaning_impact",
+            {"none", "indirect", "direct", "unknown"},
+            default_meaning_impact,
+        ),
+        "meaning_continuity_delta": _uao_life_enum_override(
+            override,
+            "meaning_continuity_delta",
+            {"positive", "neutral", "negative", "unknown"},
+            str(life_meaning_judgment["continuity_delta"]),
+        ),
+        "value_bearing_symbol": _uao_life_bool_override(
+            override,
+            "value_bearing_symbol",
+            default_impact != "none"
+            or str(life_meaning_judgment["feeling_impact"]) != "none"
+            or default_meaning_impact != "none",
+        ),
+        "lived_meaning_risk": _uao_life_enum_override(
+            override,
+            "lived_meaning_risk",
+            {"none", "low", "medium", "high", "unknown"},
+            default_lived_risk,
+        ),
+        "love_delta": _uao_life_enum_override(
+            override,
+            "love_delta",
+            {"positive", "neutral", "negative", "unknown"},
+            str(life_meaning_judgment["love_delta"]),
+        ),
+        "resonance_delta": _uao_life_enum_override(
+            override,
+            "resonance_delta",
+            {"positive", "neutral", "negative", "unknown"},
+            str(life_meaning_judgment["resonance_delta"]),
+        ),
+        "dignity_boundary": _uao_life_enum_override(
+            override,
+            "dignity_boundary",
+            {"pass", "fail", "unknown"},
+            default_dignity_boundary,
+        ),
+        "truth_preserved": _uao_life_bool_override(
+            override,
+            "truth_preserved",
+            True,
+        ),
+        "domination_risk": _uao_life_bool_override(
+            override,
+            "domination_risk",
+            default_domination_risk,
+        ),
+        "decision": _uao_life_enum_override(
+            override,
+            "decision",
+            {"pass", "pause", "block", "escalate"},
+            default_life_decision,
+        ),
+        "evidence_refs": judgment_evidence_refs,
+        "review_required": _uao_life_bool_override(
+            override,
+            "review_required",
+            default_life_decision != "pass",
+        ),
+    }
+
+
+def _uao_life_continuity_decision(decision: Mapping[str, Any]) -> str:
+    status = decision.get("status")
+    if status == "allow":
+        return "pass"
+    if status == "escalate":
+        return "escalate"
+    if status == "defer":
+        return "pause"
+    if status == "simulate":
+        return "pass"
+    return "block"
+
+
+def _uao_life_meaning_affected_symbols_override(
+    override: Mapping[str, Any],
+    *,
+    default_impact: str,
+    default_meaning_impact: str,
+    default_irreversible: bool,
+    result: UniversalActionResult,
+) -> tuple[AffectedSymbol, ...]:
+    value = override.get("affected_symbols")
+    if value is None:
+        life_status = (
+            LifeStatus.UNKNOWN
+            if default_impact != "none" or default_meaning_impact != "none"
+            else LifeStatus.NOT_LIFE
+        )
+        feeling_status = (
+            FeelingStatus.UNKNOWN
+            if default_meaning_impact != "none"
+            else FeelingStatus.NOT_FEELING
+        )
+        fragility_level = (
+            9
+            if default_irreversible and default_meaning_impact == "unknown"
+            else 6
+            if default_meaning_impact == "unknown"
+            else 3
+            if default_impact != "none" or default_meaning_impact != "none"
+            else 1
+        )
+        return (
+            AffectedSymbol(
+                symbol_id=f"action-target:{result.action_id}",
+                symbol_kind=(
+                    "effect_bearing_action_target"
+                    if default_impact != "none" or default_meaning_impact != "none"
+                    else "local_artifact"
+                ),
+                life_status=life_status,
+                feeling_status=feeling_status,
+                meaning_bearing=ImpactLevel(default_meaning_impact),
+                fragility_level=fragility_level,
+                agency_level=2 if default_impact != "none" else 0,
+            ),
+        )
+    if not isinstance(value, (list, tuple)) or not value:
+        raise RuntimeCoreInvariantError(
+            "life_meaning_judgment.affected_symbols must be a non-empty sequence"
+        )
+    affected_symbols: list[AffectedSymbol] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, Mapping):
+            raise RuntimeCoreInvariantError(
+                f"life_meaning_judgment.affected_symbols[{index}] must be a mapping"
+            )
+        try:
+            affected_symbols.append(
+                AffectedSymbol(
+                    symbol_id=_uao_life_meaning_required_text(
+                        item,
+                        "symbol_id",
+                        f"life_meaning_judgment.affected_symbols[{index}]",
+                    ),
+                    symbol_kind=_uao_life_meaning_required_text(
+                        item,
+                        "symbol_kind",
+                        f"life_meaning_judgment.affected_symbols[{index}]",
+                    ),
+                    life_status=LifeStatus(
+                        _uao_life_meaning_required_text(
+                            item,
+                            "life_status",
+                            f"life_meaning_judgment.affected_symbols[{index}]",
+                        )
+                    ),
+                    feeling_status=FeelingStatus(
+                        _uao_life_meaning_required_text(
+                            item,
+                            "feeling_status",
+                            f"life_meaning_judgment.affected_symbols[{index}]",
+                        )
+                    ),
+                    meaning_bearing=ImpactLevel(
+                        _uao_life_meaning_required_text(
+                            item,
+                            "meaning_bearing",
+                            f"life_meaning_judgment.affected_symbols[{index}]",
+                        )
+                    ),
+                    fragility_level=_uao_life_meaning_required_int(
+                        item,
+                        "fragility_level",
+                        f"life_meaning_judgment.affected_symbols[{index}]",
+                    ),
+                    agency_level=_uao_life_meaning_required_int(
+                        item,
+                        "agency_level",
+                        f"life_meaning_judgment.affected_symbols[{index}]",
+                    ),
+                )
+            )
+        except ValueError as exc:
+            raise RuntimeCoreInvariantError(str(exc)) from exc
+    return tuple(affected_symbols)
+
+
+def _uao_life_meaning_required_text(
+    source: Mapping[str, Any],
+    field_name: str,
+    label: str,
+) -> str:
+    value = source.get(field_name)
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    raise RuntimeCoreInvariantError(f"{label}.{field_name} must be a non-empty string")
+
+
+def _uao_life_meaning_required_int(
+    source: Mapping[str, Any],
+    field_name: str,
+    label: str,
+) -> int:
+    value = source.get(field_name)
+    if isinstance(value, int) and not isinstance(value, bool) and 0 <= value <= 10:
+        return value
+    raise RuntimeCoreInvariantError(f"{label}.{field_name} must be an integer in [0,10]")
+
+
+def _uao_life_meaning_enum_override(
+    override: Mapping[str, Any],
+    field_name: str,
+    allowed_values: set[str],
+    default: str,
+) -> str:
+    value = override.get(field_name, default)
+    if isinstance(value, str) and value in allowed_values:
+        return value
+    raise RuntimeCoreInvariantError(f"life_meaning_judgment.{field_name} is invalid")
+
+
+def _uao_life_meaning_bool_override(
+    override: Mapping[str, Any],
+    field_name: str,
+    default: bool,
+) -> bool:
+    value = override.get(field_name, default)
+    if isinstance(value, bool):
+        return value
+    raise RuntimeCoreInvariantError(f"life_meaning_judgment.{field_name} must be boolean")
+
+
+def _uao_life_meaning_evidence_refs_override(
+    override: Mapping[str, Any],
+    default: tuple[str, ...],
+) -> list[str]:
+    value = override.get("evidence_refs", default)
+    if "evidence_refs" in override:
+        if not isinstance(value, (list, tuple)):
+            raise RuntimeCoreInvariantError(
+                "life_meaning_judgment.evidence_refs must be a sequence of non-empty strings"
+            )
+        if not all(isinstance(ref, str) and ref.strip() for ref in value):
+            raise RuntimeCoreInvariantError(
+                "life_meaning_judgment.evidence_refs must be a sequence of non-empty strings"
+            )
+        return _unique_text_list(value)
+    refs = _unique_text_list(value)
+    if refs:
+        return refs
+    raise RuntimeCoreInvariantError(
+        "life_meaning_judgment.evidence_refs must be a sequence"
+    )
+
+
+def _uao_life_continuity_default_impact(
+    *,
+    decision: Mapping[str, Any],
+    result: UniversalActionResult,
+    effect_classes: list[str],
+) -> str:
+    if str(decision.get("proof_state")) == "Unknown":
+        return "unknown"
+    if not effect_classes:
+        return "none"
+    if result.block_reason == "simulation_only":
+        return "none"
+    return "indirect"
+
+
+def _uao_lived_meaning_default_risk(
+    *,
+    decision: Mapping[str, Any],
+    result: UniversalActionResult,
+    domination_risk: bool,
+) -> str:
+    if str(decision.get("proof_state")) == "Unknown":
+        return "unknown"
+    if decision.get("status") == "allow":
+        return "low"
+    if domination_risk:
+        return "medium"
+    if result.blocked:
+        return "medium"
+    return "low"
+
+
+def _uao_life_text_override(
+    override: Mapping[str, Any],
+    field_name: str,
+    default: str,
+) -> str:
+    value = override.get(field_name, default)
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    raise RuntimeCoreInvariantError(
+        f"life_continuity_judgment.{field_name} must be a non-empty string"
+    )
+
+
+def _uao_life_enum_override(
+    override: Mapping[str, Any],
+    field_name: str,
+    allowed_values: set[str],
+    default: str,
+) -> str:
+    value = override.get(field_name, default)
+    if isinstance(value, str) and value in allowed_values:
+        return value
+    raise RuntimeCoreInvariantError(
+        f"life_continuity_judgment.{field_name} is invalid"
+    )
+
+
+def _uao_life_bool_override(
+    override: Mapping[str, Any],
+    field_name: str,
+    default: bool,
+) -> bool:
+    value = override.get(field_name, default)
+    if isinstance(value, bool):
+        return value
+    raise RuntimeCoreInvariantError(
+        f"life_continuity_judgment.{field_name} must be boolean"
+    )
+
+
+def _uao_life_evidence_refs_override(
+    override: Mapping[str, Any],
+    default: tuple[str, ...],
+) -> list[str]:
+    value = override.get("evidence_refs", default)
+    refs = _unique_text_list(value)
+    if refs:
+        return refs
+    raise RuntimeCoreInvariantError(
+        "life_continuity_judgment.evidence_refs must contain at least one reference"
+    )
 
 
 def _uao_claim(

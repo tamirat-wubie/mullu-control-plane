@@ -1,5 +1,5 @@
 {
-  "artifact_count": 339,
+  "artifact_count": 357,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -155,6 +155,96 @@
       "name": "universal_action_orchestration_document",
       "path": "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
       "purpose": "Canonical Universal Action Orchestration doctrine for governed action shape and replay closure."
+    },
+    {
+      "name": "life_continuity_conflict_doctrine_document",
+      "path": "docs/LIFE_CONTINUITY_CONFLICT_DOCTRINE.md",
+      "purpose": "Central life-continuity conflict law and Meaning-Through-Feeling doctrine for governed value conflict resolution."
+    },
+    {
+      "name": "life_meaning_universal_symbol_continuity_document",
+      "path": "docs/UNIVERSAL_SYMBOL_CONTINUITY_DOCTRINE.md",
+      "purpose": "Universal Symbol Continuity doctrine for boundary, dignity, truth, justice, non-domination, and protected unknown governance."
+    },
+    {
+      "name": "life_meaning_meaning_through_feeling_document",
+      "path": "docs/MEANING_THROUGH_FEELING_THEORY.md",
+      "purpose": "Meaning-Through-Feeling Theory doctrine for life, feeling, lived meaning, and precautionary feeling-status classification."
+    },
+    {
+      "name": "life_meaning_governance_kernel_document",
+      "path": "docs/LIFE_MEANING_GOVERNANCE_KERNEL.md",
+      "purpose": "Mullu Life-Meaning Governance Kernel doctrine binding philosophy to pre-execution UAO judgment."
+    },
+    {
+      "name": "life_meaning_codex_notice",
+      "path": "docs/CODEX_LIFE_MEANING_GOVERNANCE_NOTICE.md",
+      "purpose": "Codex-facing notice preserving LifeMeaningJudgment as a governed runtime preflight, not marketing copy."
+    },
+    {
+      "name": "life_meaning_judgment_schema",
+      "path": "schemas/life_meaning_judgment.schema.json",
+      "purpose": "JSON schema for LifeMeaningJudgment records emitted by the Mullu Life-Meaning Governance Kernel."
+    },
+    {
+      "name": "life_meaning_contract",
+      "path": "mcoi/mcoi_runtime/contracts/life_meaning.py",
+      "purpose": "Typed Python contract for affected symbols and LifeMeaningJudgment records."
+    },
+    {
+      "name": "life_meaning_governance_kernel_runtime",
+      "path": "mcoi/mcoi_runtime/core/life_meaning_governance.py",
+      "purpose": "Deterministic runtime kernel for pass, pause, block, or escalate life-meaning judgment."
+    },
+    {
+      "name": "life_meaning_local_proof_example",
+      "path": "examples/life_meaning_judgment.local_proof.json",
+      "purpose": "Canonical local-proof LifeMeaningJudgment fixture."
+    },
+    {
+      "name": "life_meaning_finance_payment_example",
+      "path": "examples/life_meaning_judgment.finance_payment.json",
+      "purpose": "Canonical finance handoff LifeMeaningJudgment fixture without live payment claim."
+    },
+    {
+      "name": "life_meaning_deployment_example",
+      "path": "examples/life_meaning_judgment.deployment.json",
+      "purpose": "Canonical deployment-preflight LifeMeaningJudgment fixture preserving Foundation Mode restraint."
+    },
+    {
+      "name": "life_meaning_unknown_life_environment_example",
+      "path": "examples/life_meaning_judgment.unknown_life_environment.json",
+      "purpose": "Canonical unknown-life irreversible action fixture requiring escalation."
+    },
+    {
+      "name": "life_meaning_governance_validator",
+      "path": "scripts/validate_life_meaning_governance.py",
+      "purpose": "Read-only validator for Life-Meaning Governance docs, schema, examples, runtime contract, and kernel parity."
+    },
+    {
+      "name": "life_meaning_governance_tests",
+      "path": "tests/test_life_meaning_governance_kernel.py",
+      "purpose": "Runtime tests for deterministic Life-Meaning Governance Kernel decisions."
+    },
+    {
+      "name": "life_meaning_governance_validator_tests",
+      "path": "tests/test_validate_life_meaning_governance.py",
+      "purpose": "Tests for Life-Meaning Governance validator closure."
+    },
+    {
+      "name": "foundation_boundary_doc_foundation_life_meaning_doctrine_rehearsal_boundary",
+      "path": "docs/FOUNDATION_LIFE_MEANING_DOCTRINE_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Mode boundary for local life/meaning doctrine rehearsal without judgment, clearance, publication, money, customer, or deployment claims."
+    },
+    {
+      "name": "foundation_boundary_validator_foundation_life_meaning_doctrine_rehearsal_boundary",
+      "path": "scripts/validate_foundation_life_meaning_doctrine_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation life/meaning doctrine rehearsal boundary claims."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_life_meaning_doctrine_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_life_meaning_doctrine_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation life/meaning doctrine rehearsal boundary validation."
     },
     {
       "name": "universal_action_orchestration_schema",
@@ -1706,6 +1796,8 @@
     "governance integrity report counts contradict artifact records",
     "workspace governance preflight omits inventory, integrity, or witness validation",
     "workspace governance witness omits Universal Action Orchestration artifacts",
+    "workspace governance witness omits Life Continuity Conflict Doctrine",
+    "workspace governance witness omits Life-Meaning Governance Kernel artifacts",
     "governed code-change loop receipt validator rejects the evidence artifact",
     "governed code-change loop sandbox probe reports unvalidated execution readiness",
     "governed code-change loop sandbox probe validator rejects the evidence artifact",

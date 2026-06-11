@@ -1,0 +1,40 @@
+{
+  "judgment_id": "life-meaning:unknown-planetary-environment",
+  "action_id": "terraform-candidate-world",
+  "decision": "escalate",
+  "affected_symbols": [
+    {
+      "symbol_id": "candidate-world",
+      "symbol_kind": "planetary_environment",
+      "life_status": "unknown",
+      "feeling_status": "unknown",
+      "meaning_bearing": "unknown",
+      "fragility_level": 10,
+      "agency_level": 0
+    }
+  ],
+  "life_impact": "unknown",
+  "feeling_impact": "unknown",
+  "meaning_impact": "unknown",
+  "truth_preserved": true,
+  "dignity_boundary": "unknown",
+  "consent_required": true,
+  "consent_present": false,
+  "love_delta": "unknown",
+  "resonance_delta": "unknown",
+  "domination_risk": true,
+  "justice_repair_required": true,
+  "continuity_delta": "unknown",
+  "irreversible": true,
+  "reasons": [
+    "unknown_life_feeling_or_meaning_status_with_irreversible_action",
+    "meaning_bearing_action_requires_consent_or_escalation",
+    "life_feeling_or_meaning_action_requires_evidence",
+    "dignity_boundary_unknown",
+    "domination_risk_detected",
+    "irreversible_continuity_risk"
+  ],
+  "evidence_refs": [],
+  "approval_required": true,
+  "rollback_required": true
+}

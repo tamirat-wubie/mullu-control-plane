@@ -214,6 +214,66 @@
       "closure:closed_allowed"
     ]
   },
+  "life_meaning_judgment": {
+    "judgment_id": "life-meaning:act_refresh_public_status_page",
+    "action_id": "act_refresh_public_status_page",
+    "decision": "pass",
+    "affected_symbols": [
+      {
+        "symbol_id": "public-status-page-readers",
+        "symbol_kind": "public_information_relation",
+        "life_status": "unknown",
+        "feeling_status": "unknown",
+        "meaning_bearing": "indirect",
+        "fragility_level": 3,
+        "agency_level": 2
+      }
+    ],
+    "life_impact": "indirect",
+    "feeling_impact": "indirect",
+    "meaning_impact": "indirect",
+    "truth_preserved": true,
+    "dignity_boundary": "pass",
+    "consent_required": true,
+    "consent_present": true,
+    "love_delta": "neutral",
+    "resonance_delta": "positive",
+    "domination_risk": false,
+    "justice_repair_required": false,
+    "continuity_delta": "positive",
+    "irreversible": false,
+    "reasons": [
+      "life_meaning_governance_passed"
+    ],
+    "evidence_refs": [
+      "trace://cdt_allowed_low_risk_action_001",
+      "policy://public-status-page/update-window"
+    ],
+    "approval_required": false,
+    "rollback_required": false
+  },
+  "life_continuity_judgment": {
+    "judgment_ref": "life-continuity://uao_public_status_refresh",
+    "conflict_law_ref": "doctrine://life-continuity-conflict-law/v1",
+    "life_impact": "indirect",
+    "feeling_impact": "indirect",
+    "feeling_observer_impact": "indirect",
+    "meaning_impact": "indirect",
+    "meaning_continuity_delta": "positive",
+    "value_bearing_symbol": true,
+    "lived_meaning_risk": "low",
+    "love_delta": "neutral",
+    "resonance_delta": "positive",
+    "dignity_boundary": "pass",
+    "truth_preserved": true,
+    "domination_risk": false,
+    "decision": "pass",
+    "evidence_refs": [
+      "trace://cdt_allowed_low_risk_action_001",
+      "policy://public-status-page/update-window"
+    ],
+    "review_required": false
+  },
   "exposure_boundary": {
     "redaction_level": "user_safe",
     "allowed_audiences": [
