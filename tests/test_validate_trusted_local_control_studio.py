@@ -25,8 +25,9 @@ def test_current_trusted_local_control_studio_policy_passes() -> None:
     assert findings == []
     assert "## Trusted Local Control Studio Authorization" in policy_text
     assert "# Trusted Local Control Studio" in doc_text
-    assert "must not exfiltrate" in policy_text
-    assert "Do not print full secret values" in policy_text
+    assert "secret presence, names, scopes, and bounded shape" in policy_text
+    assert "Raw secret values require explicit task-scoped operator" in policy_text
+    assert "Do not read or print full secret values" in policy_text
     assert "STATUS:" in doc_text
 
 

@@ -24,15 +24,16 @@ bounded by explicit task context and governance witnesses.
 | Repository edits | Create and edit repository-local files, tests, validators, receipts, and docs needed for governed work. | Destructive operations outside the intended workspace. |
 | Local commands | Run deterministic shell commands, validators, formatters, tests, local services, and package metadata checks needed for verification. | Privileged, destructive, or machine-wide changes unrelated to the active task. |
 | Network use | Look up documentation, package metadata, source references, and task-relevant API status. | Publishing production systems, changing external accounts, or contacting customers. |
-| Local secrets | Inspect only when required for diagnosis or execution, treat values as sensitive inputs, and avoid disclosure. | Printing full secret values, exfiltrating credentials, or committing raw credentials. |
+| Local secrets | Inspect presence, names, scopes, and bounded shape when required for diagnosis or execution. | Reading raw values without explicit task-scoped instruction, printing full secret values, exfiltrating credentials, or committing raw credentials. |
 
 ## Secret Handling
 
-Task-relevant secrets are not hidden from Codex inside the local control studio,
-but they remain sensitive. The required behavior is:
+Task-relevant secret metadata can be checked inside the local control studio,
+but raw values remain sensitive and fail-closed. The required behavior is:
 
-1. Inspect secret values only when materially required by the active task.
-2. Prefer presence, shape, scope, and configuration checks over value disclosure.
+1. Prefer presence, shape, scope, and configuration checks over value access.
+2. Read raw secret values only when the operator gives explicit task-scoped
+   instruction for a concrete diagnosis or recovery action.
 3. Do not print full tokens, private keys, passwords, recovery codes, or access
    credentials in user-facing output.
 4. Do not persist raw secret values in Git, docs, fixtures, logs, receipts, or
@@ -68,7 +69,7 @@ The validator checks that:
 
 1. `AGENTS.md` contains the trusted local control studio authorization block.
 2. Local autonomy includes repository inspection, repository edits, local
-   commands, task-relevant network use, and bounded local secret inspection.
+   commands, task-relevant network use, and bounded secret metadata inspection.
 3. Secret handling preserves no-disclosure and no-exfiltration boundaries.
 4. Hard stop rules preserve destructive, legal, financial, public-facing,
    external-account, platform, connector, and Mullusi governance boundaries.
@@ -76,6 +77,6 @@ The validator checks that:
 
 STATUS:
   Completeness: 100%
-  Invariants verified: local autonomy scoped, task-relevant secret inspection bounded, secret disclosure blocked, external-effect stop rules retained, platform and connector controls retained
+  Invariants verified: local autonomy scoped, secret metadata inspection bounded, raw secret value access explicit-instruction only, secret disclosure blocked, external-effect stop rules retained, platform and connector controls retained
   Open issues: none
   Next action: run the trusted local control studio validator after any AGENTS.md authorization edit

@@ -48,9 +48,10 @@ Default authorization inside the local control studio:
 3. Use available network access for documentation lookup, package metadata,
    dependency installation, source verification, and API checks when needed for
    the active task.
-4. Treat local secrets as operator-owned sensitive inputs, not as hidden state.
-   Codex may inspect them only when required to diagnose or execute the task,
-   must avoid unnecessary disclosure in outputs, and must not exfiltrate them.
+4. Treat local secrets as operator-owned sensitive inputs. Codex may inspect
+   secret presence, names, scopes, and bounded shape when required to diagnose
+   or execute the task. Raw secret values require explicit task-scoped operator
+   instruction, must not be printed in outputs, and must not be exfiltrated.
 5. Prefer autonomous technical decisions for implementation, verification, and
    repair when the decision is reversible or repository-local.
 
@@ -64,9 +65,9 @@ Hard boundaries that remain in force:
 3. Do not bypass platform-level Codex controls, operating-system permission
    controls, connector authentication boundaries, or Mullusi hard governance
    laws.
-4. Do not print full secret values, private keys, access tokens, or credentials
-   unless the operator explicitly requests the value for a concrete recovery
-   action.
+4. Do not read or print full secret values, private keys, access tokens, or
+   credentials unless the operator explicitly requests the value for a concrete
+   recovery action.
 5. If an action is irreversible, public-facing, or crosses a tenant, billing,
    legal, deployment, or external-account boundary, classify it as
    `AwaitingEvidence` until the required witness or task instruction exists.

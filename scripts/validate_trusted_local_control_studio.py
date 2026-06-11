@@ -9,8 +9,9 @@ docs/TRUSTED_LOCAL_CONTROL_STUDIO.md.
 Invariants:
   - Validation is read-only and deterministic.
   - Local autonomy remains scoped to repository-governed work.
-  - Secret handling permits task-relevant inspection but blocks disclosure and
-    exfiltration.
+  - Secret handling permits task-relevant metadata inspection, requires
+    explicit task-scoped instruction for raw value access, and blocks disclosure
+    and exfiltration.
   - Destructive, legal, financial, public, deployment, external-account,
     platform, connector, and Mullusi hard-law boundaries remain explicit.
 """
@@ -43,14 +44,17 @@ REQUIRED_POLICY_PHRASES = (
     "Inspect repository files, local configuration, logs, receipts, schemas,",
     "Edit repository-local files, create governed artifacts, run deterministic",
     "Use available network access for documentation lookup, package metadata,",
-    "Treat local secrets as operator-owned sensitive inputs, not as hidden state.",
-    "must avoid unnecessary disclosure in outputs, and must not exfiltrate them.",
+    "Treat local secrets as operator-owned sensitive inputs.",
+    "Codex may inspect",
+    "secret presence, names, scopes, and bounded shape",
+    "Raw secret values require explicit task-scoped operator",
+    "must not be printed in outputs, and must not be exfiltrated.",
     "Hard boundaries that remain in force:",
     "Do not perform destructive operations outside the intended workspace unless",
     "Do not move money, file legal paperwork, publish production systems, contact",
     "Do not bypass platform-level Codex controls, operating-system permission",
     "connector authentication boundaries, or Mullusi hard governance",
-    "Do not print full secret values, private keys, access tokens, or credentials",
+    "Do not read or print full secret values, private keys, access tokens, or",
     "classify it as",
     "`AwaitingEvidence` until the required witness or task instruction exists.",
 )
@@ -64,7 +68,8 @@ REQUIRED_DOC_PHRASES = (
     "## Hard Stop Rules",
     "## Validation",
     "python scripts/validate_trusted_local_control_studio.py",
-    "Inspect secret values only when materially required by the active task.",
+    "Task-relevant secret metadata can be checked inside the local control studio,",
+    "Read raw secret values only when the operator gives explicit task-scoped",
     "Do not print full tokens, private keys, passwords, recovery codes, or access",
     "Do not persist raw secret values in Git, docs, fixtures, logs, receipts, or",
     "Bypass platform-level controls, operating-system permission controls, or",
