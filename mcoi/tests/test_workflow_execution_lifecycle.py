@@ -1,8 +1,8 @@
 """Purpose: bind workflow execution lifecycle proof witnesses to exact anchors.
 Governance scope: workflow, traced workflow, pipeline, template, session, and
     ledger execution/read-model surfaces.
-Dependencies: FastAPI server, workflow core, traced workflow core, gateway
-    workflow orchestration, and Effect Assurance.
+Dependencies: FastAPI server, workflow core, traced workflow core, request
+    tracing, gateway workflow orchestration, and Effect Assurance.
 Invariants:
   - Execution endpoints return bounded action proofs where required.
   - Bad capabilities and recorder failures stay sanitized.
@@ -52,6 +52,16 @@ def _workflow_api_payload(task_id: str, capability: str = "llm.completion") -> d
         "tenant_id": "tenant-workflow-anchor",
         "actor_id": "actor-workflow-anchor",
         "payload": {"prompt": "summarize governed workflow state"},
+    }
+
+
+def _legacy_execute_payload() -> dict[str, Any]:
+    return {
+        "goal_id": "goal-legacy-anchor",
+        "action": "legacy.execute",
+        "tenant_id": "tenant-workflow-anchor",
+        "actor_id": "actor-workflow-anchor",
+        "body": {"request": "bounded execution"},
     }
 
 
@@ -410,16 +420,7 @@ def test_traced_workflow_recorder_errors_sanitized() -> None:
 
 
 def test_legacy_execute_emits_action_proof(test_client) -> None:
-    response = test_client.post(
-        "/api/v1/execute",
-        json={
-            "goal_id": "goal-legacy-anchor",
-            "action": "legacy.execute",
-            "tenant_id": "tenant-workflow-anchor",
-            "actor_id": "actor-workflow-anchor",
-            "body": {"request": "bounded execution"},
-        },
-    )
+    response = test_client.post("/api/v1/execute", json=_legacy_execute_payload())
 
     body = response.json()
     proof = body["action_proof"]
@@ -430,6 +431,20 @@ def test_legacy_execute_emits_action_proof(test_client) -> None:
     assert proof["action"] == "legacy.execute"
     assert proof["succeeded"] is True
     assert proof["proof_hash"]
+
+
+def test_legacy_execute_uses_request_unique_trace_witness(test_client) -> None:
+    first = test_client.post("/api/v1/execute", json=_legacy_execute_payload())
+    second = test_client.post("/api/v1/execute", json=_legacy_execute_payload())
+
+    first_body = first.json()
+    second_body = second.json()
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert first_body["trace_id"].startswith("http-")
+    assert second_body["trace_id"].startswith("http-")
+    assert first_body["trace_id"] != second_body["trace_id"]
+    assert "goal-legacy-anchor" not in first_body["trace_id"]
 
 
 def test_session_read_model_bounded(test_client) -> None:

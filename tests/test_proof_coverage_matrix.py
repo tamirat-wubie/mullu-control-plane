@@ -3092,6 +3092,7 @@ def test_workflow_execution_lifecycle_surface_tracks_execution_history_and_traci
     assert "execute_produces_trace" in witnesses
     assert "start_trace_failure_is_counted_and_workflow_runs" in witnesses
     assert "complete_failure_is_counted_and_partial_trace_discarded" in witnesses
+    assert "legacy_execute_uses_request_unique_trace_witness" in witnesses
     assert "create_session" in witnesses
     assert "ledger_returns_entries" in witnesses
     assert "execute_pipeline" in witnesses
