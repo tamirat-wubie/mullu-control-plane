@@ -122,6 +122,22 @@ def test_schema_requires_operator_closure_readiness_view() -> None:
     assert len(errors) >= 1
 
 
+def test_schema_requires_proof_obligation_view() -> None:
+    schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
+    invalid_schema = copy.deepcopy(schema)
+    invalid_schema["$defs"]["loop_summary"]["required"] = [
+        field
+        for field in invalid_schema["$defs"]["loop_summary"]["required"]
+        if field != "proof_obligation_view"
+    ]
+
+    errors = validator.validate_schema_artifact(invalid_schema)
+
+    assert any("schema missing required loop field: proof_obligation_view" in error for error in errors)
+    assert "proof_obligation_view" not in invalid_schema["$defs"]["loop_summary"]["required"]
+    assert len(errors) >= 1
+
+
 def test_schema_requires_authority_bindings() -> None:
     schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
     invalid_schema = copy.deepcopy(schema)
@@ -508,6 +524,50 @@ def test_operator_closure_readiness_view_cannot_mutate_or_claim_terminal_closure
     assert any("operator_closure_readiness_view read_only must be true" in error for error in errors)
     assert any("operator_closure_readiness_view mutation_route must be false" in error for error in errors)
     assert any("operator_closure_readiness_view terminal_closure must be false" in error for error in errors)
+
+
+def test_proof_obligation_view_must_match_loop_proof_inputs() -> None:
+    invalid_report = copy.deepcopy(validator.build_report())
+    view = invalid_report["loops"][0]["proof_obligation_view"]
+    view["required_evidence_refs"] = ["undeclared_evidence"]
+    view["satisfied_evidence_refs"] = ["unexpected_evidence"]
+    view["missing_evidence_refs"] = ["different_evidence"]
+    view["required_authority_refs"] = ["undeclared_authority"]
+    view["satisfied_authority_refs"] = ["unexpected_authority"]
+    view["missing_authority_refs"] = ["different_authority"]
+    view["closure_condition_refs"] = ["different_closure"]
+    view["validator_refs"] = ["different_validator"]
+    view["proof_surface_refs"] = ["different_surface"]
+    view["blocker_refs"] = ["different_gap"]
+    view["obligation_state"] = "proof_obligations_satisfied_terminal_review_required"
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("required_evidence_refs must match required_evidence" in error for error in errors)
+    assert any("satisfied_evidence_refs must match evidence_refs" in error for error in errors)
+    assert any("missing_evidence_refs must match missing_evidence" in error for error in errors)
+    assert any("required_authority_refs must match required_authority" in error for error in errors)
+    assert any("satisfied_authority_refs must match authority_refs" in error for error in errors)
+    assert any("missing_authority_refs must match missing_authority" in error for error in errors)
+    assert any("closure_condition_refs must match closure_conditions" in error for error in errors)
+    assert any("validator_refs must match closure_evidence_pack" in error for error in errors)
+    assert any("proof_surface_refs must match closure_evidence_pack" in error for error in errors)
+    assert any("blocker_refs must match open_blockers" in error for error in errors)
+    assert any("obligation_state must match blockers" in error for error in errors)
+
+
+def test_proof_obligation_view_cannot_execute_validator_or_claim_terminal_closure() -> None:
+    invalid_report = copy.deepcopy(validator.build_report())
+    view = invalid_report["loops"][0]["proof_obligation_view"]
+    view["read_only"] = False
+    view["executes_validator"] = True
+    view["terminal_closure"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("proof_obligation_view read_only must be true" in error for error in errors)
+    assert any("proof_obligation_view executes_validator must be false" in error for error in errors)
+    assert any("proof_obligation_view terminal_closure must be false" in error for error in errors)
 
 
 def test_missing_evidence_requires_matching_blocker() -> None:

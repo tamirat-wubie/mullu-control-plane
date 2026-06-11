@@ -70,6 +70,7 @@ REQUIRED_LOOP_FIELDS = (
     "closure_report",
     "closure_evidence_pack",
     "operator_closure_readiness_view",
+    "proof_obligation_view",
     "open_blockers",
     "rollback_policy",
     "rollback_binding",
@@ -268,6 +269,7 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
             index,
         )
     )
+    errors.extend(_validate_proof_obligation_view(loop["proof_obligation_view"], loop, index))
     if loop["open_blockers"] and loop["status"] != "blocked":
         errors.append(f"loop {index} with blockers must be blocked")
     if loop["status"] in {"verified", "closed"} and loop["missing_evidence"]:
@@ -1261,6 +1263,114 @@ def _validate_operator_closure_readiness_view(
         errors.append(f"loop {index} operator_closure_readiness_view mutation_route must be false")
     if readiness_view["terminal_closure"] is not False:
         errors.append(f"loop {index} operator_closure_readiness_view terminal_closure must be false")
+    return errors
+
+
+def _validate_proof_obligation_view(
+    proof_view: Any,
+    loop: dict[str, Any],
+    index: int,
+) -> list[str]:
+    if not isinstance(proof_view, dict):
+        return [f"loop {index} proof_obligation_view must be an object"]
+    errors: list[str] = []
+    required_fields = {
+        "obligation_ref",
+        "loop_id",
+        "obligation_state",
+        "required_evidence_refs",
+        "satisfied_evidence_refs",
+        "missing_evidence_refs",
+        "required_authority_refs",
+        "satisfied_authority_refs",
+        "missing_authority_refs",
+        "closure_condition_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "blocker_refs",
+        "read_only",
+        "executes_validator",
+        "terminal_closure",
+    }
+    missing = sorted(required_fields - set(proof_view))
+    errors.extend(f"loop {index} proof_obligation_view missing field: {field_name}" for field_name in missing)
+    extra = sorted(set(proof_view) - required_fields)
+    errors.extend(f"loop {index} proof_obligation_view has unexpected field: {field_name}" for field_name in extra)
+    if missing:
+        return errors
+    for field_name in ("obligation_ref", "loop_id", "obligation_state"):
+        if not isinstance(proof_view[field_name], str) or not proof_view[field_name]:
+            errors.append(f"loop {index} proof_obligation_view {field_name} must be non-empty")
+    for field_name in (
+        "required_evidence_refs",
+        "satisfied_evidence_refs",
+        "missing_evidence_refs",
+        "required_authority_refs",
+        "satisfied_authority_refs",
+        "missing_authority_refs",
+        "closure_condition_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "blocker_refs",
+    ):
+        errors.extend(
+            _validate_text_list(
+                proof_view[field_name],
+                f"loop {index} proof_obligation_view {field_name}",
+            )
+        )
+        if (
+            field_name
+            in {
+                "required_evidence_refs",
+                "required_authority_refs",
+                "closure_condition_refs",
+                "validator_refs",
+                "proof_surface_refs",
+            }
+            and isinstance(proof_view[field_name], list)
+            and not proof_view[field_name]
+        ):
+            errors.append(f"loop {index} proof_obligation_view {field_name} must be non-empty")
+    if proof_view["loop_id"] != loop["loop_id"]:
+        errors.append(f"loop {index} proof_obligation_view loop_id must match loop_id")
+    if set(proof_view["required_evidence_refs"]) != set(loop["required_evidence"]):
+        errors.append(f"loop {index} proof_obligation_view required_evidence_refs must match required_evidence")
+    if set(proof_view["satisfied_evidence_refs"]) != set(loop["evidence_refs"]):
+        errors.append(f"loop {index} proof_obligation_view satisfied_evidence_refs must match evidence_refs")
+    if set(proof_view["missing_evidence_refs"]) != set(loop["missing_evidence"]):
+        errors.append(f"loop {index} proof_obligation_view missing_evidence_refs must match missing_evidence")
+    if set(proof_view["required_authority_refs"]) != set(loop["required_authority"]):
+        errors.append(f"loop {index} proof_obligation_view required_authority_refs must match required_authority")
+    if set(proof_view["satisfied_authority_refs"]) != set(loop["authority_refs"]):
+        errors.append(f"loop {index} proof_obligation_view satisfied_authority_refs must match authority_refs")
+    if set(proof_view["missing_authority_refs"]) != set(loop["missing_authority"]):
+        errors.append(f"loop {index} proof_obligation_view missing_authority_refs must match missing_authority")
+    if set(proof_view["closure_condition_refs"]) != set(loop["closure_conditions"]):
+        errors.append(f"loop {index} proof_obligation_view closure_condition_refs must match closure_conditions")
+    closure_evidence_pack = loop["closure_evidence_pack"]
+    if not isinstance(closure_evidence_pack, dict):
+        errors.append(f"loop {index} proof_obligation_view requires closure_evidence_pack object")
+        closure_evidence_pack = {}
+    if set(proof_view["validator_refs"]) != set(closure_evidence_pack.get("validator_refs", ())):
+        errors.append(f"loop {index} proof_obligation_view validator_refs must match closure_evidence_pack")
+    if set(proof_view["proof_surface_refs"]) != set(closure_evidence_pack.get("proof_surface_refs", ())):
+        errors.append(f"loop {index} proof_obligation_view proof_surface_refs must match closure_evidence_pack")
+    if set(proof_view["blocker_refs"]) != set(loop["open_blockers"]):
+        errors.append(f"loop {index} proof_obligation_view blocker_refs must match open_blockers")
+    expected_obligation_state = (
+        "blocked_by_missing_proof"
+        if loop["open_blockers"]
+        else "proof_obligations_satisfied_terminal_review_required"
+    )
+    if proof_view["obligation_state"] != expected_obligation_state:
+        errors.append(f"loop {index} proof_obligation_view obligation_state must match blockers")
+    if proof_view["read_only"] is not True:
+        errors.append(f"loop {index} proof_obligation_view read_only must be true")
+    if proof_view["executes_validator"] is not False:
+        errors.append(f"loop {index} proof_obligation_view executes_validator must be false")
+    if proof_view["terminal_closure"] is not False:
+        errors.append(f"loop {index} proof_obligation_view terminal_closure must be false")
     return errors
 
 
