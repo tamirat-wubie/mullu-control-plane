@@ -10,6 +10,7 @@ frontend can consume. Seven views cover the core operational needs:
 - Providers: Anthropic/OpenAI/Gemini/Ollama status, latency, cost
 - Scheduler: jobs, execution history, health
 - Note Memory: governed note lifecycle summaries and promotion queues
+- Spatial Map: governed runtime, launch, and boundary path panels
 """
 from __future__ import annotations
 
@@ -391,6 +392,193 @@ def console_note_memory_view(limit: int = 25, retrieval_receipt_ref: str = "", r
     return HTMLResponse(_render_note_memory_console_html(payload))
 
 
+@router.get("/api/v1/console/spatial-map")
+def console_spatial_map():
+    """Return the operator spatial-map panel read model."""
+    deps.metrics.inc("requests_governed")
+    return _spatial_map_console_payload()
+
+
+@router.get("/api/v1/console/spatial-map/view", response_class=HTMLResponse)
+def console_spatial_map_view():
+    """Browser-facing read-only spatial-map operator panel."""
+
+    deps.metrics.inc("requests_governed")
+    return HTMLResponse(_render_spatial_map_console_html(_spatial_map_console_payload()))
+
+
+def _spatial_map_console_payload() -> dict[str, object]:
+    """Build panel groupings from the bounded spatial governance map."""
+
+    spatial_map = build_gateway_spatial_map(production_readiness_checks()).to_dict()
+    paths = {str(path.get("id", "")): path for path in _sequence_of_mappings(spatial_map.get("paths"))}
+    judgments = {
+        str(judgment.get("path_id", "")): judgment
+        for judgment in _sequence_of_mappings(spatial_map.get("judgments"))
+    }
+    statuses = [str(judgment.get("status", "unknown")) for judgment in judgments.values()]
+    panels = [
+        _spatial_path_panel(
+            "Runtime Path Panel",
+            ("dashboard_health_check", "governed_request_flow"),
+            paths,
+            judgments,
+        ),
+        _spatial_path_panel(
+            "Launch Boundary Panel",
+            ("readiness_launch_gate", "stateful_command_path", "capability_execution_path"),
+            paths,
+            judgments,
+        ),
+        _spatial_path_panel(
+            "Fracture Panel",
+            ("source_to_secret",),
+            paths,
+            judgments,
+        ),
+    ]
+    return {
+        "spatial_map": spatial_map,
+        "summary": {
+            "allowed_paths": statuses.count("allowed"),
+            "blocked_paths": statuses.count("blocked"),
+            "unknown_paths": statuses.count("unknown"),
+            "blocker_count": len(spatial_map.get("blockers", ())),
+        },
+        "panels": panels,
+        "governed": True,
+    }
+
+
+def _spatial_path_panel(
+    title: str,
+    path_ids: tuple[str, ...],
+    paths: dict[str, dict[str, object]],
+    judgments: dict[str, dict[str, object]],
+) -> dict[str, object]:
+    rows: list[dict[str, object]] = []
+    for path_id in path_ids:
+        path = paths.get(path_id, {})
+        judgment = judgments.get(path_id, {})
+        rows.append(
+            {
+                "path_id": path_id,
+                "source": str(path.get("source", "")),
+                "target": str(path.get("target", "")),
+                "crosses": _string_sequence(path.get("crosses", ())),
+                "status": str(judgment.get("status", "unknown")),
+                "reasons": _string_sequence(judgment.get("reasons", ())),
+                "witness": _string_sequence(judgment.get("witness", ())),
+            }
+        )
+    return {"title": title, "paths": rows}
+
+
+def _render_spatial_map_console_html(payload: dict[str, object]) -> str:
+    """Render the spatial map panel as escaped operator HTML."""
+
+    spatial_map = _mapping_value(payload, "spatial_map")
+    summary = _mapping_value(payload, "summary")
+    frame = escape(str(spatial_map.get("frame", "")))
+    blockers = [escape(str(blocker)) for blocker in spatial_map.get("blockers", ()) if isinstance(blocker, str)]
+    blocker_items = "\n".join(f"<li><code>{blocker}</code></li>" for blocker in blockers)
+    if not blocker_items:
+        blocker_items = "<li>No blockers</li>"
+    metrics = [
+        ("Allowed Paths", summary.get("allowed_paths", 0)),
+        ("Unknown Paths", summary.get("unknown_paths", 0)),
+        ("Blocked Paths", summary.get("blocked_paths", 0)),
+        ("Blockers", summary.get("blocker_count", 0)),
+    ]
+    metric_items = "\n".join(
+        "<li>"
+        f"<span>{escape(label)}</span>"
+        f"<strong>{escape(str(value))}</strong>"
+        "</li>"
+        for label, value in metrics
+    )
+    panels = "\n".join(_spatial_panel_table(panel) for panel in _sequence_of_mappings(payload.get("panels")))
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullu Spatial Governance Console</title>
+  <style>
+    body {{ font-family: system-ui, sans-serif; margin: 24px; color: #17202a; background: #fafbfc; overflow-x: hidden; }}
+    header {{ margin-bottom: 20px; overflow-wrap: anywhere; }}
+    nav {{ display: flex; flex-wrap: wrap; gap: 14px; margin: 12px 0 18px; }}
+    a {{ color: #0f766e; }}
+    code {{ overflow-wrap: anywhere; }}
+    .metrics {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; padding: 0; }}
+    .metrics li {{ list-style: none; border: 1px solid #d8dee4; border-radius: 6px; padding: 10px; background: #ffffff; }}
+    .metrics span {{ display: block; color: #57606a; font-size: 12px; }}
+    .metrics strong {{ display: block; margin-top: 4px; font-size: 18px; }}
+    table {{ border-collapse: collapse; width: 100%; margin: 12px 0 28px; background: #ffffff; }}
+    .table-scroll {{ width: 100%; overflow-x: auto; }}
+    .table-scroll table {{ min-width: 860px; }}
+    th, td {{ border: 1px solid #d8dee4; padding: 8px; text-align: left; font-size: 14px; vertical-align: top; }}
+    th {{ background: #f6f8fa; }}
+    .status {{ font-weight: 700; }}
+    .allowed {{ color: #166534; }}
+    .unknown {{ color: #854d0e; }}
+    .blocked {{ color: #9f1239; }}
+    @media (max-width: 480px) {{
+      body {{ margin: 16px; }}
+      h1 {{ font-size: 28px; line-height: 1.18; max-width: 320px; }}
+    }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mullu Spatial<br>Governance Console</h1>
+    <nav>
+      <a href="/api/v1/console/spatial-map">json read model</a>
+      <a href="/api/v1/console">full console json</a>
+    </nav>
+    <p>Frame: <code>{frame}</code></p>
+    <ul class="metrics">
+      {metric_items}
+    </ul>
+  </header>
+  {panels}
+  <section>
+    <h2>Blockers</h2>
+    <ul>
+      {blocker_items}
+    </ul>
+  </section>
+</body>
+</html>"""
+
+
+def _spatial_panel_table(panel: dict[str, object]) -> str:
+    title = escape(str(panel.get("title", "")))
+    rows = _sequence_of_mappings(panel.get("paths"))
+    body = "\n".join(
+        "<tr>"
+        f"<td><code>{escape(str(row.get('path_id', '')))}</code></td>"
+        f"<td>{escape(str(row.get('source', '')))}</td>"
+        f"<td>{escape(str(row.get('target', '')))}</td>"
+        f"<td>{escape(', '.join(str(item) for item in row.get('crosses', ())))}</td>"
+        f"<td class=\"status {escape(str(row.get('status', 'unknown')))}\">{escape(str(row.get('status', 'unknown')))}</td>"
+        f"<td>{escape(', '.join(str(item) for item in row.get('reasons', ())))}</td>"
+        "</tr>"
+        for row in rows
+    )
+    if not body:
+        body = "<tr><td colspan=\"6\">No paths</td></tr>"
+    return f"""
+  <section>
+    <h2>{title}</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Path</th><th>Source</th><th>Target</th><th>Boundaries</th><th>Status</th><th>Reasons</th></tr></thead>
+        <tbody>{body}</tbody>
+      </table>
+    </div>
+  </section>"""
+
+
 def _render_note_memory_console_html(payload: dict[str, object]) -> str:
     """Render the note-memory read model as a compact escaped HTML console."""
 
@@ -580,9 +768,15 @@ def _mapping_value(value: dict[str, object], key: str) -> dict[str, object]:
 
 
 def _sequence_of_mappings(value: object) -> list[dict[str, object]]:
-    if not isinstance(value, list):
+    if not isinstance(value, (list, tuple)):
         return []
     return [dict(item) for item in value if isinstance(item, dict)]
+
+
+def _string_sequence(value: object) -> list[str]:
+    if not isinstance(value, (list, tuple)):
+        return []
+    return [str(item) for item in value]
 
 
 @router.get("/api/v1/console")

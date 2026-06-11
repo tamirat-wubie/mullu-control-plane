@@ -894,9 +894,9 @@
     "by_coverage_state": {
       "proven": 257,
       "unproven": 0,
-      "witnessed": 153
+      "witnessed": 155
     },
-    "route_count": 410,
+    "route_count": 412,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1381,6 +1381,16 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/console/shadow",
+        "surface_id": "operator_console_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/console/spatial-map",
+        "surface_id": "operator_console_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/console/spatial-map/view",
         "surface_id": "operator_console_read_models"
       },
       {
@@ -4048,7 +4058,7 @@
         "mcoi/tests/test_console.py",
         "mcoi/tests/test_inceptadive_shadow_routes.py"
       ],
-      "notes": "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, note-memory HTML, and aggregate views with governed response witnesses.",
+      "notes": "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, spatial governance panels, HTML views, and aggregate views with governed response witnesses.",
       "representative_paths": [
         "/api/v1/console",
         "/api/v1/console/home",
@@ -4059,7 +4069,9 @@
         "/api/v1/console/scheduler",
         "/api/v1/console/shadow",
         "/api/v1/console/note-memory",
-        "/api/v1/console/note-memory/view"
+        "/api/v1/console/note-memory/view",
+        "/api/v1/console/spatial-map",
+        "/api/v1/console/spatial-map/view"
       ],
       "request_proof": "read_model",
       "runtime_witness_anchor_aliases": {
@@ -4089,6 +4101,12 @@
         "console_runs_bounds_recent_audit_entries": [
           "console_runs"
         ],
+        "console_spatial_map_html_renders_blockers": [
+          "console_spatial_map_html_view_renders_blockers"
+        ],
+        "console_spatial_map_returns_panel_read_model": [
+          "console_spatial_map_panel_read_model"
+        ],
         "full_console_includes_spatial_map_read_model": [
           "full_console"
         ],
@@ -4106,7 +4124,9 @@
         "console_note_memory_returns_read_only_lifecycle_summary",
         "console_note_memory_html_escapes_read_model",
         "console_note_memory_fails_closed_without_store_path",
-        "full_console_includes_spatial_map_read_model"
+        "full_console_includes_spatial_map_read_model",
+        "console_spatial_map_returns_panel_read_model",
+        "console_spatial_map_html_renders_blockers"
       ],
       "surface_id": "operator_console_read_models"
     },
@@ -9783,8 +9803,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1244,
-    "runtime_witness_count": 1244,
+    "exact_test_anchor_count": 1246,
+    "runtime_witness_count": 1246,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11277,10 +11297,22 @@
               "mcoi/tests/test_operator_console.py::test_full_console"
             ],
             "witness": "full_console_includes_spatial_map_read_model"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_spatial_map_panel_read_model"
+            ],
+            "witness": "console_spatial_map_returns_panel_read_model"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_spatial_map_html_view_renders_blockers"
+            ],
+            "witness": "console_spatial_map_html_renders_blockers"
           }
         ],
-        "exact_test_anchor_count": 10,
-        "runtime_witness_count": 10,
+        "exact_test_anchor_count": 12,
+        "runtime_witness_count": 12,
         "surface_id": "operator_console_read_models",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
