@@ -31,6 +31,25 @@ def _cors_allow_origins(cors_origins: list[str], env: str) -> list[str]:
     return []
 
 
+def _request_id_from_state(request: StarletteRequest) -> str:
+    """Return the server-owned request id already attached to request state."""
+    request_id = getattr(request.state, "request_id", "")
+    if isinstance(request_id, str) and request_id.startswith(REQUEST_ID_PREFIX):
+        return request_id
+    return ""
+
+
+def _with_request_id_header(
+    response: StarletteJSONResponse,
+    request: StarletteRequest,
+) -> StarletteJSONResponse:
+    """Attach the request witness id to bounded exception responses when present."""
+    request_id = _request_id_from_state(request)
+    if request_id:
+        response.headers[REQUEST_ID_HEADER] = request_id
+    return response
+
+
 class RequestIdMiddleware(BaseHTTPMiddleware):
     """Attach a server-owned request witness id to every HTTP response."""
 
@@ -110,13 +129,16 @@ def install_global_exception_handler(
             metrics.inc("requests_rejected")
         except Exception:
             pass
-        return StarletteJSONResponse(
-            status_code=429,
-            content={
-                "error": "tenant registry capacity exhausted",
-                "error_code": "tenant_registry_capacity_exhausted",
-                "governed": True,
-            },
+        return _with_request_id_header(
+            StarletteJSONResponse(
+                status_code=429,
+                content={
+                    "error": "tenant registry capacity exhausted",
+                    "error_code": "tenant_registry_capacity_exhausted",
+                    "governed": True,
+                },
+            ),
+            request,
         )
 
     async def cross_tenant_record_handler(
@@ -130,13 +152,16 @@ def install_global_exception_handler(
             metrics.inc("requests_rejected")
         except Exception:
             pass
-        return StarletteJSONResponse(
-            status_code=403,
-            content={
-                "error": "cross-tenant access denied",
-                "error_code": "cross_tenant_denied",
-                "governed": True,
-            },
+        return _with_request_id_header(
+            StarletteJSONResponse(
+                status_code=403,
+                content={
+                    "error": "cross-tenant access denied",
+                    "error_code": "cross_tenant_denied",
+                    "governed": True,
+                },
+            ),
+            request,
         )
 
     async def invariant_violation_handler(
@@ -147,14 +172,17 @@ def install_global_exception_handler(
             metrics.inc("requests_rejected")
         except Exception:
             pass
-        return StarletteJSONResponse(
-            status_code=400,
-            content={
-                "error": "request violates a governance invariant",
-                "detail": str(exc)[:200],
-                "error_code": "invariant_violation",
-                "governed": True,
-            },
+        return _with_request_id_header(
+            StarletteJSONResponse(
+                status_code=400,
+                content={
+                    "error": "request violates a governance invariant",
+                    "detail": str(exc)[:200],
+                    "error_code": "invariant_violation",
+                    "governed": True,
+                },
+            ),
+            request,
         )
 
     async def recursion_limit_handler(
@@ -165,13 +193,16 @@ def install_global_exception_handler(
             metrics.inc("requests_rejected")
         except Exception:
             pass
-        return StarletteJSONResponse(
-            status_code=400,
-            content={
-                "error": "request structure is too deeply nested",
-                "error_code": "request_too_deeply_nested",
-                "governed": True,
-            },
+        return _with_request_id_header(
+            StarletteJSONResponse(
+                status_code=400,
+                content={
+                    "error": "request structure is too deeply nested",
+                    "error_code": "request_too_deeply_nested",
+                    "governed": True,
+                },
+            ),
+            request,
         )
 
     async def global_exception_handler(
@@ -189,12 +220,15 @@ def install_global_exception_handler(
             )
         except Exception:
             pass
-        return StarletteJSONResponse(
-            status_code=500,
-            content={
-                "error": "Internal server error",
-                "governed": True,
-            },
+        return _with_request_id_header(
+            StarletteJSONResponse(
+                status_code=500,
+                content={
+                    "error": "Internal server error",
+                    "governed": True,
+                },
+            ),
+            request,
         )
 
     app.add_exception_handler(CrossTenantRecordError, cross_tenant_record_handler)

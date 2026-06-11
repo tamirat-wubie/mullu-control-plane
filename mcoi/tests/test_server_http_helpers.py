@@ -13,6 +13,14 @@ from mcoi_runtime.app import server_http
 from mcoi_runtime.app import server_policy
 
 
+def _assert_request_id_shape(request_id: str) -> None:
+    request_id_hex = request_id.removeprefix(server_http.REQUEST_ID_PREFIX)
+
+    assert request_id.startswith(server_http.REQUEST_ID_PREFIX)
+    assert len(request_id) == len(server_http.REQUEST_ID_PREFIX) + 32
+    assert all(character in "0123456789abcdef" for character in request_id_hex)
+
+
 def test_configure_cors_middleware_adds_preflight_headers() -> None:
     app = FastAPI()
     server_http.configure_cors_middleware(
@@ -112,6 +120,51 @@ def test_global_exception_handler_returns_bounded_500() -> None:
 
     assert resp.status_code == 500
     assert resp.json() == {"error": "Internal server error", "governed": True}
+    assert metrics.calls == [("errors_total", 1)]
+    assert logger.messages == ["Unhandled exception on /explode: RuntimeError"]
+
+
+def test_global_exception_response_preserves_request_id_witness() -> None:
+    class Metrics:
+        def __init__(self) -> None:
+            self.calls: list[tuple[str, int]] = []
+
+        def inc(self, name: str, value: int = 1) -> None:
+            self.calls.append((name, value))
+
+    class Logger:
+        def __init__(self) -> None:
+            self.messages: list[str] = []
+
+        def log(self, level: str, message: str) -> None:
+            self.messages.append(message)
+
+    class Levels:
+        ERROR = "error"
+
+    app = FastAPI()
+    app.add_middleware(server_http.RequestIdMiddleware)
+    metrics = Metrics()
+    logger = Logger()
+    server_http.install_global_exception_handler(
+        app=app,
+        metrics=metrics,
+        platform_logger=logger,
+        log_levels=Levels,
+    )
+
+    @app.get("/explode")
+    def explode() -> dict[str, str]:
+        raise RuntimeError("secret detail")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.get("/explode", headers={server_http.REQUEST_ID_HEADER: "req-client-spoof"})
+    response_request_id = resp.headers[server_http.REQUEST_ID_HEADER]
+
+    assert resp.status_code == 500
+    assert resp.json() == {"error": "Internal server error", "governed": True}
+    assert response_request_id != "req-client-spoof"
+    _assert_request_id_shape(response_request_id)
     assert metrics.calls == [("errors_total", 1)]
     assert logger.messages == ["Unhandled exception on /explode: RuntimeError"]
 
