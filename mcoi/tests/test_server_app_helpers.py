@@ -93,12 +93,17 @@ def test_create_governed_app_wires_middleware_and_http_boundaries() -> None:
         validate_cors_origins_for_env=lambda origins, env: None,
         fastapi_cls=FakeFastAPI,
         governance_middleware_cls="governance-middleware",
+        request_id_middleware_cls="request-id-middleware",
         configure_cors_middleware_fn=fake_configure_cors_middleware_fn,
         install_global_exception_handler_fn=fake_install_global_exception_handler_fn,
         warnings_module="warnings-module",
     )
 
-    middleware_cls, middleware_kwargs = captured["middleware"]
+    middleware_cls, middleware_kwargs = next(
+        middleware
+        for middleware in app.middlewares
+        if middleware[0] == "governance-middleware"
+    )
     middleware_kwargs["metrics_fn"]("requests_total", 3)
     middleware_kwargs["on_reject"]({"tenant_id": "tenant-a", "path": "/guarded"})
     middleware_kwargs["on_allow"]({"tenant_id": "tenant-a", "path": "/guarded"})
@@ -115,4 +120,5 @@ def test_create_governed_app_wires_middleware_and_http_boundaries() -> None:
     assert audit_trail.records[1]["actor_id"] == "tenant-a"
     assert captured["cors_kwargs"]["env"] == "test"
     assert captured["cors_kwargs"]["warnings_module"] == "warnings-module"
+    assert app.middlewares[-1] == ("request-id-middleware", {})
     assert captured["exception_kwargs"]["app"] is app

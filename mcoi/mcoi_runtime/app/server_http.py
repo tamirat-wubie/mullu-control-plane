@@ -8,13 +8,18 @@ Invariants: CORS policy remains fail-closed outside dev, internal exception deta
 from __future__ import annotations
 
 from typing import Any, Callable
+from uuid import uuid4
 
 from fastapi import FastAPI
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request as StarletteRequest
 from starlette.responses import JSONResponse as StarletteJSONResponse
+from starlette.responses import Response as StarletteResponse
 
 _DEV_CORS_ENVS = frozenset({"local_dev", "test"})
+REQUEST_ID_HEADER = "X-Request-Id"
+REQUEST_ID_PREFIX = "req-"
 
 
 def _cors_allow_origins(cors_origins: list[str], env: str) -> list[str]:
@@ -24,6 +29,26 @@ def _cors_allow_origins(cors_origins: list[str], env: str) -> list[str]:
     if env.strip().lower() in _DEV_CORS_ENVS:
         return ["*"]
     return []
+
+
+class RequestIdMiddleware(BaseHTTPMiddleware):
+    """Attach a server-owned request witness id to every HTTP response."""
+
+    async def dispatch(
+        self,
+        request: StarletteRequest,
+        call_next: Any,
+    ) -> StarletteResponse:
+        """Add the request id header while preserving downstream errors.
+
+        Input contract: Starlette request. Output contract: response with
+        request id header. Error contract: downstream exceptions propagate.
+        """
+        request_id = f"{REQUEST_ID_PREFIX}{uuid4().hex}"
+        request.state.request_id = request_id
+        response = await call_next(request)
+        response.headers[REQUEST_ID_HEADER] = request_id
+        return response
 
 
 def configure_cors_middleware(
@@ -46,7 +71,7 @@ def configure_cors_middleware(
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        expose_headers=["X-Request-Id", "X-Governed"],
+        expose_headers=[REQUEST_ID_HEADER, "X-Governed"],
     )
 
 
