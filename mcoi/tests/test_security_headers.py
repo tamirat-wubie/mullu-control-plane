@@ -253,6 +253,31 @@ class TestMiddlewareIntegration:
 
 # ── Edge cases ─────────────────────────────────────────────────
 
+class TestServedAppSecurityHeaders:
+    def test_served_health_response_includes_security_headers(self, test_client):
+        resp = test_client.get("/health")
+        csp = resp.headers["Content-Security-Policy"]
+
+        assert resp.status_code == 200
+        assert resp.headers["X-Content-Type-Options"] == "nosniff"
+        assert resp.headers["X-Frame-Options"] == "DENY"
+        assert resp.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
+        assert "connect-src *" in csp
+
+    def test_served_governance_rejection_includes_security_headers(self, test_client):
+        resp = test_client.post(
+            "/api/v1/workflow/execute",
+            content="{",
+            headers={"content-type": "application/json"},
+        )
+
+        assert resp.status_code == 403
+        assert resp.json()["governed"] is True
+        assert resp.headers["X-Content-Type-Options"] == "nosniff"
+        assert resp.headers["X-Frame-Options"] == "DENY"
+        assert resp.headers["Cache-Control"] == "no-store"
+
+
 class TestEdgeCases:
     def test_empty_custom_headers(self):
         cfg = SecurityHeadersConfig(custom_headers={})

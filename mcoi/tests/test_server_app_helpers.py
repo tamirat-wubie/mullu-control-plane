@@ -94,6 +94,7 @@ def test_create_governed_app_wires_middleware_and_http_boundaries() -> None:
         fastapi_cls=FakeFastAPI,
         governance_middleware_cls="governance-middleware",
         request_id_middleware_cls="request-id-middleware",
+        security_headers_middleware_cls="security-headers-middleware",
         configure_cors_middleware_fn=fake_configure_cors_middleware_fn,
         install_global_exception_handler_fn=fake_install_global_exception_handler_fn,
         warnings_module="warnings-module",
@@ -120,5 +121,8 @@ def test_create_governed_app_wires_middleware_and_http_boundaries() -> None:
     assert audit_trail.records[1]["actor_id"] == "tenant-a"
     assert captured["cors_kwargs"]["env"] == "test"
     assert captured["cors_kwargs"]["warnings_module"] == "warnings-module"
-    assert app.middlewares[-1] == ("request-id-middleware", {})
+    assert app.middlewares[-2] == ("request-id-middleware", {})
+    security_middleware_cls, security_middleware_kwargs = app.middlewares[-1]
+    assert security_middleware_cls == "security-headers-middleware"
+    assert security_middleware_kwargs["config"].environment == "test"
     assert captured["exception_kwargs"]["app"] is app
