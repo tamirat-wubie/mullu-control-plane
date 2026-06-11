@@ -42,7 +42,7 @@ from gateway.interpretation import (
 from gateway.intent_resolver import CapabilityIntentResolver
 from gateway.mcp_capability_fabric import MCPAuthorityRecords, install_mcp_authority_records
 from gateway.observability import GatewayObservabilityRecorder
-from gateway.plan import CapabilityPlan, CapabilityPlanBuilder, CapabilityPlanStep
+from gateway.plan import CapabilityPlan, CapabilityPlanBuilder, CapabilityPlanPreview, CapabilityPlanStep, preview_for_plan
 from gateway.plan_executor import CapabilityPlanExecutor, CapabilityPlanStepResult
 from gateway.plan_ledger import CapabilityPlanLedger, CapabilityPlanWitnessRecord
 from gateway.tenant_identity import InMemoryTenantIdentityStore, TenantIdentityStore, TenantMapping
@@ -116,6 +116,7 @@ class GatewayRouter:
         isolated_capability_executor: IsolatedCapabilityExecutor | None = None,
         mcp_authority_records: MCPAuthorityRecords | None = None,
         observability_recorder: GatewayObservabilityRecorder | None = None,
+        preview_plans: bool = False,
     ) -> None:
         if capability_dispatcher is not None and skill_dispatcher is not None:
             raise ValueError("use capability_dispatcher or skill_dispatcher, not both")
@@ -140,6 +141,7 @@ class GatewayRouter:
         if mcp_authority_records is not None:
             install_mcp_authority_records(self._authority_obligation_mesh, mcp_authority_records)
         self._defer_approved_execution = defer_approved_execution
+        self._preview_plans = preview_plans
         self._closure_kernel = CausalClosureKernel(
             commands=self._commands,
             platform=self._platform,
@@ -391,6 +393,29 @@ class GatewayRouter:
                 "interpretation_receipt": interpretation_receipt.to_dict(),
                 "interpretation_receipt_id": interpretation_receipt.receipt_id,
                 "safe_default": clarification_request.safe_default,
+            },
+        )
+
+    def _plan_preview_response(
+        self,
+        *,
+        message: GatewayMessage,
+        plan_preview: CapabilityPlanPreview,
+    ) -> GatewayResponse:
+        """Return a governed read-only plan preview without execution authority."""
+        return GatewayResponse(
+            message_id=self._gen_id("plan-preview-resp", message.message_id),
+            channel=message.channel,
+            recipient_id=message.sender_id,
+            body="I prepared a governed plan preview for review before execution.",
+            governed=True,
+            metadata={
+                "plan_preview_required": True,
+                "plan_preview": plan_preview.to_dict(),
+                "plan_preview_id": plan_preview.preview_id,
+                "plan_id": plan_preview.plan_id,
+                "execution_allowed": plan_preview.execution_allowed,
+                "safe_default": plan_preview.safe_default,
             },
         )
 
@@ -1097,6 +1122,23 @@ class GatewayRouter:
             tenant_id=mapping.tenant_id,
             identity_id=mapping.identity_id,
         )
+        if self._preview_plans and plan is not None:
+            plan_preview = preview_for_plan(plan=plan, created_at=self._clock())
+            response = self._plan_preview_response(message=message, plan_preview=plan_preview)
+            response = self._send_response(response)
+            self._dedup.record(message.channel, message.sender_id, message.message_id, response)
+            return self._observe_gateway_response(
+                message=message,
+                response=response,
+                started_at=started_at,
+                mapping=mapping,
+                stage_names=(
+                    "request_received",
+                    "tenant_resolved",
+                    "plan_previewed",
+                    "response_observed",
+                ),
+            )
         if plan is not None and len(plan.steps) > 1:
             response = self._execute_plan(plan=plan, message=message, mapping=mapping)
             response = self._send_response(response)

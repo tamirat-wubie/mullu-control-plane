@@ -59,6 +59,12 @@
       "surface": "capability"
     },
     {
+      "schema_id": "capability-plan-preview",
+      "path": "schemas/capability_plan_preview.schema.json",
+      "urn": "urn:mullusi:schema:capability-plan-preview:1",
+      "surface": "planning"
+    },
+    {
       "schema_id": "capability-improvement-portfolio",
       "path": "schemas/capability_improvement_portfolio.schema.json",
       "urn": "urn:mullusi:schema:capability-improvement-portfolio:1",

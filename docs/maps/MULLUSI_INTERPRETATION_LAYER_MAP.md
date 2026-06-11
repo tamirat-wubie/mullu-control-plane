@@ -89,6 +89,34 @@ ClarificationRequest {
 }
 ```
 
+## 4b. CapabilityPlanPreview contract
+
+```text
+CapabilityPlanPreview {
+  preview_id
+  plan_id
+  tenant_id
+  identity_id
+  goal_hash
+  step_count
+  steps
+  risk_tier
+  approval_required
+  evidence_required
+  execution_allowed
+  safe_default
+  created_at
+}
+```
+
+Preview rule:
+
+```text
+The preview exposes plan topology, risk, approval, and evidence obligations.
+It does not grant execution authority.
+It does not store raw goal text or raw step params.
+```
+
 Receipt rule:
 
 ```text

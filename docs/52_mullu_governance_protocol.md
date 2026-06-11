@@ -54,6 +54,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 23. Interpreted requests are public contracts when they bind tenant, actor, channel, raw-message hash, intent class, slots, risk precheck, confidence, and governance constraints before planning, search, approval, or execution.
 24. Interpretation receipts are public contracts when they record what the gateway believed the user requested without storing raw message text or raw parameter values.
 25. Clarification requests are public contracts when they block missing-slot interpretation from planning or execution and carry one safe user question with default `no_execution`.
+26. Capability plan previews are public contracts when they expose read-only plan topology, risk, approval, and evidence obligations before execution without storing raw goal text or raw step params.
 23. Domain operating packs are public contracts when they package governed schemas, policies, workflows, connectors, evals, risk rules, evidence exports, and dashboard views behind activation-blocked certification.
 24. Multimodal operation receipts are public contracts when they gate modality-bound worker dispatch with source-preserving evidence.
 25. Temporal operation receipts are public contracts when they certify runtime-owned time checks for schedules, expiry, approval validity, evidence freshness, budget windows, causal prerequisites, and monotonic duration witnesses.
@@ -136,7 +137,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 187 schemas
+protocol manifest ok: 188 schemas
 ```
 
 STATUS:

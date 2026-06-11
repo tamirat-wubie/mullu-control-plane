@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:capability-plan-preview:1",
+  "title": "Capability Plan Preview",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "preview_id",
+    "plan_id",
+    "tenant_id",
+    "identity_id",
+    "goal_hash",
+    "step_count",
+    "steps",
+    "risk_tier",
+    "approval_required",
+    "evidence_required",
+    "execution_allowed",
+    "safe_default",
+    "created_at",
+    "metadata"
+  ],
+  "properties": {
+    "preview_id": {
+      "type": "string",
+      "pattern": "^plan-preview-[a-f0-9]{16}$"
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^plan-[a-f0-9]{16}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "identity_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "goal_hash": {
+      "type": "string",
+      "minLength": 32
+    },
+    "step_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "step_id",
+          "capability_id",
+          "depends_on",
+          "param_names",
+          "params_hash"
+        ],
+        "properties": {
+          "step_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "capability_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "param_names": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "params_hash": {
+            "type": "string",
+            "minLength": 32
+          }
+        }
+      }
+    },
+    "risk_tier": {
+      "type": "string",
+      "enum": ["low", "medium", "high"]
+    },
+    "approval_required": {
+      "type": "boolean"
+    },
+    "evidence_required": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "execution_allowed": {
+      "type": "boolean",
+      "const": false
+    },
+    "safe_default": {
+      "type": "string",
+      "enum": ["await_approval_or_explicit_execution"]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

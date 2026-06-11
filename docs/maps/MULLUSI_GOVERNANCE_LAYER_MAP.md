@@ -35,7 +35,7 @@ Receipts prove.
 | Authority Mesh | check actor, role, channel, tenant, and action authority | actor, tenant, channel, risk | authority decision | partial | Add channel approval-strength matrix. |
 | Approval Router | request, record, expire, or deny approval | governed plan, actor, channel | ApprovalReceipt | implemented / partial | Bind approvals to request ID and expiration. |
 | Command Ledger | hold command state and idempotency | approved command | ledger record | implemented / partial | Bind UI Current Task to ledger state. |
-| Plan Builder | create actionable plan preview | action intent and slots | PlanReceipt | implemented / partial | Require plan preview before mutation. |
+| Plan Builder | create actionable plan preview | action intent and slots | CapabilityPlanPreview | implemented / partial | Add UI binding and budget/tool display before mutation. |
 | Plan Ledger | retain plan versions and changes | plan, correction, approval | plan trace | partial | Record re-plan on scope change. |
 | Causal Closure Kernel | validate final evidence | worker receipts, plan, policy | ClosureReceipt or blocker | implemented / partial | Block success without terminal certificate. |
 

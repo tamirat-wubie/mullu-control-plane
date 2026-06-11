@@ -601,6 +601,42 @@ class TestMessageRouting:
         assert interpreted["missing_slots"] == []
         assert platform.sessions_opened == 1
 
+    def test_plan_preview_mode_returns_redacted_plan_without_execution(self):
+        platform = StubPlatform(llm_response="should not run")
+        ledger = CommandLedger()
+        router = GatewayRouter(platform=platform, command_ledger=ledger, preview_plans=True)
+        router.register_tenant_mapping(TenantMapping(
+            channel="test",
+            sender_id="user1",
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+        ))
+
+        response = router.handle_message(GatewayMessage(
+            message_id="msg-plan-preview",
+            channel="test",
+            sender_id="user1",
+            body="search knowledge docs secret-token-123 and send notification to team secret-token-123",
+            conversation_id="conversation-1",
+        ))
+        preview = response.metadata["plan_preview"]
+
+        assert response.metadata["plan_preview_required"] is True
+        assert response.metadata["plan_preview_id"] == preview["preview_id"]
+        assert response.metadata["execution_allowed"] is False
+        assert response.metadata["safe_default"] == "await_approval_or_explicit_execution"
+        assert preview["step_count"] == 2
+        assert [step["capability_id"] for step in preview["steps"]] == [
+            "enterprise.knowledge_search",
+            "enterprise.notification_send",
+        ]
+        assert preview["steps"][1]["depends_on"] == ["step-1"]
+        assert preview["approval_required"] is True
+        assert "secret-token-123" not in str(response.metadata)
+        assert platform.sessions_opened == 0
+        assert ledger.summary()["commands"] == 0
+        assert router._plan_ledger.read_model()["plan_witness_count"] == 0
+
     def test_knowledge_search_unavailable_backend_still_emits_required_receipt(self):
         platform = StubPlatform(llm_response="fallback")
         router = GatewayRouter(

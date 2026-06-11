@@ -150,7 +150,7 @@ No external channel approval without request binding and identity check.
 | Clarification engine | missing / partial | no dedicated map evidence | Add missing-slot detection and focused clarification questions. |
 | Command ledger | implemented / partial | `gateway/command_spine.py` | Bind all user-visible task states to ledger states. |
 | Approval router | implemented / partial | `gateway/approval.py`, `gateway/router.py` | Add user-facing Approval Center map and cross-channel approval rules. |
-| Plan builder | implemented / partial | `gateway/plan.py`, `gateway/router.py` | Require plan preview for action requests. |
+| Plan builder | implemented / partial | `gateway/plan.py`, `gateway/router.py` | Add UI binding, budget fields, and explicit execution approval path for plan previews. |
 | Causal closure kernel | implemented / partial | `gateway/causal_closure_kernel.py` | Ensure every success response is certificate-backed. |
 | Search layer | partial / unknown | `enterprise.knowledge_search` intent pattern | Add freshness, cache, source, budget, and receipt gates. |
 | Worker layer | partial | `gateway/capability_worker.py`, worker-related docs | Define one contract per worker type. |
