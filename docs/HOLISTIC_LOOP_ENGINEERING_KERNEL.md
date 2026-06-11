@@ -1,7 +1,7 @@
 # Mullu Holistic Loop Engineering Kernel v1
 
 Purpose: define the shared governed loop contract used to describe existing Mullu loops without changing their runtime behavior.
-Governance scope: loop manifests, loop state projections, step receipts, receipt lineage bindings, closure reports, registry exposure, status bindings, transition bindings, mode bindings, closure condition bindings, risk bindings, evidence bindings, evidence blockers, closure evidence packs, operator closure readiness views, proof obligation views, audit evolution views, rollback policy, learning bindings, and learning policy.
+Governance scope: loop manifests, loop state projections, step receipts, receipt lineage bindings, closure reports, registry exposure, status bindings, transition bindings, mode bindings, closure condition bindings, risk bindings, evidence bindings, evidence blockers, closure evidence packs, operator closure readiness views, proof obligation views, audit evolution views, recovery readiness views, rollback policy, learning bindings, and learning policy.
 Dependencies: `mcoi_runtime.contracts.holistic_loop`, `mcoi_runtime.core.holistic_loop_registry`, existing deployment witness, runtime conformance, cognitive outcome, and governed code-change surfaces.
 Invariants: this is a read-model-first contract layer; it adds no public mutation route; it does not rewrite deployment, cognitive, proof verification, or code-change behavior.
 
@@ -34,6 +34,7 @@ The kernel models the common contract through:
 | `LoopOperatorClosureReadinessView` | Read-only operator projection of blockers, evidence gaps, authority gaps, rollback availability, and the next proof action. |
 | `LoopProofObligationView` | Read-only proof obligation projection over evidence refs, authority refs, closure conditions, validators, proof surfaces, and blockers. |
 | `LoopAuditEvolutionView` | Read-only audit evolution projection over receipt refs, receipt lineage refs, audit blockers, learning candidates, learning binding refs, and proof surfaces. |
+| `LoopRecoveryReadinessView` | Read-only recovery projection over rollback policy, rollback catalog refs, blockers, receipt lineage refs, and proof surfaces. |
 | `LoopStatusBinding` | Read-only map from projected status to blockers, verification refs, closure gates, validators, and proof surfaces. |
 | `LoopTransitionBinding` | Read-only map from possible status and phase transitions to required evidence, authority, blockers, receipts, rollback refs, validators, and proof surfaces. |
 | `LoopModeBinding` | Read-only map from projected mode to allowed modes, separation refs, real-execution guards, validators, and proof surfaces. |
@@ -595,6 +596,52 @@ audit_evolution_view.admits_learning == false
 audit_evolution_view.terminal_closure == false
 ```
 
+## Recovery Readiness View
+
+Each loop summary includes `recovery_readiness_view`, a bounded projection that
+connects the rollback policy, closure evidence pack, closure report, receipt
+lineage, current blockers, and rollback catalog refs. The view is derived from
+existing read-model fields; it does not execute rollback, open incidents, mutate
+state, or certify terminal closure.
+
+| Field | Meaning |
+| --- | --- |
+| `view_ref` | Stable read-model label for the recovery readiness view. |
+| `loop_id` | Loop identity covered by the view. |
+| `recovery_state` | `recovery_blocked_by_unresolved_gaps` when blockers exist, otherwise `recovery_ready_for_terminal_review`. |
+| `rollback_ref` | Must match `rollback_policy`. |
+| `rollback_available` | Must match `closure_report.rollback_available`. |
+| `closure_report_ref` | Stable pointer to `closure_report`. |
+| `closure_evidence_pack_ref` | Must match `closure_evidence_pack.pack_ref`. |
+| `blocker_refs` | Must match `open_blockers`. |
+| `receipt_lineage_refs` | Must match `closure_evidence_pack.receipt_lineage_refs`. |
+| `recovery_source_refs` | Must match `rollback_binding.source_refs`. |
+| `recovery_validator_refs` | Must match `rollback_binding.validator_refs`. |
+| `recovery_proof_surface_refs` | Must match the union of closure evidence pack and rollback binding proof surfaces. |
+| `next_recovery_action` | Names the next non-mutating recovery proof action. |
+| `read_only` | Always `true`. |
+| `executes_rollback` | Always `false`; this view does not restore or revert state. |
+| `opens_incident` | Always `false`; this view does not create incident handoffs. |
+| `terminal_closure` | Always `false`; this view is not a closure certificate. |
+
+The view is exact by contract:
+
+```text
+recovery_readiness_view.rollback_ref == rollback_policy
+recovery_readiness_view.rollback_available == closure_report.rollback_available
+recovery_readiness_view.closure_report_ref == "closure_report"
+recovery_readiness_view.closure_evidence_pack_ref == closure_evidence_pack.pack_ref
+set(recovery_readiness_view.blocker_refs) == set(open_blockers)
+set(recovery_readiness_view.receipt_lineage_refs) == set(closure_evidence_pack.receipt_lineage_refs)
+set(recovery_readiness_view.recovery_source_refs) == set(rollback_binding.source_refs)
+set(recovery_readiness_view.recovery_validator_refs) == set(rollback_binding.validator_refs)
+set(recovery_readiness_view.recovery_proof_surface_refs) == set(closure_evidence_pack.proof_surface_refs) union set(rollback_binding.proof_surface_refs)
+recovery_readiness_view.read_only == true
+recovery_readiness_view.executes_rollback == false
+recovery_readiness_view.opens_incident == false
+recovery_readiness_view.terminal_closure == false
+```
+
 ## Closure Readiness
 
 Each loop summary also includes a derived `closure_report`. This report is a
@@ -645,8 +692,9 @@ This kernel is intentionally non-invasive:
 14. It does not emit receipt lineage records into runtime stores.
 15. It does not emit closure evidence packs into runtime stores.
 16. It does not emit audit evolution views into runtime stores, admit learning, or update memory.
-17. It does not mark any loop closed.
-18. It only exposes typed read-model contracts that other surfaces can adopt later.
+17. It does not execute rollback, open incidents, or emit recovery readiness views into runtime stores.
+18. It does not mark any loop closed.
+19. It only exposes typed read-model contracts that other surfaces can adopt later.
 
 ## Read-Only Exposure
 
@@ -681,6 +729,7 @@ script:
 | `loops[].operator_closure_readiness_view` | Read-only operator view of current blockers and next proof action. |
 | `loops[].proof_obligation_view` | Read-only proof obligation view over required evidence, authority, closure conditions, validators, proof surfaces, and blockers. |
 | `loops[].audit_evolution_view` | Read-only audit evolution view over receipt refs, lineage refs, blockers, learning candidates, learning binding refs, and proof surfaces. |
+| `loops[].recovery_readiness_view` | Read-only recovery readiness view over rollback policy, closure evidence pack, receipt lineage refs, blockers, rollback catalog refs, and proof surfaces. |
 | `blocked_count` | Count of returned summaries carrying blockers. |
 | `verified_count` | Count of returned summaries marked verified. |
 | `read_only` | Always `true`. |
@@ -734,3 +783,4 @@ The tests verify:
 14. Receipt lineage bindings cover step receipts exactly and cannot emit receipts.
 15. Closure evidence packs aggregate closure inputs exactly and cannot emit receipts.
 16. Closure reports cannot claim terminal closure and must match blockers.
+17. Recovery readiness views connect rollback policy, blockers, receipt lineage, closure evidence, and rollback catalog refs without executing rollback, opening incidents, or claiming closure.

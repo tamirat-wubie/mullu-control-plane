@@ -44,6 +44,7 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
     assert all(loop["operator_closure_readiness_view"] for loop in loops)
     assert all(loop["proof_obligation_view"] for loop in loops)
     assert all(loop["audit_evolution_view"] for loop in loops)
+    assert all(loop["recovery_readiness_view"] for loop in loops)
     assert all(loop["rollback_binding"] for loop in loops)
     assert all(loop["learning_binding"] for loop in loops)
     assert all(loop["step_receipts"] for loop in loops)
@@ -286,6 +287,34 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
         and loop["audit_evolution_view"]["terminal_closure"] is False
         for loop in loops
     )
+    assert all(
+        loop["recovery_readiness_view"]["rollback_ref"] == loop["rollback_policy"]
+        and loop["recovery_readiness_view"]["rollback_available"]
+        is loop["closure_report"]["rollback_available"]
+        and loop["recovery_readiness_view"]["closure_report_ref"] == "closure_report"
+        and loop["recovery_readiness_view"]["closure_evidence_pack_ref"]
+        == loop["closure_evidence_pack"]["pack_ref"]
+        and set(loop["recovery_readiness_view"]["blocker_refs"])
+        == set(loop["open_blockers"])
+        and set(loop["recovery_readiness_view"]["receipt_lineage_refs"])
+        == set(loop["closure_evidence_pack"]["receipt_lineage_refs"])
+        and set(loop["recovery_readiness_view"]["recovery_source_refs"])
+        == set(loop["rollback_binding"]["source_refs"])
+        and set(loop["recovery_readiness_view"]["recovery_validator_refs"])
+        == set(loop["rollback_binding"]["validator_refs"])
+        and set(loop["recovery_readiness_view"]["recovery_proof_surface_refs"])
+        == set(loop["closure_evidence_pack"]["proof_surface_refs"])
+        | set(loop["rollback_binding"]["proof_surface_refs"])
+        and loop["recovery_readiness_view"]["recovery_state"]
+        == "recovery_blocked_by_unresolved_gaps"
+        and loop["recovery_readiness_view"]["next_recovery_action"]
+        == "resolve_blockers_before_recovery_or_terminal_review"
+        and loop["recovery_readiness_view"]["read_only"] is True
+        and loop["recovery_readiness_view"]["executes_rollback"] is False
+        and loop["recovery_readiness_view"]["opens_incident"] is False
+        and loop["recovery_readiness_view"]["terminal_closure"] is False
+        for loop in loops
+    )
     assert all(loop["closure_report"]["closed"] is False for loop in loops)
     assert all(loop["closure_report"]["evidence_complete"] is False for loop in loops)
     assert all(
@@ -328,6 +357,7 @@ def test_report_accepts_complete_observed_authority_and_evidence_refs() -> None:
     assert all(loop["operator_closure_readiness_view"] for loop in report["loops"])
     assert all(loop["proof_obligation_view"] for loop in report["loops"])
     assert all(loop["audit_evolution_view"] for loop in report["loops"])
+    assert all(loop["recovery_readiness_view"] for loop in report["loops"])
     assert all(loop["rollback_binding"] for loop in report["loops"])
     assert all(loop["learning_binding"] for loop in report["loops"])
     assert all(loop["step_receipts"] for loop in report["loops"])
@@ -372,6 +402,18 @@ def test_report_accepts_complete_observed_authority_and_evidence_refs() -> None:
         and loop["audit_evolution_view"]["emits_receipt"] is False
         and loop["audit_evolution_view"]["admits_learning"] is False
         and loop["audit_evolution_view"]["terminal_closure"] is False
+        for loop in report["loops"]
+    )
+    assert all(
+        loop["recovery_readiness_view"]["recovery_state"]
+        == "recovery_ready_for_terminal_review"
+        and loop["recovery_readiness_view"]["blocker_refs"] == []
+        and loop["recovery_readiness_view"]["next_recovery_action"]
+        == "keep_recovery_evidence_available_for_terminal_review"
+        and loop["recovery_readiness_view"]["read_only"] is True
+        and loop["recovery_readiness_view"]["executes_rollback"] is False
+        and loop["recovery_readiness_view"]["opens_incident"] is False
+        and loop["recovery_readiness_view"]["terminal_closure"] is False
         for loop in report["loops"]
     )
     assert all(loop["closure_report"]["evidence_complete"] is True for loop in report["loops"])

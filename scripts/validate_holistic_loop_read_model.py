@@ -72,6 +72,7 @@ REQUIRED_LOOP_FIELDS = (
     "operator_closure_readiness_view",
     "proof_obligation_view",
     "audit_evolution_view",
+    "recovery_readiness_view",
     "open_blockers",
     "rollback_policy",
     "rollback_binding",
@@ -272,6 +273,7 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
     )
     errors.extend(_validate_proof_obligation_view(loop["proof_obligation_view"], loop, index))
     errors.extend(_validate_audit_evolution_view(loop["audit_evolution_view"], loop, index))
+    errors.extend(_validate_recovery_readiness_view(loop["recovery_readiness_view"], loop, index))
     if loop["open_blockers"] and loop["status"] != "blocked":
         errors.append(f"loop {index} with blockers must be blocked")
     if loop["status"] in {"verified", "closed"} and loop["missing_evidence"]:
@@ -1494,6 +1496,118 @@ def _validate_audit_evolution_view(
         errors.append(f"loop {index} audit_evolution_view admits_learning must be false")
     if audit_view["terminal_closure"] is not False:
         errors.append(f"loop {index} audit_evolution_view terminal_closure must be false")
+    return errors
+
+
+def _validate_recovery_readiness_view(
+    recovery_view: Any,
+    loop: dict[str, Any],
+    index: int,
+) -> list[str]:
+    if not isinstance(recovery_view, dict):
+        return [f"loop {index} recovery_readiness_view must be an object"]
+    errors: list[str] = []
+    required_fields = {
+        "view_ref",
+        "loop_id",
+        "recovery_state",
+        "rollback_ref",
+        "rollback_available",
+        "closure_report_ref",
+        "closure_evidence_pack_ref",
+        "blocker_refs",
+        "receipt_lineage_refs",
+        "recovery_source_refs",
+        "recovery_validator_refs",
+        "recovery_proof_surface_refs",
+        "next_recovery_action",
+        "read_only",
+        "executes_rollback",
+        "opens_incident",
+        "terminal_closure",
+    }
+    missing = sorted(required_fields - set(recovery_view))
+    errors.extend(f"loop {index} recovery_readiness_view missing field: {field_name}" for field_name in missing)
+    extra = sorted(set(recovery_view) - required_fields)
+    errors.extend(f"loop {index} recovery_readiness_view has unexpected field: {field_name}" for field_name in extra)
+    if missing:
+        return errors
+    for field_name in (
+        "view_ref",
+        "loop_id",
+        "recovery_state",
+        "rollback_ref",
+        "closure_report_ref",
+        "closure_evidence_pack_ref",
+        "next_recovery_action",
+    ):
+        if not isinstance(recovery_view[field_name], str) or not recovery_view[field_name]:
+            errors.append(f"loop {index} recovery_readiness_view {field_name} must be non-empty")
+    for field_name in (
+        "blocker_refs",
+        "receipt_lineage_refs",
+        "recovery_source_refs",
+        "recovery_validator_refs",
+        "recovery_proof_surface_refs",
+    ):
+        errors.extend(
+            _validate_text_list(
+                recovery_view[field_name],
+                f"loop {index} recovery_readiness_view {field_name}",
+            )
+        )
+        if field_name != "blocker_refs" and isinstance(recovery_view[field_name], list) and not recovery_view[field_name]:
+            errors.append(f"loop {index} recovery_readiness_view {field_name} must be non-empty")
+    if recovery_view["loop_id"] != loop["loop_id"]:
+        errors.append(f"loop {index} recovery_readiness_view loop_id must match loop_id")
+    if recovery_view["rollback_ref"] != loop["rollback_policy"]:
+        errors.append(f"loop {index} recovery_readiness_view rollback_ref must match rollback_policy")
+    closure_report = loop["closure_report"] if isinstance(loop["closure_report"], dict) else {}
+    if recovery_view["rollback_available"] is not closure_report.get("rollback_available"):
+        errors.append(f"loop {index} recovery_readiness_view rollback_available must match closure_report")
+    if recovery_view["closure_report_ref"] != "closure_report":
+        errors.append(f"loop {index} recovery_readiness_view closure_report_ref must point to closure_report")
+    closure_evidence_pack = loop["closure_evidence_pack"] if isinstance(loop["closure_evidence_pack"], dict) else {}
+    if recovery_view["closure_evidence_pack_ref"] != closure_evidence_pack.get("pack_ref"):
+        errors.append(f"loop {index} recovery_readiness_view closure_evidence_pack_ref must match pack_ref")
+    if set(recovery_view["blocker_refs"]) != set(loop["open_blockers"]):
+        errors.append(f"loop {index} recovery_readiness_view blocker_refs must match open_blockers")
+    if set(recovery_view["receipt_lineage_refs"]) != set(
+        closure_evidence_pack.get("receipt_lineage_refs", ())
+    ):
+        errors.append(f"loop {index} recovery_readiness_view receipt_lineage_refs must match closure_evidence_pack")
+    rollback_binding = loop["rollback_binding"] if isinstance(loop["rollback_binding"], dict) else {}
+    if set(recovery_view["recovery_source_refs"]) != set(rollback_binding.get("source_refs", ())):
+        errors.append(f"loop {index} recovery_readiness_view recovery_source_refs must match rollback_binding")
+    if set(recovery_view["recovery_validator_refs"]) != set(rollback_binding.get("validator_refs", ())):
+        errors.append(f"loop {index} recovery_readiness_view recovery_validator_refs must match rollback_binding")
+    expected_proof_surfaces = set(closure_evidence_pack.get("proof_surface_refs", ())) | set(
+        rollback_binding.get("proof_surface_refs", ())
+    )
+    if set(recovery_view["recovery_proof_surface_refs"]) != expected_proof_surfaces:
+        errors.append(f"loop {index} recovery_readiness_view recovery_proof_surface_refs must match closure and rollback surfaces")
+    expected_recovery_state = (
+        "recovery_blocked_by_unresolved_gaps"
+        if loop["open_blockers"]
+        else "recovery_ready_for_terminal_review"
+    )
+    if recovery_view["recovery_state"] != expected_recovery_state:
+        errors.append(f"loop {index} recovery_readiness_view recovery_state must match blockers")
+    expected_next_action = (
+        "resolve_blockers_before_recovery_or_terminal_review"
+        if loop["open_blockers"]
+        else "keep_recovery_evidence_available_for_terminal_review"
+    )
+    if recovery_view["next_recovery_action"] != expected_next_action:
+        errors.append(f"loop {index} recovery_readiness_view next_recovery_action must match blockers")
+    if recovery_view["read_only"] is not True:
+        errors.append(f"loop {index} recovery_readiness_view read_only must be true")
+    if recovery_view["executes_rollback"] is not False:
+        errors.append(f"loop {index} recovery_readiness_view executes_rollback must be false")
+    if recovery_view["opens_incident"] is not False:
+        errors.append(f"loop {index} recovery_readiness_view opens_incident must be false")
+    if recovery_view["terminal_closure"] is not False:
+        errors.append(f"loop {index} recovery_readiness_view terminal_closure must be false")
     return errors
 
 

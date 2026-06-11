@@ -41,6 +41,7 @@ def test_current_holistic_loop_read_model_contract_passes() -> None:
     assert all(loop["step_receipts"] for loop in report["loops"])
     assert all(loop["receipt_lineage_bindings"] for loop in report["loops"])
     assert all(loop["closure_evidence_pack"] for loop in report["loops"])
+    assert all(loop["recovery_readiness_view"] for loop in report["loops"])
 
 
 def test_schema_rejects_missing_required_loop_field() -> None:
@@ -151,6 +152,22 @@ def test_schema_requires_audit_evolution_view() -> None:
 
     assert any("schema missing required loop field: audit_evolution_view" in error for error in errors)
     assert "audit_evolution_view" not in invalid_schema["$defs"]["loop_summary"]["required"]
+    assert len(errors) >= 1
+
+
+def test_schema_requires_recovery_readiness_view() -> None:
+    schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
+    invalid_schema = copy.deepcopy(schema)
+    invalid_schema["$defs"]["loop_summary"]["required"] = [
+        field
+        for field in invalid_schema["$defs"]["loop_summary"]["required"]
+        if field != "recovery_readiness_view"
+    ]
+
+    errors = validator.validate_schema_artifact(invalid_schema)
+
+    assert any("schema missing required loop field: recovery_readiness_view" in error for error in errors)
+    assert "recovery_readiness_view" not in invalid_schema["$defs"]["loop_summary"]["required"]
     assert len(errors) >= 1
 
 
@@ -628,6 +645,52 @@ def test_audit_evolution_view_cannot_emit_admit_learning_or_claim_terminal_closu
     assert any("audit_evolution_view emits_receipt must be false" in error for error in errors)
     assert any("audit_evolution_view admits_learning must be false" in error for error in errors)
     assert any("audit_evolution_view terminal_closure must be false" in error for error in errors)
+
+
+def test_recovery_readiness_view_must_match_rollback_blockers_and_lineage_refs() -> None:
+    invalid_report = copy.deepcopy(validator.build_report())
+    view = invalid_report["loops"][0]["recovery_readiness_view"]
+    view["rollback_ref"] = "different_rollback"
+    view["rollback_available"] = False
+    view["closure_report_ref"] = "different_report"
+    view["closure_evidence_pack_ref"] = "different_pack"
+    view["blocker_refs"] = ["different_gap"]
+    view["receipt_lineage_refs"] = ["different_lineage"]
+    view["recovery_source_refs"] = ["different_source"]
+    view["recovery_validator_refs"] = ["different_validator"]
+    view["recovery_proof_surface_refs"] = ["different_surface"]
+    view["recovery_state"] = "recovery_ready_for_terminal_review"
+    view["next_recovery_action"] = "keep_recovery_evidence_available_for_terminal_review"
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("rollback_ref must match rollback_policy" in error for error in errors)
+    assert any("rollback_available must match closure_report" in error for error in errors)
+    assert any("closure_report_ref must point to closure_report" in error for error in errors)
+    assert any("closure_evidence_pack_ref must match pack_ref" in error for error in errors)
+    assert any("blocker_refs must match open_blockers" in error for error in errors)
+    assert any("receipt_lineage_refs must match closure_evidence_pack" in error for error in errors)
+    assert any("recovery_source_refs must match rollback_binding" in error for error in errors)
+    assert any("recovery_validator_refs must match rollback_binding" in error for error in errors)
+    assert any("recovery_proof_surface_refs must match closure and rollback surfaces" in error for error in errors)
+    assert any("recovery_state must match blockers" in error for error in errors)
+    assert any("next_recovery_action must match blockers" in error for error in errors)
+
+
+def test_recovery_readiness_view_cannot_execute_rollback_open_incident_or_claim_closure() -> None:
+    invalid_report = copy.deepcopy(validator.build_report())
+    view = invalid_report["loops"][0]["recovery_readiness_view"]
+    view["read_only"] = False
+    view["executes_rollback"] = True
+    view["opens_incident"] = True
+    view["terminal_closure"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("recovery_readiness_view read_only must be true" in error for error in errors)
+    assert any("recovery_readiness_view executes_rollback must be false" in error for error in errors)
+    assert any("recovery_readiness_view opens_incident must be false" in error for error in errors)
+    assert any("recovery_readiness_view terminal_closure must be false" in error for error in errors)
 
 
 def test_missing_evidence_requires_matching_blocker() -> None:

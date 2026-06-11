@@ -99,6 +99,7 @@
         "operator_closure_readiness_view",
         "proof_obligation_view",
         "audit_evolution_view",
+        "recovery_readiness_view",
         "open_blockers",
         "rollback_policy",
         "rollback_binding",
@@ -235,6 +236,9 @@
         },
         "audit_evolution_view": {
           "$ref": "#/$defs/audit_evolution_view"
+        },
+        "recovery_readiness_view": {
+          "$ref": "#/$defs/recovery_readiness_view"
         },
         "open_blockers": {
           "$ref": "#/$defs/possibly_empty_text_list"
@@ -1276,6 +1280,96 @@
           "const": false
         },
         "admits_learning": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "recovery_readiness_view": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "view_ref",
+        "loop_id",
+        "recovery_state",
+        "rollback_ref",
+        "rollback_available",
+        "closure_report_ref",
+        "closure_evidence_pack_ref",
+        "blocker_refs",
+        "receipt_lineage_refs",
+        "recovery_source_refs",
+        "recovery_validator_refs",
+        "recovery_proof_surface_refs",
+        "next_recovery_action",
+        "read_only",
+        "executes_rollback",
+        "opens_incident",
+        "terminal_closure"
+      ],
+      "properties": {
+        "view_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "loop_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recovery_state": {
+          "type": "string",
+          "enum": [
+            "recovery_blocked_by_unresolved_gaps",
+            "recovery_ready_for_terminal_review"
+          ]
+        },
+        "rollback_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rollback_available": {
+          "type": "boolean"
+        },
+        "closure_report_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "closure_evidence_pack_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blocker_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "receipt_lineage_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "recovery_source_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "recovery_validator_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "recovery_proof_surface_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "next_recovery_action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "executes_rollback": {
+          "type": "boolean",
+          "const": false
+        },
+        "opens_incident": {
           "type": "boolean",
           "const": false
         },

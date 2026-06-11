@@ -1057,6 +1057,91 @@ class LoopAuditEvolutionView(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class LoopRecoveryReadinessView(ContractRecord):
+    """Read-only recovery projection over rollback, blockers, and lineage refs."""
+
+    view_ref: str
+    loop_id: str
+    recovery_state: str
+    rollback_ref: str
+    rollback_available: bool
+    closure_report_ref: str
+    closure_evidence_pack_ref: str
+    blocker_refs: tuple[str, ...]
+    receipt_lineage_refs: tuple[str, ...]
+    recovery_source_refs: tuple[str, ...]
+    recovery_validator_refs: tuple[str, ...]
+    recovery_proof_surface_refs: tuple[str, ...]
+    next_recovery_action: str
+    read_only: bool = True
+    executes_rollback: bool = False
+    opens_incident: bool = False
+    terminal_closure: bool = False
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "view_ref",
+            "loop_id",
+            "recovery_state",
+            "rollback_ref",
+            "closure_report_ref",
+            "closure_evidence_pack_ref",
+            "next_recovery_action",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                require_non_empty_text(getattr(self, field_name), field_name),
+            )
+        allowed_states = {
+            "recovery_blocked_by_unresolved_gaps",
+            "recovery_ready_for_terminal_review",
+        }
+        if self.recovery_state not in allowed_states:
+            raise ValueError("recovery_state is invalid")
+        object.__setattr__(
+            self,
+            "blocker_refs",
+            _freeze_text_tuple(self.blocker_refs, "blocker_refs", allow_empty=True),
+        )
+        for field_name in (
+            "receipt_lineage_refs",
+            "recovery_source_refs",
+            "recovery_validator_refs",
+            "recovery_proof_surface_refs",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name),
+            )
+        if not isinstance(self.rollback_available, bool):
+            raise ValueError("rollback_available must be boolean")
+        expected_recovery_state = (
+            "recovery_blocked_by_unresolved_gaps"
+            if self.blocker_refs
+            else "recovery_ready_for_terminal_review"
+        )
+        if self.recovery_state != expected_recovery_state:
+            raise ValueError("recovery_state must match blocker refs")
+        expected_next_action = (
+            "resolve_blockers_before_recovery_or_terminal_review"
+            if self.blocker_refs
+            else "keep_recovery_evidence_available_for_terminal_review"
+        )
+        if self.next_recovery_action != expected_next_action:
+            raise ValueError("next_recovery_action must match blocker refs")
+        if self.read_only is not True:
+            raise ValueError("recovery readiness view must be read-only")
+        if self.executes_rollback is not False:
+            raise ValueError("recovery readiness view cannot execute rollback")
+        if self.opens_incident is not False:
+            raise ValueError("recovery readiness view cannot open incidents")
+        if self.terminal_closure is not False:
+            raise ValueError("recovery readiness view cannot be terminal closure")
+
+
+@dataclass(frozen=True, slots=True)
 class LoopSummary(ContractRecord):
     """Bounded read-model summary for one registered governed loop."""
 
@@ -1089,6 +1174,7 @@ class LoopSummary(ContractRecord):
     operator_closure_readiness_view: LoopOperatorClosureReadinessView
     proof_obligation_view: LoopProofObligationView
     audit_evolution_view: LoopAuditEvolutionView
+    recovery_readiness_view: LoopRecoveryReadinessView
     open_blockers: tuple[str, ...]
     rollback_policy: str
     rollback_binding: LoopRollbackBinding
@@ -1227,6 +1313,8 @@ class LoopSummary(ContractRecord):
             raise ValueError("proof_obligation_view must be a LoopProofObligationView")
         if not isinstance(self.audit_evolution_view, LoopAuditEvolutionView):
             raise ValueError("audit_evolution_view must be a LoopAuditEvolutionView")
+        if not isinstance(self.recovery_readiness_view, LoopRecoveryReadinessView):
+            raise ValueError("recovery_readiness_view must be a LoopRecoveryReadinessView")
         if not isinstance(self.rollback_binding, LoopRollbackBinding):
             raise ValueError("rollback_binding must be a LoopRollbackBinding")
         if self.rollback_binding.rollback_ref != self.rollback_policy:
@@ -1253,6 +1341,8 @@ class LoopSummary(ContractRecord):
             raise ValueError("proof_obligation_view loop_id must match summary loop_id")
         if self.audit_evolution_view.loop_id != self.loop_id:
             raise ValueError("audit_evolution_view loop_id must match summary loop_id")
+        if self.recovery_readiness_view.loop_id != self.loop_id:
+            raise ValueError("recovery_readiness_view loop_id must match summary loop_id")
         object.__setattr__(self, "updated_at", require_datetime_text(self.updated_at, "updated_at"))
         if set(self.status_binding.blocker_refs) != set(self.open_blockers):
             raise ValueError("status_binding blocker_refs must match open blockers")
@@ -1464,6 +1554,43 @@ class LoopSummary(ContractRecord):
         )
         if self.audit_evolution_view.audit_state != expected_audit_state:
             raise ValueError("audit evolution state must match blockers")
+        if self.recovery_readiness_view.rollback_ref != self.rollback_policy:
+            raise ValueError("recovery readiness rollback ref must match rollback policy")
+        if (
+            self.recovery_readiness_view.rollback_available
+            != self.closure_report.rollback_available
+        ):
+            raise ValueError("recovery readiness rollback_available must match closure report")
+        if self.recovery_readiness_view.closure_report_ref != "closure_report":
+            raise ValueError("recovery readiness closure_report_ref must point to closure_report")
+        if self.recovery_readiness_view.closure_evidence_pack_ref != self.closure_evidence_pack.pack_ref:
+            raise ValueError("recovery readiness closure evidence pack ref must match pack ref")
+        if set(self.recovery_readiness_view.blocker_refs) != set(self.open_blockers):
+            raise ValueError("recovery readiness blocker refs must match open blockers")
+        if set(self.recovery_readiness_view.receipt_lineage_refs) != set(
+            self.closure_evidence_pack.receipt_lineage_refs
+        ):
+            raise ValueError("recovery readiness lineage refs must match closure evidence pack")
+        if set(self.recovery_readiness_view.recovery_source_refs) != set(
+            self.rollback_binding.source_refs
+        ):
+            raise ValueError("recovery readiness source refs must match rollback binding")
+        if set(self.recovery_readiness_view.recovery_validator_refs) != set(
+            self.rollback_binding.validator_refs
+        ):
+            raise ValueError("recovery readiness validator refs must match rollback binding")
+        expected_recovery_proof_surfaces = set(self.closure_evidence_pack.proof_surface_refs) | set(
+            self.rollback_binding.proof_surface_refs
+        )
+        if set(self.recovery_readiness_view.recovery_proof_surface_refs) != expected_recovery_proof_surfaces:
+            raise ValueError("recovery readiness proof surface refs must match closure and rollback surfaces")
+        expected_recovery_state = (
+            "recovery_blocked_by_unresolved_gaps"
+            if self.open_blockers
+            else "recovery_ready_for_terminal_review"
+        )
+        if self.recovery_readiness_view.recovery_state != expected_recovery_state:
+            raise ValueError("recovery readiness state must match blockers")
 
 
 @dataclass(frozen=True, slots=True)
@@ -1559,6 +1686,7 @@ __all__ = [
     "LoopOperatorClosureReadinessView",
     "LoopProofObligationView",
     "LoopReceiptLineageBinding",
+    "LoopRecoveryReadinessView",
     "LoopRiskBinding",
     "LoopRollbackBinding",
     "LoopManifest",
