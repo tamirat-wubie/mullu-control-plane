@@ -442,6 +442,33 @@ class TestMessageRouting:
         assert any(event.next_state == CommandState.LEARNING_DECIDED for event in command_events)
         assert command_events[-1].next_state == CommandState.RESPONDED
 
+    def test_successful_message_includes_interpretation_receipt(self):
+        body = "What is tenant alpha token abc123?"
+        router = GatewayRouter(platform=StubPlatform(llm_response="The answer is governed."))
+        router.register_tenant_mapping(TenantMapping(
+            channel="test",
+            sender_id="user1",
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+        ))
+
+        response = router.handle_message(GatewayMessage(
+            message_id="msg-interpret-question",
+            channel="test",
+            sender_id="user1",
+            body=body,
+            conversation_id="conversation-1",
+        ))
+        receipt = response.metadata["interpretation_receipt"]
+        interpreted = response.metadata["interpreted_request"]
+
+        assert response.metadata["interpretation_receipt_id"] == receipt["receipt_id"]
+        assert interpreted["intent_class"] == "question"
+        assert interpreted["raw_message_hash"]
+        assert receipt["raw_message_hash"] == interpreted["raw_message_hash"]
+        assert receipt["model_or_rule_used"] == "deterministic_gateway"
+        assert "tenant alpha token abc123" not in str(receipt)
+
     def test_capability_dispatch_receives_command_witness_metadata(self):
         dispatcher = SkillDispatcher()
         captured_contexts: list[Any] = []
@@ -476,12 +503,46 @@ class TestMessageRouting:
         ))
 
         assert response.body == "Knowledge searched."
+        receipt = response.metadata["interpretation_receipt"]
+        interpreted = response.metadata["interpreted_request"]
+        assert interpreted["intent_class"] == "action_request"
+        assert interpreted["capability_id"] == "enterprise.knowledge_search"
+        assert interpreted["search_needed"] is True
+        assert receipt["interpreted_intent"] == "enterprise.knowledge_search"
+        assert receipt["extracted_slots"]["param_names"] == ["query"]
+        assert "search knowledge docs" not in str(receipt)
         assert captured_contexts[0].command_id == response.metadata["command_id"]
         assert captured_contexts[0].conversation_id == "conversation-1"
         assert captured_contexts[0].metadata["approval_id"]
         assert captured_contexts[0].metadata["budget_reservation_id"].startswith("budget-reservation-")
         assert captured_contexts[0].metadata["isolation_boundary_id"].startswith("isolation-boundary-")
         assert captured_contexts[0].metadata["isolation_boundary"]["execution_plane"] == "gateway_process"
+
+    def test_pending_approval_response_includes_interpretation_receipt(self):
+        router = GatewayRouter(platform=StubPlatform(llm_response="should not execute"))
+        router.register_tenant_mapping(TenantMapping(
+            channel="test",
+            sender_id="payer",
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+            roles=("financial_admin",),
+        ))
+
+        response = router.handle_message(GatewayMessage(
+            message_id="msg-interpret-payment",
+            channel="test",
+            sender_id="payer",
+            body="make a payment of $50",
+        ))
+        receipt = response.metadata["interpretation_receipt"]
+        interpreted = response.metadata["interpreted_request"]
+
+        assert response.metadata["approval_required"] is True
+        assert interpreted["intent_class"] == "action_request"
+        assert interpreted["capability_id"] == "financial.send_payment"
+        assert interpreted["risk_estimate"] == "high"
+        assert receipt["risk_precheck"] == "high"
+        assert "make a payment of $50" not in str(receipt)
 
     def test_knowledge_search_unavailable_backend_still_emits_required_receipt(self):
         platform = StubPlatform(llm_response="fallback")

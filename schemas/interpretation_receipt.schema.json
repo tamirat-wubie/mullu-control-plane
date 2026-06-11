@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:interpretation-receipt:1",
+  "title": "Interpretation Receipt",
+  "description": "Redacted evidence of what the gateway believed the user requested.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "request_id",
+    "raw_message_hash",
+    "interpreted_intent",
+    "extracted_slots",
+    "missing_slots",
+    "confidence",
+    "model_or_rule_used",
+    "rejected_interpretations",
+    "risk_precheck",
+    "created_at"
+  ],
+  "properties": {
+    "receipt_id": {"type": "string", "pattern": "^interpretation-receipt-[a-f0-9]{16}$"},
+    "request_id": {"type": "string", "pattern": "^interpreted-request-[a-f0-9]{16}$"},
+    "raw_message_hash": {"type": "string", "minLength": 1},
+    "interpreted_intent": {"type": "string", "minLength": 1},
+    "extracted_slots": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "missing_slots": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "model_or_rule_used": {"type": "string", "minLength": 1},
+    "rejected_interpretations": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "risk_precheck": {"type": "string", "enum": ["low", "medium", "high"]},
+    "created_at": {"type": "string", "minLength": 1}
+  }
+}
