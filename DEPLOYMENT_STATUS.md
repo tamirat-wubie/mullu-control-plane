@@ -10,8 +10,8 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 # Deployment Status Witness
 
 **Last audited:** 2026-06-08
-**Deployment witness state:** `published`
-**Public production health endpoint:** `https://api.mullusi.com/health`
+**Deployment witness state:** `not-published`
+**Public production health endpoint:** `not-declared`
 **Gateway health endpoint:** `/health`
 **Gateway runtime witness endpoint:** `/gateway/witness`
 **Restricted capability worker health endpoint:** `/health`
@@ -23,7 +23,7 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 |---|---|---|
 | Local API health contract | `RUNBOOK.md` and `DEPLOYMENT.md` document `/health` checks | Reflected |
 | Local gateway health contract | `README.md` documents `http://localhost:8001/health` | Reflected |
-| README production claim boundary | `README.md` states that live production runtime is not published and that public production health is not claimed until endpoint and evidence-plane witnesses are collected | Reflected |
+| README production claim boundary | `README.md` states that live production runtime is not published and that public production health is not claimed until signed witness, public-health declaration, and evidence-plane witnesses are collected | Reflected |
 | Local gateway runtime witness | `DEPLOYMENT.md` documents `/gateway/witness` and `/runtime/witness` | Reflected |
 | Restricted capability worker | `DEPLOYMENT.md`, `docker-compose.yml`, and `k8s/mullu-api.yaml` declare `gateway.capability_worker:app` | Reflected |
 | Local pilot proof slice | `scripts/pilot_proof_slice.py` emits `.change_assurance/pilot_proof_slice_witness.json` through gateway closure | Reflected |
@@ -88,7 +88,7 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 | General-agent promotion validator | `scripts/validate_general_agent_promotion.py --strict` blocks production general-agent claims until governed capability records, real browser/document/voice adapters, sandbox runner evidence, MCP import governance, deployment witness publication, and public health evidence all pass | Reflected |
 | Governed runtime promotion validator | `scripts/validate_governed_runtime_promotion.py --strict` provides the domain-neutral terminal validator while preserving the existing promotion readiness evidence contract | Reflected |
 | Governed swarm extension-health pilot gate | `scripts/collect_governed_swarm_staging_activation_witness.py` now probes `/api/v1/health/extensions`; staging evidence bundles and pilot promotion readiness require the governed swarm extension to be registered, enabled, mounted, and audit-store-configured without exposing raw filesystem paths | Reflected |
-| Public production health | `https://api.mullusi.com/health` is declared from the published deployment witness collected on 2026-06-08 after Cloudflare DNS and Render custom-domain verification | Reflected |
+| Public production health | Not declared; `.change_assurance/deployment_witness.json` records `deployment_claim=not-published`, skipped runtime and conformance signature verification, and no `.change_assurance/public_production_health_declaration.json` receipt is present | Reflected |
 | Deployment badge | No GitHub-visible deployment badge is declared | Not reflected |
 
 ## GitHub Runtime Input State
@@ -100,8 +100,9 @@ Invariants: Live deployment evidence is named; no production health claim is mad
 | Deployment witness secret | GitHub Actions secret name `MULLU_DEPLOYMENT_WITNESS_SECRET` is present; secret value is not printed |
 | Authority operator secret | GitHub Actions secret name `MULLU_AUTHORITY_OPERATOR_SECRET` is present; secret value is not printed |
 | Deployment target variables | GitHub repository variables `MULLU_GATEWAY_URL=https://api.mullusi.com` and `MULLU_EXPECTED_RUNTIME_ENV=pilot` are set |
+| Observed pilot health probe URL | `https://api.mullusi.com/health` is named only as a pilot probe URL; it is not a public production health declaration while deployment publication remains `not-published` |
 | Upstream API readiness | `api.mullusi.com` remains `AwaitingEvidence` until upstream recovery, runtime host, managed PostgreSQL, secret store, TLS, rollback, and DNS publication authority gates are closed; merged upstream reporter `mullusi-site/scripts/check-api-production-readiness.mjs` also blocks DNS until schema, preflight, persistence, firewall, private runtime witness, and runtime witness closure evidence are closed |
-| Deployment witness workflow runs | `deployment-witness.yml` run `27148629126` completed successfully on 2026-06-08 for `https://api.mullusi.com` |
+| Deployment witness workflow runs | `deployment-witness.yml` run `27148629126` completed successfully on 2026-06-08 for `https://api.mullusi.com`, but the local deployment witness remains `not-published` until signatures, upstream readiness, production evidence, and public-health declaration evidence close |
 | Gateway publication workflow runs | No `gateway-publication.yml` workflow runs are currently recorded |
 
 ## Closure Requirements

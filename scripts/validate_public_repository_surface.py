@@ -135,8 +135,8 @@ PLATFORM_OVERVIEW_REQUIRED_LITERALS = (
 )
 DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "Deployment Status Witness",
-    "**Deployment witness state:** `published`",
-    "**Public production health endpoint:** `https://api.mullusi.com/health`",
+    "**Deployment witness state:** `not-published`",
+    "**Public production health endpoint:** `not-declared`",
     "https://api.mullusi.com/health",
     "python scripts/validate_gateway_deployment_env.py --strict",
     "python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json",
@@ -219,7 +219,7 @@ DEPLOYMENT_STATUS_REQUIRED_LITERALS = (
     "GitHub Actions secret name `MULLU_AUTHORITY_OPERATOR_SECRET` is present; secret value is not printed",
     "GitHub repository variables `MULLU_GATEWAY_URL=https://api.mullusi.com` and `MULLU_EXPECTED_RUNTIME_ENV=pilot` are set",
     "`api.mullusi.com` remains `AwaitingEvidence` until upstream recovery, runtime host, managed PostgreSQL, secret store, TLS, rollback, and DNS publication authority gates are closed",
-    "`deployment-witness.yml` run `27148629126` completed successfully on 2026-06-08 for `https://api.mullusi.com`",
+    "`deployment-witness.yml` run `27148629126` completed successfully on 2026-06-08 for `https://api.mullusi.com`, but the local deployment witness remains `not-published` until signatures, upstream readiness, production evidence, and public-health declaration evidence close",
 )
 GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "Mullu Governance Protocol",

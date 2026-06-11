@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1780664954.505807,
-  "check_count": 138,
+  "check_count": 140,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -71,6 +71,28 @@
       ],
       "return_code": 0,
       "stdout": "STATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_local_release_packet_rehearsal_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_local_release_packet_rehearsal_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "[PASS] foundation_local_release_packet_rehearsal_doc\n[PASS] foundation_local_release_packet_rehearsal_witness\nSTATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "agentic_service_harness_contract",
+      "args": [
+        "python",
+        "scripts/validate_agentic_service_harness_contract.py"
+      ],
+      "return_code": 0,
+      "stdout": "AGENTIC SERVICE HARNESS CONTRACT VALID\n",
       "stderr": "",
       "passed": true
     },

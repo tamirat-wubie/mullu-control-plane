@@ -39,11 +39,13 @@ EXPECTED_BOUNDARY_ID = "foundation_source_control_boundary.awaiting_commit.v1"
 EXPECTED_CHANGE_FAMILIES = (
     "foundation_posture",
     "source_control_review_checklist_boundary",
+    "local_release_packet_rehearsal_boundary",
     "operator_readiness_boundary",
     "solo_daily_loop_boundary",
     "learning_path_boundary",
     "learning_loop_rehearsal_boundary",
     "concept_glossary_rehearsal_boundary",
+    "life_meaning_doctrine_rehearsal_boundary",
     "architecture_map_boundary",
     "system_boundary_inventory_boundary",
     "module_inventory_boundary",
@@ -236,6 +238,7 @@ REQUIRED_DOC_PHRASES = (
     "Private recovery rehearsal | Local recovery-rehearsal",
     "Learning-loop rehearsal | Local learning-loop",
     "Concept glossary rehearsal | Local concept-glossary",
+    "Life/meaning doctrine rehearsal | Local life-meaning-doctrine",
     "Legal/business question rehearsal | Local legal-question",
     "Legal-review deferral | Local legal-review-deferral",
     "Company-formation deferral | Local company-formation-deferral",
@@ -255,6 +258,7 @@ REQUIRED_DOC_PHRASES = (
     "python scripts/validate_foundation_source_control_boundary.py",
     "Phi-GPS v3 runtime safety packet | Local Phi-GPS compiler",
     "Source-control review checklist | Local review-checklist",
+    "Local release-packet rehearsal | Local release-packet",
 )
 FORBIDDEN_PACKET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("publication_authorized", re.compile(r"\b(?:push|publish|publication|pull request|release)\s+(?:allowed|authorized|ready)\b", re.IGNORECASE)),

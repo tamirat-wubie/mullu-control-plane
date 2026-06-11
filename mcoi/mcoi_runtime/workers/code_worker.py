@@ -138,6 +138,51 @@ _PATH_SUFFIXES: tuple[str, ...] = (
     ".js",
     ".jsx",
 )
+_PATH_BEARING_FLAG_NAMES: frozenset[str] = frozenset(
+    {
+        "config",
+        "config_path",
+        "destination",
+        "destination_path",
+        "dest",
+        "dir",
+        "directory",
+        "file",
+        "input",
+        "input_path",
+        "manifest",
+        "manifest_path",
+        "output",
+        "output_path",
+        "out",
+        "path",
+        "project",
+        "project_path",
+        "receipt",
+        "receipt_path",
+        "report",
+        "report_path",
+        "root",
+        "src",
+        "source",
+        "source_path",
+        "target",
+        "target_path",
+        "workspace",
+        "workspace_path",
+    }
+)
+_PATH_BEARING_FLAG_SUFFIXES: tuple[str, ...] = (
+    "_dir",
+    "_directory",
+    "_file",
+    "_manifest",
+    "_output",
+    "_path",
+    "_receipt",
+    "_report",
+    "_root",
+)
 
 
 class SandboxedCodeWorker:
@@ -384,7 +429,7 @@ def _admission_violations(
             violations.append("denied_git_remote_argument")
     if not _path_within_allowed(cwd, lease.allowed_paths):
         violations.append("cwd_outside_lease_allowed_paths")
-    path_violation = _argv_path_violation(argv, lease.allowed_paths)
+    path_violation = _argv_path_violation(argv, lease.allowed_paths, cwd)
     if path_violation is not None:
         violations.append(path_violation)
     return tuple(violations)
@@ -516,7 +561,7 @@ def _has_windows_drive_prefix(normalized_path: str) -> bool:
     parts = PurePosixPath(normalized_path).parts
     return bool(
         parts
-        and len(parts[0]) == 2
+        and len(parts[0]) >= 2
         and parts[0][1] == ":"
         and parts[0][0].isalpha()
     )
@@ -667,11 +712,15 @@ def _changed_path_violations(
     return tuple(violations)
 
 
-def _argv_path_violation(argv: tuple[str, ...], allowed_paths: tuple[str, ...]) -> str | None:
+def _argv_path_violation(
+    argv: tuple[str, ...],
+    allowed_paths: tuple[str, ...],
+    cwd: str,
+) -> str | None:
     for item in argv[1:]:
         for path_candidate in _argv_path_candidates(item):
             try:
-                normalized_path = _normalize_relative_path(path_candidate)
+                normalized_path = _normalize_argv_path_candidate(path_candidate, cwd)
             except ValueError:
                 return f"argv_path_outside_repository_boundary:{_sha256_text(path_candidate)[:16]}"
             if not _path_within_allowed(normalized_path, allowed_paths):
@@ -683,9 +732,9 @@ def _argv_path_candidates(item: str) -> tuple[str, ...]:
     if item.startswith("-"):
         if "=" not in item:
             return ()
-        _, raw_value = item.split("=", 1)
+        flag_name, raw_value = item.split("=", 1)
         value = raw_value.strip()
-        if not value or not _looks_like_path(value):
+        if not value or not (_looks_like_path(value) or _is_path_bearing_flag(flag_name)):
             return ()
         return (value,)
     if not _looks_like_path(item):
@@ -693,11 +742,23 @@ def _argv_path_candidates(item: str) -> tuple[str, ...]:
     return (item,)
 
 
+def _normalize_argv_path_candidate(path_text: str, cwd: str) -> str:
+    normalized_path = _normalize_relative_path(path_text)
+    if cwd == "." or _looks_like_path(path_text):
+        return normalized_path
+    return _normalize_relative_path(f"{cwd}/{normalized_path}")
+
+
 def _looks_like_path(value: str) -> bool:
     normalized = value.replace("\\", "/")
     if normalized == "." or "/" in normalized:
         return True
     return normalized.endswith(_PATH_SUFFIXES)
+
+
+def _is_path_bearing_flag(flag_name: str) -> bool:
+    normalized = flag_name.lstrip("-").replace("-", "_").lower()
+    return normalized in _PATH_BEARING_FLAG_NAMES or normalized.endswith(_PATH_BEARING_FLAG_SUFFIXES)
 
 
 def _executable_name(value: str) -> str:

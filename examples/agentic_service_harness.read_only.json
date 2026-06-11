@@ -1,0 +1,254 @@
+{
+  "agent_adapters": [
+    {
+      "adapter_id": "adapter.github-readonly",
+      "adapter_kind": "github_repo_task",
+      "allowed_modes": [
+        "read_only"
+      ],
+      "authority_class": "read_only",
+      "external_adapter_integrated": false,
+      "receipt_schema_ref": "schema://agentic-service-harness/agent-run-receipt",
+      "requires_workspace_sandbox": true,
+      "status": "contract_only"
+    }
+  ],
+  "agent_runs": [
+    {
+      "adapter_id": "adapter.github-readonly",
+      "approval_gate_ids": [],
+      "blocked_actions": [],
+      "created_at": "2026-06-11T22:00:00Z",
+      "evidence_bundle_id": "bundle.readonly",
+      "mode": "read_only",
+      "receipt_id": "receipt.readonly",
+      "result_summary_id": "summary.readonly",
+      "run_id": "run.readonly",
+      "sandbox_id": "sandbox.readonly",
+      "selected_agent_ref": "agent://codex-style-symbolic-operator",
+      "status": "ready_read_only",
+      "task_id": "task.readonly"
+    }
+  ],
+  "agent_tasks": [
+    {
+      "action_class": "read_only",
+      "evidence_refs": [
+        "readiness://loop-read-model"
+      ],
+      "metadata": {
+        "personal_data_minimized": true,
+        "secret_values_serialized": false
+      },
+      "mode": "read_only",
+      "objective": "Read harness and repository readiness without mutating state.",
+      "project_id": "project.foundation",
+      "requested_by_user_id": "user.operator",
+      "required_approval_gate_ids": [],
+      "risk_level": "low",
+      "status": "ready_read_only",
+      "task_id": "task.readonly"
+    }
+  ],
+  "approval_gates": [],
+  "contract_id": "agentic-service-harness-read-only",
+  "contract_version": 1,
+  "default_high_risk_authority": false,
+  "evidence_bundles": [
+    {
+      "bundle_id": "bundle.readonly",
+      "command_log_refs": [],
+      "contains_secret_values": false,
+      "diff_refs": [],
+      "evidence_refs": [
+        "readiness://loop-read-model"
+      ],
+      "policy_refs": [
+        "policy://foundation-contract-only"
+      ],
+      "redaction_policy": "hash_or_reference_only",
+      "run_id": "run.readonly",
+      "test_log_refs": []
+    }
+  ],
+  "external_adapter_integrated": false,
+  "foundation_phase": "foundation_contract_only",
+  "generated_at": "2026-06-11T22:00:00Z",
+  "mutation_endpoints_admitted": false,
+  "next_action": "Use this read-only contract as evidence for the schema-only harness foundation.",
+  "non_goals": [
+    "no_unrestricted_openclaw_automation",
+    "no_claude_code_integration",
+    "no_email_sending",
+    "no_production_deploy_approval_by_default",
+    "no_dns_mutation",
+    "no_secret_mutation",
+    "no_marketplace",
+    "no_billing_requirement",
+    "no_multi_agent_marketplace"
+  ],
+  "organizations": [
+    {
+      "admin_user_ids": [
+        "user.operator"
+      ],
+      "metadata": {
+        "personal_data_minimized": true,
+        "secret_values_serialized": false
+      },
+      "name": "Foundation Organization",
+      "organization_id": "org.foundation",
+      "owner_user_ids": [
+        "user.operator"
+      ],
+      "project_ids": [
+        "project.foundation"
+      ],
+      "status": "active",
+      "tenant_id": "tenant.foundation"
+    }
+  ],
+  "permission_model": {
+    "action_classes": [
+      "read_only",
+      "dry_run",
+      "write_to_branch",
+      "open_pr",
+      "blocked_high_risk"
+    ],
+    "blocked_high_risk_actions": [
+      "merge",
+      "deploy",
+      "dns_mutation",
+      "secret_mutation",
+      "destructive_operation"
+    ],
+    "can_deploy": false,
+    "can_merge": false,
+    "can_mutate_dns": false,
+    "can_mutate_secrets": false,
+    "can_run_destructive_operations": false,
+    "roles": [
+      "viewer",
+      "operator",
+      "approver",
+      "admin"
+    ]
+  },
+  "projects": [
+    {
+      "agent_run_ids": [
+        "run.readonly"
+      ],
+      "loop_status_ref": "loop://holistic-loop-read-model",
+      "metadata": {
+        "personal_data_minimized": true,
+        "secret_values_serialized": false
+      },
+      "name": "Foundation Harness",
+      "organization_id": "org.foundation",
+      "project_id": "project.foundation",
+      "receipt_refs": [
+        "receipt://readonly"
+      ],
+      "repository_connection_ids": [
+        "repo.mullu-control-plane"
+      ],
+      "status": "active",
+      "tenant_id": "tenant.foundation"
+    }
+  ],
+  "receipts": [
+    {
+      "commands_run": [],
+      "evidence_refs": [
+        "readiness://loop-read-model"
+      ],
+      "files_changed": {
+        "changed_file_count": 0,
+        "changed_file_refs": [],
+        "diff_refs": []
+      },
+      "mode": "read_only",
+      "next_action": "Keep reads bounded to status and receipt surfaces.",
+      "policy_result": "allowed_read_only",
+      "receipt_id": "receipt.readonly",
+      "receipt_is_not_terminal_closure": true,
+      "risk_level": "low",
+      "run_id": "run.readonly",
+      "selected_agent_ref": "agent://codex-style-symbolic-operator",
+      "task_request_ref": "task://readonly",
+      "tests_run": []
+    }
+  ],
+  "repository_connections": [
+    {
+      "connection_id": "repo.mullu-control-plane",
+      "credential_binding_ref": "credential-binding://github-app-presence-only",
+      "default_branch": "main",
+      "installation_ref": "github-installation://presence-only",
+      "permission_scope": "read_only",
+      "project_id": "project.foundation",
+      "provider": "github",
+      "repository_slug": "tamirat-wubie/mullu-control-plane",
+      "secret_values_serialized": false,
+      "write_authority_enabled": false
+    }
+  ],
+  "result_summaries": [
+    {
+      "blockers": [],
+      "changed_file_count": 0,
+      "next_action": "Proceed only to contract validation.",
+      "outcome": "AwaitingEvidence",
+      "run_id": "run.readonly",
+      "summary_id": "summary.readonly",
+      "tests_status": "not_run",
+      "user_visible_status": "Read-only readiness view available."
+    }
+  ],
+  "scenario": "read_only_status",
+  "solver_outcome": "AwaitingEvidence",
+  "status": "contract_only",
+  "ui_created": false,
+  "users": [
+    {
+      "default_role": "operator",
+      "display_name": "Foundation Operator",
+      "identity_provider_ref": "identity://local-operator",
+      "metadata": {
+        "personal_data_minimized": true,
+        "secret_values_serialized": false
+      },
+      "organization_memberships": [
+        "org.foundation"
+      ],
+      "status": "active",
+      "user_id": "user.operator"
+    }
+  ],
+  "validators": [
+    {
+      "command": "python scripts/validate_agentic_service_harness_contract.py --example examples/agentic_service_harness.read_only.json --strict",
+      "required_for_closure": true,
+      "validator_id": "validator.agentic-service-harness"
+    }
+  ],
+  "workspace_sandboxes": [
+    {
+      "cleanup_receipt_ref": "receipt://sandbox-cleanup-readonly",
+      "command_allowlist": [
+        "git.status"
+      ],
+      "network_policy": "none",
+      "path_allowlist": [
+        "."
+      ],
+      "production_mutation_allowed": false,
+      "project_id": "project.foundation",
+      "sandbox_id": "sandbox.readonly",
+      "secret_redaction_required": true,
+      "timeout_seconds": 120
+    }
+  ]
+}

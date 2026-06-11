@@ -161,7 +161,7 @@ STATUS_DOCUMENT_REQUIRED_LITERALS: tuple[str, ...] = (
     "Deployment runtime input witness",
     "Refresh deployment runtime input witness (#466)",
     "MULLU_GATEWAY_URL",
-    "deployment_claim: published",
+    "deployment_claim=not-published",
     "docs/59_general_agent_promotion_handoff_packet.md",
     "docs/60_logic_governance_application.md",
     "examples/general_agent_promotion_handoff_packet.json",
@@ -241,8 +241,8 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
     ),
     "DEPLOYMENT_STATUS.md": (
         "Deployment Status Witness",
-        "**Deployment witness state:** `published`",
-        "**Public production health endpoint:** `https://api.mullusi.com/health`",
+        "**Deployment witness state:** `not-published`",
+        "**Public production health endpoint:** `not-declared`",
         "https://api.mullusi.com/health",
         "python scripts/validate_gateway_deployment_env.py --strict",
         "python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json",
@@ -314,7 +314,7 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
         "GitHub Actions secret name `MULLU_AUTHORITY_OPERATOR_SECRET` is present; secret value is not printed",
         "GitHub repository variables `MULLU_GATEWAY_URL=https://api.mullusi.com` and `MULLU_EXPECTED_RUNTIME_ENV=pilot` are set",
         "`api.mullusi.com` remains `AwaitingEvidence` until upstream recovery, runtime host, managed PostgreSQL, secret store, TLS, rollback, and DNS publication authority gates are closed",
-        "`deployment-witness.yml` run `27148629126` completed successfully on 2026-06-08 for `https://api.mullusi.com`",
+        "`deployment-witness.yml` run `27148629126` completed successfully on 2026-06-08 for `https://api.mullusi.com`, but the local deployment witness remains `not-published` until signatures, upstream readiness, production evidence, and public-health declaration evidence close",
     ),
 }
 

@@ -1,0 +1,285 @@
+{
+  "agent_adapters": [
+    {
+      "adapter_id": "adapter.blocked-high-risk",
+      "adapter_kind": "github_repo_task",
+      "allowed_modes": [
+        "read_only"
+      ],
+      "authority_class": "blocked",
+      "external_adapter_integrated": false,
+      "receipt_schema_ref": "schema://agentic-service-harness/agent-run-receipt",
+      "requires_workspace_sandbox": true,
+      "status": "blocked"
+    }
+  ],
+  "agent_runs": [
+    {
+      "adapter_id": "adapter.blocked-high-risk",
+      "approval_gate_ids": [
+        "gate.highrisk"
+      ],
+      "blocked_actions": [
+        "merge",
+        "deploy",
+        "dns_mutation",
+        "secret_mutation",
+        "destructive_operation"
+      ],
+      "created_at": "2026-06-11T22:20:00Z",
+      "evidence_bundle_id": "bundle.highrisk",
+      "mode": "read_only",
+      "receipt_id": "receipt.highrisk",
+      "result_summary_id": "summary.highrisk",
+      "run_id": "run.highrisk",
+      "sandbox_id": "sandbox.highrisk",
+      "selected_agent_ref": "agent://codex-style-symbolic-operator",
+      "status": "blocked",
+      "task_id": "task.highrisk"
+    }
+  ],
+  "agent_tasks": [
+    {
+      "action_class": "blocked_high_risk",
+      "evidence_refs": [
+        "policy://blocked-high-risk-default"
+      ],
+      "metadata": {
+        "personal_data_minimized": true,
+        "secret_values_serialized": false
+      },
+      "mode": "read_only",
+      "objective": "Reject merge, deploy, DNS, secret, and destructive operation authority by default.",
+      "project_id": "project.foundation",
+      "requested_by_user_id": "user.operator",
+      "required_approval_gate_ids": [
+        "gate.highrisk"
+      ],
+      "risk_level": "critical",
+      "status": "blocked",
+      "task_id": "task.highrisk"
+    }
+  ],
+  "approval_gates": [
+    {
+      "action_class": "blocked_high_risk",
+      "approval_required": true,
+      "approver_role_required": "admin",
+      "evidence_refs": [
+        "policy://blocked-high-risk-default"
+      ],
+      "gate_id": "gate.highrisk",
+      "permits_external_effect": false,
+      "risk_level": "critical",
+      "run_id": "run.highrisk",
+      "self_approval_allowed": false,
+      "status": "blocked"
+    }
+  ],
+  "contract_id": "agentic-service-harness-blocked-high-risk",
+  "contract_version": 1,
+  "default_high_risk_authority": false,
+  "evidence_bundles": [
+    {
+      "bundle_id": "bundle.highrisk",
+      "command_log_refs": [],
+      "contains_secret_values": false,
+      "diff_refs": [],
+      "evidence_refs": [
+        "policy://blocked-high-risk-default"
+      ],
+      "policy_refs": [
+        "policy://blocked-high-risk-default"
+      ],
+      "redaction_policy": "hash_or_reference_only",
+      "run_id": "run.highrisk",
+      "test_log_refs": []
+    }
+  ],
+  "external_adapter_integrated": false,
+  "foundation_phase": "foundation_contract_only",
+  "generated_at": "2026-06-11T22:20:00Z",
+  "mutation_endpoints_admitted": false,
+  "next_action": "Keep high-risk actions blocked until a later explicit authority model is approved.",
+  "non_goals": [
+    "no_unrestricted_openclaw_automation",
+    "no_claude_code_integration",
+    "no_email_sending",
+    "no_production_deploy_approval_by_default",
+    "no_dns_mutation",
+    "no_secret_mutation",
+    "no_marketplace",
+    "no_billing_requirement",
+    "no_multi_agent_marketplace"
+  ],
+  "organizations": [
+    {
+      "admin_user_ids": [
+        "user.operator"
+      ],
+      "metadata": {
+        "personal_data_minimized": true,
+        "secret_values_serialized": false
+      },
+      "name": "Foundation Organization",
+      "organization_id": "org.foundation",
+      "owner_user_ids": [
+        "user.operator"
+      ],
+      "project_ids": [
+        "project.foundation"
+      ],
+      "status": "active",
+      "tenant_id": "tenant.foundation"
+    }
+  ],
+  "permission_model": {
+    "action_classes": [
+      "read_only",
+      "dry_run",
+      "write_to_branch",
+      "open_pr",
+      "blocked_high_risk"
+    ],
+    "blocked_high_risk_actions": [
+      "merge",
+      "deploy",
+      "dns_mutation",
+      "secret_mutation",
+      "destructive_operation"
+    ],
+    "can_deploy": false,
+    "can_merge": false,
+    "can_mutate_dns": false,
+    "can_mutate_secrets": false,
+    "can_run_destructive_operations": false,
+    "roles": [
+      "viewer",
+      "operator",
+      "approver",
+      "admin"
+    ]
+  },
+  "projects": [
+    {
+      "agent_run_ids": [
+        "run.highrisk"
+      ],
+      "loop_status_ref": "loop://holistic-loop-read-model",
+      "metadata": {
+        "personal_data_minimized": true,
+        "secret_values_serialized": false
+      },
+      "name": "Foundation Harness",
+      "organization_id": "org.foundation",
+      "project_id": "project.foundation",
+      "receipt_refs": [
+        "receipt://highrisk"
+      ],
+      "repository_connection_ids": [
+        "repo.mullu-control-plane"
+      ],
+      "status": "blocked",
+      "tenant_id": "tenant.foundation"
+    }
+  ],
+  "receipts": [
+    {
+      "commands_run": [],
+      "evidence_refs": [
+        "policy://blocked-high-risk-default"
+      ],
+      "files_changed": {
+        "changed_file_count": 0,
+        "changed_file_refs": [],
+        "diff_refs": []
+      },
+      "mode": "read_only",
+      "next_action": "Reject high-risk action authority by default.",
+      "policy_result": "blocked_high_risk",
+      "receipt_id": "receipt.highrisk",
+      "receipt_is_not_terminal_closure": true,
+      "risk_level": "critical",
+      "run_id": "run.highrisk",
+      "selected_agent_ref": "agent://codex-style-symbolic-operator",
+      "task_request_ref": "task://highrisk",
+      "tests_run": []
+    }
+  ],
+  "repository_connections": [
+    {
+      "connection_id": "repo.mullu-control-plane",
+      "credential_binding_ref": "credential-binding://github-app-presence-only",
+      "default_branch": "main",
+      "installation_ref": "github-installation://presence-only",
+      "permission_scope": "read_only",
+      "project_id": "project.foundation",
+      "provider": "github",
+      "repository_slug": "tamirat-wubie/mullu-control-plane",
+      "secret_values_serialized": false,
+      "write_authority_enabled": false
+    }
+  ],
+  "result_summaries": [
+    {
+      "blockers": [
+        "merge_blocked",
+        "deploy_blocked",
+        "dns_mutation_blocked",
+        "secret_mutation_blocked",
+        "destructive_operation_blocked"
+      ],
+      "changed_file_count": 0,
+      "next_action": "Keep high-risk actions out of the first harness phase.",
+      "outcome": "GovernanceBlocked",
+      "run_id": "run.highrisk",
+      "summary_id": "summary.highrisk",
+      "tests_status": "blocked",
+      "user_visible_status": "High-risk actions are blocked by default."
+    }
+  ],
+  "scenario": "blocked_high_risk_action",
+  "solver_outcome": "GovernanceBlocked",
+  "status": "blocked",
+  "ui_created": false,
+  "users": [
+    {
+      "default_role": "operator",
+      "display_name": "Foundation Operator",
+      "identity_provider_ref": "identity://local-operator",
+      "metadata": {
+        "personal_data_minimized": true,
+        "secret_values_serialized": false
+      },
+      "organization_memberships": [
+        "org.foundation"
+      ],
+      "status": "active",
+      "user_id": "user.operator"
+    }
+  ],
+  "validators": [
+    {
+      "command": "python scripts/validate_agentic_service_harness_contract.py --example examples/agentic_service_harness.blocked_high_risk.json --strict",
+      "required_for_closure": true,
+      "validator_id": "validator.agentic-service-harness"
+    }
+  ],
+  "workspace_sandboxes": [
+    {
+      "cleanup_receipt_ref": "receipt://sandbox-cleanup-highrisk",
+      "command_allowlist": [
+        "git.status"
+      ],
+      "network_policy": "none",
+      "path_allowlist": [
+        "."
+      ],
+      "production_mutation_allowed": false,
+      "project_id": "project.foundation",
+      "sandbox_id": "sandbox.highrisk",
+      "secret_redaction_required": true,
+      "timeout_seconds": 120
+    }
+  ]
+}

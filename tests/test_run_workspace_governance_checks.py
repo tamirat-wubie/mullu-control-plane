@@ -49,6 +49,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     protocol_index = names.index("protocol_manifest")
     foundation_phase = names[foundation_start:protocol_index]
     expected_foundation_names = {
+        "agentic_service_harness_contract",
         "foundation_mode",
         "foundation_local_proof_thread",
         *(
@@ -125,6 +126,12 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
 
     assert foundation_phase[:2] == ["foundation_mode", "foundation_source_control_boundary"]
     assert_ordered("foundation_source_control_boundary", "foundation_source_control_review_checklist_boundary")
+    assert_ordered(
+        "foundation_source_control_review_checklist_boundary",
+        "foundation_local_release_packet_rehearsal_boundary",
+    )
+    assert_ordered("foundation_local_release_packet_rehearsal_boundary", "agentic_service_harness_contract")
+    assert_ordered("agentic_service_harness_contract", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_source_control_review_checklist_boundary", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_source_control_boundary", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_learning_path_boundary", "foundation_learning_loop_rehearsal_boundary")

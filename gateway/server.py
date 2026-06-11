@@ -84,6 +84,11 @@ from gateway.enterprise_authority import AuthorityDecision
 from gateway.evidence_bundle import build_command_trust_bundle
 from gateway.event_log import WebhookEventLog
 from gateway.federated_control import FederatedControlPlane, federated_control_snapshot_to_json_dict
+from gateway.governed_operations import (
+    GovernedOperationsKernel,
+    default_loop_registry,
+    receipt_from_projection,
+)
 from gateway.mcp_capabilities import register_mcp_capabilities
 from gateway.mcp_capability_fabric import MCPAuthorityRecords, build_mcp_gateway_import_from_env
 from gateway.observability import GatewayObservabilityRecorder
@@ -754,6 +759,58 @@ def create_gateway_app(
             signature_key_id=os.environ.get("MULLU_DEPLOYMENT_WITNESS_KEY_ID", "deployment-witness-local"),
         )
 
+    def _governed_operations_evidence_refs(
+        *,
+        conformance: Mapping[str, Any],
+        deployment: Mapping[str, Any],
+        authority_witness: Mapping[str, Any],
+        latest_anchor_id: str,
+    ) -> tuple[str, ...]:
+        """Project existing read evidence into governed-operations refs."""
+        refs: list[str] = []
+        checks_missing = deployment.get("checks_missing", ())
+        if isinstance(checks_missing, list) and not checks_missing and deployment.get("signature"):
+            refs.append("deployment_witness:current")
+        if deployment.get("gateway_health") == "pass":
+            refs.append("runtime_health:pass")
+        if deployment.get("proof_store") == "pass":
+            refs.append("proof_verify:pass")
+        deployment_id = str(deployment.get("deployment_id", "")).strip()
+        if deployment_id and "unpublished" not in deployment_id:
+            refs.append("domain:declared")
+        if str(conformance.get("terminal_status", "")) in {"conformant", "conformant_with_gaps"}:
+            refs.append("runtime_conformance:current")
+        if latest_anchor_id:
+            refs.append("audit_anchor:current")
+        if bool(authority_witness.get("responsibility_debt_clear")):
+            refs.append("authority:witness")
+        return tuple(dict.fromkeys(refs))
+
+    def _governed_operations_observed_states(
+        *,
+        conformance: Mapping[str, Any],
+        deployment: Mapping[str, Any],
+        authority_witness: Mapping[str, Any],
+        latest_anchor_id: str,
+    ) -> dict[str, str]:
+        """Return conservative observed states for registered operations loops."""
+        checks_missing = deployment.get("checks_missing", ())
+        deployment_witnessed = (
+            isinstance(checks_missing, list)
+            and not checks_missing
+            and bool(deployment.get("signature"))
+        )
+        terminal_status = str(conformance.get("terminal_status", "missing"))
+        return {
+            "deployment_witness": "witnessed" if deployment_witnessed else "awaiting_evidence",
+            "runtime_conformance": "conformant" if terminal_status == "conformant" else terminal_status,
+            "audit_proof_verification": "verified" if latest_anchor_id else "awaiting_evidence",
+            "authority_obligations": "clear" if bool(authority_witness.get("responsibility_debt_clear")) else "debt_open",
+            "cognitive_outcome_loop": "awaiting_evidence",
+            "governed_code_change_loop": "awaiting_evidence",
+            "adapter_promotion_loop": "awaiting_evidence",
+        }
+
     def _unanchored_event_count() -> int:
         """Return unanchored command-event count when the ledger store exposes it."""
         store = getattr(command_ledger, "_store", None)
@@ -1414,6 +1471,63 @@ def create_gateway_app(
             runtime_witness_secret=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", "local-runtime-witness-secret"),
         )
         return certificate.to_json_dict()
+
+    @app.get("/governed-operations/read-model")
+    def governed_operations_read_model():
+        conformance = issue_conformance_certificate(
+            router=router,
+            command_ledger=command_ledger,
+            authority_obligation_mesh=authority_obligation_mesh,
+            capability_admission_gate=capability_admission_gate,
+            plan_ledger=plan_ledger,
+            environment=gateway_env,
+            signing_secret=os.environ.get("MULLU_RUNTIME_CONFORMANCE_SECRET", "local-runtime-conformance-secret"),
+            signature_key_id=os.environ.get("MULLU_RUNTIME_CONFORMANCE_KEY_ID", "runtime-conformance-local"),
+            runtime_witness_key_id=os.environ.get("MULLU_RUNTIME_WITNESS_KEY_ID", "runtime-witness-local"),
+            runtime_witness_secret=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", "local-runtime-witness-secret"),
+        ).to_json_dict()
+        deployment = _build_deployment_witness()
+        authority_witness = asdict(authority_obligation_mesh.responsibility_witness())
+        latest_anchors = command_ledger.list_anchors(limit=1)
+        latest_anchor_id = latest_anchors[0].anchor_id if latest_anchors else ""
+
+        evidence_refs = _governed_operations_evidence_refs(
+            conformance=conformance,
+            deployment=deployment,
+            authority_witness=authority_witness,
+            latest_anchor_id=latest_anchor_id,
+        )
+        receipts = ()
+        if evidence_refs:
+            receipts = (
+                receipt_from_projection(
+                    receipt_id="receipt://governed-operations-read-model",
+                    action="governed_operations_read_model",
+                    actor="gateway",
+                    authority="read_only",
+                    evidence_refs=evidence_refs,
+                    policy_result="read_model_only",
+                    timestamp=_clock(),
+                    status="projected",
+                    input_payload={"environment": gateway_env},
+                    output_payload={
+                        "evidence_ref_count": len(evidence_refs),
+                        "runtime_conformance": conformance.get("terminal_status", ""),
+                    },
+                ),
+            )
+        snapshot = GovernedOperationsKernel().build_snapshot(
+            loops=default_loop_registry(),
+            receipts=receipts,
+            observed_states=_governed_operations_observed_states(
+                conformance=conformance,
+                deployment=deployment,
+                authority_witness=authority_witness,
+                latest_anchor_id=latest_anchor_id,
+            ),
+            generated_at=_clock(),
+        )
+        return snapshot.to_json_dict()
 
     @app.get("/deployment/witness")
     def deployment_witness():

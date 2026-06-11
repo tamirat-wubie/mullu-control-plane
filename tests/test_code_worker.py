@@ -83,6 +83,8 @@ def test_code_worker_lease_contract_is_frozen_and_json_safe() -> None:
         _lease(allowed_paths=("../outside",))
     with pytest.raises(ValueError):
         _lease(allowed_paths=("C:/outside",))
+    with pytest.raises(ValueError):
+        _lease(allowed_paths=("C:outside",))
     with pytest.raises(Exception):
         lease.allowed_paths += ("tests",)  # type: ignore[misc]
 
@@ -688,6 +690,68 @@ def test_sandboxed_code_worker_blocks_flag_embedded_path_violations(
     assert lease_result.receipt.violation_reasons[0].startswith("argv_path_outside_lease_allowed_paths:")
     assert "../outside.py" not in boundary_result.stderr
     assert "tests/test_task.py" not in lease_result.stderr
+
+
+def test_sandboxed_code_worker_blocks_drive_relative_path_flag_without_dispatch(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "src").mkdir()
+    dispatched = False
+
+    def fake_runner(argv, **kwargs):  # noqa: ANN001, ANN202
+        nonlocal dispatched
+        dispatched = True
+        return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+
+    worker = SandboxedCodeWorker(
+        workspace_root=str(tmp_path),
+        clock=lambda: "2026-05-07T12:00:00+00:00",
+        runner=fake_runner,
+    )
+
+    result = worker.execute_command(
+        _lease(allowed_paths=(".",), allowed_commands=(("python", "--output=C:outside"),)),
+        command_id="cmd-3h",
+        argv=("python", "--output=C:outside"),
+        cwd=".",
+    )
+
+    assert dispatched is False
+    assert result.status is CodeWorkerReceiptStatus.BLOCKED
+    assert result.receipt.sandbox_receipt_id is None
+    assert result.receipt.violation_reasons[0].startswith("argv_path_outside_repository_boundary:")
+    assert "C:outside" not in result.stderr
+
+
+def test_sandboxed_code_worker_allows_extensionless_path_flag_inside_cwd(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "src").mkdir()
+    calls: list[list[str]] = []
+
+    def fake_runner(argv, **kwargs):  # noqa: ANN001, ANN202, ARG001
+        calls.append(list(argv))
+        return subprocess.CompletedProcess(argv, 0, stdout="ok\n", stderr="")
+
+    worker = SandboxedCodeWorker(
+        workspace_root=str(tmp_path),
+        clock=lambda: "2026-05-07T12:00:00+00:00",
+        runner=fake_runner,
+        platform_system=lambda: "Linux",
+    )
+
+    result = worker.execute_command(
+        _lease(allowed_commands=(("python", "--output=report"),)),
+        command_id="cmd-3i",
+        argv=("python", "--output=report"),
+        cwd="src",
+    )
+
+    assert result.status is CodeWorkerReceiptStatus.SUCCEEDED
+    assert calls
+    assert "--output=report" in calls[0]
+    assert result.receipt.violation_reasons == ()
+    assert result.receipt.sandbox_receipt_id is not None
 
 
 def test_sandboxed_code_worker_blocks_network_and_risky_git_without_dispatch(

@@ -1,5 +1,5 @@
 {
-  "artifact_count": 357,
+  "artifact_count": 360,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -787,6 +787,11 @@
       "purpose": "Foundation Local Workstation Boundary doctrine and Foundation Mode boundary evidence contract."
     },
     {
+      "name": "foundation_boundary_doc_foundation_local_release_packet_rehearsal_boundary",
+      "path": "docs/FOUNDATION_LOCAL_RELEASE_PACKET_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Local Release Packet Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
       "name": "foundation_boundary_doc_foundation_market_research_boundary",
       "path": "docs/FOUNDATION_MARKET_RESEARCH_BOUNDARY.md",
       "purpose": "Foundation Market Research Boundary doctrine and Foundation Mode boundary evidence contract."
@@ -1207,6 +1212,11 @@
       "purpose": "Read-only validator for Foundation Local Workstation Boundary."
     },
     {
+      "name": "foundation_boundary_validator_foundation_local_release_packet_rehearsal_boundary",
+      "path": "scripts/validate_foundation_local_release_packet_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Local Release Packet Rehearsal Boundary."
+    },
+    {
       "name": "foundation_boundary_validator_foundation_market_research_boundary",
       "path": "scripts/validate_foundation_market_research_boundary.py",
       "purpose": "Read-only validator for Foundation Market Research Boundary."
@@ -1625,6 +1635,11 @@
       "name": "foundation_boundary_tests_foundation_local_workstation_boundary",
       "path": "tests/test_validate_foundation_local_workstation_boundary.py",
       "purpose": "Regression tests for Foundation Local Workstation Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_local_release_packet_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_local_release_packet_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Local Release Packet Rehearsal Boundary validation."
     },
     {
       "name": "foundation_boundary_tests_foundation_market_research_boundary",
