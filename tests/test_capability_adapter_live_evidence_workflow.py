@@ -27,6 +27,7 @@ def test_capability_adapter_live_evidence_workflow_targets_all_adapter_families(
     assert "          - email-calendar" in workflow
     assert 'browser_url:' in workflow
     assert 'default: "https://api.mullusi.com/health"' in workflow
+    assert '-e "mcoi[dev,browser-worker,document-worker]" openai' in workflow
     assert "Produce browser sandbox evidence" in workflow
     assert "Produce browser live receipt" in workflow
     assert "Produce document live receipt" in workflow
@@ -54,6 +55,16 @@ def test_capability_adapter_live_evidence_workflow_collects_remaining_receipts_a
     assert "if: ${{ always() && (inputs.target == 'all' || inputs.target == 'voice') }}" in workflow
     assert "if: ${{ always() && (inputs.target == 'all' || inputs.target == 'email-calendar') }}" in workflow
     assert "if: always()" in workflow
+
+
+def test_capability_adapter_live_evidence_workflow_uses_bounded_browser_target() -> None:
+    workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
+    producer = (ROOT / "scripts" / "produce_capability_adapter_live_receipts.py").read_text(encoding="utf-8")
+
+    assert "https://api.mullusi.com/health" in producer
+    assert "https://docs.mullusi.com/" not in producer
+    assert 'default: "https://api.mullusi.com/health"' in workflow
+    assert '--browser-url "${{ inputs.browser_url }}"' in workflow
 
 
 def test_capability_adapter_live_evidence_workflow_uploads_json_receipts_only() -> None:

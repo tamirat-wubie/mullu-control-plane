@@ -132,7 +132,7 @@ class LiveReceiptRun:
 def produce_browser_live_receipt(
     *,
     output_path: Path = DEFAULT_BROWSER_RECEIPT,
-    target_url: str = "https://docs.mullusi.com/",
+    target_url: str = "https://api.mullusi.com/health",
     sandbox_evidence_ref: str = "",
     executor: BrowserExecutor | None = None,
     clock: Callable[[], str] | None = None,
@@ -438,7 +438,7 @@ def produce_live_receipts(
     document_output: Path = DEFAULT_DOCUMENT_RECEIPT,
     voice_output: Path = DEFAULT_VOICE_RECEIPT,
     email_calendar_output: Path = DEFAULT_EMAIL_CALENDAR_RECEIPT,
-    browser_url: str = "https://docs.mullusi.com/",
+    browser_url: str = "https://api.mullusi.com/health",
     browser_sandbox_evidence: str = "",
     voice_audio_path: Path | None = None,
     voice_text: str = "Mullu governed voice adapter receipt.",
@@ -707,7 +707,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--document-output", default=str(DEFAULT_DOCUMENT_RECEIPT))
     parser.add_argument("--voice-output", default=str(DEFAULT_VOICE_RECEIPT))
     parser.add_argument("--email-calendar-output", default=str(DEFAULT_EMAIL_CALENDAR_RECEIPT))
-    parser.add_argument("--browser-url", default="https://docs.mullusi.com/")
+    parser.add_argument("--browser-url", default="https://api.mullusi.com/health")
     parser.add_argument(
         "--browser-sandbox-evidence",
         default="",
