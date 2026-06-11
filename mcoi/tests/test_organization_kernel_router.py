@@ -10,6 +10,7 @@ Invariants:
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 import hashlib
 import hmac
 import json
@@ -45,8 +46,14 @@ class MetricsStub:
 
 
 class FixedClock:
+    def __init__(self) -> None:
+        self._base = datetime.fromisoformat(FIXED_CLOCK)
+        self._counter = 0
+
     def __call__(self) -> str:
-        return FIXED_CLOCK
+        value = self._base + timedelta(seconds=self._counter)
+        self._counter += 1
+        return value.isoformat()
 
 
 class StubHttpResponse:
@@ -1946,6 +1953,74 @@ def test_closure_certificate_reports_required_gate_evidence_before_closure(tmp_p
     assert "closure_gate_evidence_required" in {item["kind"] for item in portfolio.json()["attention_items"]}
     assert readiness.json()["ready_to_close"] is True
     assert readiness.json()["required_closure_evidence_refs"] == _closure_gate_evidence_refs()
+
+
+def test_closure_certificate_reports_stale_gate_after_newer_evidence(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    approval = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/approvals",
+        json={
+            "approval_id": "approval:security-dual-control",
+            "role_id": "executive.owner",
+            "approval_scope": "security_approval",
+            "approved_by": "human-executive",
+        },
+    )
+    _allow_all_plan_steps(client)
+    newer_evidence = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": "evidence:engineering_health_endpoint:v2",
+            "requirement_id": "engineering_health_endpoint",
+            "submitted_by": "operator",
+        },
+    )
+
+    certificate = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-certificate")
+    view = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-certificate/view")
+    explorer = client.get("/api/v1/cases/case.launch_gateway_pilot/proof-explorer")
+    portfolio = client.get("/api/v1/orgs/org-mullu/case-portfolio")
+    readiness = client.get("/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/readiness")
+
+    assert approval.status_code == 200
+    assert newer_evidence.status_code == 200
+    assert certificate.status_code == 200
+    assert certificate.json()["closure_gate_evidence"]["gate_decisions_fresh"] is False
+    assert certificate.json()["closure_gate_evidence"]["stale_gate_step_ids"] == ["engineering_runtime_witness"]
+    assert certificate.json()["closure_gate_evidence"]["newer_gate_evidence_refs"] == [
+        "evidence:engineering_health_endpoint:v2",
+    ]
+    assert certificate.json()["closure_gate_evidence"]["ready_for_closure_packet"] is False
+    assert "closure_gate_decision_stale" in {item["kind"] for item in certificate.json()["attention_items"]}
+    assert view.status_code == 200
+    assert "Gate Freshness" in view.text
+    assert "evidence:engineering_health_endpoint:v2" in view.text
+    assert explorer.json()["terminal_status"] == "awaiting_gate_refresh"
+    assert "closure_gate_decision_stale" in {item["kind"] for item in explorer.json()["attention_items"]}
+    assert "closure_gate_decision_stale" in {item["kind"] for item in portfolio.json()["attention_items"]}
+    assert portfolio.json()["cases"][0]["terminal_status"] == "awaiting_gate_refresh"
+    assert readiness.json()["ready_to_close"] is False
+    assert readiness.json()["preview_ready_to_close"] is True
+    assert readiness.json()["terminal_status"] == "awaiting_gate_refresh"
+    assert readiness.json()["stale_gate_step_ids"] == ["engineering_runtime_witness"]
+
+    refreshed_gate = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+    refreshed_certificate = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-certificate")
+    refreshed_readiness = client.get("/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/readiness")
+
+    assert refreshed_gate.status_code == 200
+    assert "evidence:engineering_health_endpoint:v2" in refreshed_gate.json()["decision"]["evidence_refs"]
+    assert refreshed_certificate.json()["closure_gate_evidence"]["gate_decisions_fresh"] is True
+    assert refreshed_certificate.json()["closure_gate_evidence"]["stale_gate_decisions"] == []
+    assert "closure_gate_decision_stale" not in {
+        item["kind"] for item in refreshed_certificate.json()["attention_items"]
+    }
+    assert refreshed_readiness.json()["ready_to_close"] is True
 
 
 def test_gateway_pilot_can_close_and_bind_learning(tmp_path: Path) -> None:

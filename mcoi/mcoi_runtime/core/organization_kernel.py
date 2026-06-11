@@ -1222,10 +1222,13 @@ class OrganizationKernel:
     def _evidence_refs_for_step(self, case_id: str, step: PlanStep) -> tuple[str, ...]:
         refs: list[str] = []
         for requirement_id in step.evidence_required:
-            for evidence in self._case_evidence.values():
-                if evidence.case_id == case_id and evidence.requirement_id == requirement_id:
-                    refs.append(evidence.evidence_ref)
-                    break
+            matching = [
+                evidence for evidence in self._case_evidence.values()
+                if evidence.case_id == case_id and evidence.requirement_id == requirement_id
+            ]
+            if matching:
+                latest = max(matching, key=lambda evidence: (evidence.submitted_at, evidence.evidence_ref))
+                refs.append(latest.evidence_ref)
         return tuple(refs)
 
     def _approval_refs_for_step(self, case_id: str, step: PlanStep) -> tuple[str, ...]:
