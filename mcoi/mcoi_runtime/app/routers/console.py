@@ -443,6 +443,7 @@ def _spatial_map_console_payload() -> dict[str, object]:
                 "payment_provider_handoff_path",
                 "observability_evidence_path",
                 "support_escalation_path",
+                "rollback_recovery_path",
             ),
             paths,
             judgments,
