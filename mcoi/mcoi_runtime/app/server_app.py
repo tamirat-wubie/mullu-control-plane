@@ -26,6 +26,7 @@ from mcoi_runtime.app.server_http import (
     configure_cors_middleware,
     install_global_exception_handler,
 )
+from mcoi_runtime.app.security_headers import SecurityHeadersConfig, SecurityHeadersMiddleware
 
 
 def build_app_lifespan(*, shutdown_mgr: Any) -> Callable[[FastAPI], Any]:
@@ -58,6 +59,7 @@ def create_governed_app(
     fastapi_cls: type[FastAPI] = FastAPI,
     governance_middleware_cls: type[Any] = GovernanceMiddleware,
     request_id_middleware_cls: type[Any] = RequestIdMiddleware,
+    security_headers_middleware_cls: type[Any] = SecurityHeadersMiddleware,
     configure_cors_middleware_fn: Callable[..., None] = configure_cors_middleware,
     install_global_exception_handler_fn: Callable[..., None] = install_global_exception_handler,
     install_musia_receipt_middleware_fn: Callable[..., bool] = install_musia_receipt_middleware,
@@ -105,6 +107,10 @@ def create_governed_app(
         warnings_module=warnings_module,
     )
     app.add_middleware(request_id_middleware_cls)
+    app.add_middleware(
+        security_headers_middleware_cls,
+        config=SecurityHeadersConfig(environment=env),
+    )
 
     install_global_exception_handler_fn(
         app=app,
