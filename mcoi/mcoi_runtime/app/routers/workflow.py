@@ -22,6 +22,7 @@ from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.agent_protocol import AgentCapability
 from mcoi_runtime.core.batch_pipeline import PipelineStep
+from mcoi_runtime.core.request_tracing import TraceContext
 from mcoi_runtime.core.tool_use import certify_tool_capability_policy_receipt
 
 import hashlib
@@ -56,6 +57,11 @@ def _coerce_workflow_read_limit(limit: object) -> int:
     if value < 0 or value > _MAX_WORKFLOW_READ_LIMIT:
         raise ValueError("limit is outside the allowed range")
     return value
+
+
+def _new_http_request_id() -> str:
+    """Return a request-unique HTTP witness id for the legacy execution boundary."""
+    return f"http-{TraceContext.new().trace_id}"
 
 
 def _cognitive_block_detail(verdict: str) -> dict[str, object]:
@@ -161,7 +167,7 @@ class TemplateExecuteRequest(BaseModel):
 def execute(req: ExecuteRequest, request: Request, session_id: str = Header(default="")):
     enforce_tenant_scope(request, req.tenant_id)
     api_req = deps.surface.make_api_request(
-        request_id=f"http-{id(req)}",
+        request_id=_new_http_request_id(),
         method="POST",
         path="/api/v1/execute",
         actor_id=req.actor_id,
