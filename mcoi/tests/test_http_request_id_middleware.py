@@ -6,7 +6,7 @@ Invariants: request ids are server-owned, per-request, and present on bounded re
 
 from __future__ import annotations
 
-from mcoi_runtime.app.server_http import REQUEST_ID_HEADER, REQUEST_ID_PREFIX
+from mcoi_runtime.app.server_http import GOVERNED_HEADER, REQUEST_ID_HEADER, REQUEST_ID_PREFIX
 
 
 def _assert_request_id_shape(request_id: str) -> None:
@@ -26,6 +26,8 @@ def test_health_response_emits_request_unique_id(test_client) -> None:
 
     assert first_response.status_code == 200
     assert second_response.status_code == 200
+    assert first_response.headers[GOVERNED_HEADER] == "true"
+    assert second_response.headers[GOVERNED_HEADER] == "true"
     assert first_request_id != second_request_id
     _assert_request_id_shape(first_request_id)
     _assert_request_id_shape(second_request_id)
@@ -54,6 +56,7 @@ def test_governance_rejection_emits_request_id(test_client) -> None:
     assert response.status_code == 403
     assert body["governed"] is True
     assert body["guard"] == "request_body"
+    assert response.headers[GOVERNED_HEADER] == "true"
     assert response_request_id.startswith(REQUEST_ID_PREFIX)
     _assert_request_id_shape(response_request_id)
 
@@ -70,5 +73,6 @@ def test_cors_preflight_emits_request_id(test_client) -> None:
 
     assert response.status_code in {200, 400}
     assert REQUEST_ID_HEADER in response.headers
+    assert response.headers[GOVERNED_HEADER] == "true"
     assert response.headers.get("vary") == "Origin"
     _assert_request_id_shape(response_request_id)
