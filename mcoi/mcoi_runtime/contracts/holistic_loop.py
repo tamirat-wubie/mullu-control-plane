@@ -837,6 +837,80 @@ class LoopClosureEvidencePack(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class LoopOperatorClosureReadinessView(ContractRecord):
+    """Read-only operator projection over closure blockers and next proof action."""
+
+    view_ref: str
+    loop_id: str
+    projected_status: LoopStatus
+    readiness_state: str
+    blocker_refs: tuple[str, ...]
+    evidence_gap_refs: tuple[str, ...]
+    authority_gap_refs: tuple[str, ...]
+    closure_condition_refs: tuple[str, ...]
+    rollback_ref: str
+    rollback_available: bool
+    next_proof_action: str
+    next_proof_refs: tuple[str, ...]
+    read_only: bool = True
+    mutation_route: bool = False
+    terminal_closure: bool = False
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "view_ref",
+            "loop_id",
+            "readiness_state",
+            "rollback_ref",
+            "next_proof_action",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                require_non_empty_text(getattr(self, field_name), field_name),
+            )
+        if not isinstance(self.projected_status, LoopStatus):
+            raise ValueError("projected_status must be a LoopStatus value")
+        allowed_readiness_states = {
+            "blocked_by_unresolved_gaps",
+            "ready_for_terminal_closure_review",
+        }
+        if self.readiness_state not in allowed_readiness_states:
+            raise ValueError("readiness_state is invalid")
+        for field_name in (
+            "blocker_refs",
+            "evidence_gap_refs",
+            "authority_gap_refs",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name, allow_empty=True),
+            )
+        for field_name in ("closure_condition_refs", "next_proof_refs"):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name),
+            )
+        if not isinstance(self.rollback_available, bool):
+            raise ValueError("rollback_available must be boolean")
+        expected_readiness_state = (
+            "blocked_by_unresolved_gaps"
+            if self.blocker_refs
+            else "ready_for_terminal_closure_review"
+        )
+        if self.readiness_state != expected_readiness_state:
+            raise ValueError("readiness_state must match blocker refs")
+        if self.read_only is not True:
+            raise ValueError("operator closure readiness view must be read-only")
+        if self.mutation_route is not False:
+            raise ValueError("operator closure readiness view cannot expose a mutation route")
+        if self.terminal_closure is not False:
+            raise ValueError("operator closure readiness view cannot be terminal closure")
+
+
+@dataclass(frozen=True, slots=True)
 class LoopSummary(ContractRecord):
     """Bounded read-model summary for one registered governed loop."""
 
@@ -866,6 +940,7 @@ class LoopSummary(ContractRecord):
     closure_condition_bindings: tuple[LoopClosureConditionBinding, ...]
     closure_report: LoopClosureReport
     closure_evidence_pack: LoopClosureEvidencePack
+    operator_closure_readiness_view: LoopOperatorClosureReadinessView
     open_blockers: tuple[str, ...]
     rollback_policy: str
     rollback_binding: LoopRollbackBinding
@@ -996,6 +1071,10 @@ class LoopSummary(ContractRecord):
             raise ValueError("closure_report must be a LoopClosureReport")
         if not isinstance(self.closure_evidence_pack, LoopClosureEvidencePack):
             raise ValueError("closure_evidence_pack must be a LoopClosureEvidencePack")
+        if not isinstance(self.operator_closure_readiness_view, LoopOperatorClosureReadinessView):
+            raise ValueError(
+                "operator_closure_readiness_view must be a LoopOperatorClosureReadinessView"
+            )
         if not isinstance(self.rollback_binding, LoopRollbackBinding):
             raise ValueError("rollback_binding must be a LoopRollbackBinding")
         if self.rollback_binding.rollback_ref != self.rollback_policy:
@@ -1010,6 +1089,14 @@ class LoopSummary(ContractRecord):
             raise ValueError("summary closure_report cannot claim terminal closure")
         if self.closure_evidence_pack.loop_id != self.loop_id:
             raise ValueError("closure_evidence_pack loop_id must match summary loop_id")
+        if self.operator_closure_readiness_view.loop_id != self.loop_id:
+            raise ValueError(
+                "operator_closure_readiness_view loop_id must match summary loop_id"
+            )
+        if self.operator_closure_readiness_view.projected_status != self.status:
+            raise ValueError(
+                "operator_closure_readiness_view projected_status must match summary status"
+            )
         object.__setattr__(self, "updated_at", require_datetime_text(self.updated_at, "updated_at"))
         if set(self.status_binding.blocker_refs) != set(self.open_blockers):
             raise ValueError("status_binding blocker_refs must match open blockers")
@@ -1117,6 +1204,43 @@ class LoopSummary(ContractRecord):
             raise ValueError("closure evidence pack rollback_available must match closure report")
         if self.closure_evidence_pack.rollback_ref != self.rollback_policy:
             raise ValueError("closure evidence pack rollback_ref must match rollback policy")
+        if set(self.operator_closure_readiness_view.blocker_refs) != set(self.open_blockers):
+            raise ValueError("operator closure readiness blocker refs must match open blockers")
+        if set(self.operator_closure_readiness_view.evidence_gap_refs) != set(self.missing_evidence):
+            raise ValueError("operator closure readiness evidence gap refs must match missing evidence")
+        if set(self.operator_closure_readiness_view.authority_gap_refs) != set(self.missing_authority):
+            raise ValueError("operator closure readiness authority gap refs must match missing authority")
+        if set(self.operator_closure_readiness_view.closure_condition_refs) != set(self.closure_conditions):
+            raise ValueError(
+                "operator closure readiness closure condition refs must match closure conditions"
+            )
+        if self.operator_closure_readiness_view.rollback_ref != self.rollback_policy:
+            raise ValueError("operator closure readiness rollback ref must match rollback policy")
+        if (
+            self.operator_closure_readiness_view.rollback_available
+            != self.closure_report.rollback_available
+        ):
+            raise ValueError(
+                "operator closure readiness rollback_available must match closure report"
+            )
+        expected_readiness_state = (
+            "blocked_by_unresolved_gaps"
+            if self.open_blockers
+            else "ready_for_terminal_closure_review"
+        )
+        if self.operator_closure_readiness_view.readiness_state != expected_readiness_state:
+            raise ValueError("operator closure readiness state must match blockers")
+        expected_next_action = (
+            "resolve_blockers_before_terminal_closure_review"
+            if self.open_blockers
+            else "run_loop_specific_terminal_closure_workflow"
+        )
+        if self.operator_closure_readiness_view.next_proof_action != expected_next_action:
+            raise ValueError("operator closure readiness next proof action must match blockers")
+        if "closure_evidence_pack" not in self.operator_closure_readiness_view.next_proof_refs:
+            raise ValueError("operator closure readiness refs must include closure evidence pack")
+        if "closure_report" not in self.operator_closure_readiness_view.next_proof_refs:
+            raise ValueError("operator closure readiness refs must include closure report")
 
 
 @dataclass(frozen=True, slots=True)
@@ -1208,6 +1332,7 @@ __all__ = [
     "LoopEvidenceBinding",
     "LoopLearningBinding",
     "LoopModeBinding",
+    "LoopOperatorClosureReadinessView",
     "LoopReceiptLineageBinding",
     "LoopRiskBinding",
     "LoopRollbackBinding",

@@ -96,6 +96,7 @@
         "closure_condition_bindings",
         "closure_report",
         "closure_evidence_pack",
+        "operator_closure_readiness_view",
         "open_blockers",
         "rollback_policy",
         "rollback_binding",
@@ -223,6 +224,9 @@
         },
         "closure_evidence_pack": {
           "$ref": "#/$defs/closure_evidence_pack"
+        },
+        "operator_closure_readiness_view": {
+          "$ref": "#/$defs/operator_closure_readiness_view"
         },
         "open_blockers": {
           "$ref": "#/$defs/possibly_empty_text_list"
@@ -1020,6 +1024,86 @@
           "const": true
         },
         "emits_receipt": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "operator_closure_readiness_view": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "view_ref",
+        "loop_id",
+        "projected_status",
+        "readiness_state",
+        "blocker_refs",
+        "evidence_gap_refs",
+        "authority_gap_refs",
+        "closure_condition_refs",
+        "rollback_ref",
+        "rollback_available",
+        "next_proof_action",
+        "next_proof_refs",
+        "read_only",
+        "mutation_route",
+        "terminal_closure"
+      ],
+      "properties": {
+        "view_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "loop_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "projected_status": {
+          "type": "string",
+          "enum": ["open", "blocked", "verified", "closed"]
+        },
+        "readiness_state": {
+          "type": "string",
+          "enum": [
+            "blocked_by_unresolved_gaps",
+            "ready_for_terminal_closure_review"
+          ]
+        },
+        "blocker_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "evidence_gap_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "authority_gap_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "closure_condition_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "rollback_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rollback_available": {
+          "type": "boolean"
+        },
+        "next_proof_action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "next_proof_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "mutation_route": {
           "type": "boolean",
           "const": false
         },

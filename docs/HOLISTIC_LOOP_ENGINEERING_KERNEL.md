@@ -1,7 +1,7 @@
 # Mullu Holistic Loop Engineering Kernel v1
 
 Purpose: define the shared governed loop contract used to describe existing Mullu loops without changing their runtime behavior.
-Governance scope: loop manifests, loop state projections, step receipts, receipt lineage bindings, closure reports, registry exposure, status bindings, transition bindings, mode bindings, closure condition bindings, risk bindings, evidence bindings, evidence blockers, rollback policy, learning bindings, and learning policy.
+Governance scope: loop manifests, loop state projections, step receipts, receipt lineage bindings, closure reports, registry exposure, status bindings, transition bindings, mode bindings, closure condition bindings, risk bindings, evidence bindings, evidence blockers, closure evidence packs, operator closure readiness views, rollback policy, learning bindings, and learning policy.
 Dependencies: `mcoi_runtime.contracts.holistic_loop`, `mcoi_runtime.core.holistic_loop_registry`, existing deployment witness, runtime conformance, cognitive outcome, and governed code-change surfaces.
 Invariants: this is a read-model-first contract layer; it adds no public mutation route; it does not rewrite deployment, cognitive, proof verification, or code-change behavior.
 
@@ -31,6 +31,7 @@ The kernel models the common contract through:
 | `LoopReceiptLineageBinding` | Read-only map from each synthetic step receipt to its receipt hash, required evidence, observed evidence, blockers, source receipts, validators, and proof surfaces. |
 | `LoopClosureReport` | Closure assessment with unresolved gaps, rollback availability, and learning candidates. |
 | `LoopClosureEvidencePack` | Read-only aggregate of required evidence, observed evidence, authority, blockers, closure conditions, receipt lineage, rollback, validators, and proof surfaces needed to evaluate closure readiness. |
+| `LoopOperatorClosureReadinessView` | Read-only operator projection of blockers, evidence gaps, authority gaps, rollback availability, and the next proof action. |
 | `LoopStatusBinding` | Read-only map from projected status to blockers, verification refs, closure gates, validators, and proof surfaces. |
 | `LoopTransitionBinding` | Read-only map from possible status and phase transitions to required evidence, authority, blockers, receipts, rollback refs, validators, and proof surfaces. |
 | `LoopModeBinding` | Read-only map from projected mode to allowed modes, separation refs, real-execution guards, validators, and proof surfaces. |
@@ -462,6 +463,46 @@ closure_evidence_pack.emits_receipt == false
 closure_evidence_pack.terminal_closure == false
 ```
 
+## Operator Closure Readiness View
+
+Each loop summary includes `operator_closure_readiness_view`, a bounded
+operator-facing projection over the closure evidence pack and closure report.
+The view answers what blocks review next; it does not add evidence, emit a
+receipt, expose a mutation route, run rollback, or certify closure.
+
+| Field | Meaning |
+| --- | --- |
+| `view_ref` | Stable read-model label for the operator readiness view. |
+| `loop_id` | Loop identity covered by the view. |
+| `projected_status` | Must match the loop summary `status`. |
+| `readiness_state` | `blocked_by_unresolved_gaps` when blockers exist, otherwise `ready_for_terminal_closure_review`. |
+| `blocker_refs` | Must match `open_blockers`. |
+| `evidence_gap_refs` | Must match `missing_evidence`. |
+| `authority_gap_refs` | Must match `missing_authority`. |
+| `closure_condition_refs` | Must match `closure_conditions`. |
+| `rollback_ref` | Must match `rollback_policy`. |
+| `rollback_available` | Must match `closure_report.rollback_available`. |
+| `next_proof_action` | `resolve_blockers_before_terminal_closure_review` while blocked, otherwise `run_loop_specific_terminal_closure_workflow`. |
+| `next_proof_refs` | Includes `closure_evidence_pack` and `closure_report`; blocked loops also name their blockers. |
+| `read_only` | Always `true`. |
+| `mutation_route` | Always `false`; this view cannot change loop state. |
+| `terminal_closure` | Always `false`; this view is not a closure certificate. |
+
+The view is exact by contract:
+
+```text
+operator_closure_readiness_view.projected_status == status
+set(operator_closure_readiness_view.blocker_refs) == set(open_blockers)
+set(operator_closure_readiness_view.evidence_gap_refs) == set(missing_evidence)
+set(operator_closure_readiness_view.authority_gap_refs) == set(missing_authority)
+set(operator_closure_readiness_view.closure_condition_refs) == set(closure_conditions)
+operator_closure_readiness_view.rollback_ref == rollback_policy
+operator_closure_readiness_view.rollback_available == closure_report.rollback_available
+operator_closure_readiness_view.read_only == true
+operator_closure_readiness_view.mutation_route == false
+operator_closure_readiness_view.terminal_closure == false
+```
+
 ## Closure Readiness
 
 Each loop summary also includes a derived `closure_report`. This report is a
@@ -544,6 +585,7 @@ script:
 | `loops[].receipt_lineage_bindings` | Read-only lineage catalog entries linking synthetic receipts to evidence, blockers, validators, and proof surfaces. |
 | `loops[].closure_report` | Read-only non-terminal closure-readiness report for each loop summary. |
 | `loops[].closure_evidence_pack` | Read-only aggregate of evidence, authority, blockers, closure conditions, lineage refs, rollback, validators, and proof surfaces. |
+| `loops[].operator_closure_readiness_view` | Read-only operator view of current blockers and next proof action. |
 | `blocked_count` | Count of returned summaries carrying blockers. |
 | `verified_count` | Count of returned summaries marked verified. |
 | `read_only` | Always `true`. |

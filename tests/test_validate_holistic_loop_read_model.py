@@ -103,6 +103,25 @@ def test_schema_requires_closure_evidence_pack() -> None:
     assert len(errors) >= 1
 
 
+def test_schema_requires_operator_closure_readiness_view() -> None:
+    schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
+    invalid_schema = copy.deepcopy(schema)
+    invalid_schema["$defs"]["loop_summary"]["required"] = [
+        field
+        for field in invalid_schema["$defs"]["loop_summary"]["required"]
+        if field != "operator_closure_readiness_view"
+    ]
+
+    errors = validator.validate_schema_artifact(invalid_schema)
+
+    assert any(
+        "schema missing required loop field: operator_closure_readiness_view" in error
+        for error in errors
+    )
+    assert "operator_closure_readiness_view" not in invalid_schema["$defs"]["loop_summary"]["required"]
+    assert len(errors) >= 1
+
+
 def test_schema_requires_authority_bindings() -> None:
     schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
     invalid_schema = copy.deepcopy(schema)
@@ -446,6 +465,49 @@ def test_closure_evidence_pack_cannot_emit_or_claim_terminal_closure() -> None:
     assert any("closure_evidence_pack read_only must be true" in error for error in errors)
     assert any("closure_evidence_pack emits_receipt must be false" in error for error in errors)
     assert any("closure_evidence_pack terminal_closure must be false" in error for error in errors)
+
+
+def test_operator_closure_readiness_view_must_match_loop_gaps_and_next_action() -> None:
+    invalid_report = copy.deepcopy(validator.build_report())
+    view = invalid_report["loops"][0]["operator_closure_readiness_view"]
+    view["projected_status"] = "verified"
+    view["blocker_refs"] = ["different_gap"]
+    view["evidence_gap_refs"] = ["different_evidence"]
+    view["authority_gap_refs"] = ["different_authority"]
+    view["closure_condition_refs"] = ["different_closure"]
+    view["rollback_ref"] = "different_rollback"
+    view["rollback_available"] = False
+    view["readiness_state"] = "ready_for_terminal_closure_review"
+    view["next_proof_action"] = "run_loop_specific_terminal_closure_workflow"
+    view["next_proof_refs"] = ["different_ref"]
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("projected_status must match status" in error for error in errors)
+    assert any("blocker_refs must match open_blockers" in error for error in errors)
+    assert any("evidence_gap_refs must match missing_evidence" in error for error in errors)
+    assert any("authority_gap_refs must match missing_authority" in error for error in errors)
+    assert any("closure_condition_refs must match closure_conditions" in error for error in errors)
+    assert any("rollback_ref must match rollback_policy" in error for error in errors)
+    assert any("rollback_available must match closure_report" in error for error in errors)
+    assert any("readiness_state must match blockers" in error for error in errors)
+    assert any("next_proof_action must match blockers" in error for error in errors)
+    assert any("next_proof_refs must include closure_evidence_pack" in error for error in errors)
+    assert any("next_proof_refs must include closure_report" in error for error in errors)
+
+
+def test_operator_closure_readiness_view_cannot_mutate_or_claim_terminal_closure() -> None:
+    invalid_report = copy.deepcopy(validator.build_report())
+    view = invalid_report["loops"][0]["operator_closure_readiness_view"]
+    view["read_only"] = False
+    view["mutation_route"] = True
+    view["terminal_closure"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("operator_closure_readiness_view read_only must be true" in error for error in errors)
+    assert any("operator_closure_readiness_view mutation_route must be false" in error for error in errors)
+    assert any("operator_closure_readiness_view terminal_closure must be false" in error for error in errors)
 
 
 def test_missing_evidence_requires_matching_blocker() -> None:

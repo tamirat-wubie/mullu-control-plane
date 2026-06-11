@@ -25,6 +25,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopManifest,
     LoopMode,
     LoopModeBinding,
+    LoopOperatorClosureReadinessView,
     LoopPhase,
     LoopReadModel,
     LoopReceiptLineageBinding,
@@ -369,6 +370,15 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
     )
     closure_condition_bindings = _closure_condition_bindings_for(manifest.loop_id)
     closure_report = _closure_report_for(manifest, blockers, missing)
+    closure_evidence_pack = _closure_evidence_pack_for(
+        manifest,
+        state,
+        blockers,
+        missing_authority,
+        missing,
+        receipt_lineage_bindings,
+        closure_report,
+    )
     return LoopSummary(
         loop_id=manifest.loop_id,
         name=manifest.name,
@@ -395,14 +405,15 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         closure_conditions=manifest.closure_conditions,
         closure_condition_bindings=closure_condition_bindings,
         closure_report=closure_report,
-        closure_evidence_pack=_closure_evidence_pack_for(
+        closure_evidence_pack=closure_evidence_pack,
+        operator_closure_readiness_view=_operator_closure_readiness_view_for(
             manifest,
-            state,
+            status,
             blockers,
             missing_authority,
             missing,
-            receipt_lineage_bindings,
             closure_report,
+            closure_evidence_pack,
         ),
         open_blockers=blockers,
         rollback_policy=manifest.rollback_policy,
@@ -694,6 +705,45 @@ def _closure_evidence_pack_for(
         authority_complete=not missing_authority,
         closure_blocked=bool(blockers),
         rollback_available=closure_report.rollback_available,
+    )
+
+
+def _operator_closure_readiness_view_for(
+    manifest: LoopManifest,
+    status: LoopStatus,
+    blockers: Sequence[str],
+    missing_authority: Sequence[str],
+    missing_evidence: Sequence[str],
+    closure_report: LoopClosureReport,
+    closure_evidence_pack: LoopClosureEvidencePack,
+) -> LoopOperatorClosureReadinessView:
+    blocked = bool(blockers)
+    next_proof_refs = (
+        ("closure_evidence_pack", "closure_report", *tuple(blockers))
+        if blocked
+        else ("closure_evidence_pack", "closure_report", "terminal_closure_certificate")
+    )
+    return LoopOperatorClosureReadinessView(
+        view_ref=f"{manifest.loop_id}_operator_closure_readiness_view",
+        loop_id=manifest.loop_id,
+        projected_status=status,
+        readiness_state=(
+            "blocked_by_unresolved_gaps"
+            if blocked
+            else "ready_for_terminal_closure_review"
+        ),
+        blocker_refs=closure_evidence_pack.blocker_refs,
+        evidence_gap_refs=tuple(missing_evidence),
+        authority_gap_refs=tuple(missing_authority),
+        closure_condition_refs=closure_evidence_pack.closure_condition_refs,
+        rollback_ref=closure_evidence_pack.rollback_ref,
+        rollback_available=closure_report.rollback_available,
+        next_proof_action=(
+            "resolve_blockers_before_terminal_closure_review"
+            if blocked
+            else "run_loop_specific_terminal_closure_workflow"
+        ),
+        next_proof_refs=next_proof_refs,
     )
 
 

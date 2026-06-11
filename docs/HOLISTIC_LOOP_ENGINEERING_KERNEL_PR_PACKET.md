@@ -4,7 +4,8 @@ Purpose: provide a scoped PR handoff packet for the holistic loop kernel slice.
 Governance scope: loop contract, registry, read model, HTTP projection,
 validators, schema manifest, evidence blockers, status catalog, transition
 catalog, mode catalog, risk catalog, closure condition catalog, rollback
-boundary, learning catalog, receipt lineage catalog, and closure evidence pack.
+boundary, learning catalog, receipt lineage catalog, closure evidence pack, and
+operator closure readiness view.
 Dependencies: `docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md`, holistic loop source
 files, read-model schema, report and validation scripts, focused tests, SDLC
 validators, release validators, and workspace governance preflight.
@@ -59,7 +60,7 @@ staged into the holistic loop PR.
 1. Added typed loop contracts:
    `LoopManifest`, `LoopState`, `LoopStepReceipt`, `LoopClosureReport`,
    `LoopReceiptLineageBinding`, `LoopClosureEvidencePack`, `LoopRegistry`,
-   and bounded `LoopReadModel`.
+   `LoopOperatorClosureReadinessView`, and bounded `LoopReadModel`.
 2. Registered four existing loops without changing runtime behavior:
    `deployment_witness_loop`, `runtime_conformance_loop`,
    `cognitive_outcome_loop`, and `governed_code_change_loop`.
@@ -74,6 +75,9 @@ staged into the holistic loop PR.
    `scripts/validate_holistic_loop_http_surface.py`.
 7. Indexed the new schema in the governance protocol manifest and updated
    schema-count references from 183 to 184.
+8. Added operator closure readiness views that summarize blockers, evidence
+   gaps, authority gaps, rollback readiness, and next proof action without
+   adding mutation authority or terminal closure.
 
 ## Evidence Catalog Follow-Up
 
