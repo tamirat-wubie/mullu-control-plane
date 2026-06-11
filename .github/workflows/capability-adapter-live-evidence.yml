@@ -33,6 +33,11 @@ on:
         required: true
         default: "newer_than:1d"
         type: string
+      browser_url:
+        description: "First-party URL used for the browser live probe"
+        required: true
+        default: "https://api.mullusi.com/health"
+        type: string
       voice_text:
         description: "Text used for the voice synthesis probe"
         required: true
@@ -168,6 +173,7 @@ jobs:
         run: |
           args=(
             --target browser
+            --browser-url "${{ inputs.browser_url }}"
             --browser-sandbox-evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE"
             --json
           )
@@ -177,7 +183,7 @@ jobs:
           python scripts/produce_capability_adapter_live_receipts.py "${args[@]}"
 
       - name: Produce document live receipt
-        if: ${{ inputs.target == 'all' || inputs.target == 'document' }}
+        if: ${{ always() && (inputs.target == 'all' || inputs.target == 'document') }}
         run: |
           args=(
             --target document
@@ -189,7 +195,7 @@ jobs:
           python scripts/produce_capability_adapter_live_receipts.py "${args[@]}"
 
       - name: Produce voice live receipt
-        if: ${{ inputs.target == 'all' || inputs.target == 'voice' }}
+        if: ${{ always() && (inputs.target == 'all' || inputs.target == 'voice') }}
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
@@ -205,7 +211,7 @@ jobs:
           python scripts/produce_capability_adapter_live_receipts.py "${args[@]}"
 
       - name: Produce email/calendar live receipt
-        if: ${{ inputs.target == 'all' || inputs.target == 'email-calendar' }}
+        if: ${{ always() && (inputs.target == 'all' || inputs.target == 'email-calendar') }}
         env:
           EMAIL_CALENDAR_CONNECTOR_TOKEN: ${{ secrets.EMAIL_CALENDAR_CONNECTOR_TOKEN }}
           EMAIL_CALENDAR_CONNECTOR_ID: ${{ inputs.email_calendar_connector_id }}
