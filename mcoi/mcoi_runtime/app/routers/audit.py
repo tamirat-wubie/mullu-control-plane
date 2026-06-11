@@ -16,6 +16,7 @@ from mcoi_runtime.core.structured_logging import LogLevel
 
 router = APIRouter()
 _MAX_AUDIT_READ_LIMIT = 500
+_MAX_AUDIT_ANCHOR_READ_LIMIT = 1000
 
 
 def _audit_error_detail(error: str, error_code: str) -> dict[str, object]:
@@ -29,7 +30,7 @@ def _raise_audit_read_validation_error(error: ValueError) -> NoReturn:
     ) from error
 
 
-def _coerce_audit_read_limit(limit: object) -> int:
+def _coerce_audit_read_limit(limit: object, *, maximum: int = _MAX_AUDIT_READ_LIMIT) -> int:
     if isinstance(limit, bool):
         raise ValueError("limit must be an integer")
     if isinstance(limit, int):
@@ -41,7 +42,7 @@ def _coerce_audit_read_limit(limit: object) -> int:
         value = int(normalized)
     else:
         raise ValueError("limit must be an integer")
-    if value < 0 or value > _MAX_AUDIT_READ_LIMIT:
+    if value < 0 or value > maximum:
         raise ValueError("limit is outside the allowed range")
     return value
 
@@ -153,11 +154,15 @@ def get_event_store_summary():
 
 
 @router.get("/api/v1/logs")
-def get_logs(count: int = 50, min_level: str = "INFO"):
+def get_logs(count: str = "50", min_level: str = "INFO"):
     """Return recent structured log entries."""
     deps.metrics.inc("requests_governed")
+    try:
+        read_count = _coerce_audit_read_limit(count)
+    except ValueError as error:
+        _raise_audit_read_validation_error(error)
     level = LogLevel[min_level.upper()] if min_level.upper() in LogLevel.__members__ else LogLevel.INFO
-    entries = deps.platform_logger.recent(count=count, min_level=level)
+    entries = deps.platform_logger.recent(count=read_count, min_level=level)
     return {
         "logs": [e.to_dict() for e in entries],
         "summary": deps.platform_logger.summary(),
@@ -169,10 +174,14 @@ def get_logs(count: int = 50, min_level: str = "INFO"):
 
 
 @router.post("/api/v1/audit/anchor")
-def create_audit_anchor(limit: int = 1000):
+def create_audit_anchor(limit: str = "1000"):
     """Create an external anchor checkpoint from current audit entries."""
     deps.metrics.inc("requests_governed")
-    entries = deps.audit_trail.query(limit=limit)
+    try:
+        read_limit = _coerce_audit_read_limit(limit, maximum=_MAX_AUDIT_ANCHOR_READ_LIMIT)
+    except ValueError as error:
+        _raise_audit_read_validation_error(error)
+    entries = deps.audit_trail.query(limit=read_limit)
     if not entries:
         return {"error": "no audit entries to anchor", "governed": True}
     anchor = deps.audit_anchor.create_anchor(entries)
@@ -194,19 +203,27 @@ def create_audit_anchor(limit: int = 1000):
 
 
 @router.post("/api/v1/audit/anchor/{anchor_id}/verify")
-def verify_audit_anchor(anchor_id: str, limit: int = 1000):
+def verify_audit_anchor(anchor_id: str, limit: str = "1000"):
     """Verify current audit chain against a stored anchor."""
     deps.metrics.inc("requests_governed")
-    entries = deps.audit_trail.query(limit=limit)
+    try:
+        read_limit = _coerce_audit_read_limit(limit, maximum=_MAX_AUDIT_ANCHOR_READ_LIMIT)
+    except ValueError as error:
+        _raise_audit_read_validation_error(error)
+    entries = deps.audit_trail.query(limit=read_limit)
     result = deps.audit_anchor.verify_anchor(anchor_id, entries)
     return {**result, "governed": True}
 
 
 @router.get("/api/v1/audit/anchors")
-def list_audit_anchors(limit: int = 20):
+def list_audit_anchors(limit: str = "20"):
     """List recent audit chain anchors."""
     deps.metrics.inc("requests_governed")
-    anchors = deps.audit_anchor.list_anchors(limit=limit)
+    try:
+        read_limit = _coerce_audit_read_limit(limit)
+    except ValueError as error:
+        _raise_audit_read_validation_error(error)
+    anchors = deps.audit_anchor.list_anchors(limit=read_limit)
     return {
         "anchors": [
             {
