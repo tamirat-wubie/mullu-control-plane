@@ -692,6 +692,30 @@ The stability boundary is enforced by:
 3. Report-to-HTTP parity validation.
 4. A proof matrix witness guard requiring zero unanchored holistic loop labels.
 5. Documentation checks for the v1 additive-only policy and extension rules.
+6. Extension admission validation for default loop registrations.
+
+### Extension Admission Guard
+
+New default loop registrations must pass extension admission before they are
+treated as part of the v1 registry. Admission is read-only and does not execute
+the candidate loop. It checks:
+
+1. Each loop manifest declares authority, evidence, closure, rollback, learning,
+   canonical steps, allowed modes, and existing source surfaces.
+2. `metadata.behavior_rewrite` remains `false`.
+3. Missing authority and missing evidence are projected as explicit blockers.
+4. Summary and closure-report records do not claim terminal closure.
+5. The holistic loop proof surface carries an anchored admission witness.
+
+Run:
+
+```powershell
+python scripts/validate_holistic_loop_extension_admission.py
+```
+
+Admission passing means a loop is structurally eligible for the read model. It
+does not mean the loop is verified, closed, authorized for real execution, or
+allowed to mutate runtime behavior.
 
 ### Extension Checklist
 
@@ -808,6 +832,12 @@ Kernel v1 freeze validation:
 python scripts/validate_holistic_loop_kernel_freeze.py
 ```
 
+Extension admission validation:
+
+```powershell
+python scripts/validate_holistic_loop_extension_admission.py
+```
+
 The tests verify:
 
 1. The first four loops are registered.
@@ -830,3 +860,4 @@ The tests verify:
 18. The v1 golden snapshot matches the current default report.
 19. The normalized HTTP payload matches the local report contract.
 20. The holistic proof matrix surface has zero unanchored witness labels.
+21. Extension admission keeps default loop registrations read-only, blocker-aware, non-terminal, and proof-anchored.
