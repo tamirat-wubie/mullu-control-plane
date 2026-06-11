@@ -230,6 +230,63 @@ def test_audit_and_proof_verify_surface_anchor_gap(monkeypatch) -> None:
     assert _validate_schema_instance(_load_schema(PROOF_VERIFICATION_SCHEMA), proof_payload) == []
 
 
+def test_govern_cloud_staging_witness_is_operator_gated(monkeypatch) -> None:
+    monkeypatch.setenv("MULLU_ENV", "pilot")
+    monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
+    monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_AUTHORITY_MESH", "false")
+    monkeypatch.setenv("MULLU_AUTHORITY_OPERATOR_SECRET", "operator-secret")
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    denied = client.get("/govern-cloud/staging/witness")
+    allowed = client.get(
+        "/govern-cloud/staging/witness",
+        headers={"X-Mullu-Authority-Secret": "operator-secret"},
+    )
+
+    assert denied.status_code == 403
+    assert allowed.status_code == 200
+    assert allowed.json()["witness"] == "mullu_govern_cloud_private_staging_read_model_v1"
+
+
+def test_govern_cloud_staging_witness_omits_secret_values(monkeypatch) -> None:
+    monkeypatch.setenv("MULLU_ENV", "pilot")
+    monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
+    monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_AUTHORITY_MESH", "false")
+    monkeypatch.setenv("MULLU_AUTHORITY_OPERATOR_SECRET", "operator-secret")
+    monkeypatch.setenv("MULLU_GOVERN_CLOUD_STAGING_ENABLED", "true")
+    monkeypatch.setenv("MULLU_GOVERN_CLOUD_INTERNAL_URL", "http://mullusi-govern-cloud-staging:8000")
+    monkeypatch.setenv("MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED", "false")
+    monkeypatch.setenv("MULLU_GOVERN_CLOUD_RENDER_SERVICE_ID", "srv-d8lb18flk1mc73cohnd0")
+    monkeypatch.setenv("MULLU_GOVERN_CLOUD_RENDER_DEPLOY_ID", "dep-d8lb18nlk1mc73cohns0")
+    monkeypatch.setenv(
+        "MULLU_GOVERN_CLOUD_IMAGE_TAG",
+        "ghcr.io/mullusi/mullusi-govern-cloud:v2026.06.11-govern-cloud.1",
+    )
+    monkeypatch.setenv("MULLU_GOVERN_CLOUD_DATABASE_PLAN", "Basic-256mb")
+    monkeypatch.setenv("MULLUSI_OPERATOR_API_KEY", "operator-secret-value")
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get(
+        "/govern-cloud/staging/witness",
+        headers={"X-Mullu-Authority-Secret": "operator-secret"},
+    )
+    payload = response.json()
+    serialized = json.dumps(payload, sort_keys=True)
+
+    assert response.status_code == 200
+    assert payload["enabled"] is True
+    assert payload["internal_target"] == "configured"
+    assert payload["internal_host"] == "mullusi-govern-cloud-staging"
+    assert payload["release_gate"] == "private_staging_configured"
+    assert payload["solver_outcome"] == "AwaitingEvidence"
+    assert payload["publication_allowed"] is False
+    assert payload["public_dns_mutation_allowed"] is False
+    assert "secret_values_omitted" in payload["checks_passed"]
+    assert "operator-secret-value" not in serialized
+
+
 def test_deployment_witness_uses_latest_command_anchor(monkeypatch) -> None:
     monkeypatch.setenv("MULLU_RUNTIME_CONFORMANCE_SECRET", "conformance-secret")
     monkeypatch.setenv("MULLU_DEPLOYMENT_WITNESS_SECRET", "deployment-secret")
