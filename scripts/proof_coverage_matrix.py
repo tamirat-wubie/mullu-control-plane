@@ -6594,6 +6594,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/report_holistic_loop_uao_admission_dossier.py",
                 "scripts/report_holistic_loop_workflow_admission_dossier.py",
                 "scripts/report_holistic_loop_authority_admission_dossier.py",
+                "scripts/report_holistic_loop_audit_proof_admission_dossier.py",
                 "scripts/report_holistic_loop_read_model.py",
                 "scripts/validate_holistic_loop_extension_admission.py",
                 "scripts/validate_holistic_loop_kernel_freeze.py",
@@ -6605,6 +6606,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_report_holistic_loop_uao_admission_dossier.py",
                 "tests/test_report_holistic_loop_workflow_admission_dossier.py",
                 "tests/test_report_holistic_loop_authority_admission_dossier.py",
+                "tests/test_report_holistic_loop_audit_proof_admission_dossier.py",
                 "tests/test_report_holistic_loop_read_model.py",
                 "tests/test_validate_holistic_loop_extension_admission.py",
                 "tests/test_validate_holistic_loop_kernel_freeze.py",
@@ -6631,6 +6633,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "operator-decision boundary to workflow execution surfaces. "
                 "The authority admission dossier applies the same read-only "
                 "operator-decision boundary to authority obligation surfaces. "
+                "The audit/proof admission dossier applies the same read-only "
+                "operator-decision boundary to audit, proof, and trust-ledger "
+                "anchor verification surfaces. "
                 "Missing authority or "
                 "evidence remains an explicit blocker and no mutation route is "
                 "introduced."
@@ -6675,6 +6680,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "holistic_loop_authority_admission_dossier_builds_proposed_manifest",
                 "holistic_loop_authority_admission_dossier_ready_for_operator_decision",
                 "holistic_loop_authority_admission_dossier_blocks_registration_effects",
+                "holistic_loop_audit_proof_admission_dossier_builds_proposed_manifest",
+                "holistic_loop_audit_proof_admission_dossier_ready_for_operator_decision",
+                "holistic_loop_audit_proof_admission_dossier_blocks_registration_effects",
             ],
             runtime_witness_anchor_aliases={
                 "registered_loops_expose_governed_manifest_fields": [
@@ -6793,6 +6801,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "holistic_loop_authority_admission_dossier_blocks_registration_effects": [
                     "authority_admission_dossier_does_not_register_or_mutate_runtime"
+                ],
+                "holistic_loop_audit_proof_admission_dossier_builds_proposed_manifest": [
+                    "audit_proof_admission_dossier_builds_proposed_manifest"
+                ],
+                "holistic_loop_audit_proof_admission_dossier_ready_for_operator_decision": [
+                    "audit_proof_admission_dossier_is_ready_only_for_operator_decision"
+                ],
+                "holistic_loop_audit_proof_admission_dossier_blocks_registration_effects": [
+                    "audit_proof_admission_dossier_does_not_register_or_mutate_runtime"
                 ],
             },
         ),

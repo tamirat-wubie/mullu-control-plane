@@ -849,6 +849,39 @@ rollback readiness, and learning policy readiness. It does not grant authority,
 satisfy obligations, emit a receipt, mutate the registry, execute authority
 behavior, or close admission.
 
+### Audit Proof Admission Dossier
+
+The Audit Proof Verification admission dossier applies the same
+candidate-specific readiness boundary to audit verification, proof
+verification, trust-ledger anchor verification, export packaging, remote
+submission preflight, and gateway verification surfaces.
+
+Run:
+
+```powershell
+python scripts/report_holistic_loop_audit_proof_admission_dossier.py
+```
+
+The dossier reports:
+
+```text
+candidate_id == audit_proof_verification_loop
+admission_status == ready_for_operator_decision
+requires_operator_registration_decision in admission_blockers
+registered == false
+read_only == true
+mutation_route == false
+runtime_behavior_change == false
+terminal_closure == false
+registration_effect.registers_loop == false
+```
+
+The dossier includes a proposed `LoopManifest`, existing audit/proof source
+refs, evidence gap report, authority gap report, closure-condition gap report,
+rollback readiness, and learning policy readiness. It does not verify proofs,
+submit anchors, emit receipts, mutate the registry, execute audit/proof
+behavior, or close admission.
+
 ### Extension Checklist
 
 Before adding a future v1.x loop view or field:
@@ -937,7 +970,7 @@ the registry contract, not an execution surface.
 Focused tests:
 
 ```powershell
-python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_report_holistic_loop_candidate_map.py tests/test_report_holistic_loop_uao_admission_dossier.py tests/test_report_holistic_loop_workflow_admission_dossier.py tests/test_report_holistic_loop_authority_admission_dossier.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py tests/test_proof_coverage_matrix.py -q
+python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_report_holistic_loop_candidate_map.py tests/test_report_holistic_loop_uao_admission_dossier.py tests/test_report_holistic_loop_workflow_admission_dossier.py tests/test_report_holistic_loop_authority_admission_dossier.py tests/test_report_holistic_loop_audit_proof_admission_dossier.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py tests/test_proof_coverage_matrix.py -q
 ```
 
 Read-only report:
@@ -994,6 +1027,12 @@ Authority admission dossier validation:
 python scripts/report_holistic_loop_authority_admission_dossier.py
 ```
 
+Audit proof admission dossier validation:
+
+```powershell
+python scripts/report_holistic_loop_audit_proof_admission_dossier.py
+```
+
 The tests verify:
 
 1. The first four loops are registered.
@@ -1021,3 +1060,4 @@ The tests verify:
 23. The UAO admission dossier proves readiness for an operator registration decision without registering, mutating, or closing the loop.
 24. The workflow admission dossier proves readiness for an operator registration decision without registering, mutating, or closing the loop.
 25. The authority admission dossier proves readiness for an operator registration decision without registering, mutating, satisfying obligations, or closing the loop.
+26. The audit/proof admission dossier proves readiness for an operator registration decision without registering, mutating, verifying proofs, submitting anchors, or closing the loop.
