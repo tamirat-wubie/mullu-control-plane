@@ -22,6 +22,7 @@ from mcoi_runtime.app.musia_receipt_middleware import (
     install_musia_receipt_middleware,
 )
 from mcoi_runtime.app.server_http import (
+    RequestIdMiddleware,
     configure_cors_middleware,
     install_global_exception_handler,
 )
@@ -56,6 +57,7 @@ def create_governed_app(
     validate_cors_origins_for_env: Callable[[list[str], str], str | None],
     fastapi_cls: type[FastAPI] = FastAPI,
     governance_middleware_cls: type[Any] = GovernanceMiddleware,
+    request_id_middleware_cls: type[Any] = RequestIdMiddleware,
     configure_cors_middleware_fn: Callable[..., None] = configure_cors_middleware,
     install_global_exception_handler_fn: Callable[..., None] = install_global_exception_handler,
     install_musia_receipt_middleware_fn: Callable[..., bool] = install_musia_receipt_middleware,
@@ -102,6 +104,7 @@ def create_governed_app(
         validate_cors_origins_for_env=validate_cors_origins_for_env,
         warnings_module=warnings_module,
     )
+    app.add_middleware(request_id_middleware_cls)
 
     install_global_exception_handler_fn(
         app=app,

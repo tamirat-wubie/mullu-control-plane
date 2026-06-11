@@ -9810,8 +9810,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1247,
-    "runtime_witness_count": 1247,
+    "exact_test_anchor_count": 1248,
+    "runtime_witness_count": 1248,
     "surfaces": [
       {
         "anchored_witnesses": [
