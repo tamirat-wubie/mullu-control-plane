@@ -78,3 +78,12 @@ class TestTenantIsolationAuditor:
         for i in range(5):
             auditor.audit([TenantOperation(f"o{i}", "t1", "t1", "r", "read")])
         assert len(auditor.recent_audits(3)) == 3
+        assert auditor.recent_audits(0) == []
+        assert auditor.recent_audits(-1) == []
+
+    @pytest.mark.parametrize("count", [True, "10", None])
+    def test_recent_audits_rejects_invalid_count_contract(self, auditor, count):
+        auditor.audit([TenantOperation("o1", "t1", "t1", "r", "read")])
+        with pytest.raises(ValueError, match="tenant isolation audit count must be an integer"):
+            auditor.recent_audits(count)
+        assert auditor.audit_count == 1
