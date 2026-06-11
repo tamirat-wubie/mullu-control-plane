@@ -784,6 +784,38 @@ gap report, authority gap report, closure-condition gap report, rollback
 readiness, and learning policy readiness. It does not grant authority, emit a
 receipt, mutate the registry, execute UAO behavior, or close admission.
 
+### Workflow Admission Dossier
+
+The Workflow Execution admission dossier applies the same candidate-specific
+readiness boundary to workflow descriptor, run, orchestration, replay, wait
+state, and workflow-store surfaces.
+
+Run:
+
+```powershell
+python scripts/report_holistic_loop_workflow_admission_dossier.py
+```
+
+The dossier reports:
+
+```text
+candidate_id == workflow_execution_loop
+admission_status == ready_for_operator_decision
+requires_operator_registration_decision in admission_blockers
+registered == false
+read_only == true
+mutation_route == false
+runtime_behavior_change == false
+terminal_closure == false
+registration_effect.registers_loop == false
+```
+
+The dossier includes a proposed `LoopManifest`, existing workflow source refs,
+evidence gap report, authority gap report, closure-condition gap report,
+rollback readiness, and learning policy readiness. It does not grant authority,
+emit a receipt, mutate the registry, execute workflow behavior, or close
+admission.
+
 ### Extension Checklist
 
 Before adding a future v1.x loop view or field:
@@ -872,7 +904,7 @@ the registry contract, not an execution surface.
 Focused tests:
 
 ```powershell
-python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_report_holistic_loop_candidate_map.py tests/test_report_holistic_loop_uao_admission_dossier.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py tests/test_proof_coverage_matrix.py -q
+python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_report_holistic_loop_candidate_map.py tests/test_report_holistic_loop_uao_admission_dossier.py tests/test_report_holistic_loop_workflow_admission_dossier.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py tests/test_proof_coverage_matrix.py -q
 ```
 
 Read-only report:
@@ -917,6 +949,12 @@ UAO admission dossier validation:
 python scripts/report_holistic_loop_uao_admission_dossier.py
 ```
 
+Workflow admission dossier validation:
+
+```powershell
+python scripts/report_holistic_loop_workflow_admission_dossier.py
+```
+
 The tests verify:
 
 1. The first four loops are registered.
@@ -942,3 +980,4 @@ The tests verify:
 21. Extension admission keeps default loop registrations read-only, blocker-aware, non-terminal, and proof-anchored.
 22. The candidate map lists unregistered loop-like surfaces without registering, verifying, closing, or mutating them.
 23. The UAO admission dossier proves readiness for an operator registration decision without registering, mutating, or closing the loop.
+24. The workflow admission dossier proves readiness for an operator registration decision without registering, mutating, or closing the loop.
