@@ -6555,6 +6555,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "LoopReceiptLineageBinding",
                 "LoopClosureConditionBinding",
                 "LoopClosureEvidencePack",
+                "LoopOperatorClosureReadinessView",
                 "LoopAuthorityBinding",
                 "LoopRiskBinding",
                 "LoopRollbackBinding",
@@ -6588,7 +6589,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "status catalog, transition catalog, mode catalog, closure "
                 "condition catalog, authority catalog, risk catalog, rollback "
                 "catalog, learning catalog, bounded receipt trail, receipt "
-                "lineage catalog, closure evidence pack, and HTTP "
+                "lineage catalog, closure evidence pack, operator closure "
+                "readiness view, and HTTP "
                 "read model. Missing authority or evidence remains an explicit "
                 "blocker and no mutation route is introduced."
             ),
@@ -6602,6 +6604,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "loop_mode_bindings_cover_allowed_modes",
                 "loop_closure_condition_bindings_cover_conditions",
                 "loop_closure_evidence_pack_aggregates_closure_inputs",
+                "loop_operator_closure_readiness_view_summarizes_next_action",
                 "loop_authority_bindings_cover_required_authority",
                 "loop_risk_bindings_cover_risk_class",
                 "loop_rollback_bindings_cover_recovery_policy",
@@ -6643,6 +6646,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "loop_closure_evidence_pack_aggregates_closure_inputs": [
                     "loop_closure_evidence_pack_aggregates_required_closure_inputs"
+                ],
+                "loop_operator_closure_readiness_view_summarizes_next_action": [
+                    "loop_operator_closure_readiness_view_summarizes_blockers_and_next_action"
                 ],
                 "loop_authority_bindings_cover_required_authority": [
                     "loop_authority_bindings_cover_required_authority_without_execution"

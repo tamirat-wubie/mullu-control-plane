@@ -184,6 +184,7 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         "closure_condition_bindings",
         "closure_report",
         "closure_evidence_pack",
+        "operator_closure_readiness_view",
         "rollback_policy",
         "rollback_binding",
         "learning_policy",
@@ -236,6 +237,13 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
     errors.extend(_validate_step_receipts(loop.get("step_receipts"), loop, index))
     errors.extend(_validate_receipt_lineage_bindings(loop.get("receipt_lineage_bindings"), loop, index))
     errors.extend(_validate_closure_evidence_pack(loop.get("closure_evidence_pack"), loop, index))
+    errors.extend(
+        _validate_operator_closure_readiness_view(
+            loop.get("operator_closure_readiness_view"),
+            loop,
+            index,
+        )
+    )
     return errors
 
 
@@ -757,6 +765,106 @@ def _validate_closure_evidence_pack(evidence_pack: Any, loop: dict[str, Any], in
         errors.append(f"loop {index} closure_evidence_pack emits_receipt must be false")
     if evidence_pack.get("terminal_closure") is not False:
         errors.append(f"loop {index} closure_evidence_pack terminal_closure must be false")
+    return errors
+
+
+def _validate_operator_closure_readiness_view(
+    readiness_view: Any,
+    loop: dict[str, Any],
+    index: int,
+) -> list[str]:
+    if not isinstance(readiness_view, dict):
+        return [f"loop {index} operator_closure_readiness_view must be an object"]
+    errors: list[str] = []
+    for field_name in ("view_ref", "loop_id", "readiness_state", "rollback_ref", "next_proof_action"):
+        value = readiness_view.get(field_name)
+        if not isinstance(value, str) or not value:
+            errors.append(
+                f"loop {index} operator_closure_readiness_view {field_name} must be non-empty"
+            )
+    for field_name in (
+        "blocker_refs",
+        "evidence_gap_refs",
+        "authority_gap_refs",
+        "closure_condition_refs",
+        "next_proof_refs",
+    ):
+        refs = readiness_view.get(field_name)
+        if not isinstance(refs, list) or not all(isinstance(ref, str) and ref for ref in refs):
+            errors.append(
+                f"loop {index} operator_closure_readiness_view {field_name} must be a string list"
+            )
+            continue
+        if field_name in {"closure_condition_refs", "next_proof_refs"} and not refs:
+            errors.append(
+                f"loop {index} operator_closure_readiness_view {field_name} must be non-empty"
+            )
+    if readiness_view.get("loop_id") != loop.get("loop_id"):
+        errors.append(f"loop {index} operator_closure_readiness_view loop_id must match loop_id")
+    if readiness_view.get("projected_status") != loop.get("status"):
+        errors.append(
+            f"loop {index} operator_closure_readiness_view projected_status must match status"
+        )
+    if set(readiness_view.get("blocker_refs", ())) != set(loop.get("open_blockers", ())):
+        errors.append(
+            f"loop {index} operator_closure_readiness_view blocker_refs must match open_blockers"
+        )
+    if set(readiness_view.get("evidence_gap_refs", ())) != set(loop.get("missing_evidence", ())):
+        errors.append(
+            f"loop {index} operator_closure_readiness_view evidence_gap_refs must match missing_evidence"
+        )
+    if set(readiness_view.get("authority_gap_refs", ())) != set(loop.get("missing_authority", ())):
+        errors.append(
+            f"loop {index} operator_closure_readiness_view authority_gap_refs must match missing_authority"
+        )
+    if set(readiness_view.get("closure_condition_refs", ())) != set(loop.get("closure_conditions", ())):
+        errors.append(
+            f"loop {index} operator_closure_readiness_view closure_condition_refs must match closure_conditions"
+        )
+    if readiness_view.get("rollback_ref") != loop.get("rollback_policy"):
+        errors.append(
+            f"loop {index} operator_closure_readiness_view rollback_ref must match rollback_policy"
+        )
+    closure_report = loop.get("closure_report")
+    if not isinstance(closure_report, dict):
+        errors.append(f"loop {index} operator_closure_readiness_view requires closure_report object")
+    elif readiness_view.get("rollback_available") is not closure_report.get("rollback_available"):
+        errors.append(
+            f"loop {index} operator_closure_readiness_view rollback_available must match closure_report"
+        )
+    expected_readiness_state = (
+        "blocked_by_unresolved_gaps"
+        if loop.get("open_blockers")
+        else "ready_for_terminal_closure_review"
+    )
+    if readiness_view.get("readiness_state") != expected_readiness_state:
+        errors.append(
+            f"loop {index} operator_closure_readiness_view readiness_state must match blockers"
+        )
+    expected_next_action = (
+        "resolve_blockers_before_terminal_closure_review"
+        if loop.get("open_blockers")
+        else "run_loop_specific_terminal_closure_workflow"
+    )
+    if readiness_view.get("next_proof_action") != expected_next_action:
+        errors.append(
+            f"loop {index} operator_closure_readiness_view next_proof_action must match blockers"
+        )
+    next_proof_refs = readiness_view.get("next_proof_refs", ())
+    if "closure_evidence_pack" not in next_proof_refs:
+        errors.append(
+            f"loop {index} operator_closure_readiness_view next_proof_refs must include closure_evidence_pack"
+        )
+    if "closure_report" not in next_proof_refs:
+        errors.append(
+            f"loop {index} operator_closure_readiness_view next_proof_refs must include closure_report"
+        )
+    if readiness_view.get("read_only") is not True:
+        errors.append(f"loop {index} operator_closure_readiness_view read_only must be true")
+    if readiness_view.get("mutation_route") is not False:
+        errors.append(f"loop {index} operator_closure_readiness_view mutation_route must be false")
+    if readiness_view.get("terminal_closure") is not False:
+        errors.append(f"loop {index} operator_closure_readiness_view terminal_closure must be false")
     return errors
 
 

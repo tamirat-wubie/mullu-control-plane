@@ -24,6 +24,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopLearningBinding,
     LoopMode,
     LoopModeBinding,
+    LoopOperatorClosureReadinessView,
     LoopPhase,
     LoopReceiptLineageBinding,
     LoopRiskBinding,
@@ -408,6 +409,116 @@ def test_loop_closure_evidence_pack_rejects_emission_or_terminal_closure_claim()
         LoopClosureEvidencePack(**{**kwargs, "terminal_closure": True})
 
 
+def test_loop_operator_closure_readiness_view_summarizes_blockers_and_next_action() -> None:
+    read_model = build_default_loop_read_model()
+
+    for summary in read_model.loops:
+        view = summary.operator_closure_readiness_view
+        assert view.loop_id == summary.loop_id
+        assert view.projected_status is summary.status
+        assert set(view.blocker_refs) == set(summary.open_blockers)
+        assert set(view.evidence_gap_refs) == set(summary.missing_evidence)
+        assert set(view.authority_gap_refs) == set(summary.missing_authority)
+        assert set(view.closure_condition_refs) == set(summary.closure_conditions)
+        assert view.rollback_ref == summary.rollback_policy
+        assert view.rollback_available is summary.closure_report.rollback_available
+        assert view.readiness_state == "blocked_by_unresolved_gaps"
+        assert view.next_proof_action == "resolve_blockers_before_terminal_closure_review"
+        assert "closure_evidence_pack" in view.next_proof_refs
+        assert "closure_report" in view.next_proof_refs
+        assert set(summary.open_blockers) <= set(view.next_proof_refs)
+        assert view.read_only is True
+        assert view.mutation_route is False
+        assert view.terminal_closure is False
+
+
+def test_loop_operator_closure_readiness_view_marks_complete_loops_for_review_only() -> None:
+    registry = build_default_loop_registry()
+    authority_refs = {
+        manifest.loop_id: tuple(manifest.required_authority)
+        for manifest in registry.list_manifests()
+    }
+    evidence_refs = {
+        manifest.loop_id: tuple(manifest.required_evidence)
+        for manifest in registry.list_manifests()
+    }
+    read_model = build_default_loop_read_model(
+        observed_authority_refs=authority_refs,
+        observed_evidence_refs=evidence_refs,
+    )
+
+    for summary in read_model.loops:
+        view = summary.operator_closure_readiness_view
+        assert summary.status is LoopStatus.VERIFIED
+        assert view.readiness_state == "ready_for_terminal_closure_review"
+        assert view.next_proof_action == "run_loop_specific_terminal_closure_workflow"
+        assert view.blocker_refs == ()
+        assert view.evidence_gap_refs == ()
+        assert view.authority_gap_refs == ()
+        assert "terminal_closure_certificate" in view.next_proof_refs
+        assert view.terminal_closure is False
+
+
+def test_loop_operator_closure_readiness_view_rejects_mutation_or_closure_claim() -> None:
+    summary = build_default_loop_read_model().loops[0]
+    kwargs = dataclasses.asdict(summary.operator_closure_readiness_view)
+
+    with pytest.raises(ValueError, match="read-only"):
+        LoopOperatorClosureReadinessView(**{**kwargs, "read_only": False})
+    with pytest.raises(ValueError, match="mutation route"):
+        LoopOperatorClosureReadinessView(**{**kwargs, "mutation_route": True})
+    with pytest.raises(ValueError, match="terminal closure"):
+        LoopOperatorClosureReadinessView(**{**kwargs, "terminal_closure": True})
+
+
+def test_loop_summary_rejects_mismatched_operator_closure_readiness_view() -> None:
+    summary = build_default_loop_read_model().loops[0]
+    view_kwargs = dataclasses.asdict(summary.operator_closure_readiness_view)
+    mismatched_view = LoopOperatorClosureReadinessView(
+        **{
+            **view_kwargs,
+            "blocker_refs": ("different_gap",),
+        }
+    )
+
+    with pytest.raises(ValueError, match="blocker refs"):
+        LoopSummary(
+            loop_id=summary.loop_id,
+            name=summary.name,
+            purpose=summary.purpose,
+            owner=summary.owner,
+            risk_class=summary.risk_class,
+            risk_binding=summary.risk_binding,
+            status=summary.status,
+            status_binding=summary.status_binding,
+            transition_bindings=summary.transition_bindings,
+            mode=summary.mode,
+            mode_binding=summary.mode_binding,
+            current_step=summary.current_step,
+            required_authority=summary.required_authority,
+            authority_bindings=summary.authority_bindings,
+            authority_refs=summary.authority_refs,
+            missing_authority=summary.missing_authority,
+            required_evidence=summary.required_evidence,
+            evidence_bindings=summary.evidence_bindings,
+            step_receipts=summary.step_receipts,
+            receipt_lineage_bindings=summary.receipt_lineage_bindings,
+            evidence_refs=summary.evidence_refs,
+            missing_evidence=summary.missing_evidence,
+            closure_conditions=summary.closure_conditions,
+            closure_condition_bindings=summary.closure_condition_bindings,
+            closure_report=summary.closure_report,
+            closure_evidence_pack=summary.closure_evidence_pack,
+            operator_closure_readiness_view=mismatched_view,
+            open_blockers=summary.open_blockers,
+            rollback_policy=summary.rollback_policy,
+            rollback_binding=summary.rollback_binding,
+            learning_policy=summary.learning_policy,
+            learning_binding=summary.learning_binding,
+            updated_at=summary.updated_at,
+        )
+
+
 def test_loop_summary_rejects_mismatched_closure_evidence_pack() -> None:
     summary = build_default_loop_read_model().loops[0]
     pack_kwargs = dataclasses.asdict(summary.closure_evidence_pack)
@@ -447,6 +558,7 @@ def test_loop_summary_rejects_mismatched_closure_evidence_pack() -> None:
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
             closure_evidence_pack=mismatched_pack,
+            operator_closure_readiness_view=summary.operator_closure_readiness_view,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
@@ -593,6 +705,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
             closure_evidence_pack=summary.closure_evidence_pack,
+            operator_closure_readiness_view=summary.operator_closure_readiness_view,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
@@ -629,6 +742,7 @@ def test_loop_summary_rejects_duplicate_or_missing_evidence_bindings() -> None:
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
             closure_evidence_pack=summary.closure_evidence_pack,
+            operator_closure_readiness_view=summary.operator_closure_readiness_view,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
@@ -899,6 +1013,7 @@ def test_loop_summary_rejects_mismatched_status_binding() -> None:
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
             closure_evidence_pack=summary.closure_evidence_pack,
+            operator_closure_readiness_view=summary.operator_closure_readiness_view,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
@@ -954,6 +1069,7 @@ def test_loop_summary_rejects_mismatched_transition_binding() -> None:
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
             closure_evidence_pack=summary.closure_evidence_pack,
+            operator_closure_readiness_view=summary.operator_closure_readiness_view,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
@@ -1008,6 +1124,7 @@ def test_loop_summary_rejects_mismatched_receipt_lineage_binding() -> None:
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
             closure_evidence_pack=summary.closure_evidence_pack,
+            operator_closure_readiness_view=summary.operator_closure_readiness_view,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
@@ -1057,6 +1174,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=terminal_report,
             closure_evidence_pack=summary.closure_evidence_pack,
+            operator_closure_readiness_view=summary.operator_closure_readiness_view,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
@@ -1103,6 +1221,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_closure_report() -> None:
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=mismatched_report,
             closure_evidence_pack=summary.closure_evidence_pack,
+            operator_closure_readiness_view=summary.operator_closure_readiness_view,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,
@@ -1222,6 +1341,7 @@ def test_loop_summary_rejects_terminal_or_mismatched_step_receipts() -> None:
             closure_condition_bindings=summary.closure_condition_bindings,
             closure_report=summary.closure_report,
             closure_evidence_pack=summary.closure_evidence_pack,
+            operator_closure_readiness_view=summary.operator_closure_readiness_view,
             open_blockers=summary.open_blockers,
             rollback_policy=summary.rollback_policy,
             rollback_binding=summary.rollback_binding,

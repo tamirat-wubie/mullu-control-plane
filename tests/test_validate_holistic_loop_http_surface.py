@@ -484,6 +484,57 @@ def test_payload_validation_rejects_closure_evidence_pack_emission_or_terminal_c
     assert any("closure_evidence_pack terminal_closure must be false" in error for error in errors)
 
 
+def test_payload_validation_requires_operator_closure_readiness_view_to_match_loop_inputs() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    view = invalid_payload["loops"][0]["operator_closure_readiness_view"]
+    view["projected_status"] = "verified"
+    view["blocker_refs"] = ["different_gap"]
+    view["evidence_gap_refs"] = ["different_evidence"]
+    view["authority_gap_refs"] = ["different_authority"]
+    view["closure_condition_refs"] = ["different_closure"]
+    view["rollback_ref"] = "different_rollback"
+    view["rollback_available"] = False
+    view["readiness_state"] = "ready_for_terminal_closure_review"
+    view["next_proof_action"] = "run_loop_specific_terminal_closure_workflow"
+    view["next_proof_refs"] = ["different_ref"]
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("projected_status must match status" in error for error in errors)
+    assert any("blocker_refs must match open_blockers" in error for error in errors)
+    assert any("evidence_gap_refs must match missing_evidence" in error for error in errors)
+    assert any("authority_gap_refs must match missing_authority" in error for error in errors)
+    assert any("closure_condition_refs must match closure_conditions" in error for error in errors)
+    assert any("rollback_ref must match rollback_policy" in error for error in errors)
+    assert any("rollback_available must match closure_report" in error for error in errors)
+    assert any("readiness_state must match blockers" in error for error in errors)
+    assert any("next_proof_action must match blockers" in error for error in errors)
+    assert any("next_proof_refs must include closure_evidence_pack" in error for error in errors)
+    assert any("next_proof_refs must include closure_report" in error for error in errors)
+
+
+def test_payload_validation_rejects_operator_closure_readiness_view_mutation_or_closure_claim() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    view = invalid_payload["loops"][0]["operator_closure_readiness_view"]
+    view["read_only"] = False
+    view["mutation_route"] = True
+    view["terminal_closure"] = True
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("operator_closure_readiness_view read_only must be true" in error for error in errors)
+    assert any("operator_closure_readiness_view mutation_route must be false" in error for error in errors)
+    assert any("operator_closure_readiness_view terminal_closure must be false" in error for error in errors)
+
+
 def test_payload_validation_rejects_mode_binding_transition_or_terminal_closure_claim() -> None:
     app = FastAPI()
     app.include_router(router)

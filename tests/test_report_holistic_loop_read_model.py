@@ -41,6 +41,7 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
     assert all(loop["evidence_bindings"] for loop in loops)
     assert all(loop["closure_condition_bindings"] for loop in loops)
     assert all(loop["closure_evidence_pack"] for loop in loops)
+    assert all(loop["operator_closure_readiness_view"] for loop in loops)
     assert all(loop["rollback_binding"] for loop in loops)
     assert all(loop["learning_binding"] for loop in loops)
     assert all(loop["step_receipts"] for loop in loops)
@@ -203,6 +204,29 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
         and loop["closure_evidence_pack"]["terminal_closure"] is False
         for loop in loops
     )
+    assert all(
+        loop["operator_closure_readiness_view"]["projected_status"] == loop["status"]
+        and set(loop["operator_closure_readiness_view"]["blocker_refs"])
+        == set(loop["open_blockers"])
+        and set(loop["operator_closure_readiness_view"]["evidence_gap_refs"])
+        == set(loop["missing_evidence"])
+        and set(loop["operator_closure_readiness_view"]["authority_gap_refs"])
+        == set(loop["missing_authority"])
+        and set(loop["operator_closure_readiness_view"]["closure_condition_refs"])
+        == set(loop["closure_conditions"])
+        and loop["operator_closure_readiness_view"]["rollback_ref"]
+        == loop["rollback_policy"]
+        and loop["operator_closure_readiness_view"]["readiness_state"]
+        == "blocked_by_unresolved_gaps"
+        and loop["operator_closure_readiness_view"]["next_proof_action"]
+        == "resolve_blockers_before_terminal_closure_review"
+        and "closure_evidence_pack" in loop["operator_closure_readiness_view"]["next_proof_refs"]
+        and "closure_report" in loop["operator_closure_readiness_view"]["next_proof_refs"]
+        and loop["operator_closure_readiness_view"]["read_only"] is True
+        and loop["operator_closure_readiness_view"]["mutation_route"] is False
+        and loop["operator_closure_readiness_view"]["terminal_closure"] is False
+        for loop in loops
+    )
     assert all(loop["closure_report"]["closed"] is False for loop in loops)
     assert all(loop["closure_report"]["evidence_complete"] is False for loop in loops)
     assert all(
@@ -242,6 +266,7 @@ def test_report_accepts_complete_observed_authority_and_evidence_refs() -> None:
     assert all(loop["evidence_bindings"] for loop in report["loops"])
     assert all(loop["closure_condition_bindings"] for loop in report["loops"])
     assert all(loop["closure_evidence_pack"] for loop in report["loops"])
+    assert all(loop["operator_closure_readiness_view"] for loop in report["loops"])
     assert all(loop["rollback_binding"] for loop in report["loops"])
     assert all(loop["learning_binding"] for loop in report["loops"])
     assert all(loop["step_receipts"] for loop in report["loops"])
@@ -251,6 +276,19 @@ def test_report_accepts_complete_observed_authority_and_evidence_refs() -> None:
         loop["closure_evidence_pack"]["authority_complete"] is True
         and loop["closure_evidence_pack"]["evidence_complete"] is True
         and loop["closure_evidence_pack"]["closure_blocked"] is False
+        for loop in report["loops"]
+    )
+    assert all(
+        loop["operator_closure_readiness_view"]["readiness_state"]
+        == "ready_for_terminal_closure_review"
+        and loop["operator_closure_readiness_view"]["next_proof_action"]
+        == "run_loop_specific_terminal_closure_workflow"
+        and loop["operator_closure_readiness_view"]["blocker_refs"] == []
+        and loop["operator_closure_readiness_view"]["evidence_gap_refs"] == []
+        and loop["operator_closure_readiness_view"]["authority_gap_refs"] == []
+        and "terminal_closure_certificate"
+        in loop["operator_closure_readiness_view"]["next_proof_refs"]
+        and loop["operator_closure_readiness_view"]["terminal_closure"] is False
         for loop in report["loops"]
     )
     assert all(loop["closure_report"]["evidence_complete"] is True for loop in report["loops"])

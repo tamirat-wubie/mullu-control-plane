@@ -69,6 +69,7 @@ REQUIRED_LOOP_FIELDS = (
     "closure_condition_bindings",
     "closure_report",
     "closure_evidence_pack",
+    "operator_closure_readiness_view",
     "open_blockers",
     "rollback_policy",
     "rollback_binding",
@@ -260,6 +261,13 @@ def _validate_loop_summary(loop: Any, index: int) -> list[str]:
     errors.extend(_validate_step_receipts(loop["step_receipts"], loop, index))
     errors.extend(_validate_receipt_lineage_bindings(loop["receipt_lineage_bindings"], loop, index))
     errors.extend(_validate_closure_evidence_pack(loop["closure_evidence_pack"], loop, index))
+    errors.extend(
+        _validate_operator_closure_readiness_view(
+            loop["operator_closure_readiness_view"],
+            loop,
+            index,
+        )
+    )
     if loop["open_blockers"] and loop["status"] != "blocked":
         errors.append(f"loop {index} with blockers must be blocked")
     if loop["status"] in {"verified", "closed"} and loop["missing_evidence"]:
@@ -1125,6 +1133,134 @@ def _validate_closure_evidence_pack(
         errors.append(f"loop {index} closure_evidence_pack emits_receipt must be false")
     if evidence_pack["terminal_closure"] is not False:
         errors.append(f"loop {index} closure_evidence_pack terminal_closure must be false")
+    return errors
+
+
+def _validate_operator_closure_readiness_view(
+    readiness_view: Any,
+    loop: dict[str, Any],
+    index: int,
+) -> list[str]:
+    if not isinstance(readiness_view, dict):
+        return [f"loop {index} operator_closure_readiness_view must be an object"]
+    errors: list[str] = []
+    required_fields = {
+        "view_ref",
+        "loop_id",
+        "projected_status",
+        "readiness_state",
+        "blocker_refs",
+        "evidence_gap_refs",
+        "authority_gap_refs",
+        "closure_condition_refs",
+        "rollback_ref",
+        "rollback_available",
+        "next_proof_action",
+        "next_proof_refs",
+        "read_only",
+        "mutation_route",
+        "terminal_closure",
+    }
+    missing = sorted(required_fields - set(readiness_view))
+    errors.extend(
+        f"loop {index} operator_closure_readiness_view missing field: {field_name}"
+        for field_name in missing
+    )
+    extra = sorted(set(readiness_view) - required_fields)
+    errors.extend(
+        f"loop {index} operator_closure_readiness_view has unexpected field: {field_name}"
+        for field_name in extra
+    )
+    if missing:
+        return errors
+    for field_name in ("view_ref", "loop_id", "readiness_state", "rollback_ref", "next_proof_action"):
+        if not isinstance(readiness_view[field_name], str) or not readiness_view[field_name]:
+            errors.append(
+                f"loop {index} operator_closure_readiness_view {field_name} must be non-empty"
+            )
+    if readiness_view["projected_status"] != loop["status"]:
+        errors.append(
+            f"loop {index} operator_closure_readiness_view projected_status must match status"
+        )
+    if readiness_view["loop_id"] != loop["loop_id"]:
+        errors.append(f"loop {index} operator_closure_readiness_view loop_id must match loop_id")
+    for field_name in (
+        "blocker_refs",
+        "evidence_gap_refs",
+        "authority_gap_refs",
+        "closure_condition_refs",
+        "next_proof_refs",
+    ):
+        errors.extend(
+            _validate_text_list(
+                readiness_view[field_name],
+                f"loop {index} operator_closure_readiness_view {field_name}",
+            )
+        )
+        if field_name in {"closure_condition_refs", "next_proof_refs"} and not readiness_view[field_name]:
+            errors.append(
+                f"loop {index} operator_closure_readiness_view {field_name} must be non-empty"
+            )
+    if set(readiness_view["blocker_refs"]) != set(loop["open_blockers"]):
+        errors.append(
+            f"loop {index} operator_closure_readiness_view blocker_refs must match open_blockers"
+        )
+    if set(readiness_view["evidence_gap_refs"]) != set(loop["missing_evidence"]):
+        errors.append(
+            f"loop {index} operator_closure_readiness_view evidence_gap_refs must match missing_evidence"
+        )
+    if set(readiness_view["authority_gap_refs"]) != set(loop["missing_authority"]):
+        errors.append(
+            f"loop {index} operator_closure_readiness_view authority_gap_refs must match missing_authority"
+        )
+    if set(readiness_view["closure_condition_refs"]) != set(loop["closure_conditions"]):
+        errors.append(
+            f"loop {index} operator_closure_readiness_view closure_condition_refs must match closure_conditions"
+        )
+    if readiness_view["rollback_ref"] != loop["rollback_policy"]:
+        errors.append(
+            f"loop {index} operator_closure_readiness_view rollback_ref must match rollback_policy"
+        )
+    closure_report = loop["closure_report"]
+    if not isinstance(closure_report, dict):
+        errors.append(f"loop {index} operator_closure_readiness_view requires closure_report object")
+        closure_report = {}
+    if readiness_view["rollback_available"] != closure_report.get("rollback_available"):
+        errors.append(
+            f"loop {index} operator_closure_readiness_view rollback_available must match closure_report"
+        )
+    expected_readiness_state = (
+        "blocked_by_unresolved_gaps"
+        if loop["open_blockers"]
+        else "ready_for_terminal_closure_review"
+    )
+    if readiness_view["readiness_state"] != expected_readiness_state:
+        errors.append(
+            f"loop {index} operator_closure_readiness_view readiness_state must match blockers"
+        )
+    expected_next_action = (
+        "resolve_blockers_before_terminal_closure_review"
+        if loop["open_blockers"]
+        else "run_loop_specific_terminal_closure_workflow"
+    )
+    if readiness_view["next_proof_action"] != expected_next_action:
+        errors.append(
+            f"loop {index} operator_closure_readiness_view next_proof_action must match blockers"
+        )
+    if "closure_evidence_pack" not in readiness_view["next_proof_refs"]:
+        errors.append(
+            f"loop {index} operator_closure_readiness_view next_proof_refs must include closure_evidence_pack"
+        )
+    if "closure_report" not in readiness_view["next_proof_refs"]:
+        errors.append(
+            f"loop {index} operator_closure_readiness_view next_proof_refs must include closure_report"
+        )
+    if readiness_view["read_only"] is not True:
+        errors.append(f"loop {index} operator_closure_readiness_view read_only must be true")
+    if readiness_view["mutation_route"] is not False:
+        errors.append(f"loop {index} operator_closure_readiness_view mutation_route must be false")
+    if readiness_view["terminal_closure"] is not False:
+        errors.append(f"loop {index} operator_closure_readiness_view terminal_closure must be false")
     return errors
 
 
