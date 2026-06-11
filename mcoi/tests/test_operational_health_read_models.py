@@ -287,6 +287,7 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
         "cors",
         "readiness",
         "security_headers",
+        "idempotency",
         "finance_approval",
         "payment_provider",
         "observability",
@@ -296,6 +297,8 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert judgments["dashboard_health_check"]["status"] == "allowed"
     assert judgments["bounded_exception_response"]["status"] == "allowed"
     assert judgments["bounded_exception_response"]["witness"][-1] == "path_valid"
+    assert judgments["idempotency_suppression_path"]["status"] == "allowed"
+    assert judgments["idempotency_suppression_path"]["witness"][-1] == "path_valid"
     assert judgments["readiness_launch_gate"]["status"] == "unknown"
     assert judgments["finance_approval_path"]["status"] == "unknown"
     assert judgments["payment_provider_handoff_path"]["status"] == "unknown"
@@ -309,6 +312,7 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert "blocked_boundary:secrets" in judgments["source_to_secret"]["reasons"]
     assert any(blocker.startswith("path:source_to_secret:") for blocker in spatial_map["blockers"])
     assert "bounded_exception_response_crosses_security_header_boundary" in spatial_map["witness"]
+    assert "idempotency_boundary_preserves_duplicate_suppression_before_side_effects" in spatial_map["witness"]
     assert "finance_and_payment_paths_require_approval_and_provider_evidence" in spatial_map["witness"]
     assert "operational_launch_boundaries_require_observability_and_support_evidence" in spatial_map["witness"]
     assert "secret_boundary_blocks_source_to_secret_path" in spatial_map["witness"]
