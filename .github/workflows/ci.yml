@@ -139,13 +139,20 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     needs: [python-tests, python-compatibility, python-soak-tests]
-    if: always()
+    if: ${{ !cancelled() }}
     steps:
       - name: Confirm bounded Python gates passed
+        shell: python
         run: |
-          test "${{ needs.python-tests.result }}" = "success"
-          test "${{ needs.python-compatibility.result }}" = "success"
-          test "${{ needs.python-soak-tests.result }}" = "success"
+          results = {
+              "python-tests": "${{ needs.python-tests.result }}",
+              "python-compatibility": "${{ needs.python-compatibility.result }}",
+              "python-soak-tests": "${{ needs.python-soak-tests.result }}",
+          }
+          failed = {name: result for name, result in results.items() if result != "success"}
+          if failed:
+              raise SystemExit(f"bounded Python gates failed: {failed}")
+          print("bounded Python gates passed")
 
   typescript-sdk:
     name: TypeScript SDK Verification
