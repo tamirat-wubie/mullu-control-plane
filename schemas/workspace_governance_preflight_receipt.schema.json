@@ -67,6 +67,7 @@
           "enum": [
             "local_assurance_plan",
             "agents_policy",
+            "trusted_local_control_studio",
             "foundation_mode",
             "foundation_source_control_boundary",
             "foundation_source_control_review_checklist_boundary",

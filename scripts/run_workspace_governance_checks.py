@@ -118,6 +118,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/refresh_local_assurance.py", "--dry-run", "--json"),
         ),
         CheckCommand("agents_policy", (python_executable, "scripts/validate_agents_governance.py")),
+        CheckCommand(
+            "trusted_local_control_studio",
+            (python_executable, "scripts/validate_trusted_local_control_studio.py"),
+        ),
         CheckCommand("foundation_mode", (python_executable, "scripts/validate_foundation_mode.py")),
         CheckCommand(
             "foundation_source_control_boundary",
