@@ -1018,6 +1018,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/console/shadow",
                 "/api/v1/console/note-memory",
                 "/api/v1/console/note-memory/view",
+                "/api/v1/console/spatial-map",
+                "/api/v1/console/spatial-map/view",
             ],
             "read_model",
             "read_model",
@@ -1034,7 +1036,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_console.py",
                 "mcoi/tests/test_inceptadive_shadow_routes.py",
             ],
-            "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, note-memory HTML, and aggregate views with governed response witnesses.",
+            "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, spatial governance panels, HTML views, and aggregate views with governed response witnesses.",
             [
                 "console_home_returns_governed_runtime_vitals",
                 "console_runs_bounds_recent_audit_entries",
@@ -1046,6 +1048,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "console_note_memory_html_escapes_read_model",
                 "console_note_memory_fails_closed_without_store_path",
                 "full_console_includes_spatial_map_read_model",
+                "console_spatial_map_returns_panel_read_model",
+                "console_spatial_map_html_renders_blockers",
             ],
             runtime_witness_anchor_aliases={
                 "console_home_returns_governed_runtime_vitals": ["console_home"],
@@ -1071,6 +1075,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "full_console_includes_spatial_map_read_model": [
                     "full_console",
+                ],
+                "console_spatial_map_returns_panel_read_model": [
+                    "console_spatial_map_panel_read_model",
+                ],
+                "console_spatial_map_html_renders_blockers": [
+                    "console_spatial_map_html_view_renders_blockers",
                 ],
             },
         ),

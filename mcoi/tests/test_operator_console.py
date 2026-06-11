@@ -300,3 +300,40 @@ def test_full_console(client: TestClient) -> None:
     assert judgments["readiness_launch_gate"]["status"] == "unknown"
     assert judgments["source_to_secret"]["status"] == "blocked"
     assert "blocked_boundary:secrets" in judgments["source_to_secret"]["reasons"]
+
+
+def test_console_spatial_map_panel_read_model(client: TestClient) -> None:
+    resp = client.get("/api/v1/console/spatial-map")
+    assert resp.status_code == 200
+    data = resp.json()
+    panels = {panel["title"]: panel for panel in data["panels"]}
+
+    assert data["governed"] is True
+    assert data["summary"]["allowed_paths"] >= 2
+    assert data["summary"]["unknown_paths"] >= 1
+    assert data["summary"]["blocked_paths"] == 1
+    assert data["summary"]["blocker_count"] >= 1
+    assert "Runtime Path Panel" in panels
+    assert "Launch Boundary Panel" in panels
+    assert "Fracture Panel" in panels
+    assert panels["Runtime Path Panel"]["paths"][0]["path_id"] == "dashboard_health_check"
+    assert panels["Runtime Path Panel"]["paths"][0]["status"] == "allowed"
+    assert panels["Launch Boundary Panel"]["paths"][0]["path_id"] == "readiness_launch_gate"
+    assert panels["Launch Boundary Panel"]["paths"][0]["status"] == "unknown"
+    assert panels["Fracture Panel"]["paths"][0]["path_id"] == "source_to_secret"
+    assert panels["Fracture Panel"]["paths"][0]["status"] == "blocked"
+    assert "blocked_boundary:secrets" in panels["Fracture Panel"]["paths"][0]["reasons"]
+
+
+def test_console_spatial_map_html_view_renders_blockers(client: TestClient) -> None:
+    resp = client.get("/api/v1/console/spatial-map/view")
+
+    assert resp.status_code == 200
+    assert "text/html" in resp.headers["content-type"]
+    assert "Mullu Spatial Governance Console" in resp.text
+    assert "Runtime Path Panel" in resp.text
+    assert "Launch Boundary Panel" in resp.text
+    assert "Fracture Panel" in resp.text
+    assert "source_to_secret" in resp.text
+    assert "blocked_boundary:secrets" in resp.text
+    assert "<script" not in resp.text
