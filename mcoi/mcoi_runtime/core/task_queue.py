@@ -248,6 +248,8 @@ class TaskQueue:
         }
 
     def mutation_receipts(self, limit: int = 50) -> tuple[TaskQueueMutationReceipt, ...]:
+        if limit <= 0:
+            return ()
         return tuple(self._mutation_receipts[-limit:])
 
     def effect_records(self, limit: int = 50) -> tuple[Any, ...]:

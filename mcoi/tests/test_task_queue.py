@@ -141,6 +141,9 @@ class TestTaskQueue:
         assert receipts[-1].metadata["succeeded"] is True
         assert receipts[-1].metadata["error_present"] is False
         assert "output_hash" in receipts[-1].metadata
+        assert q.mutation_receipts(limit=1)[0].effect_name == "task_queue_result_recorded"
+        assert q.mutation_receipts(limit=0) == ()
+        assert q.mutation_receipts(limit=-1) == ()
 
     def test_mutation_receipts_convert_to_effect_records(self):
         q = TaskQueue(clock=FIXED_CLOCK)
@@ -155,6 +158,8 @@ class TestTaskQueue:
         assert effect.details["evidence_ref"].startswith("task-queue-receipt:")
         assert effect.details["after_depth"] == 1
         assert effect.details["metadata"]["payload_hash"]
+        assert q.effect_records(limit=0) == ()
+        assert q.effect_records(limit=-1) == ()
 
     def test_task_queue_mutation_receipt_closes_effect_assurance(self):
         q = TaskQueue(clock=FIXED_CLOCK)
