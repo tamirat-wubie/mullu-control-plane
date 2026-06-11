@@ -272,6 +272,48 @@ def test_production_readiness_checks_bounded(client: TestClient) -> None:
     assert payload["subsystems"] == len(payload["checks"])
 
 
+def test_spatial_map_read_model_bounded(client: TestClient) -> None:
+    response = client.get("/api/v1/spatial-map")
+    payload = response.json()
+    spatial_map = payload["spatial_map"]
+    judgments = {judgment["path_id"]: judgment for judgment in spatial_map["judgments"]}
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert spatial_map["frame"].startswith("gateway_architecture_space")
+    assert len(spatial_map["entities"]) >= 10
+    assert len(spatial_map["regions"]) >= 8
+    assert {boundary["id"] for boundary in spatial_map["boundaries"]} >= {
+        "cors",
+        "readiness",
+        "secrets",
+    }
+    assert judgments["dashboard_health_check"]["status"] == "allowed"
+    assert judgments["readiness_launch_gate"]["status"] == "unknown"
+    assert judgments["source_to_secret"]["status"] == "blocked"
+    assert "blocked_boundary:secrets" in judgments["source_to_secret"]["reasons"]
+    assert any(blocker.startswith("path:source_to_secret:") for blocker in spatial_map["blockers"])
+    assert "secret_boundary_blocks_source_to_secret_path" in spatial_map["witness"]
+
+
+def test_spatial_path_missing_boundary_blocks_explicitly() -> None:
+    from mcoi_runtime.core.spatial_governance import SpatialPath, SpatialStatus, judge_path
+
+    judgment = judge_path(
+        SpatialPath("missing_boundary_path", "source", "target", ("undeclared",)),
+        {},
+    )
+
+    assert judgment.status == SpatialStatus.BLOCKED
+    assert judgment.reasons == ("dependency_missing:undeclared",)
+    assert judgment.witness == (
+        "path:missing_boundary_path",
+        "source:source",
+        "target:target",
+        "missing_boundary:undeclared",
+    )
+
+
 def test_monitoring_vitals_read_model_bounded(client: TestClient) -> None:
     response = client.get("/api/v1/monitor")
     payload = response.json()

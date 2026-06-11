@@ -18,8 +18,10 @@ from html import escape
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
+from mcoi_runtime.app.readiness import production_readiness_checks
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.routers._tenant_scope import scoped_listing_tenant
+from mcoi_runtime.core.spatial_governance import build_gateway_spatial_map
 
 router = APIRouter()
 
@@ -593,5 +595,6 @@ def full_console():
         "providers": console_providers(),
         "scheduler": console_scheduler(),
         "note_memory": console_note_memory(),
+        "spatial_map": build_gateway_spatial_map(production_readiness_checks()).to_dict(),
         "governed": True,
     }

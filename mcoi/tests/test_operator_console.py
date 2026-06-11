@@ -292,3 +292,11 @@ def test_full_console(client: TestClient) -> None:
     assert "providers" in data
     assert "scheduler" in data
     assert "note_memory" in data
+    assert "spatial_map" in data
+    assert data["spatial_map"]["frame"].startswith("gateway_architecture_space")
+    assert data["spatial_map"]["metrics"][0]["id"] == "readiness_subsystems"
+    judgments = {judgment["path_id"]: judgment for judgment in data["spatial_map"]["judgments"]}
+    assert judgments["dashboard_health_check"]["status"] == "allowed"
+    assert judgments["readiness_launch_gate"]["status"] == "unknown"
+    assert judgments["source_to_secret"]["status"] == "blocked"
+    assert "blocked_boundary:secrets" in judgments["source_to_secret"]["reasons"]
