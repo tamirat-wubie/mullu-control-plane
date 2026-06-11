@@ -5,7 +5,7 @@ Governance scope: loop contract, registry, read model, HTTP projection,
 validators, schema manifest, evidence blockers, status catalog, transition
 catalog, mode catalog, risk catalog, closure condition catalog, rollback
 boundary, learning catalog, receipt lineage catalog, closure evidence pack, and
-operator closure readiness view.
+operator closure readiness view, and proof obligation view.
 Dependencies: `docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md`, holistic loop source
 files, read-model schema, report and validation scripts, focused tests, SDLC
 validators, release validators, and workspace governance preflight.
@@ -60,7 +60,8 @@ staged into the holistic loop PR.
 1. Added typed loop contracts:
    `LoopManifest`, `LoopState`, `LoopStepReceipt`, `LoopClosureReport`,
    `LoopReceiptLineageBinding`, `LoopClosureEvidencePack`, `LoopRegistry`,
-   `LoopOperatorClosureReadinessView`, and bounded `LoopReadModel`.
+   `LoopOperatorClosureReadinessView`, `LoopProofObligationView`, and bounded
+   `LoopReadModel`.
 2. Registered four existing loops without changing runtime behavior:
    `deployment_witness_loop`, `runtime_conformance_loop`,
    `cognitive_outcome_loop`, and `governed_code_change_loop`.
@@ -78,6 +79,10 @@ staged into the holistic loop PR.
 8. Added operator closure readiness views that summarize blockers, evidence
    gaps, authority gaps, rollback readiness, and next proof action without
    adding mutation authority or terminal closure.
+9. Added proof obligation views that group required evidence, satisfied
+   evidence, missing evidence, authority refs, closure conditions, validators,
+   proof surfaces, and blockers without executing validators or claiming
+   terminal closure.
 
 ## Evidence Catalog Follow-Up
 

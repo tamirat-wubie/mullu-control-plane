@@ -27,6 +27,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopModeBinding,
     LoopOperatorClosureReadinessView,
     LoopPhase,
+    LoopProofObligationView,
     LoopReadModel,
     LoopReceiptLineageBinding,
     LoopRiskBinding,
@@ -415,6 +416,14 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
             closure_report,
             closure_evidence_pack,
         ),
+        proof_obligation_view=_proof_obligation_view_for(
+            manifest,
+            state,
+            blockers,
+            missing_authority,
+            missing,
+            closure_evidence_pack,
+        ),
         open_blockers=blockers,
         rollback_policy=manifest.rollback_policy,
         rollback_binding=_rollback_binding_for(manifest.loop_id),
@@ -744,6 +753,36 @@ def _operator_closure_readiness_view_for(
             else "run_loop_specific_terminal_closure_workflow"
         ),
         next_proof_refs=next_proof_refs,
+    )
+
+
+def _proof_obligation_view_for(
+    manifest: LoopManifest,
+    state: LoopState,
+    blockers: Sequence[str],
+    missing_authority: Sequence[str],
+    missing_evidence: Sequence[str],
+    closure_evidence_pack: LoopClosureEvidencePack,
+) -> LoopProofObligationView:
+    blocked = bool(blockers)
+    return LoopProofObligationView(
+        obligation_ref=f"{manifest.loop_id}_proof_obligation_view",
+        loop_id=manifest.loop_id,
+        obligation_state=(
+            "blocked_by_missing_proof"
+            if blocked
+            else "proof_obligations_satisfied_terminal_review_required"
+        ),
+        required_evidence_refs=closure_evidence_pack.required_evidence_refs,
+        satisfied_evidence_refs=state.evidence_refs,
+        missing_evidence_refs=tuple(missing_evidence),
+        required_authority_refs=closure_evidence_pack.required_authority_refs,
+        satisfied_authority_refs=state.authority_refs,
+        missing_authority_refs=tuple(missing_authority),
+        closure_condition_refs=closure_evidence_pack.closure_condition_refs,
+        validator_refs=closure_evidence_pack.validator_refs,
+        proof_surface_refs=closure_evidence_pack.proof_surface_refs,
+        blocker_refs=tuple(blockers),
     )
 
 

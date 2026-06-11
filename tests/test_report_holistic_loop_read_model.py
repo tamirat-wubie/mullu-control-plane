@@ -42,6 +42,7 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
     assert all(loop["closure_condition_bindings"] for loop in loops)
     assert all(loop["closure_evidence_pack"] for loop in loops)
     assert all(loop["operator_closure_readiness_view"] for loop in loops)
+    assert all(loop["proof_obligation_view"] for loop in loops)
     assert all(loop["rollback_binding"] for loop in loops)
     assert all(loop["learning_binding"] for loop in loops)
     assert all(loop["step_receipts"] for loop in loops)
@@ -227,6 +228,34 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
         and loop["operator_closure_readiness_view"]["terminal_closure"] is False
         for loop in loops
     )
+    assert all(
+        set(loop["proof_obligation_view"]["required_evidence_refs"])
+        == set(loop["required_evidence"])
+        and set(loop["proof_obligation_view"]["satisfied_evidence_refs"])
+        == set(loop["evidence_refs"])
+        and set(loop["proof_obligation_view"]["missing_evidence_refs"])
+        == set(loop["missing_evidence"])
+        and set(loop["proof_obligation_view"]["required_authority_refs"])
+        == set(loop["required_authority"])
+        and set(loop["proof_obligation_view"]["satisfied_authority_refs"])
+        == set(loop["authority_refs"])
+        and set(loop["proof_obligation_view"]["missing_authority_refs"])
+        == set(loop["missing_authority"])
+        and set(loop["proof_obligation_view"]["closure_condition_refs"])
+        == set(loop["closure_conditions"])
+        and set(loop["proof_obligation_view"]["validator_refs"])
+        == set(loop["closure_evidence_pack"]["validator_refs"])
+        and set(loop["proof_obligation_view"]["proof_surface_refs"])
+        == set(loop["closure_evidence_pack"]["proof_surface_refs"])
+        and set(loop["proof_obligation_view"]["blocker_refs"])
+        == set(loop["open_blockers"])
+        and loop["proof_obligation_view"]["obligation_state"]
+        == "blocked_by_missing_proof"
+        and loop["proof_obligation_view"]["read_only"] is True
+        and loop["proof_obligation_view"]["executes_validator"] is False
+        and loop["proof_obligation_view"]["terminal_closure"] is False
+        for loop in loops
+    )
     assert all(loop["closure_report"]["closed"] is False for loop in loops)
     assert all(loop["closure_report"]["evidence_complete"] is False for loop in loops)
     assert all(
@@ -267,6 +296,7 @@ def test_report_accepts_complete_observed_authority_and_evidence_refs() -> None:
     assert all(loop["closure_condition_bindings"] for loop in report["loops"])
     assert all(loop["closure_evidence_pack"] for loop in report["loops"])
     assert all(loop["operator_closure_readiness_view"] for loop in report["loops"])
+    assert all(loop["proof_obligation_view"] for loop in report["loops"])
     assert all(loop["rollback_binding"] for loop in report["loops"])
     assert all(loop["learning_binding"] for loop in report["loops"])
     assert all(loop["step_receipts"] for loop in report["loops"])
@@ -289,6 +319,17 @@ def test_report_accepts_complete_observed_authority_and_evidence_refs() -> None:
         and "terminal_closure_certificate"
         in loop["operator_closure_readiness_view"]["next_proof_refs"]
         and loop["operator_closure_readiness_view"]["terminal_closure"] is False
+        for loop in report["loops"]
+    )
+    assert all(
+        loop["proof_obligation_view"]["obligation_state"]
+        == "proof_obligations_satisfied_terminal_review_required"
+        and loop["proof_obligation_view"]["missing_evidence_refs"] == []
+        and loop["proof_obligation_view"]["missing_authority_refs"] == []
+        and loop["proof_obligation_view"]["blocker_refs"] == []
+        and loop["proof_obligation_view"]["read_only"] is True
+        and loop["proof_obligation_view"]["executes_validator"] is False
+        and loop["proof_obligation_view"]["terminal_closure"] is False
         for loop in report["loops"]
     )
     assert all(loop["closure_report"]["evidence_complete"] is True for loop in report["loops"])

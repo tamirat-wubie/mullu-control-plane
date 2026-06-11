@@ -911,6 +911,78 @@ class LoopOperatorClosureReadinessView(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class LoopProofObligationView(ContractRecord):
+    """Read-only proof obligation projection over evidence, authority, and closure refs."""
+
+    obligation_ref: str
+    loop_id: str
+    obligation_state: str
+    required_evidence_refs: tuple[str, ...]
+    satisfied_evidence_refs: tuple[str, ...]
+    missing_evidence_refs: tuple[str, ...]
+    required_authority_refs: tuple[str, ...]
+    satisfied_authority_refs: tuple[str, ...]
+    missing_authority_refs: tuple[str, ...]
+    closure_condition_refs: tuple[str, ...]
+    validator_refs: tuple[str, ...]
+    proof_surface_refs: tuple[str, ...]
+    blocker_refs: tuple[str, ...]
+    read_only: bool = True
+    executes_validator: bool = False
+    terminal_closure: bool = False
+
+    def __post_init__(self) -> None:
+        for field_name in ("obligation_ref", "loop_id", "obligation_state"):
+            object.__setattr__(
+                self,
+                field_name,
+                require_non_empty_text(getattr(self, field_name), field_name),
+            )
+        allowed_states = {
+            "blocked_by_missing_proof",
+            "proof_obligations_satisfied_terminal_review_required",
+        }
+        if self.obligation_state not in allowed_states:
+            raise ValueError("obligation_state is invalid")
+        for field_name in (
+            "required_evidence_refs",
+            "required_authority_refs",
+            "closure_condition_refs",
+            "validator_refs",
+            "proof_surface_refs",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name),
+            )
+        for field_name in (
+            "satisfied_evidence_refs",
+            "missing_evidence_refs",
+            "satisfied_authority_refs",
+            "missing_authority_refs",
+            "blocker_refs",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name, allow_empty=True),
+            )
+        if self.obligation_state != (
+            "blocked_by_missing_proof"
+            if self.blocker_refs
+            else "proof_obligations_satisfied_terminal_review_required"
+        ):
+            raise ValueError("obligation_state must match blocker refs")
+        if self.read_only is not True:
+            raise ValueError("proof obligation view must be read-only")
+        if self.executes_validator is not False:
+            raise ValueError("proof obligation view cannot execute validators")
+        if self.terminal_closure is not False:
+            raise ValueError("proof obligation view cannot be terminal closure")
+
+
+@dataclass(frozen=True, slots=True)
 class LoopSummary(ContractRecord):
     """Bounded read-model summary for one registered governed loop."""
 
@@ -941,6 +1013,7 @@ class LoopSummary(ContractRecord):
     closure_report: LoopClosureReport
     closure_evidence_pack: LoopClosureEvidencePack
     operator_closure_readiness_view: LoopOperatorClosureReadinessView
+    proof_obligation_view: LoopProofObligationView
     open_blockers: tuple[str, ...]
     rollback_policy: str
     rollback_binding: LoopRollbackBinding
@@ -1075,6 +1148,8 @@ class LoopSummary(ContractRecord):
             raise ValueError(
                 "operator_closure_readiness_view must be a LoopOperatorClosureReadinessView"
             )
+        if not isinstance(self.proof_obligation_view, LoopProofObligationView):
+            raise ValueError("proof_obligation_view must be a LoopProofObligationView")
         if not isinstance(self.rollback_binding, LoopRollbackBinding):
             raise ValueError("rollback_binding must be a LoopRollbackBinding")
         if self.rollback_binding.rollback_ref != self.rollback_policy:
@@ -1097,6 +1172,8 @@ class LoopSummary(ContractRecord):
             raise ValueError(
                 "operator_closure_readiness_view projected_status must match summary status"
             )
+        if self.proof_obligation_view.loop_id != self.loop_id:
+            raise ValueError("proof_obligation_view loop_id must match summary loop_id")
         object.__setattr__(self, "updated_at", require_datetime_text(self.updated_at, "updated_at"))
         if set(self.status_binding.blocker_refs) != set(self.open_blockers):
             raise ValueError("status_binding blocker_refs must match open blockers")
@@ -1241,6 +1318,33 @@ class LoopSummary(ContractRecord):
             raise ValueError("operator closure readiness refs must include closure evidence pack")
         if "closure_report" not in self.operator_closure_readiness_view.next_proof_refs:
             raise ValueError("operator closure readiness refs must include closure report")
+        if set(self.proof_obligation_view.required_evidence_refs) != set(self.required_evidence):
+            raise ValueError("proof obligation required evidence refs must match required evidence")
+        if set(self.proof_obligation_view.satisfied_evidence_refs) != set(self.evidence_refs):
+            raise ValueError("proof obligation satisfied evidence refs must match evidence refs")
+        if set(self.proof_obligation_view.missing_evidence_refs) != set(self.missing_evidence):
+            raise ValueError("proof obligation missing evidence refs must match missing evidence")
+        if set(self.proof_obligation_view.required_authority_refs) != set(self.required_authority):
+            raise ValueError("proof obligation required authority refs must match required authority")
+        if set(self.proof_obligation_view.satisfied_authority_refs) != set(self.authority_refs):
+            raise ValueError("proof obligation satisfied authority refs must match authority refs")
+        if set(self.proof_obligation_view.missing_authority_refs) != set(self.missing_authority):
+            raise ValueError("proof obligation missing authority refs must match missing authority")
+        if set(self.proof_obligation_view.closure_condition_refs) != set(self.closure_conditions):
+            raise ValueError("proof obligation closure condition refs must match closure conditions")
+        if set(self.proof_obligation_view.validator_refs) != set(self.closure_evidence_pack.validator_refs):
+            raise ValueError("proof obligation validator refs must match closure evidence pack")
+        if set(self.proof_obligation_view.proof_surface_refs) != set(self.closure_evidence_pack.proof_surface_refs):
+            raise ValueError("proof obligation proof surface refs must match closure evidence pack")
+        if set(self.proof_obligation_view.blocker_refs) != set(self.open_blockers):
+            raise ValueError("proof obligation blocker refs must match open blockers")
+        expected_obligation_state = (
+            "blocked_by_missing_proof"
+            if self.open_blockers
+            else "proof_obligations_satisfied_terminal_review_required"
+        )
+        if self.proof_obligation_view.obligation_state != expected_obligation_state:
+            raise ValueError("proof obligation state must match blockers")
 
 
 @dataclass(frozen=True, slots=True)
@@ -1333,6 +1437,7 @@ __all__ = [
     "LoopLearningBinding",
     "LoopModeBinding",
     "LoopOperatorClosureReadinessView",
+    "LoopProofObligationView",
     "LoopReceiptLineageBinding",
     "LoopRiskBinding",
     "LoopRollbackBinding",

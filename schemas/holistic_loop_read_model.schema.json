@@ -97,6 +97,7 @@
         "closure_report",
         "closure_evidence_pack",
         "operator_closure_readiness_view",
+        "proof_obligation_view",
         "open_blockers",
         "rollback_policy",
         "rollback_binding",
@@ -227,6 +228,9 @@
         },
         "operator_closure_readiness_view": {
           "$ref": "#/$defs/operator_closure_readiness_view"
+        },
+        "proof_obligation_view": {
+          "$ref": "#/$defs/proof_obligation_view"
         },
         "open_blockers": {
           "$ref": "#/$defs/possibly_empty_text_list"
@@ -1104,6 +1108,87 @@
           "const": true
         },
         "mutation_route": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "proof_obligation_view": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "obligation_ref",
+        "loop_id",
+        "obligation_state",
+        "required_evidence_refs",
+        "satisfied_evidence_refs",
+        "missing_evidence_refs",
+        "required_authority_refs",
+        "satisfied_authority_refs",
+        "missing_authority_refs",
+        "closure_condition_refs",
+        "validator_refs",
+        "proof_surface_refs",
+        "blocker_refs",
+        "read_only",
+        "executes_validator",
+        "terminal_closure"
+      ],
+      "properties": {
+        "obligation_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "loop_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "obligation_state": {
+          "type": "string",
+          "enum": [
+            "blocked_by_missing_proof",
+            "proof_obligations_satisfied_terminal_review_required"
+          ]
+        },
+        "required_evidence_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "satisfied_evidence_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "missing_evidence_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "required_authority_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "satisfied_authority_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "missing_authority_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "closure_condition_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "validator_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "proof_surface_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "blocker_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "executes_validator": {
           "type": "boolean",
           "const": false
         },

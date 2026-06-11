@@ -535,6 +535,58 @@ def test_payload_validation_rejects_operator_closure_readiness_view_mutation_or_
     assert any("operator_closure_readiness_view terminal_closure must be false" in error for error in errors)
 
 
+def test_payload_validation_requires_proof_obligation_view_to_match_loop_inputs() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    view = invalid_payload["loops"][0]["proof_obligation_view"]
+    view["required_evidence_refs"] = ["undeclared_evidence"]
+    view["satisfied_evidence_refs"] = ["unexpected_evidence"]
+    view["missing_evidence_refs"] = ["different_evidence"]
+    view["required_authority_refs"] = ["undeclared_authority"]
+    view["satisfied_authority_refs"] = ["unexpected_authority"]
+    view["missing_authority_refs"] = ["different_authority"]
+    view["closure_condition_refs"] = ["different_closure"]
+    view["validator_refs"] = ["different_validator"]
+    view["proof_surface_refs"] = ["different_surface"]
+    view["blocker_refs"] = ["different_gap"]
+    view["obligation_state"] = "proof_obligations_satisfied_terminal_review_required"
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("required_evidence_refs must match required_evidence" in error for error in errors)
+    assert any("satisfied_evidence_refs must match evidence_refs" in error for error in errors)
+    assert any("missing_evidence_refs must match missing_evidence" in error for error in errors)
+    assert any("required_authority_refs must match required_authority" in error for error in errors)
+    assert any("satisfied_authority_refs must match authority_refs" in error for error in errors)
+    assert any("missing_authority_refs must match missing_authority" in error for error in errors)
+    assert any("closure_condition_refs must match closure_conditions" in error for error in errors)
+    assert any("validator_refs must match closure_evidence_pack" in error for error in errors)
+    assert any("proof_surface_refs must match closure_evidence_pack" in error for error in errors)
+    assert any("blocker_refs must match open_blockers" in error for error in errors)
+    assert any("obligation_state must match blockers" in error for error in errors)
+
+
+def test_payload_validation_rejects_proof_obligation_view_execution_or_closure_claim() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    view = invalid_payload["loops"][0]["proof_obligation_view"]
+    view["read_only"] = False
+    view["executes_validator"] = True
+    view["terminal_closure"] = True
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("proof_obligation_view read_only must be true" in error for error in errors)
+    assert any("proof_obligation_view executes_validator must be false" in error for error in errors)
+    assert any("proof_obligation_view terminal_closure must be false" in error for error in errors)
+
+
 def test_payload_validation_rejects_mode_binding_transition_or_terminal_closure_claim() -> None:
     app = FastAPI()
     app.include_router(router)
