@@ -45,7 +45,7 @@ blocked
 | GAP-INTERP-002 | Interpretation receipt missing | Interpretation / Evidence | high | implemented / partial | The system needs proof of what it believed the user meant. | `InterpretationReceipt` is attached to command payloads and router response metadata; `schemas/interpretation_receipt.schema.json` validates the receipt shape. | Add persisted receipt viewer. |
 | GAP-INTERP-003 | Clarification engine incomplete | Interpretation | high | implemented / partial | Vague goals must not trigger unsafe or wrong execution. | `ClarificationRequest` blocks ambiguous action-like input before command creation and returns one focused user question with safe default `no_execution`. | Expand slot requirements beyond the first vague action path. |
 | GAP-INTERP-004 | LLM-assisted interpretation not bounded | Interpretation / LLM | medium | partial | LLMs can misclassify user intent or overstate available authority. | Deterministic rules run first; LLM output validated as proposal only. | Add LLM-assisted proposal lane behind deterministic interpretation. |
-| GAP-GOV-001 | Ask-to-plan preview needs product binding | Governance / UI | high | partial | Users need to see risk, budget, tools, and approvals before action. | Plan preview screen backed by governed plan object. | Map `CapabilityPlan` to UI plan preview. |
+| GAP-GOV-001 | Ask-to-plan preview needs product binding | Governance / UI | high | implemented / partial | Users need to see risk, budget, tools, and approvals before action. | `CapabilityPlanPreview` exposes redacted read-only plan topology, risk, approval, and evidence obligations before execution authority. | Bind preview metadata to the future web Plan Review UI. |
 | GAP-GOV-002 | Budget gate user display missing | Governance / UI | medium | missing / partial | Search and LLM usage can become expensive without visible limits. | Budget estimate and budget-used fields visible before approval. | Add budget fields to plan preview map. |
 | GAP-GOV-003 | Policy denial explanation needs user-friendly composer | Governance / Response | medium | partial | Denials must be understandable without leaking internals. | Response composer produces safe, plain denial explanations. | Add denial response templates. |
 | GAP-SEARCH-001 | Search need classifier missing | Search | medium | missing / partial | Every chat message should not trigger search. | Classifier separates no-search, cache, local search, light web search, deep search. | Add search decision contract. |
@@ -69,7 +69,7 @@ blocked
 1. Review mapbook for Foundation Mode language.
 2. Add persisted receipt viewer for InterpretedRequest and InterpretationReceipt.
 3. Design web-only Governed Goal Intake.
-4. Map Plan Preview to risk, budget, tools, and approval requirements.
+4. Add budget and tool display fields to Plan Preview before UI binding.
 5. Select one read-only first worker path.
 6. Build Receipt Viewer for interpretation, plan, approval, execution, and denial receipts.
 7. Add one external channel only after web identity and approval work.

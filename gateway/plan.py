@@ -54,6 +54,66 @@ class CapabilityPlan:
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass(frozen=True, slots=True)
+class CapabilityPlanPreviewStep:
+    """Redacted step shape for plan review before execution."""
+
+    step_id: str
+    capability_id: str
+    depends_on: tuple[str, ...]
+    param_names: tuple[str, ...]
+    params_hash: str
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return JSON-safe preview step data without raw params."""
+        return {
+            "step_id": self.step_id,
+            "capability_id": self.capability_id,
+            "depends_on": list(self.depends_on),
+            "param_names": list(self.param_names),
+            "params_hash": self.params_hash,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class CapabilityPlanPreview:
+    """Read-only plan review envelope emitted before execution authority."""
+
+    preview_id: str
+    plan_id: str
+    tenant_id: str
+    identity_id: str
+    goal_hash: str
+    step_count: int
+    steps: tuple[CapabilityPlanPreviewStep, ...]
+    risk_tier: str
+    approval_required: bool
+    evidence_required: tuple[str, ...]
+    execution_allowed: bool
+    safe_default: str
+    created_at: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return JSON-safe preview data without raw goal text or params."""
+        return {
+            "preview_id": self.preview_id,
+            "plan_id": self.plan_id,
+            "tenant_id": self.tenant_id,
+            "identity_id": self.identity_id,
+            "goal_hash": self.goal_hash,
+            "step_count": self.step_count,
+            "steps": [step.to_dict() for step in self.steps],
+            "risk_tier": self.risk_tier,
+            "approval_required": self.approval_required,
+            "evidence_required": list(self.evidence_required),
+            "execution_allowed": self.execution_allowed,
+            "safe_default": self.safe_default,
+            "created_at": self.created_at,
+            "metadata": dict(self.metadata),
+        }
+
+
 class CapabilityPlanBuilder:
     """Build capability plans from direct or decomposed user goals."""
 
@@ -181,6 +241,55 @@ def one_step_plan(
         approval_required=risk_tier in {"medium", "high"},
         evidence_required=_union_evidence(validated_steps),
         metadata={"step_count": 1, "builder": "one_step_plan"},
+    )
+
+
+def preview_for_plan(*, plan: CapabilityPlan, created_at: str) -> CapabilityPlanPreview:
+    """Build a read-only, redacted preview for a governed capability plan.
+
+    Input contract: ``plan`` has already passed capability passport validation.
+    Output contract: the preview exposes topology, risk, evidence, and hashes,
+    never the raw goal text or raw step params.
+    Error contract: total for valid ``CapabilityPlan`` instances.
+    """
+    steps = tuple(
+        CapabilityPlanPreviewStep(
+            step_id=step.step_id,
+            capability_id=step.capability_id,
+            depends_on=tuple(step.depends_on),
+            param_names=tuple(sorted(str(name) for name in step.params)),
+            params_hash=canonical_hash(step.params),
+        )
+        for step in plan.steps
+    )
+    goal_hash = canonical_hash({"goal": plan.goal})
+    preview_payload = {
+        "plan_id": plan.plan_id,
+        "goal_hash": goal_hash,
+        "steps": [step.to_dict() for step in steps],
+        "risk_tier": plan.risk_tier,
+        "approval_required": plan.approval_required,
+        "created_at": created_at,
+    }
+    return CapabilityPlanPreview(
+        preview_id=f"plan-preview-{canonical_hash(preview_payload)[:16]}",
+        plan_id=plan.plan_id,
+        tenant_id=plan.tenant_id,
+        identity_id=plan.identity_id,
+        goal_hash=goal_hash,
+        step_count=len(steps),
+        steps=steps,
+        risk_tier=plan.risk_tier,
+        approval_required=plan.approval_required,
+        evidence_required=tuple(plan.evidence_required),
+        execution_allowed=False,
+        safe_default="await_approval_or_explicit_execution",
+        created_at=created_at,
+        metadata={
+            "builder": str(plan.metadata.get("builder", "")),
+            "admission_source": str(plan.metadata.get("admission_source", "")),
+            "read_only": True,
+        },
     )
 
 

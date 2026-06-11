@@ -13,8 +13,11 @@ Invariants:
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
+from gateway.command_spine import canonical_hash
 from gateway.capability_fabric import build_default_capability_admission_gate
 from gateway.plan import (
     CapabilityPlan,
@@ -22,6 +25,7 @@ from gateway.plan import (
     CapabilityPlanStep,
     _validate_steps,
     one_step_plan,
+    preview_for_plan,
 )
 from gateway.plan_executor import (
     CapabilityPlanExecutor,
@@ -32,6 +36,11 @@ from gateway.plan_ledger import (
     JsonFileCapabilityPlanLedgerStore,
     build_capability_plan_ledger_from_env,
 )
+from scripts.validate_schemas import _load_schema, _validate_schema_instance
+
+
+_ROOT = Path(__file__).resolve().parent.parent.parent
+_CAPABILITY_PLAN_PREVIEW_SCHEMA = _ROOT / "schemas" / "capability_plan_preview.schema.json"
 
 
 def _clock() -> str:
@@ -213,6 +222,34 @@ def test_plan_builder_returns_none_for_conversation() -> None:
     assert builder.build(message="hello there", tenant_id="t1", identity_id="u1") is None
     assert builder.build(message="", tenant_id="t1", identity_id="u1") is None
     assert builder.build(message="please be kind", tenant_id="t1", identity_id="u1") is None
+
+
+def test_plan_preview_redacts_goal_and_params_and_matches_schema() -> None:
+    body = "search knowledge docs secret-token-123 and send notification to team secret-token-123"
+    plan = CapabilityPlanBuilder().build(
+        message=body,
+        tenant_id="tenant-1",
+        identity_id="identity-1",
+    )
+    assert plan is not None
+
+    preview = preview_for_plan(plan=plan, created_at="2026-06-11T12:00:00+00:00")
+    payload = preview.to_dict()
+    errors = _validate_schema_instance(_load_schema(_CAPABILITY_PLAN_PREVIEW_SCHEMA), payload)
+
+    assert errors == []
+    assert preview.preview_id.startswith("plan-preview-")
+    assert preview.plan_id == plan.plan_id
+    assert preview.goal_hash == canonical_hash({"goal": body})
+    assert preview.step_count == 2
+    assert [step["capability_id"] for step in payload["steps"]] == [
+        "enterprise.knowledge_search",
+        "enterprise.notification_send",
+    ]
+    assert payload["steps"][1]["depends_on"] == ["step-1"]
+    assert payload["execution_allowed"] is False
+    assert payload["safe_default"] == "await_approval_or_explicit_execution"
+    assert "secret-token-123" not in str(payload)
 
 
 def test_plan_validation_rejects_unknown_dependency() -> None:
