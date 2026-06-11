@@ -1,7 +1,7 @@
 # Mullu Holistic Loop Engineering Kernel v1
 
 Purpose: define the shared governed loop contract used to describe existing Mullu loops without changing their runtime behavior.
-Governance scope: loop manifests, loop state projections, step receipts, receipt lineage bindings, closure reports, registry exposure, status bindings, transition bindings, mode bindings, closure condition bindings, risk bindings, evidence bindings, evidence blockers, closure evidence packs, operator closure readiness views, proof obligation views, rollback policy, learning bindings, and learning policy.
+Governance scope: loop manifests, loop state projections, step receipts, receipt lineage bindings, closure reports, registry exposure, status bindings, transition bindings, mode bindings, closure condition bindings, risk bindings, evidence bindings, evidence blockers, closure evidence packs, operator closure readiness views, proof obligation views, audit evolution views, rollback policy, learning bindings, and learning policy.
 Dependencies: `mcoi_runtime.contracts.holistic_loop`, `mcoi_runtime.core.holistic_loop_registry`, existing deployment witness, runtime conformance, cognitive outcome, and governed code-change surfaces.
 Invariants: this is a read-model-first contract layer; it adds no public mutation route; it does not rewrite deployment, cognitive, proof verification, or code-change behavior.
 
@@ -33,6 +33,7 @@ The kernel models the common contract through:
 | `LoopClosureEvidencePack` | Read-only aggregate of required evidence, observed evidence, authority, blockers, closure conditions, receipt lineage, rollback, validators, and proof surfaces needed to evaluate closure readiness. |
 | `LoopOperatorClosureReadinessView` | Read-only operator projection of blockers, evidence gaps, authority gaps, rollback availability, and the next proof action. |
 | `LoopProofObligationView` | Read-only proof obligation projection over evidence refs, authority refs, closure conditions, validators, proof surfaces, and blockers. |
+| `LoopAuditEvolutionView` | Read-only audit evolution projection over receipt refs, receipt lineage refs, audit blockers, learning candidates, learning binding refs, and proof surfaces. |
 | `LoopStatusBinding` | Read-only map from projected status to blockers, verification refs, closure gates, validators, and proof surfaces. |
 | `LoopTransitionBinding` | Read-only map from possible status and phase transitions to required evidence, authority, blockers, receipts, rollback refs, validators, and proof surfaces. |
 | `LoopModeBinding` | Read-only map from projected mode to allowed modes, separation refs, real-execution guards, validators, and proof surfaces. |
@@ -549,6 +550,51 @@ proof_obligation_view.executes_validator == false
 proof_obligation_view.terminal_closure == false
 ```
 
+## Audit Evolution View
+
+Each loop summary includes `audit_evolution_view`, a bounded projection that
+connects audit blockers, synthetic receipt outputs, receipt lineage, closure
+learning candidates, and learning binding refs. The view is derived from the
+loop summary; it does not emit a receipt, admit learning, update memory, mutate
+tests, or certify terminal closure.
+
+| Field | Meaning |
+| --- | --- |
+| `view_ref` | Stable read-model label for the audit evolution view. |
+| `loop_id` | Loop identity covered by the view. |
+| `audit_state` | `audit_blocked_by_unresolved_gaps` when blockers exist, otherwise `audit_ready_for_terminal_review`. |
+| `receipt_refs` | Must match `step_receipts[*].output_hash`. |
+| `receipt_lineage_refs` | Must match `receipt_lineage_bindings[*].lineage_ref`. |
+| `audit_blocker_refs` | Must match `open_blockers`. |
+| `learning_policy_ref` | Must match `learning_policy`. |
+| `learning_candidate_refs` | Must match `closure_report.learning_candidates`. |
+| `learning_evidence_input_refs` | Must match `learning_binding.evidence_input_refs`. |
+| `learning_admission_refs` | Must match `learning_binding.admission_refs`. |
+| `learning_retention_refs` | Must match `learning_binding.retention_refs`. |
+| `proof_surface_refs` | Must match the union of closure evidence pack and learning binding proof surfaces. |
+| `read_only` | Always `true`. |
+| `emits_receipt` | Always `false`; this view does not write runtime receipts. |
+| `admits_learning` | Always `false`; this view does not authorize learning. |
+| `terminal_closure` | Always `false`; this view is not a closure certificate. |
+
+The view is exact by contract:
+
+```text
+set(audit_evolution_view.receipt_refs) == set(step_receipts[*].output_hash)
+set(audit_evolution_view.receipt_lineage_refs) == set(receipt_lineage_bindings[*].lineage_ref)
+set(audit_evolution_view.audit_blocker_refs) == set(open_blockers)
+audit_evolution_view.learning_policy_ref == learning_policy
+set(audit_evolution_view.learning_candidate_refs) == set(closure_report.learning_candidates)
+set(audit_evolution_view.learning_evidence_input_refs) == set(learning_binding.evidence_input_refs)
+set(audit_evolution_view.learning_admission_refs) == set(learning_binding.admission_refs)
+set(audit_evolution_view.learning_retention_refs) == set(learning_binding.retention_refs)
+set(audit_evolution_view.proof_surface_refs) == set(closure_evidence_pack.proof_surface_refs) union set(learning_binding.proof_surface_refs)
+audit_evolution_view.read_only == true
+audit_evolution_view.emits_receipt == false
+audit_evolution_view.admits_learning == false
+audit_evolution_view.terminal_closure == false
+```
+
 ## Closure Readiness
 
 Each loop summary also includes a derived `closure_report`. This report is a
@@ -598,8 +644,9 @@ This kernel is intentionally non-invasive:
 13. It does not emit live runtime execution receipts.
 14. It does not emit receipt lineage records into runtime stores.
 15. It does not emit closure evidence packs into runtime stores.
-16. It does not mark any loop closed.
-17. It only exposes typed read-model contracts that other surfaces can adopt later.
+16. It does not emit audit evolution views into runtime stores, admit learning, or update memory.
+17. It does not mark any loop closed.
+18. It only exposes typed read-model contracts that other surfaces can adopt later.
 
 ## Read-Only Exposure
 
@@ -633,6 +680,7 @@ script:
 | `loops[].closure_evidence_pack` | Read-only aggregate of evidence, authority, blockers, closure conditions, lineage refs, rollback, validators, and proof surfaces. |
 | `loops[].operator_closure_readiness_view` | Read-only operator view of current blockers and next proof action. |
 | `loops[].proof_obligation_view` | Read-only proof obligation view over required evidence, authority, closure conditions, validators, proof surfaces, and blockers. |
+| `loops[].audit_evolution_view` | Read-only audit evolution view over receipt refs, lineage refs, blockers, learning candidates, learning binding refs, and proof surfaces. |
 | `blocked_count` | Count of returned summaries carrying blockers. |
 | `verified_count` | Count of returned summaries marked verified. |
 | `read_only` | Always `true`. |

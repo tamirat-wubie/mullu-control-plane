@@ -9697,7 +9697,7 @@
         "tests/test_validate_holistic_loop_read_model.py",
         "tests/test_validate_holistic_loop_http_surface.py"
       ],
-      "notes": "Holistic loop engineering exposes existing governed loops through one read-only loop contract, registry, schema-backed summary, status catalog, transition catalog, mode catalog, closure condition catalog, authority catalog, risk catalog, rollback catalog, learning catalog, bounded receipt trail, receipt lineage catalog, closure evidence pack, operator closure readiness view, proof obligation view, and HTTP read model. Missing authority or evidence remains an explicit blocker and no mutation route is introduced.",
+      "notes": "Holistic loop engineering exposes existing governed loops through one read-only loop contract, registry, schema-backed summary, status catalog, transition catalog, mode catalog, closure condition catalog, authority catalog, risk catalog, rollback catalog, learning catalog, bounded receipt trail, receipt lineage catalog, closure evidence pack, operator closure readiness view, proof obligation view, audit evolution view, and HTTP read model. Missing authority or evidence remains an explicit blocker and no mutation route is introduced.",
       "representative_paths": [
         "/api/v1/loops/read-model",
         "LoopRegistry",
@@ -9710,6 +9710,7 @@
         "LoopClosureEvidencePack",
         "LoopOperatorClosureReadinessView",
         "LoopProofObligationView",
+        "LoopAuditEvolutionView",
         "LoopAuthorityBinding",
         "LoopRiskBinding",
         "LoopRollbackBinding",
@@ -9721,6 +9722,9 @@
       "runtime_witness_anchor_aliases": {
         "closure_report_blocks_incomplete_evidence": [
           "loop_receipt_and_closure_report_contracts_are_explicit"
+        ],
+        "loop_audit_evolution_view_groups_receipts_blockers_and_learning_refs": [
+          "loop_audit_evolution_view_groups_receipts_blockers_and_learning_refs"
         ],
         "loop_authority_bindings_cover_required_authority": [
           "loop_authority_bindings_cover_required_authority_without_execution"
@@ -9795,6 +9799,7 @@
         "loop_closure_evidence_pack_aggregates_closure_inputs",
         "loop_operator_closure_readiness_view_summarizes_next_action",
         "loop_proof_obligation_view_groups_required_proof_inputs",
+        "loop_audit_evolution_view_groups_receipts_blockers_and_learning_refs",
         "loop_authority_bindings_cover_required_authority",
         "loop_risk_bindings_cover_risk_class",
         "loop_rollback_bindings_cover_recovery_policy",
@@ -9810,8 +9815,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1247,
-    "runtime_witness_count": 1247,
+    "exact_test_anchor_count": 1249,
+    "runtime_witness_count": 1249,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -18598,6 +18603,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_holistic_loop_kernel.py::test_loop_audit_evolution_view_groups_receipts_blockers_and_learning_refs"
+            ],
+            "witness": "loop_audit_evolution_view_groups_receipts_blockers_and_learning_refs"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_holistic_loop_kernel.py::test_loop_authority_bindings_cover_required_authority_without_execution"
             ],
             "witness": "loop_authority_bindings_cover_required_authority"
@@ -18657,8 +18668,8 @@
             "witness": "loop_http_surface_validator_rejects_mutation_routes"
           }
         ],
-        "exact_test_anchor_count": 21,
-        "runtime_witness_count": 21,
+        "exact_test_anchor_count": 22,
+        "runtime_witness_count": 22,
         "surface_id": "holistic_loop_read_model_kernel",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

@@ -5,7 +5,8 @@ Governance scope: loop contract, registry, read model, HTTP projection,
 validators, schema manifest, evidence blockers, status catalog, transition
 catalog, mode catalog, risk catalog, closure condition catalog, rollback
 boundary, learning catalog, receipt lineage catalog, closure evidence pack, and
-operator closure readiness view, and proof obligation view.
+operator closure readiness view, proof obligation view, and audit evolution
+view.
 Dependencies: `docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md`, holistic loop source
 files, read-model schema, report and validation scripts, focused tests, SDLC
 validators, release validators, and workspace governance preflight.
@@ -83,6 +84,10 @@ staged into the holistic loop PR.
    evidence, missing evidence, authority refs, closure conditions, validators,
    proof surfaces, and blockers without executing validators or claiming
    terminal closure.
+10. Added audit evolution views that group synthetic receipt hashes, receipt
+    lineage refs, audit blockers, closure learning candidates, learning binding
+    refs, and proof surfaces without emitting receipts, admitting learning, or
+    claiming terminal closure.
 
 ## Evidence Catalog Follow-Up
 
@@ -323,6 +328,33 @@ The pack does not replace `closure_report`, emit a receipt, grant authority,
 clear blockers, execute rollback, or claim terminal closure. It gives
 validators and operator views one bounded closure-input packet while preserving
 the non-invasive read-model boundary.
+
+## Audit Evolution View Follow-Up
+
+The read model now exposes `audit_evolution_view` on every loop summary. The
+view ties audit blockers, receipt outputs, receipt lineage, learning
+candidates, learning binding refs, and proof surfaces into one read-only
+projection:
+
+```text
+receipt_refs == step_receipts[*].output_hash
+receipt_lineage_refs == receipt_lineage_bindings[*].lineage_ref
+audit_blocker_refs == open_blockers
+learning_policy_ref == learning_policy
+learning_candidate_refs == closure_report.learning_candidates
+learning_evidence_input_refs == learning_binding.evidence_input_refs
+learning_admission_refs == learning_binding.admission_refs
+learning_retention_refs == learning_binding.retention_refs
+proof_surface_refs == closure_evidence_pack.proof_surface_refs union learning_binding.proof_surface_refs
+read_only == true
+emits_receipt == false
+admits_learning == false
+terminal_closure == false
+```
+
+The view does not emit runtime receipts, admit learning, write memory, mutate
+tests, update gates, or close a loop. It makes audit-to-learning evidence
+inspectable while preserving the non-invasive read-model boundary.
 
 ## Fracture Deltas
 

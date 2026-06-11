@@ -43,6 +43,7 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
     assert all(loop["closure_evidence_pack"] for loop in loops)
     assert all(loop["operator_closure_readiness_view"] for loop in loops)
     assert all(loop["proof_obligation_view"] for loop in loops)
+    assert all(loop["audit_evolution_view"] for loop in loops)
     assert all(loop["rollback_binding"] for loop in loops)
     assert all(loop["learning_binding"] for loop in loops)
     assert all(loop["step_receipts"] for loop in loops)
@@ -256,6 +257,35 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
         and loop["proof_obligation_view"]["terminal_closure"] is False
         for loop in loops
     )
+    assert all(
+        set(loop["audit_evolution_view"]["receipt_refs"])
+        == {receipt["output_hash"] for receipt in loop["step_receipts"]}
+        and set(loop["audit_evolution_view"]["receipt_lineage_refs"])
+        == {binding["lineage_ref"] for binding in loop["receipt_lineage_bindings"]}
+        and set(loop["audit_evolution_view"]["audit_blocker_refs"])
+        == set(loop["open_blockers"])
+        and loop["audit_evolution_view"]["learning_policy_ref"]
+        == loop["learning_policy"]
+        and set(loop["audit_evolution_view"]["learning_candidate_refs"])
+        == set(loop["closure_report"]["learning_candidates"])
+        and loop["learning_policy"] in loop["audit_evolution_view"]["learning_candidate_refs"]
+        and set(loop["audit_evolution_view"]["learning_evidence_input_refs"])
+        == set(loop["learning_binding"]["evidence_input_refs"])
+        and set(loop["audit_evolution_view"]["learning_admission_refs"])
+        == set(loop["learning_binding"]["admission_refs"])
+        and set(loop["audit_evolution_view"]["learning_retention_refs"])
+        == set(loop["learning_binding"]["retention_refs"])
+        and set(loop["audit_evolution_view"]["proof_surface_refs"])
+        == set(loop["closure_evidence_pack"]["proof_surface_refs"])
+        | set(loop["learning_binding"]["proof_surface_refs"])
+        and loop["audit_evolution_view"]["audit_state"]
+        == "audit_blocked_by_unresolved_gaps"
+        and loop["audit_evolution_view"]["read_only"] is True
+        and loop["audit_evolution_view"]["emits_receipt"] is False
+        and loop["audit_evolution_view"]["admits_learning"] is False
+        and loop["audit_evolution_view"]["terminal_closure"] is False
+        for loop in loops
+    )
     assert all(loop["closure_report"]["closed"] is False for loop in loops)
     assert all(loop["closure_report"]["evidence_complete"] is False for loop in loops)
     assert all(
@@ -297,6 +327,7 @@ def test_report_accepts_complete_observed_authority_and_evidence_refs() -> None:
     assert all(loop["closure_evidence_pack"] for loop in report["loops"])
     assert all(loop["operator_closure_readiness_view"] for loop in report["loops"])
     assert all(loop["proof_obligation_view"] for loop in report["loops"])
+    assert all(loop["audit_evolution_view"] for loop in report["loops"])
     assert all(loop["rollback_binding"] for loop in report["loops"])
     assert all(loop["learning_binding"] for loop in report["loops"])
     assert all(loop["step_receipts"] for loop in report["loops"])
@@ -330,6 +361,17 @@ def test_report_accepts_complete_observed_authority_and_evidence_refs() -> None:
         and loop["proof_obligation_view"]["read_only"] is True
         and loop["proof_obligation_view"]["executes_validator"] is False
         and loop["proof_obligation_view"]["terminal_closure"] is False
+        for loop in report["loops"]
+    )
+    assert all(
+        loop["audit_evolution_view"]["audit_state"]
+        == "audit_ready_for_terminal_review"
+        and loop["audit_evolution_view"]["audit_blocker_refs"] == []
+        and loop["audit_evolution_view"]["learning_candidate_refs"] == []
+        and loop["audit_evolution_view"]["read_only"] is True
+        and loop["audit_evolution_view"]["emits_receipt"] is False
+        and loop["audit_evolution_view"]["admits_learning"] is False
+        and loop["audit_evolution_view"]["terminal_closure"] is False
         for loop in report["loops"]
     )
     assert all(loop["closure_report"]["evidence_complete"] is True for loop in report["loops"])

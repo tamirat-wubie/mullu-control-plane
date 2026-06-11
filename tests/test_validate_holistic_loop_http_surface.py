@@ -587,6 +587,58 @@ def test_payload_validation_rejects_proof_obligation_view_execution_or_closure_c
     assert any("proof_obligation_view terminal_closure must be false" in error for error in errors)
 
 
+def test_payload_validation_requires_audit_evolution_view_to_match_loop_inputs() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    view = invalid_payload["loops"][0]["audit_evolution_view"]
+    view["receipt_refs"] = ["different_receipt"]
+    view["receipt_lineage_refs"] = ["different_lineage"]
+    view["audit_blocker_refs"] = ["different_gap"]
+    view["learning_policy_ref"] = "different_learning_policy"
+    view["learning_candidate_refs"] = ["different_candidate"]
+    view["learning_evidence_input_refs"] = ["different_evidence_input"]
+    view["learning_admission_refs"] = ["different_admission"]
+    view["learning_retention_refs"] = ["different_retention"]
+    view["proof_surface_refs"] = ["different_surface"]
+    view["audit_state"] = "audit_ready_for_terminal_review"
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("receipt_refs must match step_receipts" in error for error in errors)
+    assert any("receipt_lineage_refs must match lineage bindings" in error for error in errors)
+    assert any("audit_blocker_refs must match open_blockers" in error for error in errors)
+    assert any("learning_policy_ref must match learning_policy" in error for error in errors)
+    assert any("learning_candidate_refs must match closure_report" in error for error in errors)
+    assert any("learning_evidence_input_refs must match learning_binding" in error for error in errors)
+    assert any("learning_admission_refs must match learning_binding" in error for error in errors)
+    assert any("learning_retention_refs must match learning_binding" in error for error in errors)
+    assert any("proof_surface_refs must match closure and learning surfaces" in error for error in errors)
+    assert any("audit_state must match blockers" in error for error in errors)
+
+
+def test_payload_validation_rejects_audit_evolution_view_effect_or_closure_claim() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    view = invalid_payload["loops"][0]["audit_evolution_view"]
+    view["read_only"] = False
+    view["emits_receipt"] = True
+    view["admits_learning"] = True
+    view["terminal_closure"] = True
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("audit_evolution_view read_only must be true" in error for error in errors)
+    assert any("audit_evolution_view emits_receipt must be false" in error for error in errors)
+    assert any("audit_evolution_view admits_learning must be false" in error for error in errors)
+    assert any("audit_evolution_view terminal_closure must be false" in error for error in errors)
+
+
 def test_payload_validation_rejects_mode_binding_transition_or_terminal_closure_claim() -> None:
     app = FastAPI()
     app.include_router(router)
