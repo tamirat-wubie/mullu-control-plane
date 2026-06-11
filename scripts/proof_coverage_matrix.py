@@ -6589,12 +6589,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/core/holistic_loop_registry.py",
                 "mcoi/mcoi_runtime/app/routers/loops.py",
                 "schemas/holistic_loop_read_model.schema.json",
+                "tests/fixtures/holistic_loop_read_model_v1_golden.json",
                 "scripts/report_holistic_loop_read_model.py",
+                "scripts/validate_holistic_loop_kernel_freeze.py",
                 "scripts/validate_holistic_loop_read_model.py",
                 "scripts/validate_holistic_loop_http_surface.py",
                 "mcoi/tests/test_holistic_loop_kernel.py",
                 "mcoi/tests/test_holistic_loop_router.py",
                 "tests/test_report_holistic_loop_read_model.py",
+                "tests/test_validate_holistic_loop_kernel_freeze.py",
                 "tests/test_validate_holistic_loop_read_model.py",
                 "tests/test_validate_holistic_loop_http_surface.py",
             ],
@@ -6607,8 +6610,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "lineage catalog, closure evidence pack, operator closure "
                 "readiness view, proof obligation view, audit evolution "
                 "view, recovery readiness view, and HTTP "
-                "read model. Missing authority or evidence remains an explicit "
-                "blocker and no mutation route is introduced."
+                "read model. The v1 freeze validator pins a golden snapshot, "
+                "schema/report/HTTP parity, additive-only extension policy, "
+                "and zero-unanchored proof-label guard. Missing authority or "
+                "evidence remains an explicit blocker and no mutation route is "
+                "introduced."
             ),
             [
                 "registered_loops_expose_governed_manifest_fields",
@@ -6634,6 +6640,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "loop_closure_report_blocks_terminal_closure",
                 "loop_read_model_endpoint_is_read_only",
                 "loop_http_surface_validator_rejects_mutation_routes",
+                "loop_kernel_v1_golden_snapshot_matches_current_report",
+                "loop_kernel_v1_report_schema_http_parity_holds",
+                "loop_kernel_v1_extension_policy_is_documented",
+                "holistic_loop_witness_integrity_has_zero_unanchored_labels",
             ],
             runtime_witness_anchor_aliases={
                 "registered_loops_expose_governed_manifest_fields": [
@@ -6704,6 +6714,18 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "loop_http_surface_validator_rejects_mutation_routes": [
                     "route_method_validation_rejects_mutation_route"
+                ],
+                "loop_kernel_v1_golden_snapshot_matches_current_report": [
+                    "holistic_loop_kernel_freeze_contract_passes"
+                ],
+                "loop_kernel_v1_report_schema_http_parity_holds": [
+                    "http_payload_normalizes_to_report_contract"
+                ],
+                "loop_kernel_v1_extension_policy_is_documented": [
+                    "kernel_v1_policy_doc_contains_freeze_rules"
+                ],
+                "holistic_loop_witness_integrity_has_zero_unanchored_labels": [
+                    "holistic_loop_witness_integrity_has_zero_unanchored_labels"
                 ],
             },
         ),
