@@ -413,6 +413,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "spatial-map",
+      "path": "schemas/spatial_map.schema.json",
+      "urn": "urn:mullusi:schema:spatial-map:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "gateway-dns-resolution-receipt",
       "path": "schemas/gateway_dns_resolution_receipt.schema.json",
       "urn": "urn:mullusi:schema:gateway-dns-resolution-receipt:1",
