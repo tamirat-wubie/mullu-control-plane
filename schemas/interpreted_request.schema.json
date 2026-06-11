@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:interpreted-request:1",
+  "title": "Interpreted Request",
+  "description": "Tenant-bound request interpretation produced before planning, approval, search, or execution.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "channel",
+    "conversation_id",
+    "raw_message_hash",
+    "intent_class",
+    "capability_id",
+    "extracted_slots",
+    "missing_slots",
+    "constraints",
+    "search_needed",
+    "action_needed",
+    "risk_estimate",
+    "approval_required",
+    "confidence",
+    "interpreter_kind",
+    "rejected_interpretations",
+    "created_at"
+  ],
+  "properties": {
+    "request_id": {"type": "string", "pattern": "^interpreted-request-[a-f0-9]{16}$"},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "channel": {"type": "string", "minLength": 1},
+    "conversation_id": {"type": "string"},
+    "raw_message_hash": {"type": "string", "minLength": 1},
+    "intent_class": {
+      "type": "string",
+      "enum": [
+        "question",
+        "action_request",
+        "explicit_command",
+        "approval_response",
+        "correction",
+        "follow_up",
+        "support_issue",
+        "document_instruction",
+        "connector_request",
+        "blocked_request",
+        "unclear_message"
+      ]
+    },
+    "capability_id": {"type": "string"},
+    "extracted_slots": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "missing_slots": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "constraints": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "search_needed": {"type": "boolean"},
+    "action_needed": {"type": "boolean"},
+    "risk_estimate": {"type": "string", "enum": ["low", "medium", "high"]},
+    "approval_required": {"type": "boolean"},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "interpreter_kind": {"type": "string", "minLength": 1},
+    "rejected_interpretations": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "created_at": {"type": "string", "minLength": 1}
+  }
+}

@@ -145,7 +145,7 @@ No external channel approval without request binding and identity check.
 | Channel Adapter protocol | implemented / partial | `gateway/router.py` | Harden one real production channel at a time. |
 | Tenant identity resolver | implemented / partial | `gateway/router.py`, `gateway/tenant_identity.py` | Add channel trust and approval-strength rules. |
 | Message deduplication | implemented / partial | `gateway/router.py`, `gateway/dedup.py` | Include cross-channel replay and webhook duplicate cases in map tests. |
-| Capability intent resolver | implemented / basic | `gateway/intent_resolver.py` | Add durable `InterpretedRequest` and interpretation receipt. |
+| Capability intent resolver | implemented / partial | `gateway/intent_resolver.py`, `gateway/interpretation.py` | Add schema and UI readback for `InterpretedRequest` and interpretation receipts. |
 | Ask / Goal Box UI | missing / unknown | no dedicated map evidence | Build web-only governed goal intake before external channel expansion. |
 | Clarification engine | missing / partial | no dedicated map evidence | Add missing-slot detection and focused clarification questions. |
 | Command ledger | implemented / partial | `gateway/command_spine.py` | Bind all user-visible task states to ledger states. |

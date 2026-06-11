@@ -86,6 +86,8 @@ def test_protocol_manifest_is_valid() -> None:
     world_state_entry = entries["world-state"]
     reflex_entry = entries["reflex-deployment-witness-envelope"]
     receipt_entry = entries["reflex-deployment-witness-validator-receipt"]
+    interpreted_request_entry = entries["interpreted-request"]
+    interpretation_receipt_entry = entries["interpretation-receipt"]
     errors = validate_protocol_manifest(manifest)
 
     assert errors == []
@@ -94,6 +96,12 @@ def test_protocol_manifest_is_valid() -> None:
     assert manifest["protocol_uri_scheme"] == "mgp://"
     assert len(entries) == len(manifest["schemas"])
     assert len(manifest["schemas"]) == len(tuple(SCHEMA_DIR.glob("*.schema.json")))
+    assert interpreted_request_entry["path"] == "schemas/interpreted_request.schema.json"
+    assert interpreted_request_entry["urn"] == "urn:mullusi:schema:interpreted-request:1"
+    assert interpreted_request_entry["surface"] == "interpretation"
+    assert interpretation_receipt_entry["path"] == "schemas/interpretation_receipt.schema.json"
+    assert interpretation_receipt_entry["urn"] == "urn:mullusi:schema:interpretation-receipt:1"
+    assert interpretation_receipt_entry["surface"] == "evidence"
     assert agent_identity_entry["path"] == "schemas/agent_identity.schema.json"
     assert agent_identity_entry["urn"] == "urn:mullusi:schema:agent-identity:1"
     assert agent_identity_entry["surface"] == "identity"

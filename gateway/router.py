@@ -32,6 +32,7 @@ from gateway.memory_constitution import (
     governed_memory_cell_from_mapping,
 )
 from gateway.capability_dispatch import CapabilityDispatcher, CapabilityIntent
+from gateway.interpretation import interpret_gateway_message
 from gateway.intent_resolver import CapabilityIntentResolver
 from gateway.mcp_capability_fabric import MCPAuthorityRecords, install_mcp_authority_records
 from gateway.observability import GatewayObservabilityRecorder
@@ -255,7 +256,14 @@ class GatewayRouter:
             return "llm_completion"
         return intent.capability_id
 
-    def _command_payload(self, message: GatewayMessage, intent: CapabilityIntent | None) -> dict[str, Any]:
+    def _command_payload(
+        self,
+        message: GatewayMessage,
+        intent: CapabilityIntent | None,
+        *,
+        interpreted_request: dict[str, Any],
+        interpretation_receipt: dict[str, Any],
+    ) -> dict[str, Any]:
         """Build the canonical payload preserved across approval wait/resume."""
         payload: dict[str, Any] = {
             "message_id": message.message_id,
@@ -265,6 +273,9 @@ class GatewayRouter:
             "conversation_id": message.conversation_id,
             "attachments": list(message.attachments),
             "metadata": dict(message.metadata),
+            "interpreted_request": dict(interpreted_request),
+            "interpretation_receipt": dict(interpretation_receipt),
+            "interpretation_receipt_id": str(interpretation_receipt.get("receipt_id", "")),
         }
         if intent is not None:
             payload["capability_intent"] = {
@@ -294,6 +305,13 @@ class GatewayRouter:
         intent: CapabilityIntent | None,
     ) -> CommandEnvelope:
         """Create and tenant-bind the command for a non-approval message."""
+        interpreted_request, interpretation_receipt = interpret_gateway_message(
+            message=message,
+            tenant_id=mapping.tenant_id,
+            actor_id=mapping.identity_id,
+            intent=intent,
+            created_at=self._clock(),
+        )
         idempotency_key = canonical_hash({
             "channel": message.channel,
             "sender_id": message.sender_id,
@@ -306,7 +324,12 @@ class GatewayRouter:
             conversation_id=message.conversation_id,
             idempotency_key=idempotency_key,
             intent=self._intent_name(intent),
-            payload=self._command_payload(message, intent),
+            payload=self._command_payload(
+                message,
+                intent,
+                interpreted_request=interpreted_request.to_dict(),
+                interpretation_receipt=interpretation_receipt.to_dict(),
+            ),
         )
         self._commands.transition(command.command_id, CommandState.NORMALIZED)
         tenant_bound = self._commands.transition(command.command_id, CommandState.TENANT_BOUND)
@@ -316,6 +339,23 @@ class GatewayRouter:
         if governed is None:
             raise RuntimeError("governed action binding lost command")
         return governed
+
+    def _interpretation_metadata(self, command: CommandEnvelope) -> dict[str, Any]:
+        """Return bounded interpretation evidence stored on a command payload."""
+        receipt = command.redacted_payload.get("interpretation_receipt")
+        interpreted = command.redacted_payload.get("interpreted_request")
+        metadata: dict[str, Any] = {}
+        if isinstance(receipt, dict):
+            metadata["interpretation_receipt"] = dict(receipt)
+            metadata["interpretation_receipt_id"] = str(
+                receipt.get("receipt_id")
+                or command.redacted_payload.get("interpretation_receipt_id")
+                or ""
+            )
+        if isinstance(interpreted, dict):
+            metadata["interpreted_request"] = dict(interpreted)
+            metadata["interpreted_request_id"] = str(interpreted.get("request_id") or "")
+        return metadata
 
     def _capability_intent_from_command(self, command: CommandEnvelope) -> CapabilityIntent | None:
         """Rebuild the stored capability intent without reclassifying message text."""
@@ -488,6 +528,7 @@ class GatewayRouter:
             governed=True,
             metadata={
                 **closure.metadata,
+                **self._interpretation_metadata(command),
                 "closure_response_kind": closure.response_kind.value,
                 "closure_disposition": closure.disposition.value if closure.disposition else None,
                 "response_allowed": closure.response_allowed,
@@ -1085,6 +1126,7 @@ class GatewayRouter:
                      f"Request ID: {approval.request_id}",
                 governed=True,
                 metadata={
+                    **self._interpretation_metadata(command),
                     "approval_required": True,
                     "request_id": approval.request_id,
                     "command_id": command.command_id,

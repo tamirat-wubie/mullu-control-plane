@@ -161,6 +161,18 @@
       "surface": "communication"
     },
     {
+      "schema_id": "interpreted-request",
+      "path": "schemas/interpreted_request.schema.json",
+      "urn": "urn:mullusi:schema:interpreted-request:1",
+      "surface": "interpretation"
+    },
+    {
+      "schema_id": "interpretation-receipt",
+      "path": "schemas/interpretation_receipt.schema.json",
+      "urn": "urn:mullusi:schema:interpretation-receipt:1",
+      "surface": "evidence"
+    },
+    {
       "schema_id": "connector-descriptor",
       "path": "schemas/connector_descriptor.schema.json",
       "urn": "urn:mullusi:schema:connector-descriptor:1",
