@@ -76,7 +76,7 @@ jobs:
         timeout-minutes: 10
         run: |
           python -m pip install --disable-pip-version-check --upgrade pip --timeout 60 --retries 2
-          python -m pip install --disable-pip-version-check --timeout 60 --retries 2 -e "mcoi[dev,browser-worker]" openai
+          python -m pip install --disable-pip-version-check --timeout 60 --retries 2 -e "mcoi[dev,browser-worker,document-worker]" openai
 
       - name: Install browser runtime
         if: ${{ inputs.target == 'all' || inputs.target == 'browser' }}
