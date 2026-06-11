@@ -22,6 +22,7 @@ from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.governance.network.webhook import WebhookSubscription
 
 router = APIRouter()
+_MAX_AGENT_HISTORY_READ_LIMIT = 500
 
 
 def _agent_error_detail(error: str, error_code: str) -> dict[str, object]:
@@ -33,6 +34,30 @@ def _raise_agent_validation_error(error: ValueError) -> NoReturn:
         status_code=422,
         detail=_agent_error_detail("invalid tracing request", "tracing_invalid_request"),
     ) from error
+
+
+def _raise_agent_history_validation_error(error: ValueError) -> NoReturn:
+    raise HTTPException(
+        status_code=422,
+        detail=_agent_error_detail("invalid agent history request", "agent_history_invalid_request"),
+    ) from error
+
+
+def _coerce_agent_history_limit(limit: object) -> int:
+    if isinstance(limit, bool):
+        raise ValueError("limit must be an integer")
+    if isinstance(limit, int):
+        value = limit
+    elif isinstance(limit, str):
+        normalized = limit.strip()
+        if not normalized.isdecimal():
+            raise ValueError("limit must be an integer")
+        value = int(normalized)
+    else:
+        raise ValueError("limit must be an integer")
+    if value < 0 or value > _MAX_AGENT_HISTORY_READ_LIMIT:
+        raise ValueError("limit is outside the allowed range")
+    return value
 
 
 # ── Pydantic request models ──────────────────────────────────────────────
@@ -163,8 +188,12 @@ def list_webhooks(request: Request, tenant_id: str | None = None):
 
 
 @router.get("/api/v1/webhooks/deliveries")
-def webhook_deliveries(limit: int = 50):
+def webhook_deliveries(limit: str = "50"):
     """Recent webhook delivery history."""
+    try:
+        read_limit = _coerce_agent_history_limit(limit)
+    except ValueError as error:
+        _raise_agent_history_validation_error(error)
     return {
         "deliveries": [
             {
@@ -174,11 +203,11 @@ def webhook_deliveries(limit: int = 50):
                 "status": d.status,
                 "at": d.created_at,
             }
-            for d in deps.webhook_manager.delivery_history(limit=limit)
+            for d in deps.webhook_manager.delivery_history(limit=read_limit)
         ],
         "mutation_receipts": [
             receipt.to_dict()
-            for receipt in deps.webhook_manager.mutation_receipts(limit=limit)
+            for receipt in deps.webhook_manager.mutation_receipts(limit=read_limit)
             if receipt.effect_name == "webhook_delivery_queued"
         ],
     }
@@ -206,9 +235,13 @@ def get_dead_letters():
 
 
 @router.get("/api/v1/replay/traces")
-def list_traces(limit: int = 50):
+def list_traces(limit: str = "50"):
     """Execution replay traces."""
-    traces = deps.replay_recorder.list_traces(limit=limit)
+    try:
+        read_limit = _coerce_agent_history_limit(limit)
+    except ValueError as error:
+        _raise_agent_history_validation_error(error)
+    traces = deps.replay_recorder.list_traces(limit=read_limit)
     return {
         "traces": [
             {"id": t.trace_id, "frames": len(t.frames), "hash": t.trace_hash[:16], "at": t.recorded_at}
@@ -254,11 +287,15 @@ def execute_chain(req: ChainRequest, request: Request):
 
 
 @router.get("/api/v1/chain/history")
-def chain_history(limit: int = 50):
+def chain_history(limit: str = "50"):
     """Agent chain execution history."""
+    try:
+        read_limit = _coerce_agent_history_limit(limit)
+    except ValueError as error:
+        _raise_agent_history_validation_error(error)
     return {"chains": [
         {"id": c.chain_id, "succeeded": c.succeeded, "steps": len(c.steps), "cost": c.total_cost}
-        for c in deps.agent_chain.history(limit=limit)
+        for c in deps.agent_chain.history(limit=read_limit)
     ], "summary": deps.agent_chain.summary()}
 
 

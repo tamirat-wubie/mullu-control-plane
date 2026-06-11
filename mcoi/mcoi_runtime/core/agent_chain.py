@@ -161,6 +161,8 @@ class AgentChainEngine:
         return cr
 
     def history(self, limit: int = 50) -> list[AgentChainResult]:
+        if isinstance(limit, bool) or not isinstance(limit, int):
+            raise ValueError("agent chain history limit must be an integer")
         if limit <= 0:
             return []
         return self._history[-limit:]

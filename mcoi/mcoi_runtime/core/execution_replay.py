@@ -157,6 +157,8 @@ class ReplayRecorder:
         return None
 
     def list_traces(self, limit: int = 50) -> list[ReplayTrace]:
+        if isinstance(limit, bool) or not isinstance(limit, int):
+            raise ValueError("replay trace limit must be an integer")
         if limit <= 0:
             return []
         # deque doesn't support slice indexing; materialize then slice.

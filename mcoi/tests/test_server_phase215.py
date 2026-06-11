@@ -42,6 +42,27 @@ class TestChainEndpoints:
         resp = client.get("/api/v1/chain/history")
         assert resp.json()["summary"]["total"] >= 1
 
+    @pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+    def test_chain_history_invalid_limit_returns_bounded_422(self, client, limit):
+        resp = client.get("/api/v1/chain/history", params={"limit": limit})
+
+        assert resp.status_code == 422
+        detail = resp.json()["detail"]
+        assert detail["error"] == "invalid agent history request"
+        assert detail["error_code"] == "agent_history_invalid_request"
+        assert detail["governed"] is True
+
+    def test_chain_history_zero_limit_is_empty_read(self, client):
+        client.post("/api/v1/chain/execute", json={
+            "steps": [{"step_id": "s1", "name": "A", "prompt_template": "x"}],
+        })
+
+        resp = client.get("/api/v1/chain/history", params={"limit": "0"})
+
+        assert resp.status_code == 200
+        assert resp.json()["chains"] == []
+        assert resp.json()["summary"]["total"] >= 1
+
 
 class TestMonitoringEndpoint:
     def test_monitor(self, client):

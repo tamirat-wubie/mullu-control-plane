@@ -171,6 +171,21 @@ def test_chain_history_bounded() -> None:
     assert summary["failed"] == 0
 
 
+def test_chain_history_rejects_invalid_limit_contract() -> None:
+    engine = _engine()
+    engine.execute([ChainStep(step_id="s1", name="First", prompt_template="first")])
+
+    for limit in (True, "1", None):
+        try:
+            engine.history(limit=limit)  # type: ignore[arg-type]
+        except ValueError as error:
+            assert str(error) == "agent chain history limit must be an integer"
+        else:
+            raise AssertionError("invalid chain history limit was accepted")
+
+    assert engine.total_chains == 1
+
+
 def test_chain_endpoint_governed(test_client) -> None:
     response = test_client.post(
         "/api/v1/chain/execute",
@@ -196,3 +211,40 @@ def test_chain_endpoint_governed(test_client) -> None:
     assert history_response.status_code == 200
     assert len(history_body["chains"]) <= 1
     assert history_body["summary"]["total"] >= len(history_body["chains"])
+
+
+def test_chain_history_zero_limit_returns_empty_read(test_client) -> None:
+    test_client.post(
+        "/api/v1/chain/execute",
+        json={
+            "steps": [{"step_id": "s1", "name": "Anchor", "prompt_template": "anchor"}],
+            "tenant_id": "tenant-chain-zero-history",
+        },
+    )
+    response = test_client.get("/api/v1/chain/history?limit=0")
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["chains"] == []
+    assert body["summary"]["total"] >= 1
+
+
+def test_agent_history_routes_reject_invalid_limits(test_client) -> None:
+    for path in (
+        "/api/v1/chain/history?limit=-1",
+        "/api/v1/chain/history?limit=not-a-limit",
+        "/api/v1/chain/history?limit=501",
+        "/api/v1/replay/traces?limit=-1",
+        "/api/v1/replay/traces?limit=not-a-limit",
+        "/api/v1/replay/traces?limit=501",
+        "/api/v1/webhooks/deliveries?limit=-1",
+        "/api/v1/webhooks/deliveries?limit=not-a-limit",
+        "/api/v1/webhooks/deliveries?limit=501",
+    ):
+        response = test_client.get(path)
+        detail = response.json()["detail"]
+
+        assert response.status_code == 422
+        assert detail["error"] == "invalid agent history request"
+        assert detail["error_code"] == "agent_history_invalid_request"
+        assert detail["governed"] is True

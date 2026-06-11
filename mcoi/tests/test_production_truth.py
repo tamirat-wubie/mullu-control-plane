@@ -246,3 +246,44 @@ def test_tenant_isolation_audits_reject_invalid_count(client, count: str) -> Non
     assert detail["error"] == "invalid tenant isolation audit request"
     assert detail["error_code"] == "tenant_isolation_audit_invalid_request"
     assert detail["governed"] is True
+
+
+@pytest.mark.parametrize(
+    ("path", "collection_key"),
+    [
+        ("/api/v1/webhooks/deliveries?limit=0", "deliveries"),
+        ("/api/v1/replay/traces?limit=0", "traces"),
+        ("/api/v1/chain/history?limit=0", "chains"),
+    ],
+)
+def test_agent_history_zero_limit_returns_empty_read(client, path: str, collection_key: str) -> None:
+    resp = client.get(path)
+    data = resp.json()
+
+    assert resp.status_code == 200
+    assert data[collection_key] == []
+    assert len(data[collection_key]) == 0
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/api/v1/webhooks/deliveries?limit=-1",
+        "/api/v1/webhooks/deliveries?limit=not-a-limit",
+        "/api/v1/webhooks/deliveries?limit=501",
+        "/api/v1/replay/traces?limit=-1",
+        "/api/v1/replay/traces?limit=not-a-limit",
+        "/api/v1/replay/traces?limit=501",
+        "/api/v1/chain/history?limit=-1",
+        "/api/v1/chain/history?limit=not-a-limit",
+        "/api/v1/chain/history?limit=501",
+    ],
+)
+def test_agent_history_read_limits_reject_invalid_values(client, path: str) -> None:
+    resp = client.get(path)
+    detail = resp.json()["detail"]
+
+    assert resp.status_code == 422
+    assert detail["error"] == "invalid agent history request"
+    assert detail["error_code"] == "agent_history_invalid_request"
+    assert detail["governed"] is True
