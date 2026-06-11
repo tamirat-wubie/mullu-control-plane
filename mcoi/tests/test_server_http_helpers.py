@@ -49,6 +49,35 @@ def test_configure_cors_middleware_adds_preflight_headers() -> None:
     assert resp.headers["access-control-allow-origin"] == "http://localhost:3000"
 
 
+def test_configure_cors_middleware_exposes_boundary_witness_headers() -> None:
+    app = FastAPI()
+    app.add_middleware(server_http.RequestIdMiddleware)
+    server_http.configure_cors_middleware(
+        app=app,
+        env="local_dev",
+        cors_origins_raw=None,
+        resolve_cors_origins=server_policy._resolve_cors_origins,
+        validate_cors_origins_for_env=server_policy._validate_cors_origins_for_env,
+        warnings_module=__import__("warnings"),
+    )
+
+    @app.get("/probe")
+    def probe() -> dict[str, bool]:
+        return {"ok": True}
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.get("/probe", headers={"Origin": "http://localhost:3000"})
+    exposed_headers = {
+        header.strip().lower()
+        for header in resp.headers["access-control-expose-headers"].split(",")
+    }
+
+    assert resp.status_code == 200
+    assert resp.headers[server_http.REQUEST_ID_HEADER].startswith(server_http.REQUEST_ID_PREFIX)
+    assert resp.headers[server_http.GOVERNED_HEADER] == "true"
+    assert exposed_headers == {"x-request-id", "x-governed"}
+
+
 def test_configure_cors_middleware_fails_closed_for_empty_non_dev_origins() -> None:
     warnings_seen: list[tuple[str, int]] = []
     app = FastAPI()
@@ -163,6 +192,7 @@ def test_global_exception_response_preserves_request_id_witness() -> None:
 
     assert resp.status_code == 500
     assert resp.json() == {"error": "Internal server error", "governed": True}
+    assert resp.headers[server_http.GOVERNED_HEADER] == "true"
     assert response_request_id != "req-client-spoof"
     _assert_request_id_shape(response_request_id)
     assert metrics.calls == [("errors_total", 1)]

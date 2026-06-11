@@ -18,6 +18,8 @@ from starlette.responses import JSONResponse as StarletteJSONResponse
 from starlette.responses import Response as StarletteResponse
 
 _DEV_CORS_ENVS = frozenset({"local_dev", "test"})
+GOVERNED_HEADER = "X-Governed"
+GOVERNED_HEADER_VALUE = "true"
 REQUEST_ID_HEADER = "X-Request-Id"
 REQUEST_ID_PREFIX = "req-"
 
@@ -47,26 +49,28 @@ def _with_request_id_header(
     request_id = _request_id_from_state(request)
     if request_id:
         response.headers[REQUEST_ID_HEADER] = request_id
+    response.headers[GOVERNED_HEADER] = GOVERNED_HEADER_VALUE
     return response
 
 
 class RequestIdMiddleware(BaseHTTPMiddleware):
-    """Attach a server-owned request witness id to every HTTP response."""
+    """Attach server-owned HTTP boundary witness headers to every response."""
 
     async def dispatch(
         self,
         request: StarletteRequest,
         call_next: Any,
     ) -> StarletteResponse:
-        """Add the request id header while preserving downstream errors.
+        """Add request witness headers while preserving downstream errors.
 
         Input contract: Starlette request. Output contract: response with
-        request id header. Error contract: downstream exceptions propagate.
+        request witness headers. Error contract: downstream exceptions propagate.
         """
         request_id = f"{REQUEST_ID_PREFIX}{uuid4().hex}"
         request.state.request_id = request_id
         response = await call_next(request)
         response.headers[REQUEST_ID_HEADER] = request_id
+        response.headers[GOVERNED_HEADER] = GOVERNED_HEADER_VALUE
         return response
 
 
@@ -90,7 +94,7 @@ def configure_cors_middleware(
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        expose_headers=[REQUEST_ID_HEADER, "X-Governed"],
+        expose_headers=[REQUEST_ID_HEADER, GOVERNED_HEADER],
     )
 
 
