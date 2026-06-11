@@ -7,6 +7,7 @@ Invariants: CORS policy remains fail-closed outside dev, internal exception deta
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any, Callable
 from uuid import uuid4
 
@@ -44,12 +45,17 @@ def _request_id_from_state(request: StarletteRequest) -> str:
 def _with_request_id_header(
     response: StarletteJSONResponse,
     request: StarletteRequest,
+    *,
+    security_headers: Mapping[str, str] | None = None,
 ) -> StarletteJSONResponse:
     """Attach the request witness id to bounded exception responses when present."""
     request_id = _request_id_from_state(request)
     if request_id:
         response.headers[REQUEST_ID_HEADER] = request_id
     response.headers[GOVERNED_HEADER] = GOVERNED_HEADER_VALUE
+    if security_headers:
+        for name, value in security_headers.items():
+            response.headers[name] = value
     return response
 
 
@@ -104,6 +110,7 @@ def install_global_exception_handler(
     metrics: Any,
     platform_logger: Any,
     log_levels: Any,
+    security_headers: Mapping[str, str] | None = None,
 ) -> None:
     """Register the bounded global exception handlers.
 
@@ -124,6 +131,7 @@ def install_global_exception_handler(
     from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
     from mcoi_runtime.core.request_tenant_guard import CrossTenantRecordError
     from mcoi_runtime.substrate.registry_store import TenantQuotaExceeded
+    exception_security_headers = dict(security_headers or {})
 
     async def tenant_quota_exceeded_handler(
         request: StarletteRequest,
@@ -143,6 +151,7 @@ def install_global_exception_handler(
                 },
             ),
             request,
+            security_headers=exception_security_headers,
         )
 
     async def cross_tenant_record_handler(
@@ -166,6 +175,7 @@ def install_global_exception_handler(
                 },
             ),
             request,
+            security_headers=exception_security_headers,
         )
 
     async def invariant_violation_handler(
@@ -187,6 +197,7 @@ def install_global_exception_handler(
                 },
             ),
             request,
+            security_headers=exception_security_headers,
         )
 
     async def recursion_limit_handler(
@@ -207,6 +218,7 @@ def install_global_exception_handler(
                 },
             ),
             request,
+            security_headers=exception_security_headers,
         )
 
     async def global_exception_handler(
@@ -233,6 +245,7 @@ def install_global_exception_handler(
                 },
             ),
             request,
+            security_headers=exception_security_headers,
         )
 
     app.add_exception_handler(CrossTenantRecordError, cross_tenant_record_handler)
