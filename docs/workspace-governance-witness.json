@@ -1,5 +1,5 @@
 {
-  "artifact_count": 336,
+  "artifact_count": 339,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -100,6 +100,21 @@
       "name": "agents_policy_validator",
       "path": "scripts/validate_agents_governance.py",
       "purpose": "Read-only validator for the AGENTS.md governance policy surface."
+    },
+    {
+      "name": "trusted_local_control_studio_doc",
+      "path": "docs/TRUSTED_LOCAL_CONTROL_STUDIO.md",
+      "purpose": "Operator-facing policy for trusted local control studio authorization."
+    },
+    {
+      "name": "trusted_local_control_studio_validator",
+      "path": "scripts/validate_trusted_local_control_studio.py",
+      "purpose": "Read-only validator for trusted local control studio authorization and hard boundaries."
+    },
+    {
+      "name": "trusted_local_control_studio_tests",
+      "path": "tests/test_validate_trusted_local_control_studio.py",
+      "purpose": "Tests for trusted local control studio policy validation."
     },
     {
       "name": "protocol_manifest_validator",

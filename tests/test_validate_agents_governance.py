@@ -24,8 +24,10 @@ def test_current_agents_policy_passes() -> None:
     assert findings == []
     assert "## Mfidel Enforcement" in policy_text
     assert "## Universal Action Orchestration" in policy_text
+    assert "## Trusted Local Control Studio Authorization" in policy_text
     assert "## Phi GPS v3 Platform Overlay" in policy_text
     assert "effect-bearing adapter authority as `AwaitingEvidence`" in policy_text
+    assert "must not exfiltrate them" in policy_text
     assert "symbolic intelligence" in policy_text
 
 

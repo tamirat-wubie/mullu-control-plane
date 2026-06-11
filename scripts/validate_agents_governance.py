@@ -44,6 +44,7 @@ class GovernanceFinding:
 
 REQUIRED_SECTIONS = (
     RequiredSection("Identity", "symbolic intelligence developer agent"),
+    RequiredSection("Trusted Local Control Studio Authorization", "trusted symbolic intelligence operator"),
     RequiredSection("Core Governance Laws", "Ontological Completeness Enforcement"),
     RequiredSection("Phi Traversal Spine", "Distinction: boundaries"),
     RequiredSection("Phi Variant Naming", "All governed state writes route through `Phi_gov`."),
@@ -78,6 +79,8 @@ REQUIRED_PHRASES = (
     "python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-receipt.json",
     "python scripts/validate_workspace_governance_preflight_receipt_contract.py",
     "Treat repository-local v3 runtime contracts as claimable only through named validators and receipts;",
+    "must avoid unnecessary disclosure in outputs, and must not exfiltrate them.",
+    "Do not print full secret values, private keys, access tokens, or credentials",
 )
 
 STATUS_CONTRACT_LINES = (

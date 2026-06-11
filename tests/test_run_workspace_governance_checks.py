@@ -114,7 +114,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     def assert_ordered(before: str, after: str) -> None:
         assert names.index(before) < names.index(after)
 
-    assert names[:foundation_start] == ["local_assurance_plan", "agents_policy"]
+    assert names[:foundation_start] == ["local_assurance_plan", "agents_policy", "trusted_local_control_studio"]
     assert foundation_phase
     assert set(foundation_phase) == expected_foundation_names
     assert len(foundation_phase) == len(expected_foundation_names)
@@ -191,6 +191,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "--json",
     )
     assert args_by_name["agents_policy"][1:] == ("scripts/validate_agents_governance.py",)
+    assert args_by_name["trusted_local_control_studio"][1:] == (
+        "scripts/validate_trusted_local_control_studio.py",
+    )
     assert args_by_name["phi_gps_v3_platform_spec"][1:] == (
         "scripts/validate_phi_gps_v3_platform_spec.py",
     )
