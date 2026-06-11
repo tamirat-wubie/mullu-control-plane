@@ -25,6 +25,8 @@ def test_capability_adapter_live_evidence_workflow_targets_all_adapter_families(
     assert "          - document" in workflow
     assert "          - voice" in workflow
     assert "          - email-calendar" in workflow
+    assert 'browser_url:' in workflow
+    assert 'default: "https://api.mullusi.com/health"' in workflow
     assert "Produce browser sandbox evidence" in workflow
     assert "Produce browser live receipt" in workflow
     assert "Produce document live receipt" in workflow
@@ -41,7 +43,17 @@ def test_capability_adapter_live_evidence_workflow_validates_sandbox_chain() -> 
     assert "--capability-prefix browser." in workflow
     assert "--require-no-workspace-changes" in workflow
     assert "python scripts/validate_browser_sandbox_evidence.py" in workflow
+    assert '--browser-url "${{ inputs.browser_url }}"' in workflow
     assert '--browser-sandbox-evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE"' in workflow
+
+
+def test_capability_adapter_live_evidence_workflow_collects_remaining_receipts_after_failure() -> None:
+    workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
+
+    assert "if: ${{ always() && (inputs.target == 'all' || inputs.target == 'document') }}" in workflow
+    assert "if: ${{ always() && (inputs.target == 'all' || inputs.target == 'voice') }}" in workflow
+    assert "if: ${{ always() && (inputs.target == 'all' || inputs.target == 'email-calendar') }}" in workflow
+    assert "if: always()" in workflow
 
 
 def test_capability_adapter_live_evidence_workflow_uploads_json_receipts_only() -> None:
