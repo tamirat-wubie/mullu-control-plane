@@ -81,6 +81,35 @@ def test_shell_executor_argv_only() -> None:
     assert receipt["command_hash"]
 
 
+def test_shell_executor_redacts_secret_argv_in_receipts_and_effects() -> None:
+    captured: dict[str, object] = {}
+
+    def fake_runner(*args: object, **kwargs: object) -> subprocess.CompletedProcess[str]:
+        captured["argv"] = args[0]
+        captured["shell"] = kwargs["shell"]
+        return subprocess.CompletedProcess(args[0], 0, stdout="ok", stderr="")
+
+    executor = ShellExecutor(runner=fake_runner, clock=lambda: "2026-03-18T12:00:00+00:00")
+    result = executor.execute(
+        ExecutionRequest(
+            execution_id="execution-redacted-argv",
+            goal_id="goal-redacted-argv",
+            argv=("tool", "--token=raw-secret-token", "--password", "raw-password"),
+        )
+    )
+
+    effect_details = result.actual_effects[0].details
+    receipt = effect_details["receipt"]
+    serialized_result = str(result.to_json_dict())
+    assert result.status is ExecutionOutcome.SUCCEEDED
+    assert captured["argv"] == ["tool", "--token=raw-secret-token", "--password", "raw-password"]
+    assert captured["shell"] is False
+    assert receipt["argv_summary"] == ("tool", "[REDACTED_ARG]", "[REDACTED_ARG]")
+    assert effect_details["argv"] == ("tool", "[REDACTED_ARG]", "[REDACTED_ARG]", "[REDACTED_ARG]")
+    assert "raw-secret-token" not in serialized_result
+    assert "raw-password" not in serialized_result
+
+
 def test_shell_executor_default_environment_isolated(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("SECRET_TOKEN", "must-not-leak")
     monkeypatch.setenv("PYTHONPATH", "must-not-leak")
