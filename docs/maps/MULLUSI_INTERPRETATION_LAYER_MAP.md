@@ -73,6 +73,22 @@ InterpretationReceipt {
 }
 ```
 
+## 4a. ClarificationRequest contract
+
+```text
+ClarificationRequest {
+  clarification_id
+  request_id
+  raw_message_hash
+  missing_fields
+  reason
+  max_questions
+  safe_default
+  question
+  created_at
+}
+```
+
 Receipt rule:
 
 ```text
@@ -94,7 +110,7 @@ It does not store raw private content when a hash or redacted summary is enough.
 | support_issue | maybe | maybe | clarify, triage, or deny depending on authority |
 | document_instruction | maybe | maybe | document safety and prompt-injection boundary |
 | connector_request | maybe | maybe | connector authority and credential boundary |
-| unclear_message | no | no | clarification |
+| unclear_message | no | no | clarification request with safe default `no_execution` |
 | blocked_request | no | no | structured denial |
 
 ## 6. Clarification rule

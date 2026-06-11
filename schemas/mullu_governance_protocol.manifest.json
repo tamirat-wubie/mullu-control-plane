@@ -173,6 +173,12 @@
       "surface": "evidence"
     },
     {
+      "schema_id": "clarification-request",
+      "path": "schemas/clarification_request.schema.json",
+      "urn": "urn:mullusi:schema:clarification-request:1",
+      "surface": "interpretation"
+    },
+    {
       "schema_id": "connector-descriptor",
       "path": "schemas/connector_descriptor.schema.json",
       "urn": "urn:mullusi:schema:connector-descriptor:1",
