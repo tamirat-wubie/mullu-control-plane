@@ -10,6 +10,7 @@ Invariants:
   - Deterministic resolver output is the highest-authority interpreter used here.
   - LLM-assisted interpretation is represented only as a future proposal lane.
   - Every produced receipt is tenant-bound, actor-bound, and request-bound.
+  - Ambiguous action-like input produces clarification, not execution authority.
 """
 
 from __future__ import annotations
@@ -88,6 +89,31 @@ class InterpretationReceipt:
         return payload
 
 
+@dataclass(frozen=True, slots=True)
+class ClarificationRequest:
+    """Focused clarification required before planning or execution."""
+
+    clarification_id: str
+    request_id: str
+    tenant_id: str
+    actor_id: str
+    channel: str
+    conversation_id: str
+    raw_message_hash: str
+    missing_fields: tuple[str, ...]
+    reason: str
+    max_questions: int
+    safe_default: str
+    question: str
+    created_at: str
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-safe clarification request without raw message text."""
+        payload = asdict(self)
+        payload["missing_fields"] = list(self.missing_fields)
+        return payload
+
+
 def interpret_gateway_message(
     *,
     message: InterpretableMessage,
@@ -155,6 +181,50 @@ def interpret_gateway_message(
     return interpreted, receipt
 
 
+def clarification_request_for(
+    *,
+    interpreted_request: InterpretedRequest,
+    created_at: str,
+) -> ClarificationRequest | None:
+    """Return a safe clarification request when interpretation is incomplete.
+
+    Input contract: ``interpreted_request`` has already been tenant-bound and
+    redacted.
+    Output contract: returns None when no clarification is required; otherwise
+    returns a one-question request that references only missing fields and
+    hashes, never raw user text.
+    Error contract: total for valid InterpretedRequest objects.
+    """
+    missing_fields = tuple(interpreted_request.missing_slots)
+    if not missing_fields:
+        return None
+    actionable_missing_fields = {"allowed_action", "capability_id", "target"}
+    if not actionable_missing_fields.intersection(missing_fields):
+        return None
+    question = _clarification_question_for(missing_fields)
+    payload = {
+        "request_id": interpreted_request.request_id,
+        "raw_message_hash": interpreted_request.raw_message_hash,
+        "missing_fields": missing_fields,
+        "safe_default": "no_execution",
+    }
+    return ClarificationRequest(
+        clarification_id=f"clarification-request-{canonical_hash(payload)[:16]}",
+        request_id=interpreted_request.request_id,
+        tenant_id=interpreted_request.tenant_id,
+        actor_id=interpreted_request.actor_id,
+        channel=interpreted_request.channel,
+        conversation_id=interpreted_request.conversation_id,
+        raw_message_hash=interpreted_request.raw_message_hash,
+        missing_fields=missing_fields,
+        reason="missing_required_interpretation_slots",
+        max_questions=1,
+        safe_default="no_execution",
+        question=question,
+        created_at=created_at,
+    )
+
+
 def _request_id_for(*, message: InterpretableMessage, tenant_id: str, actor_id: str) -> str:
     digest = canonical_hash({
         "tenant_id": tenant_id,
@@ -180,11 +250,19 @@ def _intent_class_for(
     stripped = message_body.strip()
     if not stripped:
         return "unclear_message"
+    if _is_greeting(stripped):
+        return "question"
     if _looks_like_question(stripped):
         return "question"
+    if _looks_like_vague_action(stripped):
+        return "unclear_message"
     if len(stripped.split()) < 3:
         return "unclear_message"
     return "question"
+
+
+def _is_greeting(message_body: str) -> bool:
+    return message_body.strip().lower() in {"hello", "hi", "hey", "good morning", "good afternoon"}
 
 
 def _looks_like_question(message_body: str) -> bool:
@@ -202,6 +280,21 @@ def _looks_like_question(message_body: str) -> bool:
         "can you explain",
         "tell me",
     ))
+
+
+def _looks_like_vague_action(message_body: str) -> bool:
+    normalized = message_body.strip().lower()
+    action_prefixes = (
+        "fix",
+        "deploy",
+        "commit",
+        "push",
+        "publish",
+        "launch",
+        "change",
+        "update",
+    )
+    return normalized.startswith(action_prefixes)
 
 
 def _extracted_slots_for(intent: CapabilityIntent | None) -> dict[str, Any]:
@@ -224,6 +317,8 @@ def _missing_slots_for(
     message_body: str,
 ) -> tuple[str, ...]:
     if intent_class == "unclear_message":
+        if _looks_like_vague_action(message_body):
+            return ("target", "allowed_action")
         return ("intent",)
     if message_body.strip().startswith("/run ") and intent is None:
         return ("capability_id",)
@@ -267,3 +362,11 @@ def _rejected_interpretations_for(
     if intent_class == "unclear_message":
         return ("deterministic_capability_intent:none", "question_confidence:low")
     return ("deterministic_capability_intent:none",)
+
+
+def _clarification_question_for(missing_fields: tuple[str, ...]) -> str:
+    if {"target", "allowed_action"}.issubset(set(missing_fields)):
+        return "Which target should I use, and should I inspect only or make changes?"
+    if "capability_id" in missing_fields:
+        return "Which governed capability should handle this request?"
+    return "What do you want me to know or do next?"

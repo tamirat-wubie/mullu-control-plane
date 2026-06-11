@@ -32,7 +32,13 @@ from gateway.memory_constitution import (
     governed_memory_cell_from_mapping,
 )
 from gateway.capability_dispatch import CapabilityDispatcher, CapabilityIntent
-from gateway.interpretation import interpret_gateway_message
+from gateway.interpretation import (
+    ClarificationRequest,
+    InterpretationReceipt,
+    InterpretedRequest,
+    clarification_request_for,
+    interpret_gateway_message,
+)
 from gateway.intent_resolver import CapabilityIntentResolver
 from gateway.mcp_capability_fabric import MCPAuthorityRecords, install_mcp_authority_records
 from gateway.observability import GatewayObservabilityRecorder
@@ -303,15 +309,19 @@ class GatewayRouter:
         message: GatewayMessage,
         mapping: TenantMapping,
         intent: CapabilityIntent | None,
+        *,
+        interpreted_request: InterpretedRequest | None = None,
+        interpretation_receipt: InterpretationReceipt | None = None,
     ) -> CommandEnvelope:
         """Create and tenant-bind the command for a non-approval message."""
-        interpreted_request, interpretation_receipt = interpret_gateway_message(
-            message=message,
-            tenant_id=mapping.tenant_id,
-            actor_id=mapping.identity_id,
-            intent=intent,
-            created_at=self._clock(),
-        )
+        if interpreted_request is None or interpretation_receipt is None:
+            interpreted_request, interpretation_receipt = interpret_gateway_message(
+                message=message,
+                tenant_id=mapping.tenant_id,
+                actor_id=mapping.identity_id,
+                intent=intent,
+                created_at=self._clock(),
+            )
         idempotency_key = canonical_hash({
             "channel": message.channel,
             "sender_id": message.sender_id,
@@ -356,6 +366,33 @@ class GatewayRouter:
             metadata["interpreted_request"] = dict(interpreted)
             metadata["interpreted_request_id"] = str(interpreted.get("request_id") or "")
         return metadata
+
+    def _clarification_response(
+        self,
+        *,
+        message: GatewayMessage,
+        interpreted_request: InterpretedRequest,
+        interpretation_receipt: InterpretationReceipt,
+        clarification_request: ClarificationRequest,
+    ) -> GatewayResponse:
+        """Return a governed clarification response without command authority."""
+        return GatewayResponse(
+            message_id=self._gen_id("resp", message.message_id),
+            channel=message.channel,
+            recipient_id=message.sender_id,
+            body=f"I need one clarification before I can continue: {clarification_request.question}",
+            governed=True,
+            metadata={
+                "clarification_required": True,
+                "clarification_request": clarification_request.to_dict(),
+                "clarification_request_id": clarification_request.clarification_id,
+                "interpreted_request": interpreted_request.to_dict(),
+                "interpreted_request_id": interpreted_request.request_id,
+                "interpretation_receipt": interpretation_receipt.to_dict(),
+                "interpretation_receipt_id": interpretation_receipt.receipt_id,
+                "safe_default": clarification_request.safe_default,
+            },
+        )
 
     def _capability_intent_from_command(self, command: CommandEnvelope) -> CapabilityIntent | None:
         """Rebuild the stored capability intent without reclassifying message text."""
@@ -1073,8 +1110,48 @@ class GatewayRouter:
             )
 
         intent = self._intent_resolver.resolve(message.body)
+        interpreted_request, interpretation_receipt = interpret_gateway_message(
+            message=message,
+            tenant_id=mapping.tenant_id,
+            actor_id=mapping.identity_id,
+            intent=intent,
+            created_at=self._clock(),
+        )
+        clarification_request = clarification_request_for(
+            interpreted_request=interpreted_request,
+            created_at=self._clock(),
+        )
+        if clarification_request is not None:
+            response = self._clarification_response(
+                message=message,
+                interpreted_request=interpreted_request,
+                interpretation_receipt=interpretation_receipt,
+                clarification_request=clarification_request,
+            )
+            response = self._send_response(response)
+            self._dedup.record(message.channel, message.sender_id, message.message_id, response)
+            return self._observe_gateway_response(
+                message=message,
+                response=response,
+                started_at=started_at,
+                mapping=mapping,
+                intent=intent,
+                stage_names=(
+                    "request_received",
+                    "tenant_resolved",
+                    "interpreted",
+                    "clarification_required",
+                    "response_observed",
+                ),
+            )
         try:
-            command = self._create_command(message, mapping, intent)
+            command = self._create_command(
+                message,
+                mapping,
+                intent,
+                interpreted_request=interpreted_request,
+                interpretation_receipt=interpretation_receipt,
+            )
         except ValueError as exc:
             if not str(exc).startswith("capability fabric admission rejected:"):
                 raise

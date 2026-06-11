@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:clarification-request:1",
+  "title": "Clarification Request",
+  "description": "Focused user clarification required before planning, approval, search, or execution.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "clarification_id",
+    "request_id",
+    "tenant_id",
+    "actor_id",
+    "channel",
+    "conversation_id",
+    "raw_message_hash",
+    "missing_fields",
+    "reason",
+    "max_questions",
+    "safe_default",
+    "question",
+    "created_at"
+  ],
+  "properties": {
+    "clarification_id": {"type": "string", "pattern": "^clarification-request-[a-f0-9]{16}$"},
+    "request_id": {"type": "string", "pattern": "^interpreted-request-[a-f0-9]{16}$"},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "channel": {"type": "string", "minLength": 1},
+    "conversation_id": {"type": "string"},
+    "raw_message_hash": {"type": "string", "minLength": 1},
+    "missing_fields": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "reason": {
+      "type": "string",
+      "enum": ["missing_required_interpretation_slots"]
+    },
+    "max_questions": {"type": "integer", "minimum": 1, "maximum": 3},
+    "safe_default": {
+      "type": "string",
+      "enum": ["no_execution"]
+    },
+    "question": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "minLength": 1}
+  }
+}

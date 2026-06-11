@@ -544,6 +544,63 @@ class TestMessageRouting:
         assert receipt["risk_precheck"] == "high"
         assert "make a payment of $50" not in str(receipt)
 
+    def test_vague_action_returns_clarification_without_command_execution(self):
+        platform = StubPlatform(llm_response="should not run")
+        ledger = CommandLedger()
+        router = GatewayRouter(platform=platform, command_ledger=ledger)
+        router.register_tenant_mapping(TenantMapping(
+            channel="test",
+            sender_id="user1",
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+        ))
+
+        response = router.handle_message(GatewayMessage(
+            message_id="msg-clarify",
+            channel="test",
+            sender_id="user1",
+            body="fix my site secret-token-123",
+            conversation_id="conversation-1",
+        ))
+        clarification = response.metadata["clarification_request"]
+        interpreted = response.metadata["interpreted_request"]
+        receipt = response.metadata["interpretation_receipt"]
+
+        assert response.metadata["clarification_required"] is True
+        assert response.metadata["safe_default"] == "no_execution"
+        assert response.metadata["clarification_request_id"] == clarification["clarification_id"]
+        assert interpreted["intent_class"] == "unclear_message"
+        assert interpreted["missing_slots"] == ["target", "allowed_action"]
+        assert clarification["missing_fields"] == ["target", "allowed_action"]
+        assert receipt["missing_slots"] == ["target", "allowed_action"]
+        assert "secret-token-123" not in str(response.metadata)
+        assert platform.sessions_opened == 0
+        assert ledger.summary()["commands"] == 0
+
+    def test_greeting_still_uses_conversational_response_path(self):
+        platform = StubPlatform(llm_response="Hello back.")
+        router = GatewayRouter(platform=platform)
+        router.register_tenant_mapping(TenantMapping(
+            channel="test",
+            sender_id="user1",
+            tenant_id="tenant-1",
+            identity_id="identity-1",
+        ))
+
+        response = router.handle_message(GatewayMessage(
+            message_id="msg-greeting",
+            channel="test",
+            sender_id="user1",
+            body="hello",
+        ))
+        interpreted = response.metadata["interpreted_request"]
+
+        assert response.body == "Hello back."
+        assert response.metadata.get("clarification_required") is None
+        assert interpreted["intent_class"] == "question"
+        assert interpreted["missing_slots"] == []
+        assert platform.sessions_opened == 1
+
     def test_knowledge_search_unavailable_backend_still_emits_required_receipt(self):
         platform = StubPlatform(llm_response="fallback")
         router = GatewayRouter(
