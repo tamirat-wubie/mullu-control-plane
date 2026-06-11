@@ -32,6 +32,7 @@ def test_capability_adapter_live_evidence_workflow_targets_all_adapter_families(
     assert "Produce document live receipt" in workflow
     assert "Produce voice live receipt" in workflow
     assert "Produce email/calendar live receipt" in workflow
+    assert '-e "mcoi[dev,browser-worker,document-worker]" openai' in workflow
 
 
 def test_capability_adapter_live_evidence_workflow_validates_sandbox_chain() -> None:
