@@ -1,0 +1,67 @@
+{
+  "security_review_id": "sdlc_security_durable_gmail_connector_runtime_20260611",
+  "change_id": "sdlc_req_durable_gmail_connector_runtime_20260611",
+  "impact_categories": [
+    "auth",
+    "external_api",
+    "secrets",
+    "policy",
+    "receipts",
+    "audit"
+  ],
+  "threat_model": "Durable Gmail runtime access touches OAuth authority, user mailbox metadata, connector tokens, refresh-token persistence, external Google endpoints, and approval-gated write operations. The primary hazards are overbroad scopes, token disclosure, unverified sensitive or restricted scope use, refresh-token persistence without revocation, and treating a read-only probe token as approval for send or draft actions.",
+  "required_checks": [
+    {
+      "category": "secrets",
+      "check": "redaction test for access tokens, refresh tokens, client secrets, and private keys",
+      "status": "passed",
+      "evidence_ref": "tests/test_durable_gmail_connector_runtime_plan.py"
+    },
+    {
+      "category": "policy",
+      "check": "policy bypass test for provider-side mutation and write-action approval gates",
+      "status": "passed",
+      "evidence_ref": "tests/test_durable_gmail_connector_runtime_plan.py"
+    },
+    {
+      "category": "receipts",
+      "check": "receipt integrity test for UAO, causal trace, and security receipt refs",
+      "status": "passed",
+      "evidence_ref": "scripts/validate_durable_gmail_connector_runtime_plan.py"
+    },
+    {
+      "category": "audit",
+      "check": "audit visibility test for durable OAuth evidence gates and blocked release state",
+      "status": "passed",
+      "evidence_ref": "docs/64_durable_gmail_connector_runtime_plan.md"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "durable_gmail_oauth_runtime_witness_missing",
+      "severity": "high",
+      "status": "open",
+      "mitigation": "Complete provider-side OAuth consent, client, scope, refresh-token, revocation, rotation, and failed-refresh witnesses under explicit operator authority before any durable production runtime claim.",
+      "evidence_refs": [
+        "docs/64_durable_gmail_connector_runtime_plan.md",
+        "examples/sdlc/requirement_durable_gmail_connector_runtime_20260611.json"
+      ],
+      "residual_risk": "high"
+    }
+  ],
+  "mitigations": [
+    "block Google Cloud credential creation in this repository-local change",
+    "require least-privilege Gmail scope selection before OAuth client mutation",
+    "require redacted secret presence receipts instead of token value serialization",
+    "require revocation, rotation, expiration, and failed-refresh tests before durable readiness",
+    "keep Gmail send and draft actions approval-gated"
+  ],
+  "residual_risk": "high",
+  "release_blocked": true,
+  "security_receipts": [
+    "receipt://sdlc/security-review/durable-gmail-connector-runtime/20260611"
+  ],
+  "uao_ref": "uao://sdlc/security-review/durable-gmail-connector-runtime/20260611",
+  "causal_decision_trace_ref": "trace://sdlc/security-review/durable-gmail-connector-runtime/20260611",
+  "receipt_ref": "receipt://sdlc/security-review/durable-gmail-connector-runtime/20260611"
+}

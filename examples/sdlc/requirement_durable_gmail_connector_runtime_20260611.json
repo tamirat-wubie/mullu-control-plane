@@ -1,0 +1,59 @@
+{
+  "requirement_id": "sdlc_reqspec_durable_gmail_connector_runtime_20260611",
+  "request_id": "sdlc_req_durable_gmail_connector_runtime_20260611",
+  "problem_statement": "The live adapter proof used a bounded Gmail connector token, but durable Gmail runtime access needs a governed OAuth lifecycle before long-lived production use.",
+  "success_criteria": [
+    "least-privilege Gmail scopes are selected before any OAuth client or consent-screen mutation",
+    "testing and production Google Cloud project boundaries are documented before verification submission",
+    "refresh-token storage, rotation, revocation, redaction, and receipt evidence are specified before runtime binding",
+    "send and draft actions remain approval-gated and are not admitted by a read-only connector token",
+    "repository validators reject overclaiming durable OAuth readiness without provider-side evidence"
+  ],
+  "non_goals": [
+    "no Google Cloud credential creation in this change",
+    "no OAuth consent-screen publication in this change",
+    "no production verification submission in this change",
+    "no secret value storage in repository artifacts",
+    "no expansion from Gmail to Google Calendar or Microsoft Graph in this change"
+  ],
+  "constraints": [
+    "Gmail scope selection must prefer the narrowest documented scope that satisfies the operation",
+    "Sensitive or restricted Google scopes require explicit verification evidence before public production use",
+    "Repository receipts must record secret presence only, never token or refresh-token values",
+    "External-account mutations require operator authorization and a fresh witness",
+    "Durable runtime access must include revocation, rotation, expiration, and failed-refresh paths"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "gateway/email_calendar_connector_adapters.py",
+    "gateway/email_calendar_worker.py",
+    ".env.example",
+    "DEPLOYMENT.md",
+    "docs/58_general_agent_promotion_operator_runbook.md",
+    "docs/64_durable_gmail_connector_runtime_plan.md",
+    "examples/sdlc",
+    "scripts",
+    "tests",
+    "GitHub Actions secrets",
+    "Google Cloud OAuth consent and credentials"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_durable_gmail_connector_runtime_plan.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/validate_sdlc_security_review.py --review examples/sdlc/security_review_durable_gmail_connector_runtime_20260611.json --strict",
+    "python -m pytest tests/test_durable_gmail_connector_runtime_plan.py -q"
+  ],
+  "evidence_required": [
+    "Google OAuth consent-screen configuration witness",
+    "Google OAuth client creation witness without secret serialization",
+    "least-privilege Gmail scope decision receipt",
+    "refresh-token storage and rotation receipt",
+    "revocation and failed-refresh test receipt",
+    "read-only Gmail probe receipt",
+    "approval-gated send or draft receipt when write operations are enabled",
+    "security review receipt"
+  ],
+  "uao_ref": "uao://sdlc/requirement/durable-gmail-connector-runtime/20260611",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/durable-gmail-connector-runtime/20260611",
+  "receipt_ref": "receipt://sdlc/requirement/durable-gmail-connector-runtime/20260611"
+}
