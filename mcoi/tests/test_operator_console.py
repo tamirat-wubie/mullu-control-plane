@@ -343,6 +343,7 @@ def test_console_spatial_map_panel_read_model(client: TestClient) -> None:
         "observability_evidence_path",
         "support_escalation_path",
         "rollback_recovery_path",
+        "proof_verification_path",
     }
     assert panels["Fracture Panel"]["paths"][0]["path_id"] == "source_to_secret"
     assert panels["Fracture Panel"]["paths"][0]["status"] == "blocked"
@@ -362,6 +363,7 @@ def test_console_spatial_map_html_view_renders_blockers(client: TestClient) -> N
     assert "backpressure_status_path" in resp.text
     assert "payment_provider_handoff_path" in resp.text
     assert "rollback_recovery_path" in resp.text
+    assert "proof_verification_path" in resp.text
     assert "observability_evidence_path" in resp.text
     assert "support_escalation_path" in resp.text
     assert "source_to_secret" in resp.text
