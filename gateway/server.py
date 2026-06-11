@@ -505,6 +505,86 @@ def create_gateway_app(
                 return value
         return "unknown"
 
+    def _truthy_env(name: str, default: bool = False) -> bool:
+        """Return a bounded boolean interpretation for operator feature gates."""
+        value = os.environ.get(name, "").strip().lower()
+        if not value:
+            return default
+        return value in {"1", "true", "yes", "on"}
+
+    def _govern_cloud_staging_read_model() -> dict[str, Any]:
+        """Return a secret-free private Govern Cloud staging dependency witness."""
+        from urllib.parse import urlsplit
+
+        enabled = _truthy_env("MULLU_GOVERN_CLOUD_STAGING_ENABLED")
+        public_proxy_enabled = _truthy_env("MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED")
+        internal_url = os.environ.get("MULLU_GOVERN_CLOUD_INTERNAL_URL", "").strip()
+        parsed_url = urlsplit(internal_url) if internal_url else None
+        internal_url_configured = bool(
+            parsed_url
+            and parsed_url.scheme in {"http", "https"}
+            and parsed_url.netloc
+            and not parsed_url.username
+            and not parsed_url.password
+            and not parsed_url.query
+            and not parsed_url.fragment
+        )
+        checks = [
+            {
+                "check_id": "private_staging_enabled",
+                "passed": enabled,
+                "detail": "enabled" if enabled else "disabled",
+            },
+            {
+                "check_id": "internal_url_configured",
+                "passed": internal_url_configured,
+                "detail": "configured" if internal_url_configured else "missing_or_invalid",
+            },
+            {
+                "check_id": "public_proxy_disabled",
+                "passed": not public_proxy_enabled,
+                "detail": "disabled" if not public_proxy_enabled else "enabled",
+            },
+            {
+                "check_id": "secret_values_omitted",
+                "passed": True,
+                "detail": "no secret values serialized",
+            },
+        ]
+        blocked = public_proxy_enabled
+        configured = enabled and internal_url_configured and not blocked
+        return {
+            "service": "mullusi-govern-cloud-staging",
+            "dependency_type": "private_render_service",
+            "runtime_env": gateway_env,
+            "gateway_deployment_id": _deployment_id(),
+            "gateway_commit_sha": _commit_sha(),
+            "enabled": enabled,
+            "internal_target": "configured" if internal_url_configured else "missing",
+            "internal_scheme": parsed_url.scheme if internal_url_configured and parsed_url else "",
+            "internal_host": parsed_url.hostname if internal_url_configured and parsed_url else "",
+            "render_service_id": os.environ.get("MULLU_GOVERN_CLOUD_RENDER_SERVICE_ID", "").strip(),
+            "render_deploy_id": os.environ.get("MULLU_GOVERN_CLOUD_RENDER_DEPLOY_ID", "").strip(),
+            "image_tag": os.environ.get("MULLU_GOVERN_CLOUD_IMAGE_TAG", "").strip(),
+            "database_plan": os.environ.get("MULLU_GOVERN_CLOUD_DATABASE_PLAN", "").strip(),
+            "checks": checks,
+            "checks_passed": [check["check_id"] for check in checks if check["passed"]],
+            "checks_missing": [check["check_id"] for check in checks if not check["passed"]],
+            "release_gate": (
+                "private_staging_configured"
+                if configured
+                else "blocked"
+                if blocked
+                else "awaiting_private_staging_configuration"
+            ),
+            "solver_outcome": "AwaitingEvidence",
+            "publication_allowed": False,
+            "public_dns_mutation_allowed": False,
+            "public_api_binding": "unchanged",
+            "witness": "mullu_govern_cloud_private_staging_read_model_v1",
+            "governed": True,
+        }
+
     def _capability_evidence_projection() -> dict[str, Any]:
         """Return maturity-oriented capability evidence from the active fabric."""
         if capability_admission_gate is None:
@@ -1427,6 +1507,11 @@ def create_gateway_app(
             "terminal_status": "verified" if all(check["passed"] for check in checks) else "verification_gaps",
             "governed": True,
         }
+
+    @app.get("/govern-cloud/staging/witness")
+    def govern_cloud_staging_witness(request: Request):
+        _require_authority_operator(request)
+        return _govern_cloud_staging_read_model()
 
     @app.get("/api/v1/federation/summary")
     def federation_summary(request: Request):
