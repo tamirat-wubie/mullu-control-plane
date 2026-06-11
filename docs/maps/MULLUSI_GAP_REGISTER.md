@@ -34,7 +34,7 @@ blocked
 
 | Gap ID | Name | Layer | Risk | Status | Why It Matters | Closure Evidence | Next Safe Step |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| GAP-MAP-001 | Total mapbook not cross-linked from Start Here | Documentation | medium | partial | The mapbook may be hard to discover from the main documentation entry path. | `docs/START_HERE.md` links to the mapbook without readiness claims. | Add link after mapbook review. |
+| GAP-MAP-001 | Total mapbook not cross-linked from Start Here | Documentation | medium | implemented | The mapbook may be hard to discover from the main documentation entry path. | `docs/START_HERE.md` links to the mapbook without readiness claims. | Keep the link aligned as the mapbook evolves. |
 | GAP-UI-001 | Governed Goal Intake UI missing | User Surface | high | missing / unknown | First-time users need a universal ask/goal entry before Current Task makes sense. | Web UI accepts user goal and emits `GatewayMessage`. | Design web-only Goal Intake. |
 | GAP-UI-002 | Current Task state view missing | User Surface | medium | missing / unknown | Users need to see running, blocked, approved, denied, or completed task state. | UI state bound to command ledger and receipts. | Map Current Task states to command states. |
 | GAP-UI-003 | Receipt Viewer missing | User Surface / Evidence | high | missing / unknown | Users need visible proof of what was interpreted, approved, executed, blocked, and evidenced. | Receipt viewer renders final and intermediate receipts. | Design read-only receipt screen. |
@@ -67,13 +67,12 @@ blocked
 
 ```text
 1. Review mapbook for Foundation Mode language.
-2. Link mapbook from docs/START_HERE.md only after review.
-3. Define InterpretedRequest and InterpretationReceipt.
-4. Design web-only Governed Goal Intake.
-5. Map Plan Preview to risk, budget, tools, and approval requirements.
-6. Select one read-only first worker path.
-7. Build Receipt Viewer for interpretation, plan, approval, execution, and denial receipts.
-8. Add one external channel only after web identity and approval work.
+2. Define InterpretedRequest and InterpretationReceipt.
+3. Design web-only Governed Goal Intake.
+4. Map Plan Preview to risk, budget, tools, and approval requirements.
+5. Select one read-only first worker path.
+6. Build Receipt Viewer for interpretation, plan, approval, execution, and denial receipts.
+7. Add one external channel only after web identity and approval work.
 ```
 
 ## 4. Edge-case backlog
