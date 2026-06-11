@@ -3,28 +3,28 @@
 > checklist, runbook, plans, and proofs for general-agent promotion. New? See
 > the Plain-English Overview (docs/explain/PLAIN_ENGLISH.md). *(Doc type: How-to.)*
 
-Purpose: Single entry-point handoff packet for general-agent promotion closure execution.
-Governance scope: Operator checklist, runbook, closure plans, validation reports, blockers, and final promotion proof.
+Purpose: Single entry-point handoff packet for general-agent promotion final validation.
+Governance scope: Operator checklist, runbook, closure plans, validation reports, residual approval gates, and final promotion proof.
 Dependencies: docs/58_general_agent_promotion_operator_runbook.md, examples/general_agent_promotion_operator_checklist.json, .change_assurance promotion closure artifacts.
-Invariants: Does not claim production readiness; keeps live evidence and approval blockers explicit.
+Invariants: Production readiness is evidence-bound; live evidence closure, residual approval gates, and terminal minting authority remain explicit.
 -->
 
 # General-Agent Promotion Handoff Packet
 
 ## Architecture
 
-This packet is the operator entry point for the remaining promotion work. It binds the human-readable runbook, machine-readable checklist, generated closure plans, and validation reports into one traceable handoff.
+This packet is the operator entry point for final promotion validation. It binds the human-readable runbook, machine-readable checklist, generated closure plans, and validation reports into one traceable handoff.
 
 | Field | Current value |
 | --- | --- |
-| Readiness level | `pilot-governed-core` |
+| Readiness level | `production-general-agent` |
 | Capability capsules | 13 |
 | Governed capabilities | 80 |
-| Aggregate closure actions | 11 |
-| Approval-required actions | 7 |
+| Aggregate closure actions | 5 |
+| Approval-required actions | 5 |
 | Closure plan schema validation | `ok=true` |
 | Closure plan drift validation | `ok=true` |
-| Production promotion | blocked |
+| Production promotion | ready |
 
 ## Entry Points
 
@@ -72,16 +72,12 @@ This packet is the operator entry point for the remaining promotion work. It bin
 ## Open Blockers
 
 ```text
-adapter_evidence_not_closed
-voice_adapter_not_closed
-email_calendar_adapter_not_closed
+none
 ```
 
 ## Approval-Required Actions
 
 ```text
-voice_dependency_missing:OPENAI_API_KEY
-email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN
 capability_improvement_required:financial.refund
 capability_improvement_required:agentic_control.evidence.append
 capability_improvement_required:agentic_control.governance_gate.evaluate
@@ -113,7 +109,9 @@ capability_improvement_required:agentic_control.incident_recovery.plan
 20. Update `DEPLOYMENT_STATUS.md` only after published witness, debt-clear witness fields, and matching health probe evidence exist.
 21. Run final strict promotion validation.
 
-Browser adapter evidence remains open unless the adapter evidence report preserves both `browser-sandbox-evidence-*` and `sandbox-receipt-*` refs from the browser sandbox proof.
+Browser adapter evidence is closed only when the adapter evidence report
+preserves both `browser-sandbox-evidence-*` and `sandbox-receipt-*` refs from
+the browser sandbox proof.
 
 ## Terminal Proof Command
 
@@ -121,10 +119,10 @@ Browser adapter evidence remains open unless the adapter evidence report preserv
 python scripts\validate_general_agent_promotion.py --strict --output .change_assurance\general_agent_promotion_readiness.json
 ```
 
-The terminal command must not pass until live adapter evidence, deployment witness publication, and public health declaration are all closed.
+The terminal command must not pass unless live adapter evidence, deployment witness publication, and public health declaration are all closed.
 
 STATUS:
   Completeness: 99%
-  Invariants verified: [single handoff entry point, machine-readable handoff packet linked, checklist linked, runbook linked, validation reports linked, live-evidence queue linked, terminal approval receipt contract linked, terminal certificate gate linked, terminal certificate candidate contract linked, terminal evidence reconciliation contract linked, terminal minting gate contract linked, terminal certificate minting run contract linked, blockers explicit, production readiness not claimed]
-  Open issues: [external dependencies, governed credentials, live adapter receipts, deployment witness publication, public health probe]
-  Next action: execute the validated checklist and runbook in the credentialed adapter-worker and deployment environment
+  Invariants verified: [single handoff entry point, machine-readable handoff packet linked, checklist linked, runbook linked, validation reports linked, live-evidence queue linked, terminal approval receipt contract linked, terminal certificate gate linked, terminal certificate candidate contract linked, terminal evidence reconciliation contract linked, terminal minting gate linked, terminal certificate minting run contract linked, blockers explicit, live adapter evidence closed]
+  Open issues: [terminal certificate minting remains authority-gated]
+  Next action: run final strict promotion validation before any terminal certificate minting action

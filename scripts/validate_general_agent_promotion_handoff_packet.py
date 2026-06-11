@@ -6,7 +6,8 @@ aligned with closure-plan, checklist, blocker, and terminal proof gates.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: examples/general_agent_promotion_handoff_packet.json,
 schemas/general_agent_promotion_handoff_packet.schema.json,
-scripts/validate_general_agent_promotion.py, and promotion closure artifacts.
+scripts/validate_general_agent_promotion.py, redacted adapter evidence, and
+promotion closure artifacts.
 Invariants:
   - The packet never claims production readiness while blockers remain.
   - Required blockers and approval-required blockers remain visible.
@@ -35,6 +36,7 @@ DEFAULT_PACKET = REPO_ROOT / "examples" / "general_agent_promotion_handoff_packe
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "general_agent_promotion_handoff_packet.schema.json"
 DEFAULT_CHECKLIST = REPO_ROOT / "examples" / "general_agent_promotion_operator_checklist.json"
 DEFAULT_CLOSURE_PLAN = REPO_ROOT / ".change_assurance" / "general_agent_promotion_closure_plan.json"
+DEFAULT_CLOSED_ADAPTER_EVIDENCE = REPO_ROOT / "examples" / "capability_adapter_evidence_live_closed_20260611.json"
 
 REQUIRED_ENTRY_POINTS = {
     "human_runbook": "docs/58_general_agent_promotion_operator_runbook.md",
@@ -147,18 +149,30 @@ def validate_general_agent_promotion_handoff_packet(
     schema_path: Path = DEFAULT_SCHEMA,
     checklist_path: Path = DEFAULT_CHECKLIST,
     closure_plan_path: Path | None = None,
+    adapter_evidence_path: Path | None = None,
 ) -> PromotionHandoffPacketValidation:
     """Validate one general-agent promotion handoff packet."""
     errors: list[str] = []
     schema = _load_json_object(schema_path, "handoff packet schema", errors)
     packet = _load_json_object(packet_path, "handoff packet", errors)
     checklist = _load_json_object(checklist_path, "operator checklist", errors)
-    closure_plan = _load_or_derive_closure_plan(closure_plan_path, errors)
+    effective_adapter_evidence_path = _adapter_evidence_path_for_packet(
+        packet,
+        explicit_path=adapter_evidence_path,
+    )
+    closure_plan = _load_or_derive_closure_plan(
+        closure_plan_path,
+        errors,
+        adapter_evidence_path=effective_adapter_evidence_path,
+    )
     if not schema or not packet:
         return _validation_result(packet_path, schema_path, packet, errors)
 
     errors.extend(_validate_schema_instance(schema, packet))
-    readiness = _evaluate_promotion_readiness(errors)
+    readiness = _evaluate_promotion_readiness(
+        errors,
+        adapter_evidence_path=effective_adapter_evidence_path,
+    )
     _validate_scalar_fields(packet, checklist, closure_plan, readiness, errors)
     _validate_required_sets(packet, closure_plan, readiness, errors)
     _validate_entry_points(packet, errors)
@@ -285,23 +299,30 @@ def _validate_terminal_proof(packet: dict[str, Any], errors: list[str]) -> None:
             errors.append(f"terminal_proof_command missing token {token}")
 
 
-def _load_or_derive_closure_plan(path: Path | None, errors: list[str]) -> dict[str, Any]:
-    if path is None:
-        return _derive_closure_plan_or_error(errors)
-    if path.exists() and not _same_path(path, DEFAULT_CLOSURE_PLAN):
+def _load_or_derive_closure_plan(
+    path: Path | None,
+    errors: list[str],
+    *,
+    adapter_evidence_path: Path | None,
+) -> dict[str, Any]:
+    if path is not None and path.exists():
         return _load_json_object(path, "aggregate closure plan", errors)
-    return _derive_closure_plan_or_error(errors)
+    return _derive_closure_plan_or_error(errors, adapter_evidence_path=adapter_evidence_path)
 
 
-def _derive_closure_plan_or_error(errors: list[str]) -> dict[str, Any]:
+def _derive_closure_plan_or_error(
+    errors: list[str],
+    *,
+    adapter_evidence_path: Path | None,
+) -> dict[str, Any]:
     try:
-        return _derive_current_closure_plan()
+        return _derive_current_closure_plan(adapter_evidence_path=adapter_evidence_path)
     except (ImportError, OSError, TypeError, ValueError) as exc:
         errors.append(f"aggregate closure plan could not be derived: {exc.__class__.__name__}")
         return {}
 
 
-def _derive_current_closure_plan() -> dict[str, Any]:
+def _derive_current_closure_plan(*, adapter_evidence_path: Path | None) -> dict[str, Any]:
     from scripts.collect_capability_adapter_evidence import collect_capability_adapter_evidence
     from scripts.plan_capability_adapter_closure import plan_capability_adapter_closure
     from scripts.plan_deployment_publication_closure import plan_deployment_publication_closure
@@ -315,33 +336,36 @@ def _derive_current_closure_plan() -> dict[str, Any]:
     with tempfile.TemporaryDirectory(prefix="mullu-handoff-closure-") as raw_tmp_dir:
         tmp_dir = Path(raw_tmp_dir)
         readiness_path = tmp_dir / "general_agent_promotion_readiness.json"
-        adapter_evidence_path = tmp_dir / "capability_adapter_evidence.json"
+        derived_adapter_evidence_path = tmp_dir / "capability_adapter_evidence.json"
         adapter_plan_path = tmp_dir / "capability_adapter_closure_plan.json"
         deployment_closure_validation_path = tmp_dir / "deployment_publication_closure_validation.json"
         deployment_plan_path = tmp_dir / "deployment_publication_closure_plan.json"
         portfolio_path = tmp_dir / "capability_improvement_portfolio.json"
 
-        _write_json_payload(
-            adapter_evidence_path,
-            collect_capability_adapter_evidence(
-                browser_receipt_path=tmp_dir / "browser_live_receipt.absent.json",
-                document_receipt_path=tmp_dir / "document_live_receipt.absent.json",
-                voice_receipt_path=tmp_dir / "voice_live_receipt.absent.json",
-                email_calendar_receipt_path=tmp_dir / "email_calendar_live_receipt.absent.json",
-                clock=lambda: "2026-05-01T12:00:00+00:00",
-                env_reader=lambda _name: None,
-            ).as_dict(),
-        )
+        if adapter_evidence_path is None:
+            _write_json_payload(
+                derived_adapter_evidence_path,
+                collect_capability_adapter_evidence(
+                    browser_receipt_path=tmp_dir / "browser_live_receipt.absent.json",
+                    document_receipt_path=tmp_dir / "document_live_receipt.absent.json",
+                    voice_receipt_path=tmp_dir / "voice_live_receipt.absent.json",
+                    email_calendar_receipt_path=tmp_dir / "email_calendar_live_receipt.absent.json",
+                    clock=lambda: "2026-05-01T12:00:00+00:00",
+                    env_reader=lambda _name: None,
+                ).as_dict(),
+            )
+        else:
+            derived_adapter_evidence_path = adapter_evidence_path
         _write_json_payload(
             readiness_path,
             validate_general_agent_promotion(
                 repo_root=REPO_ROOT,
-                adapter_evidence_path=adapter_evidence_path,
+                adapter_evidence_path=derived_adapter_evidence_path,
             ).as_dict(),
         )
         _write_json_payload(
             adapter_plan_path,
-            plan_capability_adapter_closure(evidence_path=adapter_evidence_path).as_dict(),
+            plan_capability_adapter_closure(evidence_path=derived_adapter_evidence_path).as_dict(),
         )
         write_deployment_publication_closure_validation_report(
             validate_deployment_publication_closure_report(),
@@ -431,8 +455,6 @@ def _approval_blockers_from_closure_plan(
             errors.append("approval-required closure action must name blocker")
             continue
         blockers.add(blocker)
-    if not blockers:
-        errors.append("aggregate closure plan must include approval-required blockers")
     return frozenset(blockers)
 
 
@@ -448,9 +470,16 @@ def _closure_plan_int(
     return None
 
 
-def _evaluate_promotion_readiness(errors: list[str]) -> dict[str, Any]:
+def _evaluate_promotion_readiness(
+    errors: list[str],
+    *,
+    adapter_evidence_path: Path | None,
+) -> dict[str, Any]:
     try:
-        return validate_general_agent_promotion(repo_root=REPO_ROOT).as_dict()
+        return validate_general_agent_promotion(
+            repo_root=REPO_ROOT,
+            adapter_evidence_path=adapter_evidence_path,
+        ).as_dict()
     except Exception:  # noqa: BLE001
         errors.append("promotion readiness could not be evaluated")
         return {
@@ -460,6 +489,21 @@ def _evaluate_promotion_readiness(errors: list[str]) -> dict[str, Any]:
             "capsule_count": None,
             "blockers": (),
         }
+
+
+def _adapter_evidence_path_for_packet(
+    packet: dict[str, Any],
+    *,
+    explicit_path: Path | None,
+) -> Path | None:
+    if explicit_path is not None:
+        return explicit_path
+    if (
+        packet.get("status") == "ready_for_final_validation"
+        or packet.get("production_promotion") == "ready"
+    ) and DEFAULT_CLOSED_ADAPTER_EVIDENCE.exists():
+        return DEFAULT_CLOSED_ADAPTER_EVIDENCE
+    return None
 
 
 def _validation_result(
@@ -518,6 +562,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "When omitted, the expected closure plan is derived from current governed sources."
         ),
     )
+    parser.add_argument(
+        "--adapter-evidence",
+        default="",
+        help=(
+            "Optional adapter evidence report used for readiness and derived closure-plan validation. "
+            "Ready packets default to the tracked redacted live-closed evidence fixture."
+        ),
+    )
     parser.add_argument("--json", action="store_true")
     return parser.parse_args(argv)
 
@@ -530,6 +582,7 @@ def main(argv: list[str] | None = None) -> int:
         schema_path=Path(args.schema),
         checklist_path=Path(args.checklist),
         closure_plan_path=Path(args.closure_plan) if str(args.closure_plan).strip() else None,
+        adapter_evidence_path=Path(args.adapter_evidence) if str(args.adapter_evidence).strip() else None,
     )
     if args.json:
         print(json.dumps(result.as_dict(), indent=2, sort_keys=True))

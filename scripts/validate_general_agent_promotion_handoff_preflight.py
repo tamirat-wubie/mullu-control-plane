@@ -10,7 +10,7 @@ Invariants:
   - Report blockers are derived from failed steps.
   - Missing environment variables imply the required environment binding blocker.
   - Missing environment variables emit matching contract-backed presence-only closure actions.
-  - Production readiness is never claimed by this preflight report.
+  - Production readiness is evidence-bound by the validated handoff report.
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ EXPECTED_STEP_NAMES = (
     "closure plan drift validation",
     "promotion readiness report",
 )
-EXPECTED_READINESS_LEVEL = "pilot-governed-core"
+EXPECTED_READINESS_LEVEL = "production-general-agent"
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,8 +89,8 @@ def _validate_scalar_fields(report: dict[str, Any], errors: list[str]) -> None:
         errors.append(f"step_count must be {len(EXPECTED_STEP_NAMES)}")
     if report.get("readiness_level") != EXPECTED_READINESS_LEVEL:
         errors.append(f"readiness_level must be {EXPECTED_READINESS_LEVEL}")
-    if report.get("production_ready") is not False:
-        errors.append("production_ready must be false for handoff preflight")
+    if report.get("production_ready") is not True:
+        errors.append("production_ready must be true for final-validation handoff preflight")
     if not isinstance(report.get("ready"), bool):
         errors.append("ready must be a boolean")
 

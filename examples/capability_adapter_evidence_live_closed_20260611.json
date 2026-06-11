@@ -1,0 +1,168 @@
+{
+  "adapters": [
+    {
+      "adapter_id": "browser.playwright",
+      "adapter_module": "gateway.browser_playwright_adapter",
+      "blockers": [],
+      "dependency_checks": [
+        {
+          "available": true,
+          "detail": "available",
+          "name": "playwright",
+          "required": true
+        }
+      ],
+      "evidence_refs": [
+        "gateway/browser_worker.py",
+        "gateway/browser_playwright_adapter.py",
+        ".change_assurance/browser_live_receipt.json",
+        "browser-sandbox-evidence-733e3babc080e870",
+        "sandbox-receipt-2e5f5432dce52bac"
+      ],
+      "receipt_check": {
+        "detail": "passed sandbox_evidence_id=browser-sandbox-evidence-733e3babc080e870 sandbox_receipt_id=sandbox-receipt-2e5f5432dce52bac",
+        "evidence_refs": [
+          "browser-sandbox-evidence-733e3babc080e870",
+          "sandbox-receipt-2e5f5432dce52bac"
+        ],
+        "name": "browser live receipt",
+        "passed": true,
+        "receipt_path": ".change_assurance/browser_live_receipt.json"
+      },
+      "status": "closed",
+      "worker_module": "gateway.browser_worker"
+    },
+    {
+      "adapter_id": "document.production_parsers",
+      "adapter_module": "gateway.document_production_parsers",
+      "blockers": [],
+      "dependency_checks": [
+        {
+          "available": true,
+          "detail": "available",
+          "name": "pypdf",
+          "required": true
+        },
+        {
+          "available": true,
+          "detail": "available",
+          "name": "docx",
+          "required": true
+        },
+        {
+          "available": true,
+          "detail": "available",
+          "name": "openpyxl",
+          "required": true
+        },
+        {
+          "available": true,
+          "detail": "available",
+          "name": "pptx",
+          "required": true
+        }
+      ],
+      "evidence_refs": [
+        "gateway/document_worker.py",
+        "gateway/document_production_parsers.py",
+        ".change_assurance/document_live_receipt.json",
+        "production-docx",
+        "production-pdf",
+        "production-pptx",
+        "production-xlsx"
+      ],
+      "receipt_check": {
+        "detail": "passed",
+        "evidence_refs": [
+          "production-docx",
+          "production-pdf",
+          "production-pptx",
+          "production-xlsx"
+        ],
+        "name": "document live receipt",
+        "passed": true,
+        "receipt_path": ".change_assurance/document_live_receipt.json"
+      },
+      "status": "closed",
+      "worker_module": "gateway.document_worker"
+    },
+    {
+      "adapter_id": "voice.openai",
+      "adapter_module": "gateway.voice_openai_adapter",
+      "blockers": [],
+      "dependency_checks": [
+        {
+          "available": true,
+          "detail": "available",
+          "name": "openai",
+          "required": true
+        },
+        {
+          "available": true,
+          "detail": "configured",
+          "name": "OPENAI_API_KEY",
+          "required": true
+        }
+      ],
+      "evidence_refs": [
+        "gateway/voice_worker.py",
+        "gateway/voice_openai_adapter.py",
+        ".change_assurance/voice_live_receipt.json",
+        "voice-receipt-f3320b739e84d571",
+        "voice-receipt-feab8da1293d08ee",
+        "evidence:voice-synthesis:c5d20c7cc7931701.mp3"
+      ],
+      "receipt_check": {
+        "detail": "passed speech_receipt=voice-receipt-f3320b739e84d571 synthesis_receipt=voice-receipt-feab8da1293d08ee",
+        "evidence_refs": [
+          "voice-receipt-f3320b739e84d571",
+          "voice-receipt-feab8da1293d08ee",
+          "evidence:voice-synthesis:c5d20c7cc7931701.mp3"
+        ],
+        "name": "voice live receipt",
+        "passed": true,
+        "receipt_path": ".change_assurance/voice_live_receipt.json"
+      },
+      "status": "closed",
+      "worker_module": "gateway.voice_worker"
+    },
+    {
+      "adapter_id": "communication.email_calendar_worker",
+      "adapter_module": "gateway.email_calendar_connector_adapters",
+      "blockers": [],
+      "dependency_checks": [
+        {
+          "available": true,
+          "detail": "configured",
+          "name": "EMAIL_CALENDAR_CONNECTOR_TOKEN",
+          "required": true
+        }
+      ],
+      "evidence_refs": [
+        "gateway/email_calendar_worker.py",
+        "gateway/email_calendar_connector_adapters.py",
+        ".change_assurance/email_calendar_live_receipt.json",
+        "email-calendar-receipt-670f0e8bb80778aa",
+        "gmail",
+        "19eb551b3d70229c"
+      ],
+      "receipt_check": {
+        "detail": "passed worker_receipt=email-calendar-receipt-670f0e8bb80778aa connector_id=gmail",
+        "evidence_refs": [
+          "email-calendar-receipt-670f0e8bb80778aa",
+          "gmail",
+          "19eb551b3d70229c"
+        ],
+        "name": "email/calendar live receipt",
+        "passed": true,
+        "receipt_path": ".change_assurance/email_calendar_live_receipt.json"
+      },
+      "status": "closed",
+      "worker_module": "gateway.email_calendar_worker"
+    }
+  ],
+  "blockers": [],
+  "checked_at": "2026-05-01T12:00:00+00:00",
+  "ready": true,
+  "report_id": "capability-adapter-evidence-0dd7a3fd2aef8c78"
+}

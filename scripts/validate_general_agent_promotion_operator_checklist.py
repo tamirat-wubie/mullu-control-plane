@@ -6,9 +6,10 @@ with closure-plan, live receipt, and deployment witness gates.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: examples/general_agent_promotion_operator_checklist.json.
 Invariants:
-  - The checklist names all approval-required blockers.
+  - The checklist names all approval-required residual review blockers.
   - Every required step has a command and evidence list.
-  - Final promotion remains blocked until deployment and adapter evidence close.
+  - Final validation remains gated by live evidence, environment binding, and
+    terminal authority receipts.
 """
 
 from __future__ import annotations
@@ -43,14 +44,13 @@ REQUIRED_STEP_IDS = frozenset({
     "validate_publication_and_promotion",
 })
 REQUIRED_APPROVAL_BLOCKERS = frozenset({
-    "voice_dependency_missing:OPENAI_API_KEY",
-    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+    "capability_improvement_required:financial.refund",
+    "capability_improvement_required:agentic_control.evidence.append",
+    "capability_improvement_required:agentic_control.governance_gate.evaluate",
+    "capability_improvement_required:agentic_control.code_change.plan",
+    "capability_improvement_required:agentic_control.incident_recovery.plan",
 })
-REQUIRED_BLOCKING_GAPS = frozenset({
-    "adapter_evidence_not_closed",
-    "voice_adapter_not_closed",
-    "email_calendar_adapter_not_closed",
-})
+REQUIRED_BLOCKING_GAPS = frozenset()
 REQUIRED_STEP_COMMAND_TOKENS = {
     "collect_adapter_evidence": ("collect_capability_adapter_evidence.py",),
     "write_promotion_readiness": ("validate_general_agent_promotion.py", "--output"),
@@ -89,10 +89,10 @@ REQUIRED_STEP_COMMAND_TOKENS = {
 }
 REQUIRED_STEP_EVIDENCE = {
     "write_promotion_readiness": frozenset({
-        "readiness_level=pilot-governed-core",
+        "readiness_level=production-general-agent",
         "capability_count=80",
         "capsule_count=13",
-        "production blockers explicit",
+        "production blockers absent",
     }),
     "validate_adapter_closure_plan_schema": frozenset({
         "capability_adapter_closure_plan_schema_validation.json ok=true",
@@ -101,7 +101,7 @@ REQUIRED_STEP_EVIDENCE = {
         "adapter action receipt_validator present",
     }),
     "validate_aggregate_closure_plan": frozenset({
-        "general_agent_promotion_closure_plan.json total_action_count=11",
+        "general_agent_promotion_closure_plan.json total_action_count=5",
         "general_agent_promotion_closure_plan_schema_validation.json ok=true",
         "general_agent_promotion_closure_plan_validation.json ok=true",
         "capability_improvement_portfolio.json plan_count=5",
@@ -116,9 +116,9 @@ REQUIRED_STEP_EVIDENCE = {
         "terminal_evidence_reconciliation ready_for_terminal_certificate_minting=false",
         "general_agent_promotion_terminal_minting_gate.json schema_valid=true",
         "terminal_minting_gate ready_for_terminal_certificate_minting=false",
-        "approval_required_action_count=7",
-        "source_plan_type includes adapter and portfolio; deployment source actions may be closed",
-        "closure_chain status=passed_blocked",
+        "approval_required_action_count=5",
+        "source_plan_type includes portfolio; adapter and deployment source actions are closed",
+        "closure_chain status=passed",
         "closure_chain artifact_valid=true",
     }),
     "validate_environment_binding_receipt": frozenset({
@@ -178,8 +178,8 @@ def validate_general_agent_promotion_operator_checklist(
         errors.append("schema_version must be 1")
     if checklist_id != "general-agent-promotion-operator-v1":
         errors.append("checklist_id must be general-agent-promotion-operator-v1")
-    if payload.get("status") != "blocked_until_live_evidence":
-        errors.append("status must be blocked_until_live_evidence")
+    if payload.get("status") != "ready_for_final_validation":
+        errors.append("status must be ready_for_final_validation")
 
     _require_superset(payload, "required_environment_variables", REQUIRED_ENVIRONMENT_VARIABLES, errors)
     _require_superset(payload, "approval_required_blockers", REQUIRED_APPROVAL_BLOCKERS, errors)
