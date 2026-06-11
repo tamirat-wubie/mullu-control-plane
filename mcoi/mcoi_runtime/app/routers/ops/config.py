@@ -1,7 +1,7 @@
 """Runtime configuration endpoints: get, history, update, rollback, watcher, drift."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NoReturn
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
@@ -10,6 +10,35 @@ from mcoi_runtime.app.routers.auth_context import bind_claimed_actor
 from mcoi_runtime.app.routers.deps import deps
 
 router = APIRouter()
+_MAX_CONFIG_HISTORY_READ_LIMIT = 500
+
+
+def _config_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _raise_config_history_validation_error(error: ValueError) -> NoReturn:
+    raise HTTPException(
+        status_code=422,
+        detail=_config_error_detail("invalid config history request", "config_history_invalid_request"),
+    ) from error
+
+
+def _coerce_config_history_limit(limit: object) -> int:
+    if isinstance(limit, bool):
+        raise ValueError("limit must be an integer")
+    if isinstance(limit, int):
+        value = limit
+    elif isinstance(limit, str):
+        normalized = limit.strip()
+        if not normalized.isdecimal():
+            raise ValueError("limit must be an integer")
+        value = int(normalized)
+    else:
+        raise ValueError("limit must be an integer")
+    if value < 0 or value > _MAX_CONFIG_HISTORY_READ_LIMIT:
+        raise ValueError("limit is outside the allowed range")
+    return value
 
 
 class ConfigUpdateRequest(BaseModel):
@@ -34,13 +63,16 @@ def get_config():
 
 
 @router.get("/api/v1/config/history")
-def config_history(limit: int = 10):
+def config_history(limit: str = "10"):
     """Configuration change history."""
-    limit = max(0, limit)  # negative limit would raise in config_manager.history -> 500
+    try:
+        read_limit = _coerce_config_history_limit(limit)
+    except ValueError as error:
+        _raise_config_history_validation_error(error)
     return {
         "versions": [
             {"version": v.version, "hash": v.config_hash[:16], "by": v.applied_by, "at": v.applied_at, "desc": v.description}
-            for v in deps.config_manager.history(limit=limit)
+            for v in deps.config_manager.history(limit=read_limit)
         ],
     }
 
@@ -63,7 +95,7 @@ def update_config(req: ConfigUpdateRequest, request: Request):
     except ValueError as exc:
         raise HTTPException(
             400,
-            detail={"error": str(exc)[:200], "error_code": "invalid_config_request", "governed": True},
+            detail=_config_error_detail(str(exc)[:200], "invalid_config_request"),
         ) from exc
     deps.audit_trail.record(
         action="config.update", actor_id=applied_by,

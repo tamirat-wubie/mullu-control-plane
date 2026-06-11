@@ -134,6 +134,22 @@ class TestConfigEndpoints:
         assert resp.status_code == 200
         assert len(resp.json()["versions"]) >= 1
 
+    @pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+    def test_config_history_invalid_limit_returns_bounded_422(self, client, limit):
+        resp = client.get("/api/v1/config/history", params={"limit": limit})
+
+        assert resp.status_code == 422
+        detail = resp.json()["detail"]
+        assert detail["error"] == "invalid config history request"
+        assert detail["error_code"] == "config_history_invalid_request"
+        assert detail["governed"] is True
+
+    def test_config_history_zero_limit_is_empty_read(self, client):
+        resp = client.get("/api/v1/config/history", params={"limit": "0"})
+
+        assert resp.status_code == 200
+        assert resp.json()["versions"] == []
+
 
 class TestDashboardEndpoint:
     def test_dashboard(self, client):

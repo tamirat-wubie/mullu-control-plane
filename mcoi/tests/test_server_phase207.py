@@ -61,6 +61,24 @@ class TestConfigUpdateAPI:
         assert len(versions) == 2
         assert all(len(record["hash"]) == 16 for record in versions)
 
+    @pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+    def test_config_history_invalid_limit_returns_bounded_422(self, client, limit):
+        resp = client.get("/api/v1/config/history", params={"limit": limit})
+        detail = resp.json()["detail"]
+
+        assert resp.status_code == 422
+        assert detail["error"] == "invalid config history request"
+        assert detail["error_code"] == "config_history_invalid_request"
+        assert detail["governed"] is True
+
+    def test_config_history_zero_limit_is_empty_read(self, client):
+        client.post("/api/v1/config/update", json={"changes": {"features": {"zero_history": True}}})
+
+        resp = client.get("/api/v1/config/history", params={"limit": "0"})
+
+        assert resp.status_code == 200
+        assert resp.json()["versions"] == []
+
     def test_config_update_applies_atomically(self, client):
         before = client.get("/api/v1/config").json()["version"]
         resp = client.post("/api/v1/config/update", json={
@@ -170,6 +188,33 @@ class TestConfigUpdateAPI:
             "to_version": 99999,
         })
         assert resp.json()["success"] is False
+
+
+class TestSnapshotAPI:
+    def test_snapshots_zero_limit_is_empty_read(self, client):
+        client.post("/api/v1/snapshots", json={
+            "snapshot_id": "snap-zero-limit",
+            "name": "Zero limit",
+            "state": {"ready": True},
+        })
+
+        resp = client.get("/api/v1/snapshots", params={"limit": "0"})
+        data = resp.json()
+
+        assert resp.status_code == 200
+        assert data["snapshots"] == []
+        assert data["governed"] is True
+        assert data["summary"]["current_snapshots"] >= 1
+
+    @pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+    def test_snapshots_invalid_limit_returns_bounded_422(self, client, limit):
+        resp = client.get("/api/v1/snapshots", params={"limit": limit})
+        detail = resp.json()["detail"]
+
+        assert resp.status_code == 422
+        assert detail["error"] == "invalid snapshot read request"
+        assert detail["error_code"] == "snapshot_read_invalid_request"
+        assert detail["governed"] is True
 
 
 class TestGuardsEndpoint:
