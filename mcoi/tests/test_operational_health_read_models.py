@@ -287,6 +287,8 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
         "cors",
         "readiness",
         "security_headers",
+        "finance_approval",
+        "payment_provider",
         "observability",
         "support",
         "secrets",
@@ -295,14 +297,19 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert judgments["bounded_exception_response"]["status"] == "allowed"
     assert judgments["bounded_exception_response"]["witness"][-1] == "path_valid"
     assert judgments["readiness_launch_gate"]["status"] == "unknown"
+    assert judgments["finance_approval_path"]["status"] == "unknown"
+    assert judgments["payment_provider_handoff_path"]["status"] == "unknown"
     assert judgments["observability_evidence_path"]["status"] == "unknown"
     assert judgments["support_escalation_path"]["status"] == "unknown"
+    assert "evidence_required:finance_approval" in judgments["finance_approval_path"]["reasons"]
+    assert "evidence_required:payment_provider" in judgments["payment_provider_handoff_path"]["reasons"]
     assert "evidence_required:observability" in judgments["observability_evidence_path"]["reasons"]
     assert "evidence_required:support" in judgments["support_escalation_path"]["reasons"]
     assert judgments["source_to_secret"]["status"] == "blocked"
     assert "blocked_boundary:secrets" in judgments["source_to_secret"]["reasons"]
     assert any(blocker.startswith("path:source_to_secret:") for blocker in spatial_map["blockers"])
     assert "bounded_exception_response_crosses_security_header_boundary" in spatial_map["witness"]
+    assert "finance_and_payment_paths_require_approval_and_provider_evidence" in spatial_map["witness"]
     assert "operational_launch_boundaries_require_observability_and_support_evidence" in spatial_map["witness"]
     assert "secret_boundary_blocks_source_to_secret_path" in spatial_map["witness"]
 
