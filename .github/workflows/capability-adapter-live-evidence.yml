@@ -1,7 +1,7 @@
-# Purpose: collect governed live evidence for voice and email/calendar adapters.
+# Purpose: collect governed live evidence for browser, document, voice, and email/calendar adapters.
 # Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 # Dependencies: GitHub Actions secrets, adapter live receipt producers, and MCOI runtime dependencies.
-# Invariants: no secret values or raw voice audio are printed or uploaded; failed probes remain explicit evidence.
+# Invariants: no secret values, raw voice audio, or browser screenshots are uploaded; failed probes remain explicit evidence.
 
 name: Capability Adapter Live Evidence
 
@@ -15,6 +15,8 @@ on:
         type: choice
         options:
           - all
+          - browser
+          - document
           - voice
           - email-calendar
       email_calendar_connector_id:
@@ -55,7 +57,7 @@ jobs:
   collect-adapter-live-evidence:
     name: Collect Adapter Live Evidence
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@v5
@@ -69,7 +71,25 @@ jobs:
         timeout-minutes: 10
         run: |
           python -m pip install --disable-pip-version-check --upgrade pip --timeout 60 --retries 2
-          python -m pip install --disable-pip-version-check --timeout 60 --retries 2 -e "mcoi[dev]" openai
+          python -m pip install --disable-pip-version-check --timeout 60 --retries 2 -e "mcoi[dev,browser-worker]" openai
+
+      - name: Install browser runtime
+        if: ${{ inputs.target == 'all' || inputs.target == 'browser' }}
+        timeout-minutes: 10
+        run: |
+          python -m playwright install --with-deps chromium
+
+      - name: Build sandbox probe image
+        if: ${{ inputs.target == 'all' || inputs.target == 'browser' }}
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          cat > /tmp/mullu-agent-runner.Dockerfile <<'EOF'
+          FROM python:3.13-slim
+          RUN adduser --disabled-password --gecos "" nonroot
+          USER nonroot
+          EOF
+          docker build -f /tmp/mullu-agent-runner.Dockerfile -t mullu-agent-runner:latest /tmp
 
       - name: Prepare approved voice probe audio
         if: ${{ inputs.target == 'all' || inputs.target == 'voice' }}
@@ -127,6 +147,47 @@ jobs:
             --receipt .change_assurance/general_agent_promotion_environment_binding_receipt.json \
             --json
 
+      - name: Produce browser sandbox evidence
+        if: ${{ inputs.target == 'all' || inputs.target == 'browser' }}
+        run: |
+          python scripts/produce_browser_sandbox_evidence.py \
+            --output "$MULLU_BROWSER_SANDBOX_EVIDENCE" \
+            --strict \
+            --json
+          python scripts/validate_sandbox_execution_receipt.py \
+            --receipt "$MULLU_BROWSER_SANDBOX_EVIDENCE" \
+            --capability-prefix browser. \
+            --require-no-workspace-changes \
+            --json
+          python scripts/validate_browser_sandbox_evidence.py \
+            --evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE" \
+            --json
+
+      - name: Produce browser live receipt
+        if: ${{ inputs.target == 'all' || inputs.target == 'browser' }}
+        run: |
+          args=(
+            --target browser
+            --browser-sandbox-evidence "$MULLU_BROWSER_SANDBOX_EVIDENCE"
+            --json
+          )
+          if [ "${{ inputs.strict }}" = "true" ]; then
+            args+=(--strict)
+          fi
+          python scripts/produce_capability_adapter_live_receipts.py "${args[@]}"
+
+      - name: Produce document live receipt
+        if: ${{ inputs.target == 'all' || inputs.target == 'document' }}
+        run: |
+          args=(
+            --target document
+            --json
+          )
+          if [ "${{ inputs.strict }}" = "true" ]; then
+            args+=(--strict)
+          fi
+          python scripts/produce_capability_adapter_live_receipts.py "${args[@]}"
+
       - name: Produce voice live receipt
         if: ${{ inputs.target == 'all' || inputs.target == 'voice' }}
         env:
@@ -180,6 +241,9 @@ jobs:
           name: capability-adapter-live-evidence
           path: |
             .change_assurance/general_agent_promotion_environment_binding_receipt.json
+            .change_assurance/browser_sandbox_evidence.json
+            .change_assurance/browser_live_receipt.json
+            .change_assurance/document_live_receipt.json
             .change_assurance/voice_live_receipt.json
             .change_assurance/email_calendar_live_receipt.json
             .change_assurance/capability_adapter_evidence.json

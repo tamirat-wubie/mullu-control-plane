@@ -59,15 +59,20 @@ The current expected aggregate plan contains:
 Secrets must be bound through the governed worker or deployment secret store. Do not print secret values in receipts, logs, status files, or closure plans.
 
 For GitHub-hosted live adapter evidence, use the manual
-`Capability Adapter Live Evidence` workflow. The workflow expects
-`EMAIL_CALENDAR_CONNECTOR_TOKEN` as a repository secret for email/calendar
-evidence and `MULLU_VOICE_PROBE_AUDIO_B64` as a repository secret containing
-the approved audio sample bytes encoded with base64. The workflow decodes that
-audio only inside the runner, sets `MULLU_VOICE_PROBE_AUDIO` to the temporary
-runner path, and uploads only JSON evidence artifacts. It does not upload raw
-audio or print secret values. The uploaded live receipts must still be reviewed
-and merged into the current `.change_assurance` evidence packet before terminal
-promotion validation is claimed.
+`Capability Adapter Live Evidence` workflow. The workflow can target `all`,
+`browser`, `document`, `voice`, or `email-calendar`. Browser evidence runs on
+GitHub-hosted Ubuntu, builds a minimal local `mullu-agent-runner:latest` sandbox
+probe image, validates the sandbox receipt, and then emits the browser live
+receipt. Document evidence emits the parser-family receipt without external
+effects. Voice evidence expects `MULLU_VOICE_PROBE_AUDIO_B64` as a repository
+secret containing the approved audio sample bytes encoded with base64.
+Email/calendar evidence expects `EMAIL_CALENDAR_CONNECTOR_TOKEN` as a
+repository secret for a read-only probe. The workflow decodes audio only inside
+the runner, sets `MULLU_VOICE_PROBE_AUDIO` to the temporary runner path, and
+uploads only JSON evidence artifacts. It does not upload raw audio, browser
+screenshots, or secret values. The uploaded live receipts must still be
+reviewed and merged into the current `.change_assurance` evidence packet before
+terminal promotion validation is claimed.
 
 The deployment witness publication path requires all of these bound names before
 the handoff preflight can pass: `OPENAI_API_KEY`,

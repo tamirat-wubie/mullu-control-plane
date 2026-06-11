@@ -416,7 +416,7 @@ jobs:
         # root tests/ coverage waiver (no new CI-invisible root test), plus
         # workspace preflight gating invariants for foundation boundaries and
         # full unsharded receipt generation.
-        run: python -m pytest tests/test_run_mcoi_shards.py tests/test_root_test_coverage.py tests/test_run_workspace_governance_checks.py tests/test_run_finance_approval_live_handoff_chain.py tests/test_satisfy_overdue_authority_obligations.py -q
+        run: python -m pytest tests/test_run_mcoi_shards.py tests/test_root_test_coverage.py tests/test_run_workspace_governance_checks.py tests/test_run_finance_approval_live_handoff_chain.py tests/test_satisfy_overdue_authority_obligations.py tests/test_capability_adapter_live_evidence_workflow.py -q
 
       - name: Upload SDLC validation receipt
         uses: actions/upload-artifact@v6
