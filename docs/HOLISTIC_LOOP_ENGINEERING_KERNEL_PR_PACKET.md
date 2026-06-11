@@ -105,6 +105,14 @@ staged into the holistic loop PR.
 14. Added the candidate map for future loop registration planning. It lists
     unregistered evidence-backed loop-like surfaces without admitting,
     verifying, closing, mutating, or migrating them.
+15. Added the UAO admission dossier for the first candidate-specific readiness
+    projection. It builds a proposed manifest and reports evidence, authority,
+    closure-condition, rollback, and learning readiness without registering the
+    loop or changing UAO runtime behavior.
+16. Added the workflow admission dossier for the next candidate-specific
+    readiness projection. It builds a proposed manifest and reports evidence,
+    authority, closure-condition, rollback, and learning readiness without
+    registering the loop or changing workflow runtime behavior.
 
 ## Evidence Catalog Follow-Up
 
@@ -459,6 +467,50 @@ The map currently covers audit/proof verification, authority obligations,
 universal action orchestration, and workflow execution. None are added to the
 default registry by this slice.
 
+## UAO Admission Dossier Follow-Up
+
+The UAO admission dossier projects the first candidate-specific admission
+readiness packet:
+
+```text
+dossier.candidate_id == universal_action_orchestration_loop
+dossier.admission_status == ready_for_operator_decision
+requires_operator_registration_decision in dossier.admission_blockers
+dossier.registered == false
+dossier.read_only == true
+dossier.mutation_route == false
+dossier.runtime_behavior_change == false
+dossier.terminal_closure == false
+dossier.registration_effect.registers_loop == false
+```
+
+The dossier includes a proposed `LoopManifest`, existing UAO source refs,
+evidence gap report, authority gap report, closure-condition gap report,
+rollback readiness, and learning policy readiness. It is not registration,
+terminal closure, runtime migration, receipt emission, or execution authority.
+
+## Workflow Admission Dossier Follow-Up
+
+The workflow admission dossier projects the next candidate-specific admission
+readiness packet:
+
+```text
+dossier.candidate_id == workflow_execution_loop
+dossier.admission_status == ready_for_operator_decision
+requires_operator_registration_decision in dossier.admission_blockers
+dossier.registered == false
+dossier.read_only == true
+dossier.mutation_route == false
+dossier.runtime_behavior_change == false
+dossier.terminal_closure == false
+dossier.registration_effect.registers_loop == false
+```
+
+The dossier includes a proposed `LoopManifest`, existing workflow source refs,
+evidence gap report, authority gap report, closure-condition gap report,
+rollback readiness, and learning policy readiness. It is not registration,
+terminal closure, runtime migration, receipt emission, or execution authority.
+
 ## Fracture Deltas
 
 None intended.
@@ -471,13 +523,13 @@ verification behavior changed. No public mutation route was added.
 Focused tests:
 
 ```powershell
-python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_report_holistic_loop_candidate_map.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py tests/test_proof_coverage_matrix.py -q
+python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_report_holistic_loop_candidate_map.py tests/test_report_holistic_loop_uao_admission_dossier.py tests/test_report_holistic_loop_workflow_admission_dossier.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py tests/test_proof_coverage_matrix.py -q
 ```
 
 Observed result:
 
 ```text
-332 passed
+344 passed
 ```
 
 Focused validators:
@@ -488,6 +540,8 @@ python scripts/validate_holistic_loop_http_surface.py
 python scripts/validate_holistic_loop_kernel_freeze.py
 python scripts/validate_holistic_loop_extension_admission.py
 python scripts/report_holistic_loop_candidate_map.py
+python scripts/report_holistic_loop_uao_admission_dossier.py
+python scripts/report_holistic_loop_workflow_admission_dossier.py
 python scripts/proof_coverage_matrix.py --check
 ```
 
@@ -580,7 +634,7 @@ Testing:
 ```text
 Tests added/modified: focused holistic loop kernel, router, report, validator,
 HTTP-surface, and proof coverage matrix tests.
-Assertions passing: focused suite passed with 320 tests.
+Assertions passing: focused suite passed with 338 tests.
 Edge cases covered: missing evidence blockers, complete evidence verification,
 explicit blockers, invalid limits, mutation method rejection, schema drift, and
 non-terminal closure flags, plus recovery readiness mismatch and effect-claim

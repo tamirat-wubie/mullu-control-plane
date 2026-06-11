@@ -312,8 +312,8 @@ def test_holistic_loop_kernel_witness_labels_have_exact_anchors() -> None:
         for record in holistic_integrity["anchored_witnesses"]
     }
 
-    assert holistic_integrity["runtime_witness_count"] == 30
-    assert holistic_integrity["exact_test_anchor_count"] == 30
+    assert holistic_integrity["runtime_witness_count"] == 36
+    assert holistic_integrity["exact_test_anchor_count"] == 36
     assert holistic_integrity["unanchored_witness_count"] == 0
     assert holistic_integrity["unanchored_witnesses"] == []
     assert anchors_by_witness["registered_loops_expose_governed_manifest_fields"] == {
@@ -480,6 +480,44 @@ def test_holistic_loop_kernel_witness_labels_have_exact_anchors() -> None:
         (
             "tests/test_report_holistic_loop_candidate_map.py::"
             "test_holistic_loop_candidate_map_is_read_only_non_terminal"
+        )
+    }
+    assert anchors_by_witness["holistic_loop_uao_admission_dossier_builds_proposed_manifest"] == {
+        (
+            "tests/test_report_holistic_loop_uao_admission_dossier.py::"
+            "test_uao_admission_dossier_builds_proposed_manifest"
+        )
+    }
+    assert anchors_by_witness["holistic_loop_uao_admission_dossier_ready_for_operator_decision"] == {
+        (
+            "tests/test_report_holistic_loop_uao_admission_dossier.py::"
+            "test_uao_admission_dossier_is_ready_only_for_operator_decision"
+        )
+    }
+    assert anchors_by_witness["holistic_loop_uao_admission_dossier_blocks_registration_effects"] == {
+        (
+            "tests/test_report_holistic_loop_uao_admission_dossier.py::"
+            "test_uao_admission_dossier_does_not_register_or_mutate_runtime"
+        )
+    }
+    assert anchors_by_witness["holistic_loop_workflow_admission_dossier_builds_proposed_manifest"] == {
+        (
+            "tests/test_report_holistic_loop_workflow_admission_dossier.py::"
+            "test_workflow_admission_dossier_builds_proposed_manifest"
+        )
+    }
+    assert anchors_by_witness[
+        "holistic_loop_workflow_admission_dossier_ready_for_operator_decision"
+    ] == {
+        (
+            "tests/test_report_holistic_loop_workflow_admission_dossier.py::"
+            "test_workflow_admission_dossier_is_ready_only_for_operator_decision"
+        )
+    }
+    assert anchors_by_witness["holistic_loop_workflow_admission_dossier_blocks_registration_effects"] == {
+        (
+            "tests/test_report_holistic_loop_workflow_admission_dossier.py::"
+            "test_workflow_admission_dossier_does_not_register_or_mutate_runtime"
         )
     }
 
