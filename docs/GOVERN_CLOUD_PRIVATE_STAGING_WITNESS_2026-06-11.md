@@ -60,6 +60,40 @@ The post-schema runtime conformance result was:
 Runtime result: `SolvedVerified`.
 Release gate: `ready`.
 
+## Post-Merge Closure Evidence
+
+The private staging witness was merged into `main` through PR #1519:
+
+```text
+merge_commit=e092e041939e28a4eaeb4a570e0c9b985b0c83d8
+run_id=27365204546
+workflow=CI - Build Verification
+conclusion=success
+```
+
+The post-merge `main` CI run completed successfully after the GitHub Actions
+budget gate was restored. The run covered the gateway witness tests, SDLC
+governance gate, schema validation, Python shards, Rust tests, TypeScript SDK
+verification, release status validation, deployment publication closure check,
+gateway deployment environment check, and gateway ingress manifest check.
+
+Render logs for deploy `dep-d8lb18nlk1mc73cohns0` showed the service starting,
+binding to port `8000`, and becoming live. Later log lines showed successful
+internal probes:
+
+```text
+GET /health HTTP/1.1 -> 200 OK
+GET /runtime/conformance HTTP/1.1 -> 200 OK
+```
+
+Render events showed the service on the `Starter` plan using image
+`ghcr.io/mullusi/mullusi-govern-cloud:v2026.06.11-govern-cloud.1`.
+
+Render Shell remains intentionally unopened for further direct terminal work
+because the page requires adding an account SSH public key. Current closure does
+not require that account-access change because CI, deploy logs, and conformance
+logs already establish the private staging witness.
+
 ## Gateway Boundary
 
 The control-plane gateway now has an operator-gated read model at:
@@ -107,8 +141,9 @@ Rollback does not require DNS changes because no DNS mutation was made.
 
 ## Status
 
-Outcome: `SolvedVerified` for private staging runtime evidence.
+Outcome: `SolvedVerified` for private staging runtime evidence and post-merge
+CI.
 Public production outcome: `AwaitingEvidence`.
-Next action: deploy the gateway read model configuration privately, then collect
-an operator-authorized gateway-to-service witness before considering public API
+Next action: keep the service private, monitor logs, and collect an
+operator-authorized gateway-to-service witness before considering public API
 binding.
