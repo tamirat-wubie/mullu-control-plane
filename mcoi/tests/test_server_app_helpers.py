@@ -126,3 +126,6 @@ def test_create_governed_app_wires_middleware_and_http_boundaries() -> None:
     assert security_middleware_cls == "security-headers-middleware"
     assert security_middleware_kwargs["config"].environment == "test"
     assert captured["exception_kwargs"]["app"] is app
+    exception_security_headers = captured["exception_kwargs"]["security_headers"]
+    assert exception_security_headers["X-Content-Type-Options"] == "nosniff"
+    assert "Strict-Transport-Security" not in exception_security_headers

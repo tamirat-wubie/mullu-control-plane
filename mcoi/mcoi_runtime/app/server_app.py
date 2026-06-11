@@ -26,7 +26,11 @@ from mcoi_runtime.app.server_http import (
     configure_cors_middleware,
     install_global_exception_handler,
 )
-from mcoi_runtime.app.security_headers import SecurityHeadersConfig, SecurityHeadersMiddleware
+from mcoi_runtime.app.security_headers import (
+    SecurityHeadersConfig,
+    SecurityHeadersMiddleware,
+    build_security_headers,
+)
 
 
 def build_app_lifespan(*, shutdown_mgr: Any) -> Callable[[FastAPI], Any]:
@@ -67,6 +71,7 @@ def create_governed_app(
     lifespan_factory: Callable[..., Callable[[FastAPI], Any]] = build_app_lifespan,
 ) -> FastAPI:
     """Create the governed FastAPI shell and wire boundary concerns."""
+    security_headers_config = SecurityHeadersConfig(environment=env)
     app = fastapi_cls(
         title="Mullu Platform",
         version="3.13.0",
@@ -109,7 +114,7 @@ def create_governed_app(
     app.add_middleware(request_id_middleware_cls)
     app.add_middleware(
         security_headers_middleware_cls,
-        config=SecurityHeadersConfig(environment=env),
+        config=security_headers_config,
     )
 
     install_global_exception_handler_fn(
@@ -117,6 +122,7 @@ def create_governed_app(
         metrics=metrics,
         platform_logger=platform_logger,
         log_levels=log_levels,
+        security_headers=build_security_headers(security_headers_config),
     )
 
     return app

@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 
 from mcoi_runtime.app import server_http
 from mcoi_runtime.app import server_policy
+from mcoi_runtime.app.security_headers import SecurityHeadersConfig, build_security_headers
 
 
 def _assert_request_id_shape(request_id: str) -> None:
@@ -197,6 +198,48 @@ def test_global_exception_response_preserves_request_id_witness() -> None:
     _assert_request_id_shape(response_request_id)
     assert metrics.calls == [("errors_total", 1)]
     assert logger.messages == ["Unhandled exception on /explode: RuntimeError"]
+
+
+def test_global_exception_response_preserves_security_headers() -> None:
+    class Metrics:
+        def __init__(self) -> None:
+            self.calls: list[tuple[str, int]] = []
+
+        def inc(self, name: str, value: int = 1) -> None:
+            self.calls.append((name, value))
+
+    class Logger:
+        def __init__(self) -> None:
+            self.messages: list[str] = []
+
+        def log(self, level: str, message: str) -> None:
+            self.messages.append(message)
+
+    class Levels:
+        ERROR = "error"
+
+    app = FastAPI()
+    security_headers = build_security_headers(SecurityHeadersConfig(environment="local_dev"))
+    server_http.install_global_exception_handler(
+        app=app,
+        metrics=Metrics(),
+        platform_logger=Logger(),
+        log_levels=Levels,
+        security_headers=security_headers,
+    )
+
+    @app.get("/explode")
+    def explode() -> dict[str, str]:
+        raise RuntimeError("secret detail")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.get("/explode")
+
+    assert resp.status_code == 500
+    assert resp.headers["X-Content-Type-Options"] == "nosniff"
+    assert resp.headers["X-Frame-Options"] == "DENY"
+    assert resp.headers["Cache-Control"] == "no-store"
+    assert "connect-src *" in resp.headers["Content-Security-Policy"]
 
 
 def test_global_exception_handler_maps_tenant_quota_to_bounded_429() -> None:
