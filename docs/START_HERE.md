@@ -23,6 +23,7 @@ to the deep document if you want more.
 | "I need to rehearse one tiny learning loop without claiming skill." | [Foundation Learning Loop Rehearsal Boundary](FOUNDATION_LEARNING_LOOP_REHEARSAL_BOUNDARY.md) | 8 min read |
 | "I need to clarify one concept without making it canonical." | [Foundation Concept Glossary Rehearsal Boundary](FOUNDATION_CONCEPT_GLOSSARY_REHEARSAL_BOUNDARY.md) | 8 min read |
 | "I need to map the architecture without claiming it is complete." | [Foundation Architecture Map Boundary](FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md) | 8 min read |
+| "I need the ask-to-receipt system mapbook without claiming readiness." | [Mullusi Govern System Mapbook](maps/README.md) | 12 min read |
 | "I need to inventory system boundaries without claiming closure." | [Foundation System Boundary Inventory Boundary](FOUNDATION_SYSTEM_BOUNDARY_INVENTORY_BOUNDARY.md) | 8 min read |
 | "I need to inventory modules without claiming contracts or ownership." | [Foundation Module Inventory Boundary](FOUNDATION_MODULE_INVENTORY_BOUNDARY.md) | 8 min read |
 | "I need to draft component contracts without claiming they are ready." | [Foundation Component Contract Boundary](FOUNDATION_COMPONENT_CONTRACT_BOUNDARY.md) | 8 min read |
