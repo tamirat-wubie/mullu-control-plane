@@ -6591,6 +6591,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/holistic_loop_read_model.schema.json",
                 "tests/fixtures/holistic_loop_read_model_v1_golden.json",
                 "scripts/report_holistic_loop_candidate_map.py",
+                "scripts/report_holistic_loop_uao_admission_dossier.py",
                 "scripts/report_holistic_loop_read_model.py",
                 "scripts/validate_holistic_loop_extension_admission.py",
                 "scripts/validate_holistic_loop_kernel_freeze.py",
@@ -6599,6 +6600,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_holistic_loop_kernel.py",
                 "mcoi/tests/test_holistic_loop_router.py",
                 "tests/test_report_holistic_loop_candidate_map.py",
+                "tests/test_report_holistic_loop_uao_admission_dossier.py",
                 "tests/test_report_holistic_loop_read_model.py",
                 "tests/test_validate_holistic_loop_extension_admission.py",
                 "tests/test_validate_holistic_loop_kernel_freeze.py",
@@ -6619,6 +6621,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "zero-unanchored proof-label guard, and extension admission "
                 "guard for default registry additions. The candidate map lists "
                 "unregistered future loop surfaces without admitting them. "
+                "The UAO admission dossier projects readiness for an operator "
+                "registration decision without registering the loop. "
                 "Missing authority or "
                 "evidence remains an explicit blocker and no mutation route is "
                 "introduced."
@@ -6654,6 +6658,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "holistic_loop_extension_admission_guards_default_registry",
                 "holistic_loop_candidate_map_lists_unregistered_surfaces",
                 "holistic_loop_candidate_map_is_read_only_non_terminal",
+                "holistic_loop_uao_admission_dossier_builds_proposed_manifest",
+                "holistic_loop_uao_admission_dossier_ready_for_operator_decision",
+                "holistic_loop_uao_admission_dossier_blocks_registration_effects",
             ],
             runtime_witness_anchor_aliases={
                 "registered_loops_expose_governed_manifest_fields": [
@@ -6745,6 +6752,15 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "holistic_loop_candidate_map_is_read_only_non_terminal": [
                     "holistic_loop_candidate_map_is_read_only_non_terminal"
+                ],
+                "holistic_loop_uao_admission_dossier_builds_proposed_manifest": [
+                    "uao_admission_dossier_builds_proposed_manifest"
+                ],
+                "holistic_loop_uao_admission_dossier_ready_for_operator_decision": [
+                    "uao_admission_dossier_is_ready_only_for_operator_decision"
+                ],
+                "holistic_loop_uao_admission_dossier_blocks_registration_effects": [
+                    "uao_admission_dossier_does_not_register_or_mutate_runtime"
                 ],
             },
         ),

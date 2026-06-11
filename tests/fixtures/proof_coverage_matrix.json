@@ -9690,6 +9690,7 @@
         "schemas/holistic_loop_read_model.schema.json",
         "tests/fixtures/holistic_loop_read_model_v1_golden.json",
         "scripts/report_holistic_loop_candidate_map.py",
+        "scripts/report_holistic_loop_uao_admission_dossier.py",
         "scripts/report_holistic_loop_read_model.py",
         "scripts/validate_holistic_loop_extension_admission.py",
         "scripts/validate_holistic_loop_kernel_freeze.py",
@@ -9698,13 +9699,14 @@
         "mcoi/tests/test_holistic_loop_kernel.py",
         "mcoi/tests/test_holistic_loop_router.py",
         "tests/test_report_holistic_loop_candidate_map.py",
+        "tests/test_report_holistic_loop_uao_admission_dossier.py",
         "tests/test_report_holistic_loop_read_model.py",
         "tests/test_validate_holistic_loop_extension_admission.py",
         "tests/test_validate_holistic_loop_kernel_freeze.py",
         "tests/test_validate_holistic_loop_read_model.py",
         "tests/test_validate_holistic_loop_http_surface.py"
       ],
-      "notes": "Holistic loop engineering exposes existing governed loops through one read-only loop contract, registry, schema-backed summary, status catalog, transition catalog, mode catalog, closure condition catalog, authority catalog, risk catalog, rollback catalog, learning catalog, bounded receipt trail, receipt lineage catalog, closure evidence pack, operator closure readiness view, proof obligation view, audit evolution view, recovery readiness view, and HTTP read model. The v1 freeze validator pins a golden snapshot, schema/report/HTTP parity, additive-only extension policy, zero-unanchored proof-label guard, and extension admission guard for default registry additions. The candidate map lists unregistered future loop surfaces without admitting them. Missing authority or evidence remains an explicit blocker and no mutation route is introduced.",
+      "notes": "Holistic loop engineering exposes existing governed loops through one read-only loop contract, registry, schema-backed summary, status catalog, transition catalog, mode catalog, closure condition catalog, authority catalog, risk catalog, rollback catalog, learning catalog, bounded receipt trail, receipt lineage catalog, closure evidence pack, operator closure readiness view, proof obligation view, audit evolution view, recovery readiness view, and HTTP read model. The v1 freeze validator pins a golden snapshot, schema/report/HTTP parity, additive-only extension policy, zero-unanchored proof-label guard, and extension admission guard for default registry additions. The candidate map lists unregistered future loop surfaces without admitting them. The UAO admission dossier projects readiness for an operator registration decision without registering the loop. Missing authority or evidence remains an explicit blocker and no mutation route is introduced.",
       "representative_paths": [
         "/api/v1/loops/read-model",
         "LoopRegistry",
@@ -9739,6 +9741,15 @@
         ],
         "holistic_loop_extension_admission_guards_default_registry": [
           "holistic_loop_extension_admission_guards_default_registry"
+        ],
+        "holistic_loop_uao_admission_dossier_blocks_registration_effects": [
+          "uao_admission_dossier_does_not_register_or_mutate_runtime"
+        ],
+        "holistic_loop_uao_admission_dossier_builds_proposed_manifest": [
+          "uao_admission_dossier_builds_proposed_manifest"
+        ],
+        "holistic_loop_uao_admission_dossier_ready_for_operator_decision": [
+          "uao_admission_dossier_is_ready_only_for_operator_decision"
         ],
         "holistic_loop_witness_integrity_has_zero_unanchored_labels": [
           "holistic_loop_witness_integrity_has_zero_unanchored_labels"
@@ -9849,14 +9860,17 @@
         "holistic_loop_witness_integrity_has_zero_unanchored_labels",
         "holistic_loop_extension_admission_guards_default_registry",
         "holistic_loop_candidate_map_lists_unregistered_surfaces",
-        "holistic_loop_candidate_map_is_read_only_non_terminal"
+        "holistic_loop_candidate_map_is_read_only_non_terminal",
+        "holistic_loop_uao_admission_dossier_builds_proposed_manifest",
+        "holistic_loop_uao_admission_dossier_ready_for_operator_decision",
+        "holistic_loop_uao_admission_dossier_blocks_registration_effects"
       ],
       "surface_id": "holistic_loop_read_model_kernel"
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1257,
-    "runtime_witness_count": 1257,
+    "exact_test_anchor_count": 1260,
+    "runtime_witness_count": 1260,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -18754,10 +18768,28 @@
               "tests/test_report_holistic_loop_candidate_map.py::test_holistic_loop_candidate_map_is_read_only_non_terminal"
             ],
             "witness": "holistic_loop_candidate_map_is_read_only_non_terminal"
+          },
+          {
+            "anchors": [
+              "tests/test_report_holistic_loop_uao_admission_dossier.py::test_uao_admission_dossier_builds_proposed_manifest"
+            ],
+            "witness": "holistic_loop_uao_admission_dossier_builds_proposed_manifest"
+          },
+          {
+            "anchors": [
+              "tests/test_report_holistic_loop_uao_admission_dossier.py::test_uao_admission_dossier_is_ready_only_for_operator_decision"
+            ],
+            "witness": "holistic_loop_uao_admission_dossier_ready_for_operator_decision"
+          },
+          {
+            "anchors": [
+              "tests/test_report_holistic_loop_uao_admission_dossier.py::test_uao_admission_dossier_does_not_register_or_mutate_runtime"
+            ],
+            "witness": "holistic_loop_uao_admission_dossier_blocks_registration_effects"
           }
         ],
-        "exact_test_anchor_count": 30,
-        "runtime_witness_count": 30,
+        "exact_test_anchor_count": 33,
+        "runtime_witness_count": 33,
         "surface_id": "holistic_loop_read_model_kernel",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
