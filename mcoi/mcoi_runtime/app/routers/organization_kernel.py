@@ -742,6 +742,10 @@ def _case_proof_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, 
             evidence_row["evidence_refs"].append(evidence_ref)
             evidence_row["step_ids"].append(step["step_id"])
 
+    stale_attention = _closure_gate_stale_attention_item(case_id, closure_gate_evidence)
+    if stale_attention is not None:
+        attention_items.append(stale_attention)
+
     if not summary["has_terminal_closure"]:
         attention_items.append({
             "kind": "missing_terminal_closure",
@@ -803,6 +807,8 @@ def _case_proof_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, 
             terminal_status = "closed_requires_review"
     elif summary["blocked_steps"]:
         terminal_status = "blocked_by_plan_gate"
+    elif closure_gate_evidence["stale_gate_decisions"]:
+        terminal_status = "awaiting_gate_refresh"
     elif summary["has_plan"]:
         terminal_status = "awaiting_evidence"
 
@@ -1546,14 +1552,53 @@ def _closure_status(closure_certificate: dict[str, Any] | None) -> str:
 
 def _closure_gate_evidence_projection(proof: dict[str, Any]) -> dict[str, Any]:
     required_refs: list[str] = []
+    stale_gate_decisions: list[dict[str, Any]] = []
+    evidence_timeline_by_ref = {
+        item["ref"]: item
+        for item in proof.get("proof_timeline", [])
+        if isinstance(item, dict)
+        and item.get("kind") == "evidence"
+        and isinstance(item.get("ref"), str)
+    }
     for step in proof.get("plan_step_proof", []):
         if not isinstance(step, dict):
             continue
         if step.get("gate_status") != PlanStepGateStatus.ALLOWED.value:
             continue
-        for evidence_ref in step.get("evidence_refs", []):
+        decision = step.get("latest_gate_decision")
+        decision_refs: list[str] = []
+        if isinstance(decision, dict):
+            decision_refs = [
+                ref for ref in decision.get("evidence_refs", [])
+                if isinstance(ref, str)
+            ]
+        for evidence_ref in decision_refs:
             if isinstance(evidence_ref, str) and evidence_ref not in required_refs:
                 required_refs.append(evidence_ref)
+        decided_at = decision.get("decided_at") if isinstance(decision, dict) else None
+        decision_ref_set = set(decision_refs)
+        newer_refs: list[str] = []
+        newer_times: list[str] = []
+        if isinstance(decided_at, str):
+            for evidence_ref in step.get("evidence_refs", []):
+                if not isinstance(evidence_ref, str) or evidence_ref in decision_ref_set:
+                    continue
+                timeline_item = evidence_timeline_by_ref.get(evidence_ref)
+                if not isinstance(timeline_item, dict):
+                    continue
+                occurred_at = timeline_item.get("occurred_at")
+                if isinstance(occurred_at, str) and occurred_at > decided_at:
+                    newer_refs.append(evidence_ref)
+                    newer_times.append(occurred_at)
+        if newer_refs and isinstance(decision, dict):
+            stale_gate_decisions.append({
+                "step_id": step.get("step_id"),
+                "decision_id": decision.get("decision_id"),
+                "decided_at": decided_at,
+                "gate_evidence_refs": decision_refs,
+                "newer_evidence_refs": newer_refs,
+                "latest_evidence_at": max(newer_times) if newer_times else None,
+            })
 
     admitted_refs = {
         item["ref"]
@@ -1576,14 +1621,44 @@ def _closure_gate_evidence_projection(proof: dict[str, Any]) -> dict[str, Any]:
         ref for ref in required_refs
         if isinstance(closure_certificate, dict) and ref not in closure_ref_set
     ]
+    stale_step_ids = [
+        item["step_id"] for item in stale_gate_decisions
+        if isinstance(item.get("step_id"), str)
+    ]
+    newer_gate_evidence_refs: list[str] = []
+    for item in stale_gate_decisions:
+        for evidence_ref in item.get("newer_evidence_refs", []):
+            if isinstance(evidence_ref, str) and evidence_ref not in newer_gate_evidence_refs:
+                newer_gate_evidence_refs.append(evidence_ref)
     return {
         "required_gate_evidence_refs": required_refs,
         "admitted_gate_evidence_refs": [ref for ref in required_refs if ref in admitted_refs],
         "unavailable_gate_evidence_refs": unavailable_refs,
         "closure_evidence_refs": closure_refs,
         "omitted_gate_evidence_refs": omitted_refs,
+        "stale_gate_decisions": stale_gate_decisions,
+        "stale_gate_step_ids": stale_step_ids,
+        "newer_gate_evidence_refs": newer_gate_evidence_refs,
+        "gate_decisions_fresh": not stale_gate_decisions,
         "closure_packet_present": isinstance(closure_certificate, dict),
-        "ready_for_closure_packet": bool(required_refs) and not unavailable_refs,
+        "ready_for_closure_packet": bool(required_refs) and not unavailable_refs and not stale_gate_decisions,
+    }
+
+
+def _closure_gate_stale_attention_item(
+    ref: str,
+    closure_gate_evidence: dict[str, Any],
+) -> dict[str, object] | None:
+    stale_gate_decisions = closure_gate_evidence.get("stale_gate_decisions", [])
+    if not stale_gate_decisions:
+        return None
+    return {
+        "kind": "closure_gate_decision_stale",
+        "severity": "blocker",
+        "ref": ref,
+        "message": "allowed plan-step gate predates newer admitted evidence; re-evaluate gate before terminal closure",
+        "step_ids": closure_gate_evidence.get("stale_gate_step_ids", []),
+        "evidence_refs": closure_gate_evidence.get("newer_gate_evidence_refs", []),
     }
 
 
@@ -1612,6 +1687,9 @@ def _case_closure_certificate(kernel: OrganizationKernel, case_id: str) -> dict[
                 "message": "terminal closure must include the latest allowed gate evidence refs",
                 "evidence_refs": closure_gate_evidence["required_gate_evidence_refs"],
             })
+        stale_attention = _closure_gate_stale_attention_item(case_id, closure_gate_evidence)
+        if stale_attention is not None:
+            attention_items.append(stale_attention)
     else:
         reconciliation_value = closure_certificate.get("reconciliation")
         if isinstance(reconciliation_value, dict):
@@ -1629,6 +1707,9 @@ def _case_closure_certificate(kernel: OrganizationKernel, case_id: str) -> dict[
                 "ref": closure_certificate["closure_id"],
                 "message": "terminal closure is not bound to an effect reconciliation record",
             })
+        stale_attention = _closure_gate_stale_attention_item(closure_certificate["closure_id"], closure_gate_evidence)
+        if stale_attention is not None:
+            attention_items.append(stale_attention)
         if closure_gate_evidence["unavailable_gate_evidence_refs"]:
             attention_items.append({
                 "kind": "closure_gate_evidence_unavailable",
@@ -1717,6 +1798,19 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
                 "admitted": evidence_ref in closure_gate_evidence.get("admitted_gate_evidence_refs", []),
                 "in_closure_packet": evidence_ref in closure_gate_evidence.get("closure_evidence_refs", []),
             })
+    gate_freshness_rows: list[dict[str, object]] = []
+    if isinstance(closure_gate_evidence, dict):
+        gate_freshness_rows = [
+            {
+                "step_id": item.get("step_id", ""),
+                "decision_id": item.get("decision_id", ""),
+                "decided_at": item.get("decided_at", ""),
+                "newer_evidence_refs": _text_list(item.get("newer_evidence_refs", [])),
+                "latest_evidence_at": item.get("latest_evidence_at", ""),
+            }
+            for item in closure_gate_evidence.get("stale_gate_decisions", [])
+            if isinstance(item, dict)
+        ]
     reconciliation = payload.get("reconciliation")
     reconciliation_rows: list[dict[str, object]] = []
     if isinstance(reconciliation, dict):
@@ -1776,6 +1870,7 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
     {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
     {_proof_explorer_table("Certificate", ("field", "value"), certificate_rows)}
     {_proof_explorer_table("Gate Evidence", ("evidence_ref", "admitted", "in_closure_packet"), gate_evidence_rows)}
+    {_proof_explorer_table("Gate Freshness", ("step_id", "decision_id", "decided_at", "newer_evidence_refs", "latest_evidence_at"), gate_freshness_rows)}
     {_proof_explorer_table("Reconciliation", ("field", "value"), reconciliation_rows)}
     {_proof_explorer_table("Evidence Refs", ("evidence_ref",), evidence_rows)}
     {_proof_explorer_table("Learning Admissions", ("binding_id", "decision_id", "admitted", "created_at"), learning_rows)}
@@ -2094,6 +2189,9 @@ def _open_case_terminal_status(proof: dict[str, Any]) -> str:
     summary = proof["summary"]
     if summary["blocked_steps"]:
         return "blocked_by_plan_gate"
+    closure_gate_evidence = _closure_gate_evidence_projection(proof)
+    if closure_gate_evidence["stale_gate_decisions"]:
+        return "awaiting_gate_refresh"
     if summary["has_plan"]:
         return "awaiting_evidence"
     return "awaiting_plan"
@@ -2126,6 +2224,9 @@ def _case_portfolio_attention(case_id: str, proof: dict[str, Any]) -> list[dict[
             "message": "case has blocked or unevaluated plan steps",
             "step_ids": summary["blocked_steps"],
         })
+    stale_attention = _closure_gate_stale_attention_item(case_id, closure_gate_evidence)
+    if stale_attention is not None:
+        attention_items.append(stale_attention)
     if closure_certificate is None:
         attention_items.append({
             "kind": "missing_terminal_closure",
@@ -3760,11 +3861,15 @@ def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) ->
         evidence_ref for evidence_ref in required_closure_evidence_refs
         if closure is not None and evidence_ref not in closure_evidence_refs
     ]
+    closure_gate_evidence = _closure_gate_evidence_projection(_case_proof_timeline(kernel, case_id))
+    stale_gate_steps = closure_gate_evidence["stale_gate_step_ids"]
+    newer_gate_evidence_refs = closure_gate_evidence["newer_gate_evidence_refs"]
     ready_to_close = (
         closure is None
         and not missing_evidence
         and bool(approvals)
         and not blocked_steps
+        and not stale_gate_steps
     )
     preview_ready_to_close = (
         closure is None
@@ -3780,6 +3885,8 @@ def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) ->
         terminal_status = "awaiting_approval"
     elif blocked_steps:
         terminal_status = "awaiting_gate"
+    elif stale_gate_steps:
+        terminal_status = "awaiting_gate_refresh"
     else:
         terminal_status = "ready_to_close"
     if closure is not None:
@@ -3807,6 +3914,9 @@ def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) ->
         "preview_blocked_steps": preview_blocked_steps,
         "preview_required_closure_evidence_refs": preview_required_closure_evidence_refs,
         "omitted_closure_gate_evidence_refs": omitted_closure_gate_evidence_refs,
+        "stale_gate_decisions": closure_gate_evidence["stale_gate_decisions"],
+        "stale_gate_step_ids": stale_gate_steps,
+        "newer_gate_evidence_refs": newer_gate_evidence_refs,
         "ready_to_close": ready_to_close,
         "preview_ready_to_close": preview_ready_to_close,
         "terminal_status": terminal_status,

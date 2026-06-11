@@ -197,6 +197,33 @@ def test_plan_step_gate_allows_after_evidence_authority_and_approval() -> None:
     assert decision.evidence_refs == ("evidence:security_public_claim_boundary", "evidence:security_approval")
 
 
+def test_plan_step_gate_binds_latest_admitted_evidence_for_requirement() -> None:
+    kernel, plan = _pilot()
+    _admit_all_pilot_evidence(kernel, plan.case_id)
+    _record_security_dual_control_approval(kernel, plan.case_id)
+    kernel.admit_case_evidence(
+        CaseEvidence(
+            evidence_ref="evidence:security_public_claim_boundary:v2",
+            case_id=plan.case_id,
+            requirement_id="security_public_claim_boundary",
+            submitted_by="test-harness",
+            submitted_at="2026-05-27T17:03:00+00:00",
+        )
+    )
+    step = next(candidate for candidate in plan.steps if candidate.step_id == "security_claim_boundary")
+
+    decision = kernel.evaluate_plan_step(
+        case_id=plan.case_id,
+        step_id=step.step_id,
+        checked_preconditions=step.preconditions,
+    )
+
+    assert decision.status is PlanStepGateStatus.ALLOWED
+    assert decision.reason == "allowed"
+    assert "evidence:security_public_claim_boundary:v2" in decision.evidence_refs
+    assert "evidence:security_public_claim_boundary" not in decision.evidence_refs
+
+
 def test_dual_control_blocks_self_approval_for_security_step() -> None:
     kernel, plan = _pilot()
     _admit_all_pilot_evidence(kernel, plan.case_id)
