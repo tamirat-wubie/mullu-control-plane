@@ -1,6 +1,9 @@
 """Phase 207D — Execution replay tests."""
 
 import pytest
+from fastapi.testclient import TestClient
+
+from mcoi_runtime.app.server import app
 from mcoi_runtime.core.execution_replay import (
     DEFAULT_MAX_COMPLETED_TRACES,
     ReplayExecutor,
@@ -95,6 +98,18 @@ class TestReplayRecorder:
         assert rec.list_traces(limit=0) == []
         assert rec.list_traces(limit=-1) == []
 
+    @pytest.mark.parametrize("limit", [True, "2", None])
+    def test_list_traces_rejects_invalid_limit_contract(self, limit):
+        rec = ReplayRecorder(clock=FIXED_CLOCK)
+        rec.start_trace("t1")
+        rec.record_frame("t1", "a", {}, {})
+        rec.complete_trace("t1")
+
+        with pytest.raises(ValueError, match="replay trace limit must be an integer"):
+            rec.list_traces(limit=limit)
+
+        assert rec.completed_count == 1
+
     def test_counts(self):
         rec = ReplayRecorder(clock=FIXED_CLOCK)
         rec.start_trace("t1")
@@ -152,20 +167,45 @@ class TestCompletedTraceCap:
         assert len(recent) == 2
         assert [t.trace_id for t in recent] == ["t3", "t4"]
 
-    def test_get_trace_after_eviction_returns_none(self):
-        """An evicted trace is no longer findable — caller's contract:
-        once outside the bounded window, the trace is gone. That's the
-        whole point of bounding."""
-        rec = ReplayRecorder(clock=FIXED_CLOCK, max_completed=1)
-        rec.start_trace("oldest")
-        rec.record_frame("oldest", "x", {}, {})
-        rec.complete_trace("oldest")
-        rec.start_trace("newest")
-        rec.record_frame("newest", "x", {}, {})
-        rec.complete_trace("newest")
 
-        assert rec.get_trace("oldest") is None  # evicted
-        assert rec.get_trace("newest") is not None
+@pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+def test_replay_traces_invalid_limit_returns_bounded_422(limit: str) -> None:
+    resp = TestClient(app).get("/api/v1/replay/traces", params={"limit": limit})
+
+    assert resp.status_code == 422
+    detail = resp.json()["detail"]
+    assert detail["error"] == "invalid agent history request"
+    assert detail["error_code"] == "agent_history_invalid_request"
+    assert detail["governed"] is True
+
+
+def test_replay_traces_zero_limit_is_empty_read() -> None:
+    client = TestClient(app)
+    client.post("/api/v1/workflow/traced", json={
+        "task_id": "replay-zero-limit-contract",
+        "description": "test",
+        "capability": "llm.completion",
+    })
+
+    resp = client.get("/api/v1/replay/traces", params={"limit": "0"})
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["traces"] == []
+    assert body["count"] == 0
+    assert body["summary"]["completed"] >= 1
+
+def test_get_trace_after_eviction_returns_none_regression() -> None:
+    rec = ReplayRecorder(clock=FIXED_CLOCK, max_completed=1)
+    rec.start_trace("oldest")
+    rec.record_frame("oldest", "x", {}, {})
+    rec.complete_trace("oldest")
+    rec.start_trace("newest")
+    rec.record_frame("newest", "x", {}, {})
+    rec.complete_trace("newest")
+
+    assert rec.get_trace("oldest") is None
+    assert rec.get_trace("newest") is not None
 
 
 class TestReplayExecutor:

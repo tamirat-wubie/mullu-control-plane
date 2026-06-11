@@ -308,11 +308,15 @@ class WebhookManager:
         return deliveries
 
     def delivery_history(self, limit: int = 50) -> list[WebhookDelivery]:
+        if isinstance(limit, bool) or not isinstance(limit, int):
+            raise ValueError("webhook delivery history limit must be an integer")
         if limit <= 0:
             return []
         return self._deliveries[-limit:]
 
     def mutation_receipts(self, limit: int = 50) -> tuple[WebhookMutationReceipt, ...]:
+        if isinstance(limit, bool) or not isinstance(limit, int):
+            raise ValueError("webhook mutation receipt limit must be an integer")
         if limit <= 0:
             return ()
         return tuple(self._mutation_receipts[-limit:])

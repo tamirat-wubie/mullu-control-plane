@@ -206,6 +206,21 @@ class TestWebhookManager:
         assert mgr.mutation_receipts(limit=0) == ()
         assert mgr.mutation_receipts(limit=-1) == ()
 
+    @pytest.mark.parametrize("limit", [True, "1", None])
+    def test_history_read_models_reject_invalid_limit_contract(self, limit):
+        mgr = WebhookManager(clock=FIXED_CLOCK)
+        mgr.subscribe(WebhookSubscription(
+            subscription_id="sub-1", tenant_id="t1",
+            url="https://example.com/hook", events=("task.completed",),
+        ))
+        mgr.emit("task.completed", {}, tenant_id="t1")
+
+        with pytest.raises(ValueError, match="webhook delivery history limit must be an integer"):
+            mgr.delivery_history(limit=limit)
+        with pytest.raises(ValueError, match="webhook mutation receipt limit must be an integer"):
+            mgr.mutation_receipts(limit=limit)
+        assert mgr.delivery_count == 1
+
     def test_multiple_subscriptions(self):
         mgr = WebhookManager(clock=FIXED_CLOCK)
         mgr.subscribe(WebhookSubscription(subscription_id="s1", tenant_id="t1", url="https://example.com/a", events=("task.completed",)))
