@@ -290,6 +290,8 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
         "cache",
         "idempotency",
         "request_dedup",
+        "rate_limit",
+        "backpressure",
         "finance_approval",
         "payment_provider",
         "observability",
@@ -305,6 +307,10 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert judgments["idempotency_suppression_path"]["witness"][-1] == "path_valid"
     assert judgments["request_deduplication_path"]["status"] == "allowed"
     assert judgments["request_deduplication_path"]["witness"][-1] == "path_valid"
+    assert judgments["rate_limit_guard_path"]["status"] == "allowed"
+    assert judgments["rate_limit_guard_path"]["witness"][-1] == "path_valid"
+    assert judgments["backpressure_status_path"]["status"] == "allowed"
+    assert judgments["backpressure_status_path"]["witness"][-1] == "path_valid"
     assert judgments["readiness_launch_gate"]["status"] == "unknown"
     assert judgments["finance_approval_path"]["status"] == "unknown"
     assert judgments["payment_provider_handoff_path"]["status"] == "unknown"
@@ -321,6 +327,8 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert "cache_boundary_is_ephemeral_not_persistence" in spatial_map["witness"]
     assert "idempotency_boundary_preserves_duplicate_suppression_before_side_effects" in spatial_map["witness"]
     assert "request_dedup_boundary_preserves_tenant_scoped_replay_suppression" in spatial_map["witness"]
+    assert "rate_limit_boundary_preserves_token_bucket_throughput_control" in spatial_map["witness"]
+    assert "backpressure_boundary_preserves_load_shedding_control" in spatial_map["witness"]
     assert "finance_and_payment_paths_require_approval_and_provider_evidence" in spatial_map["witness"]
     assert "operational_launch_boundaries_require_observability_and_support_evidence" in spatial_map["witness"]
     assert "secret_boundary_blocks_source_to_secret_path" in spatial_map["witness"]
@@ -407,6 +415,40 @@ def test_cache_stats_read_model_bounded(client: TestClient) -> None:
     assert payload["size"] <= payload["max_size"]
     assert payload["hits"] >= 0
     assert payload["misses"] >= 0
+
+
+def test_rate_limit_status_read_model_bounded(client: TestClient) -> None:
+    response = client.get("/api/v1/rate-limit/status")
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert payload["total_allowed"] >= 0
+    assert payload["total_denied"] >= 0
+    assert payload["identity_denied"] >= 0
+    assert payload["active_buckets"] >= 0
+    assert isinstance(payload["identity_limiting_enabled"], bool)
+
+
+def test_rate_limit_client_headers_read_model_bounded(client: TestClient) -> None:
+    response = client.get("/api/v1/rate-limits/spatial-boundary-client")
+    payload = response.json()
+    headers = payload["headers"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert set(headers) == {"X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"}
+    assert int(headers["X-RateLimit-Limit"]) >= int(headers["X-RateLimit-Remaining"]) >= 0
+    assert isinstance(payload["is_exhausted"], bool)
+
+
+def test_backpressure_read_model_bounded(client: TestClient) -> None:
+    response = client.get("/api/v1/backpressure")
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert payload["level"] in {"normal", "elevated", "high", "critical"}
+    assert 0.0 <= payload["load_pct"] <= 100.0
+    assert payload["delay_ms"] >= 0.0
 
 
 def test_deployment_readiness_read_model_bounded(client: TestClient) -> None:
