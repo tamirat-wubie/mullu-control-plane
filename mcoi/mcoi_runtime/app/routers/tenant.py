@@ -18,6 +18,7 @@ from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 
 router = APIRouter()
 _MAX_TENANT_LEDGER_READ_LIMIT = 500
+_MAX_TENANT_ISOLATION_AUDIT_READ_COUNT = 500
 
 
 # ── Helpers & request models ─────────────────────────────────────────────
@@ -51,7 +52,17 @@ def _raise_tenant_ledger_validation_error(error: ValueError) -> NoReturn:
     ) from error
 
 
-def _coerce_tenant_ledger_read_limit(limit: object) -> int:
+def _raise_tenant_isolation_audit_validation_error(error: ValueError) -> NoReturn:
+    raise HTTPException(
+        status_code=422,
+        detail=_tenant_error_detail(
+            "invalid tenant isolation audit request",
+            "tenant_isolation_audit_invalid_request",
+        ),
+    ) from error
+
+
+def _coerce_tenant_ledger_read_limit(limit: object, *, maximum: int = _MAX_TENANT_LEDGER_READ_LIMIT) -> int:
     if isinstance(limit, bool):
         raise ValueError("limit must be an integer")
     if isinstance(limit, int):
@@ -63,7 +74,7 @@ def _coerce_tenant_ledger_read_limit(limit: object) -> int:
         value = int(normalized)
     else:
         raise ValueError("limit must be an integer")
-    if value < 0 or value > _MAX_TENANT_LEDGER_READ_LIMIT:
+    if value < 0 or value > maximum:
         raise ValueError("limit is outside the allowed range")
     return value
 
@@ -285,10 +296,17 @@ def get_tenant_isolation_summary():
 
 
 @router.get("/api/v1/tenant-isolation/audits")
-def get_recent_isolation_audits(count: int = 10):
+def get_recent_isolation_audits(count: str = "10"):
     """Return recent tenant isolation audit results."""
     deps.metrics.inc("requests_governed")
-    audits = deps.tenant_isolation.recent_audits(count)
+    try:
+        read_count = _coerce_tenant_ledger_read_limit(
+            count,
+            maximum=_MAX_TENANT_ISOLATION_AUDIT_READ_COUNT,
+        )
+    except ValueError as error:
+        _raise_tenant_isolation_audit_validation_error(error)
+    audits = deps.tenant_isolation.recent_audits(read_count)
     return {
         "audits": [a.to_dict() for a in audits],
         "count": len(audits),

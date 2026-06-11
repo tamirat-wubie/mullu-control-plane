@@ -118,6 +118,10 @@ class TenantIsolationAuditor:
         return len(self._audit_results)
 
     def recent_audits(self, count: int = 10) -> list[AuditResult]:
+        if isinstance(count, bool) or not isinstance(count, int):
+            raise ValueError("tenant isolation audit count must be an integer")
+        if count <= 0:
+            return []
         return self._audit_results[-count:]
 
     def summary(self) -> dict[str, Any]:

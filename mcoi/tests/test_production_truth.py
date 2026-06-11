@@ -11,6 +11,8 @@ from dataclasses import dataclass
 
 import pytest
 
+from mcoi_runtime.app.routers.deps import deps
+from mcoi_runtime.core.tenant_isolation_audit import TenantOperation
 from mcoi_runtime.governance.audit.anchor import AuditAnchorStore
 from mcoi_runtime.governance.guards.chain import create_api_key_guard
 from mcoi_runtime.governance.auth.api_key import APIKeyManager
@@ -218,4 +220,29 @@ def test_audit_log_and_anchor_read_limits_reject_invalid_values(client, method: 
     assert resp.status_code == 422
     assert detail["error"] == "invalid audit/event read request"
     assert detail["error_code"] == "audit_event_read_invalid_request"
+    assert detail["governed"] is True
+
+
+def test_tenant_isolation_audits_zero_count_returns_empty_read(client) -> None:
+    deps.tenant_isolation.audit(
+        [TenantOperation("prod-truth-zero", "tenant-a", "tenant-a", "docs", "read")],
+        audit_id="prod-truth-zero",
+    )
+    resp = client.get("/api/v1/tenant-isolation/audits?count=0")
+    data = resp.json()
+
+    assert resp.status_code == 200
+    assert data["governed"] is True
+    assert data["audits"] == []
+    assert data["count"] == 0
+
+
+@pytest.mark.parametrize("count", ["-1", "not-a-count", "501"])
+def test_tenant_isolation_audits_reject_invalid_count(client, count: str) -> None:
+    resp = client.get(f"/api/v1/tenant-isolation/audits?count={count}")
+    detail = resp.json()["detail"]
+
+    assert resp.status_code == 422
+    assert detail["error"] == "invalid tenant isolation audit request"
+    assert detail["error_code"] == "tenant_isolation_audit_invalid_request"
     assert detail["governed"] is True
