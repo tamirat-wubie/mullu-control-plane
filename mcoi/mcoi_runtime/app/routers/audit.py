@@ -5,9 +5,9 @@ dependency container (``deps``) so there are no circular imports.
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NoReturn
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
@@ -15,6 +15,35 @@ from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope, scoped_
 from mcoi_runtime.core.structured_logging import LogLevel
 
 router = APIRouter()
+_MAX_AUDIT_READ_LIMIT = 500
+
+
+def _audit_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _raise_audit_read_validation_error(error: ValueError) -> NoReturn:
+    raise HTTPException(
+        status_code=422,
+        detail=_audit_error_detail("invalid audit/event read request", "audit_event_read_invalid_request"),
+    ) from error
+
+
+def _coerce_audit_read_limit(limit: object) -> int:
+    if isinstance(limit, bool):
+        raise ValueError("limit must be an integer")
+    if isinstance(limit, int):
+        value = limit
+    elif isinstance(limit, str):
+        normalized = limit.strip()
+        if not normalized.isdecimal():
+            raise ValueError("limit must be an integer")
+        value = int(normalized)
+    else:
+        raise ValueError("limit must be an integer")
+    if value < 0 or value > _MAX_AUDIT_READ_LIMIT:
+        raise ValueError("limit is outside the allowed range")
+    return value
 
 
 # ═══ Audit Trail Endpoints ═══════════════════════════════════════════════
@@ -26,12 +55,16 @@ def get_audit_trail(
     tenant_id: str | None = None,
     action: str | None = None,
     outcome: str | None = None,
-    limit: int = 50,
+    limit: str = "50",
 ):
     """Query the audit trail with optional filters."""
     deps.metrics.inc("requests_governed")
+    try:
+        read_limit = _coerce_audit_read_limit(limit)
+    except ValueError as error:
+        _raise_audit_read_validation_error(error)
     entries = deps.audit_trail.query(
-        tenant_id=scoped_listing_tenant(request, tenant_id), action=action, outcome=outcome, limit=limit,
+        tenant_id=scoped_listing_tenant(request, tenant_id), action=action, outcome=outcome, limit=read_limit,
     )
     return {
         "entries": [
@@ -61,9 +94,13 @@ def audit_summary():
 
 
 @router.get("/api/v1/events")
-def list_events(request: Request, event_type: str | None = None, limit: int = 50):
+def list_events(request: Request, event_type: str | None = None, limit: str = "50"):
     """Query governed event bus history."""
-    events = deps.event_bus.history(event_type=event_type, limit=limit)
+    try:
+        read_limit = _coerce_audit_read_limit(limit)
+    except ValueError as error:
+        _raise_audit_read_validation_error(error)
+    events = deps.event_bus.history(event_type=event_type, limit=read_limit)
     scoped = scoped_listing_tenant(request, None)
     if scoped is not None:
         events = [event for event in events if event.tenant_id == scoped]

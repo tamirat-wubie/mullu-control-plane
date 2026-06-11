@@ -143,6 +143,25 @@ class TestAuditEndpoints:
         assert resp.status_code == 200
         assert "entries" in resp.json()
 
+    @pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+    def test_audit_invalid_limit_returns_bounded_422(self, client, limit):
+        resp = client.get("/api/v1/audit", params={"limit": limit})
+
+        assert resp.status_code == 422
+        detail = resp.json()["detail"]
+        assert detail["error"] == "invalid audit/event read request"
+        assert detail["error_code"] == "audit_event_read_invalid_request"
+        assert detail["governed"] is True
+
+    def test_audit_zero_limit_is_empty_read(self, client):
+        client.post("/api/v1/tenant/budget", json={"tenant_id": "zero-limit-audit"})
+
+        resp = client.get("/api/v1/audit", params={"limit": "0"})
+
+        assert resp.status_code == 200
+        assert resp.json()["entries"] == []
+        assert resp.json()["count"] == 0
+
     def test_audit_after_budget_create(self, client):
         client.post("/api/v1/tenant/budget", json={"tenant_id": "audit-test"})
         resp = client.get("/api/v1/audit")

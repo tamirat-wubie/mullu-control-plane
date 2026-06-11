@@ -39,6 +39,25 @@ class TestEventBusEndpoints:
         assert resp.status_code == 200
         assert resp.json()["count"] >= 2
 
+    @pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+    def test_events_invalid_limit_returns_bounded_422(self, client, limit):
+        resp = client.get("/api/v1/events", params={"limit": limit})
+
+        assert resp.status_code == 422
+        detail = resp.json()["detail"]
+        assert detail["error"] == "invalid audit/event read request"
+        assert detail["error_code"] == "audit_event_read_invalid_request"
+        assert detail["governed"] is True
+
+    def test_events_zero_limit_is_empty_read(self, client):
+        client.post("/api/v1/events/publish", json={"event_type": "zero.limit"})
+
+        resp = client.get("/api/v1/events", params={"limit": "0"})
+
+        assert resp.status_code == 200
+        assert resp.json()["events"] == []
+        assert resp.json()["count"] == 0
+
     def test_filter_events_by_type(self, client):
         client.post("/api/v1/events/publish", json={"event_type": "x.test"})
         client.post("/api/v1/events/publish", json={"event_type": "y.test"})
