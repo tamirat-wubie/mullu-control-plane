@@ -82,9 +82,9 @@ jobs:
             exit 1
           fi
           mkdir -p .change_assurance/private
-          printf "%s" "$MULLU_VOICE_PROBE_AUDIO_B64" | base64 -d > .change_assurance/private/voice_probe_audio
-          chmod 600 .change_assurance/private/voice_probe_audio
-          echo "MULLU_VOICE_PROBE_AUDIO=.change_assurance/private/voice_probe_audio" >> "$GITHUB_ENV"
+          printf "%s" "$MULLU_VOICE_PROBE_AUDIO_B64" | base64 -d > .change_assurance/private/voice_probe_audio.wav
+          chmod 600 .change_assurance/private/voice_probe_audio.wav
+          echo "MULLU_VOICE_PROBE_AUDIO=.change_assurance/private/voice_probe_audio.wav" >> "$GITHUB_ENV"
 
       - name: Verify governed adapter secret bindings
         env:
