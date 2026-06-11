@@ -312,8 +312,8 @@ def test_holistic_loop_kernel_witness_labels_have_exact_anchors() -> None:
         for record in holistic_integrity["anchored_witnesses"]
     }
 
-    assert holistic_integrity["runtime_witness_count"] == 27
-    assert holistic_integrity["exact_test_anchor_count"] == 27
+    assert holistic_integrity["runtime_witness_count"] == 28
+    assert holistic_integrity["exact_test_anchor_count"] == 28
     assert holistic_integrity["unanchored_witness_count"] == 0
     assert holistic_integrity["unanchored_witnesses"] == []
     assert anchors_by_witness["registered_loops_expose_governed_manifest_fields"] == {
@@ -462,6 +462,12 @@ def test_holistic_loop_kernel_witness_labels_have_exact_anchors() -> None:
         (
             "tests/test_validate_holistic_loop_kernel_freeze.py::"
             "test_holistic_loop_witness_integrity_has_zero_unanchored_labels"
+        )
+    }
+    assert anchors_by_witness["holistic_loop_extension_admission_guards_default_registry"] == {
+        (
+            "tests/test_validate_holistic_loop_extension_admission.py::"
+            "test_holistic_loop_extension_admission_guards_default_registry"
         )
     }
 
