@@ -83,6 +83,23 @@ def test_promotion_closure_plan_schema_accepts_portfolio_source_actions(tmp_path
     assert validation.source_plan_types == ("adapter", "deployment", "portfolio")
 
 
+def test_promotion_closure_plan_schema_accepts_portfolio_only_after_source_ready(tmp_path: Path) -> None:
+    plan_path = tmp_path / "general_agent_promotion_closure_plan.json"
+    payload = _portfolio_only_ready_plan()
+    plan_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    validation = validate_general_agent_promotion_closure_plan_schema(
+        plan_path=plan_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is True
+    assert validation.errors == ()
+    assert validation.action_count == 1
+    assert validation.approval_required_action_count == 1
+    assert validation.source_plan_types == ("portfolio",)
+
+
 def test_promotion_closure_plan_schema_accepts_execution_environment(tmp_path: Path) -> None:
     plan_path = tmp_path / "general_agent_promotion_closure_plan.json"
     payload = _valid_plan()
@@ -120,7 +137,7 @@ def test_promotion_closure_plan_schema_rejects_missing_source_tag(tmp_path: Path
     assert validation.ok is False
     assert validation.action_count == 2
     assert any("source_plan_type" in error for error in validation.errors)
-    assert any("adapter source actions" in error for error in validation.errors)
+    assert any("adapter blockers" in error for error in validation.errors)
 
 
 def test_promotion_closure_plan_schema_bounds_malformed_json_detail(tmp_path: Path) -> None:
@@ -293,5 +310,35 @@ def _valid_plan() -> dict[str, object]:
                 "approval_required": False,
                 "source_plan_type": "deployment",
             },
+        ],
+    }
+
+
+def _portfolio_only_ready_plan() -> dict[str, object]:
+    return {
+        "plan_id": "general-agent-promotion-closure-plan-fedcba9876543210",
+        "readiness_level": "production-general-agent",
+        "source_ready": True,
+        "total_action_count": 1,
+        "approval_required_action_count": 1,
+        "source_plans": [
+            ".change_assurance/capability_adapter_closure_plan.json",
+            ".change_assurance/deployment_publication_closure_plan.json",
+            ".change_assurance/capability_improvement_portfolio.json",
+        ],
+        "blockers": [],
+        "actions": [
+            {
+                "action_id": "capability-improvement-financial-refund-0123456789abcdef",
+                "action_type": "capability-improvement",
+                "blocker": "capability_improvement_required:financial.refund",
+                "command": "Review activation-blocked improvement plan.",
+                "verification_command": "python -m pytest tests/test_gateway/test_autonomous_capability_upgrade.py -q",
+                "receipt_validator": "capability_improvement_portfolio:portfolio-hash:plan-id",
+                "evidence_required": ["capability_health:financial.refund"],
+                "risk_level": "critical",
+                "approval_required": True,
+                "source_plan_type": "portfolio",
+            }
         ],
     }

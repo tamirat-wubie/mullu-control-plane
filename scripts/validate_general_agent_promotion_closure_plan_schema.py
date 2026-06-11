@@ -11,8 +11,8 @@ Invariants:
   - Adapter closure actions carry verification commands and receipt validators.
   - Action counts are derived from the action list, not trusted blindly.
   - Approval-required counts are recomputed from action payloads.
-  - Non-empty plans must contain adapter source actions; deployment actions may
-    be absent after deployment publication closure is verified.
+  - Non-empty plans with adapter blockers must contain adapter source actions;
+    deployment and adapter actions may be absent after their evidence closes.
   - Portfolio source actions must carry approval and proof fields.
 """
 
@@ -85,8 +85,10 @@ def validate_general_agent_promotion_closure_plan_schema(
         errors.append("approval_required_action_count does not match actions")
     if approval_required_count > action_count:
         errors.append("approval_required_action_count cannot exceed total_action_count")
-    if action_count and "adapter" not in set(source_plan_types):
-        errors.append("non-empty promotion closure plan must include adapter source actions")
+    if action_count and _has_adapter_blockers(plan) and "adapter" not in set(source_plan_types):
+        errors.append("promotion closure plan with adapter blockers must include adapter source actions")
+    if action_count and set(source_plan_types) == {"portfolio"} and plan.get("source_ready") is not True:
+        errors.append("portfolio-only promotion closure plan requires source_ready=true")
     for index, action in enumerate(actions):
         source_plan_type = action.get("source_plan_type")
         if source_plan_type in {"adapter", "portfolio"}:
@@ -152,6 +154,23 @@ def _actions(plan: dict[str, Any], errors: list[str]) -> tuple[dict[str, Any], .
         errors.append("actions must be a list")
         return ()
     return tuple(action for action in actions if isinstance(action, dict))
+
+
+def _has_adapter_blockers(plan: dict[str, Any]) -> bool:
+    blockers = plan.get("blockers", ())
+    if not isinstance(blockers, list):
+        return False
+    return any(_is_adapter_blocker(str(blocker)) for blocker in blockers)
+
+
+def _is_adapter_blocker(blocker: str) -> bool:
+    return (
+        blocker.startswith("adapter_")
+        or blocker.startswith("browser_")
+        or blocker.startswith("document_")
+        or blocker.startswith("voice_")
+        or blocker.startswith("email_calendar_")
+    )
 
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:

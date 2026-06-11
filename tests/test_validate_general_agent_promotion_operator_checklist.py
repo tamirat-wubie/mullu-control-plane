@@ -26,27 +26,29 @@ def test_validate_promotion_operator_checklist_accepts_example() -> None:
 def test_validate_promotion_operator_checklist_rejects_missing_approval_blocker(tmp_path: Path) -> None:
     checklist_path = tmp_path / "promotion_operator_checklist.json"
     payload = json.loads(CHECKLIST_PATH.read_text(encoding="utf-8"))
-    payload["approval_required_blockers"].remove("voice_dependency_missing:OPENAI_API_KEY")
+    payload["approval_required_blockers"].remove("capability_improvement_required:financial.refund")
     checklist_path.write_text(json.dumps(payload), encoding="utf-8")
 
     result = validate_general_agent_promotion_operator_checklist(checklist_path)
 
     assert result.valid is False
     assert any("approval_required_blockers missing" in error for error in result.errors)
-    assert any("OPENAI_API_KEY" in error for error in result.errors)
+    assert any("financial.refund" in error for error in result.errors)
 
 
 def test_validate_promotion_operator_checklist_rejects_missing_conditional_blocker(tmp_path: Path) -> None:
     checklist_path = tmp_path / "promotion_operator_checklist.json"
     payload = json.loads(CHECKLIST_PATH.read_text(encoding="utf-8"))
-    payload["conditional_approval_blockers"].remove("email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN")
+    payload["conditional_approval_blockers"].remove(
+        "capability_improvement_required:agentic_control.governance_gate.evaluate"
+    )
     checklist_path.write_text(json.dumps(payload), encoding="utf-8")
 
     result = validate_general_agent_promotion_operator_checklist(checklist_path)
 
     assert result.valid is False
     assert any("conditional_approval_blockers missing" in error for error in result.errors)
-    assert any("EMAIL_CALENDAR_CONNECTOR_TOKEN" in error for error in result.errors)
+    assert any("governance_gate.evaluate" in error for error in result.errors)
 
 
 def test_validate_promotion_operator_checklist_rejects_command_drift(tmp_path: Path) -> None:

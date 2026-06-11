@@ -207,8 +207,8 @@ def _ready_report() -> dict[str, object]:
         "checked_at": "2026-05-01T12:00:00+00:00",
         "missing_environment_variables": [],
         "environment_binding_actions": [],
-        "production_ready": False,
-        "readiness_level": "pilot-governed-core",
+        "production_ready": True,
+        "readiness_level": "production-general-agent",
         "ready": True,
         "step_count": 10,
         "steps": [
@@ -222,10 +222,10 @@ def _ready_report() -> dict[str, object]:
             {"detail": "valid=true", "name": "environment binding contract validation", "passed": True},
             {"detail": "valid=true", "name": "environment binding receipt validation", "passed": True},
             {"detail": "all required environment variables are present", "name": "required environment bindings", "passed": True},
-            {"detail": "ok=true action_count=5 approval_required_action_count=0 blocker_count=5", "name": "adapter closure schema validation", "passed": True},
-            {"detail": "ok=true action_count=7 approval_required_action_count=4 source_plan_types=['adapter', 'deployment']", "name": "closure plan schema validation", "passed": True},
-            {"detail": "ok=true expected_action_count=7 observed_action_count=7 expected_approval_required_count=4 observed_approval_required_count=4", "name": "closure plan drift validation", "passed": True},
-            {"detail": "readiness_level=pilot-governed-core capability_count=80 capsule_count=13 production_ready=false", "name": "promotion readiness report", "passed": True},
+            {"detail": "ok=true action_count=0 approval_required_action_count=0 blocker_count=0", "name": "adapter closure schema validation", "passed": True},
+            {"detail": "ok=true action_count=5 approval_required_action_count=5 source_plan_types=['portfolio']", "name": "closure plan schema validation", "passed": True},
+            {"detail": "ok=true expected_action_count=5 observed_action_count=5 expected_approval_required_count=5 observed_approval_required_count=5", "name": "closure plan drift validation", "passed": True},
+            {"detail": "readiness_level=production-general-agent capability_count=80 capsule_count=13 production_ready=true", "name": "promotion readiness report", "passed": True},
         ],
     }
 

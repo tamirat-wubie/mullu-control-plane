@@ -19,7 +19,7 @@ def test_handoff_packet_avoids_forbidden_terminology() -> None:
 
     assert FORBIDDEN_PHRASE not in packet_text.lower()
     assert "General-Agent Promotion Handoff Packet" in packet_text
-    assert "pilot-governed-core" in packet_text
+    assert "production-general-agent" in packet_text
 
 
 def test_handoff_packet_links_operator_artifacts() -> None:
@@ -64,13 +64,15 @@ def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
     packet_text = _packet_text()
     packet = json.loads(PACKET_JSON.read_text(encoding="utf-8"))
     aggregate_closure_actions = packet["aggregate_closure_actions"]
-    expected_blockers = {
+    retired_blockers = {
         "adapter_evidence_not_closed",
         "voice_adapter_not_closed",
         "email_calendar_adapter_not_closed",
     }
 
-    assert expected_blockers <= set(packet_text.split())
+    assert packet["open_blockers"] == []
+    assert "```text\nnone\n```" in packet_text
+    assert retired_blockers.isdisjoint(set(packet_text.split()))
     assert "document_adapter_not_closed" not in packet_text
     assert f"Aggregate closure actions | {aggregate_closure_actions}" in packet_text
     assert f"Approval-required actions | {packet['approval_required_actions']}" in packet_text

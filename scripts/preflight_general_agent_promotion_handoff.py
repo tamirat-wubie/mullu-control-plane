@@ -54,10 +54,10 @@ DEFAULT_READINESS = REPO_ROOT / ".change_assurance" / "general_agent_promotion_r
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "general_agent_promotion_handoff_preflight.json"
 DEFAULT_CAPABILITY_ROOT = REPO_ROOT / "capabilities"
 DEFAULT_CAPSULE_ROOT = REPO_ROOT / "capsules"
-EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT = 4
-EXPECTED_READINESS_LEVEL = "pilot-governed-core"
-EXPECTED_SOURCE_PLAN_TYPES = ("adapter",)
-OPTIONAL_SOURCE_PLAN_TYPES = ("deployment", "portfolio")
+EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT = 5
+EXPECTED_READINESS_LEVEL = "production-general-agent"
+EXPECTED_SOURCE_PLAN_TYPES = ("portfolio",)
+OPTIONAL_SOURCE_PLAN_TYPES = ("adapter", "deployment")
 
 EnvReader = Callable[[str], str | None]
 
@@ -310,9 +310,9 @@ def _adapter_schema_report_step(path: Path) -> HandoffPreflightStep:
     passed = (
         payload.get("ok") is True
         and isinstance(action_count, int)
-        and action_count > 0
+        and action_count >= 0
         and isinstance(blocker_count, int)
-        and blocker_count > 0
+        and blocker_count >= 0
         and isinstance(approval_required_count, int)
         and 0 <= approval_required_count <= action_count
     )
@@ -427,18 +427,19 @@ def _readiness_report_step(
     production_ready = payload.get("ready") is True
     passed = (
         readiness_level == EXPECTED_READINESS_LEVEL
+        and production_ready
         and payload.get("capability_count") == expected_capability_count
         and payload.get("capsule_count") == expected_capsule_count
     )
     expected_detail = (
-        f"readiness_level=pilot-governed-core capability_count={expected_capability_count} "
-        f"capsule_count={expected_capsule_count} production_ready=false"
+            f"readiness_level={EXPECTED_READINESS_LEVEL} capability_count={expected_capability_count} "
+            f"capsule_count={expected_capsule_count} production_ready=true"
     )
     detail = (
         expected_detail
         if passed
         else (
-            "expected pilot-governed-core counts from checked-in capability fabric; "
+            f"expected {EXPECTED_READINESS_LEVEL} counts from checked-in capability fabric; "
             f"expected_capability_count={expected_capability_count} "
             f"expected_capsule_count={expected_capsule_count}; "
             f"observed={_public_report_projection(payload)}"

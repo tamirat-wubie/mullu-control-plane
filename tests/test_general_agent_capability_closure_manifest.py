@@ -23,14 +23,14 @@ def test_manifest_uses_symbolic_intelligence_terminology() -> None:
 
     assert FORBIDDEN_PHRASE not in manifest_text.lower()
     assert "symbolic intelligence" in manifest_text
-    assert "public-production claim" in manifest_text
+    assert "production-general-agent readiness claim" in manifest_text
     assert "\u00e2" not in manifest_text
 
 
 def test_manifest_records_current_promotion_readiness_stamp() -> None:
     manifest_text = _manifest_text()
 
-    assert "`pilot-governed-core`" in manifest_text
+    assert "`production-general-agent`" in manifest_text
     assert "13 capsules" in manifest_text
     assert "80 capabilities" in manifest_text
     assert "deployment.witness.publish.with_approval" in manifest_text
@@ -66,7 +66,7 @@ def test_manifest_records_current_promotion_readiness_stamp() -> None:
 
 def test_manifest_preserves_open_blocker_traceability() -> None:
     manifest_text = _manifest_text()
-    expected_blockers = {
+    retired_blockers = {
         "adapter_evidence_not_closed",
         "voice_adapter_not_closed",
         "email_calendar_adapter_not_closed",
@@ -75,7 +75,8 @@ def test_manifest_preserves_open_blocker_traceability() -> None:
     }
 
     assert "Open Production Blockers" in manifest_text
-    assert expected_blockers <= set(manifest_text.split())
+    assert "```text\nnone\n```" in manifest_text
+    assert retired_blockers.isdisjoint(set(manifest_text.split()))
     assert "document_adapter_not_closed" not in manifest_text
     assert ".change_assurance/capability_adapter_closure_plan.json" in manifest_text
     assert ".change_assurance/deployment_publication_closure_plan.json" in manifest_text

@@ -16,7 +16,7 @@ from scripts.preflight_general_agent_promotion_handoff import (
 )
 
 
-DEFAULT_ACTION_COUNT = 13
+DEFAULT_ACTION_COUNT = 5
 REQUIRED_ENV = {
     "MULLU_BROWSER_SANDBOX_EVIDENCE",
     "MULLU_VOICE_PROBE_AUDIO",
@@ -47,8 +47,8 @@ def test_handoff_preflight_blocks_missing_environment_bindings(tmp_path: Path) -
     assert "required environment bindings" in report.blockers
     assert report.step_count == 10
     assert "MULLU_GATEWAY_URL" in report.missing_environment_variables
-    assert report.readiness_level == "pilot-governed-core"
-    assert report.production_ready is False
+    assert report.readiness_level == "production-general-agent"
+    assert report.production_ready is True
     assert any("MULLU_GATEWAY_URL" in step.detail for step in report.steps)
     assert len(report.environment_binding_actions) == len(REQUIRED_ENV)
     gateway_action = next(action for action in report.environment_binding_actions if action.name == "MULLU_GATEWAY_URL")
@@ -75,7 +75,7 @@ def test_handoff_preflight_missing_readiness_keeps_report_contract(tmp_path: Pat
     )
 
     assert report.ready is False
-    assert report.readiness_level == "pilot-governed-core"
+    assert report.readiness_level == "production-general-agent"
     assert report.production_ready is False
     assert report.blockers == ("promotion readiness report",)
 
@@ -207,8 +207,8 @@ def test_handoff_preflight_rejects_drift_count_mismatch(tmp_path: Path) -> None:
                 "ok": True,
                 "expected_action_count": DEFAULT_ACTION_COUNT,
                 "observed_action_count": DEFAULT_ACTION_COUNT - 1,
-                "expected_approval_required_count": 4,
-                "observed_approval_required_count": 4,
+                "expected_approval_required_count": 5,
+                "observed_approval_required_count": 5,
             }
         ),
         encoding="utf-8",
@@ -236,9 +236,9 @@ def test_handoff_preflight_accepts_matching_generated_action_count(tmp_path: Pat
         json.dumps(
             {
                 "ok": True,
-                "action_count": 5,
+                "action_count": 0,
                 "approval_required_action_count": 0,
-                "blocker_count": 5,
+                "blocker_count": 0,
             }
         ),
         encoding="utf-8",
@@ -248,8 +248,8 @@ def test_handoff_preflight_accepts_matching_generated_action_count(tmp_path: Pat
             {
                 "ok": True,
                 "action_count": generated_action_count,
-                "approval_required_action_count": 4,
-                "source_plan_types": ["adapter", "deployment"],
+                "approval_required_action_count": 5,
+                "source_plan_types": ["portfolio"],
             }
         ),
         encoding="utf-8",
@@ -260,8 +260,8 @@ def test_handoff_preflight_accepts_matching_generated_action_count(tmp_path: Pat
                 "ok": True,
                 "expected_action_count": generated_action_count,
                 "observed_action_count": generated_action_count,
-                "expected_approval_required_count": 4,
-                "observed_approval_required_count": 4,
+                "expected_approval_required_count": 5,
+                "observed_approval_required_count": 5,
             }
         ),
         encoding="utf-8",
@@ -294,7 +294,7 @@ def test_handoff_preflight_rejects_impossible_adapter_approval_count(tmp_path: P
             {
                 "ok": True,
                 "action_count": 3,
-                "approval_required_action_count": 4,
+                "approval_required_action_count": 5,
                 "blocker_count": 3,
             }
         ),
@@ -369,8 +369,8 @@ def test_handoff_preflight_rejects_schema_and_drift_count_disagreement(tmp_path:
                 "ok": True,
                 "expected_action_count": 8,
                 "observed_action_count": 8,
-                "expected_approval_required_count": 4,
-                "observed_approval_required_count": 4,
+                "expected_approval_required_count": 5,
+                "observed_approval_required_count": 5,
             }
         ),
         encoding="utf-8",
@@ -448,9 +448,9 @@ def _write_valid_reports(
         json.dumps(
             {
                 "ok": True,
-                "action_count": 5,
+                "action_count": 0,
                 "approval_required_action_count": 0,
-                "blocker_count": 5,
+                "blocker_count": 0,
             }
         ),
         encoding="utf-8",
@@ -460,8 +460,8 @@ def _write_valid_reports(
             {
                 "ok": True,
                 "action_count": action_count,
-                "approval_required_action_count": 4,
-                "source_plan_types": ["adapter", "deployment"],
+                "approval_required_action_count": 5,
+                "source_plan_types": ["portfolio"],
             }
         ),
         encoding="utf-8",
@@ -472,8 +472,8 @@ def _write_valid_reports(
                 "ok": True,
                 "expected_action_count": action_count,
                 "observed_action_count": action_count,
-                "expected_approval_required_count": 4,
-                "observed_approval_required_count": 4,
+                "expected_approval_required_count": 5,
+                "observed_approval_required_count": 5,
             }
         ),
         encoding="utf-8",
@@ -481,8 +481,8 @@ def _write_valid_reports(
     readiness.write_text(
         json.dumps(
             {
-                "ready": False,
-                "readiness_level": "pilot-governed-core",
+                "ready": True,
+                "readiness_level": "production-general-agent",
                 "capability_count": 80,
                 "capsule_count": 13,
             }

@@ -1,13 +1,13 @@
 <!--
 > **In one box:** Step-by-step for operators to execute the general-agent
-> promotion closure. It deliberately does not claim production-ready until
-> evidence validates. New? See the Plain-English Overview
+> promotion final validation. Production readiness is evidence-bound and
+> terminal minting remains authority-gated. New? See the Plain-English Overview
 > (docs/explain/PLAIN_ENGLISH.md). *(Doc type: How-to.)*
 
-Purpose: Operator runbook for executing the governed general-agent promotion closure plan.
-Governance scope: Adapter evidence, credential binding, upstream API/DNS readiness, deployment witness publication, health declaration, and promotion validation.
+Purpose: Operator runbook for executing governed general-agent promotion final validation.
+Governance scope: Adapter evidence, credential binding, upstream API/DNS readiness, deployment witness publication, health declaration, residual portfolio review, and promotion validation.
 Dependencies: scripts/collect_capability_adapter_evidence.py, scripts/run_general_agent_promotion_closure_chain.py, scripts/plan_general_agent_promotion_closure.py, scripts/plan_general_agent_promotion_live_evidence_queue.py, scripts/validate_general_agent_promotion_terminal_approvals.py, scripts/plan_general_agent_promotion_terminal_certificate_gate.py, scripts/plan_general_agent_promotion_terminal_certificate_candidates.py, scripts/reconcile_general_agent_promotion_terminal_evidence.py, scripts/collect_deployment_publication_evidence_packet.py, scripts/validate_deployment_publication_evidence_packet.py, scripts/emit_deployment_publication_operator_input_request.py, scripts/validate_deployment_publication_operator_input_request.py, scripts/emit_deployment_upstream_blocker_receipt.py, scripts/validate_deployment_upstream_blocker_receipt.py, scripts/emit_gateway_dns_target_binding_receipt.py, scripts/validate_gateway_dns_target_binding_receipt.py, scripts/collect_gateway_dns_resolution_receipt.py, scripts/validate_gateway_dns_resolution_receipt.py, scripts/validate_general_agent_promotion_closure_plan_schema.py, scripts/validate_general_agent_promotion_closure_plan.py, DEPLOYMENT_STATUS.md.
-Invariants: Does not claim production readiness before live evidence, approval, and publication closure validate.
+Invariants: Production readiness remains evidence-bound; terminal certificate minting requires explicit authority.
 -->
 
 # General-Agent Promotion Operator Runbook
@@ -40,10 +40,10 @@ The current expected aggregate plan contains:
 
 | Measure | Value |
 | --- | ---: |
-| Total closure actions | 11 |
-| Approval-required actions | 7 |
-| Source plan types | `adapter`, `portfolio`; `deployment` source actions may be closed |
-| Current readiness level | `pilot-governed-core` |
+| Total closure actions | 5 |
+| Approval-required actions | 5 |
+| Source plan types | `portfolio`; `adapter` and `deployment` source actions are closed |
+| Current readiness level | `production-general-agent` |
 
 ## Prerequisites
 
@@ -89,7 +89,7 @@ python scripts\emit_general_agent_promotion_environment_binding_receipt.py --out
 python scripts\validate_general_agent_promotion_environment_binding_receipt.py --receipt .change_assurance\general_agent_promotion_environment_binding_receipt.json --require-ready --json
 ```
 
-1. Generate the non-production evidence and plans:
+1. Generate the evidence and plans:
 
 ```powershell
 python scripts\collect_capability_adapter_evidence.py --output .change_assurance\capability_adapter_evidence.json
@@ -140,14 +140,9 @@ The executor must produce `terminal_certificates_minted=true` only when every em
 
 9. Inspect `.change_assurance\general_agent_promotion_closure_plan.json`.
 
-10. Complete dependency actions in the adapter-worker images.
+10. Confirm adapter-worker dependency actions and governed credential bindings are already closed by the live-evidence witness.
 
-11. Complete approval-required credential actions:
-
-```text
-voice_dependency_missing:OPENAI_API_KEY
-email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN
-```
+11. Complete only the residual approval-required portfolio review actions when those actions are in scope for terminal certificate minting.
 
 12. Produce live adapter receipts:
 

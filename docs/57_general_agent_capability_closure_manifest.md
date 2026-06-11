@@ -7,7 +7,7 @@
 Purpose: Human-readable closure manifest for the governed general-agent capability buildout.
 Governance scope: Records the capability families, readiness stamp, production blockers, and verification evidence.
 Dependencies: docs/56_general_agent_capability_roadmap.md, scripts/validate_general_agent_promotion.py, scripts/plan_capability_adapter_closure.py, scripts/plan_deployment_publication_closure.py, scripts/plan_general_agent_promotion_closure.py, scripts/plan_general_agent_promotion_live_evidence_queue.py, scripts/validate_general_agent_promotion_terminal_approvals.py, scripts/plan_general_agent_promotion_terminal_certificate_gate.py, scripts/plan_general_agent_promotion_terminal_certificate_candidates.py, scripts/reconcile_general_agent_promotion_terminal_evidence.py, scripts/validate_general_agent_promotion_closure_plan.py, capability packs, capsules, gateway tests.
-Invariants: Uses symbolic intelligence terminology, separates built governed capability surface from live production evidence, and preserves explicit blocker traceability.
+Invariants: Uses symbolic intelligence terminology, separates production readiness from terminal minting authority, and preserves explicit blocker traceability.
 -->
 
 # General Agent Capability Closure Manifest
@@ -20,7 +20,7 @@ The current build moves Mullu from prompt-only extension toward governed capabil
 | --- | ---: |
 | Capability capsules | 13 capsules |
 | Governed capabilities | 80 capabilities |
-| Promotion readiness level | `pilot-governed-core` |
+| Promotion readiness level | `production-general-agent` |
 
 The closure boundary is precise:
 
@@ -33,7 +33,9 @@ Mullu control plane
 -> promotion-readiness validation
 ```
 
-This is not a public-production claim. It is a governed-core readiness claim with explicit adapter and deployment blockers still open.
+This is a production-general-agent readiness claim backed by named evidence. It
+is not a terminal certificate minting claim and does not grant unrestricted
+external-effect authority.
 
 ## Capability Families Closed
 
@@ -80,17 +82,18 @@ This is not a public-production claim. It is a governed-core readiness claim wit
 
 ## Open Production Blockers
 
-The readiness validator still reports these blockers:
+The strict readiness validator reports no adapter, deployment witness, or public
+health blockers after the credentialed live-evidence run.
 
 ```text
-adapter_evidence_not_closed
-voice_adapter_not_closed
-email_calendar_adapter_not_closed
-deployment_witness_not_published
-production_health_not_declared
+none
 ```
 
-These blockers mean the governed contracts exist, but browser, voice, email/calendar, public deployment witness publication, and declared production health are not yet closed. Document parser adapter evidence is closed; external document send, sign, and submit effects remain approval-gated.
+Closed evidence means the governed contracts, concrete adapters, dependency
+checks, live receipts, deployment witness publication, and public health
+declaration are represented by named evidence. External document send, sign,
+submit, voice-initiated external actions, email send, and calendar write effects
+remain approval-gated and require separate effect receipts.
 
 ## Algorithm
 
@@ -107,7 +110,7 @@ The promotion-readiness path is:
 The adapter-closure planning path is:
 
 1. Collect adapter evidence into `.change_assurance/capability_adapter_evidence.json`.
-2. Preserve every blocker from browser, document, voice, and email/calendar evidence.
+2. Preserve every blocker from browser, document, voice, and email/calendar evidence when a blocker is present.
 3. Map dependency blockers to image/runtime installation actions.
 4. Map credential blockers to governed secret-store actions with approval.
 5. Map live-evidence blockers to receipt-production commands.
@@ -136,7 +139,7 @@ The aggregate promotion-closure schema validation path is:
 1. Load `schemas/general_agent_promotion_closure_plan.schema.json`.
 2. Validate `.change_assurance/general_agent_promotion_closure_plan.json`.
 3. Recompute total action and approval-required action counts.
-4. Require non-empty plans to include adapter and deployment source actions.
+4. Permit portfolio-only residual plans when adapter and deployment evidence is closed.
 5. Write `.change_assurance/general_agent_promotion_closure_plan_schema_validation.json`.
 
 The aggregate promotion-closure validation path is:
@@ -250,13 +253,13 @@ Latest local verification covered:
 The generated readiness artifact reported:
 
 ```text
-readiness_level: pilot-governed-core
+readiness_level: production-general-agent
 capability_count: 80
 capsule_count: 13
 ```
 
 STATUS:
-  Completeness: 97%
-  Invariants verified: [governed capability count recorded, capsule count recorded, production blockers explicit, adapter closure plan bound to evidence, deployment closure plan approval-gated, aggregate promotion closure plan source-tagged, aggregate closure plan schema gate present, aggregate closure plan validation gate present, live-evidence queue classification present, terminal approval receipt validation present, terminal certificate gate classification present, terminal certificate candidate planning present, terminal evidence reconciliation present, terminal minting gate present, terminal certificate minting executor present, operator execution runbook present, machine-readable operator checklist present, single handoff packet present, schema-backed handoff packet present, deployment witness capability named, public-production claim avoided]
-  Open issues: [live adapter evidence, deployment witness publication, production health declaration]
-  Next action: run the aggregate promotion closure plan after live worker dependencies, governed connector credentials, and deployment publication approval are available
+  Completeness: 99%
+  Invariants verified: [governed capability count recorded, capsule count recorded, production blockers absent, adapter closure evidence bound, deployment closure evidence bound, aggregate promotion closure plan source-tagged, aggregate closure plan schema gate present, aggregate closure plan validation gate present, live-evidence queue classification present, terminal approval receipt validation present, terminal certificate gate classification present, terminal certificate candidate planning present, terminal evidence reconciliation present, terminal minting gate present, terminal certificate minting executor present, operator execution runbook present, machine-readable operator checklist present, single handoff packet present, schema-backed handoff packet present, deployment witness capability named, terminal minting authority remains gated]
+  Open issues: [terminal certificate minting remains authority-gated]
+  Next action: run final strict promotion validation before any terminal certificate minting action

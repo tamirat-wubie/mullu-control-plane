@@ -47,14 +47,20 @@ runtime does not yet behave as intended by the architecture specification.
   evidence are represented through the adapter evidence collector. External
   document send, sign, and submit effects remain approval-gated and require
   separate effect receipts before any production claim.
-- **Voice adapter not production-closed:** An OpenAI-compatible voice adapter
-  exists, but provider credentials, live STT/TTS checks, and deployment evidence
-  are not yet published.
-- **Email/calendar adapter not production-closed:** A signed email/calendar worker
-  contract and bounded Gmail, Google Calendar, and Microsoft Graph HTTP adapter
-  exist for draft/send/read/schedule policy enforcement, but provider credentials,
-  live read-only connector receipts, and deployment receipts are not yet
-  published.
+- **Voice adapter evidence closed for governed STT/TTS scope:** The
+  OpenAI-compatible voice adapter, provider credential binding, temporary
+  approved probe audio path, live STT/TTS receipt, and redacted environment
+  binding receipt are represented by the adapter evidence collector. The
+  closure witness is GitHub Actions run `27370746415`; raw audio remains
+  runner-local and is not uploaded. Broader voice-initiated external actions
+  remain confirmation- and approval-gated.
+- **Email/calendar adapter evidence closed for read-only Gmail scope:** The
+  signed email/calendar worker, bounded Gmail HTTP adapter, provider credential
+  binding, read-only Gmail receipt, and redacted environment binding receipt are
+  represented by the adapter evidence collector. The closure witness is GitHub
+  Actions run `27370746415`. Draft, send, schedule, reschedule, invite, and
+  other external effects remain approval-gated and require separate effect
+  receipts before any broader production claim.
 
 ## Provider Identity
 
