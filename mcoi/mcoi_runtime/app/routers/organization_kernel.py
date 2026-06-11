@@ -762,6 +762,9 @@ def _case_proof_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, 
                 "evidence_refs": closure_gate_evidence["required_gate_evidence_refs"],
             })
     elif closure_certificate is not None:
+        drift_attention = _closure_packet_drift_attention_item(closure_certificate["closure_id"], closure_gate_evidence)
+        if drift_attention is not None:
+            attention_items.append(drift_attention)
         if closure_gate_evidence["unavailable_gate_evidence_refs"]:
             attention_items.append({
                 "kind": "closure_gate_evidence_unavailable",
@@ -799,7 +802,9 @@ def _case_proof_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, 
 
     terminal_status = "awaiting_closure"
     if closure_certificate is not None:
-        if closure_certificate["effect_reconciled"] and closure_certificate["learning_admitted"]:
+        if closure_gate_evidence["closure_packet_drift"]:
+            terminal_status = "closed_packet_drift"
+        elif closure_certificate["effect_reconciled"] and closure_certificate["learning_admitted"]:
             terminal_status = "closed_verified"
         elif closure_certificate["effect_reconciled"]:
             terminal_status = "closed_awaiting_learning"
@@ -1621,6 +1626,10 @@ def _closure_gate_evidence_projection(proof: dict[str, Any]) -> dict[str, Any]:
         ref for ref in required_refs
         if isinstance(closure_certificate, dict) and ref not in closure_ref_set
     ]
+    superseded_closure_refs = [
+        ref for ref in closure_refs
+        if required_refs and ref not in required_refs
+    ]
     stale_step_ids = [
         item["step_id"] for item in stale_gate_decisions
         if isinstance(item.get("step_id"), str)
@@ -1636,12 +1645,32 @@ def _closure_gate_evidence_projection(proof: dict[str, Any]) -> dict[str, Any]:
         "unavailable_gate_evidence_refs": unavailable_refs,
         "closure_evidence_refs": closure_refs,
         "omitted_gate_evidence_refs": omitted_refs,
+        "superseded_closure_evidence_refs": superseded_closure_refs,
+        "closure_packet_drift_refs": omitted_refs,
+        "closure_packet_drift": bool(omitted_refs),
         "stale_gate_decisions": stale_gate_decisions,
         "stale_gate_step_ids": stale_step_ids,
         "newer_gate_evidence_refs": newer_gate_evidence_refs,
         "gate_decisions_fresh": not stale_gate_decisions,
         "closure_packet_present": isinstance(closure_certificate, dict),
         "ready_for_closure_packet": bool(required_refs) and not unavailable_refs and not stale_gate_decisions,
+    }
+
+
+def _closure_packet_drift_attention_item(
+    ref: str,
+    closure_gate_evidence: dict[str, Any],
+) -> dict[str, object] | None:
+    drift_refs = closure_gate_evidence.get("closure_packet_drift_refs", [])
+    if not drift_refs:
+        return None
+    return {
+        "kind": "closure_packet_drift",
+        "severity": "blocker",
+        "ref": ref,
+        "message": "terminal closure packet predates the latest allowed gate evidence; issue review or compensation before relying on closure",
+        "evidence_refs": drift_refs,
+        "superseded_evidence_refs": closure_gate_evidence.get("superseded_closure_evidence_refs", []),
     }
 
 
@@ -1661,12 +1690,15 @@ def _closure_gate_stale_attention_item(
         "evidence_refs": closure_gate_evidence.get("newer_gate_evidence_refs", []),
     }
 
-
 def _case_closure_certificate(kernel: OrganizationKernel, case_id: str) -> dict[str, Any]:
     proof = _case_proof_timeline(kernel, case_id)
     closure_certificate = proof["closure_certificate"]
-    status = _closure_status(closure_certificate)
     closure_gate_evidence = _closure_gate_evidence_projection(proof)
+    status = (
+        "closed_packet_drift"
+        if closure_gate_evidence["closure_packet_drift"]
+        else _closure_status(closure_certificate)
+    )
     attention_items: list[dict[str, object]] = []
     reconciliation: dict[str, Any] | None = None
     learning_admissions: list[dict[str, Any]] = []
@@ -1707,6 +1739,9 @@ def _case_closure_certificate(kernel: OrganizationKernel, case_id: str) -> dict[
                 "ref": closure_certificate["closure_id"],
                 "message": "terminal closure is not bound to an effect reconciliation record",
             })
+        drift_attention = _closure_packet_drift_attention_item(closure_certificate["closure_id"], closure_gate_evidence)
+        if drift_attention is not None:
+            attention_items.append(drift_attention)
         stale_attention = _closure_gate_stale_attention_item(closure_certificate["closure_id"], closure_gate_evidence)
         if stale_attention is not None:
             attention_items.append(stale_attention)
@@ -1798,6 +1833,14 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
                 "admitted": evidence_ref in closure_gate_evidence.get("admitted_gate_evidence_refs", []),
                 "in_closure_packet": evidence_ref in closure_gate_evidence.get("closure_evidence_refs", []),
             })
+    closure_packet_drift_rows: list[dict[str, object]] = []
+    if isinstance(closure_gate_evidence, dict) and closure_gate_evidence.get("closure_packet_drift"):
+        closure_packet_drift_rows.append({
+            "missing_latest_evidence_refs": _text_list(closure_gate_evidence.get("closure_packet_drift_refs", [])),
+            "superseded_closure_evidence_refs": _text_list(
+                closure_gate_evidence.get("superseded_closure_evidence_refs", [])
+            ),
+        })
     gate_freshness_rows: list[dict[str, object]] = []
     if isinstance(closure_gate_evidence, dict):
         gate_freshness_rows = [
@@ -1870,6 +1913,7 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
     {_proof_explorer_table("Attention", ("severity", "kind", "ref", "message"), attention_rows)}
     {_proof_explorer_table("Certificate", ("field", "value"), certificate_rows)}
     {_proof_explorer_table("Gate Evidence", ("evidence_ref", "admitted", "in_closure_packet"), gate_evidence_rows)}
+    {_proof_explorer_table("Closure Packet Drift", ("missing_latest_evidence_refs", "superseded_closure_evidence_refs"), closure_packet_drift_rows)}
     {_proof_explorer_table("Gate Freshness", ("step_id", "decision_id", "decided_at", "newer_evidence_refs", "latest_evidence_at"), gate_freshness_rows)}
     {_proof_explorer_table("Reconciliation", ("field", "value"), reconciliation_rows)}
     {_proof_explorer_table("Evidence Refs", ("evidence_ref",), evidence_rows)}
@@ -2200,6 +2244,9 @@ def _open_case_terminal_status(proof: dict[str, Any]) -> str:
 def _case_portfolio_terminal_status(proof: dict[str, Any]) -> str:
     closure_certificate = proof["closure_certificate"]
     if closure_certificate is not None:
+        closure_gate_evidence = _closure_gate_evidence_projection(proof)
+        if closure_gate_evidence["closure_packet_drift"]:
+            return "closed_packet_drift"
         return _closure_status(closure_certificate)
     return _open_case_terminal_status(proof)
 
@@ -2243,6 +2290,9 @@ def _case_portfolio_attention(case_id: str, proof: dict[str, Any]) -> list[dict[
                 "evidence_refs": closure_gate_evidence["required_gate_evidence_refs"],
             })
     else:
+        drift_attention = _closure_packet_drift_attention_item(closure_certificate["closure_id"], closure_gate_evidence)
+        if drift_attention is not None:
+            attention_items.append(drift_attention)
         if closure_gate_evidence["unavailable_gate_evidence_refs"]:
             attention_items.append({
                 "kind": "closure_gate_evidence_unavailable",
@@ -3878,7 +3928,7 @@ def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) ->
         and not preview_blocked_steps
     )
     if closure is not None:
-        terminal_status = "closed"
+        terminal_status = "closed_packet_drift" if closure_gate_evidence["closure_packet_drift"] else "closed"
     elif missing_evidence:
         terminal_status = "awaiting_evidence"
     elif not approvals:
@@ -3890,7 +3940,7 @@ def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) ->
     else:
         terminal_status = "ready_to_close"
     if closure is not None:
-        preview_terminal_status = "closed"
+        preview_terminal_status = "closed_packet_drift" if closure_gate_evidence["closure_packet_drift"] else "closed"
     elif missing_evidence:
         preview_terminal_status = "awaiting_evidence"
     elif not approvals:
@@ -3914,6 +3964,9 @@ def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) ->
         "preview_blocked_steps": preview_blocked_steps,
         "preview_required_closure_evidence_refs": preview_required_closure_evidence_refs,
         "omitted_closure_gate_evidence_refs": omitted_closure_gate_evidence_refs,
+        "closure_packet_drift": closure_gate_evidence["closure_packet_drift"],
+        "closure_packet_drift_refs": closure_gate_evidence["closure_packet_drift_refs"],
+        "superseded_closure_evidence_refs": closure_gate_evidence["superseded_closure_evidence_refs"],
         "stale_gate_decisions": closure_gate_evidence["stale_gate_decisions"],
         "stale_gate_step_ids": stale_gate_steps,
         "newer_gate_evidence_refs": newer_gate_evidence_refs,
