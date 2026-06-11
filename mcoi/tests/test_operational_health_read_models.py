@@ -288,6 +288,7 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
         "readiness",
         "security_headers",
         "idempotency",
+        "request_dedup",
         "finance_approval",
         "payment_provider",
         "observability",
@@ -299,6 +300,8 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert judgments["bounded_exception_response"]["witness"][-1] == "path_valid"
     assert judgments["idempotency_suppression_path"]["status"] == "allowed"
     assert judgments["idempotency_suppression_path"]["witness"][-1] == "path_valid"
+    assert judgments["request_deduplication_path"]["status"] == "allowed"
+    assert judgments["request_deduplication_path"]["witness"][-1] == "path_valid"
     assert judgments["readiness_launch_gate"]["status"] == "unknown"
     assert judgments["finance_approval_path"]["status"] == "unknown"
     assert judgments["payment_provider_handoff_path"]["status"] == "unknown"
@@ -313,6 +316,7 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert any(blocker.startswith("path:source_to_secret:") for blocker in spatial_map["blockers"])
     assert "bounded_exception_response_crosses_security_header_boundary" in spatial_map["witness"]
     assert "idempotency_boundary_preserves_duplicate_suppression_before_side_effects" in spatial_map["witness"]
+    assert "request_dedup_boundary_preserves_tenant_scoped_replay_suppression" in spatial_map["witness"]
     assert "finance_and_payment_paths_require_approval_and_provider_evidence" in spatial_map["witness"]
     assert "operational_launch_boundaries_require_observability_and_support_evidence" in spatial_map["witness"]
     assert "secret_boundary_blocks_source_to_secret_path" in spatial_map["witness"]
@@ -376,6 +380,18 @@ def test_idempotency_summary_read_model_bounded(client: TestClient) -> None:
     assert payload["governed"] is True
     assert 0.0 <= summary["hit_rate"] <= 1.0
     assert summary["cached_entries"] <= summary["max_entries"]
+
+
+def test_request_dedup_summary_read_model_bounded(client: TestClient) -> None:
+    response = client.get("/api/v1/dedup/summary")
+    payload = response.json()
+    summary = payload["dedup"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert 0.0 <= summary["duplicate_rate"] <= 1.0
+    assert summary["tracked_entries"] <= summary["total_checked"]
+    assert summary["tenants_tracked"] >= 0
 
 
 def test_deployment_readiness_read_model_bounded(client: TestClient) -> None:
