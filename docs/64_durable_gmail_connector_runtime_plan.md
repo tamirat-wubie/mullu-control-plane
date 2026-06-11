@@ -1,7 +1,7 @@
 <!--
 Purpose: Define the governed boundary for durable Gmail connector runtime access after the bounded live adapter evidence proof.
 Governance scope: OAuth authority, least-privilege scope selection, secret redaction, refresh-token lifecycle, revocation, audit receipts, and release blocking.
-Dependencies: gateway/email_calendar_connector_adapters.py, gateway/email_calendar_worker.py, examples/sdlc/requirement_durable_gmail_connector_runtime_20260611.json, examples/sdlc/security_review_durable_gmail_connector_runtime_20260611.json, scripts/validate_durable_gmail_connector_runtime_plan.py.
+Dependencies: gateway/email_calendar_connector_adapters.py, gateway/email_calendar_worker.py, examples/sdlc/requirement_durable_gmail_connector_runtime_20260611.json, examples/sdlc/security_review_durable_gmail_connector_runtime_20260611.json, scripts/validate_durable_gmail_connector_runtime_plan.py, scripts/validate_durable_gmail_oauth_runtime_preflight.py.
 Invariants: No Google Cloud credential creation, OAuth client creation, consent-screen publication, or production verification claim is performed by this repository-local plan.
 -->
 
@@ -75,11 +75,12 @@ Run:
 
 ```powershell
 python scripts\validate_durable_gmail_connector_runtime_plan.py
+python scripts\validate_durable_gmail_oauth_runtime_preflight.py --json
 python scripts\validate_sdlc_security_review.py --review examples\sdlc\security_review_durable_gmail_connector_runtime_20260611.json --strict
-python -m pytest tests\test_durable_gmail_connector_runtime_plan.py -q
+python -m pytest tests\test_durable_gmail_connector_runtime_plan.py tests\test_validate_durable_gmail_oauth_runtime_preflight.py -q
 ```
 
-The validator must pass while still reporting the durable provider-side runtime boundary as not yet production-releasable.
+The plan validator must pass while still reporting the durable provider-side runtime boundary as not yet production-releasable. The OAuth runtime preflight emits a presence-only receipt and remains `AwaitingEvidence` until the required Gmail OAuth scope, durable secret presence, provider witnesses, refresh-token storage receipt, and revocation/recovery receipt exist. It never prints token, refresh-token, client-secret, or private-key values.
 
 STATUS:
   Completeness: 100%
