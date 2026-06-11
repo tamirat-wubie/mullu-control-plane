@@ -286,13 +286,17 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert {boundary["id"] for boundary in spatial_map["boundaries"]} >= {
         "cors",
         "readiness",
+        "security_headers",
         "secrets",
     }
     assert judgments["dashboard_health_check"]["status"] == "allowed"
+    assert judgments["bounded_exception_response"]["status"] == "allowed"
+    assert judgments["bounded_exception_response"]["witness"][-1] == "path_valid"
     assert judgments["readiness_launch_gate"]["status"] == "unknown"
     assert judgments["source_to_secret"]["status"] == "blocked"
     assert "blocked_boundary:secrets" in judgments["source_to_secret"]["reasons"]
     assert any(blocker.startswith("path:source_to_secret:") for blocker in spatial_map["blockers"])
+    assert "bounded_exception_response_crosses_security_header_boundary" in spatial_map["witness"]
     assert "secret_boundary_blocks_source_to_secret_path" in spatial_map["witness"]
 
 
