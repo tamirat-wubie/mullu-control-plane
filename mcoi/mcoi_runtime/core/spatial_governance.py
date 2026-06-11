@@ -183,6 +183,8 @@ def build_gateway_spatial_map(readiness_checks: Mapping[str, bool]) -> SpatialMa
         SpatialEntity("command_ledger", "persistence_runtime", "persistence_zone"),
         SpatialEntity("tenant_identity", "identity_runtime", "identity_zone"),
         SpatialEntity("capability_worker", "private_worker", "private_worker_zone"),
+        SpatialEntity("observability_stack", "operator_evidence", "observability_zone"),
+        SpatialEntity("support_flow", "operator_response", "support_zone"),
         SpatialEntity("secret_rotation", "secret_control", "secret_zone"),
         SpatialEntity("render_host", "deployment_host", "deployment_zone"),
         SpatialEntity("custom_domains", "external_authority", "dns_authority_zone"),
@@ -199,6 +201,8 @@ def build_gateway_spatial_map(readiness_checks: Mapping[str, bool]) -> SpatialMa
         SpatialRegion("persistence_zone", "state_boundary", "guarded"),
         SpatialRegion("identity_zone", "authority_boundary", "guarded"),
         SpatialRegion("private_worker_zone", "execution_boundary", "private"),
+        SpatialRegion("observability_zone", "operator_evidence_boundary", "guarded"),
+        SpatialRegion("support_zone", "incident_response_boundary", "external_evidence_required"),
         SpatialRegion("secret_zone", "credential_boundary", "restricted"),
         SpatialRegion("deployment_zone", "host_boundary", "external"),
         SpatialRegion("dns_authority_zone", "domain_boundary", "external"),
@@ -213,6 +217,8 @@ def build_gateway_spatial_map(readiness_checks: Mapping[str, bool]) -> SpatialMa
         SpatialBoundary("persistence", ("api_boundary", "persistence_zone"), BoundaryRule.REQUIRES_EVIDENCE),
         SpatialBoundary("identity", ("public_browser", "identity_zone"), BoundaryRule.REQUIRES_EVIDENCE),
         SpatialBoundary("worker_private", ("api_boundary", "private_worker_zone"), BoundaryRule.REQUIRES_EVIDENCE),
+        SpatialBoundary("observability", ("api_boundary", "observability_zone"), BoundaryRule.REQUIRES_EVIDENCE),
+        SpatialBoundary("support", ("readiness_zone", "support_zone"), BoundaryRule.REQUIRES_EVIDENCE),
         SpatialBoundary("secrets", ("source_code", "secret_zone"), BoundaryRule.BLOCK),
         SpatialBoundary("dns", ("deployment_zone", "dns_authority_zone"), BoundaryRule.REQUIRES_EVIDENCE),
     )
@@ -225,6 +231,8 @@ def build_gateway_spatial_map(readiness_checks: Mapping[str, bool]) -> SpatialMa
         SpatialPath("readiness_launch_gate", "gateway_api", "public_launch", ("readiness", "dns", "identity")),
         SpatialPath("stateful_command_path", "gateway_api", "command_ledger", ("persistence",)),
         SpatialPath("capability_execution_path", "gateway_api", "capability_worker", ("worker_private",)),
+        SpatialPath("observability_evidence_path", "gateway_api", "observability_stack", ("observability",)),
+        SpatialPath("support_escalation_path", "readiness_contract", "support_flow", ("support",)),
         SpatialPath("source_to_secret", "source_code", "secret_rotation", ("secrets",)),
     )
 
@@ -256,6 +264,7 @@ def build_gateway_spatial_map(readiness_checks: Mapping[str, bool]) -> SpatialMa
             "health_is_not_launch_readiness",
             "every_path_crossing_is_witnessed",
             "bounded_exception_response_crosses_security_header_boundary",
+            "operational_launch_boundaries_require_observability_and_support_evidence",
             "secret_boundary_blocks_source_to_secret_path",
             "evidence_required_boundaries_are_unknown_not_allowed",
         ),
