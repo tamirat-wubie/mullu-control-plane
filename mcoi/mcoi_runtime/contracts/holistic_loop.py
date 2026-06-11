@@ -983,6 +983,80 @@ class LoopProofObligationView(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class LoopAuditEvolutionView(ContractRecord):
+    """Read-only audit and learning projection over receipts and evolution refs."""
+
+    view_ref: str
+    loop_id: str
+    audit_state: str
+    receipt_refs: tuple[str, ...]
+    receipt_lineage_refs: tuple[str, ...]
+    audit_blocker_refs: tuple[str, ...]
+    learning_policy_ref: str
+    learning_candidate_refs: tuple[str, ...]
+    learning_evidence_input_refs: tuple[str, ...]
+    learning_admission_refs: tuple[str, ...]
+    learning_retention_refs: tuple[str, ...]
+    proof_surface_refs: tuple[str, ...]
+    read_only: bool = True
+    emits_receipt: bool = False
+    admits_learning: bool = False
+    terminal_closure: bool = False
+
+    def __post_init__(self) -> None:
+        for field_name in ("view_ref", "loop_id", "audit_state", "learning_policy_ref"):
+            object.__setattr__(
+                self,
+                field_name,
+                require_non_empty_text(getattr(self, field_name), field_name),
+            )
+        allowed_states = {
+            "audit_blocked_by_unresolved_gaps",
+            "audit_ready_for_terminal_review",
+        }
+        if self.audit_state not in allowed_states:
+            raise ValueError("audit_state is invalid")
+        for field_name in (
+            "receipt_refs",
+            "receipt_lineage_refs",
+            "learning_evidence_input_refs",
+            "learning_admission_refs",
+            "learning_retention_refs",
+            "proof_surface_refs",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name),
+            )
+        for field_name in ("audit_blocker_refs", "learning_candidate_refs"):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_tuple(getattr(self, field_name), field_name, allow_empty=True),
+            )
+        expected_audit_state = (
+            "audit_blocked_by_unresolved_gaps"
+            if self.audit_blocker_refs
+            else "audit_ready_for_terminal_review"
+        )
+        if self.audit_state != expected_audit_state:
+            raise ValueError("audit_state must match blocker refs")
+        if self.audit_blocker_refs and self.learning_policy_ref not in self.learning_candidate_refs:
+            raise ValueError("learning_candidate_refs must include learning policy when blockers exist")
+        if not self.audit_blocker_refs and self.learning_candidate_refs:
+            raise ValueError("learning_candidate_refs must be empty when audit is ready")
+        if self.read_only is not True:
+            raise ValueError("audit evolution view must be read-only")
+        if self.emits_receipt is not False:
+            raise ValueError("audit evolution view cannot emit receipts")
+        if self.admits_learning is not False:
+            raise ValueError("audit evolution view cannot admit learning")
+        if self.terminal_closure is not False:
+            raise ValueError("audit evolution view cannot be terminal closure")
+
+
+@dataclass(frozen=True, slots=True)
 class LoopSummary(ContractRecord):
     """Bounded read-model summary for one registered governed loop."""
 
@@ -1014,6 +1088,7 @@ class LoopSummary(ContractRecord):
     closure_evidence_pack: LoopClosureEvidencePack
     operator_closure_readiness_view: LoopOperatorClosureReadinessView
     proof_obligation_view: LoopProofObligationView
+    audit_evolution_view: LoopAuditEvolutionView
     open_blockers: tuple[str, ...]
     rollback_policy: str
     rollback_binding: LoopRollbackBinding
@@ -1150,6 +1225,8 @@ class LoopSummary(ContractRecord):
             )
         if not isinstance(self.proof_obligation_view, LoopProofObligationView):
             raise ValueError("proof_obligation_view must be a LoopProofObligationView")
+        if not isinstance(self.audit_evolution_view, LoopAuditEvolutionView):
+            raise ValueError("audit_evolution_view must be a LoopAuditEvolutionView")
         if not isinstance(self.rollback_binding, LoopRollbackBinding):
             raise ValueError("rollback_binding must be a LoopRollbackBinding")
         if self.rollback_binding.rollback_ref != self.rollback_policy:
@@ -1174,6 +1251,8 @@ class LoopSummary(ContractRecord):
             )
         if self.proof_obligation_view.loop_id != self.loop_id:
             raise ValueError("proof_obligation_view loop_id must match summary loop_id")
+        if self.audit_evolution_view.loop_id != self.loop_id:
+            raise ValueError("audit_evolution_view loop_id must match summary loop_id")
         object.__setattr__(self, "updated_at", require_datetime_text(self.updated_at, "updated_at"))
         if set(self.status_binding.blocker_refs) != set(self.open_blockers):
             raise ValueError("status_binding blocker_refs must match open blockers")
@@ -1345,6 +1424,46 @@ class LoopSummary(ContractRecord):
         )
         if self.proof_obligation_view.obligation_state != expected_obligation_state:
             raise ValueError("proof obligation state must match blockers")
+        if set(self.audit_evolution_view.receipt_refs) != {
+            receipt.output_hash for receipt in self.step_receipts
+        }:
+            raise ValueError("audit evolution receipt refs must match step receipt hashes")
+        if set(self.audit_evolution_view.receipt_lineage_refs) != {
+            binding.lineage_ref for binding in self.receipt_lineage_bindings
+        }:
+            raise ValueError("audit evolution receipt lineage refs must match lineage refs")
+        if set(self.audit_evolution_view.audit_blocker_refs) != set(self.open_blockers):
+            raise ValueError("audit evolution blocker refs must match open blockers")
+        if self.audit_evolution_view.learning_policy_ref != self.learning_policy:
+            raise ValueError("audit evolution learning_policy_ref must match learning_policy")
+        if set(self.audit_evolution_view.learning_candidate_refs) != set(
+            self.closure_report.learning_candidates
+        ):
+            raise ValueError("audit evolution learning candidates must match closure report")
+        if set(self.audit_evolution_view.learning_evidence_input_refs) != set(
+            self.learning_binding.evidence_input_refs
+        ):
+            raise ValueError("audit evolution evidence input refs must match learning binding")
+        if set(self.audit_evolution_view.learning_admission_refs) != set(
+            self.learning_binding.admission_refs
+        ):
+            raise ValueError("audit evolution admission refs must match learning binding")
+        if set(self.audit_evolution_view.learning_retention_refs) != set(
+            self.learning_binding.retention_refs
+        ):
+            raise ValueError("audit evolution retention refs must match learning binding")
+        expected_audit_proof_surfaces = set(self.closure_evidence_pack.proof_surface_refs) | set(
+            self.learning_binding.proof_surface_refs
+        )
+        if set(self.audit_evolution_view.proof_surface_refs) != expected_audit_proof_surfaces:
+            raise ValueError("audit evolution proof surface refs must match closure and learning surfaces")
+        expected_audit_state = (
+            "audit_blocked_by_unresolved_gaps"
+            if self.open_blockers
+            else "audit_ready_for_terminal_review"
+        )
+        if self.audit_evolution_view.audit_state != expected_audit_state:
+            raise ValueError("audit evolution state must match blockers")
 
 
 @dataclass(frozen=True, slots=True)
@@ -1429,6 +1548,7 @@ def _freeze_contract_tuple(
 
 
 __all__ = [
+    "LoopAuditEvolutionView",
     "LoopClosureReport",
     "LoopAuthorityBinding",
     "LoopClosureConditionBinding",

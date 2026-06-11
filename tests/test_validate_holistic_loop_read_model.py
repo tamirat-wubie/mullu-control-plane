@@ -138,6 +138,22 @@ def test_schema_requires_proof_obligation_view() -> None:
     assert len(errors) >= 1
 
 
+def test_schema_requires_audit_evolution_view() -> None:
+    schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
+    invalid_schema = copy.deepcopy(schema)
+    invalid_schema["$defs"]["loop_summary"]["required"] = [
+        field
+        for field in invalid_schema["$defs"]["loop_summary"]["required"]
+        if field != "audit_evolution_view"
+    ]
+
+    errors = validator.validate_schema_artifact(invalid_schema)
+
+    assert any("schema missing required loop field: audit_evolution_view" in error for error in errors)
+    assert "audit_evolution_view" not in invalid_schema["$defs"]["loop_summary"]["required"]
+    assert len(errors) >= 1
+
+
 def test_schema_requires_authority_bindings() -> None:
     schema = validator.load_json_object(validator.DEFAULT_SCHEMA_PATH, "schema")
     invalid_schema = copy.deepcopy(schema)
@@ -568,6 +584,50 @@ def test_proof_obligation_view_cannot_execute_validator_or_claim_terminal_closur
     assert any("proof_obligation_view read_only must be true" in error for error in errors)
     assert any("proof_obligation_view executes_validator must be false" in error for error in errors)
     assert any("proof_obligation_view terminal_closure must be false" in error for error in errors)
+
+
+def test_audit_evolution_view_must_match_receipts_blockers_and_learning_refs() -> None:
+    invalid_report = copy.deepcopy(validator.build_report())
+    view = invalid_report["loops"][0]["audit_evolution_view"]
+    view["receipt_refs"] = ["different_receipt"]
+    view["receipt_lineage_refs"] = ["different_lineage"]
+    view["audit_blocker_refs"] = ["different_gap"]
+    view["learning_policy_ref"] = "different_learning_policy"
+    view["learning_candidate_refs"] = ["different_candidate"]
+    view["learning_evidence_input_refs"] = ["different_evidence_input"]
+    view["learning_admission_refs"] = ["different_admission"]
+    view["learning_retention_refs"] = ["different_retention"]
+    view["proof_surface_refs"] = ["different_surface"]
+    view["audit_state"] = "audit_ready_for_terminal_review"
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("receipt_refs must match step_receipts" in error for error in errors)
+    assert any("receipt_lineage_refs must match lineage bindings" in error for error in errors)
+    assert any("audit_blocker_refs must match open_blockers" in error for error in errors)
+    assert any("learning_policy_ref must match learning_policy" in error for error in errors)
+    assert any("learning_candidate_refs must match closure_report" in error for error in errors)
+    assert any("learning_evidence_input_refs must match learning_binding" in error for error in errors)
+    assert any("learning_admission_refs must match learning_binding" in error for error in errors)
+    assert any("learning_retention_refs must match learning_binding" in error for error in errors)
+    assert any("proof_surface_refs must match closure and learning surfaces" in error for error in errors)
+    assert any("audit_state must match blockers" in error for error in errors)
+
+
+def test_audit_evolution_view_cannot_emit_admit_learning_or_claim_terminal_closure() -> None:
+    invalid_report = copy.deepcopy(validator.build_report())
+    view = invalid_report["loops"][0]["audit_evolution_view"]
+    view["read_only"] = False
+    view["emits_receipt"] = True
+    view["admits_learning"] = True
+    view["terminal_closure"] = True
+
+    errors = validator.validate_report(invalid_report)
+
+    assert any("audit_evolution_view read_only must be true" in error for error in errors)
+    assert any("audit_evolution_view emits_receipt must be false" in error for error in errors)
+    assert any("audit_evolution_view admits_learning must be false" in error for error in errors)
+    assert any("audit_evolution_view terminal_closure must be false" in error for error in errors)
 
 
 def test_missing_evidence_requires_matching_blocker() -> None:

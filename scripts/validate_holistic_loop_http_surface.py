@@ -186,6 +186,7 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         "closure_evidence_pack",
         "operator_closure_readiness_view",
         "proof_obligation_view",
+        "audit_evolution_view",
         "rollback_policy",
         "rollback_binding",
         "learning_policy",
@@ -246,6 +247,7 @@ def _validate_loop_payload(loop: Any, index: int) -> list[str]:
         )
     )
     errors.extend(_validate_proof_obligation_view(loop.get("proof_obligation_view"), loop, index))
+    errors.extend(_validate_audit_evolution_view(loop.get("audit_evolution_view"), loop, index))
     return errors
 
 
@@ -941,6 +943,97 @@ def _validate_proof_obligation_view(proof_view: Any, loop: dict[str, Any], index
         errors.append(f"loop {index} proof_obligation_view executes_validator must be false")
     if proof_view.get("terminal_closure") is not False:
         errors.append(f"loop {index} proof_obligation_view terminal_closure must be false")
+    return errors
+
+
+def _validate_audit_evolution_view(audit_view: Any, loop: dict[str, Any], index: int) -> list[str]:
+    if not isinstance(audit_view, dict):
+        return [f"loop {index} audit_evolution_view must be an object"]
+    errors: list[str] = []
+    for field_name in ("view_ref", "loop_id", "audit_state", "learning_policy_ref"):
+        value = audit_view.get(field_name)
+        if not isinstance(value, str) or not value:
+            errors.append(f"loop {index} audit_evolution_view {field_name} must be non-empty")
+    for field_name in (
+        "receipt_refs",
+        "receipt_lineage_refs",
+        "audit_blocker_refs",
+        "learning_candidate_refs",
+        "learning_evidence_input_refs",
+        "learning_admission_refs",
+        "learning_retention_refs",
+        "proof_surface_refs",
+    ):
+        refs = audit_view.get(field_name)
+        if not isinstance(refs, list) or not all(isinstance(ref, str) and ref for ref in refs):
+            errors.append(f"loop {index} audit_evolution_view {field_name} must be a string list")
+            continue
+        if field_name in {
+            "receipt_refs",
+            "receipt_lineage_refs",
+            "learning_evidence_input_refs",
+            "learning_admission_refs",
+            "learning_retention_refs",
+            "proof_surface_refs",
+        } and not refs:
+            errors.append(f"loop {index} audit_evolution_view {field_name} must be non-empty")
+    if audit_view.get("loop_id") != loop.get("loop_id"):
+        errors.append(f"loop {index} audit_evolution_view loop_id must match loop_id")
+    if set(audit_view.get("receipt_refs", ())) != {
+        receipt.get("output_hash")
+        for receipt in loop.get("step_receipts", ())
+        if isinstance(receipt, dict)
+    }:
+        errors.append(f"loop {index} audit_evolution_view receipt_refs must match step_receipts")
+    if set(audit_view.get("receipt_lineage_refs", ())) != {
+        binding.get("lineage_ref")
+        for binding in loop.get("receipt_lineage_bindings", ())
+        if isinstance(binding, dict)
+    }:
+        errors.append(f"loop {index} audit_evolution_view receipt_lineage_refs must match lineage bindings")
+    if set(audit_view.get("audit_blocker_refs", ())) != set(loop.get("open_blockers", ())):
+        errors.append(f"loop {index} audit_evolution_view audit_blocker_refs must match open_blockers")
+    if audit_view.get("learning_policy_ref") != loop.get("learning_policy"):
+        errors.append(f"loop {index} audit_evolution_view learning_policy_ref must match learning_policy")
+    closure_report = loop.get("closure_report") if isinstance(loop.get("closure_report"), dict) else {}
+    if set(audit_view.get("learning_candidate_refs", ())) != set(closure_report.get("learning_candidates", ())):
+        errors.append(f"loop {index} audit_evolution_view learning_candidate_refs must match closure_report")
+    learning_binding = loop.get("learning_binding") if isinstance(loop.get("learning_binding"), dict) else {}
+    if set(audit_view.get("learning_evidence_input_refs", ())) != set(
+        learning_binding.get("evidence_input_refs", ())
+    ):
+        errors.append(f"loop {index} audit_evolution_view learning_evidence_input_refs must match learning_binding")
+    if set(audit_view.get("learning_admission_refs", ())) != set(learning_binding.get("admission_refs", ())):
+        errors.append(f"loop {index} audit_evolution_view learning_admission_refs must match learning_binding")
+    if set(audit_view.get("learning_retention_refs", ())) != set(learning_binding.get("retention_refs", ())):
+        errors.append(f"loop {index} audit_evolution_view learning_retention_refs must match learning_binding")
+    closure_evidence_pack = (
+        loop.get("closure_evidence_pack") if isinstance(loop.get("closure_evidence_pack"), dict) else {}
+    )
+    expected_proof_surfaces = set(closure_evidence_pack.get("proof_surface_refs", ())) | set(
+        learning_binding.get("proof_surface_refs", ())
+    )
+    if set(audit_view.get("proof_surface_refs", ())) != expected_proof_surfaces:
+        errors.append(f"loop {index} audit_evolution_view proof_surface_refs must match closure and learning surfaces")
+    expected_audit_state = (
+        "audit_blocked_by_unresolved_gaps"
+        if loop.get("open_blockers")
+        else "audit_ready_for_terminal_review"
+    )
+    if audit_view.get("audit_state") != expected_audit_state:
+        errors.append(f"loop {index} audit_evolution_view audit_state must match blockers")
+    if loop.get("open_blockers") and loop.get("learning_policy") not in audit_view.get("learning_candidate_refs", ()):
+        errors.append(f"loop {index} audit_evolution_view learning candidates must include learning_policy")
+    if not loop.get("open_blockers") and audit_view.get("learning_candidate_refs"):
+        errors.append(f"loop {index} audit_evolution_view learning candidates must be empty when audit is ready")
+    if audit_view.get("read_only") is not True:
+        errors.append(f"loop {index} audit_evolution_view read_only must be true")
+    if audit_view.get("emits_receipt") is not False:
+        errors.append(f"loop {index} audit_evolution_view emits_receipt must be false")
+    if audit_view.get("admits_learning") is not False:
+        errors.append(f"loop {index} audit_evolution_view admits_learning must be false")
+    if audit_view.get("terminal_closure") is not False:
+        errors.append(f"loop {index} audit_evolution_view terminal_closure must be false")
     return errors
 
 

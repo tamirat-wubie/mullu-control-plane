@@ -98,6 +98,7 @@
         "closure_evidence_pack",
         "operator_closure_readiness_view",
         "proof_obligation_view",
+        "audit_evolution_view",
         "open_blockers",
         "rollback_policy",
         "rollback_binding",
@@ -231,6 +232,9 @@
         },
         "proof_obligation_view": {
           "$ref": "#/$defs/proof_obligation_view"
+        },
+        "audit_evolution_view": {
+          "$ref": "#/$defs/audit_evolution_view"
         },
         "open_blockers": {
           "$ref": "#/$defs/possibly_empty_text_list"
@@ -1189,6 +1193,89 @@
           "const": true
         },
         "executes_validator": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_closure": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "audit_evolution_view": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "view_ref",
+        "loop_id",
+        "audit_state",
+        "receipt_refs",
+        "receipt_lineage_refs",
+        "audit_blocker_refs",
+        "learning_policy_ref",
+        "learning_candidate_refs",
+        "learning_evidence_input_refs",
+        "learning_admission_refs",
+        "learning_retention_refs",
+        "proof_surface_refs",
+        "read_only",
+        "emits_receipt",
+        "admits_learning",
+        "terminal_closure"
+      ],
+      "properties": {
+        "view_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "loop_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "audit_state": {
+          "type": "string",
+          "enum": [
+            "audit_blocked_by_unresolved_gaps",
+            "audit_ready_for_terminal_review"
+          ]
+        },
+        "receipt_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "receipt_lineage_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "audit_blocker_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "learning_policy_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "learning_candidate_refs": {
+          "$ref": "#/$defs/possibly_empty_text_list"
+        },
+        "learning_evidence_input_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "learning_admission_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "learning_retention_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "proof_surface_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "emits_receipt": {
+          "type": "boolean",
+          "const": false
+        },
+        "admits_learning": {
           "type": "boolean",
           "const": false
         },
