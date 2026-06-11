@@ -79,8 +79,9 @@ REQUIRED_PHRASES = (
     "python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp/workspace-governance-preflight-receipt.json",
     "python scripts/validate_workspace_governance_preflight_receipt_contract.py",
     "Treat repository-local v3 runtime contracts as claimable only through named validators and receipts;",
-    "must avoid unnecessary disclosure in outputs, and must not exfiltrate them.",
-    "Do not print full secret values, private keys, access tokens, or credentials",
+    "secret presence, names, scopes, and bounded shape",
+    "Raw secret values require explicit task-scoped operator",
+    "Do not read or print full secret values, private keys, access tokens, or",
 )
 
 STATUS_CONTRACT_LINES = (
