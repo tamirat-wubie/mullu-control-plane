@@ -132,6 +132,10 @@ class StructuredLogger:
         return self.log(LogLevel.CRITICAL, message, **kw)
 
     def recent(self, count: int = 50, min_level: LogLevel = LogLevel.DEBUG) -> list[LogEntry]:
+        if isinstance(count, bool) or not isinstance(count, int):
+            raise ValueError("structured log count must be an integer")
+        if count <= 0:
+            return []
         filtered = [e for e in self._entries if e.level >= min_level]
         return filtered[-count:]
 

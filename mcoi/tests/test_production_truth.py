@@ -162,6 +162,17 @@ def test_list_anchors_endpoint(client) -> None:
     assert resp.json()["governed"] is True
 
 
+def test_list_anchors_zero_limit_returns_empty(client) -> None:
+    client.post("/api/v1/audit/anchor?limit=50")
+    resp = client.get("/api/v1/audit/anchors?limit=0")
+    data = resp.json()
+
+    assert resp.status_code == 200
+    assert data["governed"] is True
+    assert data["anchors"] == []
+    assert data["count"] == 0
+
+
 def test_logs_read_model_bounded(client) -> None:
     resp = client.get("/api/v1/logs?count=10&min_level=INFO")
     data = resp.json()
@@ -170,3 +181,41 @@ def test_logs_read_model_bounded(client) -> None:
     assert data["governed"] is True
     assert "logs" in data
     assert "summary" in data
+
+
+def test_logs_zero_count_returns_empty_read(client) -> None:
+    client.get("/api/v1/audit/summary")
+    resp = client.get("/api/v1/logs?count=0&min_level=INFO")
+    data = resp.json()
+
+    assert resp.status_code == 200
+    assert data["governed"] is True
+    assert data["logs"] == []
+    assert "summary" in data
+
+
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [
+        ("get", "/api/v1/logs?count=-1"),
+        ("get", "/api/v1/logs?count=not-a-limit"),
+        ("get", "/api/v1/logs?count=501"),
+        ("get", "/api/v1/audit/anchors?limit=-1"),
+        ("get", "/api/v1/audit/anchors?limit=not-a-limit"),
+        ("get", "/api/v1/audit/anchors?limit=501"),
+        ("post", "/api/v1/audit/anchor?limit=-1"),
+        ("post", "/api/v1/audit/anchor?limit=not-a-limit"),
+        ("post", "/api/v1/audit/anchor?limit=1001"),
+        ("post", "/api/v1/audit/anchor/not-present/verify?limit=-1"),
+        ("post", "/api/v1/audit/anchor/not-present/verify?limit=not-a-limit"),
+        ("post", "/api/v1/audit/anchor/not-present/verify?limit=1001"),
+    ],
+)
+def test_audit_log_and_anchor_read_limits_reject_invalid_values(client, method: str, path: str) -> None:
+    resp = getattr(client, method)(path)
+    detail = resp.json()["detail"]
+
+    assert resp.status_code == 422
+    assert detail["error"] == "invalid audit/event read request"
+    assert detail["error_code"] == "audit_event_read_invalid_request"
+    assert detail["governed"] is True

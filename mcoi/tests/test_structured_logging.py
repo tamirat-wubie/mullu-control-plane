@@ -87,6 +87,23 @@ class TestStructuredLogger:
         assert len(recent) == 1
         assert recent[0].level == LogLevel.ERROR
 
+    def test_recent_zero_count_returns_empty(self):
+        logger = StructuredLogger()
+        logger.info("first")
+        logger.error("second")
+        recent = logger.recent(count=0, min_level=LogLevel.INFO)
+        assert recent == []
+        assert logger.entry_count == 2
+        assert logger.summary()["total_entries"] == 2
+
+    @pytest.mark.parametrize("count", [True, "10", None])
+    def test_recent_rejects_invalid_count_contract(self, count):
+        logger = StructuredLogger()
+        logger.info("entry")
+        with pytest.raises(ValueError, match="structured log count must be an integer"):
+            logger.recent(count=count)
+        assert logger.entry_count == 1
+
     def test_sink_callback(self):
         captured = []
         logger = StructuredLogger(sink=lambda s: captured.append(s))
