@@ -113,6 +113,11 @@ staged into the holistic loop PR.
     readiness projection. It builds a proposed manifest and reports evidence,
     authority, closure-condition, rollback, and learning readiness without
     registering the loop or changing workflow runtime behavior.
+17. Added the authority admission dossier for the next candidate-specific
+    readiness projection. It builds a proposed manifest and reports evidence,
+    authority, closure-condition, rollback, and learning readiness without
+    registering the loop, satisfying obligations, or changing authority runtime
+    behavior.
 
 ## Evidence Catalog Follow-Up
 
@@ -511,6 +516,29 @@ evidence gap report, authority gap report, closure-condition gap report,
 rollback readiness, and learning policy readiness. It is not registration,
 terminal closure, runtime migration, receipt emission, or execution authority.
 
+## Authority Admission Dossier Follow-Up
+
+The authority admission dossier projects the next candidate-specific admission
+readiness packet:
+
+```text
+dossier.candidate_id == authority_obligation_loop
+dossier.admission_status == ready_for_operator_decision
+requires_operator_registration_decision in dossier.admission_blockers
+dossier.registered == false
+dossier.read_only == true
+dossier.mutation_route == false
+dossier.runtime_behavior_change == false
+dossier.terminal_closure == false
+dossier.registration_effect.registers_loop == false
+```
+
+The dossier includes a proposed `LoopManifest`, existing authority source refs,
+evidence gap report, authority gap report, closure-condition gap report,
+rollback readiness, and learning policy readiness. It is not registration,
+terminal closure, runtime migration, obligation satisfaction, receipt emission,
+or execution authority.
+
 ## Fracture Deltas
 
 None intended.
@@ -523,13 +551,13 @@ verification behavior changed. No public mutation route was added.
 Focused tests:
 
 ```powershell
-python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_report_holistic_loop_candidate_map.py tests/test_report_holistic_loop_uao_admission_dossier.py tests/test_report_holistic_loop_workflow_admission_dossier.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py tests/test_proof_coverage_matrix.py -q
+python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_report_holistic_loop_candidate_map.py tests/test_report_holistic_loop_uao_admission_dossier.py tests/test_report_holistic_loop_workflow_admission_dossier.py tests/test_report_holistic_loop_authority_admission_dossier.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py tests/test_proof_coverage_matrix.py -q
 ```
 
 Observed result:
 
 ```text
-344 passed
+350 passed
 ```
 
 Focused validators:
@@ -542,6 +570,7 @@ python scripts/validate_holistic_loop_extension_admission.py
 python scripts/report_holistic_loop_candidate_map.py
 python scripts/report_holistic_loop_uao_admission_dossier.py
 python scripts/report_holistic_loop_workflow_admission_dossier.py
+python scripts/report_holistic_loop_authority_admission_dossier.py
 python scripts/proof_coverage_matrix.py --check
 ```
 
