@@ -287,6 +287,7 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
         "cors",
         "readiness",
         "security_headers",
+        "cache",
         "idempotency",
         "request_dedup",
         "finance_approval",
@@ -298,6 +299,8 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert judgments["dashboard_health_check"]["status"] == "allowed"
     assert judgments["bounded_exception_response"]["status"] == "allowed"
     assert judgments["bounded_exception_response"]["witness"][-1] == "path_valid"
+    assert judgments["cache_lookup_path"]["status"] == "allowed"
+    assert judgments["cache_lookup_path"]["witness"][-1] == "path_valid"
     assert judgments["idempotency_suppression_path"]["status"] == "allowed"
     assert judgments["idempotency_suppression_path"]["witness"][-1] == "path_valid"
     assert judgments["request_deduplication_path"]["status"] == "allowed"
@@ -315,6 +318,7 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert "blocked_boundary:secrets" in judgments["source_to_secret"]["reasons"]
     assert any(blocker.startswith("path:source_to_secret:") for blocker in spatial_map["blockers"])
     assert "bounded_exception_response_crosses_security_header_boundary" in spatial_map["witness"]
+    assert "cache_boundary_is_ephemeral_not_persistence" in spatial_map["witness"]
     assert "idempotency_boundary_preserves_duplicate_suppression_before_side_effects" in spatial_map["witness"]
     assert "request_dedup_boundary_preserves_tenant_scoped_replay_suppression" in spatial_map["witness"]
     assert "finance_and_payment_paths_require_approval_and_provider_evidence" in spatial_map["witness"]
@@ -392,6 +396,17 @@ def test_request_dedup_summary_read_model_bounded(client: TestClient) -> None:
     assert 0.0 <= summary["duplicate_rate"] <= 1.0
     assert summary["tracked_entries"] <= summary["total_checked"]
     assert summary["tenants_tracked"] >= 0
+
+
+def test_cache_stats_read_model_bounded(client: TestClient) -> None:
+    response = client.get("/api/v1/cache/stats")
+    payload = response.json()
+
+    assert response.status_code == 200
+    assert 0.0 <= payload["hit_rate"] <= 1.0
+    assert payload["size"] <= payload["max_size"]
+    assert payload["hits"] >= 0
+    assert payload["misses"] >= 0
 
 
 def test_deployment_readiness_read_model_bounded(client: TestClient) -> None:
