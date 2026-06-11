@@ -31,6 +31,7 @@ from mcoi_runtime.contracts.holistic_loop import (
     LoopProofObligationView,
     LoopReadModel,
     LoopReceiptLineageBinding,
+    LoopRecoveryReadinessView,
     LoopRiskBinding,
     LoopRollbackBinding,
     LoopState,
@@ -382,6 +383,7 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
         closure_report,
     )
     learning_binding = _learning_binding_for(manifest.loop_id)
+    rollback_binding = _rollback_binding_for(manifest.loop_id)
     return LoopSummary(
         loop_id=manifest.loop_id,
         name=manifest.name,
@@ -435,9 +437,17 @@ def _summarize_manifest_state(manifest: LoopManifest, state: LoopState) -> LoopS
             closure_evidence_pack,
             learning_binding,
         ),
+        recovery_readiness_view=_recovery_readiness_view_for(
+            manifest,
+            blockers,
+            receipt_lineage_bindings,
+            closure_report,
+            closure_evidence_pack,
+            rollback_binding,
+        ),
         open_blockers=blockers,
         rollback_policy=manifest.rollback_policy,
-        rollback_binding=_rollback_binding_for(manifest.loop_id),
+        rollback_binding=rollback_binding,
         learning_policy=manifest.learning_policy,
         learning_binding=learning_binding,
         updated_at=state.updated_at,
@@ -827,6 +837,45 @@ def _audit_evolution_view_for(
                 *closure_evidence_pack.proof_surface_refs,
                 *learning_binding.proof_surface_refs,
             )
+        ),
+    )
+
+
+def _recovery_readiness_view_for(
+    manifest: LoopManifest,
+    blockers: Sequence[str],
+    receipt_lineage_bindings: Sequence[LoopReceiptLineageBinding],
+    closure_report: LoopClosureReport,
+    closure_evidence_pack: LoopClosureEvidencePack,
+    rollback_binding: LoopRollbackBinding,
+) -> LoopRecoveryReadinessView:
+    blocked = bool(blockers)
+    return LoopRecoveryReadinessView(
+        view_ref=f"{manifest.loop_id}_recovery_readiness_view",
+        loop_id=manifest.loop_id,
+        recovery_state=(
+            "recovery_blocked_by_unresolved_gaps"
+            if blocked
+            else "recovery_ready_for_terminal_review"
+        ),
+        rollback_ref=manifest.rollback_policy,
+        rollback_available=closure_report.rollback_available,
+        closure_report_ref="closure_report",
+        closure_evidence_pack_ref=closure_evidence_pack.pack_ref,
+        blocker_refs=tuple(blockers),
+        receipt_lineage_refs=tuple(binding.lineage_ref for binding in receipt_lineage_bindings),
+        recovery_source_refs=rollback_binding.source_refs,
+        recovery_validator_refs=rollback_binding.validator_refs,
+        recovery_proof_surface_refs=_stable_unique_tuple(
+            (
+                *closure_evidence_pack.proof_surface_refs,
+                *rollback_binding.proof_surface_refs,
+            )
+        ),
+        next_recovery_action=(
+            "resolve_blockers_before_recovery_or_terminal_review"
+            if blocked
+            else "keep_recovery_evidence_available_for_terminal_review"
         ),
     )
 

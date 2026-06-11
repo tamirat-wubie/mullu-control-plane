@@ -639,6 +639,60 @@ def test_payload_validation_rejects_audit_evolution_view_effect_or_closure_claim
     assert any("audit_evolution_view terminal_closure must be false" in error for error in errors)
 
 
+def test_payload_validation_requires_recovery_readiness_view_to_match_loop_inputs() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    view = invalid_payload["loops"][0]["recovery_readiness_view"]
+    view["rollback_ref"] = "different_rollback"
+    view["rollback_available"] = False
+    view["closure_report_ref"] = "different_report"
+    view["closure_evidence_pack_ref"] = "different_pack"
+    view["blocker_refs"] = ["different_gap"]
+    view["receipt_lineage_refs"] = ["different_lineage"]
+    view["recovery_source_refs"] = ["different_source"]
+    view["recovery_validator_refs"] = ["different_validator"]
+    view["recovery_proof_surface_refs"] = ["different_surface"]
+    view["recovery_state"] = "recovery_ready_for_terminal_review"
+    view["next_recovery_action"] = "keep_recovery_evidence_available_for_terminal_review"
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("rollback_ref must match rollback_policy" in error for error in errors)
+    assert any("rollback_available must match closure_report" in error for error in errors)
+    assert any("closure_report_ref must point to closure_report" in error for error in errors)
+    assert any("closure_evidence_pack_ref must match pack_ref" in error for error in errors)
+    assert any("blocker_refs must match open_blockers" in error for error in errors)
+    assert any("receipt_lineage_refs must match closure_evidence_pack" in error for error in errors)
+    assert any("recovery_source_refs must match rollback_binding" in error for error in errors)
+    assert any("recovery_validator_refs must match rollback_binding" in error for error in errors)
+    assert any("recovery_proof_surface_refs must match closure and rollback surfaces" in error for error in errors)
+    assert any("recovery_state must match blockers" in error for error in errors)
+    assert any("next_recovery_action must match blockers" in error for error in errors)
+
+
+def test_payload_validation_rejects_recovery_readiness_view_effect_or_closure_claim() -> None:
+    app = FastAPI()
+    app.include_router(router)
+
+    response = TestClient(app).get(validator.LOOP_READ_MODEL_PATH)
+    invalid_payload = copy.deepcopy(response.json())
+    view = invalid_payload["loops"][0]["recovery_readiness_view"]
+    view["read_only"] = False
+    view["executes_rollback"] = True
+    view["opens_incident"] = True
+    view["terminal_closure"] = True
+
+    errors = validator.validate_payload(invalid_payload)
+
+    assert any("recovery_readiness_view read_only must be true" in error for error in errors)
+    assert any("recovery_readiness_view executes_rollback must be false" in error for error in errors)
+    assert any("recovery_readiness_view opens_incident must be false" in error for error in errors)
+    assert any("recovery_readiness_view terminal_closure must be false" in error for error in errors)
+
+
 def test_payload_validation_rejects_mode_binding_transition_or_terminal_closure_claim() -> None:
     app = FastAPI()
     app.include_router(router)

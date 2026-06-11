@@ -4,9 +4,9 @@ Purpose: provide a scoped PR handoff packet for the holistic loop kernel slice.
 Governance scope: loop contract, registry, read model, HTTP projection,
 validators, schema manifest, evidence blockers, status catalog, transition
 catalog, mode catalog, risk catalog, closure condition catalog, rollback
-boundary, learning catalog, receipt lineage catalog, closure evidence pack, and
-operator closure readiness view, proof obligation view, and audit evolution
-view.
+boundary, learning catalog, receipt lineage catalog, closure evidence pack,
+operator closure readiness view, proof obligation view, audit evolution view,
+and recovery readiness view.
 Dependencies: `docs/HOLISTIC_LOOP_ENGINEERING_KERNEL.md`, holistic loop source
 files, read-model schema, report and validation scripts, focused tests, SDLC
 validators, release validators, and workspace governance preflight.
@@ -88,6 +88,10 @@ staged into the holistic loop PR.
     lineage refs, audit blockers, closure learning candidates, learning binding
     refs, and proof surfaces without emitting receipts, admitting learning, or
     claiming terminal closure.
+11. Added recovery readiness views that group rollback policy, closure evidence
+    pack refs, receipt lineage, blockers, rollback catalog source refs,
+    rollback catalog validator refs, and proof surfaces without executing
+    rollback, opening incidents, or claiming terminal closure.
 
 ## Evidence Catalog Follow-Up
 
@@ -356,6 +360,33 @@ The view does not emit runtime receipts, admit learning, write memory, mutate
 tests, update gates, or close a loop. It makes audit-to-learning evidence
 inspectable while preserving the non-invasive read-model boundary.
 
+## Recovery Readiness View Follow-Up
+
+The read model now exposes `recovery_readiness_view` on every loop summary. The
+view ties rollback policy, rollback availability, closure evidence, receipt
+lineage, unresolved blockers, rollback catalog refs, and proof surfaces into
+one read-only projection:
+
+```text
+rollback_ref == rollback_policy
+rollback_available == closure_report.rollback_available
+closure_report_ref == closure_report
+closure_evidence_pack_ref == closure_evidence_pack.pack_ref
+blocker_refs == open_blockers
+receipt_lineage_refs == closure_evidence_pack.receipt_lineage_refs
+recovery_source_refs == rollback_binding.source_refs
+recovery_validator_refs == rollback_binding.validator_refs
+recovery_proof_surface_refs == closure_evidence_pack.proof_surface_refs union rollback_binding.proof_surface_refs
+read_only == true
+executes_rollback == false
+opens_incident == false
+terminal_closure == false
+```
+
+The view does not execute rollback, open incidents, restore snapshots, clear
+blockers, or close a loop. It makes recovery readiness inspectable while
+preserving the non-invasive read-model boundary.
+
 ## Fracture Deltas
 
 None intended.
@@ -374,7 +405,7 @@ python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holisti
 Observed result:
 
 ```text
-276 passed
+312 passed
 ```
 
 Focused validators:
@@ -382,6 +413,7 @@ Focused validators:
 ```powershell
 python scripts/validate_holistic_loop_read_model.py
 python scripts/validate_holistic_loop_http_surface.py
+python scripts/proof_coverage_matrix.py --check
 ```
 
 Observed result:
@@ -426,7 +458,7 @@ preflight receipt validation passed
 Diff hygiene:
 
 ```powershell
-git diff --check -- docs/52_mullu_governance_protocol.md docs/63_finance_approval_packet_pilot.md mcoi/mcoi_runtime/app/server_http.py schemas/mullu_governance_protocol.manifest.json
+git diff --check
 ```
 
 Observed result:
@@ -472,11 +504,12 @@ Testing:
 
 ```text
 Tests added/modified: focused holistic loop kernel, router, report, validator,
-and HTTP-surface tests.
-Assertions passing: focused suite passed with 30 tests.
+HTTP-surface, and proof coverage matrix tests.
+Assertions passing: focused suite passed with 312 tests.
 Edge cases covered: missing evidence blockers, complete evidence verification,
 explicit blockers, invalid limits, mutation method rejection, schema drift, and
-non-terminal closure flags.
+non-terminal closure flags, plus recovery readiness mismatch and effect-claim
+rejection.
 Warnings: zero test warnings observed in focused suite.
 ```
 
