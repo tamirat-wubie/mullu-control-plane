@@ -672,6 +672,43 @@ terminal_closure_required == true
 Terminal closure remains a loop-specific proof workflow outside this read-model
 surface.
 
+## Kernel v1 Stability Boundary
+
+The `holistic_loop_kernel.v1` contract is frozen as a v1 additive-only
+read-model contract. Existing v1 fields, field meanings, read-only flags,
+non-terminal closure flags, blocker semantics, and registered loop identifiers
+are part of the stable contract surface.
+
+No v1 field may be removed, renamed, repurposed, or made effect-bearing inside
+the v1 contract. A breaking shape change requires a v2 contract boundary with a
+new schema identifier, new fixture, updated validators, and explicit migration
+notes. A v1 extension may add a new read-only field or view only when existing
+v1 consumers can ignore it without losing the current contract.
+
+The stability boundary is enforced by:
+
+1. A golden snapshot fixture for the current default read model.
+2. Schema validation of the current report and normalized HTTP payload.
+3. Report-to-HTTP parity validation.
+4. A proof matrix witness guard requiring zero unanchored holistic loop labels.
+5. Documentation checks for the v1 additive-only policy and extension rules.
+
+### Extension Checklist
+
+Before adding a future v1.x loop view or field:
+
+1. Keep the addition read-only and non-terminal.
+2. Do not execute loop behavior, validators, rollback, learning, receipt
+   emission, status transition, or incident opening.
+3. Preserve every existing v1 field name and meaning.
+4. Add schema fields as additive optional-or-required v1.x fields only when all
+   report, HTTP, fixture, and validators are updated together.
+5. Add focused tests for positive projection, mismatch rejection, and
+   effect-claim rejection.
+6. Add or update the proof matrix witness label and exact test anchor.
+7. Regenerate the golden snapshot and proof matrix fixtures in the same change.
+8. Run the holistic loop kernel freeze validator before claiming closure.
+
 ## Boundary
 
 This kernel is intentionally non-invasive:
@@ -765,6 +802,12 @@ HTTP read-model surface validation:
 python scripts/validate_holistic_loop_http_surface.py
 ```
 
+Kernel v1 freeze validation:
+
+```powershell
+python scripts/validate_holistic_loop_kernel_freeze.py
+```
+
 The tests verify:
 
 1. The first four loops are registered.
@@ -784,3 +827,6 @@ The tests verify:
 15. Closure evidence packs aggregate closure inputs exactly and cannot emit receipts.
 16. Closure reports cannot claim terminal closure and must match blockers.
 17. Recovery readiness views connect rollback policy, blockers, receipt lineage, closure evidence, and rollback catalog refs without executing rollback, opening incidents, or claiming closure.
+18. The v1 golden snapshot matches the current default report.
+19. The normalized HTTP payload matches the local report contract.
+20. The holistic proof matrix surface has zero unanchored witness labels.

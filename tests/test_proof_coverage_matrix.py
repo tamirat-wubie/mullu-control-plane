@@ -312,8 +312,8 @@ def test_holistic_loop_kernel_witness_labels_have_exact_anchors() -> None:
         for record in holistic_integrity["anchored_witnesses"]
     }
 
-    assert holistic_integrity["runtime_witness_count"] == 23
-    assert holistic_integrity["exact_test_anchor_count"] == 23
+    assert holistic_integrity["runtime_witness_count"] == 27
+    assert holistic_integrity["exact_test_anchor_count"] == 27
     assert holistic_integrity["unanchored_witness_count"] == 0
     assert holistic_integrity["unanchored_witnesses"] == []
     assert anchors_by_witness["registered_loops_expose_governed_manifest_fields"] == {
@@ -439,6 +439,30 @@ def test_holistic_loop_kernel_witness_labels_have_exact_anchors() -> None:
     }
     assert anchors_by_witness["loop_http_surface_validator_rejects_mutation_routes"] == {
         "tests/test_validate_holistic_loop_http_surface.py::test_route_method_validation_rejects_mutation_route"
+    }
+    assert anchors_by_witness["loop_kernel_v1_golden_snapshot_matches_current_report"] == {
+        (
+            "tests/test_validate_holistic_loop_kernel_freeze.py::"
+            "test_holistic_loop_kernel_freeze_contract_passes"
+        )
+    }
+    assert anchors_by_witness["loop_kernel_v1_report_schema_http_parity_holds"] == {
+        (
+            "tests/test_validate_holistic_loop_kernel_freeze.py::"
+            "test_http_payload_normalizes_to_report_contract"
+        )
+    }
+    assert anchors_by_witness["loop_kernel_v1_extension_policy_is_documented"] == {
+        (
+            "tests/test_validate_holistic_loop_kernel_freeze.py::"
+            "test_kernel_v1_policy_doc_contains_freeze_rules"
+        )
+    }
+    assert anchors_by_witness["holistic_loop_witness_integrity_has_zero_unanchored_labels"] == {
+        (
+            "tests/test_validate_holistic_loop_kernel_freeze.py::"
+            "test_holistic_loop_witness_integrity_has_zero_unanchored_labels"
+        )
     }
 
 

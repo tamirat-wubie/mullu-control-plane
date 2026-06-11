@@ -37,9 +37,12 @@ mcoi/tests/test_holistic_loop_kernel.py
 mcoi/tests/test_holistic_loop_router.py
 schemas/holistic_loop_read_model.schema.json
 scripts/report_holistic_loop_read_model.py
+scripts/validate_holistic_loop_kernel_freeze.py
 scripts/validate_holistic_loop_http_surface.py
 scripts/validate_holistic_loop_read_model.py
+tests/fixtures/holistic_loop_read_model_v1_golden.json
 tests/test_report_holistic_loop_read_model.py
+tests/test_validate_holistic_loop_kernel_freeze.py
 tests/test_validate_holistic_loop_http_surface.py
 tests/test_validate_holistic_loop_read_model.py
 ```
@@ -92,6 +95,9 @@ staged into the holistic loop PR.
     pack refs, receipt lineage, blockers, rollback catalog source refs,
     rollback catalog validator refs, and proof surfaces without executing
     rollback, opening incidents, or claiming terminal closure.
+12. Added the v1 contract freeze guard: golden read-model snapshot,
+    schema/report/HTTP parity validation, additive-only extension policy
+    checks, and a holistic proof-matrix zero-unanchored-witness guard.
 
 ## Evidence Catalog Follow-Up
 
@@ -387,6 +393,27 @@ The view does not execute rollback, open incidents, restore snapshots, clear
 blockers, or close a loop. It makes recovery readiness inspectable while
 preserving the non-invasive read-model boundary.
 
+## Kernel v1 Freeze Follow-Up
+
+The read model now has a v1 contract freeze layer. The freeze layer does not
+add runtime authority or mutate loops; it only locks the current read-model
+contract against accidental drift:
+
+```text
+golden fixture == current default report
+normalized HTTP payload == current default report
+schema validates golden fixture
+schema validates current default report
+schema validates normalized HTTP payload
+holistic_loop_read_model_kernel.unanchored_witness_count == 0
+v1 extension policy documented as additive-only
+```
+
+The v1 policy is explicit: existing v1 fields cannot be removed, renamed,
+repurposed, or made effect-bearing without a v2 contract boundary. Future v1.x
+extensions must update schema, report, HTTP parity, fixture, proof matrix
+witnesses, tests, and docs together.
+
 ## Fracture Deltas
 
 None intended.
@@ -400,12 +427,13 @@ Focused tests:
 
 ```powershell
 python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_proof_coverage_matrix.py -q
+python -m pytest tests/test_validate_holistic_loop_kernel_freeze.py -q
 ```
 
 Observed result:
 
 ```text
-312 passed
+320 passed
 ```
 
 Focused validators:
@@ -413,6 +441,7 @@ Focused validators:
 ```powershell
 python scripts/validate_holistic_loop_read_model.py
 python scripts/validate_holistic_loop_http_surface.py
+python scripts/validate_holistic_loop_kernel_freeze.py
 python scripts/proof_coverage_matrix.py --check
 ```
 
@@ -505,7 +534,7 @@ Testing:
 ```text
 Tests added/modified: focused holistic loop kernel, router, report, validator,
 HTTP-surface, and proof coverage matrix tests.
-Assertions passing: focused suite passed with 312 tests.
+Assertions passing: focused suite passed with 320 tests.
 Edge cases covered: missing evidence blockers, complete evidence verification,
 explicit blockers, invalid limits, mutation method rejection, schema drift, and
 non-terminal closure flags, plus recovery readiness mismatch and effect-claim
