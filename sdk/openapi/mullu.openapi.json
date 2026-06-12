@@ -768,6 +768,114 @@
         "title": "ChatWorkflowRequest",
         "type": "object"
       },
+      "ClosureDriftRemediationActionRequest": {
+        "properties": {
+          "action_id": {
+            "title": "Action Id",
+            "type": "string"
+          },
+          "authority_ref": {
+            "title": "Authority Ref",
+            "type": "string"
+          },
+          "closure_id": {
+            "title": "Closure Id",
+            "type": "string"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "remediation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remediation Id"
+          },
+          "terminal_disposition": {
+            "title": "Terminal Disposition",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id",
+          "closure_id",
+          "terminal_disposition",
+          "authority_ref",
+          "evidence_refs"
+        ],
+        "title": "ClosureDriftRemediationActionRequest",
+        "type": "object"
+      },
+      "ClosureDriftRemediationRequest": {
+        "properties": {
+          "authority_ref": {
+            "title": "Authority Ref",
+            "type": "string"
+          },
+          "closure_id": {
+            "title": "Closure Id",
+            "type": "string"
+          },
+          "drift_evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Drift Evidence Refs",
+            "type": "array"
+          },
+          "evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Refs",
+            "type": "array"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "remediation_id": {
+            "title": "Remediation Id",
+            "type": "string"
+          },
+          "superseded_evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Superseded Evidence Refs",
+            "type": "array"
+          },
+          "terminal_disposition": {
+            "title": "Terminal Disposition",
+            "type": "string"
+          }
+        },
+        "required": [
+          "remediation_id",
+          "closure_id",
+          "terminal_disposition",
+          "drift_evidence_refs",
+          "authority_ref",
+          "evidence_refs"
+        ],
+        "title": "ClosureDriftRemediationRequest",
+        "type": "object"
+      },
       "CompletionRequest": {
         "properties": {
           "actor_id": {
@@ -5933,6 +6041,67 @@
         "title": "SyncFederatedPolicyRequest",
         "type": "object"
       },
+      "TeamOpsAssistantPlanRequest": {
+        "description": "Request to compile a TeamOps shared-inbox plan without executing it.",
+        "properties": {
+          "consent_evidence_refs": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Consent Evidence Refs",
+            "type": "array"
+          },
+          "consent_expires_at": {
+            "default": "",
+            "title": "Consent Expires At",
+            "type": "string"
+          },
+          "consent_granted_by": {
+            "default": "",
+            "title": "Consent Granted By",
+            "type": "string"
+          },
+          "consent_scope": {
+            "default": "shared_inbox_external_send",
+            "title": "Consent Scope",
+            "type": "string"
+          },
+          "created_at": {
+            "default": "",
+            "title": "Created At",
+            "type": "string"
+          },
+          "inbox_ref": {
+            "title": "Inbox Ref",
+            "type": "string"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "owner_id": {
+            "title": "Owner Id",
+            "type": "string"
+          },
+          "request_ref": {
+            "title": "Request Ref",
+            "type": "string"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "owner_id",
+          "inbox_ref",
+          "request_ref"
+        ],
+        "title": "TeamOpsAssistantPlanRequest",
+        "type": "object"
+      },
       "TemplateExecuteRequest": {
         "properties": {
           "initial_input": {
@@ -7261,6 +7430,43 @@
         "summary": "Assistant Profiles Read Model"
       }
     },
+    "/api/v1/assistant/team-ops/plans": {
+      "post": {
+        "description": "Compile a TeamOps shared-inbox plan without executing effects.",
+        "operationId": "compile_team_ops_assistant_plan_api_v1_assistant_team_ops_plans_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamOpsAssistantPlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Compile Team Ops Assistant Plan"
+      }
+    },
     "/api/v1/audit": {
       "get": {
         "description": "Query the audit trail with optional filters.",
@@ -7319,9 +7525,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -7358,9 +7564,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 1000,
+              "default": "1000",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -7406,9 +7612,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 1000,
+              "default": "1000",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -7445,9 +7651,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 20,
+              "default": "20",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -7968,6 +8174,138 @@
           }
         },
         "summary": "Get Case Closure Certificate View"
+      }
+    },
+    "/api/v1/cases/{case_id}/closure-drift-remediation-actions": {
+      "get": {
+        "description": "Return operator-ready remediation actions for a drifted closure packet.",
+        "operationId": "get_case_closure_drift_remediation_actions_api_v1_cases__case_id__closure_drift_remediation_actions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Case Closure Drift Remediation Actions"
+      },
+      "post": {
+        "description": "Execute a policy-checked operator remediation action for a drifted closure packet.",
+        "operationId": "execute_case_closure_drift_remediation_action_api_v1_cases__case_id__closure_drift_remediation_actions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClosureDriftRemediationActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Execute Case Closure Drift Remediation Action"
+      }
+    },
+    "/api/v1/cases/{case_id}/closure-drift-remediations": {
+      "post": {
+        "description": "Bind review, compensation, or accepted-risk routing for a drifted closure packet.",
+        "operationId": "bind_case_closure_drift_remediation_api_v1_cases__case_id__closure_drift_remediations_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClosureDriftRemediationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Bind Case Closure Drift Remediation"
       }
     },
     "/api/v1/cases/{case_id}/events": {
@@ -8823,9 +9161,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -8973,9 +9311,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -9046,9 +9384,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -9375,9 +9713,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 10,
+              "default": "10",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -9522,9 +9860,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -9793,9 +10131,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 100,
+              "default": "100",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -10035,9 +10373,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -10100,6 +10438,107 @@
           }
         },
         "summary": "Shadow Console"
+      }
+    },
+    "/api/v1/console/spatial-map": {
+      "get": {
+        "description": "Return the operator spatial-map panel read model.",
+        "operationId": "console_spatial_map_api_v1_console_spatial_map_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Console Spatial Map"
+      }
+    },
+    "/api/v1/console/spatial-map/view": {
+      "get": {
+        "description": "Browser-facing read-only spatial-map operator panel.",
+        "operationId": "console_spatial_map_view_api_v1_console_spatial_map_view_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Console Spatial Map View"
+      }
+    },
+    "/api/v1/console/whqr/clarifications": {
+      "get": {
+        "description": "Operator WHQR binding clarification view for active job-thread replay status.",
+        "operationId": "console_whqr_binding_clarifications_api_v1_console_whqr_clarifications_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "job_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Job Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_empty",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Empty",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": "50",
+              "title": "Limit",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Console Whqr Binding Clarifications"
       }
     },
     "/api/v1/context/summary": {
@@ -11137,9 +11576,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -11333,7 +11772,7 @@
             "required": true,
             "schema": {
               "title": "Entry Index",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -13407,9 +13846,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -13735,9 +14174,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -13774,9 +14213,9 @@
             "name": "count",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Count",
-              "type": "integer"
+              "type": "string"
             }
           },
           {
@@ -13811,6 +14250,54 @@
           }
         },
         "summary": "Get Logs"
+      }
+    },
+    "/api/v1/loops/read-model": {
+      "get": {
+        "description": "Return the bounded holistic loop read model without changing behavior.",
+        "operationId": "holistic_loop_read_model_api_v1_loops_read_model_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Holistic Loop Read Model Api V1 Loops Read Model Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Holistic Loop Read Model",
+        "tags": [
+          "loops"
+        ]
       }
     },
     "/api/v1/memory/search": {
@@ -15792,9 +16279,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -16931,9 +17418,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -17078,9 +17565,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 200,
+              "default": "200",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -17154,9 +17641,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -17477,9 +17964,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -17924,9 +18411,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 20,
+              "default": "20",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -18059,9 +18546,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 10,
+              "default": "10",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -18121,6 +18608,23 @@
           }
         },
         "summary": "Create Snapshot"
+      }
+    },
+    "/api/v1/spatial-map": {
+      "get": {
+        "description": "Return the bounded gateway spatial-causal governance map.",
+        "operationId": "read_spatial_map_api_v1_spatial_map_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Read Spatial Map"
       }
     },
     "/api/v1/state": {
@@ -18553,6 +19057,102 @@
         "summary": "Cancel Temporal Schedule"
       }
     },
+    "/api/v1/temporal/schedules/{schedule_id}/lease/reclaim": {
+      "post": {
+        "description": "Reclaim an expired temporal schedule lease and persist the repair receipt.",
+        "operationId": "reclaim_temporal_schedule_lease_api_v1_temporal_schedules__schedule_id__lease_reclaim_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "schedule_id",
+            "required": true,
+            "schema": {
+              "title": "Schedule Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "worker_id",
+            "required": false,
+            "schema": {
+              "default": "temporal-api",
+              "title": "Worker Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reclaim Temporal Schedule Lease"
+      }
+    },
+    "/api/v1/temporal/schedules/{schedule_id}/missed": {
+      "post": {
+        "description": "Mark a temporal schedule missed and persist a terminal receipt.",
+        "operationId": "mark_temporal_schedule_missed_api_v1_temporal_schedules__schedule_id__missed_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "schedule_id",
+            "required": true,
+            "schema": {
+              "title": "Schedule Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "worker_id",
+            "required": false,
+            "schema": {
+              "default": "temporal-api",
+              "title": "Worker Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Temporal Schedule Missed"
+      }
+    },
     "/api/v1/temporal/summary": {
       "get": {
         "description": "Return temporal scheduler runtime and persistence summaries.",
@@ -18634,9 +19234,9 @@
             "name": "count",
             "required": false,
             "schema": {
-              "default": 10,
+              "default": "10",
               "title": "Count",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -18933,9 +19533,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -19321,9 +19921,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -19642,9 +20242,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -19789,9 +20389,9 @@
             "name": "limit",
             "required": false,
             "schema": {
-              "default": 50,
+              "default": "50",
               "title": "Limit",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -22878,6 +23478,7 @@
             "required": false,
             "schema": {
               "default": 50,
+              "maximum": 500,
               "minimum": 1,
               "title": "Limit",
               "type": "integer"
@@ -23393,6 +23994,7 @@
             "required": false,
             "schema": {
               "default": 10,
+              "maximum": 500,
               "minimum": 1,
               "title": "Limit",
               "type": "integer"
@@ -23621,6 +24223,7 @@
             "required": false,
             "schema": {
               "default": 10,
+              "maximum": 500,
               "minimum": 1,
               "title": "Limit",
               "type": "integer"

@@ -36,6 +36,11 @@ EXTERNAL_EFFECT_CAPABILITIES = frozenset(
     }
 )
 _CAPABILITY_CLOSURE_BINDINGS = {
+    "messaging.thread.read": ("thread_context_bound",),
+    "email.read": ("shared_request_intake_recorded",),
+    "email.draft": ("draft_response_prepared",),
+    "task.assign": ("owner_assignment_recorded",),
+    "email.send.with_approval": ("external_send_approval_valid", "message_send_receipt_exists"),
     "invoice.extract": ("invoice_identity_verified",),
     "vendor.verify": ("vendor_identity_verified",),
     "po.match": ("duplicate_payment_check_passed",),

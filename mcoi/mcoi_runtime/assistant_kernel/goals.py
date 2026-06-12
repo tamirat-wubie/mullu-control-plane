@@ -1,4 +1,4 @@
-"""Purpose: typed assistant goals and flagship FinanceOps goal templates.
+"""Purpose: typed assistant goals and flagship assistant pack goal templates.
 Governance scope: intent declaration, required capability lists, closure
     predicates, and risk tier selection before planning.
 Dependencies: dataclasses and runtime invariant helpers.
@@ -8,6 +8,8 @@ Invariants:
   - Every goal declares required capabilities and closure predicates.
   - High-risk financial goals carry invoice, vendor, approval, payment,
     reconciliation, and signed evidence closure requirements.
+  - TeamOps shared-inbox goals carry owner assignment, external-send approval,
+    dispatch receipt, and signed evidence closure requirements.
 """
 
 from __future__ import annotations
@@ -40,6 +42,23 @@ FINANCE_OPS_PAYMENT_CLOSURE_PREDICATES = (
     "approval_valid",
     "payment_receipt_exists",
     "ledger_reconciliation_exists",
+    "signed_evidence_bundle_exists",
+)
+TEAM_OPS_SHARED_INBOX_CAPABILITIES = (
+    "messaging.thread.read",
+    "email.read",
+    "email.draft",
+    "task.assign",
+    "email.send.with_approval",
+    "evidence.export",
+)
+TEAM_OPS_SHARED_INBOX_CLOSURE_PREDICATES = (
+    "shared_request_intake_recorded",
+    "thread_context_bound",
+    "draft_response_prepared",
+    "owner_assignment_recorded",
+    "external_send_approval_valid",
+    "message_send_receipt_exists",
     "signed_evidence_bundle_exists",
 )
 
@@ -123,6 +142,46 @@ def finance_ops_invoice_payment_goal(
             "invoice_ref": invoice,
             "vendor_ref": vendor,
             "closure_requires_two_confirmations": True,
+        },
+    )
+
+
+def team_ops_shared_inbox_goal(
+    *,
+    tenant_id: str,
+    owner_id: str,
+    profile_id: str,
+    inbox_ref: str,
+    request_ref: str,
+    created_at: str,
+) -> AssistantGoal:
+    """Build the TeamOps shared-inbox routing goal template."""
+    inbox = ensure_non_empty_text("inbox_ref", inbox_ref)
+    request = ensure_non_empty_text("request_ref", request_ref)
+    payload = {
+        "tenant_id": tenant_id,
+        "owner_id": owner_id,
+        "profile_id": profile_id,
+        "inbox_ref": inbox,
+        "request_ref": request,
+        "created_at": created_at,
+    }
+    return AssistantGoal(
+        goal_id=stable_identifier("assistant-goal-teamops-shared-inbox", payload),
+        tenant_id=tenant_id,
+        owner_id=owner_id,
+        profile_id=profile_id,
+        intent="route_shared_inbox_request_with_approval_and_evidence",
+        required_capabilities=TEAM_OPS_SHARED_INBOX_CAPABILITIES,
+        required_closure_predicates=TEAM_OPS_SHARED_INBOX_CLOSURE_PREDICATES,
+        risk_tier="high",
+        created_at=created_at,
+        metadata={
+            "inbox_ref": inbox,
+            "request_ref": request,
+            "closure_requires_two_confirmations": True,
+            "external_send_requires_approval": True,
+            "classification_skill_id": "skill.team_ops.shared_inbox_triage",
         },
     )
 
