@@ -106,7 +106,29 @@ Verified local state:
    reported `122` tests across `mind-core`, `mind-connectors`,
    `mind-store-sqlite`, `mind-api`, `mind-cli`, and `mind-worker`.
 
-4. Workspace governance preflight passed:
+4. Offline `record_observation` dry-run passed without network write:
+
+   ```powershell
+   python scripts/nested_mind_submit_observation.py --plan .tmp/nested-mind-observation-plan-activation-boundary-20260612.json --evidence .tmp/nested-mind-proposal-evidence-activation-boundary-20260612.json --dry-run
+   python scripts/validate_nested_mind_p3_readiness.py --store .tmp/nested-mind-staging-evidence-activation-boundary-20260612.jsonl --mind-id root
+   ```
+
+   Verified dry-run identifiers:
+
+   | Field | Value |
+   | --- | --- |
+   | plan_id | `nested-mind-observation-plan-9fbcd0b3a249` |
+   | proposal_evidence_id | `nested-mind-proposal-evidence-f26b6266b44e` |
+   | payload_hash | `1e079c54a5e8cece5cbb4ee10ccb88216ab854716f334d818d4df5be783b7b0f` |
+   | observation_hash | `e04145cb9821a6c28aa3b2f1d436e122a1fe7be3dcf60b2edb0ac27d00160db4` |
+   | dry_run_status | `disabled` |
+   | dry_run_blocker | `dry_run_no_network_call` |
+
+   P3 readiness correctly remained blocked because live staging evidence was
+   absent. Required blockers were `accepted_submission_missing`,
+   `verified_commit_witness_missing`, and `verified_reconciliation_missing`.
+
+5. Workspace governance preflight passed:
 
    ```powershell
    python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt-nested-mind-settlement-20260612.json
@@ -115,7 +137,7 @@ Verified local state:
    Result: `144` checks passed, and the saved receipt validated with
    `scripts/validate_workspace_governance_preflight_receipt.py`.
 
-5. Live activation gates were absent in the local shell:
+6. Live activation gates were absent in the local shell:
 
    ```text
    MULLU_NESTED_MIND_ENABLED=absent
@@ -125,7 +147,7 @@ Verified local state:
    MULLU_NESTED_MIND_BEARER_TOKEN=absent
    ```
 
-6. Local `mind-api` does not satisfy live staging evidence by itself. The
+7. Local `mind-api` does not satisfy live staging evidence by itself. The
    Mullu bridge requires HTTPS and the governed HTTP connector blocks loopback,
    private, and metadata-network targets. A valid live witness therefore needs
    a real HTTPS staging endpoint and bounded token, not localhost or a private
