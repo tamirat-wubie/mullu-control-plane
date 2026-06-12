@@ -13,6 +13,7 @@ Invariants:
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 import urllib.error
 from pathlib import Path
@@ -23,6 +24,21 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from scripts.mint_gmail_oauth_access_token import mint_gmail_oauth_access_token  # noqa: E402
+
+
+def test_script_entrypoint_loads_gateway_imports_from_repo_root() -> None:
+    result = subprocess.run(
+        [sys.executable, str(_ROOT / "scripts" / "mint_gmail_oauth_access_token.py"), "--help"],
+        cwd=_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "Mint a Gmail OAuth access token" in result.stdout
+    assert "ModuleNotFoundError" not in result.stderr
 
 
 def test_mint_writes_access_token_to_env_file_and_redacted_receipt(tmp_path: Path) -> None:

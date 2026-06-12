@@ -15,12 +15,17 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 import urllib.error
 import urllib.parse
 import urllib.request
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from gateway.gmail_oauth_lifecycle import (
     GMAIL_OAUTH_TOKEN_ENDPOINT,
