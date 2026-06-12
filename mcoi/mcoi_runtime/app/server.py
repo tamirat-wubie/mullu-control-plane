@@ -68,6 +68,9 @@ from mcoi_runtime.app.temporal_scheduler_integration import (
     maybe_start_temporal_worker,
     select_temporal_scheduler_store,
 )
+from mcoi_runtime.app.job_conversation_integration import (
+    bootstrap_job_conversation_threads,
+)
 from mcoi_runtime.app.server_lifecycle import bootstrap_server_lifecycle
 from mcoi_runtime.app.server_registry import bootstrap_dependency_registry
 from mcoi_runtime.app.server_runtime_stack import bootstrap_server_runtime_stack
@@ -294,7 +297,16 @@ deps.set("policy_version_registry_bootstrap", _policy_version_registry_bootstrap
 deps.set("pilot_provision_registry_bootstrap", _pilot_provision_registry_bootstrap)
 deps.set("tool_permission_registry_bootstrap", _tool_permission_registry_bootstrap)
 deps.set("job_engine", JobEngine(clock=_clock))
-deps.set("job_conversation_threads", {})
+_job_conversation_bootstrap = bootstrap_job_conversation_threads(os.environ)
+deps.set("job_conversation_threads", _job_conversation_bootstrap.thread_index)
+if _job_conversation_bootstrap.store is not None:
+    deps.set("job_conversation_thread_store", _job_conversation_bootstrap.store)
+if _job_conversation_bootstrap.save_on_shutdown is not None:
+    shutdown_mgr.register(
+        "save_job_conversation_threads",
+        _job_conversation_bootstrap.save_on_shutdown,
+        priority=80,
+    )
 
 # Cognitive organs (live wiring, Slice 1): mount the reasoning/learning engines
 # into the SERVED runtime (historically CLI-bootstrap only) and register them on
