@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from mcoi_runtime.contracts.policy import DecisionReason, PolicyDecision, PolicyDecisionStatus
 from mcoi_runtime.contracts.proof import GuardVerdict
-from mcoi_runtime.contracts.whqr import EvidenceGate, GateResult, NormGate, TruthGate, WHQRExpr, WHRole
+from mcoi_runtime.contracts.whqr import EvidenceGate, GateResult, NormGate, TruthGate, WHQRDocument, WHQRExpr, WHRole
 from mcoi_runtime.whqr.binding_preflight import BindingPreflightReport, validate_binding_preflight
 from mcoi_runtime.whqr.evaluator import WHQREvaluationContext, evaluate
 from mcoi_runtime.whqr.static_checks import validate_static
@@ -28,9 +28,11 @@ def build_policy_decision(
     binding_report = validate_binding_preflight(expr)
     gate_result = evaluate(expr, context)
     status = _status(static_report.passed, binding_report, gate_result)
+    expr_hash = WHQRDocument(root=expr).canonical_hash()
+    reason_code = _reason_code(status, static_report.passed, binding_report, gate_result)
     reason = DecisionReason(
         _message(status, binding_report),
-        _reason_code(status, static_report.passed, binding_report, gate_result),
+        reason_code,
         {
             "truth": gate_result.truth.value,
             "norm": gate_result.norm.value if gate_result.norm else None,
@@ -55,12 +57,16 @@ def build_policy_decision(
         },
     )
     return PolicyDecision(
-        f"whqr:{goal_id}:{status.value}",
+        f"whqr:{goal_id}:{status.value}:{reason_code}:{expr_hash}",
         subject_id,
         goal_id,
         status,
         (reason,),
         issued_at,
+        metadata={
+            "reason_code": reason_code,
+            "whqr_canonical_hash": expr_hash,
+        },
     )
 
 
