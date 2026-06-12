@@ -161,7 +161,6 @@ STATUS_DOCUMENT_REQUIRED_LITERALS: tuple[str, ...] = (
     "Deployment runtime input witness",
     "Refresh deployment runtime input witness (#466)",
     "MULLU_GATEWAY_URL",
-    "deployment_claim=not-published",
     "docs/59_general_agent_promotion_handoff_packet.md",
     "docs/60_logic_governance_application.md",
     "examples/general_agent_promotion_handoff_packet.json",
@@ -241,8 +240,8 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
     ),
     "DEPLOYMENT_STATUS.md": (
         "Deployment Status Witness",
-        "**Deployment witness state:** `not-published`",
-        "**Public production health endpoint:** `not-declared`",
+        "**Deployment witness state:**",
+        "**Public production health endpoint:**",
         "https://api.mullusi.com/health",
         "python scripts/validate_gateway_deployment_env.py --strict",
         "python scripts/pilot_proof_slice.py --output .change_assurance/pilot_proof_slice_witness.json",
@@ -313,10 +312,16 @@ PUBLIC_SURFACE_DOCUMENT_REQUIRED_LITERALS: dict[str, tuple[str, ...]] = {
         "GitHub Actions secret name `MULLU_DEPLOYMENT_WITNESS_SECRET` is present; secret value is not printed",
         "GitHub Actions secret name `MULLU_AUTHORITY_OPERATOR_SECRET` is present; secret value is not printed",
         "GitHub repository variables `MULLU_GATEWAY_URL=https://api.mullusi.com` and `MULLU_EXPECTED_RUNTIME_ENV=pilot` are set",
-        "`api.mullusi.com` remains `AwaitingEvidence` until upstream recovery, runtime host, managed PostgreSQL, secret store, TLS, rollback, and DNS publication authority gates are closed",
-        "`deployment-witness.yml` run `27148629126` completed successfully on 2026-06-08 for `https://api.mullusi.com`, but the local deployment witness remains `not-published` until signatures, upstream readiness, production evidence, and public-health declaration evidence close",
     ),
 }
+DEPLOYMENT_STATE_PATTERN = re.compile(
+    r"^\*\*Deployment witness state:\*\*\s+`([^`]+)`$",
+    re.MULTILINE,
+)
+PUBLIC_HEALTH_PATTERN = re.compile(
+    r"^\*\*Public production health endpoint:\*\*\s+`([^`]+)`$",
+    re.MULTILINE,
+)
 
 DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS: tuple[str, ...] = (
     "Deployment Witness Collection",
@@ -691,6 +696,56 @@ def validate_status_document_text(content: str) -> list[str]:
     return errors
 
 
+def validate_deployment_status_phase_text(content: str) -> list[str]:
+    """Validate deployment status phase anchors without pinning one phase."""
+    errors: list[str] = []
+    state_match = DEPLOYMENT_STATE_PATTERN.search(content)
+    endpoint_match = PUBLIC_HEALTH_PATTERN.search(content)
+    if state_match is None:
+        errors.append("DEPLOYMENT_STATUS.md missing deployment witness state")
+        return errors
+    if endpoint_match is None:
+        errors.append("DEPLOYMENT_STATUS.md missing public production health endpoint")
+        return errors
+
+    deployment_state = state_match.group(1).strip()
+    public_health_endpoint = endpoint_match.group(1).strip()
+    if deployment_state == "not-published":
+        if public_health_endpoint != "not-declared":
+            errors.append("not-published deployment must keep public health not-declared")
+        if "deployment_claim=not-published" not in content:
+            errors.append("not-published deployment status missing blocked witness anchor")
+        return errors
+
+    if deployment_state == "published":
+        if not public_health_endpoint.startswith("https://"):
+            errors.append("published deployment must declare an HTTPS public health endpoint")
+        stale_fragments = (
+            "deployment publication remains `not-published`",
+            "deployment_claim=not-published",
+            "live production runtime is not published",
+            "public production health is not claimed",
+            "`api.mullusi.com` remains `AwaitingEvidence`",
+            "local deployment witness remains `not-published`",
+            "public production health declaration while deployment publication remains",
+            "Public production health | Not declared;",
+        )
+        stale = tuple(fragment for fragment in stale_fragments if fragment in content)
+        if stale:
+            errors.append(f"published deployment status contains stale blocked anchors: {list(stale)}")
+        required_published_anchors = (
+            "deployment_claim=published",
+            ".change_assurance/public_production_health_declaration.json",
+        )
+        missing = tuple(anchor for anchor in required_published_anchors if anchor not in content)
+        if missing:
+            errors.append(f"published deployment status missing declaration anchors: {list(missing)}")
+        return errors
+
+    errors.append(f"unsupported deployment witness state: {deployment_state}")
+    return errors
+
+
 def validate_public_surface_document_texts(
     document_texts: dict[str, str],
 ) -> list[str]:
@@ -708,6 +763,8 @@ def validate_public_surface_document_texts(
             errors.append(
                 f"{document_name} missing required public-surface anchors: {list(missing_literals)}"
             )
+        if document_name == "DEPLOYMENT_STATUS.md":
+            errors.extend(validate_deployment_status_phase_text(content))
     return errors
 
 

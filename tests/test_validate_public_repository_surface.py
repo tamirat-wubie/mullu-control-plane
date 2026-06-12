@@ -37,6 +37,7 @@ from scripts.validate_public_repository_surface import (
     STATUS_REQUIRED_LITERALS,
     _parse_json_object,
     read_json_url_with_gh,
+    validate_deployment_status_phase_text,
     validate_required_document_text,
 )
 from scripts.validate_protocol_manifest import load_manifest
@@ -80,7 +81,7 @@ def test_deployment_status_requires_orchestration_receipt_validation() -> None:
     assert "--upstream-readiness-report \"$env:UPSTREAM_API_READINESS_REPORT\"" in content
     assert "python scripts/emit_deployment_upstream_blocker_receipt.py --target-gateway-url \"$env:MULLU_GATEWAY_URL\" --upstream-readiness-report \"$env:UPSTREAM_API_READINESS_REPORT\" --output .change_assurance\\deployment_upstream_blocker_receipt.json --json" in content
     assert "python scripts/validate_deployment_upstream_blocker_receipt.py --receipt .change_assurance/deployment_upstream_blocker_receipt.json --output .change_assurance/deployment_upstream_blocker_receipt_validation.json --require-ready" in content
-    assert "`api.mullusi.com` remains `AwaitingEvidence` until upstream recovery" in content
+    assert "api.mullusi.com" in content
     assert "python scripts/emit_gateway_dns_target_binding_receipt.py --gateway-host \"$MULLU_GATEWAY_HOST\" --gateway-url \"$MULLU_GATEWAY_URL\" --expected-environment \"$MULLU_EXPECTED_RUNTIME_ENV\" --record-type \"$MULLU_GATEWAY_DNS_RECORD_TYPE\" --target \"$MULLU_GATEWAY_DNS_TARGET\" --provider \"$MULLU_DNS_PROVIDER\" --output .change_assurance/gateway_dns_target_binding_receipt.json --json" in content
     assert "python scripts/validate_gateway_dns_target_binding_receipt.py --receipt .change_assurance/gateway_dns_target_binding_receipt.json --output .change_assurance/gateway_dns_target_binding_receipt_validation.json --require-ready" in content
     assert "python scripts/apply_deployment_publication_status.py --operator-approval-ref \"$MULLU_DEPLOYMENT_PUBLICATION_APPROVAL_REF\" --receipt-output .change_assurance/public_production_health_declaration.json" in content
@@ -104,7 +105,34 @@ def test_deployment_status_requires_orchestration_receipt_validation() -> None:
     assert "examples/general_agent_promotion_handoff_packet.json" in content
     assert "examples/general_agent_promotion_environment_bindings.json" in content
     assert ".change_assurance/general_agent_promotion_environment_binding_receipt.json" in content
-    assert "`deployment-witness.yml` run `27148629126` completed successfully on 2026-06-08 for `https://api.mullusi.com`" in content
+    assert "| Deployment witness workflow runs |" in content
+
+
+def test_deployment_status_phase_accepts_published_declaration() -> None:
+    content = "\n".join(
+        (
+            "**Deployment witness state:** `published`",
+            "**Public production health endpoint:** `https://api.mullusi.com/health`",
+            "| Public production health | Declared from a verified published deployment witness; `.change_assurance/deployment_witness.json` records `deployment_claim=published`, and `.change_assurance/public_production_health_declaration.json` records the operator-approved declaration receipt | Reflected |",
+        )
+    )
+
+    assert validate_deployment_status_phase_text(content) == []
+
+
+def test_deployment_status_phase_rejects_stale_published_declaration() -> None:
+    content = "\n".join(
+        (
+            "**Deployment witness state:** `published`",
+            "**Public production health endpoint:** `https://api.mullusi.com/health`",
+            "| Public production health | Not declared; `.change_assurance/deployment_witness.json` records `deployment_claim=not-published` | Reflected |",
+        )
+    )
+
+    errors = validate_deployment_status_phase_text(content)
+
+    assert len(errors) == 2
+    assert "stale blocked anchors" in errors[0]
 
 
 def test_status_witness_requires_protocol_manifest_anchor() -> None:

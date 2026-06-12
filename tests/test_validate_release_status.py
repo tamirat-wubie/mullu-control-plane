@@ -28,6 +28,7 @@ from scripts.validate_release_status import (
     validate_ci_workflow_text,
     validate_deployment_witness_workflow_text,
     validate_gateway_publication_workflow_text,
+    validate_deployment_status_phase_text,
     validate_logic_governance_surface,
     validate_protocol_manifest_surface,
     validate_public_surface_document_texts,
@@ -130,7 +131,7 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
     assert any("emit_deployment_upstream_blocker_receipt.py" in literal for literal in deployment_literals)
     assert any("validate_deployment_upstream_blocker_receipt.py" in literal for literal in deployment_literals)
     assert any("deployment_upstream_blocker_receipt.json" in literal for literal in deployment_literals)
-    assert any("api.mullusi.com" in literal and "AwaitingEvidence" in literal for literal in deployment_literals)
+    assert any("api.mullusi.com" in literal for literal in deployment_literals)
     assert any("emit_gateway_dns_target_binding_receipt.py" in literal for literal in deployment_literals)
     assert any("validate_gateway_dns_target_binding_receipt.py" in literal for literal in deployment_literals)
     assert any("MULLU_GATEWAY_DNS_TARGET" in literal for literal in deployment_literals)
@@ -166,6 +167,33 @@ def test_release_public_surface_requires_orchestration_receipt_anchors() -> None
     assert any("general_agent_promotion_environment_binding_receipt.json" in literal for literal in deployment_literals)
 
 
+def test_release_deployment_status_phase_accepts_published_declaration() -> None:
+    content = "\n".join(
+        (
+            "**Deployment witness state:** `published`",
+            "**Public production health endpoint:** `https://api.mullusi.com/health`",
+            "| Public production health | Declared from a verified published deployment witness; `.change_assurance/deployment_witness.json` records `deployment_claim=published`, and `.change_assurance/public_production_health_declaration.json` records the operator-approved declaration receipt | Reflected |",
+        )
+    )
+
+    assert validate_deployment_status_phase_text(content) == []
+
+
+def test_release_deployment_status_phase_rejects_stale_published_declaration() -> None:
+    content = "\n".join(
+        (
+            "**Deployment witness state:** `published`",
+            "**Public production health endpoint:** `https://api.mullusi.com/health`",
+            "| Public production health | Not declared; `.change_assurance/deployment_witness.json` records `deployment_claim=not-published` | Reflected |",
+        )
+    )
+
+    errors = validate_deployment_status_phase_text(content)
+
+    assert len(errors) == 2
+    assert "stale blocked anchors" in errors[0]
+
+
 def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     content = (REPO_ROOT / "STATUS.md").read_text(encoding="utf-8")
 
@@ -185,7 +213,7 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "Refresh deployment runtime input witness (#466)" in content
     assert "MULLU_GATEWAY_URL" in content
     assert "MULLU_AUTHORITY_OPERATOR_SECRET" in content
-    assert "deployment_claim: published" in content
+    assert "deployment_claim=not-published" in content
     assert "docs/59_general_agent_promotion_handoff_packet.md" in content
     assert "examples/general_agent_promotion_handoff_packet.json" in content
     assert "examples/general_agent_promotion_environment_bindings.json" in content
