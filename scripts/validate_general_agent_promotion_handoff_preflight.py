@@ -36,7 +36,8 @@ EXPECTED_STEP_NAMES = (
     "closure plan drift validation",
     "promotion readiness report",
 )
-EXPECTED_READINESS_LEVEL = "production-general-agent"
+EXPECTED_READINESS_LEVEL = "pilot-governed-core"
+EXPECTED_PRODUCTION_READY = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,8 +90,8 @@ def _validate_scalar_fields(report: dict[str, Any], errors: list[str]) -> None:
         errors.append(f"step_count must be {len(EXPECTED_STEP_NAMES)}")
     if report.get("readiness_level") != EXPECTED_READINESS_LEVEL:
         errors.append(f"readiness_level must be {EXPECTED_READINESS_LEVEL}")
-    if report.get("production_ready") is not True:
-        errors.append("production_ready must be true for final-validation handoff preflight")
+    if report.get("production_ready") is not EXPECTED_PRODUCTION_READY:
+        errors.append(f"production_ready must be {str(EXPECTED_PRODUCTION_READY).lower()} for handoff preflight")
     if not isinstance(report.get("ready"), bool):
         errors.append("ready must be a boolean")
 

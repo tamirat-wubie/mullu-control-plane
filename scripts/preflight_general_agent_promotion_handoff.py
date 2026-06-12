@@ -54,9 +54,10 @@ DEFAULT_READINESS = REPO_ROOT / ".change_assurance" / "general_agent_promotion_r
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "general_agent_promotion_handoff_preflight.json"
 DEFAULT_CAPABILITY_ROOT = REPO_ROOT / "capabilities"
 DEFAULT_CAPSULE_ROOT = REPO_ROOT / "capsules"
-EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT = 5
-EXPECTED_READINESS_LEVEL = "production-general-agent"
-EXPECTED_SOURCE_PLAN_TYPES = ("portfolio",)
+EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT = 8
+EXPECTED_READINESS_LEVEL = "pilot-governed-core"
+EXPECTED_PRODUCTION_READY = False
+EXPECTED_SOURCE_PLAN_TYPES = ("deployment", "portfolio")
 OPTIONAL_SOURCE_PLAN_TYPES = ("adapter", "deployment")
 
 EnvReader = Callable[[str], str | None]
@@ -427,13 +428,13 @@ def _readiness_report_step(
     production_ready = payload.get("ready") is True
     passed = (
         readiness_level == EXPECTED_READINESS_LEVEL
-        and production_ready
+        and production_ready is EXPECTED_PRODUCTION_READY
         and payload.get("capability_count") == expected_capability_count
         and payload.get("capsule_count") == expected_capsule_count
     )
     expected_detail = (
             f"readiness_level={EXPECTED_READINESS_LEVEL} capability_count={expected_capability_count} "
-            f"capsule_count={expected_capsule_count} production_ready=true"
+            f"capsule_count={expected_capsule_count} production_ready={str(EXPECTED_PRODUCTION_READY).lower()}"
     )
     detail = (
         expected_detail
