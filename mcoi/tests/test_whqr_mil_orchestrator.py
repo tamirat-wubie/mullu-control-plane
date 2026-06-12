@@ -127,6 +127,42 @@ def test_whqr_mil_orchestrator_stops_before_mil_when_whqr_unresolved() -> None:
     assert executor.calls == 0
 
 
+def test_whqr_mil_orchestrator_stops_before_mil_when_typed_binding_missing() -> None:
+    governed, executor = _governed()
+    memory = EpisodicMemory()
+
+    result = run_whqr_mil_orchestration(
+        expr=WHQRNode(WHRole.WHOM, "vendor", node_id="vendor-node", expected_type="vendor"),
+        goal=_goal(),
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        governed=governed,
+        certifier=TerminalClosureCertifier(clock=clock),
+        episodic=memory,
+        actor_id="operator",
+        intent_id="intent",
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hi"},
+        context=WHQREvaluationContext(
+            node_results={
+                "vendor": GateResult(TruthGate.TRUE, NormGate.PERMITTED, EvidenceGate.PROVEN),
+            }
+        ),
+    )
+
+    assert result.completed is False
+    assert result.next_step == "resolve_whqr_binding"
+    assert result.goal_compilation.binding_report.passed is False
+    assert {issue.code for issue in result.goal_compilation.binding_report.issues} == {
+        "missing_entity_ref",
+        "missing_evidence_ref",
+    }
+    assert result.mil_program is None
+    assert result.dispatch_result is None
+    assert memory.size == 0
+    assert executor.calls == 0
+
+
 def test_meta_reasoning_gate_halts_before_mil_when_capability_degraded() -> None:
     governed, executor = _governed()
     memory = EpisodicMemory()
