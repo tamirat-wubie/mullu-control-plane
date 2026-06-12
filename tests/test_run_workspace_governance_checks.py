@@ -50,6 +50,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     foundation_phase = names[foundation_start:protocol_index]
     expected_foundation_names = {
         "agentic_service_harness_contract",
+        "agentic_service_harness_read_models",
         "foundation_mode",
         "foundation_local_proof_thread",
         *(
@@ -135,7 +136,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_python_dependency_visibility_rehearsal_boundary",
     )
     assert_ordered("foundation_python_dependency_visibility_rehearsal_boundary", "agentic_service_harness_contract")
-    assert_ordered("agentic_service_harness_contract", "foundation_operator_readiness_boundary")
+    assert_ordered("agentic_service_harness_contract", "agentic_service_harness_read_models")
+    assert_ordered("agentic_service_harness_read_models", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_source_control_review_checklist_boundary", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_source_control_boundary", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_learning_path_boundary", "foundation_learning_loop_rehearsal_boundary")
@@ -221,6 +223,8 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
             expected_args = ("scripts/validate_foundation_mode.py",)
         elif check_name == "foundation_local_proof_thread":
             expected_args = ("scripts/validate_foundation_local_proof_thread.py",)
+        elif check_name.startswith("agentic_service_harness_"):
+            expected_args = (f"scripts/validate_{check_name}.py",)
         else:
             expected_args = (f"scripts/validate_{check_name}.py",)
 

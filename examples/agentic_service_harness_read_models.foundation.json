@@ -1,0 +1,217 @@
+{
+  "report_id": "agentic_service_harness_read_models",
+  "schema_version": 1,
+  "contract_ref": "schemas/agentic_service_harness.schema.json",
+  "generated_at": "2026-06-12T00:00:00Z",
+  "projection_scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "read_only": true,
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "default_high_risk_authority": false,
+    "secret_values_serialized": false
+  },
+  "accounts": [
+    {
+      "user_id": "user-operator",
+      "tenant_id": "tenant-local-foundation",
+      "organization_memberships": [
+        "org-mullusi-foundation"
+      ],
+      "display_name": "Foundation Operator",
+      "default_role": "admin",
+      "identity_provider_ref": "identity://local-operator",
+      "read_only": true,
+      "secret_values_serialized": false
+    }
+  ],
+  "projects": [
+    {
+      "project_id": "project-agentic-service-harness",
+      "organization_id": "org-mullusi-foundation",
+      "tenant_id": "tenant-local-foundation",
+      "name": "Mullusi Agentic Service Harness",
+      "repository_connection_ids": [
+        "repo-mullu-control-plane"
+      ],
+      "agent_run_ids": [
+        "run-read-model-foundation"
+      ],
+      "receipt_refs": [
+        "receipt://agentic-service-harness/read-model-foundation"
+      ],
+      "loop_status_ref": "loop://holistic-loop/read-model-foundation",
+      "read_only": true,
+      "mutation_route": false
+    }
+  ],
+  "repositories": [
+    {
+      "connection_id": "repo-mullu-control-plane",
+      "project_id": "project-agentic-service-harness",
+      "provider": "github",
+      "repository_slug": "tamirat-wubie/mullu-control-plane",
+      "default_branch": "main",
+      "permission_scope": "read_only",
+      "credential_binding_ref": "credential-binding://github/read-only-installation",
+      "secret_values_serialized": false,
+      "write_authority_enabled": false,
+      "read_only": true
+    }
+  ],
+  "runs": [
+    {
+      "run_id": "run-read-model-foundation",
+      "project_id": "project-agentic-service-harness",
+      "task_request_ref": "task://agentic-service-harness/read-model-foundation",
+      "adapter_id": "adapter-contract-only-codex-style",
+      "sandbox_id": "sandbox-read-only-foundation",
+      "mode": "read_only",
+      "status": "ready_read_only",
+      "approval_gate_ids": [
+        "approval-not-required-read-only"
+      ],
+      "receipt_id": "receipt-read-model-foundation",
+      "evidence_bundle_id": "evidence-read-model-foundation",
+      "result_summary_id": "summary-read-model-foundation",
+      "risk_level": "low",
+      "blocked_actions": [],
+      "read_only": true,
+      "executes_adapter": false,
+      "creates_branch": false,
+      "opens_pull_request": false,
+      "permits_external_effect": false
+    }
+  ],
+  "approvals": [
+    {
+      "gate_id": "approval-not-required-read-only",
+      "run_id": "run-read-model-foundation",
+      "action_class": "read_only",
+      "risk_level": "low",
+      "status": "not_required",
+      "approver_role_required": "viewer",
+      "approval_required": false,
+      "self_approval_allowed": false,
+      "permits_external_effect": false,
+      "evidence_refs": [
+        "policy://harness/read-only-action"
+      ],
+      "read_only": true
+    }
+  ],
+  "receipts": [
+    {
+      "receipt_id": "receipt-read-model-foundation",
+      "run_id": "run-read-model-foundation",
+      "task_request_ref": "task://agentic-service-harness/read-model-foundation",
+      "selected_agent_ref": "agent://contract-only/codex-style",
+      "files_changed": {
+        "changed_file_count": 0,
+        "changed_file_refs": [],
+        "diff_refs": [
+          "diff://none/read-only-projection"
+        ]
+      },
+      "commands_run_refs": [
+        "command://validator/agentic-service-harness-read-models"
+      ],
+      "tests_run_refs": [
+        "test://pytest/test-agentic-service-harness-read-models"
+      ],
+      "policy_result": "allowed_read_only",
+      "risk_level": "low",
+      "evidence_refs": [
+        "evidence://agentic-service-harness/read-model-foundation"
+      ],
+      "next_action": "Add fixture projection PR after schema review.",
+      "read_only": true,
+      "receipt_is_not_terminal_closure": true,
+      "terminal_closure": false,
+      "secret_values_serialized": false
+    }
+  ],
+  "evidence": [
+    {
+      "bundle_id": "evidence-read-model-foundation",
+      "run_id": "run-read-model-foundation",
+      "evidence_refs": [
+        "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_MODEL_BINDING_PLAN.md"
+      ],
+      "command_log_refs": [
+        "command://validator/agentic-service-harness-read-models"
+      ],
+      "test_log_refs": [
+        "test://pytest/test-agentic-service-harness-read-models"
+      ],
+      "diff_refs": [
+        "diff://none/read-only-projection"
+      ],
+      "policy_refs": [
+        "docs/FOUNDATION_MODE.md"
+      ],
+      "redaction_policy": "hash_or_reference_only",
+      "contains_secret_values": false,
+      "inline_diff_allowed": false,
+      "read_only": true
+    }
+  ],
+  "result_summaries": [
+    {
+      "summary_id": "summary-read-model-foundation",
+      "run_id": "run-read-model-foundation",
+      "outcome": "AwaitingEvidence",
+      "user_visible_status": "Read-only schema contract available; fixture projection and persistence rehearsal still pending.",
+      "changed_file_count": 0,
+      "tests_status": "not_run",
+      "blockers": [
+        "fixture_projection_pending",
+        "local_persistence_rehearsal_pending"
+      ],
+      "next_action": "Add read-only fixture projection validator.",
+      "read_only": true,
+      "terminal_closure": false
+    }
+  ],
+  "permission_snapshot": {
+    "roles": [
+      "viewer",
+      "operator",
+      "approver",
+      "admin"
+    ],
+    "action_classes": [
+      "read_only",
+      "dry_run",
+      "write_to_branch",
+      "open_pr",
+      "blocked_high_risk"
+    ],
+    "blocked_high_risk_actions": [
+      "merge",
+      "deploy",
+      "dns_mutation",
+      "secret_mutation",
+      "destructive_operation"
+    ],
+    "can_merge": false,
+    "can_deploy": false,
+    "can_mutate_dns": false,
+    "can_mutate_secrets": false,
+    "can_run_destructive_operations": false,
+    "read_only": true
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-read-models",
+      "command": "python scripts/validate_agentic_service_harness_read_models.py --strict",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Add read-only fixture projections in a separate PR.",
+  "report_is_not_terminal_closure": true,
+  "terminal_closure_required": true
+}

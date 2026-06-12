@@ -74,6 +74,7 @@
             "foundation_local_release_packet_rehearsal_boundary",
             "foundation_python_dependency_visibility_rehearsal_boundary",
             "agentic_service_harness_contract",
+            "agentic_service_harness_read_models",
             "foundation_operator_readiness_boundary",
             "foundation_solo_daily_loop_boundary",
             "foundation_learning_path_boundary",

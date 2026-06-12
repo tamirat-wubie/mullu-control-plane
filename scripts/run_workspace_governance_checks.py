@@ -144,6 +144,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_agentic_service_harness_contract.py"),
         ),
         CheckCommand(
+            "agentic_service_harness_read_models",
+            (python_executable, "scripts/validate_agentic_service_harness_read_models.py"),
+        ),
+        CheckCommand(
             "foundation_operator_readiness_boundary",
             (python_executable, "scripts/validate_foundation_operator_readiness_boundary.py"),
         ),

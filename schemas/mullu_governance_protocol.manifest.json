@@ -35,6 +35,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "agentic-service-harness-read-models",
+      "path": "schemas/agentic_service_harness_read_models.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-read-models:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "agent-identity",
       "path": "schemas/agent_identity.schema.json",
       "urn": "urn:mullusi:schema:agent-identity:1",
