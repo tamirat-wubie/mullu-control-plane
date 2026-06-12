@@ -229,6 +229,8 @@ class LLMIntegrationBridge:
 
     def invocation_history(self, limit: int = 50) -> list[dict[str, Any]]:
         """Recent invocation records for audit."""
+        if isinstance(limit, bool) or not isinstance(limit, int):
+            raise ValueError("llm invocation history limit must be an integer")
         if limit <= 0:
             return []
         records = self._invocation_records[-limit:]
