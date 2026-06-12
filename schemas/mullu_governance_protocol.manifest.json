@@ -71,6 +71,12 @@
       "surface": "capability"
     },
     {
+      "schema_id": "capability-improvement-proof-receipt",
+      "path": "schemas/capability_improvement_proof_receipt.schema.json",
+      "urn": "urn:mullusi:schema:capability-improvement-proof-receipt:1",
+      "surface": "capability"
+    },
+    {
       "schema_id": "self-improvement-cycle-report",
       "path": "schemas/self_improvement_cycle_report.schema.json",
       "urn": "urn:mullusi:schema:self-improvement-cycle-report:1",

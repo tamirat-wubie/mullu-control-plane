@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Reconcile terminal certificate candidate evidence against live receipts.
+"""Reconcile terminal certificate candidate evidence against receipts.
 
 Purpose: determine whether non-minting terminal certificate candidates have
-their required evidence refs satisfied by validated live receipt artifacts.
+their required evidence refs satisfied by validated receipt artifacts.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
-Dependencies: terminal certificate candidate set, optional live receipt files,
-and terminal evidence reconciliation schema.
+Dependencies: terminal certificate candidate set, optional live/proof receipt
+files, and terminal evidence reconciliation schema.
 Invariants:
   - This reconciler does not execute actions or mint terminal certificates.
   - Missing receipt evidence blocks minting readiness.
@@ -42,6 +42,7 @@ DEFAULT_RECEIPT_PATHS = (
     REPO_ROOT / ".change_assurance" / "voice_live_receipt.json",
     REPO_ROOT / ".change_assurance" / "email_calendar_live_receipt.json",
     REPO_ROOT / ".change_assurance" / "gateway_publication_receipt.json",
+    REPO_ROOT / ".change_assurance" / "capability_improvement_proof_receipt.json",
 )
 CANDIDATE_SCHEMA_ID = "urn:mullusi:schema:general-agent-promotion-terminal-certificate-candidates:1"
 TERMINAL_CERTIFICATE_SCHEMA_ID = "urn:mullusi:schema:terminal-closure-certificate:1"
@@ -49,7 +50,7 @@ TERMINAL_CERTIFICATE_SCHEMA_ID = "urn:mullusi:schema:terminal-closure-certificat
 
 @dataclass(frozen=True, slots=True)
 class ReceiptEvidenceIndex:
-    """Status-only evidence projection from live receipt files."""
+    """Status-only evidence projection from receipt files."""
 
     matched_by_key: dict[str, str]
     missing_receipt_paths: tuple[str, ...]
@@ -129,7 +130,7 @@ def reconcile_general_agent_promotion_terminal_evidence(
     receipt_paths: tuple[Path, ...] = DEFAULT_RECEIPT_PATHS,
     generated_at: str = DEFAULT_GENERATED_AT,
 ) -> TerminalEvidenceReconciliation:
-    """Reconcile terminal candidate evidence against live receipt files."""
+    """Reconcile terminal candidate evidence against receipt files."""
     candidates = _load_json_object(candidate_path, "terminal certificate candidates")
     candidate_hash = _stable_hash(candidates)
     candidate_errors = validate_general_agent_promotion_terminal_certificate_candidates(candidates)
@@ -231,12 +232,13 @@ def _receipt_evidence_index(receipt_paths: tuple[Path, ...]) -> ReceiptEvidenceI
         if not path.exists():
             missing_paths.append(_path_label(path))
             continue
-        receipt = _load_json_object(path, "live receipt")
+        receipt = _load_json_object(path, "receipt")
         if not _receipt_passed(receipt):
             continue
         receipt_ref = _path_label(path)
         basename = path.name
         matched[basename] = receipt_ref
+        _index_capability_improvement_proof_receipt(receipt, receipt_ref, matched)
         adapter_id = str(receipt.get("adapter_id", ""))
         if adapter_id == "document.production_parsers" and receipt.get("production_parser_ids"):
             matched["production_parser_registry_receipt"] = receipt_ref
@@ -247,6 +249,31 @@ def _receipt_evidence_index(receipt_paths: tuple[Path, ...]) -> ReceiptEvidenceI
         if adapter_id == "communication.email_calendar_worker":
             matched["email_calendar_live_receipt"] = receipt_ref
     return ReceiptEvidenceIndex(matched_by_key=matched, missing_receipt_paths=tuple(missing_paths))
+
+
+def _index_capability_improvement_proof_receipt(
+    receipt: dict[str, Any],
+    receipt_ref: str,
+    matched: dict[str, str],
+) -> None:
+    """Index a safe capability-improvement proof receipt by evidence key."""
+    if receipt.get("receipt_type") != "capability_improvement_proof_receipt":
+        return
+    metadata = receipt.get("metadata")
+    if not isinstance(metadata, dict):
+        return
+    if metadata.get("proof_is_not_execution") is not True:
+        return
+    if metadata.get("capability_activation_performed") is not False:
+        return
+    if metadata.get("registry_mutated") is not False:
+        return
+    if metadata.get("terminal_certificates_minted") is not False:
+        return
+    if metadata.get("secret_values_serialized") is not False:
+        return
+    for evidence_key in _string_tuple(receipt.get("evidence_keys", ())):
+        matched[evidence_key] = receipt_ref
 
 
 def _reconciliation_plan(

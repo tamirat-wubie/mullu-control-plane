@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:capability-improvement-proof-receipt:1",
+  "title": "Capability Improvement Proof Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_type",
+    "receipt_id",
+    "generated_at",
+    "source_portfolio_path",
+    "source_portfolio_id",
+    "source_portfolio_hash",
+    "capability_id",
+    "plan_id",
+    "plan_hash",
+    "candidate_id",
+    "status",
+    "verification_status",
+    "evidence_keys",
+    "stage_proofs",
+    "resolved_blockers",
+    "blockers",
+    "metadata"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "receipt_type": {
+      "type": "string",
+      "const": "capability_improvement_proof_receipt"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^capability-improvement-proof-receipt-[0-9a-f]{16}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_portfolio_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_portfolio_id": {
+      "type": "string",
+      "pattern": "^capability-improvement-portfolio-[0-9a-f]{16}$"
+    },
+    "source_portfolio_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "capability_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^capability-upgrade-plan-[0-9a-f]{16}$"
+    },
+    "plan_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidate_id": {
+      "type": "string",
+      "pattern": "^capability-upgrade-candidate-[0-9a-f]{16}$"
+    },
+    "status": {
+      "type": "string",
+      "const": "passed"
+    },
+    "verification_status": {
+      "type": "string",
+      "const": "passed"
+    },
+    "evidence_keys": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "stage_proofs": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "$ref": "#/$defs/stage_proof"
+      }
+    },
+    "resolved_blockers": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "maxItems": 0,
+      "items": false
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proof_is_not_execution",
+        "capability_activation_performed",
+        "registry_mutated",
+        "terminal_certificates_minted",
+        "secret_values_serialized",
+        "operator_review_required",
+        "source_plan_activation_blocked",
+        "portfolio_schema_id"
+      ],
+      "properties": {
+        "proof_is_not_execution": {
+          "type": "boolean",
+          "const": true
+        },
+        "capability_activation_performed": {
+          "type": "boolean",
+          "const": false
+        },
+        "registry_mutated": {
+          "type": "boolean",
+          "const": false
+        },
+        "terminal_certificates_minted": {
+          "type": "boolean",
+          "const": false
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "operator_review_required": {
+          "type": "boolean"
+        },
+        "source_plan_activation_blocked": {
+          "type": "boolean",
+          "const": true
+        },
+        "portfolio_schema_id": {
+          "type": "string",
+          "const": "urn:mullusi:schema:capability-improvement-portfolio:1"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "stage_proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage",
+        "status",
+        "evidence_refs"
+      ],
+      "properties": {
+        "stage": {
+          "type": "string",
+          "enum": [
+            "capability_health",
+            "weakness_diagnosis",
+            "eval_generation",
+            "upgrade_candidate",
+            "sandbox_test",
+            "change_command",
+            "change_certificate",
+            "canary",
+            "terminal_closure",
+            "learning_admission"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "const": "passed"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

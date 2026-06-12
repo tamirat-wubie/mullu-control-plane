@@ -5,8 +5,8 @@
 > (docs/explain/PLAIN_ENGLISH.md). *(Doc type: How-to.)*
 
 Purpose: Operator runbook for executing governed general-agent promotion final validation.
-Governance scope: Adapter evidence, credential binding, upstream API/DNS readiness, deployment witness publication, health declaration, residual portfolio review, and promotion validation.
-Dependencies: scripts/collect_capability_adapter_evidence.py, scripts/run_general_agent_promotion_closure_chain.py, scripts/plan_general_agent_promotion_closure.py, scripts/plan_general_agent_promotion_live_evidence_queue.py, scripts/validate_general_agent_promotion_terminal_approvals.py, scripts/plan_general_agent_promotion_terminal_certificate_gate.py, scripts/plan_general_agent_promotion_terminal_certificate_candidates.py, scripts/reconcile_general_agent_promotion_terminal_evidence.py, scripts/collect_deployment_publication_evidence_packet.py, scripts/validate_deployment_publication_evidence_packet.py, scripts/emit_deployment_publication_operator_input_request.py, scripts/validate_deployment_publication_operator_input_request.py, scripts/emit_deployment_upstream_blocker_receipt.py, scripts/validate_deployment_upstream_blocker_receipt.py, scripts/emit_gateway_dns_target_binding_receipt.py, scripts/validate_gateway_dns_target_binding_receipt.py, scripts/collect_gateway_dns_resolution_receipt.py, scripts/validate_gateway_dns_resolution_receipt.py, scripts/validate_general_agent_promotion_closure_plan_schema.py, scripts/validate_general_agent_promotion_closure_plan.py, DEPLOYMENT_STATUS.md.
+Governance scope: Adapter evidence, credential binding, upstream API/DNS readiness, deployment witness publication, health declaration, residual portfolio review, capability improvement proof receipts, and promotion validation.
+Dependencies: scripts/collect_capability_adapter_evidence.py, scripts/run_general_agent_promotion_closure_chain.py, scripts/plan_general_agent_promotion_closure.py, scripts/plan_general_agent_promotion_live_evidence_queue.py, scripts/validate_general_agent_promotion_terminal_approvals.py, scripts/plan_general_agent_promotion_terminal_certificate_gate.py, scripts/plan_general_agent_promotion_terminal_certificate_candidates.py, scripts/produce_capability_improvement_proof_receipt.py, scripts/reconcile_general_agent_promotion_terminal_evidence.py, scripts/collect_deployment_publication_evidence_packet.py, scripts/validate_deployment_publication_evidence_packet.py, scripts/emit_deployment_publication_operator_input_request.py, scripts/validate_deployment_publication_operator_input_request.py, scripts/emit_deployment_upstream_blocker_receipt.py, scripts/validate_deployment_upstream_blocker_receipt.py, scripts/emit_gateway_dns_target_binding_receipt.py, scripts/validate_gateway_dns_target_binding_receipt.py, scripts/collect_gateway_dns_resolution_receipt.py, scripts/validate_gateway_dns_resolution_receipt.py, scripts/validate_general_agent_promotion_closure_plan_schema.py, scripts/validate_general_agent_promotion_closure_plan.py, DEPLOYMENT_STATUS.md.
 Invariants: Production readiness remains evidence-bound; terminal certificate minting requires explicit authority.
 -->
 
@@ -29,6 +29,7 @@ adapter evidence
 -> live-evidence queue classification
 -> terminal certificate admission gate
 -> terminal certificate candidate planning
+-> capability improvement proof receipt production
 -> terminal evidence reconciliation
 -> terminal minting gate
 -> live execution with approvals
@@ -115,6 +116,8 @@ The handoff preflight is not ready unless `.change_assurance\capability_adapter_
 
 The closure chain also writes `.change_assurance\capability_improvement_portfolio.json`, `.change_assurance\general_agent_promotion_closure_plan_schema_validation.json`, `.change_assurance\general_agent_promotion_closure_plan_validation.json`, `.change_assurance\general_agent_promotion_live_evidence_queue.json`, `.change_assurance\general_agent_promotion_terminal_certificate_gate.json`, `.change_assurance\general_agent_promotion_terminal_certificate_candidates.json`, `.change_assurance\general_agent_promotion_terminal_evidence_reconciliation.json`, and `.change_assurance\general_agent_promotion_terminal_minting_gate.json`; portfolio actions, terminal certificate candidates, and terminal minting gates are planning work and are not execution grants. When `.change_assurance\general_agent_promotion_terminal_approvals.json` exists, it must validate before the gate can admit approval-bound items.
 
+Capability-improvement candidates can be reconciled by a passed local proof receipt. The proof receipt is not an execution grant, does not activate capabilities, does not mutate the registry, does not mint terminal certificates, and must not serialize secret values.
+
 3. Inspect `.change_assurance\general_agent_promotion_live_evidence_queue.json` before executing any closure command. The queue classifies each source action as `runnable_local`, `requires_environment_binding`, `requires_execution_environment`, `requires_dependency_closure`, `requires_approval`, `approval_and_environment_blocked`, or `review_only`; it is not an execution grant.
 
 4. Inspect `.change_assurance\general_agent_promotion_terminal_certificate_gate.json`. The gate admits only `runnable_local` queue items or approval-bound items with explicit approval refs; it does not admit environment-blocked or dependency-blocked actions by approval alone.
@@ -125,13 +128,14 @@ If terminal approval refs are supplied, validate them before rerunning the gate:
 python scripts\validate_general_agent_promotion_terminal_approvals.py --receipt .change_assurance\general_agent_promotion_terminal_approvals.json --json
 python scripts\plan_general_agent_promotion_terminal_certificate_gate.py --queue .change_assurance\general_agent_promotion_live_evidence_queue.json --approval-receipt .change_assurance\general_agent_promotion_terminal_approvals.json --output .change_assurance\general_agent_promotion_terminal_certificate_gate.json --json --strict
 python scripts\plan_general_agent_promotion_terminal_certificate_candidates.py --gate .change_assurance\general_agent_promotion_terminal_certificate_gate.json --output .change_assurance\general_agent_promotion_terminal_certificate_candidates.json --json --strict
+python scripts\produce_capability_improvement_proof_receipt.py --portfolio .change_assurance\capability_improvement_portfolio.json --capability-id agentic_control.governance_gate.evaluate --output .change_assurance\capability_improvement_proof_receipt.json --json --strict
 python scripts\reconcile_general_agent_promotion_terminal_evidence.py --candidates .change_assurance\general_agent_promotion_terminal_certificate_candidates.json --output .change_assurance\general_agent_promotion_terminal_evidence_reconciliation.json --json --strict
 python scripts\gate_general_agent_promotion_terminal_minting.py --reconciliation .change_assurance\general_agent_promotion_terminal_evidence_reconciliation.json --output .change_assurance\general_agent_promotion_terminal_minting_gate.json --json --strict
 ```
 
 5. Inspect `.change_assurance\general_agent_promotion_terminal_certificate_candidates.json`. Candidate entries must have `certificate_minted=false`, `execution_performed=false`, and `ready_for_terminal_certificate_minting=false`.
 
-6. Inspect `.change_assurance\general_agent_promotion_terminal_evidence_reconciliation.json`. Minting readiness must stay false until every candidate evidence requirement is matched by passed live receipt artifacts.
+6. Inspect `.change_assurance\general_agent_promotion_terminal_evidence_reconciliation.json`. Minting readiness must stay false until every candidate evidence requirement is matched by passed receipt artifacts.
 
 7. Inspect `.change_assurance\general_agent_promotion_terminal_minting_gate.json`. Minting readiness must stay false until reconciliation is ready and an explicit terminal minting authority ref is supplied.
 
@@ -223,6 +227,7 @@ python scripts\validate_general_agent_promotion.py --strict --output .change_ass
 | Dependency import fails | Rebuild the affected worker image and keep promotion blocked |
 | Credential action lacks approval | Do not bind the secret and keep promotion blocked |
 | Live receipt fails | Preserve the failed receipt and blocker |
+| Capability improvement proof receipt is unsafe | Do not reconcile the candidate; regenerate the receipt only after `proof_is_not_execution=true`, `capability_activation_performed=false`, `registry_mutated=false`, `terminal_certificates_minted=false`, and `secret_values_serialized=false` |
 | Deployment witness is not published | Do not update `DEPLOYMENT_STATUS.md` |
 | Deployment publication evidence packet is not ready | Do not publish DNS or dispatch workflows; inspect `deployment_publication_evidence_packet_validation.json`, emit `deployment_publication_operator_input_request.json`, close the named inputs, then rerun `collect_deployment_publication_evidence_packet.py` plus `validate_deployment_publication_evidence_packet.py --require-ready` |
 | Upstream API/DNS readiness is not ready | Do not publish DNS; complete upstream recovery, runtime host, managed PostgreSQL, schema, secret store, preflight, persistence, firewall, TLS, rollback, private runtime witness, runtime witness closure, and DNS publication authority gates, then rerun the upstream `check-api-production-readiness.mjs --require-ready --output "$env:UPSTREAM_API_READINESS_REPORT"` command plus `emit_deployment_upstream_blocker_receipt.py --upstream-readiness-report "$env:UPSTREAM_API_READINESS_REPORT"` and `validate_deployment_upstream_blocker_receipt.py --require-ready` |
@@ -233,6 +238,6 @@ python scripts\validate_general_agent_promotion.py --strict --output .change_ass
 
 STATUS:
   Completeness: 99%
-  Invariants verified: [aggregate plan validation before execution, live-evidence queue classified before execution, terminal approval receipt schema-validated when present, terminal certificate gate checked before execution, terminal certificate candidates are non-minting, terminal evidence reconciliation gates minting readiness, terminal minting gate requires explicit authority, terminal certificate minting executor requires ready gate, credential approval required, live receipts required, deployment publication evidence packet require-ready gate, upstream API/DNS validation require-ready gate, gateway DNS target-binding validation require-ready gate, gateway DNS receipt validation require-resolved gate, deployment status mutation evidence-gated, production promotion validation terminal]
+  Invariants verified: [aggregate plan validation before execution, live-evidence queue classified before execution, terminal approval receipt schema-validated when present, terminal certificate gate checked before execution, terminal certificate candidates are non-minting, capability improvement proof receipt is non-executing, terminal evidence reconciliation gates minting readiness, terminal minting gate requires explicit authority, terminal certificate minting executor requires ready gate, credential approval required, live receipts required, deployment publication evidence packet require-ready gate, upstream API/DNS validation require-ready gate, gateway DNS target-binding validation require-ready gate, gateway DNS receipt validation require-resolved gate, deployment status mutation evidence-gated, production promotion validation terminal]
   Open issues: [external dependencies, governed credentials, live deployment witness, public health probe]
   Next action: execute this runbook in the credentialed adapter-worker and deployment environment

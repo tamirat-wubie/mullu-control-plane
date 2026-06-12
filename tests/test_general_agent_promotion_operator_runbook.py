@@ -66,6 +66,9 @@ def test_runbook_names_required_closure_artifacts_and_counts() -> None:
     assert ".change_assurance\\gateway_dns_resolution_receipt.json" in runbook_text
     assert ".change_assurance\\gateway_dns_resolution_receipt_validation.json" in runbook_text
     assert ".change_assurance\\capability_improvement_portfolio.json" in runbook_text
+    assert "produce_capability_improvement_proof_receipt.py" in runbook_text
+    assert ".change_assurance\\capability_improvement_proof_receipt.json" in runbook_text
+    assert "capability improvement proof receipt is non-executing" in runbook_text
     assert "plan_general_agent_promotion_live_evidence_queue.py" in runbook_text
     assert ".change_assurance\\general_agent_promotion_live_evidence_queue.json" in runbook_text
     assert "validate_general_agent_promotion_terminal_approvals.py" in runbook_text
@@ -83,6 +86,7 @@ def test_runbook_names_required_closure_artifacts_and_counts() -> None:
     assert "ready_for_terminal_certificate_minting=false" in runbook_text
     assert "terminal certificate gate checked before execution" in runbook_text
     assert "terminal certificate candidates are non-minting" in runbook_text
+    assert "Capability improvement proof receipt is unsafe" in runbook_text
     assert "terminal evidence reconciliation gates minting readiness" in runbook_text
     assert "terminal minting gate requires explicit authority" in runbook_text
     assert "terminal certificate minting executor requires ready gate" in runbook_text

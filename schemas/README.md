@@ -28,6 +28,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `capability_descriptor.schema.json` | Canonical capability declaration |
 | `capability_evidence_endpoint.schema.json` | Canonical live gateway capability evidence projection |
 | `capability_improvement_portfolio.schema.json` | Canonical activation-blocked portfolio of prioritized capability upgrade proposals |
+| `capability_improvement_proof_receipt.schema.json` | Canonical repository-local proof receipt for capability improvement plan evidence |
 | `capability_maturity.schema.json` | Canonical evidence-derived capability maturity assessment |
 | `collaboration_case.schema.json` | Canonical governed collaboration case with approval separation and non-terminal closure |
 | `capability_registry_entry.schema.json` | Universal governed capability registry entry |
