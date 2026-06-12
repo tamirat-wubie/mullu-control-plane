@@ -85,11 +85,15 @@ class _TenantBudgetManager:
 
 
 class _LLMBridge:
+    def __init__(self) -> None:
+        self.history_limits: list[int] = []
+
     @property
     def invocation_count(self) -> int:
         return 2
 
     def invocation_history(self, limit: int = 50):
+        self.history_limits.append(limit)
         return [{"tokens": 7}, {"tokens": 5}]
 
     def budget_summary(self):
@@ -149,13 +153,14 @@ def test_projection_maps_runtime_read_models_to_dashboard_families() -> None:
     metrics.observe("tokens_per_call", 15)
     metrics.observe("llm_latency_ms", 250)
     metrics.observe("llm_latency_ms", 500)
+    llm_bridge = _LLMBridge()
 
     receipt = projector.project(
         exporter=exporter,
         metrics=metrics,
         tenant_budget_mgr=_TenantBudgetManager(),
         health_agg=_HealthAggregator(),
-        llm_bridge=_LLMBridge(),
+        llm_bridge=llm_bridge,
         llm_circuit=SimpleNamespace(state=SimpleNamespace(value="open")),
         audit_trail=_AuditTrail(),
         agent_registry=_AgentRegistry(),
@@ -175,6 +180,7 @@ def test_projection_maps_runtime_read_models_to_dashboard_families() -> None:
     assert receipt.gauges["circuit_breaker_open"] == 1.0
     assert receipt.gauges["active_agents"] == 2.0
     assert receipt.gauges["chain_success_rate"] == 0.8
+    assert llm_bridge.history_limits == [500]
     assert _sample_value(exported, "mullu_audit_events_total") == 8.0
     assert _sample_value(exported, "mullu_tasks_completed_total") == 5.0
     assert _sample_value(exported, "mullu_memory_ops_total") == 6.0

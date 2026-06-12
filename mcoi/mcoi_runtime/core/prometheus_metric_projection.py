@@ -22,6 +22,9 @@ from typing import Any, Callable
 from mcoi_runtime.core.prometheus_exporter import PrometheusExporter
 
 
+_MAX_LLM_HISTORY_PROJECTION_READ_LIMIT = 500
+
+
 class PrometheusMetricProjectionError(RuntimeError):
     """Raised when a registered projection source cannot be read."""
 
@@ -342,7 +345,7 @@ class PrometheusMetricProjector:
         if llm_bridge is None:
             return 0.0
         try:
-            history = llm_bridge.invocation_history(limit=10000)
+            history = llm_bridge.invocation_history(limit=_MAX_LLM_HISTORY_PROJECTION_READ_LIMIT)
         except AttributeError:
             return 0.0
         except Exception as exc:
