@@ -551,6 +551,12 @@
       "surface": "finance"
     },
     {
+      "schema_id": "durable-gmail-oauth-operator-handoff",
+      "path": "schemas/durable_gmail_oauth_operator_handoff.schema.json",
+      "urn": "urn:mullusi:schema:durable-gmail-oauth-operator-handoff:1",
+      "surface": "connector"
+    },
+    {
       "schema_id": "finance-approval-payment-closure-receipt",
       "path": "schemas/finance_approval_payment_closure_receipt.schema.json",
       "urn": "urn:mullusi:schema:finance-approval-payment-closure-receipt:1",

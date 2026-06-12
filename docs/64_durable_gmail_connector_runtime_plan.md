@@ -1,7 +1,7 @@
 <!--
 Purpose: Define the governed boundary for durable Gmail connector runtime access after the bounded live adapter evidence proof.
 Governance scope: OAuth authority, least-privilege scope selection, secret redaction, refresh-token lifecycle, revocation, audit receipts, and release blocking.
-Dependencies: gateway/email_calendar_connector_adapters.py, gateway/email_calendar_worker.py, gateway/gmail_oauth_lifecycle.py, examples/sdlc/requirement_durable_gmail_connector_runtime_20260611.json, examples/sdlc/security_review_durable_gmail_connector_runtime_20260611.json, scripts/validate_durable_gmail_connector_runtime_plan.py, scripts/validate_durable_gmail_oauth_runtime_preflight.py, scripts/mint_gmail_oauth_access_token.py, scripts/produce_durable_gmail_oauth_operator_handoff.py, scripts/produce_durable_gmail_oauth_live_receipt.py.
+Dependencies: gateway/email_calendar_connector_adapters.py, gateway/email_calendar_worker.py, gateway/gmail_oauth_lifecycle.py, examples/sdlc/requirement_durable_gmail_connector_runtime_20260611.json, examples/sdlc/security_review_durable_gmail_connector_runtime_20260611.json, schemas/durable_gmail_oauth_operator_handoff.schema.json, scripts/validate_durable_gmail_connector_runtime_plan.py, scripts/validate_durable_gmail_oauth_operator_handoff.py, scripts/validate_durable_gmail_oauth_runtime_preflight.py, scripts/mint_gmail_oauth_access_token.py, scripts/produce_durable_gmail_oauth_operator_handoff.py, scripts/produce_durable_gmail_oauth_live_receipt.py.
 Invariants: No Google Cloud credential creation, OAuth client creation, consent-screen publication, or production verification claim is performed by this repository-local plan.
 -->
 
@@ -77,14 +77,15 @@ Run:
 ```powershell
 python scripts\validate_durable_gmail_connector_runtime_plan.py
 python scripts\produce_durable_gmail_oauth_operator_handoff.py --json
+python scripts\validate_durable_gmail_oauth_operator_handoff.py --require-blocked --json
 python scripts\validate_durable_gmail_oauth_runtime_preflight.py --json
 python scripts\mint_gmail_oauth_access_token.py --json
 python scripts\produce_durable_gmail_oauth_live_receipt.py --json
 python scripts\validate_sdlc_security_review.py --review examples\sdlc\security_review_durable_gmail_connector_runtime_20260611.json --strict
-python -m pytest tests\test_durable_gmail_connector_runtime_plan.py tests\test_validate_durable_gmail_oauth_runtime_preflight.py tests\test_mint_gmail_oauth_access_token.py tests\test_produce_durable_gmail_oauth_operator_handoff.py tests\test_produce_durable_gmail_oauth_live_receipt.py tests\test_gateway\test_gmail_oauth_lifecycle.py -q
+python -m pytest tests\test_durable_gmail_connector_runtime_plan.py tests\test_validate_durable_gmail_oauth_operator_handoff.py tests\test_validate_durable_gmail_oauth_runtime_preflight.py tests\test_mint_gmail_oauth_access_token.py tests\test_produce_durable_gmail_oauth_operator_handoff.py tests\test_produce_durable_gmail_oauth_live_receipt.py tests\test_gateway\test_gmail_oauth_lifecycle.py -q
 ```
 
-The plan validator must pass while still reporting the durable provider-side runtime boundary as not yet production-releasable. The operator handoff producer emits only command templates, expected evidence refs, scope decisions, and presence-only binding names; it performs no Google Cloud, Gmail, or GitHub secret mutation. The OAuth runtime preflight emits a presence-only receipt and remains `AwaitingEvidence` until the required Gmail OAuth scope, durable secret presence, provider witnesses, refresh-token storage receipt, and revocation/recovery receipt exist. The workflow token mint helper writes the access token only to the requested runtime environment file, and the durable live receipt producer performs one token refresh and one Gmail read-only probe before writing only redacted refresh classification, access-token digest evidence, and existing email/calendar worker receipt refs. The lifecycle contract classifies refresh outcomes without printing token, refresh-token, client-secret, or private-key values.
+The plan validator must pass while still reporting the durable provider-side runtime boundary as not yet production-releasable. The operator handoff producer emits only command templates, expected evidence refs, scope decisions, recommended non-secret defaults, and presence-only binding names; it performs no Google Cloud, Gmail, or GitHub secret mutation. Recommended defaults are not observed preflight evidence: the runtime preflight remains `AwaitingEvidence` until the required Gmail OAuth scope, durable secret presence, provider witnesses, refresh-token storage receipt, and revocation/recovery receipt exist. The workflow token mint helper writes the access token only to the requested runtime environment file, and the durable live receipt producer performs one token refresh and one Gmail read-only probe before writing only redacted refresh classification, access-token digest evidence, and existing email/calendar worker receipt refs. The lifecycle contract classifies refresh outcomes without printing token, refresh-token, client-secret, or private-key values.
 
 STATUS:
   Completeness: 100%

@@ -73,9 +73,8 @@ def produce_durable_gmail_oauth_operator_handoff(
         else DEFAULT_OPERATION_FAMILY
     )
     scope_set = sorted(preflight.OPERATION_FAMILY_MINIMUM_SCOPES[operation_family])
-    normalized_env = _environment_with_defaults(env, operation_family=operation_family, scope_set=scope_set)
     preflight_report = preflight.build_preflight_report(
-        normalized_env,
+        env,
         github_secret_names=secret_names,
     )
     ready_for_live_probe = bool(preflight_report["ready_for_live_probe"]) and bool(operator_approval_ref.strip())
@@ -104,6 +103,11 @@ def produce_durable_gmail_oauth_operator_handoff(
         "ready_for_provider_setup": ready_for_provider_setup,
         "ready_for_live_probe": ready_for_live_probe,
         "scope_decision": _scope_decision(operation_family, scope_set),
+        "recommended_runtime_defaults": _recommended_runtime_defaults(
+            operation_family=operation_family,
+            scope_set=scope_set,
+        ),
+        "preflight_environment_basis": "observed_environment_without_defaults",
         "provider_console_actions": _provider_console_actions(scope_set),
         "runtime_bindings": _runtime_bindings(repository),
         "preflight_summary": _preflight_summary(preflight_report),
@@ -130,18 +134,31 @@ def write_durable_gmail_oauth_operator_handoff(packet: dict[str, Any], output_pa
     return output_path
 
 
-def _environment_with_defaults(
-    environment: Mapping[str, str],
-    *,
-    operation_family: str,
-    scope_set: Sequence[str],
-) -> dict[str, str]:
-    normalized = dict(environment)
-    normalized.setdefault("MULLU_EMAIL_CALENDAR_WORKER_ADAPTER", DEFAULT_ADAPTER_MODE)
-    normalized.setdefault("EMAIL_CALENDAR_CONNECTOR_ID", DEFAULT_CONNECTOR_ID)
-    normalized.setdefault("MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY", operation_family)
-    normalized.setdefault("GMAIL_SCOPE_ID", " ".join(scope_set))
-    return normalized
+def _recommended_runtime_defaults(*, operation_family: str, scope_set: Sequence[str]) -> list[dict[str, str]]:
+    """Return non-secret defaults as recommendations, not observed preflight evidence."""
+
+    return [
+        {
+            "name": "MULLU_EMAIL_CALENDAR_WORKER_ADAPTER",
+            "recommended_value": DEFAULT_ADAPTER_MODE,
+            "classification": "non_secret_config",
+        },
+        {
+            "name": "EMAIL_CALENDAR_CONNECTOR_ID",
+            "recommended_value": DEFAULT_CONNECTOR_ID,
+            "classification": "non_secret_config",
+        },
+        {
+            "name": "MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY",
+            "recommended_value": operation_family,
+            "classification": "non_secret_config",
+        },
+        {
+            "name": "GMAIL_SCOPE_ID",
+            "recommended_value": " ".join(scope_set),
+            "classification": "non_secret_config",
+        },
+    ]
 
 
 def _scope_decision(operation_family: str, scope_set: Sequence[str]) -> dict[str, Any]:

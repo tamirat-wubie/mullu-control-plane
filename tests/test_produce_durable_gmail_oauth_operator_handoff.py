@@ -40,14 +40,23 @@ def _configured_env() -> dict[str, str]:
 def test_default_handoff_waits_for_operator_authority_and_redacts_values() -> None:
     packet = produce_durable_gmail_oauth_operator_handoff({})
     serialized_packet = json.dumps(packet, sort_keys=True)
+    recommended_defaults = {item["name"]: item for item in packet["recommended_runtime_defaults"]}
+    finding_ids = set(packet["preflight_summary"]["finding_rule_ids"])
 
     assert packet["status"] == "awaiting_operator_authority"
     assert packet["solver_outcome"] == "AwaitingEvidence"
     assert packet["provider_setup_authorized"] is False
+    assert packet["preflight_environment_basis"] == "observed_environment_without_defaults"
     assert packet["external_provider_mutation_performed"] is False
     assert packet["github_secret_mutation_performed"] is False
     assert packet["credential_values_disclosed"] is False
     assert packet["ready_for_live_probe"] is False
+    assert packet["preflight_summary"]["status"] == "awaiting_evidence"
+    assert "gmail_oauth_adapter_mode_missing" in finding_ids
+    assert "gmail_oauth_operation_family_missing_or_unsupported" in finding_ids
+    assert "gmail_oauth_scope_missing" in finding_ids
+    assert recommended_defaults["MULLU_EMAIL_CALENDAR_WORKER_ADAPTER"]["recommended_value"] == "google"
+    assert recommended_defaults["EMAIL_CALENDAR_CONNECTOR_ID"]["classification"] == "non_secret_config"
     assert "operator_approval_ref" in packet["blocked_until"]
     assert "GMAIL_OAUTH_CLIENT_SECRET" in serialized_packet
     assert "client_secret=" not in serialized_packet
