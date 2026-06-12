@@ -22,7 +22,7 @@ def test_durable_gmail_connector_runtime_plan_validates() -> None:
     assert report["valid"] is True
     assert report["status"] == "passed"
     assert report["error_count"] == 0
-    assert report["check_count"] == 8
+    assert report["check_count"] == 9
     assert report["plan_path"] == "docs/64_durable_gmail_connector_runtime_plan.md"
 
 
