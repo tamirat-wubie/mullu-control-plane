@@ -24,7 +24,7 @@ def test_validate_promotion_handoff_packet_accepts_example() -> None:
     assert result.errors == ()
 
 
-def test_validate_promotion_handoff_packet_reports_missing_closure_plan_drift(tmp_path: Path) -> None:
+def test_validate_promotion_handoff_packet_derives_missing_closure_plan(tmp_path: Path) -> None:
     result = validate_general_agent_promotion_handoff_packet(
         closure_plan_path=tmp_path / "missing_general_agent_promotion_closure_plan.json",
     )
