@@ -35,6 +35,14 @@ def build_policy_decision(
             "truth": gate_result.truth.value,
             "norm": gate_result.norm.value if gate_result.norm else None,
             "evidence": gate_result.evidence.value if gate_result.evidence else None,
+            "static_issues": tuple(
+                {
+                    "code": issue.code,
+                    "message": issue.message,
+                    "target": issue.target,
+                }
+                for issue in static_report.issues
+            ),
             "binding_issues": tuple(
                 {
                     "code": issue.code,
