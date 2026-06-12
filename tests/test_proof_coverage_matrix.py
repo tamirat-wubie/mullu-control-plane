@@ -312,8 +312,8 @@ def test_holistic_loop_kernel_witness_labels_have_exact_anchors() -> None:
         for record in holistic_integrity["anchored_witnesses"]
     }
 
-    assert holistic_integrity["runtime_witness_count"] == 43
-    assert holistic_integrity["exact_test_anchor_count"] == 43
+    assert holistic_integrity["runtime_witness_count"] == 44
+    assert holistic_integrity["exact_test_anchor_count"] == 44
     assert holistic_integrity["unanchored_witness_count"] == 0
     assert holistic_integrity["unanchored_witnesses"] == []
     assert anchors_by_witness["registered_loops_expose_governed_manifest_fields"] == {
@@ -532,12 +532,18 @@ def test_holistic_loop_kernel_witness_labels_have_exact_anchors() -> None:
             "test_authority_admission_dossier_builds_proposed_manifest"
         )
     }
+    assert anchors_by_witness["holistic_loop_authority_registered_in_default_read_model"] == {
+        (
+            "mcoi/tests/test_holistic_loop_kernel.py::"
+            "test_authority_obligation_loop_is_registered_read_only_and_blocked"
+        )
+    }
     assert anchors_by_witness[
-        "holistic_loop_authority_admission_dossier_ready_for_operator_decision"
+        "holistic_loop_authority_admission_dossier_reports_registry_admission"
     ] == {
         (
             "tests/test_report_holistic_loop_authority_admission_dossier.py::"
-            "test_authority_admission_dossier_is_ready_only_for_operator_decision"
+            "test_authority_admission_dossier_reports_registry_admission"
         )
     }
     assert anchors_by_witness["holistic_loop_authority_admission_dossier_blocks_registration_effects"] == {

@@ -37,17 +37,23 @@ def test_holistic_loop_candidate_map_reports_admitted_and_blocked_candidates() -
         for candidate in report["candidates"]
     }
 
-    assert report["registered_candidate_count"] == 1
-    assert report["blocked_candidate_count"] == 3
+    assert report["registered_candidate_count"] == 2
+    assert report["blocked_candidate_count"] == 2
     assert candidates["audit_proof_verification_loop"]["candidate_id"] in registered_loop_ids
     assert candidates["audit_proof_verification_loop"]["registered"] is True
     assert candidates["audit_proof_verification_loop"]["admission_status"] == "registered"
     assert candidates["audit_proof_verification_loop"]["admission_blockers"] == []
     assert candidates["audit_proof_verification_loop"]["next_action"] == "already_registered"
+    assert candidates["authority_obligation_loop"]["candidate_id"] in registered_loop_ids
+    assert candidates["authority_obligation_loop"]["registered"] is True
+    assert candidates["authority_obligation_loop"]["admission_status"] == "registered"
+    assert candidates["authority_obligation_loop"]["admission_blockers"] == []
+    assert candidates["authority_obligation_loop"]["next_action"] == "already_registered"
     assert all(
         candidate["registered"] is False and candidate["admission_status"] == "blocked"
         for candidate_id, candidate in candidates.items()
-        if candidate_id != "audit_proof_verification_loop"
+        if candidate_id
+        not in {"audit_proof_verification_loop", "authority_obligation_loop"}
     )
 
 
@@ -80,7 +86,7 @@ def test_candidate_map_rejects_registration_or_closure_claim() -> None:
     invalid_candidate = next(
         candidate
         for candidate in invalid_report["candidates"]
-        if candidate["candidate_id"] == "authority_obligation_loop"
+        if candidate["candidate_id"] == "universal_action_orchestration_loop"
     )
     invalid_candidate["registered"] = True
     invalid_candidate["admission_status"] = "registered"
@@ -99,7 +105,7 @@ def test_candidate_map_rejects_missing_blocker() -> None:
     invalid_candidate = next(
         candidate
         for candidate in invalid_report["candidates"]
-        if candidate["candidate_id"] == "authority_obligation_loop"
+        if candidate["candidate_id"] == "universal_action_orchestration_loop"
     )
     invalid_candidate["admission_blockers"] = [reporter.NOT_REGISTERED_BLOCKER]
 
