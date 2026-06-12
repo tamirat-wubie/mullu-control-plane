@@ -18,6 +18,14 @@ from json import JSONDecodeError
 from pathlib import Path
 from typing import Any, Mapping
 
+from mcoi_runtime.contracts.life_meaning import (
+    AffectedSymbol,
+    BoundaryState,
+    Delta,
+    FeelingStatus,
+    ImpactLevel,
+    LifeStatus,
+)
 from mcoi_runtime.contracts.workflow import (
     StageType,
     WorkflowBinding,
@@ -29,6 +37,7 @@ from mcoi_runtime.core.governor_chain import (
     build_governor_chain_read_model,
 )
 from mcoi_runtime.core.invariants import stable_identifier
+from mcoi_runtime.core.life_meaning_governance import judge_life_meaning
 from mcoi_runtime.core.sdlc_dashboard import (
     SdlcDashboardError,
     build_sdlc_dashboard_summary,
@@ -310,6 +319,18 @@ def build_private_pilot_live_rehearsal_uao_record(
     capability_refs = _live_rehearsal_capability_refs(previews)
     evidence_refs = _live_rehearsal_evidence_refs(previews)
     policy_refs = _live_rehearsal_policy_refs(previews)
+    life_meaning_judgment = _live_rehearsal_life_meaning_judgment(
+        action_id=action_id,
+        evidence_refs=evidence_refs,
+        policy_refs=policy_refs,
+        trace_ref=trace_ref,
+        admission_receipt_ref=admission_receipt_ref,
+    )
+    life_continuity_judgment = _live_rehearsal_life_continuity_judgment(
+        action_id=action_id,
+        trace_ref=trace_ref,
+        life_meaning_judgment=life_meaning_judgment,
+    )
     temporal_refs = [f"temporal://private-pilot/{request.case_id}/rehearsal-window"]
     closure_confirmation = stable_identifier(
         "universal-action-closure-confirmation",
@@ -424,6 +445,8 @@ def build_private_pilot_live_rehearsal_uao_record(
             "blocking_check_ids": [],
             "risk_notes": ["decision:simulate", "reason:live_orgos_rehearsal_only"],
         },
+        "life_meaning_judgment": life_meaning_judgment,
+        "life_continuity_judgment": life_continuity_judgment,
         "exposure_boundary": {
             "redaction_level": "user_safe",
             "allowed_audiences": ["operator", "auditor"],
@@ -1230,6 +1253,90 @@ def _live_rehearsal_admission_guards(
         _uao_guard("recovery_available", "passed", "Pass", "read_only_no_rollback_needed", ["recovery://orgos/private-pilot/read-only-no-op"]),
         _uao_guard("receipt_emittable", "passed", "Pass", "live_rehearsal_receipt_emitted", [admission_receipt_ref]),
     ]
+
+
+def _live_rehearsal_life_meaning_judgment(
+    *,
+    action_id: str,
+    evidence_refs: list[str],
+    policy_refs: list[str],
+    trace_ref: str,
+    admission_receipt_ref: str,
+) -> dict[str, Any]:
+    """Build the non-effect-bearing life-meaning judgment for rehearsal records."""
+
+    judgment = judge_life_meaning(
+        action_id=action_id,
+        affected_symbols=(
+            AffectedSymbol(
+                symbol_id="orgos-private-pilot-live-rehearsal",
+                symbol_kind="read_only_rehearsal",
+                life_status=LifeStatus.NOT_LIFE,
+                feeling_status=FeelingStatus.NOT_FEELING,
+                meaning_bearing=ImpactLevel.NONE,
+                fragility_level=1,
+                agency_level=0,
+            ),
+        ),
+        life_impact=ImpactLevel.NONE,
+        feeling_impact=ImpactLevel.NONE,
+        meaning_impact=ImpactLevel.NONE,
+        truth_preserved=True,
+        dignity_boundary=BoundaryState.PASS,
+        consent_present=False,
+        love_delta=Delta.NEUTRAL,
+        resonance_delta=Delta.NEUTRAL,
+        domination_risk=False,
+        continuity_delta=Delta.NEUTRAL,
+        irreversible=False,
+        evidence_refs=tuple(
+            _unique_text(
+                [
+                    trace_ref,
+                    admission_receipt_ref,
+                    *policy_refs[:2],
+                    *evidence_refs[:2],
+                ]
+            )
+        ),
+    )
+    return judgment.as_dict()
+
+
+def _live_rehearsal_life_continuity_judgment(
+    *,
+    action_id: str,
+    trace_ref: str,
+    life_meaning_judgment: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Project the rehearsal life-continuity judgment from life-meaning state."""
+
+    return {
+        "judgment_ref": "life-continuity://"
+        + stable_identifier(
+            "private-pilot-rehearsal-life-continuity-judgment",
+            {
+                "action_id": action_id,
+                "trace_ref": trace_ref,
+            },
+        ),
+        "conflict_law_ref": "doctrine://life-continuity-conflict-law/v1",
+        "life_impact": _text(life_meaning_judgment.get("life_impact")),
+        "feeling_impact": _text(life_meaning_judgment.get("feeling_impact")),
+        "feeling_observer_impact": _text(life_meaning_judgment.get("feeling_impact")),
+        "meaning_impact": _text(life_meaning_judgment.get("meaning_impact")),
+        "meaning_continuity_delta": _text(life_meaning_judgment.get("continuity_delta")),
+        "value_bearing_symbol": False,
+        "lived_meaning_risk": "none",
+        "love_delta": _text(life_meaning_judgment.get("love_delta")),
+        "resonance_delta": _text(life_meaning_judgment.get("resonance_delta")),
+        "dignity_boundary": _text(life_meaning_judgment.get("dignity_boundary")),
+        "truth_preserved": life_meaning_judgment.get("truth_preserved") is True,
+        "domination_risk": life_meaning_judgment.get("domination_risk") is True,
+        "decision": _text(life_meaning_judgment.get("decision")),
+        "evidence_refs": _text_list(life_meaning_judgment.get("evidence_refs")),
+        "review_required": _text(life_meaning_judgment.get("decision")) != "pass",
+    }
 
 
 def _uao_stage(
