@@ -47,8 +47,8 @@ def test_handoff_preflight_blocks_missing_environment_bindings(tmp_path: Path) -
     assert "required environment bindings" in report.blockers
     assert report.step_count == 10
     assert "MULLU_GATEWAY_URL" in report.missing_environment_variables
-    assert report.readiness_level == "production-general-agent"
-    assert report.production_ready is True
+    assert report.readiness_level == "pilot-governed-core"
+    assert report.production_ready is False
     assert any("MULLU_GATEWAY_URL" in step.detail for step in report.steps)
     assert len(report.environment_binding_actions) == len(REQUIRED_ENV)
     gateway_action = next(action for action in report.environment_binding_actions if action.name == "MULLU_GATEWAY_URL")
@@ -75,7 +75,7 @@ def test_handoff_preflight_missing_readiness_keeps_report_contract(tmp_path: Pat
     )
 
     assert report.ready is False
-    assert report.readiness_level == "production-general-agent"
+    assert report.readiness_level == "pilot-governed-core"
     assert report.production_ready is False
     assert report.blockers == ("promotion readiness report",)
 
@@ -325,7 +325,7 @@ def test_handoff_preflight_accepts_portfolio_source_plan_type(tmp_path: Path) ->
             {
                 "ok": True,
                 "action_count": 15,
-                "approval_required_action_count": 6,
+                "approval_required_action_count": 8,
                 "source_plan_types": ["adapter", "deployment", "portfolio"],
             }
         ),
@@ -337,8 +337,8 @@ def test_handoff_preflight_accepts_portfolio_source_plan_type(tmp_path: Path) ->
                 "ok": True,
                 "expected_action_count": 15,
                 "observed_action_count": 15,
-                "expected_approval_required_count": 6,
-                "observed_approval_required_count": 6,
+                "expected_approval_required_count": 8,
+                "observed_approval_required_count": 8,
             }
         ),
         encoding="utf-8",
@@ -357,7 +357,7 @@ def test_handoff_preflight_accepts_portfolio_source_plan_type(tmp_path: Path) ->
     assert report.ready is True
     assert report.blockers == ()
     assert "source_plan_types=['adapter', 'deployment', 'portfolio']" in step_details["closure plan schema validation"]
-    assert "expected_approval_required_count=6" in step_details["closure plan drift validation"]
+    assert "expected_approval_required_count=8" in step_details["closure plan drift validation"]
 
 
 def test_handoff_preflight_rejects_schema_and_drift_count_disagreement(tmp_path: Path) -> None:
@@ -481,8 +481,8 @@ def _write_valid_reports(
     readiness.write_text(
         json.dumps(
             {
-                "ready": True,
-                "readiness_level": "production-general-agent",
+                "ready": False,
+                "readiness_level": "pilot-governed-core",
                 "capability_count": 80,
                 "capsule_count": 13,
             }
