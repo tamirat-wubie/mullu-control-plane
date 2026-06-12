@@ -6,6 +6,8 @@ Invariants: all views return governed responses with structured data.
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -306,6 +308,133 @@ def test_console_note_memory_mounted_without_store_path_fails_closed(client: Tes
     assert data["summary"]["event_count"] == 0
 
 
+def test_console_whqr_clarifications_returns_active_job_status(client: TestClient) -> None:
+    from mcoi_runtime.app.routers.deps import deps
+    from mcoi_runtime.contracts.conversation import ClarificationRequest, ThreadStatus
+    from mcoi_runtime.contracts.job import JobDescriptor, JobPriority, JobState, JobStatus, SlaStatus
+    from mcoi_runtime.core.conversation import ConversationEngine
+    from mcoi_runtime.core.job_integration import JobConversationBridge
+    from mcoi_runtime.core.jobs import JobEngine
+
+    previous_job_engine = deps.get("job_engine")
+    previous_threads = deps.get("job_conversation_threads")
+    job_engine = JobEngine(clock=lambda: "2026-03-18T12:00:00+00:00")
+    conversation = ConversationEngine(clock=lambda: "2026-03-18T12:01:00+00:00")
+    descriptor = JobDescriptor(
+        job_id="job-whqr",
+        name="WHQR Vendor Binding",
+        description="Read-model job",
+        priority=JobPriority.HIGH,
+        created_at="2026-03-18T12:00:00+00:00",
+    )
+    thread = conversation.create_thread("WHQR Vendor Binding")
+    request = ClarificationRequest(
+        request_id="whqr-binding:1:vendor-node",
+        thread_id=thread.thread_id,
+        question="Which vendor entity reference and evidence reference bind WHQR target 'vendor'?",
+        context="whqr_binding_gap target=vendor node_id=vendor-node expected_type=vendor issue_codes=missing_entity_ref,missing_evidence_ref",
+        requested_from_id="operator",
+        requested_at="2026-03-18T12:02:00+00:00",
+    )
+    waiting_thread = JobConversationBridge.persist_whqr_binding_clarification_requests(thread, (request,))
+    active_thread, _response = JobConversationBridge.persist_whqr_binding_clarification_response(
+        conversation,
+        waiting_thread,
+        request,
+        "entity_ref=vendor:acme;evidence_ref=evidence:vendor-doc-1",
+        "operator",
+    )
+    job_engine.restore_job(
+        descriptor,
+        JobState(
+            job_id="job-whqr",
+            status=JobStatus.IN_PROGRESS,
+            sla_status=SlaStatus.ON_TRACK,
+            thread_id=thread.thread_id,
+            updated_at="2026-03-18T12:03:00+00:00",
+        ),
+    )
+    deps.set("job_engine", job_engine)
+    deps.set("job_conversation_threads", {thread.thread_id: active_thread})
+    try:
+        resp = client.get("/api/v1/console/whqr/clarifications")
+        full = client.get("/api/v1/console")
+    finally:
+        deps.set("job_engine", previous_job_engine)
+        deps.set("job_conversation_threads", previous_threads)
+
+    body = resp.json()
+    assert resp.status_code == 200
+    assert body["governed"] is True
+    assert body["summary"]["status_count"] == 1
+    assert body["summary"]["ready_for_orchestration_count"] == 1
+    assert body["statuses"][0]["job_id"] == "job-whqr"
+    assert body["statuses"][0]["job_name"] == "WHQR Vendor Binding"
+    assert body["statuses"][0]["whqr_binding"]["accepted_count"] == 1
+    assert body["statuses"][0]["whqr_binding"]["next_step"] == "ready_for_orchestration"
+    assert full.status_code == 200
+    assert full.json()["whqr_clarifications"]["summary"]["ready_for_orchestration_count"] == 1
+    assert active_thread.status == ThreadStatus.ACTIVE
+
+
+def test_console_whqr_clarifications_rejects_malformed_replay_metadata(client: TestClient) -> None:
+    from mcoi_runtime.app.routers.deps import deps
+    from mcoi_runtime.contracts.conversation import ClarificationRequest
+    from mcoi_runtime.contracts.job import JobDescriptor, JobPriority, JobState, JobStatus, SlaStatus
+    from mcoi_runtime.core.conversation import ConversationEngine
+    from mcoi_runtime.core.job_integration import JobConversationBridge
+    from mcoi_runtime.core.jobs import JobEngine
+
+    previous_job_engine = deps.get("job_engine")
+    previous_threads = deps.get("job_conversation_threads")
+    job_engine = JobEngine(clock=lambda: "2026-03-18T12:00:00+00:00")
+    conversation = ConversationEngine(clock=lambda: "2026-03-18T12:01:00+00:00")
+    descriptor = JobDescriptor(
+        job_id="job-bad-whqr",
+        name="Bad WHQR Replay",
+        description="Malformed replay job",
+        priority=JobPriority.NORMAL,
+        created_at="2026-03-18T12:00:00+00:00",
+    )
+    thread = conversation.create_thread("Bad WHQR Replay")
+    request = ClarificationRequest(
+        request_id="whqr-binding:1:vendor-node",
+        thread_id=thread.thread_id,
+        question="Which vendor entity reference binds WHQR target 'vendor'?",
+        context="whqr_binding_gap target=vendor node_id=vendor-node expected_type=vendor issue_codes=missing_entity_ref",
+        requested_from_id="operator",
+        requested_at="2026-03-18T12:02:00+00:00",
+    )
+    waiting_thread = JobConversationBridge.persist_whqr_binding_clarification_requests(thread, (request,))
+    malformed_thread = replace(
+        waiting_thread,
+        messages=(replace(waiting_thread.messages[0], metadata={"whqr_binding": True}),),
+    )
+    job_engine.restore_job(
+        descriptor,
+        JobState(
+            job_id="job-bad-whqr",
+            status=JobStatus.IN_PROGRESS,
+            sla_status=SlaStatus.ON_TRACK,
+            thread_id=thread.thread_id,
+            updated_at="2026-03-18T12:03:00+00:00",
+        ),
+    )
+    deps.set("job_engine", job_engine)
+    deps.set("job_conversation_threads", {thread.thread_id: malformed_thread})
+    try:
+        resp = client.get("/api/v1/console/whqr/clarifications")
+    finally:
+        deps.set("job_engine", previous_job_engine)
+        deps.set("job_conversation_threads", previous_threads)
+
+    body = resp.json()
+    assert resp.status_code == 409
+    assert body["detail"]["error"] == "whqr_clarification_replay_invalid"
+    assert body["detail"]["thread_id"] == thread.thread_id
+    assert body["detail"]["job_id"] == "job-bad-whqr"
+
+
 def test_full_console(client: TestClient) -> None:
     resp = client.get("/api/v1/console")
     assert resp.status_code == 200
@@ -316,6 +445,7 @@ def test_full_console(client: TestClient) -> None:
     assert "providers" in data
     assert "scheduler" in data
     assert "note_memory" in data
+    assert "whqr_clarifications" in data
     assert "spatial_map" in data
     assert data["spatial_map"]["frame"].startswith("gateway_architecture_space")
     assert data["spatial_map"]["metrics"][0]["id"] == "readiness_subsystems"
