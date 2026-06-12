@@ -47,6 +47,7 @@ from mcoi_runtime.core.holistic_loop_registry import (
 
 EXPECTED_LOOP_IDS = {
     "audit_proof_verification_loop",
+    "authority_obligation_loop",
     "deployment_witness_loop",
     "runtime_conformance_loop",
     "cognitive_outcome_loop",
@@ -67,6 +68,13 @@ def test_default_registry_exposes_governed_loop_manifests() -> None:
     assert "trust_ledger_anchor_verified" in registry.get_manifest(
         "audit_proof_verification_loop"
     ).required_evidence
+    assert registry.get_manifest("authority_obligation_loop").owner == "governance"
+    assert "authority_operator_ref" in registry.get_manifest(
+        "authority_obligation_loop"
+    ).required_authority
+    assert "overdue_obligation_resolution_receipt" in registry.get_manifest(
+        "authority_obligation_loop"
+    ).required_evidence
     assert registry.get_manifest("deployment_witness_loop").purpose.startswith("Describe endpoint publication")
     assert "runtime_conformance_verified" in registry.get_manifest(
         "deployment_witness_loop"
@@ -83,8 +91,8 @@ def test_missing_evidence_is_reported_as_blocker_not_success() -> None:
         loop for loop in read_model.loops if loop.loop_id == "deployment_witness_loop"
     )
 
-    assert read_model.total_count == 5
-    assert read_model.returned_count == 5
+    assert read_model.total_count == 6
+    assert read_model.returned_count == 6
     assert read_model.truncated is False
     assert deployment_summary.status is LoopStatus.BLOCKED
     assert "operator_approval_ref" in deployment_summary.missing_authority
@@ -110,6 +118,22 @@ def test_audit_proof_loop_is_registered_read_only_and_blocked() -> None:
     assert summary.status is LoopStatus.BLOCKED
     assert "missing_authority:proof_verifier_ref" in summary.open_blockers
     assert "missing_evidence:trust_ledger_anchor_verified" in summary.open_blockers
+    assert summary.status_binding.read_only is True
+    assert summary.closure_report.closed is False
+
+
+def test_authority_obligation_loop_is_registered_read_only_and_blocked() -> None:
+    registry = build_default_loop_registry()
+    manifest = registry.get_manifest("authority_obligation_loop")
+    summary = registry.summarize("authority_obligation_loop")
+
+    assert manifest.owner == "governance"
+    assert manifest.metadata["behavior_rewrite"] is False
+    assert "authority_operator_ref" in manifest.required_authority
+    assert "overdue_obligation_resolution_receipt" in manifest.required_evidence
+    assert summary.status is LoopStatus.BLOCKED
+    assert "missing_authority:authority_operator_ref" in summary.open_blockers
+    assert "missing_evidence:overdue_obligation_resolution_receipt" in summary.open_blockers
     assert summary.status_binding.read_only is True
     assert summary.closure_report.closed is False
 

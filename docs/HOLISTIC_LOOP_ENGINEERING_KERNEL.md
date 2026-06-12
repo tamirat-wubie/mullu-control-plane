@@ -52,6 +52,7 @@ The kernel models the common contract through:
 | Loop ID | Purpose | Runtime behavior changed |
 | --- | --- | --- |
 | `audit_proof_verification_loop` | Describes audit, proof, trust-ledger anchor, and verification evidence without executing proof verification or anchor submission. | No |
+| `authority_obligation_loop` | Describes authority obligation inventory, overdue debt resolution, and mesh validation evidence without satisfying obligations or mutating authority runtime behavior. | No |
 | `deployment_witness_loop` | Describes endpoint publication, runtime witness, conformance, audit, proof, and authority evidence for deployment closure. | No |
 | `runtime_conformance_loop` | Describes signed runtime conformance collection and certificate validation. | No |
 | `cognitive_outcome_loop` | Describes observe, decide, act, verify, learn, and audit evidence for cognitive outcome recording. | No |
@@ -736,7 +737,7 @@ The current candidate map includes:
 | Candidate ID | Boundary |
 | --- | --- |
 | `audit_proof_verification_loop` | Audit, proof, and trust-ledger anchor verification surfaces; admitted into the default read model as a read-only blocked loop. |
-| `authority_obligation_loop` | Authority debt detection, satisfaction, and closure evidence surfaces. |
+| `authority_obligation_loop` | Authority debt detection, satisfaction, and closure evidence surfaces; admitted into the default read model as a read-only blocked loop. |
 | `universal_action_orchestration_loop` | Effect-bearing action admission, receipt, replay, and no-bypass surfaces. |
 | `workflow_execution_loop` | Workflow descriptor, run, orchestration, and replay surfaces. |
 
@@ -833,10 +834,9 @@ admission.
 
 ### Authority Admission Dossier
 
-The Authority Obligation admission dossier applies the same
-candidate-specific readiness boundary to authority debt detection,
-obligation satisfaction, escalation, closure receipt, and responsibility mesh
-surfaces.
+The Authority Obligation admission dossier reports the admitted
+candidate-specific registry state for authority debt detection, obligation
+satisfaction, escalation, closure receipt, and responsibility mesh surfaces.
 
 Run:
 
@@ -848,9 +848,10 @@ The dossier reports:
 
 ```text
 candidate_id == authority_obligation_loop
-admission_status == ready_for_operator_decision
-requires_operator_registration_decision in admission_blockers
-registered == false
+admission_status == registered
+admission_blockers == []
+next_action == already_registered
+registered == true
 read_only == true
 mutation_route == false
 runtime_behavior_change == false
@@ -862,7 +863,7 @@ The dossier includes a proposed `LoopManifest`, existing authority source refs,
 evidence gap report, authority gap report, closure-condition gap report,
 rollback readiness, and learning policy readiness. It does not grant authority,
 satisfy obligations, emit a receipt, mutate the registry, execute authority
-behavior, or close admission.
+behavior, or claim terminal closure.
 
 ### Audit Proof Admission Dossier
 
@@ -1052,7 +1053,7 @@ python scripts/report_holistic_loop_audit_proof_admission_dossier.py
 
 The tests verify:
 
-1. The five default loops are registered.
+1. The six default loops are registered.
 2. Each loop exposes purpose, authority, evidence requirements, and closure conditions.
 3. Missing evidence becomes blockers.
 4. Complete evidence can verify the read model without executing runtime behavior.
@@ -1076,5 +1077,5 @@ The tests verify:
 22. The candidate map lists loop-like surfaces, distinguishes admitted candidates from still-blocked candidates, and does not register, verify, close, or mutate them.
 23. The UAO admission dossier proves readiness for an operator registration decision without registering, mutating, or closing the loop.
 24. The workflow admission dossier proves readiness for an operator registration decision without registering, mutating, or closing the loop.
-25. The authority admission dossier proves readiness for an operator registration decision without registering, mutating, satisfying obligations, or closing the loop.
+25. The authority admission dossier reports default registry admission without mutating, satisfying obligations, or closing the loop.
 26. The audit/proof admission dossier reports default registry admission without mutating the registry, verifying proofs, submitting anchors, or closing the loop.

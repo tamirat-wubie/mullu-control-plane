@@ -66,8 +66,9 @@ staged into the holistic loop PR.
    `LoopReceiptLineageBinding`, `LoopClosureEvidencePack`, `LoopRegistry`,
    `LoopOperatorClosureReadinessView`, `LoopProofObligationView`, and bounded
    `LoopReadModel`.
-2. Registered five existing loops without changing runtime behavior:
+2. Registered six existing loops without changing runtime behavior:
    `audit_proof_verification_loop`,
+   `authority_obligation_loop`,
    `deployment_witness_loop`, `runtime_conformance_loop`,
    `cognitive_outcome_loop`, and `governed_code_change_loop`.
 3. Added read-only reporting through
@@ -105,8 +106,8 @@ staged into the holistic loop PR.
     anchoring.
 14. Added the candidate map for future loop registration planning. It lists
     evidence-backed loop-like surfaces, distinguishes the admitted audit/proof
-    candidate from still-blocked candidates, and does not verify, close,
-    mutate, or migrate them.
+    and authority candidates from still-blocked candidates, and does not
+    verify, close, mutate, or migrate them.
 15. Added the UAO admission dossier for the first candidate-specific readiness
     projection. It builds a proposed manifest and reports evidence, authority,
     closure-condition, rollback, and learning readiness without registering the
@@ -115,17 +116,17 @@ staged into the holistic loop PR.
     readiness projection. It builds a proposed manifest and reports evidence,
     authority, closure-condition, rollback, and learning readiness without
     registering the loop or changing workflow runtime behavior.
-17. Added the authority admission dossier for the next candidate-specific
-    readiness projection. It builds a proposed manifest and reports evidence,
-    authority, closure-condition, rollback, and learning readiness without
-    registering the loop, satisfying obligations, or changing authority runtime
-    behavior.
+17. Added and then admitted the authority loop into the default read model.
+    The dossier now reports registry admission while preserving the same
+    non-mutation boundary: it does not satisfy obligations, emit receipts,
+    mutate the registry, or change authority runtime behavior.
 18. Added and then admitted the audit/proof loop into the default read model.
     The dossier now reports registry admission while preserving the same
     non-mutation boundary: it does not verify proofs, submit anchors, emit
     receipts, mutate the registry, or change audit/proof runtime behavior.
-19. Added an exact proof-matrix witness for the audit/proof default read-model
-    admission so the holistic loop surface remains at zero unanchored labels.
+19. Added exact proof-matrix witnesses for the audit/proof and authority
+    default read-model admissions so the holistic loop surface remains at zero
+    unanchored labels.
 
 ## Evidence Catalog Follow-Up
 
@@ -477,8 +478,9 @@ candidate.behavior_rewrite == false
 ```
 
 The map currently covers audit/proof verification, authority obligations,
-universal action orchestration, and workflow execution. None are added to the
-default registry by this slice.
+universal action orchestration, and workflow execution. Audit/proof and
+authority are admitted into the default registry; UAO and workflow remain
+blocked future candidates.
 
 ## UAO Admission Dossier Follow-Up
 
@@ -526,14 +528,15 @@ terminal closure, runtime migration, receipt emission, or execution authority.
 
 ## Authority Admission Dossier Follow-Up
 
-The authority admission dossier projects the next candidate-specific admission
-readiness packet:
+The authority admission dossier reports the admitted candidate-specific
+registry state:
 
 ```text
 dossier.candidate_id == authority_obligation_loop
-dossier.admission_status == ready_for_operator_decision
-requires_operator_registration_decision in dossier.admission_blockers
-dossier.registered == false
+dossier.admission_status == registered
+dossier.admission_blockers == []
+dossier.next_action == already_registered
+dossier.registered == true
 dossier.read_only == true
 dossier.mutation_route == false
 dossier.runtime_behavior_change == false
@@ -543,9 +546,9 @@ dossier.registration_effect.registers_loop == false
 
 The dossier includes a proposed `LoopManifest`, existing authority source refs,
 evidence gap report, authority gap report, closure-condition gap report,
-rollback readiness, and learning policy readiness. It is not registration,
-terminal closure, runtime migration, obligation satisfaction, receipt emission,
-or execution authority.
+rollback readiness, and learning policy readiness. It is not registration
+cause, terminal closure, runtime migration, obligation satisfaction, receipt
+emission, or execution authority.
 
 ## Audit Proof Admission Dossier Follow-Up
 
@@ -589,7 +592,7 @@ python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holisti
 Observed result:
 
 ```text
-356 passed
+358 passed
 ```
 
 Focused validators:
@@ -642,7 +645,7 @@ python scripts/validate_workspace_governance_preflight_receipt.py --receipt .tmp
 Observed result:
 
 ```text
-135 checks passed
+136 checks passed
 preflight receipt validation passed
 ```
 

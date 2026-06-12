@@ -1,7 +1,7 @@
 {
-  "blocked_count": 5,
+  "blocked_count": 6,
   "generated_at": "2026-06-08T00:00:00+00:00",
-  "loop_count": 5,
+  "loop_count": 6,
   "loops": [
     {
       "audit_evolution_view": {
@@ -1377,6 +1377,1329 @@
             "tests/test_submit_trust_ledger_anchor_export.py",
             "tests/test_gateway/test_trust_ledger.py",
             "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+          ]
+        }
+      ],
+      "updated_at": "2026-06-08T00:00:00+00:00"
+    },
+    {
+      "audit_evolution_view": {
+        "admits_learning": false,
+        "audit_blocker_refs": [
+          "missing_authority:authority_operator_ref",
+          "missing_evidence:authority_obligation_inventory_current",
+          "missing_evidence:overdue_obligation_resolution_receipt",
+          "missing_evidence:authority_mesh_validator_passed"
+        ],
+        "audit_state": "audit_blocked_by_unresolved_gaps",
+        "emits_receipt": false,
+        "learning_admission_refs": [
+          "debt_pattern_promoted_only_after_authority_validation",
+          "new_authority_preflight_requires_validator_anchor",
+          "authority_satisfaction_remains_outside_read_model"
+        ],
+        "learning_candidate_refs": [
+          "promote repeated authority debt into preflight checks"
+        ],
+        "learning_evidence_input_refs": [
+          "authority_obligation_inventory_current",
+          "overdue_obligation_resolution_receipt",
+          "authority_mesh_validator_passed"
+        ],
+        "learning_policy_ref": "promote repeated authority debt into preflight checks",
+        "learning_retention_refs": [
+          "authority_obligation_mesh",
+          "authority_directory_sync"
+        ],
+        "loop_id": "authority_obligation_loop",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "authority_obligation_mesh",
+          "authority_directory_sync",
+          "runtime_conformance_attestation"
+        ],
+        "read_only": true,
+        "receipt_lineage_refs": [
+          "observe_receipt_lineage",
+          "decision_receipt_lineage",
+          "action_projection_receipt_lineage",
+          "verification_receipt_lineage",
+          "record_receipt_lineage",
+          "state_update_projection_receipt_lineage",
+          "learning_projection_receipt_lineage",
+          "audit_projection_receipt_lineage"
+        ],
+        "receipt_refs": [
+          "sha256:65cf03a863f8c1b0fce84f68101980102bf221cc4c4d06b5a215c79478030d83",
+          "sha256:14effd5e77000167acfadd745e09ee0b3a3bb1d0fbcba9be7b7a372b404edafd",
+          "sha256:76fb003dfcdbe9f5476a0ceceb53adfcdb9cb7f5bd71c1f400a2ce16468634af",
+          "sha256:fd900bc22a9701e99f263eef20e809629198f7f4c573109679f8101e1bf8901d",
+          "sha256:9541a7e94f04c15fcc2fe1f694c8e72b72be74b1c885e9152d200c7e2ac2e54a",
+          "sha256:165aadb168ae2238d68c4c38ac1103d596c88ad148e8570f3e9b74502feddee8",
+          "sha256:c051bab05a9652b59f7148d1ceb8e3b443577858aa031bdbab48a4d619b578c7",
+          "sha256:ab9a07cd96211e38be8fbdc6e6a553e81d14fad985931d9456d664dd0f3df553"
+        ],
+        "terminal_closure": false,
+        "view_ref": "authority_obligation_loop_audit_evolution_view"
+      },
+      "authority_bindings": [
+        {
+          "authority_ref": "authority_operator_ref",
+          "proof_surface_refs": [
+            "authority_obligation_mesh"
+          ],
+          "purpose": "Authority operator reference authorizes obligation review without satisfying overdue obligations from the read model.",
+          "read_only": true,
+          "source_refs": [
+            "docs/54_authority_directory_sync.md",
+            "gateway/authority_obligation_mesh.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_gateway/test_webhooks.py"
+          ]
+        }
+      ],
+      "authority_refs": [],
+      "closure_condition_bindings": [
+        {
+          "closure_ref": "no_overdue_authority_debt",
+          "proof_surface_refs": [
+            "authority_obligation_mesh"
+          ],
+          "purpose": "Require current authority inventory and resolution receipt evidence before authority debt can be described as clear.",
+          "read_only": true,
+          "required_authority_refs": [
+            "authority_operator_ref"
+          ],
+          "required_evidence_refs": [
+            "authority_obligation_inventory_current",
+            "overdue_obligation_resolution_receipt"
+          ],
+          "source_refs": [
+            "gateway/authority_obligation_mesh.py",
+            "scripts/satisfy_overdue_authority_obligations.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_satisfy_overdue_authority_obligations.py"
+          ]
+        },
+        {
+          "closure_ref": "satisfaction_receipts_valid",
+          "proof_surface_refs": [
+            "authority_directory_sync",
+            "runtime_conformance_attestation"
+          ],
+          "purpose": "Require validator evidence that authority satisfaction receipts remain valid before closure can be described.",
+          "read_only": true,
+          "required_authority_refs": [
+            "authority_operator_ref"
+          ],
+          "required_evidence_refs": [
+            "overdue_obligation_resolution_receipt",
+            "authority_mesh_validator_passed"
+          ],
+          "source_refs": [
+            "scripts/sync_authority_directory.py",
+            "schemas/runtime_conformance_certificate.schema.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_sync_authority_directory.py",
+            "tests/test_gateway/test_conformance.py"
+          ]
+        }
+      ],
+      "closure_conditions": [
+        "no_overdue_authority_debt",
+        "satisfaction_receipts_valid"
+      ],
+      "closure_evidence_pack": {
+        "authority_complete": false,
+        "blocker_refs": [
+          "missing_authority:authority_operator_ref",
+          "missing_evidence:authority_obligation_inventory_current",
+          "missing_evidence:overdue_obligation_resolution_receipt",
+          "missing_evidence:authority_mesh_validator_passed"
+        ],
+        "closure_blocked": true,
+        "closure_condition_refs": [
+          "no_overdue_authority_debt",
+          "satisfaction_receipts_valid"
+        ],
+        "closure_report_ref": "closure_report",
+        "emits_receipt": false,
+        "evidence_complete": false,
+        "loop_id": "authority_obligation_loop",
+        "missing_authority_refs": [
+          "authority_operator_ref"
+        ],
+        "missing_evidence_refs": [
+          "authority_obligation_inventory_current",
+          "overdue_obligation_resolution_receipt",
+          "authority_mesh_validator_passed"
+        ],
+        "observed_authority_refs": [],
+        "observed_evidence_refs": [],
+        "pack_ref": "authority_obligation_loop_closure_evidence_pack",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "authority_obligation_mesh",
+          "authority_directory_sync",
+          "runtime_conformance_attestation"
+        ],
+        "read_only": true,
+        "receipt_lineage_refs": [
+          "observe_receipt_lineage",
+          "decision_receipt_lineage",
+          "action_projection_receipt_lineage",
+          "verification_receipt_lineage",
+          "record_receipt_lineage",
+          "state_update_projection_receipt_lineage",
+          "learning_projection_receipt_lineage",
+          "audit_projection_receipt_lineage"
+        ],
+        "required_authority_refs": [
+          "authority_operator_ref"
+        ],
+        "required_evidence_refs": [
+          "authority_obligation_inventory_current",
+          "overdue_obligation_resolution_receipt",
+          "authority_mesh_validator_passed"
+        ],
+        "rollback_available": true,
+        "rollback_ref": "retain_obligation_debt_and_reopen_authority_review",
+        "terminal_closure": false,
+        "validator_refs": [
+          "scripts/validate_holistic_loop_read_model.py",
+          "scripts/validate_holistic_loop_http_surface.py",
+          "scripts/proof_coverage_matrix.py"
+        ]
+      },
+      "closure_report": {
+        "closed": false,
+        "closure_reason": "read_model_blocked_by_unresolved_gaps",
+        "evidence_complete": false,
+        "learning_candidates": [
+          "promote repeated authority debt into preflight checks"
+        ],
+        "loop_id": "authority_obligation_loop",
+        "metadata": {
+          "closure_conditions": [
+            "no_overdue_authority_debt",
+            "satisfaction_receipts_valid"
+          ],
+          "read_only": true,
+          "terminal_closure": false
+        },
+        "rollback_available": true,
+        "unresolved_gaps": [
+          "missing_authority:authority_operator_ref",
+          "missing_evidence:authority_obligation_inventory_current",
+          "missing_evidence:overdue_obligation_resolution_receipt",
+          "missing_evidence:authority_mesh_validator_passed"
+        ]
+      },
+      "current_step": "observe",
+      "evidence_bindings": [
+        {
+          "evidence_ref": "authority_obligation_inventory_current",
+          "proof_surface_refs": [
+            "authority_obligation_mesh"
+          ],
+          "purpose": "Authority obligation inventory is current before debt closure is described.",
+          "read_only": true,
+          "source_refs": [
+            "gateway/authority_obligation_mesh.py",
+            "docs/54_authority_directory_sync.md"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_gateway/test_webhooks.py"
+          ]
+        },
+        {
+          "evidence_ref": "overdue_obligation_resolution_receipt",
+          "proof_surface_refs": [
+            "authority_obligation_mesh"
+          ],
+          "purpose": "Overdue authority obligation resolution receipt is present before debt closure is described.",
+          "read_only": true,
+          "source_refs": [
+            "scripts/satisfy_overdue_authority_obligations.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_satisfy_overdue_authority_obligations.py"
+          ]
+        },
+        {
+          "evidence_ref": "authority_mesh_validator_passed",
+          "proof_surface_refs": [
+            "authority_directory_sync",
+            "runtime_conformance_attestation"
+          ],
+          "purpose": "Authority mesh validators pass before authority receipt closure is described.",
+          "read_only": true,
+          "source_refs": [
+            "scripts/sync_authority_directory.py",
+            "schemas/runtime_conformance_certificate.schema.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_sync_authority_directory.py",
+            "tests/test_gateway/test_mcp_capability_fabric.py",
+            "tests/test_gateway/test_conformance.py"
+          ]
+        }
+      ],
+      "evidence_refs": [],
+      "learning_binding": {
+        "admission_refs": [
+          "debt_pattern_promoted_only_after_authority_validation",
+          "new_authority_preflight_requires_validator_anchor",
+          "authority_satisfaction_remains_outside_read_model"
+        ],
+        "evidence_input_refs": [
+          "authority_obligation_inventory_current",
+          "overdue_obligation_resolution_receipt",
+          "authority_mesh_validator_passed"
+        ],
+        "learning_ref": "promote repeated authority debt into preflight checks",
+        "proof_surface_refs": [
+          "authority_obligation_mesh",
+          "authority_directory_sync"
+        ],
+        "purpose": "Bind repeated authority debt and missing receipts to later preflight witnesses or validator coverage.",
+        "read_only": true,
+        "retention_refs": [
+          "authority_obligation_mesh",
+          "authority_directory_sync"
+        ],
+        "source_refs": [
+          "gateway/authority_obligation_mesh.py",
+          "scripts/satisfy_overdue_authority_obligations.py",
+          "scripts/sync_authority_directory.py"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_gateway/test_authority_obligation_mesh.py",
+          "tests/test_satisfy_overdue_authority_obligations.py",
+          "tests/test_sync_authority_directory.py"
+        ]
+      },
+      "learning_policy": "promote repeated authority debt into preflight checks",
+      "loop_id": "authority_obligation_loop",
+      "missing_authority": [
+        "authority_operator_ref"
+      ],
+      "missing_evidence": [
+        "authority_obligation_inventory_current",
+        "overdue_obligation_resolution_receipt",
+        "authority_mesh_validator_passed"
+      ],
+      "mode": "dry_run",
+      "mode_binding": {
+        "allowed_modes": [
+          "dry_run",
+          "shadow",
+          "simulation",
+          "replay",
+          "real"
+        ],
+        "mode_transition": false,
+        "projected_mode": "dry_run",
+        "proof_surface_refs": [
+          "authority_obligation_mesh",
+          "authority_directory_sync",
+          "runtime_conformance_attestation"
+        ],
+        "purpose": "Expose authority obligation dry-run, shadow, simulation, replay, and real-mode boundaries without satisfying obligations.",
+        "read_only": true,
+        "real_execution_guard_refs": [
+          "authority_operator_ref",
+          "no_overdue_authority_debt",
+          "satisfaction_receipts_valid"
+        ],
+        "separation_refs": [
+          "dry_run_projects_authority_debt_without_satisfaction",
+          "shadow_observes_authority_mesh_without_state_mutation",
+          "simulation_and_replay_use_retained_obligation_receipts",
+          "real_mode_requires_authority_operator_ref_and_complete_evidence"
+        ],
+        "source_refs": [
+          "docs/54_authority_directory_sync.md",
+          "gateway/authority_obligation_mesh.py",
+          "scripts/satisfy_overdue_authority_obligations.py",
+          "scripts/sync_authority_directory.py",
+          "schemas/runtime_conformance_certificate.schema.json"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_satisfy_overdue_authority_obligations.py",
+          "tests/test_sync_authority_directory.py",
+          "tests/test_gateway/test_authority_obligation_mesh.py",
+          "tests/test_gateway/test_webhooks.py",
+          "tests/test_gateway/test_mcp_capability_fabric.py",
+          "tests/test_gateway/test_conformance.py"
+        ]
+      },
+      "name": "Authority Obligation Loop",
+      "open_blockers": [
+        "missing_authority:authority_operator_ref",
+        "missing_evidence:authority_obligation_inventory_current",
+        "missing_evidence:overdue_obligation_resolution_receipt",
+        "missing_evidence:authority_mesh_validator_passed"
+      ],
+      "operator_closure_readiness_view": {
+        "authority_gap_refs": [
+          "authority_operator_ref"
+        ],
+        "blocker_refs": [
+          "missing_authority:authority_operator_ref",
+          "missing_evidence:authority_obligation_inventory_current",
+          "missing_evidence:overdue_obligation_resolution_receipt",
+          "missing_evidence:authority_mesh_validator_passed"
+        ],
+        "closure_condition_refs": [
+          "no_overdue_authority_debt",
+          "satisfaction_receipts_valid"
+        ],
+        "evidence_gap_refs": [
+          "authority_obligation_inventory_current",
+          "overdue_obligation_resolution_receipt",
+          "authority_mesh_validator_passed"
+        ],
+        "loop_id": "authority_obligation_loop",
+        "mutation_route": false,
+        "next_proof_action": "resolve_blockers_before_terminal_closure_review",
+        "next_proof_refs": [
+          "closure_evidence_pack",
+          "closure_report",
+          "missing_authority:authority_operator_ref",
+          "missing_evidence:authority_obligation_inventory_current",
+          "missing_evidence:overdue_obligation_resolution_receipt",
+          "missing_evidence:authority_mesh_validator_passed"
+        ],
+        "projected_status": "blocked",
+        "read_only": true,
+        "readiness_state": "blocked_by_unresolved_gaps",
+        "rollback_available": true,
+        "rollback_ref": "retain_obligation_debt_and_reopen_authority_review",
+        "terminal_closure": false,
+        "view_ref": "authority_obligation_loop_operator_closure_readiness_view"
+      },
+      "owner": "governance",
+      "proof_obligation_view": {
+        "blocker_refs": [
+          "missing_authority:authority_operator_ref",
+          "missing_evidence:authority_obligation_inventory_current",
+          "missing_evidence:overdue_obligation_resolution_receipt",
+          "missing_evidence:authority_mesh_validator_passed"
+        ],
+        "closure_condition_refs": [
+          "no_overdue_authority_debt",
+          "satisfaction_receipts_valid"
+        ],
+        "executes_validator": false,
+        "loop_id": "authority_obligation_loop",
+        "missing_authority_refs": [
+          "authority_operator_ref"
+        ],
+        "missing_evidence_refs": [
+          "authority_obligation_inventory_current",
+          "overdue_obligation_resolution_receipt",
+          "authority_mesh_validator_passed"
+        ],
+        "obligation_ref": "authority_obligation_loop_proof_obligation_view",
+        "obligation_state": "blocked_by_missing_proof",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "authority_obligation_mesh",
+          "authority_directory_sync",
+          "runtime_conformance_attestation"
+        ],
+        "read_only": true,
+        "required_authority_refs": [
+          "authority_operator_ref"
+        ],
+        "required_evidence_refs": [
+          "authority_obligation_inventory_current",
+          "overdue_obligation_resolution_receipt",
+          "authority_mesh_validator_passed"
+        ],
+        "satisfied_authority_refs": [],
+        "satisfied_evidence_refs": [],
+        "terminal_closure": false,
+        "validator_refs": [
+          "scripts/validate_holistic_loop_read_model.py",
+          "scripts/validate_holistic_loop_http_surface.py",
+          "scripts/proof_coverage_matrix.py"
+        ]
+      },
+      "purpose": "Describe authority obligation inventory, overdue debt resolution, and mesh validation evidence without satisfying obligations or mutating authority runtime behavior.",
+      "receipt_lineage_bindings": [
+        {
+          "blocker_refs": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "observe_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "authority_obligation_mesh",
+            "authority_directory_sync",
+            "runtime_conformance_attestation"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:65cf03a863f8c1b0fce84f68101980102bf221cc4c4d06b5a215c79478030d83",
+          "receipt_ref": "observe_receipt",
+          "required_evidence_refs": [
+            "authority_obligation_inventory_current",
+            "overdue_obligation_resolution_receipt",
+            "authority_mesh_validator_passed"
+          ],
+          "source_receipt_refs": [
+            "observe_receipt",
+            "loop_manifest",
+            "loop_state_projection"
+          ],
+          "source_refs": [
+            "docs/54_authority_directory_sync.md",
+            "gateway/authority_obligation_mesh.py",
+            "scripts/satisfy_overdue_authority_obligations.py",
+            "scripts/sync_authority_directory.py",
+            "schemas/runtime_conformance_certificate.schema.json"
+          ],
+          "step": "observe",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_satisfy_overdue_authority_obligations.py",
+            "tests/test_sync_authority_directory.py",
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_gateway/test_webhooks.py",
+            "tests/test_gateway/test_mcp_capability_fabric.py",
+            "tests/test_gateway/test_conformance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "decision_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "authority_obligation_mesh",
+            "authority_directory_sync",
+            "runtime_conformance_attestation"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:14effd5e77000167acfadd745e09ee0b3a3bb1d0fbcba9be7b7a372b404edafd",
+          "receipt_ref": "decision_receipt",
+          "required_evidence_refs": [
+            "authority_obligation_inventory_current",
+            "overdue_obligation_resolution_receipt",
+            "authority_mesh_validator_passed"
+          ],
+          "source_receipt_refs": [
+            "decision_receipt",
+            "observe_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/54_authority_directory_sync.md",
+            "gateway/authority_obligation_mesh.py",
+            "scripts/satisfy_overdue_authority_obligations.py",
+            "scripts/sync_authority_directory.py",
+            "schemas/runtime_conformance_certificate.schema.json"
+          ],
+          "step": "decide",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_satisfy_overdue_authority_obligations.py",
+            "tests/test_sync_authority_directory.py",
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_gateway/test_webhooks.py",
+            "tests/test_gateway/test_mcp_capability_fabric.py",
+            "tests/test_gateway/test_conformance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "action_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "authority_obligation_mesh",
+            "authority_directory_sync",
+            "runtime_conformance_attestation"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:76fb003dfcdbe9f5476a0ceceb53adfcdb9cb7f5bd71c1f400a2ce16468634af",
+          "receipt_ref": "action_projection_receipt",
+          "required_evidence_refs": [
+            "authority_obligation_inventory_current",
+            "overdue_obligation_resolution_receipt",
+            "authority_mesh_validator_passed"
+          ],
+          "source_receipt_refs": [
+            "action_projection_receipt",
+            "decision_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/54_authority_directory_sync.md",
+            "gateway/authority_obligation_mesh.py",
+            "scripts/satisfy_overdue_authority_obligations.py",
+            "scripts/sync_authority_directory.py",
+            "schemas/runtime_conformance_certificate.schema.json"
+          ],
+          "step": "act",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_satisfy_overdue_authority_obligations.py",
+            "tests/test_sync_authority_directory.py",
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_gateway/test_webhooks.py",
+            "tests/test_gateway/test_mcp_capability_fabric.py",
+            "tests/test_gateway/test_conformance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "verification_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "authority_obligation_mesh",
+            "authority_directory_sync",
+            "runtime_conformance_attestation"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:fd900bc22a9701e99f263eef20e809629198f7f4c573109679f8101e1bf8901d",
+          "receipt_ref": "verification_receipt",
+          "required_evidence_refs": [
+            "authority_obligation_inventory_current",
+            "overdue_obligation_resolution_receipt",
+            "authority_mesh_validator_passed"
+          ],
+          "source_receipt_refs": [
+            "verification_receipt",
+            "action_projection_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/54_authority_directory_sync.md",
+            "gateway/authority_obligation_mesh.py",
+            "scripts/satisfy_overdue_authority_obligations.py",
+            "scripts/sync_authority_directory.py",
+            "schemas/runtime_conformance_certificate.schema.json"
+          ],
+          "step": "verify",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_satisfy_overdue_authority_obligations.py",
+            "tests/test_sync_authority_directory.py",
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_gateway/test_webhooks.py",
+            "tests/test_gateway/test_mcp_capability_fabric.py",
+            "tests/test_gateway/test_conformance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "record_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "authority_obligation_mesh",
+            "authority_directory_sync",
+            "runtime_conformance_attestation"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:9541a7e94f04c15fcc2fe1f694c8e72b72be74b1c885e9152d200c7e2ac2e54a",
+          "receipt_ref": "record_receipt",
+          "required_evidence_refs": [
+            "authority_obligation_inventory_current",
+            "overdue_obligation_resolution_receipt",
+            "authority_mesh_validator_passed"
+          ],
+          "source_receipt_refs": [
+            "record_receipt",
+            "verification_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/54_authority_directory_sync.md",
+            "gateway/authority_obligation_mesh.py",
+            "scripts/satisfy_overdue_authority_obligations.py",
+            "scripts/sync_authority_directory.py",
+            "schemas/runtime_conformance_certificate.schema.json"
+          ],
+          "step": "record_receipt",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_satisfy_overdue_authority_obligations.py",
+            "tests/test_sync_authority_directory.py",
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_gateway/test_webhooks.py",
+            "tests/test_gateway/test_mcp_capability_fabric.py",
+            "tests/test_gateway/test_conformance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "state_update_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "authority_obligation_mesh",
+            "authority_directory_sync",
+            "runtime_conformance_attestation"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:165aadb168ae2238d68c4c38ac1103d596c88ad148e8570f3e9b74502feddee8",
+          "receipt_ref": "state_update_projection_receipt",
+          "required_evidence_refs": [
+            "authority_obligation_inventory_current",
+            "overdue_obligation_resolution_receipt",
+            "authority_mesh_validator_passed"
+          ],
+          "source_receipt_refs": [
+            "state_update_projection_receipt",
+            "record_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/54_authority_directory_sync.md",
+            "gateway/authority_obligation_mesh.py",
+            "scripts/satisfy_overdue_authority_obligations.py",
+            "scripts/sync_authority_directory.py",
+            "schemas/runtime_conformance_certificate.schema.json"
+          ],
+          "step": "update_state",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_satisfy_overdue_authority_obligations.py",
+            "tests/test_sync_authority_directory.py",
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_gateway/test_webhooks.py",
+            "tests/test_gateway/test_mcp_capability_fabric.py",
+            "tests/test_gateway/test_conformance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "learning_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "authority_obligation_mesh",
+            "authority_directory_sync",
+            "runtime_conformance_attestation"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:c051bab05a9652b59f7148d1ceb8e3b443577858aa031bdbab48a4d619b578c7",
+          "receipt_ref": "learning_projection_receipt",
+          "required_evidence_refs": [
+            "authority_obligation_inventory_current",
+            "overdue_obligation_resolution_receipt",
+            "authority_mesh_validator_passed"
+          ],
+          "source_receipt_refs": [
+            "learning_projection_receipt",
+            "state_update_projection_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/54_authority_directory_sync.md",
+            "gateway/authority_obligation_mesh.py",
+            "scripts/satisfy_overdue_authority_obligations.py",
+            "scripts/sync_authority_directory.py",
+            "schemas/runtime_conformance_certificate.schema.json"
+          ],
+          "step": "learn",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_satisfy_overdue_authority_obligations.py",
+            "tests/test_sync_authority_directory.py",
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_gateway/test_webhooks.py",
+            "tests/test_gateway/test_mcp_capability_fabric.py",
+            "tests/test_gateway/test_conformance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "audit_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "authority_obligation_mesh",
+            "authority_directory_sync",
+            "runtime_conformance_attestation"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:ab9a07cd96211e38be8fbdc6e6a553e81d14fad985931d9456d664dd0f3df553",
+          "receipt_ref": "audit_projection_receipt",
+          "required_evidence_refs": [
+            "authority_obligation_inventory_current",
+            "overdue_obligation_resolution_receipt",
+            "authority_mesh_validator_passed"
+          ],
+          "source_receipt_refs": [
+            "audit_projection_receipt",
+            "learning_projection_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/54_authority_directory_sync.md",
+            "gateway/authority_obligation_mesh.py",
+            "scripts/satisfy_overdue_authority_obligations.py",
+            "scripts/sync_authority_directory.py",
+            "schemas/runtime_conformance_certificate.schema.json"
+          ],
+          "step": "audit",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_satisfy_overdue_authority_obligations.py",
+            "tests/test_sync_authority_directory.py",
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_gateway/test_webhooks.py",
+            "tests/test_gateway/test_mcp_capability_fabric.py",
+            "tests/test_gateway/test_conformance.py"
+          ]
+        }
+      ],
+      "recovery_readiness_view": {
+        "blocker_refs": [
+          "missing_authority:authority_operator_ref",
+          "missing_evidence:authority_obligation_inventory_current",
+          "missing_evidence:overdue_obligation_resolution_receipt",
+          "missing_evidence:authority_mesh_validator_passed"
+        ],
+        "closure_evidence_pack_ref": "authority_obligation_loop_closure_evidence_pack",
+        "closure_report_ref": "closure_report",
+        "executes_rollback": false,
+        "loop_id": "authority_obligation_loop",
+        "next_recovery_action": "resolve_blockers_before_recovery_or_terminal_review",
+        "opens_incident": false,
+        "read_only": true,
+        "receipt_lineage_refs": [
+          "observe_receipt_lineage",
+          "decision_receipt_lineage",
+          "action_projection_receipt_lineage",
+          "verification_receipt_lineage",
+          "record_receipt_lineage",
+          "state_update_projection_receipt_lineage",
+          "learning_projection_receipt_lineage",
+          "audit_projection_receipt_lineage"
+        ],
+        "recovery_proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "authority_obligation_mesh",
+          "authority_directory_sync",
+          "runtime_conformance_attestation"
+        ],
+        "recovery_source_refs": [
+          "gateway/authority_obligation_mesh.py",
+          "scripts/satisfy_overdue_authority_obligations.py"
+        ],
+        "recovery_state": "recovery_blocked_by_unresolved_gaps",
+        "recovery_validator_refs": [
+          "tests/test_gateway/test_authority_obligation_mesh.py",
+          "tests/test_satisfy_overdue_authority_obligations.py"
+        ],
+        "rollback_available": true,
+        "rollback_ref": "retain_obligation_debt_and_reopen_authority_review",
+        "terminal_closure": false,
+        "view_ref": "authority_obligation_loop_recovery_readiness_view"
+      },
+      "required_authority": [
+        "authority_operator_ref"
+      ],
+      "required_evidence": [
+        "authority_obligation_inventory_current",
+        "overdue_obligation_resolution_receipt",
+        "authority_mesh_validator_passed"
+      ],
+      "risk_binding": {
+        "hazard_refs": [
+          "stale_authority_obligation_inventory",
+          "missing_overdue_obligation_resolution_receipt",
+          "authority_closure_overclaim"
+        ],
+        "mitigation_refs": [
+          "block_closure_until_authority_inventory_is_current",
+          "require_satisfaction_receipts",
+          "keep_obligation_satisfaction_outside_read_model"
+        ],
+        "monitor_refs": [
+          "authority_obligation_mesh",
+          "authority_directory_sync",
+          "runtime_conformance_certificate"
+        ],
+        "proof_surface_refs": [
+          "authority_obligation_mesh",
+          "authority_directory_sync",
+          "runtime_conformance_attestation"
+        ],
+        "purpose": "Authority debt risk covers stale obligation inventory, missing satisfaction receipts, and accidental closure overclaim.",
+        "read_only": true,
+        "risk_ref": "authority_debt",
+        "source_refs": [
+          "docs/54_authority_directory_sync.md",
+          "gateway/authority_obligation_mesh.py",
+          "scripts/satisfy_overdue_authority_obligations.py",
+          "scripts/sync_authority_directory.py",
+          "schemas/runtime_conformance_certificate.schema.json"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_satisfy_overdue_authority_obligations.py",
+          "tests/test_sync_authority_directory.py",
+          "tests/test_gateway/test_authority_obligation_mesh.py",
+          "tests/test_gateway/test_webhooks.py",
+          "tests/test_gateway/test_mcp_capability_fabric.py",
+          "tests/test_gateway/test_conformance.py"
+        ]
+      },
+      "risk_class": "authority_debt",
+      "rollback_binding": {
+        "proof_surface_refs": [
+          "authority_obligation_mesh"
+        ],
+        "purpose": "Rollback authority closure by retaining obligation debt and reopening authority review.",
+        "read_only": true,
+        "rollback_ref": "retain_obligation_debt_and_reopen_authority_review",
+        "source_refs": [
+          "gateway/authority_obligation_mesh.py",
+          "scripts/satisfy_overdue_authority_obligations.py"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_gateway/test_authority_obligation_mesh.py",
+          "tests/test_satisfy_overdue_authority_obligations.py"
+        ]
+      },
+      "rollback_policy": "retain_obligation_debt_and_reopen_authority_review",
+      "status": "blocked",
+      "status_binding": {
+        "blocker_refs": [
+          "missing_authority:authority_operator_ref",
+          "missing_evidence:authority_obligation_inventory_current",
+          "missing_evidence:overdue_obligation_resolution_receipt",
+          "missing_evidence:authority_mesh_validator_passed"
+        ],
+        "closure_gate_refs": [
+          "no_overdue_authority_debt",
+          "satisfaction_receipts_valid"
+        ],
+        "projected_status": "blocked",
+        "proof_surface_refs": [
+          "authority_obligation_mesh",
+          "authority_directory_sync",
+          "runtime_conformance_attestation"
+        ],
+        "read_only": true,
+        "source_refs": [
+          "docs/54_authority_directory_sync.md",
+          "gateway/authority_obligation_mesh.py",
+          "scripts/satisfy_overdue_authority_obligations.py",
+          "scripts/sync_authority_directory.py",
+          "schemas/runtime_conformance_certificate.schema.json"
+        ],
+        "status_reason": "read_model_blocked_by_unresolved_gaps",
+        "status_transition": false,
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_satisfy_overdue_authority_obligations.py",
+          "tests/test_sync_authority_directory.py",
+          "tests/test_gateway/test_authority_obligation_mesh.py",
+          "tests/test_gateway/test_webhooks.py",
+          "tests/test_gateway/test_mcp_capability_fabric.py",
+          "tests/test_gateway/test_conformance.py"
+        ],
+        "verification_refs": [
+          "required_authority_observed",
+          "required_evidence_observed",
+          "authority_obligation_validators_passed"
+        ]
+      },
+      "step_receipts": [
+        {
+          "decision": "project_read_model_observe",
+          "errors": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:a60f737d48484bb73538bd31aa836e62c98d2c7a235333a249a37721b8ab30f9",
+          "loop_id": "authority_obligation_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:65cf03a863f8c1b0fce84f68101980102bf221cc4c4d06b5a215c79478030d83",
+          "status": "blocked",
+          "step": "observe",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "project_read_model_decide",
+          "errors": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:e3c7da04f2f1122e44cc584846eb1609cf18b0f41e1530a9b743fdb56b7e2bd9",
+          "loop_id": "authority_obligation_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:14effd5e77000167acfadd745e09ee0b3a3bb1d0fbcba9be7b7a372b404edafd",
+          "status": "blocked",
+          "step": "decide",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "project_existing_behavior_without_execution",
+          "errors": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:8076e664d2da332487fe011660d3acc86838baaea51bc9202e3d9a5b107944e8",
+          "loop_id": "authority_obligation_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:76fb003dfcdbe9f5476a0ceceb53adfcdb9cb7f5bd71c1f400a2ce16468634af",
+          "status": "blocked",
+          "step": "act",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:dea5ef53203b04b9c9155655a616aa356d4a5cb905d37bc45cefd492b52b2f20",
+          "loop_id": "authority_obligation_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:fd900bc22a9701e99f263eef20e809629198f7f4c573109679f8101e1bf8901d",
+          "status": "blocked",
+          "step": "verify",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:73b6795d138f9e5e355e4e331f40755ce0463574409dc7e7eb364512cf61f660",
+          "loop_id": "authority_obligation_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:9541a7e94f04c15fcc2fe1f694c8e72b72be74b1c885e9152d200c7e2ac2e54a",
+          "status": "blocked",
+          "step": "record_receipt",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:ebfe03cc2c850ea9c10073d50460630cb20cd58d31e9e01be0e301a493d0a576",
+          "loop_id": "authority_obligation_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:165aadb168ae2238d68c4c38ac1103d596c88ad148e8570f3e9b74502feddee8",
+          "status": "blocked",
+          "step": "update_state",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:e6afc209aae9f55c9af743767d369edc22cf17547ac47a1c2e752aff4387cecc",
+          "loop_id": "authority_obligation_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:c051bab05a9652b59f7148d1ceb8e3b443577858aa031bdbab48a4d619b578c7",
+          "status": "blocked",
+          "step": "learn",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:5c2f64b6e6a224c961dc7278919b4fe2132485caf4f125754cbb1e85cab33e5e",
+          "loop_id": "authority_obligation_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:ab9a07cd96211e38be8fbdc6e6a553e81d14fad985931d9456d664dd0f3df553",
+          "status": "blocked",
+          "step": "audit",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        }
+      ],
+      "transition_bindings": [
+        {
+          "blocker_refs": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "executes_transition": false,
+          "from_status": "open",
+          "from_step": "observe",
+          "proof_surface_refs": [
+            "authority_obligation_mesh",
+            "authority_directory_sync",
+            "runtime_conformance_attestation"
+          ],
+          "read_only": true,
+          "receipt_refs": [
+            "observe_receipt",
+            "verification_receipt",
+            "closure_report"
+          ],
+          "required_authority_refs": [
+            "authority_operator_ref"
+          ],
+          "required_evidence_refs": [
+            "authority_obligation_inventory_current",
+            "overdue_obligation_resolution_receipt",
+            "authority_mesh_validator_passed"
+          ],
+          "rollback_refs": [
+            "retain_obligation_debt_and_reopen_authority_review"
+          ],
+          "source_refs": [
+            "docs/54_authority_directory_sync.md",
+            "gateway/authority_obligation_mesh.py",
+            "scripts/satisfy_overdue_authority_obligations.py",
+            "scripts/sync_authority_directory.py",
+            "schemas/runtime_conformance_certificate.schema.json"
+          ],
+          "terminal_closure": false,
+          "to_status": "blocked",
+          "to_step": "verify",
+          "transition_ref": "open_to_blocked_on_missing_requirements",
+          "validator_refs": [
+            "tests/test_satisfy_overdue_authority_obligations.py",
+            "tests/test_sync_authority_directory.py",
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_gateway/test_webhooks.py",
+            "tests/test_gateway/test_mcp_capability_fabric.py",
+            "tests/test_gateway/test_conformance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "executes_transition": false,
+          "from_status": "blocked",
+          "from_step": "verify",
+          "proof_surface_refs": [
+            "authority_obligation_mesh",
+            "authority_directory_sync",
+            "runtime_conformance_attestation"
+          ],
+          "read_only": true,
+          "receipt_refs": [
+            "verification_receipt",
+            "record_receipt",
+            "closure_report"
+          ],
+          "required_authority_refs": [
+            "authority_operator_ref"
+          ],
+          "required_evidence_refs": [
+            "authority_obligation_inventory_current",
+            "overdue_obligation_resolution_receipt",
+            "authority_mesh_validator_passed"
+          ],
+          "rollback_refs": [
+            "retain_obligation_debt_and_reopen_authority_review"
+          ],
+          "source_refs": [
+            "docs/54_authority_directory_sync.md",
+            "gateway/authority_obligation_mesh.py",
+            "scripts/satisfy_overdue_authority_obligations.py",
+            "scripts/sync_authority_directory.py",
+            "schemas/runtime_conformance_certificate.schema.json"
+          ],
+          "terminal_closure": false,
+          "to_status": "verified",
+          "to_step": "record_receipt",
+          "transition_ref": "blocked_to_verified_after_requirements",
+          "validator_refs": [
+            "tests/test_satisfy_overdue_authority_obligations.py",
+            "tests/test_sync_authority_directory.py",
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_gateway/test_webhooks.py",
+            "tests/test_gateway/test_mcp_capability_fabric.py",
+            "tests/test_gateway/test_conformance.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:authority_operator_ref",
+            "missing_evidence:authority_obligation_inventory_current",
+            "missing_evidence:overdue_obligation_resolution_receipt",
+            "missing_evidence:authority_mesh_validator_passed"
+          ],
+          "executes_transition": false,
+          "from_status": "verified",
+          "from_step": "audit",
+          "proof_surface_refs": [
+            "authority_obligation_mesh",
+            "authority_directory_sync",
+            "runtime_conformance_attestation"
+          ],
+          "read_only": true,
+          "receipt_refs": [
+            "audit_receipt",
+            "terminal_closure_certificate",
+            "closure_report"
+          ],
+          "required_authority_refs": [
+            "authority_operator_ref"
+          ],
+          "required_evidence_refs": [
+            "authority_obligation_inventory_current",
+            "overdue_obligation_resolution_receipt",
+            "authority_mesh_validator_passed"
+          ],
+          "rollback_refs": [
+            "retain_obligation_debt_and_reopen_authority_review"
+          ],
+          "source_refs": [
+            "docs/54_authority_directory_sync.md",
+            "gateway/authority_obligation_mesh.py",
+            "scripts/satisfy_overdue_authority_obligations.py",
+            "scripts/sync_authority_directory.py",
+            "schemas/runtime_conformance_certificate.schema.json"
+          ],
+          "terminal_closure": false,
+          "to_status": "closed",
+          "to_step": "close",
+          "transition_ref": "verified_to_closed_requires_terminal_closure",
+          "validator_refs": [
+            "tests/test_satisfy_overdue_authority_obligations.py",
+            "tests/test_sync_authority_directory.py",
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_gateway/test_webhooks.py",
+            "tests/test_gateway/test_mcp_capability_fabric.py",
+            "tests/test_gateway/test_conformance.py"
           ]
         }
       ],
@@ -7445,7 +8768,7 @@
   ],
   "report_id": "holistic_loop_read_model",
   "report_is_not_terminal_closure": true,
-  "returned_count": 5,
+  "returned_count": 6,
   "status": "blocked",
   "terminal_closure_required": true,
   "truncated": false,

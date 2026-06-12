@@ -212,6 +212,48 @@ def _default_manifests() -> dict[str, LoopManifest]:
                 },
             ),
             LoopManifest(
+                loop_id="authority_obligation_loop",
+                name="Authority Obligation Loop",
+                purpose=(
+                    "Describe authority obligation inventory, overdue debt "
+                    "resolution, and mesh validation evidence without satisfying "
+                    "obligations or mutating authority runtime behavior."
+                ),
+                owner="governance",
+                risk_class="authority_debt",
+                allowed_modes=(
+                    LoopMode.DRY_RUN,
+                    LoopMode.SHADOW,
+                    LoopMode.SIMULATION,
+                    LoopMode.REPLAY,
+                    LoopMode.REAL,
+                ),
+                required_authority=("authority_operator_ref",),
+                required_evidence=(
+                    "authority_obligation_inventory_current",
+                    "overdue_obligation_resolution_receipt",
+                    "authority_mesh_validator_passed",
+                ),
+                closure_conditions=(
+                    "no_overdue_authority_debt",
+                    "satisfaction_receipts_valid",
+                ),
+                rollback_policy="retain_obligation_debt_and_reopen_authority_review",
+                learning_policy="promote repeated authority debt into preflight checks",
+                metadata={
+                    "existing_surfaces": (
+                        "docs/54_authority_directory_sync.md",
+                        "gateway/authority_obligation_mesh.py",
+                        "scripts/satisfy_overdue_authority_obligations.py",
+                        "scripts/sync_authority_directory.py",
+                    ),
+                    "admission_dossier": (
+                        "scripts/report_holistic_loop_authority_admission_dossier.py"
+                    ),
+                    "behavior_rewrite": False,
+                },
+            ),
+            LoopManifest(
                 loop_id="deployment_witness_loop",
                 name="Deployment Witness Loop",
                 purpose=(
@@ -1223,6 +1265,26 @@ _AUDIT_PROOF_VALIDATORS = (
     "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
 )
 _AUDIT_PROOF_SURFACES = ("audit_chain_api", "proof_route_gap_triage", "trust_ledger")
+_AUTHORITY_OBLIGATION_SOURCES = (
+    "docs/54_authority_directory_sync.md",
+    "gateway/authority_obligation_mesh.py",
+    "scripts/satisfy_overdue_authority_obligations.py",
+    "scripts/sync_authority_directory.py",
+    "schemas/runtime_conformance_certificate.schema.json",
+)
+_AUTHORITY_OBLIGATION_VALIDATORS = (
+    "tests/test_satisfy_overdue_authority_obligations.py",
+    "tests/test_sync_authority_directory.py",
+    "tests/test_gateway/test_authority_obligation_mesh.py",
+    "tests/test_gateway/test_webhooks.py",
+    "tests/test_gateway/test_mcp_capability_fabric.py",
+    "tests/test_gateway/test_conformance.py",
+)
+_AUTHORITY_OBLIGATION_SURFACES = (
+    "authority_obligation_mesh",
+    "authority_directory_sync",
+    "runtime_conformance_attestation",
+)
 
 
 _DEFAULT_RECEIPT_LINEAGE_CATALOG: Mapping[str, Mapping[str, tuple[str, ...]]] = {
@@ -1230,6 +1292,11 @@ _DEFAULT_RECEIPT_LINEAGE_CATALOG: Mapping[str, Mapping[str, tuple[str, ...]]] = 
         "source_refs": _AUDIT_PROOF_SOURCES,
         "validator_refs": _AUDIT_PROOF_VALIDATORS,
         "proof_surface_refs": _AUDIT_PROOF_SURFACES,
+    },
+    "authority_obligation_loop": {
+        "source_refs": _AUTHORITY_OBLIGATION_SOURCES,
+        "validator_refs": _AUTHORITY_OBLIGATION_VALIDATORS,
+        "proof_surface_refs": _AUTHORITY_OBLIGATION_SURFACES,
     },
     "deployment_witness_loop": {
         "source_refs": _DEPLOYMENT_WITNESS_SOURCES,
@@ -1277,6 +1344,21 @@ _DEFAULT_STATUS_BINDINGS: Mapping[str, LoopStatusBinding] = {
         source_refs=_AUDIT_PROOF_SOURCES,
         validator_refs=_AUDIT_PROOF_VALIDATORS,
         proof_surface_refs=_AUDIT_PROOF_SURFACES,
+    ),
+    "authority_obligation_loop": _status_binding(
+        "Bind authority obligation status to unresolved operator authority, overdue debt, receipt, and mesh validation gaps.",
+        verification_refs=(
+            "required_authority_observed",
+            "required_evidence_observed",
+            "authority_obligation_validators_passed",
+        ),
+        closure_gate_refs=(
+            "no_overdue_authority_debt",
+            "satisfaction_receipts_valid",
+        ),
+        source_refs=_AUTHORITY_OBLIGATION_SOURCES,
+        validator_refs=_AUTHORITY_OBLIGATION_VALIDATORS,
+        proof_surface_refs=_AUTHORITY_OBLIGATION_SURFACES,
     ),
     "deployment_witness_loop": _status_binding(
         "Bind deployment witness status to unresolved publication, runtime, audit, proof, and authority gaps.",
@@ -1400,6 +1482,18 @@ _DEFAULT_TRANSITION_BINDINGS: Mapping[str, tuple[LoopTransitionBinding, ...]] = 
         source_refs=_AUDIT_PROOF_SOURCES,
         validator_refs=_AUDIT_PROOF_VALIDATORS,
         proof_surface_refs=_AUDIT_PROOF_SURFACES,
+    ),
+    "authority_obligation_loop": _transition_catalog(
+        required_authority_refs=("authority_operator_ref",),
+        required_evidence_refs=(
+            "authority_obligation_inventory_current",
+            "overdue_obligation_resolution_receipt",
+            "authority_mesh_validator_passed",
+        ),
+        rollback_ref="retain_obligation_debt_and_reopen_authority_review",
+        source_refs=_AUTHORITY_OBLIGATION_SOURCES,
+        validator_refs=_AUTHORITY_OBLIGATION_VALIDATORS,
+        proof_surface_refs=_AUTHORITY_OBLIGATION_SURFACES,
     ),
     "deployment_witness_loop": _transition_catalog(
         required_authority_refs=("operator_approval_ref", "deployment_publication_authority"),
@@ -1525,6 +1619,47 @@ _DEFAULT_CLOSURE_CONDITION_BINDINGS: Mapping[str, tuple[LoopClosureConditionBind
                 "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
             ),
             proof_surface_refs=("trust_ledger", "proof_route_gap_triage"),
+        ),
+    ),
+    "authority_obligation_loop": (
+        _closure_condition_binding(
+            "no_overdue_authority_debt",
+            "Require current authority inventory and resolution receipt evidence before authority debt can be described as clear.",
+            required_evidence_refs=(
+                "authority_obligation_inventory_current",
+                "overdue_obligation_resolution_receipt",
+            ),
+            required_authority_refs=("authority_operator_ref",),
+            source_refs=(
+                "gateway/authority_obligation_mesh.py",
+                "scripts/satisfy_overdue_authority_obligations.py",
+            ),
+            validator_refs=(
+                "tests/test_gateway/test_authority_obligation_mesh.py",
+                "tests/test_satisfy_overdue_authority_obligations.py",
+            ),
+            proof_surface_refs=("authority_obligation_mesh",),
+        ),
+        _closure_condition_binding(
+            "satisfaction_receipts_valid",
+            "Require validator evidence that authority satisfaction receipts remain valid before closure can be described.",
+            required_evidence_refs=(
+                "overdue_obligation_resolution_receipt",
+                "authority_mesh_validator_passed",
+            ),
+            required_authority_refs=("authority_operator_ref",),
+            source_refs=(
+                "scripts/sync_authority_directory.py",
+                "schemas/runtime_conformance_certificate.schema.json",
+            ),
+            validator_refs=(
+                "tests/test_sync_authority_directory.py",
+                "tests/test_gateway/test_conformance.py",
+            ),
+            proof_surface_refs=(
+                "authority_directory_sync",
+                "runtime_conformance_attestation",
+            ),
         ),
     ),
     "deployment_witness_loop": (
@@ -1738,6 +1873,23 @@ _DEFAULT_MODE_BINDINGS: Mapping[str, LoopModeBinding] = {
         validator_refs=_AUDIT_PROOF_VALIDATORS,
         proof_surface_refs=_AUDIT_PROOF_SURFACES,
     ),
+    "authority_obligation_loop": _mode_binding(
+        "Expose authority obligation dry-run, shadow, simulation, replay, and real-mode boundaries without satisfying obligations.",
+        separation_refs=(
+            "dry_run_projects_authority_debt_without_satisfaction",
+            "shadow_observes_authority_mesh_without_state_mutation",
+            "simulation_and_replay_use_retained_obligation_receipts",
+            "real_mode_requires_authority_operator_ref_and_complete_evidence",
+        ),
+        real_execution_guard_refs=(
+            "authority_operator_ref",
+            "no_overdue_authority_debt",
+            "satisfaction_receipts_valid",
+        ),
+        source_refs=_AUTHORITY_OBLIGATION_SOURCES,
+        validator_refs=_AUTHORITY_OBLIGATION_VALIDATORS,
+        proof_surface_refs=_AUTHORITY_OBLIGATION_SURFACES,
+    ),
     "deployment_witness_loop": _mode_binding(
         "Expose deployment witness dry-run, shadow, simulation, replay, and real-mode boundaries without changing publication state.",
         separation_refs=(
@@ -1866,6 +2018,35 @@ _DEFAULT_LEARNING_BINDINGS: Mapping[str, LoopLearningBinding] = {
             "tests/test_verify_anchor_receipt.py",
         ),
         proof_surface_refs=("proof_route_gap_triage", "trust_ledger"),
+    ),
+    "authority_obligation_loop": _learning_binding(
+        "promote repeated authority debt into preflight checks",
+        "Bind repeated authority debt and missing receipts to later preflight witnesses or validator coverage.",
+        evidence_input_refs=(
+            "authority_obligation_inventory_current",
+            "overdue_obligation_resolution_receipt",
+            "authority_mesh_validator_passed",
+        ),
+        admission_refs=(
+            "debt_pattern_promoted_only_after_authority_validation",
+            "new_authority_preflight_requires_validator_anchor",
+            "authority_satisfaction_remains_outside_read_model",
+        ),
+        retention_refs=(
+            "authority_obligation_mesh",
+            "authority_directory_sync",
+        ),
+        source_refs=(
+            "gateway/authority_obligation_mesh.py",
+            "scripts/satisfy_overdue_authority_obligations.py",
+            "scripts/sync_authority_directory.py",
+        ),
+        validator_refs=(
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_satisfy_overdue_authority_obligations.py",
+            "tests/test_sync_authority_directory.py",
+        ),
+        proof_surface_refs=("authority_obligation_mesh", "authority_directory_sync"),
     ),
     "deployment_witness_loop": _learning_binding(
         "promote deployment blockers into release preflight checks",
@@ -2007,6 +2188,28 @@ _DEFAULT_RISK_BINDINGS: Mapping[str, LoopRiskBinding] = {
         validator_refs=_AUDIT_PROOF_VALIDATORS,
         proof_surface_refs=_AUDIT_PROOF_SURFACES,
     ),
+    "authority_obligation_loop": _risk_binding(
+        "authority_debt",
+        "Authority debt risk covers stale obligation inventory, missing satisfaction receipts, and accidental closure overclaim.",
+        hazard_refs=(
+            "stale_authority_obligation_inventory",
+            "missing_overdue_obligation_resolution_receipt",
+            "authority_closure_overclaim",
+        ),
+        mitigation_refs=(
+            "block_closure_until_authority_inventory_is_current",
+            "require_satisfaction_receipts",
+            "keep_obligation_satisfaction_outside_read_model",
+        ),
+        monitor_refs=(
+            "authority_obligation_mesh",
+            "authority_directory_sync",
+            "runtime_conformance_certificate",
+        ),
+        source_refs=_AUTHORITY_OBLIGATION_SOURCES,
+        validator_refs=_AUTHORITY_OBLIGATION_VALIDATORS,
+        proof_surface_refs=_AUTHORITY_OBLIGATION_SURFACES,
+    ),
     "deployment_witness_loop": _risk_binding(
         "release_publication",
         "Publication risk covers public endpoint claims, witness freshness, and responsibility debt.",
@@ -2129,6 +2332,19 @@ _DEFAULT_ROLLBACK_BINDINGS: Mapping[str, LoopRollbackBinding] = {
         ),
         proof_surface_refs=("trust_ledger", "proof_route_gap_triage"),
     ),
+    "authority_obligation_loop": _rollback_binding(
+        "retain_obligation_debt_and_reopen_authority_review",
+        "Rollback authority closure by retaining obligation debt and reopening authority review.",
+        source_refs=(
+            "gateway/authority_obligation_mesh.py",
+            "scripts/satisfy_overdue_authority_obligations.py",
+        ),
+        validator_refs=(
+            "tests/test_gateway/test_authority_obligation_mesh.py",
+            "tests/test_satisfy_overdue_authority_obligations.py",
+        ),
+        proof_surface_refs=("authority_obligation_mesh",),
+    ),
     "deployment_witness_loop": _rollback_binding(
         "revert_publication_status_and_restore_last_verified_witness",
         "Rollback deployment publication status and restore the last verified witness boundary.",
@@ -2196,6 +2412,21 @@ _DEFAULT_AUTHORITY_BINDINGS: Mapping[str, tuple[LoopAuthorityBinding, ...]] = {
                 "tests/test_gateway/test_trust_ledger.py",
             ),
             proof_surface_refs=("audit_chain_api", "proof_route_gap_triage", "trust_ledger"),
+        ),
+    ),
+    "authority_obligation_loop": (
+        _authority_binding(
+            "authority_operator_ref",
+            "Authority operator reference authorizes obligation review without satisfying overdue obligations from the read model.",
+            source_refs=(
+                "docs/54_authority_directory_sync.md",
+                "gateway/authority_obligation_mesh.py",
+            ),
+            validator_refs=(
+                "tests/test_gateway/test_authority_obligation_mesh.py",
+                "tests/test_gateway/test_webhooks.py",
+            ),
+            proof_surface_refs=("authority_obligation_mesh",),
         ),
     ),
     "deployment_witness_loop": (
@@ -2348,6 +2579,45 @@ _DEFAULT_EVIDENCE_BINDINGS: Mapping[str, tuple[LoopEvidenceBinding, ...]] = {
                 "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
             ),
             proof_surface_refs=("trust_ledger",),
+        ),
+    ),
+    "authority_obligation_loop": (
+        _binding(
+            "authority_obligation_inventory_current",
+            "Authority obligation inventory is current before debt closure is described.",
+            source_refs=(
+                "gateway/authority_obligation_mesh.py",
+                "docs/54_authority_directory_sync.md",
+            ),
+            validator_refs=(
+                "tests/test_gateway/test_authority_obligation_mesh.py",
+                "tests/test_gateway/test_webhooks.py",
+            ),
+            proof_surface_refs=("authority_obligation_mesh",),
+        ),
+        _binding(
+            "overdue_obligation_resolution_receipt",
+            "Overdue authority obligation resolution receipt is present before debt closure is described.",
+            source_refs=("scripts/satisfy_overdue_authority_obligations.py",),
+            validator_refs=("tests/test_satisfy_overdue_authority_obligations.py",),
+            proof_surface_refs=("authority_obligation_mesh",),
+        ),
+        _binding(
+            "authority_mesh_validator_passed",
+            "Authority mesh validators pass before authority receipt closure is described.",
+            source_refs=(
+                "scripts/sync_authority_directory.py",
+                "schemas/runtime_conformance_certificate.schema.json",
+            ),
+            validator_refs=(
+                "tests/test_sync_authority_directory.py",
+                "tests/test_gateway/test_mcp_capability_fabric.py",
+                "tests/test_gateway/test_conformance.py",
+            ),
+            proof_surface_refs=(
+                "authority_directory_sync",
+                "runtime_conformance_attestation",
+            ),
         ),
     ),
     "deployment_witness_loop": (

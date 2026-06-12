@@ -45,6 +45,7 @@ HOLISTIC_SURFACE_ID = "holistic_loop_read_model_kernel"
 RECEIPT_ID = "holistic_loop_extension_admission_validation"
 REQUIRED_LOOP_IDS = (
     "audit_proof_verification_loop",
+    "authority_obligation_loop",
     "deployment_witness_loop",
     "runtime_conformance_loop",
     "cognitive_outcome_loop",
