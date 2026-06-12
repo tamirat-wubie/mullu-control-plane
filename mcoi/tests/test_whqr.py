@@ -30,6 +30,7 @@ from mcoi_runtime.contracts.whqr import (
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.whqr.binding_preflight import validate_binding_preflight
+from mcoi_runtime.whqr.clarification import build_binding_clarification_requests
 from mcoi_runtime.whqr.connectors import AssertionKind, compile_connector
 from mcoi_runtime.whqr.entity_binder import EntityBindingCandidate, EntityBindingStatus, bind_entities
 from mcoi_runtime.whqr.evaluator import WHQREvaluationContext, evaluate
@@ -430,3 +431,30 @@ def test_binding_preflight_requires_refs_for_typed_or_partial_nodes_only() -> No
     }
     assert report.issues[0].node_id == "n1"
     assert report.issues[0].expected_type == "vendor"
+
+
+def test_binding_clarification_requests_group_issues_by_target() -> None:
+    report = validate_binding_preflight(
+        LogicalExpr(
+            op=LogicalOp.AND,
+            args=(
+                WHQRNode(role=WHRole.WHOM, target="vendor", node_id="vendor-node", expected_type="vendor"),
+                WHQRNode(role=WHRole.WHAT, target="invoice", entity_ref="invoice:1"),
+            ),
+        )
+    )
+    bundle = build_binding_clarification_requests(
+        report,
+        thread_id="thread-1",
+        requested_from_id="operator",
+        requested_at="2026-05-06T12:00:01Z",
+        request_prefix="whqr-binding:goal",
+    )
+
+    assert bundle.empty is False
+    assert len(bundle.requests) == 2
+    assert bundle.requests[0].request_id == "whqr-binding:goal:1:invoice"
+    assert bundle.requests[0].question == "Which evidence reference proves WHQR target 'invoice'?"
+    assert bundle.requests[1].request_id == "whqr-binding:goal:2:vendor-node"
+    assert "entity reference and evidence reference" in bundle.requests[1].question
+    assert "missing_entity_ref,missing_evidence_ref" in bundle.requests[1].context
