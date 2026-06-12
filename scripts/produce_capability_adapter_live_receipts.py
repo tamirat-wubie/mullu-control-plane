@@ -379,6 +379,7 @@ def produce_email_calendar_live_receipt(
             "blockers": blockers,
         }
         if status == "failed":
+            payload.update(_bounded_email_calendar_worker_error(getattr(response, "error", "")))
             payload.update(_email_calendar_recovery_payload(blockers))
     except Exception:  # noqa: BLE001
         blockers.append("email_calendar_probe_exception")
@@ -397,6 +398,35 @@ def produce_email_calendar_live_receipt(
         output_path=str(output_path),
         blockers=tuple(blockers),
     )
+
+
+def _bounded_email_calendar_worker_error(error: str) -> dict[str, Any]:
+    """Classify worker errors without serializing provider or credential detail."""
+    if not error:
+        return {"worker_error_class": "unknown_worker_failure"}
+    if error.startswith("provider status "):
+        status_code = error.removeprefix("provider status ").strip()
+        if status_code.isdigit() and len(status_code) == 3:
+            return {
+                "worker_error_class": "provider_status",
+                "provider_status_code": status_code,
+            }
+    if error.startswith("email/calendar connector transport failed: "):
+        exception_name = error.rsplit(": ", 1)[-1].strip()
+        if exception_name.replace("_", "").isalnum():
+            return {
+                "worker_error_class": "connector_transport_failed",
+                "transport_error_class": exception_name,
+            }
+    if error == "connector credential unavailable":
+        return {"worker_error_class": "connector_credential_unavailable"}
+    if error == "email/calendar adapter unavailable":
+        return {"worker_error_class": "email_calendar_adapter_unavailable"}
+    if error == "email/calendar connector action unsupported":
+        return {"worker_error_class": "connector_action_unsupported"}
+    if error == "approval witness required for connector write":
+        return {"worker_error_class": "approval_witness_required"}
+    return {"worker_error_class": "worker_error_redacted"}
 
 
 def _email_calendar_recovery_payload(blockers: list[str]) -> dict[str, Any]:

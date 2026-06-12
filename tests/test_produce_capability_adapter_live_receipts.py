@@ -349,6 +349,7 @@ def test_email_calendar_live_receipt_failed_worker_includes_recovery_actions(tmp
 
     assert result.passed is False
     assert payload["failure_class"] == "worker_probe_failed"
+    assert payload["worker_error_class"] == "worker_error_redacted"
     assert payload["recovery_actions"] == [
         "verify_email_calendar_worker_reachable",
         "verify_connector_token_present",
@@ -357,6 +358,37 @@ def test_email_calendar_live_receipt_failed_worker_includes_recovery_actions(tmp
     ]
     assert "email_calendar_worker_probe_failed" in payload["blockers"]
     assert "secret-email-calendar-worker-token" not in serialized
+
+
+def test_email_calendar_live_receipt_classifies_provider_failure_without_secret(tmp_path: Path) -> None:
+    output_path = tmp_path / "email_calendar_live_receipt.json"
+
+    def _provider_status_executor(request: EmailCalendarActionRequest) -> EmailCalendarActionResponse:
+        observation = EmailCalendarActionObservation(
+            succeeded=False,
+            connector_id=request.connector_id,
+            provider_operation=request.action,
+            external_write=False,
+            error="provider status 401",
+        )
+        return execute_email_calendar_request(
+            request,
+            adapter=StaticEmailCalendarAdapter(observation),
+            policy=EmailCalendarWorkerPolicy(),
+        )
+
+    result = produce_email_calendar_live_receipt(
+        output_path=output_path,
+        executor=_provider_status_executor,
+    )
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    serialized = json.dumps(payload, sort_keys=True)
+
+    assert result.passed is False
+    assert payload["worker_error_class"] == "provider_status"
+    assert payload["provider_status_code"] == "401"
+    assert "provider status 401" not in serialized
+    assert payload["external_write"] is False
 
 
 def test_email_calendar_live_receipt_cli_accepts_read_only_connector_probe(
@@ -508,6 +540,16 @@ class FailedEmailCalendarAdapter:
             external_write=False,
             error="secret-email-calendar-worker-token",
         )
+
+
+class StaticEmailCalendarAdapter:
+    """Return one supplied email/calendar observation."""
+
+    def __init__(self, observation: EmailCalendarActionObservation) -> None:
+        self._observation = observation
+
+    def perform(self, request: EmailCalendarActionRequest) -> EmailCalendarActionObservation:
+        return self._observation
 
 
 def _browser_executor():
