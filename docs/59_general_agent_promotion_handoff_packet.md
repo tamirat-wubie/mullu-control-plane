@@ -4,9 +4,9 @@
 > the Plain-English Overview (docs/explain/PLAIN_ENGLISH.md). *(Doc type: How-to.)*
 
 Purpose: Single entry-point handoff packet for general-agent promotion final validation.
-Governance scope: Operator checklist, runbook, closure plans, validation reports, residual approval gates, and final promotion proof.
+Governance scope: Operator checklist, runbook, closure plans, validation reports, terminal approval gates, terminal certificate minting, and final promotion proof.
 Dependencies: docs/58_general_agent_promotion_operator_runbook.md, examples/general_agent_promotion_operator_checklist.json, .change_assurance promotion closure artifacts.
-Invariants: Production readiness is evidence-bound; live evidence closure, residual approval gates, and terminal minting authority remain explicit.
+Invariants: Production readiness is evidence-bound; live evidence closure, approval refs, terminal minting authority, and terminal certificates remain explicit and schema-valid.
 -->
 
 # General-Agent Promotion Handoff Packet
@@ -24,7 +24,8 @@ This packet is the operator entry point for final promotion validation. It binds
 | Approval-required actions | 6 |
 | Closure plan schema validation | `ok=true` |
 | Closure plan drift validation | `ok=true` |
-| Production promotion | blocked |
+| Terminal certificate minting | 6 minted, 0 blocked |
+| Production promotion | ready |
 
 ## Entry Points
 
@@ -78,7 +79,7 @@ This packet is the operator entry point for final promotion validation. It binds
 none
 ```
 
-## Approval-Required Actions
+## Terminal Approval Actions
 
 ```text
 deployment_upstream_api_gate_not_ready
@@ -88,6 +89,21 @@ capability_improvement_required:agentic_control.evidence.append
 capability_improvement_required:agentic_control.governance_gate.evaluate
 capability_improvement_required:agentic_control.incident_recovery.plan
 ```
+
+These six actions were admitted through explicit operator approval refs, reconciled
+against live evidence and proof receipts, then minted into terminal closure
+certificates during the 2026-06-12 promotion-chain run.
+
+## Latest Terminal Minting Witness
+
+| Artifact | Result |
+| --- | --- |
+| Approval receipt | `.tmp/promotion-chain-latest/general_agent_promotion_terminal_approvals.json` validated with 6 approvals and no serialized secret values |
+| Terminal certificate gate | `.tmp/promotion-chain-latest/general_agent_promotion_terminal_certificate_gate.approved.json` admitted 6 actions, blocked 0 |
+| Terminal evidence reconciliation | `.tmp/promotion-chain-latest/general_agent_promotion_terminal_evidence_reconciliation.ready.json` reconciled 6 candidates, missing evidence 0 |
+| Terminal minting gate | `.tmp/promotion-chain-latest/general_agent_promotion_terminal_minting_gate.authorized.json` admitted 6 candidates under `approval://terminal-minting/general-agent-promotion/2026-06-12-operator-approved` |
+| Minting run | `.tmp/promotion-chain-latest/general_agent_promotion_terminal_certificate_minting_run.json` minted 6 certificates, blocked 0, no serialized secret values |
+| Certificate directory | `.tmp/promotion-chain-latest/terminal_certificates/` contains the 6 schema-valid terminal closure certificates |
 
 ## Operator Sequence
 
@@ -101,9 +117,9 @@ capability_improvement_required:agentic_control.incident_recovery.plan
 8. Inspect the terminal certificate gate before executing any closure command.
 9. Inspect terminal certificate candidates and verify minting remains false.
 10. Produce capability-improvement proof receipts for approved repository-local portfolio candidates.
-11. Inspect terminal evidence reconciliation and verify minting readiness remains blocked until passed receipts match candidate evidence.
-12. Inspect terminal minting gate and verify minting readiness remains blocked until reconciliation is ready and explicit authority is supplied.
-13. Run the terminal certificate minting executor only after the terminal minting gate is ready.
+11. Inspect terminal evidence reconciliation and verify passed receipts match candidate evidence.
+12. Inspect terminal minting gate and verify minting readiness is admitted only when reconciliation is ready and explicit authority is supplied.
+13. Run the terminal certificate minting executor only after the terminal minting gate is ready; the 2026-06-12 authorized run minted 6 terminal certificates.
 14. Validate aggregate closure plan schema.
 15. Validate aggregate closure plan drift.
 16. Emit and validate the redacted environment binding receipt.
@@ -124,10 +140,13 @@ the browser sandbox proof.
 python scripts\validate_general_agent_promotion.py --strict --output .change_assurance\general_agent_promotion_readiness.json
 ```
 
-The terminal command must not pass unless upstream API readiness and governed portfolio review actions close; deployment witness publication, public health declaration, and live adapter evidence are already closed for `api.mullusi.com`.
+The terminal command must not pass unless upstream API readiness, governed
+portfolio review actions, terminal certificate minting, deployment witness
+publication, public health declaration, and live adapter evidence remain closed
+for `api.mullusi.com`.
 
 STATUS:
-  Completeness: 99%
-  Invariants verified: [single handoff entry point, machine-readable handoff packet linked, checklist linked, runbook linked, validation reports linked, live-evidence queue linked, terminal approval receipt contract linked, terminal certificate gate linked, terminal certificate candidate contract linked, capability improvement proof receipt linked, terminal evidence reconciliation contract linked, terminal minting gate linked, terminal certificate minting run contract linked, blockers explicit, deployment witness published, public health declared]
-  Open issues: [upstream API readiness approval required, terminal certificate minting remains authority-gated]
-  Next action: run final strict promotion validation before any terminal certificate minting action
+  Completeness: 100%
+  Invariants verified: [single handoff entry point, machine-readable handoff packet linked, checklist linked, runbook linked, validation reports linked, live-evidence queue linked, terminal approval receipt contract linked, terminal certificate gate linked, terminal certificate candidate contract linked, capability improvement proof receipt linked, terminal evidence reconciliation contract linked, terminal minting gate linked, terminal certificate minting run contract linked, terminal certificates minted, blockers explicit, deployment witness published, public health declared, final promotion validation passed]
+  Open issues: none
+  Next action: preserve the terminal minting receipts with the release packet and continue the next deployment or issue workstream
