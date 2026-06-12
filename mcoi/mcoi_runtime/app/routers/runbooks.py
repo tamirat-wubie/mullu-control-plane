@@ -9,9 +9,32 @@ from mcoi_runtime.core.runbook_learning import RunbookLearningError
 
 router = APIRouter()
 
+_MAX_RUNBOOK_READ_LIMIT = 500
+
 
 def _runbook_error_detail(error: str, error_code: str) -> dict[str, object]:
     return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _raise_runbook_read_validation_error() -> None:
+    raise HTTPException(
+        422,
+        detail=_runbook_error_detail("invalid runbook read request", "runbook_read_invalid_request"),
+    )
+
+
+def _coerce_runbook_read_limit(limit: object) -> int:
+    if isinstance(limit, bool):
+        _raise_runbook_read_validation_error()
+    try:
+        value = int(limit)
+    except (TypeError, ValueError):
+        _raise_runbook_read_validation_error()
+    if str(limit).strip() != str(value):
+        _raise_runbook_read_validation_error()
+    if value < 0 or value > _MAX_RUNBOOK_READ_LIMIT:
+        _raise_runbook_read_validation_error()
+    return value
 
 
 def _runbook_error_response(exc: RunbookLearningError) -> tuple[int, dict[str, object]]:
@@ -31,10 +54,11 @@ class ApproveRunbookRequest(BaseModel):
 
 
 @router.post("/api/v1/runbooks/analyze")
-def analyze_patterns(limit: int = 200):
+def analyze_patterns(limit: str = "200"):
     """Scan audit trail for repeated successful execution patterns."""
     deps.metrics.inc("requests_governed")
-    entries = deps.audit_trail.query(limit=limit)
+    read_limit = _coerce_runbook_read_limit(limit)
+    entries = deps.audit_trail.query(limit=read_limit)
     patterns = deps.runbook_learning.analyze(entries)
     return {
         "patterns": [
@@ -173,10 +197,11 @@ def list_runbooks(status: str = ""):
 
 
 @router.get("/api/v1/runbooks/patterns")
-def list_patterns(limit: int = 50):
+def list_patterns(limit: str = "50"):
     """List detected execution patterns."""
     deps.metrics.inc("requests_governed")
-    patterns = deps.runbook_learning.list_patterns(limit=limit)
+    read_limit = _coerce_runbook_read_limit(limit)
+    patterns = deps.runbook_learning.list_patterns(limit=read_limit)
     return {
         "patterns": [
             {

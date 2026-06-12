@@ -140,9 +140,8 @@ def test_explain_audit_endpoint_governed_and_missing_entry(client) -> None:
         detail={"mission_id": "mission-explain-test", "goal_id": "goal-explain-test"},
     )
 
-    entry_index = len(deps.audit_trail.query(limit=500_000)) - 1
-    response = client.get(f"/api/v1/explain/audit/{entry_index}")
-    missing = client.get("/api/v1/explain/audit/999999")
+    response = client.get("/api/v1/explain/audit/0")
+    missing = client.get("/api/v1/explain/audit/499")
     body = response.json()
     missing_body = missing.json()
 
@@ -153,6 +152,17 @@ def test_explain_audit_endpoint_governed_and_missing_entry(client) -> None:
     assert "policy_context" in body
     assert missing.status_code == 404
     assert missing_body["detail"]["governed"] is True
+
+
+@pytest.mark.parametrize("entry_index", ["-1", "500", "999999", "not-an-index"])
+def test_explain_audit_endpoint_invalid_index_returns_bounded_422(client, entry_index) -> None:
+    resp = client.get(f"/api/v1/explain/audit/{entry_index}")
+    detail = resp.json()["detail"]
+
+    assert resp.status_code == 422
+    assert detail["error"] == "invalid explain audit request"
+    assert detail["error_code"] == "explain_audit_invalid_request"
+    assert detail["governed"] is True
 
 
 def test_explain_summary_endpoint(client) -> None:
