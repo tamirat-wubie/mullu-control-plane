@@ -24,7 +24,7 @@ def test_validate_promotion_handoff_packet_accepts_example() -> None:
     assert result.errors == ()
 
 
-def test_validate_promotion_handoff_packet_derives_missing_closure_plan(tmp_path: Path) -> None:
+def test_validate_promotion_handoff_packet_reports_missing_closure_plan_drift(tmp_path: Path) -> None:
     result = validate_general_agent_promotion_handoff_packet(
         closure_plan_path=tmp_path / "missing_general_agent_promotion_closure_plan.json",
     )
@@ -44,7 +44,7 @@ def test_validate_promotion_handoff_packet_rejects_missing_entry_point(tmp_path:
     result = validate_general_agent_promotion_handoff_packet(packet_path=packet_path)
 
     assert result.valid is False
-    assert result.open_blocker_count == 0
+    assert result.open_blocker_count == 2
     assert any("entry_points.handoff_packet_validator" in error for error in result.errors)
 
 
@@ -59,7 +59,7 @@ def test_validate_promotion_handoff_packet_rejects_missing_adapter_schema_report
     result = validate_general_agent_promotion_handoff_packet(packet_path=packet_path)
 
     assert result.valid is False
-    assert result.open_blocker_count == 0
+    assert result.open_blocker_count == 2
     assert any("required_validation_reports missing" in error for error in result.errors)
     assert any("capability_adapter_closure_plan_schema_validation" in error for error in result.errors)
 
@@ -100,7 +100,7 @@ def test_validate_promotion_handoff_packet_rejects_aggregate_count_drift(tmp_pat
     result = validate_general_agent_promotion_handoff_packet(packet_path=packet_path)
 
     assert result.valid is False
-    assert result.open_blocker_count == 0
+    assert result.open_blocker_count == 2
     assert any("aggregate_closure_actions must be" in error for error in result.errors)
     assert not any("approval_required_actions does not match" in error for error in result.errors)
 
@@ -115,7 +115,7 @@ def test_validate_promotion_handoff_packet_rejects_capability_count_drift(tmp_pa
     result = validate_general_agent_promotion_handoff_packet(packet_path=packet_path)
 
     assert result.valid is False
-    assert result.open_blocker_count == 0
+    assert result.open_blocker_count == 2
     assert any("capability_capsules must be 13" in error for error in result.errors)
     assert any("governed_capabilities must be 80" in error for error in result.errors)
 
