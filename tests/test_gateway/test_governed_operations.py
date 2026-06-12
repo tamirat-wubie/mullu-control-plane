@@ -26,7 +26,7 @@ from gateway.governed_operations import (
     default_loop_registry,
     receipt_from_projection,
 )
-from gateway.server import create_gateway_app
+from gateway.server import _governed_operations_console_html, create_gateway_app
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -143,6 +143,55 @@ def test_governed_operations_read_model_endpoint_is_schema_backed(monkeypatch) -
     assert payload["loop_count"] == 7
     assert payload["readiness_class"] == "class_d"
     assert any(gap["blocker_type"] == "evidence_missing" for gap in payload["gaps"])
+
+
+def test_governed_operations_console_is_read_only_projection(monkeypatch) -> None:
+    monkeypatch.setenv("MULLU_RUNTIME_CONFORMANCE_SECRET", "conformance-secret")
+    monkeypatch.setenv("MULLU_RUNTIME_WITNESS_SECRET", "witness-secret")
+    monkeypatch.setenv("MULLU_DEPLOYMENT_WITNESS_SECRET", "deployment-secret")
+    app = create_gateway_app(platform=StubPlatform())
+    client = TestClient(app)
+
+    response = client.get("/governed-operations/console")
+    read_model = client.get("/governed-operations/read-model").json()
+
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "Mullu Governed Operations" in response.text
+    assert "read model json" in response.text
+    assert str(read_model["loop_count"]) in response.text
+
+
+def test_governed_operations_console_escapes_projected_values() -> None:
+    html = _governed_operations_console_html(
+        {
+            "readiness_class": "class_d",
+            "readiness_status": "<blocked>",
+            "loop_count": 1,
+            "closed_loop_count": 0,
+            "gap_count": 1,
+            "blocking_gap_count": 1,
+            "drift_count": 0,
+            "snapshot_hash": "hash",
+            "loops": [
+                {
+                    "loop_id": "loop<script>",
+                    "system_ref": "gateway",
+                    "owner": "ops",
+                    "declared_state": "open",
+                    "evidence_refs": ["ref"],
+                }
+            ],
+            "gaps": [],
+            "closure_results": [],
+            "drift_checks": [],
+        }
+    )
+
+    assert "<script>" not in html
+    assert "&lt;script&gt;" in html
+    assert "&lt;blocked&gt;" in html
+    assert "No drift checks" in html
 
 
 class StubPlatform:
