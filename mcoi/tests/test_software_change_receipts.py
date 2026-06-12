@@ -14,6 +14,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from gateway.command_spine import CommandLedger, InMemoryCommandLedgerStore
 from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReviewQueue
 from mcoi_runtime.adapters.code_adapter import CommandPolicy, LocalCodeAdapter
@@ -364,6 +366,47 @@ def test_mcp_receipt_query_rejects_missing_replay_request_id(tmp_path: Path) -> 
 
     assert result.is_error
     assert "request_id" in result.content
+
+
+@pytest.mark.parametrize(
+    ("operation", "limit"),
+    [
+        ("list", 0),
+        ("review", -1),
+        ("review_sync", 501),
+        ("list", 999999),
+        ("review", True),
+    ],
+)
+def test_mcp_receipt_query_rejects_invalid_limit_contract(
+    tmp_path: Path,
+    operation: str,
+    limit: object,
+) -> None:
+    store = SoftwareChangeReceiptStore()
+    store.append(_open_receipt())
+    review_queue = SoftwareReceiptReviewQueue(
+        review_engine=ReviewEngine(clock=_clock),
+        receipt_store=store,
+    )
+    server = MulluMCPServer(
+        platform=_PlatformStub(),
+        command_ledger=_ledger(),
+        software_dev_runner=_runner_config(
+            tmp_path,
+            receipt_store=store,
+            receipt_review_queue=review_queue,
+        ),
+    )
+
+    result = server.call_tool("mullu_software_receipts", {
+        "operation": operation,
+        "limit": limit,
+    })
+
+    assert result.is_error
+    assert "limit" in result.content
+    assert "500" in result.content
 
 
 def test_mcp_receipt_query_materializes_and_decides_review_requests(tmp_path: Path) -> None:

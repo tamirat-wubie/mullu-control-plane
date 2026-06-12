@@ -29,9 +29,26 @@ from typing import Any
 from gateway.command_spine import CommandEnvelope, CommandLedger, CommandState, canonical_hash
 
 
+_MAX_SOFTWARE_RECEIPT_READ_LIMIT = 500
+
+
 def _bounded_mcp_error(prefix: str, summary: str, exc: Exception) -> str:
     """Return a bounded MCP-facing error without backend detail."""
     return f"{prefix}: {summary} ({type(exc).__name__})"
+
+
+def _coerce_software_receipt_read_limit(limit: Any) -> int:
+    """Return a bounded MCP software receipt read limit."""
+    if isinstance(limit, bool):
+        raise ValueError("limit must be a positive integer")
+    value = int(limit)
+    if str(limit).strip() != str(value):
+        raise ValueError("limit must be a positive integer")
+    if value < 1 or value > _MAX_SOFTWARE_RECEIPT_READ_LIMIT:
+        raise ValueError(
+            f"limit must be between 1 and {_MAX_SOFTWARE_RECEIPT_READ_LIMIT}"
+        )
+    return value
 
 
 def _software_request_to_json_dict(request: Any) -> dict[str, Any]:
@@ -454,6 +471,7 @@ class MulluMCPServer:
                     "limit": {
                         "type": "integer",
                         "minimum": 1,
+                        "maximum": _MAX_SOFTWARE_RECEIPT_READ_LIMIT,
                         "default": 50,
                     },
                     "reviewer_id": {
@@ -1146,11 +1164,15 @@ class MulluMCPServer:
             request_id = str(args.get("request_id") or "").strip() or None
             limit_arg = args.get("limit", 50)
             try:
-                limit = int(limit_arg)
+                limit = _coerce_software_receipt_read_limit(limit_arg)
             except (TypeError, ValueError):
-                return MCPToolResult(content="limit must be a positive integer", is_error=True)
-            if limit < 1:
-                return MCPToolResult(content="limit must be a positive integer", is_error=True)
+                return MCPToolResult(
+                    content=(
+                        "limit must be a positive integer no greater than "
+                        f"{_MAX_SOFTWARE_RECEIPT_READ_LIMIT}"
+                    ),
+                    is_error=True,
+                )
 
             if operation == "replay":
                 if request_id is None:
