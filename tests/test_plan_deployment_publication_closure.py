@@ -274,6 +274,49 @@ def test_deployment_closure_plan_maps_upstream_blocker_receipt(tmp_path: Path) -
     assert "dns_publication_authority" in action.evidence_required
 
 
+def test_deployment_closure_plan_source_ready_requires_clear_deployment_blockers(
+    tmp_path: Path,
+) -> None:
+    readiness_path = tmp_path / "general_agent_promotion_readiness.json"
+    upstream_receipt_path = tmp_path / "deployment_upstream_blocker_receipt.json"
+    readiness_path.write_text(json.dumps({"ready": True, "blockers": []}), encoding="utf-8")
+    upstream_receipt_path.write_text(
+        json.dumps(
+            {
+                "receipt_id": "deployment-upstream-blocker-0123456789abcdef",
+                "target_gateway_host": "api.mullusi.com",
+                "target_gateway_url": "https://api.mullusi.com",
+                "upstream_repository": "mullusi/mullusi-site",
+                "upstream_gate": "api-production-readiness-gate",
+                "upstream_state": "AwaitingEvidence",
+                "api_provisioning_allowed": False,
+                "dns_publication_allowed": False,
+                "ready": False,
+                "checked_at_utc": "2026-06-12T08:00:00Z",
+                "blockers": ["runtime_host_not_provisioned"],
+                "evidence_refs": ["upstream-script:scripts/check-api-production-readiness.mjs"],
+                "next_actions": ["provision runtime host"],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    plan = plan_deployment_publication_closure(
+        readiness_path,
+        upstream_blocker_receipt_path=upstream_receipt_path,
+        dns_target_binding_receipt_path=tmp_path / "missing_dns_target_binding_receipt.json",
+        dns_resolution_receipt_path=tmp_path / "missing_dns_resolution_receipt.json",
+        deployment_publication_closure_validation_path=(
+            tmp_path / "missing_deployment_publication_closure_validation.json"
+        ),
+    )
+
+    assert plan.source_ready is False
+    assert plan.action_count == 2
+    assert "deployment_upstream_api_gate_not_ready" in plan.blockers
+    assert "deployment_dns_not_verified" in plan.blockers
+
+
 def test_deployment_closure_plan_writer_and_cli_emit_json(tmp_path: Path, capsys) -> None:
     readiness_path = tmp_path / "general_agent_promotion_readiness.json"
     output_path = tmp_path / "deployment_publication_closure_plan.json"

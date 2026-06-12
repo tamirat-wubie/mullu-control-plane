@@ -117,9 +117,10 @@ def plan_deployment_publication_closure(
         )
     )
     actions = tuple(_dedupe_actions([_action_for(blocker) for blocker in blockers]))
+    source_ready = readiness.get("ready") is True and not blockers
     plan_material = {
         "source_report_id": str(readiness.get("readiness_id", readiness.get("report_id", ""))),
-        "source_ready": readiness.get("ready") is True,
+        "source_ready": source_ready,
         "blockers": blockers,
         "actions": [action.as_dict() for action in actions],
     }
@@ -130,7 +131,7 @@ def plan_deployment_publication_closure(
         plan_id=f"deployment-publication-closure-plan-{plan_digest[:16]}",
         source_readiness_path=_path_label(readiness_path),
         deployment_status_path=_path_label(deployment_status_path),
-        source_ready=readiness.get("ready") is True,
+        source_ready=source_ready,
         action_count=len(actions),
         blockers=blockers,
         actions=actions,

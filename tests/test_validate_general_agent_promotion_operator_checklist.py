@@ -40,7 +40,7 @@ def test_validate_promotion_operator_checklist_rejects_missing_conditional_block
     checklist_path = tmp_path / "promotion_operator_checklist.json"
     payload = json.loads(CHECKLIST_PATH.read_text(encoding="utf-8"))
     payload["conditional_approval_blockers"].remove(
-        "capability_improvement_required:agentic_control.governance_gate.evaluate"
+        "deployment_upstream_api_gate_not_ready"
     )
     checklist_path.write_text(json.dumps(payload), encoding="utf-8")
 
@@ -48,7 +48,7 @@ def test_validate_promotion_operator_checklist_rejects_missing_conditional_block
 
     assert result.valid is False
     assert any("conditional_approval_blockers missing" in error for error in result.errors)
-    assert any("governance_gate.evaluate" in error for error in result.errors)
+    assert any("deployment_upstream_api_gate_not_ready" in error for error in result.errors)
 
 
 def test_validate_promotion_operator_checklist_rejects_command_drift(tmp_path: Path) -> None:
