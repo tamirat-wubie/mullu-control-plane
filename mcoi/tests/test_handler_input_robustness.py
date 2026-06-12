@@ -8,7 +8,7 @@ found two robustness defects:
 - GET /api/v1/config/history?limit=-1 -> 500: the handler passed a negative limit
   straight to config_manager.history, which (correctly) rejects it, but the
   handler did not guard the input so the ValueError became an Internal Server
-  Error. Now clamped.
+  Error. Now rejected with a governed 422.
 - GET /api/v1/ops/imports re-ran a full-tree AST import analysis on every call
   (~30s on the current tree) -- an unauthenticated DoS amplifier. The source tree
   is immutable for the process, so the result is now computed once and cached.

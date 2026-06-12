@@ -1,14 +1,43 @@
 """System snapshot endpoints: full export, list, create."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NoReturn
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers.deps import deps
 
 router = APIRouter()
+_MAX_SNAPSHOT_READ_LIMIT = 500
+
+
+def _snapshot_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _raise_snapshot_read_validation_error(error: ValueError) -> NoReturn:
+    raise HTTPException(
+        status_code=422,
+        detail=_snapshot_error_detail("invalid snapshot read request", "snapshot_read_invalid_request"),
+    ) from error
+
+
+def _coerce_snapshot_read_limit(limit: object) -> int:
+    if isinstance(limit, bool):
+        raise ValueError("limit must be an integer")
+    if isinstance(limit, int):
+        value = limit
+    elif isinstance(limit, str):
+        normalized = limit.strip()
+        if not normalized.isdecimal():
+            raise ValueError("limit must be an integer")
+        value = int(normalized)
+    else:
+        raise ValueError("limit must be an integer")
+    if value < 0 or value > _MAX_SNAPSHOT_READ_LIMIT:
+        raise ValueError("limit is outside the allowed range")
+    return value
 
 
 class CreateSnapshotRequest(BaseModel):
@@ -42,10 +71,14 @@ def system_snapshot():
 
 
 @router.get("/api/v1/snapshots")
-def list_snapshots(limit: int = 10):
+def list_snapshots(limit: str = "10"):
     """List recent system snapshots."""
     deps.metrics.inc("requests_governed")
-    snaps = deps.snapshot_mgr.list_snapshots(limit=limit)
+    try:
+        read_limit = _coerce_snapshot_read_limit(limit)
+    except ValueError as error:
+        _raise_snapshot_read_validation_error(error)
+    snaps = deps.snapshot_mgr.list_snapshots(limit=read_limit)
     return {
         "snapshots": [s.to_dict() for s in snaps],
         "summary": deps.snapshot_mgr.summary(),

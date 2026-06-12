@@ -287,3 +287,25 @@ def test_agent_history_read_limits_reject_invalid_values(client, path: str) -> N
     assert detail["error"] == "invalid agent history request"
     assert detail["error_code"] == "agent_history_invalid_request"
     assert detail["governed"] is True
+
+
+def test_snapshot_read_zero_limit_returns_empty_read(client) -> None:
+    client.post("/api/v1/snapshots", json={"snapshot_id": "zero-limit-snapshot", "name": "zero"})
+
+    resp = client.get("/api/v1/snapshots?limit=0")
+    data = resp.json()
+
+    assert resp.status_code == 200
+    assert data["governed"] is True
+    assert data["snapshots"] == []
+
+
+@pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+def test_snapshot_read_limits_reject_invalid_values(client, limit: str) -> None:
+    resp = client.get("/api/v1/snapshots", params={"limit": limit})
+    detail = resp.json()["detail"]
+
+    assert resp.status_code == 422
+    assert detail["error"] == "invalid snapshot read request"
+    assert detail["error_code"] == "snapshot_read_invalid_request"
+    assert detail["governed"] is True

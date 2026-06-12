@@ -1,5 +1,7 @@
 """Tests for Phase 228C — Rollback Snapshot Manager."""
 from __future__ import annotations
+import pytest
+
 from mcoi_runtime.core.rollback_snapshot import SnapshotManager
 
 
@@ -76,6 +78,14 @@ class TestSnapshotManager:
         assert [snap.snapshot_id for snap in mgr.list_snapshots(limit=1)] == ["s4"]
         assert mgr.list_snapshots(limit=0) == []
         assert mgr.list_snapshots(limit=-1) == []
+
+    @pytest.mark.parametrize("limit", [True, "1", None])
+    def test_list_snapshots_rejects_invalid_limit_contract(self, limit):
+        mgr = SnapshotManager()
+        mgr.create_snapshot("s1", "test", {})
+        with pytest.raises(ValueError, match="snapshot list limit must be an integer"):
+            mgr.list_snapshots(limit=limit)
+        assert mgr.snapshot_count == 1
 
     def test_delete_snapshot(self):
         mgr = SnapshotManager()
