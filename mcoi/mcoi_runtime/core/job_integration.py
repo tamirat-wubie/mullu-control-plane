@@ -10,10 +10,16 @@ Invariants:
 
 from __future__ import annotations
 
+from dataclasses import dataclass, replace
+
 from mcoi_runtime.contracts.conversation import (
     ClarificationRequest,
     ClarificationResponse,
     ConversationThread,
+    MessageDirection,
+    MessageType,
+    ThreadMessage,
+    ThreadStatus,
 )
 from mcoi_runtime.contracts.job import (
     JobDescriptor,
@@ -30,6 +36,7 @@ from mcoi_runtime.contracts.organization import (
     EscalationStep,
 )
 from mcoi_runtime.core.conversation import ConversationEngine
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
 from mcoi_runtime.core.jobs import JobEngine, WorkQueue
 from mcoi_runtime.core.learning import LearningEngine
 from mcoi_runtime.core.organization import EscalationManager, OrgDirectory
@@ -114,6 +121,146 @@ class JobConversationBridge:
         )
 
         return job_state, updated_thread, response
+
+    @staticmethod
+    def persist_whqr_binding_clarification_requests(
+        thread: ConversationThread,
+        requests: tuple[ClarificationRequest, ...],
+    ) -> ConversationThread:
+        """Persist WHQR binding clarification requests on a job conversation thread."""
+        _ensure_thread_open_for_bridge(thread)
+        if not requests:
+            return thread
+        messages = list(thread.messages)
+        updated_at = thread.updated_at
+        for request in requests:
+            _ensure_whqr_binding_request(thread, request)
+            messages.append(
+                ThreadMessage(
+                    message_id=stable_identifier(
+                        "msg",
+                        {
+                            "thread_id": thread.thread_id,
+                            "request_id": request.request_id,
+                            "type": "whqr_binding_clarification_request",
+                        },
+                    ),
+                    thread_id=thread.thread_id,
+                    direction=MessageDirection.OUTBOUND,
+                    message_type=MessageType.CLARIFICATION_REQUEST,
+                    content=request.question,
+                    sender_id="system",
+                    recipient_id=request.requested_from_id,
+                    sent_at=request.requested_at,
+                    metadata={
+                        "whqr_binding": True,
+                        "clarification_request_id": request.request_id,
+                        "clarification_context": request.context,
+                    },
+                )
+            )
+            updated_at = request.requested_at
+        return replace(thread, messages=tuple(messages), status=ThreadStatus.WAITING, updated_at=updated_at)
+
+    @staticmethod
+    def persist_whqr_binding_clarification_response(
+        conversation_engine: ConversationEngine,
+        thread: ConversationThread,
+        request: ClarificationRequest,
+        answer: str,
+        by_id: str,
+    ) -> tuple[ConversationThread, ClarificationResponse]:
+        """Persist one WHQR binding clarification response with replay metadata."""
+        _ensure_thread_open_for_bridge(thread)
+        _ensure_whqr_binding_request(thread, request)
+        ensure_non_empty_text("answer", answer)
+        ensure_non_empty_text("by_id", by_id)
+        responded_at = conversation_engine.clock()
+        response = ClarificationResponse(
+            request_id=request.request_id,
+            thread_id=thread.thread_id,
+            answer=answer,
+            responded_by_id=by_id,
+            responded_at=responded_at,
+        )
+        message = ThreadMessage(
+            message_id=stable_identifier(
+                "msg",
+                {
+                    "thread_id": thread.thread_id,
+                    "request_id": request.request_id,
+                    "type": "whqr_binding_clarification_response",
+                    "sent_at": responded_at,
+                },
+            ),
+            thread_id=thread.thread_id,
+            direction=MessageDirection.INBOUND,
+            message_type=MessageType.CLARIFICATION_RESPONSE,
+            content=answer,
+            sender_id=by_id,
+            recipient_id="system",
+            sent_at=responded_at,
+            metadata={
+                "whqr_binding": True,
+                "clarification_request_id": request.request_id,
+            },
+        )
+        updated_thread = replace(
+            thread,
+            messages=thread.messages + (message,),
+            status=ThreadStatus.ACTIVE,
+            updated_at=responded_at,
+        )
+        return updated_thread, response
+
+    @staticmethod
+    def replay_whqr_binding_clarifications(thread: ConversationThread) -> "WHQRJobClarificationReplay":
+        """Reconstruct WHQR binding clarification requests and responses from thread messages."""
+        requests: list[ClarificationRequest] = []
+        responses: list[ClarificationResponse] = []
+        for message in thread.messages:
+            if message.metadata.get("whqr_binding") is not True:
+                continue
+            request_id = message.metadata.get("clarification_request_id")
+            if not isinstance(request_id, str) or not request_id.strip():
+                raise RuntimeCoreInvariantError("WHQR binding message missing clarification_request_id")
+            if message.message_type is MessageType.CLARIFICATION_REQUEST:
+                context = message.metadata.get("clarification_context")
+                if not isinstance(context, str) or not context.strip():
+                    raise RuntimeCoreInvariantError("WHQR binding request message missing clarification_context")
+                requests.append(
+                    ClarificationRequest(
+                        request_id=request_id,
+                        thread_id=message.thread_id,
+                        question=message.content,
+                        context=context,
+                        requested_from_id=message.recipient_id,
+                        requested_at=message.sent_at,
+                    )
+                )
+            elif message.message_type is MessageType.CLARIFICATION_RESPONSE:
+                responses.append(
+                    ClarificationResponse(
+                        request_id=request_id,
+                        thread_id=message.thread_id,
+                        answer=message.content,
+                        responded_by_id=message.sender_id,
+                        responded_at=message.sent_at,
+                    )
+                )
+        return WHQRJobClarificationReplay(tuple(requests), tuple(responses))
+
+
+@dataclass(frozen=True, slots=True)
+class WHQRJobClarificationReplay:
+    """Replayable WHQR binding clarification pairs captured in a job thread."""
+
+    requests: tuple[ClarificationRequest, ...]
+    responses: tuple[ClarificationResponse, ...]
+
+    @property
+    def ready_for_binding_map(self) -> bool:
+        return bool(self.requests and self.responses)
 
 
 # ---------------------------------------------------------------------------
@@ -210,3 +357,17 @@ class JobEscalationBridge:
         advance_escalation if should_escalate is True.
         """
         return escalation_manager.check_escalation(state, now)
+
+
+def _ensure_thread_open_for_bridge(thread: ConversationThread) -> None:
+    if thread.status is ThreadStatus.CLOSED:
+        raise RuntimeCoreInvariantError("cannot modify a closed thread")
+
+
+def _ensure_whqr_binding_request(thread: ConversationThread, request: ClarificationRequest) -> None:
+    if not isinstance(request, ClarificationRequest):
+        raise RuntimeCoreInvariantError("request must be a ClarificationRequest")
+    if request.thread_id != thread.thread_id:
+        raise RuntimeCoreInvariantError("clarification request thread_id must match thread")
+    if not request.context.startswith("whqr_binding_gap "):
+        raise RuntimeCoreInvariantError("clarification request must carry WHQR binding context")
