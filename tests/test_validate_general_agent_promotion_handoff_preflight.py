@@ -223,8 +223,8 @@ def _ready_report() -> dict[str, object]:
             {"detail": "valid=true", "name": "environment binding receipt validation", "passed": True},
             {"detail": "all required environment variables are present", "name": "required environment bindings", "passed": True},
             {"detail": "ok=true action_count=0 approval_required_action_count=0 blocker_count=0", "name": "adapter closure schema validation", "passed": True},
-            {"detail": "ok=true action_count=8 approval_required_action_count=5 source_plan_types=['deployment', 'portfolio']", "name": "closure plan schema validation", "passed": True},
-            {"detail": "ok=true expected_action_count=8 observed_action_count=8 expected_approval_required_count=5 observed_approval_required_count=5", "name": "closure plan drift validation", "passed": True},
+            {"detail": "ok=true action_count=8 approval_required_action_count=8 source_plan_types=['deployment', 'portfolio']", "name": "closure plan schema validation", "passed": True},
+            {"detail": "ok=true expected_action_count=8 observed_action_count=8 expected_approval_required_count=8 observed_approval_required_count=8", "name": "closure plan drift validation", "passed": True},
             {"detail": "readiness_level=pilot-governed-core capability_count=80 capsule_count=13 production_ready=false", "name": "promotion readiness report", "passed": True},
         ],
     }

@@ -36,14 +36,7 @@ DEFAULT_PACKET = REPO_ROOT / "examples" / "general_agent_promotion_handoff_packe
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "general_agent_promotion_handoff_packet.schema.json"
 DEFAULT_CHECKLIST = REPO_ROOT / "examples" / "general_agent_promotion_operator_checklist.json"
 DEFAULT_CLOSURE_PLAN = REPO_ROOT / ".change_assurance" / "general_agent_promotion_closure_plan.json"
-DEFAULT_CURRENT_ADAPTER_EVIDENCE = REPO_ROOT / ".change_assurance" / "capability_adapter_evidence.json"
 DEFAULT_CLOSED_ADAPTER_EVIDENCE = REPO_ROOT / "examples" / "capability_adapter_evidence_live_closed_20260611.json"
-ADAPTER_APPROVAL_BLOCKERS = frozenset(
-    {
-        "voice_dependency_missing:OPENAI_API_KEY",
-        "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
-    }
-)
 
 REQUIRED_ENTRY_POINTS = {
     "human_runbook": "docs/58_general_agent_promotion_operator_runbook.md",
@@ -167,7 +160,7 @@ def validate_general_agent_promotion_handoff_packet(
         packet,
         explicit_path=adapter_evidence_path,
     )
-    effective_closure_plan_path = DEFAULT_CLOSURE_PLAN if closure_plan_path is None else closure_plan_path
+    effective_closure_plan_path = closure_plan_path
     closure_plan = _load_or_derive_closure_plan(
         effective_closure_plan_path,
         errors,
@@ -335,6 +328,7 @@ def _derive_current_closure_plan(*, adapter_evidence_path: Path | None) -> dict[
     from scripts.plan_capability_adapter_closure import plan_capability_adapter_closure
     from scripts.plan_deployment_publication_closure import plan_deployment_publication_closure
     from scripts.plan_general_agent_promotion_closure import plan_general_agent_promotion_closure
+    from scripts.produce_capability_improvement_portfolio import produce_capability_improvement_portfolio
     from scripts.validate_deployment_publication_closure import (
         validate_deployment_publication_closure_report,
         write_deployment_publication_closure_validation_report,
@@ -347,10 +341,12 @@ def _derive_current_closure_plan(*, adapter_evidence_path: Path | None) -> dict[
         adapter_plan_path = tmp_dir / "capability_adapter_closure_plan.json"
         deployment_closure_validation_path = tmp_dir / "deployment_publication_closure_validation.json"
         deployment_plan_path = tmp_dir / "deployment_publication_closure_plan.json"
+        dns_target_receipt_path = tmp_dir / "gateway_dns_target_binding_receipt.json"
+        dns_resolution_receipt_path = tmp_dir / "gateway_dns_resolution_receipt.json"
+        upstream_blocker_receipt_path = tmp_dir / "deployment_upstream_blocker_receipt.json"
+        portfolio_path = tmp_dir / "capability_improvement_portfolio.json"
 
-        if adapter_evidence_path is None and DEFAULT_CURRENT_ADAPTER_EVIDENCE.exists():
-            derived_adapter_evidence_path = DEFAULT_CURRENT_ADAPTER_EVIDENCE
-        elif adapter_evidence_path is None:
+        if adapter_evidence_path is None:
             _write_json_payload(
                 derived_adapter_evidence_path,
                 collect_capability_adapter_evidence(
@@ -380,16 +376,52 @@ def _derive_current_closure_plan(*, adapter_evidence_path: Path | None) -> dict[
             deployment_closure_validation_path,
         )
         _write_json_payload(
+            upstream_blocker_receipt_path,
+            {
+                "api_provisioning_allowed": False,
+                "dns_publication_allowed": False,
+                "ready": False,
+                "upstream_state": "AwaitingEvidence",
+            },
+        )
+        _write_json_payload(
+            dns_target_receipt_path,
+            {
+                "binding_state": "bound",
+                "gateway_host": "api.mullusi.com",
+                "provider": "derived-handoff-fixture",
+                "ready": True,
+                "record_type": "CNAME",
+                "target": "gateway-origin.example.net",
+                "target_kind": "hostname",
+            },
+        )
+        _write_json_payload(
+            dns_resolution_receipt_path,
+            {
+                "addresses": ["203.0.113.10"],
+                "host": "api.mullusi.com",
+                "resolved": True,
+            },
+        )
+        _write_json_payload(
             deployment_plan_path,
             plan_deployment_publication_closure(
                 readiness_path=readiness_path,
+                upstream_blocker_receipt_path=upstream_blocker_receipt_path,
+                dns_target_binding_receipt_path=dns_target_receipt_path,
+                dns_resolution_receipt_path=dns_resolution_receipt_path,
                 deployment_publication_closure_validation_path=deployment_closure_validation_path,
             ).as_dict(),
         )
+        portfolio_run = produce_capability_improvement_portfolio(output_path=portfolio_path)
+        if not portfolio_run.passed:
+            raise ValueError("capability improvement portfolio derivation failed")
         return plan_general_agent_promotion_closure(
             readiness_path=readiness_path,
             adapter_plan_path=adapter_plan_path,
             deployment_plan_path=deployment_plan_path,
+            portfolio_plan_path=portfolio_path,
         ).as_dict()
 
 
@@ -501,11 +533,6 @@ def _adapter_evidence_path_for_packet(
 ) -> Path | None:
     if explicit_path is not None:
         return explicit_path
-    approval_blockers = packet.get("approval_required_blockers", [])
-    if isinstance(approval_blockers, list) and any(
-        str(blocker) in ADAPTER_APPROVAL_BLOCKERS for blocker in approval_blockers
-    ):
-        return None
     if (
         packet.get("status") == "ready_for_final_validation"
         or packet.get("production_promotion") == "ready"
@@ -588,8 +615,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="",
         help=(
             "Optional adapter evidence report used for readiness and derived closure-plan validation. "
-            "Ready packets default to the tracked redacted live-closed evidence fixture only when "
-            "adapter credential blockers are absent."
+            "Ready packets default to the tracked redacted live-closed evidence fixture."
         ),
     )
     parser.add_argument("--json", action="store_true")
