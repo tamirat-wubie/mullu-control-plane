@@ -212,6 +212,16 @@ def _bounded_claim_mismatch(claim_name: str) -> str:
     return f"{claim_name} mismatch"
 
 
+def _is_numeric_claim(value: Any) -> bool:
+    """Return True for JWT NumericDate-compatible values, excluding bool."""
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _is_non_empty_string_claim(value: Any) -> bool:
+    """Return True for required identity claims represented as text."""
+    return isinstance(value, str) and bool(value.strip())
+
+
 # ---- RSA / JWKS support (v4.19.0+) ----
 #
 # These helpers are isolated so the module imports cleanly when only
@@ -540,7 +550,7 @@ class JWTAuthenticator:
         if exp is None and self._config.require_expiry:
             return JWTAuthResult(authenticated=False, error="token has no expiry (exp claim)")
         if exp is not None:
-            if not isinstance(exp, (int, float)):
+            if not _is_numeric_claim(exp):
                 return JWTAuthResult(authenticated=False, error="exp claim must be numeric")
             if now > exp + self._config.clock_skew_seconds:
                 return JWTAuthResult(authenticated=False, error="token has expired")
@@ -548,7 +558,7 @@ class JWTAuthenticator:
         # Not-before
         nbf = claims.get("nbf")
         if nbf is not None:
-            if not isinstance(nbf, (int, float)):
+            if not _is_numeric_claim(nbf):
                 return JWTAuthResult(authenticated=False, error="nbf claim must be numeric")
             if now < nbf - self._config.clock_skew_seconds:
                 return JWTAuthResult(authenticated=False, error="token is not yet valid (nbf)")
@@ -560,19 +570,19 @@ class JWTAuthenticator:
         # ``iat`` passed as long as ``exp > now``.
         iat = claims.get("iat")
         if iat is not None and self._config.require_iat_not_in_future:
-            if not isinstance(iat, (int, float)):
+            if not _is_numeric_claim(iat):
                 return JWTAuthResult(authenticated=False, error="iat claim must be numeric")
             if iat > now + self._config.clock_skew_seconds:
                 return JWTAuthResult(authenticated=False, error="token iat is in the future")
 
         # Step 7: Extract identity claims
-        subject = str(claims.get("sub", ""))
-        tenant_id = str(claims.get(self._config.tenant_claim, ""))
+        subject_claim = claims.get("sub", "")
+        tenant_claim = claims.get(self._config.tenant_claim, "")
 
         # v4.33.0 (audit JWT hardening): require non-empty subject.
         # Pre-v4.33 tokens with empty ``sub`` authenticated successfully
         # with empty ``subject``, leaving audit attribution blank.
-        if self._config.require_subject and not subject:
+        if self._config.require_subject and not _is_non_empty_string_claim(subject_claim):
             return JWTAuthResult(
                 authenticated=False, error="sub claim is empty or missing"
             )
@@ -581,10 +591,12 @@ class JWTAuthenticator:
         # Pre-v4.33 tokens with empty tenant claim authenticated; combined
         # with X-Tenant-ID header handling in middleware, an empty-tenant
         # JWT effectively trusted the header (defense bypass).
-        if self._config.require_tenant_claim and not tenant_id:
+        if self._config.require_tenant_claim and not _is_non_empty_string_claim(tenant_claim):
             return JWTAuthResult(
                 authenticated=False, error="tenant claim is empty or missing"
             )
+        subject = subject_claim if isinstance(subject_claim, str) else str(subject_claim)
+        tenant_id = tenant_claim if isinstance(tenant_claim, str) else str(tenant_claim)
 
         # Scopes: support both space-separated string and list
         raw_scopes = claims.get(self._config.scope_claim, "")

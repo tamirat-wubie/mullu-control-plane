@@ -150,6 +150,20 @@ class TestRequireSubject:
         assert result.authenticated is False
         assert "sub" in result.error.lower()
 
+    def test_non_string_sub_rejected_by_default(self):
+        cfg = OIDCConfig(
+            issuer="iss", audience="aud",
+            signing_key=b"x" * 32,
+            allowed_algorithms=frozenset({"HS256"}),
+            require_tenant_claim=False,
+        )
+        auth = JWTAuthenticator(cfg)
+        token = _make_token(auth, sub=None)
+        result = auth.validate(token)
+        assert result.authenticated is False
+        assert "sub" in result.error.lower()
+        assert "None" not in result.error
+
     def test_opt_out_allows_empty_sub(self):
         cfg = OIDCConfig(
             issuer="iss", audience="aud",
@@ -223,6 +237,19 @@ class TestRequireTenantClaim:
         assert result.authenticated is True
         assert result.tenant_id == "acme"
 
+    def test_non_string_tenant_rejected_by_default(self):
+        cfg = OIDCConfig(
+            issuer="iss", audience="aud",
+            signing_key=b"x" * 32,
+            allowed_algorithms=frozenset({"HS256"}),
+        )
+        auth = JWTAuthenticator(cfg)
+        token = _make_token(auth, tenant_id=None)
+        result = auth.validate(token)
+        assert result.authenticated is False
+        assert "tenant" in result.error.lower()
+        assert "None" not in result.error
+
 
 # ============================================================
 # require_iat_not_in_future
@@ -283,6 +310,45 @@ class TestIatNotInFuture:
         result = auth.validate(token)
         assert result.authenticated is False
         assert "iat" in result.error.lower()
+
+    def test_boolean_iat_rejected_as_non_numeric(self):
+        cfg = OIDCConfig(
+            issuer="iss", audience="aud",
+            signing_key=b"x" * 32,
+            allowed_algorithms=frozenset({"HS256"}),
+            require_tenant_claim=False,
+        )
+        auth = JWTAuthenticator(cfg)
+        token = _make_token(auth, iat=True)
+        result = auth.validate(token)
+        assert result.authenticated is False
+        assert result.error == "iat claim must be numeric"
+
+    def test_boolean_exp_rejected_as_non_numeric(self):
+        cfg = OIDCConfig(
+            issuer="iss", audience="aud",
+            signing_key=b"x" * 32,
+            allowed_algorithms=frozenset({"HS256"}),
+            require_tenant_claim=False,
+        )
+        auth = JWTAuthenticator(cfg)
+        token = _make_token(auth, exp=True)
+        result = auth.validate(token)
+        assert result.authenticated is False
+        assert result.error == "exp claim must be numeric"
+
+    def test_boolean_nbf_rejected_as_non_numeric(self):
+        cfg = OIDCConfig(
+            issuer="iss", audience="aud",
+            signing_key=b"x" * 32,
+            allowed_algorithms=frozenset({"HS256"}),
+            require_tenant_claim=False,
+        )
+        auth = JWTAuthenticator(cfg)
+        token = _make_token(auth, nbf=True)
+        result = auth.validate(token)
+        assert result.authenticated is False
+        assert result.error == "nbf claim must be numeric"
 
     def test_opt_out_allows_future_iat(self):
         cfg = OIDCConfig(
