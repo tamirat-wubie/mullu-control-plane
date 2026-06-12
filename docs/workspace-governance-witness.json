@@ -1,5 +1,5 @@
 {
-  "artifact_count": 360,
+  "artifact_count": 363,
   "artifacts": [
     {
       "name": "agents_policy",
@@ -792,6 +792,11 @@
       "purpose": "Foundation Local Release Packet Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
     },
     {
+      "name": "foundation_boundary_doc_foundation_python_dependency_visibility_rehearsal_boundary",
+      "path": "docs/FOUNDATION_PYTHON_DEPENDENCY_VISIBILITY_REHEARSAL_BOUNDARY.md",
+      "purpose": "Foundation Python Dependency Visibility Rehearsal Boundary doctrine and Foundation Mode boundary evidence contract."
+    },
+    {
       "name": "foundation_boundary_doc_foundation_market_research_boundary",
       "path": "docs/FOUNDATION_MARKET_RESEARCH_BOUNDARY.md",
       "purpose": "Foundation Market Research Boundary doctrine and Foundation Mode boundary evidence contract."
@@ -1217,6 +1222,11 @@
       "purpose": "Read-only validator for Foundation Local Release Packet Rehearsal Boundary."
     },
     {
+      "name": "foundation_boundary_validator_foundation_python_dependency_visibility_rehearsal_boundary",
+      "path": "scripts/validate_foundation_python_dependency_visibility_rehearsal_boundary.py",
+      "purpose": "Read-only validator for Foundation Python Dependency Visibility Rehearsal Boundary."
+    },
+    {
       "name": "foundation_boundary_validator_foundation_market_research_boundary",
       "path": "scripts/validate_foundation_market_research_boundary.py",
       "purpose": "Read-only validator for Foundation Market Research Boundary."
@@ -1640,6 +1650,11 @@
       "name": "foundation_boundary_tests_foundation_local_release_packet_rehearsal_boundary",
       "path": "tests/test_validate_foundation_local_release_packet_rehearsal_boundary.py",
       "purpose": "Regression tests for Foundation Local Release Packet Rehearsal Boundary validation."
+    },
+    {
+      "name": "foundation_boundary_tests_foundation_python_dependency_visibility_rehearsal_boundary",
+      "path": "tests/test_validate_foundation_python_dependency_visibility_rehearsal_boundary.py",
+      "purpose": "Regression tests for Foundation Python Dependency Visibility Rehearsal Boundary validation."
     },
     {
       "name": "foundation_boundary_tests_foundation_market_research_boundary",
