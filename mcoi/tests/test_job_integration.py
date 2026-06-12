@@ -10,10 +10,13 @@ Invariants:
 
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import dataclass, replace
 
 import pytest
 
+from mcoi_runtime.adapters.executor_base import ExecutionRequest
+from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
+from mcoi_runtime.contracts.goal import GoalDescriptor, GoalPriority
 from mcoi_runtime.contracts.job import (
     JobDescriptor,
     JobPriority,
@@ -30,7 +33,10 @@ from mcoi_runtime.contracts.organization import (
     Team,
 )
 from mcoi_runtime.contracts.conversation import ThreadStatus
-from mcoi_runtime.contracts.whqr import WHQRNode, WHRole
+from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
+from mcoi_runtime.contracts.whqr import EvidenceGate, GateResult, NormGate, TruthGate, WHQRNode, WHRole
+from mcoi_runtime.core.dispatcher import Dispatcher
+from mcoi_runtime.core.governed_dispatcher import GovernedDispatcher
 from mcoi_runtime.core.conversation import ConversationEngine
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.jobs import JobEngine
@@ -38,14 +44,20 @@ from mcoi_runtime.core.job_integration import (
     JobConversationBridge,
     JobEscalationBridge,
     JobLearningBridge,
+    JobWHQROrchestrationBridge,
 )
 from mcoi_runtime.core.learning import LearningEngine
+from mcoi_runtime.core.memory import EpisodicMemory
 from mcoi_runtime.core.organization import EscalationManager, OrgDirectory
+from mcoi_runtime.core.system_stabilization import EquilibriumEngine
+from mcoi_runtime.core.template_validator import TemplateValidator
+from mcoi_runtime.core.terminal_closure import TerminalClosureCertifier
 from mcoi_runtime.whqr.binding_preflight import validate_binding_preflight
 from mcoi_runtime.whqr.clarification import (
     build_binding_clarification_requests,
     build_binding_map_from_clarification_responses,
 )
+from mcoi_runtime.whqr.evaluator import WHQREvaluationContext
 from mcoi_runtime.app.view_models import JobSummaryView
 from mcoi_runtime.app.console import render_job_summary
 
@@ -75,6 +87,13 @@ _T18 = "2026-03-19T18:00:00+00:00"
 _T19 = "2026-03-19T19:00:00+00:00"
 _T20 = "2026-03-19T20:00:00+00:00"
 
+VALID_TEMPLATE = {
+    "template_id": "tpl-gov",
+    "action_type": "shell_command",
+    "command_argv": ("echo", "{msg}"),
+    "required_parameters": ("msg",),
+}
+
 
 def _stepping_clock(times: list[str] | None = None):
     """Return a callable that yields successive timestamps from a list."""
@@ -84,6 +103,25 @@ def _stepping_clock(times: list[str] | None = None):
     ]
     it = iter(times)
     return lambda: next(it)
+
+
+@dataclass
+class FakeExecutor:
+    """Executor test double that records deterministic successful calls."""
+
+    calls: int = 0
+
+    def execute(self, request: ExecutionRequest) -> ExecutionResult:
+        self.calls += 1
+        return ExecutionResult(
+            request.execution_id,
+            request.goal_id,
+            ExecutionOutcome.SUCCEEDED,
+            (EffectRecord("process_completed", {"argv": list(request.argv)}),),
+            (),
+            _T12,
+            _T12,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -153,6 +191,26 @@ def _whqr_binding_request(thread_id: str):
         requested_from_id="op-1",
         requested_at=_T8,
     ).requests[0]
+
+
+def _governed_dispatcher() -> tuple[GovernedDispatcher, FakeExecutor]:
+    executor = FakeExecutor()
+    equilibrium = EquilibriumEngine()
+    equilibrium.register_agent("operator")
+    dispatcher = Dispatcher(TemplateValidator(), {"shell_command": executor}, lambda: _T12)
+    return GovernedDispatcher(dispatcher, equilibrium=equilibrium, clock=lambda: _T12), executor
+
+
+def _whqr_goal() -> GoalDescriptor:
+    return GoalDescriptor("goal-42", "Govern vendor command", GoalPriority.NORMAL, _T7)
+
+
+def _vendor_context() -> WHQREvaluationContext:
+    return WHQREvaluationContext(
+        node_results={
+            "vendor": GateResult(TruthGate.TRUE, NormGate.PERMITTED, EvidenceGate.PROVEN),
+        }
+    )
 
 
 # ===================================================================
@@ -387,6 +445,82 @@ class TestWHQRBindingClarificationBridge:
 
         with pytest.raises(RuntimeCoreInvariantError, match="clarification_request_id"):
             JobConversationBridge.replay_whqr_binding_clarifications(malformed_thread)
+
+
+class TestJobWHQROrchestrationBridge:
+    def test_run_from_thread_replay_completes_after_binding_response(self):
+        clock = _stepping_clock()
+        engine = JobEngine(clock=clock)
+        conv = ConversationEngine(clock=clock)
+        desc, _started = _create_and_start_job(engine)
+        thread = JobConversationBridge.create_job_thread(desc, conv)
+        expr = WHQRNode(role=WHRole.WHOM, target="vendor", node_id="vendor-node", expected_type="vendor")
+        request = _whqr_binding_request(thread.thread_id)
+        waiting_thread = JobConversationBridge.persist_whqr_binding_clarification_requests(thread, (request,))
+        active_thread, _response = JobConversationBridge.persist_whqr_binding_clarification_response(
+            conv,
+            waiting_thread,
+            request,
+            "entity_ref=vendor:acme;evidence_ref=evidence:vendor-doc-1",
+            "op-1",
+        )
+        governed, executor = _governed_dispatcher()
+        memory = EpisodicMemory()
+
+        result = JobWHQROrchestrationBridge.run_from_thread_replay(
+            thread=active_thread,
+            expr=expr,
+            goal=_whqr_goal(),
+            subject_id="operator",
+            issued_at=_T13,
+            governed=governed,
+            certifier=TerminalClosureCertifier(clock=lambda: _T12),
+            episodic=memory,
+            actor_id="operator",
+            intent_id="intent",
+            template=VALID_TEMPLATE,
+            bindings={"msg": "hi"},
+            context=_vendor_context(),
+            capability="shell_command",
+        )
+
+        assert result.completed is True
+        assert result.next_step == "complete"
+        assert result.clarification_binding_map is not None
+        assert result.clarification_binding_map.accepted_count == 1
+        assert isinstance(result.whqr_document.root, WHQRNode)
+        assert result.whqr_document.root.entity_ref == "vendor:acme"
+        assert result.whqr_document.root.evidence_ref == "evidence:vendor-doc-1"
+        assert result.terminal_bundle is not None
+        assert result.terminal_bundle.certificate.disposition is TerminalClosureDisposition.COMMITTED
+        assert memory.size == 1
+        assert executor.calls == 1
+
+    def test_run_from_thread_replay_rejects_goal_mismatch(self):
+        clock = _stepping_clock()
+        engine = JobEngine(clock=clock)
+        conv = ConversationEngine(clock=clock)
+        desc, _started = _create_and_start_job(engine)
+        thread = JobConversationBridge.create_job_thread(desc, conv)
+        governed, _executor = _governed_dispatcher()
+
+        with pytest.raises(RuntimeCoreInvariantError, match="goal_id"):
+            JobWHQROrchestrationBridge.run_from_thread_replay(
+                thread=thread,
+                expr=WHQRNode(role=WHRole.WHOM, target="vendor", node_id="vendor-node", expected_type="vendor"),
+                goal=GoalDescriptor("other-goal", "Govern vendor command", GoalPriority.NORMAL, _T7),
+                subject_id="operator",
+                issued_at=_T13,
+                governed=governed,
+                certifier=TerminalClosureCertifier(clock=lambda: _T12),
+                episodic=EpisodicMemory(),
+                actor_id="operator",
+                intent_id="intent",
+                template=VALID_TEMPLATE,
+                bindings={"msg": "hi"},
+                context=_vendor_context(),
+                capability="shell_command",
+            )
 
 
 # ===================================================================

@@ -11,6 +11,7 @@ Invariants:
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from typing import Any, Callable, Mapping
 
 from mcoi_runtime.contracts.conversation import (
     ClarificationRequest,
@@ -21,6 +22,7 @@ from mcoi_runtime.contracts.conversation import (
     ThreadMessage,
     ThreadStatus,
 )
+from mcoi_runtime.contracts.goal import GoalDescriptor
 from mcoi_runtime.contracts.job import (
     JobDescriptor,
     JobState,
@@ -31,15 +33,23 @@ from mcoi_runtime.contracts.knowledge_ingestion import (
     ConfidenceLevel,
     LessonRecord,
 )
+from mcoi_runtime.contracts.whqr import WHQRExpr, WHRole
+from mcoi_runtime.core.adaptive_reasoning import ComplexityAssessment
 from mcoi_runtime.contracts.organization import (
     EscalationState,
     EscalationStep,
 )
 from mcoi_runtime.core.conversation import ConversationEngine
+from mcoi_runtime.core.governed_dispatcher import GovernedDispatcher
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
 from mcoi_runtime.core.jobs import JobEngine, WorkQueue
 from mcoi_runtime.core.learning import LearningEngine
+from mcoi_runtime.core.memory import EpisodicMemory
+from mcoi_runtime.core.meta_reasoning import MetaReasoningEngine
 from mcoi_runtime.core.organization import EscalationManager, OrgDirectory
+from mcoi_runtime.core.terminal_closure import TerminalClosureCertifier
+from mcoi_runtime.core.whqr_mil_orchestrator import WHQRMILOrchestrationResult, run_whqr_mil_orchestration
+from mcoi_runtime.whqr.evaluator import WHQREvaluationContext
 
 
 # ---------------------------------------------------------------------------
@@ -264,6 +274,65 @@ class WHQRJobClarificationReplay:
 
 
 # ---------------------------------------------------------------------------
+# Job <-> WHQR/MIL orchestration bridge
+# ---------------------------------------------------------------------------
+
+
+class JobWHQROrchestrationBridge:
+    """Bridge replayed job-thread WHQR clarifications into WHQR-MIL orchestration."""
+
+    @staticmethod
+    def run_from_thread_replay(
+        *,
+        thread: ConversationThread,
+        expr: WHQRExpr,
+        goal: GoalDescriptor,
+        subject_id: str,
+        issued_at: str,
+        governed: GovernedDispatcher,
+        certifier: TerminalClosureCertifier,
+        episodic: EpisodicMemory,
+        actor_id: str,
+        intent_id: str,
+        template: Mapping[str, Any],
+        bindings: Mapping[str, str],
+        context: WHQREvaluationContext | None = None,
+        required_roles: tuple[WHRole, ...] = (),
+        capability: str = "capability.pending",
+        mode: str = "simulation",
+        meta_reasoning: MetaReasoningEngine | None = None,
+        complexity_classifier: Callable[[str], ComplexityAssessment] | None = None,
+        case_id: str | None = None,
+    ) -> WHQRMILOrchestrationResult:
+        """Run WHQR-MIL orchestration using WHQR binding clarification replay from a job thread."""
+        _ensure_thread_matches_goal(thread, goal)
+        replay = JobConversationBridge.replay_whqr_binding_clarifications(thread)
+        return run_whqr_mil_orchestration(
+            expr=expr,
+            goal=goal,
+            subject_id=subject_id,
+            issued_at=issued_at,
+            governed=governed,
+            certifier=certifier,
+            episodic=episodic,
+            actor_id=actor_id,
+            intent_id=intent_id,
+            template=template,
+            bindings=bindings,
+            context=context,
+            required_roles=required_roles,
+            capability=capability,
+            mode=mode,
+            meta_reasoning=meta_reasoning,
+            complexity_classifier=complexity_classifier,
+            case_id=case_id,
+            clarification_thread_id=thread.thread_id,
+            binding_clarification_requests=replay.requests,
+            binding_clarification_responses=replay.responses,
+        )
+
+
+# ---------------------------------------------------------------------------
 # Job <-> Learning bridge
 # ---------------------------------------------------------------------------
 
@@ -371,3 +440,10 @@ def _ensure_whqr_binding_request(thread: ConversationThread, request: Clarificat
         raise RuntimeCoreInvariantError("clarification request thread_id must match thread")
     if not request.context.startswith("whqr_binding_gap "):
         raise RuntimeCoreInvariantError("clarification request must carry WHQR binding context")
+
+
+def _ensure_thread_matches_goal(thread: ConversationThread, goal: GoalDescriptor) -> None:
+    if not isinstance(goal, GoalDescriptor):
+        raise RuntimeCoreInvariantError("goal must be a GoalDescriptor")
+    if thread.goal_id is not None and thread.goal_id != goal.goal_id:
+        raise RuntimeCoreInvariantError("conversation thread goal_id must match WHQR goal")
