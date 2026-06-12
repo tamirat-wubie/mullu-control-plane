@@ -1,5 +1,5 @@
 """Purpose: static validation for WHQR trees before governance adoption.
-Governance scope: reject unresolved role coverage gaps, invalid negation scope, causal cycles, duplicate node ids, and side-effect targets.
+Governance scope: reject unresolved role coverage gaps, invalid negation scope, causal or temporal cycles, duplicate node ids, and side-effect targets.
 Dependencies: WHQR contracts and connector compiler.
 Invariants: static checks are pure and report all detected issue classes once.
 """
@@ -43,13 +43,16 @@ def validate_static(expr: WHQRExpr, required_roles: tuple[WHRole, ...] = ()) -> 
     issues: list[StaticCheckIssue] = []
     roles: set[WHRole] = set()
     causal_edges: set[tuple[str, str]] = set()
+    temporal_edges: set[tuple[str, str]] = set()
     node_ids: set[str] = set()
-    _walk(expr, roles, causal_edges, node_ids, issues)
+    _walk(expr, roles, causal_edges, temporal_edges, node_ids, issues)
     for role in required_roles:
         if role not in roles:
             issues.append(StaticCheckIssue("missing_role", f"required WHQR role missing: {role.value}", role.value))
     if _has_cycle(causal_edges):
         issues.append(StaticCheckIssue("causal_cycle", "causal relation creates a cycle"))
+    if _has_cycle(temporal_edges):
+        issues.append(StaticCheckIssue("temporal_cycle", "temporal relation creates a cycle"))
     return StaticCheckReport(passed=not issues, issues=tuple(issues))
 
 
@@ -57,6 +60,7 @@ def _walk(
     expr: WHQRExpr,
     roles: set[WHRole],
     causal_edges: set[tuple[str, str]],
+    temporal_edges: set[tuple[str, str]],
     node_ids: set[str],
     issues: list[StaticCheckIssue],
 ) -> None:
@@ -73,21 +77,32 @@ def _walk(
         if expr.op is LogicalOp.NOT and any(isinstance(arg, WHQRNode) for arg in expr.args):
             issues.append(StaticCheckIssue("negated_unresolved_node", "negation cannot apply directly to unresolved WHQR nodes"))
         for arg in expr.args:
-            _walk(arg, roles, causal_edges, node_ids, issues)
+            _walk(arg, roles, causal_edges, temporal_edges, node_ids, issues)
         return
     if isinstance(expr, ConnectorExpr):
-        if expr.connector in {Connector.BECAUSE, Connector.THEREFORE}:
-            compiled = compile_connector(expr)
-            if compiled.assertion.kind is AssertionKind.CAUSAL:
-                causal_edges.add((_target(compiled.assertion.source), _target(compiled.assertion.target)))
-        _walk(expr.left, roles, causal_edges, node_ids, issues)
-        _walk(expr.right, roles, causal_edges, node_ids, issues)
+        compiled = compile_connector(expr)
+        if compiled.assertion.kind is AssertionKind.CAUSAL:
+            causal_edges.add((_target(compiled.assertion.source), _target(compiled.assertion.target)))
+        if compiled.assertion.kind is AssertionKind.TEMPORAL:
+            edge = _temporal_edge(compiled.assertion.relation, compiled.assertion.source, compiled.assertion.target)
+            if edge is not None:
+                temporal_edges.add(edge)
+        _walk(expr.left, roles, causal_edges, temporal_edges, node_ids, issues)
+        _walk(expr.right, roles, causal_edges, temporal_edges, node_ids, issues)
 
 
 def _target(expr: WHQRExpr) -> str:
     if isinstance(expr, WHQRNode):
         return expr.node_id or expr.target
     return repr(expr)
+
+
+def _temporal_edge(relation: str, source: WHQRExpr, target: WHQRExpr) -> tuple[str, str] | None:
+    if relation in {"before", "until"}:
+        return (_target(source), _target(target))
+    if relation == "after":
+        return (_target(target), _target(source))
+    return None
 
 
 def _has_side_effect_target(target: str) -> bool:
