@@ -276,7 +276,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 191 schemas
+protocol manifest ok: 194 schemas
 ```
 
 Finance pilot readiness verification:
@@ -313,7 +313,7 @@ Credential binding receipt:
 python scripts\validate_finance_email_calendar_recovery_env_example.py --template examples\finance_email_calendar_recovery.env.example --strict --json
 python scripts\emit_finance_approval_email_calendar_binding_receipt.py --output .change_assurance\finance_approval_email_calendar_binding_receipt.json --json
 python scripts\emit_finance_approval_email_calendar_operator_input_request.py --receipt .change_assurance\finance_approval_email_calendar_binding_receipt.json --output .change_assurance\finance_approval_email_calendar_operator_input_request.json --json
-python scripts\validate_finance_approval_email_calendar_operator_input_request.py --request .change_assurance\finance_approval_email_calendar_operator_input_request.json --output .change_assurance\finance_approval_email_calendar_operator_input_request_validation.json --require-blocked --json
+python scripts\validate_finance_approval_email_calendar_operator_input_request.py --request .change_assurance\finance_approval_email_calendar_operator_input_request.json --output .change_assurance\finance_approval_email_calendar_operator_input_request_validation.json --json
 python scripts\validate_finance_approval_email_calendar_binding_receipt.py --receipt .change_assurance\finance_approval_email_calendar_binding_receipt.json --require-ready --json
 python scripts\validate_finance_approval_email_calendar_live_receipt.py --require-ready --json
 python scripts\run_finance_approval_live_handoff_closure.py --output .change_assurance\finance_approval_live_handoff_closure_run.json --strict --json
