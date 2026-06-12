@@ -31,6 +31,10 @@ from scripts.emit_finance_approval_email_calendar_binding_receipt import (  # no
     emit_finance_approval_email_calendar_binding_receipt,
     write_finance_email_calendar_binding_receipt,
 )
+from scripts.emit_finance_approval_email_calendar_operator_input_request import (  # noqa: E402
+    emit_finance_email_calendar_operator_input_request,
+    write_finance_email_calendar_operator_input_request,
+)
 from scripts.plan_finance_approval_live_handoff import (  # noqa: E402
     plan_finance_approval_live_handoff,
     write_finance_live_handoff_plan,
@@ -54,6 +58,10 @@ from scripts.validate_finance_approval_live_handoff_chain import (  # noqa: E402
 from scripts.validate_finance_approval_live_handoff_chain_schema import (  # noqa: E402
     validate_finance_approval_live_handoff_chain_schema,
     write_finance_live_handoff_chain_schema_validation,
+)
+from scripts.validate_finance_approval_email_calendar_operator_input_request import (  # noqa: E402
+    validate_finance_email_calendar_operator_input_request,
+    write_finance_email_calendar_operator_input_request_validation,
 )
 
 
@@ -135,6 +143,8 @@ def _write_chain_sources(output_dir: Path, *, live_ready: bool) -> dict[str, Pat
     witness_path = output_dir / "finance_approval_pilot_witness.json"
     adapter_evidence_path = output_dir / "capability_adapter_evidence.json"
     binding_receipt_path = output_dir / "finance_approval_email_calendar_binding_receipt.json"
+    operator_input_request_path = output_dir / "finance_approval_email_calendar_operator_input_request.json"
+    operator_input_validation_path = output_dir / "finance_approval_email_calendar_operator_input_request_validation.json"
     live_receipt_path = output_dir / "email_calendar_live_receipt.json"
     handoff_plan_path = output_dir / "finance_approval_live_handoff_plan.json"
     closure_run_path = output_dir / "finance_approval_live_handoff_closure_run.json"
@@ -154,6 +164,23 @@ def _write_chain_sources(output_dir: Path, *, live_ready: bool) -> dict[str, Pat
     if binding_errors:
         raise RuntimeError(f"finance email/calendar dry-run binding receipt invalid: {list(binding_errors)}")
     write_finance_email_calendar_binding_receipt(binding_receipt, binding_receipt_path)
+
+    operator_input_request = emit_finance_email_calendar_operator_input_request(
+        receipt_path=binding_receipt_path,
+    )
+    write_finance_email_calendar_operator_input_request(operator_input_request, operator_input_request_path)
+    operator_input_validation = validate_finance_email_calendar_operator_input_request(
+        request_path=operator_input_request_path,
+    )
+    write_finance_email_calendar_operator_input_request_validation(
+        operator_input_validation,
+        operator_input_validation_path,
+    )
+    if not operator_input_validation.valid:
+        raise RuntimeError(
+            "finance email/calendar dry-run operator input request invalid: "
+            f"{list(operator_input_validation.errors)}"
+        )
 
     handoff_plan = plan_finance_approval_live_handoff(
         adapter_evidence_path=adapter_evidence_path,
@@ -179,6 +206,8 @@ def _write_chain_sources(output_dir: Path, *, live_ready: bool) -> dict[str, Pat
         "witness": witness_path,
         "adapter_evidence": adapter_evidence_path,
         "binding_receipt": binding_receipt_path,
+        "operator_input_request": operator_input_request_path,
+        "operator_input_validation": operator_input_validation_path,
         "live_receipt": live_receipt_path,
         "handoff_plan": handoff_plan_path,
         "closure_run": closure_run_path,
