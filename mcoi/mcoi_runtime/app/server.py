@@ -109,6 +109,7 @@ from mcoi_runtime.app.software_receipt_review_queue import SoftwareReceiptReview
 from mcoi_runtime.core.review import ReviewEngine
 from mcoi_runtime.core.structured_logging import LogLevel
 from mcoi_runtime.core.event_spine import EventSpineEngine
+from mcoi_runtime.core.jobs import JobEngine
 
 
 def _init_field_encryption_from_env() -> tuple[Any | None, dict[str, Any]]:
@@ -292,6 +293,8 @@ platform = _dependency_bootstrap.platform
 deps.set("policy_version_registry_bootstrap", _policy_version_registry_bootstrap)
 deps.set("pilot_provision_registry_bootstrap", _pilot_provision_registry_bootstrap)
 deps.set("tool_permission_registry_bootstrap", _tool_permission_registry_bootstrap)
+deps.set("job_engine", JobEngine(clock=_clock))
+deps.set("job_conversation_threads", {})
 
 # Cognitive organs (live wiring, Slice 1): mount the reasoning/learning engines
 # into the SERVED runtime (historically CLI-bootstrap only) and register them on

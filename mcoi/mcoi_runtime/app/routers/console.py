@@ -14,7 +14,9 @@ frontend can consume. Seven views cover the core operational needs:
 """
 from __future__ import annotations
 
+from dataclasses import asdict
 from html import escape
+from typing import Mapping
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
@@ -22,6 +24,9 @@ from fastapi.responses import HTMLResponse
 from mcoi_runtime.app.readiness import production_readiness_checks
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.routers._tenant_scope import scoped_listing_tenant
+from mcoi_runtime.app.view_models import WHQRBindingClarificationStatusView
+from mcoi_runtime.contracts.conversation import ConversationThread
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.spatial_governance import build_gateway_spatial_map
 
 router = APIRouter()
@@ -418,6 +423,92 @@ def console_note_memory_view(limit: int = 25, retrieval_receipt_ref: str = "", r
         retrieval_citing_note_ref=retrieval_citing_note_ref,
     )
     return HTMLResponse(_render_note_memory_console_html(payload))
+
+
+@router.get("/api/v1/console/whqr/clarifications")
+def console_whqr_binding_clarifications(
+    job_id: str | None = None,
+    include_empty: bool = False,
+    limit: str = "50",
+):
+    """Operator WHQR binding clarification view for active job-thread replay status."""
+    deps.metrics.inc("requests_governed")
+    read_limit = _coerce_console_read_limit(limit)
+    job_engine = deps.get("job_engine")
+    thread_index = _job_conversation_thread_index()
+    descriptors = {descriptor.job_id: descriptor for descriptor in job_engine.list_job_descriptors()}
+    states = job_engine.list_job_states()
+    if job_id is not None:
+        states = tuple(state for state in states if state.job_id == job_id)
+        if not states:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "error": "job_not_found",
+                    "message": "job_id does not identify a known job",
+                    "job_id": job_id,
+                },
+            )
+
+    rows: list[dict[str, object]] = []
+    missing_thread_ids: list[str] = []
+    selected_states = sorted(states, key=lambda state: state.job_id)[:read_limit]
+    for state in selected_states:
+        if state.thread_id is None:
+            continue
+        thread = thread_index.get(state.thread_id)
+        if thread is None:
+            missing_thread_ids.append(state.thread_id)
+            continue
+        try:
+            view = WHQRBindingClarificationStatusView.from_thread(thread)
+        except RuntimeCoreInvariantError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "error": "whqr_clarification_replay_invalid",
+                    "message": str(exc),
+                    "thread_id": thread.thread_id,
+                    "job_id": state.job_id,
+                },
+            ) from exc
+        if not include_empty and view.next_step == "no_whqr_binding_clarification":
+            continue
+        descriptor = descriptors.get(state.job_id)
+        rows.append(
+            {
+                "job_id": state.job_id,
+                "job_name": descriptor.name if descriptor is not None else "",
+                "job_status": state.status.value,
+                "thread_id": thread.thread_id,
+                "whqr_binding": asdict(view),
+            }
+        )
+
+    next_steps = [
+        str(row["whqr_binding"]["next_step"])
+        for row in rows
+        if isinstance(row.get("whqr_binding"), dict)
+    ]
+    return {
+        "governed": True,
+        "filters": {
+            "job_id": job_id,
+            "include_empty": include_empty,
+            "limit": read_limit,
+        },
+        "summary": {
+            "job_count": len(selected_states),
+            "registered_thread_count": len(thread_index),
+            "status_count": len(rows),
+            "pending_response_count": next_steps.count("await_whqr_binding_response"),
+            "rejected_response_count": next_steps.count("resolve_whqr_clarification_response"),
+            "ready_for_orchestration_count": next_steps.count("ready_for_orchestration"),
+            "missing_thread_count": len(missing_thread_ids),
+        },
+        "missing_thread_ids": missing_thread_ids,
+        "statuses": rows,
+    }
 
 
 @router.get("/api/v1/console/spatial-map")
@@ -830,6 +921,23 @@ def _string_sequence(value: object) -> list[str]:
     return [str(item) for item in value]
 
 
+def _job_conversation_thread_index() -> Mapping[str, ConversationThread]:
+    raw_index = deps.get("job_conversation_threads")
+    if not isinstance(raw_index, Mapping):
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": "job_conversation_thread_index_invalid",
+                "message": "job_conversation_threads dependency must be a mapping",
+            },
+        )
+    index: dict[str, ConversationThread] = {}
+    for thread_id, thread in raw_index.items():
+        if isinstance(thread_id, str) and isinstance(thread, ConversationThread):
+            index[thread_id] = thread
+    return index
+
+
 @router.get("/api/v1/console")
 def full_console():
     """Complete operator console — all views in one call."""
@@ -840,6 +948,7 @@ def full_console():
         "providers": console_providers(),
         "scheduler": console_scheduler(),
         "note_memory": console_note_memory(),
+        "whqr_clarifications": console_whqr_binding_clarifications(),
         "spatial_map": build_gateway_spatial_map(production_readiness_checks()).to_dict(),
         "governed": True,
     }
