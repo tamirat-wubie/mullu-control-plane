@@ -13,6 +13,28 @@ from mcoi_runtime.app.routers.llm._models import ChatRequest, ChatWorkflowReques
 from mcoi_runtime.core.agent_protocol import AgentCapability
 
 router = APIRouter()
+_MAX_CHAT_WORKFLOW_HISTORY_READ_LIMIT = 500
+
+
+def _chat_workflow_history_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _coerce_chat_workflow_history_limit(limit: object) -> int:
+    if isinstance(limit, bool):
+        raise ValueError("limit must be an integer")
+    if isinstance(limit, int):
+        value = limit
+    elif isinstance(limit, str):
+        normalized = limit.strip()
+        if not normalized.isdecimal():
+            raise ValueError("limit must be an integer")
+        value = int(normalized)
+    else:
+        raise ValueError("limit must be an integer")
+    if value < 0 or value > _MAX_CHAT_WORKFLOW_HISTORY_READ_LIMIT:
+        raise ValueError("limit is outside the allowed range")
+    return value
 
 
 # ═══ Phase 209A — Conversation-Aware Chat Endpoint ═══
@@ -167,13 +189,23 @@ def chat_workflow_endpoint(req: ChatWorkflowRequest):
 
 
 @router.get("/api/v1/chat/workflow/history")
-def chat_workflow_history(limit: int = 50):
+def chat_workflow_history(limit: str = "50"):
     """Chat workflow execution history."""
+    try:
+        read_limit = _coerce_chat_workflow_history_limit(limit)
+    except ValueError as error:
+        raise HTTPException(
+            status_code=422,
+            detail=_chat_workflow_history_error_detail(
+                "invalid chat workflow history request",
+                "chat_workflow_history_invalid_request",
+            ),
+        ) from error
     return {
         "history": [
             {"conversation": r.conversation_id, "workflow": r.workflow_id,
              "status": r.status, "cost": r.cost}
-            for r in deps.chat_workflow.history(limit=limit)
+            for r in deps.chat_workflow.history(limit=read_limit)
         ],
         "summary": deps.chat_workflow.summary(),
     }

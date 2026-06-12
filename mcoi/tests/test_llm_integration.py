@@ -3,6 +3,8 @@
 Tests: LLMIntegrationBridge complete/chat, budget management, invocation history.
 """
 
+import pytest
+
 from mcoi_runtime.contracts.llm import (
     LLMBudget,
     LLMProvider,
@@ -157,6 +159,14 @@ class TestLLMIntegrationBridge:
         assert bridge.invocation_history(limit=-1) == []
 
     # ═══ Ledger ═══
+
+    @pytest.mark.parametrize("limit", [True, "1", None])
+    def test_invocation_history_rejects_invalid_limit_contract(self, limit):
+        bridge, _ = self._bridge()
+        bridge.complete("msg")
+        with pytest.raises(ValueError, match="llm invocation history limit must be an integer"):
+            bridge.invocation_history(limit=limit)
+        assert bridge.invocation_count == 1
 
     def test_ledger_entries_recorded(self):
         bridge, entries = self._bridge()

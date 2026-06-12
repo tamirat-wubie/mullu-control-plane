@@ -94,6 +94,26 @@ class TestToolEndpoints:
         resp = client.get("/api/v1/tools/history")
         assert resp.json()["summary"]["invocations"] >= 1
 
+    def test_tool_history_zero_limit_returns_empty_read(self, client):
+        client.post("/api/v1/tools/invoke", json={"tool_id": "get_time", "arguments": {}})
+
+        resp = client.get("/api/v1/tools/history", params={"limit": "0"})
+        data = resp.json()
+
+        assert resp.status_code == 200
+        assert data["history"] == []
+        assert data["summary"]["invocations"] >= 1
+
+    @pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+    def test_tool_history_invalid_limit_returns_bounded_422(self, client, limit):
+        resp = client.get("/api/v1/tools/history", params={"limit": limit})
+        detail = resp.json()["detail"]
+
+        assert resp.status_code == 422
+        assert detail["error"] == "invalid tool history request"
+        assert detail["error_code"] == "tool_history_invalid_request"
+        assert detail["governed"] is True
+
 
 class TestStateEndpoints:
     def test_save_and_load(self, client):

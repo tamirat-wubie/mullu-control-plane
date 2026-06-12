@@ -31,9 +31,9 @@ def test_capability_adapter_live_evidence_workflow_targets_all_adapter_families(
     assert "Produce browser live receipt" in workflow
     assert "Produce document live receipt" in workflow
     assert "Produce voice live receipt" in workflow
+    assert "Bind static email/calendar token fallback" in workflow
+    assert "Mint durable Gmail OAuth access token" in workflow
     assert "Produce email/calendar live receipt" in workflow
-    assert "produce_durable_gmail_oauth_live_receipt.py" in workflow
-    assert "validate_durable_gmail_oauth_runtime_preflight.py --json --require-ready" in workflow
     assert '-e "mcoi[dev,browser-worker,document-worker]" openai' in workflow
 
 
@@ -59,6 +59,28 @@ def test_capability_adapter_live_evidence_workflow_collects_remaining_receipts_a
     assert "if: always()" in workflow
 
 
+def test_capability_adapter_live_evidence_workflow_supports_durable_gmail_oauth() -> None:
+    workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
+
+    assert "GMAIL_OAUTH_CLIENT_ID: ${{ secrets.GMAIL_OAUTH_CLIENT_ID }}" in workflow
+    assert "GMAIL_OAUTH_CLIENT_SECRET: ${{ secrets.GMAIL_OAUTH_CLIENT_SECRET }}" in workflow
+    assert "GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}" in workflow
+    assert "python scripts/mint_gmail_oauth_access_token.py" in workflow
+    assert "--github-env \"$GITHUB_ENV\"" in workflow
+    assert "Durable Gmail OAuth secrets not configured" in workflow
+    assert "EMAIL_CALENDAR_CONNECTOR_TOKEN_SECRET" in workflow
+
+
+def test_capability_adapter_live_evidence_workflow_uses_bounded_browser_target() -> None:
+    workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
+    producer = (ROOT / "scripts" / "produce_capability_adapter_live_receipts.py").read_text(encoding="utf-8")
+
+    assert "https://api.mullusi.com/health" in producer
+    assert "https://docs.mullusi.com/" not in producer
+    assert 'default: "https://api.mullusi.com/health"' in workflow
+    assert '--browser-url "${{ inputs.browser_url }}"' in workflow
+
+
 def test_capability_adapter_live_evidence_workflow_uploads_json_receipts_only() -> None:
     workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
 
@@ -67,7 +89,7 @@ def test_capability_adapter_live_evidence_workflow_uploads_json_receipts_only() 
     assert ".change_assurance/browser_live_receipt.json" in workflow
     assert ".change_assurance/document_live_receipt.json" in workflow
     assert ".change_assurance/voice_live_receipt.json" in workflow
-    assert ".change_assurance/durable_gmail_oauth_live_receipt.json" in workflow
+    assert ".change_assurance/gmail_oauth_refresh_receipt.json" in workflow
     assert ".change_assurance/email_calendar_live_receipt.json" in workflow
     assert ".change_assurance/capability_adapter_evidence.json" in workflow
     assert ".change_assurance/private/voice_probe_audio.wav" not in workflow.split("path: |", 1)[1]

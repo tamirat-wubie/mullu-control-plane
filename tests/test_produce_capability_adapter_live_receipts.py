@@ -359,6 +359,24 @@ def test_email_calendar_live_receipt_failed_worker_includes_recovery_actions(tmp
     assert "secret-email-calendar-worker-token" not in serialized
 
 
+def test_email_calendar_live_receipt_exposes_bounded_provider_diagnostic(tmp_path: Path) -> None:
+    output_path = tmp_path / "email_calendar_live_receipt.json"
+
+    result = produce_email_calendar_live_receipt(
+        output_path=output_path,
+        executor=_provider_status_email_calendar_executor(),
+    )
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    serialized = json.dumps(payload, sort_keys=True)
+
+    assert result.passed is False
+    assert payload["failure_class"] == "worker_probe_failed"
+    assert payload["worker_error"] == "provider status 401"
+    assert payload["provider_diagnostic"] == "provider status 401"
+    assert "secret-email-calendar-worker-token" not in serialized
+    assert "email_calendar_worker_probe_failed" in payload["blockers"]
+
+
 def test_email_calendar_live_receipt_cli_accepts_read_only_connector_probe(
     tmp_path: Path,
     monkeypatch,
@@ -510,6 +528,21 @@ class FailedEmailCalendarAdapter:
         )
 
 
+class ProviderStatusEmailCalendarAdapter:
+    """Deterministic provider-status observation fixture."""
+
+    def perform(self, request: EmailCalendarActionRequest) -> EmailCalendarActionObservation:
+        return EmailCalendarActionObservation(
+            succeeded=False,
+            connector_id=request.connector_id,
+            provider_operation=request.action,
+            resource_id="",
+            response_digest="f" * 64,
+            external_write=False,
+            error="provider status 401",
+        )
+
+
 def _browser_executor():
     adapter = FakeBrowserAdapter()
     policy = BrowserWorkerPolicy()
@@ -542,6 +575,16 @@ def _email_calendar_executor():
 
 def _failed_email_calendar_executor():
     adapter = FailedEmailCalendarAdapter()
+    policy = EmailCalendarWorkerPolicy()
+
+    def execute(request: EmailCalendarActionRequest):
+        return execute_email_calendar_request(request, adapter=adapter, policy=policy)
+
+    return execute
+
+
+def _provider_status_email_calendar_executor():
+    adapter = ProviderStatusEmailCalendarAdapter()
     policy = EmailCalendarWorkerPolicy()
 
     def execute(request: EmailCalendarActionRequest):

@@ -118,6 +118,7 @@ class HttpEmailCalendarAdapter:
             return _failed_observation(request, "email/calendar connector action unsupported")
         if request.action in _approval_required_write_actions() and not request.approval_id:
             return _failed_observation(request, "approval witness required for connector write")
+        operation: ConnectorHttpOperation | None = None
         try:
             operation = _operation_for(request, credential)
             http_request = _http_request(operation, credential)
@@ -142,6 +143,8 @@ class HttpEmailCalendarAdapter:
                 external_write=operation.external_write,
                 error="" if 200 <= status_code < 300 else f"provider status {status_code}",
             )
+        except urllib.error.HTTPError as exc:
+            return _provider_http_error_observation(request, operation, exc)
         except (TimeoutError, OSError, ValueError, urllib.error.URLError) as exc:
             return _failed_observation(
                 request,
@@ -536,6 +539,31 @@ def _failed_observation(request: EmailCalendarActionRequest, error: str) -> Emai
         provider_operation=request.action,
         error=error,
     )
+
+
+def _provider_http_error_observation(
+    request: EmailCalendarActionRequest,
+    operation: ConnectorHttpOperation | None,
+    error: urllib.error.HTTPError,
+) -> EmailCalendarActionObservation:
+    response_body = _read_http_error_body(error)
+    return EmailCalendarActionObservation(
+        succeeded=False,
+        connector_id=request.connector_id,
+        provider_operation=operation.provider_operation if operation else request.action,
+        resource_id="",
+        response_digest=hashlib.sha256(response_body).hexdigest() if response_body else "",
+        external_write=operation.external_write if operation else False,
+        error=f"provider status {int(error.code)}",
+    )
+
+
+def _read_http_error_body(error: urllib.error.HTTPError) -> bytes:
+    try:
+        body = error.read()
+    except OSError:
+        return b""
+    return body if isinstance(body, bytes) else b""
 
 
 def _require_text(value: str, field_name: str) -> str:

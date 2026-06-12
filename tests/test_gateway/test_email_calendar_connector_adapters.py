@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import sys
+import urllib.error
 from pathlib import Path
 from typing import Any
 
@@ -63,6 +64,38 @@ def test_gmail_search_uses_read_only_http_request_with_digest() -> None:
     assert "from%3Aops%40example.com" in transport.calls[0]["url"]
     assert transport.calls[0]["authorization"] == "Bearer gmail-token"
     assert "gmail-token" not in observation.response_digest
+
+
+def test_gmail_http_error_preserves_bounded_provider_status_without_token() -> None:
+    transport = HttpErrorTransport(status=401, response_body={"error": "invalid token"})
+    adapter = HttpEmailCalendarAdapter(
+        credentials={
+            "gmail": ConnectorCredential(
+                connector_id="gmail",
+                access_token="gmail-token",
+                base_url="https://gmail.example",
+                scope_id="scope:gmail",
+            )
+        },
+        urlopen=transport,
+    )
+    request = _request(
+        request_id="gmail-search-401",
+        capability_id="email.search",
+        action="email.search",
+        connector_id="gmail",
+        query="newer_than:1d",
+    )
+
+    observation = adapter.perform(request)
+
+    assert observation.succeeded is False
+    assert observation.connector_id == "gmail"
+    assert observation.provider_operation == "email.search"
+    assert observation.response_digest
+    assert observation.external_write is False
+    assert observation.error == "provider status 401"
+    assert "gmail-token" not in observation.error
 
 
 def test_gmail_send_requires_approval_before_transport() -> None:
@@ -302,6 +335,23 @@ class FakeTransport:
             }
         )
         return FakeResponse(status=self._status, body=self._response_body)
+
+
+class HttpErrorTransport(FakeTransport):
+    """urllib-compatible transport fixture that raises a bounded HTTPError."""
+
+    def __init__(self, *, status: int, response_body: dict[str, Any]) -> None:
+        super().__init__(response_body=response_body, status=status)
+
+    def __call__(self, request: Any, *, timeout: float) -> "FakeResponse":
+        super().__call__(request, timeout=timeout)
+        raise urllib.error.HTTPError(
+            url=request.full_url,
+            code=self._status,
+            msg="provider rejected request",
+            hdrs={},
+            fp=FakeResponse(status=self._status, body=self._response_body),
+        )
 
 
 class FakeResponse:

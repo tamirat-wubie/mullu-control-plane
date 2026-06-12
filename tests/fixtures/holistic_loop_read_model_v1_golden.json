@@ -1,8 +1,1387 @@
 {
-  "blocked_count": 4,
+  "blocked_count": 5,
   "generated_at": "2026-06-08T00:00:00+00:00",
-  "loop_count": 4,
+  "loop_count": 5,
   "loops": [
+    {
+      "audit_evolution_view": {
+        "admits_learning": false,
+        "audit_blocker_refs": [
+          "missing_authority:proof_verifier_ref",
+          "missing_evidence:audit_verification_passed",
+          "missing_evidence:proof_verification_passed",
+          "missing_evidence:trust_ledger_anchor_verified"
+        ],
+        "audit_state": "audit_blocked_by_unresolved_gaps",
+        "emits_receipt": false,
+        "learning_admission_refs": [
+          "gap_promoted_only_after_failed_audit_or_proof_validation",
+          "new_witness_requires_exact_test_anchor",
+          "anchor_submission_remains_separate_from_read_model"
+        ],
+        "learning_candidate_refs": [
+          "promote proof gaps into coverage matrix witnesses"
+        ],
+        "learning_evidence_input_refs": [
+          "audit_verification_passed",
+          "proof_verification_passed",
+          "trust_ledger_anchor_verified"
+        ],
+        "learning_policy_ref": "promote proof gaps into coverage matrix witnesses",
+        "learning_retention_refs": [
+          "proof_coverage_matrix",
+          "trust_ledger_anchor_verification_report"
+        ],
+        "loop_id": "audit_proof_verification_loop",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "audit_chain_api",
+          "proof_route_gap_triage",
+          "trust_ledger"
+        ],
+        "read_only": true,
+        "receipt_lineage_refs": [
+          "observe_receipt_lineage",
+          "decision_receipt_lineage",
+          "action_projection_receipt_lineage",
+          "verification_receipt_lineage",
+          "record_receipt_lineage",
+          "state_update_projection_receipt_lineage",
+          "learning_projection_receipt_lineage",
+          "audit_projection_receipt_lineage"
+        ],
+        "receipt_refs": [
+          "sha256:64fe3c363ba511d8c09c4869637a3bee56fd4c0329cc2f43b8426fe375496afa",
+          "sha256:4adf6462a1d18ea847426e4d40f0eb7f4b7249b662b5c4f3b9ba6c65b2ace5f4",
+          "sha256:d3e95670e8119908862fcb96141afa698b0b93e53fd6cad288986a66cd8a80a8",
+          "sha256:01a6a3106860994a3e00a65908fa4ede611bfafcaedcb64aed1b2f455d5bf707",
+          "sha256:931e458f3e535605026d54d314b99539b410bb5732de8766e8241d427f3c6f18",
+          "sha256:b69854733bd5f5b166c0f58a94f373c5e1694099f0f8b55894114b6387375bcf",
+          "sha256:5bb28ae4ff2593c652a8fccbc169c752664cf7248ac4673b072392f0655401e9",
+          "sha256:6e9697e9f7544fa3c5bfc083c135ebae22eba2c5c646c161096c9a9101964914"
+        ],
+        "terminal_closure": false,
+        "view_ref": "audit_proof_verification_loop_audit_evolution_view"
+      },
+      "authority_bindings": [
+        {
+          "authority_ref": "proof_verifier_ref",
+          "proof_surface_refs": [
+            "audit_chain_api",
+            "proof_route_gap_triage",
+            "trust_ledger"
+          ],
+          "purpose": "Proof verifier reference authorizes audit/proof verification review without granting anchor submission authority.",
+          "read_only": true,
+          "source_refs": [
+            "schemas/proof_verification_endpoint.schema.json",
+            "schemas/audit_verification_endpoint.schema.json",
+            "scripts/verify_anchor_receipt.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_verify_anchor_receipt.py",
+            "tests/test_gateway/test_trust_ledger.py"
+          ]
+        }
+      ],
+      "authority_refs": [],
+      "closure_condition_bindings": [
+        {
+          "closure_ref": "audit_and_proof_lanes_consistent",
+          "proof_surface_refs": [
+            "audit_chain_api",
+            "proof_route_gap_triage"
+          ],
+          "purpose": "Require audit verification and proof verification evidence to agree before closure can be described.",
+          "read_only": true,
+          "required_authority_refs": [
+            "proof_verifier_ref"
+          ],
+          "required_evidence_refs": [
+            "audit_verification_passed",
+            "proof_verification_passed"
+          ],
+          "source_refs": [
+            "schemas/audit_verification_endpoint.schema.json",
+            "schemas/proof_verification_endpoint.schema.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_gateway/test_trust_ledger.py",
+            "tests/test_verify_anchor_receipt.py"
+          ]
+        },
+        {
+          "closure_ref": "anchor_verification_report_valid",
+          "proof_surface_refs": [
+            "trust_ledger",
+            "proof_route_gap_triage"
+          ],
+          "purpose": "Require trust-ledger anchor verification evidence before proof-anchor closure can be described.",
+          "read_only": true,
+          "required_authority_refs": [
+            "proof_verifier_ref"
+          ],
+          "required_evidence_refs": [
+            "trust_ledger_anchor_verified"
+          ],
+          "source_refs": [
+            "schemas/trust_ledger_anchor_verification_report.schema.json",
+            "scripts/verify_anchor_receipt.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_verify_anchor_receipt.py",
+            "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+          ]
+        }
+      ],
+      "closure_conditions": [
+        "audit_and_proof_lanes_consistent",
+        "anchor_verification_report_valid"
+      ],
+      "closure_evidence_pack": {
+        "authority_complete": false,
+        "blocker_refs": [
+          "missing_authority:proof_verifier_ref",
+          "missing_evidence:audit_verification_passed",
+          "missing_evidence:proof_verification_passed",
+          "missing_evidence:trust_ledger_anchor_verified"
+        ],
+        "closure_blocked": true,
+        "closure_condition_refs": [
+          "audit_and_proof_lanes_consistent",
+          "anchor_verification_report_valid"
+        ],
+        "closure_report_ref": "closure_report",
+        "emits_receipt": false,
+        "evidence_complete": false,
+        "loop_id": "audit_proof_verification_loop",
+        "missing_authority_refs": [
+          "proof_verifier_ref"
+        ],
+        "missing_evidence_refs": [
+          "audit_verification_passed",
+          "proof_verification_passed",
+          "trust_ledger_anchor_verified"
+        ],
+        "observed_authority_refs": [],
+        "observed_evidence_refs": [],
+        "pack_ref": "audit_proof_verification_loop_closure_evidence_pack",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "audit_chain_api",
+          "proof_route_gap_triage",
+          "trust_ledger"
+        ],
+        "read_only": true,
+        "receipt_lineage_refs": [
+          "observe_receipt_lineage",
+          "decision_receipt_lineage",
+          "action_projection_receipt_lineage",
+          "verification_receipt_lineage",
+          "record_receipt_lineage",
+          "state_update_projection_receipt_lineage",
+          "learning_projection_receipt_lineage",
+          "audit_projection_receipt_lineage"
+        ],
+        "required_authority_refs": [
+          "proof_verifier_ref"
+        ],
+        "required_evidence_refs": [
+          "audit_verification_passed",
+          "proof_verification_passed",
+          "trust_ledger_anchor_verified"
+        ],
+        "rollback_available": true,
+        "rollback_ref": "invalidate_proof_claim_and_retain_failed_anchor",
+        "terminal_closure": false,
+        "validator_refs": [
+          "scripts/validate_holistic_loop_read_model.py",
+          "scripts/validate_holistic_loop_http_surface.py",
+          "scripts/proof_coverage_matrix.py"
+        ]
+      },
+      "closure_report": {
+        "closed": false,
+        "closure_reason": "read_model_blocked_by_unresolved_gaps",
+        "evidence_complete": false,
+        "learning_candidates": [
+          "promote proof gaps into coverage matrix witnesses"
+        ],
+        "loop_id": "audit_proof_verification_loop",
+        "metadata": {
+          "closure_conditions": [
+            "audit_and_proof_lanes_consistent",
+            "anchor_verification_report_valid"
+          ],
+          "read_only": true,
+          "terminal_closure": false
+        },
+        "rollback_available": true,
+        "unresolved_gaps": [
+          "missing_authority:proof_verifier_ref",
+          "missing_evidence:audit_verification_passed",
+          "missing_evidence:proof_verification_passed",
+          "missing_evidence:trust_ledger_anchor_verified"
+        ]
+      },
+      "current_step": "observe",
+      "evidence_bindings": [
+        {
+          "evidence_ref": "audit_verification_passed",
+          "proof_surface_refs": [
+            "audit_chain_api"
+          ],
+          "purpose": "Audit verification endpoint evidence is present and consistent with proof inputs.",
+          "read_only": true,
+          "source_refs": [
+            "schemas/audit_verification_endpoint.schema.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_gateway/test_trust_ledger.py"
+          ]
+        },
+        {
+          "evidence_ref": "proof_verification_passed",
+          "proof_surface_refs": [
+            "proof_route_gap_triage"
+          ],
+          "purpose": "Proof verification endpoint evidence is present and consistent with audit inputs.",
+          "read_only": true,
+          "source_refs": [
+            "schemas/proof_verification_endpoint.schema.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_verify_anchor_receipt.py"
+          ]
+        },
+        {
+          "evidence_ref": "trust_ledger_anchor_verified",
+          "proof_surface_refs": [
+            "trust_ledger"
+          ],
+          "purpose": "Trust-ledger anchor verification report validates the retained proof anchor.",
+          "read_only": true,
+          "source_refs": [
+            "schemas/trust_ledger_anchor_verification_report.schema.json",
+            "scripts/verify_anchor_receipt.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_verify_anchor_receipt.py",
+            "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+          ]
+        }
+      ],
+      "evidence_refs": [],
+      "learning_binding": {
+        "admission_refs": [
+          "gap_promoted_only_after_failed_audit_or_proof_validation",
+          "new_witness_requires_exact_test_anchor",
+          "anchor_submission_remains_separate_from_read_model"
+        ],
+        "evidence_input_refs": [
+          "audit_verification_passed",
+          "proof_verification_passed",
+          "trust_ledger_anchor_verified"
+        ],
+        "learning_ref": "promote proof gaps into coverage matrix witnesses",
+        "proof_surface_refs": [
+          "proof_route_gap_triage",
+          "trust_ledger"
+        ],
+        "purpose": "Bind audit/proof verification gaps to later proof-matrix witnesses and validator anchors.",
+        "read_only": true,
+        "retention_refs": [
+          "proof_coverage_matrix",
+          "trust_ledger_anchor_verification_report"
+        ],
+        "source_refs": [
+          "scripts/proof_coverage_matrix.py",
+          "schemas/trust_ledger_anchor_verification_report.schema.json"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_proof_coverage_matrix.py",
+          "tests/test_verify_anchor_receipt.py"
+        ]
+      },
+      "learning_policy": "promote proof gaps into coverage matrix witnesses",
+      "loop_id": "audit_proof_verification_loop",
+      "missing_authority": [
+        "proof_verifier_ref"
+      ],
+      "missing_evidence": [
+        "audit_verification_passed",
+        "proof_verification_passed",
+        "trust_ledger_anchor_verified"
+      ],
+      "mode": "dry_run",
+      "mode_binding": {
+        "allowed_modes": [
+          "dry_run",
+          "shadow",
+          "simulation",
+          "replay",
+          "real"
+        ],
+        "mode_transition": false,
+        "projected_mode": "dry_run",
+        "proof_surface_refs": [
+          "audit_chain_api",
+          "proof_route_gap_triage",
+          "trust_ledger"
+        ],
+        "purpose": "Expose audit/proof dry-run, shadow, simulation, replay, and real-mode boundaries without executing proof verification or submitting anchors.",
+        "read_only": true,
+        "real_execution_guard_refs": [
+          "proof_verifier_ref",
+          "audit_and_proof_lanes_consistent",
+          "anchor_verification_report_valid"
+        ],
+        "separation_refs": [
+          "dry_run_projects_required_verification_without_anchor_submission",
+          "shadow_observes_audit_and_proof_surfaces_without_state_mutation",
+          "simulation_and_replay_use_retained_verification_artifacts",
+          "real_mode_requires_proof_verifier_ref_and_complete_evidence"
+        ],
+        "source_refs": [
+          "schemas/audit_verification_endpoint.schema.json",
+          "schemas/proof_verification_endpoint.schema.json",
+          "schemas/trust_ledger_anchor_verification_report.schema.json",
+          "schemas/trust_ledger_anchor_receipt.schema.json",
+          "schemas/trust_ledger_anchor_submission_receipt.schema.json",
+          "schemas/trust_ledger_export_package.schema.json",
+          "gateway/trust_ledger.py",
+          "scripts/verify_anchor_receipt.py",
+          "scripts/preflight_trust_ledger_remote_submission.py",
+          "scripts/submit_trust_ledger_anchor_export.py"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_verify_anchor_receipt.py",
+          "tests/test_preflight_trust_ledger_remote_submission.py",
+          "tests/test_submit_trust_ledger_anchor_export.py",
+          "tests/test_gateway/test_trust_ledger.py",
+          "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+        ]
+      },
+      "name": "Audit Proof Verification Loop",
+      "open_blockers": [
+        "missing_authority:proof_verifier_ref",
+        "missing_evidence:audit_verification_passed",
+        "missing_evidence:proof_verification_passed",
+        "missing_evidence:trust_ledger_anchor_verified"
+      ],
+      "operator_closure_readiness_view": {
+        "authority_gap_refs": [
+          "proof_verifier_ref"
+        ],
+        "blocker_refs": [
+          "missing_authority:proof_verifier_ref",
+          "missing_evidence:audit_verification_passed",
+          "missing_evidence:proof_verification_passed",
+          "missing_evidence:trust_ledger_anchor_verified"
+        ],
+        "closure_condition_refs": [
+          "audit_and_proof_lanes_consistent",
+          "anchor_verification_report_valid"
+        ],
+        "evidence_gap_refs": [
+          "audit_verification_passed",
+          "proof_verification_passed",
+          "trust_ledger_anchor_verified"
+        ],
+        "loop_id": "audit_proof_verification_loop",
+        "mutation_route": false,
+        "next_proof_action": "resolve_blockers_before_terminal_closure_review",
+        "next_proof_refs": [
+          "closure_evidence_pack",
+          "closure_report",
+          "missing_authority:proof_verifier_ref",
+          "missing_evidence:audit_verification_passed",
+          "missing_evidence:proof_verification_passed",
+          "missing_evidence:trust_ledger_anchor_verified"
+        ],
+        "projected_status": "blocked",
+        "read_only": true,
+        "readiness_state": "blocked_by_unresolved_gaps",
+        "rollback_available": true,
+        "rollback_ref": "invalidate_proof_claim_and_retain_failed_anchor",
+        "terminal_closure": false,
+        "view_ref": "audit_proof_verification_loop_operator_closure_readiness_view"
+      },
+      "owner": "proof_governance",
+      "proof_obligation_view": {
+        "blocker_refs": [
+          "missing_authority:proof_verifier_ref",
+          "missing_evidence:audit_verification_passed",
+          "missing_evidence:proof_verification_passed",
+          "missing_evidence:trust_ledger_anchor_verified"
+        ],
+        "closure_condition_refs": [
+          "audit_and_proof_lanes_consistent",
+          "anchor_verification_report_valid"
+        ],
+        "executes_validator": false,
+        "loop_id": "audit_proof_verification_loop",
+        "missing_authority_refs": [
+          "proof_verifier_ref"
+        ],
+        "missing_evidence_refs": [
+          "audit_verification_passed",
+          "proof_verification_passed",
+          "trust_ledger_anchor_verified"
+        ],
+        "obligation_ref": "audit_proof_verification_loop_proof_obligation_view",
+        "obligation_state": "blocked_by_missing_proof",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "audit_chain_api",
+          "proof_route_gap_triage",
+          "trust_ledger"
+        ],
+        "read_only": true,
+        "required_authority_refs": [
+          "proof_verifier_ref"
+        ],
+        "required_evidence_refs": [
+          "audit_verification_passed",
+          "proof_verification_passed",
+          "trust_ledger_anchor_verified"
+        ],
+        "satisfied_authority_refs": [],
+        "satisfied_evidence_refs": [],
+        "terminal_closure": false,
+        "validator_refs": [
+          "scripts/validate_holistic_loop_read_model.py",
+          "scripts/validate_holistic_loop_http_surface.py",
+          "scripts/proof_coverage_matrix.py"
+        ]
+      },
+      "purpose": "Describe audit, proof, trust-ledger anchor, and verification evidence without executing proof verification or anchor submission.",
+      "receipt_lineage_bindings": [
+        {
+          "blocker_refs": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "observe_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "audit_chain_api",
+            "proof_route_gap_triage",
+            "trust_ledger"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:64fe3c363ba511d8c09c4869637a3bee56fd4c0329cc2f43b8426fe375496afa",
+          "receipt_ref": "observe_receipt",
+          "required_evidence_refs": [
+            "audit_verification_passed",
+            "proof_verification_passed",
+            "trust_ledger_anchor_verified"
+          ],
+          "source_receipt_refs": [
+            "observe_receipt",
+            "loop_manifest",
+            "loop_state_projection"
+          ],
+          "source_refs": [
+            "schemas/audit_verification_endpoint.schema.json",
+            "schemas/proof_verification_endpoint.schema.json",
+            "schemas/trust_ledger_anchor_verification_report.schema.json",
+            "schemas/trust_ledger_anchor_receipt.schema.json",
+            "schemas/trust_ledger_anchor_submission_receipt.schema.json",
+            "schemas/trust_ledger_export_package.schema.json",
+            "gateway/trust_ledger.py",
+            "scripts/verify_anchor_receipt.py",
+            "scripts/preflight_trust_ledger_remote_submission.py",
+            "scripts/submit_trust_ledger_anchor_export.py"
+          ],
+          "step": "observe",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_verify_anchor_receipt.py",
+            "tests/test_preflight_trust_ledger_remote_submission.py",
+            "tests/test_submit_trust_ledger_anchor_export.py",
+            "tests/test_gateway/test_trust_ledger.py",
+            "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "decision_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "audit_chain_api",
+            "proof_route_gap_triage",
+            "trust_ledger"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:4adf6462a1d18ea847426e4d40f0eb7f4b7249b662b5c4f3b9ba6c65b2ace5f4",
+          "receipt_ref": "decision_receipt",
+          "required_evidence_refs": [
+            "audit_verification_passed",
+            "proof_verification_passed",
+            "trust_ledger_anchor_verified"
+          ],
+          "source_receipt_refs": [
+            "decision_receipt",
+            "observe_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "schemas/audit_verification_endpoint.schema.json",
+            "schemas/proof_verification_endpoint.schema.json",
+            "schemas/trust_ledger_anchor_verification_report.schema.json",
+            "schemas/trust_ledger_anchor_receipt.schema.json",
+            "schemas/trust_ledger_anchor_submission_receipt.schema.json",
+            "schemas/trust_ledger_export_package.schema.json",
+            "gateway/trust_ledger.py",
+            "scripts/verify_anchor_receipt.py",
+            "scripts/preflight_trust_ledger_remote_submission.py",
+            "scripts/submit_trust_ledger_anchor_export.py"
+          ],
+          "step": "decide",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_verify_anchor_receipt.py",
+            "tests/test_preflight_trust_ledger_remote_submission.py",
+            "tests/test_submit_trust_ledger_anchor_export.py",
+            "tests/test_gateway/test_trust_ledger.py",
+            "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "action_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "audit_chain_api",
+            "proof_route_gap_triage",
+            "trust_ledger"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:d3e95670e8119908862fcb96141afa698b0b93e53fd6cad288986a66cd8a80a8",
+          "receipt_ref": "action_projection_receipt",
+          "required_evidence_refs": [
+            "audit_verification_passed",
+            "proof_verification_passed",
+            "trust_ledger_anchor_verified"
+          ],
+          "source_receipt_refs": [
+            "action_projection_receipt",
+            "decision_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "schemas/audit_verification_endpoint.schema.json",
+            "schemas/proof_verification_endpoint.schema.json",
+            "schemas/trust_ledger_anchor_verification_report.schema.json",
+            "schemas/trust_ledger_anchor_receipt.schema.json",
+            "schemas/trust_ledger_anchor_submission_receipt.schema.json",
+            "schemas/trust_ledger_export_package.schema.json",
+            "gateway/trust_ledger.py",
+            "scripts/verify_anchor_receipt.py",
+            "scripts/preflight_trust_ledger_remote_submission.py",
+            "scripts/submit_trust_ledger_anchor_export.py"
+          ],
+          "step": "act",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_verify_anchor_receipt.py",
+            "tests/test_preflight_trust_ledger_remote_submission.py",
+            "tests/test_submit_trust_ledger_anchor_export.py",
+            "tests/test_gateway/test_trust_ledger.py",
+            "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "verification_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "audit_chain_api",
+            "proof_route_gap_triage",
+            "trust_ledger"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:01a6a3106860994a3e00a65908fa4ede611bfafcaedcb64aed1b2f455d5bf707",
+          "receipt_ref": "verification_receipt",
+          "required_evidence_refs": [
+            "audit_verification_passed",
+            "proof_verification_passed",
+            "trust_ledger_anchor_verified"
+          ],
+          "source_receipt_refs": [
+            "verification_receipt",
+            "action_projection_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "schemas/audit_verification_endpoint.schema.json",
+            "schemas/proof_verification_endpoint.schema.json",
+            "schemas/trust_ledger_anchor_verification_report.schema.json",
+            "schemas/trust_ledger_anchor_receipt.schema.json",
+            "schemas/trust_ledger_anchor_submission_receipt.schema.json",
+            "schemas/trust_ledger_export_package.schema.json",
+            "gateway/trust_ledger.py",
+            "scripts/verify_anchor_receipt.py",
+            "scripts/preflight_trust_ledger_remote_submission.py",
+            "scripts/submit_trust_ledger_anchor_export.py"
+          ],
+          "step": "verify",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_verify_anchor_receipt.py",
+            "tests/test_preflight_trust_ledger_remote_submission.py",
+            "tests/test_submit_trust_ledger_anchor_export.py",
+            "tests/test_gateway/test_trust_ledger.py",
+            "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "record_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "audit_chain_api",
+            "proof_route_gap_triage",
+            "trust_ledger"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:931e458f3e535605026d54d314b99539b410bb5732de8766e8241d427f3c6f18",
+          "receipt_ref": "record_receipt",
+          "required_evidence_refs": [
+            "audit_verification_passed",
+            "proof_verification_passed",
+            "trust_ledger_anchor_verified"
+          ],
+          "source_receipt_refs": [
+            "record_receipt",
+            "verification_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "schemas/audit_verification_endpoint.schema.json",
+            "schemas/proof_verification_endpoint.schema.json",
+            "schemas/trust_ledger_anchor_verification_report.schema.json",
+            "schemas/trust_ledger_anchor_receipt.schema.json",
+            "schemas/trust_ledger_anchor_submission_receipt.schema.json",
+            "schemas/trust_ledger_export_package.schema.json",
+            "gateway/trust_ledger.py",
+            "scripts/verify_anchor_receipt.py",
+            "scripts/preflight_trust_ledger_remote_submission.py",
+            "scripts/submit_trust_ledger_anchor_export.py"
+          ],
+          "step": "record_receipt",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_verify_anchor_receipt.py",
+            "tests/test_preflight_trust_ledger_remote_submission.py",
+            "tests/test_submit_trust_ledger_anchor_export.py",
+            "tests/test_gateway/test_trust_ledger.py",
+            "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "state_update_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "audit_chain_api",
+            "proof_route_gap_triage",
+            "trust_ledger"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:b69854733bd5f5b166c0f58a94f373c5e1694099f0f8b55894114b6387375bcf",
+          "receipt_ref": "state_update_projection_receipt",
+          "required_evidence_refs": [
+            "audit_verification_passed",
+            "proof_verification_passed",
+            "trust_ledger_anchor_verified"
+          ],
+          "source_receipt_refs": [
+            "state_update_projection_receipt",
+            "record_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "schemas/audit_verification_endpoint.schema.json",
+            "schemas/proof_verification_endpoint.schema.json",
+            "schemas/trust_ledger_anchor_verification_report.schema.json",
+            "schemas/trust_ledger_anchor_receipt.schema.json",
+            "schemas/trust_ledger_anchor_submission_receipt.schema.json",
+            "schemas/trust_ledger_export_package.schema.json",
+            "gateway/trust_ledger.py",
+            "scripts/verify_anchor_receipt.py",
+            "scripts/preflight_trust_ledger_remote_submission.py",
+            "scripts/submit_trust_ledger_anchor_export.py"
+          ],
+          "step": "update_state",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_verify_anchor_receipt.py",
+            "tests/test_preflight_trust_ledger_remote_submission.py",
+            "tests/test_submit_trust_ledger_anchor_export.py",
+            "tests/test_gateway/test_trust_ledger.py",
+            "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "learning_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "audit_chain_api",
+            "proof_route_gap_triage",
+            "trust_ledger"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:5bb28ae4ff2593c652a8fccbc169c752664cf7248ac4673b072392f0655401e9",
+          "receipt_ref": "learning_projection_receipt",
+          "required_evidence_refs": [
+            "audit_verification_passed",
+            "proof_verification_passed",
+            "trust_ledger_anchor_verified"
+          ],
+          "source_receipt_refs": [
+            "learning_projection_receipt",
+            "state_update_projection_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "schemas/audit_verification_endpoint.schema.json",
+            "schemas/proof_verification_endpoint.schema.json",
+            "schemas/trust_ledger_anchor_verification_report.schema.json",
+            "schemas/trust_ledger_anchor_receipt.schema.json",
+            "schemas/trust_ledger_anchor_submission_receipt.schema.json",
+            "schemas/trust_ledger_export_package.schema.json",
+            "gateway/trust_ledger.py",
+            "scripts/verify_anchor_receipt.py",
+            "scripts/preflight_trust_ledger_remote_submission.py",
+            "scripts/submit_trust_ledger_anchor_export.py"
+          ],
+          "step": "learn",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_verify_anchor_receipt.py",
+            "tests/test_preflight_trust_ledger_remote_submission.py",
+            "tests/test_submit_trust_ledger_anchor_export.py",
+            "tests/test_gateway/test_trust_ledger.py",
+            "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "audit_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "audit_chain_api",
+            "proof_route_gap_triage",
+            "trust_ledger"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:6e9697e9f7544fa3c5bfc083c135ebae22eba2c5c646c161096c9a9101964914",
+          "receipt_ref": "audit_projection_receipt",
+          "required_evidence_refs": [
+            "audit_verification_passed",
+            "proof_verification_passed",
+            "trust_ledger_anchor_verified"
+          ],
+          "source_receipt_refs": [
+            "audit_projection_receipt",
+            "learning_projection_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "schemas/audit_verification_endpoint.schema.json",
+            "schemas/proof_verification_endpoint.schema.json",
+            "schemas/trust_ledger_anchor_verification_report.schema.json",
+            "schemas/trust_ledger_anchor_receipt.schema.json",
+            "schemas/trust_ledger_anchor_submission_receipt.schema.json",
+            "schemas/trust_ledger_export_package.schema.json",
+            "gateway/trust_ledger.py",
+            "scripts/verify_anchor_receipt.py",
+            "scripts/preflight_trust_ledger_remote_submission.py",
+            "scripts/submit_trust_ledger_anchor_export.py"
+          ],
+          "step": "audit",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_verify_anchor_receipt.py",
+            "tests/test_preflight_trust_ledger_remote_submission.py",
+            "tests/test_submit_trust_ledger_anchor_export.py",
+            "tests/test_gateway/test_trust_ledger.py",
+            "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+          ]
+        }
+      ],
+      "recovery_readiness_view": {
+        "blocker_refs": [
+          "missing_authority:proof_verifier_ref",
+          "missing_evidence:audit_verification_passed",
+          "missing_evidence:proof_verification_passed",
+          "missing_evidence:trust_ledger_anchor_verified"
+        ],
+        "closure_evidence_pack_ref": "audit_proof_verification_loop_closure_evidence_pack",
+        "closure_report_ref": "closure_report",
+        "executes_rollback": false,
+        "loop_id": "audit_proof_verification_loop",
+        "next_recovery_action": "resolve_blockers_before_recovery_or_terminal_review",
+        "opens_incident": false,
+        "read_only": true,
+        "receipt_lineage_refs": [
+          "observe_receipt_lineage",
+          "decision_receipt_lineage",
+          "action_projection_receipt_lineage",
+          "verification_receipt_lineage",
+          "record_receipt_lineage",
+          "state_update_projection_receipt_lineage",
+          "learning_projection_receipt_lineage",
+          "audit_projection_receipt_lineage"
+        ],
+        "recovery_proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "audit_chain_api",
+          "proof_route_gap_triage",
+          "trust_ledger"
+        ],
+        "recovery_source_refs": [
+          "scripts/verify_anchor_receipt.py",
+          "schemas/trust_ledger_anchor_verification_report.schema.json",
+          "schemas/trust_ledger_anchor_receipt.schema.json"
+        ],
+        "recovery_state": "recovery_blocked_by_unresolved_gaps",
+        "recovery_validator_refs": [
+          "tests/test_verify_anchor_receipt.py",
+          "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+        ],
+        "rollback_available": true,
+        "rollback_ref": "invalidate_proof_claim_and_retain_failed_anchor",
+        "terminal_closure": false,
+        "view_ref": "audit_proof_verification_loop_recovery_readiness_view"
+      },
+      "required_authority": [
+        "proof_verifier_ref"
+      ],
+      "required_evidence": [
+        "audit_verification_passed",
+        "proof_verification_passed",
+        "trust_ledger_anchor_verified"
+      ],
+      "risk_binding": {
+        "hazard_refs": [
+          "audit_proof_lane_mismatch",
+          "unverified_trust_ledger_anchor",
+          "proof_closure_overclaim"
+        ],
+        "mitigation_refs": [
+          "block_closure_until_audit_and_proof_evidence_match",
+          "require_anchor_verification_report",
+          "keep_anchor_submission_outside_read_model"
+        ],
+        "monitor_refs": [
+          "audit_verification_endpoint",
+          "proof_verification_endpoint",
+          "trust_ledger_anchor_verification_report"
+        ],
+        "proof_surface_refs": [
+          "audit_chain_api",
+          "proof_route_gap_triage",
+          "trust_ledger"
+        ],
+        "purpose": "Proof integrity risk covers inconsistent audit/proof lanes, unverified anchors, and accidental proof closure overclaim.",
+        "read_only": true,
+        "risk_ref": "proof_integrity",
+        "source_refs": [
+          "schemas/audit_verification_endpoint.schema.json",
+          "schemas/proof_verification_endpoint.schema.json",
+          "schemas/trust_ledger_anchor_verification_report.schema.json",
+          "schemas/trust_ledger_anchor_receipt.schema.json",
+          "schemas/trust_ledger_anchor_submission_receipt.schema.json",
+          "schemas/trust_ledger_export_package.schema.json",
+          "gateway/trust_ledger.py",
+          "scripts/verify_anchor_receipt.py",
+          "scripts/preflight_trust_ledger_remote_submission.py",
+          "scripts/submit_trust_ledger_anchor_export.py"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_verify_anchor_receipt.py",
+          "tests/test_preflight_trust_ledger_remote_submission.py",
+          "tests/test_submit_trust_ledger_anchor_export.py",
+          "tests/test_gateway/test_trust_ledger.py",
+          "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+        ]
+      },
+      "risk_class": "proof_integrity",
+      "rollback_binding": {
+        "proof_surface_refs": [
+          "trust_ledger",
+          "proof_route_gap_triage"
+        ],
+        "purpose": "Rollback audit/proof closure by invalidating the proof claim while retaining failed anchor evidence.",
+        "read_only": true,
+        "rollback_ref": "invalidate_proof_claim_and_retain_failed_anchor",
+        "source_refs": [
+          "scripts/verify_anchor_receipt.py",
+          "schemas/trust_ledger_anchor_verification_report.schema.json",
+          "schemas/trust_ledger_anchor_receipt.schema.json"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_verify_anchor_receipt.py",
+          "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+        ]
+      },
+      "rollback_policy": "invalidate_proof_claim_and_retain_failed_anchor",
+      "status": "blocked",
+      "status_binding": {
+        "blocker_refs": [
+          "missing_authority:proof_verifier_ref",
+          "missing_evidence:audit_verification_passed",
+          "missing_evidence:proof_verification_passed",
+          "missing_evidence:trust_ledger_anchor_verified"
+        ],
+        "closure_gate_refs": [
+          "audit_and_proof_lanes_consistent",
+          "anchor_verification_report_valid"
+        ],
+        "projected_status": "blocked",
+        "proof_surface_refs": [
+          "audit_chain_api",
+          "proof_route_gap_triage",
+          "trust_ledger"
+        ],
+        "read_only": true,
+        "source_refs": [
+          "schemas/audit_verification_endpoint.schema.json",
+          "schemas/proof_verification_endpoint.schema.json",
+          "schemas/trust_ledger_anchor_verification_report.schema.json",
+          "schemas/trust_ledger_anchor_receipt.schema.json",
+          "schemas/trust_ledger_anchor_submission_receipt.schema.json",
+          "schemas/trust_ledger_export_package.schema.json",
+          "gateway/trust_ledger.py",
+          "scripts/verify_anchor_receipt.py",
+          "scripts/preflight_trust_ledger_remote_submission.py",
+          "scripts/submit_trust_ledger_anchor_export.py"
+        ],
+        "status_reason": "read_model_blocked_by_unresolved_gaps",
+        "status_transition": false,
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_verify_anchor_receipt.py",
+          "tests/test_preflight_trust_ledger_remote_submission.py",
+          "tests/test_submit_trust_ledger_anchor_export.py",
+          "tests/test_gateway/test_trust_ledger.py",
+          "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+        ],
+        "verification_refs": [
+          "required_authority_observed",
+          "required_evidence_observed",
+          "audit_proof_verification_validators_passed"
+        ]
+      },
+      "step_receipts": [
+        {
+          "decision": "project_read_model_observe",
+          "errors": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:39b1174931c30f49c574af9d63f2bce0ba11dec3527464b9405af6afa8eadf78",
+          "loop_id": "audit_proof_verification_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:64fe3c363ba511d8c09c4869637a3bee56fd4c0329cc2f43b8426fe375496afa",
+          "status": "blocked",
+          "step": "observe",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "project_read_model_decide",
+          "errors": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:8a1a054d65898bce923d91eb74525d0a1a0e3dbda861bbfa70c0e4877cbd73f8",
+          "loop_id": "audit_proof_verification_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:4adf6462a1d18ea847426e4d40f0eb7f4b7249b662b5c4f3b9ba6c65b2ace5f4",
+          "status": "blocked",
+          "step": "decide",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "project_existing_behavior_without_execution",
+          "errors": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:98055326018341bb1a0c73c73e3d12f1f1ce23a10c5c402eff31ea9643c29882",
+          "loop_id": "audit_proof_verification_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:d3e95670e8119908862fcb96141afa698b0b93e53fd6cad288986a66cd8a80a8",
+          "status": "blocked",
+          "step": "act",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:0534af511688772a61474c50028acf8489370bf738fa5885834c36b7e02d2dc0",
+          "loop_id": "audit_proof_verification_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:01a6a3106860994a3e00a65908fa4ede611bfafcaedcb64aed1b2f455d5bf707",
+          "status": "blocked",
+          "step": "verify",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:970589e067f65e289f0fa332aed9e436e995e76cf0b177be6ac9ed600eb1176a",
+          "loop_id": "audit_proof_verification_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:931e458f3e535605026d54d314b99539b410bb5732de8766e8241d427f3c6f18",
+          "status": "blocked",
+          "step": "record_receipt",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:1d3aed58c18675c6ecea596e0bd5bcba495f8c1a9d62305792097ec1d093b3c7",
+          "loop_id": "audit_proof_verification_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:b69854733bd5f5b166c0f58a94f373c5e1694099f0f8b55894114b6387375bcf",
+          "status": "blocked",
+          "step": "update_state",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:f89e9e8aaad88aa711859458dd4051b43a1298b2afd8e9dade38653232f34e71",
+          "loop_id": "audit_proof_verification_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:5bb28ae4ff2593c652a8fccbc169c752664cf7248ac4673b072392f0655401e9",
+          "status": "blocked",
+          "step": "learn",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:2e8959c095747d5dc9ca60b329b441d03fe90d18654a83961c2d09a8be6963db",
+          "loop_id": "audit_proof_verification_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:6e9697e9f7544fa3c5bfc083c135ebae22eba2c5c646c161096c9a9101964914",
+          "status": "blocked",
+          "step": "audit",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        }
+      ],
+      "transition_bindings": [
+        {
+          "blocker_refs": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "executes_transition": false,
+          "from_status": "open",
+          "from_step": "observe",
+          "proof_surface_refs": [
+            "audit_chain_api",
+            "proof_route_gap_triage",
+            "trust_ledger"
+          ],
+          "read_only": true,
+          "receipt_refs": [
+            "observe_receipt",
+            "verification_receipt",
+            "closure_report"
+          ],
+          "required_authority_refs": [
+            "proof_verifier_ref"
+          ],
+          "required_evidence_refs": [
+            "audit_verification_passed",
+            "proof_verification_passed",
+            "trust_ledger_anchor_verified"
+          ],
+          "rollback_refs": [
+            "invalidate_proof_claim_and_retain_failed_anchor"
+          ],
+          "source_refs": [
+            "schemas/audit_verification_endpoint.schema.json",
+            "schemas/proof_verification_endpoint.schema.json",
+            "schemas/trust_ledger_anchor_verification_report.schema.json",
+            "schemas/trust_ledger_anchor_receipt.schema.json",
+            "schemas/trust_ledger_anchor_submission_receipt.schema.json",
+            "schemas/trust_ledger_export_package.schema.json",
+            "gateway/trust_ledger.py",
+            "scripts/verify_anchor_receipt.py",
+            "scripts/preflight_trust_ledger_remote_submission.py",
+            "scripts/submit_trust_ledger_anchor_export.py"
+          ],
+          "terminal_closure": false,
+          "to_status": "blocked",
+          "to_step": "verify",
+          "transition_ref": "open_to_blocked_on_missing_requirements",
+          "validator_refs": [
+            "tests/test_verify_anchor_receipt.py",
+            "tests/test_preflight_trust_ledger_remote_submission.py",
+            "tests/test_submit_trust_ledger_anchor_export.py",
+            "tests/test_gateway/test_trust_ledger.py",
+            "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "executes_transition": false,
+          "from_status": "blocked",
+          "from_step": "verify",
+          "proof_surface_refs": [
+            "audit_chain_api",
+            "proof_route_gap_triage",
+            "trust_ledger"
+          ],
+          "read_only": true,
+          "receipt_refs": [
+            "verification_receipt",
+            "record_receipt",
+            "closure_report"
+          ],
+          "required_authority_refs": [
+            "proof_verifier_ref"
+          ],
+          "required_evidence_refs": [
+            "audit_verification_passed",
+            "proof_verification_passed",
+            "trust_ledger_anchor_verified"
+          ],
+          "rollback_refs": [
+            "invalidate_proof_claim_and_retain_failed_anchor"
+          ],
+          "source_refs": [
+            "schemas/audit_verification_endpoint.schema.json",
+            "schemas/proof_verification_endpoint.schema.json",
+            "schemas/trust_ledger_anchor_verification_report.schema.json",
+            "schemas/trust_ledger_anchor_receipt.schema.json",
+            "schemas/trust_ledger_anchor_submission_receipt.schema.json",
+            "schemas/trust_ledger_export_package.schema.json",
+            "gateway/trust_ledger.py",
+            "scripts/verify_anchor_receipt.py",
+            "scripts/preflight_trust_ledger_remote_submission.py",
+            "scripts/submit_trust_ledger_anchor_export.py"
+          ],
+          "terminal_closure": false,
+          "to_status": "verified",
+          "to_step": "record_receipt",
+          "transition_ref": "blocked_to_verified_after_requirements",
+          "validator_refs": [
+            "tests/test_verify_anchor_receipt.py",
+            "tests/test_preflight_trust_ledger_remote_submission.py",
+            "tests/test_submit_trust_ledger_anchor_export.py",
+            "tests/test_gateway/test_trust_ledger.py",
+            "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:proof_verifier_ref",
+            "missing_evidence:audit_verification_passed",
+            "missing_evidence:proof_verification_passed",
+            "missing_evidence:trust_ledger_anchor_verified"
+          ],
+          "executes_transition": false,
+          "from_status": "verified",
+          "from_step": "audit",
+          "proof_surface_refs": [
+            "audit_chain_api",
+            "proof_route_gap_triage",
+            "trust_ledger"
+          ],
+          "read_only": true,
+          "receipt_refs": [
+            "audit_receipt",
+            "terminal_closure_certificate",
+            "closure_report"
+          ],
+          "required_authority_refs": [
+            "proof_verifier_ref"
+          ],
+          "required_evidence_refs": [
+            "audit_verification_passed",
+            "proof_verification_passed",
+            "trust_ledger_anchor_verified"
+          ],
+          "rollback_refs": [
+            "invalidate_proof_claim_and_retain_failed_anchor"
+          ],
+          "source_refs": [
+            "schemas/audit_verification_endpoint.schema.json",
+            "schemas/proof_verification_endpoint.schema.json",
+            "schemas/trust_ledger_anchor_verification_report.schema.json",
+            "schemas/trust_ledger_anchor_receipt.schema.json",
+            "schemas/trust_ledger_anchor_submission_receipt.schema.json",
+            "schemas/trust_ledger_export_package.schema.json",
+            "gateway/trust_ledger.py",
+            "scripts/verify_anchor_receipt.py",
+            "scripts/preflight_trust_ledger_remote_submission.py",
+            "scripts/submit_trust_ledger_anchor_export.py"
+          ],
+          "terminal_closure": false,
+          "to_status": "closed",
+          "to_step": "close",
+          "transition_ref": "verified_to_closed_requires_terminal_closure",
+          "validator_refs": [
+            "tests/test_verify_anchor_receipt.py",
+            "tests/test_preflight_trust_ledger_remote_submission.py",
+            "tests/test_submit_trust_ledger_anchor_export.py",
+            "tests/test_gateway/test_trust_ledger.py",
+            "tests/test_gateway/test_trust_ledger_anchor_receipt.py"
+          ]
+        }
+      ],
+      "updated_at": "2026-06-08T00:00:00+00:00"
+    },
     {
       "audit_evolution_view": {
         "admits_learning": false,
@@ -6066,7 +7445,7 @@
   ],
   "report_id": "holistic_loop_read_model",
   "report_is_not_terminal_closure": true,
-  "returned_count": 4,
+  "returned_count": 5,
   "status": "blocked",
   "terminal_closure_required": true,
   "truncated": false,

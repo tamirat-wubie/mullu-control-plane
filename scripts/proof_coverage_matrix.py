@@ -2984,6 +2984,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/cases/{case_id}/audit-explorer/view",
                 "/api/v1/cases/{case_id}/closure-certificate",
                 "/api/v1/cases/{case_id}/closure-certificate/view",
+                "/api/v1/cases/{case_id}/closure-drift-remediations",
                 "/api/v1/cases/{case_id}/events",
                 "/api/v1/cases/{case_id}/evidence",
                 "/api/v1/cases/{case_id}/learning-admissions",
@@ -3021,7 +3022,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_organization_kernel_router.py",
                 "mcoi/tests/test_organization_kernel_store.py",
             ],
-            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions that must carry the latest admitted gate evidence refs, case portfolio, action queue, authority-map and department-registry views, terminal certificate views with missing gate-evidence attention details, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
+            "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions that must carry the latest admitted gate evidence refs, post-closure drift remediation routing, case portfolio, action queue, authority-map and department-registry views, terminal certificate views with missing gate-evidence attention details, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
             [
                 "orgos_api_runs_launch_gateway_case_control_loop",
                 "orgos_api_denies_unbound_authority_gate",
@@ -3072,6 +3073,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "organization_action_queue_view_preserves_filters",
                 "department_registry_view_is_read_only_and_escaped",
                 "case_closure_certificate_view_is_read_only_and_escaped",
+                "closed_case_reports_closure_packet_drift_after_gate_refresh",
+                "closure_packet_drift_accepts_remediation_routing",
+                "closure_packet_drift_remediation_rejects_mismatched_refs",
                 "case_proof_timeline_reports_open_case_without_closure",
                 "case_proof_timeline_reports_closure_certificate_and_learning",
                 "learning_binding_requires_closed_case_and_admission_decision",
@@ -6626,16 +6630,17 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schema/report/HTTP parity, additive-only extension policy, "
                 "zero-unanchored proof-label guard, and extension admission "
                 "guard for default registry additions. The candidate map lists "
-                "unregistered future loop surfaces without admitting them. "
+                "candidate loop surfaces and distinguishes admitted loops from "
+                "blocked future candidates. "
                 "The UAO admission dossier projects readiness for an operator "
                 "registration decision without registering the loop. "
                 "The workflow admission dossier applies the same read-only "
                 "operator-decision boundary to workflow execution surfaces. "
                 "The authority admission dossier applies the same read-only "
                 "operator-decision boundary to authority obligation surfaces. "
-                "The audit/proof admission dossier applies the same read-only "
-                "operator-decision boundary to audit, proof, and trust-ledger "
-                "anchor verification surfaces. "
+                "The audit/proof loop is registered in the default read model "
+                "as a read-only blocked loop, and its admission dossier reports "
+                "registry admission without causing mutation. "
                 "Missing authority or "
                 "evidence remains an explicit blocker and no mutation route is "
                 "introduced."
@@ -6671,6 +6676,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "holistic_loop_extension_admission_guards_default_registry",
                 "holistic_loop_candidate_map_lists_unregistered_surfaces",
                 "holistic_loop_candidate_map_is_read_only_non_terminal",
+                "holistic_loop_audit_proof_registered_in_default_read_model",
                 "holistic_loop_uao_admission_dossier_builds_proposed_manifest",
                 "holistic_loop_uao_admission_dossier_ready_for_operator_decision",
                 "holistic_loop_uao_admission_dossier_blocks_registration_effects",
@@ -6681,12 +6687,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "holistic_loop_authority_admission_dossier_ready_for_operator_decision",
                 "holistic_loop_authority_admission_dossier_blocks_registration_effects",
                 "holistic_loop_audit_proof_admission_dossier_builds_proposed_manifest",
-                "holistic_loop_audit_proof_admission_dossier_ready_for_operator_decision",
+                "holistic_loop_audit_proof_admission_dossier_reports_registry_admission",
                 "holistic_loop_audit_proof_admission_dossier_blocks_registration_effects",
             ],
             runtime_witness_anchor_aliases={
                 "registered_loops_expose_governed_manifest_fields": [
-                    "default_registry_exposes_first_four_loop_manifests"
+                    "default_registry_exposes_governed_loop_manifests"
                 ],
                 "missing_required_evidence_is_reported_as_blocker": [
                     "missing_evidence_is_reported_as_blocker_not_success"
@@ -6770,10 +6776,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                     "holistic_loop_extension_admission_guards_default_registry"
                 ],
                 "holistic_loop_candidate_map_lists_unregistered_surfaces": [
-                    "holistic_loop_candidate_map_lists_unregistered_surfaces"
+                    "holistic_loop_candidate_map_lists_candidate_surfaces"
                 ],
                 "holistic_loop_candidate_map_is_read_only_non_terminal": [
                     "holistic_loop_candidate_map_is_read_only_non_terminal"
+                ],
+                "holistic_loop_audit_proof_registered_in_default_read_model": [
+                    "audit_proof_loop_is_registered_read_only_and_blocked"
                 ],
                 "holistic_loop_uao_admission_dossier_builds_proposed_manifest": [
                     "uao_admission_dossier_builds_proposed_manifest"
@@ -6805,8 +6814,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "holistic_loop_audit_proof_admission_dossier_builds_proposed_manifest": [
                     "audit_proof_admission_dossier_builds_proposed_manifest"
                 ],
-                "holistic_loop_audit_proof_admission_dossier_ready_for_operator_decision": [
-                    "audit_proof_admission_dossier_is_ready_only_for_operator_decision"
+                "holistic_loop_audit_proof_admission_dossier_reports_registry_admission": [
+                    "audit_proof_admission_dossier_reports_registry_admission"
                 ],
                 "holistic_loop_audit_proof_admission_dossier_blocks_registration_effects": [
                     "audit_proof_admission_dossier_does_not_register_or_mutate_runtime"

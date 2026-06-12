@@ -139,6 +139,8 @@ class ChatWorkflowEngine:
         return result
 
     def history(self, limit: int = 50) -> list[ChatWorkflowResult]:
+        if isinstance(limit, bool) or not isinstance(limit, int):
+            raise ValueError("chat workflow history limit must be an integer")
         if limit <= 0:
             return []
         return self._history[-limit:]

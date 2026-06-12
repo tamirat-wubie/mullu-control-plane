@@ -3,10 +3,10 @@ Governance scope: future loop candidate discovery, non-registration boundary,
 read-only projection, and terminal-closure separation.
 Dependencies: scripts.report_holistic_loop_candidate_map.
 Invariants:
-  - Candidate map lists evidence-backed unregistered loop surfaces.
-  - Candidate map does not register loops.
+  - Candidate map lists evidence-backed candidate loop surfaces.
+  - Candidate map does not mutate registry state.
   - Candidate map remains read-only and non-terminal.
-  - Candidate blockers are explicit.
+  - Candidate blockers are explicit for unregistered candidates.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ import copy
 from scripts import report_holistic_loop_candidate_map as reporter
 
 
-def test_holistic_loop_candidate_map_lists_unregistered_surfaces() -> None:
+def test_holistic_loop_candidate_map_lists_candidate_surfaces() -> None:
     report = reporter.build_candidate_map()
     errors = reporter.validate_candidate_map(report)
     candidate_ids = [candidate["candidate_id"] for candidate in report["candidates"]]
@@ -29,14 +29,26 @@ def test_holistic_loop_candidate_map_lists_unregistered_surfaces() -> None:
     assert "universal_action_orchestration_loop" in candidate_ids
 
 
-def test_holistic_loop_candidate_map_does_not_register_loops() -> None:
+def test_holistic_loop_candidate_map_reports_admitted_and_blocked_candidates() -> None:
     report = reporter.build_candidate_map()
     registered_loop_ids = set(reporter.build_default_loop_registry().manifests)
+    candidates = {
+        candidate["candidate_id"]: candidate
+        for candidate in report["candidates"]
+    }
 
-    assert report["registered_candidate_count"] == 0
-    assert all(candidate["candidate_id"] not in registered_loop_ids for candidate in report["candidates"])
-    assert all(candidate["registered"] is False for candidate in report["candidates"])
-    assert all(candidate["admission_status"] == "blocked" for candidate in report["candidates"])
+    assert report["registered_candidate_count"] == 1
+    assert report["blocked_candidate_count"] == 3
+    assert candidates["audit_proof_verification_loop"]["candidate_id"] in registered_loop_ids
+    assert candidates["audit_proof_verification_loop"]["registered"] is True
+    assert candidates["audit_proof_verification_loop"]["admission_status"] == "registered"
+    assert candidates["audit_proof_verification_loop"]["admission_blockers"] == []
+    assert candidates["audit_proof_verification_loop"]["next_action"] == "already_registered"
+    assert all(
+        candidate["registered"] is False and candidate["admission_status"] == "blocked"
+        for candidate_id, candidate in candidates.items()
+        if candidate_id != "audit_proof_verification_loop"
+    )
 
 
 def test_holistic_loop_candidate_map_is_read_only_non_terminal() -> None:
@@ -65,14 +77,18 @@ def test_candidate_map_rejects_missing_existing_surface() -> None:
 def test_candidate_map_rejects_registration_or_closure_claim() -> None:
     report = reporter.build_candidate_map()
     invalid_report = copy.deepcopy(report)
-    invalid_candidate = invalid_report["candidates"][0]
+    invalid_candidate = next(
+        candidate
+        for candidate in invalid_report["candidates"]
+        if candidate["candidate_id"] == "authority_obligation_loop"
+    )
     invalid_candidate["registered"] = True
     invalid_candidate["admission_status"] = "registered"
     invalid_candidate["terminal_closure"] = True
 
     errors = reporter.validate_candidate_map(invalid_report)
 
-    assert any("must remain unregistered" in error for error in errors)
+    assert any("registered state must match default registry" in error for error in errors)
     assert any("must remain blocked until registration" in error for error in errors)
     assert any("terminal_closure must be False" in error for error in errors)
 
@@ -80,7 +96,11 @@ def test_candidate_map_rejects_registration_or_closure_claim() -> None:
 def test_candidate_map_rejects_missing_blocker() -> None:
     report = reporter.build_candidate_map()
     invalid_report = copy.deepcopy(report)
-    invalid_candidate = invalid_report["candidates"][0]
+    invalid_candidate = next(
+        candidate
+        for candidate in invalid_report["candidates"]
+        if candidate["candidate_id"] == "authority_obligation_loop"
+    )
     invalid_candidate["admission_blockers"] = [reporter.NOT_REGISTERED_BLOCKER]
 
     errors = reporter.validate_candidate_map(invalid_report)

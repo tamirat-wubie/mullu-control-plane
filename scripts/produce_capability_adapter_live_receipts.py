@@ -132,7 +132,7 @@ class LiveReceiptRun:
 def produce_browser_live_receipt(
     *,
     output_path: Path = DEFAULT_BROWSER_RECEIPT,
-    target_url: str = "https://docs.mullusi.com/",
+    target_url: str = "https://api.mullusi.com/health",
     sandbox_evidence_ref: str = "",
     executor: BrowserExecutor | None = None,
     clock: Callable[[], str] | None = None,
@@ -364,6 +364,7 @@ def produce_email_calendar_live_receipt(
             blockers.append("email_calendar_probe_observed_external_write")
         status = "passed" if not blockers else "failed"
         worker_receipt = asdict(response.receipt)
+        worker_error = _safe_email_calendar_worker_error(getattr(response, "error", ""))
         payload = {
             "receipt_id": _receipt_id("email-calendar", checked_at, worker_receipt),
             "adapter_id": "communication.email_calendar_worker",
@@ -378,8 +379,10 @@ def produce_email_calendar_live_receipt(
             "worker_receipt": _json_ready(worker_receipt),
             "blockers": blockers,
         }
+        if worker_error:
+            payload["worker_error"] = worker_error
         if status == "failed":
-            payload.update(_email_calendar_recovery_payload(blockers))
+            payload.update(_email_calendar_recovery_payload(blockers, worker_error=worker_error))
     except Exception:  # noqa: BLE001
         blockers.append("email_calendar_probe_exception")
         payload = _failed_payload(
@@ -399,7 +402,7 @@ def produce_email_calendar_live_receipt(
     )
 
 
-def _email_calendar_recovery_payload(blockers: list[str]) -> dict[str, Any]:
+def _email_calendar_recovery_payload(blockers: list[str], *, worker_error: str = "") -> dict[str, Any]:
     """Return bounded recovery metadata for failed email/calendar live receipts."""
     if "email_calendar_probe_observed_external_write" in blockers:
         return {
@@ -412,7 +415,7 @@ def _email_calendar_recovery_payload(blockers: list[str]) -> dict[str, Any]:
         failure_class = "worker_probe_failed"
     else:
         return {}
-    return {
+    payload = {
         "failure_class": failure_class,
         "recovery_actions": [
             "verify_email_calendar_worker_reachable",
@@ -421,6 +424,36 @@ def _email_calendar_recovery_payload(blockers: list[str]) -> dict[str, Any]:
             "rerun_email_calendar_live_receipt_probe",
         ],
     }
+    if worker_error:
+        payload["provider_diagnostic"] = worker_error
+    return payload
+
+
+def _safe_email_calendar_worker_error(error: object) -> str:
+    """Return a bounded email/calendar worker diagnostic without secret material."""
+    if not isinstance(error, str):
+        return ""
+    stripped = error.strip()
+    if not stripped:
+        return ""
+    if stripped.startswith("provider status "):
+        status_text = stripped.removeprefix("provider status ").strip()
+        if status_text.isdigit():
+            return f"provider status {status_text[:3]}"
+    transport_prefix = "email/calendar connector transport failed: "
+    if stripped.startswith(transport_prefix):
+        transport_class = stripped.removeprefix(transport_prefix).strip()
+        safe_class = "".join(ch for ch in transport_class if ch.isalnum() or ch == "_")[:64]
+        return f"{transport_prefix}{safe_class}" if safe_class else ""
+    if stripped in {
+        "connector credential unavailable",
+        "email/calendar adapter unavailable",
+        "email/calendar connector action unsupported",
+        "approval witness required for connector write",
+        "email/calendar verification failed",
+    }:
+        return stripped
+    return "redacted_worker_error"
 
 
 def _probe_exception_recovery_payload(adapter_id: str) -> dict[str, Any]:
@@ -438,7 +471,7 @@ def produce_live_receipts(
     document_output: Path = DEFAULT_DOCUMENT_RECEIPT,
     voice_output: Path = DEFAULT_VOICE_RECEIPT,
     email_calendar_output: Path = DEFAULT_EMAIL_CALENDAR_RECEIPT,
-    browser_url: str = "https://docs.mullusi.com/",
+    browser_url: str = "https://api.mullusi.com/health",
     browser_sandbox_evidence: str = "",
     voice_audio_path: Path | None = None,
     voice_text: str = "Mullu governed voice adapter receipt.",
@@ -707,7 +740,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--document-output", default=str(DEFAULT_DOCUMENT_RECEIPT))
     parser.add_argument("--voice-output", default=str(DEFAULT_VOICE_RECEIPT))
     parser.add_argument("--email-calendar-output", default=str(DEFAULT_EMAIL_CALENDAR_RECEIPT))
-    parser.add_argument("--browser-url", default="https://docs.mullusi.com/")
+    parser.add_argument("--browser-url", default="https://api.mullusi.com/health")
     parser.add_argument(
         "--browser-sandbox-evidence",
         default="",

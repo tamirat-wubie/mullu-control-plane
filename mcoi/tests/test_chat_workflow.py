@@ -105,6 +105,16 @@ class TestChatWorkflow:
         engine.execute(conversation_id="h1", message="a")
         engine.execute(conversation_id="h2", message="b")
         assert len(engine.history()) == 2
+        assert engine.history(limit=0) == []
+        assert engine.history(limit=-1) == []
+
+    @pytest.mark.parametrize("limit", [True, "1", None])
+    def test_history_rejects_invalid_limit_contract(self, limit):
+        engine, _, _, _ = _setup()
+        engine.execute(conversation_id="h1", message="a")
+        with pytest.raises(ValueError, match="chat workflow history limit must be an integer"):
+            engine.history(limit=limit)
+        assert engine.total_executions == 1
 
     def test_summary(self):
         engine, _, _, _ = _setup()

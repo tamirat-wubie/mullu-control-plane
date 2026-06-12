@@ -66,7 +66,8 @@ staged into the holistic loop PR.
    `LoopReceiptLineageBinding`, `LoopClosureEvidencePack`, `LoopRegistry`,
    `LoopOperatorClosureReadinessView`, `LoopProofObligationView`, and bounded
    `LoopReadModel`.
-2. Registered four existing loops without changing runtime behavior:
+2. Registered five existing loops without changing runtime behavior:
+   `audit_proof_verification_loop`,
    `deployment_witness_loop`, `runtime_conformance_loop`,
    `cognitive_outcome_loop`, and `governed_code_change_loop`.
 3. Added read-only reporting through
@@ -103,8 +104,9 @@ staged into the holistic loop PR.
     non-terminal nested read-model boundaries, and proof-matrix admission
     anchoring.
 14. Added the candidate map for future loop registration planning. It lists
-    unregistered evidence-backed loop-like surfaces without admitting,
-    verifying, closing, mutating, or migrating them.
+    evidence-backed loop-like surfaces, distinguishes the admitted audit/proof
+    candidate from still-blocked candidates, and does not verify, close,
+    mutate, or migrate them.
 15. Added the UAO admission dossier for the first candidate-specific readiness
     projection. It builds a proposed manifest and reports evidence, authority,
     closure-condition, rollback, and learning readiness without registering the
@@ -118,12 +120,12 @@ staged into the holistic loop PR.
     authority, closure-condition, rollback, and learning readiness without
     registering the loop, satisfying obligations, or changing authority runtime
     behavior.
-18. Added the audit/proof admission dossier for the final candidate-specific
-    readiness projection in the current candidate map. It builds a proposed
-    manifest and reports evidence, authority, closure-condition, rollback, and
-    learning readiness without registering the loop, verifying proofs,
-    submitting anchors, emitting receipts, or changing audit/proof runtime
-    behavior.
+18. Added and then admitted the audit/proof loop into the default read model.
+    The dossier now reports registry admission while preserving the same
+    non-mutation boundary: it does not verify proofs, submit anchors, emit
+    receipts, mutate the registry, or change audit/proof runtime behavior.
+19. Added an exact proof-matrix witness for the audit/proof default read-model
+    admission so the holistic loop surface remains at zero unanchored labels.
 
 ## Evidence Catalog Follow-Up
 
@@ -547,14 +549,15 @@ or execution authority.
 
 ## Audit Proof Admission Dossier Follow-Up
 
-The audit/proof admission dossier projects the final candidate-specific
-admission readiness packet from the current candidate map:
+The audit/proof admission dossier reports the admitted candidate-specific
+registry state from the current candidate map:
 
 ```text
 dossier.candidate_id == audit_proof_verification_loop
-dossier.admission_status == ready_for_operator_decision
-requires_operator_registration_decision in dossier.admission_blockers
-dossier.registered == false
+dossier.admission_status == registered
+dossier.admission_blockers == []
+dossier.next_action == already_registered
+dossier.registered == true
 dossier.read_only == true
 dossier.mutation_route == false
 dossier.runtime_behavior_change == false
@@ -564,9 +567,9 @@ dossier.registration_effect.registers_loop == false
 
 The dossier includes a proposed `LoopManifest`, existing audit/proof source
 refs, evidence gap report, authority gap report, closure-condition gap report,
-rollback readiness, and learning policy readiness. It is not registration,
-terminal closure, runtime migration, proof verification, anchor submission,
-receipt emission, or execution authority.
+rollback readiness, and learning policy readiness. It is not registration
+cause, terminal closure, runtime migration, proof verification, anchor
+submission, receipt emission, or execution authority.
 
 ## Fracture Deltas
 
