@@ -37,6 +37,21 @@ _PLATFORM_PASSTHROUGH_KEYS: tuple[str, ...] = (
     if os.name == "nt"
     else ("PATH", "HOME", "TMPDIR")
 )
+_REDACTED_ARG = "[REDACTED_ARG]"
+_SENSITIVE_ARG_MARKERS: tuple[str, ...] = (
+    "api-key",
+    "api_key",
+    "apikey",
+    "authorization",
+    "bearer",
+    "credential",
+    "password",
+    "passwd",
+    "private-key",
+    "private_key",
+    "secret",
+    "token",
+)
 
 
 def _minimal_process_environment(extra_env: Mapping[str, str]) -> dict[str, str]:
@@ -226,7 +241,40 @@ def _sha256_json(value: Any) -> str:
 
 
 def _argv_summary(argv: tuple[str, ...]) -> tuple[str, ...]:
-    return tuple(argv[:3])
+    return _redacted_argv(argv)[:3]
+
+
+def _safe_argv_details(argv: tuple[str, ...]) -> list[str]:
+    return list(_redacted_argv(argv))
+
+
+def _redacted_argv(argv: tuple[str, ...]) -> tuple[str, ...]:
+    redacted: list[str] = []
+    redact_next = False
+    for item in argv:
+        if redact_next:
+            redacted.append(_REDACTED_ARG)
+            redact_next = False
+            continue
+        if _arg_contains_sensitive_material(item):
+            redacted.append(_REDACTED_ARG)
+            if _arg_is_sensitive_flag_without_value(item):
+                redact_next = True
+            continue
+        redacted.append(item)
+    return tuple(redacted)
+
+
+def _arg_contains_sensitive_material(value: str) -> bool:
+    lowered = value.lower()
+    return any(marker in lowered for marker in _SENSITIVE_ARG_MARKERS)
+
+
+def _arg_is_sensitive_flag_without_value(value: str) -> bool:
+    if not value.startswith("-") or "=" in value:
+        return False
+    normalized = value.lstrip("-").replace("_", "-").lower()
+    return any(marker.replace("_", "-") in normalized for marker in _SENSITIVE_ARG_MARKERS)
 
 
 def _build_shell_receipt(
@@ -370,7 +418,7 @@ class ShellExecutor:
                             details={
                                 "verdict": verdict.verdict,
                                 "matched_rule": verdict.matched_rule,
-                                "argv_summary": list(verdict.argv_summary),
+                                "argv_summary": _safe_argv_details(tuple(verdict.argv_summary)),
                             },
                         ),
                         effect_name="policy_denied",
@@ -462,7 +510,7 @@ class ShellExecutor:
                     code="timeout",
                     message="shell execution timed out",
                     details={
-                        "argv": list(request.argv),
+                        "argv": _safe_argv_details(request.argv),
                         "timeout_seconds": request.timeout_seconds,
                         "stdout": stdout,
                         "stderr": stderr,
@@ -493,7 +541,7 @@ class ShellExecutor:
                 failure=ExecutionFailure(
                     code="spawn_failed",
                     message=_classify_spawn_exception(exc),
-                    details={"argv": list(request.argv)},
+                    details={"argv": _safe_argv_details(request.argv)},
                 ),
                 effect_name="process_start_failed",
                 receipt=receipt,
@@ -524,7 +572,7 @@ class ShellExecutor:
                 EffectRecord(
                     name=effect_name,
                     details={
-                        "argv": list(request.argv),
+                        "argv": _safe_argv_details(request.argv),
                         "returncode": completed.returncode,
                         "stdout": stdout,
                         "stderr": stderr,

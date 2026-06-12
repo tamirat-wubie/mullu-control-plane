@@ -220,6 +220,68 @@
       "closure:closed_blocked"
     ]
   },
+  "life_meaning_judgment": {
+    "judgment_id": "life-meaning:act_pay_invoice_123",
+    "action_id": "act_pay_invoice_123",
+    "decision": "block",
+    "affected_symbols": [
+      {
+        "symbol_id": "invoice-123-payment-continuity",
+        "symbol_kind": "economic_life_support_relation",
+        "life_status": "unknown",
+        "feeling_status": "unknown",
+        "meaning_bearing": "indirect",
+        "fragility_level": 6,
+        "agency_level": 3
+      }
+    ],
+    "life_impact": "indirect",
+    "feeling_impact": "indirect",
+    "meaning_impact": "indirect",
+    "truth_preserved": true,
+    "dignity_boundary": "unknown",
+    "consent_required": true,
+    "consent_present": false,
+    "love_delta": "neutral",
+    "resonance_delta": "unknown",
+    "domination_risk": true,
+    "justice_repair_required": true,
+    "continuity_delta": "unknown",
+    "irreversible": false,
+    "reasons": [
+      "meaning_bearing_action_requires_consent_or_escalation",
+      "dignity_boundary_unknown",
+      "domination_risk_detected"
+    ],
+    "evidence_refs": [
+      "trace://cdt_blocked_approval_expired_001",
+      "policy://payments/approval-freshness"
+    ],
+    "approval_required": false,
+    "rollback_required": false
+  },
+  "life_continuity_judgment": {
+    "judgment_ref": "life-continuity://uao_invoice_payment_blocked",
+    "conflict_law_ref": "doctrine://life-continuity-conflict-law/v1",
+    "life_impact": "indirect",
+    "feeling_impact": "indirect",
+    "feeling_observer_impact": "indirect",
+    "meaning_impact": "indirect",
+    "meaning_continuity_delta": "unknown",
+    "value_bearing_symbol": true,
+    "lived_meaning_risk": "medium",
+    "love_delta": "neutral",
+    "resonance_delta": "unknown",
+    "dignity_boundary": "unknown",
+    "truth_preserved": true,
+    "domination_risk": true,
+    "decision": "block",
+    "evidence_refs": [
+      "trace://cdt_blocked_approval_expired_001",
+      "policy://payments/approval-freshness"
+    ],
+    "review_required": true
+  },
   "exposure_boundary": {
     "redaction_level": "user_safe",
     "allowed_audiences": [

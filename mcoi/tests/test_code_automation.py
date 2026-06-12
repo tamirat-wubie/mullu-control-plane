@@ -1045,6 +1045,45 @@ class TestCommandPolicy:
         assert "denied git global option: -c" in config_override[2]
         assert "denied git remote argument" in remote_argument[2]
 
+    def test_package_manager_network_mutation_commands_are_blocked(self, tmp_path: Path):
+        ws = _setup_workspace(tmp_path)
+        adapter = _adapter(ws)
+
+        pip_install = adapter.run_command("cmd-pip-install", ["pip", "install", "requests"])
+        npm_install = adapter.run_command("cmd-npm-install", ["npm", "install"])
+        pnpm_add = adapter.run_command("cmd-pnpm-add", ["pnpm", "add", "left-pad"])
+        npx_exec = adapter.run_command("cmd-npx-exec", ["npx", "create-example"])
+
+        assert pip_install[0] == -1
+        assert npm_install[0] == -1
+        assert pnpm_add[0] == -1
+        assert npx_exec[0] == -1
+        assert "denied package manager subcommand: pip:install" in pip_install[2]
+        assert "denied package manager subcommand: npm:install" in npm_install[2]
+        assert "denied package manager subcommand: pnpm:add" in pnpm_add[2]
+        assert "denied package manager executable: npx" in npx_exec[2]
+
+    def test_permissive_command_policy_can_allow_package_manager_commands(
+        self, tmp_path: Path, monkeypatch,
+    ):
+        ws = _setup_workspace(tmp_path)
+        adapter = LocalCodeAdapter(
+            root_path=str(ws),
+            clock=lambda: T0,
+            command_policy=CommandPolicy.permissive_for_testing(),
+        )
+
+        monkeypatch.setattr(
+            "mcoi_runtime.adapters.code_adapter.subprocess.run",
+            lambda *a, **kw: subprocess.CompletedProcess(a[0], 0, stdout="ok", stderr=""),
+        )
+
+        rc, stdout, stderr, _ = adapter.run_command("cmd-permissive-pip", ["pip", "install", "requests"])
+
+        assert rc == 0
+        assert stdout == "ok"
+        assert stderr == ""
+
     def test_git_status_is_allowed(self, tmp_path: Path, monkeypatch):
         # Stub subprocess.run so we don't actually invoke git; we just want
         # to confirm the policy gate accepts the command.

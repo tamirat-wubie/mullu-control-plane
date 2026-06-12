@@ -4469,18 +4469,23 @@
         "mcoi/tests/test_finance_approval_packet.py",
         "mcoi/tests/test_finance_approval_router.py",
         "schemas/finance_approval_email_calendar_binding_receipt.schema.json",
+        "schemas/finance_approval_email_calendar_operator_input_request.schema.json",
         "schemas/finance_approval_email_calendar_live_receipt.schema.json",
         "schemas/finance_approval_handoff_packet.schema.json",
         "schemas/finance_approval_live_handoff_chain_validation.schema.json",
         "scripts/plan_finance_approval_live_handoff.py",
         "scripts/emit_finance_approval_email_calendar_binding_receipt.py",
+        "scripts/emit_finance_approval_email_calendar_operator_input_request.py",
         "scripts/validate_finance_approval_email_calendar_binding_receipt.py",
+        "scripts/validate_finance_approval_email_calendar_operator_input_request.py",
         "scripts/produce_finance_approval_handoff_packet.py",
         "scripts/validate_finance_approval_handoff_packet_schema.py",
         "scripts/validate_finance_approval_live_handoff_chain.py",
         "tests/test_plan_finance_approval_live_handoff.py",
         "tests/test_emit_finance_approval_email_calendar_binding_receipt.py",
+        "tests/test_emit_finance_approval_email_calendar_operator_input_request.py",
         "tests/test_validate_finance_approval_email_calendar_binding_receipt.py",
+        "tests/test_validate_finance_approval_email_calendar_operator_input_request.py",
         "tests/test_produce_finance_approval_handoff_packet.py",
         "tests/test_finance_approval_handoff_packet_schema.py",
         "tests/test_validate_finance_approval_live_handoff_chain.py",
@@ -4527,6 +4532,10 @@
         "email_calendar_handoff_plan_requires_binding_receipt_ready": [
           "current_finance_handoff_plan_scopes_to_email_calendar"
         ],
+        "email_calendar_operator_input_request_names_missing_inputs_without_values": [
+          "operator_input_request_reports_missing_finance_bindings",
+          "validate_operator_input_request_accepts_blocked_request"
+        ],
         "finance_packet_policy_reasons_explicit": [
           "create_list_get_and_proof_blocked_packet"
         ],
@@ -4570,6 +4579,7 @@
         "approval_action_binds_approval_effect_and_closure_refs",
         "payment_handoff_prepared_without_live_payment_claim",
         "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope",
+        "email_calendar_operator_input_request_names_missing_inputs_without_values",
         "email_calendar_handoff_plan_requires_binding_receipt_ready",
         "email_calendar_handoff_packet_requires_live_receipt_ready",
         "payment_receipt_and_ledger_reconciliation_required_for_payment_closure",
@@ -9937,8 +9947,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1277,
-    "runtime_witness_count": 1277,
+    "exact_test_anchor_count": 1278,
+    "runtime_witness_count": 1278,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11934,6 +11944,13 @@
           },
           {
             "anchors": [
+              "tests/test_emit_finance_approval_email_calendar_operator_input_request.py::test_operator_input_request_reports_missing_finance_bindings",
+              "tests/test_validate_finance_approval_email_calendar_operator_input_request.py::test_validate_operator_input_request_accepts_blocked_request"
+            ],
+            "witness": "email_calendar_operator_input_request_names_missing_inputs_without_values"
+          },
+          {
+            "anchors": [
               "tests/test_plan_finance_approval_live_handoff.py::test_current_finance_handoff_plan_scopes_to_email_calendar"
             ],
             "witness": "email_calendar_handoff_plan_requires_binding_receipt_ready"
@@ -12007,8 +12024,8 @@
             "witness": "operator_read_model_bounds_visible_packets_and_counts"
           }
         ],
-        "exact_test_anchor_count": 17,
-        "runtime_witness_count": 17,
+        "exact_test_anchor_count": 18,
+        "runtime_witness_count": 18,
         "surface_id": "finance_approval_packets",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

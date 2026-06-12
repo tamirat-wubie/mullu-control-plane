@@ -80,6 +80,25 @@ def produce_finance_approval_pilot_witness(
         blockers.append("success_case_missing_effect_ref")
     if not success_case.closure_certificate_id:
         blockers.append("success_case_missing_closure_certificate")
+    foundation_vertical_slice = {
+        "witness_id": "foundation_vertical_slice_witness",
+        "mode": "foundation-local",
+        "production_claim": False,
+        "blocked_case": "passed"
+        if blocked_case.state is FinancePacketState.REQUIRES_REVIEW and not blocked_case.effect_refs
+        else "failed",
+        "approved_case": "passed" if success_case.state is FinancePacketState.CLOSED_SENT else "failed",
+        "policy_receipt": "present" if blocked_case.policy_decision_refs and success_case.policy_decision_refs else "missing",
+        "approval_receipt": "present" if success_case.approval_refs else "missing",
+        "effect_handoff_receipt": "present" if success_case.effect_refs else "missing",
+        "proof_export": "passed" if blocked_proof.proof_id and success_proof.proof_id else "failed",
+        "audit_replay": "local_proof_export_passed"
+        if blocked_proof.audit_root_hash and success_proof.audit_root_hash
+        else "missing",
+        "terminal_status": "foundation_ready" if not blockers else "blocked",
+        "live_handoff_ready": readiness.ready,
+        "readiness_level": readiness.readiness_level,
+    }
 
     return {
         "witness_id": stable_identifier(
@@ -93,6 +112,7 @@ def produce_finance_approval_pilot_witness(
         "checked_at": NOW,
         "status": "passed" if not blockers else "failed",
         "blockers": blockers,
+        "foundation_vertical_slice": foundation_vertical_slice,
         "external_readiness": readiness.as_dict(),
         "claim_boundary": {
             "can_claim": [

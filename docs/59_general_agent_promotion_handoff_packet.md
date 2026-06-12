@@ -17,14 +17,14 @@ This packet is the operator entry point for final promotion validation. It binds
 
 | Field | Current value |
 | --- | --- |
-| Readiness level | `production-general-agent` |
+| Readiness level | `pilot-governed-core` |
 | Capability capsules | 13 |
 | Governed capabilities | 80 |
-| Aggregate closure actions | 5 |
-| Approval-required actions | 5 |
+| Aggregate closure actions | 8 |
+| Approval-required actions | 8 |
 | Closure plan schema validation | `ok=true` |
 | Closure plan drift validation | `ok=true` |
-| Production promotion | ready |
+| Production promotion | blocked |
 
 ## Entry Points
 
@@ -75,16 +75,20 @@ This packet is the operator entry point for final promotion validation. It binds
 ## Open Blockers
 
 ```text
-none
+deployment_witness_not_published
+production_health_not_declared
 ```
 
 ## Approval-Required Actions
 
 ```text
+deployment_witness_not_published
+production_health_not_declared
+deployment_upstream_api_gate_not_ready
 capability_improvement_required:financial.refund
+capability_improvement_required:agentic_control.code_change.plan
 capability_improvement_required:agentic_control.evidence.append
 capability_improvement_required:agentic_control.governance_gate.evaluate
-capability_improvement_required:agentic_control.code_change.plan
 capability_improvement_required:agentic_control.incident_recovery.plan
 ```
 

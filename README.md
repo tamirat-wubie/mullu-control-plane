@@ -68,6 +68,29 @@ which keeps one local vocabulary clarification from becoming a canonical
 definition, mastery proof, documentation-completeness claim, publication,
 source-control publication, legal/business action, spending, customer access,
 or deployment readiness.
+Life/meaning doctrine rehearsal is bounded by
+[`docs/FOUNDATION_LIFE_MEANING_DOCTRINE_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_LIFE_MEANING_DOCTRINE_REHEARSAL_BOUNDARY.md),
+which keeps local life-impact, feeling-impact, consent, dignity, truth,
+repair, observer-status, escalation, validator, and stop-rule labels from
+becoming judgment execution, doctrine completeness, medical or legal claims,
+safety certification, research approval, publication, source-control
+publication, money movement, customer access, or deployment readiness.
+Local release-packet rehearsal is bounded by
+[`docs/FOUNDATION_LOCAL_RELEASE_PACKET_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_LOCAL_RELEASE_PACKET_REHEARSAL_BOUNDARY.md),
+which drafts release review labels, evidence-reference labels, validator/test
+summary labels, diff-hygiene labels, risk/rollback notes, public-claim review,
+version-label questions, operator-review gates, and stop rules without release
+publication, release-readiness claims, tag creation, GitHub release creation,
+artifact publication, source-control publication, customer access, legal,
+company, patent, money, secret, or deployment claims.
+Python dependency visibility rehearsal is bounded by
+[`docs/FOUNDATION_PYTHON_DEPENDENCY_VISIBILITY_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_PYTHON_DEPENDENCY_VISIBILITY_REHEARSAL_BOUNDARY.md),
+which drafts local interpreter, user-site visibility, optional dependency,
+import-probe, sandbox, elevated-preflight, dependency-gap, repair-option,
+validation-command, and stop-rule labels without dependency visibility,
+package install, environment mutation, FastAPI readiness, preflight closure,
+runtime readiness, publication, deployment, customer, legal, company, patent,
+money, or secret claims.
 Community/network preparation is bounded by
 [`docs/FOUNDATION_COMMUNITY_NETWORK_BOUNDARY.md`](docs/FOUNDATION_COMMUNITY_NETWORK_BOUNDARY.md),
 which drafts local community, forum, social, collaborator, partner, mentor,
@@ -725,8 +748,8 @@ for the deployment template.
 | Latest tagged GitHub release | `v3.13.3` | Reflected in [`GITHUB_SURFACE.md`](GITHUB_SURFACE.md), [`STATUS.md`](STATUS.md), and `RELEASE_NOTES_v0.1.md` as `0.4.3 (v3.13.3)` |
 | Main branch release notes | v4.x notes through `RELEASE_NOTES_v4.47.0.md` are repository-mainline implementation and hardening records | They do not by themselves supersede the latest GitHub release tag |
 | Local and CI governance evidence | Schema, protocol, logic-governance, release-status, gateway-closure, and promotion validators are repository/CI evidence | Commands are listed in [`STATUS.md`](STATUS.md) and [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md) |
-| Live production runtime | Not published from this repository yet | [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md) records `not-published`, `not-declared`, missing deployment target variables, and absent `deployment-witness.yml` runs |
-| Public production health | Not claimed | Requires reachable `/health`, `/gateway/witness`, `/runtime/conformance`, and production evidence plane endpoints before status can change |
+| Live production runtime | Not published from this repository yet | [`DEPLOYMENT_STATUS.md`](DEPLOYMENT_STATUS.md) records `not-published`; local evidence shows a reachable pilot health endpoint, but publication remains blocked by unsigned witness/conformance evidence, upstream readiness, and missing public-health declaration receipt |
+| Public production health | Not claimed | Requires signed `/health`, `/gateway/witness`, `/runtime/conformance`, production evidence plane, closure validation, and public-health declaration evidence before status can change |
 
 Until the deployment witness is collected and published, this README describes
 the governed platform, local deployment contracts, and repository-validated
@@ -1070,7 +1093,9 @@ alignment, CI gates, governance checks, and known reflection gaps.
 Deployment publication is bounded separately by
 [DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md). The current deployment witness
 state is `not-published`; no public production health endpoint is declared in
-this repository.
+this repository. A pilot health endpoint may be reachable, but that is not a
+published production-health claim without signed deployment witness,
+conformance, upstream-readiness, production-evidence, and declaration receipts.
 
 ## Docs
 

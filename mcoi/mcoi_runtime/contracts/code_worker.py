@@ -81,7 +81,7 @@ def _has_windows_drive_prefix(normalized_path: str) -> bool:
     parts = PurePosixPath(normalized_path).parts
     return bool(
         parts
-        and len(parts[0]) == 2
+        and len(parts[0]) >= 2
         and parts[0][1] == ":"
         and parts[0][0].isalpha()
     )

@@ -84,6 +84,11 @@ from gateway.enterprise_authority import AuthorityDecision
 from gateway.evidence_bundle import build_command_trust_bundle
 from gateway.event_log import WebhookEventLog
 from gateway.federated_control import FederatedControlPlane, federated_control_snapshot_to_json_dict
+from gateway.governed_operations import (
+    GovernedOperationsKernel,
+    default_loop_registry,
+    receipt_from_projection,
+)
 from gateway.mcp_capabilities import register_mcp_capabilities
 from gateway.mcp_capability_fabric import MCPAuthorityRecords, build_mcp_gateway_import_from_env
 from gateway.observability import GatewayObservabilityRecorder
@@ -754,6 +759,58 @@ def create_gateway_app(
             signature_key_id=os.environ.get("MULLU_DEPLOYMENT_WITNESS_KEY_ID", "deployment-witness-local"),
         )
 
+    def _governed_operations_evidence_refs(
+        *,
+        conformance: Mapping[str, Any],
+        deployment: Mapping[str, Any],
+        authority_witness: Mapping[str, Any],
+        latest_anchor_id: str,
+    ) -> tuple[str, ...]:
+        """Project existing read evidence into governed-operations refs."""
+        refs: list[str] = []
+        checks_missing = deployment.get("checks_missing", ())
+        if isinstance(checks_missing, list) and not checks_missing and deployment.get("signature"):
+            refs.append("deployment_witness:current")
+        if deployment.get("gateway_health") == "pass":
+            refs.append("runtime_health:pass")
+        if deployment.get("proof_store") == "pass":
+            refs.append("proof_verify:pass")
+        deployment_id = str(deployment.get("deployment_id", "")).strip()
+        if deployment_id and "unpublished" not in deployment_id:
+            refs.append("domain:declared")
+        if str(conformance.get("terminal_status", "")) in {"conformant", "conformant_with_gaps"}:
+            refs.append("runtime_conformance:current")
+        if latest_anchor_id:
+            refs.append("audit_anchor:current")
+        if bool(authority_witness.get("responsibility_debt_clear")):
+            refs.append("authority:witness")
+        return tuple(dict.fromkeys(refs))
+
+    def _governed_operations_observed_states(
+        *,
+        conformance: Mapping[str, Any],
+        deployment: Mapping[str, Any],
+        authority_witness: Mapping[str, Any],
+        latest_anchor_id: str,
+    ) -> dict[str, str]:
+        """Return conservative observed states for registered operations loops."""
+        checks_missing = deployment.get("checks_missing", ())
+        deployment_witnessed = (
+            isinstance(checks_missing, list)
+            and not checks_missing
+            and bool(deployment.get("signature"))
+        )
+        terminal_status = str(conformance.get("terminal_status", "missing"))
+        return {
+            "deployment_witness": "witnessed" if deployment_witnessed else "awaiting_evidence",
+            "runtime_conformance": "conformant" if terminal_status == "conformant" else terminal_status,
+            "audit_proof_verification": "verified" if latest_anchor_id else "awaiting_evidence",
+            "authority_obligations": "clear" if bool(authority_witness.get("responsibility_debt_clear")) else "debt_open",
+            "cognitive_outcome_loop": "awaiting_evidence",
+            "governed_code_change_loop": "awaiting_evidence",
+            "adapter_promotion_loop": "awaiting_evidence",
+        }
+
     def _unanchored_event_count() -> int:
         """Return unanchored command-event count when the ledger store exposes it."""
         store = getattr(command_ledger, "_store", None)
@@ -1414,6 +1471,67 @@ def create_gateway_app(
             runtime_witness_secret=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", "local-runtime-witness-secret"),
         )
         return certificate.to_json_dict()
+
+    @app.get("/governed-operations/read-model")
+    def governed_operations_read_model():
+        conformance = issue_conformance_certificate(
+            router=router,
+            command_ledger=command_ledger,
+            authority_obligation_mesh=authority_obligation_mesh,
+            capability_admission_gate=capability_admission_gate,
+            plan_ledger=plan_ledger,
+            environment=gateway_env,
+            signing_secret=os.environ.get("MULLU_RUNTIME_CONFORMANCE_SECRET", "local-runtime-conformance-secret"),
+            signature_key_id=os.environ.get("MULLU_RUNTIME_CONFORMANCE_KEY_ID", "runtime-conformance-local"),
+            runtime_witness_key_id=os.environ.get("MULLU_RUNTIME_WITNESS_KEY_ID", "runtime-witness-local"),
+            runtime_witness_secret=os.environ.get("MULLU_RUNTIME_WITNESS_SECRET", "local-runtime-witness-secret"),
+        ).to_json_dict()
+        deployment = _build_deployment_witness()
+        authority_witness = asdict(authority_obligation_mesh.responsibility_witness())
+        latest_anchors = command_ledger.list_anchors(limit=1)
+        latest_anchor_id = latest_anchors[0].anchor_id if latest_anchors else ""
+
+        evidence_refs = _governed_operations_evidence_refs(
+            conformance=conformance,
+            deployment=deployment,
+            authority_witness=authority_witness,
+            latest_anchor_id=latest_anchor_id,
+        )
+        receipts = ()
+        if evidence_refs:
+            receipts = (
+                receipt_from_projection(
+                    receipt_id="receipt://governed-operations-read-model",
+                    action="governed_operations_read_model",
+                    actor="gateway",
+                    authority="read_only",
+                    evidence_refs=evidence_refs,
+                    policy_result="read_model_only",
+                    timestamp=_clock(),
+                    status="projected",
+                    input_payload={"environment": gateway_env},
+                    output_payload={
+                        "evidence_ref_count": len(evidence_refs),
+                        "runtime_conformance": conformance.get("terminal_status", ""),
+                    },
+                ),
+            )
+        snapshot = GovernedOperationsKernel().build_snapshot(
+            loops=default_loop_registry(),
+            receipts=receipts,
+            observed_states=_governed_operations_observed_states(
+                conformance=conformance,
+                deployment=deployment,
+                authority_witness=authority_witness,
+                latest_anchor_id=latest_anchor_id,
+            ),
+            generated_at=_clock(),
+        )
+        return snapshot.to_json_dict()
+
+    @app.get("/governed-operations/console", response_class=HTMLResponse)
+    def governed_operations_console():
+        return HTMLResponse(_governed_operations_console_html(governed_operations_read_model()))
 
     @app.get("/deployment/witness")
     def deployment_witness():
@@ -3810,6 +3928,115 @@ def _authority_operator_console_html(
     <thead><tr>{''.join(f'<th>{escape(column)}</th>' for column in operator_audit_columns)}</tr></thead>
     <tbody>{_rows(operator_audit_events, operator_audit_columns)}</tbody>
   </table>
+</main>
+</body>
+</html>"""
+
+
+def _governed_operations_console_html(read_model: Mapping[str, Any]) -> str:
+    """Render governed operations readiness as a read-only operator console."""
+    from html import escape
+
+    def _cell(value: Any) -> str:
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        if isinstance(value, (list, tuple)):
+            rendered = ", ".join(str(item) for item in value)
+        elif isinstance(value, Mapping):
+            rendered = json.dumps(value, sort_keys=True)
+        else:
+            rendered = str(value)
+        return escape(rendered)
+
+    def _table(items: Any, columns: tuple[str, ...], *, empty_label: str) -> str:
+        rows: list[str] = []
+        if isinstance(items, list):
+            for item in items:
+                if isinstance(item, Mapping):
+                    rows.append(
+                        "<tr>"
+                        + "".join(f"<td>{_cell(item.get(column, ''))}</td>" for column in columns)
+                        + "</tr>"
+                    )
+        if not rows:
+            rows.append(f'<tr><td colspan="{len(columns)}">{escape(empty_label)}</td></tr>')
+        headings = "".join(f"<th>{escape(column)}</th>" for column in columns)
+        return f"<table><thead><tr>{headings}</tr></thead><tbody>{''.join(rows)}</tbody></table>"
+
+    metrics = (
+        ("readiness class", read_model.get("readiness_class", "")),
+        ("readiness status", read_model.get("readiness_status", "")),
+        ("loops", read_model.get("loop_count", 0)),
+        ("closed loops", read_model.get("closed_loop_count", 0)),
+        ("gaps", read_model.get("gap_count", 0)),
+        ("blocking gaps", read_model.get("blocking_gap_count", 0)),
+        ("drift checks", read_model.get("drift_count", 0)),
+        ("snapshot hash", read_model.get("snapshot_hash", "")),
+    )
+    metric_items = "\n".join(
+        f"<li><span>{escape(label.title())}</span><strong>{_cell(value)}</strong></li>"
+        for label, value in metrics
+    )
+    loops = _table(
+        read_model.get("loops", ()),
+        ("loop_id", "system_ref", "owner", "declared_state", "evidence_refs"),
+        empty_label="No loops registered",
+    )
+    gaps = _table(
+        read_model.get("gaps", ()),
+        ("gap_id", "severity", "source", "blocker_type", "evidence_missing", "closure_condition"),
+        empty_label="No gaps",
+    )
+    closure_results = _table(
+        read_model.get("closure_results", ()),
+        ("loop_id", "status", "closed", "missing_evidence_refs", "drift_status", "closure_evidence_refs"),
+        empty_label="No closure results",
+    )
+    drift_checks = _table(
+        read_model.get("drift_checks", ()),
+        ("drift_id", "loop_id", "declared_state", "observed_state", "status", "evidence_refs"),
+        empty_label="No drift checks",
+    )
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullu Governed Operations</title>
+  <style>
+    :root {{ color-scheme: light; font-family: Arial, sans-serif; }}
+    body {{ margin: 0; background: #f7f8fa; color: #1b1f24; }}
+    main {{ max-width: 1240px; margin: 0 auto; padding: 32px 24px 48px; }}
+    h1 {{ margin: 0 0 8px; font-size: 28px; }}
+    h2 {{ margin: 28px 0 12px; font-size: 20px; }}
+    p {{ margin: 0 0 20px; color: #57606a; }}
+    nav {{ display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 24px; }}
+    a {{ color: #0969da; }}
+    .metrics {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; padding: 0; margin: 0 0 24px; }}
+    .metrics li {{ display: flex; justify-content: space-between; gap: 16px; list-style: none; background: #fff; border: 1px solid #d8dee4; border-radius: 8px; padding: 14px; }}
+    table {{ width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #d8dee4; margin-bottom: 24px; }}
+    th, td {{ padding: 10px 12px; border-bottom: 1px solid #d8dee4; text-align: left; vertical-align: top; font-size: 13px; overflow-wrap: anywhere; }}
+    th {{ background: #eef1f4; font-weight: 700; }}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Mullu Governed Operations</h1>
+  <p>Read-only closure, gap, drift, receipt, and readiness projection for registered control-plane loops.</p>
+  <nav>
+    <a href="/governed-operations/read-model">read model json</a>
+    <a href="/runtime/conformance">runtime conformance</a>
+    <a href="/deployment/witness">deployment witness</a>
+    <a href="/authority/operator">authority console</a>
+  </nav>
+  <ul class="metrics">{metric_items}</ul>
+  <h2>Registered Loops</h2>
+  {loops}
+  <h2>Gaps</h2>
+  {gaps}
+  <h2>Closure Results</h2>
+  {closure_results}
+  <h2>Drift Checks</h2>
+  {drift_checks}
 </main>
 </body>
 </html>"""

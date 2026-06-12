@@ -1,0 +1,117 @@
+{
+  "artifact_publication_allowed": false,
+  "blocked_claims": [
+    "release packet publication",
+    "release readiness",
+    "version label selection",
+    "tag creation",
+    "GitHub release creation",
+    "changelog publication",
+    "artifact publication",
+    "source-control publication",
+    "external publication",
+    "deployment readiness",
+    "customer access",
+    "legal clearance",
+    "company formation",
+    "patent action",
+    "money movement",
+    "secret publication",
+    "private value recording"
+  ],
+  "changelog_publication_allowed": false,
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deferral_labels": [
+    "change_family_inventory_rehearsal",
+    "evidence_reference_bundle_rehearsal",
+    "validator_result_summary_rehearsal",
+    "test_result_summary_rehearsal",
+    "diff_hygiene_summary_rehearsal",
+    "risk_and_rollback_note_rehearsal",
+    "public_claim_review_rehearsal",
+    "version_label_rehearsal",
+    "operator_review_gate_rehearsal",
+    "stop_rule_rehearsal"
+  ],
+  "deployment_allowed": false,
+  "external_publication_allowed": false,
+  "github_release_allowed": false,
+  "legal_clearance_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "keep local release-packet rehearsal labels private until source-control review, test evidence, public-claim review, rollback review, and operator reassessment evidence exist",
+  "patent_action_allowed": false,
+  "private_value_recording_allowed": false,
+  "release_packet_published": false,
+  "release_readiness_claimed": false,
+  "schema_version": "foundation.local_release_packet_rehearsal.v1",
+  "secret_publication_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_publication_allowed": false,
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "public_safe_note": "Change-family inventory rehearsal only; release scope closure is not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "change_family_inventory_rehearsal",
+      "surface_type": "local_change_family_label"
+    },
+    {
+      "public_safe_note": "Evidence-reference bundle rehearsal only; receipt contents, private paths, refs, and artifacts are not copied.",
+      "state": "AwaitingEvidence",
+      "surface_id": "evidence_reference_bundle_rehearsal",
+      "surface_type": "local_evidence_bundle_label"
+    },
+    {
+      "public_safe_note": "Validator-result summary rehearsal only; full preflight closure and CI parity are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "validator_result_summary_rehearsal",
+      "surface_type": "local_validator_summary_label"
+    },
+    {
+      "public_safe_note": "Test-result summary rehearsal only; complete coverage and flake-free status are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "test_result_summary_rehearsal",
+      "surface_type": "local_test_summary_label"
+    },
+    {
+      "public_safe_note": "Diff-hygiene summary rehearsal only; staging, commit, push, tag creation, and publication are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "diff_hygiene_summary_rehearsal",
+      "surface_type": "local_diff_hygiene_label"
+    },
+    {
+      "public_safe_note": "Risk and rollback note rehearsal only; rollback execution and release execution are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "risk_and_rollback_note_rehearsal",
+      "surface_type": "local_risk_rollback_label"
+    },
+    {
+      "public_safe_note": "Public-claim review rehearsal only; public claims and customer access are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "public_claim_review_rehearsal",
+      "surface_type": "local_public_claim_label"
+    },
+    {
+      "public_safe_note": "Version-label rehearsal only; no real version, tag, or release id is selected.",
+      "state": "AwaitingEvidence",
+      "surface_id": "version_label_rehearsal",
+      "surface_type": "local_version_label"
+    },
+    {
+      "public_safe_note": "Operator-review gate rehearsal only; approval and readiness are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "operator_review_gate_rehearsal",
+      "surface_type": "local_operator_review_label"
+    },
+    {
+      "public_safe_note": "Stop-rule rehearsal only; publication, deployment, money movement, legal or company action, patent action, customer access, source control, and secret handling are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "stop_rule_rehearsal",
+      "surface_type": "local_stop_rule_label"
+    }
+  ],
+  "tag_creation_allowed": false,
+  "version_label_selected": false,
+  "witness_id": "foundation_local_release_packet_rehearsal_witness.awaiting_evidence.v1"
+}

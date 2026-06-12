@@ -1,18 +1,27 @@
 {
   "approval_required_blockers": [
+    "deployment_witness_not_published",
+    "production_health_not_declared",
+    "deployment_upstream_api_gate_not_ready",
     "capability_improvement_required:financial.refund",
+    "capability_improvement_required:agentic_control.code_change.plan",
     "capability_improvement_required:agentic_control.evidence.append",
     "capability_improvement_required:agentic_control.governance_gate.evaluate",
-    "capability_improvement_required:agentic_control.code_change.plan",
     "capability_improvement_required:agentic_control.incident_recovery.plan"
   ],
-  "blocking_gap_ids": [],
+  "blocking_gap_ids": [
+    "deployment_witness_not_published",
+    "production_health_not_declared"
+  ],
   "checklist_id": "general-agent-promotion-operator-v1",
   "conditional_approval_blockers": [
+    "deployment_witness_not_published",
+    "production_health_not_declared",
+    "deployment_upstream_api_gate_not_ready",
     "capability_improvement_required:financial.refund",
+    "capability_improvement_required:agentic_control.code_change.plan",
     "capability_improvement_required:agentic_control.evidence.append",
     "capability_improvement_required:agentic_control.governance_gate.evaluate",
-    "capability_improvement_required:agentic_control.code_change.plan",
     "capability_improvement_required:agentic_control.incident_recovery.plan"
   ],
   "required_commands": [
@@ -30,10 +39,10 @@
     {
       "command": "python scripts\\validate_general_agent_promotion.py --output .change_assurance\\general_agent_promotion_readiness.json",
       "required_evidence": [
-        "readiness_level=production-general-agent",
+        "readiness_level=pilot-governed-core",
         "capability_count=80",
         "capsule_count=13",
-        "production blockers absent"
+        "production blockers explicit"
       ],
       "step_id": "write_promotion_readiness"
     },
@@ -41,9 +50,9 @@
       "command": "python scripts\\plan_capability_adapter_closure.py --output .change_assurance\\capability_adapter_closure_plan.json && python scripts\\plan_deployment_publication_closure.py --output .change_assurance\\deployment_publication_closure_plan.json",
       "required_evidence": [
         "capability_adapter_closure_plan.json action_count=0",
-        "deployment_publication_closure_plan.json action_count=0",
-        "adapter and credential closure actions absent",
-        "deployment publication closure already validated"
+        "deployment_publication_closure_plan.json action_count=3",
+        "adapter closure actions absent",
+        "deployment publication closure actions approval_required=true"
       ],
       "step_id": "write_source_closure_plans"
     },
@@ -60,7 +69,7 @@
     {
       "command": "python scripts\\run_general_agent_promotion_closure_chain.py --json --strict",
       "required_evidence": [
-        "general_agent_promotion_closure_plan.json total_action_count=5",
+        "general_agent_promotion_closure_plan.json total_action_count=8",
         "general_agent_promotion_closure_plan_schema_validation.json ok=true",
         "general_agent_promotion_closure_plan_validation.json ok=true",
         "capability_improvement_portfolio.json plan_count=5",
@@ -75,9 +84,9 @@
         "terminal_evidence_reconciliation ready_for_terminal_certificate_minting=false",
         "general_agent_promotion_terminal_minting_gate.json schema_valid=true",
         "terminal_minting_gate ready_for_terminal_certificate_minting=false",
-        "approval_required_action_count=5",
-        "source_plan_type includes portfolio; adapter and deployment source actions are closed",
-        "closure_chain status=passed",
+        "approval_required_action_count=8",
+        "source_plan_type includes deployment and portfolio",
+        "closure_chain status=passed_blocked",
         "closure_chain artifact_valid=true"
       ],
       "step_id": "validate_aggregate_closure_plan"
@@ -123,8 +132,8 @@
       "required_evidence": [
         "deployment publication closure ok",
         "public health endpoint matches witness gateway URL",
-        "general-agent promotion ready=true",
-        "readiness_level=production-general-agent"
+        "general-agent promotion ready=false",
+        "readiness_level=pilot-governed-core"
       ],
       "step_id": "validate_publication_and_promotion"
     }

@@ -214,6 +214,67 @@
       "closure:closed_deferred"
     ]
   },
+  "life_meaning_judgment": {
+    "judgment_id": "life-meaning:act_refresh_partner_inventory",
+    "action_id": "act_refresh_partner_inventory",
+    "decision": "pause",
+    "affected_symbols": [
+      {
+        "symbol_id": "partner-inventory-feed-continuity",
+        "symbol_kind": "supply_relation",
+        "life_status": "unknown",
+        "feeling_status": "unknown",
+        "meaning_bearing": "unknown",
+        "fragility_level": 5,
+        "agency_level": 2
+      }
+    ],
+    "life_impact": "unknown",
+    "feeling_impact": "unknown",
+    "meaning_impact": "unknown",
+    "truth_preserved": true,
+    "dignity_boundary": "unknown",
+    "consent_required": true,
+    "consent_present": false,
+    "love_delta": "unknown",
+    "resonance_delta": "unknown",
+    "domination_risk": false,
+    "justice_repair_required": false,
+    "continuity_delta": "unknown",
+    "irreversible": false,
+    "reasons": [
+      "meaning_bearing_action_requires_consent_or_escalation",
+      "dignity_boundary_unknown"
+    ],
+    "evidence_refs": [
+      "trace://cdt_deferred_stale_evidence_001",
+      "policy://partner-sync/evidence-freshness"
+    ],
+    "approval_required": true,
+    "rollback_required": false
+  },
+  "life_continuity_judgment": {
+    "judgment_ref": "life-continuity://uao_stale_evidence",
+    "conflict_law_ref": "doctrine://life-continuity-conflict-law/v1",
+    "life_impact": "unknown",
+    "feeling_impact": "unknown",
+    "feeling_observer_impact": "unknown",
+    "meaning_impact": "unknown",
+    "meaning_continuity_delta": "unknown",
+    "value_bearing_symbol": true,
+    "lived_meaning_risk": "unknown",
+    "love_delta": "unknown",
+    "resonance_delta": "unknown",
+    "dignity_boundary": "unknown",
+    "truth_preserved": true,
+    "domination_risk": false,
+    "decision": "pause",
+    "evidence_refs": [
+      "trace://cdt_deferred_stale_evidence_001",
+      "policy://partner-sync/evidence-freshness"
+    ],
+    "review_required": true
+  },
   "exposure_boundary": {
     "redaction_level": "operator",
     "allowed_audiences": [

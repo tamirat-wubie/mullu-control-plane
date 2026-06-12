@@ -34,6 +34,28 @@
       "summary": "Source-control review checklist preparation drafts local review questions, dirty-worktree snapshot triage, Git-effect stop-rule review, external-action stop-rule review, validation-receipt current-packet review, next-action witness review, runtime-safety current-packet triage, secrets/private-value screening, unrelated-work preservation, and untracked-artifact category triage without checklist completion, clean-worktree claims, status-output publication, receipt-content publication, check-count closure, failed-check closure, terminal closure, broad continuation execution, roadmap commitment, deadline promise, scope closure, ownership assignment, file-list publication, branch switching, tag creation, reset, checkout, delete, move, revert, Git config change, runtime readiness, adapter authority, secret clearance, secret-scan pass, Git effects, customer access, customer action, legal clearance, legal action, company formation, company action, patent action, money movement, payment action, secret publication, external account activation, service activation, provider binding, endpoint target recording, personal-data collection, external publication, or deployment claims."
     },
     {
+      "family_id": "local_release_packet_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_LOCAL_RELEASE_PACKET_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_local_release_packet_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_local_release_packet_rehearsal_boundary.py",
+        "tests/test_validate_foundation_local_release_packet_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Local release-packet rehearsal records release review labels without release-packet publication, release readiness, version-label selection, tag creation, GitHub release creation, changelog publication, artifact publication, source-control publication, external publication, deployment, customer access, legal clearance, company formation, patent action, money movement, secret publication, or private-value recording claims."
+    },
+    {
+      "family_id": "python_dependency_visibility_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_PYTHON_DEPENDENCY_VISIBILITY_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_python_dependency_visibility_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_python_dependency_visibility_rehearsal_boundary.py",
+        "tests/test_validate_foundation_python_dependency_visibility_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Python dependency-visibility rehearsal records local interpreter, package-visibility, optional dependency, import-probe, sandbox/elevated preflight, dependency-gap, repair-option, validation-pairing, and stop-rule labels without dependency visibility, package install, environment mutation, private path recording, FastAPI readiness, full preflight closure, runtime readiness, publication, deployment, customer access, legal/company/patent action, money movement, or secret publication claims."
+    },
+    {
       "family_id": "operator_readiness_boundary",
       "required_evidence": [
         "docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md",
@@ -89,6 +111,17 @@
       ],
       "state": "AwaitingEvidence",
       "summary": "Concept glossary rehearsal records one local vocabulary clarification label set without canonical definition, glossary completeness, concept mastery, technical readiness, training completion, comprehension proof, public docs readiness, product readiness, customer readiness, private-value recording, legal/business action, spending, money movement, source-control publication, external publication, or deployment claims."
+    },
+    {
+      "family_id": "life_meaning_doctrine_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_LIFE_MEANING_DOCTRINE_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_life_meaning_doctrine_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_life_meaning_doctrine_rehearsal_boundary.py",
+        "tests/test_validate_foundation_life_meaning_doctrine_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Life/meaning doctrine rehearsal records local stop-rule labels without judgment execution, doctrine completeness, life-impact closure, feeling-status determination, medical claims, mental-health claims, ethics clearance, legal clearance, safety certification, human-subjects research, observer-personhood claims, product readiness, customer readiness, private-value recording, spending, money movement, source-control publication, external publication, or deployment claims."
     },
     {
       "family_id": "architecture_map_boundary",
@@ -1015,11 +1048,14 @@
     "python scripts/validate_foundation_mode.py",
     "python scripts/validate_foundation_source_control_boundary.py",
     "python scripts/validate_foundation_source_control_review_checklist_boundary.py",
+    "python scripts/validate_foundation_local_release_packet_rehearsal_boundary.py",
+    "python scripts/validate_foundation_python_dependency_visibility_rehearsal_boundary.py",
     "python scripts/validate_foundation_operator_readiness_boundary.py",
     "python scripts/validate_foundation_solo_daily_loop_boundary.py",
     "python scripts/validate_foundation_learning_path_boundary.py",
     "python scripts/validate_foundation_learning_loop_rehearsal_boundary.py",
     "python scripts/validate_foundation_concept_glossary_rehearsal_boundary.py",
+    "python scripts/validate_foundation_life_meaning_doctrine_rehearsal_boundary.py",
     "python scripts/validate_foundation_architecture_map_boundary.py",
     "python scripts/validate_foundation_system_boundary_inventory_boundary.py",
     "python scripts/validate_foundation_module_inventory_boundary.py",

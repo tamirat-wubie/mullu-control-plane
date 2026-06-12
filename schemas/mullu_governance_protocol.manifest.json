@@ -29,6 +29,12 @@
       "surface": "promotion"
     },
     {
+      "schema_id": "agentic-service-harness",
+      "path": "schemas/agentic_service_harness.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "agent-identity",
       "path": "schemas/agent_identity.schema.json",
       "urn": "urn:mullusi:schema:agent-identity:1",
@@ -311,6 +317,12 @@
       "surface": "deployment"
     },
     {
+      "schema_id": "governed-operations-snapshot",
+      "path": "schemas/governed_operations_snapshot.schema.json",
+      "urn": "urn:mullusi:schema:governed-operations-snapshot:1",
+      "surface": "operations"
+    },
+    {
       "schema_id": "domain-capsule",
       "path": "schemas/domain_capsule.schema.json",
       "urn": "urn:mullusi:schema:domain-capsule:1",
@@ -512,6 +524,12 @@
       "schema_id": "finance-approval-email-calendar-binding-receipt",
       "path": "schemas/finance_approval_email_calendar_binding_receipt.schema.json",
       "urn": "urn:mullusi:schema:finance-approval-email-calendar-binding-receipt:1",
+      "surface": "finance"
+    },
+    {
+      "schema_id": "finance-approval-email-calendar-operator-input-request",
+      "path": "schemas/finance_approval_email_calendar_operator_input_request.schema.json",
+      "urn": "urn:mullusi:schema:finance-approval-email-calendar-operator-input-request:1",
       "surface": "finance"
     },
     {
@@ -1023,6 +1041,12 @@
       "path": "schemas/universal_construct.schema.json",
       "urn": "urn:mullusi:schema:universal-construct:1",
       "surface": "construct"
+    },
+    {
+      "schema_id": "life-meaning-judgment",
+      "path": "schemas/life_meaning_judgment.schema.json",
+      "urn": "urn:mullusi:schema:life-meaning-judgment:1",
+      "surface": "orchestration"
     },
     {
       "schema_id": "universal-action-orchestration",

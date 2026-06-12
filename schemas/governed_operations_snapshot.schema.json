@@ -1,0 +1,418 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:governed-operations-snapshot:1",
+  "title": "Governed Operations Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "snapshot_id",
+    "generated_at",
+    "readiness_class",
+    "readiness_status",
+    "loop_count",
+    "closed_loop_count",
+    "blocking_gap_count",
+    "gap_count",
+    "drift_count",
+    "loops",
+    "receipts",
+    "closure_results",
+    "drift_checks",
+    "gaps",
+    "evidence_refs",
+    "snapshot_hash"
+  ],
+  "properties": {
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^governed-operations-[0-9a-f]{16}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "readiness_class": {
+      "type": "string",
+      "enum": [
+        "class_a",
+        "class_b",
+        "class_c",
+        "class_d"
+      ]
+    },
+    "readiness_status": {
+      "type": "string",
+      "enum": [
+        "closed",
+        "verified_with_gaps",
+        "degraded",
+        "blocked"
+      ]
+    },
+    "loop_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "closed_loop_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "blocking_gap_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "gap_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "drift_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "loops": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/loop"
+      }
+    },
+    "receipts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/receipt"
+      }
+    },
+    "closure_results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/closure_result"
+      }
+    },
+    "drift_checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/drift_check"
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/gap"
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "snapshot_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "closure_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_id",
+        "completion_conditions",
+        "required_evidence_refs",
+        "rollback_path",
+        "human_approval_boundary"
+      ],
+      "properties": {
+        "contract_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "completion_conditions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required_evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "rollback_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "human_approval_boundary": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "loop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "loop_id",
+        "system_ref",
+        "purpose",
+        "owner",
+        "declared_state",
+        "closure_contract",
+        "evidence_refs",
+        "metadata"
+      ],
+      "properties": {
+        "loop_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "system_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "declared_state": {
+          "type": "string",
+          "minLength": 1
+        },
+        "closure_contract": {
+          "$ref": "#/$defs/closure_contract"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "action",
+        "actor",
+        "authority",
+        "input_hash",
+        "output_hash",
+        "evidence_refs",
+        "policy_result",
+        "timestamp",
+        "status"
+      ],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authority": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "output_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "policy_result": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timestamp": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "closure_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "loop_id",
+        "status",
+        "closed",
+        "missing_evidence_refs",
+        "drift_status",
+        "closure_evidence_refs"
+      ],
+      "properties": {
+        "loop_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "closed",
+            "open",
+            "blocked"
+          ]
+        },
+        "closed": {
+          "type": "boolean"
+        },
+        "missing_evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "drift_status": {
+          "type": "string",
+          "enum": [
+            "aligned",
+            "drifted",
+            "unknown"
+          ]
+        },
+        "closure_evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "drift_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "drift_id",
+        "loop_id",
+        "declared_state",
+        "observed_state",
+        "status",
+        "evidence_refs"
+      ],
+      "properties": {
+        "drift_id": {
+          "type": "string",
+          "pattern": "^drift-[0-9a-f]{16}$"
+        },
+        "loop_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "declared_state": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observed_state": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "aligned",
+            "drifted",
+            "unknown"
+          ]
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gap_id",
+        "severity",
+        "source",
+        "evidence_missing",
+        "blocker_type",
+        "owner",
+        "closure_condition"
+      ],
+      "properties": {
+        "gap_id": {
+          "type": "string",
+          "pattern": "^gap-[0-9a-f]{16}$"
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "info",
+            "warning",
+            "blocking"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_missing": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "blocker_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "closure_condition": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

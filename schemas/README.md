@@ -48,6 +48,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `domain_capsule.schema.json` | Domain capsule operating-model package |
 | `effect_assurance.schema.json` | Canonical planned, observed, and reconciled effect record |
 | `finance_approval_email_calendar_binding_receipt.schema.json` | Canonical redacted worker, connector-token, and read-only scope witness binding receipt for finance live handoff |
+| `finance_approval_email_calendar_operator_input_request.schema.json` | Canonical public-safe request for missing finance email/calendar operator inputs |
 | `finance_approval_email_calendar_live_receipt.schema.json` | Canonical redacted live email/calendar receipt for finance approval handoff evidence |
 | `finance_approval_handoff_packet.schema.json` | Canonical operator handoff packet for finance approval proof-pilot, live receipt binding, and live blockers |
 | `finance_approval_live_handoff_chain_validation.schema.json` | Canonical aggregate chain validation report for finance approval live handoff artifacts |

@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:finance-approval-email-calendar-operator-input-request:1",
+  "title": "Finance Approval Email Calendar Operator Input Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "receipt_id",
+    "ready",
+    "handoff_allowed",
+    "solver_outcome",
+    "proof_state",
+    "required_inputs",
+    "blocked_actions",
+    "source_artifacts",
+    "no_secret_values_serialized",
+    "next_action"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "pattern": "^finance-email-calendar-operator-input-request-[0-9a-f]{16}$"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^finance-email-calendar-binding-receipt-[0-9a-f]{16}$"
+    },
+    "ready": {
+      "type": "boolean"
+    },
+    "handoff_allowed": {
+      "type": "boolean"
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["AwaitingEvidence", "SolvedVerified"]
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": ["Unknown", "Pass"]
+    },
+    "required_inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "input_id",
+          "blocker",
+          "input_kind",
+          "required_names",
+          "current_state",
+          "evidence_source",
+          "next_action"
+        ],
+        "properties": {
+          "input_id": {
+            "type": "string",
+            "pattern": "^finance-email-calendar-input-[0-9a-f]{12}$"
+          },
+          "blocker": {
+            "type": "string",
+            "minLength": 1
+          },
+          "input_kind": {
+            "type": "string",
+            "enum": [
+              "connector_token",
+              "read_only_scope_witness",
+              "valid_scope_witness",
+              "worker_endpoint",
+              "worker_secret"
+            ]
+          },
+          "required_names": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID",
+                "EMAIL_CALENDAR_CONNECTOR_TOKEN",
+                "GMAIL_ACCESS_TOKEN",
+                "GMAIL_SCOPE_ID",
+                "GOOGLE_CALENDAR_ACCESS_TOKEN",
+                "GOOGLE_CALENDAR_SCOPE_ID",
+                "MICROSOFT_GRAPH_ACCESS_TOKEN",
+                "MICROSOFT_GRAPH_SCOPE_ID",
+                "MULLU_EMAIL_CALENDAR_WORKER_SECRET",
+                "MULLU_EMAIL_CALENDAR_WORKER_URL"
+              ]
+            }
+          },
+          "current_state": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_source": {
+            "type": "string",
+            "const": "finance_approval_email_calendar_binding_receipt"
+          },
+          "next_action": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "blocked_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "customer_or_external_email_dispatch",
+          "email_calendar_live_probe",
+          "finance_approval_live_handoff",
+          "finance_approval_production_readiness_claim"
+        ]
+      }
+    },
+    "source_artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["finance_approval_email_calendar_binding_receipt"],
+      "properties": {
+        "finance_approval_email_calendar_binding_receipt": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "no_secret_values_serialized": {
+      "type": "boolean",
+      "const": true
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

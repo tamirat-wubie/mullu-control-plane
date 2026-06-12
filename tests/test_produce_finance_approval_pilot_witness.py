@@ -27,6 +27,18 @@ def test_finance_approval_pilot_witness_contains_blocked_and_success_paths() -> 
     assert witness["successful_path"]["case"]["approval_refs"] == ["approval-success-001"]
     assert witness["successful_path"]["case"]["effect_refs"] == ["effect-email-handoff-001"]
     assert witness["successful_path"]["proof"]["closure_certificate_id"] == "closure:case-success-001:sent"
+    assert witness["foundation_vertical_slice"]["witness_id"] == "foundation_vertical_slice_witness"
+    assert witness["foundation_vertical_slice"]["mode"] == "foundation-local"
+    assert witness["foundation_vertical_slice"]["production_claim"] is False
+    assert witness["foundation_vertical_slice"]["blocked_case"] == "passed"
+    assert witness["foundation_vertical_slice"]["approved_case"] == "passed"
+    assert witness["foundation_vertical_slice"]["policy_receipt"] == "present"
+    assert witness["foundation_vertical_slice"]["approval_receipt"] == "present"
+    assert witness["foundation_vertical_slice"]["effect_handoff_receipt"] == "present"
+    assert witness["foundation_vertical_slice"]["proof_export"] == "passed"
+    assert witness["foundation_vertical_slice"]["audit_replay"] == "local_proof_export_passed"
+    assert witness["foundation_vertical_slice"]["terminal_status"] == "foundation_ready"
+    assert witness["foundation_vertical_slice"]["live_handoff_ready"] is False
     assert witness["external_readiness"]["readiness_level"] == "proof-pilot-ready"
     assert "email calendar evidence closed" in witness["external_readiness"]["blockers"]
     assert "live email delivery" in witness["claim_boundary"]["must_not_claim"]
@@ -47,4 +59,5 @@ def test_finance_approval_pilot_witness_cli_writes_output(tmp_path, monkeypatch)
     assert output.exists()
     assert payload["status"] == "passed"
     assert payload["store_summary"]["case_count"] == 2
+    assert payload["foundation_vertical_slice"]["terminal_status"] == "foundation_ready"
     assert payload["external_readiness"]["ready"] is False

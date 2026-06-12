@@ -254,6 +254,46 @@ class CommandPolicy:
         "p4", "pull", "push", "remote", "request-pull", "send-email",
         "submodule", "svn",
     )
+    denied_package_manager_executables: tuple[str, ...] = ("npx",)
+    denied_package_manager_subcommands: tuple[str, ...] = (
+        "npm:add",
+        "npm:ci",
+        "npm:exec",
+        "npm:install",
+        "npm:remove",
+        "npm:uninstall",
+        "npm:update",
+        "npm:upgrade",
+        "pip:download",
+        "pip:install",
+        "pip:uninstall",
+        "pip:wheel",
+        "pip3:download",
+        "pip3:install",
+        "pip3:uninstall",
+        "pip3:wheel",
+        "pipx:inject",
+        "pipx:install",
+        "pipx:run",
+        "pipx:uninstall",
+        "pipx:upgrade",
+        "pnpm:add",
+        "pnpm:ci",
+        "pnpm:dlx",
+        "pnpm:exec",
+        "pnpm:install",
+        "pnpm:remove",
+        "pnpm:uninstall",
+        "pnpm:update",
+        "pnpm:upgrade",
+        "yarn:add",
+        "yarn:dlx",
+        "yarn:exec",
+        "yarn:install",
+        "yarn:remove",
+        "yarn:uninstall",
+        "yarn:upgrade",
+    )
     max_timeout_seconds: int = 300
     max_output_bytes: int = 1_048_576
 
@@ -264,6 +304,8 @@ class CommandPolicy:
             allowed_executables=(),
             denied_executables=(),
             denied_git_subcommands=(),
+            denied_package_manager_executables=(),
+            denied_package_manager_subcommands=(),
         )
 
 
@@ -347,6 +389,13 @@ def _validate_command_policy(
         return f"denied executable: {exe}"
     if policy.allowed_executables and exe not in policy.allowed_executables:
         return f"executable not allowlisted: {exe}"
+    if exe in policy.denied_package_manager_executables:
+        return f"denied package manager executable: {exe}"
+    denied_package_manager_subcommands = frozenset(policy.denied_package_manager_subcommands)
+    for arg in command[1:]:
+        subcommand_key = f"{exe}:{arg.lower()}"
+        if subcommand_key in denied_package_manager_subcommands:
+            return f"denied package manager subcommand: {subcommand_key}"
 
     if exe == "git":
         denied_global_flag = _scan_denied_git_global_flag(command[1:])

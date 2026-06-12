@@ -7,6 +7,7 @@ method allowlisting, and status code mapping.
 from __future__ import annotations
 
 import unittest.mock as mock
+import urllib.error
 
 import pytest
 
@@ -202,6 +203,39 @@ class TestHttpConnectorInvoke:
         assert result.status is ConnectorStatus.FAILED
         assert result.error_code is not None
         assert "url_error" in result.error_code
+
+    def test_url_error_reason_is_bounded_without_secret_leakage(self) -> None:
+        connector = HttpConnector(clock=_clock)
+        fake_opener = mock.MagicMock()
+        fake_opener.open.side_effect = urllib.error.URLError(
+            "proxy token=secret-proxy-token url=https://example.com?api_key=secret-query"
+        )
+
+        with (
+            mock.patch(
+                "mcoi_runtime.adapters.http_connector._resolve_and_check",
+                return_value=(False, "93.184.216.34"),
+            ),
+            mock.patch(
+                "mcoi_runtime.adapters.http_connector._build_pinned_opener",
+                return_value=fake_opener,
+            ),
+        ):
+            result = connector.invoke(
+                _make_descriptor(),
+                {
+                    "url": "https://example.com/status?api_key=secret-query",
+                    "headers": {"Authorization": "Bearer secret-header"},
+                },
+            )
+
+        serialized = str(result.to_json_dict())
+        assert result.status is ConnectorStatus.FAILED
+        assert result.error_code == "url_error:str"
+        assert result.metadata["connector_receipt"]["error_code"] == "url_error:str"
+        assert "secret-proxy-token" not in serialized
+        assert "secret-query" not in serialized
+        assert "secret-header" not in serialized
 
     def test_http_error_returns_failure_with_status_code(self) -> None:
         """Verify the connector maps HTTP errors to FAILED with http_NNN code."""

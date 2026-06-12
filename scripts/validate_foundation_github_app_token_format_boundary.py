@@ -103,8 +103,13 @@ SCAN_EXCLUDED_PARTS = {
     ".tmp",
     ".worktrees",
     "__pycache__",
+    "mullu-control-plane",
+    "mullu-control-plane-runtime-execution-mode-20260606",
     "node_modules",
 }
+SCAN_EXCLUDED_PREFIXES = (
+    "mullu-control-plane-",
+)
 FORBIDDEN_SCAN_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("fixed_ghs_suffix_regex", re.compile(r"ghs_[^\n]{0,24}\{(?:36|40)\}", re.IGNORECASE)),
     ("exact_ghs_fixture", re.compile(r"ghs_[A-Za-z0-9]{36}(?![A-Za-z0-9])")),
@@ -290,6 +295,8 @@ def _skip_scan_directory(path: Path, relative_path: Path, repo_root: Path) -> bo
     """Return whether a directory is outside this repository scan boundary."""
 
     if any(part in SCAN_EXCLUDED_PARTS for part in relative_path.parts):
+        return True
+    if any(part.startswith(SCAN_EXCLUDED_PREFIXES) for part in relative_path.parts):
         return True
     if path != repo_root and (path / ".git").exists():
         return True

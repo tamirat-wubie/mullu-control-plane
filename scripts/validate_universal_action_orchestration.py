@@ -80,6 +80,11 @@ REQUIRED_ROOT_FIELDS = (
     "raw_reasoning_included",
     "lineage",
 )
+CANONICAL_ROOT_FIELDS = (
+    *REQUIRED_ROOT_FIELDS,
+    "life_meaning_judgment",
+    "life_continuity_judgment",
+)
 PIPELINE_STAGE_KINDS = (
     "action",
     "evidence",
@@ -109,6 +114,17 @@ REQUIRED_GUARDS = (
 PROOF_STATES = {"Pass", "Fail", "Unknown", "BudgetUnknown"}
 GUARD_VERDICTS = {"passed", "blocked", "deferred", "escalated", "simulated"}
 DECISION_STATUSES = {"allow", "block", "defer", "escalate", "simulate"}
+LIFE_CONTINUITY_IMPACTS = {"none", "indirect", "direct", "unknown"}
+LIFE_CONTINUITY_DELTAS = {"positive", "neutral", "negative", "unknown"}
+LIFE_CONTINUITY_RISKS = {"none", "low", "medium", "high", "unknown"}
+LIFE_CONTINUITY_DECISIONS = {"pass", "pause", "block", "escalate"}
+LIFE_CONTINUITY_BOUNDARY_STATES = {"pass", "fail", "unknown"}
+LIFE_MEANING_IMPACTS = {"none", "indirect", "direct", "unknown"}
+LIFE_MEANING_DELTAS = {"positive", "neutral", "negative", "unknown"}
+LIFE_MEANING_DECISIONS = {"pass", "pause", "block", "escalate"}
+LIFE_MEANING_BOUNDARY_STATES = {"pass", "fail", "unknown"}
+LIFE_MEANING_LIFE_STATUSES = {"not_life", "life", "unknown"}
+LIFE_MEANING_FEELING_STATUSES = {"not_feeling", "feeling", "unknown"}
 PASSING_OUTCOMES = {"SolvedVerified", "SolvedUnverified"}
 HIGH_RISK_CLASSES = {"H3", "H4"}
 PROHIBITED_PRIVATE_REASONING_FIELDS = {
@@ -193,6 +209,57 @@ REQUIRED_SCHEMA_DEFS = {
         "evidence_refs",
         "blocking",
     ),
+    "life_meaning_judgment": (
+        "judgment_id",
+        "action_id",
+        "decision",
+        "affected_symbols",
+        "life_impact",
+        "feeling_impact",
+        "meaning_impact",
+        "truth_preserved",
+        "dignity_boundary",
+        "consent_required",
+        "consent_present",
+        "love_delta",
+        "resonance_delta",
+        "domination_risk",
+        "justice_repair_required",
+        "continuity_delta",
+        "irreversible",
+        "reasons",
+        "evidence_refs",
+        "approval_required",
+        "rollback_required",
+    ),
+    "life_meaning_affected_symbol": (
+        "symbol_id",
+        "symbol_kind",
+        "life_status",
+        "feeling_status",
+        "meaning_bearing",
+        "fragility_level",
+        "agency_level",
+    ),
+    "life_continuity_judgment": (
+        "judgment_ref",
+        "conflict_law_ref",
+        "life_impact",
+        "feeling_impact",
+        "feeling_observer_impact",
+        "meaning_impact",
+        "meaning_continuity_delta",
+        "value_bearing_symbol",
+        "lived_meaning_risk",
+        "love_delta",
+        "resonance_delta",
+        "dignity_boundary",
+        "truth_preserved",
+        "domination_risk",
+        "decision",
+        "evidence_refs",
+        "review_required",
+    ),
     "pipeline_stage": (
         "stage_id",
         "stage_order",
@@ -264,6 +331,12 @@ REQUIRED_DOCUMENT_TERMS = (
     "Every UAO record must expose a `claim_ledger`; verified claims require evidence refs and evidence-free claims must be marked unverified.",
     "Every memory update must expose a `constitution`; recorded memory requires evidence refs, owner, scope, source refs, allowed uses, and mutation history.",
     "Every UAO record must expose a `fracture_report`; execution-allowed records require fracture status `passed`, no blocking checks, and a canonical fracture pipeline stage before execution.",
+    "Every canonical UAO record must expose a `life_meaning_judgment`.",
+    "life_meaning_judgment.decision = pass -> truth preserved, dignity boundary pass, no domination risk, consent satisfied when required, and no unknown effect-bearing meaning impact",
+    "docs/LIFE_MEANING_GOVERNANCE_KERNEL.md",
+    "Every canonical UAO record must expose a `life_continuity_judgment`.",
+    "life_continuity_judgment.decision = pass -> truth preserved, dignity boundary pass, no domination risk, and no high or unknown lived-meaning risk",
+    "docs/LIFE_CONTINUITY_CONFLICT_DOCTRINE.md",
 )
 
 
@@ -313,10 +386,25 @@ def validate_schema_artifact(schema: dict[str, Any]) -> list[str]:
     errors.extend(
         _validate_required_properties("schema", schema, "root", REQUIRED_ROOT_FIELDS)
     )
+    properties = schema.get("properties")
+    if isinstance(properties, dict):
+        for property_name in ("life_meaning_judgment", "life_continuity_judgment"):
+            if property_name not in properties:
+                errors.append(f"schema: root missing property: {property_name}")
     defs = schema.get("$defs")
     if not isinstance(defs, dict):
         errors.append("schema $defs must be an object")
         return errors
+    for definition_name in (
+        "life_meaning_affected_symbol",
+        "life_meaning_impact",
+        "life_meaning_delta",
+        "life_meaning_boundary_state",
+        "life_continuity_impact",
+        "life_continuity_delta",
+    ):
+        if definition_name not in defs:
+            errors.append(f"schema missing definition: {definition_name}")
     for definition_name, required_fields in REQUIRED_SCHEMA_DEFS.items():
         errors.extend(
             _validate_required_properties(
@@ -339,7 +427,7 @@ def validate_document_contract(document_text: str) -> list[str]:
 def validate_orchestration(record: dict[str, Any]) -> list[str]:
     """Return deterministic contract violations for one UAO record."""
 
-    errors = _validate_required_fields("orchestration", record, REQUIRED_ROOT_FIELDS)
+    errors = _validate_required_fields("orchestration", record, CANONICAL_ROOT_FIELDS)
     if errors:
         return errors
     errors.extend(_validate_no_private_reasoning_fields(record))
@@ -387,6 +475,17 @@ def validate_orchestration(record: dict[str, Any]) -> list[str]:
     errors.extend(_validate_recovery_plan(record["recovery_plan"], record["decision"]))
     errors.extend(_validate_claim_ledger(record["claim_ledger"], record))
     errors.extend(_validate_fracture_report(record["fracture_report"], record))
+    errors.extend(
+        _validate_life_meaning_judgment(
+            record["life_meaning_judgment"], record
+        )
+    )
+    errors.extend(
+        _validate_life_continuity_judgment(
+            record["life_continuity_judgment"], record
+        )
+    )
+    errors.extend(_validate_life_judgment_projection(record))
     errors.extend(_validate_exposure_boundary(record["exposure_boundary"]))
 
     stages_by_kind: dict[str, dict[str, Any]] = {}
@@ -1021,6 +1120,402 @@ def _validate_fracture_check(label: str, check: Any) -> list[str]:
     if check["status"] == "failed" and not check["blocking"]:
         errors.append(f"{label}: failed check must be blocking")
     errors.extend(_validate_string_array(f"{label}.evidence_refs", check["evidence_refs"]))
+    return errors
+
+
+def _validate_life_meaning_judgment(
+    judgment: Any,
+    record: dict[str, Any],
+) -> list[str]:
+    errors = _validate_required_fields(
+        "life_meaning_judgment",
+        judgment,
+        REQUIRED_SCHEMA_DEFS["life_meaning_judgment"],
+    )
+    if errors:
+        return errors
+    for field_name in ("judgment_id", "action_id"):
+        if not isinstance(judgment[field_name], str) or not judgment[field_name]:
+            errors.append(
+                f"life_meaning_judgment.{field_name} must be a non-empty string"
+            )
+    if judgment["action_id"] != record["action_id"]:
+        errors.append("life_meaning_judgment.action_id must match orchestration.action_id")
+    if judgment["decision"] not in LIFE_MEANING_DECISIONS:
+        errors.append("life_meaning_judgment.decision is invalid")
+    for field_name in ("life_impact", "feeling_impact", "meaning_impact"):
+        if judgment[field_name] not in LIFE_MEANING_IMPACTS:
+            errors.append(f"life_meaning_judgment.{field_name} is invalid")
+    for field_name in ("love_delta", "resonance_delta", "continuity_delta"):
+        if judgment[field_name] not in LIFE_MEANING_DELTAS:
+            errors.append(f"life_meaning_judgment.{field_name} is invalid")
+    if judgment["dignity_boundary"] not in LIFE_MEANING_BOUNDARY_STATES:
+        errors.append("life_meaning_judgment.dignity_boundary is invalid")
+    for field_name in (
+        "truth_preserved",
+        "consent_required",
+        "consent_present",
+        "domination_risk",
+        "justice_repair_required",
+        "irreversible",
+        "approval_required",
+        "rollback_required",
+    ):
+        if not isinstance(judgment[field_name], bool):
+            errors.append(f"life_meaning_judgment.{field_name} must be boolean")
+
+    errors.extend(_validate_life_meaning_affected_symbols(judgment["affected_symbols"]))
+    errors.extend(
+        _validate_string_array(
+            "life_meaning_judgment.reasons",
+            judgment["reasons"],
+            min_count=1,
+        )
+    )
+    errors.extend(
+        _validate_string_array(
+            "life_meaning_judgment.evidence_refs",
+            judgment["evidence_refs"],
+        )
+    )
+
+    known_refs = _known_claim_evidence_refs(record)
+    for evidence_ref in judgment["evidence_refs"]:
+        if evidence_ref not in known_refs:
+            errors.append(
+                "life_meaning_judgment.evidence_refs references unknown evidence: "
+                f"{evidence_ref}"
+            )
+
+    life_decision = judgment["decision"]
+    action_decision = record["decision"]["status"]
+    if action_decision == "allow" and life_decision != "pass":
+        errors.append("allow decision requires life_meaning_judgment.decision pass")
+    if action_decision == "escalate" and life_decision != "escalate":
+        errors.append(
+            "escalate decision requires life_meaning_judgment.decision escalate"
+        )
+    if action_decision == "defer" and life_decision not in {"pause", "escalate"}:
+        errors.append(
+            "defer decision requires life_meaning_judgment.decision pause or escalate"
+        )
+
+    if life_decision == "pass":
+        if judgment["truth_preserved"] is not True:
+            errors.append(
+                "life_meaning_judgment.decision pass requires truth_preserved true"
+            )
+        if judgment["dignity_boundary"] != "pass":
+            errors.append(
+                "life_meaning_judgment.decision pass requires dignity_boundary pass"
+            )
+        if judgment["domination_risk"] is not False:
+            errors.append(
+                "life_meaning_judgment.decision pass requires domination_risk false"
+            )
+        if judgment["consent_required"] and not judgment["consent_present"]:
+            errors.append(
+                "life_meaning_judgment.decision pass requires consent_present when consent_required"
+            )
+        for field_name in ("love_delta", "resonance_delta", "continuity_delta"):
+            if judgment[field_name] == "negative":
+                errors.append(
+                    f"life_meaning_judgment.decision pass rejects negative {field_name}"
+                )
+        if record["effect_bearing"] and judgment["meaning_impact"] == "unknown":
+            errors.append(
+                "effect-bearing pass requires known life_meaning_judgment.meaning_impact"
+            )
+
+    unknown_life_meaning = (
+        judgment["life_impact"] == "unknown"
+        or judgment["feeling_impact"] == "unknown"
+        or judgment["meaning_impact"] == "unknown"
+        or _life_meaning_symbols_include_unknown(judgment["affected_symbols"])
+    )
+    if judgment["irreversible"] and unknown_life_meaning and life_decision != "escalate":
+        errors.append(
+            "irreversible unknown life, feeling, or meaning impact requires escalation"
+        )
+    if judgment["truth_preserved"] is False and life_decision not in {"block", "escalate"}:
+        errors.append(
+            "life_meaning_judgment.truth_preserved false requires block or escalate"
+        )
+    if judgment["dignity_boundary"] == "fail" and life_decision not in {
+        "block",
+        "escalate",
+    }:
+        errors.append(
+            "life_meaning_judgment.dignity_boundary fail requires block or escalate"
+        )
+    if judgment["domination_risk"] and life_decision not in {"block", "escalate"}:
+        errors.append(
+            "life_meaning_judgment.domination_risk true requires block or escalate"
+        )
+    if (
+        judgment["consent_required"]
+        and not judgment["consent_present"]
+        and judgment["irreversible"]
+        and life_decision != "escalate"
+    ):
+        errors.append(
+            "irreversible consent-missing life-meaning action requires escalation"
+        )
+    if life_decision in {"pause", "escalate"} and judgment["approval_required"] is not True:
+        errors.append(
+            "life_meaning_judgment pause or escalate requires approval_required true"
+        )
+    if judgment["irreversible"] and judgment["rollback_required"] is not True:
+        errors.append(
+            "life_meaning_judgment irreversible action requires rollback_required true"
+        )
+    if (
+        life_decision == "pass"
+        and judgment["life_impact"] in {"direct", "indirect", "unknown"}
+        and not judgment["evidence_refs"]
+    ):
+        errors.append(
+            "life_meaning_judgment pass with life impact requires evidence_refs"
+        )
+    if (
+        life_decision == "pass"
+        and judgment["meaning_impact"] in {"direct", "indirect", "unknown"}
+        and not judgment["evidence_refs"]
+    ):
+        errors.append(
+            "life_meaning_judgment pass with meaning impact requires evidence_refs"
+        )
+    return errors
+
+
+def _validate_life_meaning_affected_symbols(symbols: Any) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(symbols, list) or not symbols:
+        return ["life_meaning_judgment.affected_symbols must be a non-empty list"]
+    for index, symbol in enumerate(symbols):
+        label = f"life_meaning_judgment.affected_symbols[{index}]"
+        errors.extend(
+            _validate_required_fields(
+                label,
+                symbol,
+                REQUIRED_SCHEMA_DEFS["life_meaning_affected_symbol"],
+            )
+        )
+        if not isinstance(symbol, dict):
+            errors.append(f"{label} must be an object")
+            continue
+        if any(
+            field_name not in symbol
+            for field_name in REQUIRED_SCHEMA_DEFS["life_meaning_affected_symbol"]
+        ):
+            continue
+        for field_name in ("symbol_id", "symbol_kind"):
+            if not isinstance(symbol[field_name], str) or not symbol[field_name]:
+                errors.append(f"{label}.{field_name} must be a non-empty string")
+        if symbol["life_status"] not in LIFE_MEANING_LIFE_STATUSES:
+            errors.append(f"{label}.life_status is invalid")
+        if symbol["feeling_status"] not in LIFE_MEANING_FEELING_STATUSES:
+            errors.append(f"{label}.feeling_status is invalid")
+        if symbol["meaning_bearing"] not in LIFE_MEANING_IMPACTS:
+            errors.append(f"{label}.meaning_bearing is invalid")
+        for field_name in ("fragility_level", "agency_level"):
+            if (
+                not isinstance(symbol[field_name], int)
+                or symbol[field_name] < 0
+                or symbol[field_name] > 10
+            ):
+                errors.append(f"{label}.{field_name} must be an integer in [0,10]")
+    return errors
+
+
+def _life_meaning_symbols_include_unknown(symbols: Any) -> bool:
+    if not isinstance(symbols, list):
+        return False
+    return any(
+        isinstance(symbol, dict)
+        and (
+            symbol.get("life_status") == "unknown"
+            or symbol.get("feeling_status") == "unknown"
+            or symbol.get("meaning_bearing") == "unknown"
+        )
+        for symbol in symbols
+    )
+
+
+def _validate_life_judgment_projection(record: dict[str, Any]) -> list[str]:
+    meaning = record["life_meaning_judgment"]
+    continuity = record["life_continuity_judgment"]
+    errors: list[str] = []
+    field_pairs = (
+        ("life_impact", "life_impact"),
+        ("feeling_impact", "feeling_impact"),
+        ("meaning_impact", "meaning_impact"),
+        ("continuity_delta", "meaning_continuity_delta"),
+        ("love_delta", "love_delta"),
+        ("resonance_delta", "resonance_delta"),
+        ("dignity_boundary", "dignity_boundary"),
+        ("truth_preserved", "truth_preserved"),
+        ("domination_risk", "domination_risk"),
+        ("decision", "decision"),
+    )
+    for meaning_field, continuity_field in field_pairs:
+        if meaning.get(meaning_field) != continuity.get(continuity_field):
+            errors.append(
+                "life_continuity_judgment must project life_meaning_judgment "
+                f"{meaning_field}->{continuity_field}"
+            )
+    value_bearing_expected = (
+        meaning.get("life_impact") in {"direct", "indirect", "unknown"}
+        or meaning.get("feeling_impact") in {"direct", "indirect", "unknown"}
+        or meaning.get("meaning_impact") in {"direct", "indirect", "unknown"}
+    )
+    if continuity.get("value_bearing_symbol") is not value_bearing_expected:
+        errors.append(
+            "life_continuity_judgment.value_bearing_symbol must project life_meaning_judgment impact"
+        )
+    return errors
+
+
+def _validate_life_continuity_judgment(
+    judgment: Any,
+    record: dict[str, Any],
+) -> list[str]:
+    errors = _validate_required_fields(
+        "life_continuity_judgment",
+        judgment,
+        REQUIRED_SCHEMA_DEFS["life_continuity_judgment"],
+    )
+    if errors:
+        return errors
+    for field_name in ("judgment_ref", "conflict_law_ref"):
+        if not isinstance(judgment[field_name], str) or not judgment[field_name]:
+            errors.append(
+                f"life_continuity_judgment.{field_name} must be a non-empty string"
+            )
+    for field_name in (
+        "life_impact",
+        "feeling_impact",
+        "feeling_observer_impact",
+        "meaning_impact",
+    ):
+        if judgment[field_name] not in LIFE_CONTINUITY_IMPACTS:
+            errors.append(f"life_continuity_judgment.{field_name} is invalid")
+    for field_name in (
+        "meaning_continuity_delta",
+        "love_delta",
+        "resonance_delta",
+    ):
+        if judgment[field_name] not in LIFE_CONTINUITY_DELTAS:
+            errors.append(f"life_continuity_judgment.{field_name} is invalid")
+    if judgment["lived_meaning_risk"] not in LIFE_CONTINUITY_RISKS:
+        errors.append("life_continuity_judgment.lived_meaning_risk is invalid")
+    if judgment["dignity_boundary"] not in LIFE_CONTINUITY_BOUNDARY_STATES:
+        errors.append("life_continuity_judgment.dignity_boundary is invalid")
+    if judgment["decision"] not in LIFE_CONTINUITY_DECISIONS:
+        errors.append("life_continuity_judgment.decision is invalid")
+    for field_name in ("value_bearing_symbol", "truth_preserved", "domination_risk", "review_required"):
+        if not isinstance(judgment[field_name], bool):
+            errors.append(f"life_continuity_judgment.{field_name} must be boolean")
+    errors.extend(
+        _validate_string_array(
+            "life_continuity_judgment.evidence_refs",
+            judgment["evidence_refs"],
+            min_count=1,
+        )
+    )
+    if judgment["feeling_impact"] != judgment["feeling_observer_impact"]:
+        errors.append(
+            "life_continuity_judgment.feeling_impact must match feeling_observer_impact"
+        )
+
+    known_refs = _known_claim_evidence_refs(record)
+    for evidence_ref in judgment["evidence_refs"]:
+        if evidence_ref not in known_refs:
+            errors.append(
+                "life_continuity_judgment.evidence_refs references unknown evidence: "
+                f"{evidence_ref}"
+            )
+
+    life_decision = judgment["decision"]
+    action_decision = record["decision"]["status"]
+    if action_decision == "allow" and life_decision != "pass":
+        errors.append("allow decision requires life_continuity_judgment.decision pass")
+    if action_decision == "escalate" and life_decision != "escalate":
+        errors.append(
+            "escalate decision requires life_continuity_judgment.decision escalate"
+        )
+    if action_decision == "defer" and life_decision not in {"pause", "escalate"}:
+        errors.append(
+            "defer decision requires life_continuity_judgment.decision pause or escalate"
+        )
+
+    if life_decision == "pass":
+        if judgment["truth_preserved"] is not True:
+            errors.append(
+                "life_continuity_judgment.decision pass requires truth_preserved true"
+            )
+        if judgment["dignity_boundary"] != "pass":
+            errors.append(
+                "life_continuity_judgment.decision pass requires dignity_boundary pass"
+            )
+        if judgment["domination_risk"] is not False:
+            errors.append(
+                "life_continuity_judgment.decision pass requires domination_risk false"
+            )
+        if judgment["meaning_continuity_delta"] == "negative":
+            errors.append(
+                "life_continuity_judgment.decision pass rejects negative meaning_continuity_delta"
+            )
+        if judgment["lived_meaning_risk"] in {"high", "unknown"}:
+            errors.append(
+                "life_continuity_judgment.decision pass rejects high or unknown lived_meaning_risk"
+            )
+        if record["effect_bearing"] and judgment["meaning_impact"] == "unknown":
+            errors.append(
+                "effect-bearing pass requires known life_continuity_judgment.meaning_impact"
+            )
+    if judgment["dignity_boundary"] == "fail" and life_decision not in {
+        "block",
+        "escalate",
+    }:
+        errors.append(
+            "life_continuity_judgment.dignity_boundary fail requires block or escalate"
+        )
+    if judgment["domination_risk"] and life_decision not in {"block", "escalate"}:
+        errors.append(
+            "life_continuity_judgment.domination_risk true requires block or escalate"
+        )
+    if judgment["lived_meaning_risk"] == "high" and life_decision not in {
+        "block",
+        "escalate",
+    }:
+        errors.append(
+            "life_continuity_judgment.lived_meaning_risk high requires block or escalate"
+        )
+    if (
+        record["effect_bearing"]
+        and judgment["meaning_impact"] == "unknown"
+        and life_decision == "pass"
+    ):
+        errors.append(
+            "unknown meaning-impact on effect-bearing action cannot pass life-continuity judgment"
+        )
+    if life_decision in {"pause", "escalate"} and judgment["review_required"] is not True:
+        errors.append(
+            "life_continuity_judgment pause or escalate requires review_required true"
+        )
+    if (
+        judgment["value_bearing_symbol"] is False
+        and (
+            judgment["life_impact"] in {"direct", "indirect"}
+            or judgment["feeling_impact"] in {"direct", "indirect"}
+            or judgment["meaning_impact"] in {"direct", "indirect"}
+            or judgment["meaning_continuity_delta"] in {"positive", "negative"}
+        )
+    ):
+        errors.append(
+            "life_continuity_judgment.value_bearing_symbol false conflicts with declared life or meaning impact"
+        )
     return errors
 
 

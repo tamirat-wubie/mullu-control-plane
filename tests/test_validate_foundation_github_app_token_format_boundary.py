@@ -119,6 +119,21 @@ def test_repository_scan_skips_nested_git_worktree(tmp_path: Path) -> None:
     assert findings == []
 
 
+def test_repository_scan_skips_nested_control_plane_copy_without_git_marker(tmp_path: Path) -> None:
+    nested_copy = tmp_path / "mullu-control-plane-runtime-execution-mode-20260606"
+    nested_copy.mkdir()
+    (nested_copy / "scanner.py").write_text(
+        "pattern = r'github app installation token ghs_[A-Za-z0-9]{36}'\n",
+        encoding="utf-8",
+    )
+    active_file = tmp_path / "active.py"
+    active_file.write_text("github app installation token accepts opaque ghs_ values\n", encoding="utf-8")
+
+    findings = validate_repository_scan(tmp_path)
+
+    assert findings == []
+
+
 def test_repository_scan_ignores_unrelated_jwt_text(tmp_path: Path) -> None:
     scanner_file = tmp_path / "jwt_notes.md"
     scanner_file.write_text("JWT authentication for normal API users is handled elsewhere.\n", encoding="utf-8")

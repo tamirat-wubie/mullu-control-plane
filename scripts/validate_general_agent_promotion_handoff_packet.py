@@ -160,8 +160,9 @@ def validate_general_agent_promotion_handoff_packet(
         packet,
         explicit_path=adapter_evidence_path,
     )
+    effective_closure_plan_path = DEFAULT_CLOSURE_PLAN if closure_plan_path is None else closure_plan_path
     closure_plan = _load_or_derive_closure_plan(
-        closure_plan_path,
+        effective_closure_plan_path,
         errors,
         adapter_evidence_path=effective_adapter_evidence_path,
     )
@@ -340,6 +341,7 @@ def _derive_current_closure_plan(*, adapter_evidence_path: Path | None) -> dict[
         adapter_plan_path = tmp_dir / "capability_adapter_closure_plan.json"
         deployment_closure_validation_path = tmp_dir / "deployment_publication_closure_validation.json"
         deployment_plan_path = tmp_dir / "deployment_publication_closure_plan.json"
+        upstream_blocker_receipt_path = tmp_dir / "deployment_upstream_blocker_receipt.json"
         portfolio_path = tmp_dir / "capability_improvement_portfolio.json"
 
         if adapter_evidence_path is None:
@@ -372,10 +374,19 @@ def _derive_current_closure_plan(*, adapter_evidence_path: Path | None) -> dict[
             deployment_closure_validation_path,
         )
         _write_json_payload(
+            upstream_blocker_receipt_path,
+            {
+                "api_provisioning_allowed": False,
+                "dns_publication_allowed": False,
+                "ready": False,
+                "upstream_state": "AwaitingEvidence",
+            },
+        )
+        _write_json_payload(
             deployment_plan_path,
             plan_deployment_publication_closure(
                 readiness_path=readiness_path,
-                upstream_blocker_receipt_path=tmp_dir / "deployment_upstream_blocker_receipt.absent.json",
+                upstream_blocker_receipt_path=upstream_blocker_receipt_path,
                 deployment_publication_closure_validation_path=deployment_closure_validation_path,
             ).as_dict(),
         )
@@ -502,6 +513,19 @@ def _adapter_evidence_path_for_packet(
         packet.get("status") == "ready_for_final_validation"
         or packet.get("production_promotion") == "ready"
     ) and DEFAULT_CLOSED_ADAPTER_EVIDENCE.exists():
+        return DEFAULT_CLOSED_ADAPTER_EVIDENCE
+    adapter_blockers = {
+        "adapter_evidence_not_closed",
+        "voice_adapter_not_closed",
+        "email_calendar_adapter_not_closed",
+    }
+    open_blockers = packet.get("open_blockers", [])
+    if (
+        packet.get("readiness_level") == "pilot-governed-core"
+        and isinstance(open_blockers, list)
+        and adapter_blockers.isdisjoint(str(blocker) for blocker in open_blockers)
+        and DEFAULT_CLOSED_ADAPTER_EVIDENCE.exists()
+    ):
         return DEFAULT_CLOSED_ADAPTER_EVIDENCE
     return None
 

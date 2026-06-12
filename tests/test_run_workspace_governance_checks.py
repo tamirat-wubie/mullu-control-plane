@@ -49,6 +49,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     protocol_index = names.index("protocol_manifest")
     foundation_phase = names[foundation_start:protocol_index]
     expected_foundation_names = {
+        "agentic_service_harness_contract",
         "foundation_mode",
         "foundation_local_proof_thread",
         *(
@@ -59,6 +60,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     repository_governance_phase = [
         "protocol_manifest",
         "logic_governance_application",
+        "life_meaning_governance",
         "phi_gps_v3_platform_spec",
         "public_repository_surface",
         "proprietary_boundary",
@@ -124,11 +126,25 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
 
     assert foundation_phase[:2] == ["foundation_mode", "foundation_source_control_boundary"]
     assert_ordered("foundation_source_control_boundary", "foundation_source_control_review_checklist_boundary")
+    assert_ordered(
+        "foundation_source_control_review_checklist_boundary",
+        "foundation_local_release_packet_rehearsal_boundary",
+    )
+    assert_ordered(
+        "foundation_local_release_packet_rehearsal_boundary",
+        "foundation_python_dependency_visibility_rehearsal_boundary",
+    )
+    assert_ordered("foundation_python_dependency_visibility_rehearsal_boundary", "agentic_service_harness_contract")
+    assert_ordered("agentic_service_harness_contract", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_source_control_review_checklist_boundary", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_source_control_boundary", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_learning_path_boundary", "foundation_learning_loop_rehearsal_boundary")
     assert_ordered("foundation_learning_loop_rehearsal_boundary", "foundation_concept_glossary_rehearsal_boundary")
-    assert_ordered("foundation_concept_glossary_rehearsal_boundary", "foundation_architecture_map_boundary")
+    assert_ordered(
+        "foundation_concept_glossary_rehearsal_boundary",
+        "foundation_life_meaning_doctrine_rehearsal_boundary",
+    )
+    assert_ordered("foundation_life_meaning_doctrine_rehearsal_boundary", "foundation_architecture_map_boundary")
     assert_ordered("foundation_external_infrastructure_boundary", "foundation_runtime_secret_handoff_rehearsal_boundary")
     assert_ordered(
         "foundation_runtime_secret_handoff_rehearsal_boundary",
@@ -193,6 +209,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert args_by_name["agents_policy"][1:] == ("scripts/validate_agents_governance.py",)
     assert args_by_name["trusted_local_control_studio"][1:] == (
         "scripts/validate_trusted_local_control_studio.py",
+    )
+    assert args_by_name["life_meaning_governance"][1:] == (
+        "scripts/validate_life_meaning_governance.py",
     )
     assert args_by_name["phi_gps_v3_platform_spec"][1:] == (
         "scripts/validate_phi_gps_v3_platform_spec.py",

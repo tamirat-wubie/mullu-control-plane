@@ -1,0 +1,1173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:agentic-service-harness:1",
+  "title": "Agentic Service Harness Contract",
+  "description": "Planning-only contract for the first Mullusi Agentic Service Harness foundation. This schema does not admit UI routes, mutation endpoints, external coding adapters, or default high-risk authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "contract_version",
+    "scenario",
+    "status",
+    "solver_outcome",
+    "generated_at",
+    "foundation_phase",
+    "ui_created",
+    "mutation_endpoints_admitted",
+    "external_adapter_integrated",
+    "default_high_risk_authority",
+    "users",
+    "organizations",
+    "projects",
+    "repository_connections",
+    "agent_tasks",
+    "agent_adapters",
+    "workspace_sandboxes",
+    "agent_runs",
+    "approval_gates",
+    "receipts",
+    "evidence_bundles",
+    "result_summaries",
+    "permission_model",
+    "non_goals",
+    "validators",
+    "next_action"
+  ],
+  "properties": {
+    "contract_id": {
+      "type": "string",
+      "pattern": "^agentic-service-harness-[a-z0-9-]+$"
+    },
+    "contract_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "scenario": {
+      "type": "string",
+      "enum": [
+        "read_only_status",
+        "dry_run_task",
+        "branch_write_awaiting_approval",
+        "open_pr_awaiting_approval",
+        "blocked_high_risk_action"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "contract_only",
+        "awaiting_approval",
+        "blocked"
+      ]
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": [
+        "AwaitingEvidence",
+        "GovernanceBlocked"
+      ]
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "foundation_phase": {
+      "type": "string",
+      "const": "foundation_contract_only"
+    },
+    "ui_created": {
+      "type": "boolean",
+      "const": false
+    },
+    "mutation_endpoints_admitted": {
+      "type": "boolean",
+      "const": false
+    },
+    "external_adapter_integrated": {
+      "type": "boolean",
+      "const": false
+    },
+    "default_high_risk_authority": {
+      "type": "boolean",
+      "const": false
+    },
+    "users": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/user"
+      }
+    },
+    "organizations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/organization"
+      }
+    },
+    "projects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/project"
+      }
+    },
+    "repository_connections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/repository_connection"
+      }
+    },
+    "agent_tasks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/agent_task"
+      }
+    },
+    "agent_adapters": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/agent_adapter"
+      }
+    },
+    "workspace_sandboxes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/workspace_sandbox"
+      }
+    },
+    "agent_runs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/agent_run"
+      }
+    },
+    "approval_gates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/approval_gate"
+      }
+    },
+    "receipts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/agent_run_receipt"
+      }
+    },
+    "evidence_bundles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/evidence_bundle"
+      }
+    },
+    "result_summaries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/result_summary"
+      }
+    },
+    "permission_model": {
+      "$ref": "#/$defs/permission_model"
+    },
+    "non_goals": {
+      "type": "array",
+      "minItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "no_unrestricted_openclaw_automation",
+          "no_claude_code_integration",
+          "no_email_sending",
+          "no_production_deploy_approval_by_default",
+          "no_dns_mutation",
+          "no_secret_mutation",
+          "no_marketplace",
+          "no_billing_requirement",
+          "no_multi_agent_marketplace"
+        ]
+      }
+    },
+    "validators": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/validator_ref"
+      }
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$"
+    },
+    "text_list": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "user": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "user_id",
+        "display_name",
+        "identity_provider_ref",
+        "organization_memberships",
+        "default_role",
+        "status",
+        "metadata"
+      ],
+      "properties": {
+        "user_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "identity_provider_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "organization_memberships": {
+          "$ref": "#/$defs/text_list"
+        },
+        "default_role": {
+          "$ref": "#/$defs/harness_role"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "disabled"
+          ]
+        },
+        "metadata": {
+          "$ref": "#/$defs/privacy_metadata"
+        }
+      }
+    },
+    "organization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "organization_id",
+        "tenant_id",
+        "name",
+        "owner_user_ids",
+        "admin_user_ids",
+        "project_ids",
+        "status",
+        "metadata"
+      ],
+      "properties": {
+        "organization_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner_user_ids": {
+          "$ref": "#/$defs/text_list"
+        },
+        "admin_user_ids": {
+          "$ref": "#/$defs/text_list"
+        },
+        "project_ids": {
+          "$ref": "#/$defs/text_list"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "disabled"
+          ]
+        },
+        "metadata": {
+          "$ref": "#/$defs/privacy_metadata"
+        }
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_id",
+        "organization_id",
+        "tenant_id",
+        "name",
+        "repository_connection_ids",
+        "agent_run_ids",
+        "receipt_refs",
+        "loop_status_ref",
+        "status",
+        "metadata"
+      ],
+      "properties": {
+        "project_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "organization_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository_connection_ids": {
+          "$ref": "#/$defs/text_list"
+        },
+        "agent_run_ids": {
+          "$ref": "#/$defs/text_list"
+        },
+        "receipt_refs": {
+          "$ref": "#/$defs/text_list"
+        },
+        "loop_status_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "blocked"
+          ]
+        },
+        "metadata": {
+          "$ref": "#/$defs/privacy_metadata"
+        }
+      }
+    },
+    "repository_connection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "connection_id",
+        "project_id",
+        "provider",
+        "repository_slug",
+        "default_branch",
+        "installation_ref",
+        "permission_scope",
+        "credential_binding_ref",
+        "secret_values_serialized",
+        "write_authority_enabled"
+      ],
+      "properties": {
+        "connection_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "project_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "provider": {
+          "type": "string",
+          "const": "github"
+        },
+        "repository_slug": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+        },
+        "default_branch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "installation_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "permission_scope": {
+          "type": "string",
+          "enum": [
+            "read_only",
+            "dry_run",
+            "write_to_branch",
+            "open_pr"
+          ]
+        },
+        "credential_binding_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        },
+        "write_authority_enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "agent_task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "project_id",
+        "requested_by_user_id",
+        "objective",
+        "action_class",
+        "mode",
+        "risk_level",
+        "status",
+        "required_approval_gate_ids",
+        "evidence_refs",
+        "metadata"
+      ],
+      "properties": {
+        "task_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "project_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "requested_by_user_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "objective": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "action_class": {
+          "$ref": "#/$defs/action_class"
+        },
+        "mode": {
+          "$ref": "#/$defs/run_mode"
+        },
+        "risk_level": {
+          "$ref": "#/$defs/risk_level"
+        },
+        "status": {
+          "$ref": "#/$defs/run_status"
+        },
+        "required_approval_gate_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        },
+        "metadata": {
+          "$ref": "#/$defs/privacy_metadata"
+        }
+      }
+    },
+    "agent_adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adapter_id",
+        "adapter_kind",
+        "status",
+        "allowed_modes",
+        "requires_workspace_sandbox",
+        "authority_class",
+        "external_adapter_integrated",
+        "receipt_schema_ref"
+      ],
+      "properties": {
+        "adapter_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "adapter_kind": {
+          "type": "string",
+          "enum": [
+            "github_repo_task",
+            "codex_style_coding"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "contract_only",
+            "blocked",
+            "ready"
+          ]
+        },
+        "allowed_modes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/run_mode"
+          }
+        },
+        "requires_workspace_sandbox": {
+          "type": "boolean",
+          "const": true
+        },
+        "authority_class": {
+          "type": "string",
+          "enum": [
+            "read_only",
+            "approval_required",
+            "blocked"
+          ]
+        },
+        "external_adapter_integrated": {
+          "type": "boolean",
+          "const": false
+        },
+        "receipt_schema_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        }
+      }
+    },
+    "workspace_sandbox": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sandbox_id",
+        "project_id",
+        "command_allowlist",
+        "path_allowlist",
+        "timeout_seconds",
+        "network_policy",
+        "secret_redaction_required",
+        "production_mutation_allowed",
+        "cleanup_receipt_ref"
+      ],
+      "properties": {
+        "sandbox_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "project_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "command_allowlist": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "git.status",
+              "git.diff",
+              "python.pytest",
+              "python.validator",
+              "npm.test",
+              "cargo.test"
+            ]
+          }
+        },
+        "path_allowlist": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "network_policy": {
+          "type": "string",
+          "enum": [
+            "none",
+            "proxy_allowlist"
+          ]
+        },
+        "secret_redaction_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "production_mutation_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "cleanup_receipt_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        }
+      }
+    },
+    "agent_run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "task_id",
+        "adapter_id",
+        "sandbox_id",
+        "mode",
+        "status",
+        "selected_agent_ref",
+        "approval_gate_ids",
+        "receipt_id",
+        "evidence_bundle_id",
+        "result_summary_id",
+        "blocked_actions",
+        "created_at"
+      ],
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "task_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "adapter_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "sandbox_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "mode": {
+          "$ref": "#/$defs/run_mode"
+        },
+        "status": {
+          "$ref": "#/$defs/run_status"
+        },
+        "selected_agent_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "approval_gate_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "receipt_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "evidence_bundle_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "result_summary_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "blocked_actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/blocked_high_risk_action"
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "approval_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gate_id",
+        "run_id",
+        "action_class",
+        "risk_level",
+        "status",
+        "approver_role_required",
+        "approval_required",
+        "self_approval_allowed",
+        "permits_external_effect",
+        "evidence_refs"
+      ],
+      "properties": {
+        "gate_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "run_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "action_class": {
+          "$ref": "#/$defs/action_class"
+        },
+        "risk_level": {
+          "$ref": "#/$defs/risk_level"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_required",
+            "pending",
+            "approved",
+            "denied",
+            "blocked"
+          ]
+        },
+        "approver_role_required": {
+          "$ref": "#/$defs/harness_role"
+        },
+        "approval_required": {
+          "type": "boolean"
+        },
+        "self_approval_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "permits_external_effect": {
+          "type": "boolean"
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        }
+      }
+    },
+    "agent_run_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "run_id",
+        "task_request_ref",
+        "selected_agent_ref",
+        "mode",
+        "files_changed",
+        "commands_run",
+        "tests_run",
+        "policy_result",
+        "risk_level",
+        "evidence_refs",
+        "next_action",
+        "receipt_is_not_terminal_closure"
+      ],
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "run_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "task_request_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "selected_agent_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "mode": {
+          "$ref": "#/$defs/run_mode"
+        },
+        "files_changed": {
+          "$ref": "#/$defs/file_change_summary"
+        },
+        "commands_run": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/command_receipt"
+          }
+        },
+        "tests_run": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/test_receipt"
+          }
+        },
+        "policy_result": {
+          "type": "string",
+          "enum": [
+            "allowed_read_only",
+            "allowed_dry_run",
+            "awaiting_approval",
+            "blocked_high_risk"
+          ]
+        },
+        "risk_level": {
+          "$ref": "#/$defs/risk_level"
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        },
+        "next_action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receipt_is_not_terminal_closure": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "evidence_bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundle_id",
+        "run_id",
+        "evidence_refs",
+        "command_log_refs",
+        "test_log_refs",
+        "diff_refs",
+        "policy_refs",
+        "redaction_policy",
+        "contains_secret_values"
+      ],
+      "properties": {
+        "bundle_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "run_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        },
+        "command_log_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        },
+        "test_log_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        },
+        "diff_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        },
+        "policy_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        },
+        "redaction_policy": {
+          "type": "string",
+          "const": "hash_or_reference_only"
+        },
+        "contains_secret_values": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "result_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "summary_id",
+        "run_id",
+        "outcome",
+        "user_visible_status",
+        "changed_file_count",
+        "tests_status",
+        "blockers",
+        "next_action"
+      ],
+      "properties": {
+        "summary_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "run_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "AwaitingEvidence",
+            "GovernanceBlocked"
+          ]
+        },
+        "user_visible_status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "changed_file_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tests_status": {
+          "type": "string",
+          "enum": [
+            "not_run",
+            "passed",
+            "blocked"
+          ]
+        },
+        "blockers": {
+          "$ref": "#/$defs/text_list"
+        },
+        "next_action": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "permission_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roles",
+        "action_classes",
+        "blocked_high_risk_actions",
+        "can_merge",
+        "can_deploy",
+        "can_mutate_dns",
+        "can_mutate_secrets",
+        "can_run_destructive_operations"
+      ],
+      "properties": {
+        "roles": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/harness_role"
+          },
+          "contains": {
+            "const": "viewer"
+          }
+        },
+        "action_classes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/action_class"
+          },
+          "contains": {
+            "const": "blocked_high_risk"
+          }
+        },
+        "blocked_high_risk_actions": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 5,
+          "items": {
+            "$ref": "#/$defs/blocked_high_risk_action"
+          }
+        },
+        "can_merge": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_deploy": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_mutate_dns": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_mutate_secrets": {
+          "type": "boolean",
+          "const": false
+        },
+        "can_run_destructive_operations": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "validator_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validator_id",
+        "command",
+        "required_for_closure"
+      ],
+      "properties": {
+        "validator_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_for_closure": {
+          "type": "boolean"
+        }
+      }
+    },
+    "file_change_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "changed_file_count",
+        "changed_file_refs",
+        "diff_refs"
+      ],
+      "properties": {
+        "changed_file_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "changed_file_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        },
+        "diff_refs": {
+          "$ref": "#/$defs/evidence_ref_list"
+        }
+      }
+    },
+    "command_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command_id",
+        "command_ref",
+        "status",
+        "stdout_ref",
+        "stderr_ref",
+        "timeout_seconds"
+      ],
+      "properties": {
+        "command_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "command_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_run",
+            "passed",
+            "blocked"
+          ]
+        },
+        "stdout_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "stderr_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
+        }
+      }
+    },
+    "test_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "test_id",
+        "command_ref",
+        "status",
+        "assertion_count",
+        "log_ref"
+      ],
+      "properties": {
+        "test_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "command_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_run",
+            "passed",
+            "blocked"
+          ]
+        },
+        "assertion_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "log_ref": {
+          "$ref": "#/$defs/evidence_ref"
+        }
+      }
+    },
+    "privacy_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "personal_data_minimized",
+        "secret_values_serialized"
+      ],
+      "properties": {
+        "personal_data_minimized": {
+          "type": "boolean",
+          "const": true
+        },
+        "secret_values_serialized": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "evidence_ref_list": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence_ref"
+      }
+    },
+    "harness_role": {
+      "type": "string",
+      "enum": [
+        "viewer",
+        "operator",
+        "approver",
+        "admin"
+      ]
+    },
+    "action_class": {
+      "type": "string",
+      "enum": [
+        "read_only",
+        "dry_run",
+        "write_to_branch",
+        "open_pr",
+        "blocked_high_risk"
+      ]
+    },
+    "run_mode": {
+      "type": "string",
+      "enum": [
+        "read_only",
+        "dry_run",
+        "branch_write",
+        "open_pr"
+      ]
+    },
+    "run_status": {
+      "type": "string",
+      "enum": [
+        "planned",
+        "ready_read_only",
+        "ready_dry_run",
+        "awaiting_approval",
+        "blocked"
+      ]
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "blocked_high_risk_action": {
+      "type": "string",
+      "enum": [
+        "merge",
+        "deploy",
+        "dns_mutation",
+        "secret_mutation",
+        "destructive_operation"
+      ]
+    }
+  }
+}

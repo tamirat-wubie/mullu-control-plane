@@ -132,6 +132,18 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_source_control_review_checklist_boundary.py"),
         ),
         CheckCommand(
+            "foundation_local_release_packet_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_local_release_packet_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_python_dependency_visibility_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_python_dependency_visibility_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
+            "agentic_service_harness_contract",
+            (python_executable, "scripts/validate_agentic_service_harness_contract.py"),
+        ),
+        CheckCommand(
             "foundation_operator_readiness_boundary",
             (python_executable, "scripts/validate_foundation_operator_readiness_boundary.py"),
         ),
@@ -150,6 +162,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         CheckCommand(
             "foundation_concept_glossary_rehearsal_boundary",
             (python_executable, "scripts/validate_foundation_concept_glossary_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
+            "foundation_life_meaning_doctrine_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_life_meaning_doctrine_rehearsal_boundary.py"),
         ),
         CheckCommand(
             "foundation_architecture_map_boundary",
@@ -500,6 +516,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
         CheckCommand(
             "logic_governance_application",
             (python_executable, "scripts/validate_logic_governance_application.py"),
+        ),
+        CheckCommand(
+            "life_meaning_governance",
+            (python_executable, "scripts/validate_life_meaning_governance.py"),
         ),
         CheckCommand(
             "phi_gps_v3_platform_spec",

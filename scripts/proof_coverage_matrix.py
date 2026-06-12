@@ -1386,18 +1386,23 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_finance_approval_packet.py",
                 "mcoi/tests/test_finance_approval_router.py",
                 "schemas/finance_approval_email_calendar_binding_receipt.schema.json",
+                "schemas/finance_approval_email_calendar_operator_input_request.schema.json",
                 "schemas/finance_approval_email_calendar_live_receipt.schema.json",
                 "schemas/finance_approval_handoff_packet.schema.json",
                 "schemas/finance_approval_live_handoff_chain_validation.schema.json",
                 "scripts/plan_finance_approval_live_handoff.py",
                 "scripts/emit_finance_approval_email_calendar_binding_receipt.py",
+                "scripts/emit_finance_approval_email_calendar_operator_input_request.py",
                 "scripts/validate_finance_approval_email_calendar_binding_receipt.py",
+                "scripts/validate_finance_approval_email_calendar_operator_input_request.py",
                 "scripts/produce_finance_approval_handoff_packet.py",
                 "scripts/validate_finance_approval_handoff_packet_schema.py",
                 "scripts/validate_finance_approval_live_handoff_chain.py",
                 "tests/test_plan_finance_approval_live_handoff.py",
                 "tests/test_emit_finance_approval_email_calendar_binding_receipt.py",
+                "tests/test_emit_finance_approval_email_calendar_operator_input_request.py",
                 "tests/test_validate_finance_approval_email_calendar_binding_receipt.py",
+                "tests/test_validate_finance_approval_email_calendar_operator_input_request.py",
                 "tests/test_produce_finance_approval_handoff_packet.py",
                 "tests/test_finance_approval_handoff_packet_schema.py",
                 "tests/test_validate_finance_approval_live_handoff_chain.py",
@@ -1424,6 +1429,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "approval_action_binds_approval_effect_and_closure_refs",
                 "payment_handoff_prepared_without_live_payment_claim",
                 "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope",
+                "email_calendar_operator_input_request_names_missing_inputs_without_values",
                 "email_calendar_handoff_plan_requires_binding_receipt_ready",
                 "email_calendar_handoff_packet_requires_live_receipt_ready",
                 "payment_receipt_and_ledger_reconciliation_required_for_payment_closure",
@@ -1452,6 +1458,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "email_calendar_binding_receipt_requires_worker_token_and_readonly_scope": [
                     "finance_email_calendar_binding_receipt_blocks_without_worker_and_scope"
+                ],
+                "email_calendar_operator_input_request_names_missing_inputs_without_values": [
+                    "operator_input_request_reports_missing_finance_bindings",
+                    "validate_operator_input_request_accepts_blocked_request",
                 ],
                 "email_calendar_handoff_plan_requires_binding_receipt_ready": [
                     "current_finance_handoff_plan_scopes_to_email_calendar"
