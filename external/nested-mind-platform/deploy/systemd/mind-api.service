@@ -1,0 +1,24 @@
+[Unit]
+Description=Nested Mind API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mind
+Group=mind
+WorkingDirectory=/opt/nested-mind-platform
+EnvironmentFile=/etc/nested-mind/mind-api.env
+Environment=MULLU_ENV=production
+Environment=MULLU_ENV_REQUIRED=true
+ExecStart=/usr/local/bin/mind-api
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/nested-mind
+
+[Install]
+WantedBy=multi-user.target

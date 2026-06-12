@@ -1,0 +1,20 @@
+name: live-action-boundary
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  action-boundary-static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Format check
+        run: cargo fmt --all -- --check
+      - name: Static v22 command rehearsal
+        run: |
+          cargo run -p mind-cli -- github-app-token-plan mullusi/nested-mind-platform 1 1 demo-key-fingerprint
+          cargo run -p mind-cli -- github-action-execution-plan mullusi/nested-mind-platform demo-head-sha
+          cargo run -p mind-cli -- branch-protection-worker mullusi/nested-mind-platform main
+          cargo run -p mind-cli -- kubernetes-dry-run-execute nested-mind-staging staging

@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mind-api-backup
+  namespace: nested-mind
+spec:
+  schedule: "17 * * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: ghcr.io/mullusi/nested-mind-platform/mind-api:latest
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  mkdir -p /app/data/backups
+                  curl -fsS -X POST "http://mind-api/system/backups/root"                     -H "Authorization: Bearer ${MIND_BOOTSTRAP_TOKEN}"                     > "/app/data/backups/root-$(date +%Y%m%d%H%M%S).backup.json"
+              envFrom:
+                - configMapRef:
+                    name: mind-api-config
+                - secretRef:
+                    name: mind-api-secrets
+              volumeMounts:
+                - name: data
+                  mountPath: /app/data
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: mind-api-data

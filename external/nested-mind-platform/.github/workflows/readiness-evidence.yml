@@ -1,0 +1,30 @@
+name: readiness-evidence
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+jobs:
+  executable-readiness:
+    name: executable readiness evidence
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Run executable readiness tests
+        run: |
+          cargo test -p mind-core --test v18_executable_readiness_jobs
+          cargo test -p mind-core --test v19_enforced_readiness_engineering
+          cargo test -p mind-store-sqlite --test sqlite_v18_ledgers
+          cargo test -p mind-store-sqlite --test sqlite_v19_ledgers
