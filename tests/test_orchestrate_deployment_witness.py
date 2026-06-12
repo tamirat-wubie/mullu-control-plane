@@ -279,6 +279,46 @@ def test_orchestrate_deployment_witness_can_gate_dispatch_with_preflight(tmp_pat
     assert any(command[:3] == ["gh", "workflow", "run"] for command in runner.commands)
 
 
+def test_orchestrate_deployment_witness_can_skip_target_provisioning_for_workflow_inputs(
+    tmp_path: Path,
+) -> None:
+    runner = FakeRunner()
+
+    orchestration = orchestrate_deployment_witness(
+        gateway_host="gateway.mullusi.com",
+        gateway_url="https://gateway.mullusi.com",
+        expected_environment="pilot",
+        rendered_ingress_output=tmp_path / "ingress.yaml",
+        skip_target_provisioning=True,
+        require_preflight=True,
+        preflight_output=tmp_path / "preflight.json",
+        runtime_secret_present=True,
+        conformance_secret_present=True,
+        deployment_witness_secret_present=True,
+        runner=runner,
+        resolver=lambda host: ("203.0.113.10",),
+        json_getter=_healthy_getter,
+    )
+
+    variable_commands = [
+        command for command in runner.commands if command[:3] == ["gh", "variable", "set"]
+    ]
+    variable_list_commands = [
+        command for command in runner.commands if command[:3] == ["gh", "variable", "list"]
+    ]
+    assert orchestration.target.gateway_url == "https://gateway.mullusi.com"
+    assert orchestration.target.expected_environment == "pilot"
+    assert orchestration.preflight is not None
+    assert orchestration.preflight.ready is True
+    assert any(
+        step.name == "repository variables" and step.detail == "matched:mounted-environment"
+        for step in orchestration.preflight.steps
+    )
+    assert variable_commands == []
+    assert variable_list_commands == []
+    assert not any(command[:3] == ["gh", "secret", "list"] for command in runner.commands)
+
+
 def test_orchestrate_deployment_witness_accepts_mounted_runtime_secret(tmp_path: Path) -> None:
     runner = FakeRunner()
 

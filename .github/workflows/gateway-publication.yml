@@ -104,6 +104,7 @@ jobs:
             --expected-environment "${{ inputs.expected_environment }}"
             --require-preflight
             --require-mcp-operator-checklist
+            --skip-target-provisioning
             --accept-runtime-secret-env
             --accept-conformance-secret-env
             --accept-deployment-witness-secret-env

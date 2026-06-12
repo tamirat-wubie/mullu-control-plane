@@ -160,7 +160,7 @@ Before this witness can claim public deployment health, the repository must name
 | Deployment publication closure validation | `.change_assurance/deployment_publication_closure_validation.json` |
 | Public health declaration application | `python scripts/apply_deployment_publication_status.py --operator-approval-ref "$MULLU_DEPLOYMENT_PUBLICATION_APPROVAL_REF" --receipt-output .change_assurance/public_production_health_declaration.json` |
 | Public health declaration schema | `schemas/public_production_health_declaration.schema.json` |
-| Deployment witness orchestration | `python scripts/orchestrate_deployment_witness.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot --apply-ingress --require-preflight --require-mcp-operator-checklist --dispatch --orchestration-output "$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT"` |
+| Deployment witness orchestration | `python scripts/orchestrate_deployment_witness.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot --apply-ingress --require-preflight --require-mcp-operator-checklist --skip-target-provisioning --dispatch --orchestration-output "$MULLU_DEPLOYMENT_ORCHESTRATION_OUTPUT"` |
 | Deployment witness orchestration receipt | `.change_assurance/deployment_witness_orchestration.json` |
 | Deployment witness preflight | `python scripts/preflight_deployment_witness.py --gateway-host "$MULLU_GATEWAY_HOST" --expected-environment pilot` |
 | MCP operator handoff checklist | `python scripts/validate_mcp_operator_checklist.py --checklist examples/mcp_operator_handoff_checklist.json --json` |

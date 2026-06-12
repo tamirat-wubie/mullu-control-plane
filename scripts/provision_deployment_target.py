@@ -57,20 +57,35 @@ def provision_deployment_target(
     runner: CommandRunner = subprocess.run,
 ) -> DeploymentTarget:
     """Set repository variables for deployment witness dispatch."""
+    target = build_deployment_target(
+        gateway_url=gateway_url,
+        expected_environment=expected_environment,
+        repository=repository,
+    )
+    _set_variable(
+        repository=target.repository,
+        variable_name=GATEWAY_URL_VARIABLE,
+        value=target.gateway_url,
+        runner=runner,
+    )
+    _set_variable(
+        repository=target.repository,
+        variable_name=EXPECTED_ENVIRONMENT_VARIABLE,
+        value=target.expected_environment,
+        runner=runner,
+    )
+    return target
+
+
+def build_deployment_target(
+    *,
+    gateway_url: str,
+    expected_environment: str,
+    repository: str = DEFAULT_REPOSITORY,
+) -> DeploymentTarget:
+    """Validate a deployment target without writing repository variables."""
     normalized_gateway_url = _require_gateway_url(gateway_url)
     _require_expected_environment(expected_environment)
-    _set_variable(
-        repository=repository,
-        variable_name=GATEWAY_URL_VARIABLE,
-        value=normalized_gateway_url,
-        runner=runner,
-    )
-    _set_variable(
-        repository=repository,
-        variable_name=EXPECTED_ENVIRONMENT_VARIABLE,
-        value=expected_environment,
-        runner=runner,
-    )
     return DeploymentTarget(
         repository=repository,
         gateway_url=normalized_gateway_url,

@@ -54,6 +54,7 @@ from scripts.provision_deployment_target import (  # noqa: E402
     DEFAULT_REPOSITORY,
     VALID_ENVIRONMENTS,
     DeploymentTarget,
+    build_deployment_target,
     provision_deployment_target,
 )
 from scripts.preflight_deployment_witness import (  # noqa: E402
@@ -141,6 +142,7 @@ def orchestrate_deployment_witness(
     repository: str = DEFAULT_REPOSITORY,
     rendered_ingress_output: Path = DEFAULT_OUTPUT,
     apply_ingress: bool = False,
+    skip_target_provisioning: bool = False,
     dispatch: bool = False,
     require_preflight: bool = False,
     require_mcp_operator_checklist: bool = False,
@@ -184,11 +186,19 @@ def orchestrate_deployment_witness(
         runner=command_runner,
     )
     resolved_gateway_url = gateway_url.strip().rstrip("/") or f"https://{ingress.host}"
-    target = provision_deployment_target(
-        gateway_url=resolved_gateway_url,
-        expected_environment=expected_environment,
-        repository=repository,
-        runner=command_runner,
+    target = (
+        build_deployment_target(
+            gateway_url=resolved_gateway_url,
+            expected_environment=expected_environment,
+            repository=repository,
+        )
+        if skip_target_provisioning
+        else provision_deployment_target(
+            gateway_url=resolved_gateway_url,
+            expected_environment=expected_environment,
+            repository=repository,
+            runner=command_runner,
+        )
     )
     preflight_report = (
         preflight_deployment_witness(
@@ -204,6 +214,7 @@ def orchestrate_deployment_witness(
             runtime_secret_present=runtime_secret_present,
             conformance_secret_present=conformance_secret_present,
             deployment_witness_secret_present=deployment_witness_secret_present,
+            repository_inputs_present=skip_target_provisioning,
             probe_endpoints=preflight_probe_endpoints,
             runner=command_runner,
             resolver=resolver,
@@ -301,6 +312,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--rendered-ingress-output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--apply-ingress", action="store_true")
+    parser.add_argument("--skip-target-provisioning", action="store_true")
     parser.add_argument("--dispatch", action="store_true")
     parser.add_argument("--require-preflight", action="store_true")
     parser.add_argument("--require-mcp-operator-checklist", action="store_true")
@@ -349,6 +361,7 @@ def main(argv: list[str] | None = None) -> int:
             repository=args.repo,
             rendered_ingress_output=Path(args.rendered_ingress_output),
             apply_ingress=args.apply_ingress,
+            skip_target_provisioning=args.skip_target_provisioning,
             dispatch=args.dispatch,
             require_preflight=args.require_preflight,
             require_mcp_operator_checklist=args.require_mcp_operator_checklist,
