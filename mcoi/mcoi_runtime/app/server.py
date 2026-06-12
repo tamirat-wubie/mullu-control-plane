@@ -70,6 +70,7 @@ from mcoi_runtime.app.temporal_scheduler_integration import (
 )
 from mcoi_runtime.app.job_conversation_integration import (
     bootstrap_job_conversation_threads,
+    record_job_conversation_thread,
 )
 from mcoi_runtime.app.server_lifecycle import bootstrap_server_lifecycle
 from mcoi_runtime.app.server_registry import bootstrap_dependency_registry
@@ -299,6 +300,14 @@ deps.set("tool_permission_registry_bootstrap", _tool_permission_registry_bootstr
 deps.set("job_engine", JobEngine(clock=_clock))
 _job_conversation_bootstrap = bootstrap_job_conversation_threads(os.environ)
 deps.set("job_conversation_threads", _job_conversation_bootstrap.thread_index)
+deps.set(
+    "record_job_conversation_thread",
+    lambda thread: record_job_conversation_thread(
+        _job_conversation_bootstrap.thread_index,
+        thread,
+        _job_conversation_bootstrap.store,
+    ),
+)
 if _job_conversation_bootstrap.store is not None:
     deps.set("job_conversation_thread_store", _job_conversation_bootstrap.store)
 if _job_conversation_bootstrap.save_on_shutdown is not None:

@@ -49,11 +49,7 @@ def bootstrap_job_conversation_threads(
     thread_index = store.load_index(allow_missing=True)
 
     def _save_on_shutdown() -> Mapping[str, object]:
-        store.save_index(thread_index)
-        return {
-            "store_configured": True,
-            "thread_count": len(thread_index),
-        }
+        return snapshot_job_conversation_threads(thread_index, store)
 
     return JobConversationThreadBootstrap(
         store=store,
@@ -71,3 +67,39 @@ def validate_job_conversation_thread_store_path(store_path: str | Path) -> Path:
         kind="file",
         required_suffix=".json",
     )
+
+
+def record_job_conversation_thread(
+    thread_index: dict[str, ConversationThread],
+    thread: ConversationThread,
+    store: ConversationThreadStore | None = None,
+) -> Mapping[str, object]:
+    """Update the served job-thread index and persist immediately when configured."""
+
+    if not isinstance(thread_index, dict):
+        raise TypeError("thread_index must be a dict")
+    if not isinstance(thread, ConversationThread):
+        raise TypeError("thread must be a ConversationThread")
+    thread_index[thread.thread_id] = thread
+    if store is not None:
+        store.save_index(thread_index)
+    return {
+        "store_configured": store is not None,
+        "thread_id": thread.thread_id,
+        "thread_count": len(thread_index),
+    }
+
+
+def snapshot_job_conversation_threads(
+    thread_index: Mapping[str, ConversationThread],
+    store: ConversationThreadStore,
+) -> Mapping[str, object]:
+    """Persist the current job-thread index without changing the index."""
+
+    if not isinstance(store, ConversationThreadStore):
+        raise TypeError("store must be a ConversationThreadStore")
+    store.save_index(thread_index)
+    return {
+        "store_configured": True,
+        "thread_count": len(thread_index),
+    }
