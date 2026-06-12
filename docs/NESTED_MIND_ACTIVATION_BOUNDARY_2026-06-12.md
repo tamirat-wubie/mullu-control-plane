@@ -94,7 +94,19 @@ Verified local state:
 
    Result: `43 passed`.
 
-3. Workspace governance preflight passed:
+3. Imported Nested Mind Rust workspace tests passed:
+
+   ```powershell
+   cd external/nested-mind-platform
+   cargo test --workspace
+   cargo test --workspace -- --list
+   ```
+
+   Result: `cargo test --workspace` passed, and the workspace test inventory
+   reported `122` tests across `mind-core`, `mind-connectors`,
+   `mind-store-sqlite`, `mind-api`, `mind-cli`, and `mind-worker`.
+
+4. Workspace governance preflight passed:
 
    ```powershell
    python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt-nested-mind-settlement-20260612.json
@@ -103,7 +115,7 @@ Verified local state:
    Result: `144` checks passed, and the saved receipt validated with
    `scripts/validate_workspace_governance_preflight_receipt.py`.
 
-4. Live activation gates were absent in the local shell:
+5. Live activation gates were absent in the local shell:
 
    ```text
    MULLU_NESTED_MIND_ENABLED=absent
@@ -113,7 +125,7 @@ Verified local state:
    MULLU_NESTED_MIND_BEARER_TOKEN=absent
    ```
 
-5. Local `mind-api` does not satisfy live staging evidence by itself. The
+6. Local `mind-api` does not satisfy live staging evidence by itself. The
    Mullu bridge requires HTTPS and the governed HTTP connector blocks loopback,
    private, and metadata-network targets. A valid live witness therefore needs
    a real HTTPS staging endpoint and bounded token, not localhost or a private
