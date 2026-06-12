@@ -1127,6 +1127,12 @@
       "surface": "observability"
     },
     {
+      "schema_id": "govern-cloud-public-route-monitor-receipt",
+      "path": "schemas/govern_cloud_public_route_monitor_receipt.schema.json",
+      "urn": "urn:mullusi:schema:govern-cloud-public-route-monitor-receipt:1",
+      "surface": "observability"
+    },
+    {
       "schema_id": "public-naming-readiness",
       "path": "schemas/public_naming_readiness.schema.json",
       "urn": "urn:mullusi:schema:public-naming-readiness:1",
