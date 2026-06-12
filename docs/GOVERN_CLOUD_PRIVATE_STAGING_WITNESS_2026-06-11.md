@@ -96,15 +96,30 @@ logs already establish the private staging witness.
 
 ## Gateway Boundary
 
-The control-plane gateway now has an operator-gated read model at:
+The control-plane gateway has an operator-gated read model at:
 
 ```text
 /govern-cloud/staging/witness
 ```
 
-The route is intentionally not a public proxy. It reports only private
+That route is intentionally not a public proxy. It reports only private
 dependency configuration state and never serializes secret values. The route
 requires authority-operator authorization outside explicit local/test runtime.
+
+The gateway also contains a separately gated public read proxy for exactly two
+Govern Cloud paths:
+
+```text
+GET /v1/health
+GET /v1/version
+```
+
+Those routes are disabled unless both `MULLU_GOVERN_CLOUD_STAGING_ENABLED` and
+`MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED` are truthy. The proxy validates that
+`MULLU_GOVERN_CLOUD_INTERNAL_URL` is a base HTTP(S) URL without credentials,
+query, fragment, or path prefix; forwards no caller authorization headers; and
+accepts only bounded JSON object responses from the private service. No
+arbitrary `/v1/*` forwarding is allowed.
 
 Required environment bindings:
 
@@ -120,23 +135,32 @@ MULLU_GOVERN_CLOUD_DATABASE_PLAN=Basic-256mb
 
 ## Publication Decision
 
-Public publication remains `AwaitingEvidence` until a separate gateway
-integration witness proves:
+Public publication remains `AwaitingEvidence` until the gateway deployment is
+explicitly configured with:
+
+```text
+MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED=true
+```
+
+and a live gateway integration witness proves:
 
 1. the gateway can reach the private service from Render;
-2. auth boundaries are explicit for any forwarded endpoint;
+2. only `/v1/health` and `/v1/version` are publicly forwarded;
 3. production evidence does not expose raw secrets, database URLs, tokens, or
    private headers;
 4. rollback is documented;
-5. an operator approves any public API or DNS change.
+5. an operator approves the public API binding.
 
 ## Rollback
 
 Rollback does not require DNS changes because no DNS mutation was made.
 
-1. Set `MULLU_GOVERN_CLOUD_STAGING_ENABLED=false` on the gateway.
-2. Redeploy the gateway.
-3. Keep the private Govern Cloud service running for forensic review, or suspend
+1. Set `MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED=false` on the gateway to close
+   the public read proxy.
+2. If private staging itself must be disabled, set
+   `MULLU_GOVERN_CLOUD_STAGING_ENABLED=false` on the gateway.
+3. Redeploy the gateway.
+4. Keep the private Govern Cloud service running for forensic review, or suspend
    the Render service if the operator approves cost reduction.
 
 ## Status
@@ -144,6 +168,7 @@ Rollback does not require DNS changes because no DNS mutation was made.
 Outcome: `SolvedVerified` for private staging runtime evidence and post-merge
 CI.
 Public production outcome: `AwaitingEvidence`.
-Next action: keep the service private, monitor logs, and collect an
-operator-authorized gateway-to-service witness before considering public API
-binding.
+Next action: deploy the allowlisted public read proxy, set
+`MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED=true` only after operator approval, and
+collect live `/v1/health` plus `/v1/version` evidence before declaring
+`api.mullusi.com` Govern Cloud publication complete.

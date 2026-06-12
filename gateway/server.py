@@ -11,10 +11,14 @@ from __future__ import annotations
 
 import logging
 import os
+import socket
 from dataclasses import asdict
 from hashlib import sha256
 import json
 from typing import Any, Mapping
+import urllib.error
+import urllib.request
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
@@ -111,6 +115,7 @@ from gateway.orgos_kernel import (
     replay_orgos_kernel_from_events,
 )
 from gateway.plan_ledger import build_capability_plan_ledger_from_env
+from gateway.proxy_policy import assert_proxy_environment_allowed
 from gateway.router import GatewayRouter
 from gateway.session import SessionManager
 from gateway.capability_dispatch import build_capability_dispatcher_from_platform
@@ -131,6 +136,9 @@ PHYSICAL_ACTION_RECEIPT_SCHEMA_REF = "urn:mullusi:schema:physical-action-receipt
 CAPABILITY_IMPROVEMENT_PORTFOLIO_SCHEMA_REF = "urn:mullusi:schema:capability-improvement-portfolio:1"
 PHYSICAL_LIVE_SAFETY_EXTENSION_KEY = "physical_live_safety_evidence"
 PHYSICAL_CAPABILITY_PREFIXES = ("physical.", "iot.", "robotics.")
+GOVERN_CLOUD_PUBLIC_PROXY_PATHS = frozenset(("/v1/health", "/v1/version"))
+GOVERN_CLOUD_PUBLIC_PROXY_TIMEOUT_SECONDS = 5.0
+GOVERN_CLOUD_PUBLIC_PROXY_MAX_BYTES = 65_536
 REQUIRED_PHYSICAL_LIVE_SAFETY_FIELDS = (
     "physical_action_receipt_ref",
     "simulation_ref",
@@ -517,10 +525,96 @@ def create_gateway_app(
             return default
         return value in {"1", "true", "yes", "on"}
 
+    def _govern_cloud_internal_base_url() -> str | None:
+        """Return a validated Govern Cloud internal base URL or None."""
+        internal_url = os.environ.get("MULLU_GOVERN_CLOUD_INTERNAL_URL", "").strip()
+        if not internal_url:
+            return None
+        parsed_url = urlsplit(internal_url)
+        if (
+            parsed_url.scheme not in {"http", "https"}
+            or not parsed_url.netloc
+            or parsed_url.username
+            or parsed_url.password
+            or parsed_url.query
+            or parsed_url.fragment
+            or parsed_url.path not in {"", "/"}
+        ):
+            return None
+        return f"{parsed_url.scheme}://{parsed_url.netloc}".rstrip("/")
+
+    def _govern_cloud_public_proxy_enabled() -> bool:
+        """Return whether the public Govern Cloud proxy is explicitly enabled."""
+        return _truthy_env("MULLU_GOVERN_CLOUD_STAGING_ENABLED") and _truthy_env(
+            "MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED"
+        )
+
+    def _govern_cloud_public_json_proxy(path: str) -> JSONResponse:
+        """Forward an allowlisted public Govern Cloud read-model route."""
+        if path not in GOVERN_CLOUD_PUBLIC_PROXY_PATHS:
+            raise HTTPException(status_code=404, detail="Govern Cloud route not published")
+        if not _govern_cloud_public_proxy_enabled():
+            raise HTTPException(status_code=404, detail="Govern Cloud public proxy not enabled")
+        base_url = _govern_cloud_internal_base_url()
+        if base_url is None:
+            raise HTTPException(status_code=503, detail="Govern Cloud public proxy not configured")
+        try:
+            assert_proxy_environment_allowed()
+        except RuntimeError as exc:
+            _log.warning("Govern Cloud public proxy blocked by proxy policy: %s", exc)
+            raise HTTPException(status_code=503, detail="Govern Cloud outbound proxy environment blocked") from exc
+
+        request = urllib.request.Request(
+            f"{base_url}{path}",
+            method="GET",
+            headers={
+                "Accept": "application/json",
+                "User-Agent": "mullusi-govern-cloud-public-proxy/1",
+            },
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=GOVERN_CLOUD_PUBLIC_PROXY_TIMEOUT_SECONDS) as response:
+                raw_status_code = getattr(response, "status", None)
+                status_code = int(raw_status_code if raw_status_code is not None else response.getcode())
+                if status_code != 200:
+                    raise HTTPException(status_code=502, detail="Govern Cloud upstream returned non-OK status")
+                headers = getattr(response, "headers", {}) or {}
+                content_length = headers.get("Content-Length") if hasattr(headers, "get") else None
+                if content_length:
+                    try:
+                        parsed_content_length = int(content_length)
+                    except ValueError as exc:
+                        raise HTTPException(
+                            status_code=502,
+                            detail="Govern Cloud upstream response length invalid",
+                        ) from exc
+                    if parsed_content_length > GOVERN_CLOUD_PUBLIC_PROXY_MAX_BYTES:
+                        raise HTTPException(status_code=502, detail="Govern Cloud upstream response too large")
+                raw_payload = response.read(GOVERN_CLOUD_PUBLIC_PROXY_MAX_BYTES + 1)
+        except HTTPException:
+            raise
+        except urllib.error.HTTPError as exc:
+            _log.warning("Govern Cloud public proxy upstream HTTP error: %s", exc.code)
+            raise HTTPException(status_code=502, detail="Govern Cloud upstream rejected request") from exc
+        except (TimeoutError, socket.timeout) as exc:
+            _log.warning("Govern Cloud public proxy timed out")
+            raise HTTPException(status_code=504, detail="Govern Cloud upstream timed out") from exc
+        except (urllib.error.URLError, OSError) as exc:
+            _log.warning("Govern Cloud public proxy transport failed: %s", exc)
+            raise HTTPException(status_code=503, detail="Govern Cloud upstream unreachable") from exc
+
+        if len(raw_payload) > GOVERN_CLOUD_PUBLIC_PROXY_MAX_BYTES:
+            raise HTTPException(status_code=502, detail="Govern Cloud upstream response too large")
+        try:
+            payload = json.loads(raw_payload.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise HTTPException(status_code=502, detail="Govern Cloud upstream response was not JSON") from exc
+        if not isinstance(payload, dict):
+            raise HTTPException(status_code=502, detail="Govern Cloud upstream response was not an object")
+        return JSONResponse(payload, status_code=200)
+
     def _govern_cloud_staging_read_model() -> dict[str, Any]:
         """Return a secret-free private Govern Cloud staging dependency witness."""
-        from urllib.parse import urlsplit
-
         enabled = _truthy_env("MULLU_GOVERN_CLOUD_STAGING_ENABLED")
         public_proxy_enabled = _truthy_env("MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED")
         internal_url = os.environ.get("MULLU_GOVERN_CLOUD_INTERNAL_URL", "").strip()
@@ -556,8 +650,7 @@ def create_gateway_app(
                 "detail": "no secret values serialized",
             },
         ]
-        blocked = public_proxy_enabled
-        configured = enabled and internal_url_configured and not blocked
+        configured = enabled and internal_url_configured
         return {
             "service": "mullusi-govern-cloud-staging",
             "dependency_type": "private_render_service",
@@ -578,8 +671,6 @@ def create_gateway_app(
             "release_gate": (
                 "private_staging_configured"
                 if configured
-                else "blocked"
-                if blocked
                 else "awaiting_private_staging_configuration"
             ),
             "solver_outcome": "AwaitingEvidence",
@@ -1630,6 +1721,14 @@ def create_gateway_app(
     def govern_cloud_staging_witness(request: Request):
         _require_authority_operator(request)
         return _govern_cloud_staging_read_model()
+
+    @app.get("/v1/health")
+    def govern_cloud_public_health():
+        return _govern_cloud_public_json_proxy("/v1/health")
+
+    @app.get("/v1/version")
+    def govern_cloud_public_version():
+        return _govern_cloud_public_json_proxy("/v1/version")
 
     @app.get("/api/v1/federation/summary")
     def federation_summary(request: Request):
