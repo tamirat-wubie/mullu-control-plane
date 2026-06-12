@@ -45,6 +45,17 @@
       "summary": "Local release-packet rehearsal records release review labels without release-packet publication, release readiness, version-label selection, tag creation, GitHub release creation, changelog publication, artifact publication, source-control publication, external publication, deployment, customer access, legal clearance, company formation, patent action, money movement, secret publication, or private-value recording claims."
     },
     {
+      "family_id": "python_dependency_visibility_rehearsal_boundary",
+      "required_evidence": [
+        "docs/FOUNDATION_PYTHON_DEPENDENCY_VISIBILITY_REHEARSAL_BOUNDARY.md",
+        "examples/foundation_python_dependency_visibility_rehearsal_witness.awaiting_evidence.json",
+        "scripts/validate_foundation_python_dependency_visibility_rehearsal_boundary.py",
+        "tests/test_validate_foundation_python_dependency_visibility_rehearsal_boundary.py"
+      ],
+      "state": "AwaitingEvidence",
+      "summary": "Python dependency-visibility rehearsal records local interpreter, package-visibility, optional dependency, import-probe, sandbox/elevated preflight, dependency-gap, repair-option, validation-pairing, and stop-rule labels without dependency visibility, package install, environment mutation, private path recording, FastAPI readiness, full preflight closure, runtime readiness, publication, deployment, customer access, legal/company/patent action, money movement, or secret publication claims."
+    },
+    {
       "family_id": "operator_readiness_boundary",
       "required_evidence": [
         "docs/FOUNDATION_OPERATOR_READINESS_BOUNDARY.md",
@@ -1038,6 +1049,7 @@
     "python scripts/validate_foundation_source_control_boundary.py",
     "python scripts/validate_foundation_source_control_review_checklist_boundary.py",
     "python scripts/validate_foundation_local_release_packet_rehearsal_boundary.py",
+    "python scripts/validate_foundation_python_dependency_visibility_rehearsal_boundary.py",
     "python scripts/validate_foundation_operator_readiness_boundary.py",
     "python scripts/validate_foundation_solo_daily_loop_boundary.py",
     "python scripts/validate_foundation_learning_path_boundary.py",

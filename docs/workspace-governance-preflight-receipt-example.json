@@ -4,7 +4,7 @@
   "receipt_is_not_terminal_closure": true,
   "status": "passed",
   "generated_at_epoch": 1780664954.505807,
-  "check_count": 140,
+  "check_count": 141,
   "checks": [
     {
       "name": "local_assurance_plan",
@@ -82,6 +82,17 @@
       ],
       "return_code": 0,
       "stdout": "[PASS] foundation_local_release_packet_rehearsal_doc\n[PASS] foundation_local_release_packet_rehearsal_witness\nSTATUS: passed\n",
+      "stderr": "",
+      "passed": true
+    },
+    {
+      "name": "foundation_python_dependency_visibility_rehearsal_boundary",
+      "args": [
+        "python",
+        "scripts/validate_foundation_python_dependency_visibility_rehearsal_boundary.py"
+      ],
+      "return_code": 0,
+      "stdout": "[PASS] foundation_python_dependency_visibility_rehearsal_doc\n[PASS] foundation_python_dependency_visibility_rehearsal_witness\nSTATUS: passed\n",
       "stderr": "",
       "passed": true
     },

@@ -40,6 +40,7 @@ EXPECTED_CHANGE_FAMILIES = (
     "foundation_posture",
     "source_control_review_checklist_boundary",
     "local_release_packet_rehearsal_boundary",
+    "python_dependency_visibility_rehearsal_boundary",
     "operator_readiness_boundary",
     "solo_daily_loop_boundary",
     "learning_path_boundary",

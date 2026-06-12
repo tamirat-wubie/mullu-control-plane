@@ -1,0 +1,119 @@
+{
+  "blocked_claims": [
+    "dependency visibility",
+    "dependency install",
+    "interpreter path recording",
+    "private path recording",
+    "package install",
+    "environment mutation",
+    "FastAPI readiness",
+    "full preflight closure",
+    "runtime readiness",
+    "source-control publication",
+    "external publication",
+    "deployment readiness",
+    "customer access",
+    "legal clearance",
+    "company formation",
+    "patent action",
+    "money movement",
+    "secret publication"
+  ],
+  "company_formation_claimed": false,
+  "customer_access_allowed": false,
+  "deferral_labels": [
+    "interpreter_label_rehearsal",
+    "user_site_visibility_rehearsal",
+    "optional_dependency_group_rehearsal",
+    "import_probe_label_rehearsal",
+    "sandbox_boundary_rehearsal",
+    "elevated_preflight_label_rehearsal",
+    "dependency_gap_note_rehearsal",
+    "repair_option_label_rehearsal",
+    "validation_command_pairing_rehearsal",
+    "stop_rule_rehearsal"
+  ],
+  "dependency_install_allowed": false,
+  "dependency_visibility_claimed": false,
+  "deployment_allowed": false,
+  "environment_mutation_allowed": false,
+  "external_publication_allowed": false,
+  "fastapi_readiness_claimed": false,
+  "interpreter_path_recording_allowed": false,
+  "legal_clearance_claimed": false,
+  "money_movement_allowed": false,
+  "next_action": "keep Python dependency-visibility rehearsal labels public-safe until local interpreter, package visibility, import-probe, repair-option, and preflight evidence exist without private values",
+  "package_install_allowed": false,
+  "patent_action_allowed": false,
+  "preflight_closure_claimed": false,
+  "private_path_recording_allowed": false,
+  "runtime_readiness_claimed": false,
+  "schema_version": "foundation.python_dependency_visibility_rehearsal.v1",
+  "secret_publication_allowed": false,
+  "solver_outcome": "AwaitingEvidence",
+  "source_control_publication_allowed": false,
+  "status": "AwaitingEvidence",
+  "surfaces": [
+    {
+      "public_safe_note": "Interpreter-label rehearsal only; real interpreter paths and interpreter verification are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "interpreter_label_rehearsal",
+      "surface_type": "local_interpreter_label"
+    },
+    {
+      "public_safe_note": "User-site visibility rehearsal only; site-package paths and dependency-visibility claims are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "user_site_visibility_rehearsal",
+      "surface_type": "local_user_site_visibility_label"
+    },
+    {
+      "public_safe_note": "Optional dependency group rehearsal only; package installs and dependency-group completeness are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "optional_dependency_group_rehearsal",
+      "surface_type": "local_optional_dependency_label"
+    },
+    {
+      "public_safe_note": "Import-probe label rehearsal only; FastAPI readiness and package readiness are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "import_probe_label_rehearsal",
+      "surface_type": "local_import_probe_label"
+    },
+    {
+      "public_safe_note": "Sandbox-boundary rehearsal only; sandbox bypass and elevated-environment readiness are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "sandbox_boundary_rehearsal",
+      "surface_type": "local_sandbox_boundary_label"
+    },
+    {
+      "public_safe_note": "Elevated-preflight label rehearsal only; full preflight closure and CI parity are not claimed.",
+      "state": "AwaitingEvidence",
+      "surface_id": "elevated_preflight_label_rehearsal",
+      "surface_type": "local_preflight_visibility_label"
+    },
+    {
+      "public_safe_note": "Dependency-gap note rehearsal only; private paths, versions, endpoints, and account identifiers are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "dependency_gap_note_rehearsal",
+      "surface_type": "local_dependency_gap_label"
+    },
+    {
+      "public_safe_note": "Repair-option label rehearsal only; environment mutation, package install, and profile changes are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "repair_option_label_rehearsal",
+      "surface_type": "local_repair_option_label"
+    },
+    {
+      "public_safe_note": "Validation-command pairing rehearsal only; command pairing is not test readiness or runtime readiness.",
+      "state": "AwaitingEvidence",
+      "surface_id": "validation_command_pairing_rehearsal",
+      "surface_type": "local_validation_pairing_label"
+    },
+    {
+      "public_safe_note": "Stop-rule rehearsal only; source-control publication, deployment, spending, secret handling, customer access, legal, company, and patent actions are not approved.",
+      "state": "AwaitingEvidence",
+      "surface_id": "stop_rule_rehearsal",
+      "surface_type": "local_stop_rule_label"
+    }
+  ],
+  "witness_id": "foundation_python_dependency_visibility_rehearsal_witness.awaiting_evidence.v1"
+}

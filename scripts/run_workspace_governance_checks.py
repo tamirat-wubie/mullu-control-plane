@@ -136,6 +136,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_foundation_local_release_packet_rehearsal_boundary.py"),
         ),
         CheckCommand(
+            "foundation_python_dependency_visibility_rehearsal_boundary",
+            (python_executable, "scripts/validate_foundation_python_dependency_visibility_rehearsal_boundary.py"),
+        ),
+        CheckCommand(
             "agentic_service_harness_contract",
             (python_executable, "scripts/validate_agentic_service_harness_contract.py"),
         ),

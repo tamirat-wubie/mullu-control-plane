@@ -130,7 +130,11 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "foundation_source_control_review_checklist_boundary",
         "foundation_local_release_packet_rehearsal_boundary",
     )
-    assert_ordered("foundation_local_release_packet_rehearsal_boundary", "agentic_service_harness_contract")
+    assert_ordered(
+        "foundation_local_release_packet_rehearsal_boundary",
+        "foundation_python_dependency_visibility_rehearsal_boundary",
+    )
+    assert_ordered("foundation_python_dependency_visibility_rehearsal_boundary", "agentic_service_harness_contract")
     assert_ordered("agentic_service_harness_contract", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_source_control_review_checklist_boundary", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_source_control_boundary", "foundation_operator_readiness_boundary")
