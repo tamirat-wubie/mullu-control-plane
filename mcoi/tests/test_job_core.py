@@ -280,6 +280,9 @@ class TestJobLifecycleCreateStartComplete:
         assert "Secret Name" not in str(receipts[0].to_dict())
         assert "secret description" not in str(receipts[0].to_dict())
         assert "secret completion" not in str(receipts[2].to_dict())
+        assert engine.mutation_receipts(limit=1)[0].effect_name == "job_completed"
+        assert engine.mutation_receipts(limit=0) == ()
+        assert engine.mutation_receipts(limit=-1) == ()
 
 
 class TestJobLifecycleCreateStartPauseResumeComplete:
@@ -696,6 +699,8 @@ class TestRestoreAndListingHelpers:
         assert effect.details["job_id"] == desc.job_id
         assert effect.details["evidence_ref"].startswith("job-receipt:")
         assert effect.details["new_status"] == "created"
+        assert engine.effect_records(limit=0) == ()
+        assert engine.effect_records(limit=-1) == ()
 
     def test_job_mutation_receipt_closes_effect_assurance(self):
         engine = JobEngine(clock=_make_clock([_T0]))
