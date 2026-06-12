@@ -25,6 +25,7 @@ from .view_models import (
     SkillSummaryView,
     TeamSummaryView,
     TemporalTaskView,
+    WHQRBindingClarificationStatusView,
     WorkflowSummaryView,
 )
 
@@ -284,6 +285,25 @@ def render_job_summary(view: JobSummaryView) -> str:
     return "\n".join(lines)
 
 
+def render_whqr_binding_clarification_status(view: WHQRBindingClarificationStatusView) -> str:
+    """Render WHQR binding clarification replay status as text."""
+    lines = [
+        "=== WHQR Binding Clarification Status ===",
+        f"  thread_id:          {view.thread_id}",
+        f"  request_count:      {view.request_count}",
+        f"  response_count:     {view.response_count}",
+        f"  accepted_count:     {view.accepted_count}",
+        f"  rejected_count:     {view.rejected_count}",
+        f"  has_replay_pairs:   {view.has_replay_pairs}",
+        f"  binding_map_passed: {view.binding_map_passed}",
+        f"  next_step:          {view.next_step}",
+        f"  pending_request_ids:{_render_tuple(view.pending_request_ids)}",
+        f"  responded_request_ids:{_render_tuple(view.responded_request_ids)}",
+        f"  rejected_reasons:   {_render_tuple(view.rejected_reasons)}",
+    ]
+    return "\n".join(lines)
+
+
 def render_team_summary(view: TeamSummaryView) -> str:
     """Render a team workload summary as text."""
     lines = [
@@ -296,6 +316,12 @@ def render_team_summary(view: TeamSummaryView) -> str:
         f"  assigned_jobs:      {view.assigned_jobs}",
     ]
     return "\n".join(lines)
+
+
+def _render_tuple(values: tuple[str, ...]) -> str:
+    if not values:
+        return " (none)"
+    return " " + ", ".join(values)
 
 
 def render_graph_summary(view: GraphSummaryView) -> str:

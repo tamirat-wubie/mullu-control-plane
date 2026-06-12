@@ -17,13 +17,16 @@ from mcoi_runtime.app.skill_promotion_read_models import (
     SkillPromotionReceiptReadReport,
     SkillPromotionReceiptSummary,
 )
+from mcoi_runtime.contracts.conversation import ConversationThread
 from mcoi_runtime.contracts.job import JobDescriptor, JobState
 from mcoi_runtime.contracts.roles import TeamQueueState, WorkloadSnapshot
 from mcoi_runtime.core.coordination import CoordinationEngine
+from mcoi_runtime.core.job_integration import JobConversationBridge, WHQRJobClarificationReplay
 from mcoi_runtime.contracts.temporal import TemporalTask
 from mcoi_runtime.core.errors import StructuredError
 from mcoi_runtime.core.persisted_replay import PersistedReplayResult
 from mcoi_runtime.core.runbook import RunbookAdmissionResult
+from mcoi_runtime.whqr.clarification import build_binding_map_from_clarification_responses
 
 from mcoi_runtime.contracts.simulation import SimulationComparison, SimulationVerdict
 from mcoi_runtime.contracts.provider_attribution import ProviderAttribution
@@ -494,6 +497,86 @@ class JobSummaryView:
             thread_id=state.thread_id if hasattr(state, "thread_id") else None,
             deadline=descriptor.deadline if hasattr(descriptor, "deadline") else None,
         )
+
+
+@dataclass(frozen=True, slots=True)
+class WHQRBindingClarificationStatusView:
+    """WHQR binding clarification replay status for operator display."""
+
+    thread_id: str
+    request_count: int
+    response_count: int
+    pending_request_ids: tuple[str, ...]
+    responded_request_ids: tuple[str, ...]
+    accepted_count: int
+    rejected_count: int
+    rejected_reasons: tuple[str, ...]
+    has_replay_pairs: bool
+    binding_map_passed: bool
+    next_step: str
+
+    @staticmethod
+    def from_thread(thread: ConversationThread) -> WHQRBindingClarificationStatusView:
+        replay = JobConversationBridge.replay_whqr_binding_clarifications(thread)
+        return WHQRBindingClarificationStatusView.from_replay(thread.thread_id, replay)
+
+    @staticmethod
+    def from_replay(
+        thread_id: str,
+        replay: WHQRJobClarificationReplay,
+    ) -> WHQRBindingClarificationStatusView:
+        request_ids = tuple(request.request_id for request in replay.requests)
+        responded_ids = tuple(response.request_id for response in replay.responses)
+        responded_id_set = set(responded_ids)
+        pending_ids = tuple(request_id for request_id in request_ids if request_id not in responded_id_set)
+        binding_map = (
+            build_binding_map_from_clarification_responses(replay.requests, replay.responses)
+            if replay.responses
+            else None
+        )
+        accepted_count = binding_map.accepted_count if binding_map is not None else 0
+        rejected_count = binding_map.rejected_count if binding_map is not None else 0
+        rejected_reasons = (
+            tuple(result.reason for result in binding_map.results if not result.accepted)
+            if binding_map is not None
+            else ()
+        )
+        return WHQRBindingClarificationStatusView(
+            thread_id=thread_id,
+            request_count=len(replay.requests),
+            response_count=len(replay.responses),
+            pending_request_ids=pending_ids,
+            responded_request_ids=responded_ids,
+            accepted_count=accepted_count,
+            rejected_count=rejected_count,
+            rejected_reasons=rejected_reasons,
+            has_replay_pairs=replay.ready_for_binding_map,
+            binding_map_passed=binding_map.passed if binding_map is not None else False,
+            next_step=_whqr_binding_clarification_next_step(
+                request_count=len(replay.requests),
+                accepted_count=accepted_count,
+                rejected_count=rejected_count,
+                pending_count=len(pending_ids),
+            ),
+        )
+
+
+def _whqr_binding_clarification_next_step(
+    *,
+    request_count: int,
+    accepted_count: int,
+    rejected_count: int,
+    pending_count: int,
+) -> str:
+    if request_count == 0:
+        return "no_whqr_binding_clarification"
+    if rejected_count:
+        return "resolve_whqr_clarification_response"
+    if pending_count:
+        return "await_whqr_binding_response"
+    if accepted_count:
+        return "ready_for_orchestration"
+    return "await_whqr_binding_response"
 
 
 # ---------------------------------------------------------------------------
