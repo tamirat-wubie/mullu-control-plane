@@ -19,7 +19,7 @@ def test_handoff_packet_avoids_forbidden_terminology() -> None:
 
     assert FORBIDDEN_PHRASE not in packet_text.lower()
     assert "General-Agent Promotion Handoff Packet" in packet_text
-    assert "production-general-agent" in packet_text
+    assert "pilot-governed-core" in packet_text
 
 
 def test_handoff_packet_links_operator_artifacts() -> None:

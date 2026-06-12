@@ -51,7 +51,10 @@ REQUIRED_APPROVAL_BLOCKERS = frozenset({
     "capability_improvement_required:agentic_control.code_change.plan",
     "capability_improvement_required:agentic_control.incident_recovery.plan",
 })
-REQUIRED_BLOCKING_GAPS = frozenset()
+REQUIRED_BLOCKING_GAPS = frozenset({
+    "deployment_witness_not_published",
+    "production_health_not_declared",
+})
 REQUIRED_STEP_COMMAND_TOKENS = {
     "collect_adapter_evidence": ("collect_capability_adapter_evidence.py",),
     "write_promotion_readiness": ("validate_general_agent_promotion.py", "--output"),
@@ -90,10 +93,10 @@ REQUIRED_STEP_COMMAND_TOKENS = {
 }
 REQUIRED_STEP_EVIDENCE = {
     "write_promotion_readiness": frozenset({
-        "readiness_level=production-general-agent",
+        "readiness_level=pilot-governed-core",
         "capability_count=80",
         "capsule_count=13",
-        "production blockers absent",
+        "production blockers explicit",
     }),
     "validate_adapter_closure_plan_schema": frozenset({
         "capability_adapter_closure_plan_schema_validation.json ok=true",
@@ -140,8 +143,8 @@ REQUIRED_STEP_EVIDENCE = {
         "deployment_witness.json deployment_claim=published",
     }),
     "validate_publication_and_promotion": frozenset({
-        "general-agent promotion ready=true",
-        "readiness_level=production-general-agent",
+        "general-agent promotion ready=false",
+        "readiness_level=pilot-governed-core",
     }),
 }
 

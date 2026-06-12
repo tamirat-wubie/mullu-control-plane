@@ -17,7 +17,7 @@ This packet is the operator entry point for final promotion validation. It binds
 
 | Field | Current value |
 | --- | --- |
-| Readiness level | `production-general-agent` |
+| Readiness level | `pilot-governed-core` |
 | Capability capsules | 13 |
 | Governed capabilities | 80 |
 | Aggregate closure actions | 6 |
@@ -76,7 +76,8 @@ This packet is the operator entry point for final promotion validation. It binds
 ## Open Blockers
 
 ```text
-none
+deployment_witness_not_published
+production_health_not_declared
 ```
 
 ## Terminal Approval Actions
