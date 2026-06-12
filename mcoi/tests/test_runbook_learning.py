@@ -7,7 +7,6 @@ Invariants: patterns from real data; promotion requires approval; versioned.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 import pytest
 
@@ -163,6 +162,27 @@ def test_analyze_endpoint(client) -> None:
     assert resp.json()["governed"] is True
 
 
+def test_analyze_endpoint_zero_limit_returns_empty_read(client) -> None:
+    resp = client.post("/api/v1/runbooks/analyze?limit=0")
+    body = resp.json()
+
+    assert resp.status_code == 200
+    assert body["patterns"] == []
+    assert body["count"] == 0
+    assert body["governed"] is True
+
+
+@pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+def test_analyze_endpoint_invalid_limit_returns_bounded_422(client, limit) -> None:
+    resp = client.post(f"/api/v1/runbooks/analyze?limit={limit}")
+    detail = resp.json()["detail"]
+
+    assert resp.status_code == 422
+    assert detail["error"] == "invalid runbook read request"
+    assert detail["error_code"] == "runbook_read_invalid_request"
+    assert detail["governed"] is True
+
+
 def test_list_runbooks_endpoint(client) -> None:
     resp = client.get("/api/v1/runbooks")
     assert resp.status_code == 200
@@ -212,6 +232,27 @@ def test_list_runbooks_invalid_status_fails_closed(client) -> None:
     assert resp.status_code == 422
     assert resp.json()["detail"]["error"] == "invalid runbook status"
     assert resp.json()["detail"]["error_code"] == "invalid_status"
+
+
+def test_list_patterns_endpoint_zero_limit_returns_empty_read(client) -> None:
+    resp = client.get("/api/v1/runbooks/patterns?limit=0")
+    body = resp.json()
+
+    assert resp.status_code == 200
+    assert body["patterns"] == []
+    assert body["count"] == 0
+    assert body["governed"] is True
+
+
+@pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+def test_list_patterns_invalid_limit_returns_bounded_422(client, limit) -> None:
+    resp = client.get(f"/api/v1/runbooks/patterns?limit={limit}")
+    detail = resp.json()["detail"]
+
+    assert resp.status_code == 422
+    assert detail["error"] == "invalid runbook read request"
+    assert detail["error_code"] == "runbook_read_invalid_request"
+    assert detail["governed"] is True
 
 
 def test_retire_endpoint_rejects_non_active_runbook(client) -> None:

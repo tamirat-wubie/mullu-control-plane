@@ -9,6 +9,33 @@ from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 
 router = APIRouter()
 
+_MAX_AUDIT_EXPLAIN_ENTRY_INDEX = 499
+
+
+def _explain_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _raise_explain_audit_validation_error() -> None:
+    raise HTTPException(
+        422,
+        detail=_explain_error_detail("invalid explain audit request", "explain_audit_invalid_request"),
+    )
+
+
+def _coerce_audit_entry_index(entry_index: object) -> int:
+    if isinstance(entry_index, bool):
+        _raise_explain_audit_validation_error()
+    try:
+        value = int(entry_index)
+    except (TypeError, ValueError):
+        _raise_explain_audit_validation_error()
+    if str(entry_index).strip() != str(value):
+        _raise_explain_audit_validation_error()
+    if value < 0 or value > _MAX_AUDIT_EXPLAIN_ENTRY_INDEX:
+        _raise_explain_audit_validation_error()
+    return value
+
 
 class ExplainActionRequest(BaseModel):
     action_type: str
@@ -42,18 +69,19 @@ def explain_action(req: ExplainActionRequest):
 
 
 @router.get("/api/v1/explain/audit/{entry_index}")
-def explain_audit_entry(entry_index: int, request: Request):
+def explain_audit_entry(entry_index: str, request: Request):
     """Explain a specific audit trail entry by index."""
     deps.metrics.inc("requests_governed")
-    entries = deps.audit_trail.query(limit=entry_index + 1)
-    if entry_index >= len(entries):
-        raise HTTPException(404, detail={
-            "error": "audit entry not found",
-            "error_code": "entry_not_found",
-            "governed": True,
-        })
-    enforce_tenant_scope(request, entries[entry_index].tenant_id)
-    explanation = deps.explanation_engine.explain_audit_entry(entries[entry_index])
+    read_index = _coerce_audit_entry_index(entry_index)
+    entries = deps.audit_trail.query(limit=read_index + 1)
+    if read_index >= len(entries):
+        raise HTTPException(
+            404,
+            detail=_explain_error_detail("audit entry not found", "entry_not_found"),
+        )
+    entry = entries[read_index]
+    enforce_tenant_scope(request, entry.tenant_id)
+    explanation = deps.explanation_engine.explain_audit_entry(entry)
     return {
         "explanation_id": explanation.explanation_id,
         "action": explanation.action,
