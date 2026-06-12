@@ -51,6 +51,7 @@ The kernel models the common contract through:
 
 | Loop ID | Purpose | Runtime behavior changed |
 | --- | --- | --- |
+| `audit_proof_verification_loop` | Describes audit, proof, trust-ledger anchor, and verification evidence without executing proof verification or anchor submission. | No |
 | `deployment_witness_loop` | Describes endpoint publication, runtime witness, conformance, audit, proof, and authority evidence for deployment closure. | No |
 | `runtime_conformance_loop` | Describes signed runtime conformance collection and certificate validation. | No |
 | `cognitive_outcome_loop` | Describes observe, decide, act, verify, learn, and audit evidence for cognitive outcome recording. | No |
@@ -720,7 +721,9 @@ allowed to mutate runtime behavior.
 ### Candidate Map
 
 The candidate map lists existing loop-like surfaces that may be considered for
-future admission. It does not register them and does not execute their behavior.
+future admission and reports whether a candidate has already been admitted into
+the default registry. It does not register candidates and does not execute their
+behavior.
 
 Run:
 
@@ -732,12 +735,24 @@ The current candidate map includes:
 
 | Candidate ID | Boundary |
 | --- | --- |
-| `audit_proof_verification_loop` | Audit, proof, and trust-ledger anchor verification surfaces. |
+| `audit_proof_verification_loop` | Audit, proof, and trust-ledger anchor verification surfaces; admitted into the default read model as a read-only blocked loop. |
 | `authority_obligation_loop` | Authority debt detection, satisfaction, and closure evidence surfaces. |
 | `universal_action_orchestration_loop` | Effect-bearing action admission, receipt, replay, and no-bypass surfaces. |
 | `workflow_execution_loop` | Workflow descriptor, run, orchestration, and replay surfaces. |
 
-Every candidate is projected as:
+Registered candidates are projected as:
+
+```text
+registered == true
+admission_status == registered
+admission_blockers == []
+next_action == already_registered
+read_only == true
+mutation_route == false
+terminal_closure == false
+```
+
+Unregistered candidates are projected as:
 
 ```text
 registered == false
@@ -851,10 +866,11 @@ behavior, or close admission.
 
 ### Audit Proof Admission Dossier
 
-The Audit Proof Verification admission dossier applies the same
-candidate-specific readiness boundary to audit verification, proof
-verification, trust-ledger anchor verification, export packaging, remote
-submission preflight, and gateway verification surfaces.
+The Audit Proof Verification admission dossier now reports the registered
+admission state for audit verification, proof verification, trust-ledger anchor
+verification, export packaging, remote submission preflight, and gateway
+verification surfaces. It remains read-only and does not perform the registry
+admission itself.
 
 Run:
 
@@ -866,9 +882,10 @@ The dossier reports:
 
 ```text
 candidate_id == audit_proof_verification_loop
-admission_status == ready_for_operator_decision
-requires_operator_registration_decision in admission_blockers
-registered == false
+admission_status == registered
+admission_blockers == []
+next_action == already_registered
+registered == true
 read_only == true
 mutation_route == false
 runtime_behavior_change == false
@@ -880,7 +897,7 @@ The dossier includes a proposed `LoopManifest`, existing audit/proof source
 refs, evidence gap report, authority gap report, closure-condition gap report,
 rollback readiness, and learning policy readiness. It does not verify proofs,
 submit anchors, emit receipts, mutate the registry, execute audit/proof
-behavior, or close admission.
+behavior, or claim terminal closure.
 
 ### Extension Checklist
 
@@ -1035,7 +1052,7 @@ python scripts/report_holistic_loop_audit_proof_admission_dossier.py
 
 The tests verify:
 
-1. The first four loops are registered.
+1. The five default loops are registered.
 2. Each loop exposes purpose, authority, evidence requirements, and closure conditions.
 3. Missing evidence becomes blockers.
 4. Complete evidence can verify the read model without executing runtime behavior.
@@ -1056,8 +1073,8 @@ The tests verify:
 19. The normalized HTTP payload matches the local report contract.
 20. The holistic proof matrix surface has zero unanchored witness labels.
 21. Extension admission keeps default loop registrations read-only, blocker-aware, non-terminal, and proof-anchored.
-22. The candidate map lists unregistered loop-like surfaces without registering, verifying, closing, or mutating them.
+22. The candidate map lists loop-like surfaces, distinguishes admitted candidates from still-blocked candidates, and does not register, verify, close, or mutate them.
 23. The UAO admission dossier proves readiness for an operator registration decision without registering, mutating, or closing the loop.
 24. The workflow admission dossier proves readiness for an operator registration decision without registering, mutating, or closing the loop.
 25. The authority admission dossier proves readiness for an operator registration decision without registering, mutating, satisfying obligations, or closing the loop.
-26. The audit/proof admission dossier proves readiness for an operator registration decision without registering, mutating, verifying proofs, submitting anchors, or closing the loop.
+26. The audit/proof admission dossier reports default registry admission without mutating the registry, verifying proofs, submitting anchors, or closing the loop.

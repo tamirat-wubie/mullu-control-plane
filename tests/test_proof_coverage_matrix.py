@@ -312,12 +312,12 @@ def test_holistic_loop_kernel_witness_labels_have_exact_anchors() -> None:
         for record in holistic_integrity["anchored_witnesses"]
     }
 
-    assert holistic_integrity["runtime_witness_count"] == 42
-    assert holistic_integrity["exact_test_anchor_count"] == 42
+    assert holistic_integrity["runtime_witness_count"] == 43
+    assert holistic_integrity["exact_test_anchor_count"] == 43
     assert holistic_integrity["unanchored_witness_count"] == 0
     assert holistic_integrity["unanchored_witnesses"] == []
     assert anchors_by_witness["registered_loops_expose_governed_manifest_fields"] == {
-        "mcoi/tests/test_holistic_loop_kernel.py::test_default_registry_exposes_first_four_loop_manifests"
+        "mcoi/tests/test_holistic_loop_kernel.py::test_default_registry_exposes_governed_loop_manifests"
     }
     assert anchors_by_witness["missing_required_evidence_is_reported_as_blocker"] == {
         "mcoi/tests/test_holistic_loop_kernel.py::test_missing_evidence_is_reported_as_blocker_not_success"
@@ -473,13 +473,19 @@ def test_holistic_loop_kernel_witness_labels_have_exact_anchors() -> None:
     assert anchors_by_witness["holistic_loop_candidate_map_lists_unregistered_surfaces"] == {
         (
             "tests/test_report_holistic_loop_candidate_map.py::"
-            "test_holistic_loop_candidate_map_lists_unregistered_surfaces"
+            "test_holistic_loop_candidate_map_lists_candidate_surfaces"
         )
     }
     assert anchors_by_witness["holistic_loop_candidate_map_is_read_only_non_terminal"] == {
         (
             "tests/test_report_holistic_loop_candidate_map.py::"
             "test_holistic_loop_candidate_map_is_read_only_non_terminal"
+        )
+    }
+    assert anchors_by_witness["holistic_loop_audit_proof_registered_in_default_read_model"] == {
+        (
+            "mcoi/tests/test_holistic_loop_kernel.py::"
+            "test_audit_proof_loop_is_registered_read_only_and_blocked"
         )
     }
     assert anchors_by_witness["holistic_loop_uao_admission_dossier_builds_proposed_manifest"] == {
@@ -549,11 +555,11 @@ def test_holistic_loop_kernel_witness_labels_have_exact_anchors() -> None:
         )
     }
     assert anchors_by_witness[
-        "holistic_loop_audit_proof_admission_dossier_ready_for_operator_decision"
+        "holistic_loop_audit_proof_admission_dossier_reports_registry_admission"
     ] == {
         (
             "tests/test_report_holistic_loop_audit_proof_admission_dossier.py::"
-            "test_audit_proof_admission_dossier_is_ready_only_for_operator_decision"
+            "test_audit_proof_admission_dossier_reports_registry_admission"
         )
     }
     assert anchors_by_witness[

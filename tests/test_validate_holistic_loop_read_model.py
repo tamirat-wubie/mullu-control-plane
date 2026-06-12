@@ -294,7 +294,7 @@ def test_blocked_count_mismatch_is_reported() -> None:
 
     assert "blocked_count does not match loop blockers" in errors
     assert invalid_report["blocked_count"] == 0
-    assert report["blocked_count"] == 4
+    assert report["blocked_count"] == 5
 
 
 def test_status_mismatch_is_reported() -> None:

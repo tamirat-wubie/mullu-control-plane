@@ -3,7 +3,7 @@ Governance scope: loop manifest contracts, blocker derivation, evidence
     requirements, closure conditions, and registry immutability.
 Dependencies: pytest and mcoi_runtime holistic loop contracts.
 Invariants:
-  - First four loop manifests are registered without changing runtime behavior.
+  - Default loop manifests are registered without changing runtime behavior.
   - Missing evidence is exposed as blockers, never as verified closure.
   - Complete evidence can verify the read model without mutating loop behavior.
 """
@@ -46,6 +46,7 @@ from mcoi_runtime.core.holistic_loop_registry import (
 
 
 EXPECTED_LOOP_IDS = {
+    "audit_proof_verification_loop",
     "deployment_witness_loop",
     "runtime_conformance_loop",
     "cognitive_outcome_loop",
@@ -54,11 +55,18 @@ EXPECTED_LOOP_IDS = {
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_default_registry_exposes_first_four_loop_manifests() -> None:
+def test_default_registry_exposes_governed_loop_manifests() -> None:
     registry = build_default_loop_registry()
     loop_ids = {manifest.loop_id for manifest in registry.list_manifests()}
 
     assert loop_ids == EXPECTED_LOOP_IDS
+    assert registry.get_manifest("audit_proof_verification_loop").owner == "proof_governance"
+    assert "proof_verifier_ref" in registry.get_manifest(
+        "audit_proof_verification_loop"
+    ).required_authority
+    assert "trust_ledger_anchor_verified" in registry.get_manifest(
+        "audit_proof_verification_loop"
+    ).required_evidence
     assert registry.get_manifest("deployment_witness_loop").purpose.startswith("Describe endpoint publication")
     assert "runtime_conformance_verified" in registry.get_manifest(
         "deployment_witness_loop"
@@ -75,8 +83,8 @@ def test_missing_evidence_is_reported_as_blocker_not_success() -> None:
         loop for loop in read_model.loops if loop.loop_id == "deployment_witness_loop"
     )
 
-    assert read_model.total_count == 4
-    assert read_model.returned_count == 4
+    assert read_model.total_count == 5
+    assert read_model.returned_count == 5
     assert read_model.truncated is False
     assert deployment_summary.status is LoopStatus.BLOCKED
     assert "operator_approval_ref" in deployment_summary.missing_authority
@@ -88,6 +96,22 @@ def test_missing_evidence_is_reported_as_blocker_not_success() -> None:
     assert set(deployment_summary.closure_report.unresolved_gaps) == set(
         deployment_summary.open_blockers
     )
+
+
+def test_audit_proof_loop_is_registered_read_only_and_blocked() -> None:
+    registry = build_default_loop_registry()
+    manifest = registry.get_manifest("audit_proof_verification_loop")
+    summary = registry.summarize("audit_proof_verification_loop")
+
+    assert manifest.owner == "proof_governance"
+    assert manifest.metadata["behavior_rewrite"] is False
+    assert "proof_verifier_ref" in manifest.required_authority
+    assert "trust_ledger_anchor_verified" in manifest.required_evidence
+    assert summary.status is LoopStatus.BLOCKED
+    assert "missing_authority:proof_verifier_ref" in summary.open_blockers
+    assert "missing_evidence:trust_ledger_anchor_verified" in summary.open_blockers
+    assert summary.status_binding.read_only is True
+    assert summary.closure_report.closed is False
 
 
 def test_complete_evidence_verifies_read_model_without_runtime_mutation() -> None:

@@ -170,6 +170,48 @@ def _default_manifests() -> dict[str, LoopManifest]:
         manifest.loop_id: manifest
         for manifest in (
             LoopManifest(
+                loop_id="audit_proof_verification_loop",
+                name="Audit Proof Verification Loop",
+                purpose=(
+                    "Describe audit, proof, trust-ledger anchor, and verification "
+                    "evidence without executing proof verification or anchor submission."
+                ),
+                owner="proof_governance",
+                risk_class="proof_integrity",
+                allowed_modes=(
+                    LoopMode.DRY_RUN,
+                    LoopMode.SHADOW,
+                    LoopMode.SIMULATION,
+                    LoopMode.REPLAY,
+                    LoopMode.REAL,
+                ),
+                required_authority=("proof_verifier_ref",),
+                required_evidence=(
+                    "audit_verification_passed",
+                    "proof_verification_passed",
+                    "trust_ledger_anchor_verified",
+                ),
+                closure_conditions=(
+                    "audit_and_proof_lanes_consistent",
+                    "anchor_verification_report_valid",
+                ),
+                rollback_policy="invalidate_proof_claim_and_retain_failed_anchor",
+                learning_policy="promote proof gaps into coverage matrix witnesses",
+                metadata={
+                    "existing_surfaces": (
+                        "schemas/audit_verification_endpoint.schema.json",
+                        "schemas/proof_verification_endpoint.schema.json",
+                        "schemas/trust_ledger_anchor_verification_report.schema.json",
+                        "gateway/trust_ledger.py",
+                        "scripts/verify_anchor_receipt.py",
+                    ),
+                    "admission_dossier": (
+                        "scripts/report_holistic_loop_audit_proof_admission_dossier.py"
+                    ),
+                    "behavior_rewrite": False,
+                },
+            ),
+            LoopManifest(
                 loop_id="deployment_witness_loop",
                 name="Deployment Witness Loop",
                 purpose=(
@@ -1161,9 +1203,34 @@ _GOVERNED_CODE_CHANGE_VALIDATORS = (
     "tests/test_governed_code_change_loop.py",
     "tests/test_validate_governed_code_change_loop_receipt.py",
 )
+_AUDIT_PROOF_SOURCES = (
+    "schemas/audit_verification_endpoint.schema.json",
+    "schemas/proof_verification_endpoint.schema.json",
+    "schemas/trust_ledger_anchor_verification_report.schema.json",
+    "schemas/trust_ledger_anchor_receipt.schema.json",
+    "schemas/trust_ledger_anchor_submission_receipt.schema.json",
+    "schemas/trust_ledger_export_package.schema.json",
+    "gateway/trust_ledger.py",
+    "scripts/verify_anchor_receipt.py",
+    "scripts/preflight_trust_ledger_remote_submission.py",
+    "scripts/submit_trust_ledger_anchor_export.py",
+)
+_AUDIT_PROOF_VALIDATORS = (
+    "tests/test_verify_anchor_receipt.py",
+    "tests/test_preflight_trust_ledger_remote_submission.py",
+    "tests/test_submit_trust_ledger_anchor_export.py",
+    "tests/test_gateway/test_trust_ledger.py",
+    "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
+)
+_AUDIT_PROOF_SURFACES = ("audit_chain_api", "proof_route_gap_triage", "trust_ledger")
 
 
 _DEFAULT_RECEIPT_LINEAGE_CATALOG: Mapping[str, Mapping[str, tuple[str, ...]]] = {
+    "audit_proof_verification_loop": {
+        "source_refs": _AUDIT_PROOF_SOURCES,
+        "validator_refs": _AUDIT_PROOF_VALIDATORS,
+        "proof_surface_refs": _AUDIT_PROOF_SURFACES,
+    },
     "deployment_witness_loop": {
         "source_refs": _DEPLOYMENT_WITNESS_SOURCES,
         "validator_refs": _DEPLOYMENT_WITNESS_VALIDATORS,
@@ -1196,6 +1263,21 @@ _DEFAULT_RECEIPT_LINEAGE_CATALOG: Mapping[str, Mapping[str, tuple[str, ...]]] = 
 
 
 _DEFAULT_STATUS_BINDINGS: Mapping[str, LoopStatusBinding] = {
+    "audit_proof_verification_loop": _status_binding(
+        "Bind audit/proof status to unresolved verifier authority, audit verification, proof verification, and trust-ledger anchor gaps.",
+        verification_refs=(
+            "required_authority_observed",
+            "required_evidence_observed",
+            "audit_proof_verification_validators_passed",
+        ),
+        closure_gate_refs=(
+            "audit_and_proof_lanes_consistent",
+            "anchor_verification_report_valid",
+        ),
+        source_refs=_AUDIT_PROOF_SOURCES,
+        validator_refs=_AUDIT_PROOF_VALIDATORS,
+        proof_surface_refs=_AUDIT_PROOF_SURFACES,
+    ),
     "deployment_witness_loop": _status_binding(
         "Bind deployment witness status to unresolved publication, runtime, audit, proof, and authority gaps.",
         verification_refs=(
@@ -1307,6 +1389,18 @@ _DEFAULT_STATUS_BINDINGS: Mapping[str, LoopStatusBinding] = {
 
 
 _DEFAULT_TRANSITION_BINDINGS: Mapping[str, tuple[LoopTransitionBinding, ...]] = {
+    "audit_proof_verification_loop": _transition_catalog(
+        required_authority_refs=("proof_verifier_ref",),
+        required_evidence_refs=(
+            "audit_verification_passed",
+            "proof_verification_passed",
+            "trust_ledger_anchor_verified",
+        ),
+        rollback_ref="invalidate_proof_claim_and_retain_failed_anchor",
+        source_refs=_AUDIT_PROOF_SOURCES,
+        validator_refs=_AUDIT_PROOF_VALIDATORS,
+        proof_surface_refs=_AUDIT_PROOF_SURFACES,
+    ),
     "deployment_witness_loop": _transition_catalog(
         required_authority_refs=("operator_approval_ref", "deployment_publication_authority"),
         required_evidence_refs=(
@@ -1401,6 +1495,38 @@ _DEFAULT_TRANSITION_BINDINGS: Mapping[str, tuple[LoopTransitionBinding, ...]] = 
 
 
 _DEFAULT_CLOSURE_CONDITION_BINDINGS: Mapping[str, tuple[LoopClosureConditionBinding, ...]] = {
+    "audit_proof_verification_loop": (
+        _closure_condition_binding(
+            "audit_and_proof_lanes_consistent",
+            "Require audit verification and proof verification evidence to agree before closure can be described.",
+            required_evidence_refs=("audit_verification_passed", "proof_verification_passed"),
+            required_authority_refs=("proof_verifier_ref",),
+            source_refs=(
+                "schemas/audit_verification_endpoint.schema.json",
+                "schemas/proof_verification_endpoint.schema.json",
+            ),
+            validator_refs=(
+                "tests/test_gateway/test_trust_ledger.py",
+                "tests/test_verify_anchor_receipt.py",
+            ),
+            proof_surface_refs=("audit_chain_api", "proof_route_gap_triage"),
+        ),
+        _closure_condition_binding(
+            "anchor_verification_report_valid",
+            "Require trust-ledger anchor verification evidence before proof-anchor closure can be described.",
+            required_evidence_refs=("trust_ledger_anchor_verified",),
+            required_authority_refs=("proof_verifier_ref",),
+            source_refs=(
+                "schemas/trust_ledger_anchor_verification_report.schema.json",
+                "scripts/verify_anchor_receipt.py",
+            ),
+            validator_refs=(
+                "tests/test_verify_anchor_receipt.py",
+                "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
+            ),
+            proof_surface_refs=("trust_ledger", "proof_route_gap_triage"),
+        ),
+    ),
     "deployment_witness_loop": (
         _closure_condition_binding(
             "deployment_witness_state_published",
@@ -1595,6 +1721,23 @@ _DEFAULT_CLOSURE_CONDITION_BINDINGS: Mapping[str, tuple[LoopClosureConditionBind
 
 
 _DEFAULT_MODE_BINDINGS: Mapping[str, LoopModeBinding] = {
+    "audit_proof_verification_loop": _mode_binding(
+        "Expose audit/proof dry-run, shadow, simulation, replay, and real-mode boundaries without executing proof verification or submitting anchors.",
+        separation_refs=(
+            "dry_run_projects_required_verification_without_anchor_submission",
+            "shadow_observes_audit_and_proof_surfaces_without_state_mutation",
+            "simulation_and_replay_use_retained_verification_artifacts",
+            "real_mode_requires_proof_verifier_ref_and_complete_evidence",
+        ),
+        real_execution_guard_refs=(
+            "proof_verifier_ref",
+            "audit_and_proof_lanes_consistent",
+            "anchor_verification_report_valid",
+        ),
+        source_refs=_AUDIT_PROOF_SOURCES,
+        validator_refs=_AUDIT_PROOF_VALIDATORS,
+        proof_surface_refs=_AUDIT_PROOF_SURFACES,
+    ),
     "deployment_witness_loop": _mode_binding(
         "Expose deployment witness dry-run, shadow, simulation, replay, and real-mode boundaries without changing publication state.",
         separation_refs=(
@@ -1697,6 +1840,33 @@ _DEFAULT_MODE_BINDINGS: Mapping[str, LoopModeBinding] = {
 
 
 _DEFAULT_LEARNING_BINDINGS: Mapping[str, LoopLearningBinding] = {
+    "audit_proof_verification_loop": _learning_binding(
+        "promote proof gaps into coverage matrix witnesses",
+        "Bind audit/proof verification gaps to later proof-matrix witnesses and validator anchors.",
+        evidence_input_refs=(
+            "audit_verification_passed",
+            "proof_verification_passed",
+            "trust_ledger_anchor_verified",
+        ),
+        admission_refs=(
+            "gap_promoted_only_after_failed_audit_or_proof_validation",
+            "new_witness_requires_exact_test_anchor",
+            "anchor_submission_remains_separate_from_read_model",
+        ),
+        retention_refs=(
+            "proof_coverage_matrix",
+            "trust_ledger_anchor_verification_report",
+        ),
+        source_refs=(
+            "scripts/proof_coverage_matrix.py",
+            "schemas/trust_ledger_anchor_verification_report.schema.json",
+        ),
+        validator_refs=(
+            "tests/test_proof_coverage_matrix.py",
+            "tests/test_verify_anchor_receipt.py",
+        ),
+        proof_surface_refs=("proof_route_gap_triage", "trust_ledger"),
+    ),
     "deployment_witness_loop": _learning_binding(
         "promote deployment blockers into release preflight checks",
         "Bind deployment witness blockers to later release preflight and publication readiness checks.",
@@ -1815,6 +1985,28 @@ _DEFAULT_LEARNING_BINDINGS: Mapping[str, LoopLearningBinding] = {
 
 
 _DEFAULT_RISK_BINDINGS: Mapping[str, LoopRiskBinding] = {
+    "audit_proof_verification_loop": _risk_binding(
+        "proof_integrity",
+        "Proof integrity risk covers inconsistent audit/proof lanes, unverified anchors, and accidental proof closure overclaim.",
+        hazard_refs=(
+            "audit_proof_lane_mismatch",
+            "unverified_trust_ledger_anchor",
+            "proof_closure_overclaim",
+        ),
+        mitigation_refs=(
+            "block_closure_until_audit_and_proof_evidence_match",
+            "require_anchor_verification_report",
+            "keep_anchor_submission_outside_read_model",
+        ),
+        monitor_refs=(
+            "audit_verification_endpoint",
+            "proof_verification_endpoint",
+            "trust_ledger_anchor_verification_report",
+        ),
+        source_refs=_AUDIT_PROOF_SOURCES,
+        validator_refs=_AUDIT_PROOF_VALIDATORS,
+        proof_surface_refs=_AUDIT_PROOF_SURFACES,
+    ),
     "deployment_witness_loop": _risk_binding(
         "release_publication",
         "Publication risk covers public endpoint claims, witness freshness, and responsibility debt.",
@@ -1923,6 +2115,20 @@ _DEFAULT_RISK_BINDINGS: Mapping[str, LoopRiskBinding] = {
 
 
 _DEFAULT_ROLLBACK_BINDINGS: Mapping[str, LoopRollbackBinding] = {
+    "audit_proof_verification_loop": _rollback_binding(
+        "invalidate_proof_claim_and_retain_failed_anchor",
+        "Rollback audit/proof closure by invalidating the proof claim while retaining failed anchor evidence.",
+        source_refs=(
+            "scripts/verify_anchor_receipt.py",
+            "schemas/trust_ledger_anchor_verification_report.schema.json",
+            "schemas/trust_ledger_anchor_receipt.schema.json",
+        ),
+        validator_refs=(
+            "tests/test_verify_anchor_receipt.py",
+            "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
+        ),
+        proof_surface_refs=("trust_ledger", "proof_route_gap_triage"),
+    ),
     "deployment_witness_loop": _rollback_binding(
         "revert_publication_status_and_restore_last_verified_witness",
         "Rollback deployment publication status and restore the last verified witness boundary.",
@@ -1976,6 +2182,22 @@ _DEFAULT_ROLLBACK_BINDINGS: Mapping[str, LoopRollbackBinding] = {
 
 
 _DEFAULT_AUTHORITY_BINDINGS: Mapping[str, tuple[LoopAuthorityBinding, ...]] = {
+    "audit_proof_verification_loop": (
+        _authority_binding(
+            "proof_verifier_ref",
+            "Proof verifier reference authorizes audit/proof verification review without granting anchor submission authority.",
+            source_refs=(
+                "schemas/proof_verification_endpoint.schema.json",
+                "schemas/audit_verification_endpoint.schema.json",
+                "scripts/verify_anchor_receipt.py",
+            ),
+            validator_refs=(
+                "tests/test_verify_anchor_receipt.py",
+                "tests/test_gateway/test_trust_ledger.py",
+            ),
+            proof_surface_refs=("audit_chain_api", "proof_route_gap_triage", "trust_ledger"),
+        ),
+    ),
     "deployment_witness_loop": (
         _authority_binding(
             "operator_approval_ref",
@@ -2099,6 +2321,35 @@ _DEFAULT_AUTHORITY_BINDINGS: Mapping[str, tuple[LoopAuthorityBinding, ...]] = {
 
 
 _DEFAULT_EVIDENCE_BINDINGS: Mapping[str, tuple[LoopEvidenceBinding, ...]] = {
+    "audit_proof_verification_loop": (
+        _binding(
+            "audit_verification_passed",
+            "Audit verification endpoint evidence is present and consistent with proof inputs.",
+            source_refs=("schemas/audit_verification_endpoint.schema.json",),
+            validator_refs=("tests/test_gateway/test_trust_ledger.py",),
+            proof_surface_refs=("audit_chain_api",),
+        ),
+        _binding(
+            "proof_verification_passed",
+            "Proof verification endpoint evidence is present and consistent with audit inputs.",
+            source_refs=("schemas/proof_verification_endpoint.schema.json",),
+            validator_refs=("tests/test_verify_anchor_receipt.py",),
+            proof_surface_refs=("proof_route_gap_triage",),
+        ),
+        _binding(
+            "trust_ledger_anchor_verified",
+            "Trust-ledger anchor verification report validates the retained proof anchor.",
+            source_refs=(
+                "schemas/trust_ledger_anchor_verification_report.schema.json",
+                "scripts/verify_anchor_receipt.py",
+            ),
+            validator_refs=(
+                "tests/test_verify_anchor_receipt.py",
+                "tests/test_gateway/test_trust_ledger_anchor_receipt.py",
+            ),
+            proof_surface_refs=("trust_ledger",),
+        ),
+    ),
     "deployment_witness_loop": (
         _binding(
             "deployment_witness_published",

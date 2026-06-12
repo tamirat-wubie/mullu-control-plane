@@ -9,7 +9,8 @@ Dependencies: holistic loop registry and repository-local candidate surfaces.
 Invariants:
   - Candidate reporting is read-only and deterministic.
   - Candidate reporting does not register loops or execute loop behavior.
-  - Every candidate remains blocked until an explicit registration decision.
+  - Unregistered candidates remain blocked until an explicit registration decision.
+  - Registered candidates are reported as already admitted, not terminally closed.
   - The report is not a terminal closure certificate.
 """
 
@@ -39,7 +40,7 @@ REGISTRATION_DECISION_BLOCKER = "requires_operator_registration_decision"
 
 @dataclass(frozen=True, slots=True)
 class LoopCandidate:
-    """Candidate loop surface that is not registered in the default registry."""
+    """Candidate loop surface tracked before or after registry admission."""
 
     candidate_id: str
     name: str
@@ -244,8 +245,6 @@ def validate_candidate_map(report: dict[str, Any] | None = None) -> list[str]:
             continue
         candidate_id = str(candidate.get("candidate_id", "")).strip()
         candidate_ids.append(candidate_id)
-        if candidate_id in registered_loop_ids:
-            errors.append(f"candidate {candidate_id} must not already be registered")
         for field_name in (
             "name",
             "purpose",
@@ -261,25 +260,36 @@ def validate_candidate_map(report: dict[str, Any] | None = None) -> list[str]:
             "proposed_required_authority",
             "proposed_required_evidence",
             "proposed_closure_conditions",
-            "admission_blockers",
         ):
             value = candidate.get(field_name)
             if not isinstance(value, list) or not value:
                 errors.append(f"candidate {candidate_id} {field_name} must be a non-empty list")
+        admission_blockers = candidate.get("admission_blockers")
+        if not isinstance(admission_blockers, list):
+            errors.append(f"candidate {candidate_id} admission_blockers must be a list")
         for surface in candidate.get("existing_surfaces", []):
             if not isinstance(surface, str) or not surface.strip():
                 errors.append(f"candidate {candidate_id} has invalid surface ref")
                 continue
             if not (WORKSPACE_ROOT / surface).exists():
                 errors.append(f"candidate {candidate_id} missing surface: {surface}")
-        if candidate.get("registered") is not False:
-            errors.append(f"candidate {candidate_id} must remain unregistered")
-        if candidate.get("admission_status") != "blocked":
-            errors.append(f"candidate {candidate_id} must remain blocked until registration")
-        if NOT_REGISTERED_BLOCKER not in candidate.get("admission_blockers", []):
-            errors.append(f"candidate {candidate_id} missing not_registered blocker")
-        if REGISTRATION_DECISION_BLOCKER not in candidate.get("admission_blockers", []):
-            errors.append(f"candidate {candidate_id} missing registration decision blocker")
+        expected_registered = candidate_id in registered_loop_ids
+        if candidate.get("registered") is not expected_registered:
+            errors.append(f"candidate {candidate_id} registered state must match default registry")
+        if expected_registered:
+            if candidate.get("admission_status") != "registered":
+                errors.append(f"candidate {candidate_id} must report registered admission status")
+            if candidate.get("admission_blockers") != []:
+                errors.append(f"candidate {candidate_id} registered admission_blockers must be empty")
+            if candidate.get("next_action") != "already_registered":
+                errors.append(f"candidate {candidate_id} next_action must be already_registered")
+        else:
+            if candidate.get("admission_status") != "blocked":
+                errors.append(f"candidate {candidate_id} must remain blocked until registration")
+            if NOT_REGISTERED_BLOCKER not in candidate.get("admission_blockers", []):
+                errors.append(f"candidate {candidate_id} missing not_registered blocker")
+            if REGISTRATION_DECISION_BLOCKER not in candidate.get("admission_blockers", []):
+                errors.append(f"candidate {candidate_id} missing registration decision blocker")
         for field_name, expected in (
             ("read_only", True),
             ("mutation_route", False),
@@ -294,10 +304,16 @@ def validate_candidate_map(report: dict[str, Any] | None = None) -> list[str]:
         errors.append("candidate ids must be unique")
     if candidate_map.get("candidate_count") != len(candidates):
         errors.append("candidate_count must match candidates")
-    if candidate_map.get("registered_candidate_count") != 0:
-        errors.append("registered_candidate_count must remain zero")
-    if candidate_map.get("blocked_candidate_count") != len(candidates):
-        errors.append("blocked_candidate_count must match candidates")
+    registered_count = sum(
+        1 for candidate in candidates if isinstance(candidate, dict) and candidate.get("registered") is True
+    )
+    blocked_count = sum(
+        1 for candidate in candidates if isinstance(candidate, dict) and candidate.get("admission_status") == "blocked"
+    )
+    if candidate_map.get("registered_candidate_count") != registered_count:
+        errors.append("registered_candidate_count must match registered candidates")
+    if candidate_map.get("blocked_candidate_count") != blocked_count:
+        errors.append("blocked_candidate_count must match blocked candidates")
     return errors
 
 
