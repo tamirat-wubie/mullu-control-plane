@@ -13,7 +13,8 @@ from mcoi_runtime.core.llm_integration import LLMIntegrationBridge
 from mcoi_runtime.adapters.llm_adapter import StubLLMBackend
 from mcoi_runtime.contracts.llm import LLMBudget
 
-FIXED_CLOCK = lambda: "2026-03-26T12:00:00Z"
+def FIXED_CLOCK():
+    return "2026-03-26T12:00:00Z"
 
 
 def _setup():
