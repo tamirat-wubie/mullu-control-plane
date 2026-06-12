@@ -23,8 +23,8 @@ witness in `DEPLOYMENT_STATUS.md`.
 | Private service name | `mullusi-govern-cloud-staging` | SolvedVerified |
 | Render service id | `srv-d8lb18flk1mc73cohnd0` | SolvedVerified |
 | Render deploy id | `dep-d8lb18nlk1mc73cohns0` | SolvedVerified |
-| Container image | `ghcr.io/mullusi/mullusi-govern-cloud:v2026.06.11-govern-cloud.1` | SolvedVerified |
-| Image commit label | `21e4314` | SolvedVerified |
+| Container image | `ghcr.io/mullusi/mullusi-govern-cloud:v2026.06.12-govern-cloud.1` | SolvedVerified |
+| Image commit label | `c169ef1` | SolvedVerified |
 | Internal address | `mullusi-govern-cloud-staging:8000` | SolvedVerified |
 | Managed database | `mullu-pilot-postgres`, `Basic-256mb` | SolvedVerified |
 | Public API binding | `api.mullusi.com` forwards only `/v1/health` and `/v1/version` to Govern Cloud | SolvedVerified |
@@ -50,7 +50,7 @@ The post-schema runtime conformance result was:
 | Finding | State | Detail |
 |---|---|---|
 | `required_environment` | pass | complete |
-| `image` | pass | tag `v2026.06.11-govern-cloud.1` |
+| `image` | pass | tag `v2026.06.12-govern-cloud.1` |
 | `MULLUSI_DEV_API_KEY` | pass | configured |
 | `MULLUSI_OPERATOR_API_KEY` | pass | configured |
 | `MULLUSI_PROOF_SIGNING_KEY` | pass | configured |
@@ -89,12 +89,12 @@ GET /runtime/conformance HTTP/1.1 -> 200 OK
 ```
 
 Render events showed the service on the `Starter` plan using image
-`ghcr.io/mullusi/mullusi-govern-cloud:v2026.06.11-govern-cloud.1`.
+`ghcr.io/mullusi/mullusi-govern-cloud:v2026.06.12-govern-cloud.1`.
 
-Render Shell remains intentionally unopened for further direct terminal work
-because the page requires adding an account SSH public key. Current closure does
-not require that account-access change because CI, deploy logs, and conformance
-logs already establish the private staging witness.
+Render Shell was used on 2026-06-12 for non-secret runtime probes after the
+service was promoted to image `v2026.06.12-govern-cloud.1`. The shell evidence
+recorded script presence and pass/fail outcomes only; no raw credential values
+were printed or stored.
 
 ## Gateway Boundary
 
@@ -131,7 +131,7 @@ MULLU_GOVERN_CLOUD_INTERNAL_URL=http://mullusi-govern-cloud-staging:8000
 MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED=false
 MULLU_GOVERN_CLOUD_RENDER_SERVICE_ID=srv-d8lb18flk1mc73cohnd0
 MULLU_GOVERN_CLOUD_RENDER_DEPLOY_ID=dep-d8lb18nlk1mc73cohns0
-MULLU_GOVERN_CLOUD_IMAGE_TAG=ghcr.io/mullusi/mullusi-govern-cloud:v2026.06.11-govern-cloud.1
+MULLU_GOVERN_CLOUD_IMAGE_TAG=ghcr.io/mullusi/mullusi-govern-cloud:v2026.06.12-govern-cloud.1
 MULLU_GOVERN_CLOUD_DATABASE_PLAN=Basic-256mb
 ```
 
@@ -165,10 +165,22 @@ GitHub issue witness: https://github.com/mullusi/mullusi-govern-cloud/issues/1#i
 
 Outcome for public read-route publication: `SolvedVerified`.
 
-Remaining Govern Cloud deployment issue blocker: authenticated persistence and
-proof-stamp probing remain `AwaitingEvidence` until the Govern Cloud repository
-persistence probe can run with a governed runtime credential such as
-`MULLUSI_DEV_API_KEY`. No raw secret values are recorded in this witness.
+Authenticated persistence and proof-stamp probing were completed on 2026-06-12
+from the private Render service shell. The runtime image includes both Govern
+Cloud persistence and trace probes; persistence policy is `true`; the
+persistence probe returned `storage=stored` and
+`verification=Verified`; the trace probe returned `trace_probe_passed` with 13
+phases. No raw secret values are recorded in this witness.
+
+Govern Cloud closure evidence:
+
+```text
+Issue closure: https://github.com/mullusi/mullusi-govern-cloud/issues/1#issuecomment-4693406252
+Trace-probe refinement: https://github.com/mullusi/mullusi-govern-cloud/issues/1#issuecomment-4693486921
+Trace probe image fix: https://github.com/mullusi/mullusi-govern-cloud/pull/13
+Published image workflow: https://github.com/mullusi/mullusi-govern-cloud/actions/runs/27430482025
+Final Govern Cloud CI: https://github.com/mullusi/mullusi-govern-cloud/actions/runs/27430841602
+```
 
 ## Rollback
 
@@ -187,7 +199,7 @@ Rollback does not require DNS changes because no DNS mutation was made.
 Outcome: `SolvedVerified` for private staging runtime evidence and post-merge
 CI.
 Public read-route outcome: `SolvedVerified`.
-Authenticated persistence outcome: `AwaitingEvidence`.
-Next action: run the deployed Govern Cloud persistence/proof-stamp probe with a
-governed runtime credential, then close `mullusi/mullusi-govern-cloud#1` only if
-that probe passes without exposing secret values.
+Authenticated persistence outcome: `SolvedVerified`.
+Trace readback outcome: `SolvedVerified`.
+Next action: keep Govern Cloud write routes private unless a separate governed
+approval authorizes public exposure.
