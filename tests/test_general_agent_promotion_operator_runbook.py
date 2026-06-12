@@ -68,6 +68,10 @@ def test_runbook_names_required_closure_artifacts_and_counts() -> None:
     assert ".change_assurance\\capability_improvement_portfolio.json" in runbook_text
     assert "produce_capability_improvement_proof_receipt.py" in runbook_text
     assert ".change_assurance\\capability_improvement_proof_receipt.json" in runbook_text
+    assert ".change_assurance\\capability_improvement_proof_receipt*.json" in runbook_text
+    assert "agentic_control.code_change.plan" in runbook_text
+    assert "agentic_control.evidence.append" in runbook_text
+    assert "agentic_control.incident_recovery.plan" in runbook_text
     assert "capability improvement proof receipt is non-executing" in runbook_text
     assert "plan_general_agent_promotion_live_evidence_queue.py" in runbook_text
     assert ".change_assurance\\general_agent_promotion_live_evidence_queue.json" in runbook_text

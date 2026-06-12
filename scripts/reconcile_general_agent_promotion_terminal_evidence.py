@@ -42,8 +42,8 @@ DEFAULT_RECEIPT_PATHS = (
     REPO_ROOT / ".change_assurance" / "voice_live_receipt.json",
     REPO_ROOT / ".change_assurance" / "email_calendar_live_receipt.json",
     REPO_ROOT / ".change_assurance" / "gateway_publication_receipt.json",
-    REPO_ROOT / ".change_assurance" / "capability_improvement_proof_receipt.json",
 )
+DEFAULT_CAPABILITY_IMPROVEMENT_PROOF_RECEIPT_GLOB = "capability_improvement_proof_receipt*.json"
 CANDIDATE_SCHEMA_ID = "urn:mullusi:schema:general-agent-promotion-terminal-certificate-candidates:1"
 TERMINAL_CERTIFICATE_SCHEMA_ID = "urn:mullusi:schema:terminal-closure-certificate:1"
 
@@ -127,7 +127,7 @@ class TerminalEvidenceReconciliation:
 def reconcile_general_agent_promotion_terminal_evidence(
     *,
     candidate_path: Path = DEFAULT_CANDIDATES,
-    receipt_paths: tuple[Path, ...] = DEFAULT_RECEIPT_PATHS,
+    receipt_paths: tuple[Path, ...] | None = None,
     generated_at: str = DEFAULT_GENERATED_AT,
 ) -> TerminalEvidenceReconciliation:
     """Reconcile terminal candidate evidence against receipt files."""
@@ -154,7 +154,8 @@ def reconcile_general_agent_promotion_terminal_evidence(
             results=(invalid_result,),
             receipt_index=ReceiptEvidenceIndex({}, ()),
         )
-    receipt_index = _receipt_evidence_index(receipt_paths)
+    effective_receipt_paths = receipt_paths if receipt_paths is not None else _default_receipt_paths()
+    receipt_index = _receipt_evidence_index(effective_receipt_paths)
     results = tuple(_reconcile_candidate(candidate, receipt_index) for candidate in _candidate_items(candidates))
     return _reconciliation_plan(
         candidate_path=candidate_path,
@@ -372,8 +373,17 @@ def _load_json_object(path: Path, label: str) -> dict[str, Any]:
 
 def _receipt_paths_from_args(raw_paths: list[str]) -> tuple[Path, ...]:
     if not raw_paths:
-        return DEFAULT_RECEIPT_PATHS
+        return _default_receipt_paths()
     return tuple(Path(raw_path) for raw_path in raw_paths if raw_path.strip())
+
+
+def _default_receipt_paths() -> tuple[Path, ...]:
+    proof_receipt_paths = tuple(
+        sorted(
+            (REPO_ROOT / ".change_assurance").glob(DEFAULT_CAPABILITY_IMPROVEMENT_PROOF_RECEIPT_GLOB)
+        )
+    )
+    return tuple(dict.fromkeys(DEFAULT_RECEIPT_PATHS + proof_receipt_paths))
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
