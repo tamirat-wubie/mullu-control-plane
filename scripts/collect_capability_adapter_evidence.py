@@ -324,6 +324,9 @@ def _email_calendar_evidence(
         for name in (
             "EMAIL_CALENDAR_CONNECTOR_TOKEN",
             "GMAIL_ACCESS_TOKEN",
+            "GMAIL_OAUTH_CLIENT_ID",
+            "GMAIL_OAUTH_CLIENT_SECRET",
+            "GMAIL_REFRESH_TOKEN",
             "GOOGLE_CALENDAR_ACCESS_TOKEN",
             "MICROSOFT_GRAPH_ACCESS_TOKEN",
         )

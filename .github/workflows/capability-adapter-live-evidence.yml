@@ -115,6 +115,14 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           EMAIL_CALENDAR_CONNECTOR_TOKEN: ${{ secrets.EMAIL_CALENDAR_CONNECTOR_TOKEN }}
+          GMAIL_OAUTH_CLIENT_ID: ${{ secrets.GMAIL_OAUTH_CLIENT_ID }}
+          GMAIL_OAUTH_CLIENT_SECRET: ${{ secrets.GMAIL_OAUTH_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF: ${{ secrets.MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF }}
+          MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF: ${{ secrets.MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF }}
+          MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF: ${{ secrets.MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF }}
+          MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF: ${{ secrets.MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF }}
+          MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF: ${{ secrets.MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF }}
           MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
           MULLU_RUNTIME_CONFORMANCE_SECRET: ${{ secrets.MULLU_RUNTIME_CONFORMANCE_SECRET }}
           MULLU_DEPLOYMENT_WITNESS_SECRET: ${{ secrets.MULLU_DEPLOYMENT_WITNESS_SECRET }}
@@ -127,7 +135,18 @@ jobs:
             [ -n "${MULLU_VOICE_PROBE_AUDIO:-}" ] || missing+=("MULLU_VOICE_PROBE_AUDIO")
           fi
           if [ "${{ inputs.target }}" = "all" ] || [ "${{ inputs.target }}" = "email-calendar" ]; then
-            [ -n "$EMAIL_CALENDAR_CONNECTOR_TOKEN" ] || missing+=("EMAIL_CALENDAR_CONNECTOR_TOKEN")
+            if [ "${{ inputs.email_calendar_connector_id }}" = "gmail" ]; then
+              [ -n "$GMAIL_OAUTH_CLIENT_ID" ] || missing+=("GMAIL_OAUTH_CLIENT_ID")
+              [ -n "$GMAIL_OAUTH_CLIENT_SECRET" ] || missing+=("GMAIL_OAUTH_CLIENT_SECRET")
+              [ -n "$GMAIL_REFRESH_TOKEN" ] || missing+=("GMAIL_REFRESH_TOKEN")
+              [ -n "$MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF" ] || missing+=("MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF")
+              [ -n "$MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF" ] || missing+=("MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF")
+              [ -n "$MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF" ] || missing+=("MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF")
+              [ -n "$MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF" ] || missing+=("MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF")
+              [ -n "$MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF" ] || missing+=("MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF")
+            else
+              [ -n "$EMAIL_CALENDAR_CONNECTOR_TOKEN" ] || missing+=("EMAIL_CALENDAR_CONNECTOR_TOKEN")
+            fi
           fi
           [ -n "$MULLU_AUTHORITY_OPERATOR_SECRET" ] || missing+=("MULLU_AUTHORITY_OPERATOR_SECRET")
           if [ "${#missing[@]}" -ne 0 ]; then
@@ -214,25 +233,50 @@ jobs:
         if: ${{ always() && (inputs.target == 'all' || inputs.target == 'email-calendar') }}
         env:
           EMAIL_CALENDAR_CONNECTOR_TOKEN: ${{ secrets.EMAIL_CALENDAR_CONNECTOR_TOKEN }}
+          GMAIL_OAUTH_CLIENT_ID: ${{ secrets.GMAIL_OAUTH_CLIENT_ID }}
+          GMAIL_OAUTH_CLIENT_SECRET: ${{ secrets.GMAIL_OAUTH_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          GMAIL_SCOPE_ID: https://www.googleapis.com/auth/gmail.readonly
+          MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY: read_only_search
+          MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF: ${{ secrets.MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF }}
+          MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF: ${{ secrets.MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF }}
+          MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF: ${{ secrets.MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF }}
+          MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF: ${{ secrets.MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF }}
+          MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF: ${{ secrets.MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF }}
           EMAIL_CALENDAR_CONNECTOR_ID: ${{ inputs.email_calendar_connector_id }}
           MULLU_EMAIL_CALENDAR_WORKER_ADAPTER: production
         run: |
-          args=(
-            --target email-calendar
-            --email-calendar-connector-id "${{ inputs.email_calendar_connector_id }}"
-            --email-calendar-query "${{ inputs.email_calendar_query }}"
-            --json
-          )
-          if [ "${{ inputs.strict }}" = "true" ]; then
-            args+=(--strict)
+          if [ "${{ inputs.email_calendar_connector_id }}" = "gmail" ]; then
+            python scripts/validate_durable_gmail_oauth_runtime_preflight.py --json --require-ready
+            args=(
+              --email-calendar-query "${{ inputs.email_calendar_query }}"
+              --json
+            )
+            if [ "${{ inputs.strict }}" = "true" ]; then
+              args+=(--strict)
+            fi
+            python scripts/produce_durable_gmail_oauth_live_receipt.py "${args[@]}"
+          else
+            args=(
+              --target email-calendar
+              --email-calendar-connector-id "${{ inputs.email_calendar_connector_id }}"
+              --email-calendar-query "${{ inputs.email_calendar_query }}"
+              --json
+            )
+            if [ "${{ inputs.strict }}" = "true" ]; then
+              args+=(--strict)
+            fi
+            python scripts/produce_capability_adapter_live_receipts.py "${args[@]}"
           fi
-          python scripts/produce_capability_adapter_live_receipts.py "${args[@]}"
 
       - name: Collect adapter evidence summary
         if: always()
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           EMAIL_CALENDAR_CONNECTOR_TOKEN: ${{ secrets.EMAIL_CALENDAR_CONNECTOR_TOKEN }}
+          GMAIL_OAUTH_CLIENT_ID: ${{ secrets.GMAIL_OAUTH_CLIENT_ID }}
+          GMAIL_OAUTH_CLIENT_SECRET: ${{ secrets.GMAIL_OAUTH_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
           EMAIL_CALENDAR_CONNECTOR_ID: ${{ inputs.email_calendar_connector_id }}
           MULLU_EMAIL_CALENDAR_WORKER_ADAPTER: production
         run: |
@@ -251,6 +295,7 @@ jobs:
             .change_assurance/browser_live_receipt.json
             .change_assurance/document_live_receipt.json
             .change_assurance/voice_live_receipt.json
+            .change_assurance/durable_gmail_oauth_live_receipt.json
             .change_assurance/email_calendar_live_receipt.json
             .change_assurance/capability_adapter_evidence.json
           if-no-files-found: warn

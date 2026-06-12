@@ -50,6 +50,7 @@ REQUIRED_PLAN_TERMS = (
     "approval-gated",
     "AwaitingEvidence",
     "produce_durable_gmail_oauth_operator_handoff.py",
+    "produce_durable_gmail_oauth_live_receipt.py",
     "operator handoff packet",
 )
 REQUIRED_NON_GOALS = (

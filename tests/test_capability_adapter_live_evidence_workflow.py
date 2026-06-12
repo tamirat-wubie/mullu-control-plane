@@ -32,6 +32,8 @@ def test_capability_adapter_live_evidence_workflow_targets_all_adapter_families(
     assert "Produce document live receipt" in workflow
     assert "Produce voice live receipt" in workflow
     assert "Produce email/calendar live receipt" in workflow
+    assert "produce_durable_gmail_oauth_live_receipt.py" in workflow
+    assert "validate_durable_gmail_oauth_runtime_preflight.py --json --require-ready" in workflow
     assert '-e "mcoi[dev,browser-worker,document-worker]" openai' in workflow
 
 
@@ -65,6 +67,7 @@ def test_capability_adapter_live_evidence_workflow_uploads_json_receipts_only() 
     assert ".change_assurance/browser_live_receipt.json" in workflow
     assert ".change_assurance/document_live_receipt.json" in workflow
     assert ".change_assurance/voice_live_receipt.json" in workflow
+    assert ".change_assurance/durable_gmail_oauth_live_receipt.json" in workflow
     assert ".change_assurance/email_calendar_live_receipt.json" in workflow
     assert ".change_assurance/capability_adapter_evidence.json" in workflow
     assert ".change_assurance/private/voice_probe_audio.wav" not in workflow.split("path: |", 1)[1]
