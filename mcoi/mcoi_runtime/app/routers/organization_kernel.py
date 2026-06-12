@@ -241,6 +241,16 @@ class ClosureDriftRemediationRequest(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class ClosureDriftRemediationActionRequest(BaseModel):
+    action_id: str
+    closure_id: str
+    terminal_disposition: str
+    authority_ref: str
+    evidence_refs: list[str]
+    remediation_id: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class LaunchGatewayPilotEvidenceCollectionRequest(BaseModel):
     gateway_url: str
     expected_environment: str = "pilot"
@@ -1764,6 +1774,97 @@ def _closure_packet_drift_terminal_status(closure_gate_evidence: dict[str, Any])
     if disposition == TerminalClosureDisposition.REQUIRES_REVIEW.value:
         return "closed_drift_review_required"
     return "closed_packet_drift"
+
+
+_CLOSURE_DRIFT_REMEDIATION_POLICIES: dict[TerminalClosureDisposition, dict[str, object]] = {
+    TerminalClosureDisposition.REQUIRES_REVIEW: {
+        "action_kind": "review_required",
+        "required_evidence_types": ("closure_drift_review_decision",),
+        "description": "Route the drifted closure packet to accountable review before relying on it.",
+    },
+    TerminalClosureDisposition.COMPENSATED: {
+        "action_kind": "compensated",
+        "required_evidence_types": ("compensation_receipt", "compensation_effect_reconciliation"),
+        "description": "Record compensation evidence for the drifted closure packet.",
+    },
+    TerminalClosureDisposition.ACCEPTED_RISK: {
+        "action_kind": "accepted_risk",
+        "required_evidence_types": ("accepted_risk_record", "risk_owner_approval"),
+        "description": "Accept the closure packet drift as explicit governed residual risk.",
+    },
+}
+
+
+def _closure_drift_remediation_policy(disposition: TerminalClosureDisposition) -> dict[str, object]:
+    policy = _CLOSURE_DRIFT_REMEDIATION_POLICIES.get(disposition)
+    if policy is None:
+        raise RuntimeCoreInvariantError("closure drift remediation policy unavailable")
+    return policy
+
+
+def _case_evidence_by_ref(kernel: OrganizationKernel, case_id: str) -> dict[str, CaseEvidence]:
+    state = kernel.snapshot_state()
+    return {
+        item.evidence_ref: item
+        for item in state.case_evidence
+        if item.case_id == case_id
+    }
+
+
+def _case_approval_refs(kernel: OrganizationKernel, case_id: str) -> set[str]:
+    state = kernel.snapshot_state()
+    return {
+        item.approval_id
+        for item in state.approvals
+        if item.case_id == case_id
+    }
+
+
+def _evidence_type(evidence: CaseEvidence) -> str | None:
+    evidence_type = evidence.metadata.get("evidence_type")
+    if isinstance(evidence_type, str) and evidence_type:
+        return evidence_type
+    return None
+
+
+def _closure_drift_action_readiness(
+    *,
+    disposition: TerminalClosureDisposition,
+    evidence_by_ref: dict[str, CaseEvidence],
+    approval_refs: set[str],
+    evidence_refs: list[str] | None = None,
+    authority_ref: str | None = None,
+) -> dict[str, object]:
+    policy = _closure_drift_remediation_policy(disposition)
+    required_types = tuple(str(item) for item in policy["required_evidence_types"])
+    selected_records = [
+        evidence_by_ref[evidence_ref]
+        for evidence_ref in (evidence_refs or list(evidence_by_ref))
+        if evidence_ref in evidence_by_ref
+    ]
+    available_by_type: dict[str, list[str]] = {evidence_type: [] for evidence_type in required_types}
+    for evidence in selected_records:
+        evidence_type = _evidence_type(evidence)
+        if evidence_type in available_by_type:
+            available_by_type[evidence_type].append(evidence.evidence_ref)
+    missing_types = [
+        evidence_type for evidence_type in required_types
+        if not available_by_type[evidence_type]
+    ]
+    missing_authority = []
+    if authority_ref is not None and authority_ref not in approval_refs:
+        missing_authority.append(authority_ref)
+    return {
+        "terminal_disposition": disposition.value,
+        "action_kind": policy["action_kind"],
+        "description": policy["description"],
+        "required_evidence_types": list(required_types),
+        "available_evidence_refs_by_type": available_by_type,
+        "missing_evidence_types": missing_types,
+        "authority_refs": sorted(approval_refs),
+        "missing_authority_refs": missing_authority,
+        "ready": not missing_types and not missing_authority,
+    }
 
 
 def _closure_gate_stale_attention_item(
@@ -5073,6 +5174,142 @@ def bind_case_closure_drift_remediation(case_id: str, req: ClosureDriftRemediati
         ) from exc
     _persist_kernel(kernel)
     return {"closure_drift_remediation": _body(binding), "governed": True}
+
+
+@router.get("/api/v1/cases/{case_id}/closure-drift-remediation-actions")
+def get_case_closure_drift_remediation_actions(case_id: str, request: Request):
+    """Return operator-ready remediation actions for a drifted closure packet."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    proof = _case_proof_timeline(kernel, case_id)
+    closure_gate_evidence = _closure_gate_evidence_projection(proof)
+    evidence_by_ref = _case_evidence_by_ref(kernel, case_id)
+    approval_refs = _case_approval_refs(kernel, case_id)
+    closure_certificate = proof["closure_certificate"]
+    closure_id = closure_certificate.get("closure_id") if isinstance(closure_certificate, dict) else None
+    actions = []
+    if closure_gate_evidence["closure_packet_drift"]:
+        for disposition in _CLOSURE_DRIFT_REMEDIATION_POLICIES:
+            readiness = _closure_drift_action_readiness(
+                disposition=disposition,
+                evidence_by_ref=evidence_by_ref,
+                approval_refs=approval_refs,
+            )
+            actions.append({
+                **readiness,
+                "action_id": stable_identifier(
+                    "closure-drift-remediation-action",
+                    {
+                        "case_id": case_id,
+                        "closure_id": closure_id or "",
+                        "terminal_disposition": disposition.value,
+                    },
+                ),
+                "closure_id": closure_id,
+                "drift_evidence_refs": closure_gate_evidence["closure_packet_drift_refs"],
+                "superseded_evidence_refs": closure_gate_evidence["superseded_closure_evidence_refs"],
+                "endpoint": f"/api/v1/cases/{quote(case_id, safe='')}/closure-drift-remediation-actions",
+            })
+    return {
+        "case_id": case_id,
+        "closure_id": closure_id,
+        "closure_packet_drift": closure_gate_evidence["closure_packet_drift"],
+        "closure_packet_drift_remediated": closure_gate_evidence["closure_packet_drift_remediated"],
+        "drift_evidence_refs": closure_gate_evidence["closure_packet_drift_refs"],
+        "superseded_evidence_refs": closure_gate_evidence["superseded_closure_evidence_refs"],
+        "actions": actions,
+        "governed": True,
+    }
+
+
+@router.post("/api/v1/cases/{case_id}/closure-drift-remediation-actions")
+def execute_case_closure_drift_remediation_action(
+    case_id: str,
+    req: ClosureDriftRemediationActionRequest,
+    request: Request,
+):
+    """Execute a policy-checked operator remediation action for a drifted closure packet."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    proof = _case_proof_timeline(kernel, case_id)
+    closure_gate_evidence = _closure_gate_evidence_projection(proof)
+    if not closure_gate_evidence["closure_packet_drift"]:
+        raise HTTPException(
+            400,
+            detail=_error_detail("closure packet drift unavailable", "closure_packet_drift_unavailable"),
+        )
+    try:
+        disposition = TerminalClosureDisposition(req.terminal_disposition)
+        policy = _closure_drift_remediation_policy(disposition)
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_error_detail("closure drift remediation policy rejected", "closure_drift_remediation_policy_rejected"),
+        ) from exc
+    evidence_by_ref = _case_evidence_by_ref(kernel, case_id)
+    approval_refs = _case_approval_refs(kernel, case_id)
+    readiness = _closure_drift_action_readiness(
+        disposition=disposition,
+        evidence_by_ref=evidence_by_ref,
+        approval_refs=approval_refs,
+        evidence_refs=req.evidence_refs,
+        authority_ref=req.authority_ref,
+    )
+    if not readiness["ready"]:
+        detail = _error_detail(
+            "closure drift remediation policy unmet",
+            "closure_drift_remediation_policy_unmet",
+        )
+        detail["missing_evidence_types"] = readiness["missing_evidence_types"]
+        detail["missing_authority_refs"] = readiness["missing_authority_refs"]
+        raise HTTPException(400, detail=detail)
+    remediation_id = req.remediation_id or stable_identifier(
+        "closure-drift-remediation",
+        {
+            "case_id": case_id,
+            "closure_id": req.closure_id,
+            "terminal_disposition": disposition.value,
+            "action_id": req.action_id,
+        },
+    )
+    metadata = {
+        **req.metadata,
+        "operator_action_id": req.action_id,
+        "policy_action_kind": policy["action_kind"],
+        "policy_required_evidence_types": list(policy["required_evidence_types"]),
+    }
+    try:
+        binding = kernel.bind_closure_drift_remediation(
+            ClosureDriftRemediationBinding(
+                remediation_id=remediation_id,
+                case_id=case_id,
+                closure_id=req.closure_id,
+                terminal_disposition=disposition,
+                drift_evidence_refs=tuple(closure_gate_evidence["closure_packet_drift_refs"]),
+                superseded_evidence_refs=tuple(closure_gate_evidence["superseded_closure_evidence_refs"]),
+                authority_ref=req.authority_ref,
+                evidence_refs=tuple(req.evidence_refs),
+                created_at=_clock_now(),
+                metadata=metadata,
+            )
+        )
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_error_detail("closure drift remediation action rejected", "closure_drift_remediation_action_rejected"),
+        ) from exc
+    _persist_kernel(kernel)
+    return {
+        "action": {
+            "action_id": req.action_id,
+            "terminal_disposition": disposition.value,
+            "policy": readiness,
+        },
+        "closure_drift_remediation": _body(binding),
+        "governed": True,
+    }
 
 
 @router.get("/api/v1/cases/{case_id}/events")

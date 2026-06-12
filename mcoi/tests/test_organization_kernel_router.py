@@ -2458,6 +2458,249 @@ def test_closure_packet_drift_remediation_rejects_mismatched_refs(tmp_path: Path
     assert response.json()["detail"]["error_code"] == "closure_drift_evidence_mismatch"
 
 
+def test_closure_packet_drift_operator_actions_report_policy_requirements(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    approval = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/approvals",
+        json={
+            "approval_id": "approval:security-dual-control",
+            "role_id": "executive.owner",
+            "approval_scope": "security_approval",
+            "approved_by": "human-executive",
+        },
+    )
+    _allow_all_plan_steps(client)
+    closure = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/close",
+        json={
+            "reconciliation_id": "reconciliation:gateway-pilot",
+            "expected_effect": "gateway_pilot_ready",
+            "observed_effect": "gateway_pilot_ready",
+            "reconciliation_status": "match",
+            "forbidden_effects_checked": True,
+            "evidence_refs": _closure_gate_evidence_refs(),
+            "terminal_disposition": "committed",
+            "terminal_certificate_id": "terminal:gateway-pilot",
+        },
+    )
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": "evidence:engineering_health_endpoint:v2",
+            "requirement_id": "engineering_health_endpoint",
+            "submitted_by": "operator",
+        },
+    )
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+
+    before = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-drift-remediation-actions")
+    review_evidence = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": "evidence:closure_drift_review",
+            "requirement_id": "security_public_claim_boundary",
+            "submitted_by": "human-executive",
+            "metadata": {"evidence_type": "closure_drift_review_decision"},
+        },
+    )
+    after = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-drift-remediation-actions")
+
+    assert approval.status_code == 200
+    assert closure.status_code == 200
+    assert before.status_code == 200
+    assert before.json()["closure_packet_drift"] is True
+    assert before.json()["closure_id"] == closure.json()["closure"]["closure_id"]
+    assert before.json()["drift_evidence_refs"] == ["evidence:engineering_health_endpoint:v2"]
+    assert {item["terminal_disposition"] for item in before.json()["actions"]} == {
+        "requires_review",
+        "compensated",
+        "accepted_risk",
+    }
+    before_by_disposition = {item["terminal_disposition"]: item for item in before.json()["actions"]}
+    assert before_by_disposition["requires_review"]["missing_evidence_types"] == [
+        "closure_drift_review_decision",
+    ]
+    assert before_by_disposition["compensated"]["missing_evidence_types"] == [
+        "compensation_receipt",
+        "compensation_effect_reconciliation",
+    ]
+    assert before_by_disposition["accepted_risk"]["missing_evidence_types"] == [
+        "accepted_risk_record",
+        "risk_owner_approval",
+    ]
+    assert before_by_disposition["requires_review"]["authority_refs"] == [
+        "approval:security-dual-control",
+    ]
+    assert before_by_disposition["requires_review"]["ready"] is False
+    assert review_evidence.status_code == 200
+    after_by_disposition = {item["terminal_disposition"]: item for item in after.json()["actions"]}
+    assert after_by_disposition["requires_review"]["ready"] is True
+    assert after_by_disposition["requires_review"]["missing_evidence_types"] == []
+    assert after_by_disposition["requires_review"]["available_evidence_refs_by_type"] == {
+        "closure_drift_review_decision": ["evidence:closure_drift_review"],
+    }
+
+
+def test_closure_packet_drift_operator_action_binds_review_remediation(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    approval = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/approvals",
+        json={
+            "approval_id": "approval:security-dual-control",
+            "role_id": "executive.owner",
+            "approval_scope": "security_approval",
+            "approved_by": "human-executive",
+        },
+    )
+    _allow_all_plan_steps(client)
+    closure = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/close",
+        json={
+            "reconciliation_id": "reconciliation:gateway-pilot",
+            "expected_effect": "gateway_pilot_ready",
+            "observed_effect": "gateway_pilot_ready",
+            "reconciliation_status": "match",
+            "forbidden_effects_checked": True,
+            "evidence_refs": _closure_gate_evidence_refs(),
+            "terminal_disposition": "committed",
+            "terminal_certificate_id": "terminal:gateway-pilot",
+        },
+    )
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": "evidence:engineering_health_endpoint:v2",
+            "requirement_id": "engineering_health_endpoint",
+            "submitted_by": "operator",
+        },
+    )
+    remediation_evidence = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": "evidence:closure_drift_review",
+            "requirement_id": "security_public_claim_boundary",
+            "submitted_by": "human-executive",
+            "metadata": {"evidence_type": "closure_drift_review_decision"},
+        },
+    )
+    refreshed_gate = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/closure-drift-remediation-actions",
+        json={
+            "action_id": "action:closure-drift-review",
+            "closure_id": closure.json()["closure"]["closure_id"],
+            "terminal_disposition": "requires_review",
+            "authority_ref": "approval:security-dual-control",
+            "evidence_refs": ["evidence:closure_drift_review"],
+        },
+    )
+    certificate = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-certificate")
+    events = client.get("/api/v1/cases/case.launch_gateway_pilot/events")
+
+    assert approval.status_code == 200
+    assert closure.status_code == 200
+    assert remediation_evidence.status_code == 200
+    assert refreshed_gate.status_code == 200
+    assert response.status_code == 200
+    remediation = response.json()["closure_drift_remediation"]
+    assert remediation["terminal_disposition"] == "requires_review"
+    assert remediation["drift_evidence_refs"] == ["evidence:engineering_health_endpoint:v2"]
+    assert remediation["superseded_evidence_refs"] == ["evidence:engineering_health_endpoint"]
+    assert remediation["metadata"]["operator_action_id"] == "action:closure-drift-review"
+    assert remediation["metadata"]["policy_action_kind"] == "review_required"
+    assert remediation["metadata"]["policy_required_evidence_types"] == [
+        "closure_drift_review_decision",
+    ]
+    assert response.json()["action"]["policy"]["ready"] is True
+    assert certificate.json()["terminal_status"] == "closed_drift_review_required"
+    assert certificate.json()["closure_gate_evidence"]["closure_packet_drift_remediated"] is True
+    assert "closure_packet_drift_remediated" in {item["kind"] for item in certificate.json()["attention_items"]}
+    assert "closure_drift_remediation_bound" in {item["event_type"] for item in events.json()["events"]}
+
+
+def test_closure_packet_drift_operator_action_rejects_missing_policy_evidence(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/approvals",
+        json={
+            "approval_id": "approval:security-dual-control",
+            "role_id": "executive.owner",
+            "approval_scope": "security_approval",
+            "approved_by": "human-executive",
+        },
+    )
+    _allow_all_plan_steps(client)
+    closure = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/close",
+        json={
+            "reconciliation_id": "reconciliation:gateway-pilot",
+            "expected_effect": "gateway_pilot_ready",
+            "observed_effect": "gateway_pilot_ready",
+            "reconciliation_status": "match",
+            "forbidden_effects_checked": True,
+            "evidence_refs": _closure_gate_evidence_refs(),
+            "terminal_disposition": "committed",
+            "terminal_certificate_id": "terminal:gateway-pilot",
+        },
+    )
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": "evidence:engineering_health_endpoint:v2",
+            "requirement_id": "engineering_health_endpoint",
+            "submitted_by": "operator",
+        },
+    )
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": "evidence:compensation_receipt",
+            "requirement_id": "security_public_claim_boundary",
+            "submitted_by": "human-executive",
+            "metadata": {"evidence_type": "compensation_receipt"},
+        },
+    )
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/closure-drift-remediation-actions",
+        json={
+            "action_id": "action:closure-drift-compensation",
+            "closure_id": closure.json()["closure"]["closure_id"],
+            "terminal_disposition": "compensated",
+            "authority_ref": "approval:security-dual-control",
+            "evidence_refs": ["evidence:compensation_receipt"],
+        },
+    )
+    certificate = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-certificate")
+
+    assert closure.status_code == 200
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_code"] == "closure_drift_remediation_policy_unmet"
+    assert response.json()["detail"]["missing_evidence_types"] == [
+        "compensation_effect_reconciliation",
+    ]
+    assert response.json()["detail"]["missing_authority_refs"] == []
+    assert certificate.json()["terminal_status"] == "closed_packet_drift"
+    assert certificate.json()["closure_gate_evidence"]["closure_packet_drift_remediated"] is False
+
+
 def test_case_proof_explorer_reports_closed_verified_case(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     _bootstrap_and_open_pilot(client)
@@ -2841,6 +3084,7 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/cases/{case_id}/closure-certificate" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate/view" in paths
     assert "/api/v1/cases/{case_id}/closure-drift-remediations" in paths
+    assert "/api/v1/cases/{case_id}/closure-drift-remediation-actions" in paths
     assert "/api/v1/cases/{case_id}/audit-explorer" in paths
     assert "/api/v1/cases/{case_id}/audit-explorer/view" in paths
     assert "/api/v1/cases/{case_id}/step-handoffs" in paths
