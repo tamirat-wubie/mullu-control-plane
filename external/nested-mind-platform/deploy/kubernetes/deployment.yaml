@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mind-api
+  namespace: nested-mind
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mind-api
+  template:
+    metadata:
+      labels:
+        app: mind-api
+    spec:
+      containers:
+        - name: mind-api
+          image: ghcr.io/mullusi/nested-mind-platform/mind-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: mind-api-config
+            - secretRef:
+                name: mind-api-secrets
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mind-api-data

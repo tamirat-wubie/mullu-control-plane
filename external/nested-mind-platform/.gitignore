@@ -1,0 +1,12 @@
+/target/
+/data/
+**/*.rs.bk
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/
+coverage/
+/restore/
+*.backup.json

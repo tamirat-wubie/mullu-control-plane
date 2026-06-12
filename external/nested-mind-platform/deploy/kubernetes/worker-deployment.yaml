@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mind-worker
+  namespace: nested-mind
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mind-worker
+  template:
+    metadata:
+      labels:
+        app: mind-worker
+    spec:
+      containers:
+        - name: mind-worker
+          image: ghcr.io/mullusi/nested-mind-platform/mind-worker:latest
+          imagePullPolicy: IfNotPresent
+          command: ["mind-worker"]
+          envFrom:
+            - configMapRef:
+                name: mind-api-config
+            - secretRef:
+                name: mind-api-secrets
+          env:
+            - name: MIND_WORKER_ID
+              value: worker-a
+            - name: MIND_WORKER_MODE
+              value: plan
+            - name: MIND_WORKER_MAX_TICKS
+              value: "0"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mind-api-data

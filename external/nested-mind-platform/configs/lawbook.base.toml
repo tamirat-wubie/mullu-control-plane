@@ -1,0 +1,22 @@
+# Human-readable reference lawbook.
+# The compiled lawbook is currently defined in mind-core/src/law.rs.
+
+[[rules]]
+type = "require_key"
+key = "identity.id"
+
+[[rules]]
+type = "require_key"
+key = "identity.kind"
+
+[[rules]]
+type = "immutable_key"
+key = "identity.id"
+
+[[rules]]
+type = "immutable_key"
+key = "identity.kind"
+
+[[rules]]
+type = "require_key"
+key = "system.version"

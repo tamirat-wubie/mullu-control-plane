@@ -1,0 +1,16 @@
+name: Enforcement action evidence
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  evidence-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show v21 action evidence commands
+        run: |
+          echo "cargo run -p mind-cli -- branch-protection-policy mullusi/nested-mind-platform main"
+          echo "cargo run -p mind-cli -- github-evidence-demo mullusi/nested-mind-platform 21 $GITHUB_SHA"
+          echo "cargo run -p mind-cli -- staging-chaos-run ./data/chaos-plan.json nested-mind-staging dry-run"

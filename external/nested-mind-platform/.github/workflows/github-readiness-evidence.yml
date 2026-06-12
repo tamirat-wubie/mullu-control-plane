@@ -1,0 +1,30 @@
+name: github-readiness-evidence
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  evidence-fixture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record evidence contract
+        run: |
+          mkdir -p target/readiness
+          cat > target/readiness/github-evidence-contract.json <<'JSON'
+          {
+            "required_checks": [
+              "cargo fmt",
+              "cargo clippy",
+              "cargo test",
+              "mandatory-readiness-gates",
+              "readiness-evidence"
+            ],
+            "branch_policy_file": ".github/branch-protection.required.json"
+          }
+          JSON
+      - uses: actions/upload-artifact@v4
+        with:
+          name: github-readiness-evidence-contract
+          path: target/readiness/github-evidence-contract.json

@@ -1,0 +1,40 @@
+app = "nested-mind-platform"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  MULLU_ENV = "production"
+  MULLU_ENV_REQUIRED = "true"
+  MIND_ROOT_KIND = "root"
+  MIND_EVENT_DB = "/app/data/mind-events.sqlite"
+  MIND_REQUIRE_SIGNATURES = "true"
+  MIND_OBSERVABILITY_USE_EVENT_DB = "true"
+  MIND_MAX_BODY_BYTES = "65536"
+  MIND_RATE_LIMIT_REQUESTS = "60"
+  MIND_RATE_LIMIT_WINDOW_SECONDS = "60"
+  MIND_LOG_LEVEL = "mind_api=info,tower_http=info"
+  MIND_TRACE_JSON = "true"
+
+[mounts]
+  source = "mind_data"
+  destination = "/app/data"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    interval = "15s"
+    timeout = "2s"
+    method = "GET"
+    path = "/health"

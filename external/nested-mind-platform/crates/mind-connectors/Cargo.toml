@@ -1,0 +1,29 @@
+[package]
+name = "mind-connectors"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+mind-core = { path = "../mind-core" }
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+hex.workspace = true
+time.workspace = true
+tokio.workspace = true
+
+[features]
+default = []
+provider-aws-kms = ["mind-core/provider-aws-kms"]
+provider-aws-s3 = ["mind-core/provider-aws-s3"]
+provider-gcp-kms = ["mind-core/provider-gcp-kms"]
+provider-gcs = ["mind-core/provider-gcs"]
+provider-azure-key-vault = ["mind-core/provider-azure-key-vault"]
+provider-azure-blob = ["mind-core/provider-azure-blob"]
+provider-vault = ["mind-core/provider-vault"]
+provider-pkcs11 = ["mind-core/provider-pkcs11"]
+provider-http-gateway = ["mind-core/provider-http-gateway"]
+provider-local-mirror = ["mind-core/provider-local-mirror"]

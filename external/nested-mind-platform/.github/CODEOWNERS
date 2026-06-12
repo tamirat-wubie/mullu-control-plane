@@ -1,0 +1,4 @@
+# Require owner review for kernel, governance, and CI changes.
+/crates/mind-core/ @tlulie
+/docs/governance.md @tlulie
+/.github/ @tlulie
