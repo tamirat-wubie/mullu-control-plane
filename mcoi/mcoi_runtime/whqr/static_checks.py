@@ -1,5 +1,5 @@
 """Purpose: static validation for WHQR trees before governance adoption.
-Governance scope: reject unresolved role coverage gaps, invalid negation scope, and causal cycles.
+Governance scope: reject unresolved role coverage gaps, invalid negation scope, causal cycles, duplicate node ids, and side-effect targets.
 Dependencies: WHQR contracts and connector compiler.
 Invariants: static checks are pure and report all detected issue classes once.
 """
@@ -7,9 +7,23 @@ Invariants: static checks are pure and report all detected issue classes once.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 
 from mcoi_runtime.contracts.whqr import Connector, ConnectorExpr, LogicalExpr, LogicalOp, WHQRExpr, WHQRNode, WHRole
 from mcoi_runtime.whqr.connectors import AssertionKind, compile_connector
+
+
+_SIDE_EFFECT_TERMS = frozenset({
+    "call",
+    "delete",
+    "execute",
+    "mutate",
+    "pay",
+    "run",
+    "send",
+    "shell",
+    "write",
+})
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,7 +43,8 @@ def validate_static(expr: WHQRExpr, required_roles: tuple[WHRole, ...] = ()) -> 
     issues: list[StaticCheckIssue] = []
     roles: set[WHRole] = set()
     causal_edges: set[tuple[str, str]] = set()
-    _walk(expr, roles, causal_edges, issues)
+    node_ids: set[str] = set()
+    _walk(expr, roles, causal_edges, node_ids, issues)
     for role in required_roles:
         if role not in roles:
             issues.append(StaticCheckIssue("missing_role", f"required WHQR role missing: {role.value}", role.value))
@@ -38,29 +53,46 @@ def validate_static(expr: WHQRExpr, required_roles: tuple[WHRole, ...] = ()) -> 
     return StaticCheckReport(passed=not issues, issues=tuple(issues))
 
 
-def _walk(expr: WHQRExpr, roles: set[WHRole], causal_edges: set[tuple[str, str]], issues: list[StaticCheckIssue]) -> None:
+def _walk(
+    expr: WHQRExpr,
+    roles: set[WHRole],
+    causal_edges: set[tuple[str, str]],
+    node_ids: set[str],
+    issues: list[StaticCheckIssue],
+) -> None:
     if isinstance(expr, WHQRNode):
         roles.add(expr.role)
+        if expr.node_id is not None:
+            if expr.node_id in node_ids:
+                issues.append(StaticCheckIssue("duplicate_node_id", "WHQR node_id values must be unique", expr.node_id))
+            node_ids.add(expr.node_id)
+        if _has_side_effect_target(expr.target):
+            issues.append(StaticCheckIssue("side_effect_target", "WHQR nodes may not encode side-effect actions", expr.target))
         return
     if isinstance(expr, LogicalExpr):
         if expr.op is LogicalOp.NOT and any(isinstance(arg, WHQRNode) for arg in expr.args):
             issues.append(StaticCheckIssue("negated_unresolved_node", "negation cannot apply directly to unresolved WHQR nodes"))
         for arg in expr.args:
-            _walk(arg, roles, causal_edges, issues)
+            _walk(arg, roles, causal_edges, node_ids, issues)
         return
     if isinstance(expr, ConnectorExpr):
         if expr.connector in {Connector.BECAUSE, Connector.THEREFORE}:
             compiled = compile_connector(expr)
             if compiled.assertion.kind is AssertionKind.CAUSAL:
                 causal_edges.add((_target(compiled.assertion.source), _target(compiled.assertion.target)))
-        _walk(expr.left, roles, causal_edges, issues)
-        _walk(expr.right, roles, causal_edges, issues)
+        _walk(expr.left, roles, causal_edges, node_ids, issues)
+        _walk(expr.right, roles, causal_edges, node_ids, issues)
 
 
 def _target(expr: WHQRExpr) -> str:
     if isinstance(expr, WHQRNode):
-        return expr.target
+        return expr.node_id or expr.target
     return repr(expr)
+
+
+def _has_side_effect_target(target: str) -> bool:
+    terms = tuple(term for term in re.split(r"[^A-Za-z0-9]+", target.lower()) if term)
+    return any(term in _SIDE_EFFECT_TERMS for term in terms)
 
 
 def _has_cycle(edges: set[tuple[str, str]]) -> bool:

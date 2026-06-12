@@ -72,6 +72,27 @@ def test_document_semantics_are_versioned_and_canonical() -> None:
     assert first.canonical_hash() == second.canonical_hash()
 
 
+def test_document_preserves_optional_binding_refs_in_canonical_form() -> None:
+    document = WHQRDocument(
+        root=WHQRNode(
+            role=WHRole.WHO,
+            target="approver",
+            node_id="node-approver",
+            entity_ref="identity:finance-manager",
+            evidence_ref="evidence:approval-policy",
+            expected_type="identity",
+        ),
+        source_ref="request:payment-approval",
+    )
+    payload = json.loads(document.canonical_json())
+
+    assert payload["source_ref"] == "request:payment-approval"
+    assert payload["root"]["node_id"] == "node-approver"
+    assert payload["root"]["entity_ref"] == "identity:finance-manager"
+    assert payload["root"]["evidence_ref"] == "evidence:approval-policy"
+    assert payload["root"]["expected_type"] == "identity"
+
+
 def test_document_canonical_json_rejects_nonfinite_metadata() -> None:
     document = WHQRDocument(
         root=WHQRNode(
@@ -241,3 +262,19 @@ def test_static_checks_detect_causal_cycles() -> None:
     assert not report.passed
     assert "causal_cycle" in {issue.code for issue in report.issues}
     assert len(report.issues) == 1
+
+
+def test_static_checks_reject_duplicate_node_ids_and_side_effect_targets() -> None:
+    expr = LogicalExpr(
+        op=LogicalOp.AND,
+        args=(
+            WHQRNode(role=WHRole.WHAT, target="payment_request", node_id="node-1"),
+            WHQRNode(role=WHRole.HOW, target="send_email", node_id="node-1"),
+        ),
+    )
+    report = validate_static(expr)
+    issue_codes = {issue.code for issue in report.issues}
+
+    assert not report.passed
+    assert issue_codes == {"duplicate_node_id", "side_effect_target"}
+    assert len(report.issues) == 2
