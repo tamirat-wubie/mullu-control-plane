@@ -330,6 +330,17 @@ def test_protocol_manifest_indexes_capability_improvement_portfolio() -> None:
     assert portfolio_entry["surface"] == "capability"
 
 
+def test_protocol_manifest_indexes_capability_improvement_proof_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    proof_entry = entries["capability-improvement-proof-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert proof_entry["path"] == "schemas/capability_improvement_proof_receipt.schema.json"
+    assert proof_entry["urn"] == "urn:mullusi:schema:capability-improvement-proof-receipt:1"
+    assert proof_entry["surface"] == "capability"
+
+
 def test_protocol_manifest_indexes_autonomous_test_generation_plan() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}

@@ -38,6 +38,8 @@ def test_handoff_packet_links_operator_artifacts() -> None:
     assert "schemas/general_agent_promotion_terminal_approvals.schema.json" in packet_text
     assert "scripts/plan_general_agent_promotion_terminal_certificate_gate.py" in packet_text
     assert "scripts/plan_general_agent_promotion_terminal_certificate_candidates.py" in packet_text
+    assert "scripts/produce_capability_improvement_proof_receipt.py" in packet_text
+    assert "schemas/capability_improvement_proof_receipt.schema.json" in packet_text
     assert "schemas/general_agent_promotion_terminal_certificate_candidates.schema.json" in packet_text
     assert "scripts/reconcile_general_agent_promotion_terminal_evidence.py" in packet_text
     assert "schemas/general_agent_promotion_terminal_evidence_reconciliation.schema.json" in packet_text
@@ -47,6 +49,7 @@ def test_handoff_packet_links_operator_artifacts() -> None:
     assert "schemas/general_agent_promotion_terminal_certificate_minting_run.schema.json" in packet_text
     assert ".change_assurance/general_agent_promotion_closure_plan.json" in packet_text
     assert ".change_assurance/capability_improvement_portfolio.json" in packet_text
+    assert ".change_assurance/capability_improvement_proof_receipt.json" in packet_text
     assert ".change_assurance/general_agent_promotion_live_evidence_queue.json" in packet_text
     assert ".change_assurance/general_agent_promotion_terminal_approvals.json" in packet_text
     assert ".change_assurance/general_agent_promotion_terminal_certificate_gate.json" in packet_text
@@ -85,6 +88,7 @@ def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
     assert "Validate the terminal approval receipt when approval refs are supplied" in packet_text
     assert "Inspect the terminal certificate gate before executing any closure command" in packet_text
     assert "Inspect terminal certificate candidates and verify minting remains false" in packet_text
+    assert "Produce capability-improvement proof receipts" in packet_text
     assert "Inspect terminal evidence reconciliation" in packet_text
     assert "Inspect terminal minting gate" in packet_text
     assert "Run the terminal certificate minting executor only after the terminal minting gate is ready" in packet_text

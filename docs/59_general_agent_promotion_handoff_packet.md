@@ -43,6 +43,9 @@ This packet is the operator entry point for final promotion validation. It binds
 | Handoff preflight validator | `scripts/validate_general_agent_promotion_handoff_preflight.py` |
 | Aggregate closure plan | `.change_assurance/general_agent_promotion_closure_plan.json` |
 | Capability improvement portfolio | `.change_assurance/capability_improvement_portfolio.json` |
+| Capability improvement proof receipt producer | `scripts/produce_capability_improvement_proof_receipt.py` |
+| Capability improvement proof receipt schema | `schemas/capability_improvement_proof_receipt.schema.json` |
+| Capability improvement proof receipt | `.change_assurance/capability_improvement_proof_receipt.json` |
 | Closure chain runner | `scripts/run_general_agent_promotion_closure_chain.py` |
 | Schema validation report | `.change_assurance/general_agent_promotion_closure_plan_schema_validation.json` |
 | Drift validation report | `.change_assurance/general_agent_promotion_closure_plan_validation.json` |
@@ -96,18 +99,19 @@ capability_improvement_required:agentic_control.incident_recovery.plan
 7. Validate the terminal approval receipt when approval refs are supplied.
 8. Inspect the terminal certificate gate before executing any closure command.
 9. Inspect terminal certificate candidates and verify minting remains false.
-10. Inspect terminal evidence reconciliation and verify minting readiness remains blocked until live receipts match candidate evidence.
-11. Inspect terminal minting gate and verify minting readiness remains blocked until reconciliation is ready and explicit authority is supplied.
-12. Run the terminal certificate minting executor only after the terminal minting gate is ready.
-13. Validate aggregate closure plan schema.
-14. Validate aggregate closure plan drift.
-15. Emit and validate the redacted environment binding receipt.
-16. Re-run the live-evidence queue, terminal certificate gate, terminal certificate candidate, terminal evidence reconciliation, and terminal minting gate planners if bindings, approvals, receipts, or authority refs changed after the closure chain.
-17. Complete dependency, credential, deployment, and portfolio actions with approval where required.
-18. Produce live adapter receipts.
-19. Publish deployment witness with approval only after runtime and authority responsibility debt are clear.
-20. Update `DEPLOYMENT_STATUS.md` only after published witness, debt-clear witness fields, and matching health probe evidence exist.
-21. Run final strict promotion validation.
+10. Produce capability-improvement proof receipts for approved repository-local portfolio candidates.
+11. Inspect terminal evidence reconciliation and verify minting readiness remains blocked until passed receipts match candidate evidence.
+12. Inspect terminal minting gate and verify minting readiness remains blocked until reconciliation is ready and explicit authority is supplied.
+13. Run the terminal certificate minting executor only after the terminal minting gate is ready.
+14. Validate aggregate closure plan schema.
+15. Validate aggregate closure plan drift.
+16. Emit and validate the redacted environment binding receipt.
+17. Re-run the live-evidence queue, terminal certificate gate, terminal certificate candidate, terminal evidence reconciliation, and terminal minting gate planners if bindings, approvals, receipts, or authority refs changed after the closure chain.
+18. Complete dependency, credential, deployment, and portfolio actions with approval where required.
+19. Produce live adapter receipts.
+20. Publish deployment witness with approval only after runtime and authority responsibility debt are clear.
+21. Update `DEPLOYMENT_STATUS.md` only after published witness, debt-clear witness fields, and matching health probe evidence exist.
+22. Run final strict promotion validation.
 
 Browser adapter evidence is closed only when the adapter evidence report
 preserves both `browser-sandbox-evidence-*` and `sandbox-receipt-*` refs from
@@ -123,6 +127,6 @@ The terminal command must not pass unless live adapter evidence, deployment witn
 
 STATUS:
   Completeness: 99%
-  Invariants verified: [single handoff entry point, machine-readable handoff packet linked, checklist linked, runbook linked, validation reports linked, live-evidence queue linked, terminal approval receipt contract linked, terminal certificate gate linked, terminal certificate candidate contract linked, terminal evidence reconciliation contract linked, terminal minting gate linked, terminal certificate minting run contract linked, blockers explicit, live adapter evidence closed]
+  Invariants verified: [single handoff entry point, machine-readable handoff packet linked, checklist linked, runbook linked, validation reports linked, live-evidence queue linked, terminal approval receipt contract linked, terminal certificate gate linked, terminal certificate candidate contract linked, capability improvement proof receipt linked, terminal evidence reconciliation contract linked, terminal minting gate linked, terminal certificate minting run contract linked, blockers explicit, live adapter evidence closed]
   Open issues: [terminal certificate minting remains authority-gated]
   Next action: run final strict promotion validation before any terminal certificate minting action
