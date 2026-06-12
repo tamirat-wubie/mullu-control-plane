@@ -299,6 +299,7 @@ jobs:
           python scripts/produce_capability_improvement_portfolio.py --output .change_assurance/capability_improvement_portfolio.json --json --strict
           python scripts/plan_capability_adapter_closure.py --output .change_assurance/capability_adapter_closure_plan.json
           python scripts/validate_capability_adapter_closure_plan_schema.py --output .change_assurance/capability_adapter_closure_plan_schema_validation.json --strict
+          python scripts/emit_deployment_upstream_blocker_receipt.py --target-gateway-url https://api.mullusi.com --output .change_assurance/deployment_upstream_blocker_receipt.json --json || test -f .change_assurance/deployment_upstream_blocker_receipt.json
           python scripts/plan_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_plan.json
           python scripts/validate_deployment_publication_closure_plan_schema.py --output .change_assurance/deployment_publication_closure_plan_schema_validation.json --strict
           python scripts/plan_general_agent_promotion_closure.py --portfolio-plan .change_assurance/capability_improvement_portfolio.json --output .change_assurance/general_agent_promotion_closure_plan.json
@@ -584,6 +585,7 @@ jobs:
           python scripts/produce_capability_improvement_portfolio.py --output .change_assurance/capability_improvement_portfolio.json --json --strict
           python scripts/plan_capability_adapter_closure.py --output .change_assurance/capability_adapter_closure_plan.json
           python scripts/validate_capability_adapter_closure_plan_schema.py --output .change_assurance/capability_adapter_closure_plan_schema_validation.json --strict
+          python scripts/emit_deployment_upstream_blocker_receipt.py --target-gateway-url https://api.mullusi.com --output .change_assurance/deployment_upstream_blocker_receipt.json --json || test -f .change_assurance/deployment_upstream_blocker_receipt.json
           python scripts/plan_deployment_publication_closure.py --output .change_assurance/deployment_publication_closure_plan.json
           python scripts/validate_deployment_publication_closure_plan_schema.py --output .change_assurance/deployment_publication_closure_plan_schema_validation.json --strict
           python scripts/plan_general_agent_promotion_closure.py --portfolio-plan .change_assurance/capability_improvement_portfolio.json --output .change_assurance/general_agent_promotion_closure_plan.json
