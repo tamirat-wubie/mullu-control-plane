@@ -58,8 +58,8 @@ from mcoi_runtime.whqr.clarification import (
     build_binding_map_from_clarification_responses,
 )
 from mcoi_runtime.whqr.evaluator import WHQREvaluationContext
-from mcoi_runtime.app.view_models import JobSummaryView
-from mcoi_runtime.app.console import render_job_summary
+from mcoi_runtime.app.view_models import JobSummaryView, WHQRBindingClarificationStatusView
+from mcoi_runtime.app.console import render_job_summary, render_whqr_binding_clarification_status
 
 # ---------------------------------------------------------------------------
 # Deterministic clock helpers
@@ -521,6 +521,86 @@ class TestJobWHQROrchestrationBridge:
                 context=_vendor_context(),
                 capability="shell_command",
             )
+
+
+class TestWHQRBindingClarificationStatusView:
+    def test_status_view_reports_pending_binding_request(self):
+        clock = _stepping_clock()
+        engine = JobEngine(clock=clock)
+        conv = ConversationEngine(clock=clock)
+        desc, _started = _create_and_start_job(engine)
+        thread = JobConversationBridge.create_job_thread(desc, conv)
+        request = _whqr_binding_request(thread.thread_id)
+        waiting_thread = JobConversationBridge.persist_whqr_binding_clarification_requests(thread, (request,))
+
+        view = WHQRBindingClarificationStatusView.from_thread(waiting_thread)
+
+        assert view.thread_id == thread.thread_id
+        assert view.request_count == 1
+        assert view.response_count == 0
+        assert view.pending_request_ids == (request.request_id,)
+        assert view.accepted_count == 0
+        assert view.rejected_count == 0
+        assert view.has_replay_pairs is False
+        assert view.binding_map_passed is False
+        assert view.next_step == "await_whqr_binding_response"
+
+    def test_status_view_reports_accepted_binding_response(self):
+        clock = _stepping_clock()
+        engine = JobEngine(clock=clock)
+        conv = ConversationEngine(clock=clock)
+        desc, _started = _create_and_start_job(engine)
+        thread = JobConversationBridge.create_job_thread(desc, conv)
+        request = _whqr_binding_request(thread.thread_id)
+        waiting_thread = JobConversationBridge.persist_whqr_binding_clarification_requests(thread, (request,))
+        active_thread, _response = JobConversationBridge.persist_whqr_binding_clarification_response(
+            conv,
+            waiting_thread,
+            request,
+            "entity_ref=vendor:acme;evidence_ref=evidence:vendor-doc-1",
+            "op-1",
+        )
+
+        view = WHQRBindingClarificationStatusView.from_thread(active_thread)
+        text = render_whqr_binding_clarification_status(view)
+
+        assert view.request_count == 1
+        assert view.response_count == 1
+        assert view.pending_request_ids == ()
+        assert view.responded_request_ids == (request.request_id,)
+        assert view.accepted_count == 1
+        assert view.rejected_count == 0
+        assert view.has_replay_pairs is True
+        assert view.binding_map_passed is True
+        assert view.next_step == "ready_for_orchestration"
+        assert "ready_for_orchestration" in text
+        assert request.request_id in text
+
+    def test_status_view_reports_rejected_binding_response_reason(self):
+        clock = _stepping_clock()
+        engine = JobEngine(clock=clock)
+        conv = ConversationEngine(clock=clock)
+        desc, _started = _create_and_start_job(engine)
+        thread = JobConversationBridge.create_job_thread(desc, conv)
+        request = _whqr_binding_request(thread.thread_id)
+        waiting_thread = JobConversationBridge.persist_whqr_binding_clarification_requests(thread, (request,))
+        active_thread, _response = JobConversationBridge.persist_whqr_binding_clarification_response(
+            conv,
+            waiting_thread,
+            request,
+            "vendor acme",
+            "op-1",
+        )
+
+        view = WHQRBindingClarificationStatusView.from_thread(active_thread)
+
+        assert view.request_count == 1
+        assert view.response_count == 1
+        assert view.accepted_count == 0
+        assert view.rejected_count == 1
+        assert view.rejected_reasons == ("invalid_response_binding_field",)
+        assert view.binding_map_passed is False
+        assert view.next_step == "resolve_whqr_clarification_response"
 
 
 # ===================================================================
