@@ -78,6 +78,51 @@ The requirement classifies activation as high risk because future steps can chan
 6. `scripts/validate_nested_mind_p3_readiness.py` passing against the append-only evidence store.
 7. Workspace governance preflight receipt.
 
+## Settlement Witness - 2026-06-12
+
+Repository settlement is verified at Git commit `73606cf30`, the merge commit
+for the Nested Mind activation boundary.
+
+Verified local state:
+
+1. `main` is aligned with `origin/main`.
+2. Focused Nested Mind tests passed:
+
+   ```powershell
+   python -m pytest tests/test_nested_mind_integration.py tests/test_nested_mind_observation_submitter_env.py tests/test_nested_mind_observation_submitter.py tests/test_nested_mind_staging_harness.py -q
+   ```
+
+   Result: `43 passed`.
+
+3. Workspace governance preflight passed:
+
+   ```powershell
+   python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-receipt-nested-mind-settlement-20260612.json
+   ```
+
+   Result: `144` checks passed, and the saved receipt validated with
+   `scripts/validate_workspace_governance_preflight_receipt.py`.
+
+4. Live activation gates were absent in the local shell:
+
+   ```text
+   MULLU_NESTED_MIND_ENABLED=absent
+   MULLU_NESTED_MIND_OBSERVATION_BRIDGE_ENABLED=absent
+   MULLU_NESTED_MIND_OBSERVATION_SUBMIT_ENABLED=absent
+   MULLU_NESTED_MIND_BASE_URL=absent
+   MULLU_NESTED_MIND_BEARER_TOKEN=absent
+   ```
+
+5. Local `mind-api` does not satisfy live staging evidence by itself. The
+   Mullu bridge requires HTTPS and the governed HTTP connector blocks loopback,
+   private, and metadata-network targets. A valid live witness therefore needs
+   a real HTTPS staging endpoint and bounded token, not localhost or a private
+   workstation URL.
+
+Settlement result: `SolvedVerified`.
+
+Live activation result: `AwaitingEvidence`.
+
 ## Outcome
 
 Current import state: `SolvedVerified`.
