@@ -390,8 +390,9 @@ def test_static_checks_reject_duplicate_node_ids_and_side_effect_targets() -> No
 
 
 def test_governance_decision_records_static_issue_details() -> None:
+    expr = WHQRNode(role=WHRole.HOW, target="send_email", node_id="unsafe-action")
     decision = build_policy_decision(
-        WHQRNode(role=WHRole.HOW, target="send_email", node_id="unsafe-action"),
+        expr,
         subject_id="operator",
         issued_at="2026-05-06T12:00:01Z",
         goal_id="goal-static-audit",
@@ -405,6 +406,11 @@ def test_governance_decision_records_static_issue_details() -> None:
 
     assert decision.status is PolicyDecisionStatus.DENY
     assert decision.reasons[0].code == "whqr_static_deny"
+    assert decision.decision_id == (
+        f"whqr:goal-static-audit:deny:whqr_static_deny:{WHQRDocument(root=expr).canonical_hash()}"
+    )
+    assert decision.metadata["whqr_canonical_hash"] == WHQRDocument(root=expr).canonical_hash()
+    assert decision.metadata["reason_code"] == "whqr_static_deny"
     assert details["truth"] == "true"
     assert details["static_issues"][0]["code"] == "side_effect_target"
     assert details["static_issues"][0]["target"] == "send_email"
@@ -431,6 +437,44 @@ def test_guard_verdict_preserves_whqr_policy_reason_details() -> None:
     assert verdict.detail["reason_code"] == "whqr_static_deny"
     assert verdict.detail["reason_details"]["static_issues"][0]["code"] == "side_effect_target"
     assert verdict.detail["reason_details"]["binding_issues"] == ()
+
+
+def test_governance_decision_identity_is_stable_and_tree_specific() -> None:
+    first_expr = WHQRNode(role=WHRole.WHAT, target="budget_available")
+    second_expr = WHQRNode(role=WHRole.WHAT, target="invoice_valid")
+    first_decision = build_policy_decision(
+        first_expr,
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        goal_id="goal-stable-id",
+        context=WHQREvaluationContext(
+            node_results={"budget_available": GateResult(TruthGate.FALSE, evidence=EvidenceGate.PROVEN)}
+        ),
+    )
+    repeated_decision = build_policy_decision(
+        first_expr,
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        goal_id="goal-stable-id",
+        context=WHQREvaluationContext(
+            node_results={"budget_available": GateResult(TruthGate.FALSE, evidence=EvidenceGate.PROVEN)}
+        ),
+    )
+    second_decision = build_policy_decision(
+        second_expr,
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        goal_id="goal-stable-id",
+        context=WHQREvaluationContext(
+            node_results={"invoice_valid": GateResult(TruthGate.FALSE, evidence=EvidenceGate.PROVEN)}
+        ),
+    )
+
+    assert first_decision.decision_id == repeated_decision.decision_id
+    assert first_decision.decision_id != second_decision.decision_id
+    assert first_decision.metadata["whqr_canonical_hash"] == WHQRDocument(root=first_expr).canonical_hash()
+    assert second_decision.metadata["whqr_canonical_hash"] == WHQRDocument(root=second_expr).canonical_hash()
+    assert first_decision.decision_id.endswith(str(first_decision.metadata["whqr_canonical_hash"]))
 
 
 def test_governance_decision_codes_identify_primary_deny_gate() -> None:
