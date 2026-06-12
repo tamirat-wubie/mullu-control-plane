@@ -45,7 +45,7 @@ This packet is the operator entry point for final promotion validation. It binds
 | Capability improvement portfolio | `.change_assurance/capability_improvement_portfolio.json` |
 | Capability improvement proof receipt producer | `scripts/produce_capability_improvement_proof_receipt.py` |
 | Capability improvement proof receipt schema | `schemas/capability_improvement_proof_receipt.schema.json` |
-| Capability improvement proof receipt | `.change_assurance/capability_improvement_proof_receipt.json` |
+| Capability improvement proof receipts | `.change_assurance/capability_improvement_proof_receipt*.json` |
 | Closure chain runner | `scripts/run_general_agent_promotion_closure_chain.py` |
 | Schema validation report | `.change_assurance/general_agent_promotion_closure_plan_schema_validation.json` |
 | Drift validation report | `.change_assurance/general_agent_promotion_closure_plan_validation.json` |

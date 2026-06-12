@@ -20,6 +20,7 @@ _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+import scripts.reconcile_general_agent_promotion_terminal_evidence as reconciliation_module  # noqa: E402
 from scripts.reconcile_general_agent_promotion_terminal_evidence import (  # noqa: E402
     main,
     reconcile_general_agent_promotion_terminal_evidence,
@@ -101,6 +102,33 @@ def test_terminal_evidence_reconciliation_rejects_unsafe_capability_proof_receip
     assert "terminal_closure_missing" in candidate.missing_evidence
     assert candidate.receipt_refs == ()
     assert "missing_evidence:change_command_not_certified" in reconciliation.blocked_reasons
+    assert validate_general_agent_promotion_terminal_evidence_reconciliation(reconciliation) == ()
+
+
+def test_terminal_evidence_reconciliation_default_discovers_capability_proof_receipts(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    candidate_path = _write_capability_improvement_candidates(tmp_path)
+    assurance_path = tmp_path / ".change_assurance"
+    assurance_path.mkdir()
+    _write_capability_improvement_proof_receipt(
+        assurance_path,
+        name="capability_improvement_proof_receipt_agentic_control_governance_gate_evaluate.json",
+    )
+    monkeypatch.setattr(reconciliation_module, "REPO_ROOT", tmp_path)
+
+    reconciliation = reconcile_general_agent_promotion_terminal_evidence(candidate_path=candidate_path)
+    candidate = reconciliation.candidates[0]
+
+    assert reconciliation.ready_for_terminal_certificate_minting is True
+    assert reconciliation.reconciled_candidate_count == 1
+    assert reconciliation.blocked_candidate_count == 0
+    assert candidate.missing_evidence == ()
+    assert candidate.receipt_refs == (
+        ".change_assurance/capability_improvement_proof_receipt_agentic_control_governance_gate_evaluate.json",
+    )
+    assert "change_command_not_certified" in candidate.evidence_matched
     assert validate_general_agent_promotion_terminal_evidence_reconciliation(reconciliation) == ()
 
 
@@ -315,8 +343,9 @@ def _write_capability_improvement_proof_receipt(
     tmp_path: Path,
     *,
     registry_mutated: bool = False,
+    name: str = "capability_improvement_proof_receipt.json",
 ) -> Path:
-    receipt_path = tmp_path / "capability_improvement_proof_receipt.json"
+    receipt_path = tmp_path / name
     receipt_path.write_text(
         json.dumps(
             {

@@ -49,7 +49,7 @@ def test_handoff_packet_links_operator_artifacts() -> None:
     assert "schemas/general_agent_promotion_terminal_certificate_minting_run.schema.json" in packet_text
     assert ".change_assurance/general_agent_promotion_closure_plan.json" in packet_text
     assert ".change_assurance/capability_improvement_portfolio.json" in packet_text
-    assert ".change_assurance/capability_improvement_proof_receipt.json" in packet_text
+    assert ".change_assurance/capability_improvement_proof_receipt*.json" in packet_text
     assert ".change_assurance/general_agent_promotion_live_evidence_queue.json" in packet_text
     assert ".change_assurance/general_agent_promotion_terminal_approvals.json" in packet_text
     assert ".change_assurance/general_agent_promotion_terminal_certificate_gate.json" in packet_text
