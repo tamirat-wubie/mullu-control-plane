@@ -446,6 +446,7 @@ def _spatial_map_console_payload() -> dict[str, object]:
                 "rollback_recovery_path",
                 "proof_verification_path",
                 "audit_chain_verification_path",
+                "runtime_conformance_path",
             ),
             paths,
             judgments,
