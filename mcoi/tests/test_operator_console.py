@@ -338,6 +338,7 @@ def test_console_spatial_map_panel_read_model(client: TestClient) -> None:
     assert panels["Launch Boundary Panel"]["paths"][0]["path_id"] == "readiness_launch_gate"
     assert panels["Launch Boundary Panel"]["paths"][0]["status"] == "unknown"
     assert {path["path_id"] for path in panels["Launch Boundary Panel"]["paths"]} >= {
+        "production_health_declaration_path",
         "finance_approval_path",
         "payment_provider_handoff_path",
         "observability_evidence_path",
@@ -364,6 +365,7 @@ def test_console_spatial_map_html_view_renders_blockers(client: TestClient) -> N
     assert "rate_limit_guard_path" in resp.text
     assert "backpressure_status_path" in resp.text
     assert "payment_provider_handoff_path" in resp.text
+    assert "production_health_declaration_path" in resp.text
     assert "rollback_recovery_path" in resp.text
     assert "proof_verification_path" in resp.text
     assert "audit_chain_verification_path" in resp.text
