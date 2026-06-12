@@ -1,0 +1,88 @@
+"""Purpose: build deterministic clarification requests from WHQR binding gaps.
+Governance scope: convert unresolved WHQR binding preflight issues into operator-facing questions without side effects.
+Dependencies: conversation contracts and WHQR binding preflight reports.
+Invariants: generation is pure, deterministic, grouped by WHQR target, and preserves every unresolved issue in request context.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from mcoi_runtime.contracts.conversation import ClarificationRequest
+from mcoi_runtime.whqr.binding_preflight import BindingPreflightIssue, BindingPreflightReport
+
+
+@dataclass(frozen=True, slots=True)
+class WHQRClarificationBundle:
+    requests: tuple[ClarificationRequest, ...]
+
+    @property
+    def empty(self) -> bool:
+        return not self.requests
+
+
+def build_binding_clarification_requests(
+    report: BindingPreflightReport,
+    *,
+    thread_id: str,
+    requested_from_id: str,
+    requested_at: str,
+    request_prefix: str = "whqr-binding",
+) -> WHQRClarificationBundle:
+    """Build grouped clarification requests for unresolved WHQR binding issues."""
+    if report.passed:
+        return WHQRClarificationBundle(())
+    _require_text(thread_id, "thread_id")
+    _require_text(requested_from_id, "requested_from_id")
+    _require_text(request_prefix, "request_prefix")
+    grouped = _group_issues(report.issues)
+    requests = tuple(
+        ClarificationRequest(
+            request_id=f"{request_prefix}:{idx}:{_stable_ref(issues[0])}",
+            thread_id=thread_id,
+            question=_question(issues),
+            context=_context(issues),
+            requested_from_id=requested_from_id,
+            requested_at=requested_at,
+        )
+        for idx, issues in enumerate(grouped, start=1)
+    )
+    return WHQRClarificationBundle(requests)
+
+
+def _group_issues(issues: tuple[BindingPreflightIssue, ...]) -> tuple[tuple[BindingPreflightIssue, ...], ...]:
+    groups: dict[tuple[str, str | None, str | None], list[BindingPreflightIssue]] = {}
+    for issue in issues:
+        key = (issue.target, issue.node_id, issue.expected_type)
+        groups.setdefault(key, []).append(issue)
+    return tuple(tuple(groups[key]) for key in sorted(groups))
+
+
+def _question(issues: tuple[BindingPreflightIssue, ...]) -> str:
+    first = issues[0]
+    expected = first.expected_type or "entity"
+    missing = {issue.code for issue in issues}
+    if missing == {"missing_entity_ref"}:
+        return f"Which {expected} entity reference binds WHQR target '{first.target}'?"
+    if missing == {"missing_evidence_ref"}:
+        return f"Which evidence reference proves WHQR target '{first.target}'?"
+    return f"Which {expected} entity reference and evidence reference bind WHQR target '{first.target}'?"
+
+
+def _context(issues: tuple[BindingPreflightIssue, ...]) -> str:
+    first = issues[0]
+    codes = ",".join(issue.code for issue in issues)
+    node_ref = first.node_id or "unassigned"
+    expected = first.expected_type or "unspecified"
+    return f"whqr_binding_gap target={first.target} node_id={node_ref} expected_type={expected} issue_codes={codes}"
+
+
+def _stable_ref(issue: BindingPreflightIssue) -> str:
+    node_ref = issue.node_id or issue.target
+    return node_ref.replace(":", "_").replace(" ", "_")
+
+
+def _require_text(value: str, name: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{name} must be a non-empty string")
+    return value

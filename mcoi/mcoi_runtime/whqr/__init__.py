@@ -1,10 +1,11 @@
 """Purpose: expose pure WHQR semantic helpers.
-Governance scope: side-effect-free semantic query evaluation, binding preflight, connector compilation, static checks, and MIL compilation.
+Governance scope: side-effect-free semantic query evaluation, binding preflight, clarification, connector compilation, static checks, and MIL compilation.
 Dependencies: WHQR helper modules that are part of the tracked runtime surface.
 Invariants: package exports do not initialize runtime state or perform effects.
 """
 
 from .binding_preflight import BindingPreflightIssue, BindingPreflightReport, validate_binding_preflight
+from .clarification import WHQRClarificationBundle, build_binding_clarification_requests
 from .connectors import (
     AssertionKind,
     ConnectorCompilation,
@@ -35,7 +36,9 @@ __all__ = [
     "StaticCheckIssue",
     "StaticCheckReport",
     "WHQREvaluationContext",
+    "WHQRClarificationBundle",
     "bind_entities",
+    "build_binding_clarification_requests",
     "compile_and_verify_mil_from_policy_decision",
     "compile_connector",
     "compile_mil_from_policy_decision",

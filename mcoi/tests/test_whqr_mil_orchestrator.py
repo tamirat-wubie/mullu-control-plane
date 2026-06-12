@@ -157,6 +157,13 @@ def test_whqr_mil_orchestrator_stops_before_mil_when_typed_binding_missing() -> 
         "missing_entity_ref",
         "missing_evidence_ref",
     }
+    assert len(result.clarification_requests) == 1
+    request = result.clarification_requests[0]
+    assert request.request_id == "whqr-binding:goal:1:vendor-node"
+    assert request.thread_id == "intent"
+    assert request.requested_from_id == "operator"
+    assert "vendor entity reference and evidence reference" in request.question
+    assert "issue_codes=missing_entity_ref,missing_evidence_ref" in request.context
     assert result.mil_program is None
     assert result.dispatch_result is None
     assert memory.size == 0
