@@ -10,6 +10,8 @@ Invariants:
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 
 from mcoi_runtime.contracts.job import (
@@ -28,7 +30,9 @@ from mcoi_runtime.contracts.organization import (
     Team,
 )
 from mcoi_runtime.contracts.conversation import ThreadStatus
+from mcoi_runtime.contracts.whqr import WHQRNode, WHRole
 from mcoi_runtime.core.conversation import ConversationEngine
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.core.jobs import JobEngine
 from mcoi_runtime.core.job_integration import (
     JobConversationBridge,
@@ -37,6 +41,11 @@ from mcoi_runtime.core.job_integration import (
 )
 from mcoi_runtime.core.learning import LearningEngine
 from mcoi_runtime.core.organization import EscalationManager, OrgDirectory
+from mcoi_runtime.whqr.binding_preflight import validate_binding_preflight
+from mcoi_runtime.whqr.clarification import (
+    build_binding_clarification_requests,
+    build_binding_map_from_clarification_responses,
+)
 from mcoi_runtime.app.view_models import JobSummaryView
 from mcoi_runtime.app.console import render_job_summary
 
@@ -132,6 +141,18 @@ def _make_escalation_fixtures(clock):
     org.register_escalation_chain(chain)
     esc_mgr = EscalationManager(directory=org, clock=clock)
     return org, esc_mgr
+
+
+def _whqr_binding_request(thread_id: str):
+    report = validate_binding_preflight(
+        WHQRNode(role=WHRole.WHOM, target="vendor", node_id="vendor-node", expected_type="vendor")
+    )
+    return build_binding_clarification_requests(
+        report,
+        thread_id=thread_id,
+        requested_from_id="op-1",
+        requested_at=_T8,
+    ).requests[0]
 
 
 # ===================================================================
@@ -276,6 +297,96 @@ class TestResumeOnResponse:
             thread=paused_thread, clarification_request=clarif,
         )
         assert resumed_thread.status == ThreadStatus.ACTIVE
+
+
+class TestWHQRBindingClarificationBridge:
+    def test_persist_whqr_binding_clarification_requests_are_replayable(self):
+        clock = _stepping_clock()
+        engine = JobEngine(clock=clock)
+        conv = ConversationEngine(clock=clock)
+        desc, _started = _create_and_start_job(engine)
+        thread = JobConversationBridge.create_job_thread(desc, conv)
+        request = _whqr_binding_request(thread.thread_id)
+
+        updated_thread = JobConversationBridge.persist_whqr_binding_clarification_requests(
+            thread,
+            (request,),
+        )
+        replay = JobConversationBridge.replay_whqr_binding_clarifications(updated_thread)
+
+        assert updated_thread.status == ThreadStatus.WAITING
+        assert len(updated_thread.messages) == 1
+        assert updated_thread.messages[0].metadata["whqr_binding"] is True
+        assert updated_thread.messages[0].metadata["clarification_request_id"] == request.request_id
+        assert replay.requests == (request,)
+        assert replay.responses == ()
+        assert replay.ready_for_binding_map is False
+
+    def test_persist_whqr_binding_clarification_response_feeds_binding_map(self):
+        clock = _stepping_clock()
+        engine = JobEngine(clock=clock)
+        conv = ConversationEngine(clock=clock)
+        desc, _started = _create_and_start_job(engine)
+        thread = JobConversationBridge.create_job_thread(desc, conv)
+        request = _whqr_binding_request(thread.thread_id)
+        waiting_thread = JobConversationBridge.persist_whqr_binding_clarification_requests(
+            thread,
+            (request,),
+        )
+
+        active_thread, response = JobConversationBridge.persist_whqr_binding_clarification_response(
+            conv,
+            waiting_thread,
+            request,
+            "entity_ref=vendor:acme;evidence_ref=evidence:vendor-doc-1",
+            "op-1",
+        )
+        replay = JobConversationBridge.replay_whqr_binding_clarifications(active_thread)
+        binding_map = build_binding_map_from_clarification_responses(replay.requests, replay.responses)
+
+        assert active_thread.status == ThreadStatus.ACTIVE
+        assert response.request_id == request.request_id
+        assert replay.ready_for_binding_map is True
+        assert replay.requests == (request,)
+        assert replay.responses == (response,)
+        assert binding_map.passed is True
+        assert binding_map.accepted_count == 1
+        assert binding_map.as_binding_candidates()["vendor"].entity_ref == "vendor:acme"
+
+    def test_whqr_binding_bridge_rejects_non_whqr_clarification_context(self):
+        clock = _stepping_clock()
+        engine = JobEngine(clock=clock)
+        conv = ConversationEngine(clock=clock)
+        desc, _started = _create_and_start_job(engine)
+        thread = JobConversationBridge.create_job_thread(desc, conv)
+        _waiting_thread, general_request = conv.request_clarification(
+            thread,
+            "Which branch?",
+            "op-1",
+        )
+
+        with pytest.raises(RuntimeCoreInvariantError, match="WHQR binding context"):
+            JobConversationBridge.persist_whqr_binding_clarification_requests(
+                thread,
+                (general_request,),
+            )
+
+    def test_whqr_binding_replay_rejects_malformed_metadata(self):
+        clock = _stepping_clock()
+        engine = JobEngine(clock=clock)
+        conv = ConversationEngine(clock=clock)
+        desc, _started = _create_and_start_job(engine)
+        thread = JobConversationBridge.create_job_thread(desc, conv)
+        request = _whqr_binding_request(thread.thread_id)
+        waiting_thread = JobConversationBridge.persist_whqr_binding_clarification_requests(
+            thread,
+            (request,),
+        )
+        malformed_message = replace(waiting_thread.messages[0], metadata={"whqr_binding": True})
+        malformed_thread = replace(waiting_thread, messages=(malformed_message,))
+
+        with pytest.raises(RuntimeCoreInvariantError, match="clarification_request_id"):
+            JobConversationBridge.replay_whqr_binding_clarifications(malformed_thread)
 
 
 # ===================================================================
