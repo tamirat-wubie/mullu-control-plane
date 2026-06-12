@@ -234,9 +234,10 @@ def _receipt_evidence_index(receipt_paths: tuple[Path, ...]) -> ReceiptEvidenceI
             missing_paths.append(_path_label(path))
             continue
         receipt = _load_json_object(path, "receipt")
+        receipt_ref = _path_label(path)
+        _index_deployment_publication_evidence_packet(receipt, receipt_ref, matched)
         if not _receipt_passed(receipt):
             continue
-        receipt_ref = _path_label(path)
         basename = path.name
         matched[basename] = receipt_ref
         _index_capability_improvement_proof_receipt(receipt, receipt_ref, matched)
@@ -250,6 +251,55 @@ def _receipt_evidence_index(receipt_paths: tuple[Path, ...]) -> ReceiptEvidenceI
         if adapter_id == "communication.email_calendar_worker":
             matched["email_calendar_live_receipt"] = receipt_ref
     return ReceiptEvidenceIndex(matched_by_key=matched, missing_receipt_paths=tuple(missing_paths))
+
+
+def _index_deployment_publication_evidence_packet(
+    receipt: dict[str, Any],
+    receipt_ref: str,
+    matched: dict[str, str],
+) -> None:
+    """Index a ready deployment publication packet by upstream closure keys."""
+    if not str(receipt.get("packet_id", "")).startswith("deployment-publication-evidence-packet-"):
+        return
+    if receipt.get("ready") is not True:
+        return
+    blockers = receipt.get("blockers")
+    if not isinstance(blockers, list) or blockers:
+        return
+    validation_status = receipt.get("validation_status")
+    if not isinstance(validation_status, dict):
+        return
+    required_validations = (
+        "deployment_publication_closure_plan_schema",
+        "deployment_upstream_blocker",
+        "gateway_dns_resolution",
+        "gateway_dns_target_binding",
+    )
+    if any(validation_status.get(validation) is not True for validation in required_validations):
+        return
+    artifacts = receipt.get("artifacts")
+    if not isinstance(artifacts, dict):
+        return
+    required_artifacts = (
+        "deployment_upstream_blocker_receipt",
+        "deployment_upstream_blocker_validation",
+        "gateway_dns_resolution_receipt",
+        "gateway_dns_resolution_validation",
+        "gateway_dns_target_binding_receipt",
+        "gateway_dns_target_binding_validation",
+        "gateway_publication_readiness",
+    )
+    if any(not str(artifacts.get(artifact, "")).strip() for artifact in required_artifacts):
+        return
+    for evidence_key in (
+        "upstream_api_production_readiness_report",
+        "deployment_upstream_blocker_receipt",
+        "deployment_upstream_blocker_validation",
+        "upstream_recovery_completion_witness",
+        "api_runtime_host_readiness",
+        "dns_publication_authority",
+    ):
+        matched[evidence_key] = receipt_ref
 
 
 def _index_capability_improvement_proof_receipt(

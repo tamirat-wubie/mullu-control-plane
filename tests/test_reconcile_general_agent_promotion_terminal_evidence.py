@@ -82,6 +82,59 @@ def test_terminal_evidence_reconciliation_accepts_capability_improvement_proof_r
     assert validate_general_agent_promotion_terminal_evidence_reconciliation(reconciliation) == ()
 
 
+def test_terminal_evidence_reconciliation_accepts_ready_deployment_publication_packet(
+    tmp_path: Path,
+) -> None:
+    candidate_path = _write_deployment_publication_candidates(tmp_path)
+    receipt_path = _write_deployment_publication_evidence_packet(tmp_path, ready=True)
+
+    reconciliation = reconcile_general_agent_promotion_terminal_evidence(
+        candidate_path=candidate_path,
+        receipt_paths=(receipt_path,),
+    )
+    candidate = reconciliation.candidates[0]
+
+    assert reconciliation.ready_for_terminal_certificate_minting is True
+    assert reconciliation.reconciled_candidate_count == 1
+    assert reconciliation.blocked_candidate_count == 0
+    assert reconciliation.missing_evidence_count == 0
+    assert set(candidate.evidence_matched) == {
+        "upstream_api_production_readiness_report",
+        "deployment_upstream_blocker_receipt",
+        "deployment_upstream_blocker_validation",
+        "upstream_recovery_completion_witness",
+        "api_runtime_host_readiness",
+        "dns_publication_authority",
+    }
+    assert candidate.missing_evidence == ()
+    assert candidate.receipt_refs == ("deployment_publication_evidence_packet.json",)
+    assert validate_general_agent_promotion_terminal_evidence_reconciliation(reconciliation) == ()
+
+
+def test_terminal_evidence_reconciliation_rejects_blocked_deployment_publication_packet(
+    tmp_path: Path,
+) -> None:
+    candidate_path = _write_deployment_publication_candidates(tmp_path)
+    receipt_path = _write_deployment_publication_evidence_packet(tmp_path, ready=False)
+
+    reconciliation = reconcile_general_agent_promotion_terminal_evidence(
+        candidate_path=candidate_path,
+        receipt_paths=(receipt_path,),
+    )
+    candidate = reconciliation.candidates[0]
+
+    assert reconciliation.ready_for_terminal_certificate_minting is False
+    assert reconciliation.reconciled_candidate_count == 0
+    assert reconciliation.blocked_candidate_count == 1
+    assert reconciliation.missing_evidence_count == 6
+    assert candidate.reconciliation_status == "blocked_missing_evidence"
+    assert "deployment_upstream_blocker_receipt" in candidate.missing_evidence
+    assert "dns_publication_authority" in candidate.missing_evidence
+    assert candidate.receipt_refs == ()
+    assert "missing_evidence:deployment_upstream_blocker_receipt" in reconciliation.blocked_reasons
+    assert validate_general_agent_promotion_terminal_evidence_reconciliation(reconciliation) == ()
+
+
 def test_terminal_evidence_reconciliation_rejects_unsafe_capability_proof_receipt(tmp_path: Path) -> None:
     candidate_path = _write_capability_improvement_candidates(tmp_path)
     receipt_path = _write_capability_improvement_proof_receipt(tmp_path, registry_mutated=True)
@@ -315,6 +368,66 @@ def _write_capability_improvement_candidates(tmp_path: Path) -> Path:
     return candidate_path
 
 
+def _write_deployment_publication_candidates(tmp_path: Path) -> Path:
+    candidate_path = tmp_path / "general_agent_promotion_terminal_certificate_candidates.json"
+    candidate_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "candidate_set_id": "general-agent-promotion-terminal-certificate-candidates-0123456789abcdef",
+                "generated_at": "2026-05-01T12:00:00+00:00",
+                "source_gate_path": "gate.json",
+                "source_gate_id": "general-agent-promotion-terminal-certificate-gate-0123456789abcdef",
+                "ready_for_candidate_review": True,
+                "ready_for_terminal_certificate_minting": False,
+                "gate_action_count": 1,
+                "candidate_count": 1,
+                "skipped_gate_action_count": 0,
+                "blocked_gate_action_count": 0,
+                "blocked_reasons": ["terminal_certificate_minting_not_performed"],
+                "candidates": [
+                    {
+                        "candidate_id": "terminal-certificate-candidate-0123456789abcdef",
+                        "source_gate_item_id": "terminal-certificate-gate-item-01-deployment",
+                        "source_queue_item_id": "live-evidence-queue-item-01-deployment",
+                        "source_action_id": "close-upstream-api-readiness-gate",
+                        "source_plan_type": "deployment",
+                        "terminal_gate_status": "admitted_approved",
+                        "approval_ref_present": True,
+                        "approval_ref": "approval://terminal-certificate-gate/deployment",
+                        "evidence_required": [
+                            "upstream_api_production_readiness_report",
+                            "deployment_upstream_blocker_receipt",
+                            "deployment_upstream_blocker_validation",
+                            "upstream_recovery_completion_witness",
+                            "api_runtime_host_readiness",
+                            "dns_publication_authority",
+                        ],
+                        "receipt_validator": "deployment_publication_evidence_packet",
+                        "terminal_certificate_schema_id": "urn:mullusi:schema:terminal-closure-certificate:1",
+                        "minting_status": "candidate_only",
+                        "certificate_minted": False,
+                        "execution_performed": False,
+                    }
+                ],
+                "metadata": {
+                    "candidate_plan_is_not_execution": True,
+                    "terminal_certificates_minted": False,
+                    "secret_values_serialized": False,
+                    "source_gate_ready": True,
+                    "source_gate_hash": "a" * 64,
+                    "terminal_certificate_schema_id": "urn:mullusi:schema:terminal-closure-certificate:1",
+                    "terminal_certificate_gate_schema_id": (
+                        "urn:mullusi:schema:general-agent-promotion-terminal-certificate-gate:1"
+                    ),
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return candidate_path
+
+
 def _write_document_receipt(tmp_path: Path, *, status: str) -> Path:
     receipt_path = tmp_path / "document_live_receipt.json"
     receipt_path.write_text(
@@ -332,6 +445,57 @@ def _write_document_receipt(tmp_path: Path, *, status: str) -> Path:
                     "production-pptx",
                 ],
                 "blockers": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return receipt_path
+
+
+def _write_deployment_publication_evidence_packet(tmp_path: Path, *, ready: bool) -> Path:
+    receipt_path = tmp_path / "deployment_publication_evidence_packet.json"
+    receipt_path.write_text(
+        json.dumps(
+            {
+                "packet_id": "deployment-publication-evidence-packet-0123456789abcdef",
+                "output_dir": ".change_assurance/deployment_publication_evidence_packet",
+                "gateway_host": "api.mullusi.com",
+                "gateway_url": "https://api.mullusi.com",
+                "expected_environment": "pilot",
+                "ready": ready,
+                "blockers": [] if ready else ["deployment_upstream_api_gate_not_ready"],
+                "artifacts": {
+                    "deployment_publication_closure_plan": "deployment_publication_closure_plan.json",
+                    "deployment_publication_closure_plan_schema_validation": (
+                        "deployment_publication_closure_plan_schema_validation.json"
+                    ),
+                    "deployment_publication_evidence_packet": "deployment_publication_evidence_packet.json",
+                    "deployment_publication_evidence_packet_validation": (
+                        "deployment_publication_evidence_packet_validation.json"
+                    ),
+                    "deployment_upstream_blocker_receipt": "deployment_upstream_blocker_receipt.json",
+                    "deployment_upstream_blocker_validation": (
+                        "deployment_upstream_blocker_receipt_validation.json"
+                    ),
+                    "gateway_dns_resolution_receipt": "gateway_dns_resolution_receipt.json",
+                    "gateway_dns_resolution_validation": "gateway_dns_resolution_receipt_validation.json",
+                    "gateway_dns_target_binding_receipt": "gateway_dns_target_binding_receipt.json",
+                    "gateway_dns_target_binding_validation": "gateway_dns_target_binding_receipt_validation.json",
+                    "gateway_publication_dispatch_plan": "gateway_publication_dispatch_plan.json",
+                    "gateway_publication_readiness": "gateway_publication_readiness.json",
+                },
+                "validation_status": {
+                    "deployment_publication_closure_plan_schema": ready,
+                    "deployment_upstream_blocker": ready,
+                    "gateway_dns_resolution": ready,
+                    "gateway_dns_target_binding": ready,
+                },
+                "dispatch_command": [
+                    "gh",
+                    "workflow",
+                    "run",
+                    "gateway-publication.yml",
+                ],
             }
         ),
         encoding="utf-8",
