@@ -286,6 +286,7 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert {boundary["id"] for boundary in spatial_map["boundaries"]} >= {
         "cors",
         "readiness",
+        "production_health",
         "security_headers",
         "cache",
         "idempotency",
@@ -316,6 +317,7 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert judgments["backpressure_status_path"]["status"] == "allowed"
     assert judgments["backpressure_status_path"]["witness"][-1] == "path_valid"
     assert judgments["readiness_launch_gate"]["status"] == "unknown"
+    assert judgments["production_health_declaration_path"]["status"] == "unknown"
     assert judgments["finance_approval_path"]["status"] == "unknown"
     assert judgments["payment_provider_handoff_path"]["status"] == "unknown"
     assert judgments["rollback_recovery_path"]["status"] == "unknown"
@@ -326,6 +328,7 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert judgments["support_escalation_path"]["status"] == "unknown"
     assert "evidence_required:finance_approval" in judgments["finance_approval_path"]["reasons"]
     assert "evidence_required:payment_provider" in judgments["payment_provider_handoff_path"]["reasons"]
+    assert "evidence_required:production_health" in judgments["production_health_declaration_path"]["reasons"]
     assert "evidence_required:recovery" in judgments["rollback_recovery_path"]["reasons"]
     assert "evidence_required:proof_verification" in judgments["proof_verification_path"]["reasons"]
     assert "evidence_required:audit_chain" in judgments["audit_chain_verification_path"]["reasons"]
@@ -341,6 +344,7 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert "request_dedup_boundary_preserves_tenant_scoped_replay_suppression" in spatial_map["witness"]
     assert "rate_limit_boundary_preserves_token_bucket_throughput_control" in spatial_map["witness"]
     assert "backpressure_boundary_preserves_load_shedding_control" in spatial_map["witness"]
+    assert "production_health_declaration_requires_live_health_evidence_before_public_claims" in spatial_map["witness"]
     assert "finance_and_payment_paths_require_approval_and_provider_evidence" in spatial_map["witness"]
     assert "rollback_recovery_path_requires_recovery_evidence_before_effect_claims" in spatial_map["witness"]
     assert "proof_verification_path_requires_evidence_before_proof_claims" in spatial_map["witness"]

@@ -437,6 +437,7 @@ def _spatial_map_console_payload() -> dict[str, object]:
             "Launch Boundary Panel",
             (
                 "readiness_launch_gate",
+                "production_health_declaration_path",
                 "stateful_command_path",
                 "capability_execution_path",
                 "finance_approval_path",
