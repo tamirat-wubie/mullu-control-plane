@@ -30,6 +30,7 @@ from mcoi_runtime.contracts.whqr import (
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.whqr.connectors import AssertionKind, compile_connector
+from mcoi_runtime.whqr.entity_binder import EntityBindingCandidate, EntityBindingStatus, bind_entities
 from mcoi_runtime.whqr.evaluator import WHQREvaluationContext, evaluate
 from mcoi_runtime.whqr.static_checks import validate_static
 
@@ -278,3 +279,124 @@ def test_static_checks_reject_duplicate_node_ids_and_side_effect_targets() -> No
     assert not report.passed
     assert issue_codes == {"duplicate_node_id", "side_effect_target"}
     assert len(report.issues) == 2
+
+
+def test_entity_binder_attaches_entity_and_evidence_refs_without_changing_tree_shape() -> None:
+    expr = ConnectorExpr(
+        connector=Connector.BECAUSE,
+        left=WHQRNode(role=WHRole.WHO, target="approver", node_id="n1", expected_type="identity"),
+        right=WHQRNode(role=WHRole.WHY, target="approval_policy", node_id="n2", expected_type="policy"),
+    )
+    report = bind_entities(
+        expr,
+        {
+            "approver": EntityBindingCandidate(
+                entity_ref="identity:finance-manager",
+                evidence_ref="evidence:directory-1",
+                entity_type="identity",
+            ),
+            "approval_policy": EntityBindingCandidate(
+                entity_ref="policy:payment-approval",
+                evidence_ref="evidence:policy-1",
+                entity_type="policy",
+            ),
+        },
+    )
+
+    assert report.bound is True
+    assert report.issues == ()
+    assert isinstance(report.expr, ConnectorExpr)
+    assert isinstance(report.expr.left, WHQRNode)
+    assert report.expr.connector is Connector.BECAUSE
+    assert report.expr.left.entity_ref == "identity:finance-manager"
+    assert report.expr.left.evidence_ref == "evidence:directory-1"
+    assert report.expr.right.entity_ref == "policy:payment-approval"
+    assert report.expr.right.evidence_ref == "evidence:policy-1"
+
+
+def test_entity_binder_reports_missing_ambiguous_and_type_mismatch_without_binding() -> None:
+    expr = LogicalExpr(
+        op=LogicalOp.AND,
+        args=(
+            WHQRNode(role=WHRole.WHO, target="approver", node_id="n1", expected_type="identity"),
+            WHQRNode(role=WHRole.WHOM, target="vendor", node_id="n2", expected_type="vendor"),
+            WHQRNode(role=WHRole.WHAT, target="invoice", node_id="n3", expected_type="invoice"),
+        ),
+    )
+    report = bind_entities(
+        expr,
+        {
+            "vendor": (
+                EntityBindingCandidate("vendor:a", "evidence:vendor-a", "vendor"),
+                EntityBindingCandidate("vendor:b", "evidence:vendor-b", "vendor"),
+            ),
+            "invoice": EntityBindingCandidate("invoice:1", "evidence:invoice-1", "document"),
+        },
+    )
+    statuses = {issue.target: issue.status for issue in report.issues}
+
+    assert report.bound is False
+    assert statuses == {
+        "approver": EntityBindingStatus.MISSING,
+        "vendor": EntityBindingStatus.AMBIGUOUS,
+        "invoice": EntityBindingStatus.TYPE_MISMATCH,
+    }
+    assert len(report.issues) == 3
+    assert report.issues[2].expected_type == "invoice"
+    assert report.issues[2].observed_type == "document"
+    assert isinstance(report.expr, LogicalExpr)
+    assert all(isinstance(arg, WHQRNode) and arg.entity_ref is None for arg in report.expr.args)
+
+
+def test_entity_binder_rejects_invalid_binding_candidates() -> None:
+    with pytest.raises(ValueError, match="entity_ref"):
+        EntityBindingCandidate("", "evidence:1", "identity")
+    with pytest.raises(ValueError, match="binding value"):
+        bind_entities(WHQRNode(role=WHRole.WHO, target="actor"), {"actor": "identity:1"})  # type: ignore[dict-item]
+
+
+def test_entity_binder_preserves_prebound_nodes_and_reports_conflicts() -> None:
+    prebound = WHQRNode(
+        role=WHRole.WHO,
+        target="approver",
+        node_id="n1",
+        expected_type="identity",
+        entity_ref="identity:finance-manager",
+        evidence_ref="evidence:directory-1",
+    )
+    preserved = bind_entities(prebound, {})
+    matching = bind_entities(
+        prebound,
+        {
+            "approver": EntityBindingCandidate(
+                "identity:finance-manager",
+                "evidence:directory-1",
+                "identity",
+            )
+        },
+    )
+    conflicting = bind_entities(
+        prebound,
+        {
+            "approver": EntityBindingCandidate(
+                "identity:other-manager",
+                "evidence:directory-2",
+                "identity",
+            )
+        },
+    )
+
+    assert preserved.bound is True
+    assert matching.bound is True
+    assert preserved.expr is prebound
+    assert matching.expr is prebound
+    assert conflicting.bound is False
+    assert conflicting.issues[0].status is EntityBindingStatus.PREBOUND_CONFLICT
+
+
+def test_entity_binder_reports_empty_candidate_tuple_as_missing() -> None:
+    report = bind_entities(WHQRNode(role=WHRole.WHO, target="actor"), {"actor": ()})
+
+    assert report.bound is False
+    assert len(report.issues) == 1
+    assert report.issues[0].status is EntityBindingStatus.MISSING
