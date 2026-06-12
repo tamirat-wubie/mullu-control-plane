@@ -892,11 +892,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 258,
+      "proven": 259,
       "unproven": 0,
       "witnessed": 155
     },
-    "route_count": 413,
+    "route_count": 414,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1086,6 +1086,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/cases/{case_id}/closure-certificate/view",
+        "surface_id": "orgos_case_governance_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/cases/{case_id}/closure-drift-remediation-actions",
         "surface_id": "orgos_case_governance_lifecycle"
       },
       {
@@ -6078,7 +6083,7 @@
         "mcoi/tests/test_organization_kernel_router.py",
         "mcoi/tests/test_organization_kernel_store.py"
       ],
-      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions that must carry the latest admitted gate evidence refs, post-closure drift remediation routing, case portfolio, action queue, authority-map and department-registry views, terminal certificate views with missing gate-evidence attention details, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
+      "notes": "OrgOS lifecycle routes register organization authority, departments, governed cases, evidence events, plan gates, action-admission previews, action queue selection previews, action queue approval packet previews, action queue dispatch lease previews, worker lease creation receipts, worker dispatch request receipts, private pilot live rehearsal receipts, closure decisions that must carry the latest admitted gate evidence refs, post-closure drift remediation routing, policy-checked operator remediation actions, case portfolio, action queue, authority-map and department-registry views, terminal certificate views with missing gate-evidence attention details, replayed read models, proof timelines, audit explorer projections, proof explorer projections, step handoff projections, browser-facing proof views, and bounded worker output receipts that require matching dispatch receipts before plan-step evidence admission.",
       "representative_paths": [
         "/api/v1/orgs",
         "/api/v1/orgs/{org_id}/action-queue",
@@ -6105,6 +6110,7 @@
         "/api/v1/cases/{case_id}/audit-explorer/view",
         "/api/v1/cases/{case_id}/closure-certificate",
         "/api/v1/cases/{case_id}/closure-certificate/view",
+        "/api/v1/cases/{case_id}/closure-drift-remediation-actions",
         "/api/v1/cases/{case_id}/closure-drift-remediations",
         "/api/v1/cases/{case_id}/events",
         "/api/v1/cases/{case_id}/evidence",
@@ -6181,6 +6187,9 @@
         "closed_case_reports_closure_packet_drift_after_gate_refresh",
         "closure_packet_drift_accepts_remediation_routing",
         "closure_packet_drift_remediation_rejects_mismatched_refs",
+        "closure_packet_drift_operator_actions_report_policy_requirements",
+        "closure_packet_drift_operator_action_binds_review_remediation",
+        "closure_packet_drift_operator_action_rejects_missing_policy_evidence",
         "case_proof_timeline_reports_open_case_without_closure",
         "case_proof_timeline_reports_closure_certificate_and_learning",
         "learning_binding_requires_closed_case_and_admission_decision",
@@ -9924,8 +9933,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1273,
-    "runtime_witness_count": 1273,
+    "exact_test_anchor_count": 1276,
+    "runtime_witness_count": 1276,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -14050,6 +14059,24 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_closure_packet_drift_operator_actions_report_policy_requirements"
+            ],
+            "witness": "closure_packet_drift_operator_actions_report_policy_requirements"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_closure_packet_drift_operator_action_binds_review_remediation"
+            ],
+            "witness": "closure_packet_drift_operator_action_binds_review_remediation"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_organization_kernel_router.py::test_closure_packet_drift_operator_action_rejects_missing_policy_evidence"
+            ],
+            "witness": "closure_packet_drift_operator_action_rejects_missing_policy_evidence"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_organization_kernel_router.py::test_case_proof_timeline_reports_open_case_without_closure"
             ],
             "witness": "case_proof_timeline_reports_open_case_without_closure"
@@ -14133,8 +14160,8 @@
             "witness": "worker_receipt_endpoint_rejects_missing_dispatch_receipt"
           }
         ],
-        "exact_test_anchor_count": 66,
-        "runtime_witness_count": 66,
+        "exact_test_anchor_count": 69,
+        "runtime_witness_count": 69,
         "surface_id": "orgos_case_governance_lifecycle",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
