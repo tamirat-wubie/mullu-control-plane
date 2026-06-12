@@ -40,7 +40,7 @@ from mcoi_runtime.whqr.clarification import (
 from mcoi_runtime.whqr.connectors import AssertionKind, compile_connector
 from mcoi_runtime.whqr.entity_binder import EntityBindingCandidate, EntityBindingStatus, bind_entities
 from mcoi_runtime.whqr.evaluator import WHQREvaluationContext, evaluate
-from mcoi_runtime.whqr.governance import build_policy_decision
+from mcoi_runtime.whqr.governance import build_guard_verdict, build_policy_decision
 from mcoi_runtime.whqr.static_checks import validate_static
 
 
@@ -409,6 +409,28 @@ def test_governance_decision_records_static_issue_details() -> None:
     assert details["static_issues"][0]["code"] == "side_effect_target"
     assert details["static_issues"][0]["target"] == "send_email"
     assert details["binding_issues"] == ()
+
+
+def test_guard_verdict_preserves_whqr_policy_reason_details() -> None:
+    decision = build_policy_decision(
+        WHQRNode(role=WHRole.HOW, target="send_email", node_id="unsafe-action"),
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        goal_id="goal-static-audit",
+        context=WHQREvaluationContext(
+            node_results={
+                "send_email": GateResult(TruthGate.TRUE, NormGate.PERMITTED, EvidenceGate.PROVEN),
+            }
+        ),
+    )
+    verdict = build_guard_verdict(decision)
+
+    assert verdict.guard_id == "whqr_policy"
+    assert verdict.passed is False
+    assert verdict.detail["policy_status"] == "deny"
+    assert verdict.detail["reason_code"] == "whqr_deny"
+    assert verdict.detail["reason_details"]["static_issues"][0]["code"] == "side_effect_target"
+    assert verdict.detail["reason_details"]["binding_issues"] == ()
 
 
 def test_entity_binder_attaches_entity_and_evidence_refs_without_changing_tree_shape() -> None:
