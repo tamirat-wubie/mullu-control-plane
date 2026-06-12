@@ -49,7 +49,9 @@ REQUIRED_PLAN_TERMS = (
     "revocation and failed-refresh",
     "approval-gated",
     "AwaitingEvidence",
+    "mint_gmail_oauth_access_token.py",
     "produce_durable_gmail_oauth_operator_handoff.py",
+    "produce_durable_gmail_oauth_live_receipt.py",
     "operator handoff packet",
 )
 REQUIRED_NON_GOALS = (
