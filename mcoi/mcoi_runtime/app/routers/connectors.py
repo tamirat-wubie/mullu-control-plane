@@ -1,7 +1,7 @@
 """Connector endpoints — register, invoke, and manage governed integrations."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NoReturn
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -10,10 +10,35 @@ from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 
 router = APIRouter()
+_MAX_CONNECTOR_HISTORY_READ_LIMIT = 500
 
 
 def _connector_error_detail(error: str, error_code: str) -> dict[str, object]:
     return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _raise_connector_history_validation_error(error: ValueError) -> NoReturn:
+    raise HTTPException(
+        status_code=422,
+        detail=_connector_error_detail("invalid connector history request", "connector_history_invalid_request"),
+    ) from error
+
+
+def _coerce_connector_history_limit(limit: object) -> int:
+    if isinstance(limit, bool):
+        raise ValueError("limit must be an integer")
+    if isinstance(limit, int):
+        value = limit
+    elif isinstance(limit, str):
+        normalized = limit.strip()
+        if not normalized.isdecimal():
+            raise ValueError("limit must be an integer")
+        value = int(normalized)
+    else:
+        raise ValueError("limit must be an integer")
+    if value < 0 or value > _MAX_CONNECTOR_HISTORY_READ_LIMIT:
+        raise ValueError("limit is outside the allowed range")
+    return value
 
 
 class RegisterConnectorRequest(BaseModel):
@@ -154,10 +179,14 @@ def enable_connector(connector_id: str, request: Request):
 
 
 @router.get("/api/v1/connectors/history")
-def connector_history(limit: int = 50):
+def connector_history(limit: str = "50"):
     """Recent connector invocation history."""
     deps.metrics.inc("requests_governed")
-    invocations = deps.connector_framework.recent_invocations(limit=limit)
+    try:
+        read_limit = _coerce_connector_history_limit(limit)
+    except ValueError as error:
+        _raise_connector_history_validation_error(error)
+    invocations = deps.connector_framework.recent_invocations(limit=read_limit)
     return {
         "invocations": [
             {
