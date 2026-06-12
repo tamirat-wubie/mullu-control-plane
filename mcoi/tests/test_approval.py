@@ -488,6 +488,9 @@ class TestApprovalMutationReceipts:
         assert "secret approve reason" not in str(receipts[1].to_dict())
         assert "secret revoke reason" not in str(receipts[3].to_dict())
         assert "secret override reason" not in str(receipts[4].to_dict())
+        assert engine.mutation_receipts(limit=1)[0].effect_name == "approval_override_recorded"
+        assert engine.mutation_receipts(limit=0) == ()
+        assert engine.mutation_receipts(limit=-1) == ()
 
     def test_expired_decision_records_decision_receipt(self):
         engine = _engine(clock_time=T1)
@@ -512,6 +515,8 @@ class TestApprovalMutationReceipts:
         assert effect.details["evidence_ref"].startswith("approval-receipt:")
         assert effect.details["metadata"]["scope_type"] == "skill"
         assert effect.details["metadata"]["target_id_hash"]
+        assert engine.effect_records(limit=0) == ()
+        assert engine.effect_records(limit=-1) == ()
 
     def test_approval_mutation_receipt_closes_effect_assurance(self):
         engine = _engine()
