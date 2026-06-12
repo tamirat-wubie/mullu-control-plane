@@ -145,16 +145,21 @@ def _require_whqr_expr(value: Any, name: str) -> None:
 class WHQRNode:
     role: WHRole
     target: str
+    node_id: str | None = None
     scope: str | None = None
     modality: Adverb | None = None
     expected_type: str | None = None
     quantifier: Quantifier | None = None
+    entity_ref: str | None = None
+    evidence_ref: str | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not isinstance(self.role, WHRole):
             raise ValueError("role must be a WHRole value")
         object.__setattr__(self, "target", _require_text(self.target, "target"))
+        if self.node_id is not None:
+            object.__setattr__(self, "node_id", _require_text(self.node_id, "node_id"))
         if self.scope is not None:
             object.__setattr__(self, "scope", _require_text(self.scope, "scope"))
         if self.modality is not None and not isinstance(self.modality, Adverb):
@@ -167,6 +172,10 @@ class WHQRNode:
             )
         if self.quantifier is not None and not isinstance(self.quantifier, Quantifier):
             raise ValueError("quantifier must be a Quantifier value")
+        if self.entity_ref is not None:
+            object.__setattr__(self, "entity_ref", _require_text(self.entity_ref, "entity_ref"))
+        if self.evidence_ref is not None:
+            object.__setattr__(self, "evidence_ref", _require_text(self.evidence_ref, "evidence_ref"))
         object.__setattr__(self, "metadata", _freeze_metadata(self.metadata))
 
 
@@ -231,6 +240,7 @@ class WHQRDocument:
     root: WHQRExpr
     whqr_version: str = WHQR_VERSION
     semantics_hash: str = SEMANTICS_HASH
+    source_ref: str | None = None
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
     def __init__(
@@ -240,6 +250,7 @@ class WHQRDocument:
         expr: WHQRExpr | None = None,
         whqr_version: str = WHQR_VERSION,
         semantics_hash: str = SEMANTICS_HASH,
+        source_ref: str | None = None,
         metadata: Mapping[str, Any] | None = None,
     ) -> None:
         value = root if root is not None else expr
@@ -250,6 +261,10 @@ class WHQRDocument:
         object.__setattr__(self, "semantics_hash", _require_text(semantics_hash, "semantics_hash"))
         if not semantics_hash.startswith("sha256:"):
             raise ValueError("semantics_hash must start with sha256:")
+        if source_ref is not None:
+            object.__setattr__(self, "source_ref", _require_text(source_ref, "source_ref"))
+        else:
+            object.__setattr__(self, "source_ref", None)
         object.__setattr__(self, "metadata", _freeze_metadata(metadata or {}))
 
     @property
