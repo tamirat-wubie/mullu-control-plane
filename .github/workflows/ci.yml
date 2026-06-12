@@ -416,7 +416,7 @@ jobs:
         run: python -m pytest tests/test_collect_deployment_publication_evidence_packet.py tests/test_validate_deployment_publication_evidence_packet.py tests/test_emit_deployment_publication_operator_input_request.py tests/test_validate_deployment_publication_operator_input_request.py -q
 
       - name: Run Agentic Service Harness planning tests
-        run: python -m pytest tests/test_validate_agentic_service_harness_read_model_binding_plan.py tests/test_validate_agentic_service_harness_read_models.py -q
+        run: python -m pytest tests/test_validate_agentic_service_harness_read_model_binding_plan.py tests/test_validate_agentic_service_harness_read_models.py tests/test_validate_agentic_service_harness_read_model_projections.py -q
 
       - name: Run test-coverage contract tests
         # Enforce the test-execution coverage invariants in CI: the MCOI shard
