@@ -404,7 +404,7 @@ def test_governance_decision_records_static_issue_details() -> None:
     details = decision.reasons[0].details
 
     assert decision.status is PolicyDecisionStatus.DENY
-    assert decision.reasons[0].code == "whqr_deny"
+    assert decision.reasons[0].code == "whqr_static_deny"
     assert details["truth"] == "true"
     assert details["static_issues"][0]["code"] == "side_effect_target"
     assert details["static_issues"][0]["target"] == "send_email"
@@ -428,9 +428,79 @@ def test_guard_verdict_preserves_whqr_policy_reason_details() -> None:
     assert verdict.guard_id == "whqr_policy"
     assert verdict.passed is False
     assert verdict.detail["policy_status"] == "deny"
-    assert verdict.detail["reason_code"] == "whqr_deny"
+    assert verdict.detail["reason_code"] == "whqr_static_deny"
     assert verdict.detail["reason_details"]["static_issues"][0]["code"] == "side_effect_target"
     assert verdict.detail["reason_details"]["binding_issues"] == ()
+
+
+def test_governance_decision_codes_identify_primary_deny_gate() -> None:
+    false_decision = build_policy_decision(
+        WHQRNode(role=WHRole.WHAT, target="budget_available"),
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        context=WHQREvaluationContext(
+            node_results={"budget_available": GateResult(TruthGate.FALSE, evidence=EvidenceGate.PROVEN)}
+        ),
+    )
+    forbidden_decision = build_policy_decision(
+        WHQRNode(role=WHRole.WHAT, target="tenant_secret"),
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        context=WHQREvaluationContext(
+            node_results={
+                "tenant_secret": GateResult(TruthGate.TRUE, NormGate.FORBIDDEN, EvidenceGate.PROVEN),
+            }
+        ),
+    )
+    contradicted_decision = build_policy_decision(
+        WHQRNode(role=WHRole.WHAT, target="invoice_valid"),
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        context=WHQREvaluationContext(
+            node_results={
+                "invoice_valid": GateResult(TruthGate.TRUE, NormGate.PERMITTED, EvidenceGate.CONTRADICTED),
+            }
+        ),
+    )
+
+    assert false_decision.status is PolicyDecisionStatus.DENY
+    assert false_decision.reasons[0].code == "whqr_truth_deny"
+    assert forbidden_decision.reasons[0].code == "whqr_norm_deny"
+    assert contradicted_decision.reasons[0].code == "whqr_evidence_deny"
+
+
+def test_governance_decision_codes_identify_primary_escalation_gate() -> None:
+    unknown_decision = build_policy_decision(
+        WHQRNode(role=WHRole.WHAT, target="approval_known"),
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        context=WHQREvaluationContext(
+            node_results={"approval_known": GateResult(TruthGate.UNKNOWN, evidence=EvidenceGate.PROVEN)}
+        ),
+    )
+    approval_decision = build_policy_decision(
+        WHQRNode(role=WHRole.WHAT, target="payment_request"),
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        context=WHQREvaluationContext(
+            node_results={
+                "payment_request": GateResult(TruthGate.TRUE, NormGate.REQUIRES_APPROVAL, EvidenceGate.PROVEN),
+            }
+        ),
+    )
+    stale_decision = build_policy_decision(
+        WHQRNode(role=WHRole.WHAT, target="vendor_record"),
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        context=WHQREvaluationContext(
+            node_results={"vendor_record": GateResult(TruthGate.TRUE, NormGate.PERMITTED, EvidenceGate.STALE)}
+        ),
+    )
+
+    assert unknown_decision.status is PolicyDecisionStatus.ESCALATE
+    assert unknown_decision.reasons[0].code == "whqr_truth_escalate"
+    assert approval_decision.reasons[0].code == "whqr_norm_escalate"
+    assert stale_decision.reasons[0].code == "whqr_evidence_escalate"
 
 
 def test_entity_binder_attaches_entity_and_evidence_refs_without_changing_tree_shape() -> None:

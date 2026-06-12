@@ -30,7 +30,7 @@ def build_policy_decision(
     status = _status(static_report.passed, binding_report, gate_result)
     reason = DecisionReason(
         _message(status, binding_report),
-        _reason_code(status, binding_report),
+        _reason_code(status, static_report.passed, binding_report, gate_result),
         {
             "truth": gate_result.truth.value,
             "norm": gate_result.norm.value if gate_result.norm else None,
@@ -114,7 +114,35 @@ def _message(status: PolicyDecisionStatus, binding_report: BindingPreflightRepor
     return "WHQR tree requires escalation before MIL compilation"
 
 
-def _reason_code(status: PolicyDecisionStatus, binding_report: BindingPreflightReport) -> str:
-    if not binding_report.passed and status is PolicyDecisionStatus.ESCALATE:
+def _reason_code(
+    status: PolicyDecisionStatus,
+    static_ok: bool,
+    binding_report: BindingPreflightReport,
+    gate_result: GateResult,
+) -> str:
+    if status is PolicyDecisionStatus.ALLOW:
+        return "whqr_allow"
+    if not static_ok:
+        return "whqr_static_deny"
+    if status is PolicyDecisionStatus.DENY:
+        if gate_result.truth is TruthGate.FALSE:
+            return "whqr_truth_deny"
+        if gate_result.norm is NormGate.FORBIDDEN:
+            return "whqr_norm_deny"
+        if gate_result.evidence is EvidenceGate.CONTRADICTED:
+            return "whqr_evidence_deny"
+        return "whqr_deny"
+    if not binding_report.passed:
         return "whqr_binding_escalate"
-    return f"whqr_{status.value}"
+    if gate_result.truth is TruthGate.UNKNOWN:
+        return "whqr_truth_escalate"
+    if gate_result.norm in {NormGate.ESCALATE, NormGate.REQUIRES_APPROVAL}:
+        return "whqr_norm_escalate"
+    if gate_result.evidence in {
+        EvidenceGate.UNPROVEN,
+        EvidenceGate.STALE,
+        EvidenceGate.BUDGET_UNKNOWN,
+        EvidenceGate.FORBIDDEN_UNKNOWN,
+    }:
+        return "whqr_evidence_escalate"
+    return "whqr_escalate"
