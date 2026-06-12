@@ -22,6 +22,7 @@ from mcoi_runtime.contracts.organization_kernel import (
     CapabilityBinding,
     CapabilityMaturity,
     CaseEvidence,
+    ClosureDriftRemediationBinding,
     DepartmentPack,
     EvidenceRequirement,
     LearningAdmissionBinding,
@@ -116,6 +117,7 @@ class OrganizationKernelState:
     latest_gate_decisions: tuple[LatestPlanStepGateDecisionRef, ...] = ()
     reconciliations: tuple[OrganizationEffectReconciliation, ...] = ()
     closures: tuple[OrganizationTerminalClosure, ...] = ()
+    closure_drift_remediations: tuple[ClosureDriftRemediationBinding, ...] = ()
     learning_bindings: tuple[LearningAdmissionBinding, ...] = ()
     worker_lease_receipts: tuple[PlanStepWorkerLeaseReceipt, ...] = ()
     worker_dispatch_receipts: tuple[PlanStepWorkerDispatchReceipt, ...] = ()
@@ -139,6 +141,7 @@ class OrganizationKernelState:
             "latest_gate_decisions",
             "reconciliations",
             "closures",
+            "closure_drift_remediations",
             "learning_bindings",
             "worker_lease_receipts",
             "worker_dispatch_receipts",
@@ -184,6 +187,7 @@ class OrganizationKernel:
         self._latest_gate_by_step: dict[tuple[str, str], str] = {}
         self._reconciliations: dict[str, OrganizationEffectReconciliation] = {}
         self._closures: dict[str, OrganizationTerminalClosure] = {}
+        self._closure_drift_remediations: dict[str, ClosureDriftRemediationBinding] = {}
         self._learning_bindings: dict[str, LearningAdmissionBinding] = {}
         self._worker_lease_receipts: dict[str, PlanStepWorkerLeaseReceipt] = {}
         self._worker_dispatch_receipts: dict[str, PlanStepWorkerDispatchReceipt] = {}
@@ -485,6 +489,36 @@ class OrganizationKernel:
         self._emit(binding.case_id, "learning_admission_bound", {"binding_id": binding.binding_id})
         return binding
 
+    def bind_closure_drift_remediation(
+        self,
+        binding: ClosureDriftRemediationBinding,
+    ) -> ClosureDriftRemediationBinding:
+        """Bind review, compensation, or accepted-risk routing to a drifted closure."""
+        if binding.remediation_id in self._closure_drift_remediations:
+            raise RuntimeCoreInvariantError("closure drift remediation already recorded")
+        closure = self._closures.get(binding.closure_id)
+        if closure is None:
+            raise RuntimeCoreInvariantError("terminal closure unavailable")
+        if closure.case_id != binding.case_id:
+            raise RuntimeCoreInvariantError("closure drift remediation case mismatch")
+        if binding.terminal_disposition not in _NON_COMMITTED_TERMINAL_DISPOSITIONS:
+            raise RuntimeCoreInvariantError("closure drift remediation requires non-committed disposition")
+        for evidence_ref in (*binding.drift_evidence_refs, *binding.evidence_refs):
+            evidence = self._case_evidence.get(evidence_ref)
+            if evidence is None or evidence.case_id != binding.case_id:
+                raise RuntimeCoreInvariantError("closure drift remediation evidence unavailable")
+        self._closure_drift_remediations[binding.remediation_id] = binding
+        self._emit(
+            binding.case_id,
+            "closure_drift_remediation_bound",
+            {
+                "remediation_id": binding.remediation_id,
+                "closure_id": binding.closure_id,
+                "terminal_disposition": binding.terminal_disposition.value,
+            },
+        )
+        return binding
+
     def create_worker_lease_receipt(
         self,
         receipt: PlanStepWorkerLeaseReceipt,
@@ -708,6 +742,13 @@ class OrganizationKernel:
                 return closure
         return None
 
+    def closure_drift_remediations_for_case(self, case_id: str) -> tuple[ClosureDriftRemediationBinding, ...]:
+        ensure_non_empty_text("case_id", case_id)
+        return tuple(
+            item for item in self._closure_drift_remediations.values()
+            if item.case_id == case_id
+        )
+
     def list_departments(self) -> tuple[DepartmentPack, ...]:
         return tuple(self._departments[department_id] for department_id in sorted(self._departments))
 
@@ -749,6 +790,9 @@ class OrganizationKernel:
             latest_gate_decisions=latest_gate_decisions,
             reconciliations=tuple(self._reconciliations[key] for key in sorted(self._reconciliations)),
             closures=tuple(self._closures[key] for key in sorted(self._closures)),
+            closure_drift_remediations=tuple(
+                self._closure_drift_remediations[key] for key in sorted(self._closure_drift_remediations)
+            ),
             learning_bindings=tuple(self._learning_bindings[key] for key in sorted(self._learning_bindings)),
             worker_lease_receipts=tuple(
                 self._worker_lease_receipts[key] for key in sorted(self._worker_lease_receipts)
@@ -794,6 +838,11 @@ class OrganizationKernel:
             "reconciliation",
         )
         candidate._closures = candidate._keyed(state.closures, "closure_id", "terminal closure")
+        candidate._closure_drift_remediations = candidate._keyed(
+            state.closure_drift_remediations,
+            "remediation_id",
+            "closure drift remediation",
+        )
         candidate._learning_bindings = candidate._keyed(state.learning_bindings, "binding_id", "learning binding")
         candidate._worker_lease_receipts = candidate._keyed(
             state.worker_lease_receipts,
@@ -829,6 +878,7 @@ class OrganizationKernel:
         self._latest_gate_by_step = candidate._latest_gate_by_step
         self._reconciliations = candidate._reconciliations
         self._closures = candidate._closures
+        self._closure_drift_remediations = candidate._closure_drift_remediations
         self._learning_bindings = candidate._learning_bindings
         self._worker_lease_receipts = candidate._worker_lease_receipts
         self._worker_dispatch_receipts = candidate._worker_dispatch_receipts
@@ -853,6 +903,7 @@ class OrganizationKernel:
                 self._gate_decisions,
                 self._reconciliations,
                 self._closures,
+                self._closure_drift_remediations,
                 self._learning_bindings,
                 self._worker_lease_receipts,
                 self._worker_dispatch_receipts,
@@ -950,6 +1001,14 @@ class OrganizationKernel:
         for organization_case in self._cases.values():
             if organization_case.terminal_closure_id is not None and organization_case.terminal_closure_id not in self._closures:
                 raise RuntimeCoreInvariantError("restored case terminal closure unavailable")
+        for remediation in self._closure_drift_remediations.values():
+            closure = self._closures.get(remediation.closure_id)
+            if closure is None or closure.case_id != remediation.case_id:
+                raise RuntimeCoreInvariantError("restored closure drift remediation closure mismatch")
+            for evidence_ref in (*remediation.drift_evidence_refs, *remediation.evidence_refs):
+                evidence = self._case_evidence.get(evidence_ref)
+                if evidence is None or evidence.case_id != remediation.case_id:
+                    raise RuntimeCoreInvariantError("restored closure drift remediation evidence unavailable")
         for binding in self._learning_bindings.values():
             closure = self._closures.get(binding.closure_id)
             if closure is None or closure.case_id != binding.case_id:

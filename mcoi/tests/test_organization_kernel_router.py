@@ -2288,6 +2288,176 @@ def test_closed_case_reports_closure_packet_drift_after_gate_refresh(tmp_path: P
     assert readiness.json()["closure_packet_drift_refs"] == ["evidence:engineering_health_endpoint:v2"]
 
 
+def test_closure_packet_drift_accepts_remediation_routing(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    approval = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/approvals",
+        json={
+            "approval_id": "approval:security-dual-control",
+            "role_id": "executive.owner",
+            "approval_scope": "security_approval",
+            "approved_by": "human-executive",
+        },
+    )
+    _allow_all_plan_steps(client)
+    closure = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/close",
+        json={
+            "reconciliation_id": "reconciliation:gateway-pilot",
+            "expected_effect": "gateway_pilot_ready",
+            "observed_effect": "gateway_pilot_ready",
+            "reconciliation_status": "match",
+            "forbidden_effects_checked": True,
+            "evidence_refs": _closure_gate_evidence_refs(),
+            "terminal_disposition": "committed",
+            "terminal_certificate_id": "terminal:gateway-pilot",
+        },
+    )
+    learning = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/learning-admissions",
+        json={
+            "binding_id": "learning:gateway-pilot",
+            "closure_id": closure.json()["closure"]["closure_id"],
+            "decision_id": "learning-admission:gateway-pilot",
+            "admitted": True,
+        },
+    )
+    newer_evidence = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": "evidence:engineering_health_endpoint:v2",
+            "requirement_id": "engineering_health_endpoint",
+            "submitted_by": "operator",
+        },
+    )
+    remediation_evidence = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": "evidence:closure_drift_review",
+            "requirement_id": "security_public_claim_boundary",
+            "submitted_by": "human-executive",
+        },
+    )
+    refreshed_gate = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+    remediation = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/closure-drift-remediations",
+        json={
+            "remediation_id": "remediation:gateway-pilot-drift-review",
+            "closure_id": closure.json()["closure"]["closure_id"],
+            "terminal_disposition": "requires_review",
+            "drift_evidence_refs": ["evidence:engineering_health_endpoint:v2"],
+            "superseded_evidence_refs": ["evidence:engineering_health_endpoint"],
+            "authority_ref": "approval:security-dual-control",
+            "evidence_refs": ["evidence:closure_drift_review"],
+        },
+    )
+
+    certificate = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-certificate")
+    view = client.get("/api/v1/cases/case.launch_gateway_pilot/closure-certificate/view")
+    explorer = client.get("/api/v1/cases/case.launch_gateway_pilot/proof-explorer")
+    portfolio = client.get("/api/v1/orgs/org-mullu/case-portfolio")
+    readiness = client.get("/api/v1/cases/case.launch_gateway_pilot/launch-gateway-pilot/readiness")
+    events = client.get("/api/v1/cases/case.launch_gateway_pilot/events")
+
+    assert approval.status_code == 200
+    assert closure.status_code == 200
+    assert learning.status_code == 200
+    assert newer_evidence.status_code == 200
+    assert remediation_evidence.status_code == 200
+    assert refreshed_gate.status_code == 200
+    assert remediation.status_code == 200
+    assert remediation.json()["closure_drift_remediation"]["terminal_disposition"] == "requires_review"
+    assert certificate.status_code == 200
+    assert certificate.json()["terminal_status"] == "closed_drift_review_required"
+    assert certificate.json()["closure_gate_evidence"]["closure_packet_drift"] is True
+    assert certificate.json()["closure_gate_evidence"]["closure_packet_drift_remediated"] is True
+    assert certificate.json()["closure_gate_evidence"]["closure_packet_drift_remediation"]["remediation_id"] == (
+        "remediation:gateway-pilot-drift-review"
+    )
+    assert "closure_packet_drift_remediated" in {item["kind"] for item in certificate.json()["attention_items"]}
+    assert "closure_packet_drift" not in {item["kind"] for item in certificate.json()["attention_items"]}
+    assert "closure_gate_evidence_omitted" not in {item["kind"] for item in certificate.json()["attention_items"]}
+    assert view.status_code == 200
+    assert "Closure Drift Remediations" in view.text
+    assert "remediation:gateway-pilot-drift-review" in view.text
+    assert explorer.json()["terminal_status"] == "closed_drift_review_required"
+    assert "closure_drift_remediation" in explorer.json()["proof_sections"]
+    assert portfolio.json()["cases"][0]["terminal_status"] == "closed_drift_review_required"
+    assert readiness.json()["terminal_status"] == "closed_drift_review_required"
+    assert readiness.json()["closure_packet_drift_remediated"] is True
+    assert "closure_drift_remediation_bound" in {item["event_type"] for item in events.json()["events"]}
+
+
+def test_closure_packet_drift_remediation_rejects_mismatched_refs(tmp_path: Path) -> None:
+    client, _store = _client(tmp_path)
+    _bootstrap_and_open_pilot(client)
+    _admit_all_pilot_evidence(client)
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/approvals",
+        json={
+            "approval_id": "approval:security-dual-control",
+            "role_id": "executive.owner",
+            "approval_scope": "security_approval",
+            "approved_by": "human-executive",
+        },
+    )
+    _allow_all_plan_steps(client)
+    closure = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/close",
+        json={
+            "reconciliation_id": "reconciliation:gateway-pilot",
+            "expected_effect": "gateway_pilot_ready",
+            "observed_effect": "gateway_pilot_ready",
+            "reconciliation_status": "match",
+            "forbidden_effects_checked": True,
+            "evidence_refs": _closure_gate_evidence_refs(),
+            "terminal_disposition": "committed",
+            "terminal_certificate_id": "terminal:gateway-pilot",
+        },
+    )
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": "evidence:engineering_health_endpoint:v2",
+            "requirement_id": "engineering_health_endpoint",
+            "submitted_by": "operator",
+        },
+    )
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/evidence",
+        json={
+            "evidence_ref": "evidence:closure_drift_review",
+            "requirement_id": "security_public_claim_boundary",
+            "submitted_by": "human-executive",
+        },
+    )
+    client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/plan-steps/engineering_runtime_witness/gate",
+        json={"checked_preconditions": ["launch_boundary_defined"]},
+    )
+
+    response = client.post(
+        "/api/v1/cases/case.launch_gateway_pilot/closure-drift-remediations",
+        json={
+            "remediation_id": "remediation:gateway-pilot-drift-review",
+            "closure_id": closure.json()["closure"]["closure_id"],
+            "terminal_disposition": "accepted_risk",
+            "drift_evidence_refs": ["evidence:not-current-drift"],
+            "authority_ref": "approval:security-dual-control",
+            "evidence_refs": ["evidence:closure_drift_review"],
+        },
+    )
+
+    assert closure.status_code == 200
+    assert response.status_code == 400
+    assert response.json()["detail"]["error_code"] == "closure_drift_evidence_mismatch"
+
+
 def test_case_proof_explorer_reports_closed_verified_case(tmp_path: Path) -> None:
     client, _store = _client(tmp_path)
     _bootstrap_and_open_pilot(client)
@@ -2670,6 +2840,7 @@ def test_default_routers_include_organization_kernel_paths() -> None:
     assert "/api/v1/orgs/{org_id}/action-queue/worker-dispatch-receipt" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate" in paths
     assert "/api/v1/cases/{case_id}/closure-certificate/view" in paths
+    assert "/api/v1/cases/{case_id}/closure-drift-remediations" in paths
     assert "/api/v1/cases/{case_id}/audit-explorer" in paths
     assert "/api/v1/cases/{case_id}/audit-explorer/view" in paths
     assert "/api/v1/cases/{case_id}/step-handoffs" in paths

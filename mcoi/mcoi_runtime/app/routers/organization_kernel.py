@@ -36,6 +36,7 @@ from mcoi_runtime.contracts.effect_assurance import ReconciliationStatus
 from mcoi_runtime.contracts.organization_kernel import (
     ApprovalRecord,
     CaseEvidence,
+    ClosureDriftRemediationBinding,
     DepartmentPack,
     LearningAdmissionBinding,
     OrganizationCase,
@@ -229,6 +230,17 @@ class LearningAdmissionRequest(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class ClosureDriftRemediationRequest(BaseModel):
+    remediation_id: str
+    closure_id: str
+    terminal_disposition: str
+    drift_evidence_refs: list[str]
+    superseded_evidence_refs: list[str] = Field(default_factory=list)
+    authority_ref: str
+    evidence_refs: list[str]
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class LaunchGatewayPilotEvidenceCollectionRequest(BaseModel):
     gateway_url: str
     expected_environment: str = "pilot"
@@ -388,6 +400,9 @@ def _state_case_bundle(kernel: OrganizationKernel, case_id: str) -> dict[str, An
         "reconciliations": [_body(item) for item in state.reconciliations if item.case_id == case_id],
         "closure": _body(closure) if closure is not None else None,
         "learning_bindings": [_body(item) for item in state.learning_bindings if item.case_id == case_id],
+        "closure_drift_remediations": [
+            _body(item) for item in state.closure_drift_remediations if item.case_id == case_id
+        ],
         "worker_leases": [_body(item) for item in state.worker_lease_receipts if item.case_id == case_id],
         "worker_dispatch_receipts": [
             _body(item) for item in state.worker_dispatch_receipts if item.case_id == case_id
@@ -427,6 +442,9 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
     worker_receipts = tuple(item for item in state.worker_receipt_bindings if item.case_id == case_id)
     reconciliations = tuple(item for item in state.reconciliations if item.case_id == case_id)
     learning_bindings = tuple(item for item in state.learning_bindings if item.case_id == case_id)
+    closure_drift_remediations = tuple(
+        item for item in state.closure_drift_remediations if item.case_id == case_id
+    )
     gate_by_id = {decision.decision_id: decision for decision in gate_decisions}
     latest_gate_by_step = {
         ref.step_id: gate_by_id[ref.decision_id]
@@ -594,6 +612,21 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
         )
         for item in learning_bindings
     )
+    proof_timeline.extend(
+        _timeline_item(
+            kind="closure_drift_remediation",
+            occurred_at=item.created_at,
+            ref=item.remediation_id,
+            status=item.terminal_disposition.value,
+            payload={
+                "closure_id": item.closure_id,
+                "drift_evidence_refs": list(item.drift_evidence_refs),
+                "superseded_evidence_refs": list(item.superseded_evidence_refs),
+                "evidence_refs": list(item.evidence_refs),
+            },
+        )
+        for item in closure_drift_remediations
+    )
     proof_timeline = sorted(
         proof_timeline,
         key=lambda item: (item["occurred_at"], item["kind"], item["ref"]),
@@ -650,6 +683,7 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
             "reconciliation_count": len(reconciliations),
             "has_terminal_closure": closure is not None,
             "learning_binding_count": len(learning_bindings),
+            "closure_drift_remediation_count": len(closure_drift_remediations),
             "blocked_steps": blocked_steps,
             "all_plan_steps_allowed": plan is not None and not blocked_steps,
             "terminal_status": organization_case.status.value,
@@ -657,6 +691,7 @@ def _case_proof_timeline(kernel: OrganizationKernel, case_id: str) -> dict[str, 
         "plan_step_proof": plan_step_proof,
         "proof_timeline": proof_timeline,
         "closure_certificate": closure_certificate,
+        "closure_drift_remediations": [_body(item) for item in closure_drift_remediations],
         "governed": True,
     }
 
@@ -773,7 +808,10 @@ def _case_proof_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, 
                 "message": "latest gate evidence refs are not admitted for this case",
                 "evidence_refs": closure_gate_evidence["unavailable_gate_evidence_refs"],
             })
-        if closure_gate_evidence["omitted_gate_evidence_refs"]:
+        if (
+            closure_gate_evidence["omitted_gate_evidence_refs"]
+            and not closure_gate_evidence["closure_packet_drift_remediated"]
+        ):
             attention_items.append({
                 "kind": "closure_gate_evidence_omitted",
                 "severity": "blocker",
@@ -803,7 +841,7 @@ def _case_proof_explorer(kernel: OrganizationKernel, case_id: str) -> dict[str, 
     terminal_status = "awaiting_closure"
     if closure_certificate is not None:
         if closure_gate_evidence["closure_packet_drift"]:
-            terminal_status = "closed_packet_drift"
+            terminal_status = _closure_packet_drift_terminal_status(closure_gate_evidence)
         elif closure_certificate["effect_reconciled"] and closure_certificate["learning_admitted"]:
             terminal_status = "closed_verified"
         elif closure_certificate["effect_reconciled"]:
@@ -1639,6 +1677,7 @@ def _closure_gate_evidence_projection(proof: dict[str, Any]) -> dict[str, Any]:
         for evidence_ref in item.get("newer_evidence_refs", []):
             if isinstance(evidence_ref, str) and evidence_ref not in newer_gate_evidence_refs:
                 newer_gate_evidence_refs.append(evidence_ref)
+    remediation = _closure_drift_remediation_projection(proof, omitted_refs)
     return {
         "required_gate_evidence_refs": required_refs,
         "admitted_gate_evidence_refs": [ref for ref in required_refs if ref in admitted_refs],
@@ -1648,6 +1687,8 @@ def _closure_gate_evidence_projection(proof: dict[str, Any]) -> dict[str, Any]:
         "superseded_closure_evidence_refs": superseded_closure_refs,
         "closure_packet_drift_refs": omitted_refs,
         "closure_packet_drift": bool(omitted_refs),
+        "closure_packet_drift_remediated": remediation is not None,
+        "closure_packet_drift_remediation": remediation,
         "stale_gate_decisions": stale_gate_decisions,
         "stale_gate_step_ids": stale_step_ids,
         "newer_gate_evidence_refs": newer_gate_evidence_refs,
@@ -1657,6 +1698,33 @@ def _closure_gate_evidence_projection(proof: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _closure_drift_remediation_projection(
+    proof: dict[str, Any],
+    drift_refs: list[str],
+) -> dict[str, Any] | None:
+    if not drift_refs:
+        return None
+    closure_certificate = proof.get("closure_certificate")
+    if not isinstance(closure_certificate, dict):
+        return None
+    closure_id = closure_certificate.get("closure_id")
+    if not isinstance(closure_id, str):
+        return None
+    drift_ref_set = set(drift_refs)
+    candidates = [
+        item for item in proof.get("closure_drift_remediations", [])
+        if isinstance(item, dict)
+        and item.get("closure_id") == closure_id
+        and drift_ref_set.issubset({
+            ref for ref in item.get("drift_evidence_refs", [])
+            if isinstance(ref, str)
+        })
+    ]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: str(item.get("created_at", "")))
+
+
 def _closure_packet_drift_attention_item(
     ref: str,
     closure_gate_evidence: dict[str, Any],
@@ -1664,6 +1732,16 @@ def _closure_packet_drift_attention_item(
     drift_refs = closure_gate_evidence.get("closure_packet_drift_refs", [])
     if not drift_refs:
         return None
+    if closure_gate_evidence.get("closure_packet_drift_remediated"):
+        remediation = closure_gate_evidence.get("closure_packet_drift_remediation")
+        return {
+            "kind": "closure_packet_drift_remediated",
+            "severity": "review",
+            "ref": ref,
+            "message": "terminal closure packet drift has explicit remediation routing",
+            "evidence_refs": drift_refs,
+            "remediation": remediation if isinstance(remediation, dict) else None,
+        }
     return {
         "kind": "closure_packet_drift",
         "severity": "blocker",
@@ -1672,6 +1750,20 @@ def _closure_packet_drift_attention_item(
         "evidence_refs": drift_refs,
         "superseded_evidence_refs": closure_gate_evidence.get("superseded_closure_evidence_refs", []),
     }
+
+
+def _closure_packet_drift_terminal_status(closure_gate_evidence: dict[str, Any]) -> str:
+    remediation = closure_gate_evidence.get("closure_packet_drift_remediation")
+    if not isinstance(remediation, dict):
+        return "closed_packet_drift"
+    disposition = remediation.get("terminal_disposition")
+    if disposition == TerminalClosureDisposition.COMPENSATED.value:
+        return "closed_drift_compensated"
+    if disposition == TerminalClosureDisposition.ACCEPTED_RISK.value:
+        return "closed_drift_accepted_risk"
+    if disposition == TerminalClosureDisposition.REQUIRES_REVIEW.value:
+        return "closed_drift_review_required"
+    return "closed_packet_drift"
 
 
 def _closure_gate_stale_attention_item(
@@ -1695,7 +1787,7 @@ def _case_closure_certificate(kernel: OrganizationKernel, case_id: str) -> dict[
     closure_certificate = proof["closure_certificate"]
     closure_gate_evidence = _closure_gate_evidence_projection(proof)
     status = (
-        "closed_packet_drift"
+        _closure_packet_drift_terminal_status(closure_gate_evidence)
         if closure_gate_evidence["closure_packet_drift"]
         else _closure_status(closure_certificate)
     )
@@ -1753,7 +1845,10 @@ def _case_closure_certificate(kernel: OrganizationKernel, case_id: str) -> dict[
                 "message": "latest gate evidence refs are not admitted for this case",
                 "evidence_refs": closure_gate_evidence["unavailable_gate_evidence_refs"],
             })
-        if closure_gate_evidence["omitted_gate_evidence_refs"]:
+        if (
+            closure_gate_evidence["omitted_gate_evidence_refs"]
+            and not closure_gate_evidence["closure_packet_drift_remediated"]
+        ):
             attention_items.append({
                 "kind": "closure_gate_evidence_omitted",
                 "severity": "blocker",
@@ -1788,6 +1883,7 @@ def _case_closure_certificate(kernel: OrganizationKernel, case_id: str) -> dict[
         "closure_gate_evidence": closure_gate_evidence,
         "reconciliation": reconciliation,
         "learning_admissions": learning_admissions,
+        "closure_drift_remediations": proof.get("closure_drift_remediations", []),
         "evidence_refs": evidence_refs,
         "attention_items": attention_items,
         "source_timeline_url": f"/api/v1/cases/{quote(case_id, safe='')}/proof-timeline",
@@ -1875,6 +1971,17 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
         for item in payload.get("learning_admissions", [])
         if isinstance(item, dict)
     ]
+    remediation_rows = [
+        {
+            "remediation_id": item.get("remediation_id", ""),
+            "terminal_disposition": item.get("terminal_disposition", ""),
+            "drift_evidence_refs": _text_list(item.get("drift_evidence_refs", [])),
+            "evidence_refs": _text_list(item.get("evidence_refs", [])),
+            "created_at": item.get("created_at", ""),
+        }
+        for item in payload.get("closure_drift_remediations", [])
+        if isinstance(item, dict)
+    ]
     proof_timeline_url = escape(str(payload.get("source_timeline_url", "")))
     proof_explorer_url = escape(str(payload.get("source_explorer_url", "")))
     json_url = f"/api/v1/cases/{quote(raw_case_id, safe='')}/closure-certificate"
@@ -1918,6 +2025,7 @@ def _render_case_closure_certificate_html(payload: dict[str, Any]) -> str:
     {_proof_explorer_table("Reconciliation", ("field", "value"), reconciliation_rows)}
     {_proof_explorer_table("Evidence Refs", ("evidence_ref",), evidence_rows)}
     {_proof_explorer_table("Learning Admissions", ("binding_id", "decision_id", "admitted", "created_at"), learning_rows)}
+    {_proof_explorer_table("Closure Drift Remediations", ("remediation_id", "terminal_disposition", "drift_evidence_refs", "evidence_refs", "created_at"), remediation_rows)}
   </main>
 </body>
 </html>
@@ -2246,7 +2354,7 @@ def _case_portfolio_terminal_status(proof: dict[str, Any]) -> str:
     if closure_certificate is not None:
         closure_gate_evidence = _closure_gate_evidence_projection(proof)
         if closure_gate_evidence["closure_packet_drift"]:
-            return "closed_packet_drift"
+            return _closure_packet_drift_terminal_status(closure_gate_evidence)
         return _closure_status(closure_certificate)
     return _open_case_terminal_status(proof)
 
@@ -2301,7 +2409,10 @@ def _case_portfolio_attention(case_id: str, proof: dict[str, Any]) -> list[dict[
                 "message": "latest gate evidence refs are not admitted for this case",
                 "evidence_refs": closure_gate_evidence["unavailable_gate_evidence_refs"],
             })
-        if closure_gate_evidence["omitted_gate_evidence_refs"]:
+        if (
+            closure_gate_evidence["omitted_gate_evidence_refs"]
+            and not closure_gate_evidence["closure_packet_drift_remediated"]
+        ):
             attention_items.append({
                 "kind": "closure_gate_evidence_omitted",
                 "severity": "blocker",
@@ -3928,7 +4039,11 @@ def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) ->
         and not preview_blocked_steps
     )
     if closure is not None:
-        terminal_status = "closed_packet_drift" if closure_gate_evidence["closure_packet_drift"] else "closed"
+        terminal_status = (
+            _closure_packet_drift_terminal_status(closure_gate_evidence)
+            if closure_gate_evidence["closure_packet_drift"]
+            else "closed"
+        )
     elif missing_evidence:
         terminal_status = "awaiting_evidence"
     elif not approvals:
@@ -3940,7 +4055,11 @@ def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) ->
     else:
         terminal_status = "ready_to_close"
     if closure is not None:
-        preview_terminal_status = "closed_packet_drift" if closure_gate_evidence["closure_packet_drift"] else "closed"
+        preview_terminal_status = (
+            _closure_packet_drift_terminal_status(closure_gate_evidence)
+            if closure_gate_evidence["closure_packet_drift"]
+            else "closed"
+        )
     elif missing_evidence:
         preview_terminal_status = "awaiting_evidence"
     elif not approvals:
@@ -3966,6 +4085,8 @@ def _launch_gateway_readiness_model(kernel: OrganizationKernel, case_id: str) ->
         "omitted_closure_gate_evidence_refs": omitted_closure_gate_evidence_refs,
         "closure_packet_drift": closure_gate_evidence["closure_packet_drift"],
         "closure_packet_drift_refs": closure_gate_evidence["closure_packet_drift_refs"],
+        "closure_packet_drift_remediated": closure_gate_evidence["closure_packet_drift_remediated"],
+        "closure_packet_drift_remediation": closure_gate_evidence["closure_packet_drift_remediation"],
         "superseded_closure_evidence_refs": closure_gate_evidence["superseded_closure_evidence_refs"],
         "stale_gate_decisions": closure_gate_evidence["stale_gate_decisions"],
         "stale_gate_step_ids": stale_gate_steps,
@@ -4908,6 +5029,50 @@ def bind_case_learning_admission(case_id: str, req: LearningAdmissionRequest, re
         ) from exc
     _persist_kernel(kernel)
     return {"learning_admission": _body(binding), "governed": True}
+
+
+@router.post("/api/v1/cases/{case_id}/closure-drift-remediations")
+def bind_case_closure_drift_remediation(case_id: str, req: ClosureDriftRemediationRequest, request: Request):
+    """Bind review, compensation, or accepted-risk routing for a drifted closure packet."""
+    _inc_metric("requests_governed")
+    kernel = _kernel()
+    _enforce_case_tenant(request, kernel, case_id)
+    proof = _case_proof_timeline(kernel, case_id)
+    closure_gate_evidence = _closure_gate_evidence_projection(proof)
+    if not closure_gate_evidence["closure_packet_drift"]:
+        raise HTTPException(
+            400,
+            detail=_error_detail("closure packet drift unavailable", "closure_packet_drift_unavailable"),
+        )
+    current_drift_refs = set(closure_gate_evidence["closure_packet_drift_refs"])
+    requested_drift_refs = set(req.drift_evidence_refs)
+    if current_drift_refs != requested_drift_refs:
+        raise HTTPException(
+            400,
+            detail=_error_detail("closure drift evidence mismatch", "closure_drift_evidence_mismatch"),
+        )
+    try:
+        binding = kernel.bind_closure_drift_remediation(
+            ClosureDriftRemediationBinding(
+                remediation_id=req.remediation_id,
+                case_id=case_id,
+                closure_id=req.closure_id,
+                terminal_disposition=TerminalClosureDisposition(req.terminal_disposition),
+                drift_evidence_refs=tuple(req.drift_evidence_refs),
+                superseded_evidence_refs=tuple(req.superseded_evidence_refs),
+                authority_ref=req.authority_ref,
+                evidence_refs=tuple(req.evidence_refs),
+                created_at=_clock_now(),
+                metadata=req.metadata,
+            )
+        )
+    except (RuntimeCoreInvariantError, ValueError) as exc:
+        raise HTTPException(
+            400,
+            detail=_error_detail("closure drift remediation rejected", "closure_drift_remediation_rejected"),
+        ) from exc
+    _persist_kernel(kernel)
+    return {"closure_drift_remediation": _body(binding), "governed": True}
 
 
 @router.get("/api/v1/cases/{case_id}/events")
