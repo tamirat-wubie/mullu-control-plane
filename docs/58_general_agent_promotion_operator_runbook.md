@@ -41,10 +41,14 @@ The current expected aggregate plan contains:
 
 | Measure | Value |
 | --- | ---: |
-| Total closure actions | 5 |
-| Approval-required actions | 5 |
-| Source plan types | `portfolio`; `adapter` and `deployment` source actions are closed |
-| Current readiness level | `production-general-agent` |
+| Total closure actions | 11 |
+| Approval-required actions | 7 |
+| Source plan types | `adapter` and `portfolio`; `deployment` source actions are closed |
+| Current readiness level | `pilot-governed-core` |
+
+The target readiness remains `production-general-agent`, but the current state
+is still blocked by adapter evidence and governed credential/live-receipt
+closure.
 
 ## Prerequisites
 
@@ -231,7 +235,7 @@ python scripts\validate_general_agent_promotion.py --strict --output .change_ass
 | Credential action lacks approval | Do not bind the secret and keep promotion blocked |
 | Live receipt fails | Preserve the failed receipt and blocker |
 | Capability improvement proof receipt is unsafe | Do not reconcile the candidate; regenerate the receipt only after `proof_is_not_execution=true`, `capability_activation_performed=false`, `registry_mutated=false`, `terminal_certificates_minted=false`, and `secret_values_serialized=false` |
-| Deployment witness is not published | Do not update `DEPLOYMENT_STATUS.md` |
+| Deployment witness is not published | Do not update `DEPLOYMENT_STATUS.md`; current `api.mullusi.com` deployment witness is published |
 | Deployment publication evidence packet is not ready | Do not publish DNS or dispatch workflows; inspect `deployment_publication_evidence_packet_validation.json`, emit `deployment_publication_operator_input_request.json`, close the named inputs, then rerun `collect_deployment_publication_evidence_packet.py` plus `validate_deployment_publication_evidence_packet.py --require-ready` |
 | Upstream API/DNS readiness is not ready | Do not publish DNS; complete upstream recovery, runtime host, managed PostgreSQL, schema, secret store, preflight, persistence, firewall, TLS, rollback, private runtime witness, runtime witness closure, and DNS publication authority gates, then rerun the upstream `check-api-production-readiness.mjs --require-ready --output "$env:UPSTREAM_API_READINESS_REPORT"` command plus `emit_deployment_upstream_blocker_receipt.py --upstream-readiness-report "$env:UPSTREAM_API_READINESS_REPORT"` and `validate_deployment_upstream_blocker_receipt.py --require-ready` |
 | Gateway DNS target-binding receipt is not ready | Do not publish DNS; select `MULLU_GATEWAY_DNS_TARGET`, `MULLU_GATEWAY_DNS_RECORD_TYPE`, and `MULLU_DNS_PROVIDER`, then rerun `emit_gateway_dns_target_binding_receipt.py` plus `validate_gateway_dns_target_binding_receipt.py --require-ready` |
@@ -242,5 +246,5 @@ python scripts\validate_general_agent_promotion.py --strict --output .change_ass
 STATUS:
   Completeness: 99%
   Invariants verified: [aggregate plan validation before execution, live-evidence queue classified before execution, terminal approval receipt schema-validated when present, terminal certificate gate checked before execution, terminal certificate candidates are non-minting, capability improvement proof receipt is non-executing, terminal evidence reconciliation gates minting readiness, terminal minting gate requires explicit authority, terminal certificate minting executor requires ready gate, credential approval required, live receipts required, deployment publication evidence packet require-ready gate, upstream API/DNS validation require-ready gate, gateway DNS target-binding validation require-ready gate, gateway DNS receipt validation require-resolved gate, deployment status mutation evidence-gated, production promotion validation terminal]
-  Open issues: [external dependencies, governed credentials, live deployment witness, public health probe]
+  Open issues: [external dependencies, governed credentials, adapter live receipts]
   Next action: execute this runbook in the credentialed adapter-worker and deployment environment

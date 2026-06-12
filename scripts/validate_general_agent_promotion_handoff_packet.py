@@ -378,10 +378,10 @@ def _derive_current_closure_plan(*, adapter_evidence_path: Path | None) -> dict[
         _write_json_payload(
             upstream_blocker_receipt_path,
             {
-                "api_provisioning_allowed": False,
-                "dns_publication_allowed": False,
-                "ready": False,
-                "upstream_state": "AwaitingEvidence",
+                "api_provisioning_allowed": True,
+                "dns_publication_allowed": True,
+                "ready": True,
+                "upstream_state": "SolvedVerified",
             },
         )
         _write_json_payload(

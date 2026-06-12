@@ -20,8 +20,8 @@ This packet is the operator entry point for final promotion validation. It binds
 | Readiness level | `pilot-governed-core` |
 | Capability capsules | 13 |
 | Governed capabilities | 80 |
-| Aggregate closure actions | 8 |
-| Approval-required actions | 8 |
+| Aggregate closure actions | 11 |
+| Approval-required actions | 7 |
 | Closure plan schema validation | `ok=true` |
 | Closure plan drift validation | `ok=true` |
 | Production promotion | blocked |
@@ -75,16 +75,14 @@ This packet is the operator entry point for final promotion validation. It binds
 ## Open Blockers
 
 ```text
-deployment_witness_not_published
-production_health_not_declared
+adapter_evidence_not_closed
 ```
 
 ## Approval-Required Actions
 
 ```text
-deployment_witness_not_published
-production_health_not_declared
-deployment_upstream_api_gate_not_ready
+voice_dependency_missing:OPENAI_API_KEY
+email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN
 capability_improvement_required:financial.refund
 capability_improvement_required:agentic_control.code_change.plan
 capability_improvement_required:agentic_control.evidence.append
@@ -127,10 +125,10 @@ the browser sandbox proof.
 python scripts\validate_general_agent_promotion.py --strict --output .change_assurance\general_agent_promotion_readiness.json
 ```
 
-The terminal command must not pass unless live adapter evidence, deployment witness publication, and public health declaration are all closed.
+The terminal command must not pass unless live adapter evidence and governed credential bindings are closed; deployment witness publication and public health declaration are already closed for `api.mullusi.com`.
 
 STATUS:
   Completeness: 99%
-  Invariants verified: [single handoff entry point, machine-readable handoff packet linked, checklist linked, runbook linked, validation reports linked, live-evidence queue linked, terminal approval receipt contract linked, terminal certificate gate linked, terminal certificate candidate contract linked, capability improvement proof receipt linked, terminal evidence reconciliation contract linked, terminal minting gate linked, terminal certificate minting run contract linked, blockers explicit, live adapter evidence closed]
-  Open issues: [terminal certificate minting remains authority-gated]
+  Invariants verified: [single handoff entry point, machine-readable handoff packet linked, checklist linked, runbook linked, validation reports linked, live-evidence queue linked, terminal approval receipt contract linked, terminal certificate gate linked, terminal certificate candidate contract linked, capability improvement proof receipt linked, terminal evidence reconciliation contract linked, terminal minting gate linked, terminal certificate minting run contract linked, blockers explicit, deployment witness published, public health declared]
+  Open issues: [adapter evidence not closed, terminal certificate minting remains authority-gated]
   Next action: run final strict promotion validation before any terminal certificate minting action
