@@ -83,6 +83,14 @@ version-label questions, operator-review gates, and stop rules without release
 publication, release-readiness claims, tag creation, GitHub release creation,
 artifact publication, source-control publication, customer access, legal,
 company, patent, money, secret, or deployment claims.
+Python dependency visibility rehearsal is bounded by
+[`docs/FOUNDATION_PYTHON_DEPENDENCY_VISIBILITY_REHEARSAL_BOUNDARY.md`](docs/FOUNDATION_PYTHON_DEPENDENCY_VISIBILITY_REHEARSAL_BOUNDARY.md),
+which drafts local interpreter, user-site visibility, optional dependency,
+import-probe, sandbox, elevated-preflight, dependency-gap, repair-option,
+validation-command, and stop-rule labels without dependency visibility,
+package install, environment mutation, FastAPI readiness, preflight closure,
+runtime readiness, publication, deployment, customer, legal, company, patent,
+money, or secret claims.
 Community/network preparation is bounded by
 [`docs/FOUNDATION_COMMUNITY_NETWORK_BOUNDARY.md`](docs/FOUNDATION_COMMUNITY_NETWORK_BOUNDARY.md),
 which drafts local community, forum, social, collaborator, partner, mentor,
