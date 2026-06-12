@@ -166,9 +166,9 @@ GitHub issue witness: https://github.com/mullusi/mullusi-govern-cloud/issues/1#i
 Outcome for public read-route publication: `SolvedVerified`.
 
 Remaining Govern Cloud deployment issue blocker: authenticated persistence and
-proof-stamp probing remain `AwaitingEvidence` until `scripts/probe_persistence.py`
-can run with a governed runtime credential such as `MULLUSI_DEV_API_KEY`. No raw
-secret values are recorded in this witness.
+proof-stamp probing remain `AwaitingEvidence` until the Govern Cloud repository
+persistence probe can run with a governed runtime credential such as
+`MULLUSI_DEV_API_KEY`. No raw secret values are recorded in this witness.
 
 ## Rollback
 
