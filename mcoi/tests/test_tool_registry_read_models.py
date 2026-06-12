@@ -112,6 +112,30 @@ def test_tool_invocation_history_limit_applied(client):
     assert payload["summary"]["invocations"] >= 2
 
 
+def test_tool_invocation_history_zero_limit_returns_empty_read(client):
+    client.post(
+        "/api/v1/tools/invoke",
+        json={"tool_id": "calculator", "arguments": {"expression": "1+1"}},
+    )
+    history_response = client.get("/api/v1/tools/history", params={"limit": "0"})
+    payload = history_response.json()
+
+    assert history_response.status_code == 200
+    assert payload["history"] == []
+    assert payload["summary"]["invocations"] >= 1
+
+
+@pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+def test_tool_invocation_history_invalid_limit_returns_bounded_422(client, limit):
+    history_response = client.get("/api/v1/tools/history", params={"limit": limit})
+    detail = history_response.json()["detail"]
+
+    assert history_response.status_code == 422
+    assert detail["error"] == "invalid tool history request"
+    assert detail["error_code"] == "tool_history_invalid_request"
+    assert detail["governed"] is True
+
+
 def test_tool_invoke_separate_action_proof_surface(client):
     read_response = client.get("/api/v1/tools")
     history_response = client.get("/api/v1/tools/history", params={"limit": 1})

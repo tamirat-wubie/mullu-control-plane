@@ -212,6 +212,14 @@ class TestToolRegistry:
         assert reg.invocation_history(limit=0) == []
         assert reg.invocation_history(limit=-1) == []
 
+    @pytest.mark.parametrize("limit", [True, "1", None])
+    def test_invocation_history_rejects_invalid_limit_contract(self, limit):
+        reg = _registry()
+        reg.invoke("calculator", {"expression": "1+1"})
+        with pytest.raises(ValueError, match="tool invocation history limit must be an integer"):
+            reg.invocation_history(limit=limit)
+        assert reg.invocation_count == 1
+
     def test_list_tools(self):
         reg = _registry()
         tools = reg.list_tools()

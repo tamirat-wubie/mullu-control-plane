@@ -119,6 +119,20 @@ def test_history_bounded() -> None:
     assert sb.recent_simulations(limit=-1) == []
 
 
+@pytest.mark.parametrize("limit", [True, "1", None])
+def test_history_rejects_invalid_limit_contract(limit) -> None:
+    sb = _make_sandbox()
+    sb.simulate(SimulationRequest(
+        simulation_id="sim-invalid-limit",
+        scenario=SimulationScenario.CUSTOM,
+        description="test",
+    ))
+
+    with pytest.raises(ValueError, match="simulation history limit must be an integer"):
+        sb.recent_simulations(limit=limit)
+    assert sb.summary()["total_simulations"] == 1
+
+
 def test_summary() -> None:
     sb = _make_sandbox()
     sb.simulate(SimulationRequest(
@@ -161,6 +175,29 @@ def test_simulation_history_endpoint(client) -> None:
     resp = client.get("/api/v1/simulate/history")
     assert resp.status_code == 200
     assert resp.json()["governed"] is True
+
+
+def test_simulation_history_zero_limit_returns_empty_read(client) -> None:
+    client.post("/api/v1/simulate", json={"simulation_id": "sim-zero-limit", "description": "zero"})
+
+    resp = client.get("/api/v1/simulate/history", params={"limit": "0"})
+    data = resp.json()
+
+    assert resp.status_code == 200
+    assert data["governed"] is True
+    assert data["simulations"] == []
+    assert data["count"] == 0
+
+
+@pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+def test_simulation_history_invalid_limit_returns_bounded_422(client, limit: str) -> None:
+    resp = client.get("/api/v1/simulate/history", params={"limit": limit})
+    detail = resp.json()["detail"]
+
+    assert resp.status_code == 422
+    assert detail["error"] == "invalid simulation history request"
+    assert detail["error_code"] == "simulation_history_invalid_request"
+    assert detail["governed"] is True
 
 
 def test_simulation_summary_endpoint(client) -> None:
