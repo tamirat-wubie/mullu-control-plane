@@ -319,6 +319,58 @@ def test_static_checks_detect_temporal_cycles_with_after_normalization() -> None
     assert len(report.issues) == 1
 
 
+def test_static_checks_require_at_least_n_quantifier_bound() -> None:
+    missing = validate_static(
+        WHQRNode(
+            role=WHRole.HOW_MANY,
+            target="required_approvers",
+            node_id="approver-count",
+            quantifier=Quantifier.AT_LEAST_N,
+        )
+    )
+    invalid = validate_static(
+        WHQRNode(
+            role=WHRole.HOW_MANY,
+            target="required_approvers",
+            node_id="approver-count-invalid",
+            quantifier=Quantifier.AT_LEAST_N,
+            metadata={"n": 0},
+        )
+    )
+    valid = validate_static(
+        WHQRNode(
+            role=WHRole.HOW_MANY,
+            target="required_approvers",
+            node_id="approver-count-valid",
+            quantifier=Quantifier.AT_LEAST_N,
+            metadata={"n": 2},
+        )
+    )
+
+    assert missing.passed is False
+    assert {issue.code for issue in missing.issues} == {"missing_quantifier_bound"}
+    assert invalid.passed is False
+    assert {issue.code for issue in invalid.issues} == {"invalid_quantifier_bound"}
+    assert valid.passed is True
+    assert valid.issues == ()
+
+
+def test_static_checks_detect_conflicting_modalities_for_same_role_target() -> None:
+    expr = LogicalExpr(
+        op=LogicalOp.AND,
+        args=(
+            WHQRNode(role=WHRole.WHEN, target="backup_runs", node_id="backup-always", modality=Adverb.ALWAYS),
+            WHQRNode(role=WHRole.WHEN, target="backup_runs", node_id="backup-never", modality=Adverb.NEVER),
+            WHQRNode(role=WHRole.WHY, target="backup_runs", node_id="backup-why", modality=Adverb.NEVER),
+        ),
+    )
+    report = validate_static(expr)
+
+    assert report.passed is False
+    assert {issue.code for issue in report.issues} == {"modality_conflict"}
+    assert report.issues[0].target == "backup-always|backup-never"
+
+
 def test_static_checks_reject_duplicate_node_ids_and_side_effect_targets() -> None:
     expr = LogicalExpr(
         op=LogicalOp.AND,
