@@ -659,6 +659,8 @@ class JobEngine:
 
     def mutation_receipts(self, limit: int = 50) -> tuple[JobMutationReceipt, ...]:
         """Return recent job lifecycle mutation receipts in append order."""
+        if limit <= 0:
+            return ()
         return tuple(self._mutation_receipts[-limit:])
 
     def effect_records(self, limit: int = 50) -> tuple[Any, ...]:
