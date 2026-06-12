@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import pytest
+
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
 from mcoi_runtime.contracts.conversation import ClarificationResponse
 from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
@@ -126,6 +128,50 @@ def test_whqr_mil_orchestrator_stops_before_mil_when_whqr_unresolved() -> None:
     assert result.dispatch_result is None
     assert memory.size == 0
     assert executor.calls == 0
+
+
+def test_whqr_mil_orchestrator_rejects_invalid_required_roles_before_dispatch() -> None:
+    kwargs, memory, executor = _valid_orchestration_kwargs()
+    kwargs["required_roles"] = ("what",)
+
+    with pytest.raises(TypeError, match="required_roles"):
+        run_whqr_mil_orchestration(**kwargs)
+
+    assert memory.size == 0
+    assert executor.calls == 0
+    assert kwargs["required_roles"] == ("what",)
+
+
+def test_whqr_mil_orchestrator_rejects_empty_binding_values_before_dispatch() -> None:
+    kwargs, memory, executor = _valid_orchestration_kwargs()
+    kwargs["bindings"] = {"msg": ""}
+
+    with pytest.raises(TypeError, match="binding value for msg"):
+        run_whqr_mil_orchestration(**kwargs)
+
+    assert memory.size == 0
+    assert executor.calls == 0
+    assert kwargs["bindings"] == {"msg": ""}
+
+
+def test_whqr_mil_orchestrator_rejects_malformed_clarification_sequences_before_dispatch() -> None:
+    kwargs, memory, executor = _valid_orchestration_kwargs()
+    kwargs["binding_clarification_responses"] = [
+        ClarificationResponse(
+            request_id="whqr-binding:goal:1:vendor-node",
+            thread_id="intent",
+            answer="entity_ref=vendor:acme;evidence_ref=evidence:vendor-doc-1",
+            responded_by_id="operator",
+            responded_at="2026-05-06T12:05:01Z",
+        )
+    ]
+
+    with pytest.raises(TypeError, match="binding_clarification_responses"):
+        run_whqr_mil_orchestration(**kwargs)
+
+    assert memory.size == 0
+    assert executor.calls == 0
+    assert isinstance(kwargs["binding_clarification_responses"], list)
 
 
 def test_whqr_mil_orchestrator_stops_before_mil_when_typed_binding_missing() -> None:
@@ -553,4 +599,29 @@ def _context() -> WHQREvaluationContext:
             "command_request": GateResult(TruthGate.TRUE, NormGate.PERMITTED, EvidenceGate.PROVEN),
             "operator_requested": GateResult(TruthGate.TRUE, evidence=EvidenceGate.PROVEN),
         }
+    )
+
+
+def _valid_orchestration_kwargs() -> tuple[dict[str, object], EpisodicMemory, FakeExecutor]:
+    governed, executor = _governed()
+    memory = EpisodicMemory()
+    return (
+        {
+            "expr": _expr(),
+            "goal": _goal(),
+            "subject_id": "operator",
+            "issued_at": "2026-05-06T12:00:01Z",
+            "governed": governed,
+            "certifier": TerminalClosureCertifier(clock=clock),
+            "episodic": memory,
+            "actor_id": "operator",
+            "intent_id": "intent",
+            "template": VALID_TEMPLATE,
+            "bindings": {"msg": "hi"},
+            "context": _context(),
+            "required_roles": (WHRole.WHAT, WHRole.WHY),
+            "capability": "shell_command",
+        },
+        memory,
+        executor,
     )
