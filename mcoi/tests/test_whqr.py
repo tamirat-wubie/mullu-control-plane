@@ -272,6 +272,53 @@ def test_static_checks_detect_causal_cycles() -> None:
     assert len(report.issues) == 1
 
 
+def test_static_checks_allow_acyclic_temporal_ordering() -> None:
+    sequence = LogicalExpr(
+        op=LogicalOp.AND,
+        args=(
+            ConnectorExpr(
+                connector=Connector.BEFORE,
+                left=_node("request"),
+                right=_node("approval"),
+            ),
+            ConnectorExpr(
+                connector=Connector.UNTIL,
+                left=_node("approval"),
+                right=_node("payment"),
+            ),
+        ),
+    )
+    report = validate_static(sequence)
+
+    assert report.passed is True
+    assert report.issues == ()
+    assert len(report.issues) == 0
+
+
+def test_static_checks_detect_temporal_cycles_with_after_normalization() -> None:
+    contradiction = LogicalExpr(
+        op=LogicalOp.AND,
+        args=(
+            ConnectorExpr(
+                connector=Connector.BEFORE,
+                left=_node("approval"),
+                right=_node("payment"),
+            ),
+            ConnectorExpr(
+                connector=Connector.AFTER,
+                left=_node("approval"),
+                right=_node("payment"),
+            ),
+        ),
+    )
+    report = validate_static(contradiction)
+    issue_codes = {issue.code for issue in report.issues}
+
+    assert report.passed is False
+    assert issue_codes == {"temporal_cycle"}
+    assert len(report.issues) == 1
+
+
 def test_static_checks_reject_duplicate_node_ids_and_side_effect_targets() -> None:
     expr = LogicalExpr(
         op=LogicalOp.AND,
