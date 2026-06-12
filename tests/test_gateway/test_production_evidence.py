@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import sys
+import urllib.error
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -71,6 +72,26 @@ class StubCapabilityAdmissionGate:
             "governed_capability_records": (),
             "capability_maturity_assessments": (),
         }
+
+
+class StubGovernCloudResponse:
+    """Minimal urllib response fixture for Govern Cloud proxy tests."""
+
+    def __init__(self, payload: bytes, *, status: int = 200, headers: dict[str, str] | None = None) -> None:
+        self._payload = payload
+        self.status = status
+        self.headers = headers or {}
+
+    def read(self, size: int = -1) -> bytes:
+        if size < 0:
+            return self._payload
+        return self._payload[:size]
+
+    def __enter__(self) -> "StubGovernCloudResponse":
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        return None
 
 
 def test_gateway_health_matches_public_schema() -> None:
@@ -287,6 +308,121 @@ def test_govern_cloud_staging_witness_omits_secret_values(monkeypatch) -> None:
     assert "operator-secret-value" not in serialized
 
 
+def test_govern_cloud_public_proxy_is_disabled_by_default(monkeypatch) -> None:
+    monkeypatch.delenv("MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED", raising=False)
+
+    def fail_if_called(*args: object, **kwargs: object) -> None:
+        raise AssertionError("Govern Cloud proxy should fail before outbound transport")
+
+    monkeypatch.setattr("urllib.request.urlopen", fail_if_called)
+    app = create_gateway_app(platform=StubPlatform())
+    response = TestClient(app).get("/v1/health")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Govern Cloud public proxy not enabled"
+
+
+def test_govern_cloud_public_proxy_forwards_allowlisted_health(monkeypatch) -> None:
+    _configure_govern_cloud_public_proxy(monkeypatch)
+    captured_requests = []
+
+    def capture_urlopen(request, timeout):
+        captured_requests.append((request, timeout))
+        return StubGovernCloudResponse(b'{"status":"ok","service":"govern-cloud"}')
+
+    monkeypatch.setattr("urllib.request.urlopen", capture_urlopen)
+    app = create_gateway_app(platform=StubPlatform())
+    response = TestClient(app).get("/v1/health")
+    request, timeout = captured_requests[0]
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "service": "govern-cloud"}
+    assert request.full_url == "http://mullusi-govern-cloud-staging:8000/v1/health"
+    assert timeout == 5.0
+
+
+def test_govern_cloud_public_proxy_forwards_allowlisted_version_without_auth_headers(monkeypatch) -> None:
+    _configure_govern_cloud_public_proxy(monkeypatch)
+    captured_requests = []
+
+    def capture_urlopen(request, timeout):
+        captured_requests.append(request)
+        return StubGovernCloudResponse(b'{"version":"2026.06.11","commit":"abc123"}')
+
+    monkeypatch.setattr("urllib.request.urlopen", capture_urlopen)
+    app = create_gateway_app(platform=StubPlatform())
+    response = TestClient(app).get(
+        "/v1/version",
+        headers={
+            "Authorization": "Bearer caller-secret",
+            "X-Mullu-Authority-Secret": "caller-secret",
+        },
+    )
+    outbound_headers = {key.lower(): value for key, value in captured_requests[0].header_items()}
+
+    assert response.status_code == 200
+    assert response.json()["version"] == "2026.06.11"
+    assert captured_requests[0].full_url == "http://mullusi-govern-cloud-staging:8000/v1/version"
+    assert "authorization" not in outbound_headers
+    assert "x-mullu-authority-secret" not in outbound_headers
+
+
+def test_govern_cloud_public_proxy_does_not_publish_arbitrary_v1_routes(monkeypatch) -> None:
+    _configure_govern_cloud_public_proxy(monkeypatch)
+
+    def fail_if_called(*args: object, **kwargs: object) -> None:
+        raise AssertionError("non-allowlisted route should not proxy")
+
+    monkeypatch.setattr("urllib.request.urlopen", fail_if_called)
+    app = create_gateway_app(platform=StubPlatform())
+    response = TestClient(app).get("/v1/govern/evaluate")
+
+    assert response.status_code == 404
+    assert "detail" in response.json()
+
+
+def test_govern_cloud_public_proxy_requires_valid_internal_url(monkeypatch) -> None:
+    _configure_govern_cloud_public_proxy(monkeypatch)
+    monkeypatch.setenv("MULLU_GOVERN_CLOUD_INTERNAL_URL", "http://user:secret@internal.example")
+
+    def fail_if_called(*args: object, **kwargs: object) -> None:
+        raise AssertionError("invalid internal URL should block before transport")
+
+    monkeypatch.setattr("urllib.request.urlopen", fail_if_called)
+    app = create_gateway_app(platform=StubPlatform())
+    response = TestClient(app).get("/v1/health")
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Govern Cloud public proxy not configured"
+
+
+def test_govern_cloud_public_proxy_maps_upstream_http_error_to_bad_gateway(monkeypatch) -> None:
+    _configure_govern_cloud_public_proxy(monkeypatch)
+
+    def failing_urlopen(request, timeout):
+        raise urllib.error.HTTPError(request.full_url, 503, "unavailable", hdrs=None, fp=None)
+
+    monkeypatch.setattr("urllib.request.urlopen", failing_urlopen)
+    app = create_gateway_app(platform=StubPlatform())
+    response = TestClient(app).get("/v1/health")
+
+    assert response.status_code == 502
+    assert response.json()["detail"] == "Govern Cloud upstream rejected request"
+
+
+def test_govern_cloud_public_proxy_rejects_non_json_payload(monkeypatch) -> None:
+    _configure_govern_cloud_public_proxy(monkeypatch)
+    monkeypatch.setattr(
+        "urllib.request.urlopen",
+        lambda request, timeout: StubGovernCloudResponse(b"not-json"),
+    )
+    app = create_gateway_app(platform=StubPlatform())
+    response = TestClient(app).get("/v1/health")
+
+    assert response.status_code == 502
+    assert response.json()["detail"] == "Govern Cloud upstream response was not JSON"
+
+
 def test_deployment_witness_uses_latest_command_anchor(monkeypatch) -> None:
     monkeypatch.setenv("MULLU_RUNTIME_CONFORMANCE_SECRET", "conformance-secret")
     monkeypatch.setenv("MULLU_DEPLOYMENT_WITNESS_SECRET", "deployment-secret")
@@ -348,6 +484,13 @@ def test_deployment_witness_uses_latest_command_anchor(monkeypatch) -> None:
     assert "audit_anchor" in deployment_payload["checks_passed"]
     assert "audit_anchor" not in deployment_payload["checks_missing"]
     assert _validate_schema_instance(_load_schema(PRODUCTION_EVIDENCE_SCHEMA), deployment_payload) == []
+
+
+def _configure_govern_cloud_public_proxy(monkeypatch) -> None:
+    monkeypatch.setenv("MULLU_ENV", "local_dev")
+    monkeypatch.setenv("MULLU_GOVERN_CLOUD_STAGING_ENABLED", "true")
+    monkeypatch.setenv("MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED", "true")
+    monkeypatch.setenv("MULLU_GOVERN_CLOUD_INTERNAL_URL", "http://mullusi-govern-cloud-staging:8000")
 
 
 def _physical_capability(
