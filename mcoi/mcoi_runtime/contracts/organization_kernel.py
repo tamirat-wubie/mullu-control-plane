@@ -585,6 +585,46 @@ class OrganizationTerminalClosure(ContractRecord):
 
 
 @dataclass(frozen=True, slots=True)
+class ClosureDriftRemediationBinding(ContractRecord):
+    """Post-closure binding that resolves a detected closure packet drift."""
+
+    remediation_id: str
+    case_id: str
+    closure_id: str
+    terminal_disposition: TerminalClosureDisposition
+    drift_evidence_refs: tuple[str, ...]
+    superseded_evidence_refs: tuple[str, ...]
+    authority_ref: str
+    evidence_refs: tuple[str, ...]
+    created_at: str
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for field_name in ("remediation_id", "case_id", "closure_id", "authority_ref"):
+            object.__setattr__(self, field_name, require_non_empty_text(getattr(self, field_name), field_name))
+        if not isinstance(self.terminal_disposition, TerminalClosureDisposition):
+            raise ValueError("terminal_disposition must be a TerminalClosureDisposition value")
+        if self.terminal_disposition is TerminalClosureDisposition.COMMITTED:
+            raise ValueError("closure drift remediation cannot use committed disposition")
+        for field_name in ("drift_evidence_refs", "evidence_refs"):
+            object.__setattr__(
+                self,
+                field_name,
+                _freeze_text_array(
+                    require_non_empty_tuple(getattr(self, field_name), field_name),
+                    field_name,
+                ),
+            )
+        object.__setattr__(
+            self,
+            "superseded_evidence_refs",
+            _freeze_text_array(self.superseded_evidence_refs, "superseded_evidence_refs"),
+        )
+        object.__setattr__(self, "created_at", require_datetime_text(self.created_at, "created_at"))
+        object.__setattr__(self, "metadata", freeze_value(self.metadata))
+
+
+@dataclass(frozen=True, slots=True)
 class LearningAdmissionBinding(ContractRecord):
     """Decision binding that permits or rejects closure-derived learning."""
 
