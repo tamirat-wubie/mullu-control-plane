@@ -61,6 +61,30 @@ def test_console_runs_filtered(client: TestClient) -> None:
     assert data["filters"]["outcome"] == "success"
 
 
+@pytest.mark.parametrize(
+    ("path", "limit"),
+    [
+        ("/api/v1/console/runs", "0"),
+        ("/api/v1/console/runs", "501"),
+        ("/api/v1/console/runs", "1.5"),
+        ("/api/v1/console/audit", "-1"),
+        ("/api/v1/console/audit", "999999"),
+        ("/api/v1/console/audit", "not-a-limit"),
+    ],
+)
+def test_console_audit_read_limits_reject_invalid_values(
+    client: TestClient,
+    path: str,
+    limit: str,
+) -> None:
+    resp = client.get(path, params={"limit": limit})
+    body = resp.json()
+
+    assert resp.status_code == 422
+    assert body["detail"]["error"] == "invalid_limit"
+    assert "limit" in body["detail"]["message"]
+
+
 def test_console_audit(client: TestClient) -> None:
     resp = client.get("/api/v1/console/audit?limit=20")
     assert resp.status_code == 200
