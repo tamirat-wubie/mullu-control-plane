@@ -3,14 +3,16 @@
 
 Purpose: regenerate local proof and adapter-evidence witnesses that can drift
 during development without requiring live provider credentials.
-Governance scope: document adapter receipt, aggregate adapter evidence, proof
-coverage witness, protocol manifest validation, and finance proof-pilot
-readiness.
+Governance scope: document adapter receipt, durable Gmail OAuth blocked
+handoff receipts, aggregate adapter evidence, proof coverage witness, protocol
+manifest validation, and finance proof-pilot readiness.
 Dependencies: repository-local assurance scripts and Python subprocess.
 Invariants:
   - The default step set performs no external writes and requires no secrets.
   - Live email/calendar, voice, browser, PostgreSQL, and SMTP evidence remains
     blocked unless separately supplied by operator-controlled live lanes.
+  - Durable Gmail OAuth steps emit blocked or preflight-only receipts; they do
+    not mint tokens, contact Google, or claim live readiness.
   - Each step returns an explicit command receipt; failures are not hidden.
 """
 
@@ -77,6 +79,42 @@ LOCAL_ASSURANCE_STEPS: tuple[AssuranceStep, ...] = (
             "--json",
         ),
         purpose="regenerate deterministic document parser live receipt",
+    ),
+    AssuranceStep(
+        name="durable_gmail_oauth_operator_handoff",
+        command=(
+            sys.executable,
+            "scripts/produce_durable_gmail_oauth_operator_handoff.py",
+            "--output",
+            ".change_assurance/durable_gmail_oauth_operator_handoff.json",
+            "--json",
+        ),
+        purpose="regenerate blocked durable Gmail OAuth operator handoff receipt",
+    ),
+    AssuranceStep(
+        name="durable_gmail_oauth_operator_handoff_validation",
+        command=(
+            sys.executable,
+            "scripts/validate_durable_gmail_oauth_operator_handoff.py",
+            "--handoff",
+            ".change_assurance/durable_gmail_oauth_operator_handoff.json",
+            "--output",
+            ".change_assurance/durable_gmail_oauth_operator_handoff_validation.json",
+            "--require-blocked",
+            "--json",
+        ),
+        purpose="validate blocked durable Gmail OAuth handoff without live claim",
+    ),
+    AssuranceStep(
+        name="durable_gmail_oauth_runtime_preflight",
+        command=(
+            sys.executable,
+            "scripts/validate_durable_gmail_oauth_runtime_preflight.py",
+            "--output",
+            ".change_assurance/durable_gmail_oauth_runtime_preflight.json",
+            "--json",
+        ),
+        purpose="persist redacted durable Gmail OAuth runtime preflight receipt",
     ),
     AssuranceStep(
         name="capability_adapter_evidence",

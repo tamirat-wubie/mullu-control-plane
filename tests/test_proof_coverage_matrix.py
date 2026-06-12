@@ -156,7 +156,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["runtime_state_persistence_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["multi_agent_coordination_runtime"]["exact_test_anchor_count"] == 8
     assert surfaces["multi_agent_coordination_runtime"]["unanchored_witness_count"] == 0
-    assert surfaces["governed_connector_framework"]["exact_test_anchor_count"] == 6
+    assert surfaces["governed_connector_framework"]["exact_test_anchor_count"] == 12
     assert surfaces["governed_connector_framework"]["unanchored_witness_count"] == 0
     assert surfaces["governed_background_scheduler"]["exact_test_anchor_count"] == 6
     assert surfaces["governed_background_scheduler"]["unanchored_witness_count"] == 0
@@ -2698,8 +2698,13 @@ def test_claim_verification_surface_gates_execution_admission() -> None:
 def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> None:
     matrix = _load_fixture()
     surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     connector_surface = surfaces["governed_connector_framework"]
+    connector_witness_surface = witness_surfaces["governed_connector_framework"]
     witnesses = set(connector_surface["runtime_witnesses"])
     route_records = {
         record["route"]: record
@@ -2718,17 +2723,32 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert "mcoi/tests/test_connector_framework.py" in connector_surface["evidence_files"]
     assert "mcoi/tests/test_server_phase217.py" in connector_surface["evidence_files"]
     assert "mcoi/tests/test_server_phase218.py" in connector_surface["evidence_files"]
+    assert "docs/64_durable_gmail_connector_runtime_plan.md" in connector_surface["evidence_files"]
+    assert "schemas/durable_gmail_oauth_operator_handoff.schema.json" in connector_surface["evidence_files"]
+    assert "scripts/produce_durable_gmail_oauth_operator_handoff.py" in connector_surface["evidence_files"]
+    assert "scripts/validate_durable_gmail_oauth_operator_handoff.py" in connector_surface["evidence_files"]
+    assert "tests/test_produce_durable_gmail_oauth_operator_handoff.py" in connector_surface["evidence_files"]
+    assert "tests/test_validate_durable_gmail_oauth_operator_handoff.py" in connector_surface["evidence_files"]
     assert "connector_registration_typed" in witnesses
     assert "connector_invocation_guard_chain_checked" in witnesses
     assert "connector_lifecycle_disable_enable_bounded" in witnesses
     assert "connector_history_summary_bounded" in witnesses
     assert "connector_errors_sanitized" in witnesses
     assert "connector_invocation_audited" in witnesses
+    assert "durable_gmail_oauth_handoff_blocks_until_authority" in witnesses
+    assert "durable_gmail_oauth_handoff_blocks_default_as_evidence" in witnesses
+    assert "durable_gmail_oauth_handoff_requires_live_probe_authority" in witnesses
+    assert "durable_gmail_oauth_handoff_redacts_secret_markers" in witnesses
+    assert "durable_gmail_oauth_handoff_accepts_ready_probe" in witnesses
+    assert "durable_gmail_oauth_handoff_writes_validation_receipt" in witnesses
+    assert connector_witness_surface["exact_test_anchor_count"] == 12
+    assert connector_witness_surface["unanchored_witness_count"] == 0
     assert route_records["/api/v1/connectors/register"]["coverage_state"] == "proven"
     assert route_records["/api/v1/connectors/register"]["surface_id"] == "governed_connector_framework"
     assert route_records["/api/v1/connectors/invoke"]["coverage_state"] == "proven"
     assert route_records["/api/v1/connectors/invoke"]["surface_id"] == "governed_connector_framework"
     assert closure_actions["classify_governed_connector_routes"]["status"] == "closed"
+    assert closure_actions["publish_durable_gmail_oauth_operator_handoff_contract"]["status"] == "closed"
 
 
 def test_governed_background_scheduler_surface_gates_job_lifecycle() -> None:

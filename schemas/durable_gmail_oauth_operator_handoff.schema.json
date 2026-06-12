@@ -1,0 +1,365 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:durable-gmail-oauth-operator-handoff:1",
+  "title": "Durable Gmail OAuth Operator Handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "handoff_id",
+    "schema_version",
+    "status",
+    "solver_outcome",
+    "repository",
+    "connector_id",
+    "operation_family",
+    "provider_setup_authorized",
+    "operator_approval_ref",
+    "external_provider_mutation_performed",
+    "github_secret_mutation_performed",
+    "credential_values_disclosed",
+    "ready_for_provider_setup",
+    "ready_for_live_probe",
+    "scope_decision",
+    "recommended_runtime_defaults",
+    "preflight_environment_basis",
+    "provider_console_actions",
+    "runtime_bindings",
+    "preflight_summary",
+    "blocked_until",
+    "verification_commands"
+  ],
+  "properties": {
+    "handoff_id": {
+      "type": "string",
+      "pattern": "^durable-gmail-oauth-operator-handoff-[0-9a-f]{16}$"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "awaiting_operator_authority",
+        "ready_for_provider_setup",
+        "ready_for_live_probe"
+      ]
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": [
+        "AwaitingEvidence",
+        "SolvedVerified"
+      ]
+    },
+    "repository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "connector_id": {
+      "type": "string",
+      "const": "gmail"
+    },
+    "operation_family": {
+      "type": "string",
+      "enum": [
+        "draft_create",
+        "read_and_draft",
+        "read_and_send_with_approval",
+        "read_only_message",
+        "read_only_search",
+        "send_with_approval"
+      ]
+    },
+    "provider_setup_authorized": {
+      "type": "boolean"
+    },
+    "operator_approval_ref": {
+      "type": "string"
+    },
+    "external_provider_mutation_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "github_secret_mutation_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "credential_values_disclosed": {
+      "type": "boolean",
+      "const": false
+    },
+    "ready_for_provider_setup": {
+      "type": "boolean"
+    },
+    "ready_for_live_probe": {
+      "type": "boolean"
+    },
+    "scope_decision": {
+      "$ref": "#/$defs/scope_decision"
+    },
+    "recommended_runtime_defaults": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "$ref": "#/$defs/recommended_runtime_default"
+      }
+    },
+    "preflight_environment_basis": {
+      "type": "string",
+      "const": "observed_environment_without_defaults"
+    },
+    "provider_console_actions": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "$ref": "#/$defs/provider_console_action"
+      }
+    },
+    "runtime_bindings": {
+      "type": "array",
+      "minItems": 13,
+      "items": {
+        "$ref": "#/$defs/runtime_binding"
+      }
+    },
+    "preflight_summary": {
+      "$ref": "#/$defs/preflight_summary"
+    },
+    "blocked_until": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "verification_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "scope_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation_family",
+        "minimum_scopes",
+        "scope_sensitivity",
+        "least_privilege_required",
+        "full_mail_scope_allowed",
+        "metadata_scope_search_compatible"
+      ],
+      "properties": {
+        "operation_family": {
+          "type": "string"
+        },
+        "minimum_scopes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "scope_sensitivity": {
+          "type": "string",
+          "enum": [
+            "none",
+            "sensitive",
+            "restricted"
+          ]
+        },
+        "least_privilege_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "full_mail_scope_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "metadata_scope_search_compatible": {
+          "type": "boolean"
+        }
+      }
+    },
+    "recommended_runtime_default": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "recommended_value",
+        "classification"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "enum": [
+            "EMAIL_CALENDAR_CONNECTOR_ID",
+            "GMAIL_SCOPE_ID",
+            "MULLU_EMAIL_CALENDAR_WORKER_ADAPTER",
+            "MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY"
+          ]
+        },
+        "recommended_value": {
+          "type": "string",
+          "minLength": 1
+        },
+        "classification": {
+          "type": "string",
+          "const": "non_secret_config"
+        }
+      }
+    },
+    "provider_console_action": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "action_id",
+        "effect_boundary",
+        "requires_explicit_operator_execution"
+      ],
+      "properties": {
+        "action_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effect_boundary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requires_explicit_operator_execution": {
+          "type": "boolean"
+        }
+      }
+    },
+    "runtime_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "classification",
+        "secret_store_command",
+        "value_must_not_be_committed"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "classification": {
+          "type": "string",
+          "enum": [
+            "non_secret_config",
+            "secret",
+            "witness_ref"
+          ]
+        },
+        "secret_store_command": {
+          "type": "string"
+        },
+        "value_must_not_be_committed": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "preflight_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "status",
+        "solver_outcome",
+        "blocker_count",
+        "ready_for_live_probe",
+        "credential_values_disclosed",
+        "external_provider_mutation_performed",
+        "finding_rule_ids",
+        "signal_inventory",
+        "scope_analysis"
+      ],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "const": "durable_gmail_oauth_runtime_preflight"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "awaiting_evidence",
+            "passed"
+          ]
+        },
+        "solver_outcome": {
+          "type": "string",
+          "enum": [
+            "AwaitingEvidence",
+            "SolvedVerified"
+          ]
+        },
+        "blocker_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ready_for_live_probe": {
+          "type": "boolean"
+        },
+        "credential_values_disclosed": {
+          "type": "boolean",
+          "const": false
+        },
+        "external_provider_mutation_performed": {
+          "type": "boolean",
+          "const": false
+        },
+        "finding_rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "signal_inventory": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/signal_inventory_item"
+          }
+        },
+        "scope_analysis": {
+          "type": "object"
+        }
+      }
+    },
+    "signal_inventory_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "env_present",
+        "github_secret_present",
+        "secret_value_disclosed"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "env_present": {
+          "type": "boolean"
+        },
+        "github_secret_present": {
+          "type": "boolean"
+        },
+        "secret_value_disclosed": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    }
+  }
+}

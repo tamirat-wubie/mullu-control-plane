@@ -157,6 +157,17 @@ def test_protocol_manifest_indexes_connector_certification_registry() -> None:
     assert data_governance_entry["surface"] == "data_governance"
 
 
+def test_protocol_manifest_indexes_durable_gmail_oauth_operator_handoff() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    handoff_entry = entries["durable-gmail-oauth-operator-handoff"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert handoff_entry["path"] == "schemas/durable_gmail_oauth_operator_handoff.schema.json"
+    assert handoff_entry["urn"] == "urn:mullusi:schema:durable-gmail-oauth-operator-handoff:1"
+    assert handoff_entry["surface"] == "connector"
+
+
 def test_protocol_manifest_indexes_deployment_orchestration_validation() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
