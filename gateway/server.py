@@ -1529,6 +1529,10 @@ def create_gateway_app(
         )
         return snapshot.to_json_dict()
 
+    @app.get("/governed-operations/console", response_class=HTMLResponse)
+    def governed_operations_console():
+        return HTMLResponse(_governed_operations_console_html(governed_operations_read_model()))
+
     @app.get("/deployment/witness")
     def deployment_witness():
         return _build_deployment_witness()
@@ -3924,6 +3928,115 @@ def _authority_operator_console_html(
     <thead><tr>{''.join(f'<th>{escape(column)}</th>' for column in operator_audit_columns)}</tr></thead>
     <tbody>{_rows(operator_audit_events, operator_audit_columns)}</tbody>
   </table>
+</main>
+</body>
+</html>"""
+
+
+def _governed_operations_console_html(read_model: Mapping[str, Any]) -> str:
+    """Render governed operations readiness as a read-only operator console."""
+    from html import escape
+
+    def _cell(value: Any) -> str:
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        if isinstance(value, (list, tuple)):
+            rendered = ", ".join(str(item) for item in value)
+        elif isinstance(value, Mapping):
+            rendered = json.dumps(value, sort_keys=True)
+        else:
+            rendered = str(value)
+        return escape(rendered)
+
+    def _table(items: Any, columns: tuple[str, ...], *, empty_label: str) -> str:
+        rows: list[str] = []
+        if isinstance(items, list):
+            for item in items:
+                if isinstance(item, Mapping):
+                    rows.append(
+                        "<tr>"
+                        + "".join(f"<td>{_cell(item.get(column, ''))}</td>" for column in columns)
+                        + "</tr>"
+                    )
+        if not rows:
+            rows.append(f'<tr><td colspan="{len(columns)}">{escape(empty_label)}</td></tr>')
+        headings = "".join(f"<th>{escape(column)}</th>" for column in columns)
+        return f"<table><thead><tr>{headings}</tr></thead><tbody>{''.join(rows)}</tbody></table>"
+
+    metrics = (
+        ("readiness class", read_model.get("readiness_class", "")),
+        ("readiness status", read_model.get("readiness_status", "")),
+        ("loops", read_model.get("loop_count", 0)),
+        ("closed loops", read_model.get("closed_loop_count", 0)),
+        ("gaps", read_model.get("gap_count", 0)),
+        ("blocking gaps", read_model.get("blocking_gap_count", 0)),
+        ("drift checks", read_model.get("drift_count", 0)),
+        ("snapshot hash", read_model.get("snapshot_hash", "")),
+    )
+    metric_items = "\n".join(
+        f"<li><span>{escape(label.title())}</span><strong>{_cell(value)}</strong></li>"
+        for label, value in metrics
+    )
+    loops = _table(
+        read_model.get("loops", ()),
+        ("loop_id", "system_ref", "owner", "declared_state", "evidence_refs"),
+        empty_label="No loops registered",
+    )
+    gaps = _table(
+        read_model.get("gaps", ()),
+        ("gap_id", "severity", "source", "blocker_type", "evidence_missing", "closure_condition"),
+        empty_label="No gaps",
+    )
+    closure_results = _table(
+        read_model.get("closure_results", ()),
+        ("loop_id", "status", "closed", "missing_evidence_refs", "drift_status", "closure_evidence_refs"),
+        empty_label="No closure results",
+    )
+    drift_checks = _table(
+        read_model.get("drift_checks", ()),
+        ("drift_id", "loop_id", "declared_state", "observed_state", "status", "evidence_refs"),
+        empty_label="No drift checks",
+    )
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Mullu Governed Operations</title>
+  <style>
+    :root {{ color-scheme: light; font-family: Arial, sans-serif; }}
+    body {{ margin: 0; background: #f7f8fa; color: #1b1f24; }}
+    main {{ max-width: 1240px; margin: 0 auto; padding: 32px 24px 48px; }}
+    h1 {{ margin: 0 0 8px; font-size: 28px; }}
+    h2 {{ margin: 28px 0 12px; font-size: 20px; }}
+    p {{ margin: 0 0 20px; color: #57606a; }}
+    nav {{ display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 24px; }}
+    a {{ color: #0969da; }}
+    .metrics {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; padding: 0; margin: 0 0 24px; }}
+    .metrics li {{ display: flex; justify-content: space-between; gap: 16px; list-style: none; background: #fff; border: 1px solid #d8dee4; border-radius: 8px; padding: 14px; }}
+    table {{ width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #d8dee4; margin-bottom: 24px; }}
+    th, td {{ padding: 10px 12px; border-bottom: 1px solid #d8dee4; text-align: left; vertical-align: top; font-size: 13px; overflow-wrap: anywhere; }}
+    th {{ background: #eef1f4; font-weight: 700; }}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Mullu Governed Operations</h1>
+  <p>Read-only closure, gap, drift, receipt, and readiness projection for registered control-plane loops.</p>
+  <nav>
+    <a href="/governed-operations/read-model">read model json</a>
+    <a href="/runtime/conformance">runtime conformance</a>
+    <a href="/deployment/witness">deployment witness</a>
+    <a href="/authority/operator">authority console</a>
+  </nav>
+  <ul class="metrics">{metric_items}</ul>
+  <h2>Registered Loops</h2>
+  {loops}
+  <h2>Gaps</h2>
+  {gaps}
+  <h2>Closure Results</h2>
+  {closure_results}
+  <h2>Drift Checks</h2>
+  {drift_checks}
 </main>
 </body>
 </html>"""
