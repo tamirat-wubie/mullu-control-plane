@@ -1,9 +1,9 @@
 """Tool registry endpoints: list, invoke, history, LLM-format export."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, NoReturn
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
@@ -11,6 +11,35 @@ from mcoi_runtime.app.routers.data._common import _certify_action_proof, deps
 from mcoi_runtime.core.tool_use import certify_tool_capability_policy_receipt
 
 router = APIRouter()
+_MAX_TOOL_HISTORY_READ_LIMIT = 500
+
+
+def _tool_history_error_detail(error: str, error_code: str) -> dict[str, object]:
+    return {"error": error, "error_code": error_code, "governed": True}
+
+
+def _raise_tool_history_validation_error(error: ValueError) -> NoReturn:
+    raise HTTPException(
+        status_code=422,
+        detail=_tool_history_error_detail("invalid tool history request", "tool_history_invalid_request"),
+    ) from error
+
+
+def _coerce_tool_history_limit(limit: object) -> int:
+    if isinstance(limit, bool):
+        raise ValueError("limit must be an integer")
+    if isinstance(limit, int):
+        value = limit
+    elif isinstance(limit, str):
+        normalized = limit.strip()
+        if not normalized.isdecimal():
+            raise ValueError("limit must be an integer")
+        value = int(normalized)
+    else:
+        raise ValueError("limit must be an integer")
+    if value < 0 or value > _MAX_TOOL_HISTORY_READ_LIMIT:
+        raise ValueError("limit is outside the allowed range")
+    return value
 
 
 class ToolInvokeRequest(BaseModel):
@@ -80,9 +109,13 @@ def tools_llm_format():
 
 
 @router.get("/api/v1/tools/history")
-def tool_history(limit: int = 50):
+def tool_history(limit: str = "50"):
     """Tool invocation history."""
+    try:
+        read_limit = _coerce_tool_history_limit(limit)
+    except ValueError as error:
+        _raise_tool_history_validation_error(error)
     return {"history": [
         {"id": r.invocation_id, "tool": r.tool_id, "succeeded": r.succeeded}
-        for r in deps.tool_registry.invocation_history(limit=limit)
+        for r in deps.tool_registry.invocation_history(limit=read_limit)
     ], "summary": deps.tool_registry.summary()}
