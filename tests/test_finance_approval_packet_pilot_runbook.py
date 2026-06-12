@@ -34,6 +34,8 @@ def test_finance_runbook_documents_strict_promotion_boundary() -> None:
     assert "python scripts\\validate_finance_approval_operator_summary_schema.py --strict --json" in content
     assert "python scripts\\render_finance_approval_operator_page.py --summary .change_assurance\\finance_approval_operator_summary.json --output .change_assurance\\finance_approval_operator_page.html --strict --json" in content
     assert "python scripts\\validate_finance_email_calendar_recovery_env_example.py --template examples\\finance_email_calendar_recovery.env.example --strict --json" in content
+    assert "python scripts\\emit_finance_approval_email_calendar_operator_input_request.py --receipt .change_assurance\\finance_approval_email_calendar_binding_receipt.json" in content
+    assert "python scripts\\validate_finance_approval_email_calendar_operator_input_request.py --request .change_assurance\\finance_approval_email_calendar_operator_input_request.json" in content
     assert "`promotion_boundary.ok` separately from `promotion_boundary.ready`" in content
     assert "operator summary is a redacted read-only artifact" in content
     assert "static operator page renders that validated redacted summary" in content
@@ -43,18 +45,20 @@ def test_finance_runbook_documents_strict_promotion_boundary() -> None:
     assert "`ready=false` means live handoff promotion remains blocked" in content
     assert "packet must include the `email_calendar_live_receipt` artifact" in content
     assert "passed, read-only, worker-bound, and effect-free" in content
-    assert "17-command dry-run artifact" in content
+    assert "closure runner is a dry-run artifact" in content
     assert "validates the redacted recovery env template before binding receipt emission" in content
     assert "only live connector touchpoint" in content
     assert "validates the aggregate handoff chain" in content
     assert "validates the operator summary schema" in content
-    assert "Email/calendar recovery requires three operator bindings" in content
+    assert "Email/calendar recovery requires four binding groups" in content
     assert "finance_email_calendar_binding_receipt_not_ready" in content
     assert "examples\\finance_email_calendar_recovery.env.example" in content
     assert "validate it before replacing secret placeholders" in content
     assert "binding-name presence for the email/calendar worker endpoint" in content
     assert "scope witness classification as read-only or invalid by binding name" in content
     assert "never serializes worker URLs, token values, secrets, or scope values" in content
+    assert "operator input request translates a blocked binding receipt" in content
+    assert "never serializes worker URLs, signing secrets, connector tokens, scope values" in content
     assert "MULLU_EMAIL_CALENDAR_WORKER_URL and MULLU_EMAIL_CALENDAR_WORKER_SECRET" in content
     assert "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID=gmail.readonly" in content
     assert "GOOGLE_CALENDAR_SCOPE_ID=calendar.events.readonly" in content

@@ -311,8 +311,10 @@ Credential binding receipt:
 
 ```powershell
 python scripts\validate_finance_email_calendar_recovery_env_example.py --template examples\finance_email_calendar_recovery.env.example --strict --json
-python scripts\emit_finance_approval_email_calendar_binding_receipt.py --output .change_assurance\finance_approval_email_calendar_binding_receipt.json --strict --json
-python scripts\validate_finance_approval_email_calendar_binding_receipt.py --require-ready --json
+python scripts\emit_finance_approval_email_calendar_binding_receipt.py --output .change_assurance\finance_approval_email_calendar_binding_receipt.json --json
+python scripts\emit_finance_approval_email_calendar_operator_input_request.py --receipt .change_assurance\finance_approval_email_calendar_binding_receipt.json --output .change_assurance\finance_approval_email_calendar_operator_input_request.json --json
+python scripts\validate_finance_approval_email_calendar_operator_input_request.py --request .change_assurance\finance_approval_email_calendar_operator_input_request.json --output .change_assurance\finance_approval_email_calendar_operator_input_request_validation.json --require-blocked --json
+python scripts\validate_finance_approval_email_calendar_binding_receipt.py --receipt .change_assurance\finance_approval_email_calendar_binding_receipt.json --require-ready --json
 python scripts\validate_finance_approval_email_calendar_live_receipt.py --require-ready --json
 python scripts\run_finance_approval_live_handoff_closure.py --output .change_assurance\finance_approval_live_handoff_closure_run.json --strict --json
 python scripts\validate_finance_approval_live_handoff_closure_run_schema.py --strict --json
@@ -330,7 +332,8 @@ python scripts\render_finance_approval_operator_page.py --summary .change_assura
 
 Use `examples\finance_email_calendar_recovery.env.example` as the redacted binding template; validate it before replacing secret placeholders through a secrets manager.
 The receipt records only binding-name presence for the email/calendar worker endpoint, worker signing secret, connector token family, and scope witness family. It also records scope witness classification as read-only or invalid by binding name. It never serializes worker URLs, token values, secrets, or scope values.
-Email/calendar recovery requires three operator bindings before rerunning the live receipt probe:
+The operator input request translates a blocked binding receipt into public-safe missing input names and blocked actions. It never serializes worker URLs, signing secrets, connector tokens, scope values, provider account details, or mailbox contents.
+Email/calendar recovery requires four binding groups before rerunning the live receipt probe:
 
 ```text
 MULLU_EMAIL_CALENDAR_WORKER_URL and MULLU_EMAIL_CALENDAR_WORKER_SECRET
@@ -342,7 +345,7 @@ Do not use write-capable scope witnesses such as `calendar.events`, `mail.send`,
 The handoff packet carries `promotion_boundary.ok` separately from `promotion_boundary.ready`. `ok=true` means the packet artifacts are structurally usable. `ready=false` means live handoff promotion remains blocked. The packet must include the `email_calendar_live_receipt` artifact, and `ready=true` requires that receipt to validate as passed, read-only, worker-bound, and effect-free. The strict promotion command is `python scripts\validate_finance_approval_live_handoff_chain.py --strict --require-ready --json`.
 The operator summary is a redacted read-only artifact that copies packet readiness, chain readiness, readiness blockers, artifact statuses, next actions, and must-not-claim boundaries into `.change_assurance\finance_approval_operator_summary.json`.
 The static operator page renders that validated redacted summary into `.change_assurance\finance_approval_operator_page.html`. It performs no live adapter action, contains no JavaScript, escapes rendered text, and must not be used as a production finance automation or live email delivery claim.
-The closure runner is a 17-command dry-run artifact by default. It validates the redacted recovery env template before binding receipt emission, marks the read-only email/calendar live receipt command as the only live connector touchpoint, validates that receipt before adapter evidence collection, validates the aggregate handoff chain, produces the operator summary, validates the operator summary schema, and blocks until the binding receipt, live receipt, preflight, packet, and pilot readiness are closed.
+The closure runner is a dry-run artifact by default. It validates the redacted recovery env template before binding receipt emission, marks the read-only email/calendar live receipt command as the only live connector touchpoint, validates that receipt before adapter evidence collection, validates the aggregate handoff chain, produces the operator summary, validates the operator summary schema, and blocks until the binding receipt, live receipt, preflight, packet, and pilot readiness are closed.
 
 Payment-provider binding receipt:
 
