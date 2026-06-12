@@ -111,10 +111,43 @@ jobs:
           chmod 600 .change_assurance/private/voice_probe_audio.wav
           echo "MULLU_VOICE_PROBE_AUDIO=.change_assurance/private/voice_probe_audio.wav" >> "$GITHUB_ENV"
 
+      - name: Bind static email/calendar token fallback
+        if: ${{ inputs.target == 'all' || inputs.target == 'email-calendar' }}
+        env:
+          EMAIL_CALENDAR_CONNECTOR_TOKEN_SECRET: ${{ secrets.EMAIL_CALENDAR_CONNECTOR_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -n "$EMAIL_CALENDAR_CONNECTOR_TOKEN_SECRET" ]; then
+            echo "::add-mask::$EMAIL_CALENDAR_CONNECTOR_TOKEN_SECRET"
+            printf "EMAIL_CALENDAR_CONNECTOR_TOKEN=%s\n" "$EMAIL_CALENDAR_CONNECTOR_TOKEN_SECRET" >> "$GITHUB_ENV"
+          fi
+
+      - name: Mint durable Gmail OAuth access token
+        if: ${{ always() && (inputs.target == 'all' || inputs.target == 'email-calendar') && inputs.email_calendar_connector_id == 'gmail' }}
+        env:
+          GMAIL_OAUTH_CLIENT_ID: ${{ secrets.GMAIL_OAUTH_CLIENT_ID }}
+          GMAIL_OAUTH_CLIENT_SECRET: ${{ secrets.GMAIL_OAUTH_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF: ${{ vars.MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF }}
+          MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF: ${{ vars.MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF }}
+          MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF: ${{ vars.MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF }}
+          MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF: ${{ vars.MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF }}
+          MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF: ${{ vars.MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF }}
+        run: |
+          set -euo pipefail
+          if [ -n "$GMAIL_OAUTH_CLIENT_ID" ] && [ -n "$GMAIL_OAUTH_CLIENT_SECRET" ] && [ -n "$GMAIL_REFRESH_TOKEN" ]; then
+            python scripts/mint_gmail_oauth_access_token.py \
+              --output .change_assurance/gmail_oauth_refresh_receipt.json \
+              --github-env "$GITHUB_ENV" \
+              --strict \
+              --json
+          else
+            echo "Durable Gmail OAuth secrets not configured; using static EMAIL_CALENDAR_CONNECTOR_TOKEN fallback when present."
+          fi
+
       - name: Verify governed adapter secret bindings
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          EMAIL_CALENDAR_CONNECTOR_TOKEN: ${{ secrets.EMAIL_CALENDAR_CONNECTOR_TOKEN }}
           MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
           MULLU_RUNTIME_CONFORMANCE_SECRET: ${{ secrets.MULLU_RUNTIME_CONFORMANCE_SECRET }}
           MULLU_DEPLOYMENT_WITNESS_SECRET: ${{ secrets.MULLU_DEPLOYMENT_WITNESS_SECRET }}
@@ -139,7 +172,6 @@ jobs:
         if: always()
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          EMAIL_CALENDAR_CONNECTOR_TOKEN: ${{ secrets.EMAIL_CALENDAR_CONNECTOR_TOKEN }}
           MULLU_RUNTIME_WITNESS_SECRET: ${{ secrets.MULLU_RUNTIME_WITNESS_SECRET }}
           MULLU_RUNTIME_CONFORMANCE_SECRET: ${{ secrets.MULLU_RUNTIME_CONFORMANCE_SECRET }}
           MULLU_DEPLOYMENT_WITNESS_SECRET: ${{ secrets.MULLU_DEPLOYMENT_WITNESS_SECRET }}
@@ -213,7 +245,6 @@ jobs:
       - name: Produce email/calendar live receipt
         if: ${{ always() && (inputs.target == 'all' || inputs.target == 'email-calendar') }}
         env:
-          EMAIL_CALENDAR_CONNECTOR_TOKEN: ${{ secrets.EMAIL_CALENDAR_CONNECTOR_TOKEN }}
           EMAIL_CALENDAR_CONNECTOR_ID: ${{ inputs.email_calendar_connector_id }}
           MULLU_EMAIL_CALENDAR_WORKER_ADAPTER: production
         run: |
@@ -232,7 +263,6 @@ jobs:
         if: always()
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          EMAIL_CALENDAR_CONNECTOR_TOKEN: ${{ secrets.EMAIL_CALENDAR_CONNECTOR_TOKEN }}
           EMAIL_CALENDAR_CONNECTOR_ID: ${{ inputs.email_calendar_connector_id }}
           MULLU_EMAIL_CALENDAR_WORKER_ADAPTER: production
         run: |
@@ -251,6 +281,7 @@ jobs:
             .change_assurance/browser_live_receipt.json
             .change_assurance/document_live_receipt.json
             .change_assurance/voice_live_receipt.json
+            .change_assurance/gmail_oauth_refresh_receipt.json
             .change_assurance/email_calendar_live_receipt.json
             .change_assurance/capability_adapter_evidence.json
           if-no-files-found: warn
