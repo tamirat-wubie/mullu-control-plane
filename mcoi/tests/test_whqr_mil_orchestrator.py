@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
+from mcoi_runtime.contracts.conversation import ClarificationResponse
 from mcoi_runtime.contracts.execution import EffectRecord, ExecutionOutcome, ExecutionResult
 from mcoi_runtime.contracts.goal import GoalDescriptor, GoalPriority
 from mcoi_runtime.contracts.learning import LearningAdmissionStatus
@@ -166,6 +167,127 @@ def test_whqr_mil_orchestrator_stops_before_mil_when_typed_binding_missing() -> 
     assert "issue_codes=missing_entity_ref,missing_evidence_ref" in request.context
     assert result.mil_program is None
     assert result.dispatch_result is None
+    assert memory.size == 0
+    assert executor.calls == 0
+
+
+def test_whqr_mil_orchestrator_applies_binding_clarification_response_before_mil() -> None:
+    governed, executor = _governed()
+    memory = EpisodicMemory()
+    expr = WHQRNode(WHRole.WHOM, "vendor", node_id="vendor-node", expected_type="vendor")
+    context = WHQREvaluationContext(
+        node_results={
+            "vendor": GateResult(TruthGate.TRUE, NormGate.PERMITTED, EvidenceGate.PROVEN),
+        }
+    )
+    pending = run_whqr_mil_orchestration(
+        expr=expr,
+        goal=_goal(),
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        governed=governed,
+        certifier=TerminalClosureCertifier(clock=clock),
+        episodic=memory,
+        actor_id="operator",
+        intent_id="intent",
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hi"},
+        context=context,
+        capability="shell_command",
+    )
+    request = pending.clarification_requests[0]
+    response = ClarificationResponse(
+        request_id=request.request_id,
+        thread_id=request.thread_id,
+        answer="entity_ref=vendor:acme;evidence_ref=evidence:vendor-doc-1",
+        responded_by_id="operator",
+        responded_at="2026-05-06T12:05:01Z",
+    )
+
+    resumed = run_whqr_mil_orchestration(
+        expr=expr,
+        goal=_goal(),
+        subject_id="operator",
+        issued_at="2026-05-06T12:06:01Z",
+        governed=governed,
+        certifier=TerminalClosureCertifier(clock=clock),
+        episodic=memory,
+        actor_id="operator",
+        intent_id="intent",
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hi"},
+        context=context,
+        capability="shell_command",
+        binding_clarification_requests=pending.clarification_requests,
+        binding_clarification_responses=(response,),
+    )
+
+    assert resumed.completed is True
+    assert resumed.next_step == "complete"
+    assert resumed.clarification_binding_map is not None
+    assert resumed.clarification_binding_map.accepted_count == 1
+    assert resumed.goal_compilation.binding_report.passed is True
+    assert isinstance(resumed.whqr_document.root, WHQRNode)
+    assert resumed.whqr_document.root.entity_ref == "vendor:acme"
+    assert resumed.whqr_document.root.evidence_ref == "evidence:vendor-doc-1"
+    assert resumed.audit_reconstruction is not None
+    assert memory.size == 1
+    assert executor.calls == 1
+
+
+def test_whqr_mil_orchestrator_rejects_invalid_binding_clarification_response_before_mil() -> None:
+    governed, executor = _governed()
+    memory = EpisodicMemory()
+    expr = WHQRNode(WHRole.WHOM, "vendor", node_id="vendor-node", expected_type="vendor")
+    pending = run_whqr_mil_orchestration(
+        expr=expr,
+        goal=_goal(),
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        governed=governed,
+        certifier=TerminalClosureCertifier(clock=clock),
+        episodic=memory,
+        actor_id="operator",
+        intent_id="intent",
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hi"},
+        context=WHQREvaluationContext(
+            node_results={
+                "vendor": GateResult(TruthGate.TRUE, NormGate.PERMITTED, EvidenceGate.PROVEN),
+            }
+        ),
+    )
+    response = ClarificationResponse(
+        request_id=pending.clarification_requests[0].request_id,
+        thread_id=pending.clarification_requests[0].thread_id,
+        answer="Use Acme",
+        responded_by_id="operator",
+        responded_at="2026-05-06T12:05:01Z",
+    )
+
+    resumed = run_whqr_mil_orchestration(
+        expr=expr,
+        goal=_goal(),
+        subject_id="operator",
+        issued_at="2026-05-06T12:06:01Z",
+        governed=governed,
+        certifier=TerminalClosureCertifier(clock=clock),
+        episodic=memory,
+        actor_id="operator",
+        intent_id="intent",
+        template=VALID_TEMPLATE,
+        bindings={"msg": "hi"},
+        binding_clarification_requests=pending.clarification_requests,
+        binding_clarification_responses=(response,),
+    )
+
+    assert resumed.completed is False
+    assert resumed.next_step == "resolve_whqr_clarification_response"
+    assert resumed.clarification_binding_map is not None
+    assert resumed.clarification_binding_map.rejected_count == 1
+    assert resumed.clarification_binding_map.results[0].reason == "invalid_response_binding_field"
+    assert resumed.mil_program is None
+    assert resumed.dispatch_result is None
     assert memory.size == 0
     assert executor.calls == 0
 

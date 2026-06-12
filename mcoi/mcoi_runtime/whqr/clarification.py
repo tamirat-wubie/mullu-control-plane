@@ -40,6 +40,41 @@ class WHQRClarificationBindingResult:
             raise ValueError("accepted must be a boolean")
 
 
+@dataclass(frozen=True, slots=True)
+class WHQRClarificationBindingMap:
+    results: tuple[WHQRClarificationBindingResult, ...]
+    bindings: tuple[tuple[str, EntityBindingCandidate], ...]
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.results, tuple):
+            raise ValueError("results must be a tuple")
+        if not isinstance(self.bindings, tuple):
+            raise ValueError("bindings must be a tuple")
+        for result in self.results:
+            if not isinstance(result, WHQRClarificationBindingResult):
+                raise ValueError("results must contain WHQRClarificationBindingResult values")
+        for target, candidate in self.bindings:
+            _require_text(target, "binding target")
+            if not isinstance(candidate, EntityBindingCandidate):
+                raise ValueError("bindings must contain EntityBindingCandidate values")
+
+    @property
+    def accepted_count(self) -> int:
+        return len(self.bindings)
+
+    @property
+    def rejected_count(self) -> int:
+        return sum(1 for result in self.results if not result.accepted)
+
+    @property
+    def passed(self) -> bool:
+        return self.rejected_count == 0
+
+    def as_binding_candidates(self) -> dict[str, EntityBindingCandidate]:
+        """Return a mutable candidate map suitable for the pure WHQR entity binder."""
+        return dict(self.bindings)
+
+
 def build_binding_clarification_requests(
     report: BindingPreflightReport,
     *,
@@ -94,6 +129,36 @@ def admit_binding_clarification_response(
     return WHQRClarificationBindingResult(target, candidate, True, "accepted")
 
 
+def build_binding_map_from_clarification_responses(
+    requests: tuple[ClarificationRequest, ...],
+    responses: tuple[ClarificationResponse, ...],
+) -> WHQRClarificationBindingMap:
+    """Build a deterministic target-to-candidate map from explicit clarification responses."""
+    request_index = _index_requests(requests)
+    results: list[WHQRClarificationBindingResult] = []
+    bindings: dict[str, EntityBindingCandidate] = {}
+    for response in sorted(responses, key=lambda item: (item.request_id, item.responded_at, item.responded_by_id)):
+        if not isinstance(response, ClarificationResponse):
+            raise ValueError("responses must contain ClarificationResponse values")
+        request = request_index.get(response.request_id)
+        if request is None:
+            results.append(WHQRClarificationBindingResult("unknown", None, False, "unknown_request"))
+            continue
+        result = admit_binding_clarification_response(request, response)
+        if not result.accepted:
+            results.append(result)
+            continue
+        if result.target in bindings:
+            results.append(WHQRClarificationBindingResult(result.target, None, False, "duplicate_target_binding"))
+            continue
+        if result.candidate is None:
+            results.append(WHQRClarificationBindingResult(result.target, None, False, "missing_response_binding_field"))
+            continue
+        bindings[result.target] = result.candidate
+        results.append(result)
+    return WHQRClarificationBindingMap(tuple(results), tuple(sorted(bindings.items())))
+
+
 def _group_issues(issues: tuple[BindingPreflightIssue, ...]) -> tuple[tuple[BindingPreflightIssue, ...], ...]:
     groups: dict[tuple[str, str | None, str | None], list[BindingPreflightIssue]] = {}
     for issue in issues:
@@ -124,6 +189,17 @@ def _context(issues: tuple[BindingPreflightIssue, ...]) -> str:
 def _stable_ref(issue: BindingPreflightIssue) -> str:
     node_ref = issue.node_id or issue.target
     return node_ref.replace(":", "_").replace(" ", "_")
+
+
+def _index_requests(requests: tuple[ClarificationRequest, ...]) -> dict[str, ClarificationRequest]:
+    index: dict[str, ClarificationRequest] = {}
+    for request in requests:
+        if not isinstance(request, ClarificationRequest):
+            raise ValueError("requests must contain ClarificationRequest values")
+        if request.request_id in index:
+            raise ValueError("clarification request ids must be unique")
+        index[request.request_id] = request
+    return index
 
 
 def _parse_context(context: str) -> dict[str, str]:
