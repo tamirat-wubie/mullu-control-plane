@@ -527,6 +527,12 @@
       "surface": "finance"
     },
     {
+      "schema_id": "finance-approval-email-calendar-operator-input-request",
+      "path": "schemas/finance_approval_email_calendar_operator_input_request.schema.json",
+      "urn": "urn:mullusi:schema:finance-approval-email-calendar-operator-input-request:1",
+      "surface": "finance"
+    },
+    {
       "schema_id": "finance-approval-payment-provider-binding-receipt",
       "path": "schemas/finance_approval_payment_provider_binding_receipt.schema.json",
       "urn": "urn:mullusi:schema:finance-approval-payment-provider-binding-receipt:1",
