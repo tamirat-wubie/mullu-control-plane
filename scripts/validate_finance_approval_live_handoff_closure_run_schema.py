@@ -39,22 +39,25 @@ EXPECTED_STEP_IDS = (
     "01_validate_recovery_env_template",
     "02_emit_binding_receipt",
     "03_validate_binding_receipt",
-    "04_collect_read_only_live_receipt",
-    "05_validate_read_only_live_receipt",
-    "06_collect_adapter_evidence",
-    "07_validate_pilot_readiness",
-    "08_refresh_handoff_plan",
-    "09_validate_handoff_plan_schema",
-    "10_run_preflight",
-    "11_validate_preflight_schema",
-    "12_produce_handoff_packet",
-    "13_validate_handoff_packet_schema",
-    "14_validate_handoff_chain",
-    "15_validate_handoff_chain_schema",
-    "16_produce_operator_summary",
-    "17_validate_operator_summary_schema",
+    "04_emit_operator_input_request",
+    "05_validate_operator_input_request",
+    "06_require_binding_receipt_ready",
+    "07_collect_read_only_live_receipt",
+    "08_validate_read_only_live_receipt",
+    "09_collect_adapter_evidence",
+    "10_validate_pilot_readiness",
+    "11_refresh_handoff_plan",
+    "12_validate_handoff_plan_schema",
+    "13_run_preflight",
+    "14_validate_preflight_schema",
+    "15_produce_handoff_packet",
+    "16_validate_handoff_packet_schema",
+    "17_validate_handoff_chain",
+    "18_validate_handoff_chain_schema",
+    "19_produce_operator_summary",
+    "20_validate_operator_summary_schema",
 )
-LIVE_STEP_ID = "04_collect_read_only_live_receipt"
+LIVE_STEP_ID = "07_collect_read_only_live_receipt"
 REQUIRED_COMMAND_TOKENS_BY_STEP = {
     "01_validate_recovery_env_template": (
         "validate_finance_email_calendar_recovery_env_example.py",
@@ -62,29 +65,52 @@ REQUIRED_COMMAND_TOKENS_BY_STEP = {
         "--strict",
         "--json",
     ),
-    "04_collect_read_only_live_receipt": (
+    "03_validate_binding_receipt": (
+        "validate_finance_approval_email_calendar_binding_receipt.py",
+        "--receipt .change_assurance/finance_approval_email_calendar_binding_receipt.json",
+        "--json",
+    ),
+    "04_emit_operator_input_request": (
+        "emit_finance_approval_email_calendar_operator_input_request.py",
+        "--receipt .change_assurance/finance_approval_email_calendar_binding_receipt.json",
+        "--output .change_assurance/finance_approval_email_calendar_operator_input_request.json",
+        "--json",
+    ),
+    "05_validate_operator_input_request": (
+        "validate_finance_approval_email_calendar_operator_input_request.py",
+        "--request .change_assurance/finance_approval_email_calendar_operator_input_request.json",
+        "--output .change_assurance/finance_approval_email_calendar_operator_input_request_validation.json",
+        "--json",
+    ),
+    "06_require_binding_receipt_ready": (
+        "validate_finance_approval_email_calendar_binding_receipt.py",
+        "--receipt .change_assurance/finance_approval_email_calendar_binding_receipt.json",
+        "--require-ready",
+        "--json",
+    ),
+    "07_collect_read_only_live_receipt": (
         "produce_capability_adapter_live_receipts.py",
         "--target email-calendar",
         "--strict",
         "--json",
     ),
-    "14_validate_handoff_chain": (
+    "17_validate_handoff_chain": (
         "validate_finance_approval_live_handoff_chain.py",
         "--strict",
         "--require-ready",
         "--json",
     ),
-    "15_validate_handoff_chain_schema": (
+    "18_validate_handoff_chain_schema": (
         "validate_finance_approval_live_handoff_chain_schema.py",
         "--strict",
         "--json",
     ),
-    "16_produce_operator_summary": (
+    "19_produce_operator_summary": (
         "produce_finance_approval_operator_summary.py",
         "--strict",
         "--json",
     ),
-    "17_validate_operator_summary_schema": (
+    "20_validate_operator_summary_schema": (
         "validate_finance_approval_operator_summary_schema.py",
         "--strict",
         "--json",

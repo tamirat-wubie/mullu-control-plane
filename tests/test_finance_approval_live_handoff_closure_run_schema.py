@@ -39,7 +39,7 @@ def test_finance_closure_run_schema_accepts_current_run(tmp_path: Path) -> None:
 
     assert validation.ok is True
     assert validation.errors == ()
-    assert validation.command_count == 17
+    assert validation.command_count == 20
     assert validation.live_command_count == 1
     assert validation.status == "blocked"
 
@@ -47,7 +47,7 @@ def test_finance_closure_run_schema_accepts_current_run(tmp_path: Path) -> None:
 def test_finance_closure_run_schema_rejects_live_receipt_before_binding(tmp_path: Path) -> None:
     closure_run_path = tmp_path / "finance_closure_run.json"
     closure_run = run_finance_approval_live_handoff_closure().as_dict()
-    closure_run["commands"][2], closure_run["commands"][3] = closure_run["commands"][3], closure_run["commands"][2]
+    closure_run["commands"][5], closure_run["commands"][6] = closure_run["commands"][6], closure_run["commands"][5]
     closure_run_path.write_text(json.dumps(closure_run), encoding="utf-8")
 
     validation = validate_finance_approval_live_handoff_closure_run_schema(
@@ -93,7 +93,7 @@ def test_finance_closure_run_schema_rejects_status_drift(tmp_path: Path) -> None
 def test_finance_closure_run_schema_rejects_operator_summary_command_drift(tmp_path: Path) -> None:
     closure_run_path = tmp_path / "finance_closure_run.json"
     closure_run = run_finance_approval_live_handoff_closure().as_dict()
-    closure_run["commands"][15]["command"] = "python scripts/produce_finance_approval_operator_summary.py --json"
+    closure_run["commands"][18]["command"] = "python scripts/produce_finance_approval_operator_summary.py --json"
     closure_run_path.write_text(json.dumps(closure_run), encoding="utf-8")
 
     validation = validate_finance_approval_live_handoff_closure_run_schema(
@@ -102,14 +102,14 @@ def test_finance_closure_run_schema_rejects_operator_summary_command_drift(tmp_p
     )
 
     assert validation.ok is False
-    assert any("16_produce_operator_summary command missing required tokens" in error for error in validation.errors)
+    assert any("19_produce_operator_summary command missing required tokens" in error for error in validation.errors)
     assert any("--strict" in error for error in validation.errors)
 
 
 def test_finance_closure_run_schema_rejects_live_receipt_command_drift(tmp_path: Path) -> None:
     closure_run_path = tmp_path / "finance_closure_run.json"
     closure_run = run_finance_approval_live_handoff_closure().as_dict()
-    closure_run["commands"][3]["command"] = "python scripts/produce_capability_adapter_live_receipts.py --json"
+    closure_run["commands"][6]["command"] = "python scripts/produce_capability_adapter_live_receipts.py --json"
     closure_run_path.write_text(json.dumps(closure_run), encoding="utf-8")
 
     validation = validate_finance_approval_live_handoff_closure_run_schema(
@@ -118,7 +118,7 @@ def test_finance_closure_run_schema_rejects_live_receipt_command_drift(tmp_path:
     )
 
     assert validation.ok is False
-    assert any("04_collect_read_only_live_receipt command missing required tokens" in error for error in validation.errors)
+    assert any("07_collect_read_only_live_receipt command missing required tokens" in error for error in validation.errors)
     assert any("--target email-calendar" in error for error in validation.errors)
     assert any("--strict" in error for error in validation.errors)
 
@@ -142,7 +142,7 @@ def test_finance_closure_run_schema_rejects_template_validator_command_drift(tmp
 def test_finance_closure_run_schema_rejects_strict_promotion_command_drift(tmp_path: Path) -> None:
     closure_run_path = tmp_path / "finance_closure_run.json"
     closure_run = run_finance_approval_live_handoff_closure().as_dict()
-    closure_run["commands"][13]["command"] = "python scripts/validate_finance_approval_live_handoff_chain.py --strict --json"
+    closure_run["commands"][16]["command"] = "python scripts/validate_finance_approval_live_handoff_chain.py --strict --json"
     closure_run_path.write_text(json.dumps(closure_run), encoding="utf-8")
 
     validation = validate_finance_approval_live_handoff_closure_run_schema(
@@ -151,14 +151,14 @@ def test_finance_closure_run_schema_rejects_strict_promotion_command_drift(tmp_p
     )
 
     assert validation.ok is False
-    assert any("14_validate_handoff_chain command missing required tokens" in error for error in validation.errors)
+    assert any("17_validate_handoff_chain command missing required tokens" in error for error in validation.errors)
     assert any("--require-ready" in error for error in validation.errors)
 
 
 def test_finance_closure_run_schema_rejects_chain_schema_command_drift(tmp_path: Path) -> None:
     closure_run_path = tmp_path / "finance_closure_run.json"
     closure_run = run_finance_approval_live_handoff_closure().as_dict()
-    closure_run["commands"][14]["command"] = "python scripts/validate_finance_approval_live_handoff_chain_schema.py --json"
+    closure_run["commands"][17]["command"] = "python scripts/validate_finance_approval_live_handoff_chain_schema.py --json"
     closure_run_path.write_text(json.dumps(closure_run), encoding="utf-8")
 
     validation = validate_finance_approval_live_handoff_closure_run_schema(
@@ -167,14 +167,14 @@ def test_finance_closure_run_schema_rejects_chain_schema_command_drift(tmp_path:
     )
 
     assert validation.ok is False
-    assert any("15_validate_handoff_chain_schema command missing required tokens" in error for error in validation.errors)
+    assert any("18_validate_handoff_chain_schema command missing required tokens" in error for error in validation.errors)
     assert any("--strict" in error for error in validation.errors)
 
 
 def test_finance_closure_run_schema_rejects_operator_summary_schema_command_drift(tmp_path: Path) -> None:
     closure_run_path = tmp_path / "finance_closure_run.json"
     closure_run = run_finance_approval_live_handoff_closure().as_dict()
-    closure_run["commands"][16]["command"] = "python scripts/validate_finance_approval_operator_summary_schema.py --json"
+    closure_run["commands"][19]["command"] = "python scripts/validate_finance_approval_operator_summary_schema.py --json"
     closure_run_path.write_text(json.dumps(closure_run), encoding="utf-8")
 
     validation = validate_finance_approval_live_handoff_closure_run_schema(
@@ -184,7 +184,7 @@ def test_finance_closure_run_schema_rejects_operator_summary_schema_command_drif
 
     assert validation.ok is False
     assert any(
-        "17_validate_operator_summary_schema command missing required tokens" in error for error in validation.errors
+        "20_validate_operator_summary_schema command missing required tokens" in error for error in validation.errors
     )
     assert any("--strict" in error for error in validation.errors)
 
@@ -218,4 +218,4 @@ def test_finance_closure_run_schema_writer_and_cli_honor_strict(tmp_path: Path, 
     assert written == output_path
     assert exit_code == 0
     assert payload["ok"] is True
-    assert stdout_payload["command_count"] == 17
+    assert stdout_payload["command_count"] == 20
