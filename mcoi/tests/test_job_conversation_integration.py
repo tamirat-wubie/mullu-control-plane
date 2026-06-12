@@ -17,9 +17,11 @@ import pytest
 from mcoi_runtime.app.job_conversation_integration import (
     JOB_CONVERSATION_THREAD_STORE_PATH_ENV,
     bootstrap_job_conversation_threads,
+    record_job_conversation_thread,
     validate_job_conversation_thread_store_path,
 )
 from mcoi_runtime.contracts.conversation import ConversationThread, ThreadStatus
+from mcoi_runtime.persistence.conversation_thread_store import ConversationThreadStore
 from mcoi_runtime.persistence.errors import CorruptedDataError
 
 
@@ -72,6 +74,43 @@ def test_job_conversation_shutdown_snapshot_persists_current_index(tmp_path: Pat
     assert restored.thread_index["thread-live"].subject == "WHQR Restart Replay"
     assert restored.thread_index["thread-live"].status is ThreadStatus.ACTIVE
     assert store_path.exists() is True
+
+
+def test_record_job_conversation_thread_saves_immediately_when_store_configured(tmp_path: Path) -> None:
+    store_path = tmp_path / "job-conversation-threads.json"
+    store = ConversationThreadStore(store_path)
+    thread_index: dict[str, ConversationThread] = {}
+
+    result = dict(record_job_conversation_thread(thread_index, _thread(), store))
+    restored = store.load_index()
+
+    assert result["store_configured"] is True
+    assert result["thread_id"] == "thread-live"
+    assert result["thread_count"] == 1
+    assert restored["thread-live"].subject == "WHQR Restart Replay"
+    assert store_path.exists() is True
+
+
+def test_record_job_conversation_thread_updates_memory_without_store(tmp_path: Path) -> None:
+    thread_index: dict[str, ConversationThread] = {}
+
+    result = dict(record_job_conversation_thread(thread_index, _thread(), None))
+
+    assert result["store_configured"] is False
+    assert result["thread_count"] == 1
+    assert thread_index["thread-live"].status is ThreadStatus.ACTIVE
+    assert not (tmp_path / "job-conversation-threads.json").exists()
+
+
+def test_record_job_conversation_thread_rejects_invalid_inputs(tmp_path: Path) -> None:
+    store = ConversationThreadStore(tmp_path / "job-conversation-threads.json")
+
+    with pytest.raises(TypeError, match="thread_index"):
+        record_job_conversation_thread((), _thread(), store)  # type: ignore[arg-type]
+    with pytest.raises(TypeError, match="ConversationThread"):
+        record_job_conversation_thread({}, object(), store)  # type: ignore[arg-type]
+
+    assert store.exists() is False
 
 
 def test_job_conversation_bootstrap_fails_closed_on_malformed_store(tmp_path: Path) -> None:
