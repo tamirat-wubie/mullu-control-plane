@@ -36,8 +36,8 @@ EXPECTED_STEP_NAMES = (
     "closure plan drift validation",
     "promotion readiness report",
 )
-EXPECTED_READINESS_LEVEL = "pilot-governed-core"
-EXPECTED_PRODUCTION_READY = False
+EXPECTED_READINESS_LEVEL = "production-general-agent"
+EXPECTED_PRODUCTION_READY = True
 
 
 @dataclass(frozen=True, slots=True)

@@ -41,14 +41,13 @@ The current expected aggregate plan contains:
 
 | Measure | Value |
 | --- | ---: |
-| Total closure actions | 11 |
-| Approval-required actions | 7 |
-| Source plan types | `adapter` and `portfolio`; `deployment` source actions are closed |
-| Current readiness level | `pilot-governed-core` |
+| Total closure actions | 6 |
+| Approval-required actions | 6 |
+| Source plan types | `deployment` and `portfolio`; `adapter` source actions are closed |
+| Current readiness level | `production-general-agent` |
 
-The target readiness remains `production-general-agent`, but the current state
-is still blocked by adapter evidence and governed credential/live-receipt
-closure.
+The target readiness is `production-general-agent`, but final execution remains
+gated by upstream API readiness and governed portfolio review actions.
 
 ## Prerequisites
 

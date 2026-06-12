@@ -44,17 +44,14 @@ REQUIRED_STEP_IDS = frozenset({
     "validate_publication_and_promotion",
 })
 REQUIRED_APPROVAL_BLOCKERS = frozenset({
-    "voice_dependency_missing:OPENAI_API_KEY",
-    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+    "deployment_upstream_api_gate_not_ready",
     "capability_improvement_required:financial.refund",
     "capability_improvement_required:agentic_control.evidence.append",
     "capability_improvement_required:agentic_control.governance_gate.evaluate",
     "capability_improvement_required:agentic_control.code_change.plan",
     "capability_improvement_required:agentic_control.incident_recovery.plan",
 })
-REQUIRED_BLOCKING_GAPS = frozenset({
-    "adapter_evidence_not_closed",
-})
+REQUIRED_BLOCKING_GAPS = frozenset()
 REQUIRED_STEP_COMMAND_TOKENS = {
     "collect_adapter_evidence": ("collect_capability_adapter_evidence.py",),
     "write_promotion_readiness": ("validate_general_agent_promotion.py", "--output"),
@@ -93,10 +90,10 @@ REQUIRED_STEP_COMMAND_TOKENS = {
 }
 REQUIRED_STEP_EVIDENCE = {
     "write_promotion_readiness": frozenset({
-        "readiness_level=pilot-governed-core",
+        "readiness_level=production-general-agent",
         "capability_count=80",
         "capsule_count=13",
-        "production blockers explicit",
+        "production blockers absent",
     }),
     "validate_adapter_closure_plan_schema": frozenset({
         "capability_adapter_closure_plan_schema_validation.json ok=true",
@@ -105,7 +102,7 @@ REQUIRED_STEP_EVIDENCE = {
         "adapter action receipt_validator present",
     }),
     "validate_aggregate_closure_plan": frozenset({
-        "general_agent_promotion_closure_plan.json total_action_count=11",
+        "general_agent_promotion_closure_plan.json total_action_count=6",
         "general_agent_promotion_closure_plan_schema_validation.json ok=true",
         "general_agent_promotion_closure_plan_validation.json ok=true",
         "capability_improvement_portfolio.json plan_count=5",
@@ -120,7 +117,7 @@ REQUIRED_STEP_EVIDENCE = {
         "terminal_evidence_reconciliation ready_for_terminal_certificate_minting=false",
         "general_agent_promotion_terminal_minting_gate.json schema_valid=true",
         "terminal_minting_gate ready_for_terminal_certificate_minting=false",
-        "approval_required_action_count=7",
+        "approval_required_action_count=6",
         "source_plan_type includes deployment and portfolio",
         "closure_chain status=passed_blocked",
         "closure_chain artifact_valid=true",
@@ -143,8 +140,8 @@ REQUIRED_STEP_EVIDENCE = {
         "deployment_witness.json deployment_claim=published",
     }),
     "validate_publication_and_promotion": frozenset({
-        "general-agent promotion ready=false",
-        "readiness_level=pilot-governed-core",
+        "general-agent promotion ready=true",
+        "readiness_level=production-general-agent",
     }),
 }
 

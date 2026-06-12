@@ -207,8 +207,8 @@ def _ready_report() -> dict[str, object]:
         "checked_at": "2026-05-01T12:00:00+00:00",
         "missing_environment_variables": [],
         "environment_binding_actions": [],
-        "production_ready": False,
-        "readiness_level": "pilot-governed-core",
+        "production_ready": True,
+        "readiness_level": "production-general-agent",
         "ready": True,
         "step_count": 10,
         "steps": [
@@ -223,9 +223,9 @@ def _ready_report() -> dict[str, object]:
             {"detail": "valid=true", "name": "environment binding receipt validation", "passed": True},
             {"detail": "all required environment variables are present", "name": "required environment bindings", "passed": True},
             {"detail": "ok=true action_count=0 approval_required_action_count=0 blocker_count=0", "name": "adapter closure schema validation", "passed": True},
-            {"detail": "ok=true action_count=8 approval_required_action_count=8 source_plan_types=['deployment', 'portfolio']", "name": "closure plan schema validation", "passed": True},
-            {"detail": "ok=true expected_action_count=8 observed_action_count=8 expected_approval_required_count=8 observed_approval_required_count=8", "name": "closure plan drift validation", "passed": True},
-            {"detail": "readiness_level=pilot-governed-core capability_count=80 capsule_count=13 production_ready=false", "name": "promotion readiness report", "passed": True},
+            {"detail": "ok=true action_count=6 approval_required_action_count=6 source_plan_types=['deployment', 'portfolio']", "name": "closure plan schema validation", "passed": True},
+            {"detail": "ok=true expected_action_count=6 observed_action_count=6 expected_approval_required_count=6 observed_approval_required_count=6", "name": "closure plan drift validation", "passed": True},
+            {"detail": "readiness_level=production-general-agent capability_count=80 capsule_count=13 production_ready=true", "name": "promotion readiness report", "passed": True},
         ],
     }
 

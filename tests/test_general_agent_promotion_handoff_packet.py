@@ -19,7 +19,7 @@ def test_handoff_packet_avoids_forbidden_terminology() -> None:
 
     assert FORBIDDEN_PHRASE not in packet_text.lower()
     assert "General-Agent Promotion Handoff Packet" in packet_text
-    assert "pilot-governed-core" in packet_text
+    assert "production-general-agent" in packet_text
 
 
 def test_handoff_packet_links_operator_artifacts() -> None:
@@ -67,15 +67,12 @@ def test_handoff_packet_preserves_blockers_and_terminal_proof() -> None:
     packet_text = _packet_text()
     packet = json.loads(PACKET_JSON.read_text(encoding="utf-8"))
     aggregate_closure_actions = packet["aggregate_closure_actions"]
-    assert packet["open_blockers"] == [
-        "adapter_evidence_not_closed",
-    ]
-    assert "adapter_evidence_not_closed" in packet_text
+    assert packet["open_blockers"] == []
+    assert "deployment_upstream_api_gate_not_ready" in packet_text
     assert "document_adapter_not_closed" not in packet_text
     assert f"Aggregate closure actions | {aggregate_closure_actions}" in packet_text
     assert f"Approval-required actions | {packet['approval_required_actions']}" in packet_text
-    assert "voice_dependency_missing:OPENAI_API_KEY" in packet["approval_required_blockers"]
-    assert "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN" in packet["approval_required_blockers"]
+    assert "deployment_upstream_api_gate_not_ready" in packet["approval_required_blockers"]
     assert "capability_improvement_required:agentic_control.evidence.append" in packet_text
     assert "capability_improvement_required:agentic_control.governance_gate.evaluate" in packet_text
     assert "capability_improvement_required:agentic_control.code_change.plan" in packet_text

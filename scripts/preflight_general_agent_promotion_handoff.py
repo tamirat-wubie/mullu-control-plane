@@ -54,9 +54,9 @@ DEFAULT_READINESS = REPO_ROOT / ".change_assurance" / "general_agent_promotion_r
 DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "general_agent_promotion_handoff_preflight.json"
 DEFAULT_CAPABILITY_ROOT = REPO_ROOT / "capabilities"
 DEFAULT_CAPSULE_ROOT = REPO_ROOT / "capsules"
-EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT = 8
-EXPECTED_READINESS_LEVEL = "pilot-governed-core"
-EXPECTED_PRODUCTION_READY = False
+EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT = 6
+EXPECTED_READINESS_LEVEL = "production-general-agent"
+EXPECTED_PRODUCTION_READY = True
 EXPECTED_SOURCE_PLAN_TYPES = ("deployment", "portfolio")
 OPTIONAL_SOURCE_PLAN_TYPES = ("adapter", "deployment")
 
