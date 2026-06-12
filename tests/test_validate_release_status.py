@@ -213,7 +213,7 @@ def test_status_document_reflects_deployment_runtime_input_gap() -> None:
     assert "Refresh deployment runtime input witness (#466)" in content
     assert "MULLU_GATEWAY_URL" in content
     assert "MULLU_AUTHORITY_OPERATOR_SECRET" in content
-    assert "deployment_claim=not-published" in content
+    assert "deployment_claim=published" in content
     assert "docs/59_general_agent_promotion_handoff_packet.md" in content
     assert "examples/general_agent_promotion_handoff_packet.json" in content
     assert "examples/general_agent_promotion_environment_bindings.json" in content
