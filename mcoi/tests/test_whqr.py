@@ -29,6 +29,7 @@ from mcoi_runtime.contracts.whqr import (
     WHRole,
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
+from mcoi_runtime.whqr.binding_preflight import validate_binding_preflight
 from mcoi_runtime.whqr.connectors import AssertionKind, compile_connector
 from mcoi_runtime.whqr.entity_binder import EntityBindingCandidate, EntityBindingStatus, bind_entities
 from mcoi_runtime.whqr.evaluator import WHQREvaluationContext, evaluate
@@ -400,3 +401,32 @@ def test_entity_binder_reports_empty_candidate_tuple_as_missing() -> None:
     assert report.bound is False
     assert len(report.issues) == 1
     assert report.issues[0].status is EntityBindingStatus.MISSING
+
+
+def test_binding_preflight_requires_refs_for_typed_or_partial_nodes_only() -> None:
+    expr = LogicalExpr(
+        op=LogicalOp.AND,
+        args=(
+            WHQRNode(role=WHRole.WHO, target="actor"),
+            WHQRNode(role=WHRole.WHOM, target="vendor", node_id="n1", expected_type="vendor"),
+            WHQRNode(role=WHRole.WHAT, target="invoice", entity_ref="invoice:1"),
+            WHQRNode(
+                role=WHRole.WHY,
+                target="policy",
+                expected_type="policy",
+                entity_ref="policy:refund",
+                evidence_ref="evidence:policy",
+            ),
+        ),
+    )
+    report = validate_binding_preflight(expr)
+    issue_codes = {(issue.target, issue.code) for issue in report.issues}
+
+    assert report.passed is False
+    assert issue_codes == {
+        ("vendor", "missing_entity_ref"),
+        ("vendor", "missing_evidence_ref"),
+        ("invoice", "missing_evidence_ref"),
+    }
+    assert report.issues[0].node_id == "n1"
+    assert report.issues[0].expected_type == "vendor"
