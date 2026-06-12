@@ -160,8 +160,9 @@ def validate_general_agent_promotion_handoff_packet(
         packet,
         explicit_path=adapter_evidence_path,
     )
+    effective_closure_plan_path = DEFAULT_CLOSURE_PLAN if closure_plan_path is None else closure_plan_path
     closure_plan = _load_or_derive_closure_plan(
-        closure_plan_path,
+        effective_closure_plan_path,
         errors,
         adapter_evidence_path=effective_adapter_evidence_path,
     )
@@ -502,6 +503,19 @@ def _adapter_evidence_path_for_packet(
         packet.get("status") == "ready_for_final_validation"
         or packet.get("production_promotion") == "ready"
     ) and DEFAULT_CLOSED_ADAPTER_EVIDENCE.exists():
+        return DEFAULT_CLOSED_ADAPTER_EVIDENCE
+    adapter_blockers = {
+        "adapter_evidence_not_closed",
+        "voice_adapter_not_closed",
+        "email_calendar_adapter_not_closed",
+    }
+    open_blockers = packet.get("open_blockers", [])
+    if (
+        packet.get("readiness_level") == "pilot-governed-core"
+        and isinstance(open_blockers, list)
+        and adapter_blockers.isdisjoint(str(blocker) for blocker in open_blockers)
+        and DEFAULT_CLOSED_ADAPTER_EVIDENCE.exists()
+    ):
         return DEFAULT_CLOSED_ADAPTER_EVIDENCE
     return None
 
