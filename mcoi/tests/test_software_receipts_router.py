@@ -11,6 +11,7 @@ Invariants:
 
 from __future__ import annotations
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -102,6 +103,28 @@ def test_list_filters_by_request_and_stage() -> None:
     assert body["count"] == 1
     assert body["receipts"][0]["receipt_id"] == terminal.receipt_id
     assert body["receipts"][0]["stage"] == "terminal_closed"
+
+
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [
+        ("get", "/software/receipts"),
+        ("get", "/software/receipts/review"),
+        ("post", "/software/receipts/review/sync"),
+    ],
+)
+def test_software_receipt_read_limits_reject_over_bound_values(
+    method: str,
+    path: str,
+) -> None:
+    client = _client(SoftwareChangeReceiptStore())
+
+    response = getattr(client, method)(path, params={"limit": 501})
+    detail = response.json()["detail"]
+
+    assert response.status_code == 422
+    assert detail[0]["type"] == "less_than_equal"
+    assert detail[0]["loc"][-1] == "limit"
 
 
 def test_get_receipt_by_id_returns_found_flag() -> None:

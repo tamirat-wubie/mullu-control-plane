@@ -48,6 +48,7 @@ from mcoi_runtime.persistence.software_change_receipt_store import (
 
 router = APIRouter(prefix="/software/receipts", tags=["software-receipts"])
 _FALLBACK_STORE = SoftwareChangeReceiptStore()
+_MAX_SOFTWARE_RECEIPT_READ_LIMIT = 500
 
 
 class SoftwareReceiptEnvelope(BaseModel):
@@ -357,7 +358,7 @@ def _render_private_pilot_operator_view_html(
 def list_software_receipts(
     request_id: str | None = None,
     stage: str | None = None,
-    limit: int = Query(default=50, ge=1),
+    limit: int = Query(default=50, ge=1, le=_MAX_SOFTWARE_RECEIPT_READ_LIMIT),
     tenant_id: str = Depends(require_read),
 ) -> SoftwareReceiptEnvelope:
     """List stored lifecycle receipts with optional request/stage filters."""
@@ -415,7 +416,7 @@ def replay_software_receipts(
 
 @router.post("/review/sync", response_model=SoftwareReceiptEnvelope)
 def sync_software_receipt_reviews(
-    limit: int = Query(default=10, ge=1),
+    limit: int = Query(default=10, ge=1, le=_MAX_SOFTWARE_RECEIPT_READ_LIMIT),
     tenant_id: str = Depends(require_write),
 ) -> SoftwareReceiptEnvelope:
     """Materialize open receipt-chain signals as canonical review requests."""
@@ -500,7 +501,7 @@ def decide_software_receipt_review_request(
 
 @router.get("/review", response_model=SoftwareReceiptEnvelope)
 def review_software_receipts(
-    limit: int = Query(default=10, ge=1),
+    limit: int = Query(default=10, ge=1, le=_MAX_SOFTWARE_RECEIPT_READ_LIMIT),
     tenant_id: str = Depends(require_read),
 ) -> SoftwareReceiptEnvelope:
     """List latest receipt for each request chain needing operator review."""
