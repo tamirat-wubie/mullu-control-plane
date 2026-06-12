@@ -66,11 +66,16 @@ def build_policy_decision(
 
 def build_guard_verdict(decision: PolicyDecision) -> GuardVerdict:
     """Build a guard verdict from a WHQR policy decision."""
+    reason = decision.reasons[0]
     return GuardVerdict(
         "whqr_policy",
         decision.status is PolicyDecisionStatus.ALLOW,
-        decision.reasons[0].message,
-        {"policy_status": decision.status.value},
+        reason.message,
+        {
+            "policy_status": decision.status.value,
+            "reason_code": reason.code,
+            "reason_details": reason.details,
+        },
     )
 
 
