@@ -11,16 +11,28 @@ from .connectors import (
     compile_connector,
 )
 from .evaluator import WHQREvaluationContext, evaluate
+from .entity_binder import (
+    EntityBindingCandidate,
+    EntityBindingIssue,
+    EntityBindingReport,
+    EntityBindingStatus,
+    bind_entities,
+)
 from .mil_compiler import compile_and_verify_mil_from_policy_decision, compile_mil_from_policy_decision
 from .static_checks import StaticCheckIssue, StaticCheckReport, validate_static
 
 __all__ = [
     "AssertionKind",
     "ConnectorCompilation",
+    "EntityBindingCandidate",
+    "EntityBindingIssue",
+    "EntityBindingReport",
+    "EntityBindingStatus",
     "SemanticAssertion",
     "StaticCheckIssue",
     "StaticCheckReport",
     "WHQREvaluationContext",
+    "bind_entities",
     "compile_and_verify_mil_from_policy_decision",
     "compile_connector",
     "compile_mil_from_policy_decision",
