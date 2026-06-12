@@ -433,8 +433,14 @@ def test_guard_verdict_preserves_whqr_policy_reason_details() -> None:
 
     assert verdict.guard_id == "whqr_policy"
     assert verdict.passed is False
+    assert verdict.detail["decision_id"] == decision.decision_id
+    assert verdict.detail["goal_id"] == "goal-static-audit"
+    assert verdict.detail["subject_id"] == "operator"
+    assert verdict.detail["issued_at"] == "2026-05-06T12:00:01Z"
     assert verdict.detail["policy_status"] == "deny"
     assert verdict.detail["reason_code"] == "whqr_static_deny"
+    assert verdict.detail["decision_metadata"]["reason_code"] == "whqr_static_deny"
+    assert verdict.detail["whqr_canonical_hash"] == decision.metadata["whqr_canonical_hash"]
     assert verdict.detail["reason_details"]["static_issues"][0]["code"] == "side_effect_target"
     assert verdict.detail["reason_details"]["binding_issues"] == ()
 

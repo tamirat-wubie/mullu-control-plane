@@ -78,9 +78,15 @@ def build_guard_verdict(decision: PolicyDecision) -> GuardVerdict:
         decision.status is PolicyDecisionStatus.ALLOW,
         reason.message,
         {
+            "decision_id": decision.decision_id,
+            "goal_id": decision.goal_id,
             "policy_status": decision.status.value,
             "reason_code": reason.code,
             "reason_details": reason.details,
+            "subject_id": decision.subject_id,
+            "issued_at": decision.issued_at,
+            "decision_metadata": decision.metadata,
+            "whqr_canonical_hash": decision.metadata.get("whqr_canonical_hash"),
         },
     )
 
