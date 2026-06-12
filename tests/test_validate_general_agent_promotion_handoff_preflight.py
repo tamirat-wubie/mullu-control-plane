@@ -207,8 +207,8 @@ def _ready_report() -> dict[str, object]:
         "checked_at": "2026-05-01T12:00:00+00:00",
         "missing_environment_variables": [],
         "environment_binding_actions": [],
-        "production_ready": True,
-        "readiness_level": "production-general-agent",
+        "production_ready": False,
+        "readiness_level": "pilot-governed-core",
         "ready": True,
         "step_count": 10,
         "steps": [
