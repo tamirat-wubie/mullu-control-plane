@@ -44,6 +44,34 @@ def test_apply_deployment_publication_status_updates_verified_claim(tmp_path: Pa
     assert "**Last audited:** 2026-05-15" in updated_status
 
 
+def test_apply_deployment_publication_status_updates_summary_rows(tmp_path: Path) -> None:
+    deployment_status = tmp_path / "DEPLOYMENT_STATUS.md"
+    witness_path = tmp_path / "deployment_witness.json"
+    deployment_status.write_text(_full_deployment_status(), encoding="utf-8")
+    witness_path.write_text(json.dumps(_published_witness()), encoding="utf-8")
+
+    application = apply_deployment_publication_status(
+        deployment_status_path=deployment_status,
+        witness_path=witness_path,
+        operator_approval_ref="approval://deployment/publication/001",
+        audited_at="2026-05-15",
+    )
+    updated_status = deployment_status.read_text(encoding="utf-8")
+
+    assert application.errors == ()
+    assert application.updated is True
+    assert "**API health endpoint:** `https://gateway.example/health`" in updated_status
+    assert "| README production claim boundary | `DEPLOYMENT_STATUS.md` now records" in updated_status
+    assert "| Public production health | Declared from a verified published deployment witness;" in updated_status
+    assert "| Observed pilot health probe URL | `https://gateway.example/health` is the declared" in updated_status
+    assert "| Upstream API readiness | `api.mullusi.com` has a verified published deployment witness" in updated_status
+    assert "| Deployment witness workflow runs | A deployment witness workflow run collected" in updated_status
+    assert "deployment publication remains `not-published`" not in updated_status
+    assert "deployment_claim=not-published" not in updated_status
+    assert "`api.mullusi.com` remains `AwaitingEvidence`" not in updated_status
+    assert "live production runtime is not published" not in updated_status
+
+
 def test_apply_deployment_publication_status_blocks_missing_approval(
     tmp_path: Path,
 ) -> None:
@@ -177,6 +205,31 @@ def _deployment_status() -> str:
             "**Last audited:** 2026-05-01",
             "**Deployment witness state:** `not-published`",
             "**Public production health endpoint:** `not-declared`",
+            "",
+        )
+    )
+
+
+def _full_deployment_status() -> str:
+    return "\n".join(
+        (
+            "# Deployment Status Witness",
+            "",
+            "**Last audited:** 2026-05-01",
+            "**Deployment witness state:** `not-published`",
+            "**Public production health endpoint:** `not-declared`",
+            "**API health endpoint:** `not-declared`",
+            "",
+            "| Surface | Witness | Status |",
+            "|---|---|---|",
+            "| README production claim boundary | `README.md` states that live production runtime is not published and that public production health is not claimed until signed witness, public-health declaration, and evidence-plane witnesses are collected | Reflected |",
+            "| Public production health | Not declared; `.change_assurance/deployment_witness.json` records `deployment_claim=not-published`, skipped runtime and conformance signature verification, and no `.change_assurance/public_production_health_declaration.json` receipt is present | Reflected |",
+            "",
+            "| Input surface | Observed state |",
+            "|---|---|",
+            "| Observed pilot health probe URL | `https://gateway.example/health` is named only as a pilot probe URL; it is not a public production health declaration while deployment publication remains `not-published` |",
+            "| Upstream API readiness | `api.mullusi.com` remains `AwaitingEvidence` until upstream recovery, runtime host, managed PostgreSQL, secret store, TLS, rollback, and DNS publication authority gates are closed |",
+            "| Deployment witness workflow runs | `deployment-witness.yml` run `27148629126` completed successfully on 2026-06-08 for `https://gateway.example`, but the local deployment witness remains `not-published` until signatures, upstream readiness, production evidence, and public-health declaration evidence close |",
             "",
         )
     )

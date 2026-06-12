@@ -50,6 +50,30 @@ LAST_AUDITED_PATTERN = re.compile(
     r"^\*\*Last audited:\*\*\s+[0-9]{4}-[0-9]{2}-[0-9]{2}$",
     re.MULTILINE,
 )
+API_HEALTH_PATTERN = re.compile(
+    r"^\*\*API health endpoint:\*\*\s+`([^`]+)`$",
+    re.MULTILINE,
+)
+README_PRODUCTION_CLAIM_ROW_PATTERN = re.compile(
+    r"^\| README production claim boundary \| .+ \| Reflected \|$",
+    re.MULTILINE,
+)
+PUBLIC_HEALTH_ROW_PATTERN = re.compile(
+    r"^\| Public production health \| .+ \| Reflected \|$",
+    re.MULTILINE,
+)
+OBSERVED_HEALTH_ROW_PATTERN = re.compile(
+    r"^\| Observed pilot health probe URL \| .+ \|$",
+    re.MULTILINE,
+)
+UPSTREAM_API_READINESS_ROW_PATTERN = re.compile(
+    r"^\| Upstream API readiness \| .+ \|$",
+    re.MULTILINE,
+)
+DEPLOYMENT_WITNESS_RUN_ROW_PATTERN = re.compile(
+    r"^\| Deployment witness workflow runs \| .+ \|$",
+    re.MULTILINE,
+)
 AUDITED_DATE_PATTERN = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
 
 
@@ -204,6 +228,64 @@ def _published_status_candidate(
         label="Public production health endpoint",
         errors=errors,
     )
+    candidate = _replace_optional_line(
+        text=candidate,
+        pattern=API_HEALTH_PATTERN,
+        replacement=f"**API health endpoint:** `{public_health_endpoint}`",
+    )
+    candidate = _replace_optional_line(
+        text=candidate,
+        pattern=README_PRODUCTION_CLAIM_ROW_PATTERN,
+        replacement=(
+            "| README production claim boundary | `DEPLOYMENT_STATUS.md` now "
+            "records the published public-health declaration; README and "
+            "status-summary surfaces must stay synchronized with this witness "
+            "| Reflected |"
+        ),
+    )
+    candidate = _replace_optional_line(
+        text=candidate,
+        pattern=PUBLIC_HEALTH_ROW_PATTERN,
+        replacement=(
+            "| Public production health | Declared from a verified published "
+            f"deployment witness; `{public_health_endpoint}` is the public "
+            "health endpoint, `.change_assurance/deployment_witness.json` "
+            "records `deployment_claim=published`, and "
+            "`.change_assurance/public_production_health_declaration.json` "
+            "records the operator-approved declaration receipt | Reflected |"
+        ),
+    )
+    candidate = _replace_optional_line(
+        text=candidate,
+        pattern=OBSERVED_HEALTH_ROW_PATTERN,
+        replacement=(
+            "| Observed pilot health probe URL | "
+            f"`{public_health_endpoint}` is the declared public production "
+            "health endpoint backed by the published deployment witness and "
+            "public-health declaration receipt |"
+        ),
+    )
+    candidate = _replace_optional_line(
+        text=candidate,
+        pattern=UPSTREAM_API_READINESS_ROW_PATTERN,
+        replacement=(
+            "| Upstream API readiness | `api.mullusi.com` has a verified "
+            "published deployment witness, clear runtime and authority "
+            "responsibility debt, production evidence closure, and declared "
+            f"public health endpoint `{public_health_endpoint}` |"
+        ),
+    )
+    candidate = _replace_optional_line(
+        text=candidate,
+        pattern=DEPLOYMENT_WITNESS_RUN_ROW_PATTERN,
+        replacement=(
+            "| Deployment witness workflow runs | A deployment witness "
+            f"workflow run collected the published witness for `{witness_payload.get('gateway_url')}`; "
+            "the local deployment witness records verified signatures, clear "
+            "runtime and authority responsibility debt, production evidence "
+            "closure, and `deployment_claim=published` |"
+        ),
+    )
     if LAST_AUDITED_PATTERN.search(candidate):
         candidate = LAST_AUDITED_PATTERN.sub(f"**Last audited:** {audited_at}", candidate)
     return candidate, errors
@@ -219,6 +301,17 @@ def _replace_required_line(
 ) -> str:
     if pattern.search(text) is None:
         errors.append(f"DEPLOYMENT_STATUS.md missing field: {label}")
+        return text
+    return pattern.sub(replacement, text, count=1)
+
+
+def _replace_optional_line(
+    *,
+    text: str,
+    pattern: re.Pattern[str],
+    replacement: str,
+) -> str:
+    if pattern.search(text) is None:
         return text
     return pattern.sub(replacement, text, count=1)
 

@@ -160,7 +160,7 @@ def validate_general_agent_promotion_handoff_packet(
         packet,
         explicit_path=adapter_evidence_path,
     )
-    effective_closure_plan_path = DEFAULT_CLOSURE_PLAN if closure_plan_path is None else closure_plan_path
+    effective_closure_plan_path = closure_plan_path
     closure_plan = _load_or_derive_closure_plan(
         effective_closure_plan_path,
         errors,
@@ -341,6 +341,8 @@ def _derive_current_closure_plan(*, adapter_evidence_path: Path | None) -> dict[
         adapter_plan_path = tmp_dir / "capability_adapter_closure_plan.json"
         deployment_closure_validation_path = tmp_dir / "deployment_publication_closure_validation.json"
         deployment_plan_path = tmp_dir / "deployment_publication_closure_plan.json"
+        dns_target_receipt_path = tmp_dir / "gateway_dns_target_binding_receipt.json"
+        dns_resolution_receipt_path = tmp_dir / "gateway_dns_resolution_receipt.json"
         upstream_blocker_receipt_path = tmp_dir / "deployment_upstream_blocker_receipt.json"
         portfolio_path = tmp_dir / "capability_improvement_portfolio.json"
 
@@ -383,10 +385,32 @@ def _derive_current_closure_plan(*, adapter_evidence_path: Path | None) -> dict[
             },
         )
         _write_json_payload(
+            dns_target_receipt_path,
+            {
+                "binding_state": "bound",
+                "gateway_host": "api.mullusi.com",
+                "provider": "derived-handoff-fixture",
+                "ready": True,
+                "record_type": "CNAME",
+                "target": "gateway-origin.example.net",
+                "target_kind": "hostname",
+            },
+        )
+        _write_json_payload(
+            dns_resolution_receipt_path,
+            {
+                "addresses": ["203.0.113.10"],
+                "host": "api.mullusi.com",
+                "resolved": True,
+            },
+        )
+        _write_json_payload(
             deployment_plan_path,
             plan_deployment_publication_closure(
                 readiness_path=readiness_path,
                 upstream_blocker_receipt_path=upstream_blocker_receipt_path,
+                dns_target_binding_receipt_path=dns_target_receipt_path,
+                dns_resolution_receipt_path=dns_resolution_receipt_path,
                 deployment_publication_closure_validation_path=deployment_closure_validation_path,
             ).as_dict(),
         )
