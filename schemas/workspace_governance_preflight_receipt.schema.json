@@ -76,6 +76,7 @@
             "agentic_service_harness_contract",
             "agentic_service_harness_read_models",
             "agentic_service_harness_read_model_projections",
+            "agentic_service_harness_read_model_integrity",
             "agentic_service_harness_authority_transitions",
             "foundation_operator_readiness_boundary",
             "foundation_solo_daily_loop_boundary",
