@@ -49,6 +49,8 @@ REQUIRED_PLAN_TERMS = (
     "revocation and failed-refresh",
     "approval-gated",
     "AwaitingEvidence",
+    "produce_durable_gmail_oauth_operator_handoff.py",
+    "operator handoff packet",
 )
 REQUIRED_NON_GOALS = (
     "no Google Cloud credential creation in this change",
@@ -125,6 +127,7 @@ def build_validation_report() -> dict[str, Any]:
         "durable_gmail_non_goal_boundary",
         "durable_gmail_scope_constraints",
         "durable_gmail_required_evidence",
+        "durable_gmail_operator_handoff",
         "durable_gmail_security_review_schema",
         "durable_gmail_release_block",
         "durable_gmail_secret_redaction",
