@@ -148,6 +148,24 @@ class TestLLMHistoryEndpoint:
         data = resp.json()
         assert len(data["invocations"]) >= 1
 
+    def test_history_zero_limit_returns_empty_read(self, client):
+        client.post("/api/v1/complete", json={"prompt": "zero limit"})
+        resp = client.get("/api/v1/llm/history", params={"limit": "0"})
+        data = resp.json()
+
+        assert resp.status_code == 200
+        assert data["invocations"] == []
+
+    @pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+    def test_history_invalid_limit_returns_bounded_422(self, client, limit):
+        resp = client.get("/api/v1/llm/history", params={"limit": limit})
+        detail = resp.json()["detail"]
+
+        assert resp.status_code == 422
+        assert detail["error"] == "invalid llm history request"
+        assert detail["error_code"] == "llm_history_invalid_request"
+        assert detail["governed"] is True
+
 
 class TestLedgerEndpoint:
     def test_ledger_returns_entries(self, client):
