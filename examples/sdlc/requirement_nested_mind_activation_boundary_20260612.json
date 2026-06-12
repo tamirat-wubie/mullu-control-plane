@@ -1,0 +1,58 @@
+{
+  "requirement_id": "sdlc_req_nested_mind_activation_boundary_20260612",
+  "request_id": "nested_mind_sync_activation_boundary_20260612",
+  "problem_statement": "After importing external/nested-mind-platform into the repository, the platform needs an explicit activation boundary so imported Nested Mind code does not silently become runtime authority.",
+  "success_criteria": [
+    "Nested Mind crates are classified as inactive import, local evidence tool, staging service, or future activation surface",
+    "runtime activation remains default-off unless environment gates, receipts, and readiness evidence exist",
+    "the first allowed activation lane is limited to the existing read-only projection and governed record_observation staging bridge",
+    "no public protocol schema, production claim, child-mind creation, lawbook mutation, worker activation, or system-of-record switch is claimed by the import alone"
+  ],
+  "non_goals": [
+    "no runtime service activation",
+    "no production deployment",
+    "no public protocol schema addition",
+    "no tenant or project child-mind topology change",
+    "no replacement of Mullu runtime contracts with Nested Mind Rust types"
+  ],
+  "constraints": [
+    "imported code does not gain execution authority by presence alone",
+    "Nested Mind mutation routes remain default-off until governed evidence exists",
+    "any live record_observation submit must be staging-only, receipt-bound, reconciled, and stored without raw secret or response-body persistence",
+    "mind-worker activation requires separate lease, idempotency, rollback, and secret-boundary evidence",
+    "production readiness remains AwaitingEvidence until deployment and public health witnesses exist"
+  ],
+  "risk_class": "high",
+  "affected_surfaces": [
+    "external/nested-mind-platform",
+    "docs/design/nested-mind-integration-seam.md",
+    "docs/runbooks/nested-mind-record-observation-staging.md",
+    "mcoi/mcoi_runtime/adapters/nested_mind.py",
+    "mcoi/mcoi_runtime/adapters/nested_mind_observation_submitter.py",
+    "mcoi/mcoi_runtime/contracts/nested_mind.py",
+    "mcoi/mcoi_runtime/persistence/nested_mind_store.py",
+    "scripts/nested_mind_build_observation_plan.py",
+    "scripts/nested_mind_submit_observation.py",
+    "scripts/nested_mind_reconcile_observation.py",
+    "scripts/report_nested_mind_evidence.py",
+    "scripts/validate_nested_mind_p3_readiness.py"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_sdlc_artifact.py",
+    "python -m pytest tests/test_nested_mind_staging_harness.py tests/test_nested_mind_connector.py tests/test_validate_nested_mind_p3_readiness.py -q",
+    "cargo test --manifest-path external/nested-mind-platform/Cargo.toml --workspace --quiet",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-nested-mind-activation-boundary-20260612.json"
+  ],
+  "evidence_required": [
+    "Nested Mind import merge receipt",
+    "activation boundary decision document",
+    "local Rust Nested Mind test receipt",
+    "Mullu nested-mind bridge test receipt",
+    "staging record_observation evidence store before P3 activation",
+    "P3 readiness validator receipt before memory topology activation",
+    "workspace governance preflight receipt"
+  ],
+  "uao_ref": "uao://nested-mind/activation-boundary/20260612",
+  "causal_decision_trace_ref": "trace://nested-mind/activation-boundary/20260612",
+  "receipt_ref": "receipt://nested-mind/activation-boundary/20260612"
+}

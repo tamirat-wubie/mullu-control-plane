@@ -8,6 +8,11 @@
 Treat `nested-mind-platform` as a separate governed-memory service, not as code to
 transplant into MAF.
 
+Post-merge activation is governed by
+`docs/NESTED_MIND_ACTIVATION_BOUNDARY_2026-06-12.md`. The source import makes
+Nested Mind available inside the repository, but it does not activate runtime
+authority, mutate Mullu memory, start workers, or switch the system of record.
+
 The control plane remains the outer agentic/governance brain. Nested-mind owns
 the recursive symbolic-state substrate:
 
