@@ -10,6 +10,7 @@ import json
 
 import pytest
 
+from mcoi_runtime.contracts.conversation import ClarificationResponse
 from mcoi_runtime.contracts.whqr import (
     ADVERB_THRESHOLDS,
     SEMANTICS_HASH,
@@ -30,7 +31,10 @@ from mcoi_runtime.contracts.whqr import (
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError
 from mcoi_runtime.whqr.binding_preflight import validate_binding_preflight
-from mcoi_runtime.whqr.clarification import build_binding_clarification_requests
+from mcoi_runtime.whqr.clarification import (
+    admit_binding_clarification_response,
+    build_binding_clarification_requests,
+)
 from mcoi_runtime.whqr.connectors import AssertionKind, compile_connector
 from mcoi_runtime.whqr.entity_binder import EntityBindingCandidate, EntityBindingStatus, bind_entities
 from mcoi_runtime.whqr.evaluator import WHQREvaluationContext, evaluate
@@ -458,3 +462,73 @@ def test_binding_clarification_requests_group_issues_by_target() -> None:
     assert bundle.requests[1].request_id == "whqr-binding:goal:2:vendor-node"
     assert "entity reference and evidence reference" in bundle.requests[1].question
     assert "missing_entity_ref,missing_evidence_ref" in bundle.requests[1].context
+
+
+def test_binding_clarification_response_admits_explicit_refs_only() -> None:
+    expr = WHQRNode(role=WHRole.WHOM, target="vendor", node_id="vendor-node", expected_type="vendor")
+    report = validate_binding_preflight(expr)
+    bundle = build_binding_clarification_requests(
+        report,
+        thread_id="thread-1",
+        requested_from_id="operator",
+        requested_at="2026-05-06T12:00:01Z",
+    )
+    request = bundle.requests[0]
+    response = ClarificationResponse(
+        request_id=request.request_id,
+        thread_id=request.thread_id,
+        answer="entity_ref=vendor:acme;evidence_ref=evidence:vendor-doc-1",
+        responded_by_id="operator",
+        responded_at="2026-05-06T12:05:01Z",
+    )
+
+    result = admit_binding_clarification_response(request, response)
+
+    assert result.accepted is True
+    assert result.reason == "accepted"
+    assert result.target == "vendor"
+    assert result.candidate is not None
+    assert result.candidate == EntityBindingCandidate("vendor:acme", "evidence:vendor-doc-1", "vendor")
+    binding_report = bind_entities(expr, {result.target: result.candidate})
+
+    assert binding_report.issues == ()
+    assert isinstance(binding_report.expr, WHQRNode)
+    assert binding_report.expr.entity_ref == "vendor:acme"
+    assert binding_report.expr.evidence_ref == "evidence:vendor-doc-1"
+
+
+def test_binding_clarification_response_rejects_free_text_and_mismatch() -> None:
+    report = validate_binding_preflight(
+        WHQRNode(role=WHRole.WHOM, target="vendor", node_id="vendor-node", expected_type="vendor")
+    )
+    request = build_binding_clarification_requests(
+        report,
+        thread_id="thread-1",
+        requested_from_id="operator",
+        requested_at="2026-05-06T12:00:01Z",
+    ).requests[0]
+    free_text = ClarificationResponse(
+        request_id=request.request_id,
+        thread_id=request.thread_id,
+        answer="Use Acme from the vendor document",
+        responded_by_id="operator",
+        responded_at="2026-05-06T12:05:01Z",
+    )
+    mismatch = ClarificationResponse(
+        request_id="other-request",
+        thread_id=request.thread_id,
+        answer="entity_ref=vendor:acme;evidence_ref=evidence:vendor-doc-1",
+        responded_by_id="operator",
+        responded_at="2026-05-06T12:05:01Z",
+    )
+
+    free_text_result = admit_binding_clarification_response(request, free_text)
+    mismatch_result = admit_binding_clarification_response(request, mismatch)
+
+    assert free_text_result.accepted is False
+    assert free_text_result.reason == "invalid_response_binding_field"
+    assert free_text_result.candidate is None
+    assert free_text_result.target == "vendor"
+    assert mismatch_result.accepted is False
+    assert mismatch_result.reason == "request_mismatch"
+    assert mismatch_result.candidate is None

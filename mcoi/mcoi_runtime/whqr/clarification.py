@@ -1,15 +1,18 @@
-"""Purpose: build deterministic clarification requests from WHQR binding gaps.
-Governance scope: convert unresolved WHQR binding preflight issues into operator-facing questions without side effects.
-Dependencies: conversation contracts and WHQR binding preflight reports.
-Invariants: generation is pure, deterministic, grouped by WHQR target, and preserves every unresolved issue in request context.
+"""Purpose: build deterministic clarification requests and binding admissions from WHQR binding gaps.
+Governance scope: convert unresolved WHQR binding preflight issues into operator-facing questions and explicit binding candidates without side effects.
+Dependencies: conversation contracts, WHQR binding preflight reports, and WHQR entity binding candidates.
+Invariants: generation and admission are pure, deterministic, grouped by WHQR target, and preserve every unresolved issue in request context.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from mcoi_runtime.contracts.conversation import ClarificationRequest
+from mcoi_runtime.contracts.conversation import ClarificationRequest, ClarificationResponse
 from mcoi_runtime.whqr.binding_preflight import BindingPreflightIssue, BindingPreflightReport
+from mcoi_runtime.whqr.entity_binder import EntityBindingCandidate
+
+_RESPONSE_BINDING_KEYS = frozenset(("entity_ref", "evidence_ref", "entity_type"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,6 +22,22 @@ class WHQRClarificationBundle:
     @property
     def empty(self) -> bool:
         return not self.requests
+
+
+@dataclass(frozen=True, slots=True)
+class WHQRClarificationBindingResult:
+    target: str
+    candidate: EntityBindingCandidate | None
+    accepted: bool
+    reason: str
+
+    def __post_init__(self) -> None:
+        _require_text(self.target, "target")
+        _require_text(self.reason, "reason")
+        if self.candidate is not None and not isinstance(self.candidate, EntityBindingCandidate):
+            raise ValueError("candidate must be an EntityBindingCandidate")
+        if not isinstance(self.accepted, bool):
+            raise ValueError("accepted must be a boolean")
 
 
 def build_binding_clarification_requests(
@@ -48,6 +67,31 @@ def build_binding_clarification_requests(
         for idx, issues in enumerate(grouped, start=1)
     )
     return WHQRClarificationBundle(requests)
+
+
+def admit_binding_clarification_response(
+    request: ClarificationRequest,
+    response: ClarificationResponse,
+) -> WHQRClarificationBindingResult:
+    """Admit one explicit clarification response as a WHQR entity binding candidate."""
+    context = _parse_context(request.context)
+    target = context.get("target") or "unknown"
+    if request.request_id != response.request_id or request.thread_id != response.thread_id:
+        return WHQRClarificationBindingResult(target, None, False, "request_mismatch")
+    if target == "unknown":
+        return WHQRClarificationBindingResult(target, None, False, "missing_target_context")
+    fields = _parse_response_binding_fields(response.answer)
+    if fields is None:
+        return WHQRClarificationBindingResult(target, None, False, "invalid_response_binding_field")
+    entity_ref = fields.get("entity_ref")
+    evidence_ref = fields.get("evidence_ref")
+    entity_type = fields.get("entity_type") or context.get("expected_type")
+    if not entity_ref or not evidence_ref:
+        return WHQRClarificationBindingResult(target, None, False, "missing_response_binding_field")
+    if not entity_type or entity_type == "unspecified":
+        return WHQRClarificationBindingResult(target, None, False, "missing_entity_type")
+    candidate = EntityBindingCandidate(entity_ref=entity_ref, evidence_ref=evidence_ref, entity_type=entity_type)
+    return WHQRClarificationBindingResult(target, candidate, True, "accepted")
 
 
 def _group_issues(issues: tuple[BindingPreflightIssue, ...]) -> tuple[tuple[BindingPreflightIssue, ...], ...]:
@@ -80,6 +124,34 @@ def _context(issues: tuple[BindingPreflightIssue, ...]) -> str:
 def _stable_ref(issue: BindingPreflightIssue) -> str:
     node_ref = issue.node_id or issue.target
     return node_ref.replace(":", "_").replace(" ", "_")
+
+
+def _parse_context(context: str) -> dict[str, str]:
+    fields: dict[str, str] = {}
+    for part in context.split():
+        if "=" not in part:
+            continue
+        key, value = part.split("=", 1)
+        if key:
+            fields[key] = value
+    return fields
+
+
+def _parse_response_binding_fields(answer: str) -> dict[str, str] | None:
+    fields: dict[str, str] = {}
+    for part in answer.replace("\n", ";").split(";"):
+        item = part.strip()
+        if not item:
+            continue
+        if "=" not in item:
+            return None
+        key, value = item.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if key not in _RESPONSE_BINDING_KEYS or key in fields or not value:
+            return None
+        fields[key] = value
+    return fields
 
 
 def _require_text(value: str, name: str) -> str:

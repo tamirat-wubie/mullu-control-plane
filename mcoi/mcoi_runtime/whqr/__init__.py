@@ -5,7 +5,12 @@ Invariants: package exports do not initialize runtime state or perform effects.
 """
 
 from .binding_preflight import BindingPreflightIssue, BindingPreflightReport, validate_binding_preflight
-from .clarification import WHQRClarificationBundle, build_binding_clarification_requests
+from .clarification import (
+    WHQRClarificationBindingResult,
+    WHQRClarificationBundle,
+    admit_binding_clarification_response,
+    build_binding_clarification_requests,
+)
 from .connectors import (
     AssertionKind,
     ConnectorCompilation,
@@ -36,7 +41,9 @@ __all__ = [
     "StaticCheckIssue",
     "StaticCheckReport",
     "WHQREvaluationContext",
+    "WHQRClarificationBindingResult",
     "WHQRClarificationBundle",
+    "admit_binding_clarification_response",
     "bind_entities",
     "build_binding_clarification_requests",
     "compile_and_verify_mil_from_policy_decision",
