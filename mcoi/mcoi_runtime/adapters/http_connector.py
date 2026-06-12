@@ -240,6 +240,13 @@ def _sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
 
 
+def _bounded_url_error_code(exc: urllib.error.URLError) -> str:
+    """Classify URL failures without leaking raw transport details."""
+    reason = getattr(exc, "reason", None)
+    reason_type = type(reason).__name__ if reason is not None else type(exc).__name__
+    return f"url_error:{reason_type}"
+
+
 def _encode_json_body(value: Any, *, max_bytes: int) -> tuple[bytes, str]:
     """Encode a deterministic JSON request body and return bytes + digest."""
 
@@ -685,7 +692,7 @@ class HttpConnector:
                     url,
                     self._sanitized_receipt_request(request, body_digest),
                     started_at,
-                    f"url_error:{exc.reason}",
+                    _bounded_url_error_code(exc),
                 )
             )
         except TimeoutError:
