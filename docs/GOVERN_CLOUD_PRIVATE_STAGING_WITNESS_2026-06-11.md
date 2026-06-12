@@ -1,20 +1,22 @@
 <!--
 Purpose: Record the private Govern Cloud staging deployment evidence gathered on 2026-06-11.
 Governance scope: private Render service witness, managed PostgreSQL dependency,
-  gateway integration boundary, and no-publication constraints.
+  gateway integration boundary, public read-route publication, and remaining
+  authenticated persistence constraints.
 Dependencies: DEPLOYMENT_STATUS.md, .env.example, gateway/server.py, Render
   service logs, and operator-entered secret values that are not serialized here.
-Invariants: no secret values are recorded; api.mullusi.com remains unchanged;
-  public DNS and public production health are not mutated by this witness.
+Invariants: no secret values are recorded; public DNS is unchanged; public
+  Govern Cloud read routes are limited to `/v1/health` and `/v1/version`.
 -->
 
 # Govern Cloud Private Staging Witness - 2026-06-11
 
 ## Summary
 
-This witness records a private Render staging deployment for Govern Cloud. It is
-not a public production declaration and does not replace the existing
-`api.mullusi.com` gateway witness in `DEPLOYMENT_STATUS.md`.
+This witness records a private Render staging deployment for Govern Cloud and a
+2026-06-12 follow-up public read-route publication through the existing
+`api.mullusi.com` gateway. It does not replace the existing public health
+witness in `DEPLOYMENT_STATUS.md`.
 
 | Surface | Evidence | State |
 |---|---|---|
@@ -25,7 +27,7 @@ not a public production declaration and does not replace the existing
 | Image commit label | `21e4314` | SolvedVerified |
 | Internal address | `mullusi-govern-cloud-staging:8000` | SolvedVerified |
 | Managed database | `mullu-pilot-postgres`, `Basic-256mb` | SolvedVerified |
-| Public API binding | `api.mullusi.com` unchanged | Pass |
+| Public API binding | `api.mullusi.com` forwards only `/v1/health` and `/v1/version` to Govern Cloud | SolvedVerified |
 | DNS mutation | none | Pass |
 
 ## Runtime Evidence
@@ -135,21 +137,38 @@ MULLU_GOVERN_CLOUD_DATABASE_PLAN=Basic-256mb
 
 ## Publication Decision
 
-Public publication remains `AwaitingEvidence` until the gateway deployment is
-explicitly configured with:
+Public read-route publication was applied on 2026-06-12 after PR #1594 added
+the allowlisted gateway proxy and Render was configured with:
 
 ```text
 MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED=true
 ```
 
-and a live gateway integration witness proves:
+Live gateway integration evidence:
 
-1. the gateway can reach the private service from Render;
-2. only `/v1/health` and `/v1/version` are publicly forwarded;
-3. production evidence does not expose raw secrets, database URLs, tokens, or
-   private headers;
-4. rollback is documented;
-5. an operator approves the public API binding.
+| Probe | Result | Evidence |
+|---|---|---|
+| `GET https://api.mullusi.com/v1/health` | HTTP 200 | `{"status":"ok","service":"mullusi-govern-cloud-staging"}` |
+| `GET https://api.mullusi.com/v1/version` | HTTP 200 | `{"api":"2026.05.v1","evaluator":"govern-evaluator.v1"}` |
+| `GET https://api.mullusi.com/v1/govern/evaluate` | HTTP 404 | non-allowlisted `/v1/*` routes are not proxied |
+| `GET https://api.mullusi.com/deployment/witness` | HTTP 200 | commit `600d532cca22921fe57c8999a4e2cacddab0fc7f`, runtime `pilot` |
+| `GET https://api.mullusi.com/audit/verify` | HTTP 200 | `valid:true` |
+| `GET https://api.mullusi.com/proof/verify` | HTTP 200 | `valid:true` |
+
+Control-plane evidence:
+
+```text
+PR: https://github.com/tamirat-wubie/mullu-control-plane/pull/1594
+CI: https://github.com/tamirat-wubie/mullu-control-plane/actions/runs/27428655521
+GitHub issue witness: https://github.com/mullusi/mullusi-govern-cloud/issues/1#issuecomment-4693195280
+```
+
+Outcome for public read-route publication: `SolvedVerified`.
+
+Remaining Govern Cloud deployment issue blocker: authenticated persistence and
+proof-stamp probing remain `AwaitingEvidence` until the Govern Cloud repository
+persistence probe can run with a governed runtime credential such as
+`MULLUSI_DEV_API_KEY`. No raw secret values are recorded in this witness.
 
 ## Rollback
 
@@ -167,8 +186,8 @@ Rollback does not require DNS changes because no DNS mutation was made.
 
 Outcome: `SolvedVerified` for private staging runtime evidence and post-merge
 CI.
-Public production outcome: `AwaitingEvidence`.
-Next action: deploy the allowlisted public read proxy, set
-`MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED=true` only after operator approval, and
-collect live `/v1/health` plus `/v1/version` evidence before declaring
-`api.mullusi.com` Govern Cloud publication complete.
+Public read-route outcome: `SolvedVerified`.
+Authenticated persistence outcome: `AwaitingEvidence`.
+Next action: run the deployed Govern Cloud persistence/proof-stamp probe with a
+governed runtime credential, then close `mullusi/mullusi-govern-cloud#1` only if
+that probe passes without exposing secret values.
