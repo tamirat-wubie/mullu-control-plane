@@ -341,6 +341,7 @@ def _derive_current_closure_plan(*, adapter_evidence_path: Path | None) -> dict[
         adapter_plan_path = tmp_dir / "capability_adapter_closure_plan.json"
         deployment_closure_validation_path = tmp_dir / "deployment_publication_closure_validation.json"
         deployment_plan_path = tmp_dir / "deployment_publication_closure_plan.json"
+        upstream_blocker_receipt_path = tmp_dir / "deployment_upstream_blocker_receipt.json"
         portfolio_path = tmp_dir / "capability_improvement_portfolio.json"
 
         if adapter_evidence_path is None:
@@ -373,10 +374,19 @@ def _derive_current_closure_plan(*, adapter_evidence_path: Path | None) -> dict[
             deployment_closure_validation_path,
         )
         _write_json_payload(
+            upstream_blocker_receipt_path,
+            {
+                "api_provisioning_allowed": False,
+                "dns_publication_allowed": False,
+                "ready": False,
+                "upstream_state": "AwaitingEvidence",
+            },
+        )
+        _write_json_payload(
             deployment_plan_path,
             plan_deployment_publication_closure(
                 readiness_path=readiness_path,
-                upstream_blocker_receipt_path=tmp_dir / "deployment_upstream_blocker_receipt.absent.json",
+                upstream_blocker_receipt_path=upstream_blocker_receipt_path,
                 deployment_publication_closure_validation_path=deployment_closure_validation_path,
             ).as_dict(),
         )
