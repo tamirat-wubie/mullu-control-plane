@@ -364,6 +364,7 @@ def produce_email_calendar_live_receipt(
             blockers.append("email_calendar_probe_observed_external_write")
         status = "passed" if not blockers else "failed"
         worker_receipt = asdict(response.receipt)
+        worker_error = _safe_email_calendar_worker_error(getattr(response, "error", ""))
         payload = {
             "receipt_id": _receipt_id("email-calendar", checked_at, worker_receipt),
             "adapter_id": "communication.email_calendar_worker",
@@ -378,8 +379,10 @@ def produce_email_calendar_live_receipt(
             "worker_receipt": _json_ready(worker_receipt),
             "blockers": blockers,
         }
+        if worker_error:
+            payload["worker_error"] = worker_error
         if status == "failed":
-            payload.update(_email_calendar_recovery_payload(blockers))
+            payload.update(_email_calendar_recovery_payload(blockers, worker_error=worker_error))
     except Exception:  # noqa: BLE001
         blockers.append("email_calendar_probe_exception")
         payload = _failed_payload(
@@ -399,7 +402,7 @@ def produce_email_calendar_live_receipt(
     )
 
 
-def _email_calendar_recovery_payload(blockers: list[str]) -> dict[str, Any]:
+def _email_calendar_recovery_payload(blockers: list[str], *, worker_error: str = "") -> dict[str, Any]:
     """Return bounded recovery metadata for failed email/calendar live receipts."""
     if "email_calendar_probe_observed_external_write" in blockers:
         return {
@@ -412,7 +415,7 @@ def _email_calendar_recovery_payload(blockers: list[str]) -> dict[str, Any]:
         failure_class = "worker_probe_failed"
     else:
         return {}
-    return {
+    payload = {
         "failure_class": failure_class,
         "recovery_actions": [
             "verify_email_calendar_worker_reachable",
@@ -421,6 +424,36 @@ def _email_calendar_recovery_payload(blockers: list[str]) -> dict[str, Any]:
             "rerun_email_calendar_live_receipt_probe",
         ],
     }
+    if worker_error:
+        payload["provider_diagnostic"] = worker_error
+    return payload
+
+
+def _safe_email_calendar_worker_error(error: object) -> str:
+    """Return a bounded email/calendar worker diagnostic without secret material."""
+    if not isinstance(error, str):
+        return ""
+    stripped = error.strip()
+    if not stripped:
+        return ""
+    if stripped.startswith("provider status "):
+        status_text = stripped.removeprefix("provider status ").strip()
+        if status_text.isdigit():
+            return f"provider status {status_text[:3]}"
+    transport_prefix = "email/calendar connector transport failed: "
+    if stripped.startswith(transport_prefix):
+        transport_class = stripped.removeprefix(transport_prefix).strip()
+        safe_class = "".join(ch for ch in transport_class if ch.isalnum() or ch == "_")[:64]
+        return f"{transport_prefix}{safe_class}" if safe_class else ""
+    if stripped in {
+        "connector credential unavailable",
+        "email/calendar adapter unavailable",
+        "email/calendar connector action unsupported",
+        "approval witness required for connector write",
+        "email/calendar verification failed",
+    }:
+        return stripped
+    return "redacted_worker_error"
 
 
 def _probe_exception_recovery_payload(adapter_id: str) -> dict[str, Any]:
