@@ -296,6 +296,7 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
         "payment_provider",
         "recovery",
         "proof_verification",
+        "audit_chain",
         "observability",
         "support",
         "secrets",
@@ -318,12 +319,14 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert judgments["payment_provider_handoff_path"]["status"] == "unknown"
     assert judgments["rollback_recovery_path"]["status"] == "unknown"
     assert judgments["proof_verification_path"]["status"] == "unknown"
+    assert judgments["audit_chain_verification_path"]["status"] == "unknown"
     assert judgments["observability_evidence_path"]["status"] == "unknown"
     assert judgments["support_escalation_path"]["status"] == "unknown"
     assert "evidence_required:finance_approval" in judgments["finance_approval_path"]["reasons"]
     assert "evidence_required:payment_provider" in judgments["payment_provider_handoff_path"]["reasons"]
     assert "evidence_required:recovery" in judgments["rollback_recovery_path"]["reasons"]
     assert "evidence_required:proof_verification" in judgments["proof_verification_path"]["reasons"]
+    assert "evidence_required:audit_chain" in judgments["audit_chain_verification_path"]["reasons"]
     assert "evidence_required:observability" in judgments["observability_evidence_path"]["reasons"]
     assert "evidence_required:support" in judgments["support_escalation_path"]["reasons"]
     assert judgments["source_to_secret"]["status"] == "blocked"
@@ -338,6 +341,7 @@ def test_spatial_map_read_model_bounded(client: TestClient) -> None:
     assert "finance_and_payment_paths_require_approval_and_provider_evidence" in spatial_map["witness"]
     assert "rollback_recovery_path_requires_recovery_evidence_before_effect_claims" in spatial_map["witness"]
     assert "proof_verification_path_requires_evidence_before_proof_claims" in spatial_map["witness"]
+    assert "audit_chain_verification_path_requires_integrity_evidence_before_audit_claims" in spatial_map["witness"]
     assert "operational_launch_boundaries_require_observability_and_support_evidence" in spatial_map["witness"]
     assert "secret_boundary_blocks_source_to_secret_path" in spatial_map["witness"]
 
