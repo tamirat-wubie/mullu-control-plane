@@ -11,6 +11,7 @@ import json
 import pytest
 
 from mcoi_runtime.contracts.conversation import ClarificationResponse
+from mcoi_runtime.contracts.policy import PolicyDecisionStatus
 from mcoi_runtime.contracts.whqr import (
     ADVERB_THRESHOLDS,
     SEMANTICS_HASH,
@@ -39,6 +40,7 @@ from mcoi_runtime.whqr.clarification import (
 from mcoi_runtime.whqr.connectors import AssertionKind, compile_connector
 from mcoi_runtime.whqr.entity_binder import EntityBindingCandidate, EntityBindingStatus, bind_entities
 from mcoi_runtime.whqr.evaluator import WHQREvaluationContext, evaluate
+from mcoi_runtime.whqr.governance import build_policy_decision
 from mcoi_runtime.whqr.static_checks import validate_static
 
 
@@ -385,6 +387,28 @@ def test_static_checks_reject_duplicate_node_ids_and_side_effect_targets() -> No
     assert not report.passed
     assert issue_codes == {"duplicate_node_id", "side_effect_target"}
     assert len(report.issues) == 2
+
+
+def test_governance_decision_records_static_issue_details() -> None:
+    decision = build_policy_decision(
+        WHQRNode(role=WHRole.HOW, target="send_email", node_id="unsafe-action"),
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        goal_id="goal-static-audit",
+        context=WHQREvaluationContext(
+            node_results={
+                "send_email": GateResult(TruthGate.TRUE, NormGate.PERMITTED, EvidenceGate.PROVEN),
+            }
+        ),
+    )
+    details = decision.reasons[0].details
+
+    assert decision.status is PolicyDecisionStatus.DENY
+    assert decision.reasons[0].code == "whqr_deny"
+    assert details["truth"] == "true"
+    assert details["static_issues"][0]["code"] == "side_effect_target"
+    assert details["static_issues"][0]["target"] == "send_email"
+    assert details["binding_issues"] == ()
 
 
 def test_entity_binder_attaches_entity_and_evidence_refs_without_changing_tree_shape() -> None:
