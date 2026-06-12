@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from html import escape
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
 
 from mcoi_runtime.app.readiness import production_readiness_checks
@@ -25,6 +25,32 @@ from mcoi_runtime.app.routers._tenant_scope import scoped_listing_tenant
 from mcoi_runtime.core.spatial_governance import build_gateway_spatial_map
 
 router = APIRouter()
+_MAX_CONSOLE_READ_LIMIT = 500
+
+
+def _coerce_console_read_limit(limit: object) -> int:
+    """Return a bounded console read limit."""
+    error_detail = {
+        "error": "invalid_limit",
+        "message": "limit must be a positive integer",
+    }
+    if isinstance(limit, bool):
+        raise HTTPException(status_code=422, detail=error_detail)
+    try:
+        value = int(limit)
+    except (TypeError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=error_detail) from exc
+    if str(limit).strip() != str(value):
+        raise HTTPException(status_code=422, detail=error_detail)
+    if value < 1 or value > _MAX_CONSOLE_READ_LIMIT:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error": "invalid_limit",
+                "message": "limit must be between 1 and 500",
+            },
+        )
+    return value
 
 
 # ═══ Home Dashboard ═══
@@ -71,15 +97,16 @@ def console_runs(
     request: Request,
     tenant_id: str | None = None,
     outcome: str | None = None,
-    limit: int = 50,
+    limit: str = "50",
 ):
     """Operator runs view — recent governed actions with status."""
     deps.metrics.inc("requests_governed")
     tenant_id = scoped_listing_tenant(request, tenant_id)
+    read_limit = _coerce_console_read_limit(limit)
     entries = deps.audit_trail.query(
         tenant_id=tenant_id,
         outcome=outcome,
-        limit=limit,
+        limit=read_limit,
     )
     return {
         "runs": [
@@ -110,16 +137,17 @@ def console_audit(
     tenant_id: str | None = None,
     action: str | None = None,
     outcome: str | None = None,
-    limit: int = 100,
+    limit: str = "100",
 ):
     """Operator audit view — searchable event history."""
     deps.metrics.inc("requests_governed")
     tenant_id = scoped_listing_tenant(request, tenant_id)
+    read_limit = _coerce_console_read_limit(limit)
     entries = deps.audit_trail.query(
         tenant_id=tenant_id,
         action=action,
         outcome=outcome,
-        limit=limit,
+        limit=read_limit,
     )
 
     # Aggregate by action type
