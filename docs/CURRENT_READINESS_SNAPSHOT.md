@@ -103,8 +103,8 @@ Invariants: this snapshot may not claim public production health, legal clearanc
 | Control surface | `Mullu Control Plane` | Internal/admin/deployment/governance surface |
 | Latest tagged release | `v3.13.3` | GitHub release witness, not superseded by mainline notes |
 | Mainline implementation | v4.x implementation and hardening records | Repository-mainline evidence only |
-| Public production runtime | Not published from this repository | No production health claim |
-| Public health endpoint | Not declared | Requires deployment witness and production evidence plane closure |
+| Public production runtime | Published deployment witness recorded in `DEPLOYMENT_STATUS.md` | Public health is declared for `https://api.mullusi.com/health`; this does not imply customer readiness, enterprise SLA, or live Nested Mind activation |
+| Public health endpoint | `https://api.mullusi.com/health` | Declared from deployment witness and production evidence plane closure; downstream readiness gaps remain separately bounded |
 | Best current external posture | Foundation-stage product direction / controlled staging review | Not public SaaS, not enterprise SLA |
 
 ## Allowed short description
