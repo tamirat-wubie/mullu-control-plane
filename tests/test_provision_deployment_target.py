@@ -15,7 +15,11 @@ import subprocess
 
 import pytest
 
-from scripts.provision_deployment_target import main, provision_deployment_target
+from scripts.provision_deployment_target import (
+    build_deployment_target,
+    main,
+    provision_deployment_target,
+)
 
 
 class FakeRunner:
@@ -82,6 +86,18 @@ def test_provision_deployment_target_sets_repository_variables() -> None:
         "https://gateway.example.com",
     ]
     assert runner.commands[1][-1] == "pilot"
+
+
+def test_build_deployment_target_validates_without_repository_writes() -> None:
+    target = build_deployment_target(
+        gateway_url="https://gateway.example.com/",
+        expected_environment="production",
+        repository="mullusi/example",
+    )
+
+    assert target.repository == "mullusi/example"
+    assert target.gateway_url == "https://gateway.example.com"
+    assert target.expected_environment == "production"
 
 
 def test_provision_deployment_target_rejects_missing_url() -> None:
