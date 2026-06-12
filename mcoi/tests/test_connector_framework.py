@@ -144,6 +144,17 @@ def test_history_bounded() -> None:
     assert fw.recent_invocations(limit=-1) == []
 
 
+@pytest.mark.parametrize("limit", [True, "1", None])
+def test_history_rejects_invalid_limit_contract(limit) -> None:
+    fw = _make_framework()
+    fw.register(_sample_connector(), lambda a, p: {})
+    fw.invoke("c1", "ping", {})
+
+    with pytest.raises(ValueError, match="connector invocation history limit must be an integer"):
+        fw.recent_invocations(limit=limit)
+    assert fw.summary()["history_size"] == 1
+
+
 def test_summary() -> None:
     fw = _make_framework()
     fw.register(_sample_connector(), lambda a, p: {})
@@ -235,6 +246,38 @@ def test_connector_lifecycle_and_history_endpoints(client) -> None:
     assert history.status_code == 200
     assert history.json()["governed"] is True
     assert history.json()["count"] >= 2
+
+
+def test_connector_history_zero_limit_returns_empty_read(client) -> None:
+    client.post("/api/v1/connectors/register", json={
+        "connector_id": "history-zero",
+        "name": "History Zero",
+        "connector_type": "http_api",
+    })
+    client.post("/api/v1/connectors/invoke", json={
+        "connector_id": "history-zero",
+        "action": "fetch",
+        "payload": {"url": "/history-zero"},
+    })
+
+    resp = client.get("/api/v1/connectors/history", params={"limit": "0"})
+    data = resp.json()
+
+    assert resp.status_code == 200
+    assert data["governed"] is True
+    assert data["invocations"] == []
+    assert data["count"] == 0
+
+
+@pytest.mark.parametrize("limit", ["-1", "not-a-limit", "501"])
+def test_connector_history_rejects_invalid_limit(client, limit: str) -> None:
+    resp = client.get("/api/v1/connectors/history", params={"limit": limit})
+    detail = resp.json()["detail"]
+
+    assert resp.status_code == 422
+    assert detail["error"] == "invalid connector history request"
+    assert detail["error_code"] == "connector_history_invalid_request"
+    assert detail["governed"] is True
 
 
 def test_invalid_connector_type_400(client) -> None:
