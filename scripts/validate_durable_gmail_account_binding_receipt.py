@@ -5,10 +5,12 @@ Purpose: verify that a Gmail OAuth live evidence path is bound to the expected
 tenant and mailbox account without serializing mailbox addresses or secrets.
 Governance scope: Gmail account binding, tenant boundary, profile-probe
 evidence, secret redaction, freshness, and production-claim blocking.
-Dependencies: scripts.validate_durable_gmail_oauth_runtime_preflight.
+Dependencies: scripts.validate_durable_gmail_oauth_live_receipt_freshness and
+scripts.validate_durable_gmail_oauth_runtime_preflight.
 Invariants:
   - Raw mailbox addresses and token-shaped values are never serialized.
   - Binding requires matching expected and observed account hashes.
+  - Tenant binding requires a fresh causal source live receipt.
   - Account binding never promotes Gmail write, Calendar, customer, or
     production authority.
 """
@@ -29,6 +31,7 @@ WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
 if str(WORKSPACE_ROOT) not in sys.path:
     sys.path.insert(0, str(WORKSPACE_ROOT))
 
+from scripts.validate_durable_gmail_oauth_live_receipt_freshness import validate_live_receipt_freshness  # noqa: E402
 from scripts.validate_durable_gmail_oauth_runtime_preflight import matched_secret_marker  # noqa: E402
 
 
@@ -44,6 +47,8 @@ EMAIL_ADDRESS_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I
 def validate_account_binding_receipt(
     receipt_path: Path = DEFAULT_RECEIPT_PATH,
     *,
+    source_receipt_path: Path | None = None,
+    require_source_fresh: bool = True,
     now: str | None = None,
     max_age_days: int = DEFAULT_MAX_AGE_DAYS,
     max_future_skew_minutes: int = DEFAULT_MAX_FUTURE_SKEW_MINUTES,
@@ -55,6 +60,9 @@ def validate_account_binding_receipt(
     receipt: dict[str, Any] = {}
     checked_at_text = ""
     checked_at: datetime | None = None
+    source_receipt_report: dict[str, Any] = {}
+    source_receipt_ready = False
+    source_receipt_path_label = ""
     now_source = "argument" if now is not None else "runtime_utc_now"
     if now is None and os.environ.get("MULLU_VALIDATION_TIMESTAMP", "").strip():
         now = os.environ["MULLU_VALIDATION_TIMESTAMP"].strip()
@@ -71,6 +79,22 @@ def validate_account_binding_receipt(
         checked_at_text = str(receipt.get("checked_at", "")).strip()
         checked_at = _parse_timestamp(checked_at_text, "checked_at", errors)
         errors.extend(_validate_binding_shape(receipt))
+        if require_source_fresh:
+            source_receipt_report = _validate_source_live_receipt(
+                receipt,
+                receipt_path=receipt_path,
+                source_receipt_path=source_receipt_path,
+                now=_timestamp_text(now_dt) if now_dt else now,
+                max_age_days=max_age_days,
+                max_future_skew_minutes=max_future_skew_minutes,
+                checked_at=checked_at,
+                errors=errors,
+                blockers=blockers,
+            )
+            source_receipt_ready = bool(source_receipt_report.get("ready"))
+            source_receipt_path_label = str(source_receipt_report.get("receipt_path", ""))
+        elif source_receipt_path is not None:
+            source_receipt_path_label = _path_label(source_receipt_path)
 
     max_age_seconds = max_age_days * 24 * 60 * 60
     max_future_skew_seconds = max_future_skew_minutes * 60
@@ -97,6 +121,10 @@ def validate_account_binding_receipt(
     if receipt and receipt.get("expected_account_hash") != receipt.get("observed_account_hash"):
         fresh = False
         blockers.append("account_hash_mismatch")
+    if require_source_fresh and receipt and not source_receipt_ready:
+        fresh = False
+    if "source_live_receipt_after_account_binding" in blockers:
+        fresh = False
 
     report = {
         "receipt_id": "durable_gmail_account_binding_validation",
@@ -105,7 +133,10 @@ def validate_account_binding_receipt(
         "receipt_path": _path_label(receipt_path),
         "valid": not errors,
         "fresh": fresh,
-        "ready_for_tenant_binding": fresh and not blockers and not errors,
+        "source_live_receipt_required": require_source_fresh,
+        "source_live_receipt_ready": source_receipt_ready,
+        "source_live_receipt_path": source_receipt_path_label,
+        "ready_for_tenant_binding": fresh and not blockers and not errors and (source_receipt_ready or not require_source_fresh),
         "freshness_status": freshness_status,
         "checked_at": checked_at_text,
         "now": _timestamp_text(now_dt) if now_dt else "",
@@ -219,6 +250,62 @@ def _receipt_status_blocks_readiness(receipt: Mapping[str, Any]) -> bool:
     )
 
 
+def _validate_source_live_receipt(
+    receipt: Mapping[str, Any],
+    *,
+    receipt_path: Path,
+    source_receipt_path: Path | None,
+    now: str | None,
+    max_age_days: int,
+    max_future_skew_minutes: int,
+    checked_at: datetime | None,
+    errors: list[str],
+    blockers: list[str],
+) -> dict[str, Any]:
+    source_path, source_path_error = _resolve_source_receipt_path(
+        receipt,
+        receipt_path=receipt_path,
+        source_receipt_path=source_receipt_path,
+    )
+    if source_path_error:
+        errors.append(source_path_error)
+        blockers.append("account_binding_source_receipt_ref_invalid")
+        return {"ready": False, "receipt_path": ""}
+    report = validate_live_receipt_freshness(
+        source_path,
+        now=now,
+        max_age_days=max_age_days,
+        max_future_skew_minutes=max_future_skew_minutes,
+    )
+    if not report.get("ready"):
+        blockers.append("account_binding_source_live_receipt_not_ready")
+    source_checked_at = _parse_timestamp(str(report.get("checked_at", "")), "source_checked_at", errors)
+    if checked_at and source_checked_at:
+        allowed_future_source = checked_at + timedelta(seconds=max_future_skew_minutes * 60)
+        if source_checked_at > allowed_future_source:
+            blockers.append("source_live_receipt_after_account_binding")
+    return report
+
+
+def _resolve_source_receipt_path(
+    receipt: Mapping[str, Any],
+    *,
+    receipt_path: Path,
+    source_receipt_path: Path | None,
+) -> tuple[Path, str]:
+    if source_receipt_path is not None:
+        return source_receipt_path, ""
+    source_ref = str(receipt.get("source_receipt_ref", "")).strip()
+    if not source_ref:
+        return receipt_path, "account binding source_receipt_ref is required"
+    candidate = Path(source_ref)
+    if candidate.is_absolute():
+        return candidate, "account binding source_receipt_ref must be workspace-relative"
+    if ".." in candidate.parts:
+        return candidate, "account binding source_receipt_ref must not traverse parent directories"
+    return WORKSPACE_ROOT / candidate, ""
+
+
 def _parse_timestamp(value: str, field_name: str, errors: list[str]) -> datetime | None:
     if not value:
         errors.append(f"{field_name} timestamp is required")
@@ -291,15 +378,27 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     parser = argparse.ArgumentParser(description="Validate durable Gmail account binding receipt.")
     parser.add_argument("--receipt", type=Path, default=DEFAULT_RECEIPT_PATH)
+    parser.add_argument("--source-live-receipt", type=Path, help="source Gmail live receipt to validate")
     parser.add_argument("--now", help="ISO-8601 validation time; defaults to env timestamp or UTC now")
     parser.add_argument("--max-age-days", type=int, default=DEFAULT_MAX_AGE_DAYS)
     parser.add_argument("--max-future-skew-minutes", type=int, default=DEFAULT_MAX_FUTURE_SKEW_MINUTES)
+    parser.add_argument(
+        "--skip-source-freshness",
+        action="store_true",
+        help="validate binding receipt shape without proving its source live receipt",
+    )
     parser.add_argument("--require-bound", action="store_true", help="return non-zero unless account binding is ready")
     parser.add_argument("--json", action="store_true", help="emit a machine-readable validation receipt")
     args = parser.parse_args(list(argv) if argv is not None else None)
 
+    if args.require_bound and args.skip_source_freshness:
+        sys.stderr.write("[ERROR] --require-bound cannot be combined with --skip-source-freshness\n")
+        return 2
+
     report = validate_account_binding_receipt(
         args.receipt,
+        source_receipt_path=args.source_live_receipt,
+        require_source_fresh=not args.skip_source_freshness,
         now=args.now,
         max_age_days=args.max_age_days,
         max_future_skew_minutes=args.max_future_skew_minutes,
