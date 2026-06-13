@@ -2,7 +2,7 @@
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, PRS]
 Dependencies: scripts.validate_durable_gmail_connector_runtime_plan.
 Invariants:
-  - Durable OAuth runtime access remains release-blocked without provider witnesses.
+  - Durable OAuth read-only probing requires provider witnesses and freshness.
   - Repository artifacts do not serialize secret values.
   - Write-capable Gmail operations remain approval-gated.
 """
@@ -22,7 +22,7 @@ def test_durable_gmail_connector_runtime_plan_validates() -> None:
     assert report["valid"] is True
     assert report["status"] == "passed"
     assert report["error_count"] == 0
-    assert report["check_count"] == 9
+    assert report["check_count"] == 10
     assert report["plan_path"] == "docs/64_durable_gmail_connector_runtime_plan.md"
 
 
@@ -80,3 +80,15 @@ def test_validator_rejects_serialized_secret_markers() -> None:
     assert "serialized secret marker is prohibited: client_secret=" in errors
     assert "client_secret=must-not-appear" in serialized_payload
     assert len(errors) == 1
+
+
+def test_plan_terms_require_freshness_gate() -> None:
+    plan_text = validator.PLAN_PATH.read_text(encoding="utf-8")
+    stale_plan_text = plan_text.replace("validate_durable_gmail_oauth_live_receipt_freshness.py", "")
+    stale_plan_text = stale_plan_text.replace("Evidence freshness", "")
+
+    errors = validator._validate_plan_terms(stale_plan_text)
+
+    assert "plan missing required term: validate_durable_gmail_oauth_live_receipt_freshness.py" in errors
+    assert "plan missing required term: Evidence freshness" in errors
+    assert len(errors) == 2
