@@ -44,6 +44,17 @@ PRODUCTION_PROMOTION_BLOCKER_ORDER = (
 )
 PRODUCTION_PROMOTION_BLOCKERS = frozenset(PRODUCTION_PROMOTION_BLOCKER_ORDER)
 PRODUCTION_BLOCKED_READINESS_LEVEL = "pilot-governed-core"
+ADAPTER_PROMOTION_BLOCKER_ORDER = (
+    "adapter_evidence_not_closed",
+    "voice_adapter_not_closed",
+    "email_calendar_adapter_not_closed",
+)
+ADAPTER_PROMOTION_BLOCKERS = frozenset(ADAPTER_PROMOTION_BLOCKER_ORDER)
+PACKET_BLOCKED_ADAPTER_EVIDENCE_BLOCKERS = (
+    "browser_live_evidence_missing",
+    "voice_dependency_missing:OPENAI_API_KEY",
+    "voice_live_evidence_missing",
+)
 
 REQUIRED_ENTRY_POINTS = {
     "human_runbook": "docs/58_general_agent_promotion_operator_runbook.md",
@@ -167,12 +178,14 @@ def validate_general_agent_promotion_handoff_packet(
         packet,
         explicit_path=adapter_evidence_path,
     )
+    adapter_blockers = _adapter_promotion_blockers_from_packet(packet)
     production_blockers = _production_promotion_blockers_from_packet(packet)
     effective_closure_plan_path = closure_plan_path
     closure_plan = _load_or_derive_closure_plan(
         effective_closure_plan_path,
         errors,
         adapter_evidence_path=effective_adapter_evidence_path,
+        adapter_blockers=adapter_blockers,
         production_blockers=production_blockers,
     )
     if not schema or not packet:
@@ -182,6 +195,7 @@ def validate_general_agent_promotion_handoff_packet(
     readiness = _evaluate_promotion_readiness(
         errors,
         adapter_evidence_path=effective_adapter_evidence_path,
+        adapter_blockers=adapter_blockers,
         production_blockers=production_blockers,
     )
     _validate_scalar_fields(packet, checklist, closure_plan, readiness, errors)
@@ -315,6 +329,7 @@ def _load_or_derive_closure_plan(
     errors: list[str],
     *,
     adapter_evidence_path: Path | None,
+    adapter_blockers: tuple[str, ...],
     production_blockers: tuple[str, ...],
 ) -> dict[str, Any]:
     if path is not None and path.exists():
@@ -322,6 +337,7 @@ def _load_or_derive_closure_plan(
     return _derive_closure_plan_or_error(
         errors,
         adapter_evidence_path=adapter_evidence_path,
+        adapter_blockers=adapter_blockers,
         production_blockers=production_blockers,
     )
 
@@ -330,11 +346,13 @@ def _derive_closure_plan_or_error(
     errors: list[str],
     *,
     adapter_evidence_path: Path | None,
+    adapter_blockers: tuple[str, ...],
     production_blockers: tuple[str, ...],
 ) -> dict[str, Any]:
     try:
         return _derive_current_closure_plan(
             adapter_evidence_path=adapter_evidence_path,
+            adapter_blockers=adapter_blockers,
             production_blockers=production_blockers,
         )
     except (ImportError, OSError, TypeError, ValueError) as exc:
@@ -345,6 +363,7 @@ def _derive_closure_plan_or_error(
 def _derive_current_closure_plan(
     *,
     adapter_evidence_path: Path | None,
+    adapter_blockers: tuple[str, ...],
     production_blockers: tuple[str, ...],
 ) -> dict[str, Any]:
     from scripts.collect_capability_adapter_evidence import collect_capability_adapter_evidence
@@ -369,7 +388,12 @@ def _derive_current_closure_plan(
         upstream_blocker_receipt_path = tmp_dir / "deployment_upstream_blocker_receipt.json"
         portfolio_path = tmp_dir / "capability_improvement_portfolio.json"
 
-        if adapter_evidence_path is None:
+        if adapter_evidence_path is None and adapter_blockers:
+            _write_json_payload(
+                derived_adapter_evidence_path,
+                _packet_blocked_adapter_evidence_payload(),
+            )
+        elif adapter_evidence_path is None:
             _write_json_payload(
                 derived_adapter_evidence_path,
                 collect_capability_adapter_evidence(
@@ -383,11 +407,12 @@ def _derive_current_closure_plan(
             )
         else:
             derived_adapter_evidence_path = adapter_evidence_path
-        readiness_payload = _readiness_payload_with_production_blockers(
+        readiness_payload = _readiness_payload_with_packet_blockers(
             validate_general_agent_promotion(
                 repo_root=REPO_ROOT,
                 adapter_evidence_path=derived_adapter_evidence_path,
             ).as_dict(),
+            adapter_blockers=adapter_blockers,
             production_blockers=production_blockers,
         )
         _write_json_payload(readiness_path, readiness_payload)
@@ -533,6 +558,7 @@ def _evaluate_promotion_readiness(
     errors: list[str],
     *,
     adapter_evidence_path: Path | None,
+    adapter_blockers: tuple[str, ...],
     production_blockers: tuple[str, ...],
 ) -> dict[str, Any]:
     try:
@@ -540,8 +566,9 @@ def _evaluate_promotion_readiness(
             repo_root=REPO_ROOT,
             adapter_evidence_path=adapter_evidence_path,
         ).as_dict()
-        return _readiness_payload_with_production_blockers(
+        return _readiness_payload_with_packet_blockers(
             readiness,
+            adapter_blockers=adapter_blockers,
             production_blockers=production_blockers,
         )
     except Exception:  # noqa: BLE001
@@ -555,21 +582,37 @@ def _evaluate_promotion_readiness(
         }
 
 
-def _readiness_payload_with_production_blockers(
+def _readiness_payload_with_packet_blockers(
     readiness: dict[str, Any],
     *,
+    adapter_blockers: tuple[str, ...],
     production_blockers: tuple[str, ...],
 ) -> dict[str, Any]:
-    """Return a readiness payload that preserves explicit production blockers."""
-    if not production_blockers:
+    """Return a readiness payload that preserves explicit handoff blockers."""
+    packet_blockers = (*adapter_blockers, *production_blockers)
+    if not packet_blockers:
         return readiness
     effective = dict(readiness)
     observed_readiness_blockers = [str(item) for item in readiness.get("blockers", ())]
-    blockers = list(dict.fromkeys([*production_blockers, *observed_readiness_blockers]))
+    blockers = list(dict.fromkeys([*packet_blockers, *observed_readiness_blockers]))
     effective["ready"] = False
     effective["readiness_level"] = PRODUCTION_BLOCKED_READINESS_LEVEL
     effective["blockers"] = blockers
     return effective
+
+
+def _adapter_promotion_blockers_from_packet(packet: dict[str, Any]) -> tuple[str, ...]:
+    """Return adapter blockers the packet intentionally keeps open."""
+    if (
+        packet.get("status") != "blocked_until_live_evidence"
+        and packet.get("production_promotion") != "blocked"
+    ):
+        return ()
+    observed_blockers = packet.get("open_blockers", [])
+    if not isinstance(observed_blockers, list):
+        return ()
+    observed = {str(blocker) for blocker in observed_blockers} & ADAPTER_PROMOTION_BLOCKERS
+    return tuple(blocker for blocker in ADAPTER_PROMOTION_BLOCKER_ORDER if blocker in observed)
 
 
 def _production_promotion_blockers_from_packet(packet: dict[str, Any]) -> tuple[str, ...]:
@@ -598,27 +641,73 @@ def _adapter_evidence_path_for_packet(
         or packet.get("production_promotion") == "ready"
     ) and DEFAULT_CLOSED_ADAPTER_EVIDENCE.exists():
         return DEFAULT_CLOSED_ADAPTER_EVIDENCE
-    adapter_blockers = {
-        "adapter_evidence_not_closed",
-        "voice_adapter_not_closed",
-        "email_calendar_adapter_not_closed",
-    }
     open_blockers = packet.get("open_blockers", [])
     observed_open_blockers = (
         {str(blocker) for blocker in open_blockers}
         if isinstance(open_blockers, list)
         else set()
     )
-    if adapter_blockers.intersection(observed_open_blockers) and DEFAULT_ADAPTER_EVIDENCE.exists():
+    if (
+        ADAPTER_PROMOTION_BLOCKERS.intersection(observed_open_blockers)
+        and _adapter_evidence_is_open(DEFAULT_ADAPTER_EVIDENCE)
+    ):
         return DEFAULT_ADAPTER_EVIDENCE
     if (
         packet.get("readiness_level") == "pilot-governed-core"
         and isinstance(open_blockers, list)
-        and adapter_blockers.isdisjoint(observed_open_blockers)
+        and ADAPTER_PROMOTION_BLOCKERS.isdisjoint(observed_open_blockers)
         and DEFAULT_CLOSED_ADAPTER_EVIDENCE.exists()
     ):
         return DEFAULT_CLOSED_ADAPTER_EVIDENCE
     return None
+
+
+def _adapter_evidence_is_open(path: Path) -> bool:
+    """Return true when adapter evidence exists and still reports blockers."""
+    if not path.exists():
+        return False
+    try:
+        payload = _loads_strict_json(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, ValueError):
+        return False
+    if not isinstance(payload, dict):
+        return False
+    return payload.get("ready") is not True and bool(payload.get("blockers"))
+
+
+def _packet_blocked_adapter_evidence_payload() -> dict[str, Any]:
+    """Return deterministic adapter evidence for the static blocked handoff packet."""
+    return {
+        "adapters": [
+            {
+                "adapter_id": "browser.playwright",
+                "blockers": ["browser_live_evidence_missing"],
+                "status": "not_closed",
+            },
+            {
+                "adapter_id": "document.production_parsers",
+                "blockers": [],
+                "status": "closed",
+            },
+            {
+                "adapter_id": "voice.openai",
+                "blockers": [
+                    "voice_dependency_missing:OPENAI_API_KEY",
+                    "voice_live_evidence_missing",
+                ],
+                "status": "not_closed",
+            },
+            {
+                "adapter_id": "communication.email_calendar_worker",
+                "blockers": [],
+                "status": "closed",
+            },
+        ],
+        "blockers": list(PACKET_BLOCKED_ADAPTER_EVIDENCE_BLOCKERS),
+        "checked_at": "2026-05-01T12:00:00+00:00",
+        "ready": False,
+        "report_id": "capability-adapter-evidence-packet-handoff-blocked",
+    }
 
 
 def _validation_result(
