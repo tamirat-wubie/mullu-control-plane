@@ -126,6 +126,7 @@ Invariants: schemas and wire contracts are public; runtime implementation remain
 97. Workspace governance inventory reports are public contracts when they bind repository-local governance artifact names, paths, purposes, sizes, missing-artifact counts, issue counts, and non-terminal closure flags into replayable governance evidence.
 98. Workspace governance integrity reports are public contracts when they bind repository-local governance artifact names, paths, purposes, sizes, SHA-256 digests, missing-artifact counts, issue counts, and non-terminal closure flags into replayable governance evidence.
 99. Workspace governance witnesses are public contracts when they bind repository-local governance artifact inventory, artifact count, block conditions, release status, governance scope, and self-validation artifacts into preflight-admissible evidence.
+100. TeamOps shared inbox operator handoff packets are public contracts when they bind assistant profile authority, shared inbox witness refs, owner queue evidence, approval policy, idempotency policy, Gmail OAuth scope, blocked live-probe conditions, and no-send/no-secret-serialization flags before TeamOps connector promotion.
 
 ## Verification
 
@@ -138,7 +139,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 197 schemas
+protocol manifest ok: 198 schemas
 ```
 
 STATUS:

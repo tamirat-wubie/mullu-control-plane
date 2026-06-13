@@ -161,11 +161,15 @@ def test_protocol_manifest_indexes_durable_gmail_oauth_operator_handoff() -> Non
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     handoff_entry = entries["durable-gmail-oauth-operator-handoff"]
+    team_ops_entry = entries["team-ops-shared-inbox-operator-handoff"]
 
     assert validate_protocol_manifest(manifest) == []
     assert handoff_entry["path"] == "schemas/durable_gmail_oauth_operator_handoff.schema.json"
     assert handoff_entry["urn"] == "urn:mullusi:schema:durable-gmail-oauth-operator-handoff:1"
     assert handoff_entry["surface"] == "connector"
+    assert team_ops_entry["path"] == "schemas/team_ops_shared_inbox_operator_handoff.schema.json"
+    assert team_ops_entry["urn"] == "urn:mullusi:schema:team-ops-shared-inbox-operator-handoff:1"
+    assert team_ops_entry["surface"] == "team_ops"
 
 
 def test_protocol_manifest_indexes_deployment_orchestration_validation() -> None:
