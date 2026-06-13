@@ -20,12 +20,12 @@ This packet is the operator entry point for final promotion validation. It binds
 | Readiness level | `pilot-governed-core` |
 | Capability capsules | 13 |
 | Governed capabilities | 80 |
-| Aggregate closure actions | 6 |
-| Approval-required actions | 6 |
+| Aggregate closure actions | 8 |
+| Approval-required actions | 8 |
 | Closure plan schema validation | `ok=true` |
 | Closure plan drift validation | `ok=true` |
-| Terminal certificate minting | 6 minted, 0 blocked |
-| Production promotion | ready |
+| Terminal certificate minting | 6 minted, 0 blocked; deployment witness and health blockers remain open |
+| Production promotion | blocked |
 
 ## Entry Points
 
@@ -83,6 +83,8 @@ production_health_not_declared
 ## Terminal Approval Actions
 
 ```text
+deployment_witness_not_published
+production_health_not_declared
 deployment_upstream_api_gate_not_ready
 capability_improvement_required:financial.refund
 capability_improvement_required:agentic_control.code_change.plan
@@ -91,9 +93,11 @@ capability_improvement_required:agentic_control.governance_gate.evaluate
 capability_improvement_required:agentic_control.incident_recovery.plan
 ```
 
-These six actions were admitted through explicit operator approval refs, reconciled
-against live evidence and proof receipts, then minted into terminal closure
-certificates during the 2026-06-12 promotion-chain run.
+The six non-publication actions were admitted through explicit operator approval
+refs, reconciled against live evidence and proof receipts, then minted into
+terminal closure certificates during the 2026-06-12 promotion-chain run.
+Deployment witness publication and public-health declaration remain blocked
+until their live evidence receipts close.
 
 ## Latest Terminal Minting Witness
 
