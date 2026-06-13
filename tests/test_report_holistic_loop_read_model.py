@@ -21,13 +21,14 @@ def test_default_report_exposes_blocked_loop_summaries() -> None:
 
     assert report["report_id"] == "holistic_loop_read_model"
     assert report["status"] == "blocked"
-    assert report["loop_count"] == 6
-    assert report["blocked_count"] == 6
+    assert report["loop_count"] == 7
+    assert report["blocked_count"] == 7
     assert report["report_is_not_terminal_closure"] is True
     assert isinstance(loops, list)
     assert {loop["loop_id"] for loop in loops} == {
         "audit_proof_verification_loop",
         "authority_obligation_loop",
+        "universal_action_orchestration_loop",
         "deployment_witness_loop",
         "runtime_conformance_loop",
         "cognitive_outcome_loop",
@@ -344,7 +345,7 @@ def test_report_accepts_complete_observed_authority_and_evidence_refs() -> None:
 
     assert report["status"] == "verified"
     assert report["blocked_count"] == 0
-    assert report["verified_count"] == 6
+    assert report["verified_count"] == 7
     assert all(loop["missing_authority"] == [] for loop in report["loops"])
     assert all(loop["missing_evidence"] == [] for loop in report["loops"])
     assert all(loop["status"] == "verified" for loop in report["loops"])

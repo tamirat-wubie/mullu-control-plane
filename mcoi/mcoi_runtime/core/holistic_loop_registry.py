@@ -254,6 +254,48 @@ def _default_manifests() -> dict[str, LoopManifest]:
                 },
             ),
             LoopManifest(
+                loop_id="universal_action_orchestration_loop",
+                name="Universal Action Orchestration Loop",
+                purpose=(
+                    "Describe effect-bearing action admission, receipt, replay, "
+                    "rollback, and no-bypass evidence without executing Universal "
+                    "Action Orchestration or mutating action state."
+                ),
+                owner="action_governance",
+                risk_class="effect_bearing_action",
+                allowed_modes=(
+                    LoopMode.DRY_RUN,
+                    LoopMode.SHADOW,
+                    LoopMode.SIMULATION,
+                    LoopMode.REPLAY,
+                    LoopMode.REAL,
+                ),
+                required_authority=("uao_policy_ref",),
+                required_evidence=(
+                    "action_admission_receipt_valid",
+                    "no_bypass_detector_passed",
+                    "replay_or_rollback_ref_present",
+                ),
+                closure_conditions=(
+                    "effect_reconciled",
+                    "receipt_and_memory_deltas_recorded",
+                ),
+                rollback_policy="execute_recovery_handoff_or_mark_accepted_risk",
+                learning_policy="promote rejected action causes into policy rules",
+                metadata={
+                    "existing_surfaces": (
+                        "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+                        "schemas/universal_action_orchestration.schema.json",
+                        "scripts/validate_universal_action_orchestration.py",
+                        "mcoi/mcoi_runtime/core/universal_action_kernel.py",
+                    ),
+                    "admission_dossier": (
+                        "scripts/report_holistic_loop_uao_admission_dossier.py"
+                    ),
+                    "behavior_rewrite": False,
+                },
+            ),
+            LoopManifest(
                 loop_id="deployment_witness_loop",
                 name="Deployment Witness Loop",
                 purpose=(
@@ -1285,6 +1327,29 @@ _AUTHORITY_OBLIGATION_SURFACES = (
     "authority_directory_sync",
     "runtime_conformance_attestation",
 )
+_UNIVERSAL_ACTION_ORCHESTRATION_SOURCES = (
+    "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+    "schemas/universal_action_orchestration.schema.json",
+    "schemas/universal_action_orchestration_validation_receipt.schema.json",
+    "docs/universal-action-orchestration-validation-receipt-example.json",
+    "scripts/validate_universal_action_orchestration.py",
+    "scripts/validate_universal_action_orchestration_receipt.py",
+    "scripts/validate_universal_action_orchestration_receipt_contract.py",
+    "scripts/detect_uao_runtime_bypass.py",
+    "mcoi/mcoi_runtime/core/universal_action_kernel.py",
+)
+_UNIVERSAL_ACTION_ORCHESTRATION_VALIDATORS = (
+    "tests/test_validate_universal_action_orchestration.py",
+    "tests/test_validate_universal_action_orchestration_receipt.py",
+    "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+    "tests/test_detect_uao_runtime_bypass.py",
+    "mcoi/tests/test_universal_action_kernel.py",
+    "tests/test_gateway/test_webhooks.py",
+)
+_UNIVERSAL_ACTION_ORCHESTRATION_SURFACES = (
+    "gateway_capability_fabric",
+    "universal_action_orchestration",
+)
 
 
 _DEFAULT_RECEIPT_LINEAGE_CATALOG: Mapping[str, Mapping[str, tuple[str, ...]]] = {
@@ -1297,6 +1362,11 @@ _DEFAULT_RECEIPT_LINEAGE_CATALOG: Mapping[str, Mapping[str, tuple[str, ...]]] = 
         "source_refs": _AUTHORITY_OBLIGATION_SOURCES,
         "validator_refs": _AUTHORITY_OBLIGATION_VALIDATORS,
         "proof_surface_refs": _AUTHORITY_OBLIGATION_SURFACES,
+    },
+    "universal_action_orchestration_loop": {
+        "source_refs": _UNIVERSAL_ACTION_ORCHESTRATION_SOURCES,
+        "validator_refs": _UNIVERSAL_ACTION_ORCHESTRATION_VALIDATORS,
+        "proof_surface_refs": _UNIVERSAL_ACTION_ORCHESTRATION_SURFACES,
     },
     "deployment_witness_loop": {
         "source_refs": _DEPLOYMENT_WITNESS_SOURCES,
@@ -1359,6 +1429,21 @@ _DEFAULT_STATUS_BINDINGS: Mapping[str, LoopStatusBinding] = {
         source_refs=_AUTHORITY_OBLIGATION_SOURCES,
         validator_refs=_AUTHORITY_OBLIGATION_VALIDATORS,
         proof_surface_refs=_AUTHORITY_OBLIGATION_SURFACES,
+    ),
+    "universal_action_orchestration_loop": _status_binding(
+        "Bind UAO status to unresolved policy authority, action admission receipt, no-bypass, replay, and rollback gaps.",
+        verification_refs=(
+            "required_authority_observed",
+            "required_evidence_observed",
+            "universal_action_orchestration_validators_passed",
+        ),
+        closure_gate_refs=(
+            "effect_reconciled",
+            "receipt_and_memory_deltas_recorded",
+        ),
+        source_refs=_UNIVERSAL_ACTION_ORCHESTRATION_SOURCES,
+        validator_refs=_UNIVERSAL_ACTION_ORCHESTRATION_VALIDATORS,
+        proof_surface_refs=_UNIVERSAL_ACTION_ORCHESTRATION_SURFACES,
     ),
     "deployment_witness_loop": _status_binding(
         "Bind deployment witness status to unresolved publication, runtime, audit, proof, and authority gaps.",
@@ -1494,6 +1579,18 @@ _DEFAULT_TRANSITION_BINDINGS: Mapping[str, tuple[LoopTransitionBinding, ...]] = 
         source_refs=_AUTHORITY_OBLIGATION_SOURCES,
         validator_refs=_AUTHORITY_OBLIGATION_VALIDATORS,
         proof_surface_refs=_AUTHORITY_OBLIGATION_SURFACES,
+    ),
+    "universal_action_orchestration_loop": _transition_catalog(
+        required_authority_refs=("uao_policy_ref",),
+        required_evidence_refs=(
+            "action_admission_receipt_valid",
+            "no_bypass_detector_passed",
+            "replay_or_rollback_ref_present",
+        ),
+        rollback_ref="execute_recovery_handoff_or_mark_accepted_risk",
+        source_refs=_UNIVERSAL_ACTION_ORCHESTRATION_SOURCES,
+        validator_refs=_UNIVERSAL_ACTION_ORCHESTRATION_VALIDATORS,
+        proof_surface_refs=_UNIVERSAL_ACTION_ORCHESTRATION_SURFACES,
     ),
     "deployment_witness_loop": _transition_catalog(
         required_authority_refs=("operator_approval_ref", "deployment_publication_authority"),
@@ -1660,6 +1757,44 @@ _DEFAULT_CLOSURE_CONDITION_BINDINGS: Mapping[str, tuple[LoopClosureConditionBind
                 "authority_directory_sync",
                 "runtime_conformance_attestation",
             ),
+        ),
+    ),
+    "universal_action_orchestration_loop": (
+        _closure_condition_binding(
+            "effect_reconciled",
+            "Require action admission receipt and replay or rollback evidence before an effect can be described as reconciled.",
+            required_evidence_refs=(
+                "action_admission_receipt_valid",
+                "replay_or_rollback_ref_present",
+            ),
+            required_authority_refs=("uao_policy_ref",),
+            source_refs=(
+                "schemas/universal_action_orchestration.schema.json",
+                "mcoi/mcoi_runtime/core/universal_action_kernel.py",
+            ),
+            validator_refs=(
+                "tests/test_validate_universal_action_orchestration.py",
+                "mcoi/tests/test_universal_action_kernel.py",
+            ),
+            proof_surface_refs=("gateway_capability_fabric",),
+        ),
+        _closure_condition_binding(
+            "receipt_and_memory_deltas_recorded",
+            "Require validation receipt and no-bypass evidence before UAO receipt and memory deltas can be described as recorded.",
+            required_evidence_refs=(
+                "action_admission_receipt_valid",
+                "no_bypass_detector_passed",
+            ),
+            required_authority_refs=("uao_policy_ref",),
+            source_refs=(
+                "schemas/universal_action_orchestration_validation_receipt.schema.json",
+                "scripts/detect_uao_runtime_bypass.py",
+            ),
+            validator_refs=(
+                "tests/test_validate_universal_action_orchestration_receipt.py",
+                "tests/test_detect_uao_runtime_bypass.py",
+            ),
+            proof_surface_refs=("universal_action_orchestration",),
         ),
     ),
     "deployment_witness_loop": (
@@ -1890,6 +2025,23 @@ _DEFAULT_MODE_BINDINGS: Mapping[str, LoopModeBinding] = {
         validator_refs=_AUTHORITY_OBLIGATION_VALIDATORS,
         proof_surface_refs=_AUTHORITY_OBLIGATION_SURFACES,
     ),
+    "universal_action_orchestration_loop": _mode_binding(
+        "Expose UAO dry-run, shadow, simulation, replay, and real-mode boundaries without executing orchestration or mutating action state.",
+        separation_refs=(
+            "dry_run_validates_action_without_effect",
+            "shadow_observes_orchestration_records_without_state_mutation",
+            "simulation_and_replay_use_retained_uao_receipts",
+            "real_mode_requires_uao_policy_ref_and_complete_evidence",
+        ),
+        real_execution_guard_refs=(
+            "uao_policy_ref",
+            "effect_reconciled",
+            "receipt_and_memory_deltas_recorded",
+        ),
+        source_refs=_UNIVERSAL_ACTION_ORCHESTRATION_SOURCES,
+        validator_refs=_UNIVERSAL_ACTION_ORCHESTRATION_VALIDATORS,
+        proof_surface_refs=_UNIVERSAL_ACTION_ORCHESTRATION_SURFACES,
+    ),
     "deployment_witness_loop": _mode_binding(
         "Expose deployment witness dry-run, shadow, simulation, replay, and real-mode boundaries without changing publication state.",
         separation_refs=(
@@ -2047,6 +2199,33 @@ _DEFAULT_LEARNING_BINDINGS: Mapping[str, LoopLearningBinding] = {
             "tests/test_sync_authority_directory.py",
         ),
         proof_surface_refs=("authority_obligation_mesh", "authority_directory_sync"),
+    ),
+    "universal_action_orchestration_loop": _learning_binding(
+        "promote rejected action causes into policy rules",
+        "Bind rejected action causes and bypass findings to later policy-rule updates or validation witnesses.",
+        evidence_input_refs=(
+            "action_admission_receipt_valid",
+            "no_bypass_detector_passed",
+            "replay_or_rollback_ref_present",
+        ),
+        admission_refs=(
+            "rejected_action_cause_requires_uao_validation_receipt",
+            "new_policy_rule_requires_governance_validator_anchor",
+            "effect_execution_remains_outside_read_model",
+        ),
+        retention_refs=(
+            "universal_action_orchestration_validation_receipt",
+            "uao_runtime_bypass_findings",
+        ),
+        source_refs=(
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/detect_uao_runtime_bypass.py",
+        ),
+        validator_refs=(
+            "tests/test_validate_universal_action_orchestration.py",
+            "tests/test_detect_uao_runtime_bypass.py",
+        ),
+        proof_surface_refs=("universal_action_orchestration",),
     ),
     "deployment_witness_loop": _learning_binding(
         "promote deployment blockers into release preflight checks",
@@ -2210,6 +2389,28 @@ _DEFAULT_RISK_BINDINGS: Mapping[str, LoopRiskBinding] = {
         validator_refs=_AUTHORITY_OBLIGATION_VALIDATORS,
         proof_surface_refs=_AUTHORITY_OBLIGATION_SURFACES,
     ),
+    "universal_action_orchestration_loop": _risk_binding(
+        "effect_bearing_action",
+        "Effect-bearing action risk covers unorchestrated effects, missing receipts, stale replay evidence, and rollback overclaim.",
+        hazard_refs=(
+            "unorchestrated_effect_bearing_action",
+            "missing_action_admission_receipt",
+            "rollback_or_replay_overclaim",
+        ),
+        mitigation_refs=(
+            "block_closure_until_uao_policy_ref_exists",
+            "require_no_bypass_detector",
+            "keep_effect_execution_outside_read_model",
+        ),
+        monitor_refs=(
+            "universal_action_orchestration_validation_receipt",
+            "uao_runtime_bypass_detector",
+            "command_universal_action_orchestration_read_model",
+        ),
+        source_refs=_UNIVERSAL_ACTION_ORCHESTRATION_SOURCES,
+        validator_refs=_UNIVERSAL_ACTION_ORCHESTRATION_VALIDATORS,
+        proof_surface_refs=_UNIVERSAL_ACTION_ORCHESTRATION_SURFACES,
+    ),
     "deployment_witness_loop": _risk_binding(
         "release_publication",
         "Publication risk covers public endpoint claims, witness freshness, and responsibility debt.",
@@ -2345,6 +2546,20 @@ _DEFAULT_ROLLBACK_BINDINGS: Mapping[str, LoopRollbackBinding] = {
         ),
         proof_surface_refs=("authority_obligation_mesh",),
     ),
+    "universal_action_orchestration_loop": _rollback_binding(
+        "execute_recovery_handoff_or_mark_accepted_risk",
+        "Rollback UAO closure by requiring recovery handoff evidence or an accepted-risk marker before effect closure can proceed.",
+        source_refs=(
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+            "examples/uao/blocked_missing_approval.json",
+            "examples/uao/deferred_stale_evidence.json",
+        ),
+        validator_refs=(
+            "tests/test_validate_universal_action_orchestration.py",
+            "mcoi/tests/test_universal_action_kernel.py",
+        ),
+        proof_surface_refs=("universal_action_orchestration",),
+    ),
     "deployment_witness_loop": _rollback_binding(
         "revert_publication_status_and_restore_last_verified_witness",
         "Rollback deployment publication status and restore the last verified witness boundary.",
@@ -2427,6 +2642,21 @@ _DEFAULT_AUTHORITY_BINDINGS: Mapping[str, tuple[LoopAuthorityBinding, ...]] = {
                 "tests/test_gateway/test_webhooks.py",
             ),
             proof_surface_refs=("authority_obligation_mesh",),
+        ),
+    ),
+    "universal_action_orchestration_loop": (
+        _authority_binding(
+            "uao_policy_ref",
+            "UAO policy reference authorizes effect-bearing action admission review without executing orchestration from the read model.",
+            source_refs=(
+                "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+                "scripts/validate_agents_governance.py",
+            ),
+            validator_refs=(
+                "tests/test_validate_universal_action_orchestration.py",
+                "tests/test_validate_agents_governance.py",
+            ),
+            proof_surface_refs=("universal_action_orchestration",),
         ),
     ),
     "deployment_witness_loop": (
@@ -2618,6 +2848,39 @@ _DEFAULT_EVIDENCE_BINDINGS: Mapping[str, tuple[LoopEvidenceBinding, ...]] = {
                 "authority_directory_sync",
                 "runtime_conformance_attestation",
             ),
+        ),
+    ),
+    "universal_action_orchestration_loop": (
+        _binding(
+            "action_admission_receipt_valid",
+            "Universal Action Orchestration admission receipt validates before action closure is described.",
+            source_refs=(
+                "schemas/universal_action_orchestration.schema.json",
+                "examples/universal_action_orchestration.allowed_status_publish.json",
+                "examples/universal_action_orchestration.blocked_invoice_payment.json",
+            ),
+            validator_refs=("tests/test_validate_universal_action_orchestration.py",),
+            proof_surface_refs=("universal_action_orchestration",),
+        ),
+        _binding(
+            "no_bypass_detector_passed",
+            "Runtime bypass detector passes before UAO no-bypass closure is described.",
+            source_refs=("scripts/detect_uao_runtime_bypass.py",),
+            validator_refs=("tests/test_detect_uao_runtime_bypass.py",),
+            proof_surface_refs=("universal_action_orchestration",),
+        ),
+        _binding(
+            "replay_or_rollback_ref_present",
+            "Replay or rollback reference is present before effect reconciliation can be described.",
+            source_refs=(
+                "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+                "mcoi/mcoi_runtime/core/universal_action_kernel.py",
+            ),
+            validator_refs=(
+                "mcoi/tests/test_universal_action_kernel.py",
+                "tests/test_gateway/test_webhooks.py",
+            ),
+            proof_surface_refs=("gateway_capability_fabric",),
         ),
     ),
     "deployment_witness_loop": (

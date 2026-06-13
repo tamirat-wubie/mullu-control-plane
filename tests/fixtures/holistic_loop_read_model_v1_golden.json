@@ -1,7 +1,7 @@
 {
-  "blocked_count": 6,
+  "blocked_count": 7,
   "generated_at": "2026-06-08T00:00:00+00:00",
-  "loop_count": 6,
+  "loop_count": 7,
   "loops": [
     {
       "audit_evolution_view": {
@@ -8764,11 +8764,1368 @@
         }
       ],
       "updated_at": "2026-06-08T00:00:00+00:00"
+    },
+    {
+      "audit_evolution_view": {
+        "admits_learning": false,
+        "audit_blocker_refs": [
+          "missing_authority:uao_policy_ref",
+          "missing_evidence:action_admission_receipt_valid",
+          "missing_evidence:no_bypass_detector_passed",
+          "missing_evidence:replay_or_rollback_ref_present"
+        ],
+        "audit_state": "audit_blocked_by_unresolved_gaps",
+        "emits_receipt": false,
+        "learning_admission_refs": [
+          "rejected_action_cause_requires_uao_validation_receipt",
+          "new_policy_rule_requires_governance_validator_anchor",
+          "effect_execution_remains_outside_read_model"
+        ],
+        "learning_candidate_refs": [
+          "promote rejected action causes into policy rules"
+        ],
+        "learning_evidence_input_refs": [
+          "action_admission_receipt_valid",
+          "no_bypass_detector_passed",
+          "replay_or_rollback_ref_present"
+        ],
+        "learning_policy_ref": "promote rejected action causes into policy rules",
+        "learning_retention_refs": [
+          "universal_action_orchestration_validation_receipt",
+          "uao_runtime_bypass_findings"
+        ],
+        "loop_id": "universal_action_orchestration_loop",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "gateway_capability_fabric",
+          "universal_action_orchestration"
+        ],
+        "read_only": true,
+        "receipt_lineage_refs": [
+          "observe_receipt_lineage",
+          "decision_receipt_lineage",
+          "action_projection_receipt_lineage",
+          "verification_receipt_lineage",
+          "record_receipt_lineage",
+          "state_update_projection_receipt_lineage",
+          "learning_projection_receipt_lineage",
+          "audit_projection_receipt_lineage"
+        ],
+        "receipt_refs": [
+          "sha256:1dea368af03422f414fbac69aff0f18b9e9841b1a8c753bf1dfbbd7a551eb475",
+          "sha256:14a7becff015244203e0df4f8d46d1c1ae9d37cae99f5817e00800a3f1fbd408",
+          "sha256:249100419a1ecae4d633cdd053f1815f1c707c272d9eec01d1720b0671ba1fcd",
+          "sha256:e4e0e4d6486c1d8c1a8948aed4eb1b75695897affa38b345cc19bbc6263cbd85",
+          "sha256:edc41c2f76e3c090a1a17b4476fd31b67f52d85477a563f93cff8a5e8a0fcb2d",
+          "sha256:1b563f84ec38f07e083a933c92e4e23816a721e6ed5a530fa908c566502df09b",
+          "sha256:6468610b11f4285dfa8a3d0e85786c552379f37f5635bd5cb1541baf608337c4",
+          "sha256:d6b7e3b0259f4e43fc81545c5e3bd24a9a8bfb143407b1d61585694b425aae64"
+        ],
+        "terminal_closure": false,
+        "view_ref": "universal_action_orchestration_loop_audit_evolution_view"
+      },
+      "authority_bindings": [
+        {
+          "authority_ref": "uao_policy_ref",
+          "proof_surface_refs": [
+            "universal_action_orchestration"
+          ],
+          "purpose": "UAO policy reference authorizes effect-bearing action admission review without executing orchestration from the read model.",
+          "read_only": true,
+          "source_refs": [
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+            "scripts/validate_agents_governance.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration.py",
+            "tests/test_validate_agents_governance.py"
+          ]
+        }
+      ],
+      "authority_refs": [],
+      "closure_condition_bindings": [
+        {
+          "closure_ref": "effect_reconciled",
+          "proof_surface_refs": [
+            "gateway_capability_fabric"
+          ],
+          "purpose": "Require action admission receipt and replay or rollback evidence before an effect can be described as reconciled.",
+          "read_only": true,
+          "required_authority_refs": [
+            "uao_policy_ref"
+          ],
+          "required_evidence_refs": [
+            "action_admission_receipt_valid",
+            "replay_or_rollback_ref_present"
+          ],
+          "source_refs": [
+            "schemas/universal_action_orchestration.schema.json",
+            "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration.py",
+            "mcoi/tests/test_universal_action_kernel.py"
+          ]
+        },
+        {
+          "closure_ref": "receipt_and_memory_deltas_recorded",
+          "proof_surface_refs": [
+            "universal_action_orchestration"
+          ],
+          "purpose": "Require validation receipt and no-bypass evidence before UAO receipt and memory deltas can be described as recorded.",
+          "read_only": true,
+          "required_authority_refs": [
+            "uao_policy_ref"
+          ],
+          "required_evidence_refs": [
+            "action_admission_receipt_valid",
+            "no_bypass_detector_passed"
+          ],
+          "source_refs": [
+            "schemas/universal_action_orchestration_validation_receipt.schema.json",
+            "scripts/detect_uao_runtime_bypass.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration_receipt.py",
+            "tests/test_detect_uao_runtime_bypass.py"
+          ]
+        }
+      ],
+      "closure_conditions": [
+        "effect_reconciled",
+        "receipt_and_memory_deltas_recorded"
+      ],
+      "closure_evidence_pack": {
+        "authority_complete": false,
+        "blocker_refs": [
+          "missing_authority:uao_policy_ref",
+          "missing_evidence:action_admission_receipt_valid",
+          "missing_evidence:no_bypass_detector_passed",
+          "missing_evidence:replay_or_rollback_ref_present"
+        ],
+        "closure_blocked": true,
+        "closure_condition_refs": [
+          "effect_reconciled",
+          "receipt_and_memory_deltas_recorded"
+        ],
+        "closure_report_ref": "closure_report",
+        "emits_receipt": false,
+        "evidence_complete": false,
+        "loop_id": "universal_action_orchestration_loop",
+        "missing_authority_refs": [
+          "uao_policy_ref"
+        ],
+        "missing_evidence_refs": [
+          "action_admission_receipt_valid",
+          "no_bypass_detector_passed",
+          "replay_or_rollback_ref_present"
+        ],
+        "observed_authority_refs": [],
+        "observed_evidence_refs": [],
+        "pack_ref": "universal_action_orchestration_loop_closure_evidence_pack",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "gateway_capability_fabric",
+          "universal_action_orchestration"
+        ],
+        "read_only": true,
+        "receipt_lineage_refs": [
+          "observe_receipt_lineage",
+          "decision_receipt_lineage",
+          "action_projection_receipt_lineage",
+          "verification_receipt_lineage",
+          "record_receipt_lineage",
+          "state_update_projection_receipt_lineage",
+          "learning_projection_receipt_lineage",
+          "audit_projection_receipt_lineage"
+        ],
+        "required_authority_refs": [
+          "uao_policy_ref"
+        ],
+        "required_evidence_refs": [
+          "action_admission_receipt_valid",
+          "no_bypass_detector_passed",
+          "replay_or_rollback_ref_present"
+        ],
+        "rollback_available": true,
+        "rollback_ref": "execute_recovery_handoff_or_mark_accepted_risk",
+        "terminal_closure": false,
+        "validator_refs": [
+          "scripts/validate_holistic_loop_read_model.py",
+          "scripts/validate_holistic_loop_http_surface.py",
+          "scripts/proof_coverage_matrix.py"
+        ]
+      },
+      "closure_report": {
+        "closed": false,
+        "closure_reason": "read_model_blocked_by_unresolved_gaps",
+        "evidence_complete": false,
+        "learning_candidates": [
+          "promote rejected action causes into policy rules"
+        ],
+        "loop_id": "universal_action_orchestration_loop",
+        "metadata": {
+          "closure_conditions": [
+            "effect_reconciled",
+            "receipt_and_memory_deltas_recorded"
+          ],
+          "read_only": true,
+          "terminal_closure": false
+        },
+        "rollback_available": true,
+        "unresolved_gaps": [
+          "missing_authority:uao_policy_ref",
+          "missing_evidence:action_admission_receipt_valid",
+          "missing_evidence:no_bypass_detector_passed",
+          "missing_evidence:replay_or_rollback_ref_present"
+        ]
+      },
+      "current_step": "observe",
+      "evidence_bindings": [
+        {
+          "evidence_ref": "action_admission_receipt_valid",
+          "proof_surface_refs": [
+            "universal_action_orchestration"
+          ],
+          "purpose": "Universal Action Orchestration admission receipt validates before action closure is described.",
+          "read_only": true,
+          "source_refs": [
+            "schemas/universal_action_orchestration.schema.json",
+            "examples/universal_action_orchestration.allowed_status_publish.json",
+            "examples/universal_action_orchestration.blocked_invoice_payment.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration.py"
+          ]
+        },
+        {
+          "evidence_ref": "no_bypass_detector_passed",
+          "proof_surface_refs": [
+            "universal_action_orchestration"
+          ],
+          "purpose": "Runtime bypass detector passes before UAO no-bypass closure is described.",
+          "read_only": true,
+          "source_refs": [
+            "scripts/detect_uao_runtime_bypass.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_detect_uao_runtime_bypass.py"
+          ]
+        },
+        {
+          "evidence_ref": "replay_or_rollback_ref_present",
+          "proof_surface_refs": [
+            "gateway_capability_fabric"
+          ],
+          "purpose": "Replay or rollback reference is present before effect reconciliation can be described.",
+          "read_only": true,
+          "source_refs": [
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+            "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "mcoi/tests/test_universal_action_kernel.py",
+            "tests/test_gateway/test_webhooks.py"
+          ]
+        }
+      ],
+      "evidence_refs": [],
+      "learning_binding": {
+        "admission_refs": [
+          "rejected_action_cause_requires_uao_validation_receipt",
+          "new_policy_rule_requires_governance_validator_anchor",
+          "effect_execution_remains_outside_read_model"
+        ],
+        "evidence_input_refs": [
+          "action_admission_receipt_valid",
+          "no_bypass_detector_passed",
+          "replay_or_rollback_ref_present"
+        ],
+        "learning_ref": "promote rejected action causes into policy rules",
+        "proof_surface_refs": [
+          "universal_action_orchestration"
+        ],
+        "purpose": "Bind rejected action causes and bypass findings to later policy-rule updates or validation witnesses.",
+        "read_only": true,
+        "retention_refs": [
+          "universal_action_orchestration_validation_receipt",
+          "uao_runtime_bypass_findings"
+        ],
+        "source_refs": [
+          "scripts/validate_universal_action_orchestration.py",
+          "scripts/detect_uao_runtime_bypass.py"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_validate_universal_action_orchestration.py",
+          "tests/test_detect_uao_runtime_bypass.py"
+        ]
+      },
+      "learning_policy": "promote rejected action causes into policy rules",
+      "loop_id": "universal_action_orchestration_loop",
+      "missing_authority": [
+        "uao_policy_ref"
+      ],
+      "missing_evidence": [
+        "action_admission_receipt_valid",
+        "no_bypass_detector_passed",
+        "replay_or_rollback_ref_present"
+      ],
+      "mode": "dry_run",
+      "mode_binding": {
+        "allowed_modes": [
+          "dry_run",
+          "shadow",
+          "simulation",
+          "replay",
+          "real"
+        ],
+        "mode_transition": false,
+        "projected_mode": "dry_run",
+        "proof_surface_refs": [
+          "gateway_capability_fabric",
+          "universal_action_orchestration"
+        ],
+        "purpose": "Expose UAO dry-run, shadow, simulation, replay, and real-mode boundaries without executing orchestration or mutating action state.",
+        "read_only": true,
+        "real_execution_guard_refs": [
+          "uao_policy_ref",
+          "effect_reconciled",
+          "receipt_and_memory_deltas_recorded"
+        ],
+        "separation_refs": [
+          "dry_run_validates_action_without_effect",
+          "shadow_observes_orchestration_records_without_state_mutation",
+          "simulation_and_replay_use_retained_uao_receipts",
+          "real_mode_requires_uao_policy_ref_and_complete_evidence"
+        ],
+        "source_refs": [
+          "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+          "schemas/universal_action_orchestration.schema.json",
+          "schemas/universal_action_orchestration_validation_receipt.schema.json",
+          "docs/universal-action-orchestration-validation-receipt-example.json",
+          "scripts/validate_universal_action_orchestration.py",
+          "scripts/validate_universal_action_orchestration_receipt.py",
+          "scripts/validate_universal_action_orchestration_receipt_contract.py",
+          "scripts/detect_uao_runtime_bypass.py",
+          "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_validate_universal_action_orchestration.py",
+          "tests/test_validate_universal_action_orchestration_receipt.py",
+          "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+          "tests/test_detect_uao_runtime_bypass.py",
+          "mcoi/tests/test_universal_action_kernel.py",
+          "tests/test_gateway/test_webhooks.py"
+        ]
+      },
+      "name": "Universal Action Orchestration Loop",
+      "open_blockers": [
+        "missing_authority:uao_policy_ref",
+        "missing_evidence:action_admission_receipt_valid",
+        "missing_evidence:no_bypass_detector_passed",
+        "missing_evidence:replay_or_rollback_ref_present"
+      ],
+      "operator_closure_readiness_view": {
+        "authority_gap_refs": [
+          "uao_policy_ref"
+        ],
+        "blocker_refs": [
+          "missing_authority:uao_policy_ref",
+          "missing_evidence:action_admission_receipt_valid",
+          "missing_evidence:no_bypass_detector_passed",
+          "missing_evidence:replay_or_rollback_ref_present"
+        ],
+        "closure_condition_refs": [
+          "effect_reconciled",
+          "receipt_and_memory_deltas_recorded"
+        ],
+        "evidence_gap_refs": [
+          "action_admission_receipt_valid",
+          "no_bypass_detector_passed",
+          "replay_or_rollback_ref_present"
+        ],
+        "loop_id": "universal_action_orchestration_loop",
+        "mutation_route": false,
+        "next_proof_action": "resolve_blockers_before_terminal_closure_review",
+        "next_proof_refs": [
+          "closure_evidence_pack",
+          "closure_report",
+          "missing_authority:uao_policy_ref",
+          "missing_evidence:action_admission_receipt_valid",
+          "missing_evidence:no_bypass_detector_passed",
+          "missing_evidence:replay_or_rollback_ref_present"
+        ],
+        "projected_status": "blocked",
+        "read_only": true,
+        "readiness_state": "blocked_by_unresolved_gaps",
+        "rollback_available": true,
+        "rollback_ref": "execute_recovery_handoff_or_mark_accepted_risk",
+        "terminal_closure": false,
+        "view_ref": "universal_action_orchestration_loop_operator_closure_readiness_view"
+      },
+      "owner": "action_governance",
+      "proof_obligation_view": {
+        "blocker_refs": [
+          "missing_authority:uao_policy_ref",
+          "missing_evidence:action_admission_receipt_valid",
+          "missing_evidence:no_bypass_detector_passed",
+          "missing_evidence:replay_or_rollback_ref_present"
+        ],
+        "closure_condition_refs": [
+          "effect_reconciled",
+          "receipt_and_memory_deltas_recorded"
+        ],
+        "executes_validator": false,
+        "loop_id": "universal_action_orchestration_loop",
+        "missing_authority_refs": [
+          "uao_policy_ref"
+        ],
+        "missing_evidence_refs": [
+          "action_admission_receipt_valid",
+          "no_bypass_detector_passed",
+          "replay_or_rollback_ref_present"
+        ],
+        "obligation_ref": "universal_action_orchestration_loop_proof_obligation_view",
+        "obligation_state": "blocked_by_missing_proof",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "gateway_capability_fabric",
+          "universal_action_orchestration"
+        ],
+        "read_only": true,
+        "required_authority_refs": [
+          "uao_policy_ref"
+        ],
+        "required_evidence_refs": [
+          "action_admission_receipt_valid",
+          "no_bypass_detector_passed",
+          "replay_or_rollback_ref_present"
+        ],
+        "satisfied_authority_refs": [],
+        "satisfied_evidence_refs": [],
+        "terminal_closure": false,
+        "validator_refs": [
+          "scripts/validate_holistic_loop_read_model.py",
+          "scripts/validate_holistic_loop_http_surface.py",
+          "scripts/proof_coverage_matrix.py"
+        ]
+      },
+      "purpose": "Describe effect-bearing action admission, receipt, replay, rollback, and no-bypass evidence without executing Universal Action Orchestration or mutating action state.",
+      "receipt_lineage_bindings": [
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "observe_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "gateway_capability_fabric",
+            "universal_action_orchestration"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:1dea368af03422f414fbac69aff0f18b9e9841b1a8c753bf1dfbbd7a551eb475",
+          "receipt_ref": "observe_receipt",
+          "required_evidence_refs": [
+            "action_admission_receipt_valid",
+            "no_bypass_detector_passed",
+            "replay_or_rollback_ref_present"
+          ],
+          "source_receipt_refs": [
+            "observe_receipt",
+            "loop_manifest",
+            "loop_state_projection"
+          ],
+          "source_refs": [
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+            "schemas/universal_action_orchestration.schema.json",
+            "schemas/universal_action_orchestration_validation_receipt.schema.json",
+            "docs/universal-action-orchestration-validation-receipt-example.json",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_universal_action_orchestration_receipt.py",
+            "scripts/validate_universal_action_orchestration_receipt_contract.py",
+            "scripts/detect_uao_runtime_bypass.py",
+            "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+          ],
+          "step": "observe",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration.py",
+            "tests/test_validate_universal_action_orchestration_receipt.py",
+            "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+            "tests/test_detect_uao_runtime_bypass.py",
+            "mcoi/tests/test_universal_action_kernel.py",
+            "tests/test_gateway/test_webhooks.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "decision_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "gateway_capability_fabric",
+            "universal_action_orchestration"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:14a7becff015244203e0df4f8d46d1c1ae9d37cae99f5817e00800a3f1fbd408",
+          "receipt_ref": "decision_receipt",
+          "required_evidence_refs": [
+            "action_admission_receipt_valid",
+            "no_bypass_detector_passed",
+            "replay_or_rollback_ref_present"
+          ],
+          "source_receipt_refs": [
+            "decision_receipt",
+            "observe_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+            "schemas/universal_action_orchestration.schema.json",
+            "schemas/universal_action_orchestration_validation_receipt.schema.json",
+            "docs/universal-action-orchestration-validation-receipt-example.json",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_universal_action_orchestration_receipt.py",
+            "scripts/validate_universal_action_orchestration_receipt_contract.py",
+            "scripts/detect_uao_runtime_bypass.py",
+            "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+          ],
+          "step": "decide",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration.py",
+            "tests/test_validate_universal_action_orchestration_receipt.py",
+            "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+            "tests/test_detect_uao_runtime_bypass.py",
+            "mcoi/tests/test_universal_action_kernel.py",
+            "tests/test_gateway/test_webhooks.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "action_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "gateway_capability_fabric",
+            "universal_action_orchestration"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:249100419a1ecae4d633cdd053f1815f1c707c272d9eec01d1720b0671ba1fcd",
+          "receipt_ref": "action_projection_receipt",
+          "required_evidence_refs": [
+            "action_admission_receipt_valid",
+            "no_bypass_detector_passed",
+            "replay_or_rollback_ref_present"
+          ],
+          "source_receipt_refs": [
+            "action_projection_receipt",
+            "decision_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+            "schemas/universal_action_orchestration.schema.json",
+            "schemas/universal_action_orchestration_validation_receipt.schema.json",
+            "docs/universal-action-orchestration-validation-receipt-example.json",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_universal_action_orchestration_receipt.py",
+            "scripts/validate_universal_action_orchestration_receipt_contract.py",
+            "scripts/detect_uao_runtime_bypass.py",
+            "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+          ],
+          "step": "act",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration.py",
+            "tests/test_validate_universal_action_orchestration_receipt.py",
+            "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+            "tests/test_detect_uao_runtime_bypass.py",
+            "mcoi/tests/test_universal_action_kernel.py",
+            "tests/test_gateway/test_webhooks.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "verification_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "gateway_capability_fabric",
+            "universal_action_orchestration"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:e4e0e4d6486c1d8c1a8948aed4eb1b75695897affa38b345cc19bbc6263cbd85",
+          "receipt_ref": "verification_receipt",
+          "required_evidence_refs": [
+            "action_admission_receipt_valid",
+            "no_bypass_detector_passed",
+            "replay_or_rollback_ref_present"
+          ],
+          "source_receipt_refs": [
+            "verification_receipt",
+            "action_projection_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+            "schemas/universal_action_orchestration.schema.json",
+            "schemas/universal_action_orchestration_validation_receipt.schema.json",
+            "docs/universal-action-orchestration-validation-receipt-example.json",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_universal_action_orchestration_receipt.py",
+            "scripts/validate_universal_action_orchestration_receipt_contract.py",
+            "scripts/detect_uao_runtime_bypass.py",
+            "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+          ],
+          "step": "verify",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration.py",
+            "tests/test_validate_universal_action_orchestration_receipt.py",
+            "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+            "tests/test_detect_uao_runtime_bypass.py",
+            "mcoi/tests/test_universal_action_kernel.py",
+            "tests/test_gateway/test_webhooks.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "record_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "gateway_capability_fabric",
+            "universal_action_orchestration"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:edc41c2f76e3c090a1a17b4476fd31b67f52d85477a563f93cff8a5e8a0fcb2d",
+          "receipt_ref": "record_receipt",
+          "required_evidence_refs": [
+            "action_admission_receipt_valid",
+            "no_bypass_detector_passed",
+            "replay_or_rollback_ref_present"
+          ],
+          "source_receipt_refs": [
+            "record_receipt",
+            "verification_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+            "schemas/universal_action_orchestration.schema.json",
+            "schemas/universal_action_orchestration_validation_receipt.schema.json",
+            "docs/universal-action-orchestration-validation-receipt-example.json",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_universal_action_orchestration_receipt.py",
+            "scripts/validate_universal_action_orchestration_receipt_contract.py",
+            "scripts/detect_uao_runtime_bypass.py",
+            "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+          ],
+          "step": "record_receipt",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration.py",
+            "tests/test_validate_universal_action_orchestration_receipt.py",
+            "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+            "tests/test_detect_uao_runtime_bypass.py",
+            "mcoi/tests/test_universal_action_kernel.py",
+            "tests/test_gateway/test_webhooks.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "state_update_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "gateway_capability_fabric",
+            "universal_action_orchestration"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:1b563f84ec38f07e083a933c92e4e23816a721e6ed5a530fa908c566502df09b",
+          "receipt_ref": "state_update_projection_receipt",
+          "required_evidence_refs": [
+            "action_admission_receipt_valid",
+            "no_bypass_detector_passed",
+            "replay_or_rollback_ref_present"
+          ],
+          "source_receipt_refs": [
+            "state_update_projection_receipt",
+            "record_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+            "schemas/universal_action_orchestration.schema.json",
+            "schemas/universal_action_orchestration_validation_receipt.schema.json",
+            "docs/universal-action-orchestration-validation-receipt-example.json",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_universal_action_orchestration_receipt.py",
+            "scripts/validate_universal_action_orchestration_receipt_contract.py",
+            "scripts/detect_uao_runtime_bypass.py",
+            "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+          ],
+          "step": "update_state",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration.py",
+            "tests/test_validate_universal_action_orchestration_receipt.py",
+            "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+            "tests/test_detect_uao_runtime_bypass.py",
+            "mcoi/tests/test_universal_action_kernel.py",
+            "tests/test_gateway/test_webhooks.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "learning_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "gateway_capability_fabric",
+            "universal_action_orchestration"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:6468610b11f4285dfa8a3d0e85786c552379f37f5635bd5cb1541baf608337c4",
+          "receipt_ref": "learning_projection_receipt",
+          "required_evidence_refs": [
+            "action_admission_receipt_valid",
+            "no_bypass_detector_passed",
+            "replay_or_rollback_ref_present"
+          ],
+          "source_receipt_refs": [
+            "learning_projection_receipt",
+            "state_update_projection_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+            "schemas/universal_action_orchestration.schema.json",
+            "schemas/universal_action_orchestration_validation_receipt.schema.json",
+            "docs/universal-action-orchestration-validation-receipt-example.json",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_universal_action_orchestration_receipt.py",
+            "scripts/validate_universal_action_orchestration_receipt_contract.py",
+            "scripts/detect_uao_runtime_bypass.py",
+            "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+          ],
+          "step": "learn",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration.py",
+            "tests/test_validate_universal_action_orchestration_receipt.py",
+            "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+            "tests/test_detect_uao_runtime_bypass.py",
+            "mcoi/tests/test_universal_action_kernel.py",
+            "tests/test_gateway/test_webhooks.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "audit_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "gateway_capability_fabric",
+            "universal_action_orchestration"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:d6b7e3b0259f4e43fc81545c5e3bd24a9a8bfb143407b1d61585694b425aae64",
+          "receipt_ref": "audit_projection_receipt",
+          "required_evidence_refs": [
+            "action_admission_receipt_valid",
+            "no_bypass_detector_passed",
+            "replay_or_rollback_ref_present"
+          ],
+          "source_receipt_refs": [
+            "audit_projection_receipt",
+            "learning_projection_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+            "schemas/universal_action_orchestration.schema.json",
+            "schemas/universal_action_orchestration_validation_receipt.schema.json",
+            "docs/universal-action-orchestration-validation-receipt-example.json",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_universal_action_orchestration_receipt.py",
+            "scripts/validate_universal_action_orchestration_receipt_contract.py",
+            "scripts/detect_uao_runtime_bypass.py",
+            "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+          ],
+          "step": "audit",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration.py",
+            "tests/test_validate_universal_action_orchestration_receipt.py",
+            "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+            "tests/test_detect_uao_runtime_bypass.py",
+            "mcoi/tests/test_universal_action_kernel.py",
+            "tests/test_gateway/test_webhooks.py"
+          ]
+        }
+      ],
+      "recovery_readiness_view": {
+        "blocker_refs": [
+          "missing_authority:uao_policy_ref",
+          "missing_evidence:action_admission_receipt_valid",
+          "missing_evidence:no_bypass_detector_passed",
+          "missing_evidence:replay_or_rollback_ref_present"
+        ],
+        "closure_evidence_pack_ref": "universal_action_orchestration_loop_closure_evidence_pack",
+        "closure_report_ref": "closure_report",
+        "executes_rollback": false,
+        "loop_id": "universal_action_orchestration_loop",
+        "next_recovery_action": "resolve_blockers_before_recovery_or_terminal_review",
+        "opens_incident": false,
+        "read_only": true,
+        "receipt_lineage_refs": [
+          "observe_receipt_lineage",
+          "decision_receipt_lineage",
+          "action_projection_receipt_lineage",
+          "verification_receipt_lineage",
+          "record_receipt_lineage",
+          "state_update_projection_receipt_lineage",
+          "learning_projection_receipt_lineage",
+          "audit_projection_receipt_lineage"
+        ],
+        "recovery_proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "gateway_capability_fabric",
+          "universal_action_orchestration"
+        ],
+        "recovery_source_refs": [
+          "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+          "examples/uao/blocked_missing_approval.json",
+          "examples/uao/deferred_stale_evidence.json"
+        ],
+        "recovery_state": "recovery_blocked_by_unresolved_gaps",
+        "recovery_validator_refs": [
+          "tests/test_validate_universal_action_orchestration.py",
+          "mcoi/tests/test_universal_action_kernel.py"
+        ],
+        "rollback_available": true,
+        "rollback_ref": "execute_recovery_handoff_or_mark_accepted_risk",
+        "terminal_closure": false,
+        "view_ref": "universal_action_orchestration_loop_recovery_readiness_view"
+      },
+      "required_authority": [
+        "uao_policy_ref"
+      ],
+      "required_evidence": [
+        "action_admission_receipt_valid",
+        "no_bypass_detector_passed",
+        "replay_or_rollback_ref_present"
+      ],
+      "risk_binding": {
+        "hazard_refs": [
+          "unorchestrated_effect_bearing_action",
+          "missing_action_admission_receipt",
+          "rollback_or_replay_overclaim"
+        ],
+        "mitigation_refs": [
+          "block_closure_until_uao_policy_ref_exists",
+          "require_no_bypass_detector",
+          "keep_effect_execution_outside_read_model"
+        ],
+        "monitor_refs": [
+          "universal_action_orchestration_validation_receipt",
+          "uao_runtime_bypass_detector",
+          "command_universal_action_orchestration_read_model"
+        ],
+        "proof_surface_refs": [
+          "gateway_capability_fabric",
+          "universal_action_orchestration"
+        ],
+        "purpose": "Effect-bearing action risk covers unorchestrated effects, missing receipts, stale replay evidence, and rollback overclaim.",
+        "read_only": true,
+        "risk_ref": "effect_bearing_action",
+        "source_refs": [
+          "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+          "schemas/universal_action_orchestration.schema.json",
+          "schemas/universal_action_orchestration_validation_receipt.schema.json",
+          "docs/universal-action-orchestration-validation-receipt-example.json",
+          "scripts/validate_universal_action_orchestration.py",
+          "scripts/validate_universal_action_orchestration_receipt.py",
+          "scripts/validate_universal_action_orchestration_receipt_contract.py",
+          "scripts/detect_uao_runtime_bypass.py",
+          "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_validate_universal_action_orchestration.py",
+          "tests/test_validate_universal_action_orchestration_receipt.py",
+          "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+          "tests/test_detect_uao_runtime_bypass.py",
+          "mcoi/tests/test_universal_action_kernel.py",
+          "tests/test_gateway/test_webhooks.py"
+        ]
+      },
+      "risk_class": "effect_bearing_action",
+      "rollback_binding": {
+        "proof_surface_refs": [
+          "universal_action_orchestration"
+        ],
+        "purpose": "Rollback UAO closure by requiring recovery handoff evidence or an accepted-risk marker before effect closure can proceed.",
+        "read_only": true,
+        "rollback_ref": "execute_recovery_handoff_or_mark_accepted_risk",
+        "source_refs": [
+          "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+          "examples/uao/blocked_missing_approval.json",
+          "examples/uao/deferred_stale_evidence.json"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_validate_universal_action_orchestration.py",
+          "mcoi/tests/test_universal_action_kernel.py"
+        ]
+      },
+      "rollback_policy": "execute_recovery_handoff_or_mark_accepted_risk",
+      "status": "blocked",
+      "status_binding": {
+        "blocker_refs": [
+          "missing_authority:uao_policy_ref",
+          "missing_evidence:action_admission_receipt_valid",
+          "missing_evidence:no_bypass_detector_passed",
+          "missing_evidence:replay_or_rollback_ref_present"
+        ],
+        "closure_gate_refs": [
+          "effect_reconciled",
+          "receipt_and_memory_deltas_recorded"
+        ],
+        "projected_status": "blocked",
+        "proof_surface_refs": [
+          "gateway_capability_fabric",
+          "universal_action_orchestration"
+        ],
+        "read_only": true,
+        "source_refs": [
+          "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+          "schemas/universal_action_orchestration.schema.json",
+          "schemas/universal_action_orchestration_validation_receipt.schema.json",
+          "docs/universal-action-orchestration-validation-receipt-example.json",
+          "scripts/validate_universal_action_orchestration.py",
+          "scripts/validate_universal_action_orchestration_receipt.py",
+          "scripts/validate_universal_action_orchestration_receipt_contract.py",
+          "scripts/detect_uao_runtime_bypass.py",
+          "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+        ],
+        "status_reason": "read_model_blocked_by_unresolved_gaps",
+        "status_transition": false,
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_validate_universal_action_orchestration.py",
+          "tests/test_validate_universal_action_orchestration_receipt.py",
+          "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+          "tests/test_detect_uao_runtime_bypass.py",
+          "mcoi/tests/test_universal_action_kernel.py",
+          "tests/test_gateway/test_webhooks.py"
+        ],
+        "verification_refs": [
+          "required_authority_observed",
+          "required_evidence_observed",
+          "universal_action_orchestration_validators_passed"
+        ]
+      },
+      "step_receipts": [
+        {
+          "decision": "project_read_model_observe",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:6f50d868a4a27c381021b92821230c269269dd33a62d53c523fe32ede8d48e72",
+          "loop_id": "universal_action_orchestration_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:1dea368af03422f414fbac69aff0f18b9e9841b1a8c753bf1dfbbd7a551eb475",
+          "status": "blocked",
+          "step": "observe",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "project_read_model_decide",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:539d7777aa06a349a1d276ee10400510e86454b3b34044dad95e681deb61094a",
+          "loop_id": "universal_action_orchestration_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:14a7becff015244203e0df4f8d46d1c1ae9d37cae99f5817e00800a3f1fbd408",
+          "status": "blocked",
+          "step": "decide",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "project_existing_behavior_without_execution",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:c9b5568fb40cdb38485ee43d44f09a193ffb80848d632ca3113b62508cbec40a",
+          "loop_id": "universal_action_orchestration_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:249100419a1ecae4d633cdd053f1815f1c707c272d9eec01d1720b0671ba1fcd",
+          "status": "blocked",
+          "step": "act",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:983067f0e85a41ce6bb1ea0997a89f022f8c3c1935ff41d33070b0d8aa7e07ff",
+          "loop_id": "universal_action_orchestration_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:e4e0e4d6486c1d8c1a8948aed4eb1b75695897affa38b345cc19bbc6263cbd85",
+          "status": "blocked",
+          "step": "verify",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:2582407dc10c8ec5a301352b08427ccf4aab48fce9e6a3801a11c2ad76bfdb78",
+          "loop_id": "universal_action_orchestration_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:edc41c2f76e3c090a1a17b4476fd31b67f52d85477a563f93cff8a5e8a0fcb2d",
+          "status": "blocked",
+          "step": "record_receipt",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:37e9bffa86c59a851736a78a928f7e92c34a7e89d7b2ecfbe9c20cbbb646dfcc",
+          "loop_id": "universal_action_orchestration_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:1b563f84ec38f07e083a933c92e4e23816a721e6ed5a530fa908c566502df09b",
+          "status": "blocked",
+          "step": "update_state",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:00ef536786d4d8c7ea551ef8e8a5e5ff47b14dc7f11115e95b18dfdb7a5f958d",
+          "loop_id": "universal_action_orchestration_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:6468610b11f4285dfa8a3d0e85786c552379f37f5635bd5cb1541baf608337c4",
+          "status": "blocked",
+          "step": "learn",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:e104c549cbc431a2948e24fbee13df7cecb053d8fdc9b8295b24a9034d8bb90b",
+          "loop_id": "universal_action_orchestration_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:d6b7e3b0259f4e43fc81545c5e3bd24a9a8bfb143407b1d61585694b425aae64",
+          "status": "blocked",
+          "step": "audit",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        }
+      ],
+      "transition_bindings": [
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "executes_transition": false,
+          "from_status": "open",
+          "from_step": "observe",
+          "proof_surface_refs": [
+            "gateway_capability_fabric",
+            "universal_action_orchestration"
+          ],
+          "read_only": true,
+          "receipt_refs": [
+            "observe_receipt",
+            "verification_receipt",
+            "closure_report"
+          ],
+          "required_authority_refs": [
+            "uao_policy_ref"
+          ],
+          "required_evidence_refs": [
+            "action_admission_receipt_valid",
+            "no_bypass_detector_passed",
+            "replay_or_rollback_ref_present"
+          ],
+          "rollback_refs": [
+            "execute_recovery_handoff_or_mark_accepted_risk"
+          ],
+          "source_refs": [
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+            "schemas/universal_action_orchestration.schema.json",
+            "schemas/universal_action_orchestration_validation_receipt.schema.json",
+            "docs/universal-action-orchestration-validation-receipt-example.json",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_universal_action_orchestration_receipt.py",
+            "scripts/validate_universal_action_orchestration_receipt_contract.py",
+            "scripts/detect_uao_runtime_bypass.py",
+            "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+          ],
+          "terminal_closure": false,
+          "to_status": "blocked",
+          "to_step": "verify",
+          "transition_ref": "open_to_blocked_on_missing_requirements",
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration.py",
+            "tests/test_validate_universal_action_orchestration_receipt.py",
+            "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+            "tests/test_detect_uao_runtime_bypass.py",
+            "mcoi/tests/test_universal_action_kernel.py",
+            "tests/test_gateway/test_webhooks.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "executes_transition": false,
+          "from_status": "blocked",
+          "from_step": "verify",
+          "proof_surface_refs": [
+            "gateway_capability_fabric",
+            "universal_action_orchestration"
+          ],
+          "read_only": true,
+          "receipt_refs": [
+            "verification_receipt",
+            "record_receipt",
+            "closure_report"
+          ],
+          "required_authority_refs": [
+            "uao_policy_ref"
+          ],
+          "required_evidence_refs": [
+            "action_admission_receipt_valid",
+            "no_bypass_detector_passed",
+            "replay_or_rollback_ref_present"
+          ],
+          "rollback_refs": [
+            "execute_recovery_handoff_or_mark_accepted_risk"
+          ],
+          "source_refs": [
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+            "schemas/universal_action_orchestration.schema.json",
+            "schemas/universal_action_orchestration_validation_receipt.schema.json",
+            "docs/universal-action-orchestration-validation-receipt-example.json",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_universal_action_orchestration_receipt.py",
+            "scripts/validate_universal_action_orchestration_receipt_contract.py",
+            "scripts/detect_uao_runtime_bypass.py",
+            "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+          ],
+          "terminal_closure": false,
+          "to_status": "verified",
+          "to_step": "record_receipt",
+          "transition_ref": "blocked_to_verified_after_requirements",
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration.py",
+            "tests/test_validate_universal_action_orchestration_receipt.py",
+            "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+            "tests/test_detect_uao_runtime_bypass.py",
+            "mcoi/tests/test_universal_action_kernel.py",
+            "tests/test_gateway/test_webhooks.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:uao_policy_ref",
+            "missing_evidence:action_admission_receipt_valid",
+            "missing_evidence:no_bypass_detector_passed",
+            "missing_evidence:replay_or_rollback_ref_present"
+          ],
+          "executes_transition": false,
+          "from_status": "verified",
+          "from_step": "audit",
+          "proof_surface_refs": [
+            "gateway_capability_fabric",
+            "universal_action_orchestration"
+          ],
+          "read_only": true,
+          "receipt_refs": [
+            "audit_receipt",
+            "terminal_closure_certificate",
+            "closure_report"
+          ],
+          "required_authority_refs": [
+            "uao_policy_ref"
+          ],
+          "required_evidence_refs": [
+            "action_admission_receipt_valid",
+            "no_bypass_detector_passed",
+            "replay_or_rollback_ref_present"
+          ],
+          "rollback_refs": [
+            "execute_recovery_handoff_or_mark_accepted_risk"
+          ],
+          "source_refs": [
+            "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+            "schemas/universal_action_orchestration.schema.json",
+            "schemas/universal_action_orchestration_validation_receipt.schema.json",
+            "docs/universal-action-orchestration-validation-receipt-example.json",
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_universal_action_orchestration_receipt.py",
+            "scripts/validate_universal_action_orchestration_receipt_contract.py",
+            "scripts/detect_uao_runtime_bypass.py",
+            "mcoi/mcoi_runtime/core/universal_action_kernel.py"
+          ],
+          "terminal_closure": false,
+          "to_status": "closed",
+          "to_step": "close",
+          "transition_ref": "verified_to_closed_requires_terminal_closure",
+          "validator_refs": [
+            "tests/test_validate_universal_action_orchestration.py",
+            "tests/test_validate_universal_action_orchestration_receipt.py",
+            "tests/test_validate_universal_action_orchestration_receipt_contract.py",
+            "tests/test_detect_uao_runtime_bypass.py",
+            "mcoi/tests/test_universal_action_kernel.py",
+            "tests/test_gateway/test_webhooks.py"
+          ]
+        }
+      ],
+      "updated_at": "2026-06-08T00:00:00+00:00"
     }
   ],
   "report_id": "holistic_loop_read_model",
   "report_is_not_terminal_closure": true,
-  "returned_count": 6,
+  "returned_count": 7,
   "status": "blocked",
   "terminal_closure_required": true,
   "truncated": false,

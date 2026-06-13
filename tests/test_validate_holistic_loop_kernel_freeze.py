@@ -18,6 +18,13 @@ from pathlib import Path
 from scripts import validate_holistic_loop_kernel_freeze as validator
 
 
+def _proof_matrix_fixture() -> dict[str, object]:
+    return validator.load_json_object(
+        validator.WORKSPACE_ROOT / "tests" / "fixtures" / "proof_coverage_matrix.json",
+        "proof coverage matrix fixture",
+    )
+
+
 def test_holistic_loop_kernel_freeze_contract_passes() -> None:
     errors = validator.validate_freeze_contract()
     fixture = validator.load_json_object(validator.DEFAULT_FIXTURE_PATH, "fixture")
@@ -94,7 +101,7 @@ def test_kernel_v1_policy_doc_drift_is_reported() -> None:
 
 
 def test_holistic_loop_witness_integrity_has_zero_unanchored_labels() -> None:
-    errors = validator.validate_holistic_witness_integrity()
+    errors = validator.validate_holistic_witness_integrity(_proof_matrix_fixture())
 
     assert errors == []
     assert validator.HOLISTIC_SURFACE_ID == "holistic_loop_read_model_kernel"
@@ -102,7 +109,7 @@ def test_holistic_loop_witness_integrity_has_zero_unanchored_labels() -> None:
 
 
 def test_holistic_loop_witness_integrity_rejects_unanchored_labels() -> None:
-    matrix = validator.proof_coverage_matrix()
+    matrix = _proof_matrix_fixture()
     holistic_surface = next(
         surface
         for surface in matrix["surfaces"]

@@ -6853,8 +6853,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "guard for default registry additions. The candidate map lists "
                 "candidate loop surfaces and distinguishes admitted loops from "
                 "blocked future candidates. "
-                "The UAO admission dossier projects readiness for an operator "
-                "registration decision without registering the loop. "
+                "The UAO loop is registered in the default read model as a "
+                "read-only blocked loop, and its admission dossier reports "
+                "registry admission without causing mutation. "
                 "The workflow admission dossier applies the same read-only "
                 "operator-decision boundary to workflow execution surfaces. "
                 "The authority loop is registered in the default read model "
@@ -6900,8 +6901,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "holistic_loop_candidate_map_is_read_only_non_terminal",
                 "holistic_loop_audit_proof_registered_in_default_read_model",
                 "holistic_loop_authority_registered_in_default_read_model",
+                "holistic_loop_uao_registered_in_default_read_model",
                 "holistic_loop_uao_admission_dossier_builds_proposed_manifest",
-                "holistic_loop_uao_admission_dossier_ready_for_operator_decision",
+                "holistic_loop_uao_admission_dossier_reports_registry_admission",
                 "holistic_loop_uao_admission_dossier_blocks_registration_effects",
                 "holistic_loop_workflow_admission_dossier_builds_proposed_manifest",
                 "holistic_loop_workflow_admission_dossier_ready_for_operator_decision",
@@ -7010,11 +7012,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "holistic_loop_authority_registered_in_default_read_model": [
                     "authority_obligation_loop_is_registered_read_only_and_blocked"
                 ],
+                "holistic_loop_uao_registered_in_default_read_model": [
+                    "universal_action_orchestration_loop_is_registered_read_only_and_blocked"
+                ],
                 "holistic_loop_uao_admission_dossier_builds_proposed_manifest": [
                     "uao_admission_dossier_builds_proposed_manifest"
                 ],
-                "holistic_loop_uao_admission_dossier_ready_for_operator_decision": [
-                    "uao_admission_dossier_is_ready_only_for_operator_decision"
+                "holistic_loop_uao_admission_dossier_reports_registry_admission": [
+                    "uao_admission_dossier_reports_registry_admission"
                 ],
                 "holistic_loop_uao_admission_dossier_blocks_registration_effects": [
                     "uao_admission_dossier_does_not_register_or_mutate_runtime"
