@@ -22,7 +22,6 @@ from typing import Any
 from mcoi_runtime.core.engine_protocol import Clock, WallClock
 
 from ..contracts.math_runtime import (
-    MathClosureReport,
     MathOptimizationConstraint,
     MathSnapshot,
     ObjectiveDirection,
@@ -793,12 +792,8 @@ class MathRuntimeEngine:
         if "linear_terms" in constraint.metadata:
             return _bounded_terms(constraint.metadata["linear_terms"]), constraint.lower_bound, constraint.upper_bound
         expression_terms, expression_lower, expression_upper = _parse_linear_constraint_expression(constraint.expression)
-        lower_bound = constraint.lower_bound
-        upper_bound = constraint.upper_bound
-        if math.isinf(lower_bound) and not math.isinf(expression_lower):
-            lower_bound = expression_lower
-        if math.isinf(upper_bound) and not math.isinf(expression_upper):
-            upper_bound = expression_upper
+        lower_bound = max(constraint.lower_bound, expression_lower)
+        upper_bound = min(constraint.upper_bound, expression_upper)
         return expression_terms, lower_bound, upper_bound
 
     def _append_variable_bound_inequalities(
