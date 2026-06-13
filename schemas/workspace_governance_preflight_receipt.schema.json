@@ -198,6 +198,7 @@
             "mcp_operator_checklist",
             "public_naming_readiness",
             "public_demo_surfaces",
+            "snet_episode_replay",
             "strict_schema_validation",
             "strict_artifact_validation",
             "terminal_closure_certificate",
