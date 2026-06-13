@@ -750,6 +750,15 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             ),
         ),
         CheckCommand(
+            "snet_episode_replay",
+            (
+                python_executable,
+                "scripts/validate_snet_episode_replay.py",
+                "--episode",
+                "examples/snet_episode_seed_dependency.json",
+            ),
+        ),
+        CheckCommand(
             "strict_schema_validation",
             (python_executable, "scripts/validate_schemas.py", "--strict"),
         ),

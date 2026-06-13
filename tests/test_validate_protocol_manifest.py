@@ -1051,6 +1051,7 @@ def test_protocol_manifest_indexes_snet_operator_read_model_contract() -> None:
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     mesh_receipt_entry = entries["snet-mesh-receipt"]
     read_model_entry = entries["snet-operator-read-model"]
+    episode_entry = entries["snet-episode"]
 
     assert validate_protocol_manifest(manifest) == []
     assert mesh_receipt_entry["path"] == "schemas/snet_mesh_receipt.schema.json"
@@ -1059,6 +1060,9 @@ def test_protocol_manifest_indexes_snet_operator_read_model_contract() -> None:
     assert read_model_entry["path"] == "schemas/snet_operator_read_model.schema.json"
     assert read_model_entry["urn"] == "urn:mullusi:schema:snet-operator-read-model:1"
     assert read_model_entry["surface"] == "symbolic_mesh"
+    assert episode_entry["path"] == "schemas/snet_episode.schema.json"
+    assert episode_entry["urn"] == "urn:mullusi:schema:snet-episode:1"
+    assert episode_entry["surface"] == "symbolic_mesh"
 
 
 def test_protocol_manifest_indexes_reflex_deployment_witness_envelope() -> None:

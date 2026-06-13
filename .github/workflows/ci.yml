@@ -247,6 +247,9 @@ jobs:
       - name: Test SNet operator read model contract
         run: python -m pytest tests/test_validate_snet_operator_read_model.py -q
 
+      - name: Test SNet episode replay contract
+        run: python -m pytest tests/test_validate_snet_episode_replay.py -q
+
       - name: Validate doc/code consistency (anti-fabrication gate)
         run: python scripts/validate_doc_code_consistency.py
 

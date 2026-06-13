@@ -100,6 +100,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "mcp_operator_checklist",
         "public_naming_readiness",
         "public_demo_surfaces",
+        "snet_episode_replay",
         "strict_schema_validation",
         "strict_artifact_validation",
         "terminal_closure_certificate",
@@ -358,6 +359,11 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "scripts/validate_public_demo_surfaces.py",
         "--output",
         ".tmp/public-demo-surface-validation.json",
+    )
+    assert args_by_name["snet_episode_replay"][1:] == (
+        "scripts/validate_snet_episode_replay.py",
+        "--episode",
+        "examples/snet_episode_seed_dependency.json",
     )
     assert args_by_name["strict_schema_validation"][1:] == (
         "scripts/validate_schemas.py",
