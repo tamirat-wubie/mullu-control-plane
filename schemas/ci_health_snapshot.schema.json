@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:ci-health-snapshot:1",
+  "title": "CI Health Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "snapshot_type",
+    "snapshot_id",
+    "status",
+    "repository",
+    "branch",
+    "open_pr_count",
+    "main_workflow_count",
+    "finding_count",
+    "active_failed_count",
+    "active_pending_count",
+    "active_warning_count",
+    "stale_failure_count",
+    "latest_main_runs",
+    "stale_failures",
+    "findings",
+    "evidence_refs"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "snapshot_type": { "const": "ci_health_snapshot" },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^ci-health-[0-9a-f]{16}$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["passed", "failed"]
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+    },
+    "branch": {
+      "type": "string",
+      "minLength": 1
+    },
+    "open_pr_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "main_workflow_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "finding_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "active_failed_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "active_pending_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "active_warning_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "stale_failure_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "latest_main_runs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/workflow_run_summary" }
+    },
+    "stale_failures": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/workflow_run_summary" }
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "nullable_string": {
+      "anyOf": [
+        { "type": "string" },
+        { "type": "null" }
+      ]
+    },
+    "nullable_integer": {
+      "anyOf": [
+        { "type": "integer" },
+        { "type": "null" }
+      ]
+    },
+    "workflow_run_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "workflow_name",
+        "state",
+        "head_branch",
+        "head_sha",
+        "database_id",
+        "display_title",
+        "url"
+      ],
+      "properties": {
+        "workflow_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "type": "string",
+          "minLength": 1
+        },
+        "head_branch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "head_sha": { "$ref": "#/$defs/nullable_string" },
+        "database_id": { "$ref": "#/$defs/nullable_integer" },
+        "display_title": {
+          "type": "string"
+        },
+        "url": { "$ref": "#/$defs/nullable_string" }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "severity",
+        "scope",
+        "title",
+        "detail",
+        "url"
+      ],
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": ["failed", "pending", "warning"]
+        },
+        "scope": {
+          "type": "string",
+          "enum": ["pull_request", "main"]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": { "$ref": "#/$defs/nullable_string" }
+      }
+    }
+  }
+}

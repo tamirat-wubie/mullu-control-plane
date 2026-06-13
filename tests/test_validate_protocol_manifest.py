@@ -154,6 +154,7 @@ def test_protocol_manifest_indexes_connector_certification_registry() -> None:
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     connector_entry = entries["connector-certification-registry"]
     commercial_entry = entries["commercial-metering-snapshot"]
+    ci_health_entry = entries["ci-health-snapshot"]
     data_governance_entry = entries["data-governance-snapshot"]
 
     assert validate_protocol_manifest(manifest) == []
@@ -163,6 +164,9 @@ def test_protocol_manifest_indexes_connector_certification_registry() -> None:
     assert commercial_entry["path"] == "schemas/commercial_metering_snapshot.schema.json"
     assert commercial_entry["urn"] == "urn:mullusi:schema:commercial-metering-snapshot:1"
     assert commercial_entry["surface"] == "commercial"
+    assert ci_health_entry["path"] == "schemas/ci_health_snapshot.schema.json"
+    assert ci_health_entry["urn"] == "urn:mullusi:schema:ci-health-snapshot:1"
+    assert ci_health_entry["surface"] == "ci"
     assert data_governance_entry["path"] == "schemas/data_governance_snapshot.schema.json"
     assert data_governance_entry["urn"] == "urn:mullusi:schema:data-governance-snapshot:1"
     assert data_governance_entry["surface"] == "data_governance"

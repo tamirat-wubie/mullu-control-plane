@@ -53,6 +53,12 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "ci-health-snapshot",
+      "path": "schemas/ci_health_snapshot.schema.json",
+      "urn": "urn:mullusi:schema:ci-health-snapshot:1",
+      "surface": "ci"
+    },
+    {
       "schema_id": "runtime-witness",
       "path": "schemas/runtime_witness.schema.json",
       "urn": "urn:mullusi:schema:runtime-witness:1",

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
+import hashlib
 import json
 import subprocess
 import sys
@@ -42,6 +43,58 @@ class CiHealthFinding:
 
 
 @dataclass(frozen=True)
+class CiWorkflowRunSummary:
+    """Bounded workflow run metadata retained in the CI snapshot."""
+
+    workflow_name: str
+    state: str
+    head_branch: str
+    head_sha: str | None
+    database_id: int | None
+    display_title: str
+    url: str | None
+
+    def to_json(self) -> dict[str, Any]:
+        """Return a JSON-serializable workflow summary."""
+
+        return {
+            "workflow_name": self.workflow_name,
+            "state": self.state,
+            "head_branch": self.head_branch,
+            "head_sha": self.head_sha,
+            "database_id": self.database_id,
+            "display_title": self.display_title,
+            "url": self.url,
+        }
+
+
+@dataclass(frozen=True)
+class CiStaleFailureSummary:
+    """One failed workflow on a branch without an open PR."""
+
+    workflow_name: str
+    state: str
+    head_branch: str
+    head_sha: str | None
+    database_id: int | None
+    display_title: str
+    url: str | None
+
+    def to_json(self) -> dict[str, Any]:
+        """Return a JSON-serializable stale failure summary."""
+
+        return {
+            "workflow_name": self.workflow_name,
+            "state": self.state,
+            "head_branch": self.head_branch,
+            "head_sha": self.head_sha,
+            "database_id": self.database_id,
+            "display_title": self.display_title,
+            "url": self.url,
+        }
+
+
+@dataclass(frozen=True)
 class CiHealthReport:
     """CI health report with deterministic summary counts."""
 
@@ -51,17 +104,30 @@ class CiHealthReport:
     open_pr_count: int
     main_workflow_count: int
     findings: tuple[CiHealthFinding, ...]
+    latest_main_runs: tuple[CiWorkflowRunSummary, ...] = ()
+    stale_failures: tuple[CiStaleFailureSummary, ...] = ()
 
     def to_json(self) -> dict[str, Any]:
         """Return a JSON-serializable report."""
 
-        return {
+        active_failed_count = sum(1 for finding in self.findings if finding.severity == "failed")
+        active_pending_count = sum(1 for finding in self.findings if finding.severity == "pending")
+        active_warning_count = sum(1 for finding in self.findings if finding.severity == "warning")
+        payload = {
+            "schema_version": 1,
+            "snapshot_type": "ci_health_snapshot",
             "status": self.status,
             "repository": self.repository,
             "branch": self.branch,
             "open_pr_count": self.open_pr_count,
             "main_workflow_count": self.main_workflow_count,
             "finding_count": len(self.findings),
+            "active_failed_count": active_failed_count,
+            "active_pending_count": active_pending_count,
+            "active_warning_count": active_warning_count,
+            "stale_failure_count": len(self.stale_failures),
+            "latest_main_runs": [run.to_json() for run in self.latest_main_runs],
+            "stale_failures": [failure.to_json() for failure in self.stale_failures],
             "findings": [
                 {
                     "severity": finding.severity,
@@ -72,12 +138,16 @@ class CiHealthReport:
                 }
                 for finding in self.findings
             ],
+            "evidence_refs": _evidence_refs(self),
         }
+        payload["snapshot_id"] = _snapshot_id(payload)
+        return payload
 
 
 def evaluate_ci_health(
     open_pull_requests: list[dict[str, Any]],
     main_runs: list[dict[str, Any]],
+    recent_runs: list[dict[str, Any]] | None = None,
     *,
     repository: str = DEFAULT_REPOSITORY,
     branch: str = DEFAULT_BRANCH,
@@ -93,6 +163,7 @@ def evaluate_ci_health(
         if finding is not None:
             findings.append(finding)
     status = "passed" if not any(f.severity in {"failed", "pending"} for f in findings) else "failed"
+    stale_failures = _stale_failures(recent_runs or [], branch, open_pull_requests)
     return CiHealthReport(
         status=status,
         repository=repository,
@@ -100,6 +171,8 @@ def evaluate_ci_health(
         open_pr_count=len(open_pull_requests),
         main_workflow_count=len(latest_runs),
         findings=tuple(findings),
+        latest_main_runs=tuple(_workflow_run_summary(run, branch) for run in latest_runs),
+        stale_failures=stale_failures,
     )
 
 
@@ -196,6 +269,47 @@ def _latest_runs_by_workflow(runs: list[dict[str, Any]]) -> tuple[dict[str, Any]
     return tuple(latest)
 
 
+def _latest_runs_by_branch_and_workflow(runs: list[dict[str, Any]]) -> tuple[dict[str, Any], ...]:
+    """Return the first observed run for each branch/workflow pair."""
+
+    observed: set[tuple[str, str]] = set()
+    latest: list[dict[str, Any]] = []
+    for run in runs:
+        key = (
+            str(run.get("headBranch") or ""),
+            str(run.get("workflowName") or "unknown workflow"),
+        )
+        if key in observed:
+            continue
+        observed.add(key)
+        latest.append(run)
+    return tuple(latest)
+
+
+def _stale_failures(
+    recent_runs: list[dict[str, Any]],
+    branch: str,
+    open_pull_requests: list[dict[str, Any]],
+) -> tuple[CiStaleFailureSummary, ...]:
+    """Return failed latest branch runs that are not active PR or main blockers."""
+
+    open_pr_heads = {
+        str(pull_request.get("headRefName") or "")
+        for pull_request in open_pull_requests
+        if pull_request.get("headRefName")
+    }
+    stale: list[CiStaleFailureSummary] = []
+    for run in _latest_runs_by_branch_and_workflow(recent_runs):
+        head_branch = str(run.get("headBranch") or "")
+        if not head_branch or head_branch == branch or head_branch in open_pr_heads:
+            continue
+        state = _workflow_run_state(run)
+        if state not in FAILING_STATES:
+            continue
+        stale.append(_stale_failure_summary(run, head_branch, state))
+    return tuple(stale)
+
+
 def _workflow_run_state(run: dict[str, Any]) -> str:
     """Normalize a workflow run status/conclusion pair."""
 
@@ -206,6 +320,34 @@ def _workflow_run_state(run: dict[str, Any]) -> str:
     if conclusion:
         return "SUCCESS" if conclusion == "SUCCESS" else conclusion
     return "UNKNOWN"
+
+
+def _workflow_run_summary(run: dict[str, Any], fallback_branch: str) -> CiWorkflowRunSummary:
+    """Create bounded summary metadata for one workflow run."""
+
+    return CiWorkflowRunSummary(
+        workflow_name=str(run.get("workflowName") or "unknown workflow"),
+        state=_workflow_run_state(run),
+        head_branch=str(run.get("headBranch") or fallback_branch),
+        head_sha=_optional_string(run.get("headSha")),
+        database_id=_optional_int(run.get("databaseId")),
+        display_title=str(run.get("displayTitle") or ""),
+        url=_optional_string(run.get("url")),
+    )
+
+
+def _stale_failure_summary(run: dict[str, Any], head_branch: str, state: str) -> CiStaleFailureSummary:
+    """Create bounded summary metadata for one stale failed branch run."""
+
+    return CiStaleFailureSummary(
+        workflow_name=str(run.get("workflowName") or "unknown workflow"),
+        state=state,
+        head_branch=head_branch,
+        head_sha=_optional_string(run.get("headSha")),
+        database_id=_optional_int(run.get("databaseId")),
+        display_title=str(run.get("displayTitle") or ""),
+        url=_optional_string(run.get("url")),
+    )
 
 
 def _check_state(check: dict[str, Any]) -> str:
@@ -242,7 +384,44 @@ def _optional_string(value: object) -> str | None:
     return text or None
 
 
-def collect_ci_health_inputs(repository: str, branch: str, pr_limit: int, run_limit: int) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _optional_int(value: object) -> int | None:
+    """Return an integer or None for empty values."""
+
+    if value is None or value == "":
+        return None
+    if isinstance(value, bool):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _evidence_refs(report: CiHealthReport) -> list[str]:
+    """Return unique bounded evidence references for the snapshot."""
+
+    refs: list[str] = []
+    for run in report.latest_main_runs:
+        if run.url:
+            refs.append(run.url)
+    for finding in report.findings:
+        if finding.url:
+            refs.append(finding.url)
+    for failure in report.stale_failures:
+        if failure.url:
+            refs.append(failure.url)
+    return sorted(set(refs))
+
+
+def _snapshot_id(payload: dict[str, Any]) -> str:
+    """Derive a stable snapshot id from bounded payload content."""
+
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    digest = hashlib.sha256(encoded).hexdigest()
+    return f"ci-health-{digest[:16]}"
+
+
+def collect_ci_health_inputs(repository: str, branch: str, pr_limit: int, run_limit: int) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     """Collect read-only PR and main workflow payloads through GitHub CLI."""
 
     pull_requests = _gh_json(
@@ -273,11 +452,25 @@ def collect_ci_health_inputs(repository: str, branch: str, pr_limit: int, run_li
             "databaseId,displayTitle,workflowName,status,conclusion,headSha,url,createdAt",
         ]
     )
+    recent_runs = _gh_json(
+        [
+            "run",
+            "list",
+            "--repo",
+            repository,
+            "--limit",
+            str(run_limit),
+            "--json",
+            "databaseId,displayTitle,workflowName,status,conclusion,headSha,headBranch,url,createdAt,event",
+        ]
+    )
     if not isinstance(pull_requests, list):
         raise ValueError("GitHub PR list response must be an array")
     if not isinstance(runs, list):
         raise ValueError("GitHub run list response must be an array")
-    return pull_requests, runs
+    if not isinstance(recent_runs, list):
+        raise ValueError("GitHub recent run list response must be an array")
+    return pull_requests, runs, recent_runs
 
 
 def _gh_json(args: list[str]) -> Any:
@@ -329,8 +522,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        pull_requests, runs = collect_ci_health_inputs(args.repo, args.branch, args.pr_limit, args.run_limit)
-        report = evaluate_ci_health(pull_requests, runs, repository=args.repo, branch=args.branch)
+        pull_requests, runs, recent_runs = collect_ci_health_inputs(args.repo, args.branch, args.pr_limit, args.run_limit)
+        report = evaluate_ci_health(pull_requests, runs, recent_runs, repository=args.repo, branch=args.branch)
     except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as exc:
         sys.stderr.write(f"CI health collection failed: {_bounded_error(str(exc))}\nSTATUS: failed\n")
         return 2
