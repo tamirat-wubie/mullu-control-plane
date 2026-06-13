@@ -82,11 +82,17 @@ class SNetRecursiveMesh:
         depth: int = 0,
     ) -> SNetSymbol:
         """Add or return a symbol using label, sense, type, and parent context."""
+        label_text = _require_text(label, "label")
+        symbol_type_text = _require_text(symbol_type, "symbol_type")
+        sense_id_text = _optional_text(sense_id, "sense_id")
+        definition_text = _optional_text(definition, "definition")
+        parent_context_text = _optional_text(parent_context, "parent_context")
+        created_from_metadata_id_text = _optional_text(created_from_metadata_id, "created_from_metadata_id")
         identity_key = (
-            _ascii_lower_stripped(label),
-            _ascii_lower_stripped(sense_id or label),
-            _ascii_lower_stripped(symbol_type),
-            _ascii_lower_stripped(parent_context),
+            _ascii_lower_stripped(label_text),
+            _ascii_lower_stripped(sense_id_text or label_text),
+            _ascii_lower_stripped(symbol_type_text),
+            _ascii_lower_stripped(parent_context_text),
         )
         existing_symbol_id = self._symbol_identity_index.get(identity_key)
         if existing_symbol_id is not None:
@@ -95,13 +101,13 @@ class SNetRecursiveMesh:
         symbol_id = _stable_id("snet-symbol", *identity_key)
         symbol = SNetSymbol(
             symbol_id=symbol_id,
-            label=label.strip(),
-            symbol_type=symbol_type.strip(),
-            sense_id=sense_id.strip() if sense_id else "",
-            definition=definition.strip() if definition else "",
+            label=label_text,
+            symbol_type=symbol_type_text,
+            sense_id=sense_id_text,
+            definition=definition_text,
             ontology_status=ontology_status,
-            parent_context=parent_context.strip() if parent_context else "",
-            created_from_metadata_id=created_from_metadata_id.strip() if created_from_metadata_id else "",
+            parent_context=parent_context_text,
+            created_from_metadata_id=created_from_metadata_id_text,
             depth=depth,
         )
         self.symbols[symbol.symbol_id] = symbol
@@ -120,8 +126,7 @@ class SNetRecursiveMesh:
         symbol = self._require_symbol(symbol_id)
         perspective = _require_text(perspective, "perspective")
         context = _require_text(context, "context")
-        if parent_question_id:
-            parent_question_id = _require_text(parent_question_id, "parent_question_id")
+        parent_question_id = _optional_text(parent_question_id, "parent_question_id")
         tick_id = _stable_id("snet-tick", symbol_id, perspective, context, str(symbol.depth))
         if symbol.depth >= self.budget.max_depth:
             return SNetTickResult(
@@ -189,6 +194,7 @@ class SNetRecursiveMesh:
         validation_state = _require_validation_state(validation_state)
         raw_answer_text = _require_text(raw_answer, "raw_answer")
         ascii_folded_answer = _ascii_lower_stripped(raw_answer_text)
+        evidence_ref_values = _require_text_tuple(evidence_refs, "evidence_refs")
         answer_id = _stable_id(
             "snet-answer",
             question_id,
@@ -204,7 +210,7 @@ class SNetRecursiveMesh:
             ascii_folded_answer=ascii_folded_answer,
             confidence=confidence_value,
             validation_state=validation_state,
-            evidence_refs=evidence_refs,
+            evidence_refs=evidence_ref_values,
         )
         self.answers[answer.answer_id] = answer
         return answer
@@ -589,6 +595,20 @@ def _require_text(value: str, field_name: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field_name} must be a non-empty string")
     return value.strip()
+
+
+def _optional_text(value: str, field_name: str) -> str:
+    if value == "":
+        return ""
+    return _require_text(value, field_name)
+
+
+def _require_text_tuple(values: tuple[str, ...], field_name: str) -> tuple[str, ...]:
+    if not isinstance(values, tuple):
+        raise ValueError(f"{field_name} must be a tuple of non-empty strings")
+    for index, value in enumerate(values):
+        _require_text(value, f"{field_name}[{index}]")
+    return values
 
 
 def _require_confidence(confidence: float) -> float:
