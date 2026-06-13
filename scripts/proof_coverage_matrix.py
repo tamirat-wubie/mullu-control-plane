@@ -190,15 +190,19 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_refresh_local_assurance.py",
                 "tests/test_run_workspace_governance_checks.py",
             ],
-            "Local assurance refresh regenerates deterministic no-secret evidence receipts, including blocked durable Gmail OAuth handoff and preflight receipts, exposes dry-run command receipts, and remains part of the workspace governance preflight plan.",
+            "Local assurance refresh regenerates deterministic no-secret evidence receipts, including blocked durable Gmail OAuth handoff, TeamOps shared inbox handoff, and read-only probe-authority receipts, exposes dry-run command receipts, and remains part of the workspace governance preflight plan.",
             [
                 "local_assurance_refresh_includes_durable_gmail_receipts",
+                "local_assurance_refresh_includes_team_ops_receipts",
                 "local_assurance_dry_run_does_not_execute",
                 "local_assurance_stops_on_first_failure",
                 "workspace_preflight_includes_local_assurance_plan",
             ],
             runtime_witness_anchor_aliases={
                 "local_assurance_refresh_includes_durable_gmail_receipts": [
+                    "default_refresh_steps_cover_local_assurance_surfaces",
+                ],
+                "local_assurance_refresh_includes_team_ops_receipts": [
                     "default_refresh_steps_cover_local_assurance_surfaces",
                 ],
                 "local_assurance_dry_run_does_not_execute": [
@@ -4187,8 +4191,18 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/validate_durable_gmail_oauth_operator_handoff.py",
                 "tests/test_produce_durable_gmail_oauth_operator_handoff.py",
                 "tests/test_validate_durable_gmail_oauth_operator_handoff.py",
+                "schemas/team_ops_shared_inbox_operator_handoff.schema.json",
+                "scripts/produce_team_ops_shared_inbox_operator_handoff.py",
+                "scripts/validate_team_ops_shared_inbox_operator_handoff.py",
+                "tests/test_produce_team_ops_shared_inbox_operator_handoff.py",
+                "tests/test_validate_team_ops_shared_inbox_operator_handoff.py",
+                "schemas/team_ops_shared_inbox_live_probe_authority.schema.json",
+                "scripts/produce_team_ops_shared_inbox_live_probe_authority.py",
+                "scripts/validate_team_ops_shared_inbox_live_probe_authority.py",
+                "tests/test_produce_team_ops_shared_inbox_live_probe_authority.py",
+                "tests/test_validate_team_ops_shared_inbox_live_probe_authority.py",
             ],
-            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, and bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion.",
+            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe authority behind handoff readiness plus separate approval evidence.",
             [
                 "connector_registration_typed",
                 "connector_invocation_guard_chain_checked",
@@ -4207,6 +4221,19 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "durable_gmail_oauth_routes_witness_refs_as_variables",
                 "durable_gmail_oauth_rejects_secret_markers_in_readable_signals",
                 "durable_gmail_oauth_validates_repository_slug",
+                "team_ops_shared_inbox_handoff_blocks_until_authority",
+                "team_ops_shared_inbox_handoff_blocks_default_as_evidence",
+                "team_ops_shared_inbox_handoff_requires_live_probe_authority",
+                "team_ops_shared_inbox_handoff_redacts_secret_markers",
+                "team_ops_shared_inbox_handoff_accepts_ready_probe",
+                "team_ops_shared_inbox_handoff_blocks_external_message_drift",
+                "team_ops_shared_inbox_handoff_writes_validation_receipt",
+                "team_ops_shared_inbox_probe_authority_blocks_missing_handoff",
+                "team_ops_shared_inbox_probe_authority_requires_probe_approval",
+                "team_ops_shared_inbox_probe_authority_admits_read_only_probe",
+                "team_ops_shared_inbox_probe_authority_blocks_effect_drift",
+                "team_ops_shared_inbox_probe_authority_redacts_secret_markers",
+                "team_ops_shared_inbox_probe_authority_writes_validation_receipt",
             ],
             runtime_witness_anchor_aliases={
                 "connector_registration_typed": [
@@ -4285,6 +4312,55 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "durable_gmail_oauth_validates_repository_slug": [
                     "handoff_rejects_malformed_repository_slug",
+                ],
+                "team_ops_shared_inbox_handoff_blocks_until_authority": [
+                    "team_ops_default_handoff_waits_for_operator_authority_and_redacts_values",
+                    "team_ops_shared_inbox_operator_handoff_accepts_blocked_packet",
+                ],
+                "team_ops_shared_inbox_handoff_blocks_default_as_evidence": [
+                    "team_ops_shared_inbox_operator_handoff_rejects_default_as_evidence_drift",
+                ],
+                "team_ops_shared_inbox_handoff_requires_live_probe_authority": [
+                    "team_ops_operator_approval_allows_provider_setup_not_live_probe",
+                    "team_ops_shared_inbox_operator_handoff_rejects_live_probe_drift",
+                ],
+                "team_ops_shared_inbox_handoff_redacts_secret_markers": [
+                    "team_ops_handoff_rejects_secret_shaped_approval_ref",
+                    "team_ops_writer_and_cli_emit_redacted_blocked_packet",
+                    "team_ops_shared_inbox_operator_handoff_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_handoff_accepts_ready_probe": [
+                    "team_ops_presence_only_secret_inventory_admits_live_probe_with_approval",
+                    "team_ops_shared_inbox_operator_handoff_accepts_ready_packet",
+                ],
+                "team_ops_shared_inbox_handoff_blocks_external_message_drift": [
+                    "team_ops_shared_inbox_operator_handoff_rejects_external_message_drift",
+                ],
+                "team_ops_shared_inbox_handoff_writes_validation_receipt": [
+                    "team_ops_shared_inbox_operator_handoff_cli_writes_validation",
+                ],
+                "team_ops_shared_inbox_probe_authority_blocks_missing_handoff": [
+                    "missing_handoff_blocks_without_external_effects",
+                    "team_ops_live_probe_authority_accepts_blocked_packet",
+                ],
+                "team_ops_shared_inbox_probe_authority_requires_probe_approval": [
+                    "ready_handoff_without_probe_approval_blocks_authority",
+                    "team_ops_live_probe_authority_rejects_admitted_state_without_approval",
+                ],
+                "team_ops_shared_inbox_probe_authority_admits_read_only_probe": [
+                    "ready_handoff_with_probe_approval_admits_read_only_probe",
+                    "team_ops_live_probe_authority_accepts_admitted_packet",
+                ],
+                "team_ops_shared_inbox_probe_authority_blocks_effect_drift": [
+                    "team_ops_live_probe_authority_rejects_external_effect_drift",
+                ],
+                "team_ops_shared_inbox_probe_authority_redacts_secret_markers": [
+                    "probe_authority_rejects_secret_shaped_approval_ref",
+                    "team_ops_live_probe_authority_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_probe_authority_writes_validation_receipt": [
+                    "probe_authority_writer_and_cli_emit_blocked_receipt",
+                    "team_ops_live_probe_authority_cli_writes_validation",
                 ],
             },
         ),
@@ -7356,6 +7432,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
         },
         {
             "action_id": "publish_durable_gmail_oauth_operator_handoff_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_operator_handoff_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_live_probe_authority_contract",
             "surfaces": ["governed_connector_framework"],
             "status": "closed",
         },
