@@ -283,3 +283,108 @@ class TestDeterministicLinearSolver:
         assert result.metadata["reason"] == "bounded_optimum"
         assert result.metadata["decision_value"] == 2.0
         assert result.objective_value == 2.0
+
+
+class TestDeterministicLinearExpressionParser:
+    def test_linear_expression_metadata_and_constraint_expression_solve(self, engine):
+        engine.register_objective(
+            "obj-expr-1",
+            "t-1",
+            "Expression cost",
+            ObjectiveDirection.MINIMIZE,
+            metadata={
+                "decision_variables": ["x", "y"],
+                "linear_expression": "3*x + y",
+                "variable_bounds": {"x": [0.0, 10.0], "y": [0.0, 10.0]},
+            },
+        )
+        engine.add_constraint("c-expr-1", "t-1", "obj-expr-1", "x + y >= 5")
+        engine.submit_solver_request("req-expr-1", "t-1", "obj-expr-1")
+
+        result = engine.solve_solver_request("req-expr-1")
+        decision_values = result.metadata["decision_values"]
+
+        assert result.status is OptimizationStatus.OPTIMAL
+        assert result.metadata["solver"] == "deterministic_linear_v1"
+        assert result.metadata["reason"] == "bounded_linear_optimum"
+        assert decision_values["x"] == 0.0
+        assert decision_values["y"] == 5.0
+        assert result.objective_value == 5.0
+
+    def test_linear_constraint_expression_supports_two_sided_variable_terms(self, engine):
+        engine.register_objective(
+            "obj-expr-2",
+            "t-1",
+            "Throughput expression",
+            ObjectiveDirection.MAXIMIZE,
+            metadata={
+                "decision_variables": ["x", "y"],
+                "linear_expression": "x + 2*y",
+                "variable_bounds": {"x": [0.0, 6.0], "y": [0.0, 6.0]},
+            },
+        )
+        engine.add_constraint("c-expr-2", "t-1", "obj-expr-2", "x + y <= 6")
+        engine.add_constraint("c-expr-3", "t-1", "obj-expr-2", "x - y >= 0")
+        engine.submit_solver_request("req-expr-2", "t-1", "obj-expr-2")
+
+        result = engine.solve_solver_request("req-expr-2")
+        decision_values = result.metadata["decision_values"]
+
+        assert result.status is OptimizationStatus.OPTIMAL
+        assert result.disposition is SolverDisposition.SOLVED
+        assert decision_values["x"] == 3.0
+        assert decision_values["y"] == 3.0
+        assert result.objective_value == 9.0
+        assert result.iterations > 0
+
+    def test_linear_expression_rejects_unsupported_syntax_with_bounded_message(self, engine):
+        engine.register_objective(
+            "obj-expr-3",
+            "t-1",
+            "Bad expression",
+            ObjectiveDirection.MINIMIZE,
+            metadata={
+                "decision_variables": ["x"],
+                "linear_expression": "x^2",
+                "variable_bounds": {"x": [0.0, 1.0]},
+            },
+        )
+        engine.submit_solver_request("req-expr-3", "t-1", "obj-expr-3")
+
+        with pytest.raises(RuntimeCoreInvariantError, match="Linear expression contains unsupported syntax") as exc_info:
+            engine.solve_solver_request("req-expr-3")
+
+        assert str(exc_info.value) == "Linear expression contains unsupported syntax"
+        assert "x^2" not in str(exc_info.value)
+        assert "obj-expr-3" not in str(exc_info.value)
+
+    def test_linear_metadata_terms_take_precedence_over_expression_text(self, engine):
+        engine.register_objective(
+            "obj-expr-4",
+            "t-1",
+            "Metadata precedence",
+            ObjectiveDirection.MINIMIZE,
+            metadata={
+                "decision_variables": ["x"],
+                "linear_coefficients": {"x": 1.0},
+                "linear_expression": "unsupported(x)",
+                "variable_bounds": {"x": [0.0, 10.0]},
+            },
+        )
+        engine.add_constraint(
+            "c-expr-4",
+            "t-1",
+            "obj-expr-4",
+            "unsupported constraint",
+            4.0,
+            8.0,
+            metadata={"linear_terms": {"x": 1.0}},
+        )
+        engine.submit_solver_request("req-expr-4", "t-1", "obj-expr-4")
+
+        result = engine.solve_solver_request("req-expr-4")
+
+        assert result.status is OptimizationStatus.OPTIMAL
+        assert result.metadata["reason"] == "bounded_linear_optimum"
+        assert result.metadata["decision_values"]["x"] == 4.0
+        assert result.objective_value == 4.0

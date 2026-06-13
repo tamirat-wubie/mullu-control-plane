@@ -44,6 +44,30 @@ Constraint metadata:
 
 For each linear constraint, `lower_bound <= sum(linear_terms[var] * var) <= upper_bound`.
 
+Objective metadata may also use a bounded expression:
+
+```json
+{
+  "decision_variables": ["x", "y"],
+  "linear_expression": "3*x + y",
+  "variable_bounds": {"x": [0.0, 10.0], "y": [0.0, 10.0]}
+}
+```
+
+When no `linear_terms` metadata is provided, constraint expressions can provide the linear terms and comparison:
+
+```text
+x + y >= 5
+x - y <= 0
+```
+
+Supported expression grammar is intentionally small:
+
+1. Variables: `x`, `machine_1`, `load2`.
+2. Terms: `x`, `-y`, `3*x`, `0.5*y`.
+3. Operators: `+`, `-`, `<=`, `>=`, `=`.
+4. No parentheses, division, exponentiation, function calls, or dynamic evaluation.
+
 The linear backend:
 
 1. Requires finite variable bounds for every variable.
@@ -51,6 +75,7 @@ The linear backend:
 3. Enumerates feasible vertices deterministically.
 4. Selects the minimum or maximum weighted linear objective.
 5. Rejects malformed metadata with bounded messages.
+6. Rejects unsupported expression syntax with bounded messages.
 
 Each solver records:
 
@@ -83,12 +108,13 @@ The backend rejects:
 5. Missing linear objective metadata when linear constraints are present.
 6. Non-numeric or non-finite linear metadata.
 7. Unknown or duplicate linear variable names.
+8. Unsupported linear-expression syntax.
 
 The backend does not yet solve:
 
 1. Nonlinear objectives.
 2. Integer or mixed-integer programs.
-3. Constraint expressions without explicit linear metadata.
+3. Nonlinear constraint expressions.
 4. Unbounded-domain linear programs beyond explicit `UNBOUNDED` classification.
 5. Iterative numerical optimization.
 
