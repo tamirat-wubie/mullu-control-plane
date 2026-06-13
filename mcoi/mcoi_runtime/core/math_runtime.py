@@ -161,8 +161,27 @@ def _parse_linear_expression(expression: str) -> dict[str, float]:
 
 def _parse_linear_constraint_expression(expression: str) -> tuple[dict[str, float], float, float]:
     matches = tuple(_LINEAR_COMPARATOR_RE.finditer(expression))
-    if len(matches) > 1:
-        raise RuntimeCoreInvariantError("Linear constraint expression must contain one comparator")
+    if len(matches) > 2:
+        raise RuntimeCoreInvariantError("Linear constraint expression must contain at most two comparators")
+    if len(matches) == 2:
+        first, second = matches
+        first_operator = first.group(1)
+        second_operator = second.group(1)
+        if first_operator != second_operator or first_operator == "=":
+            raise RuntimeCoreInvariantError("Linear chained constraint requires aligned inequality comparators")
+        left = expression[:first.start()]
+        middle = expression[first.end():second.start()]
+        right = expression[second.end():]
+        left_terms, left_constant = _parse_linear_side(left)
+        middle_terms, middle_constant = _parse_linear_side(middle)
+        right_terms, right_constant = _parse_linear_side(right)
+        if left_terms or right_terms:
+            raise RuntimeCoreInvariantError("Linear chained constraint requires constant outer bounds")
+        if not middle_terms:
+            raise RuntimeCoreInvariantError("Linear solver metadata requires nonzero terms")
+        if first_operator == "<=":
+            return middle_terms, left_constant - middle_constant, right_constant - middle_constant
+        return middle_terms, right_constant - middle_constant, left_constant - middle_constant
     if not matches:
         terms, constant = _parse_linear_side(expression)
         if abs(constant) > _LINEAR_TOLERANCE:
