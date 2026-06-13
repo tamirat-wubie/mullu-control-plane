@@ -52,8 +52,11 @@ def _logical(expr: LogicalExpr, context: WHQREvaluationContext) -> GateResult:
             result = _and(result, value, "and")
         return result
     if expr.op is LogicalOp.OR:
-        if any(value.truth is TruthGate.TRUE for value in values):
-            return GateResult(TruthGate.TRUE, _norm(values), _evidence(values), _reasons(values))
+        true_values = tuple(value for value in values if value.truth is TruthGate.TRUE)
+        if true_values:
+            proven_true_values = tuple(value for value in true_values if value.evidence is EvidenceGate.PROVEN)
+            evidence_values = proven_true_values or true_values
+            return GateResult(TruthGate.TRUE, _norm(true_values), _evidence(evidence_values), _reasons(evidence_values))
         if all(value.truth is TruthGate.FALSE for value in values):
             return GateResult(TruthGate.FALSE, _norm(values), _evidence(values), _reasons(values))
         return GateResult(TruthGate.UNKNOWN, _norm(values), _evidence(values), _reasons(values))

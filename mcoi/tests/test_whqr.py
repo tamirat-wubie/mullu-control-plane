@@ -168,6 +168,59 @@ def test_evaluator_resolves_and_preserves_gates() -> None:
     assert denied_implication.truth == TruthGate.FALSE
 
 
+def test_or_evaluator_does_not_escalate_when_true_branch_is_proven() -> None:
+    ctx = WHQREvaluationContext(
+        node_results={
+            "fresh_vendor_record": GateResult(
+                TruthGate.TRUE,
+                NormGate.PERMITTED,
+                EvidenceGate.PROVEN,
+                reason="fresh_vendor_record_verified",
+            ),
+            "stale_vendor_record": GateResult(
+                TruthGate.TRUE,
+                NormGate.PERMITTED,
+                EvidenceGate.STALE,
+                reason="stale_vendor_record_expired",
+            ),
+            "missing_vendor_record": GateResult(
+                TruthGate.UNKNOWN,
+                NormGate.PERMITTED,
+                EvidenceGate.UNPROVEN,
+                reason="missing_vendor_record",
+            ),
+        }
+    )
+    proven_or_stale = evaluate(
+        LogicalExpr(
+            op=LogicalOp.OR,
+            args=(
+                _node("fresh_vendor_record"),
+                _node("stale_vendor_record"),
+            ),
+        ),
+        ctx,
+    )
+    proven_or_missing = evaluate(
+        LogicalExpr(
+            op=LogicalOp.OR,
+            args=(
+                _node("missing_vendor_record"),
+                _node("fresh_vendor_record"),
+            ),
+        ),
+        ctx,
+    )
+
+    assert proven_or_stale.truth is TruthGate.TRUE
+    assert proven_or_stale.norm is NormGate.PERMITTED
+    assert proven_or_stale.evidence is EvidenceGate.PROVEN
+    assert proven_or_stale.reason == "logical:fresh_vendor_record_verified"
+    assert proven_or_missing.truth is TruthGate.TRUE
+    assert proven_or_missing.evidence is EvidenceGate.PROVEN
+    assert proven_or_missing.reason == "logical:fresh_vendor_record_verified"
+
+
 def test_unresolved_negation_and_connector_behavior_are_bounded() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="not cannot apply"):
         evaluate(LogicalExpr(op=LogicalOp.NOT, args=(_node("missing"),)))
