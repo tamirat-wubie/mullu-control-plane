@@ -552,11 +552,45 @@ def test_governance_decision_codes_identify_primary_escalation_gate() -> None:
             node_results={"vendor_record": GateResult(TruthGate.TRUE, NormGate.PERMITTED, EvidenceGate.STALE)}
         ),
     )
+    unproven_decision = build_policy_decision(
+        WHQRNode(role=WHRole.WHAT, target="invoice_evidence"),
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        context=WHQREvaluationContext(
+            node_results={
+                "invoice_evidence": GateResult(TruthGate.TRUE, NormGate.PERMITTED, EvidenceGate.UNPROVEN),
+            }
+        ),
+    )
+    budget_unknown_decision = build_policy_decision(
+        WHQRNode(role=WHRole.WHAT, target="budget_check"),
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        context=WHQREvaluationContext(
+            node_results={
+                "budget_check": GateResult(TruthGate.TRUE, NormGate.PERMITTED, EvidenceGate.BUDGET_UNKNOWN),
+            }
+        ),
+    )
+    forbidden_unknown_decision = build_policy_decision(
+        WHQRNode(role=WHRole.WHAT, target="tenant_secret"),
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        context=WHQREvaluationContext(
+            node_results={
+                "tenant_secret": GateResult(TruthGate.TRUE, NormGate.PERMITTED, EvidenceGate.FORBIDDEN_UNKNOWN),
+            }
+        ),
+    )
 
     assert unknown_decision.status is PolicyDecisionStatus.ESCALATE
     assert unknown_decision.reasons[0].code == "whqr_truth_escalate"
     assert approval_decision.reasons[0].code == "whqr_norm_escalate"
-    assert stale_decision.reasons[0].code == "whqr_evidence_escalate"
+    assert stale_decision.reasons[0].code == "whqr_evidence_stale_escalate"
+    assert unproven_decision.reasons[0].code == "whqr_evidence_unproven_escalate"
+    assert budget_unknown_decision.reasons[0].code == "whqr_evidence_budget_unknown_escalate"
+    assert forbidden_unknown_decision.reasons[0].code == "whqr_evidence_forbidden_unknown_escalate"
+    assert forbidden_unknown_decision.reasons[0].details["evidence"] == EvidenceGate.FORBIDDEN_UNKNOWN.value
 
 
 def test_entity_binder_attaches_entity_and_evidence_refs_without_changing_tree_shape() -> None:
