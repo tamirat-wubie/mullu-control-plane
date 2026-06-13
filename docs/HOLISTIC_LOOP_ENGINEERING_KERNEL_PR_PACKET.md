@@ -66,9 +66,10 @@ staged into the holistic loop PR.
    `LoopReceiptLineageBinding`, `LoopClosureEvidencePack`, `LoopRegistry`,
    `LoopOperatorClosureReadinessView`, `LoopProofObligationView`, and bounded
    `LoopReadModel`.
-2. Registered six existing loops without changing runtime behavior:
+2. Registered seven existing loops without changing runtime behavior:
    `audit_proof_verification_loop`,
    `authority_obligation_loop`,
+   `universal_action_orchestration_loop`,
    `deployment_witness_loop`, `runtime_conformance_loop`,
    `cognitive_outcome_loop`, and `governed_code_change_loop`.
 3. Added read-only reporting through
@@ -105,13 +106,13 @@ staged into the holistic loop PR.
     non-terminal nested read-model boundaries, and proof-matrix admission
     anchoring.
 14. Added the candidate map for future loop registration planning. It lists
-    evidence-backed loop-like surfaces, distinguishes the admitted audit/proof
-    and authority candidates from still-blocked candidates, and does not
+    evidence-backed loop-like surfaces, distinguishes the admitted audit/proof,
+    authority, and UAO candidates from still-blocked candidates, and does not
     verify, close, mutate, or migrate them.
-15. Added the UAO admission dossier for the first candidate-specific readiness
-    projection. It builds a proposed manifest and reports evidence, authority,
-    closure-condition, rollback, and learning readiness without registering the
-    loop or changing UAO runtime behavior.
+15. Added and then admitted the UAO loop into the default read model. The
+    dossier now reports registry admission while preserving the same
+    non-mutation boundary: it does not execute orchestration, emit receipts,
+    mutate action state, or change UAO runtime behavior.
 16. Added the workflow admission dossier for the next candidate-specific
     readiness projection. It builds a proposed manifest and reports evidence,
     authority, closure-condition, rollback, and learning readiness without
@@ -124,7 +125,7 @@ staged into the holistic loop PR.
     The dossier now reports registry admission while preserving the same
     non-mutation boundary: it does not verify proofs, submit anchors, emit
     receipts, mutate the registry, or change audit/proof runtime behavior.
-19. Added exact proof-matrix witnesses for the audit/proof and authority
+19. Added exact proof-matrix witnesses for the audit/proof, authority, and UAO
     default read-model admissions so the holistic loop surface remains at zero
     unanchored labels.
 
@@ -478,20 +479,21 @@ candidate.behavior_rewrite == false
 ```
 
 The map currently covers audit/proof verification, authority obligations,
-universal action orchestration, and workflow execution. Audit/proof and
-authority are admitted into the default registry; UAO and workflow remain
-blocked future candidates.
+universal action orchestration, and workflow execution. Audit/proof, authority,
+and UAO are admitted into the default registry; workflow remains a blocked
+future candidate.
 
 ## UAO Admission Dossier Follow-Up
 
-The UAO admission dossier projects the first candidate-specific admission
-readiness packet:
+The UAO admission dossier reports the admitted candidate-specific registry
+state:
 
 ```text
 dossier.candidate_id == universal_action_orchestration_loop
-dossier.admission_status == ready_for_operator_decision
-requires_operator_registration_decision in dossier.admission_blockers
-dossier.registered == false
+dossier.admission_status == registered
+dossier.admission_blockers == []
+dossier.next_action == already_registered
+dossier.registered == true
 dossier.read_only == true
 dossier.mutation_route == false
 dossier.runtime_behavior_change == false
@@ -502,7 +504,8 @@ dossier.registration_effect.registers_loop == false
 The dossier includes a proposed `LoopManifest`, existing UAO source refs,
 evidence gap report, authority gap report, closure-condition gap report,
 rollback readiness, and learning policy readiness. It is not registration,
-terminal closure, runtime migration, receipt emission, or execution authority.
+terminal closure, runtime migration, receipt emission, orchestration execution,
+or execution authority.
 
 ## Workflow Admission Dossier Follow-Up
 
