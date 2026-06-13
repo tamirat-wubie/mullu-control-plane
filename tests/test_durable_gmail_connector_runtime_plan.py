@@ -110,3 +110,14 @@ def test_plan_terms_require_account_binding_gate() -> None:
     assert "plan missing required term: source live receipt" in errors
     assert "plan missing required term: Tenant/mailbox binding" in errors
     assert "plan missing required term: account binding" in errors
+
+
+def test_plan_terms_require_revocation_recovery_rehearsal_gate() -> None:
+    plan_text = validator.PLAN_PATH.read_text(encoding="utf-8")
+    stale_plan_text = plan_text.replace("produce_durable_gmail_revocation_recovery_rehearsal_receipt.py", "")
+    stale_plan_text = stale_plan_text.replace("validate_durable_gmail_revocation_recovery_rehearsal_receipt.py", "")
+
+    errors = validator._validate_plan_terms(stale_plan_text)
+
+    assert "plan missing required term: produce_durable_gmail_revocation_recovery_rehearsal_receipt.py" in errors
+    assert "plan missing required term: validate_durable_gmail_revocation_recovery_rehearsal_receipt.py" in errors
