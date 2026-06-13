@@ -56,6 +56,11 @@ from scripts.validate_schemas import _load_schema, _validate_schema_instance  # 
 
 
 LATEST_ANCHOR_SCHEMA = _ROOT / "schemas" / "latest_anchor_read_model.schema.json"
+COMMAND_INTERPRETATION_READ_MODEL_SCHEMA = (
+    _ROOT / "schemas" / "command_interpretation_receipt_read_model.schema.json"
+)
+INTERPRETATION_RECEIPT_SCHEMA = _ROOT / "schemas" / "interpretation_receipt.schema.json"
+INTERPRETED_REQUEST_SCHEMA = _ROOT / "schemas" / "interpreted_request.schema.json"
 
 
 def _replace_command_event_with_recomputed_hash(event, **changes):
@@ -2506,10 +2511,10 @@ class TestGatewayStatus:
             intent="llm_completion",
             payload={
                 "body": "do not expose raw body",
-                "interpretation_receipt_id": "interp-rcpt-1",
+                "interpretation_receipt_id": "interpretation-receipt-aaaaaaaaaaaaaaaa",
                 "interpretation_receipt": {
-                    "receipt_id": "interp-rcpt-1",
-                    "request_id": "req-interpret-1",
+                    "receipt_id": "interpretation-receipt-aaaaaaaaaaaaaaaa",
+                    "request_id": "interpreted-request-bbbbbbbbbbbbbbbb",
                     "raw_message_hash": "hash-raw-message-1",
                     "interpreted_intent": "llm_completion",
                     "extracted_slots": {
@@ -2521,30 +2526,28 @@ class TestGatewayStatus:
                     "confidence": 0.91,
                     "model_or_rule_used": "deterministic-rule-v1",
                     "rejected_interpretations": [],
-                    "risk_precheck": {"risk_tier": "low"},
+                    "risk_precheck": "low",
                     "created_at": "2026-04-24T12:00:00+00:00",
                     "raw_message": "do not expose raw body",
                 },
                 "interpreted_request": {
-                    "request_id": "req-interpret-1",
+                    "request_id": "interpreted-request-bbbbbbbbbbbbbbbb",
                     "tenant_id": "t1",
                     "actor_id": "u1",
                     "channel": "web",
                     "conversation_id": "conversation-interpretation",
                     "raw_message_hash": "hash-raw-message-1",
-                    "intent_class": "llm_completion",
+                    "intent_class": "action_request",
                     "capability_id": "llm_completion",
                     "extracted_slots": {
                         "capability_id": "llm_completion",
                         "body": "do not expose nested request raw body",
                         "raw-body": "do not expose hyphenated request raw body",
-                    },
-                    "missing_slots": [],
-                    "constraints": {
-                        "tenant_bound": True,
                         "raw_text": "do not expose nested raw text",
                         "rawText": "do not expose camel-case raw text",
                     },
+                    "missing_slots": [],
+                    "constraints": ["tenant_bound"],
                     "search_needed": False,
                     "action_needed": True,
                     "risk_estimate": "low",
@@ -2565,7 +2568,11 @@ class TestGatewayStatus:
         assert data["command_id"] == command.command_id
         assert data["tenant_id"] == "t1"
         assert data["actor_id"] == "u1"
-        assert data["interpretation_receipt_id"] == "interp-rcpt-1"
+        assert (
+            data["schema_ref"]
+            == "urn:mullusi:schema:command-interpretation-receipt-read-model:1"
+        )
+        assert data["interpretation_receipt_id"] == "interpretation-receipt-aaaaaaaaaaaaaaaa"
         assert data["raw_message_exposed"] is False
         assert data["execution_allowed"] is False
         assert data["governed"] is True
@@ -2574,8 +2581,20 @@ class TestGatewayStatus:
         assert data["interpretation_receipt"]["extracted_slots"] == {"capability_id": "llm_completion"}
         assert data["interpreted_request"]["capability_id"] == "llm_completion"
         assert data["interpreted_request"]["extracted_slots"] == {"capability_id": "llm_completion"}
-        assert data["interpreted_request"]["constraints"] == {"tenant_bound": True}
+        assert data["interpreted_request"]["constraints"] == ["tenant_bound"]
         assert data["interpreted_request"]["action_needed"] is True
+        assert _validate_schema_instance(
+            _load_schema(COMMAND_INTERPRETATION_READ_MODEL_SCHEMA),
+            data,
+        ) == []
+        assert _validate_schema_instance(
+            _load_schema(INTERPRETATION_RECEIPT_SCHEMA),
+            data["interpretation_receipt"],
+        ) == []
+        assert _validate_schema_instance(
+            _load_schema(INTERPRETED_REQUEST_SCHEMA),
+            data["interpreted_request"],
+        ) == []
         assert "raw_message" not in data["interpretation_receipt"]
         assert "raw_message" not in data["interpreted_request"]
         assert "do not expose raw body" not in json.dumps(data, sort_keys=True)

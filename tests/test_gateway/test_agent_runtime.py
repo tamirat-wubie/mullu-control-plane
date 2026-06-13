@@ -20,10 +20,12 @@ import pytest
 
 from gateway.agent_runtime import (
     AgentLease,
+    AgentReceipt,
     AgentReceiptStatus,
     AgentRuntimeCoordinator,
     AgentRuntimeIdentity,
     AgentRuntimeStatus,
+    AgentTask,
     AgentTaskStatus,
     agent_runtime_snapshot_to_json_dict,
 )
@@ -154,6 +156,31 @@ def test_agent_runtime_evidence_refs_reject_non_string_values() -> None:
             issued_at="2026-05-05T12:00:00Z",
             expires_at="2026-05-05T13:00:00Z",
             evidence_refs=(1,),  # type: ignore[arg-type]
+        )
+
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        AgentTask(
+            task_id="task-invalid-evidence",
+            agent_id="agent-finance",
+            tenant_id="tenant-a",
+            capability="invoice.read",
+            goal_id="goal-invoice",
+            risk_tier="high",
+            budget_cents=100,
+            status=AgentTaskStatus.ACCEPTED,
+            assigned_at="2026-05-05T12:00:00Z",
+            evidence_refs=({"proof": "approval://case-001"},),  # type: ignore[arg-type]
+        )
+
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        AgentReceipt(
+            receipt_id="receipt-invalid-evidence",
+            receipt_type="task",
+            status=AgentReceiptStatus.ACCEPTED,
+            actor_agent_id="agent-finance",
+            tenant_id="tenant-a",
+            reason="accepted",
+            evidence_refs=(["receipt://structured"],),  # type: ignore[arg-type]
         )
 
 

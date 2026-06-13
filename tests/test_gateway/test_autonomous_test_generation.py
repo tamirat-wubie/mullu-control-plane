@@ -19,6 +19,7 @@ from pathlib import Path
 from gateway.autonomous_test_generation import (
     AutonomousTestGenerationEngine,
     FailureTrace,
+    GeneratedTestCase,
 )
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
@@ -109,6 +110,40 @@ def test_failure_trace_requires_evidence_refs() -> None:
     assert error == "evidence_refs_required"
     assert FailureTrace is not None
     assert AutonomousTestGenerationEngine is not None
+
+
+def test_autonomous_test_generation_evidence_refs_reject_structured_values() -> None:
+    try:
+        _trace(evidence_refs=({"proof": "trace:evidence:1"},))
+    except ValueError as exc:
+        trace_error = str(exc)
+    else:
+        trace_error = ""
+
+    try:
+        GeneratedTestCase(
+            case_id="generated-case-structured-evidence",
+            trace_id="failure-trace-1",
+            tenant_id="tenant-a",
+            test_type="governance",
+            title="Reject structured evidence refs",
+            target="gateway.autonomous_test_generation",
+            scenario="structured evidence refs must not satisfy proof admission",
+            input_mutations=("structured_evidence_ref",),
+            expected_outcome="evidence_ref_rejected",
+            required_controls=("evidence_ref_string_validation",),
+            evidence_refs=(["trace:evidence:1"],),
+            replay_required=True,
+            sandbox_required=False,
+            operator_review_required=True,
+        )
+    except ValueError as exc:
+        case_error = str(exc)
+    else:
+        case_error = ""
+
+    assert trace_error == "evidence_refs_invalid"
+    assert case_error == "evidence_refs_invalid"
 
 
 def test_generation_requires_matching_certified_trace() -> None:

@@ -121,7 +121,7 @@ class PolicyScenario:
             _require_text(getattr(self, field_name), field_name)
         if self.amount < 0:
             raise ValueError("amount_nonnegative_required")
-        object.__setattr__(self, "evidence_refs", _normalize_text_tuple(self.evidence_refs, "evidence_refs", allow_empty=True))
+        object.__setattr__(self, "evidence_refs", _normalize_evidence_refs(self.evidence_refs, allow_empty=True))
         object.__setattr__(self, "metadata", dict(self.metadata))
 
     def to_json_dict(self) -> dict[str, Any]:
@@ -153,7 +153,7 @@ class PolicySimulation:
         object.__setattr__(self, "reasons", _normalize_text_tuple(self.reasons, "reasons"))
         object.__setattr__(self, "matched_rule_ids", _normalize_text_tuple(self.matched_rule_ids, "matched_rule_ids", allow_empty=True))
         object.__setattr__(self, "required_approvals", _normalize_text_tuple(self.required_approvals, "required_approvals", allow_empty=True))
-        object.__setattr__(self, "evidence_refs", _normalize_text_tuple(self.evidence_refs, "evidence_refs", allow_empty=True))
+        object.__setattr__(self, "evidence_refs", _normalize_evidence_refs(self.evidence_refs, allow_empty=True))
         object.__setattr__(self, "metadata", dict(self.metadata))
 
     def to_json_dict(self) -> dict[str, Any]:
@@ -174,7 +174,7 @@ class PolicyBypassCounterexample:
     def __post_init__(self) -> None:
         for field_name in ("probe_id", "scenario_id", "reason", "simulation_id"):
             _require_text(getattr(self, field_name), field_name)
-        object.__setattr__(self, "evidence_refs", _normalize_text_tuple(self.evidence_refs, "evidence_refs", allow_empty=True))
+        object.__setattr__(self, "evidence_refs", _normalize_evidence_refs(self.evidence_refs, allow_empty=True))
 
 
 @dataclass(frozen=True, slots=True)
@@ -449,6 +449,21 @@ def _normalize_text_tuple(values: tuple[str, ...], field_name: str, *, allow_emp
     if not normalized and not allow_empty:
         raise ValueError(f"{field_name}_required")
     return normalized
+
+
+def _normalize_evidence_refs(values: tuple[str, ...], *, allow_empty: bool = False) -> tuple[str, ...]:
+    if not isinstance(values, tuple | list):
+        raise ValueError("evidence_refs_invalid")
+    normalized: list[str] = []
+    for value in values:
+        if not isinstance(value, str):
+            raise ValueError("evidence_refs_invalid")
+        evidence_ref = value.strip()
+        if evidence_ref and evidence_ref not in normalized:
+            normalized.append(evidence_ref)
+    if not normalized and not allow_empty:
+        raise ValueError("evidence_refs_required")
+    return tuple(normalized)
 
 
 def _require_text(value: str, field_name: str) -> None:

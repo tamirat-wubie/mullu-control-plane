@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:command-interpretation-receipt-read-model:1",
+  "title": "Command Interpretation Receipt Read Model",
+  "description": "Operator-gated, bounded command interpretation receipt view.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "command_id",
+    "tenant_id",
+    "actor_id",
+    "interpretation_receipt_id",
+    "interpretation_receipt",
+    "interpreted_request",
+    "raw_message_exposed",
+    "execution_allowed",
+    "governed"
+  ],
+  "properties": {
+    "schema_ref": {
+      "type": "string",
+      "const": "urn:mullusi:schema:command-interpretation-receipt-read-model:1"
+    },
+    "command_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "actor_id": {"type": "string", "minLength": 1},
+    "interpretation_receipt_id": {
+      "type": "string",
+      "pattern": "^interpretation-receipt-[a-f0-9]{16}$"
+    },
+    "interpretation_receipt": {"$ref": "#/$defs/interpretation_receipt"},
+    "interpreted_request": {"$ref": "#/$defs/interpreted_request"},
+    "raw_message_exposed": {"type": "boolean", "const": false},
+    "execution_allowed": {"type": "boolean", "const": false},
+    "governed": {"type": "boolean", "const": true}
+  },
+  "$defs": {
+    "interpretation_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "request_id",
+        "raw_message_hash",
+        "interpreted_intent",
+        "extracted_slots",
+        "missing_slots",
+        "confidence",
+        "model_or_rule_used",
+        "rejected_interpretations",
+        "risk_precheck",
+        "created_at"
+      ],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^interpretation-receipt-[a-f0-9]{16}$"
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^interpreted-request-[a-f0-9]{16}$"
+        },
+        "raw_message_hash": {"type": "string", "minLength": 1},
+        "interpreted_intent": {"type": "string", "minLength": 1},
+        "extracted_slots": {"type": "object", "additionalProperties": true},
+        "missing_slots": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "model_or_rule_used": {"type": "string", "minLength": 1},
+        "rejected_interpretations": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "risk_precheck": {"type": "string", "enum": ["low", "medium", "high"]},
+        "created_at": {"type": "string", "minLength": 1}
+      }
+    },
+    "interpreted_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "tenant_id",
+        "actor_id",
+        "channel",
+        "conversation_id",
+        "raw_message_hash",
+        "intent_class",
+        "capability_id",
+        "extracted_slots",
+        "missing_slots",
+        "constraints",
+        "search_needed",
+        "action_needed",
+        "risk_estimate",
+        "approval_required",
+        "confidence",
+        "interpreter_kind",
+        "rejected_interpretations",
+        "created_at"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "pattern": "^interpreted-request-[a-f0-9]{16}$"
+        },
+        "tenant_id": {"type": "string", "minLength": 1},
+        "actor_id": {"type": "string", "minLength": 1},
+        "channel": {"type": "string", "minLength": 1},
+        "conversation_id": {"type": "string"},
+        "raw_message_hash": {"type": "string", "minLength": 1},
+        "intent_class": {
+          "type": "string",
+          "enum": [
+            "question",
+            "action_request",
+            "explicit_command",
+            "approval_response",
+            "correction",
+            "follow_up",
+            "support_issue",
+            "document_instruction",
+            "connector_request",
+            "blocked_request",
+            "unclear_message"
+          ]
+        },
+        "capability_id": {"type": "string"},
+        "extracted_slots": {"type": "object", "additionalProperties": true},
+        "missing_slots": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "constraints": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "search_needed": {"type": "boolean"},
+        "action_needed": {"type": "boolean"},
+        "risk_estimate": {"type": "string", "enum": ["low", "medium", "high"]},
+        "approval_required": {"type": "boolean"},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "interpreter_kind": {"type": "string", "minLength": 1},
+        "rejected_interpretations": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        },
+        "created_at": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

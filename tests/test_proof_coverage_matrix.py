@@ -258,7 +258,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["tool_permission_registry"]["unanchored_witness_count"] == 0
     assert surfaces["tool_permission_registry"]["exact_test_anchor_count"] == 11
     assert surfaces["gateway_capability_fabric"]["unanchored_witness_count"] == 0
-    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 18
+    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 19
     assert surfaces["capability_worker_execution"]["unanchored_witness_count"] == 0
     assert surfaces["capability_worker_execution"]["exact_test_anchor_count"] == 7
     assert surfaces["capability_plan_evidence_bundle"]["unanchored_witness_count"] == 0
@@ -1488,6 +1488,10 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "gateway/command_spine.py" in gateway_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/app/governed_execution.py" in gateway_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/domain_capsule_compiler.py" in gateway_surface["evidence_files"]
+    assert (
+        "schemas/command_interpretation_receipt_read_model.schema.json"
+        in gateway_surface["evidence_files"]
+    )
     assert "tests/test_gateway/test_capability_capsule_installer.py" in gateway_surface["evidence_files"]
     assert "tests/test_gateway/test_webhooks.py" in gateway_surface["evidence_files"]
     assert "tests/test_governed_capability_fabric.py" in gateway_surface["evidence_files"]
@@ -1495,6 +1499,7 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "terminal_closure_requires_evidence_refs" in witnesses
     assert "successful_response_is_bound_to_response_evidence_closure" in witnesses
     assert "command_interpretation_receipt_read_model_bounds_raw_message" in witnesses
+    assert "command_interpretation_receipt_read_model_schema_valid" in witnesses
     assert "command_interpretation_receipt_requires_operator_authority" in witnesses
     assert "command_interpretation_receipt_replays_from_command_store" in witnesses
     assert "universal_action_proof_replays_from_command_events" in witnesses

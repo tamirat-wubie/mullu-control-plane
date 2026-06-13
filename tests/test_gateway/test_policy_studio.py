@@ -17,9 +17,11 @@ import json
 from pathlib import Path
 
 from gateway.policy_studio import (
+    PolicyBypassCounterexample,
     PolicyRule,
     PolicyRuleEffect,
     PolicyScenario,
+    PolicySimulation,
     PolicyScenarioVerdict,
     PolicySimulator,
     PolicyStudio,
@@ -195,6 +197,57 @@ def test_policy_studio_schema_exposes_session_contract() -> None:
     assert schema["$defs"]["rule"]["properties"]["tenant_match_required"]["const"] is True
     assert schema["properties"]["metadata"]["properties"]["policy_studio_is_read_only"]["const"] is True
     assert payload["probe_report"]["metadata"]["policy_weakening_allowed"] is False
+
+
+def test_policy_studio_evidence_refs_reject_structured_values() -> None:
+    try:
+        PolicyScenario(
+            scenario_id="scenario-structured-evidence",
+            tenant_id="tenant-a",
+            actor_id="support-agent",
+            actor_role="support_agent",
+            action="refund_customer",
+            requested_at="2026-05-05T14:00:00Z",
+            evidence_refs=({"proof": "evidence://refund"},),
+        )
+    except ValueError as exc:
+        scenario_error = str(exc)
+    else:
+        scenario_error = ""
+
+    try:
+        PolicySimulation(
+            simulation_id="simulation-structured-evidence",
+            policy_id="support-refund-policy",
+            scenario_id="scenario-structured-evidence",
+            verdict=PolicyScenarioVerdict.ESCALATE,
+            reasons=("approval_required",),
+            matched_rule_ids=("refund-manager-approval",),
+            required_approvals=("support_manager",),
+            side_effects_allowed=False,
+            evidence_refs=(["evidence://refund"],),
+        )
+    except ValueError as exc:
+        simulation_error = str(exc)
+    else:
+        simulation_error = ""
+
+    try:
+        PolicyBypassCounterexample(
+            probe_id="probe-structured-evidence",
+            scenario_id="scenario-structured-evidence",
+            reason="unsafe_allow",
+            simulation_id="simulation-structured-evidence",
+            evidence_refs=({"proof": "evidence://refund"},),
+        )
+    except ValueError as exc:
+        counterexample_error = str(exc)
+    else:
+        counterexample_error = ""
+
+    assert scenario_error == "evidence_refs_invalid"
+    assert simulation_error == "evidence_refs_invalid"
+    assert counterexample_error == "evidence_refs_invalid"
 
 
 def _rules() -> tuple[PolicyRule, ...]:
