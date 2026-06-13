@@ -61,6 +61,8 @@ judgment is earned.
 | CI SDLC Governance Gate | Job `81222190750`, `success`; `Run test-coverage contract tests` passed |
 | CI Schema Validation | Job `81222190720`, `success`; `Test SNet mesh receipt contract` passed |
 | CI Build Verification job | Job `81222369820`, `success` |
+| Local focused governance runner | `agents_policy`, `workspace_governance_witness_contract`, and `release_status` passed |
+| Local full workspace preflight rerun | `145` checks passed; receipt `.tmp/workspace-governance-preflight-receipt.json` validated |
 | Public health endpoint | `https://api.mullusi.com/health` returned `status=healthy` |
 | Deployment witness endpoint | `https://api.mullusi.com/deployment/witness` returned `gateway_health=pass`, `api_health=pass`, `db_health=pass` |
 | Deployment witness commit | `130d0567edcc8d7f303c0081334ef57eb5c071dd` |
@@ -90,7 +92,8 @@ the failing witness against CI run `27478565963` and deployment witness
 
 `SolvedVerified`: the originally linked failed run is obsolete, the causal repair
 commit is identified, merge-commit CI is green, and the live deployment witness
-reports the merged commit.
+reports the merged commit. Local focused governance checks passed, and the local
+full workspace preflight rerun passed with a validated receipt.
 
 STATUS:
   Completeness: 100%
