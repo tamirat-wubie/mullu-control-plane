@@ -22,6 +22,7 @@ from ._base import (
     freeze_value,
     require_datetime_text,
     require_non_empty_text,
+    require_non_empty_tuple,
     require_non_negative_float,
     require_non_negative_int,
     require_unit_float,
@@ -262,6 +263,46 @@ class SolverResult(ContractRecord):
         object.__setattr__(self, "duration_ms", require_non_negative_float(self.duration_ms, "duration_ms"))
         require_datetime_text(self.solved_at, "solved_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
+
+
+@dataclass(frozen=True, slots=True)
+class MathSolverReceipt(ContractRecord):
+    """Governance evidence receipt for one deterministic solver decision."""
+
+    receipt_id: str = ""
+    tenant_id: str = ""
+    request_ref: str = ""
+    result_id: str = ""
+    trace_id: str = ""
+    solver: str = ""
+    status: OptimizationStatus = OptimizationStatus.FEASIBLE
+    disposition: SolverDisposition = SolverDisposition.SOLVED
+    reason: str = ""
+    objective_value: float = 0.0
+    iterations: int = 0
+    decision_summary: Mapping[str, Any] = field(default_factory=dict)
+    evidence_refs: tuple[str, ...] = field(default_factory=tuple)
+    emitted_at: str = ""
+    receipt_hash: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "receipt_id", require_non_empty_text(self.receipt_id, "receipt_id"))
+        object.__setattr__(self, "tenant_id", require_non_empty_text(self.tenant_id, "tenant_id"))
+        object.__setattr__(self, "request_ref", require_non_empty_text(self.request_ref, "request_ref"))
+        object.__setattr__(self, "result_id", require_non_empty_text(self.result_id, "result_id"))
+        object.__setattr__(self, "trace_id", require_non_empty_text(self.trace_id, "trace_id"))
+        object.__setattr__(self, "solver", require_non_empty_text(self.solver, "solver"))
+        if not isinstance(self.status, OptimizationStatus):
+            raise ValueError("status must be an OptimizationStatus")
+        if not isinstance(self.disposition, SolverDisposition):
+            raise ValueError("disposition must be a SolverDisposition")
+        object.__setattr__(self, "reason", require_non_empty_text(self.reason, "reason"))
+        object.__setattr__(self, "objective_value", _require_finite_float(self.objective_value, "objective_value"))
+        object.__setattr__(self, "iterations", require_non_negative_int(self.iterations, "iterations"))
+        object.__setattr__(self, "decision_summary", freeze_value(dict(self.decision_summary)))
+        object.__setattr__(self, "evidence_refs", require_non_empty_tuple(self.evidence_refs, "evidence_refs"))
+        require_datetime_text(self.emitted_at, "emitted_at")
+        object.__setattr__(self, "receipt_hash", require_non_empty_text(self.receipt_hash, "receipt_hash"))
 
 
 @dataclass(frozen=True, slots=True)

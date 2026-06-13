@@ -511,3 +511,77 @@ class TestDeterministicIntegerLinearSolver:
         assert str(exc_info.value) == "Linear integer assignment limit exceeded"
         assert "300" not in str(exc_info.value)
         assert "req-int-4" not in str(exc_info.value)
+
+
+class TestMathSolverReceiptEvidence:
+    def test_interval_solver_result_carries_governance_receipt(self, engine):
+        engine.register_objective("obj-receipt-1", "t-1", "Receipt cost", ObjectiveDirection.MINIMIZE, weight=0.5)
+        engine.add_constraint("c-receipt-1", "t-1", "obj-receipt-1", "x >= 4", 4.0, 10.0)
+        engine.submit_solver_request("req-receipt-1", "t-1", "obj-receipt-1")
+
+        result = engine.solve_solver_request("req-receipt-1", result_id="res-receipt-1")
+        receipt = result.metadata["solver_receipt"]
+
+        assert receipt["receipt_id"].startswith("math-solver-receipt-")
+        assert receipt["solver"] == "deterministic_interval_v1"
+        assert receipt["status"] == OptimizationStatus.OPTIMAL.value
+        assert receipt["disposition"] == SolverDisposition.SOLVED.value
+        assert receipt["reason"] == "bounded_optimum"
+        assert receipt["decision_summary"]["decision_value"] == 4.0
+        assert receipt["evidence_refs"][0] == "math-request:req-receipt-1"
+        assert receipt["evidence_refs"][1] == "math-result:res-receipt-1"
+        assert receipt["evidence_refs"][2].startswith("math-trace:trace-math-solver-")
+        assert len(receipt["receipt_hash"]) == 64
+
+    def test_linear_solver_receipt_captures_decision_values_and_bounds(self, engine):
+        engine.register_objective(
+            "obj-receipt-2",
+            "t-1",
+            "Receipt linear",
+            ObjectiveDirection.MINIMIZE,
+            metadata={
+                "decision_variables": ["x", "y"],
+                "linear_expression": "3*x + y",
+                "variable_bounds": {"x": [0.0, 10.0], "y": [0.0, 10.0]},
+            },
+        )
+        engine.add_constraint("c-receipt-2", "t-1", "obj-receipt-2", "x + y >= 5")
+        engine.submit_solver_request("req-receipt-2", "t-1", "obj-receipt-2")
+
+        result = engine.solve_solver_request("req-receipt-2", result_id="res-receipt-2")
+        receipt = result.metadata["solver_receipt"]
+
+        assert receipt["solver"] == "deterministic_linear_v1"
+        assert receipt["reason"] == "bounded_linear_optimum"
+        assert receipt["decision_summary"]["decision_variables"] == ("x", "y")
+        assert receipt["decision_summary"]["decision_values"] == {"x": 0.0, "y": 5.0}
+        assert receipt["decision_summary"]["variable_bounds"]["x"]["lower"] == 0.0
+        assert receipt["decision_summary"]["weighted_objective_value"] == 5.0
+        assert receipt["evidence_refs"][1] == "math-result:res-receipt-2"
+
+    def test_integer_linear_solver_receipt_captures_assignment_evidence(self, engine):
+        engine.register_objective(
+            "obj-receipt-3",
+            "t-1",
+            "Receipt integer",
+            ObjectiveDirection.MAXIMIZE,
+            metadata={
+                "decision_variables": ["x"],
+                "linear_coefficients": {"x": 1.0},
+                "integer_variables": ["x"],
+                "variable_bounds": {"x": [0.0, 3.0]},
+            },
+        )
+        engine.add_constraint("c-receipt-3", "t-1", "obj-receipt-3", "x <= 2.5")
+        engine.submit_solver_request("req-receipt-3", "t-1", "obj-receipt-3")
+
+        result = engine.solve_solver_request("req-receipt-3", result_id="res-receipt-3")
+        receipt = result.metadata["solver_receipt"]
+
+        assert receipt["reason"] == "bounded_linear_optimum"
+        assert receipt["decision_summary"]["integer_variables"] == ("x",)
+        assert receipt["decision_summary"]["integer_assignment_count"] == 3
+        assert receipt["decision_summary"]["integer_assignment_limit"] == 256
+        assert receipt["decision_summary"]["decision_values"] == {"x": 2.0}
+        assert receipt["iterations"] == result.iterations
+        assert receipt["objective_value"] == result.objective_value

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:math-solver-receipt:1",
+  "title": "Math Solver Receipt",
+  "description": "Governance evidence receipt for one deterministic math solver decision.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "tenant_id",
+    "request_ref",
+    "result_id",
+    "trace_id",
+    "solver",
+    "status",
+    "disposition",
+    "reason",
+    "objective_value",
+    "iterations",
+    "decision_summary",
+    "evidence_refs",
+    "emitted_at",
+    "receipt_hash"
+  ],
+  "properties": {
+    "receipt_id": { "type": "string", "pattern": "^math-solver-receipt-[0-9a-f]{12}$" },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "request_ref": { "type": "string", "minLength": 1 },
+    "result_id": { "type": "string", "minLength": 1 },
+    "trace_id": { "type": "string", "minLength": 1 },
+    "solver": { "type": "string", "enum": ["deterministic_interval_v1", "deterministic_linear_v1"] },
+    "status": {
+      "type": "string",
+      "enum": ["feasible", "infeasible", "optimal", "bounded", "unbounded", "timeout"]
+    },
+    "disposition": {
+      "type": "string",
+      "enum": ["solved", "failed", "timeout", "deferred"]
+    },
+    "reason": { "type": "string", "minLength": 1 },
+    "objective_value": { "type": "number" },
+    "iterations": { "type": "integer", "minimum": 0 },
+    "decision_summary": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          { "type": "string" },
+          { "type": "number" },
+          { "type": "integer" },
+          { "type": "boolean" },
+          { "type": "array" },
+          { "type": "object" }
+        ]
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 3,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "emitted_at": { "type": "string", "format": "date-time" },
+    "receipt_hash": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

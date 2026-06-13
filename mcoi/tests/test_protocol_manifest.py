@@ -39,6 +39,7 @@ def test_protocol_manifest_is_valid() -> None:
     candidate_entry = entries["capability-candidate"]
     maturity_entry = entries["capability-maturity"]
     marketplace_entry = entries["marketplace-sdk-catalog"]
+    math_solver_receipt_entry = entries["math-solver-receipt"]
     economic_intelligence_entry = entries["economic-intelligence-snapshot"]
     federated_control_entry = entries["federated-control-snapshot"]
     memory_lattice_entry = entries["memory-lattice"]
@@ -143,6 +144,9 @@ def test_protocol_manifest_is_valid() -> None:
     assert marketplace_entry["path"] == "schemas/marketplace_sdk_catalog.schema.json"
     assert marketplace_entry["urn"] == "urn:mullusi:schema:marketplace-sdk-catalog:1"
     assert marketplace_entry["surface"] == "marketplace"
+    assert math_solver_receipt_entry["path"] == "schemas/math_solver_receipt.schema.json"
+    assert math_solver_receipt_entry["urn"] == "urn:mullusi:schema:math-solver-receipt:1"
+    assert math_solver_receipt_entry["surface"] == "math"
     assert economic_intelligence_entry["path"] == "schemas/economic_intelligence_snapshot.schema.json"
     assert economic_intelligence_entry["urn"] == "urn:mullusi:schema:economic-intelligence-snapshot:1"
     assert economic_intelligence_entry["surface"] == "commercial"

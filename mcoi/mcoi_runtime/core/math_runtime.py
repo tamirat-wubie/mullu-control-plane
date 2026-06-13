@@ -13,6 +13,7 @@ Invariants:
 from __future__ import annotations
 
 from collections.abc import Mapping
+import json
 import math
 from itertools import combinations, product
 import re
@@ -23,6 +24,7 @@ from mcoi_runtime.core.engine_protocol import Clock, WallClock
 
 from ..contracts.math_runtime import (
     MathOptimizationConstraint,
+    MathSolverReceipt,
     MathSnapshot,
     ObjectiveDirection,
     OptimizationObjective,
@@ -209,6 +211,20 @@ def _solve_linear_system(matrix: tuple[tuple[float, ...], ...], vector: tuple[fl
             for current_column in range(column, dimension + 1):
                 rows[row][current_column] -= factor * rows[column][current_column]
     return tuple(rows[row][dimension] for row in range(dimension))
+
+
+def _receipt_safe_value(value: Any) -> Any:
+    if isinstance(value, float):
+        if math.isinf(value):
+            return "Infinity" if value > 0 else "-Infinity"
+        if math.isnan(value):
+            return "NaN"
+        return value
+    if isinstance(value, Mapping):
+        return {str(key): _receipt_safe_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_receipt_safe_value(item) for item in value]
+    return value
 
 
 class MathRuntimeEngine:
@@ -557,6 +573,16 @@ class MathRuntimeEngine:
             feasible=status is OptimizationStatus.OPTIMAL,
             metadata={"solver": metadata["solver"], "reason": metadata["reason"]},
         )
+        metadata["solver_receipt"] = self._build_solver_receipt(
+            request=request,
+            result_id=effective_result_id,
+            trace_id=trace_id,
+            status=status,
+            disposition=disposition,
+            objective_value=objective_value,
+            iterations=iterations,
+            metadata=metadata,
+        ).to_json_dict()
         return self.record_solver_result(
             result_id=effective_result_id,
             tenant_id=request.tenant_id,
@@ -976,6 +1002,16 @@ class MathRuntimeEngine:
             feasible=status is OptimizationStatus.OPTIMAL,
             metadata={"solver": metadata["solver"], "reason": metadata["reason"]},
         )
+        metadata["solver_receipt"] = self._build_solver_receipt(
+            request=request,
+            result_id=result_id,
+            trace_id=trace_id,
+            status=status,
+            disposition=disposition,
+            objective_value=objective_value,
+            iterations=iterations,
+            metadata=metadata,
+        ).to_json_dict()
         return self.record_solver_result(
             result_id=result_id,
             tenant_id=request.tenant_id,
@@ -986,6 +1022,98 @@ class MathRuntimeEngine:
             iterations=iterations,
             duration_ms=0.0,
             metadata=metadata,
+        )
+
+    def _build_solver_receipt(
+        self,
+        request: SolverRequest,
+        result_id: str,
+        trace_id: str,
+        status: OptimizationStatus,
+        disposition: SolverDisposition,
+        objective_value: float,
+        iterations: int,
+        metadata: Mapping[str, Any],
+    ) -> MathSolverReceipt:
+        decision_summary_keys = (
+            "decision_dimension",
+            "constraint_count",
+            "objective_direction",
+            "objective_weight",
+            "lower_bound",
+            "upper_bound",
+            "decision_value",
+            "decision_variables",
+            "decision_values",
+            "variable_bounds",
+            "integer_variables",
+            "binary_variables",
+            "integer_assignment_count",
+            "integer_assignment_limit",
+            "weighted_objective_value",
+        )
+        decision_summary = {
+            key: _receipt_safe_value(metadata[key])
+            for key in decision_summary_keys
+            if key in metadata
+        }
+        evidence_refs = (
+            f"math-request:{request.request_id}",
+            f"math-result:{result_id}",
+            f"math-trace:{trace_id}",
+        )
+        receipt_id = stable_identifier(
+            "math-solver-receipt",
+            {
+                "request": request.request_id,
+                "result": result_id,
+                "trace": trace_id,
+                "solver": metadata["solver"],
+                "reason": metadata["reason"],
+            },
+        )
+        emitted_at = self._now()
+        receipt_material = {
+            "receipt_id": receipt_id,
+            "tenant_id": request.tenant_id,
+            "request_ref": request.request_id,
+            "result_id": result_id,
+            "trace_id": trace_id,
+            "solver": metadata["solver"],
+            "status": status.value,
+            "disposition": disposition.value,
+            "reason": metadata["reason"],
+            "objective_value": objective_value,
+            "iterations": iterations,
+            "decision_summary": decision_summary,
+            "evidence_refs": evidence_refs,
+            "emitted_at": emitted_at,
+        }
+        receipt_hash = sha256(
+            json.dumps(
+                receipt_material,
+                sort_keys=True,
+                ensure_ascii=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+        ).hexdigest()
+        return MathSolverReceipt(
+            receipt_id=receipt_id,
+            tenant_id=request.tenant_id,
+            request_ref=request.request_id,
+            result_id=result_id,
+            trace_id=trace_id,
+            solver=str(metadata["solver"]),
+            status=status,
+            disposition=disposition,
+            reason=str(metadata["reason"]),
+            objective_value=objective_value,
+            iterations=iterations,
+            decision_summary=decision_summary,
+            evidence_refs=evidence_refs,
+            emitted_at=emitted_at,
+            receipt_hash=receipt_hash,
         )
 
     # ------------------------------------------------------------------
