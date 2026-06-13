@@ -552,6 +552,13 @@
       ]
     },
     {
+      "action_id": "publish_team_ops_shared_inbox_operator_handoff_contract",
+      "status": "closed",
+      "surfaces": [
+        "governed_connector_framework"
+      ]
+    },
+    {
       "action_id": "classify_governed_scheduler_routes",
       "status": "closed",
       "surfaces": [
@@ -7288,9 +7295,14 @@
         "scripts/produce_durable_gmail_oauth_operator_handoff.py",
         "scripts/validate_durable_gmail_oauth_operator_handoff.py",
         "tests/test_produce_durable_gmail_oauth_operator_handoff.py",
-        "tests/test_validate_durable_gmail_oauth_operator_handoff.py"
+        "tests/test_validate_durable_gmail_oauth_operator_handoff.py",
+        "schemas/team_ops_shared_inbox_operator_handoff.schema.json",
+        "scripts/produce_team_ops_shared_inbox_operator_handoff.py",
+        "scripts/validate_team_ops_shared_inbox_operator_handoff.py",
+        "tests/test_produce_team_ops_shared_inbox_operator_handoff.py",
+        "tests/test_validate_team_ops_shared_inbox_operator_handoff.py"
       ],
-      "notes": "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, and bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion.",
+      "notes": "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, and bind durable Gmail OAuth plus TeamOps shared inbox handoff evidence to schema-backed operator authority before live probe promotion.",
       "representative_paths": [
         "/api/v1/connectors",
         "/api/v1/connectors/history",
@@ -7354,6 +7366,32 @@
         ],
         "durable_gmail_oauth_handoff_writes_validation_receipt": [
           "durable_gmail_oauth_operator_handoff_cli_writes_validation"
+        ],
+        "team_ops_shared_inbox_handoff_accepts_ready_probe": [
+          "team_ops_presence_only_secret_inventory_admits_live_probe_with_approval",
+          "team_ops_shared_inbox_operator_handoff_accepts_ready_packet"
+        ],
+        "team_ops_shared_inbox_handoff_blocks_default_as_evidence": [
+          "team_ops_shared_inbox_operator_handoff_rejects_default_as_evidence_drift"
+        ],
+        "team_ops_shared_inbox_handoff_blocks_external_message_drift": [
+          "team_ops_shared_inbox_operator_handoff_rejects_external_message_drift"
+        ],
+        "team_ops_shared_inbox_handoff_blocks_until_authority": [
+          "team_ops_default_handoff_waits_for_operator_authority_and_redacts_values",
+          "team_ops_shared_inbox_operator_handoff_accepts_blocked_packet"
+        ],
+        "team_ops_shared_inbox_handoff_redacts_secret_markers": [
+          "team_ops_handoff_rejects_secret_shaped_approval_ref",
+          "team_ops_writer_and_cli_emit_redacted_blocked_packet",
+          "team_ops_shared_inbox_operator_handoff_rejects_secret_marker"
+        ],
+        "team_ops_shared_inbox_handoff_requires_live_probe_authority": [
+          "team_ops_operator_approval_allows_provider_setup_not_live_probe",
+          "team_ops_shared_inbox_operator_handoff_rejects_live_probe_drift"
+        ],
+        "team_ops_shared_inbox_handoff_writes_validation_receipt": [
+          "team_ops_shared_inbox_operator_handoff_cli_writes_validation"
         ]
       },
       "runtime_witnesses": [
@@ -7368,7 +7406,14 @@
         "durable_gmail_oauth_handoff_requires_live_probe_authority",
         "durable_gmail_oauth_handoff_redacts_secret_markers",
         "durable_gmail_oauth_handoff_accepts_ready_probe",
-        "durable_gmail_oauth_handoff_writes_validation_receipt"
+        "durable_gmail_oauth_handoff_writes_validation_receipt",
+        "team_ops_shared_inbox_handoff_blocks_until_authority",
+        "team_ops_shared_inbox_handoff_blocks_default_as_evidence",
+        "team_ops_shared_inbox_handoff_requires_live_probe_authority",
+        "team_ops_shared_inbox_handoff_redacts_secret_markers",
+        "team_ops_shared_inbox_handoff_accepts_ready_probe",
+        "team_ops_shared_inbox_handoff_blocks_external_message_drift",
+        "team_ops_shared_inbox_handoff_writes_validation_receipt"
       ],
       "surface_id": "governed_connector_framework"
     },
@@ -10032,8 +10077,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1290,
-    "runtime_witness_count": 1290,
+    "exact_test_anchor_count": 1297,
+    "runtime_witness_count": 1297,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -15577,10 +15622,57 @@
               "tests/test_validate_durable_gmail_oauth_operator_handoff.py::test_durable_gmail_oauth_operator_handoff_cli_writes_validation"
             ],
             "witness": "durable_gmail_oauth_handoff_writes_validation_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_operator_handoff.py::test_team_ops_default_handoff_waits_for_operator_authority_and_redacts_values",
+              "tests/test_validate_team_ops_shared_inbox_operator_handoff.py::test_team_ops_shared_inbox_operator_handoff_accepts_blocked_packet"
+            ],
+            "witness": "team_ops_shared_inbox_handoff_blocks_until_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_team_ops_shared_inbox_operator_handoff.py::test_team_ops_shared_inbox_operator_handoff_rejects_default_as_evidence_drift"
+            ],
+            "witness": "team_ops_shared_inbox_handoff_blocks_default_as_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_operator_handoff.py::test_team_ops_operator_approval_allows_provider_setup_not_live_probe",
+              "tests/test_validate_team_ops_shared_inbox_operator_handoff.py::test_team_ops_shared_inbox_operator_handoff_rejects_live_probe_drift"
+            ],
+            "witness": "team_ops_shared_inbox_handoff_requires_live_probe_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_operator_handoff.py::test_team_ops_handoff_rejects_secret_shaped_approval_ref",
+              "tests/test_produce_team_ops_shared_inbox_operator_handoff.py::test_team_ops_writer_and_cli_emit_redacted_blocked_packet",
+              "tests/test_validate_team_ops_shared_inbox_operator_handoff.py::test_team_ops_shared_inbox_operator_handoff_rejects_secret_marker"
+            ],
+            "witness": "team_ops_shared_inbox_handoff_redacts_secret_markers"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_operator_handoff.py::test_team_ops_presence_only_secret_inventory_admits_live_probe_with_approval",
+              "tests/test_validate_team_ops_shared_inbox_operator_handoff.py::test_team_ops_shared_inbox_operator_handoff_accepts_ready_packet"
+            ],
+            "witness": "team_ops_shared_inbox_handoff_accepts_ready_probe"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_team_ops_shared_inbox_operator_handoff.py::test_team_ops_shared_inbox_operator_handoff_rejects_external_message_drift"
+            ],
+            "witness": "team_ops_shared_inbox_handoff_blocks_external_message_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_team_ops_shared_inbox_operator_handoff.py::test_team_ops_shared_inbox_operator_handoff_cli_writes_validation"
+            ],
+            "witness": "team_ops_shared_inbox_handoff_writes_validation_receipt"
           }
         ],
-        "exact_test_anchor_count": 12,
-        "runtime_witness_count": 12,
+        "exact_test_anchor_count": 19,
+        "runtime_witness_count": 19,
         "surface_id": "governed_connector_framework",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

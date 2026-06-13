@@ -44,6 +44,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `deployment_publication_operator_input_request.schema.json` | Canonical public-safe request for missing deployment publication operator inputs |
 | `deployment_upstream_blocker_receipt.schema.json` | Canonical upstream API/DNS readiness blocker receipt for deployment publication |
 | `durable_gmail_oauth_operator_handoff.schema.json` | Canonical redacted Gmail OAuth provider-setup handoff, recommended defaults, runtime bindings, and live-probe blockers |
+| `team_ops_shared_inbox_operator_handoff.schema.json` | Canonical redacted TeamOps shared inbox operator handoff with assistant profile, owner queue, approval policy, and live-probe blockers |
 | `public_production_health_declaration.schema.json` | Canonical evidence-gated public production health declaration receipt |
 | `deployment_witness.schema.json` | Canonical live gateway deployment witness artifact |
 | `domain_capsule.schema.json` | Domain capsule operating-model package |
