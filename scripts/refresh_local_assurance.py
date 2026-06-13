@@ -4,8 +4,9 @@
 Purpose: regenerate local proof and adapter-evidence witnesses that can drift
 during development without requiring live provider credentials.
 Governance scope: document adapter receipt, durable Gmail OAuth blocked
-handoff receipts, aggregate adapter evidence, proof coverage witness, protocol
-manifest validation, and finance proof-pilot readiness.
+handoff receipts, TeamOps shared inbox blocked handoff and probe-authority
+receipts, aggregate adapter evidence, proof coverage witness, protocol manifest
+validation, and finance proof-pilot readiness.
 Dependencies: repository-local assurance scripts and Python subprocess.
 Invariants:
   - The default step set performs no external writes and requires no secrets.
@@ -13,6 +14,8 @@ Invariants:
     blocked unless separately supplied by operator-controlled live lanes.
   - Durable Gmail OAuth steps emit blocked or preflight-only receipts; they do
     not mint tokens, contact Google, or claim live readiness.
+  - TeamOps shared inbox steps emit blocked handoff and read-only probe
+    authority receipts without provider calls, mailbox writes, drafts, or sends.
   - Each step returns an explicit command receipt; failures are not hidden.
 """
 
@@ -115,6 +118,58 @@ LOCAL_ASSURANCE_STEPS: tuple[AssuranceStep, ...] = (
             "--json",
         ),
         purpose="persist redacted durable Gmail OAuth runtime preflight receipt",
+    ),
+    AssuranceStep(
+        name="team_ops_shared_inbox_operator_handoff",
+        command=(
+            sys.executable,
+            "scripts/produce_team_ops_shared_inbox_operator_handoff.py",
+            "--output",
+            ".change_assurance/team_ops_shared_inbox_operator_handoff.json",
+            "--json",
+        ),
+        purpose="regenerate blocked TeamOps shared inbox operator handoff receipt",
+    ),
+    AssuranceStep(
+        name="team_ops_shared_inbox_operator_handoff_validation",
+        command=(
+            sys.executable,
+            "scripts/validate_team_ops_shared_inbox_operator_handoff.py",
+            "--handoff",
+            ".change_assurance/team_ops_shared_inbox_operator_handoff.json",
+            "--output",
+            ".change_assurance/team_ops_shared_inbox_operator_handoff_validation.json",
+            "--require-blocked",
+            "--json",
+        ),
+        purpose="validate blocked TeamOps shared inbox handoff without live claim",
+    ),
+    AssuranceStep(
+        name="team_ops_shared_inbox_live_probe_authority",
+        command=(
+            sys.executable,
+            "scripts/produce_team_ops_shared_inbox_live_probe_authority.py",
+            "--handoff",
+            ".change_assurance/team_ops_shared_inbox_operator_handoff.json",
+            "--output",
+            ".change_assurance/team_ops_shared_inbox_live_probe_authority.json",
+            "--json",
+        ),
+        purpose="regenerate blocked TeamOps read-only live-probe authority receipt",
+    ),
+    AssuranceStep(
+        name="team_ops_shared_inbox_live_probe_authority_validation",
+        command=(
+            sys.executable,
+            "scripts/validate_team_ops_shared_inbox_live_probe_authority.py",
+            "--authority",
+            ".change_assurance/team_ops_shared_inbox_live_probe_authority.json",
+            "--output",
+            ".change_assurance/team_ops_shared_inbox_live_probe_authority_validation.json",
+            "--require-blocked",
+            "--json",
+        ),
+        purpose="validate blocked TeamOps live-probe authority without executing the probe",
     ),
     AssuranceStep(
         name="capability_adapter_evidence",

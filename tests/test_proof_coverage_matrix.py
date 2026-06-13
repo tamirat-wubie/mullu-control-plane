@@ -94,10 +94,11 @@ def test_local_assurance_refresh_surface_covers_blocked_evidence_refresh() -> No
     assert "scripts/refresh_local_assurance.py" in surface["evidence_files"]
     assert "tests/test_refresh_local_assurance.py" in surface["evidence_files"]
     assert "local_assurance_refresh_includes_durable_gmail_receipts" in witnesses
+    assert "local_assurance_refresh_includes_team_ops_receipts" in witnesses
     assert "local_assurance_dry_run_does_not_execute" in witnesses
     assert "local_assurance_stops_on_first_failure" in witnesses
     assert "workspace_preflight_includes_local_assurance_plan" in witnesses
-    assert witness_surfaces["local_assurance_refresh"]["exact_test_anchor_count"] == 4
+    assert witness_surfaces["local_assurance_refresh"]["exact_test_anchor_count"] == 5
     assert witness_surfaces["local_assurance_refresh"]["unanchored_witness_count"] == 0
     assert closure_actions["publish_local_assurance_refresh_contract"]["status"] == "closed"
 
@@ -150,7 +151,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["policy_version_registry"]["unanchored_witness_count"] == 0
     assert surfaces["pilot_provisioning"]["unanchored_witness_count"] == 0
     assert surfaces["hosted_demo_sandbox"]["unanchored_witness_count"] == 0
-    assert surfaces["local_assurance_refresh"]["exact_test_anchor_count"] == 4
+    assert surfaces["local_assurance_refresh"]["exact_test_anchor_count"] == 5
     assert surfaces["local_assurance_refresh"]["unanchored_witness_count"] == 0
     assert surfaces["replay_determinism"]["unanchored_witness_count"] == 0
     assert surfaces["governed_session"]["unanchored_witness_count"] == 0
@@ -182,7 +183,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["runtime_state_persistence_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["multi_agent_coordination_runtime"]["exact_test_anchor_count"] == 8
     assert surfaces["multi_agent_coordination_runtime"]["unanchored_witness_count"] == 0
-    assert surfaces["governed_connector_framework"]["exact_test_anchor_count"] == 17
+    assert surfaces["governed_connector_framework"]["exact_test_anchor_count"] == 30
     assert surfaces["governed_connector_framework"]["unanchored_witness_count"] == 0
     assert surfaces["governed_background_scheduler"]["exact_test_anchor_count"] == 6
     assert surfaces["governed_background_scheduler"]["unanchored_witness_count"] == 0
@@ -2762,6 +2763,16 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert "scripts/validate_durable_gmail_oauth_operator_handoff.py" in connector_surface["evidence_files"]
     assert "tests/test_produce_durable_gmail_oauth_operator_handoff.py" in connector_surface["evidence_files"]
     assert "tests/test_validate_durable_gmail_oauth_operator_handoff.py" in connector_surface["evidence_files"]
+    assert "schemas/team_ops_shared_inbox_operator_handoff.schema.json" in connector_surface["evidence_files"]
+    assert "scripts/produce_team_ops_shared_inbox_operator_handoff.py" in connector_surface["evidence_files"]
+    assert "scripts/validate_team_ops_shared_inbox_operator_handoff.py" in connector_surface["evidence_files"]
+    assert "tests/test_produce_team_ops_shared_inbox_operator_handoff.py" in connector_surface["evidence_files"]
+    assert "tests/test_validate_team_ops_shared_inbox_operator_handoff.py" in connector_surface["evidence_files"]
+    assert "schemas/team_ops_shared_inbox_live_probe_authority.schema.json" in connector_surface["evidence_files"]
+    assert "scripts/produce_team_ops_shared_inbox_live_probe_authority.py" in connector_surface["evidence_files"]
+    assert "scripts/validate_team_ops_shared_inbox_live_probe_authority.py" in connector_surface["evidence_files"]
+    assert "tests/test_produce_team_ops_shared_inbox_live_probe_authority.py" in connector_surface["evidence_files"]
+    assert "tests/test_validate_team_ops_shared_inbox_live_probe_authority.py" in connector_surface["evidence_files"]
     assert "connector_registration_typed" in witnesses
     assert "connector_invocation_guard_chain_checked" in witnesses
     assert "connector_lifecycle_disable_enable_bounded" in witnesses
@@ -2779,7 +2790,20 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert "durable_gmail_oauth_routes_witness_refs_as_variables" in witnesses
     assert "durable_gmail_oauth_rejects_secret_markers_in_readable_signals" in witnesses
     assert "durable_gmail_oauth_validates_repository_slug" in witnesses
-    assert connector_witness_surface["exact_test_anchor_count"] == 17
+    assert "team_ops_shared_inbox_handoff_blocks_until_authority" in witnesses
+    assert "team_ops_shared_inbox_handoff_blocks_default_as_evidence" in witnesses
+    assert "team_ops_shared_inbox_handoff_requires_live_probe_authority" in witnesses
+    assert "team_ops_shared_inbox_handoff_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_handoff_accepts_ready_probe" in witnesses
+    assert "team_ops_shared_inbox_handoff_blocks_external_message_drift" in witnesses
+    assert "team_ops_shared_inbox_handoff_writes_validation_receipt" in witnesses
+    assert "team_ops_shared_inbox_probe_authority_blocks_missing_handoff" in witnesses
+    assert "team_ops_shared_inbox_probe_authority_requires_probe_approval" in witnesses
+    assert "team_ops_shared_inbox_probe_authority_admits_read_only_probe" in witnesses
+    assert "team_ops_shared_inbox_probe_authority_blocks_effect_drift" in witnesses
+    assert "team_ops_shared_inbox_probe_authority_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_probe_authority_writes_validation_receipt" in witnesses
+    assert connector_witness_surface["exact_test_anchor_count"] == 30
     assert connector_witness_surface["unanchored_witness_count"] == 0
     assert route_records["/api/v1/connectors/register"]["coverage_state"] == "proven"
     assert route_records["/api/v1/connectors/register"]["surface_id"] == "governed_connector_framework"
@@ -2787,6 +2811,8 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert route_records["/api/v1/connectors/invoke"]["surface_id"] == "governed_connector_framework"
     assert closure_actions["classify_governed_connector_routes"]["status"] == "closed"
     assert closure_actions["publish_durable_gmail_oauth_operator_handoff_contract"]["status"] == "closed"
+    assert closure_actions["publish_team_ops_shared_inbox_operator_handoff_contract"]["status"] == "closed"
+    assert closure_actions["publish_team_ops_shared_inbox_live_probe_authority_contract"]["status"] == "closed"
 
 
 def test_governed_background_scheduler_surface_gates_job_lifecycle() -> None:
