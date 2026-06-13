@@ -11,8 +11,8 @@ Invariants:
   - This validator is read-only and deterministic.
   - Provider-side credential mutation is not performed or claimed.
   - Read-only live-probe readiness requires provider lifecycle witnesses.
-  - Account binding, write, calendar, customer, and production readiness remain
-    separately blocked unless their own receipts pass.
+  - Account binding, write rehearsal, calendar, customer, and production
+    readiness remain separately blocked unless their own receipts pass.
 """
 
 from __future__ import annotations
@@ -61,10 +61,15 @@ REQUIRED_PLAN_TERMS = (
     "produce_durable_gmail_account_binding_receipt.py",
     "validate_durable_gmail_oauth_live_receipt_freshness.py",
     "validate_durable_gmail_account_binding_receipt.py",
+    "produce_durable_gmail_write_authority_rehearsal_receipt.py",
+    "validate_durable_gmail_write_authority_rehearsal_receipt.py",
     "Evidence freshness",
     "source live receipt",
     "Tenant/mailbox binding",
     "account binding",
+    "Gmail write-authority rehearsal",
+    "send_without_approval_blocked",
+    "draft/send split",
     "operator handoff packet",
 )
 REQUIRED_NON_GOALS = (
@@ -145,6 +150,7 @@ def build_validation_report() -> dict[str, Any]:
         "durable_gmail_operator_handoff",
         "durable_gmail_evidence_freshness",
         "durable_gmail_account_binding",
+        "durable_gmail_write_authority_rehearsal",
         "durable_gmail_security_review_schema",
         "durable_gmail_release_block",
         "durable_gmail_secret_redaction",
