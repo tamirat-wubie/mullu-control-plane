@@ -227,6 +227,12 @@
       "surface": "connector"
     },
     {
+      "schema_id": "durable-gmail-oauth-operator-handoff",
+      "path": "schemas/durable_gmail_oauth_operator_handoff.schema.json",
+      "urn": "urn:mullusi:schema:durable-gmail-oauth-operator-handoff:1",
+      "surface": "connector"
+    },
+    {
       "schema_id": "data-governance-snapshot",
       "path": "schemas/data_governance_snapshot.schema.json",
       "urn": "urn:mullusi:schema:data-governance-snapshot:1",
@@ -765,6 +771,12 @@
       "path": "schemas/symbolic_simulation_engine.schema.json",
       "urn": "urn:mullusi:schema:symbolic-simulation-engine:1",
       "surface": "simulation"
+    },
+    {
+      "schema_id": "snet-mesh-receipt",
+      "path": "schemas/snet_mesh_receipt.schema.json",
+      "urn": "urn:mullusi:schema:snet-mesh-receipt:1",
+      "surface": "symbolic_mesh"
     },
     {
       "schema_id": "intelligence-coordination-episode-receipt",
