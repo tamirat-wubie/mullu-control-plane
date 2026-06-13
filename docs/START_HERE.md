@@ -26,6 +26,7 @@ to the deep document if you want more.
 | "I need to rehearse a local release packet without publishing a release." | [Foundation Local Release Packet Rehearsal Boundary](FOUNDATION_LOCAL_RELEASE_PACKET_REHEARSAL_BOUNDARY.md) | 8 min read |
 | "I need to understand why one Python command sees packages and another does not." | [Foundation Python Dependency Visibility Rehearsal Boundary](FOUNDATION_PYTHON_DEPENDENCY_VISIBILITY_REHEARSAL_BOUNDARY.md) | 8 min read |
 | "I need to map the architecture without claiming it is complete." | [Foundation Architecture Map Boundary](FOUNDATION_ARCHITECTURE_MAP_BOUNDARY.md) | 8 min read |
+| "I need to inspect SNet without giving it execution or connector authority." | [SNet operator read model](73_snet_operator_read_model.md) | 7 min read |
 | "I need the ask-to-receipt system mapbook without claiming readiness." | [Mullusi Govern System Mapbook](maps/README.md) | 12 min read |
 | "I need to inventory system boundaries without claiming closure." | [Foundation System Boundary Inventory Boundary](FOUNDATION_SYSTEM_BOUNDARY_INVENTORY_BOUNDARY.md) | 8 min read |
 | "I need to inventory modules without claiming contracts or ownership." | [Foundation Module Inventory Boundary](FOUNDATION_MODULE_INVENTORY_BOUNDARY.md) | 8 min read |
