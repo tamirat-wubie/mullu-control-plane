@@ -39,12 +39,15 @@ EXPECTED_ROOT_KEYS = {
     "blocked_claims",
     "boundary_surfaces",
     "enforcement_rules",
+    "foundation_mode_allowed_classes",
     "foundation_mode_required",
     "ip_provenance_classes",
+    "mandatory_gate",
     "next_action",
     "schema_version",
     "solver_outcome",
     "status",
+    "trigger_classes",
     "witness_id",
 }
 EXPECTED_ROOT_VALUES = {
@@ -58,9 +61,11 @@ EXPECTED_LEDGER_KEYS = {
     "authorization_flags",
     "enforcement_rules",
     "forbidden_storage",
+    "foundation_mode_allowed_classes",
     "foundation_mode_required",
     "ip_provenance_classes",
     "ledger_id",
+    "mandatory_gate",
     "next_action",
     "non_authorization_rule",
     "promotion_authority",
@@ -68,6 +73,7 @@ EXPECTED_LEDGER_KEYS = {
     "schema_version",
     "solver_outcome",
     "status",
+    "trigger_classes",
 }
 EXPECTED_LEDGER_VALUES = {
     "schema_version": "foundation.company_boundary_kernel.ledger.v1",
@@ -136,6 +142,44 @@ IP_PROVENANCE_CLASSES = (
     "contractor_contributor_created",
     "externally_derived",
 )
+FOUNDATION_MODE_ALLOWED_CLASSES = (
+    "local_docs",
+    "local_tests",
+    "local_schemas",
+    "local_proof_artifacts",
+    "local_rehearsal_files",
+    "draft_checklists",
+    "non_secret_evidence_labels",
+    "architecture_mapping",
+    "governance_refinement",
+    "validator_improvements",
+)
+MANDATORY_GATE_REQUIREMENTS = (
+    "company-boundary validator passes",
+    "exact surface evidence exists",
+    "promotion witness exists",
+    "no forbidden storage appears",
+    "no unauthorized claim appears",
+)
+TRIGGER_CLASSES = (
+    "company_formation",
+    "legal_clearance",
+    "customer_access",
+    "pilot_readiness",
+    "deployment_readiness",
+    "production_health",
+    "payment_activation",
+    "money_movement",
+    "tax_readiness",
+    "patent_filing_or_protection",
+    "trademark_ownership_or_clearance",
+    "compliance_certification",
+    "insurance_readiness",
+    "continuity_transfer",
+    "external_vendor_activation",
+    "external_account_activation",
+    "public_launch",
+)
 ENFORCEMENT_RULES = ("R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "R9", "R10")
 FORBIDDEN_STORAGE_IDS = (
     "plaintext_secret_values",
@@ -153,6 +197,10 @@ REQUIRED_DOC_PHRASES = (
     "Mullu Control Plane Company Boundary Kernel",
     "Witness packet: [`../examples/foundation_company_boundary_kernel_witness.awaiting_evidence.json`]",
     "Rule: This document does not authorize company formation, legal claims, customer",
+    "## Mandatory Gate Trigger Class",
+    "Before any future external obligation or readiness claim is made, the Mullu",
+    "Correct enforcement formula:",
+    "This change is subject to the Mullu Control Plane Company Boundary Kernel.",
     "company_boundary_kernel_state=AwaitingEvidence",
     "company_formation_authorized=false",
     "legal_claim_authorized=false",
@@ -383,6 +431,94 @@ def validate_boundary_surfaces(surfaces: object) -> list[CompanyBoundaryFinding]
     return findings
 
 
+def validate_mandatory_gate(gate: object) -> list[CompanyBoundaryFinding]:
+    """Return findings for mandatory gate trigger-class drift."""
+
+    if not isinstance(gate, dict):
+        return [CompanyBoundaryFinding("company_boundary_mandatory_gate_shape", "mandatory_gate must be an object")]
+    findings: list[CompanyBoundaryFinding] = []
+    if gate.get("mode") != "mandatory_preflight_gate":
+        findings.append(
+            CompanyBoundaryFinding(
+                "company_boundary_mandatory_gate_mode",
+                "mandatory_gate mode must be mandatory_preflight_gate",
+            )
+        )
+    if tuple(gate.get("requirements", ())) != MANDATORY_GATE_REQUIREMENTS:
+        findings.append(
+            CompanyBoundaryFinding(
+                "company_boundary_mandatory_gate_requirements",
+                "mandatory_gate requirements drifted",
+            )
+        )
+    status_effect = gate.get("status_effect")
+    if not isinstance(status_effect, str) or "blocks promotion" not in status_effect:
+        findings.append(
+            CompanyBoundaryFinding(
+                "company_boundary_mandatory_gate_status_effect",
+                "mandatory_gate must block promotion without evidence and witness",
+            )
+        )
+    trigger_rule = gate.get("trigger_rule")
+    if (
+        not isinstance(trigger_rule, str)
+        or "external obligation" not in trigger_rule
+        or "readiness claim" not in trigger_rule
+        or "AwaitingEvidence promotion" not in trigger_rule
+    ):
+        findings.append(
+            CompanyBoundaryFinding(
+                "company_boundary_mandatory_gate_trigger_rule",
+                "mandatory_gate trigger rule must cover external obligation, readiness claim, and promotion",
+            )
+        )
+    return findings
+
+
+def validate_ledger_mandatory_gate(gate: object) -> list[CompanyBoundaryFinding]:
+    """Return findings for mandatory gate drift in the YAML ledger."""
+
+    findings: list[CompanyBoundaryFinding] = []
+    if not isinstance(gate, list) or len(gate) != 1 or not isinstance(gate[0], dict):
+        return [
+            CompanyBoundaryFinding(
+                "company_boundary_ledger_mandatory_gate_shape",
+                "ledger mandatory_gate must contain one gate object",
+            )
+        ]
+    gate_item = gate[0]
+    if gate_item.get("gate_id") != "future_external_obligation_or_readiness_claim":
+        findings.append(
+            CompanyBoundaryFinding(
+                "company_boundary_ledger_mandatory_gate_id",
+                "ledger mandatory_gate id drifted",
+            )
+        )
+    if gate_item.get("mode") != "mandatory_preflight_gate":
+        findings.append(
+            CompanyBoundaryFinding(
+                "company_boundary_ledger_mandatory_gate_mode",
+                "ledger mandatory_gate mode must be mandatory_preflight_gate",
+            )
+        )
+    if gate_item.get("state") != "AwaitingEvidence":
+        findings.append(
+            CompanyBoundaryFinding(
+                "company_boundary_ledger_mandatory_gate_state",
+                "ledger mandatory_gate state must remain AwaitingEvidence",
+            )
+        )
+    status_effect = gate_item.get("status_effect")
+    if not isinstance(status_effect, str) or "blocks promotion" not in status_effect:
+        findings.append(
+            CompanyBoundaryFinding(
+                "company_boundary_ledger_mandatory_gate_status_effect",
+                "ledger mandatory_gate must block promotion without evidence and witness",
+            )
+        )
+    return findings
+
+
 def validate_ledger_items(
     items: object,
     *,
@@ -449,6 +585,15 @@ def validate_packet(payload: dict[str, Any]) -> list[CompanyBoundaryFinding]:
         findings.append(CompanyBoundaryFinding("company_boundary_blocked_claims", "blocked claims drifted"))
     if tuple(payload.get("ip_provenance_classes", ())) != IP_PROVENANCE_CLASSES:
         findings.append(CompanyBoundaryFinding("company_boundary_ip_provenance", "IP provenance classes drifted"))
+    if tuple(payload.get("foundation_mode_allowed_classes", ())) != FOUNDATION_MODE_ALLOWED_CLASSES:
+        findings.append(
+            CompanyBoundaryFinding(
+                "company_boundary_foundation_mode_allowed_classes",
+                "Foundation Mode allowed classes drifted",
+            )
+        )
+    if tuple(payload.get("trigger_classes", ())) != TRIGGER_CLASSES:
+        findings.append(CompanyBoundaryFinding("company_boundary_trigger_classes", "mandatory gate trigger classes drifted"))
     if tuple(payload.get("enforcement_rules", ())) != ENFORCEMENT_RULES:
         findings.append(CompanyBoundaryFinding("company_boundary_enforcement_rules", "enforcement rule inventory drifted"))
     next_action = payload.get("next_action")
@@ -461,6 +606,7 @@ def validate_packet(payload: dict[str, Any]) -> list[CompanyBoundaryFinding]:
         )
     findings.extend(validate_authorization_flags(payload.get("authorization_flags")))
     findings.extend(validate_boundary_surfaces(payload.get("boundary_surfaces")))
+    findings.extend(validate_mandatory_gate(payload.get("mandatory_gate")))
     findings.extend(validate_forbidden_text(payload))
     return findings
 
@@ -520,6 +666,27 @@ def validate_ledger(payload: dict[str, Any]) -> list[CompanyBoundaryFinding]:
             state_key="state",
             expected_state="AwaitingEvidence",
             rule_prefix="company_boundary_ledger_ip_provenance",
+        )
+    )
+    findings.extend(validate_ledger_mandatory_gate(payload.get("mandatory_gate")))
+    findings.extend(
+        validate_ledger_items(
+            payload.get("trigger_classes"),
+            expected_ids=TRIGGER_CLASSES,
+            id_key="trigger_id",
+            state_key="requires_gate",
+            expected_state=True,
+            rule_prefix="company_boundary_ledger_trigger_classes",
+        )
+    )
+    findings.extend(
+        validate_ledger_items(
+            payload.get("foundation_mode_allowed_classes"),
+            expected_ids=FOUNDATION_MODE_ALLOWED_CLASSES,
+            id_key="class_id",
+            state_key="allowed_without_promotion",
+            expected_state=True,
+            rule_prefix="company_boundary_ledger_foundation_mode_allowed_classes",
         )
     )
     findings.extend(

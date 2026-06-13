@@ -29,8 +29,11 @@ from scripts.validate_foundation_company_boundary_kernel import (  # noqa: E402
     DEFAULT_DOC_PATH,
     DEFAULT_LEDGER_PATH,
     DEFAULT_PACKET_PATH,
+    FOUNDATION_MODE_ALLOWED_CLASSES,
     IP_PROVENANCE_CLASSES,
+    MANDATORY_GATE_REQUIREMENTS,
     REQUIRED_DOC_PHRASES,
+    TRIGGER_CLASSES,
     load_json_object,
     load_text,
     load_yaml_object,
@@ -69,6 +72,9 @@ def test_witness_contract_keeps_claims_blocked() -> None:
     assert all(payload["authorization_flags"][flag] is False for flag in AUTHORIZATION_FLAGS)
     assert tuple(surface["surface_id"] for surface in payload["boundary_surfaces"]) == BOUNDARY_SURFACE_IDS
     assert tuple(payload["ip_provenance_classes"]) == IP_PROVENANCE_CLASSES
+    assert tuple(payload["trigger_classes"]) == TRIGGER_CLASSES
+    assert tuple(payload["foundation_mode_allowed_classes"]) == FOUNDATION_MODE_ALLOWED_CLASSES
+    assert tuple(payload["mandatory_gate"]["requirements"]) == MANDATORY_GATE_REQUIREMENTS
 
 
 def test_yaml_ledger_contract_keeps_surfaces_blocked() -> None:
@@ -80,6 +86,9 @@ def test_yaml_ledger_contract_keeps_surfaces_blocked() -> None:
     assert all(item["allowed"] is False for item in payload["authorization_flags"])
     assert [item["surface_id"] for item in payload["promotion_surfaces"]] == list(BOUNDARY_SURFACE_IDS)
     assert [item["class_id"] for item in payload["ip_provenance_classes"]] == list(IP_PROVENANCE_CLASSES)
+    assert [item["trigger_id"] for item in payload["trigger_classes"]] == list(TRIGGER_CLASSES)
+    assert all(item["requires_gate"] is True for item in payload["trigger_classes"])
+    assert payload["mandatory_gate"][0]["mode"] == "mandatory_preflight_gate"
 
 
 def test_false_flag_drift_is_reported() -> None:
@@ -150,6 +159,46 @@ def test_yaml_ledger_promotion_drift_is_reported() -> None:
     assert any(finding.rule_id == "company_boundary_ledger_surfaces_state" for finding in findings)
     assert any(finding.rule_id == "company_boundary_ledger_non_authorization" for finding in findings)
     assert any(finding.rule_id == "company_boundary_forbidden_promotion" for finding in findings)
+
+
+def test_mandatory_gate_trigger_drift_is_reported() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "company-boundary kernel witness")
+    candidate = deepcopy(payload)
+    candidate["mandatory_gate"]["mode"] = "optional_preflight"
+    candidate["mandatory_gate"]["requirements"] = candidate["mandatory_gate"]["requirements"][:-1]
+    candidate["trigger_classes"] = candidate["trigger_classes"][:-1]
+
+    findings = validate_packet(candidate)
+
+    assert any(finding.rule_id == "company_boundary_mandatory_gate_mode" for finding in findings)
+    assert any(finding.rule_id == "company_boundary_mandatory_gate_requirements" for finding in findings)
+    assert any(finding.rule_id == "company_boundary_trigger_classes" for finding in findings)
+
+
+def test_foundation_work_scope_drift_is_reported() -> None:
+    payload = load_json_object(DEFAULT_PACKET_PATH, "company-boundary kernel witness")
+    candidate = deepcopy(payload)
+    candidate["foundation_mode_allowed_classes"] = candidate["foundation_mode_allowed_classes"][:-1]
+
+    findings = validate_packet(candidate)
+
+    assert any(finding.rule_id == "company_boundary_foundation_mode_allowed_classes" for finding in findings)
+    assert all(finding.rule_id != "company_boundary_forbidden_promotion" for finding in findings)
+    assert len(findings) >= 1
+
+
+def test_yaml_mandatory_gate_and_allowed_scope_drift_is_reported() -> None:
+    payload = load_yaml_object(DEFAULT_LEDGER_PATH, "company-boundary kernel ledger")
+    candidate = deepcopy(payload)
+    candidate["mandatory_gate"][0]["state"] = "SolvedVerified"
+    candidate["trigger_classes"][0]["requires_gate"] = False
+    candidate["foundation_mode_allowed_classes"][0]["allowed_without_promotion"] = False
+
+    findings = validate_ledger(candidate)
+
+    assert any(finding.rule_id == "company_boundary_ledger_mandatory_gate_state" for finding in findings)
+    assert any(finding.rule_id == "company_boundary_ledger_trigger_classes_state" for finding in findings)
+    assert any(finding.rule_id == "company_boundary_ledger_foundation_mode_allowed_classes_state" for finding in findings)
 
 
 def test_doc_required_phrase_drift_is_reported(tmp_path: Path) -> None:
