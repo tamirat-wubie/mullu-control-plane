@@ -25,6 +25,76 @@ compliance certification, money movement, public launch, or external
 obligation. It defines the evidence boundary required before any of those
 actions can be promoted.
 
+## Mandatory Gate Trigger Class
+
+Apply this kernel as a mandatory preflight gate only when a change creates a
+future external obligation, makes a readiness claim, or promotes one surface
+from `AwaitingEvidence` to an active or verified state.
+
+```text
+Before any future external obligation or readiness claim is made, the Mullu
+Control Plane Company Boundary Kernel must pass validation, the affected
+promotion surface must have exact evidence, and a promotion witness must
+explicitly promote that one surface.
+
+If evidence is missing, the surface remains AwaitingEvidence.
+```
+
+The gate blocks any claim or action involving:
+
+1. company formation;
+2. legal clearance;
+3. customer access or pilot readiness;
+4. deployment readiness or production health;
+5. payment activation, money movement, or tax readiness;
+6. patent filing or protection;
+7. trademark ownership or clearance;
+8. compliance certification;
+9. insurance readiness;
+10. continuity transfer;
+11. external vendor or account activation;
+12. public launch.
+
+The gate does not block harmless internal Foundation Mode work that remains
+clearly local, reversible, and non-promotional:
+
+1. local docs;
+2. local tests;
+3. local schemas;
+4. local proof artifacts;
+5. local rehearsal files;
+6. draft checklists;
+7. non-secret evidence labels;
+8. architecture mapping;
+9. governance refinement;
+10. validator improvements.
+
+Correct enforcement formula:
+
+```text
+IF change creates external obligation
+OR change claims readiness
+OR change promotes AwaitingEvidence to Active or SolvedVerified
+THEN require:
+    1. company-boundary validator passes
+    2. exact surface evidence exists
+    3. promotion witness exists
+    4. no forbidden storage appears
+    5. no unauthorized claim appears
+ELSE:
+    allow as Foundation Mode preparation
+```
+
+Canonical PR, issue, doc, and handoff wording:
+
+```text
+This change is subject to the Mullu Control Plane Company Boundary Kernel.
+It may prepare local governance, documentation, validation, schemas, and
+evidence labels, but it must not promote legal, customer, deployment, payment,
+patent, trademark, compliance, money, production, or external-obligation claims
+unless the exact surface has evidence and a promotion witness.
+```
+
 ## Current Status
 
 ```text

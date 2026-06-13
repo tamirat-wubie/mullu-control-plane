@@ -109,9 +109,52 @@
     "contractor_contributor_created",
     "externally_derived"
   ],
+  "foundation_mode_allowed_classes": [
+    "local_docs",
+    "local_tests",
+    "local_schemas",
+    "local_proof_artifacts",
+    "local_rehearsal_files",
+    "draft_checklists",
+    "non_secret_evidence_labels",
+    "architecture_mapping",
+    "governance_refinement",
+    "validator_improvements"
+  ],
+  "mandatory_gate": {
+    "mode": "mandatory_preflight_gate",
+    "requirements": [
+      "company-boundary validator passes",
+      "exact surface evidence exists",
+      "promotion witness exists",
+      "no forbidden storage appears",
+      "no unauthorized claim appears"
+    ],
+    "status_effect": "blocks promotion unless exact evidence and promotion witness exist",
+    "trigger_rule": "required before external obligation, readiness claim, or AwaitingEvidence promotion"
+  },
   "next_action": "keep the company-boundary kernel in AwaitingEvidence until one exact legal, payment, customer, deployment, patent, trademark, compliance, continuity, or external-obligation surface has review evidence and a promotion witness",
   "schema_version": "foundation.company_boundary_kernel.v1",
   "solver_outcome": "AwaitingEvidence",
   "status": "AwaitingEvidence",
+  "trigger_classes": [
+    "company_formation",
+    "legal_clearance",
+    "customer_access",
+    "pilot_readiness",
+    "deployment_readiness",
+    "production_health",
+    "payment_activation",
+    "money_movement",
+    "tax_readiness",
+    "patent_filing_or_protection",
+    "trademark_ownership_or_clearance",
+    "compliance_certification",
+    "insurance_readiness",
+    "continuity_transfer",
+    "external_vendor_activation",
+    "external_account_activation",
+    "public_launch"
+  ],
   "witness_id": "foundation_company_boundary_kernel_witness.awaiting_evidence.v1"
 }

@@ -12,6 +12,12 @@ promotion_authority: promotion_witness_required
 non_authorization_rule: "This ledger does not authorize company formation, legal claims, customer access, deployment, payment activation, patent filing, trademark claim, compliance certification, money movement, public launch, or external obligation."
 next_action: "keep every surface in AwaitingEvidence until exact review evidence and a promotion witness exist"
 
+mandatory_gate:
+  - gate_id: future_external_obligation_or_readiness_claim
+    mode: mandatory_preflight_gate
+    state: AwaitingEvidence
+    status_effect: "blocks promotion unless exact evidence and promotion witness exist"
+
 authorization_flags:
   - flag_id: company_formation_authorized
     allowed: false
@@ -81,6 +87,64 @@ ip_provenance_classes:
     state: AwaitingEvidence
   - class_id: externally_derived
     state: AwaitingEvidence
+
+trigger_classes:
+  - trigger_id: company_formation
+    requires_gate: true
+  - trigger_id: legal_clearance
+    requires_gate: true
+  - trigger_id: customer_access
+    requires_gate: true
+  - trigger_id: pilot_readiness
+    requires_gate: true
+  - trigger_id: deployment_readiness
+    requires_gate: true
+  - trigger_id: production_health
+    requires_gate: true
+  - trigger_id: payment_activation
+    requires_gate: true
+  - trigger_id: money_movement
+    requires_gate: true
+  - trigger_id: tax_readiness
+    requires_gate: true
+  - trigger_id: patent_filing_or_protection
+    requires_gate: true
+  - trigger_id: trademark_ownership_or_clearance
+    requires_gate: true
+  - trigger_id: compliance_certification
+    requires_gate: true
+  - trigger_id: insurance_readiness
+    requires_gate: true
+  - trigger_id: continuity_transfer
+    requires_gate: true
+  - trigger_id: external_vendor_activation
+    requires_gate: true
+  - trigger_id: external_account_activation
+    requires_gate: true
+  - trigger_id: public_launch
+    requires_gate: true
+
+foundation_mode_allowed_classes:
+  - class_id: local_docs
+    allowed_without_promotion: true
+  - class_id: local_tests
+    allowed_without_promotion: true
+  - class_id: local_schemas
+    allowed_without_promotion: true
+  - class_id: local_proof_artifacts
+    allowed_without_promotion: true
+  - class_id: local_rehearsal_files
+    allowed_without_promotion: true
+  - class_id: draft_checklists
+    allowed_without_promotion: true
+  - class_id: non_secret_evidence_labels
+    allowed_without_promotion: true
+  - class_id: architecture_mapping
+    allowed_without_promotion: true
+  - class_id: governance_refinement
+    allowed_without_promotion: true
+  - class_id: validator_improvements
+    allowed_without_promotion: true
 
 forbidden_storage:
   - storage_id: plaintext_secret_values
