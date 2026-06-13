@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import scripts.validate_general_agent_promotion_handoff_packet as handoff_validator
 from scripts.validate_general_agent_promotion_handoff_packet import (
     main,
     validate_general_agent_promotion_handoff_packet,
@@ -25,6 +26,29 @@ def test_validate_promotion_handoff_packet_accepts_example() -> None:
 
 
 def test_validate_promotion_handoff_packet_derives_missing_closure_plan(tmp_path: Path) -> None:
+    result = validate_general_agent_promotion_handoff_packet(
+        closure_plan_path=tmp_path / "missing_general_agent_promotion_closure_plan.json",
+    )
+
+    assert result.valid is True
+    assert result.open_blocker_count == 1
+    assert result.approval_required_count == 7
+    assert result.errors == ()
+
+
+def test_validate_promotion_handoff_packet_derives_blocked_adapter_plan_when_default_evidence_is_closed(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    closed_evidence_path = tmp_path / "capability_adapter_evidence.json"
+    closed_evidence_path.write_text(
+        (Path("examples") / "capability_adapter_evidence_live_closed_20260611.json").read_text(
+            encoding="utf-8"
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(handoff_validator, "DEFAULT_ADAPTER_EVIDENCE", closed_evidence_path)
+
     result = validate_general_agent_promotion_handoff_packet(
         closure_plan_path=tmp_path / "missing_general_agent_promotion_closure_plan.json",
     )
