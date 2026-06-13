@@ -146,3 +146,140 @@ class TestDeterministicIntervalSolver:
         assert str(nan_exc.value) == "Constraint bound must not be NaN"
         assert "req-5" not in str(duplicate_exc.value)
         assert "c-6" not in str(nan_exc.value)
+
+
+class TestDeterministicLinearSolver:
+    def test_two_variable_solver_selects_bounded_linear_optimum(self, engine):
+        engine.register_objective(
+            "obj-linear-1",
+            "t-1",
+            "Cost mix",
+            ObjectiveDirection.MINIMIZE,
+            metadata={
+                "decision_variables": ["x", "y"],
+                "linear_coefficients": {"x": 3.0, "y": 1.0},
+                "variable_bounds": {"x": [0.0, 10.0], "y": [0.0, 10.0]},
+            },
+        )
+        engine.add_constraint(
+            "c-linear-1",
+            "t-1",
+            "obj-linear-1",
+            "x + y >= 5",
+            5.0,
+            float("inf"),
+            metadata={"linear_terms": {"x": 1.0, "y": 1.0}},
+        )
+        engine.submit_solver_request("req-linear-1", "t-1", "obj-linear-1")
+
+        result = engine.solve_solver_request("req-linear-1")
+        decision_values = result.metadata["decision_values"]
+
+        assert result.status is OptimizationStatus.OPTIMAL
+        assert result.disposition is SolverDisposition.SOLVED
+        assert result.metadata["solver"] == "deterministic_linear_v1"
+        assert result.metadata["reason"] == "bounded_linear_optimum"
+        assert decision_values["x"] == 0.0
+        assert decision_values["y"] == 5.0
+        assert result.objective_value == 5.0
+        assert engine.trace_count == 1
+
+    def test_linear_solver_records_infeasible_coupled_constraints(self, engine):
+        engine.register_objective(
+            "obj-linear-2",
+            "t-1",
+            "Capacity",
+            ObjectiveDirection.MAXIMIZE,
+            target_value=2.0,
+            metadata={
+                "decision_variables": ["x", "y"],
+                "linear_coefficients": {"x": 1.0, "y": 1.0},
+                "variable_bounds": {"x": [0.0, 4.0], "y": [0.0, 4.0]},
+            },
+        )
+        engine.add_constraint(
+            "c-linear-2",
+            "t-1",
+            "obj-linear-2",
+            "x + y >= 9",
+            9.0,
+            float("inf"),
+            metadata={"linear_terms": {"x": 1.0, "y": 1.0}},
+        )
+        engine.submit_solver_request("req-linear-2", "t-1", "obj-linear-2")
+
+        result = engine.solve_solver_request("req-linear-2")
+
+        assert result.status is OptimizationStatus.INFEASIBLE
+        assert result.disposition is SolverDisposition.FAILED
+        assert result.objective_value == 2.0
+        assert result.metadata["reason"] == "infeasible_linear_constraints"
+        assert result.metadata["decision_values"] == {}
+        assert result.iterations > 0
+
+    def test_linear_solver_rejects_unbounded_domain_before_enumeration(self, engine):
+        engine.register_objective(
+            "obj-linear-3",
+            "t-1",
+            "Open domain",
+            ObjectiveDirection.MINIMIZE,
+            target_value=11.0,
+            metadata={
+                "decision_variables": ["x", "y"],
+                "linear_coefficients": {"x": 1.0, "y": 1.0},
+                "variable_bounds": {"x": [0.0, 10.0]},
+            },
+        )
+        engine.add_constraint(
+            "c-linear-3",
+            "t-1",
+            "obj-linear-3",
+            "x + y >= 1",
+            1.0,
+            float("inf"),
+            metadata={"linear_terms": {"x": 1.0, "y": 1.0}},
+        )
+        engine.submit_solver_request("req-linear-3", "t-1", "obj-linear-3")
+
+        result = engine.solve_solver_request("req-linear-3")
+
+        assert result.status is OptimizationStatus.UNBOUNDED
+        assert result.disposition is SolverDisposition.FAILED
+        assert result.objective_value == 11.0
+        assert result.metadata["reason"] == "unbounded_linear_domain"
+        assert result.metadata["decision_values"] == {}
+        assert result.iterations == 0
+
+    def test_linear_solver_rejects_malformed_metadata_with_bounded_message(self, engine):
+        engine.register_objective(
+            "obj-linear-4",
+            "t-1",
+            "Malformed",
+            ObjectiveDirection.MINIMIZE,
+            metadata={
+                "decision_variables": ["x"],
+                "linear_coefficients": {"x": "bad"},
+                "variable_bounds": {"x": [0.0, 1.0]},
+            },
+        )
+        engine.submit_solver_request("req-linear-4", "t-1", "obj-linear-4")
+
+        with pytest.raises(RuntimeCoreInvariantError, match="Linear solver metadata must be numeric") as exc_info:
+            engine.solve_solver_request("req-linear-4")
+
+        assert str(exc_info.value) == "Linear solver metadata must be numeric"
+        assert "bad" not in str(exc_info.value)
+        assert "obj-linear-4" not in str(exc_info.value)
+
+    def test_scalar_interval_solver_remains_default_without_linear_metadata(self, engine):
+        engine.register_objective("obj-linear-5", "t-1", "Legacy scalar", ObjectiveDirection.MINIMIZE)
+        engine.add_constraint("c-linear-5", "t-1", "obj-linear-5", "x >= 2", 2.0, 8.0)
+        engine.submit_solver_request("req-linear-5", "t-1", "obj-linear-5")
+
+        result = engine.solve_solver_request("req-linear-5")
+
+        assert result.status is OptimizationStatus.OPTIMAL
+        assert result.metadata["solver"] == "deterministic_interval_v1"
+        assert result.metadata["reason"] == "bounded_optimum"
+        assert result.metadata["decision_value"] == 2.0
+        assert result.objective_value == 2.0

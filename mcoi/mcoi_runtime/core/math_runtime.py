@@ -12,7 +12,9 @@ Invariants:
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import math
+from itertools import combinations
 from hashlib import sha256
 from typing import Any
 
@@ -78,6 +80,58 @@ def _emit(es: EventSpineEngine, action: str, payload: dict, cid: str, now: str) 
     )
     es.emit(event)
     return event
+
+
+_LINEAR_TOLERANCE = 1e-9
+_MAX_LINEAR_VARIABLES = 4
+
+
+def _dot(left: tuple[float, ...], right: tuple[float, ...]) -> float:
+    return sum(a * b for a, b in zip(left, right, strict=True))
+
+
+def _bounded_number(value: Any) -> float:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        raise RuntimeCoreInvariantError("Linear solver metadata must be numeric")
+    number = float(value)
+    if not math.isfinite(number):
+        raise RuntimeCoreInvariantError("Linear solver metadata must be finite")
+    return number
+
+
+def _bounded_terms(value: Any) -> dict[str, float]:
+    if not isinstance(value, Mapping) or not value:
+        raise RuntimeCoreInvariantError("Linear solver metadata requires terms")
+    terms: dict[str, float] = {}
+    for key, raw_number in value.items():
+        if not isinstance(key, str) or not key.strip():
+            raise RuntimeCoreInvariantError("Linear solver metadata requires variable names")
+        number = _bounded_number(raw_number)
+        if abs(number) > _LINEAR_TOLERANCE:
+            terms[key] = number
+    if not terms:
+        raise RuntimeCoreInvariantError("Linear solver metadata requires nonzero terms")
+    return terms
+
+
+def _solve_linear_system(matrix: tuple[tuple[float, ...], ...], vector: tuple[float, ...]) -> tuple[float, ...] | None:
+    dimension = len(vector)
+    rows = [list(row) + [vector[index]] for index, row in enumerate(matrix)]
+    for column in range(dimension):
+        pivot = max(range(column, dimension), key=lambda row: abs(rows[row][column]))
+        if abs(rows[pivot][column]) <= _LINEAR_TOLERANCE:
+            return None
+        rows[column], rows[pivot] = rows[pivot], rows[column]
+        pivot_value = rows[column][column]
+        for current_column in range(column, dimension + 1):
+            rows[column][current_column] /= pivot_value
+        for row in range(dimension):
+            if row == column:
+                continue
+            factor = rows[row][column]
+            for current_column in range(column, dimension + 1):
+                rows[row][current_column] -= factor * rows[column][current_column]
+    return tuple(rows[row][dimension] for row in range(dimension))
 
 
 class MathRuntimeEngine:
@@ -254,6 +308,7 @@ class MathRuntimeEngine:
         direction: ObjectiveDirection,
         target_value: float = 0.0,
         weight: float = 1.0,
+        metadata: dict[str, Any] | None = None,
     ) -> OptimizationObjective:
         """Register an optimization objective. Duplicate objective_id raises."""
         if objective_id in self._objectives:
@@ -267,6 +322,7 @@ class MathRuntimeEngine:
             target_value=target_value,
             weight=weight,
             created_at=now,
+            metadata=metadata or {},
         )
         self._objectives[objective_id] = obj
         _emit(self._events, "objective_registered", {
@@ -286,6 +342,7 @@ class MathRuntimeEngine:
         expression: str,
         lower_bound: float = float("-inf"),
         upper_bound: float = float("inf"),
+        metadata: dict[str, Any] | None = None,
     ) -> MathOptimizationConstraint:
         """Add a constraint on an objective. Duplicate constraint_id raises."""
         if constraint_id in self._constraints:
@@ -299,6 +356,7 @@ class MathRuntimeEngine:
             lower_bound=lower_bound,
             upper_bound=upper_bound,
             created_at=now,
+            metadata=metadata or {},
         )
         self._constraints[constraint_id] = con
         _emit(self._events, "constraint_added", {
@@ -364,6 +422,9 @@ class MathRuntimeEngine:
             for constraint in self._constraints.values()
             if constraint.tenant_id == request.tenant_id and constraint.objective_ref == objective.objective_id
         )
+        if self._uses_linear_solver_metadata(objective, constraints):
+            return self._solve_linear_request(request, objective, constraints, result_id)
+
         lower_bound = float("-inf")
         upper_bound = float("inf")
         for constraint in constraints:
@@ -423,6 +484,276 @@ class MathRuntimeEngine:
             result_id=effective_result_id,
             tenant_id=request.tenant_id,
             request_ref=request_id,
+            status=status,
+            disposition=disposition,
+            objective_value=objective_value,
+            iterations=iterations,
+            duration_ms=0.0,
+            metadata=metadata,
+        )
+
+    def _uses_linear_solver_metadata(
+        self,
+        objective: OptimizationObjective,
+        constraints: tuple[MathOptimizationConstraint, ...],
+    ) -> bool:
+        return "linear_coefficients" in objective.metadata or any(
+            "linear_terms" in constraint.metadata for constraint in constraints
+        )
+
+    def _solve_linear_request(
+        self,
+        request: SolverRequest,
+        objective: OptimizationObjective,
+        constraints: tuple[MathOptimizationConstraint, ...],
+        result_id: str | None,
+    ) -> SolverResult:
+        coefficient_metadata = objective.metadata.get("linear_coefficients")
+        if coefficient_metadata is None:
+            raise RuntimeCoreInvariantError("Linear objective metadata required")
+        objective_terms = _bounded_terms(coefficient_metadata)
+        variable_names = self._linear_variable_names(objective, objective_terms, constraints)
+        coefficients = tuple(objective_terms.get(name, 0.0) for name in variable_names)
+        inequalities, lower_bounds, upper_bounds = self._linear_inequalities(
+            objective,
+            constraints,
+            variable_names,
+        )
+        effective_result_id = result_id or stable_identifier("res-math-linear-solver", {"request": request.request_id})
+        trace_id = stable_identifier("trace-math-linear-solver", {
+            "request": request.request_id,
+            "result": effective_result_id,
+        })
+        metadata: dict[str, Any] = {
+            "solver": "deterministic_linear_v1",
+            "decision_dimension": len(variable_names),
+            "decision_variables": variable_names,
+            "constraint_count": len(constraints),
+            "objective_direction": objective.direction.value,
+            "objective_weight": objective.weight,
+            "variable_bounds": {
+                name: {"lower": lower_bounds[name], "upper": upper_bounds[name]}
+                for name in variable_names
+            },
+        }
+
+        infeasible_variable = next(
+            (name for name in variable_names if lower_bounds[name] > upper_bounds[name] + _LINEAR_TOLERANCE),
+            None,
+        )
+        if infeasible_variable is not None:
+            return self._record_linear_solver_outcome(
+                request=request,
+                result_id=effective_result_id,
+                trace_id=trace_id,
+                status=OptimizationStatus.INFEASIBLE,
+                disposition=SolverDisposition.FAILED,
+                objective_value=objective.target_value * objective.weight,
+                iterations=0,
+                metadata=metadata | {"reason": "infeasible_variable_bounds", "decision_values": {}},
+            )
+
+        if any(math.isinf(lower_bounds[name]) or math.isinf(upper_bounds[name]) for name in variable_names):
+            return self._record_linear_solver_outcome(
+                request=request,
+                result_id=effective_result_id,
+                trace_id=trace_id,
+                status=OptimizationStatus.UNBOUNDED,
+                disposition=SolverDisposition.FAILED,
+                objective_value=objective.target_value * objective.weight,
+                iterations=0,
+                metadata=metadata | {"reason": "unbounded_linear_domain", "decision_values": {}},
+            )
+
+        candidates = self._linear_candidate_points(inequalities, len(variable_names))
+        feasible_candidates = tuple(
+            candidate
+            for candidate in candidates
+            if all(
+                _dot(coefficients_row, candidate) <= bound + _LINEAR_TOLERANCE
+                for coefficients_row, bound in inequalities
+            )
+        )
+        if not feasible_candidates:
+            return self._record_linear_solver_outcome(
+                request=request,
+                result_id=effective_result_id,
+                trace_id=trace_id,
+                status=OptimizationStatus.INFEASIBLE,
+                disposition=SolverDisposition.FAILED,
+                objective_value=objective.target_value * objective.weight,
+                iterations=len(candidates),
+                metadata=metadata | {"reason": "infeasible_linear_constraints", "decision_values": {}},
+            )
+
+        if objective.direction is ObjectiveDirection.MINIMIZE:
+            decision = min(feasible_candidates, key=lambda candidate: (_dot(coefficients, candidate), candidate))
+        else:
+            decision = max(feasible_candidates, key=lambda candidate: (_dot(coefficients, candidate), candidate))
+        objective_value = _dot(coefficients, decision) * objective.weight
+        decision_values = {name: decision[index] for index, name in enumerate(variable_names)}
+        return self._record_linear_solver_outcome(
+            request=request,
+            result_id=effective_result_id,
+            trace_id=trace_id,
+            status=OptimizationStatus.OPTIMAL,
+            disposition=SolverDisposition.SOLVED,
+            objective_value=objective_value,
+            iterations=len(candidates),
+            metadata=metadata | {
+                "reason": "bounded_linear_optimum",
+                "decision_values": decision_values,
+                "weighted_objective_value": objective_value,
+            },
+        )
+
+    def _linear_variable_names(
+        self,
+        objective: OptimizationObjective,
+        objective_terms: dict[str, float],
+        constraints: tuple[MathOptimizationConstraint, ...],
+    ) -> tuple[str, ...]:
+        variable_metadata = objective.metadata.get("decision_variables")
+        if variable_metadata is None:
+            names = set(objective_terms)
+            for constraint in constraints:
+                if "linear_terms" in constraint.metadata:
+                    names.update(_bounded_terms(constraint.metadata["linear_terms"]))
+            variable_names = tuple(sorted(names))
+        else:
+            if not isinstance(variable_metadata, (list, tuple)) or not variable_metadata:
+                raise RuntimeCoreInvariantError("Linear solver metadata requires variables")
+            variable_names = tuple(variable_metadata)
+            if any(not isinstance(name, str) or not name.strip() for name in variable_names):
+                raise RuntimeCoreInvariantError("Linear solver metadata requires variable names")
+            if len(set(variable_names)) != len(variable_names):
+                raise RuntimeCoreInvariantError("Linear solver metadata requires unique variables")
+            unknown_terms = set(objective_terms) - set(variable_names)
+            if unknown_terms:
+                raise RuntimeCoreInvariantError("Linear objective references unknown variable")
+        if len(variable_names) > _MAX_LINEAR_VARIABLES:
+            raise RuntimeCoreInvariantError("Linear solver variable limit exceeded")
+        return variable_names
+
+    def _linear_inequalities(
+        self,
+        objective: OptimizationObjective,
+        constraints: tuple[MathOptimizationConstraint, ...],
+        variable_names: tuple[str, ...],
+    ) -> tuple[tuple[tuple[float, ...], float], dict[str, float], dict[str, float]]:
+        variable_index = {name: index for index, name in enumerate(variable_names)}
+        inequalities: list[tuple[tuple[float, ...], float]] = []
+        lower_bounds = {name: float("-inf") for name in variable_names}
+        upper_bounds = {name: float("inf") for name in variable_names}
+
+        raw_bounds = objective.metadata.get("variable_bounds", {})
+        if raw_bounds:
+            if not isinstance(raw_bounds, Mapping):
+                raise RuntimeCoreInvariantError("Linear solver metadata requires variable bounds")
+            for name, bounds in raw_bounds.items():
+                if name not in variable_index:
+                    raise RuntimeCoreInvariantError("Linear bounds reference unknown variable")
+                if not isinstance(bounds, (list, tuple)) or len(bounds) != 2:
+                    raise RuntimeCoreInvariantError("Linear solver metadata requires bound pairs")
+                lower, upper = _bounded_number(bounds[0]), _bounded_number(bounds[1])
+                lower_bounds[name] = max(lower_bounds[name], lower)
+                upper_bounds[name] = min(upper_bounds[name], upper)
+                self._append_variable_bound_inequalities(
+                    inequalities,
+                    variable_index[name],
+                    len(variable_names),
+                    lower,
+                    upper,
+                )
+
+        for constraint in constraints:
+            if math.isnan(constraint.lower_bound) or math.isnan(constraint.upper_bound):
+                raise RuntimeCoreInvariantError("Constraint bound must not be NaN")
+            terms = _bounded_terms(constraint.metadata.get("linear_terms", {"x": 1.0}))
+            unknown_terms = set(terms) - set(variable_names)
+            if unknown_terms:
+                raise RuntimeCoreInvariantError("Linear constraint references unknown variable")
+            coefficients = tuple(terms.get(name, 0.0) for name in variable_names)
+            if math.isfinite(constraint.upper_bound):
+                inequalities.append((coefficients, constraint.upper_bound))
+            if math.isfinite(constraint.lower_bound):
+                inequalities.append((tuple(-value for value in coefficients), -constraint.lower_bound))
+            if sum(1 for value in coefficients if abs(value) > _LINEAR_TOLERANCE) == 1:
+                index = next(index for index, value in enumerate(coefficients) if abs(value) > _LINEAR_TOLERANCE)
+                name = variable_names[index]
+                coefficient = coefficients[index]
+                if math.isfinite(constraint.lower_bound):
+                    bound = constraint.lower_bound / coefficient
+                    if coefficient > 0:
+                        lower_bounds[name] = max(lower_bounds[name], bound)
+                    else:
+                        upper_bounds[name] = min(upper_bounds[name], bound)
+                if math.isfinite(constraint.upper_bound):
+                    bound = constraint.upper_bound / coefficient
+                    if coefficient > 0:
+                        upper_bounds[name] = min(upper_bounds[name], bound)
+                    else:
+                        lower_bounds[name] = max(lower_bounds[name], bound)
+        return tuple(inequalities), lower_bounds, upper_bounds
+
+    def _append_variable_bound_inequalities(
+        self,
+        inequalities: list[tuple[tuple[float, ...], float]],
+        variable_index: int,
+        dimension: int,
+        lower: float,
+        upper: float,
+    ) -> None:
+        upper_row = [0.0] * dimension
+        upper_row[variable_index] = 1.0
+        inequalities.append((tuple(upper_row), upper))
+        lower_row = [0.0] * dimension
+        lower_row[variable_index] = -1.0
+        inequalities.append((tuple(lower_row), -lower))
+
+    def _linear_candidate_points(
+        self,
+        inequalities: tuple[tuple[tuple[float, ...], float], ...],
+        dimension: int,
+    ) -> tuple[tuple[float, ...], ...]:
+        candidates: list[tuple[float, ...]] = []
+        seen: set[tuple[float, ...]] = set()
+        for selected in combinations(inequalities, dimension):
+            matrix = tuple(row for row, _bound in selected)
+            vector = tuple(bound for _row, bound in selected)
+            solved = _solve_linear_system(matrix, vector)
+            if solved is None or any(not math.isfinite(value) for value in solved):
+                continue
+            rounded = tuple(0.0 if abs(value) <= _LINEAR_TOLERANCE else round(value, 12) for value in solved)
+            if rounded not in seen:
+                seen.add(rounded)
+                candidates.append(rounded)
+        return tuple(candidates)
+
+    def _record_linear_solver_outcome(
+        self,
+        request: SolverRequest,
+        result_id: str,
+        trace_id: str,
+        status: OptimizationStatus,
+        disposition: SolverDisposition,
+        objective_value: float,
+        iterations: int,
+        metadata: dict[str, Any],
+    ) -> SolverResult:
+        self.record_trace_step(
+            trace_id=trace_id,
+            tenant_id=request.tenant_id,
+            request_ref=request.request_id,
+            step=0,
+            objective_value=objective_value,
+            feasible=status is OptimizationStatus.OPTIMAL,
+            metadata={"solver": metadata["solver"], "reason": metadata["reason"]},
+        )
+        return self.record_solver_result(
+            result_id=result_id,
+            tenant_id=request.tenant_id,
+            request_ref=request.request_id,
             status=status,
             disposition=disposition,
             objective_value=objective_value,
