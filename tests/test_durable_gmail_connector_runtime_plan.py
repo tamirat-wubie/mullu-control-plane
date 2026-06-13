@@ -97,12 +97,14 @@ def test_plan_terms_require_freshness_gate() -> None:
 
 def test_plan_terms_require_account_binding_gate() -> None:
     plan_text = validator.PLAN_PATH.read_text(encoding="utf-8")
-    stale_plan_text = plan_text.replace("validate_durable_gmail_account_binding_receipt.py", "")
+    stale_plan_text = plan_text.replace("produce_durable_gmail_account_binding_receipt.py", "")
+    stale_plan_text = stale_plan_text.replace("validate_durable_gmail_account_binding_receipt.py", "")
     stale_plan_text = stale_plan_text.replace("Tenant/mailbox binding", "")
     stale_plan_text = stale_plan_text.replace("account binding", "")
 
     errors = validator._validate_plan_terms(stale_plan_text)
 
+    assert "plan missing required term: produce_durable_gmail_account_binding_receipt.py" in errors
     assert "plan missing required term: validate_durable_gmail_account_binding_receipt.py" in errors
     assert "plan missing required term: Tenant/mailbox binding" in errors
     assert "plan missing required term: account binding" in errors
