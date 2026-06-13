@@ -351,8 +351,12 @@ def test_case_distinct_raw_answers_do_not_silently_overwrite() -> None:
 
 def test_direct_text_inputs_fail_with_explicit_errors() -> None:
     mesh = SNetRecursiveMesh()
-    with pytest.raises(ValueError, match="SNet text value"):
+    with pytest.raises(ValueError, match="label"):
         mesh.add_symbol(123)
+    with pytest.raises(ValueError, match="sense_id"):
+        mesh.add_symbol("Seed", sense_id=0)
+    with pytest.raises(ValueError, match="created_from_metadata_id"):
+        mesh.add_symbol("Seed", created_from_metadata_id=None)
     assert mesh.symbols == {}
 
     seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
@@ -362,6 +366,8 @@ def test_direct_text_inputs_fail_with_explicit_errors() -> None:
         mesh.generate_wh_tick(seed.symbol_id, perspective="")
     with pytest.raises(ValueError, match="context"):
         mesh.generate_wh_tick(seed.symbol_id, context=123)
+    with pytest.raises(ValueError, match="parent_question_id"):
+        mesh.generate_wh_tick(seed.symbol_id, parent_question_id=0)
     with pytest.raises(ValueError, match="facet"):
         mesh.score_metadata(
             facet="",
@@ -380,6 +386,23 @@ def test_direct_text_inputs_fail_with_explicit_errors() -> None:
     assert seed.symbol_id in mesh.symbols
     assert mesh.questions == {}
     assert mesh.answers == {}
+
+
+def test_evidence_refs_require_tuple_without_partial_answer_mutation() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    tick = mesh.generate_wh_tick(seed.symbol_id)
+    question_id = tick.generated_question_ids[0]
+
+    with pytest.raises(ValueError, match="evidence_refs"):
+        mesh.ingest_answer(question_id, "Seed", evidence_refs="evidence:1")
+    with pytest.raises(ValueError, match="evidence_refs"):
+        mesh.ingest_answer(question_id, "Seed", evidence_refs=("",))
+    answer = mesh.ingest_answer(question_id, "Seed", evidence_refs=("evidence:1",))
+
+    assert mesh.answers == {answer.answer_id: answer}
+    assert answer.evidence_refs == ("evidence:1",)
+    assert mesh.metadata == {}
 
 
 def test_answer_map_rejects_unusable_answers_without_partial_mutation() -> None:
