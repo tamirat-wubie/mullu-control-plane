@@ -593,6 +593,38 @@ def test_governance_decision_codes_identify_primary_escalation_gate() -> None:
     assert forbidden_unknown_decision.reasons[0].details["evidence"] == EvidenceGate.FORBIDDEN_UNKNOWN.value
 
 
+def test_governance_reason_details_preserve_gate_reason_and_metadata() -> None:
+    decision = build_policy_decision(
+        WHQRNode(role=WHRole.WHAT, target="vendor_record"),
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        context=WHQREvaluationContext(
+            node_results={
+                "vendor_record": GateResult(
+                    TruthGate.TRUE,
+                    NormGate.PERMITTED,
+                    EvidenceGate.STALE,
+                    reason="evidence_freshness_window_expired",
+                    metadata={
+                        "checked_at": "2026-05-06T12:00:00Z",
+                        "evidence_ref": "evidence:vendor-record-1",
+                        "fresh_until": "2026-05-05T12:00:00Z",
+                    },
+                ),
+            }
+        ),
+    )
+    verdict = build_guard_verdict(decision)
+
+    assert decision.status is PolicyDecisionStatus.ESCALATE
+    assert decision.reasons[0].code == "whqr_evidence_stale_escalate"
+    assert decision.reasons[0].details["gate_reason"] == "evidence_freshness_window_expired"
+    assert decision.reasons[0].details["gate_metadata"]["evidence_ref"] == "evidence:vendor-record-1"
+    assert decision.reasons[0].details["gate_metadata"]["fresh_until"] == "2026-05-05T12:00:00Z"
+    assert verdict.detail["reason_details"]["gate_reason"] == decision.reasons[0].details["gate_reason"]
+    assert verdict.detail["reason_details"]["gate_metadata"] == decision.reasons[0].details["gate_metadata"]
+
+
 def test_entity_binder_attaches_entity_and_evidence_refs_without_changing_tree_shape() -> None:
     expr = ConnectorExpr(
         connector=Connector.BECAUSE,

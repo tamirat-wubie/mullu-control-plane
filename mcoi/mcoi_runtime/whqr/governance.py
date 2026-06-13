@@ -38,6 +38,8 @@ def build_policy_decision(
             "truth": gate_result.truth.value,
             "norm": gate_result.norm.value if gate_result.norm else None,
             "evidence": gate_result.evidence.value if gate_result.evidence else None,
+            "gate_reason": gate_result.reason,
+            "gate_metadata": dict(gate_result.metadata),
             "static_issues": tuple(
                 {
                     "code": issue.code,
