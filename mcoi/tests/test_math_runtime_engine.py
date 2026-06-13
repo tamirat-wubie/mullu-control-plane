@@ -6,6 +6,8 @@ import pytest
 
 from mcoi_runtime.contracts.math_runtime import (
     ObjectiveDirection,
+    OptimizationStatus,
+    SolverDisposition,
     UncertaintyKind,
     UnitDimension,
 )
@@ -63,3 +65,84 @@ class TestBoundedViolationReasons:
         assert violations["dimension_mismatch_in_constraint"] == "Constraint bounds are inverted"
         assert violations["infeasible_no_result"] == "Solver request has no result"
         assert violations["uncertainty_inverted"] == "Uncertainty interval bounds are inverted"
+
+
+class TestDeterministicIntervalSolver:
+    def test_minimize_solver_records_optimal_result_and_trace(self, engine):
+        engine.register_objective("obj-1", "t-1", "Cost", ObjectiveDirection.MINIMIZE, weight=0.5)
+        engine.add_constraint("c-1", "t-1", "obj-1", "x >= 4", 4.0, 10.0)
+        engine.submit_solver_request("req-1", "t-1", "obj-1")
+
+        result = engine.solve_solver_request("req-1")
+        snapshot = engine.snapshot()
+
+        assert result.status is OptimizationStatus.OPTIMAL
+        assert result.disposition is SolverDisposition.SOLVED
+        assert result.objective_value == 2.0
+        assert result.metadata["decision_value"] == 4.0
+        assert result.metadata["weighted_objective_value"] == 2.0
+        assert engine.result_count == 1
+        assert engine.trace_count == 1
+        assert next(iter(snapshot["traces"].values()))["metadata"]["reason"] == "bounded_optimum"
+
+    def test_maximize_solver_uses_upper_bound(self, engine):
+        engine.register_objective("obj-2", "t-1", "Throughput", ObjectiveDirection.MAXIMIZE)
+        engine.add_constraint("c-2", "t-1", "obj-2", "x <= 9", 1.0, 9.0)
+        engine.submit_solver_request("req-2", "t-1", "obj-2")
+
+        result = engine.solve_solver_request("req-2", result_id="res-2")
+
+        assert result.result_id == "res-2"
+        assert result.status is OptimizationStatus.OPTIMAL
+        assert result.objective_value == 9.0
+        assert result.metadata["decision_value"] == 9.0
+        assert result.metadata["objective_direction"] == ObjectiveDirection.MAXIMIZE.value
+        assert result.iterations == 1
+
+    def test_solver_records_infeasible_bounds_without_pending_request_violation(self, engine):
+        engine.register_objective("obj-3", "t-1", "Budget", ObjectiveDirection.MINIMIZE, target_value=7.0)
+        engine.add_constraint("c-3", "t-1", "obj-3", "x impossible", 10.0, 5.0)
+        engine.submit_solver_request("req-3", "t-1", "obj-3")
+
+        result = engine.solve_solver_request("req-3")
+        violations = {item.operation for item in engine.detect_math_violations("t-1")}
+
+        assert result.status is OptimizationStatus.INFEASIBLE
+        assert result.disposition is SolverDisposition.FAILED
+        assert result.metadata["reason"] == "infeasible_bounds"
+        assert result.metadata["decision_value"] == 7.0
+        assert "infeasible_no_result" not in violations
+        assert "dimension_mismatch_in_constraint" in violations
+
+    def test_solver_classifies_unbounded_minimize(self, engine):
+        engine.register_objective("obj-4", "t-1", "Latency", ObjectiveDirection.MINIMIZE, target_value=3.0)
+        engine.add_constraint("c-4", "t-1", "obj-4", "x <= 12", float("-inf"), 12.0)
+        engine.submit_solver_request("req-4", "t-1", "obj-4")
+
+        result = engine.solve_solver_request("req-4")
+
+        assert result.status is OptimizationStatus.UNBOUNDED
+        assert result.disposition is SolverDisposition.FAILED
+        assert result.objective_value == 3.0
+        assert result.metadata["reason"] == "unbounded_minimize"
+        assert result.metadata["constraint_count"] == 1
+
+    def test_solver_rejects_duplicate_and_nan_bound_with_bounded_messages(self, engine):
+        engine.register_objective("obj-5", "t-1", "Risk", ObjectiveDirection.MINIMIZE)
+        engine.add_constraint("c-5", "t-1", "obj-5", "x >= 0", 0.0, 1.0)
+        engine.submit_solver_request("req-5", "t-1", "obj-5")
+        engine.solve_solver_request("req-5")
+
+        with pytest.raises(RuntimeCoreInvariantError, match="Solver request already has result") as duplicate_exc:
+            engine.solve_solver_request("req-5")
+
+        engine.register_objective("obj-6", "t-1", "NaN guard", ObjectiveDirection.MINIMIZE)
+        engine.add_constraint("c-6", "t-1", "obj-6", "bad bound", float("nan"), 1.0)
+        engine.submit_solver_request("req-6", "t-1", "obj-6")
+        with pytest.raises(RuntimeCoreInvariantError, match="Constraint bound must not be NaN") as nan_exc:
+            engine.solve_solver_request("req-6")
+
+        assert str(duplicate_exc.value) == "Solver request already has result"
+        assert str(nan_exc.value) == "Constraint bound must not be NaN"
+        assert "req-5" not in str(duplicate_exc.value)
+        assert "c-6" not in str(nan_exc.value)

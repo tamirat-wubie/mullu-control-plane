@@ -12,6 +12,7 @@ Invariants:
 
 from __future__ import annotations
 
+import math
 from hashlib import sha256
 from typing import Any
 
@@ -336,6 +337,100 @@ class MathRuntimeEngine:
         }, request_id, self._now())
         return sr
 
+    def solve_solver_request(
+        self,
+        request_id: str,
+        result_id: str | None = None,
+    ) -> SolverResult:
+        """Solve a one-dimensional bounded objective deterministically.
+
+        The first built-in backend treats constraints for the objective as
+        interval bounds over a single decision scalar. It records one trace
+        step and one result. Non-finite or contradictory bounds are explicit
+        solver outcomes, never silent fallbacks.
+        """
+        request = self._requests.get(request_id)
+        if request is None:
+            raise RuntimeCoreInvariantError("Unknown solver request")
+        if any(result.request_ref == request_id for result in self._results.values()):
+            raise RuntimeCoreInvariantError("Solver request already has result")
+
+        objective = self._objectives.get(request.objective_ref)
+        if objective is None or objective.tenant_id != request.tenant_id:
+            raise RuntimeCoreInvariantError("Unknown objective_ref")
+
+        constraints = tuple(
+            constraint
+            for constraint in self._constraints.values()
+            if constraint.tenant_id == request.tenant_id and constraint.objective_ref == objective.objective_id
+        )
+        lower_bound = float("-inf")
+        upper_bound = float("inf")
+        for constraint in constraints:
+            if math.isnan(constraint.lower_bound) or math.isnan(constraint.upper_bound):
+                raise RuntimeCoreInvariantError("Constraint bound must not be NaN")
+            lower_bound = max(lower_bound, constraint.lower_bound)
+            upper_bound = min(upper_bound, constraint.upper_bound)
+
+        effective_result_id = result_id or stable_identifier("res-math-solver", {"request": request_id})
+        trace_id = stable_identifier("trace-math-solver", {"request": request_id, "result": effective_result_id})
+        iterations = 1 if constraints else 0
+        metadata: dict[str, Any] = {
+            "solver": "deterministic_interval_v1",
+            "decision_dimension": 1,
+            "constraint_count": len(constraints),
+            "lower_bound": lower_bound,
+            "upper_bound": upper_bound,
+            "objective_direction": objective.direction.value,
+            "objective_weight": objective.weight,
+        }
+
+        if lower_bound > upper_bound:
+            status = OptimizationStatus.INFEASIBLE
+            disposition = SolverDisposition.FAILED
+            decision_value = objective.target_value
+            metadata["reason"] = "infeasible_bounds"
+        elif objective.direction is ObjectiveDirection.MINIMIZE and math.isinf(lower_bound):
+            status = OptimizationStatus.UNBOUNDED
+            disposition = SolverDisposition.FAILED
+            decision_value = objective.target_value
+            metadata["reason"] = "unbounded_minimize"
+        elif objective.direction is ObjectiveDirection.MAXIMIZE and math.isinf(upper_bound):
+            status = OptimizationStatus.UNBOUNDED
+            disposition = SolverDisposition.FAILED
+            decision_value = objective.target_value
+            metadata["reason"] = "unbounded_maximize"
+        else:
+            status = OptimizationStatus.OPTIMAL
+            disposition = SolverDisposition.SOLVED
+            decision_value = lower_bound if objective.direction is ObjectiveDirection.MINIMIZE else upper_bound
+            metadata["reason"] = "bounded_optimum"
+
+        objective_value = decision_value * objective.weight
+        metadata["decision_value"] = decision_value
+        metadata["weighted_objective_value"] = objective_value
+
+        self.record_trace_step(
+            trace_id=trace_id,
+            tenant_id=request.tenant_id,
+            request_ref=request_id,
+            step=0,
+            objective_value=objective_value,
+            feasible=status is OptimizationStatus.OPTIMAL,
+            metadata={"solver": metadata["solver"], "reason": metadata["reason"]},
+        )
+        return self.record_solver_result(
+            result_id=effective_result_id,
+            tenant_id=request.tenant_id,
+            request_ref=request_id,
+            status=status,
+            disposition=disposition,
+            objective_value=objective_value,
+            iterations=iterations,
+            duration_ms=0.0,
+            metadata=metadata,
+        )
+
     # ------------------------------------------------------------------
     # Solver Results
     # ------------------------------------------------------------------
@@ -350,6 +445,7 @@ class MathRuntimeEngine:
         objective_value: float,
         iterations: int = 0,
         duration_ms: float = 0.0,
+        metadata: dict[str, Any] | None = None,
     ) -> SolverResult:
         """Record a solver result. Duplicate result_id raises."""
         if result_id in self._results:
@@ -365,6 +461,7 @@ class MathRuntimeEngine:
             iterations=iterations,
             duration_ms=duration_ms,
             solved_at=now,
+            metadata=metadata or {},
         )
         self._results[result_id] = res
         _emit(self._events, "solver_result_recorded", {
@@ -418,6 +515,7 @@ class MathRuntimeEngine:
         step: int,
         objective_value: float,
         feasible: bool = True,
+        metadata: dict[str, Any] | None = None,
     ) -> OptimizationTrace:
         """Record a trace step. Duplicate trace_id raises."""
         if trace_id in self._traces:
@@ -431,6 +529,7 @@ class MathRuntimeEngine:
             objective_value=objective_value,
             feasible=feasible,
             recorded_at=now,
+            metadata=metadata or {},
         )
         self._traces[trace_id] = ot
         _emit(self._events, "trace_step_recorded", {
