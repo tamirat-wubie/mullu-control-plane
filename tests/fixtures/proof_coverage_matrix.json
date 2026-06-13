@@ -3059,6 +3059,9 @@
         "command_interpretation_receipt_read_model_bounds_raw_message": [
           "command_interpretation_receipt_read_model_bounds_raw_message"
         ],
+        "command_interpretation_receipt_requires_operator_authority": [
+          "command_interpretation_receipt_requires_operator_authority_in_production"
+        ],
         "command_lifecycle_events_are_hash_linked": [
           "command_closure_read_model"
         ],
@@ -3099,6 +3102,7 @@
         "terminal_closure_requires_evidence_refs",
         "successful_response_is_bound_to_response_evidence_closure",
         "command_interpretation_receipt_read_model_bounds_raw_message",
+        "command_interpretation_receipt_requires_operator_authority",
         "universal_action_proof_replays_from_command_events",
         "universal_action_runtime_record_exports_contract_shape",
         "universal_action_orchestration_replays_from_command_events",
@@ -10087,8 +10091,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1298,
-    "runtime_witness_count": 1298,
+    "exact_test_anchor_count": 1299,
+    "runtime_witness_count": 1299,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -10115,6 +10119,12 @@
               "tests/test_gateway/test_webhooks.py::test_command_interpretation_receipt_read_model_bounds_raw_message"
             ],
             "witness": "command_interpretation_receipt_read_model_bounds_raw_message"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_command_interpretation_receipt_requires_operator_authority_in_production"
+            ],
+            "witness": "command_interpretation_receipt_requires_operator_authority"
           },
           {
             "anchors": [
@@ -10193,8 +10203,8 @@
             "witness": "physical_capsule_admission_runs_promotion_preflight"
           }
         ],
-        "exact_test_anchor_count": 16,
-        "runtime_witness_count": 16,
+        "exact_test_anchor_count": 17,
+        "runtime_witness_count": 17,
         "surface_id": "gateway_capability_fabric",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
