@@ -26,7 +26,7 @@ from ._base import (
 
 
 SNET_VERSION = "0.1.5"
-SNET_SEMANTICS_HASH = "sha256:snet-v0.1.5-raw-answer-identity-refined"
+SNET_SEMANTICS_HASH = "sha256:snet-v0.1.5-answer-and-text-boundary-refined"
 SNET_READ_ONLY_SURFACE = "read_only_snet_recursive_mesh"
 
 

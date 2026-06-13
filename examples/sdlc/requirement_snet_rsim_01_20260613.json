@@ -17,7 +17,8 @@
     "SNet mesh receipt evidence references include the mesh digest witness",
     "invalid confidence, invalid validation state, and malformed answer maps fail before WH tick mutation",
     "non-string text inputs, empty score fields, and non-integer read-model bounds fail with explicit errors",
-    "case-distinct raw answers remain separate evidence records instead of silently overwriting each other"
+    "case-distinct raw answers remain separate evidence records instead of silently overwriting each other",
+    "answer evidence references reject malformed tuple input before answer mutation"
   ],
   "non_goals": [
     "no public deployment claim",
