@@ -1,0 +1,471 @@
+"""Purpose: verify SNet recursive WH mesh prototype behavior.
+Governance scope: WH coverage, promotion gates, context retention,
+    contradiction recording, perspective isolation, and recursion termination.
+Dependencies: mcoi_runtime.contracts.snet and mcoi_runtime.snet.engine.
+Invariants:
+  - Inquiry remains local and deterministic.
+  - Unknowns are not promoted.
+  - Context and perspective are never silently merged.
+  - Recursion stops at the configured budget.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+
+import pytest
+
+from mcoi_runtime.contracts.snet import (
+    SNetContradictionState,
+    SNetInquiryBudget,
+    SNetMeshReceipt,
+    SNetSettlementState,
+    SNetTickStatus,
+    SNetValidationState,
+    SNetWHType,
+    WH_TYPES,
+)
+from mcoi_runtime.snet.engine import SNetRecursiveMesh, map_wh_to_facet
+from mcoi_runtime.snet.read_model import build_snet_operator_read_model, create_snet_mesh_receipt
+
+
+def test_wh_tick_generates_required_questions() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+
+    tick = mesh.generate_wh_tick(seed.symbol_id)
+
+    assert tick.status is SNetTickStatus.RAN
+    assert len(tick.generated_question_ids) == len(WH_TYPES) == 14
+    assert {mesh.questions[question_id].wh_type for question_id in tick.generated_question_ids} == set(WH_TYPES)
+    assert mesh.questions[tick.generated_question_ids[0]].text == "What is Seed?"
+    assert map_wh_to_facet(SNetWHType.DEPENDS_ON) == "upstream_dependency"
+    assert len(mesh.symbols[seed.symbol_id].inquiry_history) == 14
+
+
+def test_promotion_gate_preserves_context_and_blocks_unknowns() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+
+    tick = mesh.run_tick_with_answers(
+        seed.symbol_id,
+        {
+            SNetWHType.WHAT: "unknown",
+            SNetWHType.WHICH: "brown",
+            SNetWHType.DEPENDS_ON: "Water",
+            SNetWHType.DEPENDS_ON_ME: "Future plant",
+        },
+    )
+    promoted_labels = {mesh.symbols[symbol_id].label for symbol_id in tick.promoted_symbol_ids}
+    promoted_contexts = {mesh.symbols[symbol_id].parent_context for symbol_id in tick.promoted_symbol_ids}
+    relation_types = {
+        mesh.relations[relation_id].relation_type
+        for relation_id in mesh.symbols[seed.symbol_id].relation_refs
+    }
+
+    assert "water" in promoted_labels
+    assert "future plant" in promoted_labels
+    assert "unknown" not in promoted_labels
+    assert "brown" not in promoted_labels
+    assert any(context.startswith("Seed:upstream_dependency:water") for context in promoted_contexts)
+    assert {"upstream_dependency", "downstream_dependency"}.issubset(relation_types)
+    assert len(tick.unknown_ids) >= 1
+
+
+def test_contextual_contradiction_is_recorded_instead_of_deleting_claims() -> None:
+    mesh = SNetRecursiveMesh()
+    fire = mesh.add_symbol("Fire", symbol_type="physical_process")
+
+    controlled_tick = mesh.run_tick_with_answers(
+        fire.symbol_id,
+        {SNetWHType.WHY: "Controlled warmth helps seed germination"},
+        context="controlled cooking heat",
+    )
+    uncontrolled_tick = mesh.run_tick_with_answers(
+        fire.symbol_id,
+        {SNetWHType.WHY: "Uncontrolled fire destroys seed structure"},
+        context="uncontrolled burning heat",
+    )
+    contradiction = mesh.contradictions[uncontrolled_tick.contradiction_ids[0]]
+
+    assert len(controlled_tick.metadata_ids) == 1
+    assert len(uncontrolled_tick.metadata_ids) == 1
+    assert contradiction.resolution_state is SNetContradictionState.CONTEXTUAL_DUALITY
+    assert contradiction.context_a == "controlled cooking heat"
+    assert contradiction.context_b == "uncontrolled burning heat"
+    assert len(mesh.metadata) == 2
+
+
+def test_perspective_isolation_keeps_same_label_senses_separate() -> None:
+    mesh = SNetRecursiveMesh()
+    biological_seed = mesh.add_symbol(
+        "Seed",
+        symbol_type="physical_biological_object",
+        sense_id="seed#biological",
+    )
+    economic_seed = mesh.add_symbol(
+        "Seed",
+        symbol_type="economic_input",
+        sense_id="seed#economic",
+    )
+    repeated_biological_seed = mesh.add_symbol(
+        "Seed",
+        symbol_type="physical_biological_object",
+        sense_id="seed#biological",
+    )
+    matching_label_symbols = mesh.find_symbols_by_label("seed")
+
+    assert biological_seed.symbol_id != economic_seed.symbol_id
+    assert repeated_biological_seed.symbol_id == biological_seed.symbol_id
+    assert {symbol.sense_id for symbol in matching_label_symbols} == {"seed#biological", "seed#economic"}
+    assert len(matching_label_symbols) == 2
+
+
+def test_recursive_expansion_stops_at_depth_budget() -> None:
+    mesh = SNetRecursiveMesh(SNetInquiryBudget(max_depth=2))
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+
+    def answers_for(symbol):
+        if symbol.label == "Seed":
+            return {SNetWHType.DEPENDS_ON: "Water"}
+        if symbol.label == "water":
+            return {SNetWHType.DEPENDS_ON: "Molecule"}
+        if symbol.label == "molecule":
+            return {SNetWHType.DEPENDS_ON: "Hydrogen"}
+        return {}
+
+    results = mesh.run_recursive(seed.symbol_id, answers_for)
+    symbol_labels = {symbol.label for symbol in mesh.symbols.values()}
+    depth_limit_results = [result for result in results if result.status is SNetTickStatus.DEPTH_LIMIT_REACHED]
+
+    assert "water" in symbol_labels
+    assert "molecule" in symbol_labels
+    assert "hydrogen" not in symbol_labels
+    assert max(symbol.depth for symbol in mesh.symbols.values()) == 2
+    assert len(depth_limit_results) == 0
+    assert mesh.symbols[seed.symbol_id].settlement_state is SNetSettlementState.UNKNOWN_HEAVY
+
+
+def test_operator_read_model_is_bounded_and_hides_raw_answers() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(
+        seed.symbol_id,
+        {
+            SNetWHType.DEPENDS_ON: "Water",
+            SNetWHType.DEPENDS_ON_ME: "Future plant",
+        },
+    )
+
+    projection = build_snet_operator_read_model(mesh, max_symbol_count=1)
+    receipt = projection["receipt"]
+    selected_symbol = projection["selected_symbols"][0]
+
+    assert projection["surface"] == "read_only_snet_recursive_mesh"
+    assert projection["raw_answers_exposed"] is False
+    assert projection["raw_metadata_values_exposed"] is False
+    assert projection["execution_authority_granted"] is False
+    assert projection["connector_authority_granted"] is False
+    assert projection["route_authority_granted"] is False
+    assert projection["filesystem_authority_granted"] is False
+    assert "answers" not in projection
+    assert "metadata_values" not in projection
+    assert projection["symbol_count"] == 3
+    assert projection["truncated_symbol_count"] == 2
+    assert selected_symbol["label"] == "Seed"
+    assert receipt["receipt_id"].startswith("snet-mesh-")
+    assert receipt["evidence_refs"]
+
+
+def test_operator_read_model_rejects_non_integer_symbol_bound() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+
+    with pytest.raises(ValueError, match="max_symbol_count"):
+        build_snet_operator_read_model(mesh, max_symbol_count=1.5)
+    with pytest.raises(ValueError, match="max_symbol_count"):
+        build_snet_operator_read_model(mesh, max_symbol_count=True)
+    assert build_snet_operator_read_model(mesh, max_symbol_count=0)["selected_symbols"] == []
+
+
+def test_mesh_receipt_is_deterministic_for_same_state() -> None:
+    first_mesh = SNetRecursiveMesh()
+    second_mesh = SNetRecursiveMesh()
+    for mesh in (first_mesh, second_mesh):
+        seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+        mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+
+    first_receipt = create_snet_mesh_receipt(first_mesh)
+    second_receipt = create_snet_mesh_receipt(second_mesh)
+
+    assert first_receipt.receipt_id == second_receipt.receipt_id
+    assert first_receipt.mesh_digest == second_receipt.mesh_digest
+    assert first_receipt.to_json() == second_receipt.to_json()
+    assert first_receipt.raw_answers_exposed is False
+    assert first_receipt.raw_metadata_values_exposed is False
+    assert first_receipt.execution_authority_granted is False
+    assert first_receipt.connector_authority_granted is False
+    assert first_receipt.route_authority_granted is False
+    assert first_receipt.filesystem_authority_granted is False
+
+
+def test_mesh_receipt_changes_for_different_same_count_mesh_state() -> None:
+    first_mesh = SNetRecursiveMesh()
+    second_mesh = SNetRecursiveMesh()
+    first_seed = first_mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    second_seed = second_mesh.add_symbol("Root", symbol_type="physical_biological_object")
+    first_mesh.run_tick_with_answers(first_seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+    second_mesh.run_tick_with_answers(second_seed.symbol_id, {SNetWHType.DEPENDS_ON: "Light"})
+
+    first_receipt = create_snet_mesh_receipt(first_mesh)
+    second_receipt = create_snet_mesh_receipt(second_mesh)
+
+    assert first_receipt.symbol_count == second_receipt.symbol_count
+    assert first_receipt.question_count == second_receipt.question_count
+    assert first_receipt.metadata_count == second_receipt.metadata_count
+    assert first_receipt.mesh_digest != second_receipt.mesh_digest
+    assert first_receipt.receipt_id != second_receipt.receipt_id
+    assert any(ref == f"snet:mesh_digest:{first_receipt.mesh_digest}" for ref in first_receipt.evidence_refs)
+
+
+def test_budget_rejects_zero_question_and_zero_unknown_threshold() -> None:
+    with pytest.raises(ValueError, match="max_questions_per_symbol"):
+        SNetInquiryBudget(max_questions_per_symbol=0)
+    with pytest.raises(ValueError, match="finite SNet WH spine"):
+        SNetInquiryBudget(max_questions_per_symbol=len(WH_TYPES) + 1)
+    with pytest.raises(ValueError, match="unknown_gravity_threshold"):
+        SNetInquiryBudget(unknown_gravity_threshold=0)
+    assert SNetInquiryBudget(max_questions_per_symbol=1, unknown_gravity_threshold=1).max_questions_per_symbol == 1
+
+
+def test_answer_map_rejects_duplicate_and_empty_wh_answers() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+
+    class DuplicateAnswerMap(Mapping):
+        def __getitem__(self, key):
+            if key is SNetWHType.WHAT:
+                return "Seed object"
+            if key == "what":
+                return "Duplicate seed object"
+            raise KeyError(key)
+
+        def __iter__(self):
+            return iter((SNetWHType.WHAT, "what"))
+
+        def __len__(self):
+            return 2
+
+        def items(self):
+            return ((SNetWHType.WHAT, "Seed object"), ("what", "Duplicate seed object"))
+
+    with pytest.raises(ValueError, match="duplicate SNet WH answer key"):
+        mesh.run_tick_with_answers(seed.symbol_id, DuplicateAnswerMap())
+
+    second_mesh = SNetRecursiveMesh()
+    second_seed = second_mesh.add_symbol("Second seed", symbol_type="physical_biological_object")
+    with pytest.raises(ValueError, match="must be a non-empty string"):
+        second_mesh.run_tick_with_answers(second_seed.symbol_id, {SNetWHType.WHAT: "   "})
+    assert mesh.answers == {}
+    assert mesh.questions == {}
+    assert mesh.metadata == {}
+    assert second_mesh.answers == {}
+    assert second_mesh.questions == {}
+    assert second_mesh.metadata == {}
+
+
+def test_run_tick_rejects_invalid_confidence_and_state_before_mutation() -> None:
+    confidence_mesh = SNetRecursiveMesh()
+    confidence_seed = confidence_mesh.add_symbol("Confidence seed", symbol_type="physical_biological_object")
+    with pytest.raises(ValueError, match="SNet confidence"):
+        confidence_mesh.run_tick_with_answers(confidence_seed.symbol_id, {SNetWHType.WHAT: "Seed"}, confidence=1.2)
+
+    state_mesh = SNetRecursiveMesh()
+    state_seed = state_mesh.add_symbol("State seed", symbol_type="physical_biological_object")
+    with pytest.raises(ValueError, match="validation_state"):
+        state_mesh.run_tick_with_answers(state_seed.symbol_id, {SNetWHType.WHAT: "Seed"}, validation_state="supported")
+
+    map_mesh = SNetRecursiveMesh()
+    map_seed = map_mesh.add_symbol("Map seed", symbol_type="physical_biological_object")
+    with pytest.raises(ValueError, match="answer_map must be a mapping"):
+        map_mesh.run_tick_with_answers(map_seed.symbol_id, [(SNetWHType.WHAT, "Seed")])
+
+    assert confidence_mesh.questions == {}
+    assert state_mesh.questions == {}
+    assert map_mesh.questions == {}
+
+
+def test_direct_answer_and_score_validation_fail_closed() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    tick = mesh.generate_wh_tick(seed.symbol_id)
+    question_id = tick.generated_question_ids[0]
+
+    with pytest.raises(ValueError, match="raw_answer"):
+        mesh.ingest_answer(question_id, "   ")
+    with pytest.raises(ValueError, match="validation_state"):
+        mesh.ingest_answer(question_id, "Seed", validation_state="supported")
+    with pytest.raises(ValueError, match="SNet confidence"):
+        mesh.score_metadata(
+            facet="identity",
+            ascii_folded_value="seed",
+            confidence=float("nan"),
+            validation_state=SNetValidationState.SUPPORTED,
+        )
+
+    assert mesh.answers == {}
+    assert mesh.metadata == {}
+    assert mesh.questions[question_id].question_id == question_id
+
+
+def test_case_distinct_raw_answers_do_not_silently_overwrite() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    tick = mesh.generate_wh_tick(seed.symbol_id)
+    question_id = tick.generated_question_ids[0]
+
+    upper_answer = mesh.ingest_answer(
+        question_id,
+        "Seed",
+        confidence=0.8,
+        validation_state=SNetValidationState.SUPPORTED,
+    )
+    lower_answer = mesh.ingest_answer(
+        question_id,
+        "seed",
+        confidence=0.8,
+        validation_state=SNetValidationState.SUPPORTED,
+    )
+    upper_metadata = mesh.extract_metadata(question_id, upper_answer.answer_id)
+    lower_metadata = mesh.extract_metadata(question_id, lower_answer.answer_id)
+
+    assert upper_answer.answer_id != lower_answer.answer_id
+    assert upper_answer.raw_answer == "Seed"
+    assert lower_answer.raw_answer == "seed"
+    assert upper_answer.ascii_folded_answer == lower_answer.ascii_folded_answer == "seed"
+    assert upper_metadata.metadata_id != lower_metadata.metadata_id
+    assert len(mesh.answers) == 2
+    assert len(mesh.metadata) == 2
+
+
+def test_direct_text_inputs_fail_with_explicit_errors() -> None:
+    mesh = SNetRecursiveMesh()
+    with pytest.raises(ValueError, match="SNet text value"):
+        mesh.add_symbol(123)
+    assert mesh.symbols == {}
+
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    with pytest.raises(ValueError, match="SNet text value"):
+        mesh.find_symbols_by_label(123)
+    with pytest.raises(ValueError, match="perspective"):
+        mesh.generate_wh_tick(seed.symbol_id, perspective="")
+    with pytest.raises(ValueError, match="context"):
+        mesh.generate_wh_tick(seed.symbol_id, context=123)
+    with pytest.raises(ValueError, match="facet"):
+        mesh.score_metadata(
+            facet="",
+            ascii_folded_value="seed",
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+        )
+    with pytest.raises(ValueError, match="ascii_folded_value"):
+        mesh.score_metadata(
+            facet="identity",
+            ascii_folded_value="",
+            confidence=0.5,
+            validation_state=SNetValidationState.SUPPORTED,
+        )
+
+    assert seed.symbol_id in mesh.symbols
+    assert mesh.questions == {}
+    assert mesh.answers == {}
+
+
+def test_answer_map_rejects_unusable_answers_without_partial_mutation() -> None:
+    budgeted_mesh = SNetRecursiveMesh(SNetInquiryBudget(max_questions_per_symbol=1))
+    budgeted_seed = budgeted_mesh.add_symbol("Budgeted seed", symbol_type="physical_biological_object")
+    with pytest.raises(ValueError, match="outside current question budget"):
+        budgeted_mesh.run_tick_with_answers(budgeted_seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+
+    depth_mesh = SNetRecursiveMesh(SNetInquiryBudget(max_depth=0))
+    depth_seed = depth_mesh.add_symbol("Depth seed", symbol_type="physical_biological_object")
+    with pytest.raises(ValueError, match="depth-limited symbol"):
+        depth_mesh.run_tick_with_answers(depth_seed.symbol_id, {SNetWHType.WHAT: "Seed"})
+
+    duplicate_mesh = SNetRecursiveMesh()
+    duplicate_seed = duplicate_mesh.add_symbol("Duplicate seed", symbol_type="physical_biological_object")
+    duplicate_mesh.generate_wh_tick(duplicate_seed.symbol_id)
+    with pytest.raises(ValueError, match="duplicate tick"):
+        duplicate_mesh.run_tick_with_answers(duplicate_seed.symbol_id, {SNetWHType.WHAT: "Seed"})
+
+    assert budgeted_mesh.questions == {}
+    assert depth_mesh.questions == {}
+    assert duplicate_mesh.answers == {}
+    assert duplicate_mesh.metadata == {}
+
+
+def test_mojibake_sequence_is_preserved_without_text_rewrite() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("ሀ", symbol_type="mfidel_atomic_symbol")
+    fidel_sequence = "ሀሁአ"
+
+    tick = mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: fidel_sequence})
+    answer = mesh.answers[tick.answer_ids[0]]
+    metadata = mesh.metadata[tick.metadata_ids[0]]
+    promoted_symbol = mesh.symbols[tick.promoted_symbol_ids[0]]
+
+    assert answer.raw_answer == fidel_sequence
+    assert answer.ascii_folded_answer == fidel_sequence
+    assert metadata.value == fidel_sequence
+    assert promoted_symbol.label == fidel_sequence
+
+
+def test_mfidel_sequence_is_preserved_as_atomic_symbol_text() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("ሀ", symbol_type="mfidel_atomic_symbol")
+    fidel_sequence = "ሀሁአ"
+
+    tick = mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: fidel_sequence})
+    answer = mesh.answers[tick.answer_ids[0]]
+    metadata = mesh.metadata[tick.metadata_ids[0]]
+    promoted_symbol = mesh.symbols[tick.promoted_symbol_ids[0]]
+
+    assert answer.raw_answer == fidel_sequence
+    assert answer.ascii_folded_answer == fidel_sequence
+    assert metadata.value == fidel_sequence
+    assert promoted_symbol.label == fidel_sequence
+    assert [ord(fidel) for fidel in promoted_symbol.label] == [0x1200, 0x1201, 0x12A0]
+
+
+def test_mesh_receipt_rejects_authority_and_settlement_drift() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+    receipt = create_snet_mesh_receipt(mesh)
+    receipt_payload = receipt.to_json_dict()
+
+    with pytest.raises(ValueError, match="connector authority"):
+        SNetMeshReceipt(**{**receipt_payload, "connector_authority_granted": True})
+    with pytest.raises(ValueError, match="settlement_counts total"):
+        SNetMeshReceipt(**{**receipt_payload, "settlement_counts": {**receipt_payload["settlement_counts"], "active": 99}})
+    assert sum(receipt_payload["settlement_counts"].values()) == receipt_payload["symbol_count"]
+
+
+def test_mesh_receipt_rejects_direct_contract_drift() -> None:
+    mesh = SNetRecursiveMesh()
+    seed = mesh.add_symbol("Seed", symbol_type="physical_biological_object")
+    mesh.run_tick_with_answers(seed.symbol_id, {SNetWHType.DEPENDS_ON: "Water"})
+    receipt_payload = create_snet_mesh_receipt(mesh).to_json_dict()
+
+    with pytest.raises(ValueError, match="read-only SNet operator surface"):
+        SNetMeshReceipt(**{**receipt_payload, "surface": "unsafe_surface"})
+    with pytest.raises(ValueError, match="runtime SNet version"):
+        SNetMeshReceipt(**{**receipt_payload, "snet_version": "0.0.0"})
+    with pytest.raises(ValueError, match="runtime SNet semantics"):
+        SNetMeshReceipt(**{**receipt_payload, "semantics_hash": "sha256:wrong"})
+    with pytest.raises(ValueError, match="sha256 digest"):
+        SNetMeshReceipt(**{**receipt_payload, "mesh_digest": "sha256:nothex"})
+    with pytest.raises(ValueError, match="evidence_refs"):
+        SNetMeshReceipt(**{**receipt_payload, "evidence_refs": []})
+    assert receipt_payload["mesh_digest"].startswith("sha256:")
