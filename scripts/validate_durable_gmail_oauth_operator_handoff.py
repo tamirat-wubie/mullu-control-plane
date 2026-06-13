@@ -21,7 +21,7 @@ from dataclasses import asdict, dataclass
 import json
 from pathlib import Path
 import sys
-from typing import Any
+from typing import Any, Sequence
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -31,8 +31,8 @@ if str(REPO_ROOT) not in sys.path:
 from scripts.validate_durable_gmail_oauth_runtime_preflight import (  # noqa: E402
     DURABLE_SECRET_SIGNAL_NAMES,
     NON_SECRET_CONFIG_SIGNAL_NAMES,
-    SECRET_VALUE_MARKERS,
     WITNESS_REF_SIGNAL_NAMES,
+    matched_secret_marker,
 )
 from scripts.validate_schemas import _load_schema, _validate_schema_instance  # noqa: E402
 
@@ -128,9 +128,9 @@ def write_durable_gmail_oauth_operator_handoff_validation(
 
 def _validate_semantics(handoff: dict[str, Any], errors: list[str]) -> None:
     serialized = json.dumps(handoff, sort_keys=True)
-    for marker in SECRET_VALUE_MARKERS:
-        if marker in serialized:
-            errors.append(f"handoff must not serialize secret marker: {marker}")
+    marker = matched_secret_marker(serialized)
+    if marker:
+        errors.append(f"handoff must not serialize secret marker: {marker}")
     if handoff.get("external_provider_mutation_performed") is not False:
         errors.append("external_provider_mutation_performed must be false")
     if handoff.get("github_secret_mutation_performed") is not False:
@@ -172,12 +172,16 @@ def _validate_recommended_defaults(handoff: dict[str, Any], errors: list[str]) -
     if not isinstance(defaults, list):
         errors.append("recommended_runtime_defaults must be a list")
         return
-    default_names = {str(item.get("name", "")) for item in defaults if isinstance(item, dict)}
+    default_names_sequence = [str(item.get("name", "")) for item in defaults if isinstance(item, dict)]
+    default_names = set(default_names_sequence)
     if default_names != RECOMMENDED_DEFAULT_NAMES:
         errors.append(
             "recommended_runtime_defaults must list only durable Gmail non-secret defaults: "
             f"observed={sorted(default_names)}"
         )
+    duplicate_defaults = _duplicate_values(default_names_sequence)
+    if duplicate_defaults:
+        errors.append(f"recommended_runtime_defaults must not duplicate names: observed={duplicate_defaults}")
     for item in defaults:
         if not isinstance(item, dict):
             continue
@@ -192,9 +196,13 @@ def _validate_provider_actions(handoff: dict[str, Any], errors: list[str]) -> No
     if not isinstance(actions, list):
         errors.append("provider_console_actions must be a list")
         return
-    action_ids = {str(item.get("action_id", "")) for item in actions if isinstance(item, dict)}
+    action_id_sequence = [str(item.get("action_id", "")) for item in actions if isinstance(item, dict)]
+    action_ids = set(action_id_sequence)
     if action_ids != REQUIRED_PROVIDER_ACTION_IDS:
         errors.append(f"provider action ids must match durable Gmail handoff set: observed={sorted(action_ids)}")
+    duplicate_action_ids = _duplicate_values(action_id_sequence)
+    if duplicate_action_ids:
+        errors.append(f"provider_console_actions must not duplicate action ids: observed={duplicate_action_ids}")
     for action in actions:
         if not isinstance(action, dict):
             continue
@@ -213,29 +221,43 @@ def _validate_runtime_bindings(handoff: dict[str, Any], errors: list[str]) -> No
     if not isinstance(bindings, list):
         errors.append("runtime_bindings must be a list")
         return
+    binding_name_sequence = [str(item.get("name", "")) for item in bindings if isinstance(item, dict)]
     binding_by_name = {str(item.get("name", "")): item for item in bindings if isinstance(item, dict)}
     required_names = set(NON_SECRET_CONFIG_SIGNAL_NAMES) | set(DURABLE_SECRET_SIGNAL_NAMES) | set(WITNESS_REF_SIGNAL_NAMES)
+    observed_names = set(binding_by_name)
     missing = sorted(required_names - set(binding_by_name))
     if missing:
         errors.append(f"runtime bindings missing {missing}")
+    extra = sorted(observed_names - required_names)
+    if extra:
+        errors.append(f"runtime bindings include unsupported names {extra}")
+    duplicate_binding_names = _duplicate_values(binding_name_sequence)
+    if duplicate_binding_names:
+        errors.append(f"runtime_bindings must not duplicate names: observed={duplicate_binding_names}")
     for name in NON_SECRET_CONFIG_SIGNAL_NAMES:
         binding = binding_by_name.get(name, {})
         if binding and binding.get("classification") != "non_secret_config":
             errors.append(f"{name} must be classified non_secret_config")
-        if binding and binding.get("secret_store_command"):
-            errors.append(f"{name} must not include a secret store command")
+        if binding and binding.get("store_command"):
+            errors.append(f"{name} must not include a store command")
     for name in DURABLE_SECRET_SIGNAL_NAMES:
         binding = binding_by_name.get(name, {})
         if binding and binding.get("classification") != "secret":
             errors.append(f"{name} must be classified secret")
-        if binding and "gh secret set" not in str(binding.get("secret_store_command", "")):
+        store_command = str(binding.get("store_command", ""))
+        if binding and not store_command.startswith(f"gh secret set {name} --repo "):
             errors.append(f"{name} must include a secret store command template")
+        if binding and "--body" in store_command:
+            errors.append(f"{name} secret store command must not inline a value")
     for name in WITNESS_REF_SIGNAL_NAMES:
         binding = binding_by_name.get(name, {})
         if binding and binding.get("classification") != "witness_ref":
             errors.append(f"{name} must be classified witness_ref")
-        if binding and "gh secret set" not in str(binding.get("secret_store_command", "")):
-            errors.append(f"{name} must include a witness ref store command template")
+        store_command = str(binding.get("store_command", ""))
+        if binding and not store_command.startswith(f"gh variable set {name} --repo "):
+            errors.append(f"{name} must include a witness ref variable command template")
+        if binding and " --body <witness-ref>" not in store_command:
+            errors.append(f"{name} witness ref command must use the witness-ref placeholder")
 
 
 def _validate_preflight_summary(preflight_summary: Any, errors: list[str]) -> None:
@@ -277,6 +299,16 @@ def _expected_status(provider_setup_authorized: bool, ready_for_live_probe: bool
     if provider_setup_authorized:
         return "ready_for_provider_setup"
     return "awaiting_operator_authority"
+
+
+def _duplicate_values(values: Sequence[str]) -> list[str]:
+    seen: set[str] = set()
+    duplicates: set[str] = set()
+    for value in values:
+        if value in seen:
+            duplicates.add(value)
+        seen.add(value)
+    return sorted(duplicates)
 
 
 def _blocker_count(handoff: dict[str, Any]) -> int:

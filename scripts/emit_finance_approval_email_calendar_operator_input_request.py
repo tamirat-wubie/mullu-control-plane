@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -120,7 +121,7 @@ def emit_finance_email_calendar_operator_input_request(
         required_inputs=required_inputs,
         blocked_actions=_blocked_actions(ready),
         source_artifacts={
-            "finance_approval_email_calendar_binding_receipt": str(receipt_path)
+            "finance_approval_email_calendar_binding_receipt": _artifact_ref(receipt_path)
         },
         no_secret_values_serialized=True,
         next_action=_next_action(required_inputs, ready),
@@ -299,6 +300,21 @@ def _load_json_object(path: Path, label: str) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise RuntimeError(f"{label} JSON root must be an object")
     return payload
+
+
+def _artifact_ref(path: Path) -> str:
+    """Return a public-safe artifact reference without host-local ancestry."""
+    label = path.as_posix().replace("\\", "/")
+    if not path.is_absolute():
+        return label
+    resolved_path = path.resolve(strict=False)
+    try:
+        relative_label = os.path.relpath(str(resolved_path), str(REPO_ROOT)).replace(os.sep, "/")
+    except ValueError:
+        return path.name
+    if relative_label == "." or relative_label.startswith("../") or relative_label.startswith("..\\"):
+        return path.name
+    return relative_label
 
 
 def _reject_json_constant(raw_constant: str) -> None:

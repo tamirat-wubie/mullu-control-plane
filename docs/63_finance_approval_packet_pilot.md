@@ -276,7 +276,7 @@ python scripts\validate_protocol_manifest.py
 Expected result:
 
 ```text
-protocol manifest ok: 194 schemas
+protocol manifest ok: 196 schemas
 ```
 
 Finance pilot readiness verification:
@@ -316,6 +316,7 @@ python scripts\emit_finance_approval_email_calendar_operator_input_request.py --
 python scripts\validate_finance_approval_email_calendar_operator_input_request.py --request .change_assurance\finance_approval_email_calendar_operator_input_request.json --output .change_assurance\finance_approval_email_calendar_operator_input_request_validation.json --json
 python scripts\validate_finance_approval_email_calendar_binding_receipt.py --receipt .change_assurance\finance_approval_email_calendar_binding_receipt.json --require-ready --json
 python scripts\validate_finance_approval_email_calendar_live_receipt.py --require-ready --json
+python scripts\preflight_finance_email_calendar_recovery.py --receipt .change_assurance\email_calendar_live_receipt.json --output .change_assurance\finance_email_calendar_recovery_preflight.json --json
 python scripts\run_finance_approval_live_handoff_closure.py --output .change_assurance\finance_approval_live_handoff_closure_run.json --strict --json
 python scripts\validate_finance_approval_live_handoff_closure_run_schema.py --strict --json
 python scripts\preflight_finance_approval_live_handoff.py --strict --json
@@ -333,6 +334,7 @@ python scripts\render_finance_approval_operator_page.py --summary .change_assura
 Use `examples\finance_email_calendar_recovery.env.example` as the redacted binding template; validate it before replacing secret placeholders through a secrets manager.
 The receipt records only binding-name presence for the email/calendar worker endpoint, worker signing secret, connector token family, and scope witness family. It also records scope witness classification as read-only or invalid by binding name. It never serializes worker URLs, token values, secrets, or scope values.
 The operator input request translates a blocked binding receipt into public-safe missing input names and blocked actions. It never serializes worker URLs, signing secrets, connector tokens, scope values, provider account details, or mailbox contents.
+The recovery preflight receipt records redacted recovery checks for worker reachability inputs, connector token presence, read-only scope review, and live probe rerun readiness.
 Email/calendar recovery requires four binding groups before rerunning the live receipt probe:
 
 ```text

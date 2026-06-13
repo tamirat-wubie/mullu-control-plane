@@ -1,7 +1,7 @@
 <!--
 Purpose: Define the governed boundary for durable Gmail connector runtime access after the bounded live adapter evidence proof.
 Governance scope: OAuth authority, least-privilege scope selection, secret redaction, refresh-token lifecycle, revocation, audit receipts, and release blocking.
-Dependencies: gateway/email_calendar_connector_adapters.py, gateway/email_calendar_worker.py, gateway/gmail_oauth_lifecycle.py, examples/sdlc/requirement_durable_gmail_connector_runtime_20260611.json, examples/sdlc/security_review_durable_gmail_connector_runtime_20260611.json, schemas/durable_gmail_oauth_operator_handoff.schema.json, scripts/validate_durable_gmail_connector_runtime_plan.py, scripts/validate_durable_gmail_oauth_operator_handoff.py, scripts/validate_durable_gmail_oauth_runtime_preflight.py, scripts/mint_gmail_oauth_access_token.py, scripts/produce_durable_gmail_oauth_operator_handoff.py, scripts/produce_durable_gmail_oauth_live_receipt.py.
+Dependencies: gateway/email_calendar_connector_adapters.py, gateway/email_calendar_worker.py, gateway/gmail_oauth_lifecycle.py, examples/sdlc/requirement_durable_gmail_connector_runtime_20260611.json, examples/sdlc/security_review_durable_gmail_connector_runtime_20260611.json, schemas/durable_gmail_oauth_operator_handoff.schema.json, scripts/validate_durable_gmail_connector_runtime_plan.py, scripts/validate_durable_gmail_oauth_runtime_preflight.py, scripts/validate_durable_gmail_oauth_operator_handoff.py, scripts/mint_gmail_oauth_access_token.py, scripts/produce_durable_gmail_oauth_operator_handoff.py, scripts/produce_durable_gmail_oauth_live_receipt.py.
 Invariants: No Google Cloud credential creation, OAuth client creation, consent-screen publication, or production verification claim is performed by this repository-local plan.
 -->
 
@@ -70,6 +70,51 @@ The durable boundary is not closed by the prior live adapter receipt. It stays `
 | Write-action approval receipt | Required only if draft or send is enabled |
 | Security review | Release-blocking until provider and runtime witnesses exist |
 
+## GitHub Runtime Inventory
+
+The durable Gmail runtime preflight can read GitHub repository configuration without exposing credential values:
+
+```powershell
+gh variable set MULLU_EMAIL_CALENDAR_WORKER_ADAPTER --repo tamirat-wubie/mullu-control-plane --body google
+python scripts\validate_durable_gmail_oauth_runtime_preflight.py --github-repo tamirat-wubie/mullu-control-plane --output .change_assurance\durable_gmail_oauth_runtime_preflight.json --json --require-ready
+python scripts\produce_durable_gmail_oauth_operator_handoff.py --github-repo tamirat-wubie/mullu-control-plane --operator-approval-ref "$env:MULLU_GMAIL_OPERATOR_APPROVAL_REF" --output .change_assurance\durable_gmail_oauth_operator_handoff.json --json --require-live-probe
+python scripts\validate_durable_gmail_oauth_operator_handoff.py --handoff .change_assurance\durable_gmail_oauth_operator_handoff.json --output .change_assurance\durable_gmail_oauth_operator_handoff_validation.json --require-live-probe --json
+```
+
+The GitHub path treats repository secrets as presence-only bindings and admits only non-secret variables and witness-reference variables as readable values. Secret-shaped values in admitted variables are rejected. Local environment values and explicit env files retain precedence over GitHub repository inventory.
+
+The operator handoff emits `store_command` templates only. Durable credential bindings use `gh secret set`; witness-reference bindings use `gh variable set ... --body <witness-ref>` so non-secret proof references remain readable by the preflight without exposing credential material.
+
+Observed repository readiness inputs:
+
+| Input | Evidence state |
+| --- | --- |
+| `MULLU_EMAIL_CALENDAR_WORKER_ADAPTER` | GitHub variable set to `google`. |
+| `EMAIL_CALENDAR_CONNECTOR_ID` | GitHub variable set to `gmail`. |
+| `GMAIL_SCOPE_ID` | GitHub variable set to `https://www.googleapis.com/auth/gmail.readonly`. |
+| `MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY` | GitHub variable set to `read_only_search`. |
+| Gmail OAuth credential bindings | GitHub secret-name inventory present; values are not read. |
+| Provider and lifecycle witnesses | GitHub witness-reference variables present. |
+
+## Live Evidence Witness
+
+The email/calendar target was exercised through GitHub Actions run `27472200253`:
+
+```powershell
+gh workflow run capability-adapter-live-evidence.yml --repo tamirat-wubie/mullu-control-plane -f target=email-calendar -f email_calendar_connector_id=gmail -f email_calendar_query='newer_than:1d' -f strict=true
+```
+
+Downloaded artifact `capability-adapter-live-evidence` included:
+
+| Receipt | Validation result |
+| --- | --- |
+| `gmail_oauth_refresh_receipt.json` | `passed`; OAuth refresh succeeded; token type `Bearer`; secret values not disclosed. |
+| `email_calendar_live_receipt.json` | `passed`; provider operation `email.search`; external write `false`; ready `true`. |
+| `general_agent_promotion_environment_binding_receipt.json` | Valid for Gmail bindings; aggregate readiness remains false because voice probe audio was not in scope. |
+| `capability_adapter_evidence.json` | `communication.email_calendar_worker` status `closed`; aggregate adapter report remains not ready because browser, document, and voice targets were intentionally skipped. |
+
+The Gmail read-only durable probe is therefore `SolvedVerified` for the email/calendar adapter. This does not claim production-customer readiness, Gmail write authority, calendar authority, or full capability-adapter promotion.
+
 ## Verification
 
 Run:
@@ -77,18 +122,21 @@ Run:
 ```powershell
 python scripts\validate_durable_gmail_connector_runtime_plan.py
 python scripts\produce_durable_gmail_oauth_operator_handoff.py --json
-python scripts\validate_durable_gmail_oauth_operator_handoff.py --require-blocked --json
-python scripts\validate_durable_gmail_oauth_runtime_preflight.py --json
+python scripts\validate_durable_gmail_oauth_operator_handoff.py --output .change_assurance\durable_gmail_oauth_operator_handoff_validation.json --require-blocked --json
+python scripts\validate_durable_gmail_oauth_runtime_preflight.py --output .change_assurance\durable_gmail_oauth_runtime_preflight.json --json
+python scripts\validate_durable_gmail_oauth_runtime_preflight.py --github-repo tamirat-wubie/mullu-control-plane --output .change_assurance\durable_gmail_oauth_runtime_preflight.json --json --require-ready
+python scripts\produce_durable_gmail_oauth_operator_handoff.py --github-repo tamirat-wubie/mullu-control-plane --operator-approval-ref "$env:MULLU_GMAIL_OPERATOR_APPROVAL_REF" --output .change_assurance\durable_gmail_oauth_operator_handoff.json --json --require-live-probe
+python scripts\validate_durable_gmail_oauth_operator_handoff.py --handoff .change_assurance\durable_gmail_oauth_operator_handoff.json --output .change_assurance\durable_gmail_oauth_operator_handoff_validation.json --require-live-probe --json
 python scripts\mint_gmail_oauth_access_token.py --json
 python scripts\produce_durable_gmail_oauth_live_receipt.py --json
 python scripts\validate_sdlc_security_review.py --review examples\sdlc\security_review_durable_gmail_connector_runtime_20260611.json --strict
-python -m pytest tests\test_durable_gmail_connector_runtime_plan.py tests\test_validate_durable_gmail_oauth_operator_handoff.py tests\test_validate_durable_gmail_oauth_runtime_preflight.py tests\test_mint_gmail_oauth_access_token.py tests\test_produce_durable_gmail_oauth_operator_handoff.py tests\test_produce_durable_gmail_oauth_live_receipt.py tests\test_gateway\test_gmail_oauth_lifecycle.py -q
+python -m pytest tests\test_durable_gmail_connector_runtime_plan.py tests\test_validate_durable_gmail_oauth_runtime_preflight.py tests\test_validate_durable_gmail_oauth_operator_handoff.py tests\test_mint_gmail_oauth_access_token.py tests\test_produce_durable_gmail_oauth_operator_handoff.py tests\test_produce_durable_gmail_oauth_live_receipt.py tests\test_gateway\test_gmail_oauth_lifecycle.py -q
 ```
 
-The plan validator must pass while still reporting the durable provider-side runtime boundary as not yet production-releasable. The operator handoff producer emits only command templates, expected evidence refs, scope decisions, recommended non-secret defaults, and presence-only binding names; it performs no Google Cloud, Gmail, or GitHub secret mutation. Recommended defaults are not observed preflight evidence: the runtime preflight remains `AwaitingEvidence` until the required Gmail OAuth scope, durable secret presence, provider witnesses, refresh-token storage receipt, and revocation/recovery receipt exist. The workflow token mint helper writes the access token only to the requested runtime environment file, and the durable live receipt producer performs one token refresh and one Gmail read-only probe before writing only redacted refresh classification, access-token digest evidence, and existing email/calendar worker receipt refs. The lifecycle contract classifies refresh outcomes without printing token, refresh-token, client-secret, or private-key values.
+The plan validator must pass while still blocking production-customer claims. The operator handoff producer emits only command templates, expected evidence refs, scope decisions, recommended non-secret defaults, and presence-only binding names; its preflight summary is based on observed runtime inputs without applying those defaults, and it performs no Google Cloud, Gmail, or GitHub secret mutation. The OAuth runtime preflight emits a presence-only receipt and reaches `SolvedVerified` for the read-only Gmail live-probe boundary when the GitHub repo inventory or local environment contains the required adapter mode, connector id, Gmail scope, durable secret presence, provider witnesses, refresh-token storage receipt, and revocation/recovery receipt. The workflow token mint helper writes the access token only to the requested runtime environment file, and the durable live receipt producer performs one token refresh and one Gmail read-only probe before writing only redacted refresh classification, access-token digest evidence, and existing email/calendar worker receipt refs. The lifecycle contract classifies refresh outcomes without printing token, refresh-token, client-secret, or private-key values.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: [external credential mutation blocked, least-privilege scope gate defined, secret value serialization blocked, operator handoff packet redacted, refresh and revocation evidence required, failed-refresh recovery classified, write actions approval-gated]
-  Open issues: [OAuth consent-screen witness, OAuth client witness, refresh-token lifecycle witness, revocation witness]
-  Next action: execute provider-side OAuth setup only under explicit operator authority
+  Invariants verified: [external credential mutation blocked, least-privilege scope gate defined, secret value serialization blocked, operator handoff packet redacted, refresh and revocation evidence required, failed-refresh recovery classified, read-only live probe verified, write actions approval-gated]
+  Open issues: [no Gmail write-action authority claimed, no Calendar authority claimed, full adapter aggregate still blocked by browser/document/voice live evidence]
+  Next action: preserve Gmail read-only evidence refs and close non-Gmail adapter evidence separately

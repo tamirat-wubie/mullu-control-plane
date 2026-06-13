@@ -48,6 +48,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `public_production_health_declaration.schema.json` | Canonical evidence-gated public production health declaration receipt |
 | `deployment_witness.schema.json` | Canonical live gateway deployment witness artifact |
 | `domain_capsule.schema.json` | Domain capsule operating-model package |
+| `durable_gmail_oauth_operator_handoff.schema.json` | Canonical redacted operator handoff for durable Gmail OAuth setup and live-probe admission |
 | `effect_assurance.schema.json` | Canonical planned, observed, and reconciled effect record |
 | `finance_approval_email_calendar_binding_receipt.schema.json` | Canonical redacted worker, connector-token, and read-only scope witness binding receipt for finance live handoff |
 | `finance_approval_email_calendar_operator_input_request.schema.json` | Canonical public-safe request for missing finance email/calendar operator inputs |

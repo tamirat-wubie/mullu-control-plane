@@ -19,6 +19,7 @@ from pathlib import Path
 from scripts.preflight_finance_email_calendar_recovery import (
     main,
     preflight_finance_email_calendar_recovery,
+    write_finance_email_calendar_recovery_preflight,
 )
 
 
@@ -126,24 +127,46 @@ def test_recovery_preflight_worker_probe_failure_blocks_rerun(tmp_path: Path) ->
 
 def test_recovery_preflight_cli_outputs_redacted_json(tmp_path: Path, monkeypatch, capsys) -> None:
     receipt_path = _write_failed_receipt(tmp_path)
+    output_path = tmp_path / "finance_email_calendar_recovery_preflight.json"
     monkeypatch.setenv("MULLU_EMAIL_CALENDAR_WORKER_URL", "https://worker.internal/email-calendar")
     monkeypatch.setenv("MULLU_EMAIL_CALENDAR_WORKER_SECRET", "secret-worker-value")
     monkeypatch.setenv("EMAIL_CALENDAR_CONNECTOR_TOKEN", "secret-token-value")
     monkeypatch.setenv("EMAIL_CALENDAR_CONNECTOR_SCOPE_ID", "gmail.readonly")
 
-    exit_code = main(["--receipt", str(receipt_path), "--json"])
+    exit_code = main(["--receipt", str(receipt_path), "--output", str(output_path), "--json"])
     captured = capsys.readouterr()
     payload = json.loads(captured.out)
+    written_payload = json.loads(output_path.read_text(encoding="utf-8"))
     serialized = json.dumps(payload, sort_keys=True)
 
     assert exit_code == 0
     assert payload["ready_to_rerun_probe"] is True
+    assert written_payload == payload
     assert payload["receipt_path"] == "email-calendar-live-receipt.json"
     assert payload["blockers"] == []
     assert "secret-worker-value" not in serialized
     assert "secret-token-value" not in serialized
     assert "worker.internal" not in serialized
     assert str(tmp_path) not in serialized
+
+
+def test_recovery_preflight_writer_persists_redacted_receipt(tmp_path: Path) -> None:
+    receipt_path = _write_failed_receipt(tmp_path)
+    output_path = tmp_path / "recovery_preflight.json"
+    result = preflight_finance_email_calendar_recovery(
+        receipt_path=receipt_path,
+        env_reader=_ready_env,
+    )
+
+    written = write_finance_email_calendar_recovery_preflight(result, output_path)
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    serialized = json.dumps(payload, sort_keys=True)
+
+    assert written == output_path
+    assert payload["ready_to_rerun_probe"] is True
+    assert payload["blockers"] == []
+    assert "secret-token-value" not in serialized
+    assert "worker.internal" not in serialized
 
 
 def test_recovery_preflight_missing_receipt_path_is_bounded(tmp_path: Path) -> None:

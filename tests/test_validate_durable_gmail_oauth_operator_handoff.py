@@ -110,7 +110,7 @@ def test_durable_gmail_oauth_operator_handoff_rejects_live_probe_drift(tmp_path:
 def test_durable_gmail_oauth_operator_handoff_rejects_secret_marker(tmp_path: Path) -> None:
     handoff_path = tmp_path / "durable_gmail_oauth_operator_handoff.json"
     packet = produce_durable_gmail_oauth_operator_handoff({})
-    packet["operator_approval_ref"] = "client_secret=must-not-serialize"
+    packet["operator_approval_ref"] = "CLIENT_SECRET=must-not-serialize"
     handoff_path.write_text(json.dumps(packet), encoding="utf-8")
 
     validation = validate_durable_gmail_oauth_operator_handoff(
@@ -120,6 +120,65 @@ def test_durable_gmail_oauth_operator_handoff_rejects_secret_marker(tmp_path: Pa
 
     assert validation.ok is False
     assert any("secret marker" in error for error in validation.errors)
+
+
+def test_durable_gmail_oauth_operator_handoff_rejects_duplicate_contract_entries(tmp_path: Path) -> None:
+    handoff_path = tmp_path / "durable_gmail_oauth_operator_handoff.json"
+    packet = produce_durable_gmail_oauth_operator_handoff({})
+    packet["recommended_runtime_defaults"].append(dict(packet["recommended_runtime_defaults"][0]))
+    packet["provider_console_actions"].append(dict(packet["provider_console_actions"][0]))
+    packet["runtime_bindings"].append(dict(packet["runtime_bindings"][0]))
+    packet["runtime_bindings"].append(
+        {
+            "name": "UNSUPPORTED_RUNTIME_BINDING",
+            "classification": "non_secret_config",
+            "store_command": "",
+            "value_must_not_be_committed": True,
+        }
+    )
+    handoff_path.write_text(json.dumps(packet), encoding="utf-8")
+
+    validation = validate_durable_gmail_oauth_operator_handoff(
+        handoff_path=handoff_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is False
+    assert any("recommended_runtime_defaults must not duplicate names" in error for error in validation.errors)
+    assert any("provider_console_actions must not duplicate action ids" in error for error in validation.errors)
+    assert any("runtime_bindings must not duplicate names" in error for error in validation.errors)
+    assert any("runtime bindings include unsupported names" in error for error in validation.errors)
+
+
+def test_durable_gmail_oauth_operator_handoff_rejects_binding_command_drift(tmp_path: Path) -> None:
+    handoff_path = tmp_path / "durable_gmail_oauth_operator_handoff.json"
+    packet = produce_durable_gmail_oauth_operator_handoff({})
+    bindings = {binding["name"]: binding for binding in packet["runtime_bindings"]}
+    bindings["MULLU_EMAIL_CALENDAR_WORKER_ADAPTER"]["store_command"] = "gh variable set SHOULD_NOT_EXIST"
+    bindings["GMAIL_REFRESH_TOKEN"]["store_command"] = "gh variable set GMAIL_REFRESH_TOKEN --repo owner/repo --body <secret>"
+    bindings["GMAIL_OAUTH_CLIENT_SECRET"]["store_command"] = "gh secret set GMAIL_OAUTH_CLIENT_SECRET --repo owner/repo --body <secret>"
+    bindings["MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF"]["store_command"] = "gh secret set MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF"
+    bindings["MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF"]["store_command"] = "gh variable set MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF --repo owner/repo"
+    handoff_path.write_text(json.dumps(packet), encoding="utf-8")
+
+    validation = validate_durable_gmail_oauth_operator_handoff(
+        handoff_path=handoff_path,
+        schema_path=SCHEMA_PATH,
+    )
+
+    assert validation.ok is False
+    assert "MULLU_EMAIL_CALENDAR_WORKER_ADAPTER must not include a store command" in validation.errors
+    assert "GMAIL_REFRESH_TOKEN must include a secret store command template" in validation.errors
+    assert "GMAIL_REFRESH_TOKEN secret store command must not inline a value" in validation.errors
+    assert "GMAIL_OAUTH_CLIENT_SECRET secret store command must not inline a value" in validation.errors
+    assert (
+        "MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF must include a witness ref variable command template"
+        in validation.errors
+    )
+    assert (
+        "MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF witness ref command must use the witness-ref placeholder"
+        in validation.errors
+    )
 
 
 def test_durable_gmail_oauth_operator_handoff_cli_writes_validation(tmp_path: Path, capsys) -> None:

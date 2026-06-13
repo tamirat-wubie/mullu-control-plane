@@ -4,17 +4,15 @@
 Purpose: regenerate local proof and adapter-evidence witnesses that can drift
 during development without requiring live provider credentials.
 Governance scope: document adapter receipt, durable Gmail OAuth blocked
-handoff receipts, TeamOps shared inbox blocked handoff receipts, aggregate
-adapter evidence, proof coverage witness, protocol manifest validation, and
-finance proof-pilot readiness.
+handoff receipts, aggregate adapter evidence, proof coverage witness, protocol
+manifest validation, and finance proof-pilot readiness.
 Dependencies: repository-local assurance scripts and Python subprocess.
 Invariants:
   - The default step set performs no external writes and requires no secrets.
   - Live email/calendar, voice, browser, PostgreSQL, and SMTP evidence remains
     blocked unless separately supplied by operator-controlled live lanes.
-  - Durable Gmail OAuth and TeamOps shared inbox steps emit blocked or
-    preflight-only receipts; they do not mint tokens, contact Google, send
-    messages, or claim live readiness.
+  - Durable Gmail OAuth steps emit blocked or preflight-only receipts; they do
+    not mint tokens, contact Google, or claim live readiness.
   - Each step returns an explicit command receipt; failures are not hidden.
 """
 
@@ -106,31 +104,6 @@ LOCAL_ASSURANCE_STEPS: tuple[AssuranceStep, ...] = (
             "--json",
         ),
         purpose="validate blocked durable Gmail OAuth handoff without live claim",
-    ),
-    AssuranceStep(
-        name="team_ops_shared_inbox_operator_handoff",
-        command=(
-            sys.executable,
-            "scripts/produce_team_ops_shared_inbox_operator_handoff.py",
-            "--output",
-            ".change_assurance/team_ops_shared_inbox_operator_handoff.json",
-            "--json",
-        ),
-        purpose="regenerate blocked TeamOps shared inbox operator handoff receipt",
-    ),
-    AssuranceStep(
-        name="team_ops_shared_inbox_operator_handoff_validation",
-        command=(
-            sys.executable,
-            "scripts/validate_team_ops_shared_inbox_operator_handoff.py",
-            "--handoff",
-            ".change_assurance/team_ops_shared_inbox_operator_handoff.json",
-            "--output",
-            ".change_assurance/team_ops_shared_inbox_operator_handoff_validation.json",
-            "--require-blocked",
-            "--json",
-        ),
-        purpose="validate blocked TeamOps shared inbox handoff without live claim",
     ),
     AssuranceStep(
         name="durable_gmail_oauth_runtime_preflight",
