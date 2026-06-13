@@ -65,6 +65,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
         "terminal_closure_requires_evidence_refs",
         "successful_response_is_bound_to_response_evidence_closure",
         "command_interpretation_receipt_read_model_bounds_raw_message",
+        "command_interpretation_receipt_requires_operator_authority",
         "universal_action_proof_replays_from_command_events",
         "universal_action_runtime_record_exports_contract_shape",
         "universal_action_orchestration_replays_from_command_events",
@@ -125,6 +126,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "successful_response_is_bound_to_response_evidence_closure": ["command_closure_read_model"],
                 "command_interpretation_receipt_read_model_bounds_raw_message": [
                     "command_interpretation_receipt_read_model_bounds_raw_message",
+                ],
+                "command_interpretation_receipt_requires_operator_authority": [
+                    "command_interpretation_receipt_requires_operator_authority_in_production",
                 ],
                 "universal_action_proof_replays_from_command_events": [
                     "command_universal_action_proof_read_model",

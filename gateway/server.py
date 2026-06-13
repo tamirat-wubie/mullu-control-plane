@@ -3096,7 +3096,8 @@ def create_gateway_app(
         }
 
     @app.get("/commands/{command_id}/interpretation-receipt")
-    def command_interpretation_receipt(command_id: str):
+    def command_interpretation_receipt(command_id: str, request: Request):
+        _require_authority_operator(request)
         command = command_ledger.get(command_id)
         if command is None:
             raise HTTPException(404, detail="command not found")

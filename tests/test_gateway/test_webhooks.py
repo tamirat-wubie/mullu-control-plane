@@ -2598,6 +2598,77 @@ class TestGatewayStatus:
         assert resp.status_code == 404
         assert resp.json()["detail"] == "interpretation receipt not found"
 
+    def test_command_interpretation_receipt_requires_operator_authority_in_production(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("MULLU_ENV", "production")
+        monkeypatch.setenv("MULLU_REQUIRE_PERSISTENT_TENANT_IDENTITY", "false")
+        monkeypatch.setenv("MULLU_AUTHORITY_OPERATOR_SECRET", "authority-secret")
+        app = create_gateway_app(platform=StubPlatform())
+        local_client = TestClient(app)
+        command = app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-interpretation-production",
+            idempotency_key="interpretation-receipt-production",
+            intent="llm_completion",
+            payload={
+                "body": "production secret bounded body",
+                "interpretation_receipt": {
+                    "receipt_id": "interp-rcpt-prod-1",
+                    "request_id": "req-interpret-prod-1",
+                    "raw_message_hash": "hash-prod-message-1",
+                    "interpreted_intent": "llm_completion",
+                    "extracted_slots": {},
+                    "missing_slots": [],
+                    "confidence": 0.88,
+                    "model_or_rule_used": "deterministic-rule-v1",
+                    "rejected_interpretations": [],
+                    "risk_precheck": {"risk_tier": "low"},
+                    "created_at": "2026-04-24T12:00:00+00:00",
+                },
+                "interpreted_request": {
+                    "request_id": "req-interpret-prod-1",
+                    "tenant_id": "t1",
+                    "actor_id": "u1",
+                    "channel": "web",
+                    "conversation_id": "conversation-interpretation-production",
+                    "raw_message_hash": "hash-prod-message-1",
+                    "intent_class": "llm_completion",
+                    "capability_id": "llm_completion",
+                    "extracted_slots": {},
+                    "missing_slots": [],
+                    "constraints": {},
+                    "search_needed": False,
+                    "action_needed": True,
+                    "risk_estimate": "low",
+                    "approval_required": False,
+                    "confidence": 0.88,
+                    "interpreter_kind": "deterministic_rule",
+                    "rejected_interpretations": [],
+                    "created_at": "2026-04-24T12:00:00+00:00",
+                },
+            },
+        )
+
+        denied = local_client.get(
+            f"/commands/{command.command_id}/interpretation-receipt"
+        )
+        allowed = local_client.get(
+            f"/commands/{command.command_id}/interpretation-receipt",
+            headers={"X-Mullu-Authority-Secret": "authority-secret"},
+        )
+
+        assert denied.status_code == 403
+        assert denied.json()["detail"] == "Authority operator access not authorized"
+        assert allowed.status_code == 200
+        assert allowed.json()["interpretation_receipt_id"] == "interp-rcpt-prod-1"
+        assert allowed.json()["execution_allowed"] is False
+        assert "production secret bounded body" not in json.dumps(
+            allowed.json(), sort_keys=True
+        )
+
     def test_command_universal_action_proof_read_model(self, gateway_app, client):
         command = gateway_app.state.command_ledger.create_command(
             tenant_id="t1",
