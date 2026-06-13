@@ -1,7 +1,7 @@
 <!--
 Purpose: Define the governed boundary for durable Gmail connector runtime access after the bounded live adapter evidence proof.
-Governance scope: OAuth authority, least-privilege scope selection, secret redaction, refresh-token lifecycle, revocation, audit receipts, evidence freshness, and release blocking.
-Dependencies: gateway/email_calendar_connector_adapters.py, gateway/email_calendar_worker.py, gateway/gmail_oauth_lifecycle.py, examples/sdlc/requirement_durable_gmail_connector_runtime_20260611.json, examples/sdlc/security_review_durable_gmail_connector_runtime_20260611.json, schemas/durable_gmail_oauth_operator_handoff.schema.json, scripts/validate_durable_gmail_connector_runtime_plan.py, scripts/validate_durable_gmail_oauth_runtime_preflight.py, scripts/validate_durable_gmail_oauth_operator_handoff.py, scripts/validate_durable_gmail_oauth_live_receipt_freshness.py, scripts/mint_gmail_oauth_access_token.py, scripts/produce_durable_gmail_oauth_operator_handoff.py, scripts/produce_durable_gmail_oauth_live_receipt.py.
+Governance scope: OAuth authority, least-privilege scope selection, secret redaction, refresh-token lifecycle, revocation, audit receipts, evidence freshness, tenant/mailbox binding, and release blocking.
+Dependencies: gateway/email_calendar_connector_adapters.py, gateway/email_calendar_worker.py, gateway/gmail_oauth_lifecycle.py, examples/sdlc/requirement_durable_gmail_connector_runtime_20260611.json, examples/sdlc/security_review_durable_gmail_connector_runtime_20260611.json, schemas/durable_gmail_oauth_operator_handoff.schema.json, scripts/validate_durable_gmail_connector_runtime_plan.py, scripts/validate_durable_gmail_oauth_runtime_preflight.py, scripts/validate_durable_gmail_oauth_operator_handoff.py, scripts/validate_durable_gmail_oauth_live_receipt_freshness.py, scripts/validate_durable_gmail_account_binding_receipt.py, scripts/mint_gmail_oauth_access_token.py, scripts/produce_durable_gmail_oauth_operator_handoff.py, scripts/produce_durable_gmail_oauth_live_receipt.py.
 Invariants: No Google Cloud credential creation, OAuth client creation, consent-screen publication, or production verification claim is performed by this repository-local plan.
 -->
 
@@ -18,13 +18,16 @@ bounded evidence token
 -> refresh-token storage and rotation
 -> revocation and failed-refresh recovery
 -> evidence freshness validation
+-> tenant/mailbox account binding
 -> approval-gated write actions
 -> production readiness witness
 ```
 
 The prior live adapter receipt did not close durable runtime access by itself. Current repository and GitHub evidence closes only the read-only Gmail live-probe boundary as `SolvedVerified` when the provider-side OAuth witnesses, runtime lifecycle witnesses, live probe receipt, and evidence freshness receipt pass.
 
-Gmail draft/send authority, Calendar authority, public production readiness, and customer readiness remain `AwaitingEvidence` until separate write, calendar, deployment, and customer-surface witnesses pass.
+Tenant/mailbox binding is a separate claim. A read-only Gmail probe proves that a token can search Gmail; it does not by itself prove that the token is bound to the intended tenant mailbox. Tenant/mailbox binding becomes claimable only when a redacted account binding receipt passes with matching expected and observed account hashes, no raw mailbox address, no credential value disclosure, no external mailbox write, and fresh `checked_at` evidence.
+
+Gmail draft/send authority, Calendar authority, public production readiness, and customer readiness remain `AwaitingEvidence` until separate account-binding, write, calendar, deployment, and customer-surface witnesses pass.
 
 ## Requirement Boundary
 
@@ -35,6 +38,7 @@ Gmail draft/send authority, Calendar authority, public production readiness, and
 | Consent | Configure consent-screen identity, support contact, domain ownership, and app use statement before user-data access is expanded. |
 | Secret lifecycle | Store only secret presence and receipt refs in repository artifacts; never serialize access tokens, refresh tokens, client secrets, or private keys. |
 | Runtime | Implement refresh, expiry, rotation, revocation, and failed-refresh recovery before durable access is claimed. |
+| Tenant/mailbox binding | Bind the Gmail token to the intended tenant mailbox through a redacted account hash receipt before any tenant-specific or customer claim. |
 | Approval | Keep Gmail send and draft actions approval-gated; a read-only probe token must not admit write operations. |
 
 ## Algorithm
@@ -49,8 +53,9 @@ Gmail draft/send authority, Calendar authority, public production readiness, and
 8. Classify refresh-token outcomes through the repository-local lifecycle contract: refreshed, retryable provider error, revoked or expired refresh token, OAuth client rejection, scope rejection, malformed provider response, and too-short access-token lifetime.
 9. Run `scripts\mint_gmail_oauth_access_token.py` in the live-evidence workflow or `scripts\produce_durable_gmail_oauth_live_receipt.py` in local proof mode to refresh a transient access token, execute the existing Gmail read-only live probe, and persist only redacted refresh and adapter evidence.
 10. Validate the live receipt freshness before relying on a read-only live-probe claim.
-11. Run approval-gated send/draft evidence only if write operations are in scope.
-12. Update release readiness only after all receipts pass.
+11. Validate `scripts\validate_durable_gmail_account_binding_receipt.py` before claiming the token belongs to the intended tenant mailbox.
+12. Run approval-gated send/draft evidence only if write operations are in scope.
+13. Update release readiness only after all receipts pass.
 
 ## Non-Goals
 
@@ -72,6 +77,7 @@ Gmail draft/send authority, Calendar authority, public production readiness, and
 | Failed-refresh recovery receipt | Contract-tested; live failure drill remains optional unless required for promotion |
 | Read-only Gmail probe receipt | `SolvedVerified` for Gmail search with no external mailbox write |
 | Evidence freshness receipt | Required before relying on a prior live receipt |
+| Tenant/mailbox binding receipt | Required before tenant-specific, customer, or production claims |
 | Write-action approval receipt | `AwaitingEvidence`; required only if draft or send is enabled |
 | Security review | Release-blocking for write, calendar, production, and customer claims |
 
@@ -85,6 +91,7 @@ python scripts\validate_durable_gmail_oauth_runtime_preflight.py --github-repo t
 python scripts\produce_durable_gmail_oauth_operator_handoff.py --github-repo tamirat-wubie/mullu-control-plane --operator-approval-ref "$env:MULLU_GMAIL_OPERATOR_APPROVAL_REF" --output .change_assurance\durable_gmail_oauth_operator_handoff.json --json --require-live-probe
 python scripts\validate_durable_gmail_oauth_operator_handoff.py --handoff .change_assurance\durable_gmail_oauth_operator_handoff.json --output .change_assurance\durable_gmail_oauth_operator_handoff_validation.json --require-live-probe --json
 python scripts\validate_durable_gmail_oauth_live_receipt_freshness.py --receipt .change_assurance\durable_gmail_oauth_live_receipt.json --max-age-days 14 --require-fresh --json
+python scripts\validate_durable_gmail_account_binding_receipt.py --receipt .change_assurance\durable_gmail_account_binding_receipt.json --max-age-days 14 --require-bound --json
 ```
 
 The GitHub path treats repository secrets as presence-only bindings and admits only non-secret variables and witness-reference variables as readable values. Secret-shaped values in admitted variables are rejected. Local environment values and explicit env files retain precedence over GitHub repository inventory.
@@ -136,14 +143,15 @@ python scripts\validate_durable_gmail_oauth_operator_handoff.py --handoff .chang
 python scripts\mint_gmail_oauth_access_token.py --json
 python scripts\produce_durable_gmail_oauth_live_receipt.py --json
 python scripts\validate_durable_gmail_oauth_live_receipt_freshness.py --receipt .change_assurance\durable_gmail_oauth_live_receipt.json --max-age-days 14 --require-fresh --json
+python scripts\validate_durable_gmail_account_binding_receipt.py --receipt .change_assurance\durable_gmail_account_binding_receipt.json --max-age-days 14 --require-bound --json
 python scripts\validate_sdlc_security_review.py --review examples\sdlc\security_review_durable_gmail_connector_runtime_20260611.json --strict
-python -m pytest tests\test_durable_gmail_connector_runtime_plan.py tests\test_validate_durable_gmail_oauth_runtime_preflight.py tests\test_validate_durable_gmail_oauth_operator_handoff.py tests\test_validate_durable_gmail_oauth_live_receipt_freshness.py tests\test_mint_gmail_oauth_access_token.py tests\test_produce_durable_gmail_oauth_operator_handoff.py tests\test_produce_durable_gmail_oauth_live_receipt.py tests\test_gateway\test_gmail_oauth_lifecycle.py -q
+python -m pytest tests\test_durable_gmail_connector_runtime_plan.py tests\test_validate_durable_gmail_oauth_runtime_preflight.py tests\test_validate_durable_gmail_oauth_operator_handoff.py tests\test_validate_durable_gmail_oauth_live_receipt_freshness.py tests\test_validate_durable_gmail_account_binding_receipt.py tests\test_mint_gmail_oauth_access_token.py tests\test_produce_durable_gmail_oauth_operator_handoff.py tests\test_produce_durable_gmail_oauth_live_receipt.py tests\test_gateway\test_gmail_oauth_lifecycle.py -q
 ```
 
-The plan validator must pass while still blocking production-customer claims. The operator handoff producer emits only command templates, expected evidence refs, scope decisions, recommended non-secret defaults, and presence-only binding names; its preflight summary is based on observed runtime inputs without applying those defaults, and it performs no Google Cloud, Gmail, or GitHub secret mutation. The OAuth runtime preflight emits a presence-only receipt and reaches `SolvedVerified` for the read-only Gmail live-probe boundary when the GitHub repo inventory or local environment contains the required adapter mode, connector id, Gmail scope, durable secret presence, provider witnesses, refresh-token storage receipt, and revocation/recovery receipt. The workflow token mint helper writes the access token only to the requested runtime environment file, and the durable live receipt producer performs one token refresh and one Gmail read-only probe before writing only redacted refresh classification, access-token digest evidence, and existing email/calendar worker receipt refs. The freshness validator blocks stale, future-skewed, non-passing, unrecognized, or secret-contaminated evidence before any prior live receipt can support a current claim. The lifecycle contract classifies refresh outcomes without printing token, refresh-token, client-secret, or private-key values.
+The plan validator must pass while still blocking production-customer claims. The operator handoff producer emits only command templates, expected evidence refs, scope decisions, recommended non-secret defaults, and presence-only binding names; its preflight summary is based on observed runtime inputs without applying those defaults, and it performs no Google Cloud, Gmail, or GitHub secret mutation. The OAuth runtime preflight emits a presence-only receipt and reaches `SolvedVerified` for the read-only Gmail live-probe boundary when the GitHub repo inventory or local environment contains the required adapter mode, connector id, Gmail scope, durable secret presence, provider witnesses, refresh-token storage receipt, and revocation/recovery receipt. The workflow token mint helper writes the access token only to the requested runtime environment file, and the durable live receipt producer performs one token refresh and one Gmail read-only probe before writing only redacted refresh classification, access-token digest evidence, and existing email/calendar worker receipt refs. The freshness validator blocks stale, future-skewed, non-passing, unrecognized, or secret-contaminated evidence before any prior live receipt can support a current claim. The account binding validator blocks mismatched account hashes, missing profile-probe evidence, raw mailbox addresses, credential-shaped values, stale evidence, and external mailbox writes before any tenant/mailbox binding claim. The lifecycle contract classifies refresh outcomes without printing token, refresh-token, client-secret, or private-key values.
 
 STATUS:
   Completeness: 100%
-  Invariants verified: [external credential mutation blocked, least-privilege scope gate defined, secret value serialization blocked, operator handoff packet redacted, refresh and revocation evidence required, failed-refresh recovery classified, read-only live probe verified, evidence freshness gate defined, write actions approval-gated]
-  Open issues: [no Gmail write-action authority claimed, no Calendar authority claimed, destructive revocation drill not executed, full adapter aggregate still blocked by browser/document/voice live evidence]
-  Next action: preserve Gmail read-only evidence refs and close non-Gmail adapter evidence separately
+  Invariants verified: [external credential mutation blocked, least-privilege scope gate defined, secret value serialization blocked, operator handoff packet redacted, refresh and revocation evidence required, failed-refresh recovery classified, read-only live probe verified, evidence freshness gate defined, tenant/mailbox binding gate defined, write actions approval-gated]
+  Open issues: [no Gmail write-action authority claimed, no Calendar authority claimed, destructive revocation drill not executed, no production/customer claim without account-binding receipt, full adapter aggregate still blocked by browser/document/voice live evidence]
+  Next action: produce a redacted live account-binding receipt from a Gmail profile probe before tenant-specific claims
