@@ -101,6 +101,24 @@ Each solver records:
 2. One `SolverResult`.
 3. Event-spine records for trace and result writes.
 4. Metadata with solver id, bound envelope, objective direction, decision value, weighted objective value, and reason.
+5. A `solver_receipt` metadata object that conforms to `schemas/math_solver_receipt.schema.json`.
+
+### Solver Receipt
+
+Every built-in solver result carries one governance receipt under
+`result.metadata["solver_receipt"]`.
+
+The receipt records:
+
+1. `receipt_id`: deterministic `math-solver-receipt-*` id.
+2. `request_ref`, `result_id`, and `trace_id`.
+3. `solver`, `status`, `disposition`, and bounded `reason`.
+4. `decision_summary`: bounded decision evidence such as bounds, selected value, decision variables, integer assignment count, and weighted objective value.
+5. `evidence_refs`: `math-request:*`, `math-result:*`, and `math-trace:*` references.
+6. `receipt_hash`: SHA-256 hash over the receipt material before the hash field is added.
+
+Non-finite bounds inside receipt summaries are represented as strings such as
+`Infinity` or `-Infinity` so receipt JSON remains deterministic.
 
 ## Outcomes
 

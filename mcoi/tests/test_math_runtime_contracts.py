@@ -7,12 +7,16 @@ while confirming that MathOptimizationConstraint bounds still allow inf.
 
 from __future__ import annotations
 
+import json
 import math
+from pathlib import Path
 
+from jsonschema import Draft202012Validator
 import pytest
 
 from mcoi_runtime.contracts.math_runtime import (
     MathOptimizationConstraint,
+    MathSolverReceipt,
     ObjectiveDirection,
     OptimizationObjective,
     OptimizationStatus,
@@ -28,6 +32,7 @@ from mcoi_runtime.contracts.math_runtime import (
 
 
 TS = "2025-06-01T12:00:00+00:00"
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 # ---------------------------------------------------------------------------
@@ -104,6 +109,28 @@ def _solver_result(**overrides) -> SolverResult:
     return SolverResult(**defaults)
 
 
+def _solver_receipt(**overrides) -> MathSolverReceipt:
+    defaults = dict(
+        receipt_id="math-solver-receipt-123456789abc",
+        tenant_id="t-1",
+        request_ref="req-1",
+        result_id="res-1",
+        trace_id="trace-1",
+        solver="deterministic_interval_v1",
+        status=OptimizationStatus.OPTIMAL,
+        disposition=SolverDisposition.SOLVED,
+        reason="bounded_optimum",
+        objective_value=42.0,
+        iterations=1,
+        decision_summary={"decision_dimension": 1, "decision_value": 4.0},
+        evidence_refs=("math-request:req-1", "math-result:res-1", "math-trace:trace-1"),
+        emitted_at=TS,
+        receipt_hash="a" * 64,
+    )
+    defaults.update(overrides)
+    return MathSolverReceipt(**defaults)
+
+
 # ---------------------------------------------------------------------------
 # Happy paths
 # ---------------------------------------------------------------------------
@@ -138,6 +165,18 @@ class TestHappyPaths:
     def test_solver_result_valid(self):
         r = _solver_result(objective_value=-10.5)
         assert r.objective_value == -10.5
+
+    def test_math_solver_receipt_valid_and_schema_bound(self):
+        receipt = _solver_receipt()
+        schema = json.loads((REPO_ROOT / "schemas/math_solver_receipt.schema.json").read_text(encoding="utf-8"))
+
+        Draft202012Validator(schema).validate(receipt.to_json_dict())
+
+        assert receipt.receipt_id == "math-solver-receipt-123456789abc"
+        assert receipt.evidence_refs == ("math-request:req-1", "math-result:res-1", "math-trace:trace-1")
+        assert receipt.to_json_dict()["status"] == OptimizationStatus.OPTIMAL.value
+        assert receipt.to_json_dict()["decision_summary"]["decision_value"] == 4.0
+        assert len(receipt.receipt_hash) == 64
 
 
 # ---------------------------------------------------------------------------
@@ -190,6 +229,11 @@ class TestInfNanRejection:
     def test_solver_result_objective_rejects_non_finite(self, bad):
         with pytest.raises(ValueError, match="numeric value must be finite"):
             _solver_result(objective_value=bad)
+
+    @pytest.mark.parametrize("bad", [float("inf"), float("-inf"), float("nan")])
+    def test_math_solver_receipt_objective_rejects_non_finite(self, bad):
+        with pytest.raises(ValueError, match="numeric value must be finite"):
+            _solver_receipt(objective_value=bad)
 
     def test_constraint_bounds_allow_inf(self):
         """MathOptimizationConstraint bounds intentionally allow inf."""

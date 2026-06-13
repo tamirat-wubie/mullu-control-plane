@@ -1773,6 +1773,7 @@ from .product_console import (
 from .math_runtime import (
     MathClosureReport,
     MathOptimizationConstraint,
+    MathSolverReceipt,
     MathSnapshot,
     ObjectiveDirection,
     OptimizationObjective,
@@ -3526,6 +3527,7 @@ __all__ = [
     "MemoryRetentionRule",
     "MathClosureReport",
     "MathOptimizationConstraint",
+    "MathSolverReceipt",
     "MathSnapshot",
     "ObjectiveDirection",
     "OptimizationObjective",
