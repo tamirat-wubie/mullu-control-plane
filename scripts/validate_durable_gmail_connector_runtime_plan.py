@@ -60,6 +60,7 @@ REQUIRED_PLAN_TERMS = (
     "validate_durable_gmail_oauth_live_receipt_freshness.py",
     "validate_durable_gmail_account_binding_receipt.py",
     "Evidence freshness",
+    "source live receipt",
     "Tenant/mailbox binding",
     "account binding",
     "operator handoff packet",

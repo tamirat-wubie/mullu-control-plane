@@ -62,7 +62,11 @@ def test_successful_profile_probe_writes_redacted_binding_receipt(tmp_path: Path
         profile_probe=profile_probe,
     )
     serialized = output_path.read_text(encoding="utf-8")
-    validation = validate_account_binding_receipt(output_path, now="2026-06-13T00:00:00Z")
+    validation = validate_account_binding_receipt(
+        output_path,
+        now="2026-06-13T00:00:00Z",
+        require_source_fresh=False,
+    )
 
     assert payload["status"] == "passed"
     assert payload["solver_outcome"] == "SolvedVerified"
@@ -133,7 +137,11 @@ def test_profile_probe_failure_blocks_binding(tmp_path: Path) -> None:
         clock=lambda: "2026-06-13T00:00:00Z",
         profile_probe=profile_probe,
     )
-    validation = validate_account_binding_receipt(tmp_path / "binding.json", now="2026-06-13T00:00:00Z")
+    validation = validate_account_binding_receipt(
+        tmp_path / "binding.json",
+        now="2026-06-13T00:00:00Z",
+        require_source_fresh=False,
+    )
 
     assert payload["status"] == "failed"
     assert payload["solver_outcome"] == "AwaitingEvidence"
@@ -158,7 +166,11 @@ def test_hash_mismatch_blocks_binding_without_address_disclosure(tmp_path: Path)
         profile_probe=profile_probe,
     )
     serialized = json.dumps(payload, sort_keys=True)
-    validation = validate_account_binding_receipt(output_path, now="2026-06-13T00:00:00Z")
+    validation = validate_account_binding_receipt(
+        output_path,
+        now="2026-06-13T00:00:00Z",
+        require_source_fresh=False,
+    )
 
     assert payload["status"] == "failed"
     assert payload["observed_account_hash"] != payload["expected_account_hash"]

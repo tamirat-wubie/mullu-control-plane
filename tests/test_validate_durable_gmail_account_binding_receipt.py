@@ -49,12 +49,36 @@ def _binding_receipt(**overrides: object) -> dict[str, object]:
     return payload
 
 
+def _source_live_receipt(**overrides: object) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "receipt_id": "durable_gmail_oauth_live_receipt",
+        "adapter_id": "communication.gmail_oauth",
+        "status": "passed",
+        "solver_outcome": "SolvedVerified",
+        "checked_at": "2026-06-12T00:00:00Z",
+        "connector_id": "gmail",
+        "operation_family": "read_only_search",
+        "external_mailbox_write_performed": False,
+        "credential_values_disclosed": False,
+    }
+    payload.update(overrides)
+    return payload
+
+
+def _write_fresh_source_receipt(tmp_path: Path, **overrides: object) -> Path:
+    source_receipt_path = tmp_path / "source-live.json"
+    _write_receipt(source_receipt_path, _source_live_receipt(**overrides))
+    return source_receipt_path
+
+
 def test_matching_account_binding_receipt_is_ready(tmp_path: Path) -> None:
     receipt_path = tmp_path / "binding.json"
     _write_receipt(receipt_path, _binding_receipt())
+    source_receipt_path = _write_fresh_source_receipt(tmp_path)
 
     report = validator.validate_account_binding_receipt(
         receipt_path,
+        source_receipt_path=source_receipt_path,
         now="2026-06-13T00:00:00Z",
     )
 
@@ -65,14 +89,18 @@ def test_matching_account_binding_receipt_is_ready(tmp_path: Path) -> None:
     assert report["write_authority_claimed"] is False
     assert report["calendar_authority_claimed"] is False
     assert report["production_ready_claimed"] is False
+    assert report["source_live_receipt_required"] is True
+    assert report["source_live_receipt_ready"] is True
 
 
 def test_hash_mismatch_blocks_account_binding(tmp_path: Path) -> None:
     receipt_path = tmp_path / "binding.json"
     _write_receipt(receipt_path, _binding_receipt(observed_account_hash=OTHER_HASH))
+    source_receipt_path = _write_fresh_source_receipt(tmp_path)
 
     report = validator.validate_account_binding_receipt(
         receipt_path,
+        source_receipt_path=source_receipt_path,
         now="2026-06-13T00:00:00Z",
     )
 
@@ -86,9 +114,11 @@ def test_hash_mismatch_blocks_account_binding(tmp_path: Path) -> None:
 def test_stale_account_binding_blocks_readiness(tmp_path: Path) -> None:
     receipt_path = tmp_path / "binding.json"
     _write_receipt(receipt_path, _binding_receipt(checked_at="2026-05-01T00:00:00Z"))
+    source_receipt_path = _write_fresh_source_receipt(tmp_path)
 
     report = validator.validate_account_binding_receipt(
         receipt_path,
+        source_receipt_path=source_receipt_path,
         now="2026-06-13T00:00:00Z",
         max_age_days=14,
     )
@@ -109,9 +139,11 @@ def test_missing_profile_probe_blocks_account_binding(tmp_path: Path) -> None:
             external_provider_call_performed=False,
         ),
     )
+    source_receipt_path = _write_fresh_source_receipt(tmp_path)
 
     report = validator.validate_account_binding_receipt(
         receipt_path,
+        source_receipt_path=source_receipt_path,
         now="2026-06-13T00:00:00Z",
     )
 
@@ -124,9 +156,11 @@ def test_missing_profile_probe_blocks_account_binding(tmp_path: Path) -> None:
 def test_external_mailbox_write_blocks_account_binding(tmp_path: Path) -> None:
     receipt_path = tmp_path / "binding.json"
     _write_receipt(receipt_path, _binding_receipt(external_mailbox_write_performed=True))
+    source_receipt_path = _write_fresh_source_receipt(tmp_path)
 
     report = validator.validate_account_binding_receipt(
         receipt_path,
+        source_receipt_path=source_receipt_path,
         now="2026-06-13T00:00:00Z",
     )
 
@@ -139,9 +173,11 @@ def test_external_mailbox_write_blocks_account_binding(tmp_path: Path) -> None:
 def test_raw_mailbox_address_is_blocked_without_disclosure(tmp_path: Path) -> None:
     receipt_path = tmp_path / "binding.json"
     _write_receipt(receipt_path, _binding_receipt(raw_email="operator@example.com"))
+    source_receipt_path = _write_fresh_source_receipt(tmp_path)
 
     report = validator.validate_account_binding_receipt(
         receipt_path,
+        source_receipt_path=source_receipt_path,
         now="2026-06-13T00:00:00Z",
     )
     serialized = json.dumps(report, sort_keys=True)
@@ -151,6 +187,83 @@ def test_raw_mailbox_address_is_blocked_without_disclosure(tmp_path: Path) -> No
     assert "account_binding_contains_raw_mailbox_address" in report["blockers"]
     assert "operator@example.com" not in serialized
     assert report["raw_mailbox_address_disclosed"] is False
+
+
+def test_missing_source_live_receipt_blocks_account_binding(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "binding.json"
+    _write_receipt(receipt_path, _binding_receipt())
+
+    report = validator.validate_account_binding_receipt(
+        receipt_path,
+        source_receipt_path=tmp_path / "missing-source.json",
+        now="2026-06-13T00:00:00Z",
+    )
+
+    assert report["valid"] is False
+    assert report["fresh"] is False
+    assert report["ready_for_tenant_binding"] is False
+    assert report["source_live_receipt_ready"] is False
+    assert "account_binding_source_live_receipt_not_ready" in report["blockers"]
+
+
+def test_stale_source_live_receipt_blocks_account_binding(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "binding.json"
+    _write_receipt(receipt_path, _binding_receipt())
+    source_receipt_path = _write_fresh_source_receipt(tmp_path, checked_at="2026-05-01T00:00:00Z")
+
+    report = validator.validate_account_binding_receipt(
+        receipt_path,
+        source_receipt_path=source_receipt_path,
+        now="2026-06-13T00:00:00Z",
+        max_age_days=14,
+    )
+
+    assert report["valid"] is True
+    assert report["fresh"] is False
+    assert report["ready_for_tenant_binding"] is False
+    assert report["source_live_receipt_ready"] is False
+    assert "account_binding_source_live_receipt_not_ready" in report["blockers"]
+
+
+def test_source_live_receipt_after_binding_blocks_causal_chain(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "binding.json"
+    _write_receipt(receipt_path, _binding_receipt(checked_at="2026-06-12T00:00:00Z"))
+    source_receipt_path = _write_fresh_source_receipt(tmp_path, checked_at="2026-06-12T00:10:01Z")
+
+    report = validator.validate_account_binding_receipt(
+        receipt_path,
+        source_receipt_path=source_receipt_path,
+        now="2026-06-13T00:00:00Z",
+        max_future_skew_minutes=5,
+    )
+
+    assert report["valid"] is True
+    assert report["fresh"] is False
+    assert report["ready_for_tenant_binding"] is False
+    assert report["source_live_receipt_ready"] is True
+    assert "source_live_receipt_after_account_binding" in report["blockers"]
+
+
+def test_source_receipt_ref_parent_traversal_is_blocked(tmp_path: Path) -> None:
+    receipt_path = tmp_path / "binding.json"
+    _write_receipt(receipt_path, _binding_receipt(source_receipt_ref="../outside.json"))
+
+    report = validator.validate_account_binding_receipt(
+        receipt_path,
+        now="2026-06-13T00:00:00Z",
+    )
+
+    assert report["valid"] is False
+    assert report["fresh"] is False
+    assert report["ready_for_tenant_binding"] is False
+    assert "account_binding_source_receipt_ref_invalid" in report["blockers"]
+    assert any("must not traverse parent directories" in error for error in report["errors"])
+
+
+def test_require_bound_cannot_skip_source_freshness() -> None:
+    exit_code = validator.main(["--require-bound", "--skip-source-freshness"])
+
+    assert exit_code == 2
 
 
 def test_missing_receipt_error_is_bounded(tmp_path: Path) -> None:
