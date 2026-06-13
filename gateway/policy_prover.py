@@ -57,7 +57,7 @@ class PolicyProofCase:
         object.__setattr__(self, "case_id", self.case_id.strip())
         object.__setattr__(self, "subject_id", self.subject_id.strip())
         object.__setattr__(self, "attributes", dict(self.attributes))
-        object.__setattr__(self, "evidence_refs", tuple(str(ref) for ref in self.evidence_refs))
+        object.__setattr__(self, "evidence_refs", _normalize_evidence_refs(self.evidence_refs))
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,7 +71,7 @@ class PolicyCounterexample:
     evidence_refs: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "evidence_refs", tuple(str(ref) for ref in self.evidence_refs))
+        object.__setattr__(self, "evidence_refs", _normalize_evidence_refs(self.evidence_refs))
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,7 +101,7 @@ class PolicyProofReport:
             raise ValueError("counterexample_report_requires_counterexamples")
         object.__setattr__(self, "proven_invariants", tuple(self.proven_invariants))
         object.__setattr__(self, "counterexamples", tuple(self.counterexamples))
-        object.__setattr__(self, "evidence_refs", tuple(str(ref) for ref in self.evidence_refs))
+        object.__setattr__(self, "evidence_refs", _normalize_evidence_refs(self.evidence_refs))
         object.__setattr__(self, "metadata", dict(self.metadata))
 
 
@@ -181,3 +181,9 @@ def _counterexamples_for_case(
                 )
             )
     return tuple(counterexamples)
+
+
+def _normalize_evidence_refs(values: tuple[str, ...]) -> tuple[str, ...]:
+    if not all(isinstance(ref, str) for ref in values):
+        raise ValueError("evidence_refs_invalid")
+    return tuple(dict.fromkeys(ref.strip() for ref in values if ref.strip()))

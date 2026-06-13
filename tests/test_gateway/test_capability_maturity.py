@@ -144,6 +144,11 @@ def test_capability_maturity_schema_rejects_readiness_overclaim() -> None:
 def test_capability_maturity_rejects_invalid_manual_claims() -> None:
     with pytest.raises(ValueError, match="^capability_id_required$"):
         CapabilityMaturityEvidence(capability_id="  ")
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        CapabilityMaturityEvidence(
+            capability_id="payments.send",
+            evidence_refs=({"ref": "proof://capabilities/payments.send"},),  # type: ignore[arg-type]
+        )
     with pytest.raises(ValueError, match="^production_requires_C6_or_C7$"):
         CapabilityMaturityAssessment(
             assessment_id="assessment-1",
@@ -153,6 +158,16 @@ def test_capability_maturity_rejects_invalid_manual_claims() -> None:
             autonomy_ready=False,
             blockers=(),
             evidence_refs=(),
+        )
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        CapabilityMaturityAssessment(
+            assessment_id="assessment-1",
+            capability_id="payments.send",
+            maturity_level="C6",
+            production_ready=True,
+            autonomy_ready=False,
+            blockers=(),
+            evidence_refs=(1,),  # type: ignore[arg-type]
         )
     with pytest.raises(ValueError, match="^autonomy_requires_C7$"):
         CapabilityMaturityAssessment(
@@ -199,6 +214,29 @@ def test_registry_entry_extension_evidence_can_reach_c6_without_autonomy() -> No
     assert assessment.blockers == ("autonomy_controls_missing",)
     assert "proof://capabilities/crm.update_customer_address/live" in assessment.evidence_refs
     assert assessment.metadata["assessment_is_not_promotion"] is True
+
+
+def test_registry_entry_extension_drops_structured_evidence_refs() -> None:
+    entry = _registry_entry(
+        certified=True,
+        maturity_evidence={
+            "sandbox_receipt_valid": True,
+            "live_read_receipt_valid": True,
+            "live_write_receipt_valid": True,
+            "worker_deployment_bound": True,
+            "recovery_evidence_present": True,
+            "evidence_refs": [{"ref": "proof://capabilities/crm.update_customer_address/live"}],
+        },
+    )
+
+    assessment = CapabilityRegistryMaturityProjector().assess_entry(entry)
+
+    assert assessment.maturity_level == "C6"
+    assert "proof://capabilities/crm.update_customer_address/live" not in assessment.evidence_refs
+    assert assessment.evidence_refs == (
+        "capability_registry:crm.update_customer_address",
+        "capability_certification:certified",
+    )
 
 
 def test_certification_bundle_generates_maturity_extension_without_manual_flags() -> None:

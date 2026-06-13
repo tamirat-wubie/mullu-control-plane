@@ -23,6 +23,7 @@ from gateway.operator_control_tower import (
     OperatorControlTowerBuilder,
     OperatorPanelKind,
     OperatorSignalSeverity,
+    OperatorTowerSignal,
     PanelHealth,
     operator_control_tower_snapshot_to_json_dict,
 )
@@ -77,6 +78,34 @@ def test_review_and_blocked_items_degrade_panel_and_emit_signal() -> None:
     assert approvals.review_count == 2
     assert approval_signal.reason == "operator_review_or_blocked_items_present"
     assert "case:approval-1" in approval_signal.evidence_refs
+
+
+def test_read_model_evidence_refs_reject_structured_values() -> None:
+    builder = _full_builder()
+    builder.attach_panel(
+        OperatorPanelKind.APPROVALS,
+        _read_model("approvals", item_count=4, blocked_count=1, evidence_refs=("case:approval-1",))
+        | {"evidence_refs": [{"ref": "case:approval-1"}]},
+    )
+
+    snapshot = builder.build(tenant_id="tenant-a", generated_at=NOW)
+    approvals = next(panel for panel in snapshot.panels if panel.panel is OperatorPanelKind.APPROVALS)
+    approval_signal = next(signal for signal in snapshot.signals if signal.panel is OperatorPanelKind.APPROVALS)
+
+    assert approvals.evidence_refs == ()
+    assert approval_signal.evidence_refs == ()
+    assert approval_signal.reason == "operator_review_or_blocked_items_present"
+
+
+def test_signal_evidence_refs_reject_non_string_values() -> None:
+    with pytest.raises(ValueError, match="evidence_refs_invalid"):
+        OperatorTowerSignal(
+            signal_id="signal-1",
+            panel=OperatorPanelKind.APPROVALS,
+            severity=OperatorSignalSeverity.WARNING,
+            reason="operator_review_or_blocked_items_present",
+            evidence_refs=(1,),  # type: ignore[arg-type]
+        )
 
 
 def test_raw_tool_surface_is_not_exposed_and_raises_critical_signal() -> None:

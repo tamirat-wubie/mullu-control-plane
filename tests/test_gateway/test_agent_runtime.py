@@ -16,7 +16,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from gateway.agent_runtime import (
+    AgentLease,
     AgentReceiptStatus,
     AgentRuntimeCoordinator,
     AgentRuntimeIdentity,
@@ -125,6 +128,50 @@ def test_task_assignment_requires_capability_budget_and_high_risk_evidence() -> 
     assert rejected.status == AgentTaskStatus.REJECTED
     assert rejected_receipt.status == AgentReceiptStatus.REJECTED
     assert rejected_receipt.reason == "capability_not_in_agent_scope"
+
+
+def test_agent_runtime_evidence_refs_reject_non_string_values() -> None:
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        AgentRuntimeIdentity(
+            agent_id="agent-invalid-evidence",
+            tenant_id="tenant-a",
+            role="finance_agent",
+            status=AgentRuntimeStatus.ACTIVE,
+            capability_scope=("payment.dispatch",),
+            memory_scope=("invoice",),
+            budget_scope_cents=1000,
+            evidence_refs=({"ref": "directory://agent-invalid-evidence"},),  # type: ignore[arg-type]
+        )
+
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        AgentLease(
+            lease_id="lease-invalid-evidence",
+            agent_id="agent-finance",
+            tenant_id="tenant-a",
+            issued_by_agent_id="agent-supervisor",
+            capability_scope=("payment.dispatch",),
+            budget_scope_cents=1000,
+            issued_at="2026-05-05T12:00:00Z",
+            expires_at="2026-05-05T13:00:00Z",
+            evidence_refs=(1,),  # type: ignore[arg-type]
+        )
+
+
+def test_high_risk_task_rejects_structured_evidence_refs() -> None:
+    coordinator = _coordinator_with_supervisor()
+    _spawn_finance_agent(coordinator)
+
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        coordinator.assign_task(
+            task_id="task-pay-invalid-evidence",
+            agent_id="agent-finance",
+            tenant_id="tenant-a",
+            capability="payment.dispatch",
+            goal_id="goal-pay-invoice",
+            risk_tier="high",
+            budget_cents=3000,
+            evidence_refs=({"ref": "approval://case-001"},),
+        )
 
 
 def test_handoff_preserves_scope_and_rejects_cross_tenant_expansion() -> None:

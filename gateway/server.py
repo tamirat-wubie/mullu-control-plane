@@ -168,6 +168,7 @@ def create_gateway_app(
     platform: Any = None,
     *,
     capability_admission_gate_override: Any | None = None,
+    command_ledger_override: Any | None = None,
     mcp_capability_entries: tuple[Any, ...] = (),
     mcp_executor: Any | None = None,
     mcp_authority_records: MCPAuthorityRecords | None = None,
@@ -979,10 +980,12 @@ def create_gateway_app(
         capability_admission_gate = mcp_gateway_import.admission_gate
         mcp_capability_entries = mcp_gateway_import.entries
         mcp_authority_records = mcp_gateway_import.authority_records
-    command_ledger = build_command_ledger_from_env(
-        clock=_clock,
-        capability_admission_gate=capability_admission_gate,
-    )
+    command_ledger = command_ledger_override
+    if command_ledger is None:
+        command_ledger = build_command_ledger_from_env(
+            clock=_clock,
+            capability_admission_gate=capability_admission_gate,
+        )
     tenant_identity_store = build_tenant_identity_store_from_env(clock=_clock)
     authority_mesh_store = build_authority_obligation_mesh_store_from_env()
     authority_obligation_mesh = AuthorityObligationMesh(
