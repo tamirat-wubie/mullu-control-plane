@@ -2,15 +2,16 @@
 """Validate the durable Gmail connector runtime planning boundary.
 
 Purpose: verify that durable Gmail connector runtime work is requirement-bound,
-release-blocked until provider-side witnesses exist, and free of serialized
-secret values.
+release-bounded by provider-side witnesses, and free of serialized secret
+values.
 Governance scope: OAuth authority, least-privilege scope selection, secret
 redaction, receipt integrity, audit visibility, and release blocking.
 Dependencies: scripts.validate_sdlc_artifact and scripts.validate_sdlc_security_review.
 Invariants:
   - This validator is read-only and deterministic.
   - Provider-side credential mutation is not performed or claimed.
-  - Durable runtime readiness remains blocked until OAuth lifecycle witnesses exist.
+  - Read-only live-probe readiness requires provider lifecycle witnesses.
+  - Write, calendar, customer, and production readiness remain separately blocked.
 """
 
 from __future__ import annotations
@@ -49,9 +50,13 @@ REQUIRED_PLAN_TERMS = (
     "revocation and failed-refresh",
     "approval-gated",
     "AwaitingEvidence",
+    "SolvedVerified",
+    "read-only Gmail live-probe boundary",
     "mint_gmail_oauth_access_token.py",
     "produce_durable_gmail_oauth_operator_handoff.py",
     "produce_durable_gmail_oauth_live_receipt.py",
+    "validate_durable_gmail_oauth_live_receipt_freshness.py",
+    "Evidence freshness",
     "operator handoff packet",
 )
 REQUIRED_NON_GOALS = (
@@ -130,6 +135,7 @@ def build_validation_report() -> dict[str, Any]:
         "durable_gmail_scope_constraints",
         "durable_gmail_required_evidence",
         "durable_gmail_operator_handoff",
+        "durable_gmail_evidence_freshness",
         "durable_gmail_security_review_schema",
         "durable_gmail_release_block",
         "durable_gmail_secret_redaction",
