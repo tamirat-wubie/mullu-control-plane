@@ -244,6 +244,9 @@ jobs:
       - name: Test SNet mesh receipt contract
         run: python -m pytest tests/test_validate_snet_mesh_receipt.py -q
 
+      - name: Test SNet operator read model contract
+        run: python -m pytest tests/test_validate_snet_operator_read_model.py -q
+
       - name: Validate doc/code consistency (anti-fabrication gate)
         run: python scripts/validate_doc_code_consistency.py
 
