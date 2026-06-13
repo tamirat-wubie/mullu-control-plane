@@ -50,7 +50,7 @@ It does not mark any route as witnessed or proven.
 
 ## Current Closure Witness
 
-The current canonical proof matrix reports `declared_route_count: 395` and
+The current canonical proof matrix reports `declared_route_count: 418` and
 `total_unclassified_route_count: 0`. The generated proof-route triage report is
 therefore closed with `ranked_families: []`, `open_issue: none`, and
 `next_action: none`.

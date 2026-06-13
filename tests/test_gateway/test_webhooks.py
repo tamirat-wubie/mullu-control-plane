@@ -2490,6 +2490,114 @@ class TestGatewayStatus:
         )
         assert data["terminal_certificate"]["response_evidence_closure_id"]
 
+    def test_command_interpretation_receipt_read_model_bounds_raw_message(
+        self, gateway_app, client
+    ):
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-interpretation",
+            idempotency_key="interpretation-receipt-read",
+            intent="llm_completion",
+            payload={
+                "body": "do not expose raw body",
+                "interpretation_receipt_id": "interp-rcpt-1",
+                "interpretation_receipt": {
+                    "receipt_id": "interp-rcpt-1",
+                    "request_id": "req-interpret-1",
+                    "raw_message_hash": "hash-raw-message-1",
+                    "interpreted_intent": "llm_completion",
+                    "extracted_slots": {
+                        "capability_id": "llm_completion",
+                        "raw_message": "do not expose nested receipt raw body",
+                        "RawMessage": "do not expose mixed-case receipt raw body",
+                    },
+                    "missing_slots": [],
+                    "confidence": 0.91,
+                    "model_or_rule_used": "deterministic-rule-v1",
+                    "rejected_interpretations": [],
+                    "risk_precheck": {"risk_tier": "low"},
+                    "created_at": "2026-04-24T12:00:00+00:00",
+                    "raw_message": "do not expose raw body",
+                },
+                "interpreted_request": {
+                    "request_id": "req-interpret-1",
+                    "tenant_id": "t1",
+                    "actor_id": "u1",
+                    "channel": "web",
+                    "conversation_id": "conversation-interpretation",
+                    "raw_message_hash": "hash-raw-message-1",
+                    "intent_class": "llm_completion",
+                    "capability_id": "llm_completion",
+                    "extracted_slots": {
+                        "capability_id": "llm_completion",
+                        "body": "do not expose nested request raw body",
+                        "raw-body": "do not expose hyphenated request raw body",
+                    },
+                    "missing_slots": [],
+                    "constraints": {
+                        "tenant_bound": True,
+                        "raw_text": "do not expose nested raw text",
+                        "rawText": "do not expose camel-case raw text",
+                    },
+                    "search_needed": False,
+                    "action_needed": True,
+                    "risk_estimate": "low",
+                    "approval_required": False,
+                    "confidence": 0.91,
+                    "interpreter_kind": "deterministic_rule",
+                    "rejected_interpretations": [],
+                    "created_at": "2026-04-24T12:00:00+00:00",
+                    "raw_message": "do not expose raw body",
+                },
+            },
+        )
+
+        resp = client.get(f"/commands/{command.command_id}/interpretation-receipt")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["command_id"] == command.command_id
+        assert data["tenant_id"] == "t1"
+        assert data["actor_id"] == "u1"
+        assert data["interpretation_receipt_id"] == "interp-rcpt-1"
+        assert data["raw_message_exposed"] is False
+        assert data["execution_allowed"] is False
+        assert data["governed"] is True
+        assert data["interpretation_receipt"]["raw_message_hash"] == "hash-raw-message-1"
+        assert data["interpretation_receipt"]["interpreted_intent"] == "llm_completion"
+        assert data["interpretation_receipt"]["extracted_slots"] == {"capability_id": "llm_completion"}
+        assert data["interpreted_request"]["capability_id"] == "llm_completion"
+        assert data["interpreted_request"]["extracted_slots"] == {"capability_id": "llm_completion"}
+        assert data["interpreted_request"]["constraints"] == {"tenant_bound": True}
+        assert data["interpreted_request"]["action_needed"] is True
+        assert "raw_message" not in data["interpretation_receipt"]
+        assert "raw_message" not in data["interpreted_request"]
+        assert "do not expose raw body" not in json.dumps(data, sort_keys=True)
+        assert "do not expose nested" not in json.dumps(data, sort_keys=True)
+        assert "do not expose mixed-case" not in json.dumps(data, sort_keys=True)
+        assert "do not expose hyphenated" not in json.dumps(data, sort_keys=True)
+        assert "do not expose camel-case" not in json.dumps(data, sort_keys=True)
+
+    def test_command_interpretation_receipt_missing_returns_404(
+        self, gateway_app, client
+    ):
+        command = gateway_app.state.command_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-interpretation-missing",
+            idempotency_key="interpretation-receipt-missing",
+            intent="llm_completion",
+            payload={"body": "no interpretation receipt"},
+        )
+
+        resp = client.get(f"/commands/{command.command_id}/interpretation-receipt")
+
+        assert resp.status_code == 404
+        assert resp.json()["detail"] == "interpretation receipt not found"
+
     def test_command_universal_action_proof_read_model(self, gateway_app, client):
         command = gateway_app.state.command_ledger.create_command(
             tenant_id="t1",

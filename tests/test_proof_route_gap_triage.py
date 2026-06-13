@@ -57,6 +57,8 @@ def test_closed_gap_triage_document_matches_canonical_report() -> None:
     assert report["total_unclassified_route_count"] == 0
     assert report["ranked_families"] == []
     assert report["open_issue"] == "none"
+    assert f"`declared_route_count: {report['declared_route_count']}`" in document
+    assert f"`total_unclassified_route_count: {report['total_unclassified_route_count']}`" in document
     assert "Open issues: none" in document
     assert "unclassified route families still require named proof surfaces" not in document
     assert "closed report/documentation parity" in document
