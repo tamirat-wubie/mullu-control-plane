@@ -155,11 +155,12 @@ def _reason_code(
         return "whqr_truth_escalate"
     if gate_result.norm in {NormGate.ESCALATE, NormGate.REQUIRES_APPROVAL}:
         return "whqr_norm_escalate"
-    if gate_result.evidence in {
-        EvidenceGate.UNPROVEN,
-        EvidenceGate.STALE,
-        EvidenceGate.BUDGET_UNKNOWN,
-        EvidenceGate.FORBIDDEN_UNKNOWN,
-    }:
-        return "whqr_evidence_escalate"
+    if gate_result.evidence is EvidenceGate.UNPROVEN:
+        return "whqr_evidence_unproven_escalate"
+    if gate_result.evidence is EvidenceGate.STALE:
+        return "whqr_evidence_stale_escalate"
+    if gate_result.evidence is EvidenceGate.BUDGET_UNKNOWN:
+        return "whqr_evidence_budget_unknown_escalate"
+    if gate_result.evidence is EvidenceGate.FORBIDDEN_UNKNOWN:
+        return "whqr_evidence_forbidden_unknown_escalate"
     return "whqr_escalate"
