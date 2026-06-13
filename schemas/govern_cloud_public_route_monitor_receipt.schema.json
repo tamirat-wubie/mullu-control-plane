@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:govern-cloud-public-route-monitor-receipt:1",
+  "title": "Govern Cloud Public Route Monitor Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "generated_at",
+    "proof_state",
+    "solver_outcome",
+    "raw_secret_values_included",
+    "monitor_surface",
+    "thresholds",
+    "route_observations",
+    "summary",
+    "remediation",
+    "lineage"
+  ],
+  "properties": {
+    "schema_version": { "const": "govern_cloud.public_route_monitor_receipt.v1" },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^govern-cloud-public-route-monitor-[0-9a-f]{16}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "proof_state": {
+      "type": "string",
+      "enum": ["Pass", "Fail"]
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["SolvedVerified", "AwaitingEvidence"]
+    },
+    "raw_secret_values_included": { "const": false },
+    "monitor_surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "service",
+        "base_url",
+        "public_routes",
+        "blocked_routes",
+        "time_window"
+      ],
+      "properties": {
+        "service": { "const": "mullusi-govern-cloud-staging" },
+        "base_url": {
+          "type": "string",
+          "pattern": "^https://[^/]+$"
+        },
+        "public_routes": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string" }
+        },
+        "blocked_routes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "time_window": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["observed_at"],
+          "properties": {
+            "observed_at": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        }
+      }
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "health_status_code",
+        "version_status_code",
+        "blocked_route_status_code",
+        "missing_signal_policy"
+      ],
+      "properties": {
+        "health_status_code": { "const": 200 },
+        "version_status_code": { "const": 200 },
+        "blocked_route_status_code": { "const": 404 },
+        "missing_signal_policy": { "const": "explicit_not_observed" }
+      }
+    },
+    "route_observations": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "route_id",
+          "method",
+          "url",
+          "expected_status_code",
+          "observed_status_code",
+          "request_reached_endpoint",
+          "passed",
+          "response_digest",
+          "observed_json_fields",
+          "error"
+        ],
+        "properties": {
+          "route_id": {
+            "type": "string",
+            "enum": ["health", "version", "blocked_evaluate"]
+          },
+          "method": { "const": "GET" },
+          "url": {
+            "type": "string",
+            "pattern": "^https://[^/]+/v1/.+$"
+          },
+          "expected_status_code": { "type": "integer" },
+          "observed_status_code": {
+            "anyOf": [
+              { "type": "integer" },
+              { "type": "null" }
+            ]
+          },
+          "request_reached_endpoint": { "type": "boolean" },
+          "passed": { "type": "boolean" },
+          "response_digest": {
+            "type": "string",
+            "pattern": "^(sha256:[0-9a-f]{64})?$"
+          },
+          "observed_json_fields": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          },
+          "error": { "type": "string" }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "passed_route_count",
+        "failed_route_count",
+        "public_read_routes_verified",
+        "blocked_route_guard_verified",
+        "monitor_closed"
+      ],
+      "properties": {
+        "passed_route_count": { "type": "integer", "minimum": 0 },
+        "failed_route_count": { "type": "integer", "minimum": 0 },
+        "public_read_routes_verified": { "type": "boolean" },
+        "blocked_route_guard_verified": { "type": "boolean" },
+        "monitor_closed": { "type": "boolean" }
+      }
+    },
+    "remediation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision", "rollback_path"],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": ["observe", "rollback_public_proxy"]
+        },
+        "rollback_path": { "type": "string", "minLength": 1 }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accepted_deltas", "rejected_deltas"],
+      "properties": {
+        "accepted_deltas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["delta_id", "reason", "logged_in_lineage"],
+            "properties": {
+              "delta_id": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 },
+              "logged_in_lineage": { "const": true }
+            }
+          }
+        },
+        "rejected_deltas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["delta_id", "reason", "logged_in_lineage"],
+            "properties": {
+              "delta_id": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 },
+              "logged_in_lineage": { "const": true }
+            }
+          }
+        }
+      }
+    }
+  }
+}

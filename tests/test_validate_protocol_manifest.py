@@ -157,6 +157,17 @@ def test_protocol_manifest_indexes_connector_certification_registry() -> None:
     assert data_governance_entry["surface"] == "data_governance"
 
 
+def test_protocol_manifest_indexes_durable_gmail_oauth_operator_handoff() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    handoff_entry = entries["durable-gmail-oauth-operator-handoff"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert handoff_entry["path"] == "schemas/durable_gmail_oauth_operator_handoff.schema.json"
+    assert handoff_entry["urn"] == "urn:mullusi:schema:durable-gmail-oauth-operator-handoff:1"
+    assert handoff_entry["surface"] == "connector"
+
+
 def test_protocol_manifest_indexes_deployment_orchestration_validation() -> None:
     manifest = load_manifest()
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
@@ -232,6 +243,17 @@ def test_protocol_manifest_indexes_public_production_health_declaration() -> Non
     assert declaration_entry["path"] == "schemas/public_production_health_declaration.schema.json"
     assert declaration_entry["urn"] == "urn:mullusi:schema:public-production-health-declaration:1"
     assert declaration_entry["surface"] == "deployment"
+
+
+def test_protocol_manifest_indexes_govern_cloud_public_route_monitor_receipt() -> None:
+    manifest = load_manifest()
+    entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
+    monitor_entry = entries["govern-cloud-public-route-monitor-receipt"]
+
+    assert validate_protocol_manifest(manifest) == []
+    assert monitor_entry["path"] == "schemas/govern_cloud_public_route_monitor_receipt.schema.json"
+    assert monitor_entry["urn"] == "urn:mullusi:schema:govern-cloud-public-route-monitor-receipt:1"
+    assert monitor_entry["surface"] == "observability"
 
 
 def test_protocol_manifest_indexes_governed_swarm_production_readiness() -> None:

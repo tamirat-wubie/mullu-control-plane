@@ -19,6 +19,7 @@ from mcoi_runtime.assistant_kernel.closure import (
     closure_observation,
     evaluate_closure,
     finance_ops_payment_closure_contract,
+    team_ops_shared_inbox_closure_contract,
 )
 from mcoi_runtime.assistant_kernel.consent import ConsentDecision, ConsentGrant, ConsentLedger, consent_grant_id
 from mcoi_runtime.assistant_kernel.effects import (
@@ -31,8 +32,11 @@ from mcoi_runtime.assistant_kernel.effects import (
 from mcoi_runtime.assistant_kernel.goals import (
     FINANCE_OPS_INVOICE_PAYMENT_CAPABILITIES,
     FINANCE_OPS_PAYMENT_CLOSURE_PREDICATES,
+    TEAM_OPS_SHARED_INBOX_CAPABILITIES,
+    TEAM_OPS_SHARED_INBOX_CLOSURE_PREDICATES,
     AssistantGoal,
     finance_ops_invoice_payment_goal,
+    team_ops_shared_inbox_goal,
 )
 from mcoi_runtime.assistant_kernel.identity import (
     AssistantIdentityBinding,
@@ -83,6 +87,8 @@ __all__ = [
     "EffectVerification",
     "FINANCE_OPS_INVOICE_PAYMENT_CAPABILITIES",
     "FINANCE_OPS_PAYMENT_CLOSURE_PREDICATES",
+    "TEAM_OPS_SHARED_INBOX_CAPABILITIES",
+    "TEAM_OPS_SHARED_INBOX_CLOSURE_PREDICATES",
     "ScheduledAssistantAction",
     "admit_memory_candidate",
     "bind_assistant_identity",
@@ -102,5 +108,7 @@ __all__ = [
     "schedule_assistant_action",
     "select_capabilities",
     "team_ops_default_profile",
+    "team_ops_shared_inbox_closure_contract",
+    "team_ops_shared_inbox_goal",
     "verify_effect_receipts",
 ]

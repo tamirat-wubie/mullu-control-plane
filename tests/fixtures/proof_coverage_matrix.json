@@ -545,6 +545,13 @@
       ]
     },
     {
+      "action_id": "publish_durable_gmail_oauth_operator_handoff_contract",
+      "status": "closed",
+      "surfaces": [
+        "governed_connector_framework"
+      ]
+    },
+    {
       "action_id": "classify_governed_scheduler_routes",
       "status": "closed",
       "surfaces": [
@@ -892,11 +899,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 259,
+      "proven": 260,
       "unproven": 0,
       "witnessed": 157
     },
-    "route_count": 416,
+    "route_count": 417,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -981,6 +988,11 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/assistant/profiles",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/assistant/team-ops/plans",
         "surface_id": "assistant_kernel_planning"
       },
       {
@@ -3413,10 +3425,11 @@
         "mcoi/tests/test_assistant_router.py",
         "tests/test_assistant_kernel.py"
       ],
-      "notes": "Assistant kernel routes expose governed profile read models and compile FinanceOps plans with consent, approval, idempotency, effect reconciliation, and closure controls without executing external effects.",
+      "notes": "Assistant kernel routes expose governed profile read models and compile FinanceOps and TeamOps plans with consent, approval, idempotency, effect reconciliation, and closure controls without executing external effects.",
       "representative_paths": [
         "/api/v1/assistant/profiles",
-        "/api/v1/assistant/finance-ops/plans"
+        "/api/v1/assistant/finance-ops/plans",
+        "/api/v1/assistant/team-ops/plans"
       ],
       "request_proof": "request_proof",
       "runtime_witness_anchor_aliases": {
@@ -3425,7 +3438,9 @@
         ],
         "assistant_plan_never_grants_execution_authority": [
           "finance_ops_plan_with_consent_projects_dispatch_ready_controls",
-          "finance_ops_plan_blocks_without_active_payment_consent"
+          "finance_ops_plan_blocks_without_active_payment_consent",
+          "team_ops_plan_with_consent_projects_dispatch_ready_controls",
+          "team_ops_plan_blocks_without_active_external_send_consent"
         ],
         "assistant_profiles_read_model_bounded": [
           "assistant_profiles_read_model_exposes_finance_ops_profile"
@@ -3435,14 +3450,27 @@
         ],
         "finance_ops_plan_requires_active_consent": [
           "finance_ops_plan_blocks_without_active_payment_consent"
+        ],
+        "team_ops_plan_errors_sanitized": [
+          "team_ops_plan_error_detail_is_bounded",
+          "invalid_team_ops_plan_fails_closed"
+        ],
+        "team_ops_plan_projects_operator_queue": [
+          "team_ops_plan_with_consent_projects_dispatch_ready_controls"
+        ],
+        "team_ops_plan_requires_active_external_send_consent": [
+          "team_ops_plan_blocks_without_active_external_send_consent"
         ]
       },
       "runtime_witnesses": [
         "assistant_profiles_read_model_bounded",
         "finance_ops_plan_requires_active_consent",
         "finance_ops_plan_projects_operator_queue",
+        "team_ops_plan_requires_active_external_send_consent",
+        "team_ops_plan_projects_operator_queue",
         "assistant_plan_never_grants_execution_authority",
-        "assistant_plan_errors_sanitized"
+        "assistant_plan_errors_sanitized",
+        "team_ops_plan_errors_sanitized"
       ],
       "surface_id": "assistant_kernel_planning"
     },
@@ -7254,9 +7282,15 @@
         "mcoi/mcoi_runtime/core/connector_framework.py",
         "mcoi/tests/test_connector_framework.py",
         "mcoi/tests/test_server_phase217.py",
-        "mcoi/tests/test_server_phase218.py"
+        "mcoi/tests/test_server_phase218.py",
+        "docs/64_durable_gmail_connector_runtime_plan.md",
+        "schemas/durable_gmail_oauth_operator_handoff.schema.json",
+        "scripts/produce_durable_gmail_oauth_operator_handoff.py",
+        "scripts/validate_durable_gmail_oauth_operator_handoff.py",
+        "tests/test_produce_durable_gmail_oauth_operator_handoff.py",
+        "tests/test_validate_durable_gmail_oauth_operator_handoff.py"
       ],
-      "notes": "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, and sanitize connector errors before returning operator-visible receipts.",
+      "notes": "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, and bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion.",
       "representative_paths": [
         "/api/v1/connectors",
         "/api/v1/connectors/history",
@@ -7297,6 +7331,29 @@
           "register_and_list",
           "register_connector_endpoint",
           "invalid_connector_type"
+        ],
+        "durable_gmail_oauth_handoff_accepts_ready_probe": [
+          "presence_only_secret_inventory_admits_live_probe_with_approval",
+          "durable_gmail_oauth_operator_handoff_accepts_ready_packet"
+        ],
+        "durable_gmail_oauth_handoff_blocks_default_as_evidence": [
+          "durable_gmail_oauth_operator_handoff_rejects_default_as_evidence_drift"
+        ],
+        "durable_gmail_oauth_handoff_blocks_until_authority": [
+          "default_handoff_waits_for_operator_authority_and_redacts_values",
+          "durable_gmail_oauth_operator_handoff_accepts_blocked_packet"
+        ],
+        "durable_gmail_oauth_handoff_redacts_secret_markers": [
+          "handoff_rejects_secret_shaped_approval_ref",
+          "writer_and_cli_emit_redacted_blocked_packet",
+          "durable_gmail_oauth_operator_handoff_rejects_secret_marker"
+        ],
+        "durable_gmail_oauth_handoff_requires_live_probe_authority": [
+          "operator_approval_allows_provider_setup_not_live_probe",
+          "durable_gmail_oauth_operator_handoff_rejects_live_probe_drift"
+        ],
+        "durable_gmail_oauth_handoff_writes_validation_receipt": [
+          "durable_gmail_oauth_operator_handoff_cli_writes_validation"
         ]
       },
       "runtime_witnesses": [
@@ -7305,7 +7362,13 @@
         "connector_lifecycle_disable_enable_bounded",
         "connector_history_summary_bounded",
         "connector_errors_sanitized",
-        "connector_invocation_audited"
+        "connector_invocation_audited",
+        "durable_gmail_oauth_handoff_blocks_until_authority",
+        "durable_gmail_oauth_handoff_blocks_default_as_evidence",
+        "durable_gmail_oauth_handoff_requires_live_probe_authority",
+        "durable_gmail_oauth_handoff_redacts_secret_markers",
+        "durable_gmail_oauth_handoff_accepts_ready_probe",
+        "durable_gmail_oauth_handoff_writes_validation_receipt"
       ],
       "surface_id": "governed_connector_framework"
     },
@@ -9969,8 +10032,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1281,
-    "runtime_witness_count": 1281,
+    "exact_test_anchor_count": 1290,
+    "runtime_witness_count": 1290,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -10507,9 +10570,25 @@
           },
           {
             "anchors": [
+              "tests/test_assistant_kernel.py::test_team_ops_plan_requires_active_external_send_consent",
+              "mcoi/tests/test_assistant_router.py::test_team_ops_plan_blocks_without_active_external_send_consent"
+            ],
+            "witness": "team_ops_plan_requires_active_external_send_consent"
+          },
+          {
+            "anchors": [
+              "tests/test_assistant_kernel.py::test_team_ops_plan_projects_operator_queue",
+              "mcoi/tests/test_assistant_router.py::test_team_ops_plan_with_consent_projects_dispatch_ready_controls"
+            ],
+            "witness": "team_ops_plan_projects_operator_queue"
+          },
+          {
+            "anchors": [
               "tests/test_assistant_kernel.py::test_assistant_plan_never_grants_execution_authority",
               "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_with_consent_projects_dispatch_ready_controls",
-              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_blocks_without_active_payment_consent"
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_blocks_without_active_payment_consent",
+              "mcoi/tests/test_assistant_router.py::test_team_ops_plan_with_consent_projects_dispatch_ready_controls",
+              "mcoi/tests/test_assistant_router.py::test_team_ops_plan_blocks_without_active_external_send_consent"
             ],
             "witness": "assistant_plan_never_grants_execution_authority"
           },
@@ -10519,10 +10598,18 @@
               "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_error_detail_is_bounded"
             ],
             "witness": "assistant_plan_errors_sanitized"
+          },
+          {
+            "anchors": [
+              "tests/test_assistant_kernel.py::test_team_ops_plan_errors_sanitized",
+              "mcoi/tests/test_assistant_router.py::test_team_ops_plan_error_detail_is_bounded",
+              "mcoi/tests/test_assistant_router.py::test_invalid_team_ops_plan_fails_closed"
+            ],
+            "witness": "team_ops_plan_errors_sanitized"
           }
         ],
-        "exact_test_anchor_count": 5,
-        "runtime_witness_count": 5,
+        "exact_test_anchor_count": 8,
+        "runtime_witness_count": 8,
         "surface_id": "assistant_kernel_planning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
@@ -15449,10 +15536,51 @@
               "mcoi/tests/test_connector_framework.py::test_invoke_records_audit_trail"
             ],
             "witness": "connector_invocation_audited"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_durable_gmail_oauth_operator_handoff.py::test_default_handoff_waits_for_operator_authority_and_redacts_values",
+              "tests/test_validate_durable_gmail_oauth_operator_handoff.py::test_durable_gmail_oauth_operator_handoff_accepts_blocked_packet"
+            ],
+            "witness": "durable_gmail_oauth_handoff_blocks_until_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_durable_gmail_oauth_operator_handoff.py::test_durable_gmail_oauth_operator_handoff_rejects_default_as_evidence_drift"
+            ],
+            "witness": "durable_gmail_oauth_handoff_blocks_default_as_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_durable_gmail_oauth_operator_handoff.py::test_operator_approval_allows_provider_setup_not_live_probe",
+              "tests/test_validate_durable_gmail_oauth_operator_handoff.py::test_durable_gmail_oauth_operator_handoff_rejects_live_probe_drift"
+            ],
+            "witness": "durable_gmail_oauth_handoff_requires_live_probe_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_durable_gmail_oauth_operator_handoff.py::test_handoff_rejects_secret_shaped_approval_ref",
+              "tests/test_produce_durable_gmail_oauth_operator_handoff.py::test_writer_and_cli_emit_redacted_blocked_packet",
+              "tests/test_validate_durable_gmail_oauth_operator_handoff.py::test_durable_gmail_oauth_operator_handoff_rejects_secret_marker"
+            ],
+            "witness": "durable_gmail_oauth_handoff_redacts_secret_markers"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_durable_gmail_oauth_operator_handoff.py::test_presence_only_secret_inventory_admits_live_probe_with_approval",
+              "tests/test_validate_durable_gmail_oauth_operator_handoff.py::test_durable_gmail_oauth_operator_handoff_accepts_ready_packet"
+            ],
+            "witness": "durable_gmail_oauth_handoff_accepts_ready_probe"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_durable_gmail_oauth_operator_handoff.py::test_durable_gmail_oauth_operator_handoff_cli_writes_validation"
+            ],
+            "witness": "durable_gmail_oauth_handoff_writes_validation_receipt"
           }
         ],
-        "exact_test_anchor_count": 6,
-        "runtime_witness_count": 6,
+        "exact_test_anchor_count": 12,
+        "runtime_witness_count": 12,
         "surface_id": "governed_connector_framework",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

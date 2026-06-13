@@ -433,6 +433,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "/api/v1/assistant/profiles",
                 "/api/v1/assistant/finance-ops/plans",
+                "/api/v1/assistant/team-ops/plans",
             ],
             "request_proof",
             "action_proof",
@@ -445,13 +446,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_assistant_router.py",
                 "tests/test_assistant_kernel.py",
             ],
-            "Assistant kernel routes expose governed profile read models and compile FinanceOps plans with consent, approval, idempotency, effect reconciliation, and closure controls without executing external effects.",
+            "Assistant kernel routes expose governed profile read models and compile FinanceOps and TeamOps plans with consent, approval, idempotency, effect reconciliation, and closure controls without executing external effects.",
             [
                 "assistant_profiles_read_model_bounded",
                 "finance_ops_plan_requires_active_consent",
                 "finance_ops_plan_projects_operator_queue",
+                "team_ops_plan_requires_active_external_send_consent",
+                "team_ops_plan_projects_operator_queue",
                 "assistant_plan_never_grants_execution_authority",
                 "assistant_plan_errors_sanitized",
+                "team_ops_plan_errors_sanitized",
             ],
             runtime_witness_anchor_aliases={
                 "assistant_profiles_read_model_bounded": [
@@ -463,12 +467,24 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "finance_ops_plan_projects_operator_queue": [
                     "finance_ops_plan_with_consent_projects_dispatch_ready_controls",
                 ],
+                "team_ops_plan_requires_active_external_send_consent": [
+                    "team_ops_plan_blocks_without_active_external_send_consent",
+                ],
+                "team_ops_plan_projects_operator_queue": [
+                    "team_ops_plan_with_consent_projects_dispatch_ready_controls",
+                ],
                 "assistant_plan_never_grants_execution_authority": [
                     "finance_ops_plan_with_consent_projects_dispatch_ready_controls",
                     "finance_ops_plan_blocks_without_active_payment_consent",
+                    "team_ops_plan_with_consent_projects_dispatch_ready_controls",
+                    "team_ops_plan_blocks_without_active_external_send_consent",
                 ],
                 "assistant_plan_errors_sanitized": [
                     "finance_ops_plan_error_detail_is_bounded",
+                ],
+                "team_ops_plan_errors_sanitized": [
+                    "team_ops_plan_error_detail_is_bounded",
+                    "invalid_team_ops_plan_fails_closed",
                 ],
             },
         ),
@@ -4131,8 +4147,14 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_connector_framework.py",
                 "mcoi/tests/test_server_phase217.py",
                 "mcoi/tests/test_server_phase218.py",
+                "docs/64_durable_gmail_connector_runtime_plan.md",
+                "schemas/durable_gmail_oauth_operator_handoff.schema.json",
+                "scripts/produce_durable_gmail_oauth_operator_handoff.py",
+                "scripts/validate_durable_gmail_oauth_operator_handoff.py",
+                "tests/test_produce_durable_gmail_oauth_operator_handoff.py",
+                "tests/test_validate_durable_gmail_oauth_operator_handoff.py",
             ],
-            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, and sanitize connector errors before returning operator-visible receipts.",
+            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, and bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion.",
             [
                 "connector_registration_typed",
                 "connector_invocation_guard_chain_checked",
@@ -4140,6 +4162,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "connector_history_summary_bounded",
                 "connector_errors_sanitized",
                 "connector_invocation_audited",
+                "durable_gmail_oauth_handoff_blocks_until_authority",
+                "durable_gmail_oauth_handoff_blocks_default_as_evidence",
+                "durable_gmail_oauth_handoff_requires_live_probe_authority",
+                "durable_gmail_oauth_handoff_redacts_secret_markers",
+                "durable_gmail_oauth_handoff_accepts_ready_probe",
+                "durable_gmail_oauth_handoff_writes_validation_receipt",
             ],
             runtime_witness_anchor_aliases={
                 "connector_registration_typed": [
@@ -4171,6 +4199,29 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "connector_invocation_audited": [
                     "invoke_records_audit_trail",
+                ],
+                "durable_gmail_oauth_handoff_blocks_until_authority": [
+                    "default_handoff_waits_for_operator_authority_and_redacts_values",
+                    "durable_gmail_oauth_operator_handoff_accepts_blocked_packet",
+                ],
+                "durable_gmail_oauth_handoff_blocks_default_as_evidence": [
+                    "durable_gmail_oauth_operator_handoff_rejects_default_as_evidence_drift",
+                ],
+                "durable_gmail_oauth_handoff_requires_live_probe_authority": [
+                    "operator_approval_allows_provider_setup_not_live_probe",
+                    "durable_gmail_oauth_operator_handoff_rejects_live_probe_drift",
+                ],
+                "durable_gmail_oauth_handoff_redacts_secret_markers": [
+                    "handoff_rejects_secret_shaped_approval_ref",
+                    "writer_and_cli_emit_redacted_blocked_packet",
+                    "durable_gmail_oauth_operator_handoff_rejects_secret_marker",
+                ],
+                "durable_gmail_oauth_handoff_accepts_ready_probe": [
+                    "presence_only_secret_inventory_admits_live_probe_with_approval",
+                    "durable_gmail_oauth_operator_handoff_accepts_ready_packet",
+                ],
+                "durable_gmail_oauth_handoff_writes_validation_receipt": [
+                    "durable_gmail_oauth_operator_handoff_cli_writes_validation",
                 ],
             },
         ),
@@ -7232,6 +7283,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         },
         {
             "action_id": "classify_governed_connector_routes",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_durable_gmail_oauth_operator_handoff_contract",
             "surfaces": ["governed_connector_framework"],
             "status": "closed",
         },

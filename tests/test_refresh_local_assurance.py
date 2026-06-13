@@ -5,7 +5,7 @@ Dependencies: scripts.refresh_local_assurance.
 Invariants:
   - Dry-run does not execute commands.
   - Runner injection records command receipts without shell construction.
-  - Default steps include document, adapter, protocol, and finance witnesses.
+  - Default steps include document, durable Gmail, adapter, protocol, and finance witnesses.
 """
 
 from __future__ import annotations
@@ -25,6 +25,9 @@ def test_default_refresh_steps_cover_local_assurance_surfaces() -> None:
     names = tuple(step.name for step in refresh_local_assurance.LOCAL_ASSURANCE_STEPS)
 
     assert names[0] == "document_live_receipt"
+    assert names[1] == "durable_gmail_oauth_operator_handoff"
+    assert names[2] == "durable_gmail_oauth_operator_handoff_validation"
+    assert names[3] == "durable_gmail_oauth_runtime_preflight"
     assert "capability_adapter_evidence" in names
     assert "proof_coverage_matrix" in names
     assert "protocol_manifest" in names
@@ -41,6 +44,8 @@ def test_dry_run_returns_step_receipts_without_invoking_runner() -> None:
     assert all(result.dry_run for result in results)
     assert all(result.returncode == 0 for result in results)
     assert results[0].command[1] == "scripts/produce_capability_adapter_live_receipts.py"
+    assert results[1].command[1] == "scripts/produce_durable_gmail_oauth_operator_handoff.py"
+    assert results[2].command[1] == "scripts/validate_durable_gmail_oauth_operator_handoff.py"
 
 
 def test_runner_injection_stops_on_first_failure() -> None:

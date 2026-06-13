@@ -1,5 +1,5 @@
 """Purpose: assistant kernel HTTP read and planning endpoints.
-Governance scope: assistant profile read models, FinanceOps planning,
+Governance scope: assistant profile read models, FinanceOps and TeamOps planning,
     consent binding, approval controls, idempotency controls, and closure
     contract projection.
 Dependencies: FastAPI, router deps, and mcoi_runtime.assistant_kernel.
@@ -15,10 +15,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from mcoi_runtime.app.cognitive_planning_integration import planning_context_for
+from mcoi_runtime.app.routers._tenant_scope import enforce_tenant_scope
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.assistant_kernel import (
     AssistantKernel,
@@ -29,6 +30,9 @@ from mcoi_runtime.assistant_kernel import (
     finance_ops_default_profile,
     finance_ops_invoice_payment_goal,
     finance_ops_payment_closure_contract,
+    team_ops_default_profile,
+    team_ops_shared_inbox_closure_contract,
+    team_ops_shared_inbox_goal,
 )
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 
@@ -45,6 +49,21 @@ class FinanceOpsAssistantPlanRequest(BaseModel):
     vendor_ref: str
     created_at: str = ""
     consent_scope: str = "invoice_payment"
+    consent_granted_by: str = ""
+    consent_expires_at: str = ""
+    consent_evidence_refs: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class TeamOpsAssistantPlanRequest(BaseModel):
+    """Request to compile a TeamOps shared-inbox plan without executing it."""
+
+    tenant_id: str
+    owner_id: str
+    inbox_ref: str
+    request_ref: str
+    created_at: str = ""
+    consent_scope: str = "shared_inbox_external_send"
     consent_granted_by: str = ""
     consent_expires_at: str = ""
     consent_evidence_refs: list[str] = Field(default_factory=list)
@@ -96,7 +115,11 @@ def compile_finance_ops_assistant_plan(req: FinanceOpsAssistantPlanRequest):
             vendor_ref=req.vendor_ref,
             created_at=now,
         )
-        consent_ledger = _consent_ledger_from_request(req, goal_created_at=now)
+        consent_ledger = _consent_ledger_from_request(
+            req,
+            goal_created_at=now,
+            capability_id="payment.execute.with_approval",
+        )
         closure_contract = finance_ops_payment_closure_contract(goal.goal_id)
         plan = AssistantKernel().compile_plan(
             profile=profile,
@@ -126,15 +149,66 @@ def compile_finance_ops_assistant_plan(req: FinanceOpsAssistantPlanRequest):
     return response
 
 
+@router.post("/api/v1/assistant/team-ops/plans")
+def compile_team_ops_assistant_plan(req: TeamOpsAssistantPlanRequest, request: Request):
+    """Compile a TeamOps shared-inbox plan without executing effects."""
+    _inc_metric("requests_governed")
+    enforce_tenant_scope(request, req.tenant_id)
+    try:
+        now = req.created_at or _clock_now()
+        profile = team_ops_default_profile()
+        goal = team_ops_shared_inbox_goal(
+            tenant_id=req.tenant_id,
+            owner_id=req.owner_id,
+            profile_id=profile.assistant_id,
+            inbox_ref=req.inbox_ref,
+            request_ref=req.request_ref,
+            created_at=now,
+        )
+        consent_ledger = _consent_ledger_from_request(
+            req,
+            goal_created_at=now,
+            capability_id="email.send.with_approval",
+        )
+        closure_contract = team_ops_shared_inbox_closure_contract(goal.goal_id)
+        plan = AssistantKernel().compile_plan(
+            profile=profile,
+            goal=goal,
+            closure_contract=closure_contract,
+            consent_ledger=consent_ledger,
+            now=now,
+        )
+    except RuntimeCoreInvariantError as exc:
+        raise HTTPException(400, detail=_assistant_error_detail("invalid assistant plan", "invalid_assistant_plan")) from exc
+
+    cognitive_context = planning_context_for(deps, tuple(step.capability_id for step in plan.steps))
+    response = {
+        "profile": profile.to_dict(),
+        "goal": goal.to_dict(),
+        "plan": plan.to_dict(),
+        "operator_queue_item": _operator_queue_item(
+            plan=plan,
+            tenant_id=req.tenant_id,
+            owner_id=req.owner_id,
+            cognitive_context=cognitive_context,
+        ),
+        "outcome": "AwaitingEvidence" if plan.blocked else "SolvedUnverified",
+        "governed": True,
+    }
+    if cognitive_context is not None:
+        response["cognitive_planning_context"] = cognitive_context
+    return response
+
+
 def _consent_ledger_from_request(
-    req: FinanceOpsAssistantPlanRequest,
+    req: FinanceOpsAssistantPlanRequest | TeamOpsAssistantPlanRequest,
     *,
     goal_created_at: str,
+    capability_id: str,
 ) -> ConsentLedger | None:
     if not req.consent_evidence_refs:
         return None
     ledger = ConsentLedger()
-    capability_id = "payment.execute.with_approval"
     granted_by = req.consent_granted_by or req.owner_id
     expires_at = req.consent_expires_at or goal_created_at
     ledger.grant(
