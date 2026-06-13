@@ -15,13 +15,16 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 from fastapi import HTTPException
 
 from mcoi_runtime.app.routers.assistant import (
     FinanceOpsAssistantPlanRequest,
+    TeamOpsAssistantPlanRequest,
     _operator_queue_item,
     compile_finance_ops_assistant_plan,
+    compile_team_ops_assistant_plan,
 )
 from mcoi_runtime.assistant_kernel import (
     AssistantExecutionPlan,
@@ -44,10 +47,16 @@ from mcoi_runtime.assistant_kernel import (
     finance_ops_payment_closure_contract,
     make_inbox_item,
     schedule_assistant_action,
+    team_ops_default_profile,
+    team_ops_shared_inbox_closure_contract,
+    team_ops_shared_inbox_goal,
     verify_effect_receipts,
 )
 from mcoi_runtime.assistant_kernel.effects import EffectReceipt
-from mcoi_runtime.assistant_kernel.goals import FINANCE_OPS_PAYMENT_CLOSURE_PREDICATES
+from mcoi_runtime.assistant_kernel.goals import (
+    FINANCE_OPS_PAYMENT_CLOSURE_PREDICATES,
+    TEAM_OPS_SHARED_INBOX_CLOSURE_PREDICATES,
+)
 from mcoi_runtime.assistant_kernel.identity import PROTECTED_FORBIDDEN_CAPABILITIES
 
 
@@ -105,6 +114,63 @@ def _compile_finance_ops_plan(
         now="2026-05-13T10:30:00+00:00",
     )
     return goal, plan
+
+
+def _team_ops_profile_and_goal(
+    request_ref: str = "shared-request:1001",
+) -> tuple[AssistantProfile, AssistantGoal]:
+    profile = team_ops_default_profile()
+    goal = team_ops_shared_inbox_goal(
+        tenant_id="tenant-team",
+        owner_id="ops-owner",
+        profile_id=profile.assistant_id,
+        inbox_ref="shared-inbox:support",
+        request_ref=request_ref,
+        created_at="2026-05-13T10:00:00+00:00",
+    )
+    return profile, goal
+
+
+def _active_team_ops_consent_ledger(goal: AssistantGoal) -> ConsentLedger:
+    ledger = ConsentLedger()
+    ledger.grant(
+        ConsentGrant(
+            consent_id=consent_grant_id(
+                tenant_id=goal.tenant_id,
+                owner_id=goal.owner_id,
+                capability_id="email.send.with_approval",
+                scope="shared_inbox_external_send",
+                granted_at="2026-05-13T10:00:00+00:00",
+            ),
+            tenant_id=goal.tenant_id,
+            owner_id=goal.owner_id,
+            capability_id="email.send.with_approval",
+            scope="shared_inbox_external_send",
+            granted_by="ops-owner",
+            granted_at="2026-05-13T10:00:00+00:00",
+            expires_at="2026-05-13T12:00:00+00:00",
+            evidence_refs=("approval:ops-owner",),
+        )
+    )
+    return ledger
+
+
+def _compile_team_ops_plan(
+    consent_ledger: ConsentLedger | None = None,
+) -> tuple[AssistantGoal, AssistantExecutionPlan]:
+    profile, goal = _team_ops_profile_and_goal()
+    plan = AssistantKernel().compile_plan(
+        profile=profile,
+        goal=goal,
+        closure_contract=team_ops_shared_inbox_closure_contract(goal.goal_id),
+        consent_ledger=consent_ledger,
+        now="2026-05-13T10:30:00+00:00",
+    )
+    return goal, plan
+
+
+def _unauthenticated_request() -> object:
+    return SimpleNamespace(state=SimpleNamespace(governance_context={}))
 
 
 def test_builtin_finance_ops_profile_preserves_skill_capability_boundary() -> None:
@@ -254,6 +320,67 @@ def test_finance_ops_plan_projects_operator_queue() -> None:
     assert queue_item["execution_authority_granted"] is False
 
 
+def test_assistant_kernel_compiles_team_ops_plan_with_consent_and_controls() -> None:
+    profile, goal = _team_ops_profile_and_goal()
+
+    plan = AssistantKernel().compile_plan(
+        profile=profile,
+        goal=goal,
+        closure_contract=team_ops_shared_inbox_closure_contract(goal.goal_id),
+        consent_ledger=_active_team_ops_consent_ledger(goal),
+        now="2026-05-13T10:30:00+00:00",
+    )
+    send_step = next(step for step in plan.steps if step.capability_id == "email.send.with_approval")
+
+    assert plan.blocked is False
+    assert len(plan.steps) == len(goal.required_capabilities)
+    assert tuple(step.capability_id for step in plan.steps) == goal.required_capabilities
+    assert send_step.requires_approval is True
+    assert send_step.closure_predicates == ("external_send_approval_valid", "message_send_receipt_exists")
+    assert "active_consent" in plan.required_controls
+    assert "temporal_idempotency" in plan.required_controls
+    assert "effect_reconciliation" in plan.required_controls
+    assert "fresh_approval" in plan.required_controls
+    assert goal.metadata["classification_skill_id"] == "skill.team_ops.shared_inbox_triage"
+    assert plan.metadata["plan_is_not_execution"] is True
+    assert plan.plan_hash
+
+
+def test_team_ops_plan_requires_active_external_send_consent() -> None:
+    _, plan = _compile_team_ops_plan()
+
+    assert plan.blocked is True
+    assert plan.steps == ()
+    assert "active_consent_required:email.send.with_approval" in plan.blocked_reasons
+    assert "terminal_closure" in plan.required_controls
+    assert "active_consent" in plan.required_controls
+    assert plan.metadata["plan_is_not_execution"] is True
+    assert plan.plan_hash
+
+
+def test_team_ops_plan_projects_operator_queue() -> None:
+    profile, goal = _team_ops_profile_and_goal()
+    plan = AssistantKernel().compile_plan(
+        profile=profile,
+        goal=goal,
+        closure_contract=team_ops_shared_inbox_closure_contract(goal.goal_id),
+        consent_ledger=_active_team_ops_consent_ledger(goal),
+        now="2026-05-13T10:30:00+00:00",
+    )
+    queue_item = _operator_queue_item(
+        plan=plan,
+        tenant_id=goal.tenant_id,
+        owner_id=goal.owner_id,
+    )
+
+    assert plan.blocked is False
+    assert queue_item["state"] == "ready_for_governed_dispatch"
+    assert queue_item["plan_id"] == plan.plan_id
+    assert queue_item["step_count"] == len(plan.steps)
+    assert queue_item["required_controls"] == list(plan.required_controls)
+    assert queue_item["execution_authority_granted"] is False
+
+
 def test_assistant_plan_never_grants_execution_authority() -> None:
     blocked_goal, blocked_plan = _compile_finance_ops_plan()
     ready_profile, ready_goal = _finance_ops_profile_and_goal()
@@ -306,6 +433,32 @@ def test_assistant_plan_errors_sanitized() -> None:
     }
     assert "invoice:1001" not in str(detail)
     assert "vendor:acme" not in str(detail)
+
+
+def test_team_ops_plan_errors_sanitized() -> None:
+    try:
+        compile_team_ops_assistant_plan(
+            TeamOpsAssistantPlanRequest(
+                tenant_id="tenant-team",
+                owner_id="ops-owner",
+                inbox_ref="",
+                request_ref="shared-request:1001",
+                created_at="2026-05-13T10:00:00+00:00",
+            ),
+            _unauthenticated_request(),
+        )
+    except HTTPException as exc:
+        detail = exc.detail
+    else:  # pragma: no cover - the invariant above must fail closed.
+        raise AssertionError("invalid TeamOps assistant plan was accepted")
+
+    assert detail == {
+        "error": "invalid assistant plan",
+        "error_code": "invalid_assistant_plan",
+        "governed": True,
+    }
+    assert "shared-request:1001" not in str(detail)
+    assert "tenant-team" not in str(detail)
 
 
 def test_assistant_kernel_blocks_missing_capability_before_execution() -> None:
@@ -369,6 +522,38 @@ def test_finance_ops_closure_requires_two_confirmed_predicates() -> None:
     assert closed.reason == "closure_verified"
     assert closed.confirmation_counts["signed_evidence_bundle_exists"] == 2
     assert len(closed.evidence_refs) == len(FINANCE_OPS_PAYMENT_CLOSURE_PREDICATES) * 2
+
+
+def test_team_ops_closure_requires_two_confirmed_predicates() -> None:
+    contract = team_ops_shared_inbox_closure_contract("goal-teamops-1")
+    first_pass = tuple(
+        closure_observation(
+            predicate_id=predicate,
+            status="passed",
+            observed_at="2026-05-13T10:00:00+00:00",
+            evidence_refs=(f"evidence:{predicate}:1",),
+        )
+        for predicate in TEAM_OPS_SHARED_INBOX_CLOSURE_PREDICATES
+    )
+    unstable = evaluate_closure(contract, first_pass)
+    second_pass = tuple(
+        closure_observation(
+            predicate_id=predicate,
+            status="passed",
+            observed_at="2026-05-13T10:05:00+00:00",
+            evidence_refs=(f"evidence:{predicate}:2",),
+        )
+        for predicate in TEAM_OPS_SHARED_INBOX_CLOSURE_PREDICATES
+    )
+    closed = evaluate_closure(contract, (*first_pass, *second_pass))
+
+    assert unstable.closed is False
+    assert unstable.reason == "closure_confirmation_unstable"
+    assert set(unstable.unstable_predicates) == set(TEAM_OPS_SHARED_INBOX_CLOSURE_PREDICATES)
+    assert closed.closed is True
+    assert closed.reason == "closure_verified"
+    assert closed.confirmation_counts["message_send_receipt_exists"] == 2
+    assert len(closed.evidence_refs) == len(TEAM_OPS_SHARED_INBOX_CLOSURE_PREDICATES) * 2
 
 
 def test_assistant_support_contracts_keep_observations_and_effects_explicit() -> None:
