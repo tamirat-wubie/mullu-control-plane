@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:team-ops-shared-inbox-live-probe-authority:1",
+  "title": "TeamOps Shared Inbox Live Probe Authority",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "authority_id",
+    "schema_version",
+    "status",
+    "solver_outcome",
+    "repository",
+    "workflow_id",
+    "connector_id",
+    "source_handoff_ref",
+    "source_handoff_id",
+    "handoff_validation_ok",
+    "handoff_ready_for_live_probe",
+    "probe_authorized",
+    "probe_approval_ref",
+    "read_only_probe_allowed",
+    "live_probe_executed",
+    "external_provider_call_performed",
+    "external_mailbox_write_performed",
+    "external_message_sent",
+    "provider_mutation_performed",
+    "credential_values_disclosed",
+    "effect_classification",
+    "allowed_probe",
+    "forbidden_effects",
+    "handoff_summary",
+    "blocked_until",
+    "verification_commands"
+  ],
+  "properties": {
+    "authority_id": {
+      "type": "string",
+      "pattern": "^teamops-shared-inbox-live-probe-authority-[0-9a-f]{16}$"
+    },
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "awaiting_handoff_readiness",
+        "awaiting_probe_authority",
+        "admitted_for_read_only_probe"
+      ]
+    },
+    "solver_outcome": {
+      "type": "string",
+      "enum": [
+        "AwaitingEvidence",
+        "GovernanceBlocked",
+        "SolvedVerified"
+      ]
+    },
+    "repository": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workflow_id": {
+      "type": "string",
+      "const": "team_ops.shared_inbox_triage"
+    },
+    "connector_id": {
+      "type": "string",
+      "const": "gmail"
+    },
+    "source_handoff_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_handoff_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "handoff_validation_ok": {
+      "type": "boolean"
+    },
+    "handoff_ready_for_live_probe": {
+      "type": "boolean"
+    },
+    "probe_authorized": {
+      "type": "boolean"
+    },
+    "probe_approval_ref": {
+      "type": "string"
+    },
+    "read_only_probe_allowed": {
+      "type": "boolean"
+    },
+    "live_probe_executed": {
+      "type": "boolean",
+      "const": false
+    },
+    "external_provider_call_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "external_mailbox_write_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "external_message_sent": {
+      "type": "boolean",
+      "const": false
+    },
+    "provider_mutation_performed": {
+      "type": "boolean",
+      "const": false
+    },
+    "credential_values_disclosed": {
+      "type": "boolean",
+      "const": false
+    },
+    "effect_classification": {
+      "type": "string",
+      "const": "epistemic_external_observation"
+    },
+    "allowed_probe": {
+      "$ref": "#/$defs/allowed_probe"
+    },
+    "forbidden_effects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "handoff_summary": {
+      "$ref": "#/$defs/handoff_summary"
+    },
+    "blocked_until": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "verification_commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "allowed_probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "probe_id",
+        "capabilities_used",
+        "query",
+        "max_message_count",
+        "read_only",
+        "draft_allowed",
+        "external_send_allowed",
+        "requires_approval_ref"
+      ],
+      "properties": {
+        "probe_id": {
+          "type": "string",
+          "const": "team_ops.shared_inbox.read_only_probe"
+        },
+        "capabilities_used": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "query": {
+          "type": "string",
+          "minLength": 1
+        },
+        "max_message_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50
+        },
+        "read_only": {
+          "type": "boolean",
+          "const": true
+        },
+        "draft_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "external_send_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "requires_approval_ref": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "handoff_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "solver_outcome",
+        "ready_for_live_probe",
+        "blocker_count",
+        "validation_error_count"
+      ],
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "solver_outcome": {
+          "type": "string"
+        },
+        "ready_for_live_probe": {
+          "type": "boolean"
+        },
+        "blocker_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "validation_error_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

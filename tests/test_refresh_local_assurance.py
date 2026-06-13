@@ -5,8 +5,8 @@ Dependencies: scripts.refresh_local_assurance.
 Invariants:
   - Dry-run does not execute commands.
   - Runner injection records command receipts without shell construction.
-  - Default steps include document, durable Gmail, adapter, protocol, and
-    finance witnesses.
+  - Default steps include document, durable Gmail, TeamOps, adapter, protocol,
+    and finance witnesses.
 """
 
 from __future__ import annotations
@@ -29,6 +29,10 @@ def test_default_refresh_steps_cover_local_assurance_surfaces() -> None:
     assert names[1] == "durable_gmail_oauth_operator_handoff"
     assert names[2] == "durable_gmail_oauth_operator_handoff_validation"
     assert names[3] == "durable_gmail_oauth_runtime_preflight"
+    assert names[4] == "team_ops_shared_inbox_operator_handoff"
+    assert names[5] == "team_ops_shared_inbox_operator_handoff_validation"
+    assert names[6] == "team_ops_shared_inbox_live_probe_authority"
+    assert names[7] == "team_ops_shared_inbox_live_probe_authority_validation"
     assert "capability_adapter_evidence" in names
     assert "proof_coverage_matrix" in names
     assert "protocol_manifest" in names
