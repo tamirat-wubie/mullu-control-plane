@@ -20,6 +20,7 @@ from gateway.autonomous_capability_upgrade import (
     AutonomousCapabilityUpgradeLoop,
     CapabilityHealthSignal,
     CapabilityImprovementPortfolio,
+    CapabilityWeaknessDiagnosis,
 )
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
@@ -95,6 +96,32 @@ def test_health_signal_requires_evidence_refs() -> None:
     assert error == "evidence_refs_required"
     assert CapabilityHealthSignal is not None
     assert AutonomousCapabilityUpgradeLoop is not None
+
+
+def test_capability_upgrade_evidence_refs_reject_structured_values() -> None:
+    try:
+        _signal(evidence_refs=({"proof": "capability_health:email-send"},))
+    except ValueError as exc:
+        signal_error = str(exc)
+    else:
+        signal_error = ""
+
+    try:
+        CapabilityWeaknessDiagnosis(
+            diagnosis_id="diagnosis-structured-evidence",
+            capability_id="email.send.with_approval",
+            weakness_codes=("maturity_below_live_read",),
+            severity="high",
+            recommended_change_classes=("capability",),
+            evidence_refs=(["capability_health:email-send"],),
+        )
+    except ValueError as exc:
+        diagnosis_error = str(exc)
+    else:
+        diagnosis_error = ""
+
+    assert signal_error == "evidence_refs_invalid"
+    assert diagnosis_error == "evidence_refs_invalid"
 
 
 def test_systemic_weaknesses_are_ranked() -> None:

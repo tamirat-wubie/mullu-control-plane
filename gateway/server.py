@@ -3116,6 +3116,7 @@ def create_gateway_app(
             or ""
         )
         return {
+            "schema_ref": "urn:mullusi:schema:command-interpretation-receipt-read-model:1",
             "command_id": command_id,
             "tenant_id": command.tenant_id,
             "actor_id": command.actor_id,

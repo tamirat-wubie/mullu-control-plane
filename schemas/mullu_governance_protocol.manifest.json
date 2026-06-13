@@ -203,6 +203,12 @@
       "surface": "evidence"
     },
     {
+      "schema_id": "command-interpretation-receipt-read-model",
+      "path": "schemas/command_interpretation_receipt_read_model.schema.json",
+      "urn": "urn:mullusi:schema:command-interpretation-receipt-read-model:1",
+      "surface": "evidence"
+    },
+    {
       "schema_id": "clarification-request",
       "path": "schemas/clarification_request.schema.json",
       "urn": "urn:mullusi:schema:clarification-request:1",

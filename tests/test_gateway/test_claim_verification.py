@@ -22,6 +22,7 @@ from gateway.claim_verification import (
     ClaimRisk,
     ClaimSource,
     ClaimVerificationEngine,
+    ClaimVerificationReport,
     ClaimVerificationStatus,
 )
 from scripts.validate_schemas import _load_schema, _validate_schema_instance
@@ -52,6 +53,45 @@ def test_source_evidence_required() -> None:
     assert evidence_error == "evidence_refs_required"
     assert evidence_error.endswith("_required")
     assert evidence_error.startswith("evidence_refs")
+
+
+def test_claim_verification_evidence_refs_reject_structured_values() -> None:
+    try:
+        ClaimSource(
+            source_id="source-structured-evidence",
+            source_type="operator_receipt",
+            observed_at="2026-05-06T10:00:00Z",
+            evidence_refs=({"proof": "proof://source-a"},),
+        )
+    except ValueError as exc:
+        source_error = str(exc)
+    else:
+        source_error = ""
+
+    try:
+        ClaimVerificationReport(
+            report_id="claim-verification-structured-evidence",
+            tenant_id="tenant-a",
+            claim_id="claim-vendor-bank-verified",
+            claim_kind=ClaimKind.OBSERVED_FACT,
+            status=ClaimVerificationStatus.VERIFIED,
+            allowed_for_planning=True,
+            allowed_for_execution=True,
+            confidence=0.94,
+            domain_risk=ClaimRisk.LOW,
+            supported_by=("source-a",),
+            contradicted_by=(),
+            missing_requirements=(),
+            evidence_refs=(["proof://source-a"],),
+            checked_at="2026-05-06T12:00:00Z",
+        )
+    except ValueError as exc:
+        report_error = str(exc)
+    else:
+        report_error = ""
+
+    assert source_error == "evidence_refs_invalid"
+    assert report_error == "evidence_refs_invalid"
 
 
 def test_user_claim_without_support_is_not_execution_eligible() -> None:

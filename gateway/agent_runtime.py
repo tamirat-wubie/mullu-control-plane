@@ -584,6 +584,8 @@ def _normalize_text_tuple(values: tuple[str, ...], field_name: str, *, allow_emp
 
 
 def _normalize_evidence_refs(values: tuple[str, ...], *, allow_empty: bool = False) -> tuple[str, ...]:
+    if not isinstance(values, tuple | list):
+        raise ValueError("evidence_refs_invalid")
     if not all(isinstance(value, str) for value in values):
         raise ValueError("evidence_refs_invalid")
     normalized = tuple(dict.fromkeys(value.strip() for value in values if value.strip()))

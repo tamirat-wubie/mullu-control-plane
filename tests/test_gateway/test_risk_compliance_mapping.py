@@ -24,6 +24,7 @@ from gateway.risk_compliance_mapping import (
     ComplianceEvidenceRecord,
     ComplianceFramework,
     ControlMapping,
+    ControlMappingResult,
     EvidenceKind,
     MappingDisposition,
     RiskComplianceMapper,
@@ -131,6 +132,29 @@ def test_risk_compliance_mapping_snapshot_schema_exposes_control_contract() -> N
     assert payload["reports"][0]["certification_claimed"] is False
     assert payload["reports"][0]["publication_allowed"] is False
     assert snapshot.snapshot_hash
+
+
+def test_risk_compliance_evidence_refs_reject_structured_values() -> None:
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        SymbolicSystemInventoryItem(
+            item_id="system-structured-evidence",
+            item_type="capability",
+            tenant_id="tenant-a",
+            owner="platform",
+            risk_tier=RiskSeverity.HIGH,
+            evidence_refs=({"proof": "capability:evidence-1"},),
+        )
+
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        ControlMappingResult(
+            mapping_id="map-soc2-approval",
+            framework=ComplianceFramework.SOC2,
+            control_id="SOC2-CC6.1",
+            disposition=MappingDisposition.MAPPED,
+            present_evidence_kinds=(EvidenceKind.POLICY_DECISION,),
+            missing_evidence_kinds=(),
+            evidence_refs=(["policy:decision-1"],),
+        )
 
 
 def _mapper() -> RiskComplianceMapper:
