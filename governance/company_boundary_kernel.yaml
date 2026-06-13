@@ -1,0 +1,127 @@
+# Purpose: machine-readable public-safe company-boundary kernel ledger.
+# Governance scope: Foundation Mode claim control, IP provenance, secrets restraint, continuity restraint, customer/payment/deployment/legal/patent/trademark/compliance deferral.
+# Dependencies: docs/FOUNDATION_COMPANY_BOUNDARY_KERNEL.md, examples/foundation_company_boundary_kernel_witness.awaiting_evidence.json, scripts/validate_foundation_company_boundary_kernel.py.
+# Invariants: all authorization flags remain false; all surfaces remain AwaitingEvidence; no secrets, account values, private paths, or live endpoint values are stored here.
+
+schema_version: foundation.company_boundary_kernel.ledger.v1
+ledger_id: foundation_company_boundary_kernel.ledger.v1
+status: AwaitingEvidence
+solver_outcome: AwaitingEvidence
+foundation_mode_required: true
+promotion_authority: promotion_witness_required
+non_authorization_rule: "This ledger does not authorize company formation, legal claims, customer access, deployment, payment activation, patent filing, trademark claim, compliance certification, money movement, public launch, or external obligation."
+next_action: "keep every surface in AwaitingEvidence until exact review evidence and a promotion witness exist"
+
+authorization_flags:
+  - flag_id: company_formation_authorized
+    allowed: false
+  - flag_id: compliance_certification_authorized
+    allowed: false
+  - flag_id: customer_access_authorized
+    allowed: false
+  - flag_id: deployment_authorized
+    allowed: false
+  - flag_id: external_obligation_authorized
+    allowed: false
+  - flag_id: legal_claim_authorized
+    allowed: false
+  - flag_id: money_movement_allowed
+    allowed: false
+  - flag_id: patent_filing_authorized
+    allowed: false
+  - flag_id: payment_activation_authorized
+    allowed: false
+  - flag_id: trademark_claim_authorized
+    allowed: false
+
+promotion_surfaces:
+  - surface_id: entity_status
+    state: AwaitingEvidence
+    evidence_required: "qualified formation evidence and permitted storage rule"
+  - surface_id: ownership_ip_status
+    state: AwaitingEvidence
+    evidence_required: "authorship license assignment or authorization evidence"
+  - surface_id: repository_infrastructure_control
+    state: AwaitingEvidence
+    evidence_required: "public-safe control witness recovery witness and no-secret review"
+  - surface_id: secrets_recovery_control
+    state: AwaitingEvidence
+    evidence_required: "owner-only private inventory outside Git plus public-safe confirmation"
+  - surface_id: money_tax_separation
+    state: AwaitingEvidence
+    evidence_required: "tax payment budget and legal review evidence"
+  - surface_id: customer_contract_readiness
+    state: AwaitingEvidence
+    evidence_required: "terms privacy support rollback evidence and approval witness"
+  - surface_id: privacy_data_readiness
+    state: AwaitingEvidence
+    evidence_required: "data classification consent retention deletion and processor evidence"
+  - surface_id: insurance_risk_review
+    state: AwaitingEvidence
+    evidence_required: "qualified risk review and insurance or liability decision evidence"
+  - surface_id: continuity_plan
+    state: AwaitingEvidence
+    evidence_required: "owner-only continuity packet and public-safe witness"
+  - surface_id: shutdown_transfer_path
+    state: AwaitingEvidence
+    evidence_required: "qualified legal business review and explicit operator decision witness"
+
+ip_provenance_classes:
+  - class_id: founder_created
+    state: AwaitingEvidence
+  - class_id: symbolic_intelligence_assisted
+    state: AwaitingEvidence
+  - class_id: generated_artifact
+    state: AwaitingEvidence
+  - class_id: third_party_dependency
+    state: AwaitingEvidence
+  - class_id: open_source_dependency
+    state: AwaitingEvidence
+  - class_id: contractor_contributor_created
+    state: AwaitingEvidence
+  - class_id: externally_derived
+    state: AwaitingEvidence
+
+forbidden_storage:
+  - storage_id: plaintext_secret_values
+    blocked: true
+  - storage_id: private_keys
+    blocked: true
+  - storage_id: access_tokens
+    blocked: true
+  - storage_id: seed_phrases
+    blocked: true
+  - storage_id: recovery_codes
+    blocked: true
+  - storage_id: provider_account_ids
+    blocked: true
+  - storage_id: private_contact_details
+    blocked: true
+  - storage_id: live_endpoint_values
+    blocked: true
+  - storage_id: billing_values
+    blocked: true
+  - storage_id: customer_personal_data
+    blocked: true
+
+enforcement_rules:
+  - rule_id: R1
+    state: AwaitingEvidence
+  - rule_id: R2
+    state: AwaitingEvidence
+  - rule_id: R3
+    state: AwaitingEvidence
+  - rule_id: R4
+    state: AwaitingEvidence
+  - rule_id: R5
+    state: AwaitingEvidence
+  - rule_id: R6
+    state: AwaitingEvidence
+  - rule_id: R7
+    state: AwaitingEvidence
+  - rule_id: R8
+    state: AwaitingEvidence
+  - rule_id: R9
+    state: AwaitingEvidence
+  - rule_id: R10
+    state: AwaitingEvidence

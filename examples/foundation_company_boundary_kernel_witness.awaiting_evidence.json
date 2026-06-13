@@ -1,0 +1,117 @@
+{
+  "authorization_flags": {
+    "company_formation_authorized": false,
+    "compliance_certification_authorized": false,
+    "customer_access_authorized": false,
+    "deployment_authorized": false,
+    "external_obligation_authorized": false,
+    "legal_claim_authorized": false,
+    "money_movement_allowed": false,
+    "patent_filing_authorized": false,
+    "payment_activation_authorized": false,
+    "trademark_claim_authorized": false
+  },
+  "blocked_claims": [
+    "company formation",
+    "trademark ownership or clearance",
+    "patent filing or protection",
+    "legal review completion",
+    "compliance certification",
+    "customer readiness",
+    "deployment readiness",
+    "payment provider readiness",
+    "tax readiness",
+    "insurance readiness",
+    "continuity transfer approval",
+    "production claim"
+  ],
+  "boundary_surfaces": [
+    {
+      "public_safe_note": "Entity status surface only; formation and registration remain unpromoted.",
+      "state": "AwaitingEvidence",
+      "surface_id": "entity_status",
+      "surface_type": "blocked_entity_status"
+    },
+    {
+      "public_safe_note": "Ownership and IP status surface only; final clearance remains unpromoted.",
+      "state": "AwaitingEvidence",
+      "surface_id": "ownership_ip_status",
+      "surface_type": "blocked_ownership_ip_status"
+    },
+    {
+      "public_safe_note": "Repository and infrastructure control surface only; live control values are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "repository_infrastructure_control",
+      "surface_type": "blocked_control_surface"
+    },
+    {
+      "public_safe_note": "Secrets and recovery surface only; private inventory remains outside Git.",
+      "state": "AwaitingEvidence",
+      "surface_id": "secrets_recovery_control",
+      "surface_type": "blocked_secret_recovery_surface"
+    },
+    {
+      "public_safe_note": "Money and tax separation surface only; payment, tax, and money actions remain blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "money_tax_separation",
+      "surface_type": "blocked_money_tax_surface"
+    },
+    {
+      "public_safe_note": "Customer contract readiness surface only; customer access remains blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "customer_contract_readiness",
+      "surface_type": "blocked_customer_contract_surface"
+    },
+    {
+      "public_safe_note": "Privacy and data readiness surface only; customer and personal data handling remains blocked.",
+      "state": "AwaitingEvidence",
+      "surface_id": "privacy_data_readiness",
+      "surface_type": "blocked_privacy_data_surface"
+    },
+    {
+      "public_safe_note": "Insurance and risk review surface only; risk and coverage claims remain unpromoted.",
+      "state": "AwaitingEvidence",
+      "surface_id": "insurance_risk_review",
+      "surface_type": "blocked_insurance_risk_surface"
+    },
+    {
+      "public_safe_note": "Continuity plan surface only; private contacts and credentials are not recorded.",
+      "state": "AwaitingEvidence",
+      "surface_id": "continuity_plan",
+      "surface_type": "blocked_continuity_surface"
+    },
+    {
+      "public_safe_note": "Shutdown or transfer path surface only; transfer and shutdown authority remain unpromoted.",
+      "state": "AwaitingEvidence",
+      "surface_id": "shutdown_transfer_path",
+      "surface_type": "blocked_shutdown_transfer_surface"
+    }
+  ],
+  "enforcement_rules": [
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R7",
+    "R8",
+    "R9",
+    "R10"
+  ],
+  "foundation_mode_required": true,
+  "ip_provenance_classes": [
+    "founder_created",
+    "symbolic_intelligence_assisted",
+    "generated_artifact",
+    "third_party_dependency",
+    "open_source_dependency",
+    "contractor_contributor_created",
+    "externally_derived"
+  ],
+  "next_action": "keep the company-boundary kernel in AwaitingEvidence until one exact legal, payment, customer, deployment, patent, trademark, compliance, continuity, or external-obligation surface has review evidence and a promotion witness",
+  "schema_version": "foundation.company_boundary_kernel.v1",
+  "solver_outcome": "AwaitingEvidence",
+  "status": "AwaitingEvidence",
+  "witness_id": "foundation_company_boundary_kernel_witness.awaiting_evidence.v1"
+}

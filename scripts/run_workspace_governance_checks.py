@@ -546,6 +546,10 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_public_repository_surface.py"),
         ),
         CheckCommand("proprietary_boundary", (python_executable, "scripts/validate_proprietary_boundary.py")),
+        CheckCommand(
+            "company_boundary_kernel",
+            (python_executable, "scripts/validate_foundation_company_boundary_kernel.py"),
+        ),
         CheckCommand("release_status", (python_executable, "scripts/validate_release_status.py")),
         CheckCommand(
             "workspace_governance_preflight_receipt_contract",
