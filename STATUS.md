@@ -9,7 +9,7 @@ Invariants: Claims are bounded to named witnesses; gaps are explicit; status
 
 # Repository Status Witness
 
-**Last audited:** 2026-05-24
+**Last audited:** 2026-06-13
 **Repository:** `tamirat-wubie/mullu-control-plane`
 **Default branch:** `main`
 **Audited runtime baseline:** `2fdcd37046e0be096ac4c52c357257e4f65c0c0a`
@@ -35,6 +35,7 @@ Invariants: Claims are bounded to named witnesses; gaps are explicit; status
 | Deployment witness secret binding | General-agent promotion environment bindings and CI handoff placeholders include `MULLU_DEPLOYMENT_WITNESS_SECRET`, matching the live production evidence collection command in `DEPLOYMENT_STATUS.md` | Reflected |
 | Governed runtime promotion witness | `scripts/validate_governed_runtime_promotion.py` provides a domain-neutral terminal validation command over the existing governed promotion readiness contract | Reflected |
 | Operational witness | Runtime deployment publication and public production health are declared through `DEPLOYMENT_STATUS.md`; public/customer readiness remains bounded by the separate readiness snapshot and open Gmail operator handoff work | Reflected |
+| Foundation gap audit | `docs/FOUNDATION_GAP_AUDIT_2026-06-13.md` records current closed foundation areas, remaining P0/P1/P2 gaps, edge cases, stop rules, and next one-at-a-time closure order | Reflected |
 
 ## Required Proprietary Anchors
 
@@ -47,23 +48,25 @@ The GitHub page is sufficient only when these anchors are present and current:
 5. `docs/PRODUCT_BOUNDARY.md` names product, company, control-plane, rename, launch, and rename-not-split-trigger boundaries.
 6. `docs/52_mullu_governance_protocol.md` names the public protocol contract boundary.
 7. `docs/60_logic_governance_application.md` names the formal logic application boundary.
-8. CI keeps `python scripts/validate_protocol_manifest.py`.
-9. CI keeps `python scripts/validate_logic_governance_application.py`.
-10. CI keeps `python scripts/validate_public_repository_surface.py`.
-11. CI keeps `python scripts/validate_release_status.py --strict`.
-12. CI keeps `python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md`.
-13. CI keeps `python scripts/validate_gateway_deployment_env.py --strict`.
-14. Deployment runbooks keep `python scripts/gateway_runtime_smoke.py`.
-15. Release metadata in `RELEASE_NOTES_v0.1.md`, `KNOWN_LIMITATIONS_v0.1.md`, and `SECURITY_MODEL_v0.1.md` remains aligned.
-16. General-agent promotion handoff remains anchored by `docs/59_general_agent_promotion_handoff_packet.md` and `examples/general_agent_promotion_handoff_packet.json`.
-17. Known reflection gaps are named instead of implied.
+8. `docs/FOUNDATION_GAP_AUDIT_2026-06-13.md` names current closed foundation areas, remaining gaps, edge cases, and stop rules.
+9. CI keeps `python scripts/validate_protocol_manifest.py`.
+10. CI keeps `python scripts/validate_logic_governance_application.py`.
+11. CI keeps `python scripts/validate_public_repository_surface.py`.
+12. CI keeps `python scripts/validate_release_status.py --strict`.
+13. CI keeps `python scripts/certify_change.py --base HEAD^ --head HEAD --strict --approval-id ci-governance --rollback-plan-ref RELEASE_CHECKLIST_v0.1.md`.
+14. CI keeps `python scripts/validate_gateway_deployment_env.py --strict`.
+15. Deployment runbooks keep `python scripts/gateway_runtime_smoke.py`.
+16. Release metadata in `RELEASE_NOTES_v0.1.md`, `KNOWN_LIMITATIONS_v0.1.md`, and `SECURITY_MODEL_v0.1.md` remains aligned.
+17. General-agent promotion handoff remains anchored by `docs/59_general_agent_promotion_handoff_packet.md` and `examples/general_agent_promotion_handoff_packet.json`.
+18. Known reflection gaps are named instead of implied.
 
 ## Known Reflection Gaps
 
 | Gap | Cause | Required closure |
 |---|---|---|
+| Foundation gap audit absent from status witness | The repository had deployment, Math Core, WHQR, TeamOps, Govern Cloud, and Nested Mind progress without one current gap/edge-case closure document | **Closed (2026-06-13)** - `docs/FOUNDATION_GAP_AUDIT_2026-06-13.md` records closed foundation surfaces, remaining gaps, edge cases, stop rules, and next closure order. |
 | Deployment status publication claim | `DEPLOYMENT_STATUS.md` now declares `deployment witness state=published`, public production health endpoint `https://api.mullusi.com/health`, `deployment_claim=published`, and the public-health declaration receipt | **Closed (2026-06-12)** - keep status-summary surfaces synchronized with `DEPLOYMENT_STATUS.md`; do not treat this as customer/SLA readiness or live Nested Mind activation. |
-| Production claim boundary absent from README | README previously led with capability claims before naming release, mainline, and live-runtime evidence boundaries | **Closed (2026-05-06)** - README now names the `v3.13.3` latest-release witness, bounds v4.x release-note files as mainline records, and states that live production runtime is not published until deployment witness closure lands. |
+| Production claim boundary absent from README | README previously led with capability claims before naming release, mainline, and live-runtime evidence boundaries | **Closed (2026-05-06; refreshed 2026-06-13)** - README routes live-runtime claims to `DEPLOYMENT_STATUS.md`; deployment health is published, while customer access, enterprise SLA, and live Nested Mind activation remain separately bounded. |
 | Test-count claim not machine-derived | README stated test volume as a human-maintained claim | **Closed (2026-05-06)** - README now cites the generated `.change_assurance/test_inventory.json` runtime witness and keeps `python scripts/generate_test_inventory.py --check` as the drift gate. The artifact records `51,164` total tests at the 2026-05-06 witness; `mcoi/tests/test_inventory_freshness.py` guards shape and self-consistency. |
 | GitHub metadata external to git | GitHub description/topics live outside repository commits | Validate metadata with `scripts/validate_public_repository_surface.py` |
 
@@ -80,6 +83,7 @@ The GitHub page is sufficient only when these anchors are present and current:
 | Test inventory freshness | `python scripts/generate_test_inventory.py --check` |
 | Gateway deployment validation | `python scripts/validate_gateway_deployment_env.py --strict` |
 | Gateway runtime smoke probe | `python scripts/gateway_runtime_smoke.py` |
+| Foundation gap audit review | `docs/FOUNDATION_GAP_AUDIT_2026-06-13.md` |
 | General-agent promotion operator checklist | `python scripts/validate_general_agent_promotion_operator_checklist.py --checklist examples/general_agent_promotion_operator_checklist.json --json` |
 | General-agent promotion environment bindings | `python scripts/validate_general_agent_promotion_environment_bindings.py --contract examples/general_agent_promotion_environment_bindings.json --json` |
 | General-agent promotion environment binding receipt | `python scripts/emit_general_agent_promotion_environment_binding_receipt.py --output .change_assurance/general_agent_promotion_environment_binding_receipt.json --json` |
