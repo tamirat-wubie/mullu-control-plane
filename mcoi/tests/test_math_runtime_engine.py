@@ -337,6 +337,29 @@ class TestDeterministicLinearExpressionParser:
         assert result.objective_value == 9.0
         assert result.iterations > 0
 
+    def test_linear_constraint_expression_intersects_explicit_bounds(self, engine):
+        engine.register_objective(
+            "obj-expr-5",
+            "t-1",
+            "Bound intersection",
+            ObjectiveDirection.MAXIMIZE,
+            metadata={
+                "decision_variables": ["x"],
+                "linear_expression": "x",
+                "variable_bounds": {"x": [0.0, 10.0]},
+            },
+        )
+        engine.add_constraint("c-expr-5", "t-1", "obj-expr-5", "x <= 6", 0.0, 8.0)
+        engine.submit_solver_request("req-expr-5", "t-1", "obj-expr-5")
+
+        result = engine.solve_solver_request("req-expr-5")
+
+        assert result.status is OptimizationStatus.OPTIMAL
+        assert result.disposition is SolverDisposition.SOLVED
+        assert result.metadata["solver"] == "deterministic_linear_v1"
+        assert result.metadata["decision_values"]["x"] == 6.0
+        assert result.objective_value == 6.0
+
     def test_linear_expression_rejects_unsupported_syntax_with_bounded_message(self, engine):
         engine.register_objective(
             "obj-expr-3",
