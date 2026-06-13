@@ -388,3 +388,103 @@ class TestDeterministicLinearExpressionParser:
         assert result.metadata["reason"] == "bounded_linear_optimum"
         assert result.metadata["decision_values"]["x"] == 4.0
         assert result.objective_value == 4.0
+
+
+class TestDeterministicIntegerLinearSolver:
+    def test_binary_variables_select_bounded_linear_optimum(self, engine):
+        engine.register_objective(
+            "obj-int-1",
+            "t-1",
+            "Binary allocation",
+            ObjectiveDirection.MAXIMIZE,
+            metadata={
+                "decision_variables": ["x", "y"],
+                "linear_expression": "3*x + 2*y",
+                "binary_variables": ["x", "y"],
+                "variable_bounds": {"x": [0.0, 1.0], "y": [0.0, 1.0]},
+            },
+        )
+        engine.add_constraint("c-int-1", "t-1", "obj-int-1", "x + y <= 1")
+        engine.submit_solver_request("req-int-1", "t-1", "obj-int-1")
+
+        result = engine.solve_solver_request("req-int-1")
+        decision_values = result.metadata["decision_values"]
+
+        assert result.status is OptimizationStatus.OPTIMAL
+        assert result.metadata["reason"] == "bounded_linear_optimum"
+        assert result.metadata["integer_variables"] == ("x", "y")
+        assert result.metadata["binary_variables"] == ("x", "y")
+        assert decision_values == {"x": 1.0, "y": 0.0}
+        assert result.objective_value == 3.0
+
+    def test_integer_variable_rejects_fractional_continuous_vertex(self, engine):
+        engine.register_objective(
+            "obj-int-2",
+            "t-1",
+            "Integer throughput",
+            ObjectiveDirection.MAXIMIZE,
+            metadata={
+                "decision_variables": ["x"],
+                "linear_coefficients": {"x": 1.0},
+                "integer_variables": ["x"],
+                "variable_bounds": {"x": [0.0, 3.0]},
+            },
+        )
+        engine.add_constraint("c-int-2", "t-1", "obj-int-2", "x <= 2.5")
+        engine.submit_solver_request("req-int-2", "t-1", "obj-int-2")
+
+        result = engine.solve_solver_request("req-int-2")
+
+        assert result.status is OptimizationStatus.OPTIMAL
+        assert result.disposition is SolverDisposition.SOLVED
+        assert result.metadata["decision_values"]["x"] == 2.0
+        assert result.metadata["integer_assignment_count"] == 3
+        assert result.objective_value == 2.0
+        assert result.iterations > 0
+
+    def test_binary_bounds_with_no_integer_value_return_infeasible_domain(self, engine):
+        engine.register_objective(
+            "obj-int-3",
+            "t-1",
+            "Impossible binary",
+            ObjectiveDirection.MINIMIZE,
+            target_value=7.0,
+            metadata={
+                "decision_variables": ["flag"],
+                "linear_coefficients": {"flag": 1.0},
+                "binary_variables": ["flag"],
+                "variable_bounds": {"flag": [0.25, 0.75]},
+            },
+        )
+        engine.submit_solver_request("req-int-3", "t-1", "obj-int-3")
+
+        result = engine.solve_solver_request("req-int-3")
+
+        assert result.status is OptimizationStatus.INFEASIBLE
+        assert result.disposition is SolverDisposition.FAILED
+        assert result.metadata["reason"] == "infeasible_integer_domain"
+        assert result.metadata["decision_values"] == {}
+        assert result.metadata["integer_assignment_count"] == 0
+        assert result.objective_value == 7.0
+
+    def test_integer_assignment_limit_rejects_unbounded_enumeration_surface(self, engine):
+        engine.register_objective(
+            "obj-int-4",
+            "t-1",
+            "Too many assignments",
+            ObjectiveDirection.MINIMIZE,
+            metadata={
+                "decision_variables": ["x"],
+                "linear_coefficients": {"x": 1.0},
+                "integer_variables": ["x"],
+                "variable_bounds": {"x": [0.0, 300.0]},
+            },
+        )
+        engine.submit_solver_request("req-int-4", "t-1", "obj-int-4")
+
+        with pytest.raises(RuntimeCoreInvariantError, match="Linear integer assignment limit exceeded") as exc_info:
+            engine.solve_solver_request("req-int-4")
+
+        assert str(exc_info.value) == "Linear integer assignment limit exceeded"
+        assert "300" not in str(exc_info.value)
+        assert "req-int-4" not in str(exc_info.value)
