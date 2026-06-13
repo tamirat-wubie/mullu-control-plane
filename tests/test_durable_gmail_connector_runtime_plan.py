@@ -23,7 +23,7 @@ def test_durable_gmail_connector_runtime_plan_validates() -> None:
     assert report["valid"] is True
     assert report["status"] == "passed"
     assert report["error_count"] == 0
-    assert report["check_count"] == 11
+    assert report["check_count"] == 12
     assert report["plan_path"] == "docs/64_durable_gmail_connector_runtime_plan.md"
 
 
@@ -121,3 +121,20 @@ def test_plan_terms_require_revocation_recovery_rehearsal_gate() -> None:
 
     assert "plan missing required term: produce_durable_gmail_revocation_recovery_rehearsal_receipt.py" in errors
     assert "plan missing required term: validate_durable_gmail_revocation_recovery_rehearsal_receipt.py" in errors
+
+
+def test_plan_terms_require_write_authority_rehearsal_gate() -> None:
+    plan_text = validator.PLAN_PATH.read_text(encoding="utf-8")
+    stale_plan_text = plan_text.replace("produce_durable_gmail_write_authority_rehearsal_receipt.py", "")
+    stale_plan_text = stale_plan_text.replace("validate_durable_gmail_write_authority_rehearsal_receipt.py", "")
+    stale_plan_text = stale_plan_text.replace("Gmail write-authority rehearsal", "")
+    stale_plan_text = stale_plan_text.replace("send_without_approval_blocked", "")
+    stale_plan_text = stale_plan_text.replace("draft/send split", "")
+
+    errors = validator._validate_plan_terms(stale_plan_text)
+
+    assert "plan missing required term: produce_durable_gmail_write_authority_rehearsal_receipt.py" in errors
+    assert "plan missing required term: validate_durable_gmail_write_authority_rehearsal_receipt.py" in errors
+    assert "plan missing required term: Gmail write-authority rehearsal" in errors
+    assert "plan missing required term: send_without_approval_blocked" in errors
+    assert "plan missing required term: draft/send split" in errors
