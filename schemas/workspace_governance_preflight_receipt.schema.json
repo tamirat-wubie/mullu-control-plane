@@ -168,6 +168,7 @@
             "phi_gps_v3_platform_spec",
             "public_repository_surface",
             "proprietary_boundary",
+            "company_boundary_kernel",
             "release_status",
             "workspace_governance_preflight_receipt_contract",
             "workspace_governance_preflight_receipt_example",

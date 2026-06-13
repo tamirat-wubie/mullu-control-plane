@@ -68,6 +68,7 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "phi_gps_v3_platform_spec",
         "public_repository_surface",
         "proprietary_boundary",
+        "company_boundary_kernel",
         "release_status",
     ]
     workspace_evidence_phase = [
@@ -224,6 +225,9 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     )
     assert args_by_name["phi_gps_v3_platform_spec"][1:] == (
         "scripts/validate_phi_gps_v3_platform_spec.py",
+    )
+    assert args_by_name["company_boundary_kernel"][1:] == (
+        "scripts/validate_foundation_company_boundary_kernel.py",
     )
     for check_name in foundation_phase:
         if check_name == "foundation_mode":

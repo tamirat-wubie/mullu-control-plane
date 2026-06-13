@@ -590,6 +590,11 @@ recording, legal conclusions, legal clearance, trademark clearance, patent
 protection, formation, tax readiness, terms/privacy approval, compliance
 clearance, contractors, payments, customer access, personal data, money
 movement, publication, or deployment;
+[`docs/FOUNDATION_COMPANY_BOUNDARY_KERNEL.md`](docs/FOUNDATION_COMPANY_BOUNDARY_KERNEL.md)
+for Foundation company-boundary governance without company formation, legal
+claims, customer access, deployment, payment activation, patent filing,
+trademark claim, compliance certification, money movement, or external
+obligation;
 [`docs/FOUNDATION_COMPANY_FORMATION_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_COMPANY_FORMATION_DEFERRAL_BOUNDARY.md)
 for company-formation stop-rule labels without entity registration, names,
 identifiers, tax records, registered-agent records, business-address records,
@@ -654,7 +659,13 @@ evidence exists. Legal-review deferral is bounded by
 [`docs/FOUNDATION_LEGAL_REVIEW_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_LEGAL_REVIEW_DEFERRAL_BOUNDARY.md),
 which keeps review completion, reviewer identity recording, conclusions,
 clearance, filings, formation, payment, customer access, publication, and
-deployment blocked until future evidence exists. Company-formation deferral is
+deployment blocked until future evidence exists. Company-boundary governance is
+defined by
+[`docs/FOUNDATION_COMPANY_BOUNDARY_KERNEL.md`](docs/FOUNDATION_COMPANY_BOUNDARY_KERNEL.md),
+which keeps repository claim control, IP provenance, asset-control readiness,
+secrets/recovery restraint, continuity planning, customer/payment/deployment
+deferral, and legal/patent/trademark/compliance deferral in
+`AwaitingEvidence`. Company-formation deferral is
 bounded by
 [`docs/FOUNDATION_COMPANY_FORMATION_DEFERRAL_BOUNDARY.md`](docs/FOUNDATION_COMPANY_FORMATION_DEFERRAL_BOUNDARY.md),
 which keeps entity registration, identifiers, tax records, banking, payment
