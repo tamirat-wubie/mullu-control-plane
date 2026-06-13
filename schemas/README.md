@@ -46,6 +46,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `durable_gmail_oauth_operator_handoff.schema.json` | Canonical redacted Gmail OAuth provider-setup handoff, recommended defaults, runtime bindings, and live-probe blockers |
 | `team_ops_shared_inbox_operator_handoff.schema.json` | Canonical redacted TeamOps shared inbox operator handoff with assistant profile, owner queue, approval policy, and live-probe blockers |
 | `team_ops_shared_inbox_live_probe_authority.schema.json` | Canonical redacted TeamOps shared inbox live-probe authority receipt that admits only approved read-only probes |
+| `team_ops_shared_inbox_live_probe_operator_input_request.schema.json` | Canonical public-safe request for missing TeamOps shared inbox live-probe operator inputs |
 | `public_production_health_declaration.schema.json` | Canonical evidence-gated public production health declaration receipt |
 | `deployment_witness.schema.json` | Canonical live gateway deployment witness artifact |
 | `domain_capsule.schema.json` | Domain capsule operating-model package |

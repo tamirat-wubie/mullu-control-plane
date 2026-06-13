@@ -195,7 +195,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_refresh_local_assurance.py",
                 "tests/test_run_workspace_governance_checks.py",
             ],
-            "Local assurance refresh regenerates deterministic no-secret evidence receipts, including blocked durable Gmail OAuth handoff, TeamOps shared inbox handoff, and read-only probe-authority receipts, exposes dry-run command receipts, and remains part of the workspace governance preflight plan.",
+            "Local assurance refresh regenerates deterministic no-secret evidence receipts, including blocked durable Gmail OAuth handoff, TeamOps shared inbox handoff, read-only probe-authority, and live-probe operator-input receipts, exposes dry-run command receipts, and remains part of the workspace governance preflight plan.",
             [
                 "local_assurance_refresh_includes_durable_gmail_receipts",
                 "local_assurance_refresh_includes_team_ops_receipts",
@@ -4206,8 +4206,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/validate_team_ops_shared_inbox_live_probe_authority.py",
                 "tests/test_produce_team_ops_shared_inbox_live_probe_authority.py",
                 "tests/test_validate_team_ops_shared_inbox_live_probe_authority.py",
+                "schemas/team_ops_shared_inbox_live_probe_operator_input_request.schema.json",
+                "scripts/emit_team_ops_shared_inbox_live_probe_operator_input_request.py",
+                "scripts/validate_team_ops_shared_inbox_live_probe_operator_input_request.py",
+                "tests/test_emit_team_ops_shared_inbox_live_probe_operator_input_request.py",
+                "tests/test_validate_team_ops_shared_inbox_live_probe_operator_input_request.py",
             ],
-            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe authority behind handoff readiness plus separate approval evidence.",
+            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe authority plus operator-input readiness behind handoff readiness and separate approval evidence.",
             [
                 "connector_registration_typed",
                 "connector_invocation_guard_chain_checked",
@@ -4239,6 +4244,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "team_ops_shared_inbox_probe_authority_blocks_effect_drift",
                 "team_ops_shared_inbox_probe_authority_redacts_secret_markers",
                 "team_ops_shared_inbox_probe_authority_writes_validation_receipt",
+                "team_ops_shared_inbox_probe_input_request_lists_blockers",
+                "team_ops_shared_inbox_probe_input_request_allows_admitted_authority",
+                "team_ops_shared_inbox_probe_input_request_blocks_invalid_authority",
+                "team_ops_shared_inbox_probe_input_request_blocks_effect_drift",
+                "team_ops_shared_inbox_probe_input_request_redacts_secret_markers",
+                "team_ops_shared_inbox_probe_input_request_writes_validation_receipt",
             ],
             runtime_witness_anchor_aliases={
                 "connector_registration_typed": [
@@ -4366,6 +4377,27 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "team_ops_shared_inbox_probe_authority_writes_validation_receipt": [
                     "probe_authority_writer_and_cli_emit_blocked_receipt",
                     "team_ops_live_probe_authority_cli_writes_validation",
+                ],
+                "team_ops_shared_inbox_probe_input_request_lists_blockers": [
+                    "team_ops_live_probe_operator_input_request_reports_blocked_authority",
+                    "team_ops_live_probe_operator_input_request_validation_accepts_blocked_request",
+                ],
+                "team_ops_shared_inbox_probe_input_request_allows_admitted_authority": [
+                    "team_ops_live_probe_operator_input_request_allows_admitted_authority",
+                ],
+                "team_ops_shared_inbox_probe_input_request_blocks_invalid_authority": [
+                    "team_ops_live_probe_operator_input_request_blocks_invalid_authority",
+                    "team_ops_live_probe_operator_input_request_validation_rejects_ready_drift",
+                ],
+                "team_ops_shared_inbox_probe_input_request_blocks_effect_drift": [
+                    "team_ops_live_probe_operator_input_request_validation_rejects_effect_drift",
+                ],
+                "team_ops_shared_inbox_probe_input_request_redacts_secret_markers": [
+                    "team_ops_live_probe_operator_input_request_validation_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_probe_input_request_writes_validation_receipt": [
+                    "team_ops_live_probe_operator_input_request_cli_writes_report",
+                    "team_ops_live_probe_operator_input_request_validation_cli_writes_receipt",
                 ],
             },
         ),
@@ -7452,6 +7484,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         },
         {
             "action_id": "publish_team_ops_shared_inbox_live_probe_authority_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_live_probe_operator_input_request_contract",
             "surfaces": ["governed_connector_framework"],
             "status": "closed",
         },
