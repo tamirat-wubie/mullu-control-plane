@@ -121,9 +121,9 @@ The deployment-closure planning path is:
 1. Read `.change_assurance/general_agent_promotion_readiness.json`.
 2. Read `.change_assurance/deployment_upstream_blocker_receipt.json` when present.
 3. Preserve upstream API/DNS readiness blockers before DNS or witness publication.
-4. Preserve `deployment_witness_not_published` and `production_health_not_declared`.
-5. Map witness publication to an approval-gated `publish_gateway_publication.py` action.
-6. Map health declaration to an evidence-gated `DEPLOYMENT_STATUS.md` update action.
+4. Preserve `deployment_upstream_api_gate_not_ready` when upstream API/DNS readiness remains open.
+5. Map upstream closure to an approval-gated readiness receipt action.
+6. Keep deployment witness and public-health declaration closed only while the publication closure validator passes.
 7. Write `.change_assurance/deployment_publication_closure_plan.json` without mutating status.
 
 The aggregate promotion-closure planning path is:

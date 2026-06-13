@@ -233,6 +233,8 @@ def _ready_report() -> dict[str, object]:
 def _blocked_report() -> dict[str, object]:
     payload = _ready_report()
     payload["ready"] = False
+    payload["production_ready"] = False
+    payload["readiness_level"] = "pilot-governed-core"
     payload["blockers"] = ["required environment bindings"]
     payload["missing_environment_variables"] = ["MULLU_GATEWAY_URL"]
     payload["environment_binding_actions"] = [

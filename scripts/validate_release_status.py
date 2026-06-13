@@ -15,10 +15,12 @@ Usage:
 
 from __future__ import annotations
 
+import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 import re
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MCOI_PATH = REPO_ROOT / "mcoi"
@@ -321,6 +323,15 @@ DEPLOYMENT_STATE_PATTERN = re.compile(
 PUBLIC_HEALTH_PATTERN = re.compile(
     r"^\*\*Public production health endpoint:\*\*\s+`([^`]+)`$",
     re.MULTILINE,
+)
+
+DEPLOYMENT_STATUS_WITNESS_ALIGNMENT_REQUIRED_LITERALS: tuple[str, ...] = (
+    "**Deployment witness state:**",
+    "**Public production health endpoint:**",
+    ".change_assurance/deployment_witness.json",
+    ".change_assurance/public_production_health_declaration.json",
+    "deployment_claim=published",
+    "https://api.mullusi.com/health",
 )
 
 DEPLOYMENT_WITNESS_WORKFLOW_REQUIRED_LITERALS: tuple[str, ...] = (
@@ -747,6 +758,21 @@ def validate_deployment_status_phase_text(content: str) -> list[str]:
     return errors
 
 
+def validate_deployment_status_witness_alignment(content: str) -> list[str]:
+    """Validate deployment status keeps witness and health declaration anchors aligned."""
+    missing_literals = tuple(
+        literal
+        for literal in DEPLOYMENT_STATUS_WITNESS_ALIGNMENT_REQUIRED_LITERALS
+        if literal not in content
+    )
+    if not missing_literals:
+        return []
+    return [
+        "DEPLOYMENT_STATUS.md missing deployment witness alignment anchors: "
+        f"{list(missing_literals)}"
+    ]
+
+
 def validate_public_surface_document_texts(
     document_texts: dict[str, str],
 ) -> list[str]:
@@ -766,6 +792,7 @@ def validate_public_surface_document_texts(
             )
         if document_name == "DEPLOYMENT_STATUS.md":
             errors.extend(validate_deployment_status_phase_text(content))
+            errors.extend(validate_deployment_status_witness_alignment(content))
     return errors
 
 
