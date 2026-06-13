@@ -28,7 +28,11 @@ from gateway.authority_obligation_mesh import (  # noqa: E402
     ObligationStatus,
     TeamOwnership,
 )
-from gateway.command_spine import CommandState  # noqa: E402
+from gateway.command_spine import (  # noqa: E402
+    CommandLedger,
+    CommandState,
+    InMemoryCommandLedgerStore,
+)
 from gateway.capability_fabric import build_capability_admission_gate_from_env  # noqa: E402
 from gateway.plan import one_step_plan  # noqa: E402
 from gateway.plan_executor import CapabilityPlanExecutor, CapabilityPlanStepResult  # noqa: E402
@@ -2667,6 +2671,84 @@ class TestGatewayStatus:
         assert allowed.json()["execution_allowed"] is False
         assert "production secret bounded body" not in json.dumps(
             allowed.json(), sort_keys=True
+        )
+
+    def test_command_interpretation_receipt_read_model_replays_from_command_store(
+        self,
+    ):
+        store = InMemoryCommandLedgerStore()
+        initial_ledger = CommandLedger(
+            clock=lambda: "2026-04-24T12:00:00+00:00",
+            store=store,
+        )
+        command = initial_ledger.create_command(
+            tenant_id="t1",
+            actor_id="u1",
+            source="web",
+            conversation_id="conversation-interpretation-replay",
+            idempotency_key="interpretation-receipt-replay",
+            intent="llm_completion",
+            payload={
+                "body": "replay should not expose body",
+                "interpretation_receipt": {
+                    "receipt_id": "interp-rcpt-replay-1",
+                    "request_id": "req-interpret-replay-1",
+                    "raw_message_hash": "hash-replay-message-1",
+                    "interpreted_intent": "llm_completion",
+                    "extracted_slots": {"capability_id": "llm_completion"},
+                    "missing_slots": [],
+                    "confidence": 0.93,
+                    "model_or_rule_used": "deterministic-rule-v1",
+                    "rejected_interpretations": [],
+                    "risk_precheck": {"risk_tier": "low"},
+                    "created_at": "2026-04-24T12:00:00+00:00",
+                },
+                "interpreted_request": {
+                    "request_id": "req-interpret-replay-1",
+                    "tenant_id": "t1",
+                    "actor_id": "u1",
+                    "channel": "web",
+                    "conversation_id": "conversation-interpretation-replay",
+                    "raw_message_hash": "hash-replay-message-1",
+                    "intent_class": "llm_completion",
+                    "capability_id": "llm_completion",
+                    "extracted_slots": {"capability_id": "llm_completion"},
+                    "missing_slots": [],
+                    "constraints": {"tenant_bound": True},
+                    "search_needed": False,
+                    "action_needed": True,
+                    "risk_estimate": "low",
+                    "approval_required": False,
+                    "confidence": 0.93,
+                    "interpreter_kind": "deterministic_rule",
+                    "rejected_interpretations": [],
+                    "created_at": "2026-04-24T12:00:00+00:00",
+                },
+            },
+        )
+        restarted_ledger = CommandLedger(
+            clock=lambda: "2026-04-24T12:01:00+00:00",
+            store=store,
+        )
+        app = create_gateway_app(
+            platform=StubPlatform(),
+            command_ledger_override=restarted_ledger,
+        )
+        local_client = TestClient(app)
+
+        resp = local_client.get(
+            f"/commands/{command.command_id}/interpretation-receipt"
+        )
+
+        assert app.state.command_ledger is restarted_ledger
+        assert store.load_command(command.command_id) is not None
+        assert resp.status_code == 200
+        assert resp.json()["command_id"] == command.command_id
+        assert resp.json()["interpretation_receipt_id"] == "interp-rcpt-replay-1"
+        assert resp.json()["interpreted_request"]["raw_message_hash"] == "hash-replay-message-1"
+        assert resp.json()["raw_message_exposed"] is False
+        assert "replay should not expose body" not in json.dumps(
+            resp.json(), sort_keys=True
         )
 
     def test_command_universal_action_proof_read_model(self, gateway_app, client):

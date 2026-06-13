@@ -53,7 +53,7 @@ class CapabilityMaturityEvidence:
         if not self.capability_id.strip():
             raise ValueError("capability_id_required")
         object.__setattr__(self, "capability_id", self.capability_id.strip())
-        object.__setattr__(self, "evidence_refs", tuple(str(ref) for ref in self.evidence_refs))
+        object.__setattr__(self, "evidence_refs", _normalize_evidence_refs(self.evidence_refs))
 
 
 @dataclass(frozen=True, slots=True)
@@ -128,7 +128,7 @@ class CapabilityMaturityAssessment:
         if self.autonomy_ready and not self.production_ready:
             raise ValueError("autonomy_requires_production_readiness")
         object.__setattr__(self, "blockers", tuple(str(blocker) for blocker in self.blockers))
-        object.__setattr__(self, "evidence_refs", tuple(str(ref) for ref in self.evidence_refs))
+        object.__setattr__(self, "evidence_refs", _normalize_evidence_refs(self.evidence_refs))
         object.__setattr__(self, "metadata", dict(self.metadata))
 
 
@@ -475,10 +475,11 @@ def _evidence_refs(
     refs = maturity_extensions.get("evidence_refs", ())
     if not isinstance(refs, (list, tuple)):
         refs = ()
+    refs = _valid_evidence_refs(refs)
     return (
         f"capability_registry:{entry.capability_id}",
         f"capability_certification:{entry.certification_status.value}",
-        *(str(ref) for ref in refs),
+        *refs,
     )
 
 
@@ -489,3 +490,15 @@ def _maturity_counts(assessments: Any) -> dict[str, int]:
         if level in counts:
             counts[level] += 1
     return counts
+
+
+def _normalize_evidence_refs(values: tuple[str, ...]) -> tuple[str, ...]:
+    if not all(isinstance(ref, str) for ref in values):
+        raise ValueError("evidence_refs_invalid")
+    return tuple(dict.fromkeys(ref.strip() for ref in values if ref.strip()))
+
+
+def _valid_evidence_refs(values: list[Any] | tuple[Any, ...]) -> tuple[str, ...]:
+    if not all(isinstance(ref, str) for ref in values):
+        return ()
+    return tuple(dict.fromkeys(ref.strip() for ref in values if ref.strip()))

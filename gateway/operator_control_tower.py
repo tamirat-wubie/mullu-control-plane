@@ -319,7 +319,11 @@ def _evidence_refs(read_model: Mapping[str, Any]) -> tuple[str, ...]:
     value = read_model.get("evidence_refs") or ()
     if isinstance(value, str):
         value = (value,)
-    return _normalize_text_tuple(tuple(str(item) for item in value), "evidence_refs", allow_empty=True)
+    if not isinstance(value, (list, tuple)):
+        return ()
+    if not all(isinstance(item, str) for item in value):
+        return ()
+    return _normalize_text_tuple(tuple(value), "evidence_refs", allow_empty=True)
 
 
 def _int_field(read_model: Mapping[str, Any], field_name: str) -> int:
@@ -328,7 +332,9 @@ def _int_field(read_model: Mapping[str, Any], field_name: str) -> int:
 
 
 def _normalize_text_tuple(values: tuple[str, ...], field_name: str, *, allow_empty: bool = False) -> tuple[str, ...]:
-    normalized = tuple(dict.fromkeys(str(value).strip() for value in values if str(value).strip()))
+    if not all(isinstance(value, str) for value in values):
+        raise ValueError(f"{field_name}_invalid")
+    normalized = tuple(dict.fromkeys(value.strip() for value in values if value.strip()))
     if not normalized and not allow_empty:
         raise ValueError(f"{field_name}_required")
     return normalized

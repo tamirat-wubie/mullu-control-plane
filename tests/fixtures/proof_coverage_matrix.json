@@ -3025,7 +3025,7 @@
         "tests/test_gateway/test_webhooks.py",
         "tests/test_governed_capability_fabric.py"
       ],
-      "notes": "Gateway command admission, request receipt envelopes, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
+      "notes": "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
       "representative_paths": [
         "/webhook/*",
         "/capability-fabric/read-model",
@@ -3055,6 +3055,15 @@
         ],
         "capsule_installer_stamps_admission_receipt": [
           "capsule_installer_admits_certified_handoff_batch_with_receipt"
+        ],
+        "command_interpretation_receipt_read_model_bounds_raw_message": [
+          "command_interpretation_receipt_read_model_bounds_raw_message"
+        ],
+        "command_interpretation_receipt_replays_from_command_store": [
+          "command_interpretation_receipt_read_model_replays_from_command_store"
+        ],
+        "command_interpretation_receipt_requires_operator_authority": [
+          "command_interpretation_receipt_requires_operator_authority_in_production"
         ],
         "command_lifecycle_events_are_hash_linked": [
           "command_closure_read_model"
@@ -3095,6 +3104,9 @@
         "command_lifecycle_events_are_hash_linked",
         "terminal_closure_requires_evidence_refs",
         "successful_response_is_bound_to_response_evidence_closure",
+        "command_interpretation_receipt_read_model_bounds_raw_message",
+        "command_interpretation_receipt_requires_operator_authority",
+        "command_interpretation_receipt_replays_from_command_store",
         "universal_action_proof_replays_from_command_events",
         "universal_action_runtime_record_exports_contract_shape",
         "universal_action_orchestration_replays_from_command_events",
@@ -10095,8 +10107,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1294,
-    "runtime_witness_count": 1294,
+    "exact_test_anchor_count": 1297,
+    "runtime_witness_count": 1297,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -10117,6 +10129,24 @@
               "tests/test_gateway/test_webhooks.py::test_command_closure_read_model"
             ],
             "witness": "successful_response_is_bound_to_response_evidence_closure"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_command_interpretation_receipt_read_model_bounds_raw_message"
+            ],
+            "witness": "command_interpretation_receipt_read_model_bounds_raw_message"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_command_interpretation_receipt_requires_operator_authority_in_production"
+            ],
+            "witness": "command_interpretation_receipt_requires_operator_authority"
+          },
+          {
+            "anchors": [
+              "tests/test_gateway/test_webhooks.py::test_command_interpretation_receipt_read_model_replays_from_command_store"
+            ],
+            "witness": "command_interpretation_receipt_replays_from_command_store"
           },
           {
             "anchors": [
@@ -10195,8 +10225,8 @@
             "witness": "physical_capsule_admission_runs_promotion_preflight"
           }
         ],
-        "exact_test_anchor_count": 15,
-        "runtime_witness_count": 15,
+        "exact_test_anchor_count": 18,
+        "runtime_witness_count": 18,
         "surface_id": "gateway_capability_fabric",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

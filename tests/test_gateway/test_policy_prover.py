@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from gateway.policy_prover import PolicyProofCase, PolicyProofInvariant, PolicyProver
+from gateway.policy_prover import PolicyCounterexample, PolicyProofCase, PolicyProofInvariant, PolicyProofReport, PolicyProver
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -171,6 +171,38 @@ def test_policy_prover_rejects_empty_inputs() -> None:
 
     with pytest.raises(ValueError, match="policy_id_required"):
         prover.prove(policy_id="", invariants=(_tenant_write_invariant(),), cases=(_valid_case(),))
+
+
+def test_policy_proof_evidence_refs_reject_non_string_values() -> None:
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        PolicyProofCase(
+            case_id="case-invalid-evidence",
+            subject_id="tenant-a/user-1",
+            attributes={"tenant_bound": True},
+            evidence_refs=({"ref": "proof://case"},),  # type: ignore[arg-type]
+        )
+
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        PolicyCounterexample(
+            invariant_id="tenant_write_requires_approval",
+            case_id="case-invalid-evidence",
+            subject_id="tenant-a/user-1",
+            reason="missing_required_field:approval_required",
+            evidence_refs=(1,),  # type: ignore[arg-type]
+        )
+
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        PolicyProofReport(
+            report_id="report-invalid-evidence",
+            policy_id="tenant-write-policy",
+            status="proved",
+            invariant_count=1,
+            case_count=1,
+            counterexample_count=0,
+            proven_invariants=("tenant_write_requires_approval",),
+            counterexamples=(),
+            evidence_refs=(object(),),  # type: ignore[arg-type]
+        )
 
 
 def test_policy_proof_report_schema_contract_is_bounded_and_non_weakening() -> None:
