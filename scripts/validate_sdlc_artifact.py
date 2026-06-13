@@ -590,14 +590,15 @@ def _validate_design_decision(record: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if record.get("schema_changes") and not record.get("validator_changes"):
         errors.append("design_decision: schema changes require validator changes")
-    errors.extend(
-        _validate_ref_inventory(
-            "design_decision",
-            "schema_changes",
-            record.get("schema_changes", []),
-            CANONICAL_SCHEMA_REFS,
+    if record.get("schema_changes"):
+        errors.extend(
+            _validate_ref_inventory(
+                "design_decision",
+                "schema_changes",
+                record.get("schema_changes", []),
+                CANONICAL_SCHEMA_REFS,
+            )
         )
-    )
     missing_validators = set(REQUIRED_VALIDATORS) - set(record.get("validator_changes", []))
     if missing_validators:
         errors.append(f"design_decision: missing required validators: {sorted(missing_validators)}")
