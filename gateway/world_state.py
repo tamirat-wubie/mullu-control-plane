@@ -425,7 +425,6 @@ class InMemoryWorldStateStore(WorldStateStore):
                 "contradictions": sorted(
                     contradiction.contradiction_hash for contradiction in contradictions
                 ),
-                "projected_at": projected_at,
             }
             state_hash = _canonical_hash(payload)
             return WorldState(

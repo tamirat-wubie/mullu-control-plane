@@ -52,6 +52,28 @@ def test_world_state_store_admits_entity_and_materializes_projection() -> None:
     assert history[0]["object_type"] == "entity"
 
 
+def test_world_state_materialize_uses_content_stable_hash() -> None:
+    clock_values = iter(
+        (
+            "2026-05-04T12:00:00Z",
+            "2026-05-04T12:00:01Z",
+            "2026-05-04T12:00:02Z",
+            "2026-05-04T12:00:03Z",
+        )
+    )
+    store = InMemoryWorldStateStore(clock=lambda: next(clock_values))
+
+    store.add_entity(_entity(entity_id="vendor-a"))
+    first_state = store.materialize(tenant_id="tenant-1")
+    second_state = store.materialize(tenant_id="tenant-1")
+
+    assert first_state.projected_at == "2026-05-04T12:00:02Z"
+    assert second_state.projected_at == "2026-05-04T12:00:03Z"
+    assert first_state.state_hash == second_state.state_hash
+    assert first_state.state_id == second_state.state_id
+    assert first_state.entity_count == second_state.entity_count == 1
+
+
 def test_world_state_store_rejects_unsourced_assertion() -> None:
     store = InMemoryWorldStateStore(clock=lambda: NOW)
 
