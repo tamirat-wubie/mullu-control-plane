@@ -20,6 +20,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from gateway.agent_identity import (
+    AgentActionDecision,
     AgentActionRequest,
     AgentApprovalScope,
     AgentBudget,
@@ -203,6 +204,50 @@ def test_agent_reputation_update_requires_evidence_and_stays_bounded() -> None:
     assert updated.evidence_history[-1].evidence_type == "outcome:succeeded"
     assert updated.evidence_history[-1].command_id == "cmd-1"
     assert evidence_error == "evidence_refs_required"
+
+
+def test_agent_identity_evidence_refs_reject_structured_values() -> None:
+    try:
+        AgentActionRequest(
+            request_id="agent-request-structured-evidence",
+            agent_id="agent-finance-1",
+            tenant_id="tenant-a",
+            capability="worker.dispatch",
+            operation="delegate",
+            risk_tier="high",
+            evidence_refs=({"proof": "proof://structured-evidence"},),
+        )
+    except ValueError as exc:
+        request_error = str(exc)
+    else:
+        request_error = ""
+
+    try:
+        AgentActionDecision(
+            decision_id="agent-decision-structured-evidence",
+            request_id="agent-request-structured-evidence",
+            agent_id="agent-finance-1",
+            tenant_id="tenant-a",
+            allowed=True,
+            reason="allowed",
+            required_controls=("decision_receipt",),
+            evidence_refs=(["proof://structured-evidence"],),
+        )
+    except ValueError as exc:
+        decision_error = str(exc)
+    else:
+        decision_error = ""
+
+    try:
+        _outcome(evidence_refs=({"proof": "proof://agent-outcome-1"},))
+    except ValueError as exc:
+        outcome_error = str(exc)
+    else:
+        outcome_error = ""
+
+    assert request_error == "evidence_refs_invalid"
+    assert decision_error == "evidence_refs_invalid"
+    assert outcome_error == "evidence_refs_invalid"
 
 
 def test_agent_identity_denies_unknown_execution_memory_class() -> None:

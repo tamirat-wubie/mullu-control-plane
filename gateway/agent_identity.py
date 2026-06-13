@@ -241,7 +241,7 @@ class AgentActionRequest:
             raise ValueError("delegation_depth_integer_required")
         if self.delegation_depth < 0:
             raise ValueError("nonnegative_delegation_depth_required")
-        object.__setattr__(self, "evidence_refs", _normalize_text_tuple(self.evidence_refs, "evidence_refs", allow_empty=True))
+        object.__setattr__(self, "evidence_refs", _normalize_evidence_refs(self.evidence_refs, allow_empty=True))
         object.__setattr__(self, "metadata", dict(self.metadata))
 
 
@@ -262,7 +262,7 @@ class AgentActionDecision:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "required_controls", _normalize_text_tuple(self.required_controls, "required_controls", allow_empty=True))
-        object.__setattr__(self, "evidence_refs", _normalize_text_tuple(self.evidence_refs, "evidence_refs", allow_empty=True))
+        object.__setattr__(self, "evidence_refs", _normalize_evidence_refs(self.evidence_refs, allow_empty=True))
         object.__setattr__(self, "metadata", dict(self.metadata))
 
     def to_json_dict(self) -> dict[str, Any]:
@@ -294,7 +294,7 @@ class AgentOutcome:
         if self.risk_tier not in RISK_TIERS:
             raise ValueError("risk_tier_invalid")
         _require_text(self.observed_at, "observed_at")
-        object.__setattr__(self, "evidence_refs", _normalize_text_tuple(self.evidence_refs, "evidence_refs"))
+        object.__setattr__(self, "evidence_refs", _normalize_evidence_refs(self.evidence_refs))
         object.__setattr__(self, "metadata", dict(self.metadata))
 
 
@@ -548,6 +548,19 @@ def _normalize_text_tuple(values: tuple[str, ...], field_name: str, *, allow_emp
     if not normalized and not allow_empty:
         raise ValueError(f"{field_name}_required")
     return normalized
+
+
+def _normalize_evidence_refs(values: tuple[str, ...], *, allow_empty: bool = False) -> tuple[str, ...]:
+    normalized: list[str] = []
+    for value in values:
+        if not isinstance(value, str):
+            raise ValueError("evidence_refs_invalid")
+        evidence_ref = value.strip()
+        if evidence_ref and evidence_ref not in normalized:
+            normalized.append(evidence_ref)
+    if not normalized and not allow_empty:
+        raise ValueError("evidence_refs_required")
+    return tuple(normalized)
 
 
 def _require_text(value: str, field_name: str) -> None:
