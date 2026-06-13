@@ -411,6 +411,8 @@ def test_governance_decision_records_static_issue_details() -> None:
     )
     assert decision.metadata["whqr_canonical_hash"] == WHQRDocument(root=expr).canonical_hash()
     assert decision.metadata["reason_code"] == "whqr_static_deny"
+    assert decision.metadata["whqr_semantics_hash"] == WHQRDocument(root=expr).semantics_hash
+    assert decision.metadata["whqr_version"] == WHQRDocument(root=expr).whqr_version
     assert details["truth"] == "true"
     assert details["static_issues"][0]["code"] == "side_effect_target"
     assert details["static_issues"][0]["target"] == "send_email"
@@ -441,6 +443,8 @@ def test_guard_verdict_preserves_whqr_policy_reason_details() -> None:
     assert verdict.detail["reason_code"] == "whqr_static_deny"
     assert verdict.detail["decision_metadata"]["reason_code"] == "whqr_static_deny"
     assert verdict.detail["whqr_canonical_hash"] == decision.metadata["whqr_canonical_hash"]
+    assert verdict.detail["whqr_semantics_hash"] == decision.metadata["whqr_semantics_hash"]
+    assert verdict.detail["whqr_version"] == decision.metadata["whqr_version"]
     assert verdict.detail["reason_details"]["static_issues"][0]["code"] == "side_effect_target"
     assert verdict.detail["reason_details"]["binding_issues"] == ()
 
@@ -480,6 +484,8 @@ def test_governance_decision_identity_is_stable_and_tree_specific() -> None:
     assert first_decision.decision_id != second_decision.decision_id
     assert first_decision.metadata["whqr_canonical_hash"] == WHQRDocument(root=first_expr).canonical_hash()
     assert second_decision.metadata["whqr_canonical_hash"] == WHQRDocument(root=second_expr).canonical_hash()
+    assert first_decision.metadata["whqr_semantics_hash"] == WHQRDocument(root=first_expr).semantics_hash
+    assert first_decision.metadata["whqr_version"] == WHQRDocument(root=first_expr).whqr_version
     assert first_decision.decision_id.endswith(str(first_decision.metadata["whqr_canonical_hash"]))
 
 

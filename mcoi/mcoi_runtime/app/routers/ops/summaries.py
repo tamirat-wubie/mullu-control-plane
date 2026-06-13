@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from mcoi_runtime.app.operational_math_observability import OPERATIONAL_MATH_OBSERVABILITY_SOURCE
 from mcoi_runtime.app.readiness import production_readiness_checks
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.core.spatial_governance import build_gateway_spatial_map
@@ -21,6 +22,17 @@ router = APIRouter()
 def dashboard():
     """Aggregated observability dashboard data."""
     return deps.observability.collect_all()
+
+
+@router.get("/api/v1/dashboard/operational-math")
+def operational_math_dashboard():
+    """Read the operational mathematics proof posture."""
+    deps.metrics.inc("requests_governed")
+    return {
+        "operational_math": deps.observability.collect(OPERATIONAL_MATH_OBSERVABILITY_SOURCE),
+        "governed": True,
+        "execution_allowed": False,
+    }
 
 
 # ═══ Plugins ═══

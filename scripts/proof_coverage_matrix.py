@@ -6594,6 +6594,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi_runtime.app.operational_math_cli",
                 "mcoi_runtime.app.operational_math_observability",
                 "OperationalMathReceiptStore",
+                "/api/v1/dashboard/operational-math",
             ],
             "request_proof",
             "action_proof",
@@ -6611,6 +6612,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_operational_math_cli.py",
                 "mcoi/tests/test_operational_math_receipt_store.py",
                 "mcoi/tests/test_operational_math_observability.py",
+                "mcoi/tests/test_operational_math_dashboard_router.py",
             ],
             (
                 "Operational math converts the F1-F10 audit into bounded roles, "
@@ -6631,6 +6633,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "registers_operational_math_observability_source",
                 "registers_operational_math_store_observability_source",
                 "server_wires_operational_math_store_into_dashboard",
+                "operational_math_dashboard_route_exposes_read_only_projection",
             ],
         ),
         _surface(

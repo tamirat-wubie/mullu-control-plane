@@ -742,6 +742,7 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/deploy/readiness"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/release/latest"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/snapshot"]["surface_id"] == "operational_health_read_models"
+    assert classified_routes["/api/v1/dashboard/operational-math"]["surface_id"] == "operational_math_loop"
     assert classified_routes["/api/v1/console/shadow"]["surface_id"] == "operator_console_read_models"
     assert classified_routes["/api/v1/console/whqr/clarifications"]["surface_id"] == "operator_console_read_models"
     assert classified_routes["/api/v1/console/spatial-map"]["surface_id"] == "operator_console_read_models"
@@ -3013,6 +3014,10 @@ def test_operational_math_loop_surface_anchors_receipts_and_projection() -> None
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     math_surface = surfaces["operational_math_loop"]
     witnesses = set(math_surface["runtime_witnesses"])
+    route_records = {
+        record["route"]: record
+        for record in matrix["route_coverage"]["routes"]
+    }
 
     assert math_surface["coverage_state"] == "witnessed"
     assert math_surface["request_proof"] == "request_proof"
@@ -3020,6 +3025,7 @@ def test_operational_math_loop_surface_anchors_receipts_and_projection() -> None
     assert "OperationalMathLoopEngine.apply_all" in math_surface["representative_paths"]
     assert "mcoi_runtime.app.operational_math_cli" in math_surface["representative_paths"]
     assert "OperationalMathReceiptStore" in math_surface["representative_paths"]
+    assert "/api/v1/dashboard/operational-math" in math_surface["representative_paths"]
     assert "docs/operational_math_loop.md" in math_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/contracts/operational_math.py" in math_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/operational_math_loop.py" in math_surface["evidence_files"]
@@ -3031,6 +3037,7 @@ def test_operational_math_loop_surface_anchors_receipts_and_projection() -> None
     assert "mcoi/tests/test_operational_math_cli.py" in math_surface["evidence_files"]
     assert "mcoi/tests/test_operational_math_receipt_store.py" in math_surface["evidence_files"]
     assert "mcoi/tests/test_operational_math_observability.py" in math_surface["evidence_files"]
+    assert "mcoi/tests/test_operational_math_dashboard_router.py" in math_surface["evidence_files"]
     assert "operational_math_loop_applies_all_audit_principles" in witnesses
     assert "operational_math_loop_stops_at_iteration_budget_with_open_gaps" in witnesses
     assert "operational_math_cli_writes_dashboard_projection" in witnesses
@@ -3038,7 +3045,10 @@ def test_operational_math_loop_surface_anchors_receipts_and_projection() -> None
     assert "memory_store_appends_queries_and_summarizes_receipts" in witnesses
     assert "file_store_persists_and_reloads_receipts" in witnesses
     assert "server_wires_operational_math_store_into_dashboard" in witnesses
+    assert "operational_math_dashboard_route_exposes_read_only_projection" in witnesses
     assert "summary_marks_incomplete_receipt_for_review" in witnesses
+    assert route_records["/api/v1/dashboard/operational-math"]["coverage_state"] == "witnessed"
+    assert route_records["/api/v1/dashboard/operational-math"]["surface_id"] == "operational_math_loop"
     assert "append-only JSON receipt stores" in math_surface["notes"]
     assert closure_actions["anchor_operational_math_loop_receipts_and_projection"]["status"] == "closed"
 
