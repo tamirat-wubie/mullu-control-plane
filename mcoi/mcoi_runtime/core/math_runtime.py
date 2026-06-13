@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 import math
-from itertools import combinations
+from itertools import combinations, product
 import re
 from hashlib import sha256
 from typing import Any
@@ -84,6 +84,7 @@ def _emit(es: EventSpineEngine, action: str, payload: dict, cid: str, now: str) 
 
 _LINEAR_TOLERANCE = 1e-9
 _MAX_LINEAR_VARIABLES = 4
+_MAX_LINEAR_INTEGER_ASSIGNMENTS = 256
 _LINEAR_TERM_RE = re.compile(r"^((?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)?(?:\*)?([A-Za-z_][A-Za-z0-9_]*)$")
 _LINEAR_NUMBER_RE = re.compile(r"^(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$")
 _LINEAR_COMPARATOR_RE = re.compile(r"(<=|>=|=)")
@@ -594,6 +595,20 @@ class MathRuntimeEngine:
             constraints,
             variable_names,
         )
+        active_inequalities = list(inequalities)
+        integer_variables, binary_variables = self._linear_integrality(objective, variable_names)
+        if binary_variables:
+            variable_index = {name: index for index, name in enumerate(variable_names)}
+            for name in binary_variables:
+                lower_bounds[name] = max(lower_bounds[name], 0.0)
+                upper_bounds[name] = min(upper_bounds[name], 1.0)
+                self._append_variable_bound_inequalities(
+                    active_inequalities,
+                    variable_index[name],
+                    len(variable_names),
+                    0.0,
+                    1.0,
+                )
         effective_result_id = result_id or stable_identifier("res-math-linear-solver", {"request": request.request_id})
         trace_id = stable_identifier("trace-math-linear-solver", {
             "request": request.request_id,
@@ -611,6 +626,12 @@ class MathRuntimeEngine:
                 for name in variable_names
             },
         }
+        if integer_variables:
+            metadata |= {
+                "integer_variables": integer_variables,
+                "binary_variables": binary_variables,
+                "integer_assignment_limit": _MAX_LINEAR_INTEGER_ASSIGNMENTS,
+            }
 
         infeasible_variable = next(
             (name for name in variable_names if lower_bounds[name] > upper_bounds[name] + _LINEAR_TOLERANCE),
@@ -640,7 +661,27 @@ class MathRuntimeEngine:
                 metadata=metadata | {"reason": "unbounded_linear_domain", "decision_values": {}},
             )
 
-        candidates = self._linear_candidate_points(inequalities, len(variable_names))
+        if integer_variables:
+            integer_assignments = self._linear_integer_assignments(variable_names, integer_variables, lower_bounds, upper_bounds)
+            metadata["integer_assignment_count"] = len(integer_assignments)
+            if not integer_assignments:
+                return self._record_linear_solver_outcome(
+                    request=request,
+                    result_id=effective_result_id,
+                    trace_id=trace_id,
+                    status=OptimizationStatus.INFEASIBLE,
+                    disposition=SolverDisposition.FAILED,
+                    objective_value=objective.target_value * objective.weight,
+                    iterations=0,
+                    metadata=metadata | {"reason": "infeasible_integer_domain", "decision_values": {}},
+                )
+            candidates = self._linear_integer_candidate_points(
+                tuple(active_inequalities),
+                len(variable_names),
+                integer_assignments,
+            )
+        else:
+            candidates = self._linear_candidate_points(tuple(active_inequalities), len(variable_names))
         feasible_candidates = tuple(
             candidate
             for candidate in candidates
@@ -796,6 +837,39 @@ class MathRuntimeEngine:
         upper_bound = min(constraint.upper_bound, expression_upper)
         return expression_terms, lower_bound, upper_bound
 
+    def _linear_integrality(
+        self,
+        objective: OptimizationObjective,
+        variable_names: tuple[str, ...],
+    ) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        variable_set = set(variable_names)
+        integer_variables = self._linear_variable_metadata_tuple(
+            objective.metadata.get("integer_variables"),
+            "Linear integer metadata requires variable names",
+        )
+        binary_variables = self._linear_variable_metadata_tuple(
+            objective.metadata.get("binary_variables"),
+            "Linear binary metadata requires variable names",
+        )
+        unknown_variables = (set(integer_variables) | set(binary_variables)) - variable_set
+        if unknown_variables:
+            raise RuntimeCoreInvariantError("Linear integrality references unknown variable")
+        all_integer_variables = tuple(name for name in variable_names if name in set(integer_variables) | set(binary_variables))
+        ordered_binary_variables = tuple(name for name in variable_names if name in set(binary_variables))
+        return all_integer_variables, ordered_binary_variables
+
+    def _linear_variable_metadata_tuple(self, raw_value: Any, error_message: str) -> tuple[str, ...]:
+        if raw_value is None:
+            return ()
+        if not isinstance(raw_value, (list, tuple)) or not raw_value:
+            raise RuntimeCoreInvariantError(error_message)
+        variable_names = tuple(raw_value)
+        if any(not isinstance(name, str) or not name.strip() for name in variable_names):
+            raise RuntimeCoreInvariantError(error_message)
+        if len(set(variable_names)) != len(variable_names):
+            raise RuntimeCoreInvariantError("Linear integrality metadata requires unique variables")
+        return variable_names
+
     def _append_variable_bound_inequalities(
         self,
         inequalities: list[tuple[tuple[float, ...], float]],
@@ -828,6 +902,58 @@ class MathRuntimeEngine:
             if rounded not in seen:
                 seen.add(rounded)
                 candidates.append(rounded)
+        return tuple(candidates)
+
+    def _linear_integer_assignments(
+        self,
+        variable_names: tuple[str, ...],
+        integer_variables: tuple[str, ...],
+        lower_bounds: dict[str, float],
+        upper_bounds: dict[str, float],
+    ) -> tuple[tuple[tuple[int, float], ...], ...]:
+        integer_indices = tuple(
+            (index, name) for index, name in enumerate(variable_names) if name in set(integer_variables)
+        )
+        domains: list[tuple[float, ...]] = []
+        assignment_count = 1
+        for _index, name in integer_indices:
+            lower = math.ceil(lower_bounds[name] - _LINEAR_TOLERANCE)
+            upper = math.floor(upper_bounds[name] + _LINEAR_TOLERANCE)
+            if lower > upper:
+                return ()
+            domain = tuple(float(value) for value in range(lower, upper + 1))
+            assignment_count *= len(domain)
+            if assignment_count > _MAX_LINEAR_INTEGER_ASSIGNMENTS:
+                raise RuntimeCoreInvariantError("Linear integer assignment limit exceeded")
+            domains.append(domain)
+        return tuple(
+            tuple((integer_indices[index][0], value) for index, value in enumerate(values))
+            for values in product(*domains)
+        )
+
+    def _linear_integer_candidate_points(
+        self,
+        inequalities: tuple[tuple[tuple[float, ...], float], ...],
+        dimension: int,
+        integer_assignments: tuple[tuple[tuple[int, float], ...], ...],
+    ) -> tuple[tuple[float, ...], ...]:
+        candidates: list[tuple[float, ...]] = []
+        seen: set[tuple[float, ...]] = set()
+        for assignment in integer_assignments:
+            assignment_inequalities = list(inequalities)
+            for variable_index, value in assignment:
+                upper_row = [0.0] * dimension
+                upper_row[variable_index] = 1.0
+                assignment_inequalities.append((tuple(upper_row), value))
+                lower_row = [0.0] * dimension
+                lower_row[variable_index] = -1.0
+                assignment_inequalities.append((tuple(lower_row), -value))
+            for candidate in self._linear_candidate_points(tuple(assignment_inequalities), dimension):
+                if any(abs(candidate[variable_index] - value) > _LINEAR_TOLERANCE for variable_index, value in assignment):
+                    continue
+                if candidate not in seen:
+                    seen.add(candidate)
+                    candidates.append(candidate)
         return tuple(candidates)
 
     def _record_linear_solver_outcome(

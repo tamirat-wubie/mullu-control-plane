@@ -73,9 +73,27 @@ The linear backend:
 1. Requires finite variable bounds for every variable.
 2. Supports up to four variables.
 3. Enumerates feasible vertices deterministically.
-4. Selects the minimum or maximum weighted linear objective.
-5. Rejects malformed metadata with bounded messages.
-6. Rejects unsupported expression syntax with bounded messages.
+4. Supports bounded integer and binary variables through explicit metadata.
+5. Selects the minimum or maximum weighted linear objective.
+6. Rejects malformed metadata with bounded messages.
+7. Rejects unsupported expression syntax with bounded messages.
+
+Integer metadata:
+
+```json
+{
+  "decision_variables": ["x", "flag"],
+  "linear_expression": "x + 5*flag",
+  "integer_variables": ["x"],
+  "binary_variables": ["flag"],
+  "variable_bounds": {"x": [0.0, 10.0], "flag": [0.0, 1.0]}
+}
+```
+
+Binary variables are also treated as integer variables and their effective
+bounds are tightened to `[0, 1]`. Integer assignment enumeration is capped at
+256 assignments. If a bounded integer or binary variable has no integer value
+inside its effective bounds, the result is `INFEASIBLE`.
 
 Each solver records:
 
@@ -95,6 +113,7 @@ Each solver records:
 | Linear domain lacks finite per-variable bounds | `UNBOUNDED` | `FAILED` | `unbounded_linear_domain` |
 | Linear constraints have no feasible vertex | `INFEASIBLE` | `FAILED` | `infeasible_linear_constraints` |
 | Linear variable bounds contradict | `INFEASIBLE` | `FAILED` | `infeasible_variable_bounds` |
+| Integer or binary bounds contain no integer assignment | `INFEASIBLE` | `FAILED` | `infeasible_integer_domain` |
 | Linear objective has a finite optimum vertex | `OPTIMAL` | `SOLVED` | `bounded_linear_optimum` |
 
 ## Guardrails
@@ -109,13 +128,15 @@ The backend rejects:
 6. Non-numeric or non-finite linear metadata.
 7. Unknown or duplicate linear variable names.
 8. Unsupported linear-expression syntax.
+9. Unknown or duplicate integer/binary variable names.
+10. Integer assignment surfaces above the deterministic cap.
 
 The backend does not yet solve:
 
 1. Nonlinear objectives.
-2. Integer or mixed-integer programs.
-3. Nonlinear constraint expressions.
-4. Unbounded-domain linear programs beyond explicit `UNBOUNDED` classification.
+2. Nonlinear constraint expressions.
+3. Unbounded-domain linear programs beyond explicit `UNBOUNDED` classification.
+4. Integer assignment surfaces above 256 assignments.
 5. Iterative numerical optimization.
 
 ## Verification
