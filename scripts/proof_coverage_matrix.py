@@ -64,6 +64,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
         "command_lifecycle_events_are_hash_linked",
         "terminal_closure_requires_evidence_refs",
         "successful_response_is_bound_to_response_evidence_closure",
+        "command_interpretation_receipt_read_model_bounds_raw_message",
         "universal_action_proof_replays_from_command_events",
         "universal_action_runtime_record_exports_contract_shape",
         "universal_action_orchestration_replays_from_command_events",
@@ -79,6 +80,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/capability-fabric/admission-audits",
                 "/capability-fabric/capsule-admissions",
                 "/capability-fabric/capsule-admission-receipts",
+                "/commands/{command_id}/interpretation-receipt",
                 "/commands/{command_id}/closure",
                 "/commands/{command_id}/capability-admission",
                 "/commands/{command_id}/universal-action-proof",
@@ -106,7 +108,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_webhooks.py",
                 "tests/test_governed_capability_fabric.py",
             ],
-            "Gateway command admission, request receipt envelopes, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
+            "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
             [
                 *gateway_witnesses,
                 "capability_admission_audits_filter_status",
@@ -121,6 +123,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "command_lifecycle_events_are_hash_linked": ["command_closure_read_model"],
                 "terminal_closure_requires_evidence_refs": ["command_closure_read_model"],
                 "successful_response_is_bound_to_response_evidence_closure": ["command_closure_read_model"],
+                "command_interpretation_receipt_read_model_bounds_raw_message": [
+                    "command_interpretation_receipt_read_model_bounds_raw_message",
+                ],
                 "universal_action_proof_replays_from_command_events": [
                     "command_universal_action_proof_read_model",
                 ],

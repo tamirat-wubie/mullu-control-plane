@@ -231,7 +231,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["tool_permission_registry"]["unanchored_witness_count"] == 0
     assert surfaces["tool_permission_registry"]["exact_test_anchor_count"] == 11
     assert surfaces["gateway_capability_fabric"]["unanchored_witness_count"] == 0
-    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 15
+    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 16
     assert surfaces["capability_worker_execution"]["unanchored_witness_count"] == 0
     assert surfaces["capability_worker_execution"]["exact_test_anchor_count"] == 7
     assert surfaces["capability_plan_evidence_bundle"]["unanchored_witness_count"] == 0
@@ -642,6 +642,10 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/capability-fabric/capsule-admissions"]["surface_id"] == "gateway_capability_fabric"
     assert (
         classified_routes["/capability-fabric/capsule-admission-receipts"]["surface_id"]
+        == "gateway_capability_fabric"
+    )
+    assert (
+        classified_routes["/commands/{command_id}/interpretation-receipt"]["surface_id"]
         == "gateway_capability_fabric"
     )
     assert classified_routes["/commands/{command_id}/capability-admission"]["surface_id"] == "gateway_capability_fabric"
@@ -1446,6 +1450,7 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "/capability-fabric/admission-audits" in gateway_surface["representative_paths"]
     assert "/capability-fabric/capsule-admissions" in gateway_surface["representative_paths"]
     assert "/capability-fabric/capsule-admission-receipts" in gateway_surface["representative_paths"]
+    assert "/commands/{command_id}/interpretation-receipt" in gateway_surface["representative_paths"]
     assert "/commands/{command_id}/closure" in gateway_surface["representative_paths"]
     assert "/commands/{command_id}/capability-admission" in gateway_surface["representative_paths"]
     assert "/commands/{command_id}/universal-action-proof" in gateway_surface["representative_paths"]
@@ -1464,6 +1469,7 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "command_lifecycle_events_are_hash_linked" in witnesses
     assert "terminal_closure_requires_evidence_refs" in witnesses
     assert "successful_response_is_bound_to_response_evidence_closure" in witnesses
+    assert "command_interpretation_receipt_read_model_bounds_raw_message" in witnesses
     assert "universal_action_proof_replays_from_command_events" in witnesses
     assert "universal_action_orchestration_replays_from_command_events" in witnesses
     assert "operator_universal_action_read_model_filters_command_proofs" in witnesses

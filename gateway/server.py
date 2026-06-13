@@ -3020,6 +3020,109 @@ def create_gateway_app(
             "evidence_batch": _handoff_evidence_batch_payload(outcome.evidence_batch),
         }
 
+    _INTERPRETATION_RECEIPT_FIELDS = (
+        "receipt_id",
+        "request_id",
+        "raw_message_hash",
+        "interpreted_intent",
+        "extracted_slots",
+        "missing_slots",
+        "confidence",
+        "model_or_rule_used",
+        "rejected_interpretations",
+        "risk_precheck",
+        "created_at",
+    )
+    _INTERPRETED_REQUEST_FIELDS = (
+        "request_id",
+        "tenant_id",
+        "actor_id",
+        "channel",
+        "conversation_id",
+        "raw_message_hash",
+        "intent_class",
+        "capability_id",
+        "extracted_slots",
+        "missing_slots",
+        "constraints",
+        "search_needed",
+        "action_needed",
+        "risk_estimate",
+        "approval_required",
+        "confidence",
+        "interpreter_kind",
+        "rejected_interpretations",
+        "created_at",
+    )
+    _INTERPRETATION_RECEIPT_FORBIDDEN_KEYS = frozenset({
+        "body",
+        "message",
+        "raw_body",
+        "rawbody",
+        "raw_message",
+        "rawmessage",
+        "raw_text",
+        "rawtext",
+    })
+
+    def _interpretation_payload_key_name(key: Any) -> str:
+        return str(key).strip().replace("-", "_").lower()
+
+    def _redacted_interpretation_value(value: Any) -> Any:
+        if isinstance(value, Mapping):
+            return {
+                str(key): _redacted_interpretation_value(nested)
+                for key, nested in value.items()
+                if _interpretation_payload_key_name(key)
+                not in _INTERPRETATION_RECEIPT_FORBIDDEN_KEYS
+            }
+        if isinstance(value, list):
+            return [_redacted_interpretation_value(item) for item in value]
+        if isinstance(value, tuple):
+            return [_redacted_interpretation_value(item) for item in value]
+        try:
+            json.dumps(value, ensure_ascii=True, allow_nan=False)
+        except (TypeError, ValueError):
+            return str(type(value).__name__)
+        return value
+
+    def _bounded_mapping(source: Any, allowed_keys: tuple[str, ...]) -> dict[str, Any]:
+        if not isinstance(source, Mapping):
+            return {}
+        return {
+            key: _redacted_interpretation_value(source[key])
+            for key in allowed_keys
+            if key in source
+        }
+
+    @app.get("/commands/{command_id}/interpretation-receipt")
+    def command_interpretation_receipt(command_id: str):
+        command = command_ledger.get(command_id)
+        if command is None:
+            raise HTTPException(404, detail="command not found")
+        receipt = command.redacted_payload.get("interpretation_receipt")
+        interpreted = command.redacted_payload.get("interpreted_request")
+        if not isinstance(receipt, Mapping) or not isinstance(interpreted, Mapping):
+            raise HTTPException(404, detail="interpretation receipt not found")
+        bounded_receipt = _bounded_mapping(receipt, _INTERPRETATION_RECEIPT_FIELDS)
+        bounded_interpreted = _bounded_mapping(interpreted, _INTERPRETED_REQUEST_FIELDS)
+        receipt_id = str(
+            bounded_receipt.get("receipt_id")
+            or command.redacted_payload.get("interpretation_receipt_id")
+            or ""
+        )
+        return {
+            "command_id": command_id,
+            "tenant_id": command.tenant_id,
+            "actor_id": command.actor_id,
+            "interpretation_receipt_id": receipt_id,
+            "interpretation_receipt": bounded_receipt,
+            "interpreted_request": bounded_interpreted,
+            "raw_message_exposed": False,
+            "execution_allowed": False,
+            "governed": True,
+        }
+
     @app.get("/commands/{command_id}/closure")
     def command_closure(command_id: str):
         certificate = command_ledger.terminal_certificate_for(command_id)
