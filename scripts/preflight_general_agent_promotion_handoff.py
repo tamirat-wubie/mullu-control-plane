@@ -57,6 +57,7 @@ DEFAULT_CAPSULE_ROOT = REPO_ROOT / "capsules"
 EXPECTED_APPROVAL_REQUIRED_ACTION_COUNT = 6
 EXPECTED_READINESS_LEVEL = "production-general-agent"
 EXPECTED_PRODUCTION_READY = True
+BLOCKED_READINESS_LEVEL = "pilot-governed-core"
 EXPECTED_SOURCE_PLAN_TYPES = ("deployment", "portfolio")
 OPTIONAL_SOURCE_PLAN_TYPES = ("adapter", "deployment")
 
@@ -199,6 +200,8 @@ def preflight_general_agent_promotion_handoff(
         readiness_step,
     ]
     blockers = tuple(step.name for step in steps if not step.passed)
+    effective_readiness_level = readiness_level if not blockers else BLOCKED_READINESS_LEVEL
+    effective_production_ready = production_ready if not blockers else False
     return HandoffPreflightReport(
         ready=not blockers,
         checked_at=_validation_clock(),
@@ -207,8 +210,8 @@ def preflight_general_agent_promotion_handoff(
         blockers=blockers,
         missing_environment_variables=missing_environment_variables,
         environment_binding_actions=environment_binding_actions,
-        readiness_level=readiness_level,
-        production_ready=production_ready,
+        readiness_level=effective_readiness_level,
+        production_ready=effective_production_ready,
     )
 
 
@@ -411,7 +414,7 @@ def _readiness_report_step(
     if error:
         return (
             HandoffPreflightStep(name="promotion readiness report", passed=False, detail=error),
-            EXPECTED_READINESS_LEVEL,
+            BLOCKED_READINESS_LEVEL,
             False,
         )
     expected_capability_count, expected_capsule_count, count_error = _default_fabric_counts(
@@ -421,8 +424,8 @@ def _readiness_report_step(
     if count_error:
         return (
             HandoffPreflightStep(name="promotion readiness report", passed=False, detail=count_error),
-            str(payload.get("readiness_level") or EXPECTED_READINESS_LEVEL),
-            payload.get("ready") is True,
+            BLOCKED_READINESS_LEVEL,
+            False,
         )
     readiness_level = str(payload.get("readiness_level", ""))
     production_ready = payload.get("ready") is True

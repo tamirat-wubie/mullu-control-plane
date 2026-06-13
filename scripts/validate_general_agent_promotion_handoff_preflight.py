@@ -75,7 +75,7 @@ def validate_general_agent_promotion_handoff_preflight(
         return _validation_result(report_path, report, errors)
 
     steps = report.get("steps", [])
-    _validate_scalar_fields(report, errors)
+    _validate_scalar_fields(report, errors, require_ready=require_ready)
     _validate_steps(steps, errors)
     _validate_derived_fields(report, steps, errors)
     binding_contract = _load_environment_binding_contract(environment_bindings_path, errors)
@@ -85,12 +85,18 @@ def validate_general_agent_promotion_handoff_preflight(
     return _validation_result(report_path, report, errors)
 
 
-def _validate_scalar_fields(report: dict[str, Any], errors: list[str]) -> None:
+def _validate_scalar_fields(report: dict[str, Any], errors: list[str], *, require_ready: bool) -> None:
     if report.get("step_count") != len(EXPECTED_STEP_NAMES):
         errors.append(f"step_count must be {len(EXPECTED_STEP_NAMES)}")
-    if report.get("readiness_level") != EXPECTED_READINESS_LEVEL:
+    readiness_level = report.get("readiness_level")
+    production_ready = report.get("production_ready")
+    if not isinstance(readiness_level, str) or not readiness_level.strip():
+        errors.append("readiness_level must be a non-empty string")
+    if not isinstance(production_ready, bool):
+        errors.append("production_ready must be a boolean")
+    if (report.get("ready") is True or require_ready) and readiness_level != EXPECTED_READINESS_LEVEL:
         errors.append(f"readiness_level must be {EXPECTED_READINESS_LEVEL}")
-    if report.get("production_ready") is not EXPECTED_PRODUCTION_READY:
+    if (report.get("ready") is True or require_ready) and production_ready is not EXPECTED_PRODUCTION_READY:
         errors.append(f"production_ready must be {str(EXPECTED_PRODUCTION_READY).lower()} for handoff preflight")
     if not isinstance(report.get("ready"), bool):
         errors.append("ready must be a boolean")

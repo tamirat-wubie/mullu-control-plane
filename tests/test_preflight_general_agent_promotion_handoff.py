@@ -481,8 +481,8 @@ def _write_valid_reports(
     readiness.write_text(
         json.dumps(
             {
-                "ready": False,
-                "readiness_level": "pilot-governed-core",
+                "ready": True,
+                "readiness_level": "production-general-agent",
                 "capability_count": 80,
                 "capsule_count": 13,
             }
