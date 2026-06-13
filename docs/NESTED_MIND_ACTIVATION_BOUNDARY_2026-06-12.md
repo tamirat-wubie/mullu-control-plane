@@ -49,6 +49,8 @@ Mullu receipt / authority receipt
 ```
 
 Allowed commands are documented in `docs/runbooks/nested-mind-record-observation-staging.md`.
+The exact post-merge handoff for this activation boundary is documented in
+`docs/runbooks/nested-mind-activation-boundary-staging-handoff-2026-06-12.md`.
 
 ## Blocked Until Evidence Exists
 

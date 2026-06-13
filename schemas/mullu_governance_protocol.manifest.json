@@ -551,6 +551,12 @@
       "surface": "finance"
     },
     {
+      "schema_id": "durable-gmail-oauth-operator-handoff",
+      "path": "schemas/durable_gmail_oauth_operator_handoff.schema.json",
+      "urn": "urn:mullusi:schema:durable-gmail-oauth-operator-handoff:1",
+      "surface": "connector"
+    },
+    {
       "schema_id": "finance-approval-payment-closure-receipt",
       "path": "schemas/finance_approval_payment_closure_receipt.schema.json",
       "urn": "urn:mullusi:schema:finance-approval-payment-closure-receipt:1",
@@ -1118,6 +1124,12 @@
       "schema_id": "product-dashboard-production-prometheus-scrape-probe-receipt",
       "path": "schemas/product_dashboard_production_prometheus_scrape_probe_receipt.schema.json",
       "urn": "urn:mullusi:schema:product-dashboard-production-prometheus-scrape-probe-receipt:1",
+      "surface": "observability"
+    },
+    {
+      "schema_id": "govern-cloud-public-route-monitor-receipt",
+      "path": "schemas/govern_cloud_public_route_monitor_receipt.schema.json",
+      "urn": "urn:mullusi:schema:govern-cloud-public-route-monitor-receipt:1",
       "surface": "observability"
     },
     {
