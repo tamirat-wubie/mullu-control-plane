@@ -894,9 +894,9 @@
     "by_coverage_state": {
       "proven": 259,
       "unproven": 0,
-      "witnessed": 156
+      "witnessed": 157
     },
-    "route_count": 415,
+    "route_count": 416,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1487,6 +1487,11 @@
         "coverage_state": "proven",
         "route": "/api/v1/dashboard",
         "surface_id": "operational_health_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/dashboard/operational-math",
+        "surface_id": "operational_math_loop"
       },
       {
         "coverage_state": "proven",
@@ -9693,14 +9698,16 @@
         "mcoi/tests/test_operational_math_loop.py",
         "mcoi/tests/test_operational_math_cli.py",
         "mcoi/tests/test_operational_math_receipt_store.py",
-        "mcoi/tests/test_operational_math_observability.py"
+        "mcoi/tests/test_operational_math_observability.py",
+        "mcoi/tests/test_operational_math_dashboard_router.py"
       ],
       "notes": "Operational math converts the F1-F10 audit into bounded roles, controls, proof references, event-spine records, append-only JSON receipt stores, and dashboard-safe operator review projections without silent completion when unresolved principles remain.",
       "representative_paths": [
         "OperationalMathLoopEngine.apply_all",
         "mcoi_runtime.app.operational_math_cli",
         "mcoi_runtime.app.operational_math_observability",
-        "OperationalMathReceiptStore"
+        "OperationalMathReceiptStore",
+        "/api/v1/dashboard/operational-math"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
@@ -9715,7 +9722,8 @@
         "summary_marks_incomplete_receipt_for_review",
         "registers_operational_math_observability_source",
         "registers_operational_math_store_observability_source",
-        "server_wires_operational_math_store_into_dashboard"
+        "server_wires_operational_math_store_into_dashboard",
+        "operational_math_dashboard_route_exposes_read_only_projection"
       ],
       "surface_id": "operational_math_loop"
     },
@@ -9961,8 +9969,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1280,
-    "runtime_witness_count": 1280,
+    "exact_test_anchor_count": 1281,
+    "runtime_witness_count": 1281,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -18726,10 +18734,16 @@
               "mcoi/tests/test_operational_math_observability.py::test_server_wires_operational_math_store_into_dashboard"
             ],
             "witness": "server_wires_operational_math_store_into_dashboard"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operational_math_dashboard_router.py::test_operational_math_dashboard_route_exposes_read_only_projection"
+            ],
+            "witness": "operational_math_dashboard_route_exposes_read_only_projection"
           }
         ],
-        "exact_test_anchor_count": 12,
-        "runtime_witness_count": 12,
+        "exact_test_anchor_count": 13,
+        "runtime_witness_count": 13,
         "surface_id": "operational_math_loop",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
