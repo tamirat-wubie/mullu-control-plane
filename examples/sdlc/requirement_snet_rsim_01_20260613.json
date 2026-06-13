@@ -1,0 +1,65 @@
+{
+  "requirement_id": "sdlc_reqspec_snet_rsim_01_20260613",
+  "request_id": "sdlc_req_snet_rsim_01_20260613",
+  "problem_statement": "The platform has governed symbols, claims, contradictions, and memory admission, but it needs a bounded local proof module that tests recursive WH-driven symbol inquiry, metadata promotion, provenance, unknown generation, contradiction recording, and settlement without granting execution authority.",
+  "success_criteria": [
+    "SNet generates the full bounded WH inquiry tick for a symbol deterministically",
+    "metadata promotion requires an explicit score and preserves parent context",
+    "unknown answers produce unknown records and are not promoted into trusted symbols",
+    "contextual contradictions are recorded instead of deleting or flattening claims",
+    "recursive expansion stops at the configured depth budget",
+    "a read-only operator projection exposes bounded counts and receipt evidence without raw answers or execution, connector, route, or filesystem authority",
+    "the SNet mesh receipt validates against a repository-local JSON schema and rejects raw-answer or authority mutations",
+    "invalid zero-question budgets, duplicate WH answer keys, and empty explicit answers fail closed with explicit errors",
+    "Mfidel sequences are preserved exactly as atomic symbol text across answer, metadata, and promoted-symbol paths",
+    "SNet mesh receipts include a content-sensitive digest so different same-count meshes do not share receipt identity",
+    "answers outside the active WH budget, depth-limited ticks, or duplicate ticks fail closed instead of being silently discarded",
+    "SNet mesh receipt evidence references include the mesh digest witness",
+    "invalid confidence, invalid validation state, and malformed answer maps fail before WH tick mutation",
+    "non-string text inputs, empty score fields, and non-integer read-model bounds fail with explicit errors",
+    "case-distinct raw answers remain separate evidence records instead of silently overwriting each other",
+    "answer evidence references reject malformed tuple input before answer mutation"
+  ],
+  "non_goals": [
+    "no public deployment claim",
+    "no external API calls",
+    "no autonomous execution authority",
+    "no replacement of existing WHQR policy evaluation",
+    "no trusted knowledge promotion without evidence"
+  ],
+  "constraints": [
+    "SNet must remain a local Foundation Mode proof module",
+    "all generated records must be deterministic and auditable",
+    "all error paths must fail closed with explicit reasons",
+    "Mfidel atomicity must not be violated by Unicode normalization, decomposition, recomposition, or root-letter modeling",
+    "runtime integration remains AwaitingEvidence until focused tests prove bounded recursion and promotion behavior"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "mcoi/mcoi_runtime/contracts/snet.py",
+    "mcoi/mcoi_runtime/snet/engine.py",
+    "mcoi/mcoi_runtime/snet/read_model.py",
+    "schemas/snet_mesh_receipt.schema.json",
+    "scripts/validate_snet_mesh_receipt.py",
+    "mcoi/tests/test_snet_recursive_mesh.py",
+    "tests/test_validate_snet_mesh_receipt.py",
+    "examples/sdlc/requirement_snet_rsim_01_20260613.json"
+  ],
+  "acceptance_tests": [
+    "python -m pytest mcoi/tests/test_snet_recursive_mesh.py -q",
+    "python scripts/validate_snet_mesh_receipt.py",
+    "python -m pytest tests/test_validate_snet_mesh_receipt.py -q",
+    "python -c \"import json; from pathlib import Path; from scripts.validate_sdlc_artifact import validate_artifact_record; payload=json.loads(Path('examples/sdlc/requirement_snet_rsim_01_20260613.json').read_text(encoding='utf-8')); errors=validate_artifact_record('requirement', payload); assert not errors, errors\""
+  ],
+  "evidence_required": [
+    "focused SNet pytest receipt",
+    "SNet mesh receipt schema validation receipt",
+    "SNet SDLC requirement schema validation receipt",
+    "workspace governance preflight receipt before closure claim",
+    "future design decision receipt before runtime or route integration",
+    "future security review receipt before any execution-adjacent use"
+  ],
+  "uao_ref": "uao://sdlc/requirement/snet-rsim-01/20260613",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/snet-rsim-01/20260613",
+  "receipt_ref": "receipt://sdlc/requirement/snet-rsim-01/20260613"
+}

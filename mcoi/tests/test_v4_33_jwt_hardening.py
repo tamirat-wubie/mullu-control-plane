@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import json
 import time
-import urllib.error
+from urllib import error as urllib_error
 
 import pytest
 
@@ -377,8 +377,6 @@ class TestJwksRedirectBlocking:
     """
 
     def test_no_redirect_handler_raises_on_redirect(self):
-        import urllib.request
-
         # Re-extract the handler class from the fetcher's module by
         # invoking it against a stub URL via an HTTP-mocking shim.
         # Easier: build a redirect handler by replicating the inline
@@ -390,11 +388,11 @@ class TestJwksRedirectBlocking:
         # opener.open call to raise the redirect-blocked error directly,
         # confirming the fetcher surfaces it.
         with patch("urllib.request.OpenerDirector.open") as mock_open:
-            mock_open.side_effect = urllib.error.HTTPError(
+            mock_open.side_effect = urllib_error.HTTPError(
                 "https://jwks.example.com/keys", 302,
                 "jwks_redirect_blocked:302", {}, None,
             )
-            with pytest.raises(urllib.error.HTTPError) as exc_info:
+            with pytest.raises(urllib_error.HTTPError) as exc_info:
                 _default_jwks_fetcher("https://jwks.example.com/keys")
             assert "jwks_redirect_blocked" in str(exc_info.value.msg)
 
@@ -423,8 +421,8 @@ class TestJwksRedirectBlocking:
             # Force the fetcher to fail fast — patch the opener.open call
             # so we don't make a real network request.
             with patch("urllib.request.OpenerDirector.open") as mock_open:
-                mock_open.side_effect = urllib.error.URLError("stop")
-                with pytest.raises(urllib.error.URLError):
+                mock_open.side_effect = urllib_error.URLError("stop")
+                with pytest.raises(urllib_error.URLError):
                     _default_jwks_fetcher("https://jwks.example.com/keys")
 
         # The handlers list must include a class whose redirect_request
@@ -433,7 +431,7 @@ class TestJwksRedirectBlocking:
         assert len(handlers) >= 1
         handler_class = handlers[0]
         handler = handler_class() if isinstance(handler_class, type) else handler_class
-        with pytest.raises(urllib.error.HTTPError) as exc_info:
+        with pytest.raises(urllib_error.HTTPError) as exc_info:
             handler.redirect_request(
                 MagicMock(), MagicMock(), 302, "Found", {},
                 "https://attacker.example.com/keys",
