@@ -221,6 +221,72 @@ def test_or_evaluator_does_not_escalate_when_true_branch_is_proven() -> None:
     assert proven_or_missing.reason == "logical:fresh_vendor_record_verified"
 
 
+def test_iff_and_xor_evaluator_resolve_declared_logical_operators() -> None:
+    ctx = WHQREvaluationContext(
+        node_results={
+            "left_true": GateResult(
+                TruthGate.TRUE,
+                NormGate.PERMITTED,
+                EvidenceGate.PROVEN,
+                reason="left_true",
+            ),
+            "right_true": GateResult(
+                TruthGate.TRUE,
+                NormGate.PERMITTED,
+                EvidenceGate.PROVEN,
+                reason="right_true",
+            ),
+            "left_false": GateResult(
+                TruthGate.FALSE,
+                NormGate.PERMITTED,
+                EvidenceGate.PROVEN,
+                reason="left_false",
+            ),
+            "right_false": GateResult(
+                TruthGate.FALSE,
+                NormGate.PERMITTED,
+                EvidenceGate.PROVEN,
+                reason="right_false",
+            ),
+            "unknown": GateResult(
+                TruthGate.UNKNOWN,
+                NormGate.PERMITTED,
+                EvidenceGate.UNPROVEN,
+                reason="unknown",
+            ),
+        }
+    )
+    equivalent_true = evaluate(
+        LogicalExpr(op=LogicalOp.IFF, args=(_node("left_true"), _node("right_true"))),
+        ctx,
+    )
+    equivalent_false = evaluate(
+        LogicalExpr(op=LogicalOp.IFF, args=(_node("left_true"), _node("right_false"))),
+        ctx,
+    )
+    exclusive_true = evaluate(
+        LogicalExpr(op=LogicalOp.XOR, args=(_node("left_true"), _node("right_false"))),
+        ctx,
+    )
+    exclusive_false = evaluate(
+        LogicalExpr(op=LogicalOp.XOR, args=(_node("left_true"), _node("right_true"))),
+        ctx,
+    )
+    exclusive_unknown = evaluate(
+        LogicalExpr(op=LogicalOp.XOR, args=(_node("left_false"), _node("unknown"))),
+        ctx,
+    )
+
+    assert equivalent_true.truth is TruthGate.TRUE
+    assert equivalent_true.evidence is EvidenceGate.PROVEN
+    assert equivalent_true.reason == "logical:left_true;right_true"
+    assert equivalent_false.truth is TruthGate.FALSE
+    assert exclusive_true.truth is TruthGate.TRUE
+    assert exclusive_false.truth is TruthGate.FALSE
+    assert exclusive_unknown.truth is TruthGate.UNKNOWN
+    assert exclusive_unknown.evidence is EvidenceGate.UNPROVEN
+
+
 def test_unresolved_negation_and_connector_behavior_are_bounded() -> None:
     with pytest.raises(RuntimeCoreInvariantError, match="not cannot apply"):
         evaluate(LogicalExpr(op=LogicalOp.NOT, args=(_node("missing"),)))

@@ -69,6 +69,21 @@ def _logical(expr: LogicalExpr, context: WHQREvaluationContext) -> GateResult:
         if antecedent.truth is TruthGate.UNKNOWN or consequent.truth is TruthGate.UNKNOWN:
             return GateResult(TruthGate.UNKNOWN, _norm(values), _evidence(values), _reasons(values))
         return GateResult(TruthGate.TRUE, _norm(values), _evidence(values), _reasons(values))
+    if expr.op is LogicalOp.IFF:
+        if any(value.truth is TruthGate.UNKNOWN for value in values):
+            return GateResult(TruthGate.UNKNOWN, _norm(values), _evidence(values), _reasons(values))
+        first_truth = values[0].truth
+        truth = TruthGate.TRUE if all(value.truth is first_truth for value in values) else TruthGate.FALSE
+        return GateResult(truth, _norm(values), _evidence(values), _reasons(values))
+    if expr.op is LogicalOp.XOR:
+        true_count = sum(1 for value in values if value.truth is TruthGate.TRUE)
+        unknown_count = sum(1 for value in values if value.truth is TruthGate.UNKNOWN)
+        if true_count > 1:
+            return GateResult(TruthGate.FALSE, _norm(values), _evidence(values), _reasons(values))
+        if unknown_count:
+            return GateResult(TruthGate.UNKNOWN, _norm(values), _evidence(values), _reasons(values))
+        truth = TruthGate.TRUE if true_count == 1 else TruthGate.FALSE
+        return GateResult(truth, _norm(values), _evidence(values), _reasons(values))
     return GateResult(TruthGate.UNKNOWN, _norm(values), _evidence(values), f"unsupported_logical:{expr.op.value}")
 
 
