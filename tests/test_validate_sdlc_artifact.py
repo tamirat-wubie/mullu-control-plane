@@ -229,6 +229,23 @@ def test_design_and_verification_require_pr_enforcement_validator() -> None:
     assert len(design_errors) + len(verification_errors) >= 3
 
 
+def test_snet_runtime_integration_gate_validates_as_design_decision() -> None:
+    design_path = Path("examples/sdlc/design_snet_runtime_integration_gate_20260613.json")
+    design_record = validator.load_json_object(design_path, "SNet runtime integration gate")
+
+    errors = validator.validate_artifact_record("design_decision", design_record)
+
+    assert errors == []
+    assert design_record["requirement_id"] == "sdlc_reqspec_snet_rsim_01_20260613"
+    assert set(validator.CANONICAL_SCHEMA_REFS).issubset(set(design_record["schema_changes"]))
+    assert set(validator.REQUIRED_VALIDATORS).issubset(set(design_record["validator_changes"]))
+    assert design_record["security_model"]["effect_bearing_requires_receipt"] is True
+    assert "mcoi/mcoi_runtime/snet/engine.py" in design_record["affected_modules"]
+    assert "scripts/validate_snet_mesh_receipt.py" in design_record["validator_changes"]
+    assert any("run_workspace_governance_checks.py" in item for item in design_record["test_plan"])
+    assert "Do not wire SNet into runtime routes" in design_record["architecture_summary"]
+
+
 def test_implementation_receipt_rejects_path_escape_and_unlisted_refs() -> None:
     implementation = copy.deepcopy(validator.load_example_records()["implementation_receipt"])
     implementation["changed_files"][0]["path"] = "../outside.py"
