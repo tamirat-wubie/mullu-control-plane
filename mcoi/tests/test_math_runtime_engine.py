@@ -430,6 +430,52 @@ class TestDeterministicLinearExpressionParser:
         assert "y <= x <= 6" not in str(exc_info.value)
         assert "obj-expr-8" not in str(exc_info.value)
 
+    def test_linear_constraint_expression_rejects_mixed_chained_comparators(self, engine):
+        engine.register_objective(
+            "obj-expr-9",
+            "t-1",
+            "Mixed chained bounds",
+            ObjectiveDirection.MINIMIZE,
+            metadata={
+                "decision_variables": ["x"],
+                "linear_expression": "x",
+                "variable_bounds": {"x": [0.0, 10.0]},
+            },
+        )
+        engine.add_constraint("c-expr-9", "t-1", "obj-expr-9", "0 <= x >= 5")
+        engine.submit_solver_request("req-expr-9", "t-1", "obj-expr-9")
+
+        with pytest.raises(RuntimeCoreInvariantError, match="aligned inequality comparators") as exc_info:
+            engine.solve_solver_request("req-expr-9")
+
+        assert str(exc_info.value) == "Linear chained constraint requires aligned inequality comparators"
+        assert "0 <= x >= 5" not in str(exc_info.value)
+        assert "obj-expr-9" not in str(exc_info.value)
+
+    def test_linear_constraint_expression_reports_impossible_chained_bounds_as_infeasible(self, engine):
+        engine.register_objective(
+            "obj-expr-10",
+            "t-1",
+            "Impossible chained bounds",
+            ObjectiveDirection.MINIMIZE,
+            target_value=2.0,
+            metadata={
+                "decision_variables": ["x"],
+                "linear_expression": "x",
+            },
+        )
+        engine.add_constraint("c-expr-10", "t-1", "obj-expr-10", "6 <= x <= 0")
+        engine.submit_solver_request("req-expr-10", "t-1", "obj-expr-10")
+
+        result = engine.solve_solver_request("req-expr-10")
+
+        assert result.status is OptimizationStatus.INFEASIBLE
+        assert result.disposition is SolverDisposition.FAILED
+        assert result.objective_value == 2.0
+        assert result.metadata["reason"] == "infeasible_variable_bounds"
+        assert result.metadata["variable_bounds"]["x"] == {"lower": 6.0, "upper": 0.0}
+        assert result.metadata["decision_values"] == {}
+
     def test_linear_expression_rejects_unsupported_syntax_with_bounded_message(self, engine):
         engine.register_objective(
             "obj-expr-3",
