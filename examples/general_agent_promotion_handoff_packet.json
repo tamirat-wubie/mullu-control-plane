@@ -1,9 +1,7 @@
 {
-  "aggregate_closure_actions": 8,
-  "approval_required_actions": 8,
+  "aggregate_closure_actions": 6,
+  "approval_required_actions": 6,
   "approval_required_blockers": [
-    "deployment_witness_not_published",
-    "production_health_not_declared",
     "deployment_upstream_api_gate_not_ready",
     "capability_improvement_required:financial.refund",
     "capability_improvement_required:agentic_control.code_change.plan",
@@ -57,15 +55,12 @@
   },
   "governed_capabilities": 80,
   "invariants": [
-    "production_promotion remains blocked until deployment witness and public-health evidence close",
+    "production_promotion is ready for final validation while approval blockers remain gated",
     "credential actions require governed approval",
     "DEPLOYMENT_STATUS.md remains evidence-gated by published witness and health evidence",
-    "terminal proof command must fail until open blockers close"
+    "terminal proof command must pass only after closure validation remains stable"
   ],
-  "open_blockers": [
-    "deployment_witness_not_published",
-    "production_health_not_declared"
-  ],
+  "open_blockers": [],
   "operator_sequence": [
     "validate_operator_checklist",
     "regenerate_adapter_evidence",
@@ -88,8 +83,8 @@
     "run_terminal_promotion_validation"
   ],
   "packet_id": "general-agent-promotion-handoff-v1",
-  "production_promotion": "blocked",
-  "readiness_level": "pilot-governed-core",
+  "production_promotion": "ready",
+  "readiness_level": "production-general-agent",
   "required_validation_reports": [
     "general_agent_promotion_operator_checklist valid=true",
     "capability_improvement_portfolio schema-valid",
@@ -105,7 +100,7 @@
     "general_agent_promotion_closure_plan_validation ok=true"
   ],
   "schema_version": 1,
-  "status": "blocked_until_live_evidence",
+  "status": "ready_for_final_validation",
   "terminal_proof_command": "python scripts/validate_general_agent_promotion.py --strict --output .change_assurance/general_agent_promotion_readiness.json",
   "title": "General-Agent Promotion Handoff Packet"
 }

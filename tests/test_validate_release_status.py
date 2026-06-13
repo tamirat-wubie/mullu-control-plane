@@ -12,7 +12,6 @@ Invariants:
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import scripts.validate_release_status as validate_release_status_module
@@ -28,7 +27,6 @@ from scripts.validate_release_status import (
     WORKFLOW_DIR,
     validate_ci_workflow_text,
     validate_deployment_witness_workflow_text,
-    validate_deployment_status_witness_alignment,
     validate_gateway_publication_workflow_text,
     validate_deployment_status_phase_text,
     validate_logic_governance_surface,
