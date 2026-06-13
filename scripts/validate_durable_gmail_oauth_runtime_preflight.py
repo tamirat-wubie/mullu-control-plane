@@ -8,7 +8,7 @@ secret redaction, witness gating, adapter compatibility, and no external effect
 unless the operator explicitly requests GitHub secret-name inventory.
 Dependencies: gateway.email_calendar_connector_adapters,
 docs/64_durable_gmail_connector_runtime_plan.md, Google Gmail API scope rules,
-and optional GitHub CLI secret-name inventory.
+and optional GitHub CLI secret-name/non-secret variable inventory.
 Invariants:
   - Secret values are never returned, printed, persisted, or compared by value.
   - Missing provider, refresh, revocation, or scope evidence remains
@@ -31,6 +31,7 @@ from typing import Any, Mapping, Sequence
 
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_OUTPUT = WORKSPACE_ROOT / ".change_assurance" / "durable_gmail_oauth_runtime_preflight.json"
 
 SUPPORTED_GMAIL_ADAPTER_MODES = frozenset({"http", "google", "production"})
 GMAIL_CONNECTOR_IDS = frozenset({"", "gmail"})
@@ -56,6 +57,9 @@ NON_SECRET_CONFIG_SIGNAL_NAMES = (
     "MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY",
     "GMAIL_SCOPE_ID",
     "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID",
+)
+GITHUB_VARIABLE_SIGNAL_NAMES = frozenset(NON_SECRET_CONFIG_SIGNAL_NAMES) | frozenset(
+    WITNESS_REF_SIGNAL_NAMES
 )
 
 GMAIL_FULL_MAIL_SCOPE = "https://mail.google.com/"
@@ -192,6 +196,7 @@ def validate_preflight_signals(
     findings.extend(_validate_durable_secret_presence(environment, secret_names))
     findings.extend(_validate_witness_presence(environment, secret_names))
     findings.extend(_validate_scope_boundary(environment))
+    findings.extend(_validate_non_secret_signal_redaction_boundary(environment))
     findings.extend(_validate_access_token_only_boundary(environment, secret_names))
     findings.extend(_validate_no_secret_marker_leakage(environment))
     return findings
@@ -289,6 +294,29 @@ def collect_github_secret_names(repo: str) -> set[str]:
     return parse_github_secret_list(completed.stdout)
 
 
+def collect_github_variable_values(repo: str) -> dict[str, str]:
+    """Collect allowed GitHub Actions variable values with gh.
+
+    Only non-secret config and witness-reference variables are admitted. Durable
+    OAuth credential values must remain in GitHub secrets and are never read.
+    """
+
+    repo_value = repo.strip()
+    if not repo_value:
+        raise ValueError("GitHub repository must be non-empty")
+    completed = subprocess.run(
+        ["gh", "variable", "list", "--repo", repo_value],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    if completed.returncode != 0:
+        reason = _safe_cli_error(completed.stderr or completed.stdout or "gh variable list failed")
+        raise RuntimeError(f"GitHub variable inventory unavailable: {reason}")
+    return parse_github_variable_list(completed.stdout)
+
+
 def parse_github_secret_list(output: str) -> set[str]:
     """Parse `gh secret list` table output into secret names only."""
 
@@ -301,6 +329,45 @@ def parse_github_secret_list(output: str) -> set[str]:
         if re.fullmatch(r"[A-Z][A-Z0-9_]*", name):
             names.add(name)
     return names
+
+
+def parse_github_variable_list(output: str) -> dict[str, str]:
+    """Parse allowed `gh variable list` rows into non-secret config values."""
+
+    values: dict[str, str] = {}
+    for raw_line in output.splitlines():
+        line = raw_line.strip()
+        if not line or line.upper().startswith("NAME"):
+            continue
+        parts = line.split("\t")
+        if len(parts) < 2:
+            parts = line.split(None, 2)
+        if len(parts) < 2:
+            continue
+        name = parts[0].strip()
+        value = parts[1].strip()
+        if name not in GITHUB_VARIABLE_SIGNAL_NAMES or not value:
+            continue
+        marker = matched_secret_marker(value)
+        if marker:
+            raise ValueError(
+                f"GitHub variable {name} contains prohibited secret marker: {marker}"
+            )
+        values[name] = value
+    return values
+
+
+def merge_non_empty_overlay(
+    base: Mapping[str, str],
+    overlay: Mapping[str, str],
+) -> dict[str, str]:
+    """Merge overlay values that carry non-empty evidence."""
+
+    merged = dict(base)
+    for name, value in overlay.items():
+        if str(value).strip():
+            merged[name] = value
+    return merged
 
 
 def _validate_adapter_boundary(environment: Mapping[str, str]) -> list[RuntimePreflightFinding]:
@@ -443,14 +510,30 @@ def _validate_access_token_only_boundary(
     return []
 
 
+def _validate_non_secret_signal_redaction_boundary(environment: Mapping[str, str]) -> list[RuntimePreflightFinding]:
+    findings: list[RuntimePreflightFinding] = []
+    for name in (*NON_SECRET_CONFIG_SIGNAL_NAMES, *WITNESS_REF_SIGNAL_NAMES):
+        value = str(environment.get(name, ""))
+        marker = matched_secret_marker(value)
+        if marker:
+            findings.append(
+                RuntimePreflightFinding(
+                    "gmail_oauth_non_secret_signal_contains_secret_marker",
+                    "blocker",
+                    f"{name} must not contain secret-shaped material.",
+                )
+            )
+    return findings
+
+
 def _validate_no_secret_marker_leakage(environment: Mapping[str, str]) -> list[RuntimePreflightFinding]:
     report_shape = {
         "scope_analysis": analyze_scope(environment),
         "signal_inventory": build_signal_inventory(environment),
     }
     serialized_report_shape = json.dumps(report_shape, sort_keys=True)
-    leaked_markers = [marker for marker in SECRET_VALUE_MARKERS if marker in serialized_report_shape]
-    if leaked_markers:
+    leaked_marker = matched_secret_marker(serialized_report_shape)
+    if leaked_marker:
         return [
             RuntimePreflightFinding(
                 "gmail_oauth_secret_marker_leaked",
@@ -526,8 +609,39 @@ def _path_label(path: Path) -> str:
 def _safe_cli_error(message: str) -> str:
     first_line = next((line.strip() for line in message.splitlines() if line.strip()), "unknown error")
     for marker in SECRET_VALUE_MARKERS:
-        first_line = first_line.replace(marker, "<redacted-secret-marker>")
+        first_line = re.sub(re.escape(marker), "<redacted-secret-marker>", first_line, flags=re.IGNORECASE)
     return first_line[:240]
+
+
+def write_durable_gmail_oauth_runtime_preflight(report: Mapping[str, Any], output_path: Path) -> Path:
+    """Write one redacted durable Gmail OAuth runtime preflight receipt."""
+    _assert_preflight_report_redacted(report)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return output_path
+
+
+def _assert_preflight_report_redacted(report: Mapping[str, Any]) -> None:
+    serialized_report = json.dumps(report, sort_keys=True)
+    marker = matched_secret_marker(serialized_report)
+    if marker:
+        raise ValueError(f"durable Gmail OAuth runtime preflight contains prohibited secret marker: {marker}")
+
+
+def matched_secret_marker(value: str) -> str:
+    """Return the prohibited secret marker present in value, ignoring case."""
+
+    lowered_value = value.lower()
+    for marker in SECRET_VALUE_MARKERS:
+        if marker.lower() in lowered_value:
+            return marker
+    return ""
+
+
+def _matched_secret_marker(value: str) -> str:
+    """Backward-compatible private wrapper for older local imports."""
+
+    return matched_secret_marker(value)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -535,15 +649,25 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     parser = argparse.ArgumentParser(description="Validate durable Gmail OAuth runtime preflight signals.")
     parser.add_argument("--env-file", type=Path, help="optional dotenv-style file to overlay onto process env")
-    parser.add_argument("--github-repo", help="optional repo for gh secret-name inventory, e.g. owner/repo")
+    parser.add_argument(
+        "--github-repo",
+        help=(
+            "optional repo for gh secret-name and allowed non-secret variable "
+            "inventory, e.g. owner/repo"
+        ),
+    )
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--json", action="store_true", help="emit a machine-readable preflight receipt")
     parser.add_argument("--require-ready", action="store_true", help="return non-zero unless ready_for_live_probe is true")
     args = parser.parse_args(list(argv) if argv is not None else None)
 
     try:
         environment = dict(os.environ)
+        if args.github_repo:
+            github_variable_values = collect_github_variable_values(args.github_repo)
+            environment = merge_non_empty_overlay(github_variable_values, environment)
         if args.env_file:
-            environment.update(load_env_file(args.env_file))
+            environment = merge_non_empty_overlay(environment, load_env_file(args.env_file))
         github_secret_names = collect_github_secret_names(args.github_repo) if args.github_repo else set()
         report = build_preflight_report(environment, github_secret_names=github_secret_names)
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
@@ -566,6 +690,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             ],
         }
 
+    write_durable_gmail_oauth_runtime_preflight(report, args.output)
     if args.json:
         sys.stdout.write(json.dumps(report, indent=2, sort_keys=True) + "\n")
     else:

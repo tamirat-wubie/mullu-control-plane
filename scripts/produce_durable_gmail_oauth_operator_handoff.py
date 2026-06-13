@@ -24,6 +24,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import sys
 from typing import Any, Mapping, Sequence
 
@@ -62,6 +63,7 @@ def produce_durable_gmail_oauth_operator_handoff(
     """Return a redacted operator handoff packet for durable Gmail OAuth setup."""
 
     env = dict(os.environ if environment is None else environment)
+    repository_slug = _validate_repository_slug(repository)
     secret_names = set(github_secret_names or set())
     configured_operation_family = env.get(
         "MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY",
@@ -92,7 +94,7 @@ def produce_durable_gmail_oauth_operator_handoff(
             ready_for_live_probe=ready_for_live_probe,
         ),
         "solver_outcome": "SolvedVerified" if ready_for_live_probe else "AwaitingEvidence",
-        "repository": repository,
+        "repository": repository_slug,
         "connector_id": DEFAULT_CONNECTOR_ID,
         "operation_family": operation_family,
         "provider_setup_authorized": bool(operator_approval_ref.strip()),
@@ -109,7 +111,7 @@ def produce_durable_gmail_oauth_operator_handoff(
         ),
         "preflight_environment_basis": "observed_environment_without_defaults",
         "provider_console_actions": _provider_console_actions(scope_set),
-        "runtime_bindings": _runtime_bindings(repository),
+        "runtime_bindings": _runtime_bindings(repository_slug),
         "preflight_summary": _preflight_summary(preflight_report),
         "blocked_until": _blocked_until(
             provider_setup_authorized=bool(operator_approval_ref.strip()),
@@ -129,6 +131,7 @@ def produce_durable_gmail_oauth_operator_handoff(
 def write_durable_gmail_oauth_operator_handoff(packet: dict[str, Any], output_path: Path) -> Path:
     """Write one redacted durable Gmail OAuth handoff packet."""
 
+    _assert_redacted(packet)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(packet, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return output_path
@@ -241,21 +244,31 @@ def _provider_console_actions(scope_set: Sequence[str]) -> list[dict[str, Any]]:
 
 def _runtime_bindings(repository: str) -> list[dict[str, Any]]:
     bindings: list[dict[str, Any]] = []
+    repository_slug = _validate_repository_slug(repository)
     for name in preflight.NON_SECRET_CONFIG_SIGNAL_NAMES:
         bindings.append(
             {
                 "name": name,
                 "classification": "non_secret_config",
-                "secret_store_command": "",
+                "store_command": "",
                 "value_must_not_be_committed": True,
             }
         )
-    for name in (*preflight.DURABLE_SECRET_SIGNAL_NAMES, *preflight.WITNESS_REF_SIGNAL_NAMES):
+    for name in preflight.DURABLE_SECRET_SIGNAL_NAMES:
         bindings.append(
             {
                 "name": name,
-                "classification": "secret" if name in preflight.DURABLE_SECRET_SIGNAL_NAMES else "witness_ref",
-                "secret_store_command": f"gh secret set {name} --repo {repository}",
+                "classification": "secret",
+                "store_command": f"gh secret set {name} --repo {repository_slug}",
+                "value_must_not_be_committed": True,
+            }
+        )
+    for name in preflight.WITNESS_REF_SIGNAL_NAMES:
+        bindings.append(
+            {
+                "name": name,
+                "classification": "witness_ref",
+                "store_command": f"gh variable set {name} --repo {repository_slug} --body <witness-ref>",
                 "value_must_not_be_committed": True,
             }
         )
@@ -327,21 +340,39 @@ def _redacted_ref(value: str) -> str:
     stripped = value.strip()
     if not stripped:
         return ""
-    for marker in preflight.SECRET_VALUE_MARKERS:
-        if marker in stripped:
-            raise ValueError(f"durable Gmail OAuth handoff reference contains prohibited secret marker: {marker}")
+    marker = preflight.matched_secret_marker(stripped)
+    if marker:
+        raise ValueError(f"durable Gmail OAuth handoff reference contains prohibited secret marker: {marker}")
     return f"ref:{hashlib.sha256(stripped.encode('utf-8')).hexdigest()[:12]}"
 
 
 def _assert_redacted(packet: Mapping[str, Any]) -> None:
     serialized_packet = json.dumps(packet, sort_keys=True)
-    for marker in preflight.SECRET_VALUE_MARKERS:
-        if marker in serialized_packet:
-            raise ValueError(f"durable Gmail OAuth handoff contains prohibited secret marker: {marker}")
+    marker = preflight.matched_secret_marker(serialized_packet)
+    if marker:
+        raise ValueError(f"durable Gmail OAuth handoff contains prohibited secret marker: {marker}")
 
 
 def _parse_github_secret_names(values: Sequence[str]) -> set[str]:
-    return {value.strip() for value in values if value.strip()}
+    names: set[str] = set()
+    for value in values:
+        stripped = value.strip()
+        if not stripped:
+            continue
+        marker = preflight.matched_secret_marker(stripped)
+        if marker:
+            raise ValueError(f"GitHub secret name contains prohibited secret marker: {marker}")
+        if re.fullmatch(r"[A-Z][A-Z0-9_]*", stripped) is None:
+            raise ValueError(f"GitHub secret name must be an uppercase identifier: {stripped}")
+        names.add(stripped)
+    return names
+
+
+def _validate_repository_slug(repository: str) -> str:
+    slug = repository.strip()
+    if re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", slug) is None:
+        raise ValueError(f"GitHub repository must be owner/repo slug: {repository}")
+    return slug
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -349,7 +380,12 @@ def main(argv: list[str] | None = None) -> int:
 
     parser = argparse.ArgumentParser(description="Produce durable Gmail OAuth operator handoff packet.")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
-    parser.add_argument("--repo", default=DEFAULT_REPOSITORY)
+    parser.add_argument("--repo", default="")
+    parser.add_argument(
+        "--github-repo",
+        default="",
+        help="optional repo for presence-only secret names and allowed non-secret variables",
+    )
     parser.add_argument("--operator-approval-ref", default=os.environ.get("MULLU_GMAIL_OPERATOR_APPROVAL_REF", ""))
     parser.add_argument(
         "--github-secret-name",
@@ -365,10 +401,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--json", action="store_true", help="print the generated handoff packet")
     args = parser.parse_args(argv)
 
+    environment = dict(os.environ)
+    github_secret_names = _parse_github_secret_names(args.github_secret_name)
+    target_repository = args.repo or args.github_repo or DEFAULT_REPOSITORY
+    if args.github_repo:
+        github_variable_values = preflight.collect_github_variable_values(args.github_repo)
+        environment = preflight.merge_non_empty_overlay(github_variable_values, environment)
+        github_secret_names |= preflight.collect_github_secret_names(args.github_repo)
+
     packet = produce_durable_gmail_oauth_operator_handoff(
-        repository=args.repo,
+        environment,
+        repository=target_repository,
         operator_approval_ref=args.operator_approval_ref,
-        github_secret_names=_parse_github_secret_names(args.github_secret_name),
+        github_secret_names=github_secret_names,
     )
     write_durable_gmail_oauth_operator_handoff(packet, args.output)
     if args.json:

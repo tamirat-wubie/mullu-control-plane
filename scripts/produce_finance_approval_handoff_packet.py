@@ -72,6 +72,7 @@ def produce_finance_approval_handoff_packet(
     closure_run_path: Path = DEFAULT_CLOSURE_RUN,
     preflight_path: Path = DEFAULT_PREFLIGHT,
     adapter_evidence_path: Path = DEFAULT_ADAPTER_EVIDENCE,
+    artifact_base_path: Path | None = None,
 ) -> dict[str, Any]:
     """Return a bounded finance approval handoff packet."""
     witness = _load_json(witness_path)
@@ -83,12 +84,18 @@ def produce_finance_approval_handoff_packet(
     readiness = validate_finance_approval_pilot(adapter_evidence_path=adapter_evidence_path)
     live_receipt_validation = validate_finance_approval_email_calendar_live_receipt(receipt_path=live_receipt_path)
     artifacts = (
-        _artifact("pilot_witness", witness_path, witness, "status"),
-        _artifact("live_handoff_plan", handoff_plan_path, handoff_plan, "readiness_level"),
-        _artifact("email_calendar_binding_receipt", binding_receipt_path, binding_receipt, "ready"),
-        _live_receipt_artifact(live_receipt_path, live_receipt, live_receipt_validation.ready),
-        _artifact("live_handoff_closure_run", closure_run_path, closure_run, "status"),
-        _artifact("live_handoff_preflight", preflight_path, preflight, "ready"),
+        _artifact("pilot_witness", witness_path, witness, "status", artifact_base_path),
+        _artifact("live_handoff_plan", handoff_plan_path, handoff_plan, "readiness_level", artifact_base_path),
+        _artifact(
+            "email_calendar_binding_receipt",
+            binding_receipt_path,
+            binding_receipt,
+            "ready",
+            artifact_base_path,
+        ),
+        _live_receipt_artifact(live_receipt_path, live_receipt, live_receipt_validation.ready, artifact_base_path),
+        _artifact("live_handoff_closure_run", closure_run_path, closure_run, "status", artifact_base_path),
+        _artifact("live_handoff_preflight", preflight_path, preflight, "ready", artifact_base_path),
     )
     artifact_blockers = tuple(f"{artifact.name}_missing" for artifact in artifacts if not artifact.present)
     live_receipt_blockers = _live_receipt_blockers(live_receipt_validation)
@@ -174,26 +181,49 @@ def write_finance_approval_handoff_packet(packet: dict[str, Any], output_path: P
     return output_path
 
 
-def _artifact(name: str, path: Path, payload: dict[str, Any], status_field: str) -> HandoffArtifact:
+def _artifact(
+    name: str,
+    path: Path,
+    payload: dict[str, Any],
+    status_field: str,
+    artifact_base_path: Path | None,
+) -> HandoffArtifact:
+    artifact_path = _artifact_path_label(path, artifact_base_path)
     if not payload:
-        return HandoffArtifact(name=name, path=str(path), present=False, status="missing")
+        return HandoffArtifact(name=name, path=artifact_path, present=False, status="missing")
     status_value = payload.get(status_field)
     if isinstance(status_value, bool):
         status = "ready" if status_value else "blocked"
     else:
         status = str(status_value or "present")
-    return HandoffArtifact(name=name, path=str(path), present=True, status=status)
+    return HandoffArtifact(name=name, path=artifact_path, present=True, status=status)
 
 
-def _live_receipt_artifact(path: Path, payload: dict[str, Any], live_receipt_ready: bool) -> HandoffArtifact:
+def _live_receipt_artifact(
+    path: Path,
+    payload: dict[str, Any],
+    live_receipt_ready: bool,
+    artifact_base_path: Path | None,
+) -> HandoffArtifact:
+    artifact_path = _artifact_path_label(path, artifact_base_path)
     if not payload:
-        return HandoffArtifact(name="email_calendar_live_receipt", path=str(path), present=False, status="missing")
+        return HandoffArtifact(name="email_calendar_live_receipt", path=artifact_path, present=False, status="missing")
     return HandoffArtifact(
         name="email_calendar_live_receipt",
-        path=str(path),
+        path=artifact_path,
         present=True,
         status="ready" if live_receipt_ready else "blocked",
     )
+
+
+def _artifact_path_label(path: Path, artifact_base_path: Path | None) -> str:
+    """Return a packet-local artifact label without leaking host-local ancestry."""
+    resolved_path = path.resolve(strict=False)
+    resolved_base = (artifact_base_path or REPO_ROOT).resolve(strict=False)
+    try:
+        return resolved_path.relative_to(resolved_base).as_posix()
+    except ValueError:
+        return path.name
 
 
 def _live_receipt_blockers(live_receipt_validation: Any) -> tuple[str, ...]:
@@ -296,6 +326,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     """CLI entry point for finance handoff packet production."""
     args = parse_args(argv)
+    output_path = Path(args.output)
     packet = produce_finance_approval_handoff_packet(
         witness_path=Path(args.witness),
         handoff_plan_path=Path(args.handoff_plan),
@@ -304,8 +335,9 @@ def main(argv: list[str] | None = None) -> int:
         closure_run_path=Path(args.closure_run),
         preflight_path=Path(args.preflight),
         adapter_evidence_path=Path(args.adapter_evidence),
+        artifact_base_path=output_path.parent,
     )
-    write_finance_approval_handoff_packet(packet, Path(args.output))
+    write_finance_approval_handoff_packet(packet, output_path)
     if args.json:
         print(json.dumps(packet, indent=2, sort_keys=True))
     else:

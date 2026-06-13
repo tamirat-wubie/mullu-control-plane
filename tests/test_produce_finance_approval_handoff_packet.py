@@ -119,6 +119,89 @@ def test_finance_handoff_packet_writer_and_cli_emit_json(tmp_path: Path, capsys)
     }
 
 
+def test_finance_handoff_packet_cli_uses_packet_local_artifact_paths(tmp_path: Path, capsys) -> None:
+    output_path = tmp_path / "finance_handoff_packet.json"
+    paths = write_finance_handoff_sources(tmp_path, live_ready=False)
+
+    exit_code = main(
+        [
+            "--witness",
+            str(paths["witness"]),
+            "--handoff-plan",
+            str(paths["handoff_plan"]),
+            "--binding-receipt",
+            str(paths["binding_receipt"]),
+            "--live-receipt",
+            str(paths["live_receipt"]),
+            "--closure-run",
+            str(paths["closure_run"]),
+            "--preflight",
+            str(paths["preflight"]),
+            "--adapter-evidence",
+            str(paths["adapter_evidence"]),
+            "--output",
+            str(output_path),
+            "--json",
+        ]
+    )
+    capsys.readouterr()
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    artifact_paths = {artifact["name"]: artifact["path"] for artifact in payload["artifacts"]}
+
+    assert exit_code == 2
+    assert artifact_paths["pilot_witness"] == "finance_approval_pilot_witness.json"
+    assert artifact_paths["live_handoff_plan"] == "finance_approval_live_handoff_plan.json"
+    assert artifact_paths["email_calendar_binding_receipt"] == "finance_approval_email_calendar_binding_receipt.json"
+    assert artifact_paths["email_calendar_live_receipt"] == "email_calendar_live_receipt.json"
+    assert artifact_paths["live_handoff_closure_run"] == "finance_approval_live_handoff_closure_run.json"
+    assert artifact_paths["live_handoff_preflight"] == "finance_approval_live_handoff_preflight.json"
+    assert all(not Path(path).is_absolute() for path in artifact_paths.values())
+    assert all(str(tmp_path) not in path for path in artifact_paths.values())
+
+
+def test_finance_handoff_packet_uses_basenames_for_escaped_artifacts(tmp_path: Path) -> None:
+    source_dir = tmp_path / "sources"
+    output_dir = tmp_path / "packet"
+    paths = write_finance_handoff_sources(source_dir, live_ready=False)
+
+    packet = produce_finance_approval_handoff_packet(
+        witness_path=paths["witness"],
+        handoff_plan_path=paths["handoff_plan"],
+        binding_receipt_path=paths["binding_receipt"],
+        live_receipt_path=paths["live_receipt"],
+        closure_run_path=paths["closure_run"],
+        preflight_path=paths["preflight"],
+        adapter_evidence_path=paths["adapter_evidence"],
+        artifact_base_path=output_dir,
+    )
+    artifact_paths = {artifact["name"]: artifact["path"] for artifact in packet["artifacts"]}
+
+    assert artifact_paths["pilot_witness"] == "finance_approval_pilot_witness.json"
+    assert artifact_paths["email_calendar_live_receipt"] == "email_calendar_live_receipt.json"
+    assert all(not Path(path).is_absolute() for path in artifact_paths.values())
+    assert all(str(tmp_path) not in path for path in artifact_paths.values())
+
+
+def test_finance_handoff_packet_direct_call_uses_safe_artifact_labels(tmp_path: Path) -> None:
+    paths = write_finance_handoff_sources(tmp_path, live_ready=False)
+
+    packet = produce_finance_approval_handoff_packet(
+        witness_path=paths["witness"],
+        handoff_plan_path=paths["handoff_plan"],
+        binding_receipt_path=paths["binding_receipt"],
+        live_receipt_path=paths["live_receipt"],
+        closure_run_path=paths["closure_run"],
+        preflight_path=paths["preflight"],
+        adapter_evidence_path=paths["adapter_evidence"],
+    )
+    artifact_paths = {artifact["name"]: artifact["path"] for artifact in packet["artifacts"]}
+
+    assert artifact_paths["pilot_witness"] == "finance_approval_pilot_witness.json"
+    assert artifact_paths["live_handoff_preflight"] == "finance_approval_live_handoff_preflight.json"
+    assert all(not Path(path).is_absolute() for path in artifact_paths.values())
+    assert all(str(tmp_path) not in path for path in artifact_paths.values())
+
+
 def test_finance_handoff_packet_requires_ready_live_receipt(tmp_path: Path) -> None:
     blocked_paths = write_finance_handoff_sources(tmp_path / "blocked", live_ready=False)
     ready_paths = write_finance_handoff_sources(tmp_path / "ready", live_ready=True)

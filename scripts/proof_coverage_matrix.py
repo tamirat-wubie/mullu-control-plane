@@ -64,8 +64,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
         "command_lifecycle_events_are_hash_linked",
         "terminal_closure_requires_evidence_refs",
         "successful_response_is_bound_to_response_evidence_closure",
-        "command_interpretation_receipt_read_model_bounds_raw_message",
-        "command_interpretation_receipt_requires_operator_authority",
         "universal_action_proof_replays_from_command_events",
         "universal_action_runtime_record_exports_contract_shape",
         "universal_action_orchestration_replays_from_command_events",
@@ -81,11 +79,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/capability-fabric/admission-audits",
                 "/capability-fabric/capsule-admissions",
                 "/capability-fabric/capsule-admission-receipts",
-                "/commands/{command_id}/interpretation-receipt",
                 "/commands/{command_id}/closure",
                 "/commands/{command_id}/capability-admission",
                 "/commands/{command_id}/universal-action-proof",
                 "/commands/{command_id}/universal-action-orchestration",
+                "/commands/{command_id}/interpretation-receipt",
                 "/operator/universal-actions/read-model",
                 "/operator/universal-actions",
                 "DomainCapsuleCompiler.compile",
@@ -109,7 +107,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_webhooks.py",
                 "tests/test_governed_capability_fabric.py",
             ],
-            "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
+            "Gateway command admission, request receipt envelopes, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
             [
                 *gateway_witnesses,
                 "capability_admission_audits_filter_status",
@@ -124,12 +122,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "command_lifecycle_events_are_hash_linked": ["command_closure_read_model"],
                 "terminal_closure_requires_evidence_refs": ["command_closure_read_model"],
                 "successful_response_is_bound_to_response_evidence_closure": ["command_closure_read_model"],
-                "command_interpretation_receipt_read_model_bounds_raw_message": [
-                    "command_interpretation_receipt_read_model_bounds_raw_message",
-                ],
-                "command_interpretation_receipt_requires_operator_authority": [
-                    "command_interpretation_receipt_requires_operator_authority_in_production",
-                ],
                 "universal_action_proof_replays_from_command_events": [
                     "command_universal_action_proof_read_model",
                 ],
@@ -166,6 +158,45 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "physical_capsule_admission_runs_promotion_preflight": [
                     "capsule_installer_runs_physical_preflight_before_registry_mutation",
+                ],
+            },
+        ),
+        _surface(
+            "local_assurance_refresh",
+            [
+                "refresh_local_assurance.run_refresh",
+                "refresh_local_assurance.LOCAL_ASSURANCE_STEPS",
+                "run_workspace_governance_checks.local_assurance_plan",
+            ],
+            "request_proof",
+            "action_proof",
+            "audit_chain",
+            "witnessed",
+            [
+                "scripts/refresh_local_assurance.py",
+                "scripts/run_workspace_governance_checks.py",
+                "tests/test_refresh_local_assurance.py",
+                "tests/test_run_workspace_governance_checks.py",
+            ],
+            "Local assurance refresh regenerates deterministic no-secret evidence receipts, including blocked durable Gmail OAuth handoff and preflight receipts, exposes dry-run command receipts, and remains part of the workspace governance preflight plan.",
+            [
+                "local_assurance_refresh_includes_durable_gmail_receipts",
+                "local_assurance_dry_run_does_not_execute",
+                "local_assurance_stops_on_first_failure",
+                "workspace_preflight_includes_local_assurance_plan",
+            ],
+            runtime_witness_anchor_aliases={
+                "local_assurance_refresh_includes_durable_gmail_receipts": [
+                    "default_refresh_steps_cover_local_assurance_surfaces",
+                ],
+                "local_assurance_dry_run_does_not_execute": [
+                    "dry_run_returns_step_receipts_without_invoking_runner",
+                ],
+                "local_assurance_stops_on_first_failure": [
+                    "runner_injection_stops_on_first_failure",
+                ],
+                "workspace_preflight_includes_local_assurance_plan": [
+                    "build_check_commands_are_ordered_and_repo_local",
                 ],
             },
         ),
@@ -455,16 +486,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_assistant_router.py",
                 "tests/test_assistant_kernel.py",
             ],
-            "Assistant kernel routes expose governed profile read models and compile FinanceOps and TeamOps plans with consent, approval, idempotency, effect reconciliation, and closure controls without executing external effects.",
+            "Assistant kernel routes expose governed profile read models and compile FinanceOps plans with consent, approval, idempotency, effect reconciliation, and closure controls without executing external effects.",
             [
                 "assistant_profiles_read_model_bounded",
                 "finance_ops_plan_requires_active_consent",
                 "finance_ops_plan_projects_operator_queue",
-                "team_ops_plan_requires_active_external_send_consent",
-                "team_ops_plan_projects_operator_queue",
                 "assistant_plan_never_grants_execution_authority",
                 "assistant_plan_errors_sanitized",
-                "team_ops_plan_errors_sanitized",
             ],
             runtime_witness_anchor_aliases={
                 "assistant_profiles_read_model_bounded": [
@@ -476,24 +504,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "finance_ops_plan_projects_operator_queue": [
                     "finance_ops_plan_with_consent_projects_dispatch_ready_controls",
                 ],
-                "team_ops_plan_requires_active_external_send_consent": [
-                    "team_ops_plan_blocks_without_active_external_send_consent",
-                ],
-                "team_ops_plan_projects_operator_queue": [
-                    "team_ops_plan_with_consent_projects_dispatch_ready_controls",
-                ],
                 "assistant_plan_never_grants_execution_authority": [
                     "finance_ops_plan_with_consent_projects_dispatch_ready_controls",
                     "finance_ops_plan_blocks_without_active_payment_consent",
-                    "team_ops_plan_with_consent_projects_dispatch_ready_controls",
-                    "team_ops_plan_blocks_without_active_external_send_consent",
                 ],
                 "assistant_plan_errors_sanitized": [
                     "finance_ops_plan_error_detail_is_bounded",
-                ],
-                "team_ops_plan_errors_sanitized": [
-                    "team_ops_plan_error_detail_is_bounded",
-                    "invalid_team_ops_plan_fails_closed",
                 ],
             },
         ),
@@ -1041,9 +1057,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/console/providers",
                 "/api/v1/console/scheduler",
                 "/api/v1/console/shadow",
+                "/api/v1/console/whqr/clarifications",
                 "/api/v1/console/note-memory",
                 "/api/v1/console/note-memory/view",
-                "/api/v1/console/whqr/clarifications",
                 "/api/v1/console/spatial-map",
                 "/api/v1/console/spatial-map/view",
             ],
@@ -1062,7 +1078,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_console.py",
                 "mcoi/tests/test_inceptadive_shadow_routes.py",
             ],
-            "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, WHQR clarification, spatial governance panels, HTML views, and aggregate views with governed response witnesses.",
+            "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, spatial governance panels, HTML views, and aggregate views with governed response witnesses.",
             [
                 "console_home_returns_governed_runtime_vitals",
                 "console_runs_bounds_recent_audit_entries",
@@ -1073,11 +1089,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "console_note_memory_returns_read_only_lifecycle_summary",
                 "console_note_memory_html_escapes_read_model",
                 "console_note_memory_fails_closed_without_store_path",
-                "console_whqr_clarifications_returns_active_job_status",
-                "console_whqr_clarifications_rejects_malformed_replay_metadata",
                 "full_console_includes_spatial_map_read_model",
                 "console_spatial_map_returns_panel_read_model",
                 "console_spatial_map_html_renders_blockers",
+                "console_whqr_clarifications_return_bounded_read_model",
             ],
             runtime_witness_anchor_aliases={
                 "console_home_returns_governed_runtime_vitals": ["console_home"],
@@ -1101,12 +1116,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "console_note_memory_fails_closed_without_store_path": [
                     "console_note_memory_mounted_without_store_path_fails_closed",
                 ],
-                "console_whqr_clarifications_returns_active_job_status": [
-                    "console_whqr_clarifications_returns_active_job_status",
-                ],
-                "console_whqr_clarifications_rejects_malformed_replay_metadata": [
-                    "console_whqr_clarifications_rejects_malformed_replay_metadata",
-                ],
                 "full_console_includes_spatial_map_read_model": [
                     "full_console",
                 ],
@@ -1115,6 +1124,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "console_spatial_map_html_renders_blockers": [
                     "console_spatial_map_html_view_renders_blockers",
+                ],
+                "console_whqr_clarifications_return_bounded_read_model": [
+                    "console_whqr_clarifications_returns_active_job_status",
+                    "console_whqr_clarifications_rejects_malformed_replay_metadata",
                 ],
             },
         ),
@@ -4162,13 +4175,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/validate_durable_gmail_oauth_operator_handoff.py",
                 "tests/test_produce_durable_gmail_oauth_operator_handoff.py",
                 "tests/test_validate_durable_gmail_oauth_operator_handoff.py",
-                "schemas/team_ops_shared_inbox_operator_handoff.schema.json",
-                "scripts/produce_team_ops_shared_inbox_operator_handoff.py",
-                "scripts/validate_team_ops_shared_inbox_operator_handoff.py",
-                "tests/test_produce_team_ops_shared_inbox_operator_handoff.py",
-                "tests/test_validate_team_ops_shared_inbox_operator_handoff.py",
             ],
-            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, and bind durable Gmail OAuth plus TeamOps shared inbox handoff evidence to schema-backed operator authority before live probe promotion.",
+            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, and bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion.",
             [
                 "connector_registration_typed",
                 "connector_invocation_guard_chain_checked",
@@ -4182,13 +4190,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "durable_gmail_oauth_handoff_redacts_secret_markers",
                 "durable_gmail_oauth_handoff_accepts_ready_probe",
                 "durable_gmail_oauth_handoff_writes_validation_receipt",
-                "team_ops_shared_inbox_handoff_blocks_until_authority",
-                "team_ops_shared_inbox_handoff_blocks_default_as_evidence",
-                "team_ops_shared_inbox_handoff_requires_live_probe_authority",
-                "team_ops_shared_inbox_handoff_redacts_secret_markers",
-                "team_ops_shared_inbox_handoff_accepts_ready_probe",
-                "team_ops_shared_inbox_handoff_blocks_external_message_drift",
-                "team_ops_shared_inbox_handoff_writes_validation_receipt",
+                "durable_gmail_oauth_uses_github_repo_inventory",
+                "durable_gmail_oauth_blocks_case_insensitive_secret_markers",
+                "durable_gmail_oauth_routes_witness_refs_as_variables",
+                "durable_gmail_oauth_rejects_secret_markers_in_readable_signals",
+                "durable_gmail_oauth_validates_repository_slug",
             ],
             runtime_witness_anchor_aliases={
                 "connector_registration_typed": [
@@ -4234,8 +4240,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "durable_gmail_oauth_handoff_redacts_secret_markers": [
                     "handoff_rejects_secret_shaped_approval_ref",
+                    "handoff_rejects_uppercase_secret_shaped_approval_ref",
                     "writer_and_cli_emit_redacted_blocked_packet",
                     "durable_gmail_oauth_operator_handoff_rejects_secret_marker",
+                    "runtime_preflight_writer_rejects_uppercase_secret_marker",
                 ],
                 "durable_gmail_oauth_handoff_accepts_ready_probe": [
                     "presence_only_secret_inventory_admits_live_probe_with_approval",
@@ -4244,31 +4252,27 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "durable_gmail_oauth_handoff_writes_validation_receipt": [
                     "durable_gmail_oauth_operator_handoff_cli_writes_validation",
                 ],
-                "team_ops_shared_inbox_handoff_blocks_until_authority": [
-                    "team_ops_default_handoff_waits_for_operator_authority_and_redacts_values",
-                    "team_ops_shared_inbox_operator_handoff_accepts_blocked_packet",
+                "durable_gmail_oauth_uses_github_repo_inventory": [
+                    "github_repo_inventory_cli_uses_variables_and_secret_names",
+                    "cli_uses_github_repo_inventory_for_live_probe_handoff",
+                    "empty_local_overlay_does_not_mask_github_inventory",
                 ],
-                "team_ops_shared_inbox_handoff_blocks_default_as_evidence": [
-                    "team_ops_shared_inbox_operator_handoff_rejects_default_as_evidence_drift",
+                "durable_gmail_oauth_blocks_case_insensitive_secret_markers": [
+                    "parse_github_variable_list_rejects_uppercase_secret_marker",
+                    "runtime_preflight_detects_uppercase_secret_marker_leakage",
+                    "runtime_preflight_writer_rejects_uppercase_secret_marker",
+                    "handoff_rejects_uppercase_secret_shaped_approval_ref",
                 ],
-                "team_ops_shared_inbox_handoff_requires_live_probe_authority": [
-                    "team_ops_operator_approval_allows_provider_setup_not_live_probe",
-                    "team_ops_shared_inbox_operator_handoff_rejects_live_probe_drift",
+                "durable_gmail_oauth_routes_witness_refs_as_variables": [
+                    "runtime_bindings_route_secrets_and_witness_refs_separately",
+                    "durable_gmail_oauth_operator_handoff_rejects_binding_command_drift",
                 ],
-                "team_ops_shared_inbox_handoff_redacts_secret_markers": [
-                    "team_ops_handoff_rejects_secret_shaped_approval_ref",
-                    "team_ops_writer_and_cli_emit_redacted_blocked_packet",
-                    "team_ops_shared_inbox_operator_handoff_rejects_secret_marker",
+                "durable_gmail_oauth_rejects_secret_markers_in_readable_signals": [
+                    "non_secret_runtime_signal_with_secret_marker_fails_closed",
+                    "durable_gmail_oauth_operator_handoff_rejects_secret_marker",
                 ],
-                "team_ops_shared_inbox_handoff_accepts_ready_probe": [
-                    "team_ops_presence_only_secret_inventory_admits_live_probe_with_approval",
-                    "team_ops_shared_inbox_operator_handoff_accepts_ready_packet",
-                ],
-                "team_ops_shared_inbox_handoff_blocks_external_message_drift": [
-                    "team_ops_shared_inbox_operator_handoff_rejects_external_message_drift",
-                ],
-                "team_ops_shared_inbox_handoff_writes_validation_receipt": [
-                    "team_ops_shared_inbox_operator_handoff_cli_writes_validation",
+                "durable_gmail_oauth_validates_repository_slug": [
+                    "handoff_rejects_malformed_repository_slug",
                 ],
             },
         ),
@@ -6637,11 +6641,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         _surface(
             "operational_math_loop",
             [
+                "/api/v1/dashboard/operational-math",
                 "OperationalMathLoopEngine.apply_all",
                 "mcoi_runtime.app.operational_math_cli",
                 "mcoi_runtime.app.operational_math_observability",
                 "OperationalMathReceiptStore",
-                "/api/v1/dashboard/operational-math",
             ],
             "request_proof",
             "action_proof",
@@ -6654,6 +6658,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/persistence/operational_math_receipt_store.py",
                 "mcoi/mcoi_runtime/app/operational_math_cli.py",
                 "mcoi/mcoi_runtime/app/operational_math_observability.py",
+                "mcoi/mcoi_runtime/app/routers/ops/summaries.py",
                 "mcoi/mcoi_runtime/app/server.py",
                 "mcoi/tests/test_operational_math_loop.py",
                 "mcoi/tests/test_operational_math_cli.py",
@@ -6680,7 +6685,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "registers_operational_math_observability_source",
                 "registers_operational_math_store_observability_source",
                 "server_wires_operational_math_store_into_dashboard",
-                "operational_math_dashboard_route_exposes_read_only_projection",
             ],
         ),
         _surface(
@@ -6986,6 +6990,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         {
             "action_id": "classify_gateway_capability_admission_routes",
             "surfaces": ["gateway_capability_fabric", "capability_worker_execution", "trust_ledger"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_local_assurance_refresh_contract",
+            "surfaces": ["local_assurance_refresh"],
             "status": "closed",
         },
         {
@@ -7335,11 +7344,6 @@ def proof_coverage_matrix() -> dict[str, Any]:
         },
         {
             "action_id": "publish_durable_gmail_oauth_operator_handoff_contract",
-            "surfaces": ["governed_connector_framework"],
-            "status": "closed",
-        },
-        {
-            "action_id": "publish_team_ops_shared_inbox_operator_handoff_contract",
             "surfaces": ["governed_connector_framework"],
             "status": "closed",
         },

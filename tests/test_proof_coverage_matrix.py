@@ -78,6 +78,30 @@ def test_coverage_summary_matches_surfaces() -> None:
     assert summary["by_coverage_state"]["witnessed"] >= 1
 
 
+def test_local_assurance_refresh_surface_covers_blocked_evidence_refresh() -> None:
+    matrix = _load_fixture()
+    surfaces = {surface["surface_id"]: surface for surface in matrix["surfaces"]}
+    witness_surfaces = {
+        surface["surface_id"]: surface
+        for surface in matrix["witness_integrity"]["surfaces"]
+    }
+    closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
+    surface = surfaces["local_assurance_refresh"]
+    witnesses = set(surface["runtime_witnesses"])
+
+    assert surface["coverage_state"] == "witnessed"
+    assert "refresh_local_assurance.run_refresh" in surface["representative_paths"]
+    assert "scripts/refresh_local_assurance.py" in surface["evidence_files"]
+    assert "tests/test_refresh_local_assurance.py" in surface["evidence_files"]
+    assert "local_assurance_refresh_includes_durable_gmail_receipts" in witnesses
+    assert "local_assurance_dry_run_does_not_execute" in witnesses
+    assert "local_assurance_stops_on_first_failure" in witnesses
+    assert "workspace_preflight_includes_local_assurance_plan" in witnesses
+    assert witness_surfaces["local_assurance_refresh"]["exact_test_anchor_count"] == 4
+    assert witness_surfaces["local_assurance_refresh"]["unanchored_witness_count"] == 0
+    assert closure_actions["publish_local_assurance_refresh_contract"]["status"] == "closed"
+
+
 def test_evidence_quality_report_tracks_witness_strength_gaps() -> None:
     matrix = _load_fixture()
     evidence_quality = matrix["evidence_quality"]
@@ -126,15 +150,17 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["policy_version_registry"]["unanchored_witness_count"] == 0
     assert surfaces["pilot_provisioning"]["unanchored_witness_count"] == 0
     assert surfaces["hosted_demo_sandbox"]["unanchored_witness_count"] == 0
+    assert surfaces["local_assurance_refresh"]["exact_test_anchor_count"] == 4
+    assert surfaces["local_assurance_refresh"]["unanchored_witness_count"] == 0
     assert surfaces["replay_determinism"]["unanchored_witness_count"] == 0
     assert surfaces["governed_session"]["unanchored_witness_count"] == 0
     assert surfaces["lineage_query_api"]["unanchored_witness_count"] == 0
     assert surfaces["physical_action_boundary"]["unanchored_witness_count"] == 0
     assert surfaces["cost_budget_read_models"]["exact_test_anchor_count"] == 6
     assert surfaces["cost_budget_read_models"]["unanchored_witness_count"] == 0
-    assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 8
+    assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 5
     assert surfaces["assistant_kernel_planning"]["unanchored_witness_count"] == 0
-    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 14
+    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 13
     assert surfaces["operator_console_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["model_experiment_control"]["exact_test_anchor_count"] == 7
     assert surfaces["model_experiment_control"]["unanchored_witness_count"] == 0
@@ -156,7 +182,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["runtime_state_persistence_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["multi_agent_coordination_runtime"]["exact_test_anchor_count"] == 8
     assert surfaces["multi_agent_coordination_runtime"]["unanchored_witness_count"] == 0
-    assert surfaces["governed_connector_framework"]["exact_test_anchor_count"] == 19
+    assert surfaces["governed_connector_framework"]["exact_test_anchor_count"] == 17
     assert surfaces["governed_connector_framework"]["unanchored_witness_count"] == 0
     assert surfaces["governed_background_scheduler"]["exact_test_anchor_count"] == 6
     assert surfaces["governed_background_scheduler"]["unanchored_witness_count"] == 0
@@ -231,7 +257,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["tool_permission_registry"]["unanchored_witness_count"] == 0
     assert surfaces["tool_permission_registry"]["exact_test_anchor_count"] == 11
     assert surfaces["gateway_capability_fabric"]["unanchored_witness_count"] == 0
-    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 17
+    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 15
     assert surfaces["capability_worker_execution"]["unanchored_witness_count"] == 0
     assert surfaces["capability_worker_execution"]["exact_test_anchor_count"] == 7
     assert surfaces["capability_plan_evidence_bundle"]["unanchored_witness_count"] == 0
@@ -644,10 +670,6 @@ def test_representative_routes_are_not_unclassified() -> None:
         classified_routes["/capability-fabric/capsule-admission-receipts"]["surface_id"]
         == "gateway_capability_fabric"
     )
-    assert (
-        classified_routes["/commands/{command_id}/interpretation-receipt"]["surface_id"]
-        == "gateway_capability_fabric"
-    )
     assert classified_routes["/commands/{command_id}/capability-admission"]["surface_id"] == "gateway_capability_fabric"
     assert classified_routes["/commands/{command_id}/authority"]["surface_id"] == "authority_obligation_mesh"
     assert classified_routes["/capability/execute"]["surface_id"] == "capability_worker_execution"
@@ -746,9 +768,7 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/deploy/readiness"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/release/latest"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/snapshot"]["surface_id"] == "operational_health_read_models"
-    assert classified_routes["/api/v1/dashboard/operational-math"]["surface_id"] == "operational_math_loop"
     assert classified_routes["/api/v1/console/shadow"]["surface_id"] == "operator_console_read_models"
-    assert classified_routes["/api/v1/console/whqr/clarifications"]["surface_id"] == "operator_console_read_models"
     assert classified_routes["/api/v1/console/spatial-map"]["surface_id"] == "operator_console_read_models"
     assert classified_routes["/api/v1/console/spatial-map/view"]["surface_id"] == "operator_console_read_models"
     assert classified_routes["/api/v1/orchestration"]["surface_id"] == "agent_orchestration_lifecycle"
@@ -1450,7 +1470,6 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "/capability-fabric/admission-audits" in gateway_surface["representative_paths"]
     assert "/capability-fabric/capsule-admissions" in gateway_surface["representative_paths"]
     assert "/capability-fabric/capsule-admission-receipts" in gateway_surface["representative_paths"]
-    assert "/commands/{command_id}/interpretation-receipt" in gateway_surface["representative_paths"]
     assert "/commands/{command_id}/closure" in gateway_surface["representative_paths"]
     assert "/commands/{command_id}/capability-admission" in gateway_surface["representative_paths"]
     assert "/commands/{command_id}/universal-action-proof" in gateway_surface["representative_paths"]
@@ -1469,8 +1488,6 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "command_lifecycle_events_are_hash_linked" in witnesses
     assert "terminal_closure_requires_evidence_refs" in witnesses
     assert "successful_response_is_bound_to_response_evidence_closure" in witnesses
-    assert "command_interpretation_receipt_read_model_bounds_raw_message" in witnesses
-    assert "command_interpretation_receipt_requires_operator_authority" in witnesses
     assert "universal_action_proof_replays_from_command_events" in witnesses
     assert "universal_action_orchestration_replays_from_command_events" in witnesses
     assert "operator_universal_action_read_model_filters_command_proofs" in witnesses
@@ -2737,11 +2754,6 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert "scripts/validate_durable_gmail_oauth_operator_handoff.py" in connector_surface["evidence_files"]
     assert "tests/test_produce_durable_gmail_oauth_operator_handoff.py" in connector_surface["evidence_files"]
     assert "tests/test_validate_durable_gmail_oauth_operator_handoff.py" in connector_surface["evidence_files"]
-    assert "schemas/team_ops_shared_inbox_operator_handoff.schema.json" in connector_surface["evidence_files"]
-    assert "scripts/produce_team_ops_shared_inbox_operator_handoff.py" in connector_surface["evidence_files"]
-    assert "scripts/validate_team_ops_shared_inbox_operator_handoff.py" in connector_surface["evidence_files"]
-    assert "tests/test_produce_team_ops_shared_inbox_operator_handoff.py" in connector_surface["evidence_files"]
-    assert "tests/test_validate_team_ops_shared_inbox_operator_handoff.py" in connector_surface["evidence_files"]
     assert "connector_registration_typed" in witnesses
     assert "connector_invocation_guard_chain_checked" in witnesses
     assert "connector_lifecycle_disable_enable_bounded" in witnesses
@@ -2754,14 +2766,12 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert "durable_gmail_oauth_handoff_redacts_secret_markers" in witnesses
     assert "durable_gmail_oauth_handoff_accepts_ready_probe" in witnesses
     assert "durable_gmail_oauth_handoff_writes_validation_receipt" in witnesses
-    assert "team_ops_shared_inbox_handoff_blocks_until_authority" in witnesses
-    assert "team_ops_shared_inbox_handoff_blocks_default_as_evidence" in witnesses
-    assert "team_ops_shared_inbox_handoff_requires_live_probe_authority" in witnesses
-    assert "team_ops_shared_inbox_handoff_redacts_secret_markers" in witnesses
-    assert "team_ops_shared_inbox_handoff_accepts_ready_probe" in witnesses
-    assert "team_ops_shared_inbox_handoff_blocks_external_message_drift" in witnesses
-    assert "team_ops_shared_inbox_handoff_writes_validation_receipt" in witnesses
-    assert connector_witness_surface["exact_test_anchor_count"] == 19
+    assert "durable_gmail_oauth_uses_github_repo_inventory" in witnesses
+    assert "durable_gmail_oauth_blocks_case_insensitive_secret_markers" in witnesses
+    assert "durable_gmail_oauth_routes_witness_refs_as_variables" in witnesses
+    assert "durable_gmail_oauth_rejects_secret_markers_in_readable_signals" in witnesses
+    assert "durable_gmail_oauth_validates_repository_slug" in witnesses
+    assert connector_witness_surface["exact_test_anchor_count"] == 17
     assert connector_witness_surface["unanchored_witness_count"] == 0
     assert route_records["/api/v1/connectors/register"]["coverage_state"] == "proven"
     assert route_records["/api/v1/connectors/register"]["surface_id"] == "governed_connector_framework"
@@ -2769,7 +2779,6 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert route_records["/api/v1/connectors/invoke"]["surface_id"] == "governed_connector_framework"
     assert closure_actions["classify_governed_connector_routes"]["status"] == "closed"
     assert closure_actions["publish_durable_gmail_oauth_operator_handoff_contract"]["status"] == "closed"
-    assert closure_actions["publish_team_ops_shared_inbox_operator_handoff_contract"]["status"] == "closed"
 
 
 def test_governed_background_scheduler_surface_gates_job_lifecycle() -> None:
@@ -3034,10 +3043,6 @@ def test_operational_math_loop_surface_anchors_receipts_and_projection() -> None
     closure_actions = {action["action_id"]: action for action in matrix["closure_actions"]}
     math_surface = surfaces["operational_math_loop"]
     witnesses = set(math_surface["runtime_witnesses"])
-    route_records = {
-        record["route"]: record
-        for record in matrix["route_coverage"]["routes"]
-    }
 
     assert math_surface["coverage_state"] == "witnessed"
     assert math_surface["request_proof"] == "request_proof"
@@ -3045,7 +3050,6 @@ def test_operational_math_loop_surface_anchors_receipts_and_projection() -> None
     assert "OperationalMathLoopEngine.apply_all" in math_surface["representative_paths"]
     assert "mcoi_runtime.app.operational_math_cli" in math_surface["representative_paths"]
     assert "OperationalMathReceiptStore" in math_surface["representative_paths"]
-    assert "/api/v1/dashboard/operational-math" in math_surface["representative_paths"]
     assert "docs/operational_math_loop.md" in math_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/contracts/operational_math.py" in math_surface["evidence_files"]
     assert "mcoi/mcoi_runtime/core/operational_math_loop.py" in math_surface["evidence_files"]
@@ -3057,7 +3061,6 @@ def test_operational_math_loop_surface_anchors_receipts_and_projection() -> None
     assert "mcoi/tests/test_operational_math_cli.py" in math_surface["evidence_files"]
     assert "mcoi/tests/test_operational_math_receipt_store.py" in math_surface["evidence_files"]
     assert "mcoi/tests/test_operational_math_observability.py" in math_surface["evidence_files"]
-    assert "mcoi/tests/test_operational_math_dashboard_router.py" in math_surface["evidence_files"]
     assert "operational_math_loop_applies_all_audit_principles" in witnesses
     assert "operational_math_loop_stops_at_iteration_budget_with_open_gaps" in witnesses
     assert "operational_math_cli_writes_dashboard_projection" in witnesses
@@ -3065,10 +3068,7 @@ def test_operational_math_loop_surface_anchors_receipts_and_projection() -> None
     assert "memory_store_appends_queries_and_summarizes_receipts" in witnesses
     assert "file_store_persists_and_reloads_receipts" in witnesses
     assert "server_wires_operational_math_store_into_dashboard" in witnesses
-    assert "operational_math_dashboard_route_exposes_read_only_projection" in witnesses
     assert "summary_marks_incomplete_receipt_for_review" in witnesses
-    assert route_records["/api/v1/dashboard/operational-math"]["coverage_state"] == "witnessed"
-    assert route_records["/api/v1/dashboard/operational-math"]["surface_id"] == "operational_math_loop"
     assert "append-only JSON receipt stores" in math_surface["notes"]
     assert closure_actions["anchor_operational_math_loop_receipts_and_projection"]["status"] == "closed"
 

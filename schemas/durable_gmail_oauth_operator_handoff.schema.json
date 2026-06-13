@@ -54,7 +54,7 @@
     },
     "repository": {
       "type": "string",
-      "minLength": 1
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
     },
     "connector_id": {
       "type": "string",
@@ -101,6 +101,8 @@
     "recommended_runtime_defaults": {
       "type": "array",
       "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
       "items": {
         "$ref": "#/$defs/recommended_runtime_default"
       }
@@ -112,6 +114,8 @@
     "provider_console_actions": {
       "type": "array",
       "minItems": 8,
+      "maxItems": 8,
+      "uniqueItems": true,
       "items": {
         "$ref": "#/$defs/provider_console_action"
       }
@@ -119,6 +123,8 @@
     "runtime_bindings": {
       "type": "array",
       "minItems": 13,
+      "maxItems": 13,
+      "uniqueItems": true,
       "items": {
         "$ref": "#/$defs/runtime_binding"
       }
@@ -226,7 +232,16 @@
       "properties": {
         "action_id": {
           "type": "string",
-          "minLength": 1
+          "enum": [
+            "complete_operator_consent_for_refresh_token",
+            "configure_oauth_consent_screen",
+            "create_oauth_client_without_secret_serialization",
+            "declare_least_privilege_gmail_scope",
+            "record_revocation_recovery_receipt",
+            "run_durable_gmail_runtime_preflight",
+            "select_google_cloud_project",
+            "store_runtime_secrets_by_reference"
+          ]
         },
         "effect_boundary": {
           "type": "string",
@@ -243,13 +258,27 @@
       "required": [
         "name",
         "classification",
-        "secret_store_command",
+        "store_command",
         "value_must_not_be_committed"
       ],
       "properties": {
         "name": {
           "type": "string",
-          "minLength": 1
+          "enum": [
+            "EMAIL_CALENDAR_CONNECTOR_ID",
+            "EMAIL_CALENDAR_CONNECTOR_SCOPE_ID",
+            "GMAIL_OAUTH_CLIENT_ID",
+            "GMAIL_OAUTH_CLIENT_SECRET",
+            "GMAIL_REFRESH_TOKEN",
+            "GMAIL_SCOPE_ID",
+            "MULLU_EMAIL_CALENDAR_WORKER_ADAPTER",
+            "MULLU_GMAIL_CONNECTOR_OPERATION_FAMILY",
+            "MULLU_GMAIL_LEAST_PRIVILEGE_SCOPE_RECEIPT_REF",
+            "MULLU_GMAIL_OAUTH_CLIENT_WITNESS_REF",
+            "MULLU_GMAIL_OAUTH_CONSENT_WITNESS_REF",
+            "MULLU_GMAIL_REFRESH_TOKEN_STORAGE_RECEIPT_REF",
+            "MULLU_GMAIL_REVOCATION_RECOVERY_RECEIPT_REF"
+          ]
         },
         "classification": {
           "type": "string",
@@ -259,7 +288,7 @@
             "witness_ref"
           ]
         },
-        "secret_store_command": {
+        "store_command": {
           "type": "string"
         },
         "value_must_not_be_committed": {

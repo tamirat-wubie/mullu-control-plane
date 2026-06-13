@@ -55,6 +55,13 @@
       ]
     },
     {
+      "action_id": "publish_local_assurance_refresh_contract",
+      "status": "closed",
+      "surfaces": [
+        "local_assurance_refresh"
+      ]
+    },
+    {
       "action_id": "bound_authority_read_models_to_paginated_windows",
       "status": "closed",
       "surfaces": [
@@ -552,13 +559,6 @@
       ]
     },
     {
-      "action_id": "publish_team_ops_shared_inbox_operator_handoff_contract",
-      "status": "closed",
-      "surfaces": [
-        "governed_connector_framework"
-      ]
-    },
-    {
       "action_id": "classify_governed_scheduler_routes",
       "status": "closed",
       "surfaces": [
@@ -867,7 +867,7 @@
   ],
   "coverage_summary": {
     "by_action_proof": {
-      "action_proof": 103,
+      "action_proof": 104,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 16,
@@ -875,7 +875,7 @@
     },
     "by_audit": {
       "action_proof": 0,
-      "audit_chain": 118,
+      "audit_chain": 119,
       "gap": 0,
       "read_model": 3,
       "request_proof": 0
@@ -883,21 +883,21 @@
     "by_coverage_state": {
       "proven": 38,
       "unproven": 0,
-      "witnessed": 83
+      "witnessed": 84
     },
     "by_request_proof": {
       "action_proof": 1,
       "audit_chain": 0,
       "gap": 0,
       "read_model": 18,
-      "request_proof": 102
+      "request_proof": 103
     },
-    "surface_count": 121
+    "surface_count": 122
   },
   "evidence_quality": {
     "by_strength": {
       "classified_with_quality_gaps": 0,
-      "strong": 121,
+      "strong": 122,
       "unproven": 0
     },
     "quality_gap_count": 0,
@@ -3025,18 +3025,18 @@
         "tests/test_gateway/test_webhooks.py",
         "tests/test_governed_capability_fabric.py"
       ],
-      "notes": "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
+      "notes": "Gateway command admission, request receipt envelopes, terminal closure, universal action proof replay, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
       "representative_paths": [
         "/webhook/*",
         "/capability-fabric/read-model",
         "/capability-fabric/admission-audits",
         "/capability-fabric/capsule-admissions",
         "/capability-fabric/capsule-admission-receipts",
-        "/commands/{command_id}/interpretation-receipt",
         "/commands/{command_id}/closure",
         "/commands/{command_id}/capability-admission",
         "/commands/{command_id}/universal-action-proof",
         "/commands/{command_id}/universal-action-orchestration",
+        "/commands/{command_id}/interpretation-receipt",
         "/operator/universal-actions/read-model",
         "/operator/universal-actions",
         "DomainCapsuleCompiler.compile",
@@ -3055,12 +3055,6 @@
         ],
         "capsule_installer_stamps_admission_receipt": [
           "capsule_installer_admits_certified_handoff_batch_with_receipt"
-        ],
-        "command_interpretation_receipt_read_model_bounds_raw_message": [
-          "command_interpretation_receipt_read_model_bounds_raw_message"
-        ],
-        "command_interpretation_receipt_requires_operator_authority": [
-          "command_interpretation_receipt_requires_operator_authority_in_production"
         ],
         "command_lifecycle_events_are_hash_linked": [
           "command_closure_read_model"
@@ -3101,8 +3095,6 @@
         "command_lifecycle_events_are_hash_linked",
         "terminal_closure_requires_evidence_refs",
         "successful_response_is_bound_to_response_evidence_closure",
-        "command_interpretation_receipt_read_model_bounds_raw_message",
-        "command_interpretation_receipt_requires_operator_authority",
         "universal_action_proof_replays_from_command_events",
         "universal_action_runtime_record_exports_contract_shape",
         "universal_action_orchestration_replays_from_command_events",
@@ -3117,6 +3109,45 @@
         "physical_capsule_admission_runs_promotion_preflight"
       ],
       "surface_id": "gateway_capability_fabric"
+    },
+    {
+      "action_proof": "action_proof",
+      "audit": "audit_chain",
+      "coverage_state": "witnessed",
+      "evidence_files": [
+        "scripts/refresh_local_assurance.py",
+        "scripts/run_workspace_governance_checks.py",
+        "tests/test_refresh_local_assurance.py",
+        "tests/test_run_workspace_governance_checks.py"
+      ],
+      "notes": "Local assurance refresh regenerates deterministic no-secret evidence receipts, including blocked durable Gmail OAuth handoff and preflight receipts, exposes dry-run command receipts, and remains part of the workspace governance preflight plan.",
+      "representative_paths": [
+        "refresh_local_assurance.run_refresh",
+        "refresh_local_assurance.LOCAL_ASSURANCE_STEPS",
+        "run_workspace_governance_checks.local_assurance_plan"
+      ],
+      "request_proof": "request_proof",
+      "runtime_witness_anchor_aliases": {
+        "local_assurance_dry_run_does_not_execute": [
+          "dry_run_returns_step_receipts_without_invoking_runner"
+        ],
+        "local_assurance_refresh_includes_durable_gmail_receipts": [
+          "default_refresh_steps_cover_local_assurance_surfaces"
+        ],
+        "local_assurance_stops_on_first_failure": [
+          "runner_injection_stops_on_first_failure"
+        ],
+        "workspace_preflight_includes_local_assurance_plan": [
+          "build_check_commands_are_ordered_and_repo_local"
+        ]
+      },
+      "runtime_witnesses": [
+        "local_assurance_refresh_includes_durable_gmail_receipts",
+        "local_assurance_dry_run_does_not_execute",
+        "local_assurance_stops_on_first_failure",
+        "workspace_preflight_includes_local_assurance_plan"
+      ],
+      "surface_id": "local_assurance_refresh"
     },
     {
       "action_proof": "action_proof",
@@ -3446,7 +3477,7 @@
         "mcoi/tests/test_assistant_router.py",
         "tests/test_assistant_kernel.py"
       ],
-      "notes": "Assistant kernel routes expose governed profile read models and compile FinanceOps and TeamOps plans with consent, approval, idempotency, effect reconciliation, and closure controls without executing external effects.",
+      "notes": "Assistant kernel routes expose governed profile read models and compile FinanceOps plans with consent, approval, idempotency, effect reconciliation, and closure controls without executing external effects.",
       "representative_paths": [
         "/api/v1/assistant/profiles",
         "/api/v1/assistant/finance-ops/plans",
@@ -3459,9 +3490,7 @@
         ],
         "assistant_plan_never_grants_execution_authority": [
           "finance_ops_plan_with_consent_projects_dispatch_ready_controls",
-          "finance_ops_plan_blocks_without_active_payment_consent",
-          "team_ops_plan_with_consent_projects_dispatch_ready_controls",
-          "team_ops_plan_blocks_without_active_external_send_consent"
+          "finance_ops_plan_blocks_without_active_payment_consent"
         ],
         "assistant_profiles_read_model_bounded": [
           "assistant_profiles_read_model_exposes_finance_ops_profile"
@@ -3471,27 +3500,14 @@
         ],
         "finance_ops_plan_requires_active_consent": [
           "finance_ops_plan_blocks_without_active_payment_consent"
-        ],
-        "team_ops_plan_errors_sanitized": [
-          "team_ops_plan_error_detail_is_bounded",
-          "invalid_team_ops_plan_fails_closed"
-        ],
-        "team_ops_plan_projects_operator_queue": [
-          "team_ops_plan_with_consent_projects_dispatch_ready_controls"
-        ],
-        "team_ops_plan_requires_active_external_send_consent": [
-          "team_ops_plan_blocks_without_active_external_send_consent"
         ]
       },
       "runtime_witnesses": [
         "assistant_profiles_read_model_bounded",
         "finance_ops_plan_requires_active_consent",
         "finance_ops_plan_projects_operator_queue",
-        "team_ops_plan_requires_active_external_send_consent",
-        "team_ops_plan_projects_operator_queue",
         "assistant_plan_never_grants_execution_authority",
-        "assistant_plan_errors_sanitized",
-        "team_ops_plan_errors_sanitized"
+        "assistant_plan_errors_sanitized"
       ],
       "surface_id": "assistant_kernel_planning"
     },
@@ -4127,7 +4143,7 @@
         "mcoi/tests/test_console.py",
         "mcoi/tests/test_inceptadive_shadow_routes.py"
       ],
-      "notes": "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, WHQR clarification, spatial governance panels, HTML views, and aggregate views with governed response witnesses.",
+      "notes": "Operator console routes expose bounded read-only runtime, audit, checkpoint, provider, scheduler, shadow posture, note-memory, spatial governance panels, HTML views, and aggregate views with governed response witnesses.",
       "representative_paths": [
         "/api/v1/console",
         "/api/v1/console/home",
@@ -4137,9 +4153,9 @@
         "/api/v1/console/providers",
         "/api/v1/console/scheduler",
         "/api/v1/console/shadow",
+        "/api/v1/console/whqr/clarifications",
         "/api/v1/console/note-memory",
         "/api/v1/console/note-memory/view",
-        "/api/v1/console/whqr/clarifications",
         "/api/v1/console/spatial-map",
         "/api/v1/console/spatial-map/view"
       ],
@@ -4177,11 +4193,9 @@
         "console_spatial_map_returns_panel_read_model": [
           "console_spatial_map_panel_read_model"
         ],
-        "console_whqr_clarifications_rejects_malformed_replay_metadata": [
+        "console_whqr_clarifications_return_bounded_read_model": [
+          "console_whqr_clarifications_returns_active_job_status",
           "console_whqr_clarifications_rejects_malformed_replay_metadata"
-        ],
-        "console_whqr_clarifications_returns_active_job_status": [
-          "console_whqr_clarifications_returns_active_job_status"
         ],
         "full_console_includes_spatial_map_read_model": [
           "full_console"
@@ -4200,11 +4214,10 @@
         "console_note_memory_returns_read_only_lifecycle_summary",
         "console_note_memory_html_escapes_read_model",
         "console_note_memory_fails_closed_without_store_path",
-        "console_whqr_clarifications_returns_active_job_status",
-        "console_whqr_clarifications_rejects_malformed_replay_metadata",
         "full_console_includes_spatial_map_read_model",
         "console_spatial_map_returns_panel_read_model",
-        "console_spatial_map_html_renders_blockers"
+        "console_spatial_map_html_renders_blockers",
+        "console_whqr_clarifications_return_bounded_read_model"
       ],
       "surface_id": "operator_console_read_models"
     },
@@ -7309,14 +7322,9 @@
         "scripts/produce_durable_gmail_oauth_operator_handoff.py",
         "scripts/validate_durable_gmail_oauth_operator_handoff.py",
         "tests/test_produce_durable_gmail_oauth_operator_handoff.py",
-        "tests/test_validate_durable_gmail_oauth_operator_handoff.py",
-        "schemas/team_ops_shared_inbox_operator_handoff.schema.json",
-        "scripts/produce_team_ops_shared_inbox_operator_handoff.py",
-        "scripts/validate_team_ops_shared_inbox_operator_handoff.py",
-        "tests/test_produce_team_ops_shared_inbox_operator_handoff.py",
-        "tests/test_validate_team_ops_shared_inbox_operator_handoff.py"
+        "tests/test_validate_durable_gmail_oauth_operator_handoff.py"
       ],
-      "notes": "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, and bind durable Gmail OAuth plus TeamOps shared inbox handoff evidence to schema-backed operator authority before live probe promotion.",
+      "notes": "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, and bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion.",
       "representative_paths": [
         "/api/v1/connectors",
         "/api/v1/connectors/history",
@@ -7358,6 +7366,12 @@
           "register_connector_endpoint",
           "invalid_connector_type"
         ],
+        "durable_gmail_oauth_blocks_case_insensitive_secret_markers": [
+          "parse_github_variable_list_rejects_uppercase_secret_marker",
+          "runtime_preflight_detects_uppercase_secret_marker_leakage",
+          "runtime_preflight_writer_rejects_uppercase_secret_marker",
+          "handoff_rejects_uppercase_secret_shaped_approval_ref"
+        ],
         "durable_gmail_oauth_handoff_accepts_ready_probe": [
           "presence_only_secret_inventory_admits_live_probe_with_approval",
           "durable_gmail_oauth_operator_handoff_accepts_ready_packet"
@@ -7371,8 +7385,10 @@
         ],
         "durable_gmail_oauth_handoff_redacts_secret_markers": [
           "handoff_rejects_secret_shaped_approval_ref",
+          "handoff_rejects_uppercase_secret_shaped_approval_ref",
           "writer_and_cli_emit_redacted_blocked_packet",
-          "durable_gmail_oauth_operator_handoff_rejects_secret_marker"
+          "durable_gmail_oauth_operator_handoff_rejects_secret_marker",
+          "runtime_preflight_writer_rejects_uppercase_secret_marker"
         ],
         "durable_gmail_oauth_handoff_requires_live_probe_authority": [
           "operator_approval_allows_provider_setup_not_live_probe",
@@ -7381,31 +7397,21 @@
         "durable_gmail_oauth_handoff_writes_validation_receipt": [
           "durable_gmail_oauth_operator_handoff_cli_writes_validation"
         ],
-        "team_ops_shared_inbox_handoff_accepts_ready_probe": [
-          "team_ops_presence_only_secret_inventory_admits_live_probe_with_approval",
-          "team_ops_shared_inbox_operator_handoff_accepts_ready_packet"
+        "durable_gmail_oauth_rejects_secret_markers_in_readable_signals": [
+          "non_secret_runtime_signal_with_secret_marker_fails_closed",
+          "durable_gmail_oauth_operator_handoff_rejects_secret_marker"
         ],
-        "team_ops_shared_inbox_handoff_blocks_default_as_evidence": [
-          "team_ops_shared_inbox_operator_handoff_rejects_default_as_evidence_drift"
+        "durable_gmail_oauth_routes_witness_refs_as_variables": [
+          "runtime_bindings_route_secrets_and_witness_refs_separately",
+          "durable_gmail_oauth_operator_handoff_rejects_binding_command_drift"
         ],
-        "team_ops_shared_inbox_handoff_blocks_external_message_drift": [
-          "team_ops_shared_inbox_operator_handoff_rejects_external_message_drift"
+        "durable_gmail_oauth_uses_github_repo_inventory": [
+          "github_repo_inventory_cli_uses_variables_and_secret_names",
+          "cli_uses_github_repo_inventory_for_live_probe_handoff",
+          "empty_local_overlay_does_not_mask_github_inventory"
         ],
-        "team_ops_shared_inbox_handoff_blocks_until_authority": [
-          "team_ops_default_handoff_waits_for_operator_authority_and_redacts_values",
-          "team_ops_shared_inbox_operator_handoff_accepts_blocked_packet"
-        ],
-        "team_ops_shared_inbox_handoff_redacts_secret_markers": [
-          "team_ops_handoff_rejects_secret_shaped_approval_ref",
-          "team_ops_writer_and_cli_emit_redacted_blocked_packet",
-          "team_ops_shared_inbox_operator_handoff_rejects_secret_marker"
-        ],
-        "team_ops_shared_inbox_handoff_requires_live_probe_authority": [
-          "team_ops_operator_approval_allows_provider_setup_not_live_probe",
-          "team_ops_shared_inbox_operator_handoff_rejects_live_probe_drift"
-        ],
-        "team_ops_shared_inbox_handoff_writes_validation_receipt": [
-          "team_ops_shared_inbox_operator_handoff_cli_writes_validation"
+        "durable_gmail_oauth_validates_repository_slug": [
+          "handoff_rejects_malformed_repository_slug"
         ]
       },
       "runtime_witnesses": [
@@ -7421,13 +7427,11 @@
         "durable_gmail_oauth_handoff_redacts_secret_markers",
         "durable_gmail_oauth_handoff_accepts_ready_probe",
         "durable_gmail_oauth_handoff_writes_validation_receipt",
-        "team_ops_shared_inbox_handoff_blocks_until_authority",
-        "team_ops_shared_inbox_handoff_blocks_default_as_evidence",
-        "team_ops_shared_inbox_handoff_requires_live_probe_authority",
-        "team_ops_shared_inbox_handoff_redacts_secret_markers",
-        "team_ops_shared_inbox_handoff_accepts_ready_probe",
-        "team_ops_shared_inbox_handoff_blocks_external_message_drift",
-        "team_ops_shared_inbox_handoff_writes_validation_receipt"
+        "durable_gmail_oauth_uses_github_repo_inventory",
+        "durable_gmail_oauth_blocks_case_insensitive_secret_markers",
+        "durable_gmail_oauth_routes_witness_refs_as_variables",
+        "durable_gmail_oauth_rejects_secret_markers_in_readable_signals",
+        "durable_gmail_oauth_validates_repository_slug"
       ],
       "surface_id": "governed_connector_framework"
     },
@@ -9816,6 +9820,7 @@
         "mcoi/mcoi_runtime/persistence/operational_math_receipt_store.py",
         "mcoi/mcoi_runtime/app/operational_math_cli.py",
         "mcoi/mcoi_runtime/app/operational_math_observability.py",
+        "mcoi/mcoi_runtime/app/routers/ops/summaries.py",
         "mcoi/mcoi_runtime/app/server.py",
         "mcoi/tests/test_operational_math_loop.py",
         "mcoi/tests/test_operational_math_cli.py",
@@ -9825,11 +9830,11 @@
       ],
       "notes": "Operational math converts the F1-F10 audit into bounded roles, controls, proof references, event-spine records, append-only JSON receipt stores, and dashboard-safe operator review projections without silent completion when unresolved principles remain.",
       "representative_paths": [
+        "/api/v1/dashboard/operational-math",
         "OperationalMathLoopEngine.apply_all",
         "mcoi_runtime.app.operational_math_cli",
         "mcoi_runtime.app.operational_math_observability",
-        "OperationalMathReceiptStore",
-        "/api/v1/dashboard/operational-math"
+        "OperationalMathReceiptStore"
       ],
       "request_proof": "request_proof",
       "runtime_witnesses": [
@@ -9844,8 +9849,7 @@
         "summary_marks_incomplete_receipt_for_review",
         "registers_operational_math_observability_source",
         "registers_operational_math_store_observability_source",
-        "server_wires_operational_math_store_into_dashboard",
-        "operational_math_dashboard_route_exposes_read_only_projection"
+        "server_wires_operational_math_store_into_dashboard"
       ],
       "surface_id": "operational_math_loop"
     },
@@ -10091,8 +10095,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1299,
-    "runtime_witness_count": 1299,
+    "exact_test_anchor_count": 1294,
+    "runtime_witness_count": 1294,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -10113,18 +10117,6 @@
               "tests/test_gateway/test_webhooks.py::test_command_closure_read_model"
             ],
             "witness": "successful_response_is_bound_to_response_evidence_closure"
-          },
-          {
-            "anchors": [
-              "tests/test_gateway/test_webhooks.py::test_command_interpretation_receipt_read_model_bounds_raw_message"
-            ],
-            "witness": "command_interpretation_receipt_read_model_bounds_raw_message"
-          },
-          {
-            "anchors": [
-              "tests/test_gateway/test_webhooks.py::test_command_interpretation_receipt_requires_operator_authority_in_production"
-            ],
-            "witness": "command_interpretation_receipt_requires_operator_authority"
           },
           {
             "anchors": [
@@ -10203,9 +10195,42 @@
             "witness": "physical_capsule_admission_runs_promotion_preflight"
           }
         ],
-        "exact_test_anchor_count": 17,
-        "runtime_witness_count": 17,
+        "exact_test_anchor_count": 15,
+        "runtime_witness_count": 15,
         "surface_id": "gateway_capability_fabric",
+        "unanchored_witness_count": 0,
+        "unanchored_witnesses": []
+      },
+      {
+        "anchored_witnesses": [
+          {
+            "anchors": [
+              "tests/test_refresh_local_assurance.py::test_default_refresh_steps_cover_local_assurance_surfaces"
+            ],
+            "witness": "local_assurance_refresh_includes_durable_gmail_receipts"
+          },
+          {
+            "anchors": [
+              "tests/test_refresh_local_assurance.py::test_dry_run_returns_step_receipts_without_invoking_runner"
+            ],
+            "witness": "local_assurance_dry_run_does_not_execute"
+          },
+          {
+            "anchors": [
+              "tests/test_refresh_local_assurance.py::test_runner_injection_stops_on_first_failure"
+            ],
+            "witness": "local_assurance_stops_on_first_failure"
+          },
+          {
+            "anchors": [
+              "tests/test_run_workspace_governance_checks.py::test_build_check_commands_are_ordered_and_repo_local"
+            ],
+            "witness": "workspace_preflight_includes_local_assurance_plan"
+          }
+        ],
+        "exact_test_anchor_count": 4,
+        "runtime_witness_count": 4,
+        "surface_id": "local_assurance_refresh",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
       },
@@ -10641,25 +10666,9 @@
           },
           {
             "anchors": [
-              "tests/test_assistant_kernel.py::test_team_ops_plan_requires_active_external_send_consent",
-              "mcoi/tests/test_assistant_router.py::test_team_ops_plan_blocks_without_active_external_send_consent"
-            ],
-            "witness": "team_ops_plan_requires_active_external_send_consent"
-          },
-          {
-            "anchors": [
-              "tests/test_assistant_kernel.py::test_team_ops_plan_projects_operator_queue",
-              "mcoi/tests/test_assistant_router.py::test_team_ops_plan_with_consent_projects_dispatch_ready_controls"
-            ],
-            "witness": "team_ops_plan_projects_operator_queue"
-          },
-          {
-            "anchors": [
               "tests/test_assistant_kernel.py::test_assistant_plan_never_grants_execution_authority",
               "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_with_consent_projects_dispatch_ready_controls",
-              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_blocks_without_active_payment_consent",
-              "mcoi/tests/test_assistant_router.py::test_team_ops_plan_with_consent_projects_dispatch_ready_controls",
-              "mcoi/tests/test_assistant_router.py::test_team_ops_plan_blocks_without_active_external_send_consent"
+              "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_blocks_without_active_payment_consent"
             ],
             "witness": "assistant_plan_never_grants_execution_authority"
           },
@@ -10669,18 +10678,10 @@
               "mcoi/tests/test_assistant_router.py::test_finance_ops_plan_error_detail_is_bounded"
             ],
             "witness": "assistant_plan_errors_sanitized"
-          },
-          {
-            "anchors": [
-              "tests/test_assistant_kernel.py::test_team_ops_plan_errors_sanitized",
-              "mcoi/tests/test_assistant_router.py::test_team_ops_plan_error_detail_is_bounded",
-              "mcoi/tests/test_assistant_router.py::test_invalid_team_ops_plan_fails_closed"
-            ],
-            "witness": "team_ops_plan_errors_sanitized"
           }
         ],
-        "exact_test_anchor_count": 8,
-        "runtime_witness_count": 8,
+        "exact_test_anchor_count": 5,
+        "runtime_witness_count": 5,
         "surface_id": "assistant_kernel_planning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
@@ -11618,18 +11619,6 @@
           },
           {
             "anchors": [
-              "mcoi/tests/test_operator_console.py::test_console_whqr_clarifications_returns_active_job_status"
-            ],
-            "witness": "console_whqr_clarifications_returns_active_job_status"
-          },
-          {
-            "anchors": [
-              "mcoi/tests/test_operator_console.py::test_console_whqr_clarifications_rejects_malformed_replay_metadata"
-            ],
-            "witness": "console_whqr_clarifications_rejects_malformed_replay_metadata"
-          },
-          {
-            "anchors": [
               "mcoi/tests/test_operator_console.py::test_full_console"
             ],
             "witness": "full_console_includes_spatial_map_read_model"
@@ -11645,10 +11634,17 @@
               "mcoi/tests/test_operator_console.py::test_console_spatial_map_html_view_renders_blockers"
             ],
             "witness": "console_spatial_map_html_renders_blockers"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_whqr_clarifications_returns_active_job_status",
+              "mcoi/tests/test_operator_console.py::test_console_whqr_clarifications_rejects_malformed_replay_metadata"
+            ],
+            "witness": "console_whqr_clarifications_return_bounded_read_model"
           }
         ],
-        "exact_test_anchor_count": 14,
-        "runtime_witness_count": 14,
+        "exact_test_anchor_count": 13,
+        "runtime_witness_count": 13,
         "surface_id": "operator_console_read_models",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
@@ -15631,6 +15627,7 @@
           {
             "anchors": [
               "tests/test_produce_durable_gmail_oauth_operator_handoff.py::test_handoff_rejects_secret_shaped_approval_ref",
+              "tests/test_produce_durable_gmail_oauth_operator_handoff.py::test_handoff_rejects_uppercase_secret_shaped_approval_ref",
               "tests/test_produce_durable_gmail_oauth_operator_handoff.py::test_writer_and_cli_emit_redacted_blocked_packet",
               "tests/test_validate_durable_gmail_oauth_operator_handoff.py::test_durable_gmail_oauth_operator_handoff_rejects_secret_marker"
             ],
@@ -15651,54 +15648,38 @@
           },
           {
             "anchors": [
-              "tests/test_produce_team_ops_shared_inbox_operator_handoff.py::test_team_ops_default_handoff_waits_for_operator_authority_and_redacts_values",
-              "tests/test_validate_team_ops_shared_inbox_operator_handoff.py::test_team_ops_shared_inbox_operator_handoff_accepts_blocked_packet"
+              "tests/test_produce_durable_gmail_oauth_operator_handoff.py::test_cli_uses_github_repo_inventory_for_live_probe_handoff"
             ],
-            "witness": "team_ops_shared_inbox_handoff_blocks_until_authority"
+            "witness": "durable_gmail_oauth_uses_github_repo_inventory"
           },
           {
             "anchors": [
-              "tests/test_validate_team_ops_shared_inbox_operator_handoff.py::test_team_ops_shared_inbox_operator_handoff_rejects_default_as_evidence_drift"
+              "tests/test_produce_durable_gmail_oauth_operator_handoff.py::test_handoff_rejects_uppercase_secret_shaped_approval_ref"
             ],
-            "witness": "team_ops_shared_inbox_handoff_blocks_default_as_evidence"
+            "witness": "durable_gmail_oauth_blocks_case_insensitive_secret_markers"
           },
           {
             "anchors": [
-              "tests/test_produce_team_ops_shared_inbox_operator_handoff.py::test_team_ops_operator_approval_allows_provider_setup_not_live_probe",
-              "tests/test_validate_team_ops_shared_inbox_operator_handoff.py::test_team_ops_shared_inbox_operator_handoff_rejects_live_probe_drift"
+              "tests/test_produce_durable_gmail_oauth_operator_handoff.py::test_runtime_bindings_route_secrets_and_witness_refs_separately",
+              "tests/test_validate_durable_gmail_oauth_operator_handoff.py::test_durable_gmail_oauth_operator_handoff_rejects_binding_command_drift"
             ],
-            "witness": "team_ops_shared_inbox_handoff_requires_live_probe_authority"
+            "witness": "durable_gmail_oauth_routes_witness_refs_as_variables"
           },
           {
             "anchors": [
-              "tests/test_produce_team_ops_shared_inbox_operator_handoff.py::test_team_ops_handoff_rejects_secret_shaped_approval_ref",
-              "tests/test_produce_team_ops_shared_inbox_operator_handoff.py::test_team_ops_writer_and_cli_emit_redacted_blocked_packet",
-              "tests/test_validate_team_ops_shared_inbox_operator_handoff.py::test_team_ops_shared_inbox_operator_handoff_rejects_secret_marker"
+              "tests/test_validate_durable_gmail_oauth_operator_handoff.py::test_durable_gmail_oauth_operator_handoff_rejects_secret_marker"
             ],
-            "witness": "team_ops_shared_inbox_handoff_redacts_secret_markers"
+            "witness": "durable_gmail_oauth_rejects_secret_markers_in_readable_signals"
           },
           {
             "anchors": [
-              "tests/test_produce_team_ops_shared_inbox_operator_handoff.py::test_team_ops_presence_only_secret_inventory_admits_live_probe_with_approval",
-              "tests/test_validate_team_ops_shared_inbox_operator_handoff.py::test_team_ops_shared_inbox_operator_handoff_accepts_ready_packet"
+              "tests/test_produce_durable_gmail_oauth_operator_handoff.py::test_handoff_rejects_malformed_repository_slug"
             ],
-            "witness": "team_ops_shared_inbox_handoff_accepts_ready_probe"
-          },
-          {
-            "anchors": [
-              "tests/test_validate_team_ops_shared_inbox_operator_handoff.py::test_team_ops_shared_inbox_operator_handoff_rejects_external_message_drift"
-            ],
-            "witness": "team_ops_shared_inbox_handoff_blocks_external_message_drift"
-          },
-          {
-            "anchors": [
-              "tests/test_validate_team_ops_shared_inbox_operator_handoff.py::test_team_ops_shared_inbox_operator_handoff_cli_writes_validation"
-            ],
-            "witness": "team_ops_shared_inbox_handoff_writes_validation_receipt"
+            "witness": "durable_gmail_oauth_validates_repository_slug"
           }
         ],
-        "exact_test_anchor_count": 19,
-        "runtime_witness_count": 19,
+        "exact_test_anchor_count": 17,
+        "runtime_witness_count": 17,
         "surface_id": "governed_connector_framework",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
@@ -18980,16 +18961,10 @@
               "mcoi/tests/test_operational_math_observability.py::test_server_wires_operational_math_store_into_dashboard"
             ],
             "witness": "server_wires_operational_math_store_into_dashboard"
-          },
-          {
-            "anchors": [
-              "mcoi/tests/test_operational_math_dashboard_router.py::test_operational_math_dashboard_route_exposes_read_only_projection"
-            ],
-            "witness": "operational_math_dashboard_route_exposes_read_only_projection"
           }
         ],
-        "exact_test_anchor_count": 13,
-        "runtime_witness_count": 13,
+        "exact_test_anchor_count": 12,
+        "runtime_witness_count": 12,
         "surface_id": "operational_math_loop",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

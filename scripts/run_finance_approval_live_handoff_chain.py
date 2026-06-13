@@ -106,6 +106,7 @@ def run_finance_approval_live_handoff_chain(
         closure_run_path=paths["closure_run"],
         preflight_path=paths["preflight"],
         adapter_evidence_path=paths["adapter_evidence"],
+        artifact_base_path=output_dir,
     )
     packet_path = output_dir / "finance_approval_handoff_packet.json"
     write_finance_approval_handoff_packet(packet, packet_path)

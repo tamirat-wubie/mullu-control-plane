@@ -36,6 +36,7 @@ from scripts.proxy_policy import ProxyEnvironmentBlocked, assert_proxy_environme
 
 EnvReader = Callable[[str], str | None]
 WorkerProbe = Callable[[str], bool]
+DEFAULT_OUTPUT = REPO_ROOT / ".change_assurance" / "finance_email_calendar_recovery_preflight.json"
 
 ACCEPTED_TOKEN_ENV_NAMES = (
     "EMAIL_CALENDAR_CONNECTOR_TOKEN",
@@ -131,6 +132,16 @@ def preflight_finance_email_calendar_recovery(
         blockers=blockers,
         errors=tuple(errors),
     )
+
+
+def write_finance_email_calendar_recovery_preflight(
+    preflight: FinanceEmailCalendarRecoveryPreflight,
+    output_path: Path,
+) -> Path:
+    """Write one redacted finance email/calendar recovery preflight receipt."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(preflight.as_dict(), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return output_path
 
 
 def _check_recovery_action(
@@ -296,6 +307,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse finance email/calendar recovery preflight arguments."""
     parser = argparse.ArgumentParser(description="Preflight finance email/calendar recovery actions.")
     parser.add_argument("--receipt", default=str(DEFAULT_EMAIL_CALENDAR_RECEIPT))
+    parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--probe-worker", action="store_true")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--strict", action="store_true")
@@ -309,6 +321,7 @@ def main(argv: list[str] | None = None) -> int:
         receipt_path=Path(args.receipt),
         probe_worker=args.probe_worker,
     )
+    write_finance_email_calendar_recovery_preflight(result, Path(args.output))
     if args.json:
         print(json.dumps(result.as_dict(), indent=2, sort_keys=True))
     elif result.ready_to_rerun_probe:

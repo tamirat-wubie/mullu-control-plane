@@ -21,6 +21,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from scripts.emit_finance_approval_email_calendar_operator_input_request import (  # noqa: E402
+    _artifact_ref,
     emit_finance_email_calendar_operator_input_request,
     main,
     write_finance_email_calendar_operator_input_request,
@@ -64,6 +65,10 @@ def test_operator_input_request_reports_missing_finance_bindings(tmp_path: Path)
     assert "https://worker.internal.example" not in rendered
     assert "secret-value" not in rendered
     assert "https://www.googleapis.com/auth/gmail.readonly" not in rendered
+    assert str(tmp_path) not in rendered
+    assert "\\" not in request.source_artifacts["finance_approval_email_calendar_binding_receipt"]
+    assert request.source_artifacts["finance_approval_email_calendar_binding_receipt"] == receipt_path.name
+    assert _artifact_ref(receipt_path) == receipt_path.name
 
 
 def test_operator_input_request_cli_writes_report(tmp_path: Path, capsys) -> None:
