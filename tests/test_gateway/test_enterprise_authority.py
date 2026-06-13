@@ -16,7 +16,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from gateway.enterprise_authority import (
+    AuthorityDecision,
     AuthorityGrant,
     AuthorityRequest,
     CredentialLease,
@@ -87,6 +90,75 @@ def test_agent_cannot_expand_own_permissions() -> None:
     assert decision.reason == "agent_cannot_expand_own_permissions"
     assert decision.evidence_refs == ("directory://agent-finance",)
     assert decision.decision_id.startswith("authority-decision-")
+
+
+def test_enterprise_authority_evidence_refs_reject_non_string_values() -> None:
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        EnterpriseIdentity(
+            identity_id="human-invalid-evidence",
+            identity_type="human",
+            tenant_id="tenant-a",
+            display_name="human-invalid-evidence",
+            status="active",
+            source="scim",
+            external_subject="scim://directory/human-invalid-evidence",
+            teams=("finance",),
+            roles=("finance_admin",),
+            created_at=NOW,
+            evidence_refs=({"ref": "directory://human-invalid-evidence"},),  # type: ignore[arg-type]
+        )
+
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        AuthorityGrant(
+            grant_id="grant-invalid-evidence",
+            identity_id="human-finance",
+            tenant_id="tenant-a",
+            grant_type="capability",
+            value="payment.dispatch",
+            resource="payment",
+            issued_by="directory-admin",
+            issued_at=NOW,
+            expires_at=FUTURE,
+            evidence_refs=(1,),  # type: ignore[arg-type]
+        )
+
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        CredentialLease(
+            lease_id="lease-invalid-evidence",
+            identity_id="svc-payments",
+            tenant_id="tenant-a",
+            scopes=("stripe.write",),
+            issued_at=NOW,
+            expires_at=FUTURE,
+            evidence_refs=(object(),),  # type: ignore[arg-type]
+        )
+
+
+def test_authority_request_and_decision_reject_structured_evidence_refs() -> None:
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        AuthorityRequest(
+            request_id="req-invalid-evidence",
+            actor_id="human-finance",
+            tenant_id="tenant-a",
+            action="payment.dispatch",
+            resource="payment",
+            risk_tier="high",
+            requested_at=NOW,
+            evidence_refs=({"ref": "approval://case-001"},),  # type: ignore[arg-type]
+        )
+
+    with pytest.raises(ValueError, match="^evidence_refs_invalid$"):
+        AuthorityDecision(
+            decision_id="decision-invalid-evidence",
+            request_id="req-invalid-evidence",
+            actor_id="human-finance",
+            tenant_id="tenant-a",
+            verdict="allow",
+            reason="authority_grant_satisfied",
+            required_controls=(),
+            matched_grant_ids=("grant-pay",),
+            evidence_refs=(["approval://case-001"],),  # type: ignore[arg-type]
+        )
 
 
 def test_service_identity_requires_active_scoped_credential_lease() -> None:
