@@ -14,7 +14,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from mcoi_runtime.assistant_kernel.goals import FINANCE_OPS_PAYMENT_CLOSURE_PREDICATES
+from mcoi_runtime.assistant_kernel.goals import (
+    FINANCE_OPS_PAYMENT_CLOSURE_PREDICATES,
+    TEAM_OPS_SHARED_INBOX_CLOSURE_PREDICATES,
+)
 from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, ensure_non_empty_text, stable_identifier
 
 
@@ -90,6 +93,16 @@ def finance_ops_payment_closure_contract(goal_id: str) -> ClosureContract:
         contract_id=stable_identifier("assistant-closure-finance-payment", {"goal_id": goal_id}),
         goal_id=goal_id,
         required_predicates=FINANCE_OPS_PAYMENT_CLOSURE_PREDICATES,
+        two_confirmation_required=True,
+    )
+
+
+def team_ops_shared_inbox_closure_contract(goal_id: str) -> ClosureContract:
+    """Return the TeamOps shared-inbox terminal closure contract."""
+    return ClosureContract(
+        contract_id=stable_identifier("assistant-closure-teamops-shared-inbox", {"goal_id": goal_id}),
+        goal_id=goal_id,
+        required_predicates=TEAM_OPS_SHARED_INBOX_CLOSURE_PREDICATES,
         two_confirmation_required=True,
     )
 

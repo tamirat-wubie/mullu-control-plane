@@ -433,6 +433,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
             [
                 "/api/v1/assistant/profiles",
                 "/api/v1/assistant/finance-ops/plans",
+                "/api/v1/assistant/team-ops/plans",
             ],
             "request_proof",
             "action_proof",
@@ -445,13 +446,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_assistant_router.py",
                 "tests/test_assistant_kernel.py",
             ],
-            "Assistant kernel routes expose governed profile read models and compile FinanceOps plans with consent, approval, idempotency, effect reconciliation, and closure controls without executing external effects.",
+            "Assistant kernel routes expose governed profile read models and compile FinanceOps and TeamOps plans with consent, approval, idempotency, effect reconciliation, and closure controls without executing external effects.",
             [
                 "assistant_profiles_read_model_bounded",
                 "finance_ops_plan_requires_active_consent",
                 "finance_ops_plan_projects_operator_queue",
+                "team_ops_plan_requires_active_external_send_consent",
+                "team_ops_plan_projects_operator_queue",
                 "assistant_plan_never_grants_execution_authority",
                 "assistant_plan_errors_sanitized",
+                "team_ops_plan_errors_sanitized",
             ],
             runtime_witness_anchor_aliases={
                 "assistant_profiles_read_model_bounded": [
@@ -463,12 +467,24 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "finance_ops_plan_projects_operator_queue": [
                     "finance_ops_plan_with_consent_projects_dispatch_ready_controls",
                 ],
+                "team_ops_plan_requires_active_external_send_consent": [
+                    "team_ops_plan_blocks_without_active_external_send_consent",
+                ],
+                "team_ops_plan_projects_operator_queue": [
+                    "team_ops_plan_with_consent_projects_dispatch_ready_controls",
+                ],
                 "assistant_plan_never_grants_execution_authority": [
                     "finance_ops_plan_with_consent_projects_dispatch_ready_controls",
                     "finance_ops_plan_blocks_without_active_payment_consent",
+                    "team_ops_plan_with_consent_projects_dispatch_ready_controls",
+                    "team_ops_plan_blocks_without_active_external_send_consent",
                 ],
                 "assistant_plan_errors_sanitized": [
                     "finance_ops_plan_error_detail_is_bounded",
+                ],
+                "team_ops_plan_errors_sanitized": [
+                    "team_ops_plan_error_detail_is_bounded",
+                    "invalid_team_ops_plan_fails_closed",
                 ],
             },
         ),
