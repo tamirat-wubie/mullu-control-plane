@@ -62,7 +62,11 @@ def _logical(expr: LogicalExpr, context: WHQREvaluationContext) -> GateResult:
         return GateResult(TruthGate.UNKNOWN, _norm(values), _evidence(values), _reasons(values))
     if expr.op is LogicalOp.IMPLIES:
         if len(values) != 2:
-            raise RuntimeCoreInvariantError("implies requires exactly two WHQR arguments")
+            return GateResult(
+                TruthGate.UNKNOWN,
+                evidence=EvidenceGate.UNPROVEN,
+                reason="invalid_logical_arity:implies",
+            )
         antecedent, consequent = values
         if antecedent.truth is TruthGate.TRUE and consequent.truth is TruthGate.FALSE:
             return GateResult(TruthGate.FALSE, _norm(values), _evidence(values), _reasons(values))

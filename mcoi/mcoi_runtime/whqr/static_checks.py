@@ -92,6 +92,7 @@ def _walk(
             modalities.setdefault(_modality_key(expr), []).append((expr.modality, expr.node_id or expr.target))
         return
     if isinstance(expr, LogicalExpr):
+        _validate_logical_arity(expr, issues)
         if expr.op is LogicalOp.NOT and any(isinstance(arg, WHQRNode) for arg in expr.args):
             issues.append(StaticCheckIssue("negated_unresolved_node", "negation cannot apply directly to unresolved WHQR nodes"))
         for arg in expr.args:
@@ -130,6 +131,17 @@ def _validate_at_least_n(node: WHQRNode, issues: list[StaticCheckIssue]) -> None
     value = node.metadata["n"]
     if not isinstance(value, int) or isinstance(value, bool) or value < 1:
         issues.append(StaticCheckIssue("invalid_quantifier_bound", "at_least_n metadata['n'] must be a positive integer", node.node_id or node.target))
+
+
+def _validate_logical_arity(expr: LogicalExpr, issues: list[StaticCheckIssue]) -> None:
+    if expr.op is LogicalOp.IMPLIES and len(expr.args) != 2:
+        issues.append(
+            StaticCheckIssue(
+                "invalid_logical_arity",
+                "implies requires exactly two WHQR expressions",
+                f"{expr.op.value}:{len(expr.args)}",
+            )
+        )
 
 
 def _modality_key(node: WHQRNode) -> str:

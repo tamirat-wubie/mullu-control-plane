@@ -376,6 +376,39 @@ def test_static_checks_catch_missing_role_and_negated_node() -> None:
     assert len(report.issues) == 2
 
 
+def test_static_checks_deny_invalid_implies_arity_before_policy_admission() -> None:
+    expr = LogicalExpr(
+        op=LogicalOp.IMPLIES,
+        args=(
+            _node("actor_present"),
+            _node("approval_valid"),
+            _node("budget_available"),
+        ),
+    )
+    report = validate_static(expr)
+    decision = build_policy_decision(
+        expr,
+        subject_id="operator",
+        issued_at="2026-05-06T12:00:01Z",
+        goal_id="goal-invalid-implies",
+        context=WHQREvaluationContext(
+            node_results={
+                "actor_present": GateResult(TruthGate.TRUE, evidence=EvidenceGate.PROVEN),
+                "approval_valid": GateResult(TruthGate.TRUE, evidence=EvidenceGate.PROVEN),
+                "budget_available": GateResult(TruthGate.TRUE, evidence=EvidenceGate.PROVEN),
+            }
+        ),
+    )
+
+    assert report.passed is False
+    assert {issue.code for issue in report.issues} == {"invalid_logical_arity"}
+    assert report.issues[0].target == "implies:3"
+    assert decision.status is PolicyDecisionStatus.DENY
+    assert decision.reasons[0].code == "whqr_static_deny"
+    assert decision.reasons[0].details["gate_reason"] == "invalid_logical_arity:implies"
+    assert decision.reasons[0].details["static_issues"][0]["code"] == "invalid_logical_arity"
+
+
 def test_static_checks_detect_causal_cycles() -> None:
     left = _node("a")
     right = _node("b")
