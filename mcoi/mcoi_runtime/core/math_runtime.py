@@ -15,6 +15,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 import math
 from itertools import combinations
+import re
 from hashlib import sha256
 from typing import Any
 
@@ -84,6 +85,9 @@ def _emit(es: EventSpineEngine, action: str, payload: dict, cid: str, now: str) 
 
 _LINEAR_TOLERANCE = 1e-9
 _MAX_LINEAR_VARIABLES = 4
+_LINEAR_TERM_RE = re.compile(r"^((?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)?(?:\*)?([A-Za-z_][A-Za-z0-9_]*)$")
+_LINEAR_NUMBER_RE = re.compile(r"^(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$")
+_LINEAR_COMPARATOR_RE = re.compile(r"(<=|>=|=)")
 
 
 def _dot(left: tuple[float, ...], right: tuple[float, ...]) -> float:
@@ -112,6 +116,79 @@ def _bounded_terms(value: Any) -> dict[str, float]:
     if not terms:
         raise RuntimeCoreInvariantError("Linear solver metadata requires nonzero terms")
     return terms
+
+
+def _merge_linear_term(target: dict[str, float], variable_name: str, coefficient: float) -> None:
+    updated = target.get(variable_name, 0.0) + coefficient
+    if abs(updated) <= _LINEAR_TOLERANCE:
+        target.pop(variable_name, None)
+    else:
+        target[variable_name] = updated
+
+
+def _parse_linear_side(expression: str) -> tuple[dict[str, float], float]:
+    normalized = expression.replace(" ", "")
+    if not normalized:
+        raise RuntimeCoreInvariantError("Linear expression is empty")
+    if any(symbol in normalized for symbol in ("(", ")", "/", "^")):
+        raise RuntimeCoreInvariantError("Linear expression contains unsupported syntax")
+    terms: dict[str, float] = {}
+    constant = 0.0
+    for raw_part in re.findall(r"[+-]?[^+-]+", normalized):
+        sign = -1.0 if raw_part.startswith("-") else 1.0
+        part = raw_part[1:] if raw_part[:1] in {"+", "-"} else raw_part
+        if not part:
+            raise RuntimeCoreInvariantError("Linear expression contains unsupported syntax")
+        if _LINEAR_NUMBER_RE.fullmatch(part):
+            constant += sign * _bounded_number(float(part))
+            continue
+        term_match = _LINEAR_TERM_RE.fullmatch(part)
+        if term_match is None:
+            raise RuntimeCoreInvariantError("Linear expression contains unsupported syntax")
+        raw_coefficient, variable_name = term_match.groups()
+        coefficient = 1.0 if raw_coefficient in (None, "") else _bounded_number(float(raw_coefficient))
+        _merge_linear_term(terms, variable_name, sign * coefficient)
+    return terms, constant
+
+
+def _parse_linear_expression(expression: str) -> dict[str, float]:
+    terms, constant = _parse_linear_side(expression)
+    if abs(constant) > _LINEAR_TOLERANCE:
+        raise RuntimeCoreInvariantError("Linear objective expression must not contain constants")
+    if not terms:
+        raise RuntimeCoreInvariantError("Linear solver metadata requires nonzero terms")
+    return terms
+
+
+def _parse_linear_constraint_expression(expression: str) -> tuple[dict[str, float], float, float]:
+    matches = tuple(_LINEAR_COMPARATOR_RE.finditer(expression))
+    if len(matches) > 1:
+        raise RuntimeCoreInvariantError("Linear constraint expression must contain one comparator")
+    if not matches:
+        terms, constant = _parse_linear_side(expression)
+        if abs(constant) > _LINEAR_TOLERANCE:
+            raise RuntimeCoreInvariantError("Linear constraint expression constant requires comparator")
+        if not terms:
+            raise RuntimeCoreInvariantError("Linear solver metadata requires nonzero terms")
+        return terms, float("-inf"), float("inf")
+
+    match = matches[0]
+    operator = match.group(1)
+    lhs = expression[:match.start()]
+    rhs = expression[match.end():]
+    lhs_terms, lhs_constant = _parse_linear_side(lhs)
+    rhs_terms, rhs_constant = _parse_linear_side(rhs)
+    terms = dict(lhs_terms)
+    for variable_name, coefficient in rhs_terms.items():
+        _merge_linear_term(terms, variable_name, -coefficient)
+    if not terms:
+        raise RuntimeCoreInvariantError("Linear solver metadata requires nonzero terms")
+    bound = rhs_constant - lhs_constant
+    if operator == "<=":
+        return terms, float("-inf"), bound
+    if operator == ">=":
+        return terms, bound, float("inf")
+    return terms, bound, bound
 
 
 def _solve_linear_system(matrix: tuple[tuple[float, ...], ...], vector: tuple[float, ...]) -> tuple[float, ...] | None:
@@ -497,7 +574,7 @@ class MathRuntimeEngine:
         objective: OptimizationObjective,
         constraints: tuple[MathOptimizationConstraint, ...],
     ) -> bool:
-        return "linear_coefficients" in objective.metadata or any(
+        return "linear_coefficients" in objective.metadata or "linear_expression" in objective.metadata or any(
             "linear_terms" in constraint.metadata for constraint in constraints
         )
 
@@ -508,10 +585,9 @@ class MathRuntimeEngine:
         constraints: tuple[MathOptimizationConstraint, ...],
         result_id: str | None,
     ) -> SolverResult:
-        coefficient_metadata = objective.metadata.get("linear_coefficients")
-        if coefficient_metadata is None:
+        objective_terms = self._linear_objective_terms(objective)
+        if objective_terms is None:
             raise RuntimeCoreInvariantError("Linear objective metadata required")
-        objective_terms = _bounded_terms(coefficient_metadata)
         variable_names = self._linear_variable_names(objective, objective_terms, constraints)
         coefficients = tuple(objective_terms.get(name, 0.0) for name in variable_names)
         inequalities, lower_bounds, upper_bounds = self._linear_inequalities(
@@ -619,6 +695,9 @@ class MathRuntimeEngine:
             for constraint in constraints:
                 if "linear_terms" in constraint.metadata:
                     names.update(_bounded_terms(constraint.metadata["linear_terms"]))
+                else:
+                    terms, _lower, _upper = _parse_linear_constraint_expression(constraint.expression)
+                    names.update(terms)
             variable_names = tuple(sorted(names))
         else:
             if not isinstance(variable_metadata, (list, tuple)) or not variable_metadata:
@@ -634,6 +713,17 @@ class MathRuntimeEngine:
         if len(variable_names) > _MAX_LINEAR_VARIABLES:
             raise RuntimeCoreInvariantError("Linear solver variable limit exceeded")
         return variable_names
+
+    def _linear_objective_terms(self, objective: OptimizationObjective) -> dict[str, float] | None:
+        coefficient_metadata = objective.metadata.get("linear_coefficients")
+        if coefficient_metadata is not None:
+            return _bounded_terms(coefficient_metadata)
+        expression_metadata = objective.metadata.get("linear_expression")
+        if expression_metadata is None:
+            return None
+        if not isinstance(expression_metadata, str):
+            raise RuntimeCoreInvariantError("Linear objective expression must be text")
+        return _parse_linear_expression(expression_metadata)
 
     def _linear_inequalities(
         self,
@@ -669,32 +759,47 @@ class MathRuntimeEngine:
         for constraint in constraints:
             if math.isnan(constraint.lower_bound) or math.isnan(constraint.upper_bound):
                 raise RuntimeCoreInvariantError("Constraint bound must not be NaN")
-            terms = _bounded_terms(constraint.metadata.get("linear_terms", {"x": 1.0}))
+            terms, lower_bound, upper_bound = self._linear_constraint_terms_and_bounds(constraint)
             unknown_terms = set(terms) - set(variable_names)
             if unknown_terms:
                 raise RuntimeCoreInvariantError("Linear constraint references unknown variable")
             coefficients = tuple(terms.get(name, 0.0) for name in variable_names)
-            if math.isfinite(constraint.upper_bound):
-                inequalities.append((coefficients, constraint.upper_bound))
-            if math.isfinite(constraint.lower_bound):
-                inequalities.append((tuple(-value for value in coefficients), -constraint.lower_bound))
+            if math.isfinite(upper_bound):
+                inequalities.append((coefficients, upper_bound))
+            if math.isfinite(lower_bound):
+                inequalities.append((tuple(-value for value in coefficients), -lower_bound))
             if sum(1 for value in coefficients if abs(value) > _LINEAR_TOLERANCE) == 1:
                 index = next(index for index, value in enumerate(coefficients) if abs(value) > _LINEAR_TOLERANCE)
                 name = variable_names[index]
                 coefficient = coefficients[index]
-                if math.isfinite(constraint.lower_bound):
-                    bound = constraint.lower_bound / coefficient
+                if math.isfinite(lower_bound):
+                    bound = lower_bound / coefficient
                     if coefficient > 0:
                         lower_bounds[name] = max(lower_bounds[name], bound)
                     else:
                         upper_bounds[name] = min(upper_bounds[name], bound)
-                if math.isfinite(constraint.upper_bound):
-                    bound = constraint.upper_bound / coefficient
+                if math.isfinite(upper_bound):
+                    bound = upper_bound / coefficient
                     if coefficient > 0:
                         upper_bounds[name] = min(upper_bounds[name], bound)
                     else:
                         lower_bounds[name] = max(lower_bounds[name], bound)
         return tuple(inequalities), lower_bounds, upper_bounds
+
+    def _linear_constraint_terms_and_bounds(
+        self,
+        constraint: MathOptimizationConstraint,
+    ) -> tuple[dict[str, float], float, float]:
+        if "linear_terms" in constraint.metadata:
+            return _bounded_terms(constraint.metadata["linear_terms"]), constraint.lower_bound, constraint.upper_bound
+        expression_terms, expression_lower, expression_upper = _parse_linear_constraint_expression(constraint.expression)
+        lower_bound = constraint.lower_bound
+        upper_bound = constraint.upper_bound
+        if math.isinf(lower_bound) and not math.isinf(expression_lower):
+            lower_bound = expression_lower
+        if math.isinf(upper_bound) and not math.isinf(expression_upper):
+            upper_bound = expression_upper
+        return expression_terms, lower_bound, upper_bound
 
     def _append_variable_bound_inequalities(
         self,
