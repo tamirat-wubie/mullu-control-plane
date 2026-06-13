@@ -272,6 +272,7 @@ GOVERNANCE_PROTOCOL_REQUIRED_LITERALS = (
     "Terminal closure certificates are public contracts",
     "Finance approval live handoff artifacts are public contracts",
     "Finance payment provider binding receipts are public contracts",
+    "TeamOps shared inbox operator handoff packets are public contracts",
     "Reflex deployment witness envelopes are public contracts",
     "Reflex deployment witness validator receipts are public contracts",
     "Temporal operation receipts are public contracts",
