@@ -773,6 +773,12 @@
       "surface": "symbolic_mesh"
     },
     {
+      "schema_id": "snet-operator-read-model",
+      "path": "schemas/snet_operator_read_model.schema.json",
+      "urn": "urn:mullusi:schema:snet-operator-read-model:1",
+      "surface": "symbolic_mesh"
+    },
+    {
       "schema_id": "intelligence-coordination-episode-receipt",
       "path": "schemas/intelligence_coordination_episode_receipt.schema.json",
       "urn": "urn:mullusi:schema:intelligence-coordination-episode-receipt:1",
