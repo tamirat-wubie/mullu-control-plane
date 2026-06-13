@@ -36,7 +36,14 @@ DEFAULT_PACKET = REPO_ROOT / "examples" / "general_agent_promotion_handoff_packe
 DEFAULT_SCHEMA = REPO_ROOT / "schemas" / "general_agent_promotion_handoff_packet.schema.json"
 DEFAULT_CHECKLIST = REPO_ROOT / "examples" / "general_agent_promotion_operator_checklist.json"
 DEFAULT_CLOSURE_PLAN = REPO_ROOT / ".change_assurance" / "general_agent_promotion_closure_plan.json"
+DEFAULT_ADAPTER_EVIDENCE = REPO_ROOT / ".change_assurance" / "capability_adapter_evidence.json"
 DEFAULT_CLOSED_ADAPTER_EVIDENCE = REPO_ROOT / "examples" / "capability_adapter_evidence_live_closed_20260611.json"
+PRODUCTION_PROMOTION_BLOCKER_ORDER = (
+    "deployment_witness_not_published",
+    "production_health_not_declared",
+)
+PRODUCTION_PROMOTION_BLOCKERS = frozenset(PRODUCTION_PROMOTION_BLOCKER_ORDER)
+PRODUCTION_BLOCKED_READINESS_LEVEL = "pilot-governed-core"
 
 REQUIRED_ENTRY_POINTS = {
     "human_runbook": "docs/58_general_agent_promotion_operator_runbook.md",
@@ -160,11 +167,13 @@ def validate_general_agent_promotion_handoff_packet(
         packet,
         explicit_path=adapter_evidence_path,
     )
+    production_blockers = _production_promotion_blockers_from_packet(packet)
     effective_closure_plan_path = closure_plan_path
     closure_plan = _load_or_derive_closure_plan(
         effective_closure_plan_path,
         errors,
         adapter_evidence_path=effective_adapter_evidence_path,
+        production_blockers=production_blockers,
     )
     if not schema or not packet:
         return _validation_result(packet_path, schema_path, packet, errors)
@@ -173,6 +182,7 @@ def validate_general_agent_promotion_handoff_packet(
     readiness = _evaluate_promotion_readiness(
         errors,
         adapter_evidence_path=effective_adapter_evidence_path,
+        production_blockers=production_blockers,
     )
     _validate_scalar_fields(packet, checklist, closure_plan, readiness, errors)
     _validate_required_sets(packet, closure_plan, readiness, errors)
@@ -305,25 +315,38 @@ def _load_or_derive_closure_plan(
     errors: list[str],
     *,
     adapter_evidence_path: Path | None,
+    production_blockers: tuple[str, ...],
 ) -> dict[str, Any]:
     if path is not None and path.exists():
         return _load_json_object(path, "aggregate closure plan", errors)
-    return _derive_closure_plan_or_error(errors, adapter_evidence_path=adapter_evidence_path)
+    return _derive_closure_plan_or_error(
+        errors,
+        adapter_evidence_path=adapter_evidence_path,
+        production_blockers=production_blockers,
+    )
 
 
 def _derive_closure_plan_or_error(
     errors: list[str],
     *,
     adapter_evidence_path: Path | None,
+    production_blockers: tuple[str, ...],
 ) -> dict[str, Any]:
     try:
-        return _derive_current_closure_plan(adapter_evidence_path=adapter_evidence_path)
+        return _derive_current_closure_plan(
+            adapter_evidence_path=adapter_evidence_path,
+            production_blockers=production_blockers,
+        )
     except (ImportError, OSError, TypeError, ValueError) as exc:
         errors.append(f"aggregate closure plan could not be derived: {exc.__class__.__name__}")
         return {}
 
 
-def _derive_current_closure_plan(*, adapter_evidence_path: Path | None) -> dict[str, Any]:
+def _derive_current_closure_plan(
+    *,
+    adapter_evidence_path: Path | None,
+    production_blockers: tuple[str, ...],
+) -> dict[str, Any]:
     from scripts.collect_capability_adapter_evidence import collect_capability_adapter_evidence
     from scripts.plan_capability_adapter_closure import plan_capability_adapter_closure
     from scripts.plan_deployment_publication_closure import plan_deployment_publication_closure
@@ -360,13 +383,14 @@ def _derive_current_closure_plan(*, adapter_evidence_path: Path | None) -> dict[
             )
         else:
             derived_adapter_evidence_path = adapter_evidence_path
-        _write_json_payload(
-            readiness_path,
+        readiness_payload = _readiness_payload_with_production_blockers(
             validate_general_agent_promotion(
                 repo_root=REPO_ROOT,
                 adapter_evidence_path=derived_adapter_evidence_path,
             ).as_dict(),
+            production_blockers=production_blockers,
         )
+        _write_json_payload(readiness_path, readiness_payload)
         _write_json_payload(
             adapter_plan_path,
             plan_capability_adapter_closure(evidence_path=derived_adapter_evidence_path).as_dict(),
@@ -509,12 +533,17 @@ def _evaluate_promotion_readiness(
     errors: list[str],
     *,
     adapter_evidence_path: Path | None,
+    production_blockers: tuple[str, ...],
 ) -> dict[str, Any]:
     try:
-        return validate_general_agent_promotion(
+        readiness = validate_general_agent_promotion(
             repo_root=REPO_ROOT,
             adapter_evidence_path=adapter_evidence_path,
         ).as_dict()
+        return _readiness_payload_with_production_blockers(
+            readiness,
+            production_blockers=production_blockers,
+        )
     except Exception:  # noqa: BLE001
         errors.append("promotion readiness could not be evaluated")
         return {
@@ -524,6 +553,37 @@ def _evaluate_promotion_readiness(
             "capsule_count": None,
             "blockers": (),
         }
+
+
+def _readiness_payload_with_production_blockers(
+    readiness: dict[str, Any],
+    *,
+    production_blockers: tuple[str, ...],
+) -> dict[str, Any]:
+    """Return a readiness payload that preserves explicit production blockers."""
+    if not production_blockers:
+        return readiness
+    effective = dict(readiness)
+    observed_readiness_blockers = [str(item) for item in readiness.get("blockers", ())]
+    blockers = list(dict.fromkeys([*production_blockers, *observed_readiness_blockers]))
+    effective["ready"] = False
+    effective["readiness_level"] = PRODUCTION_BLOCKED_READINESS_LEVEL
+    effective["blockers"] = blockers
+    return effective
+
+
+def _production_promotion_blockers_from_packet(packet: dict[str, Any]) -> tuple[str, ...]:
+    """Return deployment/public-health blockers the packet intentionally keeps open."""
+    if (
+        packet.get("status") != "blocked_until_live_evidence"
+        and packet.get("production_promotion") != "blocked"
+    ):
+        return ()
+    observed_blockers = packet.get("open_blockers", [])
+    if not isinstance(observed_blockers, list):
+        return ()
+    observed = {str(blocker) for blocker in observed_blockers} & PRODUCTION_PROMOTION_BLOCKERS
+    return tuple(blocker for blocker in PRODUCTION_PROMOTION_BLOCKER_ORDER if blocker in observed)
 
 
 def _adapter_evidence_path_for_packet(
@@ -544,10 +604,17 @@ def _adapter_evidence_path_for_packet(
         "email_calendar_adapter_not_closed",
     }
     open_blockers = packet.get("open_blockers", [])
+    observed_open_blockers = (
+        {str(blocker) for blocker in open_blockers}
+        if isinstance(open_blockers, list)
+        else set()
+    )
+    if adapter_blockers.intersection(observed_open_blockers) and DEFAULT_ADAPTER_EVIDENCE.exists():
+        return DEFAULT_ADAPTER_EVIDENCE
     if (
         packet.get("readiness_level") == "pilot-governed-core"
         and isinstance(open_blockers, list)
-        and adapter_blockers.isdisjoint(str(blocker) for blocker in open_blockers)
+        and adapter_blockers.isdisjoint(observed_open_blockers)
         and DEFAULT_CLOSED_ADAPTER_EVIDENCE.exists()
     ):
         return DEFAULT_CLOSED_ADAPTER_EVIDENCE

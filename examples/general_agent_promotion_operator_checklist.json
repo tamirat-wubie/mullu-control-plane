@@ -1,7 +1,6 @@
 {
   "approval_required_blockers": [
-    "deployment_witness_not_published",
-    "production_health_not_declared",
+    "voice_dependency_missing:OPENAI_API_KEY",
     "deployment_upstream_api_gate_not_ready",
     "capability_improvement_required:financial.refund",
     "capability_improvement_required:agentic_control.code_change.plan",
@@ -10,13 +9,11 @@
     "capability_improvement_required:agentic_control.incident_recovery.plan"
   ],
   "blocking_gap_ids": [
-    "deployment_witness_not_published",
-    "production_health_not_declared"
+    "adapter_evidence_not_closed"
   ],
   "checklist_id": "general-agent-promotion-operator-v1",
   "conditional_approval_blockers": [
-    "deployment_witness_not_published",
-    "production_health_not_declared",
+    "voice_dependency_missing:OPENAI_API_KEY",
     "deployment_upstream_api_gate_not_ready",
     "capability_improvement_required:financial.refund",
     "capability_improvement_required:agentic_control.code_change.plan",
@@ -49,9 +46,9 @@
     {
       "command": "python scripts\\plan_capability_adapter_closure.py --output .change_assurance\\capability_adapter_closure_plan.json && python scripts\\plan_deployment_publication_closure.py --output .change_assurance\\deployment_publication_closure_plan.json",
       "required_evidence": [
-        "capability_adapter_closure_plan.json action_count=0",
+        "capability_adapter_closure_plan.json action_count=3",
         "deployment_publication_closure_plan.json action_count=1",
-        "adapter closure actions absent",
+        "adapter closure actions present",
         "upstream deployment closure action approval_required=true"
       ],
       "step_id": "write_source_closure_plans"
@@ -69,7 +66,7 @@
     {
       "command": "python scripts\\run_general_agent_promotion_closure_chain.py --json --strict",
       "required_evidence": [
-        "general_agent_promotion_closure_plan.json total_action_count=8",
+        "general_agent_promotion_closure_plan.json total_action_count=9",
         "general_agent_promotion_closure_plan_schema_validation.json ok=true",
         "general_agent_promotion_closure_plan_validation.json ok=true",
         "capability_improvement_portfolio.json plan_count=5",
@@ -84,8 +81,8 @@
         "terminal_evidence_reconciliation ready_for_terminal_certificate_minting=false",
         "general_agent_promotion_terminal_minting_gate.json schema_valid=true",
         "terminal_minting_gate ready_for_terminal_certificate_minting=false",
-        "approval_required_action_count=8",
-        "source_plan_type includes deployment and portfolio",
+        "approval_required_action_count=7",
+        "source_plan_type includes adapter, deployment, and portfolio",
         "closure_chain status=passed_blocked",
         "closure_chain artifact_valid=true"
       ],
