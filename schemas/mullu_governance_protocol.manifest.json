@@ -557,12 +557,6 @@
       "surface": "finance"
     },
     {
-      "schema_id": "durable-gmail-oauth-operator-handoff",
-      "path": "schemas/durable_gmail_oauth_operator_handoff.schema.json",
-      "urn": "urn:mullusi:schema:durable-gmail-oauth-operator-handoff:1",
-      "surface": "connector"
-    },
-    {
       "schema_id": "team-ops-shared-inbox-operator-handoff",
       "path": "schemas/team_ops_shared_inbox_operator_handoff.schema.json",
       "urn": "urn:mullusi:schema:team-ops-shared-inbox-operator-handoff:1",
