@@ -10037,6 +10037,7 @@
         "snet_episode_rejects_authority_and_raw_field_mutations",
         "snet_episode_rejects_expected_count_drift",
         "snet_episode_malformed_answer_bindings_report_errors",
+        "snet_episode_non_json_replay_inputs_report_errors",
         "snet_episode_saved_file_validation",
         "committed_snet_episode_example_replays_to_expected_receipt"
       ],
@@ -19401,6 +19402,12 @@
           },
           {
             "anchors": [
+              "tests/test_validate_snet_episode_replay.py::test_snet_episode_non_json_replay_inputs_report_errors"
+            ],
+            "witness": "snet_episode_non_json_replay_inputs_report_errors"
+          },
+          {
+            "anchors": [
               "tests/test_validate_snet_episode_replay.py::test_snet_episode_saved_file_validation"
             ],
             "witness": "snet_episode_saved_file_validation"
@@ -19412,8 +19419,8 @@
             "witness": "committed_snet_episode_example_replays_to_expected_receipt"
           }
         ],
-        "exact_test_anchor_count": 8,
-        "runtime_witness_count": 8,
+        "exact_test_anchor_count": 9,
+        "runtime_witness_count": 9,
         "surface_id": "snet_episode_replay",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
