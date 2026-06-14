@@ -3565,6 +3565,11 @@ def create_gateway_app(
             if isinstance(closure, Mapping)
             else None
         )
+        whqr_replay_ref = (
+            str(whqr_replay_binding.get("replay_ref", ""))
+            if isinstance(whqr_replay_binding, Mapping)
+            else ""
+        )
         return {
             "command_id": command_id,
             "universal_action_orchestration": record,
@@ -3574,6 +3579,7 @@ def create_gateway_app(
             "reconciliation_ref": reconciliation_ref,
             "memory_ref": memory_ref,
             "whqr_replay_binding": whqr_replay_binding,
+            "whqr_replay_ref": whqr_replay_ref,
         }
 
     def _operator_universal_actions_payload(

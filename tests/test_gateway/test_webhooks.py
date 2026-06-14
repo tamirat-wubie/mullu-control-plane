@@ -2964,6 +2964,7 @@ class TestGatewayStatus:
         assert data["reconciliation_ref"] == record["closure"]["reconciliation_ref"]
         assert data["memory_ref"] == record["closure"]["memory_ref"]
         assert data["whqr_replay_binding"] == record["closure"]["whqr_replay_binding"]
+        assert data["whqr_replay_ref"] == "whqr://replay/fixture-canonical-hash"
         assert (
             data["whqr_replay_binding"]["replay_ref"]
             == "whqr://replay/fixture-canonical-hash"
