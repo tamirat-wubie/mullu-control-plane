@@ -129,6 +129,10 @@ staged into the holistic loop PR.
 19. Added exact proof-matrix witnesses for the audit/proof, authority, UAO, and
     workflow default read-model admissions so the holistic loop surface remains
     at zero unanchored labels.
+20. Added the admission closure report for the v1 candidate queue. It proves
+    all tracked candidates are admitted, no candidate admission remains pending,
+    extension admission is valid, and proof labels remain anchored without
+    claiming terminal closure.
 
 ## Evidence Catalog Follow-Up
 
@@ -484,6 +488,26 @@ universal action orchestration, and workflow execution. All four candidates are
 admitted into the default registry as read-only blocked loops; the map does not
 perform registration, execution, verification, mutation, or terminal closure.
 
+## Admission Closure Report Follow-Up
+
+The admission closure report summarizes the v1 candidate queue after admission:
+
+```text
+report.loop_count == 8
+report.candidate_count == 4
+report.blocked_candidate_count == 0
+report.pending_candidate_ids == []
+report.unregistered_candidate_ids == []
+report.proof_witness_integrity.unanchored_witness_count == 0
+report.admission_closure_verified == true
+report.terminal_closure == false
+report.next_action == maintain_kernel_v1_freeze
+```
+
+The report composes the read model, candidate map, extension admission
+validator, and proof witness integrity record. It is not registration cause,
+terminal closure, runtime migration, receipt emission, or execution authority.
+
 ## UAO Admission Dossier Follow-Up
 
 The UAO admission dossier reports the admitted candidate-specific registry
@@ -592,13 +616,13 @@ verification behavior changed. No public mutation route was added.
 Focused tests:
 
 ```powershell
-python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_report_holistic_loop_candidate_map.py tests/test_report_holistic_loop_uao_admission_dossier.py tests/test_report_holistic_loop_workflow_admission_dossier.py tests/test_report_holistic_loop_authority_admission_dossier.py tests/test_report_holistic_loop_audit_proof_admission_dossier.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py tests/test_proof_coverage_matrix.py -q
+python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_report_holistic_loop_candidate_map.py tests/test_report_holistic_loop_admission_closure.py tests/test_report_holistic_loop_uao_admission_dossier.py tests/test_report_holistic_loop_workflow_admission_dossier.py tests/test_report_holistic_loop_authority_admission_dossier.py tests/test_report_holistic_loop_audit_proof_admission_dossier.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py tests/test_proof_coverage_matrix.py -q
 ```
 
 Observed result:
 
 ```text
-358 passed
+367 passed
 ```
 
 Focused validators:
@@ -609,6 +633,7 @@ python scripts/validate_holistic_loop_http_surface.py
 python scripts/validate_holistic_loop_kernel_freeze.py
 python scripts/validate_holistic_loop_extension_admission.py
 python scripts/report_holistic_loop_candidate_map.py
+python scripts/report_holistic_loop_admission_closure.py
 python scripts/report_holistic_loop_uao_admission_dossier.py
 python scripts/report_holistic_loop_workflow_admission_dossier.py
 python scripts/report_holistic_loop_authority_admission_dossier.py

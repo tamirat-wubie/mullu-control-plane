@@ -771,6 +771,37 @@ behavior_rewrite == false
 This preserves the extension boundary: candidate discovery is not registration,
 verification, closure, or runtime migration.
 
+### Admission Closure Report
+
+The admission closure report summarizes whether the tracked candidate surfaces
+have all been admitted into the default registry without converting that fact
+into terminal loop closure. It composes the read model, candidate map,
+extension admission validator, and proof matrix witness integrity.
+
+Run:
+
+```powershell
+python scripts/report_holistic_loop_admission_closure.py
+```
+
+The report verifies:
+
+```text
+loop_count == 8
+candidate_count == 4
+blocked_candidate_count == 0
+pending_candidate_ids == []
+unregistered_candidate_ids == []
+proof_witness_integrity.unanchored_witness_count == 0
+admission_closure_verified == true
+terminal_closure == false
+next_action == maintain_kernel_v1_freeze
+```
+
+The report does not register loops, execute loop behavior, mutate the registry,
+emit receipts, or claim terminal closure. It only proves that the v1 admission
+queue is empty and the read-only kernel freeze should be maintained.
+
 ### UAO Admission Dossier
 
 The Universal Action Orchestration admission dossier reports the admitted
@@ -993,7 +1024,7 @@ the registry contract, not an execution surface.
 Focused tests:
 
 ```powershell
-python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_report_holistic_loop_candidate_map.py tests/test_report_holistic_loop_uao_admission_dossier.py tests/test_report_holistic_loop_workflow_admission_dossier.py tests/test_report_holistic_loop_authority_admission_dossier.py tests/test_report_holistic_loop_audit_proof_admission_dossier.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py tests/test_proof_coverage_matrix.py -q
+python -m pytest mcoi/tests/test_holistic_loop_kernel.py mcoi/tests/test_holistic_loop_router.py tests/test_report_holistic_loop_read_model.py tests/test_report_holistic_loop_candidate_map.py tests/test_report_holistic_loop_admission_closure.py tests/test_report_holistic_loop_uao_admission_dossier.py tests/test_report_holistic_loop_workflow_admission_dossier.py tests/test_report_holistic_loop_authority_admission_dossier.py tests/test_report_holistic_loop_audit_proof_admission_dossier.py tests/test_validate_holistic_loop_read_model.py tests/test_validate_holistic_loop_http_surface.py tests/test_validate_holistic_loop_kernel_freeze.py tests/test_validate_holistic_loop_extension_admission.py tests/test_proof_coverage_matrix.py -q
 ```
 
 Read-only report:
@@ -1030,6 +1061,12 @@ Candidate map validation:
 
 ```powershell
 python scripts/report_holistic_loop_candidate_map.py
+```
+
+Admission closure validation:
+
+```powershell
+python scripts/report_holistic_loop_admission_closure.py
 ```
 
 UAO admission dossier validation:
@@ -1080,7 +1117,8 @@ The tests verify:
 20. The holistic proof matrix surface has zero unanchored witness labels.
 21. Extension admission keeps default loop registrations read-only, blocker-aware, non-terminal, and proof-anchored.
 22. The candidate map lists loop-like surfaces, reports admitted candidates, and does not register, verify, close, or mutate them.
-23. The UAO admission dossier reports default registry admission without mutating, executing UAO behavior, or closing the loop.
-24. The workflow admission dossier reports default registry admission without mutating, executing workflow behavior, or closing the loop.
-25. The authority admission dossier reports default registry admission without mutating, satisfying obligations, or closing the loop.
-26. The audit/proof admission dossier reports default registry admission without mutating the registry, verifying proofs, submitting anchors, or closing the loop.
+23. The admission closure report proves no tracked candidate admission remains pending while remaining read-only and non-terminal.
+24. The UAO admission dossier reports default registry admission without mutating, executing UAO behavior, or closing the loop.
+25. The workflow admission dossier reports default registry admission without mutating, executing workflow behavior, or closing the loop.
+26. The authority admission dossier reports default registry admission without mutating, satisfying obligations, or closing the loop.
+27. The audit/proof admission dossier reports default registry admission without mutating the registry, verifying proofs, submitting anchors, or closing the loop.
