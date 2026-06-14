@@ -141,13 +141,14 @@ The backend rejects:
 1. Unknown request ids.
 2. Requests already solved.
 3. Missing or tenant-mismatched objective references.
-4. `NaN` constraint bounds at contract admission.
-5. Missing linear objective metadata when linear constraints are present.
-6. Non-numeric or non-finite linear metadata.
-7. Unknown or duplicate linear variable names.
-8. Unsupported linear-expression syntax.
-9. Unknown or duplicate integer/binary variable names.
-10. Integer assignment surfaces above the deterministic cap.
+4. Solver requests with zero `max_iterations` or zero `timeout_ms`.
+5. `NaN` constraint bounds at contract admission.
+6. Missing linear objective metadata when linear constraints are present.
+7. Non-numeric or non-finite linear metadata.
+8. Unknown or duplicate linear variable names.
+9. Unsupported linear-expression syntax.
+10. Unknown or duplicate integer/binary variable names.
+11. Integer assignment surfaces above the deterministic cap.
 
 The backend does not yet solve:
 

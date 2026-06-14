@@ -23,6 +23,7 @@ from mcoi_runtime.contracts.math_runtime import (
     OptimizationTrace,
     QuantityRecord,
     SolverDisposition,
+    SolverRequest,
     SolverResult,
     UncertaintyInterval,
     UncertaintyKind,
@@ -109,6 +110,18 @@ def _solver_result(**overrides) -> SolverResult:
     return SolverResult(**defaults)
 
 
+def _solver_request(**overrides) -> SolverRequest:
+    defaults = dict(
+        request_id="req-1",
+        tenant_id="t-1",
+        objective_ref="obj-1",
+        status=OptimizationStatus.FEASIBLE,
+        created_at=TS,
+    )
+    defaults.update(overrides)
+    return SolverRequest(**defaults)
+
+
 def _solver_receipt(**overrides) -> MathSolverReceipt:
     defaults = dict(
         receipt_id="math-solver-receipt-123456789abc",
@@ -165,6 +178,11 @@ class TestHappyPaths:
     def test_solver_result_valid(self):
         r = _solver_result(objective_value=-10.5)
         assert r.objective_value == -10.5
+
+    def test_solver_request_valid(self):
+        r = _solver_request(max_iterations=1, timeout_ms=1)
+        assert r.max_iterations == 1
+        assert r.timeout_ms == 1
 
     def test_math_solver_receipt_valid_and_schema_bound(self):
         receipt = _solver_receipt()
@@ -242,6 +260,14 @@ class TestInfNanRejection:
     def test_math_solver_receipt_objective_rejects_non_finite(self, bad):
         with pytest.raises(ValueError, match="numeric value must be finite"):
             _solver_receipt(objective_value=bad)
+
+    @pytest.mark.parametrize("field_name", ["max_iterations", "timeout_ms"])
+    def test_solver_request_rejects_non_positive_budget(self, field_name):
+        with pytest.raises(ValueError) as exc_info:
+            _solver_request(**{field_name: 0})
+        message = str(exc_info.value)
+        assert message == f"{field_name} must be >= 1"
+        assert "req-1" not in message
 
     def test_constraint_bounds_allow_inf(self):
         """MathOptimizationConstraint bounds intentionally allow inf."""

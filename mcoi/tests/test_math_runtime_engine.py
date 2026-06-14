@@ -61,6 +61,20 @@ class TestBoundedInvariantContracts:
         assert "conv-zero" not in str(exc_info.value)
         assert engine.conversion_count == 0
 
+    def test_solver_request_rejects_zero_budget_before_persistence(self, engine):
+        engine.register_objective("obj-budget", "t-1", "Budget", ObjectiveDirection.MINIMIZE)
+        with pytest.raises(ValueError) as exc_info:
+            engine.submit_solver_request(
+                "req-zero-budget",
+                "t-1",
+                "obj-budget",
+                max_iterations=0,
+            )
+
+        assert str(exc_info.value) == "max_iterations must be >= 1"
+        assert "req-zero-budget" not in str(exc_info.value)
+        assert engine.request_count == 0
+
 
 class TestBoundedViolationReasons:
     def test_detect_math_violations_reasons_are_bounded(self, engine):

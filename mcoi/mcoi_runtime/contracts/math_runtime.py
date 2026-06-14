@@ -25,6 +25,7 @@ from ._base import (
     require_non_empty_tuple,
     require_non_negative_float,
     require_non_negative_int,
+    require_positive_int,
     require_unit_float,
 )
 
@@ -234,8 +235,8 @@ class SolverRequest(ContractRecord):
         object.__setattr__(self, "objective_ref", require_non_empty_text(self.objective_ref, "objective_ref"))
         if not isinstance(self.status, OptimizationStatus):
             raise ValueError("status must be an OptimizationStatus")
-        object.__setattr__(self, "max_iterations", require_non_negative_int(self.max_iterations, "max_iterations"))
-        object.__setattr__(self, "timeout_ms", require_non_negative_int(self.timeout_ms, "timeout_ms"))
+        object.__setattr__(self, "max_iterations", require_positive_int(self.max_iterations, "max_iterations"))
+        object.__setattr__(self, "timeout_ms", require_positive_int(self.timeout_ms, "timeout_ms"))
         require_datetime_text(self.created_at, "created_at")
         object.__setattr__(self, "metadata", freeze_value(dict(self.metadata)))
 
