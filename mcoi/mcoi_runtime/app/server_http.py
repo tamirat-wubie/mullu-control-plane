@@ -255,6 +255,23 @@ def install_global_exception_handler(
     app.add_exception_handler(Exception, global_exception_handler)
 
 
+def iter_effective_app_routes(app: FastAPI) -> tuple[Any, ...]:
+    """Return route-like entries for eager and lazy FastAPI router storage."""
+    routes: list[Any] = []
+
+    def append_route(route: Any) -> None:
+        effective_candidates = getattr(route, "effective_candidates", None)
+        if callable(effective_candidates):
+            for candidate in effective_candidates():
+                append_route(candidate)
+            return
+        routes.append(route)
+
+    for route in app.routes:
+        append_route(route)
+    return tuple(routes)
+
+
 def include_default_routers(app: FastAPI) -> None:
     """Mount the default API router set onto the application."""
     from mcoi_runtime.app.routers.adapter import router as adapter_router
