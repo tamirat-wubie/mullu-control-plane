@@ -767,10 +767,23 @@ def test_governance_decision_records_static_issue_details() -> None:
     assert decision.decision_id == (
         f"whqr:goal-static-audit:deny:whqr_static_deny:{WHQRDocument(root=expr).canonical_hash()}"
     )
+    replay_document = WHQRDocument.from_canonical_json(
+        decision.metadata["whqr_canonical_json"],
+        expected_canonical_hash=decision.metadata["whqr_canonical_hash"],
+    )
+    tampered_replay_json = decision.metadata["whqr_canonical_json"].replace("send_email", "delete_file")
+
     assert decision.metadata["whqr_canonical_hash"] == WHQRDocument(root=expr).canonical_hash()
+    assert replay_document.root == expr
+    assert replay_document.canonical_hash() == decision.metadata["whqr_canonical_hash"]
     assert decision.metadata["reason_code"] == "whqr_static_deny"
     assert decision.metadata["whqr_semantics_hash"] == WHQRDocument(root=expr).semantics_hash
     assert decision.metadata["whqr_version"] == WHQRDocument(root=expr).whqr_version
+    with pytest.raises(ValueError, match="canonical hash mismatch"):
+        WHQRDocument.from_canonical_json(
+            tampered_replay_json,
+            expected_canonical_hash=decision.metadata["whqr_canonical_hash"],
+        )
     assert details["truth"] == "true"
     assert details["static_issues"][0]["code"] == "side_effect_target"
     assert details["static_issues"][0]["target"] == "send_email"
@@ -800,9 +813,17 @@ def test_guard_verdict_preserves_whqr_policy_reason_details() -> None:
     assert verdict.detail["policy_status"] == "deny"
     assert verdict.detail["reason_code"] == "whqr_static_deny"
     assert verdict.detail["decision_metadata"]["reason_code"] == "whqr_static_deny"
+    assert verdict.detail["whqr_canonical_json"] == decision.metadata["whqr_canonical_json"]
     assert verdict.detail["whqr_canonical_hash"] == decision.metadata["whqr_canonical_hash"]
     assert verdict.detail["whqr_semantics_hash"] == decision.metadata["whqr_semantics_hash"]
     assert verdict.detail["whqr_version"] == decision.metadata["whqr_version"]
+    assert (
+        WHQRDocument.from_canonical_json(
+            verdict.detail["whqr_canonical_json"],
+            expected_canonical_hash=verdict.detail["whqr_canonical_hash"],
+        ).canonical_hash()
+        == verdict.detail["whqr_canonical_hash"]
+    )
     assert verdict.detail["reason_details"]["static_issues"][0]["code"] == "side_effect_target"
     assert verdict.detail["reason_details"]["binding_issues"] == ()
 
