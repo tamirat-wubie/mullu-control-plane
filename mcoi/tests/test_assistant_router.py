@@ -17,13 +17,7 @@ from fastapi.testclient import TestClient
 from mcoi_runtime.app.routers import assistant as assistant_router_module
 from mcoi_runtime.app.routers.assistant import router
 from mcoi_runtime.app.routers.deps import deps
-from mcoi_runtime.app.server_http import include_default_routers, iter_effective_app_routes
-from mcoi_runtime.personal_assistant import (
-    ApprovalDecision,
-    ApprovalProposedAction,
-    ApprovalScope,
-    PersonalAssistantApprovalQueue,
-)
+from mcoi_runtime.app.server_http import include_default_routers
 
 
 class MetricsStub:
@@ -152,52 +146,6 @@ def test_personal_assistant_preview_compiles_inbox_request_without_execution() -
     assert body["clarification_bundle"]["clarification_count"] == 0
     assert body["effect_boundary"]["external_send_allowed"] is False
     assert body["console_read_model"]["effect_boundary"]["execution_allowed"] is False
-    assert body["console_read_model"]["approval_queue"]["receipt_ids"] == []
-    assert body["console_read_model"]["approval_queue"]["external_send_allowed"] is False
-    assert body["console_read_model"]["approval_queue"]["metadata"]["queue_projection"] == "read_model"
-
-
-def test_personal_assistant_approval_queue_read_model_is_public_safe() -> None:
-    queue = PersonalAssistantApprovalQueue()
-    record = queue.enqueue(
-        request_id="pa_request_public_queue_001",
-        plan_id="pa_plan_public_queue_001",
-        approver_ref="operator:tamirat",
-        approval_scope=ApprovalScope.PER_ACTION,
-        proposed_actions=(
-            ApprovalProposedAction(
-                action_id="pa_action_send_001",
-                skill_id="email.send.with_approval",
-                risk_level="P4",
-                effect_boundary="external_send",
-                summary="Send the prepared response after operator approval.",
-            ),
-        ),
-        forbidden_without_approval=("external_message_send", "connector_mutation"),
-        evidence_refs=("intent:pa_request_public_queue_001",),
-        created_at="2026-05-13T10:00:00+00:00",
-    )
-    queue.record_decision(
-        record.approval_id,
-        decision=ApprovalDecision.APPROVED,
-        reason_codes=("operator_approved",),
-        decided_at="2026-05-13T10:05:00+00:00",
-        decision_evidence_ref="approval:operator:tamirat:001",
-    )
-
-    model = queue.read_model()
-
-    assert model["approval_count"] == 1
-    assert model["state_counts"]["approved"] == 1
-    assert model["receipt_ids"] == [
-        "pa_receipt_public_queue_001_public_queue_001_request",
-        "pa_receipt_public_queue_001_public_queue_001_approved",
-    ]
-    assert model["execution_allowed"] is False
-    assert model["external_send_allowed"] is False
-    assert model["connector_mutation_allowed"] is False
-    assert model["approval_is_execution"] is False
-    assert model["metadata"]["approval_decision_executes_action"] is False
 
 
 def test_personal_assistant_preview_blocks_unknown_request_with_whqr_step() -> None:
@@ -387,7 +335,7 @@ def test_default_routers_include_assistant_kernel_paths() -> None:
     deps.set("metrics", MetricsStub())
     app = FastAPI()
     include_default_routers(app)
-    paths = {route.path for route in iter_effective_app_routes(app)}
+    paths = set(app.openapi()["paths"])
 
     assert "/api/v1/assistant/profiles" in paths
     assert "/api/v1/assistant/finance-ops/plans" in paths

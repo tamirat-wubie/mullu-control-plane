@@ -650,6 +650,27 @@
       ]
     },
     {
+      "action_id": "publish_team_ops_shared_inbox_send_execution_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "governed_connector_framework"
+      ]
+    },
+    {
+      "action_id": "publish_team_ops_shared_inbox_sent_message_observation_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "governed_connector_framework"
+      ]
+    },
+    {
+      "action_id": "publish_team_ops_shared_inbox_terminal_closure_review_packet_contract",
+      "status": "closed",
+      "surfaces": [
+        "governed_connector_framework"
+      ]
+    },
+    {
       "action_id": "classify_governed_scheduler_routes",
       "status": "closed",
       "surfaces": [
@@ -7641,9 +7662,24 @@
         "scripts/produce_team_ops_shared_inbox_send_preparation_receipt.py",
         "scripts/validate_team_ops_shared_inbox_send_preparation_receipt.py",
         "tests/test_produce_team_ops_shared_inbox_send_preparation_receipt.py",
-        "tests/test_validate_team_ops_shared_inbox_send_preparation_receipt.py"
+        "tests/test_validate_team_ops_shared_inbox_send_preparation_receipt.py",
+        "schemas/team_ops_shared_inbox_send_execution_receipt.schema.json",
+        "scripts/produce_team_ops_shared_inbox_send_execution_receipt.py",
+        "scripts/validate_team_ops_shared_inbox_send_execution_receipt.py",
+        "tests/test_produce_team_ops_shared_inbox_send_execution_receipt.py",
+        "tests/test_validate_team_ops_shared_inbox_send_execution_receipt.py",
+        "schemas/team_ops_shared_inbox_sent_message_observation_receipt.schema.json",
+        "scripts/produce_team_ops_shared_inbox_sent_message_observation_receipt.py",
+        "scripts/validate_team_ops_shared_inbox_sent_message_observation_receipt.py",
+        "tests/test_produce_team_ops_shared_inbox_sent_message_observation_receipt.py",
+        "tests/test_validate_team_ops_shared_inbox_sent_message_observation_receipt.py",
+        "schemas/team_ops_shared_inbox_terminal_closure_review_packet.schema.json",
+        "scripts/produce_team_ops_shared_inbox_terminal_closure_review_packet.py",
+        "scripts/validate_team_ops_shared_inbox_terminal_closure_review_packet.py",
+        "tests/test_produce_team_ops_shared_inbox_terminal_closure_review_packet.py",
+        "tests/test_validate_team_ops_shared_inbox_terminal_closure_review_packet.py"
       ],
-      "notes": "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, operator-input readiness, observation receipt binding, no-send observation routing, approval queue obligations, approval decision evidence, and send-preparation evidence behind handoff readiness, separate approval evidence, redacted read-only evidence, approval-before-send obligations, and separate send-execution receipt requirements.",
+      "notes": "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, operator-input readiness, observation receipt binding, no-send observation routing, approval queue obligations, approval decision evidence, send-preparation evidence, send-execution evidence, sent-message observation/replay closure evidence, and terminal closure review packets behind handoff readiness, separate approval evidence, redacted read-only evidence, approval-before-send obligations, provider-send evidence refs, duplicate-absence observation, deterministic replay, certificate-minting separation, and no local provider-mutation requirements.",
       "representative_paths": [
         "/api/v1/connectors",
         "/api/v1/connectors/history",
@@ -7943,6 +7979,35 @@
           "team_ops_shared_inbox_live_probe_receipt_cli_writes_report",
           "team_ops_shared_inbox_live_probe_receipt_validation_cli_writes_receipt"
         ],
+        "team_ops_shared_inbox_send_execution_accepts_provider_receipt": [
+          "team_ops_shared_inbox_send_execution_accepts_provider_receipt",
+          "team_ops_shared_inbox_send_execution_validation_accepts_ready_receipt"
+        ],
+        "team_ops_shared_inbox_send_execution_blocks_drift_or_local_provider_claim": [
+          "team_ops_shared_inbox_send_execution_blocks_preparation_drift",
+          "team_ops_shared_inbox_send_execution_validation_rejects_unready_preparation",
+          "team_ops_shared_inbox_send_execution_validation_rejects_local_provider_claim",
+          "team_ops_shared_inbox_send_execution_validation_rejects_raw_fields",
+          "team_ops_shared_inbox_send_execution_validation_rejects_missing_execution",
+          "team_ops_shared_inbox_send_execution_validation_rejects_bad_hash"
+        ],
+        "team_ops_shared_inbox_send_execution_blocks_without_preparation": [
+          "team_ops_shared_inbox_send_execution_blocks_without_preparation_ready",
+          "team_ops_shared_inbox_send_execution_validation_accepts_blocked_receipt"
+        ],
+        "team_ops_shared_inbox_send_execution_redacts_secret_markers": [
+          "team_ops_shared_inbox_send_execution_rejects_secret_marker_ref",
+          "team_ops_shared_inbox_send_execution_validation_rejects_secret_marker"
+        ],
+        "team_ops_shared_inbox_send_execution_requires_execution_evidence": [
+          "team_ops_shared_inbox_send_execution_requires_execution_evidence",
+          "team_ops_shared_inbox_send_execution_validation_require_ready_rejects_blocked"
+        ],
+        "team_ops_shared_inbox_send_execution_writes_validation_receipt": [
+          "team_ops_shared_inbox_send_execution_cli_writes_report",
+          "team_ops_shared_inbox_send_execution_validation_cli_writes_receipt",
+          "team_ops_shared_inbox_send_execution_validation_missing_path_is_bounded"
+        ],
         "team_ops_shared_inbox_send_preparation_accepts_approved_packet": [
           "team_ops_shared_inbox_send_preparation_accepts_approved_packet",
           "team_ops_shared_inbox_send_preparation_validation_accepts_ready_receipt"
@@ -7971,6 +8036,60 @@
           "team_ops_shared_inbox_send_preparation_cli_writes_report",
           "team_ops_shared_inbox_send_preparation_validation_cli_writes_receipt",
           "team_ops_shared_inbox_send_preparation_validation_missing_path_is_bounded"
+        ],
+        "team_ops_shared_inbox_sent_message_observation_accepts_replay_closure": [
+          "team_ops_sent_message_observation_accepts_two_observations_and_replay",
+          "team_ops_sent_message_observation_validator_accepts_ready_receipt"
+        ],
+        "team_ops_shared_inbox_sent_message_observation_blocks_inconsistent_or_local_provider_claim": [
+          "team_ops_sent_message_observation_blocks_hash_mismatch",
+          "team_ops_sent_message_observation_validator_rejects_local_provider_claim",
+          "team_ops_sent_message_observation_validator_rejects_raw_provider_field",
+          "team_ops_sent_message_observation_validator_rejects_missing_replay",
+          "team_ops_sent_message_observation_validator_rejects_bad_replay_hash",
+          "team_ops_sent_message_observation_validator_rejects_hash_mismatch"
+        ],
+        "team_ops_shared_inbox_sent_message_observation_blocks_without_execution": [
+          "team_ops_sent_message_observation_blocks_without_send_execution_ready",
+          "team_ops_sent_message_observation_validator_accepts_blocked_receipt"
+        ],
+        "team_ops_shared_inbox_sent_message_observation_redacts_secret_markers": [
+          "team_ops_sent_message_observation_rejects_secret_marker_ref",
+          "team_ops_sent_message_observation_validator_rejects_secret_marker"
+        ],
+        "team_ops_shared_inbox_sent_message_observation_requires_observation_replay": [
+          "team_ops_sent_message_observation_requires_observation_and_replay_evidence",
+          "team_ops_sent_message_observation_validator_require_ready_rejects_blocked"
+        ],
+        "team_ops_shared_inbox_sent_message_observation_writes_validation_receipt": [
+          "team_ops_sent_message_observation_cli_writes_report",
+          "team_ops_sent_message_observation_validator_cli_writes_validation",
+          "team_ops_sent_message_observation_validator_missing_path_is_bounded"
+        ],
+        "team_ops_shared_inbox_terminal_closure_review_accepts_candidate_packet": [
+          "team_ops_terminal_closure_review_accepts_ready_observation",
+          "team_ops_terminal_closure_review_validator_accepts_ready_packet"
+        ],
+        "team_ops_shared_inbox_terminal_closure_review_blocks_certificate_or_raw_claim": [
+          "team_ops_terminal_closure_review_validator_rejects_certificate_mint_claim",
+          "team_ops_terminal_closure_review_validator_rejects_raw_provider_field",
+          "team_ops_terminal_closure_review_validator_rejects_bad_review_hash"
+        ],
+        "team_ops_shared_inbox_terminal_closure_review_blocks_without_observation": [
+          "team_ops_terminal_closure_review_blocks_without_observation_ready",
+          "team_ops_terminal_closure_review_validator_accepts_blocked_packet"
+        ],
+        "team_ops_shared_inbox_terminal_closure_review_redacts_secret_markers": [
+          "team_ops_terminal_closure_review_rejects_secret_marker_ref",
+          "team_ops_terminal_closure_review_validator_rejects_secret_marker"
+        ],
+        "team_ops_shared_inbox_terminal_closure_review_requires_ready_packet": [
+          "team_ops_terminal_closure_review_validator_require_ready_rejects_blocked"
+        ],
+        "team_ops_shared_inbox_terminal_closure_review_writes_validation_receipt": [
+          "team_ops_terminal_closure_review_cli_writes_packet",
+          "team_ops_terminal_closure_review_validator_cli_writes_validation",
+          "team_ops_terminal_closure_review_validator_missing_path_is_bounded"
         ]
       },
       "runtime_witnesses": [
@@ -8046,7 +8165,25 @@
         "team_ops_shared_inbox_send_preparation_accepts_approved_packet",
         "team_ops_shared_inbox_send_preparation_blocks_denied_or_drift",
         "team_ops_shared_inbox_send_preparation_redacts_secret_markers",
-        "team_ops_shared_inbox_send_preparation_writes_validation_receipt"
+        "team_ops_shared_inbox_send_preparation_writes_validation_receipt",
+        "team_ops_shared_inbox_send_execution_blocks_without_preparation",
+        "team_ops_shared_inbox_send_execution_requires_execution_evidence",
+        "team_ops_shared_inbox_send_execution_accepts_provider_receipt",
+        "team_ops_shared_inbox_send_execution_blocks_drift_or_local_provider_claim",
+        "team_ops_shared_inbox_send_execution_redacts_secret_markers",
+        "team_ops_shared_inbox_send_execution_writes_validation_receipt",
+        "team_ops_shared_inbox_sent_message_observation_blocks_without_execution",
+        "team_ops_shared_inbox_sent_message_observation_requires_observation_replay",
+        "team_ops_shared_inbox_sent_message_observation_accepts_replay_closure",
+        "team_ops_shared_inbox_sent_message_observation_blocks_inconsistent_or_local_provider_claim",
+        "team_ops_shared_inbox_sent_message_observation_redacts_secret_markers",
+        "team_ops_shared_inbox_sent_message_observation_writes_validation_receipt",
+        "team_ops_shared_inbox_terminal_closure_review_blocks_without_observation",
+        "team_ops_shared_inbox_terminal_closure_review_requires_ready_packet",
+        "team_ops_shared_inbox_terminal_closure_review_accepts_candidate_packet",
+        "team_ops_shared_inbox_terminal_closure_review_blocks_certificate_or_raw_claim",
+        "team_ops_shared_inbox_terminal_closure_review_redacts_secret_markers",
+        "team_ops_shared_inbox_terminal_closure_review_writes_validation_receipt"
       ],
       "surface_id": "governed_connector_framework"
     },
@@ -10989,8 +11126,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1435,
-    "runtime_witness_count": 1435,
+    "exact_test_anchor_count": 1453,
+    "runtime_witness_count": 1453,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11695,7 +11832,6 @@
           {
             "anchors": [
               "tests/test_personal_assistant_approval_queue.py::test_approval_queue_read_model_matches_schema_and_denies_execution",
-              "mcoi/tests/test_assistant_router.py::test_personal_assistant_approval_queue_read_model_is_public_safe",
               "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_approval_queue_read_model_is_empty_and_safe",
               "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_approval_queue_preview_records_pending_packet"
             ],
@@ -17142,10 +17278,147 @@
               "tests/test_validate_team_ops_shared_inbox_send_preparation_receipt.py::test_team_ops_shared_inbox_send_preparation_validation_missing_path_is_bounded"
             ],
             "witness": "team_ops_shared_inbox_send_preparation_writes_validation_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_blocks_without_preparation_ready",
+              "tests/test_validate_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_validation_accepts_blocked_receipt"
+            ],
+            "witness": "team_ops_shared_inbox_send_execution_blocks_without_preparation"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_requires_execution_evidence",
+              "tests/test_validate_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_validation_require_ready_rejects_blocked"
+            ],
+            "witness": "team_ops_shared_inbox_send_execution_requires_execution_evidence"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_accepts_provider_receipt",
+              "tests/test_validate_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_validation_accepts_ready_receipt"
+            ],
+            "witness": "team_ops_shared_inbox_send_execution_accepts_provider_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_blocks_preparation_drift",
+              "tests/test_validate_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_validation_rejects_unready_preparation",
+              "tests/test_validate_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_validation_rejects_local_provider_claim",
+              "tests/test_validate_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_validation_rejects_raw_fields",
+              "tests/test_validate_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_validation_rejects_missing_execution",
+              "tests/test_validate_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_validation_rejects_bad_hash"
+            ],
+            "witness": "team_ops_shared_inbox_send_execution_blocks_drift_or_local_provider_claim"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_rejects_secret_marker_ref",
+              "tests/test_validate_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_validation_rejects_secret_marker"
+            ],
+            "witness": "team_ops_shared_inbox_send_execution_redacts_secret_markers"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_cli_writes_report",
+              "tests/test_validate_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_validation_cli_writes_receipt",
+              "tests/test_validate_team_ops_shared_inbox_send_execution_receipt.py::test_team_ops_shared_inbox_send_execution_validation_missing_path_is_bounded"
+            ],
+            "witness": "team_ops_shared_inbox_send_execution_writes_validation_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_blocks_without_send_execution_ready",
+              "tests/test_validate_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_validator_accepts_blocked_receipt"
+            ],
+            "witness": "team_ops_shared_inbox_sent_message_observation_blocks_without_execution"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_requires_observation_and_replay_evidence",
+              "tests/test_validate_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_validator_require_ready_rejects_blocked"
+            ],
+            "witness": "team_ops_shared_inbox_sent_message_observation_requires_observation_replay"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_accepts_two_observations_and_replay",
+              "tests/test_validate_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_validator_accepts_ready_receipt"
+            ],
+            "witness": "team_ops_shared_inbox_sent_message_observation_accepts_replay_closure"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_blocks_hash_mismatch",
+              "tests/test_validate_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_validator_rejects_local_provider_claim",
+              "tests/test_validate_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_validator_rejects_raw_provider_field",
+              "tests/test_validate_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_validator_rejects_missing_replay",
+              "tests/test_validate_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_validator_rejects_bad_replay_hash",
+              "tests/test_validate_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_validator_rejects_hash_mismatch"
+            ],
+            "witness": "team_ops_shared_inbox_sent_message_observation_blocks_inconsistent_or_local_provider_claim"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_rejects_secret_marker_ref",
+              "tests/test_validate_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_validator_rejects_secret_marker"
+            ],
+            "witness": "team_ops_shared_inbox_sent_message_observation_redacts_secret_markers"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_cli_writes_report",
+              "tests/test_validate_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_validator_cli_writes_validation",
+              "tests/test_validate_team_ops_shared_inbox_sent_message_observation_receipt.py::test_team_ops_sent_message_observation_validator_missing_path_is_bounded"
+            ],
+            "witness": "team_ops_shared_inbox_sent_message_observation_writes_validation_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_terminal_closure_review_packet.py::test_team_ops_terminal_closure_review_blocks_without_observation_ready",
+              "tests/test_validate_team_ops_shared_inbox_terminal_closure_review_packet.py::test_team_ops_terminal_closure_review_validator_accepts_blocked_packet"
+            ],
+            "witness": "team_ops_shared_inbox_terminal_closure_review_blocks_without_observation"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_team_ops_shared_inbox_terminal_closure_review_packet.py::test_team_ops_terminal_closure_review_validator_require_ready_rejects_blocked"
+            ],
+            "witness": "team_ops_shared_inbox_terminal_closure_review_requires_ready_packet"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_terminal_closure_review_packet.py::test_team_ops_terminal_closure_review_accepts_ready_observation",
+              "tests/test_validate_team_ops_shared_inbox_terminal_closure_review_packet.py::test_team_ops_terminal_closure_review_validator_accepts_ready_packet"
+            ],
+            "witness": "team_ops_shared_inbox_terminal_closure_review_accepts_candidate_packet"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_team_ops_shared_inbox_terminal_closure_review_packet.py::test_team_ops_terminal_closure_review_validator_rejects_certificate_mint_claim",
+              "tests/test_validate_team_ops_shared_inbox_terminal_closure_review_packet.py::test_team_ops_terminal_closure_review_validator_rejects_raw_provider_field",
+              "tests/test_validate_team_ops_shared_inbox_terminal_closure_review_packet.py::test_team_ops_terminal_closure_review_validator_rejects_bad_review_hash"
+            ],
+            "witness": "team_ops_shared_inbox_terminal_closure_review_blocks_certificate_or_raw_claim"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_terminal_closure_review_packet.py::test_team_ops_terminal_closure_review_rejects_secret_marker_ref",
+              "tests/test_validate_team_ops_shared_inbox_terminal_closure_review_packet.py::test_team_ops_terminal_closure_review_validator_rejects_secret_marker"
+            ],
+            "witness": "team_ops_shared_inbox_terminal_closure_review_redacts_secret_markers"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_terminal_closure_review_packet.py::test_team_ops_terminal_closure_review_cli_writes_packet",
+              "tests/test_validate_team_ops_shared_inbox_terminal_closure_review_packet.py::test_team_ops_terminal_closure_review_validator_cli_writes_validation",
+              "tests/test_validate_team_ops_shared_inbox_terminal_closure_review_packet.py::test_team_ops_terminal_closure_review_validator_missing_path_is_bounded"
+            ],
+            "witness": "team_ops_shared_inbox_terminal_closure_review_writes_validation_receipt"
           }
         ],
-        "exact_test_anchor_count": 73,
-        "runtime_witness_count": 73,
+        "exact_test_anchor_count": 91,
+        "runtime_witness_count": 91,
         "surface_id": "governed_connector_framework",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
