@@ -222,13 +222,17 @@ def validate_episode(episode: dict[str, Any], schema: dict[str, Any] | None = No
         return errors
 
     replay_receipt_json = replay_receipt.to_json_dict()
-    errors.extend(f"expected_receipt: {error}" for error in receipt_validator.validate_receipt(episode["expected_receipt"]))
+    expected_receipt = episode["expected_receipt"]
+    if isinstance(expected_receipt, dict):
+        errors.extend(f"expected_receipt: {error}" for error in receipt_validator.validate_receipt(expected_receipt))
+    else:
+        errors.append("expected_receipt must be a JSON object")
     errors.extend(f"replay_receipt: {error}" for error in receipt_validator.validate_receipt(replay_receipt_json))
     if episode["expected_mesh_digest"] != replay_receipt.mesh_digest:
         errors.append("expected_mesh_digest must match replay mesh_digest")
     if episode["expected_receipt_id"] != replay_receipt.receipt_id:
         errors.append("expected_receipt_id must match replay receipt_id")
-    if episode["expected_receipt"] != replay_receipt_json:
+    if expected_receipt != replay_receipt_json:
         errors.append("expected_receipt must match replay receipt")
     expected_counts = episode.get("expected_counts")
     if isinstance(expected_counts, dict):

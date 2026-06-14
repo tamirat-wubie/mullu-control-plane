@@ -127,6 +127,18 @@ def test_snet_episode_non_json_replay_inputs_report_errors() -> None:
     assert non_finite_episode["raw_answers_exposed"] is False
 
 
+def test_snet_episode_malformed_expected_receipt_report_errors() -> None:
+    schema = validator._load_schema(validator.DEFAULT_SCHEMA_PATH)
+    non_object_episode = validator.build_sample_episode()
+    non_object_episode["expected_receipt"] = None
+
+    errors = validator.validate_episode(non_object_episode, schema)
+
+    assert any("expected_receipt must be a JSON object" in error for error in errors)
+    assert any("expected_receipt must match replay receipt" in error for error in errors)
+    assert non_object_episode["execution_authority_granted"] is False
+
+
 def test_snet_episode_saved_file_validation(tmp_path) -> None:
     episode_path = tmp_path / "snet_episode.json"
     episode_path.write_text(json.dumps(validator.build_sample_episode()), encoding="utf-8")
