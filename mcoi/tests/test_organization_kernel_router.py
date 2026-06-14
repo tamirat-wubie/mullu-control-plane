@@ -3064,7 +3064,7 @@ def test_launch_gateway_pilot_readiness_packet_rejects_duplicate_evidence_refs(
 def test_default_routers_include_organization_kernel_paths() -> None:
     app = FastAPI()
     include_default_routers(app)
-    paths = {route.path for route in app.routes}
+    paths = set(app.openapi()["paths"])
 
     assert "/api/v1/orgs" in paths
     assert "/api/v1/cases" in paths

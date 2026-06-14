@@ -335,7 +335,7 @@ def test_default_routers_include_assistant_kernel_paths() -> None:
     deps.set("metrics", MetricsStub())
     app = FastAPI()
     include_default_routers(app)
-    paths = {route.path for route in app.routes}
+    paths = set(app.openapi()["paths"])
 
     assert "/api/v1/assistant/profiles" in paths
     assert "/api/v1/assistant/finance-ops/plans" in paths

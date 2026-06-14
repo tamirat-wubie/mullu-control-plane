@@ -237,7 +237,7 @@ def test_default_routers_include_temporal_scheduler_summary() -> None:
     _install_deps(MutableClock("2026-05-04T13:00:00+00:00"))
     app = FastAPI()
     include_default_routers(app)
-    paths = {route.path for route in app.routes}
+    paths = set(app.openapi()["paths"])
 
     assert "/api/v1/temporal/monitor" in paths
     assert "/api/v1/temporal/summary" in paths
