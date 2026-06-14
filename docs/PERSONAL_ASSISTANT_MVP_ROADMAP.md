@@ -56,6 +56,15 @@ No stage may skip UAO admission, approval classification, receipt emission, and 
 6. Raw private connector payloads, raw message bodies, credentials, tokens, and secret-like values are rejected.
 7. Proof coverage classifies approval queue routes under the assistant planning surface.
 
+## PR 4 Evidence Acceptance Criteria
+
+1. Redacted inbox/calendar summaries validate against `schemas/personal_assistant_read_only_projection.schema.json`.
+2. Projection envelopes embed schema-valid personal-assistant receipts.
+3. `execution_allowed`, `live_connector_execution_allowed`, `mailbox_read_allowed`, `mailbox_mutation_allowed`, `calendar_write_allowed`, `external_send_allowed`, and `connector_mutation_allowed` remain false.
+4. The source is explicitly `operator_supplied_redacted_projection`; the contract does not claim live provider reads.
+5. Raw private connector payloads, raw message bodies, credentials, tokens, and secret-like values are rejected.
+6. Assurance remains Foundation Mode only, with no live execution or customer-readiness claim.
+
 ## PR 7 Acceptance Criteria
 
 1. Memory observation records validate against `schemas/personal_assistant_memory_observation.schema.json`.

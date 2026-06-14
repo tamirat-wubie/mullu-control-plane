@@ -311,6 +311,12 @@
       "surface": "approval"
     },
     {
+      "schema_id": "personal-assistant-read-only-projection",
+      "path": "schemas/personal_assistant_read_only_projection.schema.json",
+      "urn": "urn:mullusi:schema:personal-assistant-read-only-projection:1",
+      "surface": "assistant"
+    },
+    {
       "schema_id": "personal-assistant-receipt",
       "path": "schemas/personal_assistant_receipt.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-receipt:1",
