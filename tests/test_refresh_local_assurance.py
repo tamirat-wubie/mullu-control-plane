@@ -7,7 +7,7 @@ Invariants:
   - Runner injection records command receipts without shell construction.
   - Default steps include document, durable Gmail, TeamOps approval binding,
     authority, input, observation routing, approval queue, approval decision,
-    adapter, protocol, and finance witnesses.
+    send preparation, adapter, protocol, and finance witnesses.
 """
 
 from __future__ import annotations
@@ -46,6 +46,8 @@ def test_default_refresh_steps_cover_local_assurance_surfaces() -> None:
     assert names[17] == "team_ops_shared_inbox_approval_queue_receipt_validation"
     assert names[18] == "team_ops_shared_inbox_approval_decision_receipt"
     assert names[19] == "team_ops_shared_inbox_approval_decision_receipt_validation"
+    assert names[20] == "team_ops_shared_inbox_send_preparation_receipt"
+    assert names[21] == "team_ops_shared_inbox_send_preparation_receipt_validation"
     assert "capability_adapter_evidence" in names
     assert "proof_coverage_matrix" in names
     assert "protocol_manifest" in names

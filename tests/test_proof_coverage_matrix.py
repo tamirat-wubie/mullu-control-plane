@@ -183,7 +183,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["runtime_state_persistence_lifecycle"]["unanchored_witness_count"] == 0
     assert surfaces["multi_agent_coordination_runtime"]["exact_test_anchor_count"] == 8
     assert surfaces["multi_agent_coordination_runtime"]["unanchored_witness_count"] == 0
-    assert surfaces["governed_connector_framework"]["exact_test_anchor_count"] == 67
+    assert surfaces["governed_connector_framework"]["exact_test_anchor_count"] == 73
     assert surfaces["governed_connector_framework"]["unanchored_witness_count"] == 0
     assert surfaces["governed_background_scheduler"]["exact_test_anchor_count"] == 6
     assert surfaces["governed_background_scheduler"]["unanchored_witness_count"] == 0
@@ -2915,6 +2915,17 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert "tests/test_validate_team_ops_shared_inbox_approval_decision_receipt.py" in connector_surface[
         "evidence_files"
     ]
+    assert "schemas/team_ops_shared_inbox_send_preparation_receipt.schema.json" in connector_surface["evidence_files"]
+    assert "scripts/produce_team_ops_shared_inbox_send_preparation_receipt.py" in connector_surface["evidence_files"]
+    assert "scripts/validate_team_ops_shared_inbox_send_preparation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_produce_team_ops_shared_inbox_send_preparation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
+    assert "tests/test_validate_team_ops_shared_inbox_send_preparation_receipt.py" in connector_surface[
+        "evidence_files"
+    ]
     assert "connector_registration_typed" in witnesses
     assert "connector_invocation_guard_chain_checked" in witnesses
     assert "connector_lifecycle_disable_enable_bounded" in witnesses
@@ -2982,7 +2993,13 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     assert "team_ops_shared_inbox_approval_decision_blocks_role_or_authorization_drift" in witnesses
     assert "team_ops_shared_inbox_approval_decision_redacts_secret_markers" in witnesses
     assert "team_ops_shared_inbox_approval_decision_writes_validation_receipt" in witnesses
-    assert connector_witness_surface["exact_test_anchor_count"] == 67
+    assert "team_ops_shared_inbox_send_preparation_blocks_without_decision" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_requires_preparation_evidence" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_accepts_approved_packet" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_blocks_denied_or_drift" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_redacts_secret_markers" in witnesses
+    assert "team_ops_shared_inbox_send_preparation_writes_validation_receipt" in witnesses
+    assert connector_witness_surface["exact_test_anchor_count"] == 73
     assert connector_witness_surface["unanchored_witness_count"] == 0
     assert route_records["/api/v1/connectors/register"]["coverage_state"] == "proven"
     assert route_records["/api/v1/connectors/register"]["surface_id"] == "governed_connector_framework"
@@ -3002,6 +3019,7 @@ def test_governed_connector_framework_surface_gates_invocation_lifecycle() -> No
     ] == "closed"
     assert closure_actions["publish_team_ops_shared_inbox_approval_queue_receipt_contract"]["status"] == "closed"
     assert closure_actions["publish_team_ops_shared_inbox_approval_decision_receipt_contract"]["status"] == "closed"
+    assert closure_actions["publish_team_ops_shared_inbox_send_preparation_receipt_contract"]["status"] == "closed"
 
 
 def test_governed_background_scheduler_surface_gates_job_lifecycle() -> None:

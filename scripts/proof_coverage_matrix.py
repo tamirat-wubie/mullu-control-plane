@@ -4292,8 +4292,13 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "scripts/validate_team_ops_shared_inbox_approval_decision_receipt.py",
                 "tests/test_produce_team_ops_shared_inbox_approval_decision_receipt.py",
                 "tests/test_validate_team_ops_shared_inbox_approval_decision_receipt.py",
+                "schemas/team_ops_shared_inbox_send_preparation_receipt.schema.json",
+                "scripts/produce_team_ops_shared_inbox_send_preparation_receipt.py",
+                "scripts/validate_team_ops_shared_inbox_send_preparation_receipt.py",
+                "tests/test_produce_team_ops_shared_inbox_send_preparation_receipt.py",
+                "tests/test_validate_team_ops_shared_inbox_send_preparation_receipt.py",
             ],
-            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, operator-input readiness, observation receipt binding, no-send observation routing, approval queue obligations, and approval decision evidence behind handoff readiness, separate approval evidence, redacted read-only evidence, approval-before-send obligations, and separate send-receipt requirements.",
+            "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, operator-input readiness, observation receipt binding, no-send observation routing, approval queue obligations, approval decision evidence, and send-preparation evidence behind handoff readiness, separate approval evidence, redacted read-only evidence, approval-before-send obligations, and separate send-execution receipt requirements.",
             [
                 "connector_registration_typed",
                 "connector_invocation_guard_chain_checked",
@@ -4362,6 +4367,12 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "team_ops_shared_inbox_approval_decision_blocks_role_or_authorization_drift",
                 "team_ops_shared_inbox_approval_decision_redacts_secret_markers",
                 "team_ops_shared_inbox_approval_decision_writes_validation_receipt",
+                "team_ops_shared_inbox_send_preparation_blocks_without_decision",
+                "team_ops_shared_inbox_send_preparation_requires_preparation_evidence",
+                "team_ops_shared_inbox_send_preparation_accepts_approved_packet",
+                "team_ops_shared_inbox_send_preparation_blocks_denied_or_drift",
+                "team_ops_shared_inbox_send_preparation_redacts_secret_markers",
+                "team_ops_shared_inbox_send_preparation_writes_validation_receipt",
             ],
             runtime_witness_anchor_aliases={
                 "connector_registration_typed": [
@@ -4651,6 +4662,35 @@ def proof_coverage_matrix() -> dict[str, Any]:
                     "team_ops_shared_inbox_approval_decision_cli_writes_report",
                     "team_ops_shared_inbox_approval_decision_validation_cli_writes_receipt",
                     "team_ops_shared_inbox_approval_decision_validation_missing_path_is_bounded",
+                ],
+                "team_ops_shared_inbox_send_preparation_blocks_without_decision": [
+                    "team_ops_shared_inbox_send_preparation_blocks_without_decision_ready",
+                    "team_ops_shared_inbox_send_preparation_validation_accepts_blocked_receipt",
+                ],
+                "team_ops_shared_inbox_send_preparation_requires_preparation_evidence": [
+                    "team_ops_shared_inbox_send_preparation_requires_preparation_evidence",
+                    "team_ops_shared_inbox_send_preparation_validation_require_ready_rejects_blocked",
+                ],
+                "team_ops_shared_inbox_send_preparation_accepts_approved_packet": [
+                    "team_ops_shared_inbox_send_preparation_accepts_approved_packet",
+                    "team_ops_shared_inbox_send_preparation_validation_accepts_ready_receipt",
+                ],
+                "team_ops_shared_inbox_send_preparation_blocks_denied_or_drift": [
+                    "team_ops_shared_inbox_send_preparation_blocks_denied_decision",
+                    "team_ops_shared_inbox_send_preparation_validation_rejects_denied_decision",
+                    "team_ops_shared_inbox_send_preparation_validation_rejects_effect_drift",
+                    "team_ops_shared_inbox_send_preparation_validation_rejects_raw_fields",
+                    "team_ops_shared_inbox_send_preparation_validation_rejects_missing_preparation",
+                    "team_ops_shared_inbox_send_preparation_validation_rejects_bad_hash",
+                ],
+                "team_ops_shared_inbox_send_preparation_redacts_secret_markers": [
+                    "team_ops_shared_inbox_send_preparation_rejects_secret_marker_ref",
+                    "team_ops_shared_inbox_send_preparation_validation_rejects_secret_marker",
+                ],
+                "team_ops_shared_inbox_send_preparation_writes_validation_receipt": [
+                    "team_ops_shared_inbox_send_preparation_cli_writes_report",
+                    "team_ops_shared_inbox_send_preparation_validation_cli_writes_receipt",
+                    "team_ops_shared_inbox_send_preparation_validation_missing_path_is_bounded",
                 ],
             },
         ),
@@ -8087,6 +8127,11 @@ def proof_coverage_matrix() -> dict[str, Any]:
         },
         {
             "action_id": "publish_team_ops_shared_inbox_approval_decision_receipt_contract",
+            "surfaces": ["governed_connector_framework"],
+            "status": "closed",
+        },
+        {
+            "action_id": "publish_team_ops_shared_inbox_send_preparation_receipt_contract",
             "surfaces": ["governed_connector_framework"],
             "status": "closed",
         },
