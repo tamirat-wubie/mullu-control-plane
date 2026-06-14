@@ -49,6 +49,7 @@ gate can close.
 
 | Evidence key | Meaning | Current state |
 |---|---|---|
+| `production_image_published` | A versioned production image exists and is selected for deployment. | AwaitingEvidence |
 | `runtime_host_ready` | The intended runtime host is provisioned and reachable through the expected private path. | AwaitingEvidence |
 | `managed_postgres_ready` | The managed PostgreSQL database exists and is bound to the service. | AwaitingEvidence |
 | `schema_applied` | Required database schema or migrations have been applied. | AwaitingEvidence |
@@ -82,7 +83,7 @@ Validate the blocker receipt:
 python scripts/validate_deployment_upstream_blocker_receipt.py --receipt .change_assurance\deployment_upstream_blocker_receipt.json --output .change_assurance\deployment_upstream_blocker_receipt_validation.json
 ```
 
-Only after the twelve private evidence items are proven, rerun the upstream
+Only after the thirteen private evidence items are proven, rerun the upstream
 checker with `--require-ready` in the upstream site repository:
 
 ```powershell
@@ -114,5 +115,5 @@ Back to [Start Here](START_HERE.md)
 STATUS:
   Completeness: 90%
   Invariants verified: [public-route evidence separated from private readiness evidence, no raw secret values recorded, DNS target and DNS resolution evidence named, upstream blocker preserved]
-  Open issues: [twelve private upstream evidence items remain AwaitingEvidence]
+  Open issues: [thirteen private upstream evidence items remain AwaitingEvidence]
   Next action: collect private evidence or update the upstream checker to recognize the current Render gateway deployment path without weakening the private evidence gate
