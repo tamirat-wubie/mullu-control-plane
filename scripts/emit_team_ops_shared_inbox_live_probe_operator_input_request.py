@@ -240,6 +240,42 @@ def _derive_required_inputs(
                     ),
                 )
             )
+        elif blocker == "approval_binding_missing":
+            inputs.append(
+                _operator_input(
+                    blocker=blocker,
+                    input_kind="approval_binding_receipt",
+                    required_names=("team_ops_shared_inbox_live_probe_approval_binding",),
+                    current_state="missing",
+                    next_action=(
+                        "emit the TeamOps live-probe approval binding receipt, then rerun authority"
+                    ),
+                )
+            )
+        elif blocker.startswith("approval_binding_invalid:"):
+            inputs.append(
+                _operator_input(
+                    blocker=blocker,
+                    input_kind="valid_approval_binding_receipt",
+                    required_names=("team_ops_shared_inbox_live_probe_approval_binding",),
+                    current_state="present_invalid",
+                    next_action=(
+                        "fix the TeamOps approval binding receipt validation errors, then rerun authority"
+                    ),
+                )
+            )
+        elif blocker == "approval_binding_not_ready":
+            inputs.append(
+                _operator_input(
+                    blocker=blocker,
+                    input_kind="approval_binding_readiness_evidence",
+                    required_names=("team_ops_shared_inbox_live_probe_approval_binding",),
+                    current_state="awaiting_evidence",
+                    next_action=(
+                        "close TeamOps approval binding evidence, then rerun live-probe authority"
+                    ),
+                )
+            )
     return tuple(_dedupe_inputs(inputs))
 
 
