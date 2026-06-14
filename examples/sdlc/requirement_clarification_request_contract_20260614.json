@@ -1,0 +1,58 @@
+{
+  "requirement_id": "sdlc_req_clarification_request_contract_20260614",
+  "request_id": "platform_ask_to_receipt_clarification_request_contract_20260614",
+  "problem_statement": "The ask-to-receipt and interpretation maps require a clarification evidence object for missing action slots, but the public ClarificationRequest contract allowed multi-question drift and lacked a standalone foundation example and validator.",
+  "success_criteria": [
+    "ClarificationRequest validates against the public JSON schema and a Foundation Mode example",
+    "max_questions is fixed to one focused question",
+    "safe_default remains no_execution",
+    "missing target and allowed_action slots are represented explicitly for vague action-like input",
+    "raw user text, secrets, approval claims, and execution authority are rejected by the validator",
+    "focused tests cover valid, malformed, multi-question, missing-slot, prefix, raw-text, and authority-drift cases"
+  ],
+  "non_goals": [
+    "no execution authority",
+    "no approval authority",
+    "no connector authority",
+    "no runtime behavior change",
+    "no launch, production, customer, or support readiness claim"
+  ],
+  "constraints": [
+    "Foundation Mode remains active",
+    "clarification is a blocking interpretation artifact, not a plan or command",
+    "raw message content must remain represented by hash only",
+    "effect-bearing follow-on action still requires UAO, Phi_gov, life-meaning judgment, approval where required, and verification",
+    "Mfidel atomicity remains preserved and no text-processing decomposition is introduced"
+  ],
+  "risk_class": "medium",
+  "affected_surfaces": [
+    "schemas/clarification_request.schema.json",
+    "examples/clarification_request.foundation.json",
+    "scripts/validate_clarification_request.py",
+    "tests/test_validate_clarification_request.py",
+    "docs/76_clarification_request_contract.md",
+    "docs/maps/MULLUSI_INTERPRETATION_LAYER_MAP.md",
+    ".github/workflows/ci.yml",
+    "examples/sdlc/requirement_clarification_request_contract_20260614.json",
+    "examples/sdlc/design_clarification_request_contract_20260614.json"
+  ],
+  "acceptance_tests": [
+    "python scripts/validate_clarification_request.py",
+    "python -m pytest tests/test_validate_clarification_request.py tests/test_gateway/test_interpretation.py -q",
+    "python scripts/validate_schemas.py",
+    "python scripts/validate_protocol_manifest.py",
+    "python scripts/validate_sdlc_artifact.py",
+    "python scripts/run_workspace_governance_checks.py --json --receipt-path .tmp/workspace-governance-preflight-clarification-request-contract-20260614.json"
+  ],
+  "evidence_required": [
+    "ClarificationRequest validation receipt",
+    "focused pytest receipt for validator and gateway interpretation behavior",
+    "schema validation receipt",
+    "protocol manifest validation receipt",
+    "SDLC artifact validation receipt",
+    "workspace governance preflight receipt before closure claim"
+  ],
+  "uao_ref": "uao://sdlc/requirement/clarification-request-contract/20260614",
+  "causal_decision_trace_ref": "trace://sdlc/requirement/clarification-request-contract/20260614",
+  "receipt_ref": "receipt://sdlc/requirement/clarification-request-contract/20260614"
+}

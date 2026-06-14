@@ -9,7 +9,7 @@
 
 Purpose: define the repository boundary for Mullu Govern and the Mullu Control Plane.
 Governance scope: Milestone 0 shared foundation and Foundation Mode claim boundary.
-Dependencies: `docs/FOUNDATION_MODE.md`, `docs/PRODUCT_BOUNDARY.md`, `docs/01_shared_invariants.md`, `docs/02_shared_contracts.md`, `docs/74_truth_kernel_plane.md`, `docs/75_problem_star_compilation_receipt.md`.
+Dependencies: `docs/FOUNDATION_MODE.md`, `docs/PRODUCT_BOUNDARY.md`, `docs/01_shared_invariants.md`, `docs/02_shared_contracts.md`, `docs/74_truth_kernel_plane.md`, `docs/75_problem_star_compilation_receipt.md`, `docs/76_clarification_request_contract.md`.
 Invariants: shared meaning is defined once; Foundation Mode remains the current operating posture until promoted by witness; MAF Core and MCOI Runtime remain split; Mullu Govern remains the public product name; Mullu remains the suite/family name; Mullusi remains the company name; Mullu Platform remains a developer and architecture term; Mullu Control Plane remains the admin/governance/deployment surface; Mullu Truth Kernel remains an internal MAF Core subsystem, not a company, product, or runtime replacement.
 
 ## Product Identity
@@ -39,6 +39,7 @@ and receipt-backed until a later status witness promotes the project.
 - `MAF Core` owns the general substrate, kernel-facing interfaces, and shared runtime primitives.
 - `Mullu Truth Kernel` is an internal MAF Core subsystem for domains, constraints, closure, propagation, kernel checks, projections, forced values, and proof-bound truth-state commits.
 - `ProblemStar Compilation Receipt` is a read-only governance receipt proving raw input was separated into canonical Phi-GPS fields and proof surfaces before solver routing.
+- `ClarificationRequest Contract` is a read-only interpretation blocker that asks one focused question and preserves `no_execution` until missing action slots are answered.
 - `MCOI Runtime` owns computer-operation-specific observation and execution runtime surfaces.
 - `Mullu Govern` remains product-facing and explains governed execution to users and buyers.
 - `Mullu Control Plane` remains operator-facing and consumes traces, approvals, and status from the shared foundation.
