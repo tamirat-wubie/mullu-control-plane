@@ -1331,6 +1331,12 @@
       "surface": "worker"
     },
     {
+      "schema_id": "worker-failure-receipt",
+      "path": "schemas/worker_failure_receipt.schema.json",
+      "urn": "urn:mullusi:schema:worker-failure-receipt:1",
+      "surface": "worker"
+    },
+    {
       "schema_id": "world-state",
       "path": "schemas/world_state.schema.json",
       "urn": "urn:mullusi:schema:world-state:1",
