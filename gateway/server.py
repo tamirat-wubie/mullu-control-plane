@@ -3446,6 +3446,11 @@ def create_gateway_app(
             closure.get("reconciliation_ref") if isinstance(closure, Mapping) else None
         )
         memory_ref = closure.get("memory_ref") if isinstance(closure, Mapping) else None
+        whqr_replay_binding = (
+            closure.get("whqr_replay_binding")
+            if isinstance(closure, Mapping)
+            else None
+        )
         return {
             "command_id": command_id,
             "universal_action_orchestration": record,
@@ -3454,6 +3459,7 @@ def create_gateway_app(
             "closure_state": record.get("closure_state", ""),
             "reconciliation_ref": reconciliation_ref,
             "memory_ref": memory_ref,
+            "whqr_replay_binding": whqr_replay_binding,
         }
 
     def _operator_universal_actions_payload(
@@ -3484,6 +3490,13 @@ def create_gateway_app(
             payload["intent"] = command.intent
             payload["command_state"] = command.state.value
             payload["created_at"] = command.created_at
+            whqr_replay_binding = payload.get("whqr_replay_binding")
+            if isinstance(whqr_replay_binding, Mapping):
+                payload["whqr_replay_ref"] = str(
+                    whqr_replay_binding.get("replay_ref", "")
+                )
+            else:
+                payload["whqr_replay_ref"] = ""
             proofs.append(payload)
         page, page_meta = _read_model_page(
             tuple(proofs),
@@ -4628,6 +4641,7 @@ def _universal_actions_console_html(read_model: Mapping[str, Any]) -> str:
         "closure_state",
         "reconciliation_ref",
         "memory_ref",
+        "whqr_replay_ref",
         "proof_hash",
         "terminal_certificate_id",
         "learning_status",

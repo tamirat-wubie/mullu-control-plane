@@ -291,13 +291,19 @@ def _uao_closure_confirmation(
     closure_state: str,
     reconciliation_ref: str | None,
     memory_ref: str | None,
+    whqr_replay_binding: dict | None = None,
 ) -> str:
+    whqr_replay_binding = whqr_replay_binding or {}
     return stable_identifier(
         "universal-action-closure-confirmation",
         {
             "closure_state": closure_state,
             "reconciliation_ref": reconciliation_ref or "",
             "memory_ref": memory_ref or "",
+            "whqr_replay_ref": whqr_replay_binding.get("replay_ref", ""),
+            "whqr_canonical_hash": whqr_replay_binding.get("canonical_hash", ""),
+            "whqr_semantics_hash": whqr_replay_binding.get("semantics_hash", ""),
+            "whqr_version": whqr_replay_binding.get("version", ""),
         },
     )
 
@@ -2883,6 +2889,20 @@ class TestGatewayStatus:
             payload={"body": "refresh status page"},
         )
         record["action_envelope"]["intent"] = command.command_id
+        record["closure"]["whqr_replay_binding"] = {
+            "replay_ref": "whqr://replay/fixture-canonical-hash",
+            "canonical_hash": "fixture-canonical-hash",
+            "semantics_hash": "sha256:fixture-semantics",
+            "version": "0.1.0",
+        }
+        for receipt in record["receipts"]:
+            if receipt["kind"] == "closure":
+                receipt["confirms"] = _uao_closure_confirmation(
+                    closure_state=record["closure_state"],
+                    reconciliation_ref=record["closure"]["reconciliation_ref"],
+                    memory_ref=record["closure"]["memory_ref"],
+                    whqr_replay_binding=record["closure"]["whqr_replay_binding"],
+                )
         universal_detail = _bind_uao_fixture_to_universal_action_detail(record)
         gateway_app.state.command_ledger.transition(
             command.command_id,
@@ -2906,6 +2926,11 @@ class TestGatewayStatus:
         assert data["closure_state"] == "closed_allowed"
         assert data["reconciliation_ref"] == record["closure"]["reconciliation_ref"]
         assert data["memory_ref"] == record["closure"]["memory_ref"]
+        assert data["whqr_replay_binding"] == record["closure"]["whqr_replay_binding"]
+        assert (
+            data["whqr_replay_binding"]["replay_ref"]
+            == "whqr://replay/fixture-canonical-hash"
+        )
         assert data["universal_action_orchestration"]["raw_reasoning_included"] is False
 
     def test_command_universal_action_orchestration_missing_returns_404(
@@ -3398,6 +3423,12 @@ class TestGatewayStatus:
                     "closure_state": "closed_allowed",
                     "reconciliation_ref": "reconciliation://uact-committed",
                     "memory_ref": "memory://uact-committed",
+                    "whqr_replay_binding": {
+                        "replay_ref": "whqr://replay/operator-canonical-hash",
+                        "canonical_hash": "operator-canonical-hash",
+                        "semantics_hash": "sha256:operator-semantics",
+                        "version": "0.1.0",
+                    },
                 },
             },
         )
@@ -3416,6 +3447,7 @@ class TestGatewayStatus:
                     "closure_state": "closed_blocked",
                     "reconciliation_ref": "",
                     "memory_ref": "",
+                    "whqr_replay_binding": {},
                 },
             },
         )
@@ -3449,6 +3481,15 @@ class TestGatewayStatus:
         assert committed_row["closure_state"] == "closed_allowed"
         assert committed_row["reconciliation_ref"] == "reconciliation://uact-committed"
         assert committed_row["memory_ref"] == "memory://uact-committed"
+        assert committed_row["whqr_replay_binding"] == {
+            "replay_ref": "whqr://replay/operator-canonical-hash",
+            "canonical_hash": "operator-canonical-hash",
+            "semantics_hash": "sha256:operator-semantics",
+            "version": "0.1.0",
+        }
+        assert committed_row["whqr_replay_ref"] == (
+            "whqr://replay/operator-canonical-hash"
+        )
         assert invalid_resp.status_code == 400
         assert invalid_resp.json()["detail"] == "blocked must be true or false"
 
@@ -3479,6 +3520,12 @@ class TestGatewayStatus:
                     "closure_state": "closed_blocked",
                     "reconciliation_ref": "reconciliation://uact-console",
                     "memory_ref": "memory://uact-console",
+                    "whqr_replay_binding": {
+                        "replay_ref": "whqr://replay/console-canonical-hash",
+                        "canonical_hash": "console-canonical-hash",
+                        "semantics_hash": "sha256:console-semantics",
+                        "version": "0.1.0",
+                    },
                 },
             },
         )
@@ -3496,6 +3543,7 @@ class TestGatewayStatus:
         assert "closed_blocked" in resp.text
         assert "reconciliation://uact-console" in resp.text
         assert "memory://uact-console" in resp.text
+        assert "whqr://replay/console-canonical-hash" in resp.text
 
     def test_latest_anchor_read_model(self, gateway_app, client):
         msg_resp = client.post(

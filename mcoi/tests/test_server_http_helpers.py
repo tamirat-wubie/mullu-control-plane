@@ -321,7 +321,7 @@ def test_include_default_routers_mounts_health_and_completion_routes() -> None:
     app = FastAPI()
     server_http.include_default_routers(app)
 
-    paths = {route.path for route in server_http.iter_inspectable_routes(app)}
+    paths = {route.path for route in server_http.iter_effective_app_routes(app)}
     assert "/health" in paths
     assert "/api/v1/complete" in paths
     assert "/software/receipts" in paths

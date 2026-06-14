@@ -32,7 +32,10 @@ if str(MCOI_ROOT) not in sys.path:
 from fastapi import FastAPI  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
-from mcoi_runtime.app.server_http import include_default_routers, iter_inspectable_routes  # noqa: E402
+from mcoi_runtime.app.server_http import (  # noqa: E402
+    include_default_routers,
+    iter_effective_app_routes,
+)
 
 
 LOOP_READ_MODEL_PATH = "/api/v1/loops/read-model"
@@ -69,7 +72,7 @@ def validate_route_methods(app: FastAPI) -> list[str]:
     """Validate that the loop read-model route is read-only."""
 
     methods: set[str] = set()
-    for route in iter_inspectable_routes(app):
+    for route in iter_effective_app_routes(app):
         if getattr(route, "path", "") == LOOP_READ_MODEL_PATH:
             methods.update(str(method) for method in getattr(route, "methods", set()))
     errors: list[str] = []

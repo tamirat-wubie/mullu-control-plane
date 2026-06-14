@@ -256,18 +256,27 @@ def install_global_exception_handler(
 
 
 def iter_inspectable_routes(app: FastAPI) -> Iterable[Any]:
-    """Yield mounted route objects with stable ``path``/``methods`` access.
+    """Yield mounted route objects with stable ``path``/``methods`` access."""
+
+    yield from iter_effective_app_routes(app)
+
+
+def iter_effective_app_routes(app: FastAPI) -> tuple[Any, ...]:
+    """Return route-like entries for eager and lazy FastAPI router storage.
 
     FastAPI 0.137 can keep included routers as internal placeholder routes
     until request-time matching. Older releases expand them in ``app.routes``.
     Governance and audit tests need a deterministic read-only view of the
     mounted route surface, independent of that internal representation.
     """
+    routes: list[Any] = []
+
     for route in app.routes:
-        yield from _iter_inspectable_route(route)
+        routes.extend(_iter_effective_route(route))
+    return tuple(routes)
 
 
-def _iter_inspectable_route(route: Any) -> Iterable[Any]:
+def _iter_effective_route(route: Any) -> Iterable[Any]:
     if hasattr(route, "path"):
         yield route
         return
@@ -278,7 +287,7 @@ def _iter_inspectable_route(route: Any) -> Iterable[Any]:
 
     for candidate in effective_candidates():
         if hasattr(candidate, "effective_candidates"):
-            yield from _iter_inspectable_route(candidate)
+            yield from _iter_effective_route(candidate)
             continue
         if hasattr(candidate, "path"):
             yield candidate

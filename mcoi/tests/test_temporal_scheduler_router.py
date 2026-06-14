@@ -16,7 +16,7 @@ from fastapi.testclient import TestClient
 
 from mcoi_runtime.app.routers.deps import deps
 from mcoi_runtime.app.routers.temporal_scheduler import router
-from mcoi_runtime.app.server_http import include_default_routers, iter_inspectable_routes
+from mcoi_runtime.app.server_http import include_default_routers, iter_effective_app_routes
 from mcoi_runtime.core.event_spine import EventSpineEngine
 from mcoi_runtime.core.proof_bridge import ProofBridge
 from mcoi_runtime.core.temporal_runtime import TemporalRuntimeEngine
@@ -237,7 +237,7 @@ def test_default_routers_include_temporal_scheduler_summary() -> None:
     _install_deps(MutableClock("2026-05-04T13:00:00+00:00"))
     app = FastAPI()
     include_default_routers(app)
-    paths = {route.path for route in iter_inspectable_routes(app)}
+    paths = {route.path for route in iter_effective_app_routes(app)}
 
     assert "/api/v1/temporal/monitor" in paths
     assert "/api/v1/temporal/summary" in paths

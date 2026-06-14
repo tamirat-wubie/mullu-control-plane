@@ -1128,6 +1128,7 @@ def test_universal_command_proof_view_replays_persisted_success_events() -> None
     assert proof.admission_receipt_ref == result.admission_receipt_ref
     assert proof.execution_receipt_ref == result.execution_receipt_ref
     assert proof.closure_state == "closed_allowed"
+    assert proof.whqr_replay_binding == {}
     assert proof.proof_hash == result.proof_hash
     assert proof.capability_id == "shell_command"
     assert proof.dispatch_ledger_hash == result.dispatch_result.ledger_hash
