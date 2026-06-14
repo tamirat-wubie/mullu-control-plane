@@ -32,12 +32,13 @@ def test_loop_read_model_exposes_registered_blocked_loops() -> None:
     assert response.status_code == 200
     assert payload["read_model_id"] == "holistic_loop_read_model"
     assert payload["status"] == "blocked"
-    assert payload["blocked_count"] == 7
-    assert payload["returned_count"] == 7
+    assert payload["blocked_count"] == 8
+    assert payload["returned_count"] == 8
     assert {loop["loop_id"] for loop in payload["loops"]} == {
         "audit_proof_verification_loop",
         "authority_obligation_loop",
         "universal_action_orchestration_loop",
+        "workflow_execution_loop",
         "deployment_witness_loop",
         "runtime_conformance_loop",
         "cognitive_outcome_loop",
@@ -346,7 +347,7 @@ def test_loop_read_model_limit_is_bounded_and_truncated() -> None:
 
     assert response.status_code == 200
     assert payload["returned_count"] == 2
-    assert payload["total_count"] == 7
+    assert payload["total_count"] == 8
     assert payload["truncated"] is True
     assert payload["blocked_count"] == 2
     assert len(payload["loops"]) == 2

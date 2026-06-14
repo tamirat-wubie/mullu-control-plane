@@ -1,7 +1,7 @@
 {
-  "blocked_count": 7,
+  "blocked_count": 8,
   "generated_at": "2026-06-08T00:00:00+00:00",
-  "loop_count": 7,
+  "loop_count": 8,
   "loops": [
     {
       "audit_evolution_view": {
@@ -10121,11 +10121,1434 @@
         }
       ],
       "updated_at": "2026-06-08T00:00:00+00:00"
+    },
+    {
+      "audit_evolution_view": {
+        "admits_learning": false,
+        "audit_blocker_refs": [
+          "missing_authority:workflow_operator_ref",
+          "missing_evidence:workflow_descriptor_valid",
+          "missing_evidence:workflow_run_receipt_valid",
+          "missing_evidence:workflow_replay_boundary_passed"
+        ],
+        "audit_state": "audit_blocked_by_unresolved_gaps",
+        "emits_receipt": false,
+        "learning_admission_refs": [
+          "descriptor_rule_update_requires_workflow_validation",
+          "wait_state_pattern_requires_replay_receipt",
+          "workflow_execution_remains_outside_read_model"
+        ],
+        "learning_candidate_refs": [
+          "promote workflow failures into descriptor validation rules"
+        ],
+        "learning_evidence_input_refs": [
+          "workflow_descriptor_valid",
+          "workflow_run_receipt_valid",
+          "workflow_replay_boundary_passed"
+        ],
+        "learning_policy_ref": "promote workflow failures into descriptor validation rules",
+        "learning_retention_refs": [
+          "workflow_descriptor_validation_failures",
+          "workflow_replay_boundary_findings",
+          "workflow_wait_state_blockers"
+        ],
+        "loop_id": "workflow_execution_loop",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "agent_orchestration_lifecycle",
+          "workflow_mining"
+        ],
+        "read_only": true,
+        "receipt_lineage_refs": [
+          "observe_receipt_lineage",
+          "decision_receipt_lineage",
+          "action_projection_receipt_lineage",
+          "verification_receipt_lineage",
+          "record_receipt_lineage",
+          "state_update_projection_receipt_lineage",
+          "learning_projection_receipt_lineage",
+          "audit_projection_receipt_lineage"
+        ],
+        "receipt_refs": [
+          "sha256:b547178389462b4ae282f07fd59f559a78b5001c4c9397c8c1daddcd9d274e7b",
+          "sha256:8b7eccae215c9785501a84e5b9a6dc0e4688d4d82537155397d1096f95701317",
+          "sha256:6a533e9a977758af1f67c66d88e28e30eb8e6df40e12189f9feecaa43b630eff",
+          "sha256:d59dcf8ce8f4574b7b1d29957f40fbe0c9e561bf05c9822d8a8d4918e563539f",
+          "sha256:b66a6aca76cb4a0a789201e6c478e2cbe01686aff1a6448c89e246abdaef6650",
+          "sha256:614c693fa710357a4be55ea44d0997f892de7bc1f0fc122be425fda45f089f47",
+          "sha256:b075e410eb32a529f7949e09d1ae9bb0c99f28e83fc0c43807d1fa8bb9d77b7f",
+          "sha256:716f747aece11948ebe7375a3bc62c04989671e86f00bf84b5e1629ed5ea1536"
+        ],
+        "terminal_closure": false,
+        "view_ref": "workflow_execution_loop_audit_evolution_view"
+      },
+      "authority_bindings": [
+        {
+          "authority_ref": "workflow_operator_ref",
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle"
+          ],
+          "purpose": "Workflow operator reference authorizes workflow admission review without dispatching or executing workflow runs from the read model.",
+          "read_only": true,
+          "source_refs": [
+            "docs/21_workflow_runtime.md",
+            "mcoi/mcoi_runtime/app/routers/workflow.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_gateway/test_workflow_orchestration.py",
+            "mcoi/tests/test_workflow_runtime_integration.py"
+          ]
+        }
+      ],
+      "authority_refs": [],
+      "closure_condition_bindings": [
+        {
+          "closure_ref": "workflow_run_reconciled",
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle"
+          ],
+          "purpose": "Require descriptor, run receipt, and replay boundary evidence before a workflow run can be described as reconciled.",
+          "read_only": true,
+          "required_authority_refs": [
+            "workflow_operator_ref"
+          ],
+          "required_evidence_refs": [
+            "workflow_descriptor_valid",
+            "workflow_run_receipt_valid",
+            "workflow_replay_boundary_passed"
+          ],
+          "source_refs": [
+            "schemas/workflow.schema.json",
+            "schemas/workflow_run.schema.json",
+            "mcoi/mcoi_runtime/core/workflow.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "mcoi/tests/test_workflow_contracts.py",
+            "mcoi/tests/test_workflow_core.py",
+            "mcoi/tests/test_workflow_runtime_integration.py"
+          ]
+        },
+        {
+          "closure_ref": "workflow_wait_states_closed_or_blocked",
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle"
+          ],
+          "purpose": "Require wait-state topology and replay evidence before workflow wait states can be described as closed or explicitly blocked.",
+          "read_only": true,
+          "required_authority_refs": [
+            "workflow_operator_ref"
+          ],
+          "required_evidence_refs": [
+            "workflow_run_receipt_valid",
+            "workflow_replay_boundary_passed"
+          ],
+          "source_refs": [
+            "docs/21_workflow_runtime.md",
+            "mcoi/mcoi_runtime/core/workflow_dag.py",
+            "mcoi/mcoi_runtime/persistence/workflow_store.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "mcoi/tests/test_workflow_dag.py",
+            "mcoi/tests/test_workflow_store.py",
+            "tests/test_gateway/test_workflow_orchestration.py"
+          ]
+        }
+      ],
+      "closure_conditions": [
+        "workflow_run_reconciled",
+        "workflow_wait_states_closed_or_blocked"
+      ],
+      "closure_evidence_pack": {
+        "authority_complete": false,
+        "blocker_refs": [
+          "missing_authority:workflow_operator_ref",
+          "missing_evidence:workflow_descriptor_valid",
+          "missing_evidence:workflow_run_receipt_valid",
+          "missing_evidence:workflow_replay_boundary_passed"
+        ],
+        "closure_blocked": true,
+        "closure_condition_refs": [
+          "workflow_run_reconciled",
+          "workflow_wait_states_closed_or_blocked"
+        ],
+        "closure_report_ref": "closure_report",
+        "emits_receipt": false,
+        "evidence_complete": false,
+        "loop_id": "workflow_execution_loop",
+        "missing_authority_refs": [
+          "workflow_operator_ref"
+        ],
+        "missing_evidence_refs": [
+          "workflow_descriptor_valid",
+          "workflow_run_receipt_valid",
+          "workflow_replay_boundary_passed"
+        ],
+        "observed_authority_refs": [],
+        "observed_evidence_refs": [],
+        "pack_ref": "workflow_execution_loop_closure_evidence_pack",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "agent_orchestration_lifecycle",
+          "workflow_mining"
+        ],
+        "read_only": true,
+        "receipt_lineage_refs": [
+          "observe_receipt_lineage",
+          "decision_receipt_lineage",
+          "action_projection_receipt_lineage",
+          "verification_receipt_lineage",
+          "record_receipt_lineage",
+          "state_update_projection_receipt_lineage",
+          "learning_projection_receipt_lineage",
+          "audit_projection_receipt_lineage"
+        ],
+        "required_authority_refs": [
+          "workflow_operator_ref"
+        ],
+        "required_evidence_refs": [
+          "workflow_descriptor_valid",
+          "workflow_run_receipt_valid",
+          "workflow_replay_boundary_passed"
+        ],
+        "rollback_available": true,
+        "rollback_ref": "halt_workflow_and_retain_replay_cursor",
+        "terminal_closure": false,
+        "validator_refs": [
+          "scripts/validate_holistic_loop_read_model.py",
+          "scripts/validate_holistic_loop_http_surface.py",
+          "scripts/proof_coverage_matrix.py"
+        ]
+      },
+      "closure_report": {
+        "closed": false,
+        "closure_reason": "read_model_blocked_by_unresolved_gaps",
+        "evidence_complete": false,
+        "learning_candidates": [
+          "promote workflow failures into descriptor validation rules"
+        ],
+        "loop_id": "workflow_execution_loop",
+        "metadata": {
+          "closure_conditions": [
+            "workflow_run_reconciled",
+            "workflow_wait_states_closed_or_blocked"
+          ],
+          "read_only": true,
+          "terminal_closure": false
+        },
+        "rollback_available": true,
+        "unresolved_gaps": [
+          "missing_authority:workflow_operator_ref",
+          "missing_evidence:workflow_descriptor_valid",
+          "missing_evidence:workflow_run_receipt_valid",
+          "missing_evidence:workflow_replay_boundary_passed"
+        ]
+      },
+      "current_step": "observe",
+      "evidence_bindings": [
+        {
+          "evidence_ref": "workflow_descriptor_valid",
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle"
+          ],
+          "purpose": "Workflow descriptor validates before workflow execution closure is described.",
+          "read_only": true,
+          "source_refs": [
+            "schemas/workflow.schema.json",
+            "mcoi/mcoi_runtime/contracts/workflow.py",
+            "examples/foundation_local_proof_thread.workflow.json"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "mcoi/tests/test_workflow_contracts.py"
+          ]
+        },
+        {
+          "evidence_ref": "workflow_run_receipt_valid",
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle"
+          ],
+          "purpose": "Workflow run receipt validates before workflow run reconciliation is described.",
+          "read_only": true,
+          "source_refs": [
+            "schemas/workflow_run.schema.json",
+            "mcoi/mcoi_runtime/core/workflow.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "mcoi/tests/test_workflow_core.py",
+            "mcoi/tests/test_workflow_runtime_integration.py"
+          ]
+        },
+        {
+          "evidence_ref": "workflow_replay_boundary_passed",
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle",
+            "workflow_mining"
+          ],
+          "purpose": "Workflow replay boundary passes before wait-state or replay closure is described.",
+          "read_only": true,
+          "source_refs": [
+            "mcoi/mcoi_runtime/core/traced_workflow.py",
+            "mcoi/mcoi_runtime/persistence/workflow_store.py"
+          ],
+          "terminal_closure": false,
+          "validator_refs": [
+            "mcoi/tests/test_traced_workflow.py",
+            "mcoi/tests/test_workflow_store.py"
+          ]
+        }
+      ],
+      "evidence_refs": [],
+      "learning_binding": {
+        "admission_refs": [
+          "descriptor_rule_update_requires_workflow_validation",
+          "wait_state_pattern_requires_replay_receipt",
+          "workflow_execution_remains_outside_read_model"
+        ],
+        "evidence_input_refs": [
+          "workflow_descriptor_valid",
+          "workflow_run_receipt_valid",
+          "workflow_replay_boundary_passed"
+        ],
+        "learning_ref": "promote workflow failures into descriptor validation rules",
+        "proof_surface_refs": [
+          "agent_orchestration_lifecycle"
+        ],
+        "purpose": "Bind workflow descriptor failures, replay findings, and wait-state blockers to later descriptor validation or workflow policy updates.",
+        "read_only": true,
+        "retention_refs": [
+          "workflow_descriptor_validation_failures",
+          "workflow_replay_boundary_findings",
+          "workflow_wait_state_blockers"
+        ],
+        "source_refs": [
+          "mcoi/mcoi_runtime/core/workflow.py",
+          "mcoi/mcoi_runtime/core/traced_workflow.py"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "mcoi/tests/test_workflow_core.py",
+          "mcoi/tests/test_traced_workflow.py"
+        ]
+      },
+      "learning_policy": "promote workflow failures into descriptor validation rules",
+      "loop_id": "workflow_execution_loop",
+      "missing_authority": [
+        "workflow_operator_ref"
+      ],
+      "missing_evidence": [
+        "workflow_descriptor_valid",
+        "workflow_run_receipt_valid",
+        "workflow_replay_boundary_passed"
+      ],
+      "mode": "dry_run",
+      "mode_binding": {
+        "allowed_modes": [
+          "dry_run",
+          "shadow",
+          "simulation",
+          "replay",
+          "real"
+        ],
+        "mode_transition": false,
+        "projected_mode": "dry_run",
+        "proof_surface_refs": [
+          "agent_orchestration_lifecycle",
+          "workflow_mining"
+        ],
+        "purpose": "Expose workflow dry-run, shadow, simulation, replay, and real-mode boundaries without executing workflow runs or mutating workflow state.",
+        "read_only": true,
+        "real_execution_guard_refs": [
+          "workflow_operator_ref",
+          "workflow_run_reconciled",
+          "workflow_wait_states_closed_or_blocked"
+        ],
+        "separation_refs": [
+          "dry_run_validates_descriptor_without_run",
+          "shadow_observes_workflow_records_without_dispatch",
+          "simulation_and_replay_use_retained_workflow_receipts",
+          "real_mode_requires_workflow_operator_ref_and_complete_evidence"
+        ],
+        "source_refs": [
+          "docs/21_workflow_runtime.md",
+          "schemas/workflow.schema.json",
+          "schemas/workflow_run.schema.json",
+          "gateway/workflow_orchestration.py",
+          "gateway/workflow_mining.py",
+          "mcoi/mcoi_runtime/contracts/workflow.py",
+          "mcoi/mcoi_runtime/core/workflow.py",
+          "mcoi/mcoi_runtime/core/workflow_dag.py",
+          "mcoi/mcoi_runtime/core/traced_workflow.py",
+          "mcoi/mcoi_runtime/persistence/workflow_store.py",
+          "mcoi/mcoi_runtime/app/routers/workflow.py"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_gateway/test_workflow_orchestration.py",
+          "tests/test_gateway/test_workflow_mining.py",
+          "mcoi/tests/test_workflow_contracts.py",
+          "mcoi/tests/test_workflow_core.py",
+          "mcoi/tests/test_workflow_dag.py",
+          "mcoi/tests/test_traced_workflow.py",
+          "mcoi/tests/test_workflow_store.py",
+          "mcoi/tests/test_workflow_runtime_integration.py"
+        ]
+      },
+      "name": "Workflow Execution Loop",
+      "open_blockers": [
+        "missing_authority:workflow_operator_ref",
+        "missing_evidence:workflow_descriptor_valid",
+        "missing_evidence:workflow_run_receipt_valid",
+        "missing_evidence:workflow_replay_boundary_passed"
+      ],
+      "operator_closure_readiness_view": {
+        "authority_gap_refs": [
+          "workflow_operator_ref"
+        ],
+        "blocker_refs": [
+          "missing_authority:workflow_operator_ref",
+          "missing_evidence:workflow_descriptor_valid",
+          "missing_evidence:workflow_run_receipt_valid",
+          "missing_evidence:workflow_replay_boundary_passed"
+        ],
+        "closure_condition_refs": [
+          "workflow_run_reconciled",
+          "workflow_wait_states_closed_or_blocked"
+        ],
+        "evidence_gap_refs": [
+          "workflow_descriptor_valid",
+          "workflow_run_receipt_valid",
+          "workflow_replay_boundary_passed"
+        ],
+        "loop_id": "workflow_execution_loop",
+        "mutation_route": false,
+        "next_proof_action": "resolve_blockers_before_terminal_closure_review",
+        "next_proof_refs": [
+          "closure_evidence_pack",
+          "closure_report",
+          "missing_authority:workflow_operator_ref",
+          "missing_evidence:workflow_descriptor_valid",
+          "missing_evidence:workflow_run_receipt_valid",
+          "missing_evidence:workflow_replay_boundary_passed"
+        ],
+        "projected_status": "blocked",
+        "read_only": true,
+        "readiness_state": "blocked_by_unresolved_gaps",
+        "rollback_available": true,
+        "rollback_ref": "halt_workflow_and_retain_replay_cursor",
+        "terminal_closure": false,
+        "view_ref": "workflow_execution_loop_operator_closure_readiness_view"
+      },
+      "owner": "workflow_governance",
+      "proof_obligation_view": {
+        "blocker_refs": [
+          "missing_authority:workflow_operator_ref",
+          "missing_evidence:workflow_descriptor_valid",
+          "missing_evidence:workflow_run_receipt_valid",
+          "missing_evidence:workflow_replay_boundary_passed"
+        ],
+        "closure_condition_refs": [
+          "workflow_run_reconciled",
+          "workflow_wait_states_closed_or_blocked"
+        ],
+        "executes_validator": false,
+        "loop_id": "workflow_execution_loop",
+        "missing_authority_refs": [
+          "workflow_operator_ref"
+        ],
+        "missing_evidence_refs": [
+          "workflow_descriptor_valid",
+          "workflow_run_receipt_valid",
+          "workflow_replay_boundary_passed"
+        ],
+        "obligation_ref": "workflow_execution_loop_proof_obligation_view",
+        "obligation_state": "blocked_by_missing_proof",
+        "proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "agent_orchestration_lifecycle",
+          "workflow_mining"
+        ],
+        "read_only": true,
+        "required_authority_refs": [
+          "workflow_operator_ref"
+        ],
+        "required_evidence_refs": [
+          "workflow_descriptor_valid",
+          "workflow_run_receipt_valid",
+          "workflow_replay_boundary_passed"
+        ],
+        "satisfied_authority_refs": [],
+        "satisfied_evidence_refs": [],
+        "terminal_closure": false,
+        "validator_refs": [
+          "scripts/validate_holistic_loop_read_model.py",
+          "scripts/validate_holistic_loop_http_surface.py",
+          "scripts/proof_coverage_matrix.py"
+        ]
+      },
+      "purpose": "Describe workflow descriptor, run receipt, replay, wait-state, rollback, and orchestration evidence without executing workflow runs or mutating workflow runtime state.",
+      "receipt_lineage_bindings": [
+        {
+          "blocker_refs": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "observe_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle",
+            "workflow_mining"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:b547178389462b4ae282f07fd59f559a78b5001c4c9397c8c1daddcd9d274e7b",
+          "receipt_ref": "observe_receipt",
+          "required_evidence_refs": [
+            "workflow_descriptor_valid",
+            "workflow_run_receipt_valid",
+            "workflow_replay_boundary_passed"
+          ],
+          "source_receipt_refs": [
+            "observe_receipt",
+            "loop_manifest",
+            "loop_state_projection"
+          ],
+          "source_refs": [
+            "docs/21_workflow_runtime.md",
+            "schemas/workflow.schema.json",
+            "schemas/workflow_run.schema.json",
+            "gateway/workflow_orchestration.py",
+            "gateway/workflow_mining.py",
+            "mcoi/mcoi_runtime/contracts/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow_dag.py",
+            "mcoi/mcoi_runtime/core/traced_workflow.py",
+            "mcoi/mcoi_runtime/persistence/workflow_store.py",
+            "mcoi/mcoi_runtime/app/routers/workflow.py"
+          ],
+          "step": "observe",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_gateway/test_workflow_orchestration.py",
+            "tests/test_gateway/test_workflow_mining.py",
+            "mcoi/tests/test_workflow_contracts.py",
+            "mcoi/tests/test_workflow_core.py",
+            "mcoi/tests/test_workflow_dag.py",
+            "mcoi/tests/test_traced_workflow.py",
+            "mcoi/tests/test_workflow_store.py",
+            "mcoi/tests/test_workflow_runtime_integration.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "decision_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle",
+            "workflow_mining"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:8b7eccae215c9785501a84e5b9a6dc0e4688d4d82537155397d1096f95701317",
+          "receipt_ref": "decision_receipt",
+          "required_evidence_refs": [
+            "workflow_descriptor_valid",
+            "workflow_run_receipt_valid",
+            "workflow_replay_boundary_passed"
+          ],
+          "source_receipt_refs": [
+            "decision_receipt",
+            "observe_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/21_workflow_runtime.md",
+            "schemas/workflow.schema.json",
+            "schemas/workflow_run.schema.json",
+            "gateway/workflow_orchestration.py",
+            "gateway/workflow_mining.py",
+            "mcoi/mcoi_runtime/contracts/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow_dag.py",
+            "mcoi/mcoi_runtime/core/traced_workflow.py",
+            "mcoi/mcoi_runtime/persistence/workflow_store.py",
+            "mcoi/mcoi_runtime/app/routers/workflow.py"
+          ],
+          "step": "decide",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_gateway/test_workflow_orchestration.py",
+            "tests/test_gateway/test_workflow_mining.py",
+            "mcoi/tests/test_workflow_contracts.py",
+            "mcoi/tests/test_workflow_core.py",
+            "mcoi/tests/test_workflow_dag.py",
+            "mcoi/tests/test_traced_workflow.py",
+            "mcoi/tests/test_workflow_store.py",
+            "mcoi/tests/test_workflow_runtime_integration.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "action_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle",
+            "workflow_mining"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:6a533e9a977758af1f67c66d88e28e30eb8e6df40e12189f9feecaa43b630eff",
+          "receipt_ref": "action_projection_receipt",
+          "required_evidence_refs": [
+            "workflow_descriptor_valid",
+            "workflow_run_receipt_valid",
+            "workflow_replay_boundary_passed"
+          ],
+          "source_receipt_refs": [
+            "action_projection_receipt",
+            "decision_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/21_workflow_runtime.md",
+            "schemas/workflow.schema.json",
+            "schemas/workflow_run.schema.json",
+            "gateway/workflow_orchestration.py",
+            "gateway/workflow_mining.py",
+            "mcoi/mcoi_runtime/contracts/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow_dag.py",
+            "mcoi/mcoi_runtime/core/traced_workflow.py",
+            "mcoi/mcoi_runtime/persistence/workflow_store.py",
+            "mcoi/mcoi_runtime/app/routers/workflow.py"
+          ],
+          "step": "act",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_gateway/test_workflow_orchestration.py",
+            "tests/test_gateway/test_workflow_mining.py",
+            "mcoi/tests/test_workflow_contracts.py",
+            "mcoi/tests/test_workflow_core.py",
+            "mcoi/tests/test_workflow_dag.py",
+            "mcoi/tests/test_traced_workflow.py",
+            "mcoi/tests/test_workflow_store.py",
+            "mcoi/tests/test_workflow_runtime_integration.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "verification_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle",
+            "workflow_mining"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:d59dcf8ce8f4574b7b1d29957f40fbe0c9e561bf05c9822d8a8d4918e563539f",
+          "receipt_ref": "verification_receipt",
+          "required_evidence_refs": [
+            "workflow_descriptor_valid",
+            "workflow_run_receipt_valid",
+            "workflow_replay_boundary_passed"
+          ],
+          "source_receipt_refs": [
+            "verification_receipt",
+            "action_projection_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/21_workflow_runtime.md",
+            "schemas/workflow.schema.json",
+            "schemas/workflow_run.schema.json",
+            "gateway/workflow_orchestration.py",
+            "gateway/workflow_mining.py",
+            "mcoi/mcoi_runtime/contracts/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow_dag.py",
+            "mcoi/mcoi_runtime/core/traced_workflow.py",
+            "mcoi/mcoi_runtime/persistence/workflow_store.py",
+            "mcoi/mcoi_runtime/app/routers/workflow.py"
+          ],
+          "step": "verify",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_gateway/test_workflow_orchestration.py",
+            "tests/test_gateway/test_workflow_mining.py",
+            "mcoi/tests/test_workflow_contracts.py",
+            "mcoi/tests/test_workflow_core.py",
+            "mcoi/tests/test_workflow_dag.py",
+            "mcoi/tests/test_traced_workflow.py",
+            "mcoi/tests/test_workflow_store.py",
+            "mcoi/tests/test_workflow_runtime_integration.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "record_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle",
+            "workflow_mining"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:b66a6aca76cb4a0a789201e6c478e2cbe01686aff1a6448c89e246abdaef6650",
+          "receipt_ref": "record_receipt",
+          "required_evidence_refs": [
+            "workflow_descriptor_valid",
+            "workflow_run_receipt_valid",
+            "workflow_replay_boundary_passed"
+          ],
+          "source_receipt_refs": [
+            "record_receipt",
+            "verification_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/21_workflow_runtime.md",
+            "schemas/workflow.schema.json",
+            "schemas/workflow_run.schema.json",
+            "gateway/workflow_orchestration.py",
+            "gateway/workflow_mining.py",
+            "mcoi/mcoi_runtime/contracts/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow_dag.py",
+            "mcoi/mcoi_runtime/core/traced_workflow.py",
+            "mcoi/mcoi_runtime/persistence/workflow_store.py",
+            "mcoi/mcoi_runtime/app/routers/workflow.py"
+          ],
+          "step": "record_receipt",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_gateway/test_workflow_orchestration.py",
+            "tests/test_gateway/test_workflow_mining.py",
+            "mcoi/tests/test_workflow_contracts.py",
+            "mcoi/tests/test_workflow_core.py",
+            "mcoi/tests/test_workflow_dag.py",
+            "mcoi/tests/test_traced_workflow.py",
+            "mcoi/tests/test_workflow_store.py",
+            "mcoi/tests/test_workflow_runtime_integration.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "state_update_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle",
+            "workflow_mining"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:614c693fa710357a4be55ea44d0997f892de7bc1f0fc122be425fda45f089f47",
+          "receipt_ref": "state_update_projection_receipt",
+          "required_evidence_refs": [
+            "workflow_descriptor_valid",
+            "workflow_run_receipt_valid",
+            "workflow_replay_boundary_passed"
+          ],
+          "source_receipt_refs": [
+            "state_update_projection_receipt",
+            "record_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/21_workflow_runtime.md",
+            "schemas/workflow.schema.json",
+            "schemas/workflow_run.schema.json",
+            "gateway/workflow_orchestration.py",
+            "gateway/workflow_mining.py",
+            "mcoi/mcoi_runtime/contracts/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow_dag.py",
+            "mcoi/mcoi_runtime/core/traced_workflow.py",
+            "mcoi/mcoi_runtime/persistence/workflow_store.py",
+            "mcoi/mcoi_runtime/app/routers/workflow.py"
+          ],
+          "step": "update_state",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_gateway/test_workflow_orchestration.py",
+            "tests/test_gateway/test_workflow_mining.py",
+            "mcoi/tests/test_workflow_contracts.py",
+            "mcoi/tests/test_workflow_core.py",
+            "mcoi/tests/test_workflow_dag.py",
+            "mcoi/tests/test_traced_workflow.py",
+            "mcoi/tests/test_workflow_store.py",
+            "mcoi/tests/test_workflow_runtime_integration.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "learning_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle",
+            "workflow_mining"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:b075e410eb32a529f7949e09d1ae9bb0c99f28e83fc0c43807d1fa8bb9d77b7f",
+          "receipt_ref": "learning_projection_receipt",
+          "required_evidence_refs": [
+            "workflow_descriptor_valid",
+            "workflow_run_receipt_valid",
+            "workflow_replay_boundary_passed"
+          ],
+          "source_receipt_refs": [
+            "learning_projection_receipt",
+            "state_update_projection_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/21_workflow_runtime.md",
+            "schemas/workflow.schema.json",
+            "schemas/workflow_run.schema.json",
+            "gateway/workflow_orchestration.py",
+            "gateway/workflow_mining.py",
+            "mcoi/mcoi_runtime/contracts/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow_dag.py",
+            "mcoi/mcoi_runtime/core/traced_workflow.py",
+            "mcoi/mcoi_runtime/persistence/workflow_store.py",
+            "mcoi/mcoi_runtime/app/routers/workflow.py"
+          ],
+          "step": "learn",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_gateway/test_workflow_orchestration.py",
+            "tests/test_gateway/test_workflow_mining.py",
+            "mcoi/tests/test_workflow_contracts.py",
+            "mcoi/tests/test_workflow_core.py",
+            "mcoi/tests/test_workflow_dag.py",
+            "mcoi/tests/test_traced_workflow.py",
+            "mcoi/tests/test_workflow_store.py",
+            "mcoi/tests/test_workflow_runtime_integration.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "emits_receipt": false,
+          "lineage_ref": "audit_projection_receipt_lineage",
+          "observed_evidence_refs": [],
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle",
+            "workflow_mining"
+          ],
+          "read_only": true,
+          "receipt_hash": "sha256:716f747aece11948ebe7375a3bc62c04989671e86f00bf84b5e1629ed5ea1536",
+          "receipt_ref": "audit_projection_receipt",
+          "required_evidence_refs": [
+            "workflow_descriptor_valid",
+            "workflow_run_receipt_valid",
+            "workflow_replay_boundary_passed"
+          ],
+          "source_receipt_refs": [
+            "audit_projection_receipt",
+            "learning_projection_receipt",
+            "closure_report"
+          ],
+          "source_refs": [
+            "docs/21_workflow_runtime.md",
+            "schemas/workflow.schema.json",
+            "schemas/workflow_run.schema.json",
+            "gateway/workflow_orchestration.py",
+            "gateway/workflow_mining.py",
+            "mcoi/mcoi_runtime/contracts/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow_dag.py",
+            "mcoi/mcoi_runtime/core/traced_workflow.py",
+            "mcoi/mcoi_runtime/persistence/workflow_store.py",
+            "mcoi/mcoi_runtime/app/routers/workflow.py"
+          ],
+          "step": "audit",
+          "terminal_closure": false,
+          "validator_refs": [
+            "tests/test_gateway/test_workflow_orchestration.py",
+            "tests/test_gateway/test_workflow_mining.py",
+            "mcoi/tests/test_workflow_contracts.py",
+            "mcoi/tests/test_workflow_core.py",
+            "mcoi/tests/test_workflow_dag.py",
+            "mcoi/tests/test_traced_workflow.py",
+            "mcoi/tests/test_workflow_store.py",
+            "mcoi/tests/test_workflow_runtime_integration.py"
+          ]
+        }
+      ],
+      "recovery_readiness_view": {
+        "blocker_refs": [
+          "missing_authority:workflow_operator_ref",
+          "missing_evidence:workflow_descriptor_valid",
+          "missing_evidence:workflow_run_receipt_valid",
+          "missing_evidence:workflow_replay_boundary_passed"
+        ],
+        "closure_evidence_pack_ref": "workflow_execution_loop_closure_evidence_pack",
+        "closure_report_ref": "closure_report",
+        "executes_rollback": false,
+        "loop_id": "workflow_execution_loop",
+        "next_recovery_action": "resolve_blockers_before_recovery_or_terminal_review",
+        "opens_incident": false,
+        "read_only": true,
+        "receipt_lineage_refs": [
+          "observe_receipt_lineage",
+          "decision_receipt_lineage",
+          "action_projection_receipt_lineage",
+          "verification_receipt_lineage",
+          "record_receipt_lineage",
+          "state_update_projection_receipt_lineage",
+          "learning_projection_receipt_lineage",
+          "audit_projection_receipt_lineage"
+        ],
+        "recovery_proof_surface_refs": [
+          "holistic_loop_read_model_kernel",
+          "agent_orchestration_lifecycle",
+          "workflow_mining"
+        ],
+        "recovery_source_refs": [
+          "docs/21_workflow_runtime.md",
+          "mcoi/mcoi_runtime/core/traced_workflow.py",
+          "mcoi/mcoi_runtime/persistence/workflow_store.py"
+        ],
+        "recovery_state": "recovery_blocked_by_unresolved_gaps",
+        "recovery_validator_refs": [
+          "mcoi/tests/test_traced_workflow.py",
+          "mcoi/tests/test_workflow_store.py"
+        ],
+        "rollback_available": true,
+        "rollback_ref": "halt_workflow_and_retain_replay_cursor",
+        "terminal_closure": false,
+        "view_ref": "workflow_execution_loop_recovery_readiness_view"
+      },
+      "required_authority": [
+        "workflow_operator_ref"
+      ],
+      "required_evidence": [
+        "workflow_descriptor_valid",
+        "workflow_run_receipt_valid",
+        "workflow_replay_boundary_passed"
+      ],
+      "risk_binding": {
+        "hazard_refs": [
+          "unapproved_workflow_dispatch",
+          "invalid_workflow_descriptor",
+          "dangling_wait_state_or_replay_cursor"
+        ],
+        "mitigation_refs": [
+          "block_closure_until_workflow_operator_ref_exists",
+          "require_descriptor_and_run_receipt_validators",
+          "keep_workflow_execution_outside_read_model"
+        ],
+        "monitor_refs": [
+          "workflow_descriptor_validator",
+          "workflow_run_receipt_validator",
+          "workflow_replay_boundary_monitor"
+        ],
+        "proof_surface_refs": [
+          "agent_orchestration_lifecycle",
+          "workflow_mining"
+        ],
+        "purpose": "Workflow execution risk covers unapproved run dispatch, invalid descriptors, dangling wait states, replay drift, and rollback overclaim.",
+        "read_only": true,
+        "risk_ref": "workflow_execution",
+        "source_refs": [
+          "docs/21_workflow_runtime.md",
+          "schemas/workflow.schema.json",
+          "schemas/workflow_run.schema.json",
+          "gateway/workflow_orchestration.py",
+          "gateway/workflow_mining.py",
+          "mcoi/mcoi_runtime/contracts/workflow.py",
+          "mcoi/mcoi_runtime/core/workflow.py",
+          "mcoi/mcoi_runtime/core/workflow_dag.py",
+          "mcoi/mcoi_runtime/core/traced_workflow.py",
+          "mcoi/mcoi_runtime/persistence/workflow_store.py",
+          "mcoi/mcoi_runtime/app/routers/workflow.py"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_gateway/test_workflow_orchestration.py",
+          "tests/test_gateway/test_workflow_mining.py",
+          "mcoi/tests/test_workflow_contracts.py",
+          "mcoi/tests/test_workflow_core.py",
+          "mcoi/tests/test_workflow_dag.py",
+          "mcoi/tests/test_traced_workflow.py",
+          "mcoi/tests/test_workflow_store.py",
+          "mcoi/tests/test_workflow_runtime_integration.py"
+        ]
+      },
+      "risk_class": "workflow_execution",
+      "rollback_binding": {
+        "proof_surface_refs": [
+          "agent_orchestration_lifecycle"
+        ],
+        "purpose": "Rollback workflow closure by halting dispatch claims and retaining replay cursor evidence before workflow closure can proceed.",
+        "read_only": true,
+        "rollback_ref": "halt_workflow_and_retain_replay_cursor",
+        "source_refs": [
+          "docs/21_workflow_runtime.md",
+          "mcoi/mcoi_runtime/core/traced_workflow.py",
+          "mcoi/mcoi_runtime/persistence/workflow_store.py"
+        ],
+        "terminal_closure": false,
+        "validator_refs": [
+          "mcoi/tests/test_traced_workflow.py",
+          "mcoi/tests/test_workflow_store.py"
+        ]
+      },
+      "rollback_policy": "halt_workflow_and_retain_replay_cursor",
+      "status": "blocked",
+      "status_binding": {
+        "blocker_refs": [
+          "missing_authority:workflow_operator_ref",
+          "missing_evidence:workflow_descriptor_valid",
+          "missing_evidence:workflow_run_receipt_valid",
+          "missing_evidence:workflow_replay_boundary_passed"
+        ],
+        "closure_gate_refs": [
+          "workflow_run_reconciled",
+          "workflow_wait_states_closed_or_blocked"
+        ],
+        "projected_status": "blocked",
+        "proof_surface_refs": [
+          "agent_orchestration_lifecycle",
+          "workflow_mining"
+        ],
+        "read_only": true,
+        "source_refs": [
+          "docs/21_workflow_runtime.md",
+          "schemas/workflow.schema.json",
+          "schemas/workflow_run.schema.json",
+          "gateway/workflow_orchestration.py",
+          "gateway/workflow_mining.py",
+          "mcoi/mcoi_runtime/contracts/workflow.py",
+          "mcoi/mcoi_runtime/core/workflow.py",
+          "mcoi/mcoi_runtime/core/workflow_dag.py",
+          "mcoi/mcoi_runtime/core/traced_workflow.py",
+          "mcoi/mcoi_runtime/persistence/workflow_store.py",
+          "mcoi/mcoi_runtime/app/routers/workflow.py"
+        ],
+        "status_reason": "read_model_blocked_by_unresolved_gaps",
+        "status_transition": false,
+        "terminal_closure": false,
+        "validator_refs": [
+          "tests/test_gateway/test_workflow_orchestration.py",
+          "tests/test_gateway/test_workflow_mining.py",
+          "mcoi/tests/test_workflow_contracts.py",
+          "mcoi/tests/test_workflow_core.py",
+          "mcoi/tests/test_workflow_dag.py",
+          "mcoi/tests/test_traced_workflow.py",
+          "mcoi/tests/test_workflow_store.py",
+          "mcoi/tests/test_workflow_runtime_integration.py"
+        ],
+        "verification_refs": [
+          "required_authority_observed",
+          "required_evidence_observed",
+          "workflow_runtime_validators_passed"
+        ]
+      },
+      "step_receipts": [
+        {
+          "decision": "project_read_model_observe",
+          "errors": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:88b8824f3db9358852d1a5f7531c8cdf8f7c1a095f0aff5523d94f7b3aa30390",
+          "loop_id": "workflow_execution_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:b547178389462b4ae282f07fd59f559a78b5001c4c9397c8c1daddcd9d274e7b",
+          "status": "blocked",
+          "step": "observe",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "project_read_model_decide",
+          "errors": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:4e970b9425e077011fd9289e913d7bae9d626d583aca2087a31ccf47637c4b76",
+          "loop_id": "workflow_execution_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:8b7eccae215c9785501a84e5b9a6dc0e4688d4d82537155397d1096f95701317",
+          "status": "blocked",
+          "step": "decide",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "project_existing_behavior_without_execution",
+          "errors": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:db086322e67822c3ffcc9b495d5930b026fc1f4ec312a652333b3400a1b57937",
+          "loop_id": "workflow_execution_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:6a533e9a977758af1f67c66d88e28e30eb8e6df40e12189f9feecaa43b630eff",
+          "status": "blocked",
+          "step": "act",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:3569090f4969ca176c8b3933b7fc436b412992ec32edd70ed3143cb84dfa09db",
+          "loop_id": "workflow_execution_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:d59dcf8ce8f4574b7b1d29957f40fbe0c9e561bf05c9822d8a8d4918e563539f",
+          "status": "blocked",
+          "step": "verify",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:201341b355affafbfd3b36caaac9e1c549197834ab287a75486e8f0ff68c5fca",
+          "loop_id": "workflow_execution_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:b66a6aca76cb4a0a789201e6c478e2cbe01686aff1a6448c89e246abdaef6650",
+          "status": "blocked",
+          "step": "record_receipt",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:704d88bdf15129dd5631c713a920ae3b9a42966611c761e0ef1a9dfdd924341f",
+          "loop_id": "workflow_execution_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:614c693fa710357a4be55ea44d0997f892de7bc1f0fc122be425fda45f089f47",
+          "status": "blocked",
+          "step": "update_state",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:d8f3de8d2d09e791cf83df3ecf062ce7182a4c65ad270de5b357c9826c049e47",
+          "loop_id": "workflow_execution_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:b075e410eb32a529f7949e09d1ae9bb0c99f28e83fc0c43807d1fa8bb9d77b7f",
+          "status": "blocked",
+          "step": "learn",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        },
+        {
+          "decision": "block_until_required_evidence_observed",
+          "errors": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "evidence_refs": [],
+          "input_hash": "sha256:127e931f493b538b9d7c19c807ad98b81bf988c5f0c7839d3ef4e535f699cd70",
+          "loop_id": "workflow_execution_loop",
+          "metadata": {
+            "behavior_rewrite": false,
+            "read_only": true,
+            "synthetic_projection": true,
+            "terminal_closure": false
+          },
+          "output_hash": "sha256:716f747aece11948ebe7375a3bc62c04989671e86f00bf84b5e1629ed5ea1536",
+          "status": "blocked",
+          "step": "audit",
+          "timestamp": "2026-06-08T00:00:00+00:00"
+        }
+      ],
+      "transition_bindings": [
+        {
+          "blocker_refs": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "executes_transition": false,
+          "from_status": "open",
+          "from_step": "observe",
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle",
+            "workflow_mining"
+          ],
+          "read_only": true,
+          "receipt_refs": [
+            "observe_receipt",
+            "verification_receipt",
+            "closure_report"
+          ],
+          "required_authority_refs": [
+            "workflow_operator_ref"
+          ],
+          "required_evidence_refs": [
+            "workflow_descriptor_valid",
+            "workflow_run_receipt_valid",
+            "workflow_replay_boundary_passed"
+          ],
+          "rollback_refs": [
+            "halt_workflow_and_retain_replay_cursor"
+          ],
+          "source_refs": [
+            "docs/21_workflow_runtime.md",
+            "schemas/workflow.schema.json",
+            "schemas/workflow_run.schema.json",
+            "gateway/workflow_orchestration.py",
+            "gateway/workflow_mining.py",
+            "mcoi/mcoi_runtime/contracts/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow_dag.py",
+            "mcoi/mcoi_runtime/core/traced_workflow.py",
+            "mcoi/mcoi_runtime/persistence/workflow_store.py",
+            "mcoi/mcoi_runtime/app/routers/workflow.py"
+          ],
+          "terminal_closure": false,
+          "to_status": "blocked",
+          "to_step": "verify",
+          "transition_ref": "open_to_blocked_on_missing_requirements",
+          "validator_refs": [
+            "tests/test_gateway/test_workflow_orchestration.py",
+            "tests/test_gateway/test_workflow_mining.py",
+            "mcoi/tests/test_workflow_contracts.py",
+            "mcoi/tests/test_workflow_core.py",
+            "mcoi/tests/test_workflow_dag.py",
+            "mcoi/tests/test_traced_workflow.py",
+            "mcoi/tests/test_workflow_store.py",
+            "mcoi/tests/test_workflow_runtime_integration.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "executes_transition": false,
+          "from_status": "blocked",
+          "from_step": "verify",
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle",
+            "workflow_mining"
+          ],
+          "read_only": true,
+          "receipt_refs": [
+            "verification_receipt",
+            "record_receipt",
+            "closure_report"
+          ],
+          "required_authority_refs": [
+            "workflow_operator_ref"
+          ],
+          "required_evidence_refs": [
+            "workflow_descriptor_valid",
+            "workflow_run_receipt_valid",
+            "workflow_replay_boundary_passed"
+          ],
+          "rollback_refs": [
+            "halt_workflow_and_retain_replay_cursor"
+          ],
+          "source_refs": [
+            "docs/21_workflow_runtime.md",
+            "schemas/workflow.schema.json",
+            "schemas/workflow_run.schema.json",
+            "gateway/workflow_orchestration.py",
+            "gateway/workflow_mining.py",
+            "mcoi/mcoi_runtime/contracts/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow_dag.py",
+            "mcoi/mcoi_runtime/core/traced_workflow.py",
+            "mcoi/mcoi_runtime/persistence/workflow_store.py",
+            "mcoi/mcoi_runtime/app/routers/workflow.py"
+          ],
+          "terminal_closure": false,
+          "to_status": "verified",
+          "to_step": "record_receipt",
+          "transition_ref": "blocked_to_verified_after_requirements",
+          "validator_refs": [
+            "tests/test_gateway/test_workflow_orchestration.py",
+            "tests/test_gateway/test_workflow_mining.py",
+            "mcoi/tests/test_workflow_contracts.py",
+            "mcoi/tests/test_workflow_core.py",
+            "mcoi/tests/test_workflow_dag.py",
+            "mcoi/tests/test_traced_workflow.py",
+            "mcoi/tests/test_workflow_store.py",
+            "mcoi/tests/test_workflow_runtime_integration.py"
+          ]
+        },
+        {
+          "blocker_refs": [
+            "missing_authority:workflow_operator_ref",
+            "missing_evidence:workflow_descriptor_valid",
+            "missing_evidence:workflow_run_receipt_valid",
+            "missing_evidence:workflow_replay_boundary_passed"
+          ],
+          "executes_transition": false,
+          "from_status": "verified",
+          "from_step": "audit",
+          "proof_surface_refs": [
+            "agent_orchestration_lifecycle",
+            "workflow_mining"
+          ],
+          "read_only": true,
+          "receipt_refs": [
+            "audit_receipt",
+            "terminal_closure_certificate",
+            "closure_report"
+          ],
+          "required_authority_refs": [
+            "workflow_operator_ref"
+          ],
+          "required_evidence_refs": [
+            "workflow_descriptor_valid",
+            "workflow_run_receipt_valid",
+            "workflow_replay_boundary_passed"
+          ],
+          "rollback_refs": [
+            "halt_workflow_and_retain_replay_cursor"
+          ],
+          "source_refs": [
+            "docs/21_workflow_runtime.md",
+            "schemas/workflow.schema.json",
+            "schemas/workflow_run.schema.json",
+            "gateway/workflow_orchestration.py",
+            "gateway/workflow_mining.py",
+            "mcoi/mcoi_runtime/contracts/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow.py",
+            "mcoi/mcoi_runtime/core/workflow_dag.py",
+            "mcoi/mcoi_runtime/core/traced_workflow.py",
+            "mcoi/mcoi_runtime/persistence/workflow_store.py",
+            "mcoi/mcoi_runtime/app/routers/workflow.py"
+          ],
+          "terminal_closure": false,
+          "to_status": "closed",
+          "to_step": "close",
+          "transition_ref": "verified_to_closed_requires_terminal_closure",
+          "validator_refs": [
+            "tests/test_gateway/test_workflow_orchestration.py",
+            "tests/test_gateway/test_workflow_mining.py",
+            "mcoi/tests/test_workflow_contracts.py",
+            "mcoi/tests/test_workflow_core.py",
+            "mcoi/tests/test_workflow_dag.py",
+            "mcoi/tests/test_traced_workflow.py",
+            "mcoi/tests/test_workflow_store.py",
+            "mcoi/tests/test_workflow_runtime_integration.py"
+          ]
+        }
+      ],
+      "updated_at": "2026-06-08T00:00:00+00:00"
     }
   ],
   "report_id": "holistic_loop_read_model",
   "report_is_not_terminal_closure": true,
-  "returned_count": 7,
+  "returned_count": 8,
   "status": "blocked",
   "terminal_closure_required": true,
   "truncated": false,

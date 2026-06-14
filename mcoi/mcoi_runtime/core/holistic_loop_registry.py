@@ -296,6 +296,48 @@ def _default_manifests() -> dict[str, LoopManifest]:
                 },
             ),
             LoopManifest(
+                loop_id="workflow_execution_loop",
+                name="Workflow Execution Loop",
+                purpose=(
+                    "Describe workflow descriptor, run receipt, replay, wait-state, "
+                    "rollback, and orchestration evidence without executing workflow "
+                    "runs or mutating workflow runtime state."
+                ),
+                owner="workflow_governance",
+                risk_class="workflow_execution",
+                allowed_modes=(
+                    LoopMode.DRY_RUN,
+                    LoopMode.SHADOW,
+                    LoopMode.SIMULATION,
+                    LoopMode.REPLAY,
+                    LoopMode.REAL,
+                ),
+                required_authority=("workflow_operator_ref",),
+                required_evidence=(
+                    "workflow_descriptor_valid",
+                    "workflow_run_receipt_valid",
+                    "workflow_replay_boundary_passed",
+                ),
+                closure_conditions=(
+                    "workflow_run_reconciled",
+                    "workflow_wait_states_closed_or_blocked",
+                ),
+                rollback_policy="halt_workflow_and_retain_replay_cursor",
+                learning_policy="promote workflow failures into descriptor validation rules",
+                metadata={
+                    "existing_surfaces": (
+                        "docs/21_workflow_runtime.md",
+                        "schemas/workflow.schema.json",
+                        "schemas/workflow_run.schema.json",
+                        "mcoi/mcoi_runtime/core/workflow.py",
+                    ),
+                    "admission_dossier": (
+                        "scripts/report_holistic_loop_workflow_admission_dossier.py"
+                    ),
+                    "behavior_rewrite": False,
+                },
+            ),
+            LoopManifest(
                 loop_id="deployment_witness_loop",
                 name="Deployment Witness Loop",
                 purpose=(
@@ -1350,6 +1392,33 @@ _UNIVERSAL_ACTION_ORCHESTRATION_SURFACES = (
     "gateway_capability_fabric",
     "universal_action_orchestration",
 )
+_WORKFLOW_EXECUTION_SOURCES = (
+    "docs/21_workflow_runtime.md",
+    "schemas/workflow.schema.json",
+    "schemas/workflow_run.schema.json",
+    "gateway/workflow_orchestration.py",
+    "gateway/workflow_mining.py",
+    "mcoi/mcoi_runtime/contracts/workflow.py",
+    "mcoi/mcoi_runtime/core/workflow.py",
+    "mcoi/mcoi_runtime/core/workflow_dag.py",
+    "mcoi/mcoi_runtime/core/traced_workflow.py",
+    "mcoi/mcoi_runtime/persistence/workflow_store.py",
+    "mcoi/mcoi_runtime/app/routers/workflow.py",
+)
+_WORKFLOW_EXECUTION_VALIDATORS = (
+    "tests/test_gateway/test_workflow_orchestration.py",
+    "tests/test_gateway/test_workflow_mining.py",
+    "mcoi/tests/test_workflow_contracts.py",
+    "mcoi/tests/test_workflow_core.py",
+    "mcoi/tests/test_workflow_dag.py",
+    "mcoi/tests/test_traced_workflow.py",
+    "mcoi/tests/test_workflow_store.py",
+    "mcoi/tests/test_workflow_runtime_integration.py",
+)
+_WORKFLOW_EXECUTION_SURFACES = (
+    "agent_orchestration_lifecycle",
+    "workflow_mining",
+)
 
 
 _DEFAULT_RECEIPT_LINEAGE_CATALOG: Mapping[str, Mapping[str, tuple[str, ...]]] = {
@@ -1367,6 +1436,11 @@ _DEFAULT_RECEIPT_LINEAGE_CATALOG: Mapping[str, Mapping[str, tuple[str, ...]]] = 
         "source_refs": _UNIVERSAL_ACTION_ORCHESTRATION_SOURCES,
         "validator_refs": _UNIVERSAL_ACTION_ORCHESTRATION_VALIDATORS,
         "proof_surface_refs": _UNIVERSAL_ACTION_ORCHESTRATION_SURFACES,
+    },
+    "workflow_execution_loop": {
+        "source_refs": _WORKFLOW_EXECUTION_SOURCES,
+        "validator_refs": _WORKFLOW_EXECUTION_VALIDATORS,
+        "proof_surface_refs": _WORKFLOW_EXECUTION_SURFACES,
     },
     "deployment_witness_loop": {
         "source_refs": _DEPLOYMENT_WITNESS_SOURCES,
@@ -1444,6 +1518,21 @@ _DEFAULT_STATUS_BINDINGS: Mapping[str, LoopStatusBinding] = {
         source_refs=_UNIVERSAL_ACTION_ORCHESTRATION_SOURCES,
         validator_refs=_UNIVERSAL_ACTION_ORCHESTRATION_VALIDATORS,
         proof_surface_refs=_UNIVERSAL_ACTION_ORCHESTRATION_SURFACES,
+    ),
+    "workflow_execution_loop": _status_binding(
+        "Bind workflow status to unresolved workflow authority, descriptor, run receipt, replay, wait-state, and rollback gaps.",
+        verification_refs=(
+            "required_authority_observed",
+            "required_evidence_observed",
+            "workflow_runtime_validators_passed",
+        ),
+        closure_gate_refs=(
+            "workflow_run_reconciled",
+            "workflow_wait_states_closed_or_blocked",
+        ),
+        source_refs=_WORKFLOW_EXECUTION_SOURCES,
+        validator_refs=_WORKFLOW_EXECUTION_VALIDATORS,
+        proof_surface_refs=_WORKFLOW_EXECUTION_SURFACES,
     ),
     "deployment_witness_loop": _status_binding(
         "Bind deployment witness status to unresolved publication, runtime, audit, proof, and authority gaps.",
@@ -1591,6 +1680,18 @@ _DEFAULT_TRANSITION_BINDINGS: Mapping[str, tuple[LoopTransitionBinding, ...]] = 
         source_refs=_UNIVERSAL_ACTION_ORCHESTRATION_SOURCES,
         validator_refs=_UNIVERSAL_ACTION_ORCHESTRATION_VALIDATORS,
         proof_surface_refs=_UNIVERSAL_ACTION_ORCHESTRATION_SURFACES,
+    ),
+    "workflow_execution_loop": _transition_catalog(
+        required_authority_refs=("workflow_operator_ref",),
+        required_evidence_refs=(
+            "workflow_descriptor_valid",
+            "workflow_run_receipt_valid",
+            "workflow_replay_boundary_passed",
+        ),
+        rollback_ref="halt_workflow_and_retain_replay_cursor",
+        source_refs=_WORKFLOW_EXECUTION_SOURCES,
+        validator_refs=_WORKFLOW_EXECUTION_VALIDATORS,
+        proof_surface_refs=_WORKFLOW_EXECUTION_SURFACES,
     ),
     "deployment_witness_loop": _transition_catalog(
         required_authority_refs=("operator_approval_ref", "deployment_publication_authority"),
@@ -1795,6 +1896,49 @@ _DEFAULT_CLOSURE_CONDITION_BINDINGS: Mapping[str, tuple[LoopClosureConditionBind
                 "tests/test_detect_uao_runtime_bypass.py",
             ),
             proof_surface_refs=("universal_action_orchestration",),
+        ),
+    ),
+    "workflow_execution_loop": (
+        _closure_condition_binding(
+            "workflow_run_reconciled",
+            "Require descriptor, run receipt, and replay boundary evidence before a workflow run can be described as reconciled.",
+            required_evidence_refs=(
+                "workflow_descriptor_valid",
+                "workflow_run_receipt_valid",
+                "workflow_replay_boundary_passed",
+            ),
+            required_authority_refs=("workflow_operator_ref",),
+            source_refs=(
+                "schemas/workflow.schema.json",
+                "schemas/workflow_run.schema.json",
+                "mcoi/mcoi_runtime/core/workflow.py",
+            ),
+            validator_refs=(
+                "mcoi/tests/test_workflow_contracts.py",
+                "mcoi/tests/test_workflow_core.py",
+                "mcoi/tests/test_workflow_runtime_integration.py",
+            ),
+            proof_surface_refs=("agent_orchestration_lifecycle",),
+        ),
+        _closure_condition_binding(
+            "workflow_wait_states_closed_or_blocked",
+            "Require wait-state topology and replay evidence before workflow wait states can be described as closed or explicitly blocked.",
+            required_evidence_refs=(
+                "workflow_run_receipt_valid",
+                "workflow_replay_boundary_passed",
+            ),
+            required_authority_refs=("workflow_operator_ref",),
+            source_refs=(
+                "docs/21_workflow_runtime.md",
+                "mcoi/mcoi_runtime/core/workflow_dag.py",
+                "mcoi/mcoi_runtime/persistence/workflow_store.py",
+            ),
+            validator_refs=(
+                "mcoi/tests/test_workflow_dag.py",
+                "mcoi/tests/test_workflow_store.py",
+                "tests/test_gateway/test_workflow_orchestration.py",
+            ),
+            proof_surface_refs=("agent_orchestration_lifecycle",),
         ),
     ),
     "deployment_witness_loop": (
@@ -2042,6 +2186,23 @@ _DEFAULT_MODE_BINDINGS: Mapping[str, LoopModeBinding] = {
         validator_refs=_UNIVERSAL_ACTION_ORCHESTRATION_VALIDATORS,
         proof_surface_refs=_UNIVERSAL_ACTION_ORCHESTRATION_SURFACES,
     ),
+    "workflow_execution_loop": _mode_binding(
+        "Expose workflow dry-run, shadow, simulation, replay, and real-mode boundaries without executing workflow runs or mutating workflow state.",
+        separation_refs=(
+            "dry_run_validates_descriptor_without_run",
+            "shadow_observes_workflow_records_without_dispatch",
+            "simulation_and_replay_use_retained_workflow_receipts",
+            "real_mode_requires_workflow_operator_ref_and_complete_evidence",
+        ),
+        real_execution_guard_refs=(
+            "workflow_operator_ref",
+            "workflow_run_reconciled",
+            "workflow_wait_states_closed_or_blocked",
+        ),
+        source_refs=_WORKFLOW_EXECUTION_SOURCES,
+        validator_refs=_WORKFLOW_EXECUTION_VALIDATORS,
+        proof_surface_refs=_WORKFLOW_EXECUTION_SURFACES,
+    ),
     "deployment_witness_loop": _mode_binding(
         "Expose deployment witness dry-run, shadow, simulation, replay, and real-mode boundaries without changing publication state.",
         separation_refs=(
@@ -2227,6 +2388,34 @@ _DEFAULT_LEARNING_BINDINGS: Mapping[str, LoopLearningBinding] = {
         ),
         proof_surface_refs=("universal_action_orchestration",),
     ),
+    "workflow_execution_loop": _learning_binding(
+        "promote workflow failures into descriptor validation rules",
+        "Bind workflow descriptor failures, replay findings, and wait-state blockers to later descriptor validation or workflow policy updates.",
+        evidence_input_refs=(
+            "workflow_descriptor_valid",
+            "workflow_run_receipt_valid",
+            "workflow_replay_boundary_passed",
+        ),
+        admission_refs=(
+            "descriptor_rule_update_requires_workflow_validation",
+            "wait_state_pattern_requires_replay_receipt",
+            "workflow_execution_remains_outside_read_model",
+        ),
+        retention_refs=(
+            "workflow_descriptor_validation_failures",
+            "workflow_replay_boundary_findings",
+            "workflow_wait_state_blockers",
+        ),
+        source_refs=(
+            "mcoi/mcoi_runtime/core/workflow.py",
+            "mcoi/mcoi_runtime/core/traced_workflow.py",
+        ),
+        validator_refs=(
+            "mcoi/tests/test_workflow_core.py",
+            "mcoi/tests/test_traced_workflow.py",
+        ),
+        proof_surface_refs=("agent_orchestration_lifecycle",),
+    ),
     "deployment_witness_loop": _learning_binding(
         "promote deployment blockers into release preflight checks",
         "Bind deployment witness blockers to later release preflight and publication readiness checks.",
@@ -2411,6 +2600,28 @@ _DEFAULT_RISK_BINDINGS: Mapping[str, LoopRiskBinding] = {
         validator_refs=_UNIVERSAL_ACTION_ORCHESTRATION_VALIDATORS,
         proof_surface_refs=_UNIVERSAL_ACTION_ORCHESTRATION_SURFACES,
     ),
+    "workflow_execution_loop": _risk_binding(
+        "workflow_execution",
+        "Workflow execution risk covers unapproved run dispatch, invalid descriptors, dangling wait states, replay drift, and rollback overclaim.",
+        hazard_refs=(
+            "unapproved_workflow_dispatch",
+            "invalid_workflow_descriptor",
+            "dangling_wait_state_or_replay_cursor",
+        ),
+        mitigation_refs=(
+            "block_closure_until_workflow_operator_ref_exists",
+            "require_descriptor_and_run_receipt_validators",
+            "keep_workflow_execution_outside_read_model",
+        ),
+        monitor_refs=(
+            "workflow_descriptor_validator",
+            "workflow_run_receipt_validator",
+            "workflow_replay_boundary_monitor",
+        ),
+        source_refs=_WORKFLOW_EXECUTION_SOURCES,
+        validator_refs=_WORKFLOW_EXECUTION_VALIDATORS,
+        proof_surface_refs=_WORKFLOW_EXECUTION_SURFACES,
+    ),
     "deployment_witness_loop": _risk_binding(
         "release_publication",
         "Publication risk covers public endpoint claims, witness freshness, and responsibility debt.",
@@ -2560,6 +2771,20 @@ _DEFAULT_ROLLBACK_BINDINGS: Mapping[str, LoopRollbackBinding] = {
         ),
         proof_surface_refs=("universal_action_orchestration",),
     ),
+    "workflow_execution_loop": _rollback_binding(
+        "halt_workflow_and_retain_replay_cursor",
+        "Rollback workflow closure by halting dispatch claims and retaining replay cursor evidence before workflow closure can proceed.",
+        source_refs=(
+            "docs/21_workflow_runtime.md",
+            "mcoi/mcoi_runtime/core/traced_workflow.py",
+            "mcoi/mcoi_runtime/persistence/workflow_store.py",
+        ),
+        validator_refs=(
+            "mcoi/tests/test_traced_workflow.py",
+            "mcoi/tests/test_workflow_store.py",
+        ),
+        proof_surface_refs=("agent_orchestration_lifecycle",),
+    ),
     "deployment_witness_loop": _rollback_binding(
         "revert_publication_status_and_restore_last_verified_witness",
         "Rollback deployment publication status and restore the last verified witness boundary.",
@@ -2657,6 +2882,21 @@ _DEFAULT_AUTHORITY_BINDINGS: Mapping[str, tuple[LoopAuthorityBinding, ...]] = {
                 "tests/test_validate_agents_governance.py",
             ),
             proof_surface_refs=("universal_action_orchestration",),
+        ),
+    ),
+    "workflow_execution_loop": (
+        _authority_binding(
+            "workflow_operator_ref",
+            "Workflow operator reference authorizes workflow admission review without dispatching or executing workflow runs from the read model.",
+            source_refs=(
+                "docs/21_workflow_runtime.md",
+                "mcoi/mcoi_runtime/app/routers/workflow.py",
+            ),
+            validator_refs=(
+                "tests/test_gateway/test_workflow_orchestration.py",
+                "mcoi/tests/test_workflow_runtime_integration.py",
+            ),
+            proof_surface_refs=("agent_orchestration_lifecycle",),
         ),
     ),
     "deployment_witness_loop": (
@@ -2881,6 +3121,45 @@ _DEFAULT_EVIDENCE_BINDINGS: Mapping[str, tuple[LoopEvidenceBinding, ...]] = {
                 "tests/test_gateway/test_webhooks.py",
             ),
             proof_surface_refs=("gateway_capability_fabric",),
+        ),
+    ),
+    "workflow_execution_loop": (
+        _binding(
+            "workflow_descriptor_valid",
+            "Workflow descriptor validates before workflow execution closure is described.",
+            source_refs=(
+                "schemas/workflow.schema.json",
+                "mcoi/mcoi_runtime/contracts/workflow.py",
+                "examples/foundation_local_proof_thread.workflow.json",
+            ),
+            validator_refs=("mcoi/tests/test_workflow_contracts.py",),
+            proof_surface_refs=("agent_orchestration_lifecycle",),
+        ),
+        _binding(
+            "workflow_run_receipt_valid",
+            "Workflow run receipt validates before workflow run reconciliation is described.",
+            source_refs=(
+                "schemas/workflow_run.schema.json",
+                "mcoi/mcoi_runtime/core/workflow.py",
+            ),
+            validator_refs=(
+                "mcoi/tests/test_workflow_core.py",
+                "mcoi/tests/test_workflow_runtime_integration.py",
+            ),
+            proof_surface_refs=("agent_orchestration_lifecycle",),
+        ),
+        _binding(
+            "workflow_replay_boundary_passed",
+            "Workflow replay boundary passes before wait-state or replay closure is described.",
+            source_refs=(
+                "mcoi/mcoi_runtime/core/traced_workflow.py",
+                "mcoi/mcoi_runtime/persistence/workflow_store.py",
+            ),
+            validator_refs=(
+                "mcoi/tests/test_traced_workflow.py",
+                "mcoi/tests/test_workflow_store.py",
+            ),
+            proof_surface_refs=("agent_orchestration_lifecycle", "workflow_mining"),
         ),
     ),
     "deployment_witness_loop": (

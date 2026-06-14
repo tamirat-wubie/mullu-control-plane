@@ -66,10 +66,11 @@ staged into the holistic loop PR.
    `LoopReceiptLineageBinding`, `LoopClosureEvidencePack`, `LoopRegistry`,
    `LoopOperatorClosureReadinessView`, `LoopProofObligationView`, and bounded
    `LoopReadModel`.
-2. Registered seven existing loops without changing runtime behavior:
+2. Registered eight existing loops without changing runtime behavior:
    `audit_proof_verification_loop`,
    `authority_obligation_loop`,
    `universal_action_orchestration_loop`,
+   `workflow_execution_loop`,
    `deployment_witness_loop`, `runtime_conformance_loop`,
    `cognitive_outcome_loop`, and `governed_code_change_loop`.
 3. Added read-only reporting through
@@ -106,17 +107,17 @@ staged into the holistic loop PR.
     non-terminal nested read-model boundaries, and proof-matrix admission
     anchoring.
 14. Added the candidate map for future loop registration planning. It lists
-    evidence-backed loop-like surfaces, distinguishes the admitted audit/proof,
-    authority, and UAO candidates from still-blocked candidates, and does not
-    verify, close, mutate, or migrate them.
+    evidence-backed loop-like surfaces, reports the admitted audit/proof,
+    authority, UAO, and workflow candidates, and does not verify, close,
+    mutate, or migrate them.
 15. Added and then admitted the UAO loop into the default read model. The
     dossier now reports registry admission while preserving the same
     non-mutation boundary: it does not execute orchestration, emit receipts,
     mutate action state, or change UAO runtime behavior.
-16. Added the workflow admission dossier for the next candidate-specific
-    readiness projection. It builds a proposed manifest and reports evidence,
-    authority, closure-condition, rollback, and learning readiness without
-    registering the loop or changing workflow runtime behavior.
+16. Added and then admitted the workflow loop into the default read model. The
+    dossier now reports registry admission while preserving the same
+    non-mutation boundary: it does not execute workflow runs, emit receipts,
+    mutate the registry, or change workflow runtime behavior.
 17. Added and then admitted the authority loop into the default read model.
     The dossier now reports registry admission while preserving the same
     non-mutation boundary: it does not satisfy obligations, emit receipts,
@@ -125,9 +126,9 @@ staged into the holistic loop PR.
     The dossier now reports registry admission while preserving the same
     non-mutation boundary: it does not verify proofs, submit anchors, emit
     receipts, mutate the registry, or change audit/proof runtime behavior.
-19. Added exact proof-matrix witnesses for the audit/proof, authority, and UAO
-    default read-model admissions so the holistic loop surface remains at zero
-    unanchored labels.
+19. Added exact proof-matrix witnesses for the audit/proof, authority, UAO, and
+    workflow default read-model admissions so the holistic loop surface remains
+    at zero unanchored labels.
 
 ## Evidence Catalog Follow-Up
 
@@ -464,14 +465,14 @@ described by the v1 kernel without weakening the read-only contract.
 
 ## Candidate Map Follow-Up
 
-The candidate map lists future loop candidates before registration. It is a
-planning read model only:
+The candidate map lists loop-like surfaces and their current registry
+admission state. It is a planning read model only:
 
 ```text
-candidate.registered == false
-candidate.admission_status == blocked
-not_registered in candidate.admission_blockers
-requires_operator_registration_decision in candidate.admission_blockers
+candidate.registered == true
+candidate.admission_status == registered
+candidate.admission_blockers == []
+candidate.next_action == already_registered
 candidate.read_only == true
 candidate.mutation_route == false
 candidate.terminal_closure == false
@@ -479,9 +480,9 @@ candidate.behavior_rewrite == false
 ```
 
 The map currently covers audit/proof verification, authority obligations,
-universal action orchestration, and workflow execution. Audit/proof, authority,
-and UAO are admitted into the default registry; workflow remains a blocked
-future candidate.
+universal action orchestration, and workflow execution. All four candidates are
+admitted into the default registry as read-only blocked loops; the map does not
+perform registration, execution, verification, mutation, or terminal closure.
 
 ## UAO Admission Dossier Follow-Up
 
@@ -509,14 +510,15 @@ or execution authority.
 
 ## Workflow Admission Dossier Follow-Up
 
-The workflow admission dossier projects the next candidate-specific admission
-readiness packet:
+The workflow admission dossier reports the admitted candidate-specific registry
+state:
 
 ```text
 dossier.candidate_id == workflow_execution_loop
-dossier.admission_status == ready_for_operator_decision
-requires_operator_registration_decision in dossier.admission_blockers
-dossier.registered == false
+dossier.admission_status == registered
+dossier.admission_blockers == []
+dossier.next_action == already_registered
+dossier.registered == true
 dossier.read_only == true
 dossier.mutation_route == false
 dossier.runtime_behavior_change == false
@@ -527,7 +529,8 @@ dossier.registration_effect.registers_loop == false
 The dossier includes a proposed `LoopManifest`, existing workflow source refs,
 evidence gap report, authority gap report, closure-condition gap report,
 rollback readiness, and learning policy readiness. It is not registration,
-terminal closure, runtime migration, receipt emission, or execution authority.
+cause, terminal closure, runtime migration, receipt emission, workflow
+execution, or execution authority.
 
 ## Authority Admission Dossier Follow-Up
 

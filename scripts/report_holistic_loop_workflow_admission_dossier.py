@@ -2,7 +2,7 @@
 """Report the workflow holistic loop admission dossier.
 
 Purpose: expose a read-only admission dossier for the Workflow Execution loop
-candidate before any operator registration decision.
+candidate and its registry admission state.
 Governance scope: proposed loop manifest, evidence readiness, authority
 readiness, closure-condition readiness, rollback readiness, learning policy
 readiness, and non-registration boundary.
@@ -10,9 +10,10 @@ Dependencies: holistic loop contracts, candidate map reporter, and
 repository-local workflow proof surfaces.
 Invariants:
   - The dossier is read-only and deterministic.
-  - The dossier does not register the workflow execution loop.
+  - The dossier does not mutate the workflow execution loop registration.
   - The dossier does not execute or rewrite workflow runtime behavior.
-  - Operator registration remains a required blocker before admission.
+  - Operator registration remains explicit before admission and cleared after
+    default registry admission.
 """
 
 from __future__ import annotations
@@ -56,7 +57,7 @@ def _relative_path_exists(path_text: str) -> bool:
     return (WORKSPACE_ROOT / path_text).exists()
 
 
-def _proposed_manifest() -> dict[str, Any]:
+def _proposed_manifest(*, registered: bool) -> dict[str, Any]:
     candidate = _workflow_candidate()
     manifest = LoopManifest(
         loop_id=candidate.candidate_id,
@@ -89,8 +90,8 @@ def _proposed_manifest() -> dict[str, Any]:
         metadata={
             "source_candidate_map": "scripts/report_holistic_loop_candidate_map.py",
             "behavior_rewrite": False,
-            "registered": False,
-            "operator_decision_required": True,
+            "registered": registered,
+            "operator_decision_required": not registered,
         },
     )
     return manifest.to_json_dict()
@@ -125,16 +126,17 @@ def build_dossier() -> dict[str, Any]:
     """Build the read-only workflow admission dossier."""
 
     registered_loop_ids = set(build_default_loop_registry().manifests)
-    proposed_manifest = _proposed_manifest()
+    registered = CANDIDATE_ID in registered_loop_ids
+    proposed_manifest = _proposed_manifest(registered=registered)
     existing_surface_refs = _existing_surface_refs()
     return {
         "dossier_id": DOSSIER_ID,
         "dossier_version": DOSSIER_VERSION,
         "candidate_id": CANDIDATE_ID,
-        "admission_status": ADMISSION_STATUS_READY,
-        "admission_blockers": [REGISTRATION_DECISION_BLOCKER],
-        "next_action": "operator_registration_decision",
-        "registered": CANDIDATE_ID in registered_loop_ids,
+        "admission_status": "registered" if registered else ADMISSION_STATUS_READY,
+        "admission_blockers": [] if registered else [REGISTRATION_DECISION_BLOCKER],
+        "next_action": "already_registered" if registered else "operator_registration_decision",
+        "registered": registered,
         "read_only": True,
         "mutation_route": False,
         "runtime_behavior_change": False,
@@ -148,10 +150,18 @@ def build_dossier() -> dict[str, Any]:
             "runtime_behavior_change": False,
         },
         "operator_decision_report": {
-            "decision_required": True,
-            "decision_status": "missing",
-            "decision_ref": "",
-            "blocks_registration": True,
+            "decision_required": not registered,
+            "decision_status": (
+                "satisfied_by_default_registry_admission"
+                if registered
+                else "missing"
+            ),
+            "decision_ref": (
+                "default_registry:workflow_execution_loop"
+                if registered
+                else ""
+            ),
+            "blocks_registration": not registered,
         },
         "proposed_manifest": proposed_manifest,
         "existing_surface_refs": list(existing_surface_refs),
@@ -242,12 +252,20 @@ def validate_dossier(dossier: dict[str, Any] | None = None) -> list[str]:
         errors.append("dossier_version is invalid")
     if report.get("candidate_id") != CANDIDATE_ID:
         errors.append("candidate_id must be workflow_execution_loop")
-    if report.get("admission_status") != ADMISSION_STATUS_READY:
-        errors.append("admission_status must remain ready_for_operator_decision")
-    if REGISTRATION_DECISION_BLOCKER not in report.get("admission_blockers", []):
-        errors.append("operator registration decision blocker is required")
-    if report.get("registered") is not False:
-        errors.append("dossier must not claim the loop is registered")
+    registered_loop_ids = set(build_default_loop_registry().manifests)
+    expected_registered = CANDIDATE_ID in registered_loop_ids
+    if report.get("registered") is not expected_registered:
+        errors.append("dossier registered state must match default registry")
+    if expected_registered:
+        if report.get("admission_status") != "registered":
+            errors.append("admission_status must be registered after admission")
+        if report.get("admission_blockers") != []:
+            errors.append("admission_blockers must be empty after admission")
+    else:
+        if report.get("admission_status") != ADMISSION_STATUS_READY:
+            errors.append("admission_status must remain ready_for_operator_decision")
+        if REGISTRATION_DECISION_BLOCKER not in report.get("admission_blockers", []):
+            errors.append("operator registration decision blocker is required")
     if report.get("read_only") is not True:
         errors.append("dossier must be read-only")
     if report.get("mutation_route") is not False:
@@ -275,14 +293,24 @@ def validate_dossier(dossier: dict[str, Any] | None = None) -> list[str]:
     if not isinstance(operator_decision, dict):
         errors.append("operator_decision_report must be present")
     else:
-        if operator_decision.get("decision_required") is not True:
-            errors.append("operator decision must be required")
-        if operator_decision.get("decision_status") != "missing":
-            errors.append("operator decision status must remain missing")
-        if operator_decision.get("decision_ref"):
-            errors.append("operator decision ref must remain empty before admission")
-        if operator_decision.get("blocks_registration") is not True:
-            errors.append("operator decision must block registration")
+        if expected_registered:
+            if operator_decision.get("decision_required") is not False:
+                errors.append("operator decision must not be required after admission")
+            if operator_decision.get("decision_status") != "satisfied_by_default_registry_admission":
+                errors.append("operator decision status must report registry admission")
+            if not operator_decision.get("decision_ref"):
+                errors.append("operator decision ref must be present after admission")
+            if operator_decision.get("blocks_registration") is not False:
+                errors.append("operator decision must not block after admission")
+        else:
+            if operator_decision.get("decision_required") is not True:
+                errors.append("operator decision must be required")
+            if operator_decision.get("decision_status") != "missing":
+                errors.append("operator decision status must remain missing")
+            if operator_decision.get("decision_ref"):
+                errors.append("operator decision ref must remain empty before admission")
+            if operator_decision.get("blocks_registration") is not True:
+                errors.append("operator decision must block registration")
 
     errors.extend(_validate_manifest(report.get("proposed_manifest")))
     errors.extend(_validate_existing_surfaces(report.get("existing_surface_refs")))
@@ -298,9 +326,6 @@ def validate_dossier(dossier: dict[str, Any] | None = None) -> list[str]:
     errors.extend(_validate_readiness_report(report, "rollback_readiness"))
     errors.extend(_validate_readiness_report(report, "learning_policy_readiness"))
 
-    registered_loop_ids = set(build_default_loop_registry().manifests)
-    if CANDIDATE_ID in registered_loop_ids:
-        errors.append("default registry must not include the workflow candidate")
     return errors
 
 
@@ -333,8 +358,6 @@ def _validate_manifest(manifest: Any) -> list[str]:
         errors.append("proposed_manifest loop_id must match candidate_id")
     if manifest.get("metadata", {}).get("behavior_rewrite") is not False:
         errors.append("proposed_manifest metadata behavior_rewrite must be false")
-    if manifest.get("metadata", {}).get("registered") is not False:
-        errors.append("proposed_manifest metadata registered must be false")
     return errors
 
 
