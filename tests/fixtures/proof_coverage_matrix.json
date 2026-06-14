@@ -997,11 +997,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 264,
+      "proven": 266,
       "unproven": 0,
       "witnessed": 159
     },
-    "route_count": 423,
+    "route_count": 425,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2242,6 +2242,16 @@
         "coverage_state": "proven",
         "route": "/api/v1/partitions",
         "surface_id": "tenant_governance_lifecycle"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/approval-queue",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/approval-queue/preview",
+        "surface_id": "assistant_kernel_planning"
       },
       {
         "coverage_state": "proven",
@@ -3640,17 +3650,25 @@
         "mcoi/mcoi_runtime/assistant_kernel/planner.py",
         "mcoi/mcoi_runtime/assistant_kernel/identity.py",
         "mcoi/mcoi_runtime/personal_assistant/planner.py",
+        "mcoi/mcoi_runtime/personal_assistant/approval.py",
         "mcoi/tests/test_assistant_router.py",
         "tests/test_assistant_kernel.py",
-        "tests/test_personal_assistant_planner.py"
+        "tests/test_gateway/test_personal_assistant_public_routes.py",
+        "tests/test_personal_assistant_approval_queue.py",
+        "tests/test_personal_assistant_planner.py",
+        "schemas/personal_assistant_approval_queue.schema.json",
+        "examples/personal_assistant_approval_queue_read_model.json",
+        "scripts/validate_personal_assistant_approval_queue.py"
       ],
-      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, plan, and receipt projections without executing external effects.",
+      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, plan, and receipt projections without executing external effects.",
       "representative_paths": [
         "/api/v1/assistant/profiles",
         "/api/v1/assistant/finance-ops/plans",
         "/api/v1/assistant/team-ops/plans",
         "/api/v1/personal-assistant/skills",
-        "/api/v1/personal-assistant/requests/preview"
+        "/api/v1/personal-assistant/requests/preview",
+        "/api/v1/personal-assistant/approval-queue",
+        "/api/v1/personal-assistant/approval-queue/preview"
       ],
       "request_proof": "request_proof",
       "runtime_witness_anchor_aliases": {
@@ -3669,6 +3687,16 @@
         ],
         "finance_ops_plan_requires_active_consent": [
           "finance_ops_plan_blocks_without_active_payment_consent"
+        ],
+        "personal_assistant_approval_queue_decision_deferred": [
+          "approved_decision_links_evidence_and_still_defers_execution",
+          "gateway_personal_assistant_approval_queue_approved_still_defers_execution"
+        ],
+        "personal_assistant_approval_queue_read_model_public_safe": [
+          "approval_queue_read_model_matches_schema_and_denies_execution",
+          "personal_assistant_approval_queue_read_model_is_public_safe",
+          "gateway_personal_assistant_approval_queue_read_model_is_empty_and_safe",
+          "gateway_personal_assistant_approval_queue_preview_records_pending_packet"
         ],
         "personal_assistant_preview_blocks_with_whqr_step": [
           "personal_assistant_preview_blocks_unknown_request_with_whqr_step",
@@ -3694,7 +3722,9 @@
         "personal_assistant_skill_read_model_deployed_read_only",
         "personal_assistant_preview_compiles_without_execution",
         "personal_assistant_preview_blocks_with_whqr_step",
-        "personal_assistant_preview_errors_sanitized"
+        "personal_assistant_preview_errors_sanitized",
+        "personal_assistant_approval_queue_read_model_public_safe",
+        "personal_assistant_approval_queue_decision_deferred"
       ],
       "surface_id": "assistant_kernel_planning"
     },
@@ -10898,8 +10928,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1422,
-    "runtime_witness_count": 1422,
+    "exact_test_anchor_count": 1424,
+    "runtime_witness_count": 1424,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11576,10 +11606,26 @@
               "mcoi/tests/test_assistant_router.py::test_personal_assistant_preview_fails_closed_on_invalid_request"
             ],
             "witness": "personal_assistant_preview_errors_sanitized"
+          },
+          {
+            "anchors": [
+              "tests/test_personal_assistant_approval_queue.py::test_approval_queue_read_model_matches_schema_and_denies_execution",
+              "mcoi/tests/test_assistant_router.py::test_personal_assistant_approval_queue_read_model_is_public_safe",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_approval_queue_read_model_is_empty_and_safe",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_approval_queue_preview_records_pending_packet"
+            ],
+            "witness": "personal_assistant_approval_queue_read_model_public_safe"
+          },
+          {
+            "anchors": [
+              "tests/test_personal_assistant_approval_queue.py::test_approved_decision_links_evidence_and_still_defers_execution",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_approval_queue_approved_still_defers_execution"
+            ],
+            "witness": "personal_assistant_approval_queue_decision_deferred"
           }
         ],
-        "exact_test_anchor_count": 9,
-        "runtime_witness_count": 9,
+        "exact_test_anchor_count": 11,
+        "runtime_witness_count": 11,
         "surface_id": "assistant_kernel_planning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

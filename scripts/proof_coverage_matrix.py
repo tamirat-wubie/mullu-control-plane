@@ -527,6 +527,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "/api/v1/assistant/team-ops/plans",
                 "/api/v1/personal-assistant/skills",
                 "/api/v1/personal-assistant/requests/preview",
+                "/api/v1/personal-assistant/approval-queue",
+                "/api/v1/personal-assistant/approval-queue/preview",
             ],
             "request_proof",
             "action_proof",
@@ -537,11 +539,17 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/mcoi_runtime/assistant_kernel/planner.py",
                 "mcoi/mcoi_runtime/assistant_kernel/identity.py",
                 "mcoi/mcoi_runtime/personal_assistant/planner.py",
+                "mcoi/mcoi_runtime/personal_assistant/approval.py",
                 "mcoi/tests/test_assistant_router.py",
                 "tests/test_assistant_kernel.py",
+                "tests/test_gateway/test_personal_assistant_public_routes.py",
+                "tests/test_personal_assistant_approval_queue.py",
                 "tests/test_personal_assistant_planner.py",
+                "schemas/personal_assistant_approval_queue.schema.json",
+                "examples/personal_assistant_approval_queue_read_model.json",
+                "scripts/validate_personal_assistant_approval_queue.py",
             ],
-            "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, plan, and receipt projections without executing external effects.",
+            "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, plan, and receipt projections without executing external effects.",
             [
                 "assistant_profiles_read_model_bounded",
                 "finance_ops_plan_requires_active_consent",
@@ -552,6 +560,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "personal_assistant_preview_compiles_without_execution",
                 "personal_assistant_preview_blocks_with_whqr_step",
                 "personal_assistant_preview_errors_sanitized",
+                "personal_assistant_approval_queue_read_model_public_safe",
+                "personal_assistant_approval_queue_decision_deferred",
             ],
             runtime_witness_anchor_aliases={
                 "assistant_profiles_read_model_bounded": [
@@ -583,6 +593,16 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "personal_assistant_preview_errors_sanitized": [
                     "personal_assistant_preview_fails_closed_on_invalid_request",
+                ],
+                "personal_assistant_approval_queue_read_model_public_safe": [
+                    "approval_queue_read_model_matches_schema_and_denies_execution",
+                    "personal_assistant_approval_queue_read_model_is_public_safe",
+                    "gateway_personal_assistant_approval_queue_read_model_is_empty_and_safe",
+                    "gateway_personal_assistant_approval_queue_preview_records_pending_packet",
+                ],
+                "personal_assistant_approval_queue_decision_deferred": [
+                    "approved_decision_links_evidence_and_still_defers_execution",
+                    "gateway_personal_assistant_approval_queue_approved_still_defers_execution",
                 ],
             },
         ),
