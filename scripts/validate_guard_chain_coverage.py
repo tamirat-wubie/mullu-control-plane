@@ -47,18 +47,18 @@ def build_guard_chain_coverage_report() -> dict[str, Any]:
     uncovered_routes: list[dict[str, str]] = []
     exempt_api_v1_routes: list[dict[str, str]] = []
 
-    for route in _api_v1_routes(app):
-        endpoint = f"{route.endpoint.__module__}.{route.endpoint.__name__}"
-        for method in sorted(route.methods - {"HEAD", "OPTIONS"}):
+    for route in _api_v1_route_records(app):
+        endpoint = f"{route['endpoint'].__module__}.{route['endpoint'].__name__}"
+        for method in sorted(route["methods"] - {"HEAD", "OPTIONS"}):
             record = {
                 "method": method,
-                "path": route.path,
+                "path": route["path"],
                 "endpoint": endpoint,
             }
             route_records.append(record)
-            if route.path in EXEMPT_PATHS:
+            if route["path"] in EXEMPT_PATHS:
                 exempt_api_v1_routes.append(record)
-            if not middleware_installed or not _covered_by_governance_middleware(route.path):
+            if not middleware_installed or not _covered_by_governance_middleware(route["path"]):
                 uncovered_routes.append(record)
 
     route_records.sort(key=lambda item: (item["path"], item["method"], item["endpoint"]))
@@ -91,17 +91,37 @@ def build_guard_chain_coverage_report() -> dict[str, Any]:
     }
 
 
-def _api_v1_routes(app: FastAPI) -> list[Any]:
+def _api_v1_route_records(app: FastAPI) -> list[dict[str, Any]]:
+    """Return API v1 route records across eager and lazy FastAPI router layouts."""
+    records: list[dict[str, Any]] = []
+    for route in iter_effective_app_routes(app):
+        path = getattr(route, "path", "")
+        methods = getattr(route, "methods", None)
+        endpoint = getattr(route, "endpoint", None)
+        if methods is None or endpoint is None:
+            continue
+        _append_api_v1_route_record(
+            records,
+            path=path,
+            endpoint=endpoint,
+            methods=methods,
+        )
+
     return sorted(
-        (
-            route
-            for route in iter_effective_app_routes(app)
-            if getattr(route, "path", "").startswith(API_V1_PREFIX)
-            and hasattr(route, "methods")
-            and hasattr(route, "endpoint")
-        ),
-        key=lambda route: route.path,
+        records,
+        key=lambda record: (record["path"], record["endpoint"].__module__, record["endpoint"].__name__),
     )
+
+
+def _append_api_v1_route_record(
+    records: list[dict[str, Any]],
+    *,
+    path: str,
+    endpoint: Any,
+    methods: set[str],
+) -> None:
+    if path.startswith(API_V1_PREFIX):
+        records.append({"path": path, "endpoint": endpoint, "methods": methods})
 
 
 def _has_governance_middleware(app: FastAPI) -> bool:
