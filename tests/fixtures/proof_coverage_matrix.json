@@ -9999,6 +9999,7 @@
         "scripts/validate_snet_mesh_receipt.py",
         "examples/snet_operator_read_model.json",
         "tests/test_validate_snet_operator_read_model.py",
+        "tests/test_validate_snet_mesh_receipt.py",
         "tests/test_snet_operator_read_model_doc.py"
       ],
       "notes": "SNet operator read model projects bounded symbol summaries, mesh receipt counts, settlement counts, raw-answer suppression, raw-metadata suppression, and denied execution, connector, route, filesystem, and terminal-closure authority. The operator document preserves the AwaitingEvidence runtime-integration gate.",
@@ -10017,6 +10018,14 @@
         "snet_operator_read_model_rejects_count_drift",
         "snet_operator_read_model_rejects_symbol_raw_field",
         "snet_operator_read_model_zero_symbol_projection_is_valid",
+        "snet_mesh_receipt_contract_passes",
+        "snet_mesh_receipt_rejects_raw_answer_and_authority_mutations",
+        "snet_mesh_receipt_saved_file_validation",
+        "snet_mesh_receipt_rejects_settlement_count_drift",
+        "snet_mesh_receipt_requires_digest_evidence_ref",
+        "snet_mesh_receipt_non_string_evidence_ref_reports_errors",
+        "snet_mesh_receipt_malformed_payload_reports_errors",
+        "snet_mesh_receipt_rejects_identity_drift",
         "snet_operator_doc_declares_read_only_boundary",
         "snet_operator_doc_names_blocked_authorities",
         "snet_operator_doc_lists_verification_commands",
@@ -10510,8 +10519,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1359,
-    "runtime_witness_count": 1359,
+    "exact_test_anchor_count": 1367,
+    "runtime_witness_count": 1367,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19500,6 +19509,54 @@
           },
           {
             "anchors": [
+              "tests/test_validate_snet_mesh_receipt.py::test_snet_mesh_receipt_contract_passes"
+            ],
+            "witness": "snet_mesh_receipt_contract_passes"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_snet_mesh_receipt.py::test_snet_mesh_receipt_rejects_raw_answer_and_authority_mutations"
+            ],
+            "witness": "snet_mesh_receipt_rejects_raw_answer_and_authority_mutations"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_snet_mesh_receipt.py::test_snet_mesh_receipt_saved_file_validation"
+            ],
+            "witness": "snet_mesh_receipt_saved_file_validation"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_snet_mesh_receipt.py::test_snet_mesh_receipt_rejects_settlement_count_drift"
+            ],
+            "witness": "snet_mesh_receipt_rejects_settlement_count_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_snet_mesh_receipt.py::test_snet_mesh_receipt_requires_digest_evidence_ref"
+            ],
+            "witness": "snet_mesh_receipt_requires_digest_evidence_ref"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_snet_mesh_receipt.py::test_snet_mesh_receipt_non_string_evidence_ref_reports_errors"
+            ],
+            "witness": "snet_mesh_receipt_non_string_evidence_ref_reports_errors"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_snet_mesh_receipt.py::test_snet_mesh_receipt_malformed_payload_reports_errors"
+            ],
+            "witness": "snet_mesh_receipt_malformed_payload_reports_errors"
+          },
+          {
+            "anchors": [
+              "tests/test_validate_snet_mesh_receipt.py::test_snet_mesh_receipt_rejects_identity_drift"
+            ],
+            "witness": "snet_mesh_receipt_rejects_identity_drift"
+          },
+          {
+            "anchors": [
               "tests/test_snet_operator_read_model_doc.py::test_snet_operator_doc_declares_read_only_boundary"
             ],
             "witness": "snet_operator_doc_declares_read_only_boundary"
@@ -19523,8 +19580,8 @@
             "witness": "start_here_links_snet_operator_doc"
           }
         ],
-        "exact_test_anchor_count": 10,
-        "runtime_witness_count": 10,
+        "exact_test_anchor_count": 18,
+        "runtime_witness_count": 18,
         "surface_id": "snet_operator_read_model",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

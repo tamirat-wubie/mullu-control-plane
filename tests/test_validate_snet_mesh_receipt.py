@@ -98,6 +98,29 @@ def test_snet_mesh_receipt_requires_digest_evidence_ref() -> None:
     assert receipt["receipt_is_not_terminal_closure"] is True
 
 
+def test_snet_mesh_receipt_non_string_evidence_ref_reports_errors() -> None:
+    receipt = validator.build_sample_receipt()
+    schema = validator._load_schema(validator.DEFAULT_SCHEMA_PATH)
+    receipt["evidence_refs"] = [{"ref": "snet:mesh_digest:"}]
+
+    errors = validator.validate_receipt(receipt, schema)
+
+    assert any("expected string" in error for error in errors)
+    assert any("snet:mesh_digest:" in error for error in errors)
+    assert receipt["raw_metadata_values_exposed"] is False
+
+
+def test_snet_mesh_receipt_malformed_payload_reports_errors() -> None:
+    schema = validator._load_schema(validator.DEFAULT_SCHEMA_PATH)
+
+    none_errors = validator.validate_receipt(None, schema)
+    object_errors = validator.validate_receipt(object(), schema)
+
+    assert any("receipt must be a JSON object" in error for error in none_errors)
+    assert any("receipt must be a JSON object" in error for error in object_errors)
+    assert any("expected object" in error for error in none_errors + object_errors)
+
+
 def test_snet_mesh_receipt_rejects_identity_drift() -> None:
     schema = validator._load_schema(validator.DEFAULT_SCHEMA_PATH)
     bad_receipts = {

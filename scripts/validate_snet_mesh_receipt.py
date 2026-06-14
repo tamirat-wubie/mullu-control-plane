@@ -135,10 +135,13 @@ def validate_schema_artifact(schema: dict[str, Any]) -> list[str]:
     return errors
 
 
-def validate_receipt(receipt: dict[str, Any], schema: dict[str, Any] | None = None) -> list[str]:
+def validate_receipt(receipt: Any, schema: dict[str, Any] | None = None) -> list[str]:
     """Return deterministic validation errors for one SNet mesh receipt."""
     schema_payload = schema or _load_schema(DEFAULT_SCHEMA_PATH)
     errors = _validate_schema_instance(schema_payload, receipt)
+    if not isinstance(receipt, dict):
+        errors.append("receipt must be a JSON object")
+        return errors
     missing_fields = [field_name for field_name in REQUIRED_RECEIPT_FIELDS if field_name not in receipt]
     for field_name in missing_fields:
         errors.append(f"receipt missing field: {field_name}")
@@ -181,6 +184,7 @@ def validate_receipt(receipt: dict[str, Any], schema: dict[str, Any] | None = No
         if settlement_total != receipt["symbol_count"]:
             errors.append("settlement_counts total must match symbol_count")
     if isinstance(receipt.get("evidence_refs"), list):
+        evidence_refs = receipt["evidence_refs"]
         required_prefixes = (
             "snet:mesh_digest:",
             "snet:symbols:",
@@ -191,7 +195,7 @@ def validate_receipt(receipt: dict[str, Any], schema: dict[str, Any] | None = No
             "snet:contradictions:",
         )
         for prefix in required_prefixes:
-            if not any(ref.startswith(prefix) for ref in receipt["evidence_refs"]):
+            if not any(isinstance(ref, str) and ref.startswith(prefix) for ref in evidence_refs):
                 errors.append(f"receipt missing evidence ref prefix: {prefix}")
     return errors
 
