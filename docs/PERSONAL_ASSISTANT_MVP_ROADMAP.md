@@ -65,6 +65,15 @@ No stage may skip UAO admission, approval classification, receipt emission, and 
 5. Raw private connector payloads, raw message bodies, credentials, tokens, and secret-like values are rejected.
 6. Assurance remains Foundation Mode only, with no live execution or customer-readiness claim.
 
+## PR 5 Evidence Acceptance Criteria
+
+1. Email, calendar, and task drafts validate against `schemas/personal_assistant_draft_projection.schema.json`.
+2. Draft projection envelopes embed schema-valid personal-assistant receipts for each draft artifact.
+3. `draft_preparation_allowed` is true, while `execution_allowed`, `live_connector_execution_allowed`, `external_send_allowed`, `calendar_write_allowed`, `task_write_allowed`, `memory_write_allowed`, `connector_mutation_allowed`, and `system_of_record_write_allowed` remain false.
+4. Drafts require approval before any send, invite, connector mutation, task write, or system-of-record write.
+5. Raw private connector payloads, raw message bodies, credentials, tokens, and secret-like values are rejected.
+6. Assurance remains Foundation Mode only, with no live execution or customer-readiness claim.
+
 ## PR 7 Acceptance Criteria
 
 1. Memory observation records validate against `schemas/personal_assistant_memory_observation.schema.json`.
