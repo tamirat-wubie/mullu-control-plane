@@ -262,7 +262,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["tool_permission_registry"]["unanchored_witness_count"] == 0
     assert surfaces["tool_permission_registry"]["exact_test_anchor_count"] == 11
     assert surfaces["gateway_capability_fabric"]["unanchored_witness_count"] == 0
-    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 22
+    assert surfaces["gateway_capability_fabric"]["exact_test_anchor_count"] == 23
     assert surfaces["capability_worker_execution"]["unanchored_witness_count"] == 0
     assert surfaces["capability_worker_execution"]["exact_test_anchor_count"] == 7
     assert surfaces["capability_plan_evidence_bundle"]["unanchored_witness_count"] == 0
@@ -1591,6 +1591,7 @@ def test_gateway_runtime_witnesses_bind_closure_invariants() -> None:
     assert "universal_action_orchestration_replays_from_command_events" in witnesses
     assert "universal_action_orchestration_exposes_whqr_replay_ref" in witnesses
     assert "operator_universal_action_read_model_filters_command_proofs" in witnesses
+    assert "operator_universal_action_read_model_exposes_whqr_replay_ref" in witnesses
     assert "operator_universal_action_console_renders_replay_state" in witnesses
     assert "capability_admission_audits_filter_status" in witnesses
     assert "command_capability_admission_read_model_reports_accepted_witness" in witnesses

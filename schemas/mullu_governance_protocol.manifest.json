@@ -359,6 +359,12 @@
       "surface": "connector"
     },
     {
+      "schema_id": "durable-gmail-live-write-operator-input-request",
+      "path": "schemas/durable_gmail_live_write_operator_input_request.schema.json",
+      "urn": "urn:mullusi:schema:durable-gmail-live-write-operator-input-request:1",
+      "surface": "connector"
+    },
+    {
       "schema_id": "data-governance-snapshot",
       "path": "schemas/data_governance_snapshot.schema.json",
       "urn": "urn:mullusi:schema:data-governance-snapshot:1",
@@ -1382,6 +1388,12 @@
       "schema_id": "read-only-worker-lease-preflight",
       "path": "schemas/read_only_worker_lease_preflight.schema.json",
       "urn": "urn:mullusi:schema:read-only-worker-lease-preflight:1",
+      "surface": "worker"
+    },
+    {
+      "schema_id": "read-only-worker-rehearsal-receipt",
+      "path": "schemas/read_only_worker_rehearsal_receipt.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-rehearsal-receipt:1",
       "surface": "worker"
     },
     {

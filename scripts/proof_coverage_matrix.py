@@ -75,6 +75,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
         "universal_action_orchestration_replays_from_command_events",
         "universal_action_orchestration_exposes_whqr_replay_ref",
         "operator_universal_action_read_model_filters_command_proofs",
+        "operator_universal_action_read_model_exposes_whqr_replay_ref",
         "operator_universal_action_console_renders_replay_state",
     ]
     surfaces = [
@@ -115,7 +116,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "tests/test_gateway/test_webhooks.py",
                 "tests/test_governed_capability_fabric.py",
             ],
-            "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure with WHQR replay refs, universal action proof and orchestration replay with WHQR replay refs, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
+            "Gateway command admission, request receipt envelopes, bounded interpretation-receipt read models, terminal closure with WHQR replay refs, universal action proof, orchestration, and operator replay with WHQR replay refs, capsule compiler certification-evidence manifests, and the capsule admission installer receipt expose runtime witnesses.",
             [
                 *gateway_witnesses,
                 "capability_admission_audits_filter_status",
@@ -162,6 +163,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                     "command_universal_action_orchestration_read_model",
                 ],
                 "operator_universal_action_read_model_filters_command_proofs": [
+                    "operator_universal_actions_read_model_filters_proofs",
+                ],
+                "operator_universal_action_read_model_exposes_whqr_replay_ref": [
                     "operator_universal_actions_read_model_filters_proofs",
                 ],
                 "operator_universal_action_console_renders_replay_state": [
