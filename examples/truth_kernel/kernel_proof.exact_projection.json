@@ -1,0 +1,66 @@
+{
+  "proof_id": "kernel-proof-color-domain-exact-v1",
+  "tenant_id": "foundation-local",
+  "proof_kind": "ValidityProof",
+  "proof_state": "Pass",
+  "result_kind": "ExactResult",
+  "kernel_signature": "kernel-signature-foundation-0001",
+  "subject_ref": "truth-candidate-constraint-color-red-blue-v1",
+  "generated_at": "2026-06-14T00:01:00Z",
+  "premises": [
+    {
+      "premise_id": "premise-color-domain-finite",
+      "premise_kind": "domain",
+      "source_ref": "domain:color",
+      "statement": "The color variable has a finite declared domain."
+    },
+    {
+      "premise_id": "premise-color-constraint-total",
+      "premise_kind": "constraint",
+      "source_ref": "constraint-color-red-blue-v1",
+      "statement": "The color constraint predicate is deterministic and total over the declared scope."
+    }
+  ],
+  "derivation_steps": [
+    {
+      "step_id": "step-domain-membership",
+      "rule_ref": "rule:domain-membership",
+      "input_refs": [
+        "premise-color-domain-finite"
+      ],
+      "output_statement": "Every candidate color value is checked against the finite domain."
+    },
+    {
+      "step_id": "step-constraint-scope",
+      "rule_ref": "rule:constraint-scope-totality",
+      "input_refs": [
+        "premise-color-constraint-total"
+      ],
+      "output_statement": "The constraint can be evaluated for each value in scope without side effects."
+    }
+  ],
+  "conclusion": {
+    "statement": "The proposed color constraint can support a truth commit after governance approval.",
+    "supports_truth_mutation": true,
+    "required_next_action": "commit_candidate"
+  },
+  "witness_refs": [
+    "witness:color-red",
+    "witness:color-blue"
+  ],
+  "replay": {
+    "replay_mode": "observation_only",
+    "deterministic": true,
+    "source_hash": "proof-source-hash-color-domain-v1",
+    "expected_hash": "proof-expected-hash-color-domain-v1",
+    "reason_codes": []
+  },
+  "budget": {
+    "budget_id": "proof-budget-color-domain-v1",
+    "limit": 32,
+    "used": 12,
+    "unit": "checks"
+  },
+  "limitations": [],
+  "proof_hash": "kernel-proof-hash-color-domain-exact-v1"
+}

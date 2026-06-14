@@ -1,0 +1,57 @@
+{
+  "candidate_id": "truth-candidate-constraint-color-red-blue-v1",
+  "tenant_id": "foundation-local",
+  "candidate_kind": "constraint_addition",
+  "parent_kernel_signature": "kernel-signature-foundation-0001",
+  "proposed_at": "2026-06-14T00:00:00Z",
+  "actor_ref": "operator:local-control-studio",
+  "source_refs": [
+    "docs/74_truth_kernel_plane.md"
+  ],
+  "delta": {
+    "delta_id": "truth-delta-color-domain-v1",
+    "delta_kind": "constraint_addition",
+    "operation": {
+      "operation_type": "add_constraint",
+      "payload": {
+        "constraint_id": "constraint-color-red-blue-v1",
+        "scope": [
+          "var:color"
+        ],
+        "predicate_ref": "predicate:color-in-red-blue"
+      }
+    },
+    "affected_variable_ids": [
+      "var:color"
+    ],
+    "affected_constraint_ids": [
+      "constraint-color-red-blue-v1"
+    ],
+    "includes_mfidel": false,
+    "mfidel_atomicity_preserved": true,
+    "change_summary": "Admit a finite color-domain constraint for local truth-kernel proof threading."
+  },
+  "admission_boundary": {
+    "result_authority": "exact_required",
+    "requires_exact_result": true,
+    "can_mutate_truth": true,
+    "requires_governance_ref": true,
+    "requires_trace_ref": true
+  },
+  "proof_obligations": [
+    {
+      "obligation_id": "proof-obligation-color-domain-validity",
+      "proof_kind": "ValidityProof",
+      "required_for_mutation": true,
+      "notes": "Constraint addition requires exact validity proof before commit."
+    },
+    {
+      "obligation_id": "proof-obligation-color-domain-commit",
+      "proof_kind": "CommitProof",
+      "required_for_mutation": true,
+      "notes": "Accepted candidate requires replayable commit proof."
+    }
+  ],
+  "status": "proposed",
+  "candidate_hash": "truth-candidate-hash-color-red-blue-v1"
+}

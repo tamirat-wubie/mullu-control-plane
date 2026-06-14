@@ -9,8 +9,8 @@
 
 Purpose: define the repository boundary for Mullu Govern and the Mullu Control Plane.
 Governance scope: Milestone 0 shared foundation and Foundation Mode claim boundary.
-Dependencies: `docs/FOUNDATION_MODE.md`, `docs/PRODUCT_BOUNDARY.md`, `docs/01_shared_invariants.md`, `docs/02_shared_contracts.md`.
-Invariants: shared meaning is defined once; Foundation Mode remains the current operating posture until promoted by witness; MAF Core and MCOI Runtime remain split; Mullu Govern remains the public product name; Mullu remains the suite/family name; Mullu Platform remains a developer and architecture term; Mullu Control Plane remains the admin/governance/deployment surface.
+Dependencies: `docs/FOUNDATION_MODE.md`, `docs/PRODUCT_BOUNDARY.md`, `docs/01_shared_invariants.md`, `docs/02_shared_contracts.md`, `docs/74_truth_kernel_plane.md`.
+Invariants: shared meaning is defined once; Foundation Mode remains the current operating posture until promoted by witness; MAF Core and MCOI Runtime remain split; Mullu Govern remains the public product name; Mullu remains the suite/family name; Mullusi remains the company name; Mullu Platform remains a developer and architecture term; Mullu Control Plane remains the admin/governance/deployment surface; Mullu Truth Kernel remains an internal MAF Core subsystem, not a company, product, or runtime replacement.
 
 ## Product Identity
 
@@ -19,6 +19,11 @@ suite/family name. Mullu Platform is reserved for developer, SDK, API,
 deployment, and architecture contexts. This repository defines the Mullu Control
 Plane surface for admin, governance, approval, trace, budget, lineage, and
 deployment operation.
+
+Subsystem naming follows the same boundary. Mullusi is the company, not a
+component prefix. The truth-state kernel subsystem is named
+[Mullu Truth Kernel](74_truth_kernel_plane.md), with `MTK` as the internal
+short name and Truth Kernel Plane as its architecture boundary.
 
 ## Current Operating Posture
 
@@ -32,6 +37,7 @@ and receipt-backed until a later status witness promotes the project.
 
 - `Shared Contracts` define invariants, contract meaning, trace semantics, policy semantics, verification semantics, and learning admission semantics.
 - `MAF Core` owns the general substrate, kernel-facing interfaces, and shared runtime primitives.
+- `Mullu Truth Kernel` is an internal MAF Core subsystem for domains, constraints, closure, propagation, kernel checks, projections, forced values, and proof-bound truth-state commits.
 - `MCOI Runtime` owns computer-operation-specific observation and execution runtime surfaces.
 - `Mullu Govern` remains product-facing and explains governed execution to users and buyers.
 - `Mullu Control Plane` remains operator-facing and consumes traces, approvals, and status from the shared foundation.
