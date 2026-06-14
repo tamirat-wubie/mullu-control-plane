@@ -1,0 +1,21 @@
+{
+  "summary_id": "truth-kernel-finite-projection-summary-v1",
+  "runtime_boundary": "finite-domain-proof-summary",
+  "tenant_id": "foundation-local",
+  "proof_id": "kernel-proof:finite-domain-color-parity",
+  "subject_ref": "truth-candidate:finite-domain-color-parity",
+  "variable_id": "var:color",
+  "proof_state": "Pass",
+  "result_kind": "ExactResult",
+  "projection_values": [
+    "blue",
+    "red"
+  ],
+  "checked_state_count": 3,
+  "valid_state_count": 2,
+  "budget_limit": 8,
+  "limitations": [],
+  "sandbox_witness_present": true,
+  "deterministic_replay": true,
+  "truth_mutation_authority": "adapter_required"
+}

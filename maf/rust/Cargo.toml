@@ -10,5 +10,6 @@ members = [
   "crates/maf-ops",
   "crates/maf-orchestration",
   "crates/maf-learning",
+  "crates/maf-truth-kernel",
 ]
 resolver = "2"

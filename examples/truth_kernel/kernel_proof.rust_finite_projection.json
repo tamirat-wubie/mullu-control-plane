@@ -1,0 +1,75 @@
+{
+  "proof_id": "kernel-proof:rust-finite-domain-color",
+  "tenant_id": "foundation-local",
+  "proof_kind": "ProjectionProof",
+  "proof_state": "Pass",
+  "result_kind": "ExactResult",
+  "kernel_signature": "truth-kernel-signature-9275e4ae578fcc38b99ee0745596b0b6d31b9d2a9cfc620a2b6c2c4b2dd589e1",
+  "subject_ref": "truth-candidate:rust-finite-domain-color",
+  "generated_at": "2026-06-14T00:13:00Z",
+  "premises": [
+    {
+      "premise_id": "premise-domain:var:color",
+      "premise_kind": "domain",
+      "source_ref": "domain:color",
+      "statement": "var:color has 3 declared finite values."
+    },
+    {
+      "premise_id": "premise-constraint:constraint:color-red-blue",
+      "premise_kind": "constraint",
+      "source_ref": "constraint:color-red-blue",
+      "statement": "Color must be red or blue."
+    }
+  ],
+  "derivation_steps": [
+    {
+      "step_id": "step-enumerate-finite-domain",
+      "rule_ref": "rule:finite-domain-enumeration",
+      "input_refs": [
+        "premise-domain:var:color"
+      ],
+      "output_statement": "Enumerated 3 candidate states within declared budget."
+    },
+    {
+      "step_id": "step-apply-finite-constraints",
+      "rule_ref": "rule:total-finite-constraint-check",
+      "input_refs": [
+        "premise-constraint:constraint:color-red-blue",
+        "step-enumerate-finite-domain"
+      ],
+      "output_statement": "Constraint evaluation produced ExactResult."
+    },
+    {
+      "step_id": "step-project-variable",
+      "rule_ref": "rule:exact-finite-projection",
+      "input_refs": [
+        "step-apply-finite-constraints"
+      ],
+      "output_statement": "var:color projects to [\"blue\", \"red\"]."
+    }
+  ],
+  "conclusion": {
+    "statement": "Exact projection for var:color is [\"blue\", \"red\"].",
+    "supports_truth_mutation": true,
+    "required_next_action": "commit_candidate"
+  },
+  "witness_refs": [
+    "witness:sandbox-isolated",
+    "witness-projection-fba9c2f8bd8b8b4250f47d666910d3470d56f01d8d52ae6675c3aa59cbd6d4a6"
+  ],
+  "replay": {
+    "replay_mode": "observation_only",
+    "deterministic": true,
+    "source_hash": "truth-kernel-signature-9275e4ae578fcc38b99ee0745596b0b6d31b9d2a9cfc620a2b6c2c4b2dd589e1",
+    "expected_hash": "truth-kernel-replay-fc74100f5ff17857ff94568f14ff960236ca19528cf90b45a06bdf5854a3cb6c",
+    "reason_codes": []
+  },
+  "budget": {
+    "budget_id": "budget:kernel-proof:rust-finite-domain-color",
+    "limit": 8,
+    "used": 3,
+    "unit": "checks"
+  },
+  "limitations": [],
+  "proof_hash": "kernel-proof-198b01fc2e6b73ff9a5c9da162fe7391486bf2c424da7d3d313c2887227c3324"
+}
