@@ -992,9 +992,9 @@
     "by_coverage_state": {
       "proven": 262,
       "unproven": 0,
-      "witnessed": 157
+      "witnessed": 159
     },
-    "route_count": 419,
+    "route_count": 421,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -1474,6 +1474,16 @@
       {
         "coverage_state": "witnessed",
         "route": "/api/v1/console/note-memory/view",
+        "surface_id": "operator_console_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/console/personal-assistant",
+        "surface_id": "operator_console_read_models"
+      },
+      {
+        "coverage_state": "witnessed",
+        "route": "/api/v1/console/personal-assistant/view",
         "surface_id": "operator_console_read_models"
       },
       {
@@ -4294,6 +4304,8 @@
         "/api/v1/console/whqr/clarifications",
         "/api/v1/console/note-memory",
         "/api/v1/console/note-memory/view",
+        "/api/v1/console/personal-assistant",
+        "/api/v1/console/personal-assistant/view",
         "/api/v1/console/spatial-map",
         "/api/v1/console/spatial-map/view"
       ],
@@ -4355,7 +4367,9 @@
         "full_console_includes_spatial_map_read_model",
         "console_spatial_map_returns_panel_read_model",
         "console_spatial_map_html_renders_blockers",
-        "console_whqr_clarifications_return_bounded_read_model"
+        "console_whqr_clarifications_return_bounded_read_model",
+        "console_personal_assistant_panel_read_model",
+        "console_personal_assistant_html_view_renders_read_only_panel"
       ],
       "surface_id": "operator_console_read_models"
     },
@@ -10804,8 +10818,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1409,
-    "runtime_witness_count": 1409,
+    "exact_test_anchor_count": 1411,
+    "runtime_witness_count": 1411,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -12419,10 +12433,22 @@
               "mcoi/tests/test_operator_console.py::test_console_whqr_clarifications_rejects_malformed_replay_metadata"
             ],
             "witness": "console_whqr_clarifications_return_bounded_read_model"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_personal_assistant_panel_read_model"
+            ],
+            "witness": "console_personal_assistant_panel_read_model"
+          },
+          {
+            "anchors": [
+              "mcoi/tests/test_operator_console.py::test_console_personal_assistant_html_view_renders_read_only_panel"
+            ],
+            "witness": "console_personal_assistant_html_view_renders_read_only_panel"
           }
         ],
-        "exact_test_anchor_count": 13,
-        "runtime_witness_count": 13,
+        "exact_test_anchor_count": 15,
+        "runtime_witness_count": 15,
         "surface_id": "operator_console_read_models",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

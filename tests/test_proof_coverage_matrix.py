@@ -161,7 +161,7 @@ def test_witness_integrity_report_tracks_exact_test_anchors() -> None:
     assert surfaces["cost_budget_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["assistant_kernel_planning"]["exact_test_anchor_count"] == 5
     assert surfaces["assistant_kernel_planning"]["unanchored_witness_count"] == 0
-    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 13
+    assert surfaces["operator_console_read_models"]["exact_test_anchor_count"] == 15
     assert surfaces["operator_console_read_models"]["unanchored_witness_count"] == 0
     assert surfaces["model_experiment_control"]["exact_test_anchor_count"] == 7
     assert surfaces["model_experiment_control"]["unanchored_witness_count"] == 0
@@ -828,6 +828,14 @@ def test_representative_routes_are_not_unclassified() -> None:
     assert classified_routes["/api/v1/release/latest"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/snapshot"]["surface_id"] == "operational_health_read_models"
     assert classified_routes["/api/v1/console/shadow"]["surface_id"] == "operator_console_read_models"
+    assert (
+        classified_routes["/api/v1/console/personal-assistant"]["surface_id"]
+        == "operator_console_read_models"
+    )
+    assert (
+        classified_routes["/api/v1/console/personal-assistant/view"]["surface_id"]
+        == "operator_console_read_models"
+    )
     assert classified_routes["/api/v1/console/spatial-map"]["surface_id"] == "operator_console_read_models"
     assert classified_routes["/api/v1/console/spatial-map/view"]["surface_id"] == "operator_console_read_models"
     assert classified_routes["/api/v1/orchestration"]["surface_id"] == "agent_orchestration_lifecycle"
