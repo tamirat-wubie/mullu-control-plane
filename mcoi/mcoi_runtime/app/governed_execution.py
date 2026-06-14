@@ -66,6 +66,7 @@ class UniversalCommandProofView:
     closure_state: str
     reconciliation_ref: str
     memory_ref: str
+    whqr_replay_binding: Mapping[str, Any]
     proof_hash: str
     capability_id: str
     dispatch_ledger_hash: str
@@ -413,6 +414,9 @@ def universal_command_proof_view(
         closure_state=str(universal_detail.get("closure_state", "")),
         reconciliation_ref=_text_detail(universal_detail.get("reconciliation_ref")),
         memory_ref=_text_detail(universal_detail.get("memory_ref")),
+        whqr_replay_binding=_mapping_detail(
+            universal_detail.get("whqr_replay_binding")
+        ),
         proof_hash=str(universal_detail.get("proof_hash", "")),
         capability_id=str(universal_detail.get("capability_id", "")),
         dispatch_ledger_hash=str(universal_detail.get("dispatch_ledger_hash", "")),
