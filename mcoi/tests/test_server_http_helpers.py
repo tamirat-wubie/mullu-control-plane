@@ -324,4 +324,5 @@ def test_include_default_routers_mounts_health_and_completion_routes() -> None:
     paths = {route.path for route in server_http.iter_effective_app_routes(app)}
     assert "/health" in paths
     assert "/api/v1/complete" in paths
+    assert "/api/v1/snet/operator/read-model" in paths
     assert "/software/receipts" in paths

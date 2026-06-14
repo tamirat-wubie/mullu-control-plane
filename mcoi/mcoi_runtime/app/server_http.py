@@ -337,6 +337,7 @@ def include_default_routers(app: FastAPI) -> None:
     from mcoi_runtime.app.routers.scheduler import router as scheduler_router
     from mcoi_runtime.app.routers.shadow import router as shadow_router
     from mcoi_runtime.app.routers.simulation import router as simulation_router
+    from mcoi_runtime.app.routers.snet import router as snet_router
     from mcoi_runtime.app.routers.software_receipts import router as software_receipts_router
     from mcoi_runtime.app.routers.tenant import router as tenant_router
     from mcoi_runtime.app.routers.temporal_scheduler import router as temporal_scheduler_router
@@ -375,6 +376,7 @@ def include_default_routers(app: FastAPI) -> None:
     app.include_router(replay_router)
     app.include_router(sandbox_router)
     app.include_router(simulation_router)
+    app.include_router(snet_router)
     app.include_router(runbooks_router)
     app.include_router(mil_audit_router)
     app.include_router(explain_router)
