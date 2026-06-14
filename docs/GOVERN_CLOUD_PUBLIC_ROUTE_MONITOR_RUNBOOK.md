@@ -21,7 +21,7 @@ It covers only:
 |---|---|
 | `GET /v1/health` | HTTP 200 with `status=ok` and `service=mullusi-govern-cloud-staging` |
 | `GET /v1/version` | HTTP 200 with `api=2026.05.v1` and `evaluator=govern-evaluator.v1` |
-| `GET /v1/govern/evaluate` | HTTP 404 because non-allowlisted `/v1/*` routes are not public |
+| `POST /v1/govern/evaluate` | HTTP 404 because non-allowlisted `/v1/*` routes are not public |
 
 ## Collection
 
@@ -49,9 +49,9 @@ If `solver_outcome` is not `SolvedVerified`:
 1. Treat the public read-route monitor as `AwaitingEvidence`.
 2. Check whether the failing route is a read-route outage or a blocked-route
    guard failure.
-3. If `/v1/govern/evaluate` returns HTTP 200, immediately disable the public
-   proxy with `MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED=false` on the gateway and
-   redeploy.
+3. If `POST /v1/govern/evaluate` returns HTTP 200, immediately disable the
+   public proxy with `MULLU_GOVERN_CLOUD_PUBLIC_PROXY_ENABLED=false` on the
+   gateway and redeploy.
 4. Preserve the private Govern Cloud Render service for evidence review.
 5. Rerun the monitor after remediation and keep the new receipt.
 

@@ -381,6 +381,20 @@ def test_govern_cloud_public_proxy_does_not_publish_arbitrary_v1_routes(monkeypa
     assert "detail" in response.json()
 
 
+def test_govern_cloud_public_proxy_blocks_post_evaluate_contract_probe(monkeypatch) -> None:
+    _configure_govern_cloud_public_proxy(monkeypatch)
+
+    def fail_if_called(*args: object, **kwargs: object) -> None:
+        raise AssertionError("blocked product contract probe should not proxy")
+
+    monkeypatch.setattr("urllib.request.urlopen", fail_if_called)
+    app = create_gateway_app(platform=StubPlatform())
+    response = TestClient(app).post("/v1/govern/evaluate", json={})
+
+    assert response.status_code == 404
+    assert "detail" in response.json()
+
+
 def test_govern_cloud_public_proxy_requires_valid_internal_url(monkeypatch) -> None:
     _configure_govern_cloud_public_proxy(monkeypatch)
     monkeypatch.setenv("MULLU_GOVERN_CLOUD_INTERNAL_URL", "http://user:secret@internal.example")

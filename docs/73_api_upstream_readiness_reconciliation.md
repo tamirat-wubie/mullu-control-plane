@@ -25,7 +25,7 @@ Invariants: no secret values are recorded; public route health is not treated
 | Claim | Current state | Evidence |
 |---|---|---|
 | Public API read routes | `SolvedVerified` | `.change_assurance/govern_cloud_public_route_monitor_receipt.json` recorded `/v1/health` and `/v1/version` returning `200` on 2026-06-13T21:12:20Z. |
-| Public guarded route | `SolvedVerified` | The same monitor recorded `/v1/govern/evaluate` returning `404`, preserving the blocked evaluator boundary. |
+| Public guarded route | `SolvedVerified` | The same monitor recorded `POST /v1/govern/evaluate` returning `404`, preserving the blocked evaluator boundary. |
 | DNS target binding | `SolvedVerified` | `.change_assurance/gateway_dns_target_binding_receipt.json` records `api.mullusi.com -> mullu-gateway.onrender.com` through `cloudflare-render`. |
 | DNS resolution | `SolvedVerified` | `.change_assurance/gateway_dns_resolution_receipt.json` records resolved IPv4 and IPv6 addresses. |
 | Published deployment witness | `SolvedVerified` | `DEPLOYMENT_STATUS.md` and `.change_assurance/deployment_witness.json` record a published public-health witness for `https://api.mullusi.com/health`. |
@@ -38,7 +38,7 @@ Invariants: no secret values are recorded; public route health is not treated
 |---|---|---|
 | `GET https://api.mullusi.com/v1/health` | HTTP `200`, service `mullusi-govern-cloud-staging`, status `ok` | Pass |
 | `GET https://api.mullusi.com/v1/version` | HTTP `200`, API `2026.05.v1`, evaluator `govern-evaluator.v1` | Pass |
-| `GET https://api.mullusi.com/v1/govern/evaluate` | HTTP `404` guard | Pass |
+| `POST https://api.mullusi.com/v1/govern/evaluate` | HTTP `404` guard | Pass |
 | Raw secret handling | `raw_secret_values_included=false` | Pass |
 
 ## Remaining Private Evidence
