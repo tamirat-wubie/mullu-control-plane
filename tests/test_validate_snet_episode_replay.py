@@ -139,6 +139,17 @@ def test_snet_episode_malformed_expected_receipt_report_errors() -> None:
     assert non_object_episode["execution_authority_granted"] is False
 
 
+def test_snet_episode_malformed_root_reports_errors() -> None:
+    schema = validator._load_schema(validator.DEFAULT_SCHEMA_PATH)
+
+    none_errors = validator.validate_episode(None, schema)
+    list_errors = validator.validate_episode([], schema)
+
+    assert any("episode must be a JSON object" in error for error in none_errors)
+    assert any("episode must be a JSON object" in error for error in list_errors)
+    assert any("expected object" in error for error in none_errors + list_errors)
+
+
 def test_snet_episode_saved_file_validation(tmp_path) -> None:
     episode_path = tmp_path / "snet_episode.json"
     episode_path.write_text(json.dumps(validator.build_sample_episode()), encoding="utf-8")

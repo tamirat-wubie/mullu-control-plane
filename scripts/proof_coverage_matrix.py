@@ -7252,6 +7252,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "snet_episode_malformed_answer_bindings_report_errors",
                 "snet_episode_non_json_replay_inputs_report_errors",
                 "snet_episode_malformed_expected_receipt_report_errors",
+                "snet_episode_malformed_root_reports_errors",
                 "snet_episode_saved_file_validation",
                 "committed_snet_episode_example_replays_to_expected_receipt",
             ],

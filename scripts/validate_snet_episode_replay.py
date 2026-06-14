@@ -166,10 +166,13 @@ def validate_schema_artifact(schema: dict[str, Any]) -> list[str]:
     return errors
 
 
-def validate_episode(episode: dict[str, Any], schema: dict[str, Any] | None = None) -> list[str]:
+def validate_episode(episode: Any, schema: dict[str, Any] | None = None) -> list[str]:
     """Return deterministic validation errors for one SNet episode."""
     schema_payload = schema or _load_schema(DEFAULT_SCHEMA_PATH)
     errors = _validate_schema_instance(schema_payload, episode)
+    if not isinstance(episode, dict):
+        errors.append("episode must be a JSON object")
+        return errors
     missing_fields = [field_name for field_name in REQUIRED_EPISODE_FIELDS if field_name not in episode]
     for field_name in missing_fields:
         errors.append(f"episode missing field: {field_name}")
