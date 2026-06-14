@@ -52,6 +52,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `team_ops_shared_inbox_observation_routing_receipt.schema.json` | Canonical TeamOps shared inbox no-send routing receipt binding redacted observations to classification, owner assignment, and approval obligations |
 | `team_ops_shared_inbox_approval_queue_receipt.schema.json` | Canonical TeamOps shared inbox no-send approval queue receipt binding ready routing evidence to a pending approval obligation |
 | `team_ops_shared_inbox_approval_decision_receipt.schema.json` | Canonical TeamOps shared inbox no-send approval decision receipt binding a pending approval obligation to redacted operator decision evidence |
+| `team_ops_shared_inbox_send_preparation_receipt.schema.json` | Canonical TeamOps shared inbox no-send preparation receipt binding approved decision evidence to redacted send-preparation evidence |
 | `public_production_health_declaration.schema.json` | Canonical evidence-gated public production health declaration receipt |
 | `deployment_witness.schema.json` | Canonical live gateway deployment witness artifact |
 | `domain_capsule.schema.json` | Domain capsule operating-model package |
