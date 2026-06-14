@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Iterable
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
@@ -99,9 +100,17 @@ def _gather_routes() -> Iterable[APIRoute]:
     """Build the assembled app and yield every APIRoute it mounts."""
     app = FastAPI()
     include_default_routers(app)
-    for route in app.routes:
+    yield from _flatten_routes(app.routes)
+
+
+def _flatten_routes(routes: Iterable[Any]) -> Iterable[APIRoute]:
+    for route in routes:
         if isinstance(route, APIRoute):
             yield route
+            continue
+        original_router = getattr(route, "original_router", None)
+        if original_router is not None:
+            yield from _flatten_routes(getattr(original_router, "routes", ()))
 
 
 def _route_uses_auth_dependency(route: APIRoute) -> bool:
@@ -162,7 +171,9 @@ def test_every_non_get_route_is_gated():
     neither gating mechanism.
     """
     violations: list[str] = []
-    for route in _gather_routes():
+    routes = list(_gather_routes())
+    assert routes, "route governance coverage found no assembled routes"
+    for route in routes:
         write_methods = route.methods - {"GET", "HEAD", "OPTIONS"}
         if not write_methods:
             continue
@@ -195,7 +206,9 @@ def test_get_routes_are_all_either_gated_or_intentionally_open():
     or annotated.
     """
     unannotated_open: list[str] = []
-    for route in _gather_routes():
+    routes = list(_gather_routes())
+    assert routes, "route governance coverage found no assembled routes"
+    for route in routes:
         if "GET" not in route.methods:
             continue
         if _is_gated(route):
@@ -247,7 +260,9 @@ def test_no_duplicate_route_registrations():
     Operation ID" warning at OpenAPI generation.
     """
     seen: dict[tuple[str, str], int] = {}
-    for route in _gather_routes():
+    routes = list(_gather_routes())
+    assert routes, "route governance coverage found no assembled routes"
+    for route in routes:
         for method in route.methods - {"HEAD", "OPTIONS"}:
             key = (method, route.path)
             seen[key] = seen.get(key, 0) + 1

@@ -25,8 +25,6 @@ if str(MCOI_ROOT) not in sys.path:
     sys.path.insert(0, str(MCOI_ROOT))
 
 from fastapi import FastAPI  # noqa: E402
-from fastapi.routing import APIRoute  # noqa: E402
-
 from mcoi_runtime.app.middleware import EXEMPT_PATHS, GovernanceMiddleware  # noqa: E402
 from mcoi_runtime.app.server_http import include_default_routers  # noqa: E402
 
@@ -46,17 +44,16 @@ def build_guard_chain_coverage_report() -> dict[str, Any]:
     exempt_api_v1_routes: list[dict[str, str]] = []
 
     for route in _api_v1_routes(app):
-        endpoint = f"{route.endpoint.__module__}.{route.endpoint.__name__}"
-        for method in sorted(route.methods - {"HEAD", "OPTIONS"}):
+        for method in sorted(route["methods"]):
             record = {
                 "method": method,
-                "path": route.path,
-                "endpoint": endpoint,
+                "path": route["path"],
+                "endpoint": route["endpoint"],
             }
             route_records.append(record)
-            if route.path in EXEMPT_PATHS:
+            if route["path"] in EXEMPT_PATHS:
                 exempt_api_v1_routes.append(record)
-            if not middleware_installed or not _covered_by_governance_middleware(route.path):
+            if not middleware_installed or not _covered_by_governance_middleware(route["path"]):
                 uncovered_routes.append(record)
 
     route_records.sort(key=lambda item: (item["path"], item["method"], item["endpoint"]))
@@ -89,15 +86,37 @@ def build_guard_chain_coverage_report() -> dict[str, Any]:
     }
 
 
-def _api_v1_routes(app: FastAPI) -> list[APIRoute]:
-    return sorted(
-        (
-            route
-            for route in app.routes
-            if isinstance(route, APIRoute) and route.path.startswith(API_V1_PREFIX)
-        ),
-        key=lambda route: route.path,
+def _api_v1_routes(app: FastAPI) -> list[dict[str, Any]]:
+    route_records: list[dict[str, Any]] = []
+    for path, path_item in app.openapi()["paths"].items():
+        if not path.startswith(API_V1_PREFIX):
+            continue
+        methods = [
+            method.upper()
+            for method in path_item
+            if method.upper() not in {"HEAD", "OPTIONS", "PARAMETERS"}
+        ]
+        if not methods:
+            continue
+        route_records.append(
+            {
+                "path": path,
+                "methods": sorted(methods),
+                "endpoint": _openapi_endpoint_ref(path_item),
+            }
+        )
+    return sorted(route_records, key=lambda route: route["path"])
+
+
+def _openapi_endpoint_ref(path_item: dict[str, Any]) -> str:
+    operation_ids = sorted(
+        str(operation.get("operationId"))
+        for method, operation in path_item.items()
+        if method.upper() not in {"HEAD", "OPTIONS", "PARAMETERS"}
+        and isinstance(operation, dict)
+        and operation.get("operationId")
     )
+    return ",".join(operation_ids) if operation_ids else "openapi_operation_id_missing"
 
 
 def _has_governance_middleware(app: FastAPI) -> bool:
