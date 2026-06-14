@@ -280,6 +280,8 @@ class WHQRDocument:
         object.__setattr__(self, "semantics_hash", _require_text(semantics_hash, "semantics_hash"))
         if not semantics_hash.startswith("sha256:"):
             raise ValueError("semantics_hash must start with sha256:")
+        if (whqr_version, semantics_hash) != (WHQR_VERSION, SEMANTICS_HASH):
+            raise ValueError("whqr_version and semantics_hash must match the canonical WHQR semantics")
         if source_ref is not None:
             object.__setattr__(self, "source_ref", _require_text(source_ref, "source_ref"))
         else:
