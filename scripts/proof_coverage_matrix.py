@@ -6933,6 +6933,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "schemas/holistic_loop_read_model.schema.json",
                 "tests/fixtures/holistic_loop_read_model_v1_golden.json",
                 "scripts/report_holistic_loop_candidate_map.py",
+                "scripts/report_holistic_loop_admission_closure.py",
                 "scripts/report_holistic_loop_uao_admission_dossier.py",
                 "scripts/report_holistic_loop_workflow_admission_dossier.py",
                 "scripts/report_holistic_loop_authority_admission_dossier.py",
@@ -6945,6 +6946,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "mcoi/tests/test_holistic_loop_kernel.py",
                 "mcoi/tests/test_holistic_loop_router.py",
                 "tests/test_report_holistic_loop_candidate_map.py",
+                "tests/test_report_holistic_loop_admission_closure.py",
                 "tests/test_report_holistic_loop_uao_admission_dossier.py",
                 "tests/test_report_holistic_loop_workflow_admission_dossier.py",
                 "tests/test_report_holistic_loop_authority_admission_dossier.py",
@@ -6982,6 +6984,10 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "The audit/proof loop is registered in the default read model "
                 "as a read-only blocked loop, and its admission dossier reports "
                 "registry admission without causing mutation. "
+                "The admission closure report proves all tracked candidate "
+                "surfaces are admitted, no candidate admission remains pending, "
+                "extension admission is valid, and holistic proof labels remain "
+                "anchored while still requiring terminal closure. "
                 "Missing authority or "
                 "evidence remains an explicit blocker and no mutation route is "
                 "introduced."
@@ -7017,6 +7023,7 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "holistic_loop_extension_admission_guards_default_registry",
                 "holistic_loop_candidate_map_lists_candidate_surfaces",
                 "holistic_loop_candidate_map_is_read_only_non_terminal",
+                "holistic_loop_admission_closure_reports_no_pending_candidates",
                 "holistic_loop_audit_proof_registered_in_default_read_model",
                 "holistic_loop_authority_registered_in_default_read_model",
                 "holistic_loop_uao_registered_in_default_read_model",
@@ -7124,6 +7131,9 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 ],
                 "holistic_loop_candidate_map_is_read_only_non_terminal": [
                     "holistic_loop_candidate_map_is_read_only_non_terminal"
+                ],
+                "holistic_loop_admission_closure_reports_no_pending_candidates": [
+                    "holistic_loop_admission_closure_reports_no_pending_candidates"
                 ],
                 "holistic_loop_audit_proof_registered_in_default_read_model": [
                     "audit_proof_loop_is_registered_read_only_and_blocked"

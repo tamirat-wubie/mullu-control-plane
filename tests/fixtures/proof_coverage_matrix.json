@@ -10099,6 +10099,7 @@
         "schemas/holistic_loop_read_model.schema.json",
         "tests/fixtures/holistic_loop_read_model_v1_golden.json",
         "scripts/report_holistic_loop_candidate_map.py",
+        "scripts/report_holistic_loop_admission_closure.py",
         "scripts/report_holistic_loop_uao_admission_dossier.py",
         "scripts/report_holistic_loop_workflow_admission_dossier.py",
         "scripts/report_holistic_loop_authority_admission_dossier.py",
@@ -10111,6 +10112,7 @@
         "mcoi/tests/test_holistic_loop_kernel.py",
         "mcoi/tests/test_holistic_loop_router.py",
         "tests/test_report_holistic_loop_candidate_map.py",
+        "tests/test_report_holistic_loop_admission_closure.py",
         "tests/test_report_holistic_loop_uao_admission_dossier.py",
         "tests/test_report_holistic_loop_workflow_admission_dossier.py",
         "tests/test_report_holistic_loop_authority_admission_dossier.py",
@@ -10121,7 +10123,7 @@
         "tests/test_validate_holistic_loop_read_model.py",
         "tests/test_validate_holistic_loop_http_surface.py"
       ],
-      "notes": "Holistic loop engineering exposes existing governed loops through one read-only loop contract, registry, schema-backed summary, status catalog, transition catalog, mode catalog, closure condition catalog, authority catalog, risk catalog, rollback catalog, learning catalog, bounded receipt trail, receipt lineage catalog, closure evidence pack, operator closure readiness view, proof obligation view, audit evolution view, recovery readiness view, and HTTP read model. The v1 freeze validator pins a golden snapshot, schema/report/HTTP parity, additive-only extension policy, zero-unanchored proof-label guard, and extension admission guard for default registry additions. The candidate map lists candidate loop surfaces and reports their current registry admission state. The UAO loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. The workflow loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. The authority loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. The audit/proof loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. Missing authority or evidence remains an explicit blocker and no mutation route is introduced.",
+      "notes": "Holistic loop engineering exposes existing governed loops through one read-only loop contract, registry, schema-backed summary, status catalog, transition catalog, mode catalog, closure condition catalog, authority catalog, risk catalog, rollback catalog, learning catalog, bounded receipt trail, receipt lineage catalog, closure evidence pack, operator closure readiness view, proof obligation view, audit evolution view, recovery readiness view, and HTTP read model. The v1 freeze validator pins a golden snapshot, schema/report/HTTP parity, additive-only extension policy, zero-unanchored proof-label guard, and extension admission guard for default registry additions. The candidate map lists candidate loop surfaces and reports their current registry admission state. The UAO loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. The workflow loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. The authority loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. The audit/proof loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. The admission closure report proves all tracked candidate surfaces are admitted, no candidate admission remains pending, extension admission is valid, and holistic proof labels remain anchored while still requiring terminal closure. Missing authority or evidence remains an explicit blocker and no mutation route is introduced.",
       "representative_paths": [
         "/api/v1/loops/read-model",
         "LoopRegistry",
@@ -10147,6 +10149,9 @@
       "runtime_witness_anchor_aliases": {
         "closure_report_blocks_incomplete_evidence": [
           "loop_receipt_and_closure_report_contracts_are_explicit"
+        ],
+        "holistic_loop_admission_closure_reports_no_pending_candidates": [
+          "holistic_loop_admission_closure_reports_no_pending_candidates"
         ],
         "holistic_loop_audit_proof_admission_dossier_blocks_registration_effects": [
           "audit_proof_admission_dossier_does_not_register_or_mutate_runtime"
@@ -10315,6 +10320,7 @@
         "holistic_loop_extension_admission_guards_default_registry",
         "holistic_loop_candidate_map_lists_candidate_surfaces",
         "holistic_loop_candidate_map_is_read_only_non_terminal",
+        "holistic_loop_admission_closure_reports_no_pending_candidates",
         "holistic_loop_audit_proof_registered_in_default_read_model",
         "holistic_loop_authority_registered_in_default_read_model",
         "holistic_loop_uao_registered_in_default_read_model",
@@ -10336,8 +10342,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1338,
-    "runtime_witness_count": 1338,
+    "exact_test_anchor_count": 1339,
+    "runtime_witness_count": 1339,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -19677,6 +19683,12 @@
           },
           {
             "anchors": [
+              "tests/test_report_holistic_loop_admission_closure.py::test_holistic_loop_admission_closure_reports_no_pending_candidates"
+            ],
+            "witness": "holistic_loop_admission_closure_reports_no_pending_candidates"
+          },
+          {
+            "anchors": [
               "mcoi/tests/test_holistic_loop_kernel.py::test_audit_proof_loop_is_registered_read_only_and_blocked"
             ],
             "witness": "holistic_loop_audit_proof_registered_in_default_read_model"
@@ -19772,8 +19784,8 @@
             "witness": "holistic_loop_audit_proof_admission_dossier_blocks_registration_effects"
           }
         ],
-        "exact_test_anchor_count": 46,
-        "runtime_witness_count": 46,
+        "exact_test_anchor_count": 47,
+        "runtime_witness_count": 47,
         "surface_id": "holistic_loop_read_model_kernel",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
