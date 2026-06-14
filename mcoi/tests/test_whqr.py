@@ -155,6 +155,54 @@ def test_document_verify_semantics_rejects_nested_tree_tampering() -> None:
         connector_tampered.verify_semantics()
 
 
+def test_document_imports_canonical_json_with_replay_hash() -> None:
+    document = WHQRDocument(
+        root=ConnectorExpr(
+            connector=Connector.BECAUSE,
+            left=WHQRNode(
+                role=WHRole.WHAT,
+                target="payment_request",
+                node_id="request-node",
+                quantifier=Quantifier.EXISTS,
+                metadata={"priority": 1, "refs": ["invoice:1"]},
+            ),
+            right=WHQRNode(
+                role=WHRole.WHY,
+                target="invoice_due",
+                modality=Adverb.CERTAINLY,
+                evidence_ref="evidence:invoice-1",
+            ),
+        ),
+        source_ref="request:payment-approval",
+        metadata={"tenant": "foundation"},
+    )
+    canonical_json = document.canonical_json()
+    canonical_hash = document.canonical_hash()
+
+    imported = WHQRDocument.from_canonical_json(canonical_json, expected_canonical_hash=canonical_hash)
+
+    assert imported.canonical_json() == canonical_json
+    assert imported.verify_semantics() == canonical_hash
+    assert isinstance(imported.root, ConnectorExpr)
+    assert isinstance(imported.root.left, WHQRNode)
+    assert imported.root.left.metadata["refs"] == ("invoice:1",)
+
+
+def test_document_import_rejects_noncanonical_json_and_unknown_fields() -> None:
+    document = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    payload = json.loads(document.canonical_json())
+    payload["ignored"] = "field"
+
+    with pytest.raises(ValueError, match="canonical JSON"):
+        WHQRDocument.from_canonical_json(json.dumps(json.loads(document.canonical_json())))
+    with pytest.raises(ValueError, match="unknown fields"):
+        WHQRDocument.from_canonical_json(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+    with pytest.raises(ValueError, match="known WHRole"):
+        WHQRDocument.from_canonical_json(
+            document.canonical_json().replace('"role":"what"', '"role":"invalid_role"')
+        )
+
+
 def test_document_preserves_optional_binding_refs_in_canonical_form() -> None:
     document = WHQRDocument(
         root=WHQRNode(

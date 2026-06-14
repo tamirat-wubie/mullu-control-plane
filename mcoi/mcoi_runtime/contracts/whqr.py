@@ -10,13 +10,14 @@ from dataclasses import dataclass, field, fields, is_dataclass
 from enum import StrEnum
 from math import isfinite
 from types import MappingProxyType
-from typing import Any, Mapping, Sequence, TypeAlias
+from typing import Any, Mapping, Sequence, TypeAlias, TypeVar
 import hashlib
 import json
 
 
 WHQR_VERSION = "0.1.0"
 SEMANTICS_HASH = "sha256:whqr-v0.1.0-split-gates-side-effect-free"
+_EnumT = TypeVar("_EnumT", bound=StrEnum)
 
 
 class WHRole(StrEnum):
@@ -229,6 +230,94 @@ def _require_whqr_expr_tree(value: Any, name: str) -> None:
     _require_whqr_expr_tree(value.right, f"{name}.right")
 
 
+def _require_mapping_payload(value: Any, name: str) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{name} must be a mapping")
+    return value
+
+
+def _require_allowed_keys(value: Mapping[str, Any], name: str, allowed: set[str]) -> None:
+    unknown = sorted(str(key) for key in value.keys() if key not in allowed)
+    if unknown:
+        raise ValueError(f"{name} contains unknown fields: {','.join(unknown)}")
+
+
+def _enum_from_payload(enum_type: type[_EnumT], value: Any, name: str) -> _EnumT:
+    text = _require_text(value, name)
+    try:
+        return enum_type(text)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a known {enum_type.__name__} value") from exc
+
+
+def _optional_enum_from_payload(enum_type: type[_EnumT], value: Any, name: str) -> _EnumT | None:
+    if value is None:
+        return None
+    return _enum_from_payload(enum_type, value, name)
+
+
+def _optional_text_from_payload(value: Any, name: str) -> str | None:
+    if value is None:
+        return None
+    return _require_text(value, name)
+
+
+def _metadata_from_payload(value: Any | None, name: str) -> Mapping[str, Any]:
+    if value is None:
+        return {}
+    return _require_mapping_payload(value, name)
+
+
+def _expr_from_payload(value: Any, name: str) -> WHQRExpr:
+    payload = _require_mapping_payload(value, name)
+    if "role" in payload:
+        _require_allowed_keys(
+            payload,
+            name,
+            {
+                "role",
+                "target",
+                "node_id",
+                "scope",
+                "modality",
+                "expected_type",
+                "quantifier",
+                "entity_ref",
+                "evidence_ref",
+                "metadata",
+            },
+        )
+        return WHQRNode(
+            role=_enum_from_payload(WHRole, payload.get("role"), f"{name}.role"),
+            target=_require_text(payload.get("target"), f"{name}.target"),
+            node_id=_optional_text_from_payload(payload.get("node_id"), f"{name}.node_id"),
+            scope=_optional_text_from_payload(payload.get("scope"), f"{name}.scope"),
+            modality=_optional_enum_from_payload(Adverb, payload.get("modality"), f"{name}.modality"),
+            expected_type=_optional_text_from_payload(payload.get("expected_type"), f"{name}.expected_type"),
+            quantifier=_optional_enum_from_payload(Quantifier, payload.get("quantifier"), f"{name}.quantifier"),
+            entity_ref=_optional_text_from_payload(payload.get("entity_ref"), f"{name}.entity_ref"),
+            evidence_ref=_optional_text_from_payload(payload.get("evidence_ref"), f"{name}.evidence_ref"),
+            metadata=_metadata_from_payload(payload.get("metadata"), f"{name}.metadata"),
+        )
+    if "op" in payload:
+        _require_allowed_keys(payload, name, {"op", "args"})
+        args_payload = payload.get("args")
+        if not isinstance(args_payload, list):
+            raise ValueError(f"{name}.args must be a list")
+        return LogicalExpr(
+            op=_enum_from_payload(LogicalOp, payload.get("op"), f"{name}.op"),
+            args=tuple(_expr_from_payload(arg, f"{name}.args[{index}]") for index, arg in enumerate(args_payload)),
+        )
+    if "connector" in payload:
+        _require_allowed_keys(payload, name, {"connector", "left", "right"})
+        return ConnectorExpr(
+            connector=_enum_from_payload(Connector, payload.get("connector"), f"{name}.connector"),
+            left=_expr_from_payload(payload.get("left"), f"{name}.left"),
+            right=_expr_from_payload(payload.get("right"), f"{name}.right"),
+        )
+    raise ValueError(f"{name} must declare a WHQR expression kind")
+
+
 @dataclass(frozen=True, slots=True)
 class WHQRNode:
     role: WHRole
@@ -362,6 +451,37 @@ class WHQRDocument:
     @property
     def expr(self) -> WHQRExpr:
         return self.root
+
+    @classmethod
+    def from_canonical_json(
+        cls,
+        payload: str,
+        *,
+        expected_canonical_hash: str | None = None,
+    ) -> WHQRDocument:
+        text = _require_text(payload, "payload")
+        try:
+            document_payload = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise ValueError("WHQR canonical JSON payload must be valid JSON") from exc
+        document_map = _require_mapping_payload(document_payload, "payload")
+        _require_allowed_keys(
+            document_map,
+            "payload",
+            {"root", "whqr_version", "semantics_hash", "source_ref", "metadata"},
+        )
+        document = cls(
+            root=_expr_from_payload(document_map.get("root"), "payload.root"),
+            whqr_version=_require_text(document_map.get("whqr_version"), "payload.whqr_version"),
+            semantics_hash=_require_text(document_map.get("semantics_hash"), "payload.semantics_hash"),
+            source_ref=_optional_text_from_payload(document_map.get("source_ref"), "payload.source_ref"),
+            metadata=_metadata_from_payload(document_map.get("metadata"), "payload.metadata"),
+        )
+        canonical_payload = document.canonical_json()
+        if canonical_payload != text:
+            raise ValueError("WHQR replay payload must match deterministic canonical JSON")
+        document.verify_semantics(expected_canonical_hash=expected_canonical_hash)
+        return document
 
     def canonical_json(self) -> str:
         try:
