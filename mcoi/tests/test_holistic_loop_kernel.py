@@ -54,6 +54,7 @@ EXPECTED_LOOP_IDS = {
     "runtime_conformance_loop",
     "cognitive_outcome_loop",
     "governed_code_change_loop",
+    "governed_symbolic_loop",
 }
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -99,6 +100,11 @@ def test_default_registry_exposes_governed_loop_manifests() -> None:
         "cognitive_outcome_loop"
     ).closure_conditions
     assert "uao_ref" in registry.get_manifest("governed_code_change_loop").required_authority
+    governed_symbolic_manifest = registry.get_manifest("governed_symbolic_loop")
+    assert governed_symbolic_manifest.owner == "platform_governance"
+    assert "operator_registration_decision_ref" in governed_symbolic_manifest.required_authority
+    assert "learning_admission_receipt" in governed_symbolic_manifest.required_evidence
+    assert LoopMode.REAL not in governed_symbolic_manifest.allowed_modes
 
 
 def test_missing_evidence_is_reported_as_blocker_not_success() -> None:
@@ -107,8 +113,8 @@ def test_missing_evidence_is_reported_as_blocker_not_success() -> None:
         loop for loop in read_model.loops if loop.loop_id == "deployment_witness_loop"
     )
 
-    assert read_model.total_count == 8
-    assert read_model.returned_count == 8
+    assert read_model.total_count == 9
+    assert read_model.returned_count == 9
     assert read_model.truncated is False
     assert deployment_summary.status is LoopStatus.BLOCKED
     assert "operator_approval_ref" in deployment_summary.missing_authority
@@ -184,6 +190,28 @@ def test_workflow_execution_loop_is_registered_read_only_and_blocked() -> None:
     assert "missing_evidence:workflow_descriptor_valid" in summary.open_blockers
     assert summary.status_binding.read_only is True
     assert summary.closure_report.closed is False
+
+
+def test_governed_symbolic_loop_is_registered_read_only_and_blocked() -> None:
+    registry = build_default_loop_registry()
+    manifest = registry.get_manifest("governed_symbolic_loop")
+    summary = registry.summarize("governed_symbolic_loop")
+
+    assert manifest.owner == "platform_governance"
+    assert manifest.metadata["behavior_rewrite"] is False
+    assert LoopMode.REAL not in manifest.allowed_modes
+    assert "uao_policy_ref" in manifest.required_authority
+    assert "life_meaning_judgment_ref" in manifest.required_authority
+    assert "operator_registration_decision_ref" in manifest.required_authority
+    assert "verification_receipt" in manifest.required_evidence
+    assert summary.status is LoopStatus.BLOCKED
+    assert "missing_authority:operator_registration_decision_ref" in summary.open_blockers
+    assert "missing_evidence:learning_admission_receipt" in summary.open_blockers
+    assert summary.status_binding.read_only is True
+    assert summary.mode_binding is not None
+    assert "real_mode_not_registered_for_governed_symbolic_loop" in summary.mode_binding.separation_refs
+    assert summary.closure_report.closed is False
+    assert summary.closure_report.evidence_complete is False
 
 
 def test_complete_evidence_verifies_read_model_without_runtime_mutation() -> None:

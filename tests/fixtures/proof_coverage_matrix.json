@@ -10364,6 +10364,7 @@
         "scripts/report_holistic_loop_workflow_admission_dossier.py",
         "scripts/report_holistic_loop_authority_admission_dossier.py",
         "scripts/report_holistic_loop_audit_proof_admission_dossier.py",
+        "scripts/report_holistic_loop_governed_symbolic_admission_dossier.py",
         "scripts/report_holistic_loop_read_model.py",
         "scripts/validate_holistic_loop_extension_admission.py",
         "scripts/validate_holistic_loop_kernel_freeze.py",
@@ -10377,13 +10378,14 @@
         "tests/test_report_holistic_loop_workflow_admission_dossier.py",
         "tests/test_report_holistic_loop_authority_admission_dossier.py",
         "tests/test_report_holistic_loop_audit_proof_admission_dossier.py",
+        "tests/test_report_holistic_loop_governed_symbolic_admission_dossier.py",
         "tests/test_report_holistic_loop_read_model.py",
         "tests/test_validate_holistic_loop_extension_admission.py",
         "tests/test_validate_holistic_loop_kernel_freeze.py",
         "tests/test_validate_holistic_loop_read_model.py",
         "tests/test_validate_holistic_loop_http_surface.py"
       ],
-      "notes": "Holistic loop engineering exposes existing governed loops through one read-only loop contract, registry, schema-backed summary, status catalog, transition catalog, mode catalog, closure condition catalog, authority catalog, risk catalog, rollback catalog, learning catalog, bounded receipt trail, receipt lineage catalog, closure evidence pack, operator closure readiness view, proof obligation view, audit evolution view, recovery readiness view, and HTTP read model. The v1 freeze validator pins a golden snapshot, schema/report/HTTP parity, additive-only extension policy, zero-unanchored proof-label guard, and extension admission guard for default registry additions. The candidate map lists candidate loop surfaces and reports their current registry admission state. The UAO loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. The workflow loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. The authority loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. The audit/proof loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. The admission closure report proves all tracked candidate surfaces are admitted, no candidate admission remains pending, extension admission is valid, and holistic proof labels remain anchored while still requiring terminal closure. Missing authority or evidence remains an explicit blocker and no mutation route is introduced.",
+      "notes": "Holistic loop engineering exposes existing governed loops through one read-only loop contract, registry, schema-backed summary, status catalog, transition catalog, mode catalog, closure condition catalog, authority catalog, risk catalog, rollback catalog, learning catalog, bounded receipt trail, receipt lineage catalog, closure evidence pack, operator closure readiness view, proof obligation view, audit evolution view, recovery readiness view, and HTTP read model. The v1 freeze validator pins a golden snapshot, schema/report/HTTP parity, additive-only extension policy, zero-unanchored proof-label guard, and extension admission guard for default registry additions. The candidate map lists candidate loop surfaces and reports their current registry admission state. The UAO loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. The workflow loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. The authority loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. The audit/proof loop is registered in the default read model as a read-only blocked loop, and its admission dossier reports registry admission without causing mutation. The governed symbolic loop is registered in the default read model as a read-only blocked loop with no real mode, and its admission dossier reports registry admission without causing mutation. The admission closure report proves all tracked candidate surfaces are admitted, no candidate admission remains pending, extension admission is valid, and holistic proof labels remain anchored while still requiring terminal closure. Missing authority or evidence remains an explicit blocker and no mutation route is introduced.",
       "representative_paths": [
         "/api/v1/loops/read-model",
         "LoopRegistry",
@@ -10445,6 +10447,18 @@
         ],
         "holistic_loop_extension_admission_guards_default_registry": [
           "holistic_loop_extension_admission_guards_default_registry"
+        ],
+        "holistic_loop_governed_symbolic_admission_dossier_blocks_registration_effects": [
+          "governed_symbolic_admission_dossier_does_not_register_or_mutate_runtime"
+        ],
+        "holistic_loop_governed_symbolic_admission_dossier_builds_proposed_manifest": [
+          "governed_symbolic_admission_dossier_builds_proposed_manifest"
+        ],
+        "holistic_loop_governed_symbolic_admission_dossier_reports_registry_admission": [
+          "governed_symbolic_admission_dossier_reports_registry_admission"
+        ],
+        "holistic_loop_governed_symbolic_registered_in_default_read_model": [
+          "governed_symbolic_loop_is_registered_read_only_and_blocked"
         ],
         "holistic_loop_uao_admission_dossier_blocks_registration_effects": [
           "uao_admission_dossier_does_not_register_or_mutate_runtime"
@@ -10585,6 +10599,7 @@
         "holistic_loop_authority_registered_in_default_read_model",
         "holistic_loop_uao_registered_in_default_read_model",
         "holistic_loop_workflow_registered_in_default_read_model",
+        "holistic_loop_governed_symbolic_registered_in_default_read_model",
         "holistic_loop_uao_admission_dossier_builds_proposed_manifest",
         "holistic_loop_uao_admission_dossier_reports_registry_admission",
         "holistic_loop_uao_admission_dossier_blocks_registration_effects",
@@ -10596,14 +10611,17 @@
         "holistic_loop_authority_admission_dossier_blocks_registration_effects",
         "holistic_loop_audit_proof_admission_dossier_builds_proposed_manifest",
         "holistic_loop_audit_proof_admission_dossier_reports_registry_admission",
-        "holistic_loop_audit_proof_admission_dossier_blocks_registration_effects"
+        "holistic_loop_audit_proof_admission_dossier_blocks_registration_effects",
+        "holistic_loop_governed_symbolic_admission_dossier_builds_proposed_manifest",
+        "holistic_loop_governed_symbolic_admission_dossier_reports_registry_admission",
+        "holistic_loop_governed_symbolic_admission_dossier_blocks_registration_effects"
       ],
       "surface_id": "holistic_loop_read_model_kernel"
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1381,
-    "runtime_witness_count": 1381,
+    "exact_test_anchor_count": 1385,
+    "runtime_witness_count": 1385,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -20271,6 +20289,12 @@
           },
           {
             "anchors": [
+              "mcoi/tests/test_holistic_loop_kernel.py::test_governed_symbolic_loop_is_registered_read_only_and_blocked"
+            ],
+            "witness": "holistic_loop_governed_symbolic_registered_in_default_read_model"
+          },
+          {
+            "anchors": [
               "tests/test_report_holistic_loop_uao_admission_dossier.py::test_uao_admission_dossier_builds_proposed_manifest"
             ],
             "witness": "holistic_loop_uao_admission_dossier_builds_proposed_manifest"
@@ -20340,10 +20364,28 @@
               "tests/test_report_holistic_loop_audit_proof_admission_dossier.py::test_audit_proof_admission_dossier_does_not_register_or_mutate_runtime"
             ],
             "witness": "holistic_loop_audit_proof_admission_dossier_blocks_registration_effects"
+          },
+          {
+            "anchors": [
+              "tests/test_report_holistic_loop_governed_symbolic_admission_dossier.py::test_governed_symbolic_admission_dossier_builds_proposed_manifest"
+            ],
+            "witness": "holistic_loop_governed_symbolic_admission_dossier_builds_proposed_manifest"
+          },
+          {
+            "anchors": [
+              "tests/test_report_holistic_loop_governed_symbolic_admission_dossier.py::test_governed_symbolic_admission_dossier_reports_registry_admission"
+            ],
+            "witness": "holistic_loop_governed_symbolic_admission_dossier_reports_registry_admission"
+          },
+          {
+            "anchors": [
+              "tests/test_report_holistic_loop_governed_symbolic_admission_dossier.py::test_governed_symbolic_admission_dossier_does_not_register_or_mutate_runtime"
+            ],
+            "witness": "holistic_loop_governed_symbolic_admission_dossier_blocks_registration_effects"
           }
         ],
-        "exact_test_anchor_count": 47,
-        "runtime_witness_count": 47,
+        "exact_test_anchor_count": 51,
+        "runtime_witness_count": 51,
         "surface_id": "holistic_loop_read_model_kernel",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

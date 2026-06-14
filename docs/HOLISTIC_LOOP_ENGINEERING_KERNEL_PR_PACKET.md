@@ -66,13 +66,14 @@ staged into the holistic loop PR.
    `LoopReceiptLineageBinding`, `LoopClosureEvidencePack`, `LoopRegistry`,
    `LoopOperatorClosureReadinessView`, `LoopProofObligationView`, and bounded
    `LoopReadModel`.
-2. Registered eight existing loops without changing runtime behavior:
+2. Registered nine existing loops without changing runtime behavior:
    `audit_proof_verification_loop`,
    `authority_obligation_loop`,
    `universal_action_orchestration_loop`,
    `workflow_execution_loop`,
    `deployment_witness_loop`, `runtime_conformance_loop`,
-   `cognitive_outcome_loop`, and `governed_code_change_loop`.
+   `cognitive_outcome_loop`, `governed_code_change_loop`, and
+   `governed_symbolic_loop`.
 3. Added read-only reporting through
    `scripts/report_holistic_loop_read_model.py`.
 4. Added schema-backed read-model validation through
@@ -484,7 +485,7 @@ candidate.behavior_rewrite == false
 ```
 
 The map currently covers audit/proof verification, authority obligations,
-universal action orchestration, and workflow execution. All four candidates are
+governed symbolic loop admission, universal action orchestration, and workflow execution. All five candidates are
 admitted into the default registry as read-only blocked loops; the map does not
 perform registration, execution, verification, mutation, or terminal closure.
 
@@ -493,8 +494,8 @@ perform registration, execution, verification, mutation, or terminal closure.
 The admission closure report summarizes the v1 candidate queue after admission:
 
 ```text
-report.loop_count == 8
-report.candidate_count == 4
+report.loop_count == 9
+report.candidate_count == 5
 report.blocked_candidate_count == 0
 report.pending_candidate_ids == []
 report.unregistered_candidate_ids == []

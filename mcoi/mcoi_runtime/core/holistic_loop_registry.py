@@ -497,6 +497,59 @@ def _default_manifests() -> dict[str, LoopManifest]:
                     "behavior_rewrite": False,
                 },
             ),
+            LoopManifest(
+                loop_id="governed_symbolic_loop",
+                name="Governed Symbolic Loop",
+                purpose=(
+                    "Describe canonical symbolic episode phases, action classes, "
+                    "deterministic kernel boundaries, effect-bearing guards, "
+                    "verification, rollback, and post-verification learning "
+                    "without executing runtime orchestration or mutating state."
+                ),
+                owner="platform_governance",
+                risk_class="platform_orchestration",
+                allowed_modes=(
+                    LoopMode.DRY_RUN,
+                    LoopMode.SHADOW,
+                    LoopMode.SIMULATION,
+                    LoopMode.REPLAY,
+                ),
+                required_authority=(
+                    "uao_policy_ref",
+                    "phi_gov_authority_ref",
+                    "life_meaning_judgment_ref",
+                    "operator_registration_decision_ref",
+                ),
+                required_evidence=(
+                    "problem_star_compilation_receipt",
+                    "action_classification_receipt",
+                    "capability_admission_receipt",
+                    "verification_receipt",
+                    "rollback_or_recovery_handoff_receipt",
+                    "learning_admission_receipt",
+                ),
+                closure_conditions=(
+                    "canonical_episode_phases_preserved",
+                    "deterministic_kernel_boundaries_preserved",
+                    "runtime_authority_denials_preserved",
+                    "post_verification_learning_preserved",
+                ),
+                rollback_policy="remove_registry_admission_and_restore_read_only_contract",
+                learning_policy="promote loop guard regressions into validators only after verified evidence",
+                metadata={
+                    "existing_surfaces": (
+                        "schemas/governed_symbolic_loop_contract.schema.json",
+                        "examples/governed_symbolic_loop_contract.foundation.json",
+                        "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+                        "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+                        "scripts/validate_governed_symbolic_loop_contract.py",
+                    ),
+                    "admission_dossier": (
+                        "scripts/report_holistic_loop_governed_symbolic_admission_dossier.py"
+                    ),
+                    "behavior_rewrite": False,
+                },
+            ),
         )
     }
 
@@ -1329,6 +1382,23 @@ _GOVERNED_CODE_CHANGE_VALIDATORS = (
     "tests/test_governed_code_change_loop.py",
     "tests/test_validate_governed_code_change_loop_receipt.py",
 )
+_GOVERNED_SYMBOLIC_LOOP_SOURCES = (
+    "schemas/governed_symbolic_loop_contract.schema.json",
+    "examples/governed_symbolic_loop_contract.foundation.json",
+    "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+    "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+    "scripts/validate_governed_symbolic_loop_contract.py",
+)
+_GOVERNED_SYMBOLIC_LOOP_VALIDATORS = (
+    "tests/test_validate_governed_symbolic_loop_contract.py",
+    "tests/test_validate_sdlc_artifact.py",
+    "tests/test_validate_protocol_manifest.py",
+)
+_GOVERNED_SYMBOLIC_LOOP_SURFACES = (
+    "holistic_loop_read_model_kernel",
+    "universal_action_orchestration",
+    "software_dev_capability_pack",
+)
 _AUDIT_PROOF_SOURCES = (
     "schemas/audit_verification_endpoint.schema.json",
     "schemas/proof_verification_endpoint.schema.json",
@@ -1469,6 +1539,19 @@ _DEFAULT_RECEIPT_LINEAGE_CATALOG: Mapping[str, Mapping[str, tuple[str, ...]]] = 
             "scripts/validate_sdlc_artifact.py",
         ),
         "proof_surface_refs": ("software_dev_capability_pack",),
+    },
+    "governed_symbolic_loop": {
+        "source_refs": (
+            *_GOVERNED_SYMBOLIC_LOOP_SOURCES,
+            "schemas/life_meaning_judgment.schema.json",
+            "schemas/universal_action_orchestration.schema.json",
+        ),
+        "validator_refs": (
+            *_GOVERNED_SYMBOLIC_LOOP_VALIDATORS,
+            "scripts/validate_universal_action_orchestration.py",
+            "scripts/validate_life_meaning_governance.py",
+        ),
+        "proof_surface_refs": _GOVERNED_SYMBOLIC_LOOP_SURFACES,
     },
 }
 
@@ -1641,6 +1724,23 @@ _DEFAULT_STATUS_BINDINGS: Mapping[str, LoopStatusBinding] = {
         ),
         proof_surface_refs=("software_dev_capability_pack",),
     ),
+    "governed_symbolic_loop": _status_binding(
+        "Bind governed symbolic loop status to unresolved policy, episode contract, verification, rollback, and learning-admission gaps.",
+        verification_refs=(
+            "required_authority_observed",
+            "required_evidence_observed",
+            "governed_symbolic_loop_contract_validators_passed",
+        ),
+        closure_gate_refs=(
+            "canonical_episode_phases_preserved",
+            "deterministic_kernel_boundaries_preserved",
+            "runtime_authority_denials_preserved",
+            "post_verification_learning_preserved",
+        ),
+        source_refs=_GOVERNED_SYMBOLIC_LOOP_SOURCES,
+        validator_refs=_GOVERNED_SYMBOLIC_LOOP_VALIDATORS,
+        proof_surface_refs=_GOVERNED_SYMBOLIC_LOOP_SURFACES,
+    ),
 }
 
 
@@ -1782,6 +1882,26 @@ _DEFAULT_TRANSITION_BINDINGS: Mapping[str, tuple[LoopTransitionBinding, ...]] = 
             "scripts/validate_sdlc_artifact.py",
         ),
         proof_surface_refs=("software_dev_capability_pack",),
+    ),
+    "governed_symbolic_loop": _transition_catalog(
+        required_authority_refs=(
+            "uao_policy_ref",
+            "phi_gov_authority_ref",
+            "life_meaning_judgment_ref",
+            "operator_registration_decision_ref",
+        ),
+        required_evidence_refs=(
+            "problem_star_compilation_receipt",
+            "action_classification_receipt",
+            "capability_admission_receipt",
+            "verification_receipt",
+            "rollback_or_recovery_handoff_receipt",
+            "learning_admission_receipt",
+        ),
+        rollback_ref="remove_registry_admission_and_restore_read_only_contract",
+        source_refs=_GOVERNED_SYMBOLIC_LOOP_SOURCES,
+        validator_refs=_GOVERNED_SYMBOLIC_LOOP_VALIDATORS,
+        proof_surface_refs=_GOVERNED_SYMBOLIC_LOOP_SURFACES,
     ),
 }
 
@@ -2131,6 +2251,65 @@ _DEFAULT_CLOSURE_CONDITION_BINDINGS: Mapping[str, tuple[LoopClosureConditionBind
             proof_surface_refs=("software_dev_capability_pack",),
         ),
     ),
+    "governed_symbolic_loop": (
+        _closure_condition_binding(
+            "canonical_episode_phases_preserved",
+            "Require the governed symbolic loop contract to preserve compile, classify, preflight, verify, rollback, and learning phases.",
+            required_evidence_refs=(
+                "problem_star_compilation_receipt",
+                "action_classification_receipt",
+            ),
+            required_authority_refs=("phi_gov_authority_ref",),
+            source_refs=(
+                "schemas/governed_symbolic_loop_contract.schema.json",
+                "examples/governed_symbolic_loop_contract.foundation.json",
+            ),
+            validator_refs=("tests/test_validate_governed_symbolic_loop_contract.py",),
+            proof_surface_refs=("holistic_loop_read_model_kernel",),
+        ),
+        _closure_condition_binding(
+            "deterministic_kernel_boundaries_preserved",
+            "Require deterministic kernel boundaries to remain explicit before symbolic loop closure can be described.",
+            required_evidence_refs=("verification_receipt",),
+            required_authority_refs=("phi_gov_authority_ref",),
+            source_refs=("examples/sdlc/design_governed_symbolic_loop_20260614.json",),
+            validator_refs=("scripts/validate_sdlc_artifact.py",),
+            proof_surface_refs=("software_dev_capability_pack",),
+        ),
+        _closure_condition_binding(
+            "runtime_authority_denials_preserved",
+            "Require runtime authority denials to remain explicit for direct execution, live adapter, and real-mode paths.",
+            required_evidence_refs=(
+                "capability_admission_receipt",
+                "rollback_or_recovery_handoff_receipt",
+            ),
+            required_authority_refs=("uao_policy_ref", "operator_registration_decision_ref"),
+            source_refs=(
+                "schemas/universal_action_orchestration.schema.json",
+                "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+            ),
+            validator_refs=(
+                "scripts/validate_universal_action_orchestration.py",
+                "scripts/validate_sdlc_artifact.py",
+            ),
+            proof_surface_refs=("universal_action_orchestration", "software_dev_capability_pack"),
+        ),
+        _closure_condition_binding(
+            "post_verification_learning_preserved",
+            "Require learning admission to remain post-verification and read-only until evidence is validated.",
+            required_evidence_refs=("learning_admission_receipt", "verification_receipt"),
+            required_authority_refs=("life_meaning_judgment_ref",),
+            source_refs=(
+                "schemas/learning_admission.schema.json",
+                "schemas/life_meaning_judgment.schema.json",
+            ),
+            validator_refs=(
+                "tests/test_validate_governed_symbolic_loop_contract.py",
+                "tests/test_validate_life_meaning_governance.py",
+            ),
+            proof_surface_refs=("software_outcome_learning", "holistic_loop_read_model_kernel"),
+        ),
+    ),
 }
 
 
@@ -2300,6 +2479,24 @@ _DEFAULT_MODE_BINDINGS: Mapping[str, LoopModeBinding] = {
             "scripts/validate_sdlc_artifact.py",
         ),
         proof_surface_refs=("software_dev_capability_pack",),
+    ),
+    "governed_symbolic_loop": _mode_binding(
+        "Expose governed symbolic loop dry-run, shadow, simulation, and replay boundaries without granting runtime execution or state mutation authority.",
+        separation_refs=(
+            "dry_run_compiles_problem_star_without_effect",
+            "shadow_observes_symbolic_episode_contract_without_state_mutation",
+            "simulation_tests_counterfactuals_without_runtime_authority",
+            "replay_uses_retained_contract_and_receipt_evidence",
+            "real_mode_not_registered_for_governed_symbolic_loop",
+        ),
+        real_execution_guard_refs=(
+            "uao_policy_ref_required_for_effect_bearing_action",
+            "life_meaning_judgment_ref_required_for_effect_bearing_action",
+            "operator_registration_decision_ref_required_before_runtime_admission",
+        ),
+        source_refs=_GOVERNED_SYMBOLIC_LOOP_SOURCES,
+        validator_refs=_GOVERNED_SYMBOLIC_LOOP_VALIDATORS,
+        proof_surface_refs=_GOVERNED_SYMBOLIC_LOOP_SURFACES,
     ),
 }
 
@@ -2530,6 +2727,32 @@ _DEFAULT_LEARNING_BINDINGS: Mapping[str, LoopLearningBinding] = {
         ),
         proof_surface_refs=("software_dev_capability_pack",),
     ),
+    "governed_symbolic_loop": _learning_binding(
+        "promote loop guard regressions into validators only after verified evidence",
+        "Bind symbolic loop learning to verified contract, rollback, and LifeMeaningJudgment evidence before validator promotion.",
+        evidence_input_refs=(
+            "verification_receipt",
+            "learning_admission_receipt",
+            "rollback_or_recovery_handoff_receipt",
+        ),
+        admission_refs=(
+            "learning_requires_verified_contract",
+            "regression_requires_validator_anchor",
+            "memory_promotion_requires_life_meaning_judgment_ref",
+        ),
+        retention_refs=(
+            "governed_symbolic_loop_contract",
+            "sdlc_requirement_artifact",
+            "sdlc_design_artifact",
+        ),
+        source_refs=(
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+        ),
+        validator_refs=_GOVERNED_SYMBOLIC_LOOP_VALIDATORS,
+        proof_surface_refs=_GOVERNED_SYMBOLIC_LOOP_SURFACES,
+    ),
 }
 
 
@@ -2726,6 +2949,30 @@ _DEFAULT_RISK_BINDINGS: Mapping[str, LoopRiskBinding] = {
         ),
         proof_surface_refs=("software_dev_capability_pack",),
     ),
+    "governed_symbolic_loop": _risk_binding(
+        "platform_orchestration",
+        "Platform orchestration risk covers overbroad loop generalization, direct runtime authority, missing LifeMeaningJudgment, and premature learning admission.",
+        hazard_refs=(
+            "overbroad_wholistic_loop_generalization",
+            "direct_runtime_authority_without_registration",
+            "missing_life_meaning_judgment",
+            "premature_learning_admission",
+        ),
+        mitigation_refs=(
+            "admit_read_model_only",
+            "exclude_real_mode_from_allowed_modes",
+            "require_uao_and_life_meaning_authority_refs",
+            "block_learning_until_verification_receipt_exists",
+        ),
+        monitor_refs=(
+            "governed_symbolic_loop_contract_validator",
+            "holistic_loop_extension_admission",
+            "workspace_governance_preflight",
+        ),
+        source_refs=_GOVERNED_SYMBOLIC_LOOP_SOURCES,
+        validator_refs=_GOVERNED_SYMBOLIC_LOOP_VALIDATORS,
+        proof_surface_refs=_GOVERNED_SYMBOLIC_LOOP_SURFACES,
+    ),
 }
 
 
@@ -2833,6 +3080,20 @@ _DEFAULT_ROLLBACK_BINDINGS: Mapping[str, LoopRollbackBinding] = {
             "scripts/validate_sdlc_artifact.py",
         ),
         proof_surface_refs=("software_dev_capability_pack",),
+    ),
+    "governed_symbolic_loop": _rollback_binding(
+        "remove_registry_admission_and_restore_read_only_contract",
+        "Rollback governed symbolic loop admission by removing the registry manifest while retaining the read-only contract and SDLC proof artifacts.",
+        source_refs=(
+            "schemas/governed_symbolic_loop_contract.schema.json",
+            "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+            "scripts/validate_governed_symbolic_loop_contract.py",
+        ),
+        validator_refs=(
+            "tests/test_validate_governed_symbolic_loop_contract.py",
+            "scripts/validate_sdlc_artifact.py",
+        ),
+        proof_surface_refs=_GOVERNED_SYMBOLIC_LOOP_SURFACES,
     ),
 }
 
@@ -3016,6 +3277,61 @@ _DEFAULT_AUTHORITY_BINDINGS: Mapping[str, tuple[LoopAuthorityBinding, ...]] = {
                 "tests/test_validate_sdlc_release_readiness.py",
             ),
             proof_surface_refs=("software_dev_capability_pack",),
+        ),
+    ),
+    "governed_symbolic_loop": (
+        _authority_binding(
+            "uao_policy_ref",
+            "UAO policy reference authorizes effect-bearing symbolic loop action classification without executing runtime orchestration.",
+            source_refs=(
+                "docs/UNIVERSAL_ACTION_ORCHESTRATION.md",
+                "schemas/universal_action_orchestration.schema.json",
+            ),
+            validator_refs=(
+                "tests/test_validate_universal_action_orchestration.py",
+                "mcoi/tests/test_universal_action_kernel.py",
+            ),
+            proof_surface_refs=("universal_action_orchestration",),
+        ),
+        _authority_binding(
+            "phi_gov_authority_ref",
+            "Phi governance authority reference binds symbolic loop state writes to governed validation and lineage.",
+            source_refs=(
+                "AGENTS.md",
+                "scripts/validate_agents_governance.py",
+            ),
+            validator_refs=(
+                "tests/test_validate_agents_governance.py",
+                "scripts/validate_agents_governance.py",
+            ),
+            proof_surface_refs=("holistic_loop_read_model_kernel", "software_dev_capability_pack"),
+        ),
+        _authority_binding(
+            "life_meaning_judgment_ref",
+            "LifeMeaningJudgment reference preserves effect-bearing life, feeling, meaning, dignity, consent, and repair review before action admission.",
+            source_refs=(
+                "schemas/life_meaning_judgment.schema.json",
+                "docs/LIFE_MEANING_GOVERNANCE_KERNEL.md",
+                "mcoi/mcoi_runtime/core/life_meaning_governance.py",
+            ),
+            validator_refs=(
+                "tests/test_validate_life_meaning_governance.py",
+                "tests/test_life_meaning_governance_kernel.py",
+            ),
+            proof_surface_refs=("universal_action_orchestration",),
+        ),
+        _authority_binding(
+            "operator_registration_decision_ref",
+            "Operator registration decision reference separates read-only admission from any later runtime authority promotion.",
+            source_refs=(
+                "scripts/report_holistic_loop_candidate_map.py",
+                "scripts/validate_holistic_loop_extension_admission.py",
+            ),
+            validator_refs=(
+                "tests/test_report_holistic_loop_candidate_map.py",
+                "tests/test_validate_holistic_loop_extension_admission.py",
+            ),
+            proof_surface_refs=("holistic_loop_read_model_kernel",),
         ),
     ),
 }
@@ -3340,6 +3656,74 @@ _DEFAULT_EVIDENCE_BINDINGS: Mapping[str, tuple[LoopEvidenceBinding, ...]] = {
             source_refs=("schemas/sdlc_recovery_handoff_receipt.schema.json",),
             validator_refs=("scripts/validate_sdlc_artifact.py",),
             proof_surface_refs=("software_dev_capability_pack",),
+        ),
+    ),
+    "governed_symbolic_loop": (
+        _binding(
+            "problem_star_compilation_receipt",
+            "ProblemStar compilation evidence separates evidence, assumptions, unknowns, contradictions, goals, constraints, risks, actions, and proof obligations.",
+            source_refs=(
+                "schemas/governed_symbolic_loop_contract.schema.json",
+                "examples/governed_symbolic_loop_contract.foundation.json",
+            ),
+            validator_refs=("tests/test_validate_governed_symbolic_loop_contract.py",),
+            proof_surface_refs=("holistic_loop_read_model_kernel",),
+        ),
+        _binding(
+            "action_classification_receipt",
+            "Action classification evidence preserves epistemic, world-changing, and hybrid boundaries before execution.",
+            source_refs=(
+                "schemas/governed_symbolic_loop_contract.schema.json",
+                "examples/governed_symbolic_loop_contract.foundation.json",
+            ),
+            validator_refs=("tests/test_validate_governed_symbolic_loop_contract.py",),
+            proof_surface_refs=("universal_action_orchestration",),
+        ),
+        _binding(
+            "capability_admission_receipt",
+            "Capability admission evidence blocks direct runtime, live adapter, and real-mode authority until explicit admission exists.",
+            source_refs=(
+                "schemas/universal_action_orchestration.schema.json",
+                "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+            ),
+            validator_refs=(
+                "scripts/validate_universal_action_orchestration.py",
+                "scripts/validate_sdlc_artifact.py",
+            ),
+            proof_surface_refs=("universal_action_orchestration", "software_dev_capability_pack"),
+        ),
+        _binding(
+            "verification_receipt",
+            "Verification evidence proves the governed symbolic loop contract and SDLC artifacts before closure can advance.",
+            source_refs=(
+                "scripts/validate_governed_symbolic_loop_contract.py",
+                "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+            ),
+            validator_refs=(
+                "tests/test_validate_governed_symbolic_loop_contract.py",
+                "scripts/validate_sdlc_artifact.py",
+            ),
+            proof_surface_refs=("software_dev_capability_pack", "holistic_loop_read_model_kernel"),
+        ),
+        _binding(
+            "rollback_or_recovery_handoff_receipt",
+            "Rollback or recovery handoff evidence exists before runtime authority or closure promotion can be described.",
+            source_refs=("examples/sdlc/design_governed_symbolic_loop_20260614.json",),
+            validator_refs=("scripts/validate_sdlc_artifact.py",),
+            proof_surface_refs=("software_dev_capability_pack",),
+        ),
+        _binding(
+            "learning_admission_receipt",
+            "Learning admission evidence keeps memory or policy promotion downstream of verified loop evidence.",
+            source_refs=(
+                "schemas/learning_admission.schema.json",
+                "schemas/governed_symbolic_loop_contract.schema.json",
+            ),
+            validator_refs=(
+                "tests/test_validate_governed_symbolic_loop_contract.py",
+                "mcoi/tests/test_learning_loop.py",
+            ),
+            proof_surface_refs=("software_outcome_learning", "holistic_loop_read_model_kernel"),
         ),
     ),
 }

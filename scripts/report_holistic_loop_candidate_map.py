@@ -141,6 +141,49 @@ def candidate_loop_catalog() -> tuple[LoopCandidate, ...]:
             proposed_learning_policy="promote repeated authority debt into preflight checks",
         ),
         LoopCandidate(
+            candidate_id="governed_symbolic_loop",
+            name="Governed Symbolic Loop",
+            purpose=(
+                "Describe canonical symbolic episode phases, action classes, deterministic "
+                "kernel boundaries, effect-bearing guards, verification, rollback, and "
+                "post-verification learning."
+            ),
+            owner="platform_governance",
+            risk_class="platform_orchestration",
+            existing_surfaces=(
+                "schemas/governed_symbolic_loop_contract.schema.json",
+                "examples/governed_symbolic_loop_contract.foundation.json",
+                "examples/sdlc/requirement_governed_symbolic_loop_20260614.json",
+                "examples/sdlc/design_governed_symbolic_loop_20260614.json",
+                "scripts/validate_governed_symbolic_loop_contract.py",
+                "tests/test_validate_governed_symbolic_loop_contract.py",
+            ),
+            proposed_required_authority=(
+                "uao_policy_ref",
+                "phi_gov_authority_ref",
+                "life_meaning_judgment_ref",
+                "operator_registration_decision_ref",
+            ),
+            proposed_required_evidence=(
+                "problem_star_compilation_receipt",
+                "action_classification_receipt",
+                "capability_admission_receipt",
+                "verification_receipt",
+                "rollback_or_recovery_handoff_receipt",
+                "learning_admission_receipt",
+            ),
+            proposed_closure_conditions=(
+                "canonical_episode_phases_preserved",
+                "deterministic_kernel_boundaries_preserved",
+                "runtime_authority_denials_preserved",
+                "post_verification_learning_preserved",
+            ),
+            proposed_rollback_policy="remove_registry_admission_and_restore_read_only_contract",
+            proposed_learning_policy=(
+                "promote loop guard regressions into validators only after verified evidence"
+            ),
+        ),
+        LoopCandidate(
             candidate_id="universal_action_orchestration_loop",
             name="Universal Action Orchestration Loop",
             purpose="Describe effect-bearing action admission, receipt, replay, and no-bypass evidence.",

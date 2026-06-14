@@ -22,10 +22,10 @@ def test_holistic_loop_admission_closure_reports_no_pending_candidates() -> None
 
     assert errors == []
     assert report["status"] == "verified"
-    assert report["loop_count"] == 8
-    assert report["required_loop_count"] == 8
-    assert report["candidate_count"] == 4
-    assert report["registered_candidate_count"] == 4
+    assert report["loop_count"] == 9
+    assert report["required_loop_count"] == 9
+    assert report["candidate_count"] == 5
+    assert report["registered_candidate_count"] == 5
     assert report["blocked_candidate_count"] == 0
     assert report["pending_candidate_ids"] == []
     assert report["unregistered_candidate_ids"] == []

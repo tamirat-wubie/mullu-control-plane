@@ -24,6 +24,7 @@ def test_holistic_loop_candidate_map_lists_candidate_surfaces() -> None:
     assert errors == []
     assert candidate_ids == sorted(candidate_ids)
     assert "authority_obligation_loop" in candidate_ids
+    assert "governed_symbolic_loop" in candidate_ids
     assert "workflow_execution_loop" in candidate_ids
     assert "audit_proof_verification_loop" in candidate_ids
     assert "universal_action_orchestration_loop" in candidate_ids
@@ -37,7 +38,7 @@ def test_holistic_loop_candidate_map_reports_admitted_and_blocked_candidates() -
         for candidate in report["candidates"]
     }
 
-    assert report["registered_candidate_count"] == 4
+    assert report["registered_candidate_count"] == 5
     assert report["blocked_candidate_count"] == 0
     assert candidates["audit_proof_verification_loop"]["candidate_id"] in registered_loop_ids
     assert candidates["audit_proof_verification_loop"]["registered"] is True
@@ -49,6 +50,11 @@ def test_holistic_loop_candidate_map_reports_admitted_and_blocked_candidates() -
     assert candidates["authority_obligation_loop"]["admission_status"] == "registered"
     assert candidates["authority_obligation_loop"]["admission_blockers"] == []
     assert candidates["authority_obligation_loop"]["next_action"] == "already_registered"
+    assert candidates["governed_symbolic_loop"]["candidate_id"] in registered_loop_ids
+    assert candidates["governed_symbolic_loop"]["registered"] is True
+    assert candidates["governed_symbolic_loop"]["admission_status"] == "registered"
+    assert candidates["governed_symbolic_loop"]["admission_blockers"] == []
+    assert candidates["governed_symbolic_loop"]["next_action"] == "already_registered"
     assert candidates["universal_action_orchestration_loop"]["candidate_id"] in registered_loop_ids
     assert candidates["universal_action_orchestration_loop"]["registered"] is True
     assert candidates["universal_action_orchestration_loop"]["admission_status"] == "registered"
