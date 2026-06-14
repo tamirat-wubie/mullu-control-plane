@@ -30,6 +30,7 @@ if str(MCOI_ROOT) not in sys.path:
     sys.path.insert(0, str(MCOI_ROOT))
 
 from fastapi import FastAPI  # noqa: E402
+from fastapi.routing import APIRoute  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 from mcoi_runtime.app.server_http import include_default_routers  # noqa: E402
@@ -69,9 +70,9 @@ def validate_route_methods(app: FastAPI) -> list[str]:
     """Validate that the loop read-model route is read-only."""
 
     methods: set[str] = set()
-    for route in app.routes:
-        if getattr(route, "path", "") == LOOP_READ_MODEL_PATH:
-            methods.update(str(method) for method in getattr(route, "methods", set()))
+    for route in _iter_app_routes(app.routes):
+        if route.path == LOOP_READ_MODEL_PATH:
+            methods.update(str(method) for method in route.methods)
     errors: list[str] = []
     if "GET" not in methods:
         errors.append("loop read-model route is missing GET")
@@ -79,6 +80,20 @@ def validate_route_methods(app: FastAPI) -> list[str]:
     if mutation_methods:
         errors.append(f"loop read-model route exposes mutation methods: {mutation_methods}")
     return errors
+
+
+def _iter_app_routes(routes: Any) -> list[APIRoute]:
+    """Return APIRoutes from direct and included-router containers."""
+
+    route_records: list[APIRoute] = []
+    for route in routes:
+        if isinstance(route, APIRoute):
+            route_records.append(route)
+            continue
+        original_router = getattr(route, "original_router", None)
+        if original_router is not None:
+            route_records.extend(_iter_app_routes(getattr(original_router, "routes", ())))
+    return route_records
 
 
 def validate_payload(payload: dict[str, Any]) -> list[str]:
