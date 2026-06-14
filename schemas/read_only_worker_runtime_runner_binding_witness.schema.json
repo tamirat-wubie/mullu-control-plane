@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:read-only-worker-runtime-runner-binding-witness:1",
+  "title": "Read-Only Worker Runtime Runner Binding Witness",
+  "description": "Foundation Mode witness for future read_only_repo_inspection runtime runner registration and runtime receipt schema binding evidence without registering a runner, dispatch endpoint, emitter, schema binding, runtime dispatch, filesystem writes, network, connectors, terminal closure, or success claims.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "receipt_version",
+    "emitter_dry_run_ref",
+    "handoff_ref",
+    "binding_ref",
+    "lease_preflight_ref",
+    "rehearsal_receipt_ref",
+    "selected_worker_path",
+    "tenant_id",
+    "actor_id",
+    "created_at",
+    "solver_outcome",
+    "authority_scope",
+    "registration_witness_contract",
+    "schema_binding_witness_contract",
+    "admission_decision",
+    "receipt_refs",
+    "contract_summary",
+    "governance_refs",
+    "receipt_envelope",
+    "evidence_refs"
+  ],
+  "properties": {
+    "receipt_id": { "type": "string", "pattern": "^read-only-worker-runtime-runner-binding-witness-[a-z0-9-]+$" },
+    "receipt_version": { "type": "string", "const": "read_only_worker_runtime_runner_binding_witness.v1" },
+    "emitter_dry_run_ref": { "type": "string", "const": "examples/read_only_worker_runtime_receipt_emitter_dry_run.foundation.json" },
+    "handoff_ref": { "type": "string", "const": "examples/read_only_worker_runtime_receipt_handoff.foundation.json" },
+    "binding_ref": { "type": "string", "const": "examples/read_only_worker_binding.foundation.json" },
+    "lease_preflight_ref": { "type": "string", "const": "examples/read_only_worker_lease_preflight.foundation.json" },
+    "rehearsal_receipt_ref": { "type": "string", "const": "examples/read_only_worker_rehearsal_receipt.foundation.json" },
+    "selected_worker_path": { "type": "string", "const": "read_only_repo_inspection" },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "actor_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]
+    },
+    "authority_scope": { "$ref": "#/$defs/authority_scope" },
+    "registration_witness_contract": { "$ref": "#/$defs/registration_witness_contract" },
+    "schema_binding_witness_contract": { "$ref": "#/$defs/schema_binding_witness_contract" },
+    "admission_decision": { "$ref": "#/$defs/admission_decision" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "contract_summary": { "$ref": "#/$defs/contract_summary" },
+    "governance_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "receipt_envelope": { "$ref": "#/$defs/receipt_envelope" },
+    "evidence_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "metadata": { "type": "object", "additionalProperties": true }
+  },
+  "$defs": {
+    "authority_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only",
+        "foundation_witness_only",
+        "runtime_runner_registration_performed",
+        "dispatch_endpoint_registration_performed",
+        "runtime_receipt_emitter_registration_performed",
+        "runtime_receipt_schema_binding_performed",
+        "runtime_dispatch_allowed",
+        "external_network_allowed",
+        "secret_access_allowed",
+        "filesystem_write_allowed",
+        "connector_authority_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed",
+        "mfidel_atomicity_preserved"
+      ],
+      "properties": {
+        "read_only": { "type": "boolean", "const": true },
+        "foundation_witness_only": { "type": "boolean", "const": true },
+        "runtime_runner_registration_performed": { "type": "boolean", "const": false },
+        "dispatch_endpoint_registration_performed": { "type": "boolean", "const": false },
+        "runtime_receipt_emitter_registration_performed": { "type": "boolean", "const": false },
+        "runtime_receipt_schema_binding_performed": { "type": "boolean", "const": false },
+        "runtime_dispatch_allowed": { "type": "boolean", "const": false },
+        "external_network_allowed": { "type": "boolean", "const": false },
+        "secret_access_allowed": { "type": "boolean", "const": false },
+        "filesystem_write_allowed": { "type": "boolean", "const": false },
+        "connector_authority_allowed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "success_claim_allowed": { "type": "boolean", "const": false },
+        "mfidel_atomicity_preserved": { "type": "boolean", "const": true }
+      }
+    },
+    "registration_witness_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "worker_id",
+        "capability",
+        "operation_family",
+        "witness_mode",
+        "runner_registration_candidate_ref",
+        "dispatch_endpoint_candidate_ref",
+        "runtime_receipt_emitter_candidate_ref",
+        "required_registration_witness_refs",
+        "registration_obligations_checked",
+        "validation_refs"
+      ],
+      "properties": {
+        "worker_id": { "type": "string", "const": "worker_local_read_only_repo_inspection" },
+        "capability": { "type": "string", "const": "read_only_repo_inspection" },
+        "operation_family": { "type": "string", "const": "local_repo_inspection" },
+        "witness_mode": { "type": "string", "const": "REGISTRATION_WITNESS_ONLY" },
+        "runner_registration_candidate_ref": { "type": "string", "const": "candidate://runtime-runner/read-only-repo-inspection" },
+        "dispatch_endpoint_candidate_ref": { "type": "string", "const": "candidate://dispatch-endpoint/read-only-repo-inspection" },
+        "runtime_receipt_emitter_candidate_ref": { "type": "string", "const": "candidate://runtime-receipt-emitter/read-only-repo-inspection" },
+        "required_registration_witness_refs": { "$ref": "#/$defs/non_empty_string_array" },
+        "registration_obligations_checked": { "$ref": "#/$defs/non_empty_string_array" },
+        "validation_refs": { "$ref": "#/$defs/non_empty_string_array" }
+      }
+    },
+    "schema_binding_witness_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_receipt_kind",
+        "schema_binding_mode",
+        "schema_candidate_ref",
+        "source_dry_run_ref",
+        "required_schema_binding_witness_refs",
+        "schema_binding_obligations_checked",
+        "validation_refs"
+      ],
+      "properties": {
+        "runtime_receipt_kind": { "type": "string", "const": "future_worker_runtime_receipt" },
+        "schema_binding_mode": { "type": "string", "const": "SCHEMA_BINDING_WITNESS_ONLY" },
+        "schema_candidate_ref": { "type": "string", "const": "candidate://schema/future-worker-runtime-receipt" },
+        "source_dry_run_ref": { "type": "string", "const": "examples/read_only_worker_runtime_receipt_emitter_dry_run.foundation.json" },
+        "required_schema_binding_witness_refs": { "$ref": "#/$defs/non_empty_string_array" },
+        "schema_binding_obligations_checked": { "$ref": "#/$defs/non_empty_string_array" },
+        "validation_refs": { "$ref": "#/$defs/non_empty_string_array" }
+      }
+    },
+    "admission_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision",
+        "runtime_runner_admitted",
+        "runtime_receipt_schema_bound",
+        "runtime_dispatch_admitted",
+        "remaining_denied_until_refs",
+        "blocked_reason_refs",
+        "terminal_closure_allowed"
+      ],
+      "properties": {
+        "decision": { "type": "string", "const": "RUNTIME_BINDING_BLOCKED_AWAITING_LIVE_RUNNER_WITNESS" },
+        "runtime_runner_admitted": { "type": "boolean", "const": false },
+        "runtime_receipt_schema_bound": { "type": "boolean", "const": false },
+        "runtime_dispatch_admitted": { "type": "boolean", "const": false },
+        "remaining_denied_until_refs": { "$ref": "#/$defs/non_empty_string_array" },
+        "blocked_reason_refs": { "$ref": "#/$defs/non_empty_string_array" },
+        "terminal_closure_allowed": { "type": "boolean", "const": false }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only_worker_runtime_runner_binding_witness_schema",
+        "read_only_worker_runtime_receipt_emitter_dry_run_schema",
+        "read_only_worker_runtime_receipt_handoff_schema",
+        "read_only_worker_binding_schema",
+        "read_only_worker_lease_preflight_schema",
+        "read_only_worker_rehearsal_receipt_schema",
+        "personal_assistant_console_read_model_schema",
+        "temporal_lease_window_receipt_schema",
+        "worker_failure_receipt_schema",
+        "worker_mesh_schema"
+      ],
+      "properties": {
+        "read_only_worker_runtime_runner_binding_witness_schema": { "type": "string", "const": "schemas/read_only_worker_runtime_runner_binding_witness.schema.json" },
+        "read_only_worker_runtime_receipt_emitter_dry_run_schema": { "type": "string", "const": "schemas/read_only_worker_runtime_receipt_emitter_dry_run.schema.json" },
+        "read_only_worker_runtime_receipt_handoff_schema": { "type": "string", "const": "schemas/read_only_worker_runtime_receipt_handoff.schema.json" },
+        "read_only_worker_binding_schema": { "type": "string", "const": "schemas/read_only_worker_binding.schema.json" },
+        "read_only_worker_lease_preflight_schema": { "type": "string", "const": "schemas/read_only_worker_lease_preflight.schema.json" },
+        "read_only_worker_rehearsal_receipt_schema": { "type": "string", "const": "schemas/read_only_worker_rehearsal_receipt.schema.json" },
+        "personal_assistant_console_read_model_schema": { "type": "string", "const": "schemas/personal_assistant_console_read_model.schema.json" },
+        "temporal_lease_window_receipt_schema": { "type": "string", "const": "schemas/temporal_lease_window_receipt.schema.json" },
+        "worker_failure_receipt_schema": { "type": "string", "const": "schemas/worker_failure_receipt.schema.json" },
+        "worker_mesh_schema": { "type": "string", "const": "schemas/worker_mesh.schema.json" }
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "registration_witness_ref_count",
+        "registration_obligation_count",
+        "registration_validation_ref_count",
+        "schema_binding_witness_ref_count",
+        "schema_binding_obligation_count",
+        "schema_binding_validation_ref_count",
+        "remaining_denied_until_ref_count",
+        "blocked_reason_ref_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "registration_witness_ref_count": { "type": "integer", "minimum": 4 },
+        "registration_obligation_count": { "type": "integer", "minimum": 5 },
+        "registration_validation_ref_count": { "type": "integer", "minimum": 4 },
+        "schema_binding_witness_ref_count": { "type": "integer", "minimum": 4 },
+        "schema_binding_obligation_count": { "type": "integer", "minimum": 5 },
+        "schema_binding_validation_ref_count": { "type": "integer", "minimum": 4 },
+        "remaining_denied_until_ref_count": { "type": "integer", "minimum": 5 },
+        "blocked_reason_ref_count": { "type": "integer", "minimum": 5 },
+        "receipt_ref_count": { "type": "integer", "const": 10 },
+        "evidence_ref_count": { "type": "integer", "minimum": 12 }
+      }
+    },
+    "receipt_envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["uao_ref", "causal_decision_trace_ref", "receipt_ref"],
+      "properties": {
+        "uao_ref": { "type": "string", "pattern": "^uao://.+$" },
+        "causal_decision_trace_ref": { "type": "string", "pattern": "^trace://.+$" },
+        "receipt_ref": { "type": "string", "pattern": "^receipt://.+$" }
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}
