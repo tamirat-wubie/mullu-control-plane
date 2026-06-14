@@ -118,6 +118,7 @@ tests/test_produce_finance_approval_operator_summary.py
 tests/test_produce_finance_approval_payment_closure_receipt.py
 tests/test_produce_finance_approval_pilot_witness.py
 tests/test_produce_physical_worker_canary.py
+tests/test_produce_team_ops_shared_inbox_live_probe_receipt.py
 tests/test_proof_coverage_matrix.py
 tests/test_proof_route_gap_triage.py
 tests/test_provision_deployment_target.py
@@ -190,6 +191,7 @@ tests/test_validate_release_status.py
 tests/test_validate_sandbox_execution_receipt.py
 tests/test_validate_schemas_bounded_errors.py
 tests/test_validate_streaming_budget_enforcement.py
+tests/test_validate_team_ops_shared_inbox_live_probe_receipt.py
 tests/test_validate_tenant_scope_coverage.py
 tests/test_validate_terminal_closure_certificate.py
 tests/test_validate_universal_action_orchestration.py
