@@ -3179,10 +3179,11 @@ def test_snet_episode_replay_surface_binds_deterministic_receipt_replay() -> Non
     assert "snet_episode_rejects_answer_drift" in witnesses
     assert "snet_episode_rejects_authority_and_raw_field_mutations" in witnesses
     assert "snet_episode_rejects_expected_count_drift" in witnesses
+    assert "snet_episode_malformed_answer_bindings_report_errors" in witnesses
     assert "snet_episode_saved_file_validation" in witnesses
     assert "committed_snet_episode_example_replays_to_expected_receipt" in witnesses
     assert "read-only SNet mesh evidence" in replay_surface["notes"]
-    assert replay_integrity["exact_test_anchor_count"] == 7
+    assert replay_integrity["exact_test_anchor_count"] == 8
     assert replay_integrity["unanchored_witness_count"] == 0
     assert closure_actions["publish_snet_episode_replay_contract"]["status"] == "closed"
 

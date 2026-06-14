@@ -99,6 +99,18 @@ def test_snet_episode_rejects_expected_count_drift() -> None:
     assert episode["expected_receipt"]["mesh_digest"] == episode["expected_mesh_digest"]
 
 
+def test_snet_episode_malformed_answer_bindings_report_errors() -> None:
+    episode = validator.build_sample_episode()
+    schema = validator._load_schema(validator.DEFAULT_SCHEMA_PATH)
+    episode["answer_bindings"] = ["Water"]
+
+    errors = validator.validate_episode(episode, schema)
+
+    assert any("answer_bindings" in error for error in errors)
+    assert any("replay failed" in error for error in errors)
+    assert episode["raw_answers_exposed"] is False
+
+
 def test_snet_episode_saved_file_validation(tmp_path) -> None:
     episode_path = tmp_path / "snet_episode.json"
     episode_path.write_text(json.dumps(validator.build_sample_episode()), encoding="utf-8")
