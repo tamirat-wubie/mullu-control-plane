@@ -165,6 +165,12 @@ An append-only record of trust-relevant outcomes that can be independently
 verified, even without access to the live system. *(Trust you can check
 yourself.)* → [65_trust_ledger_offline_verification.md](65_trust_ledger_offline_verification.md)
 
+### Truth kernel / Truth Kernel Plane
+The internal MAF Core subsystem that checks candidate truth states against
+declared domains, constraints, and proofs before anything can be treated as
+true. *(It keeps truth-state reasoning separate from action execution.)* →
+[74_truth_kernel_plane.md](74_truth_kernel_plane.md)
+
 ### Witness / witness anchoring
 A piece of evidence attached to a claim or proof so that the claim can be
 checked rather than taken on faith; "anchoring" means tying that evidence to a

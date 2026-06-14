@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:mullu-truth-kernel:truth-candidate:1",
+  "title": "Mullu Truth Kernel Truth Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "candidate_id",
+    "tenant_id",
+    "candidate_kind",
+    "parent_kernel_signature",
+    "proposed_at",
+    "actor_ref",
+    "source_refs",
+    "delta",
+    "admission_boundary",
+    "proof_obligations",
+    "status",
+    "candidate_hash"
+  ],
+  "properties": {
+    "candidate_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "candidate_kind": {"$ref": "#/$defs/delta_kind"},
+    "parent_kernel_signature": {"type": "string", "minLength": 1},
+    "proposed_at": {"type": "string", "format": "date-time"},
+    "actor_ref": {"type": "string", "minLength": 1},
+    "source_refs": {"$ref": "#/$defs/non_empty_string_array"},
+    "delta": {"$ref": "#/$defs/truth_delta"},
+    "admission_boundary": {"$ref": "#/$defs/admission_boundary"},
+    "proof_obligations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/proof_obligation"}
+    },
+    "status": {
+      "type": "string",
+      "enum": ["proposed", "sandboxed", "accepted", "rejected", "deferred"]
+    },
+    "candidate_hash": {"type": "string", "minLength": 1},
+    "metadata": {"type": "object", "additionalProperties": true}
+  },
+  "$defs": {
+    "delta_kind": {
+      "type": "string",
+      "enum": [
+        "domain_addition",
+        "constraint_addition",
+        "constraint_status_change",
+        "proof_attachment",
+        "truth_query_evaluation"
+      ]
+    },
+    "operation_type": {
+      "type": "string",
+      "enum": [
+        "add_domain",
+        "add_constraint",
+        "quarantine_constraint",
+        "promote_constraint",
+        "attach_proof",
+        "evaluate_query"
+      ]
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "string_array": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "truth_delta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delta_id",
+        "delta_kind",
+        "operation",
+        "affected_variable_ids",
+        "affected_constraint_ids",
+        "includes_mfidel",
+        "mfidel_atomicity_preserved",
+        "change_summary"
+      ],
+      "properties": {
+        "delta_id": {"type": "string", "minLength": 1},
+        "delta_kind": {"$ref": "#/$defs/delta_kind"},
+        "operation": {"$ref": "#/$defs/truth_operation"},
+        "affected_variable_ids": {"$ref": "#/$defs/string_array"},
+        "affected_constraint_ids": {"$ref": "#/$defs/string_array"},
+        "includes_mfidel": {"type": "boolean"},
+        "mfidel_atomicity_preserved": {"type": "boolean"},
+        "change_summary": {"type": "string", "minLength": 1}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "includes_mfidel": {"const": true}
+            },
+            "required": ["includes_mfidel"]
+          },
+          "then": {
+            "properties": {
+              "mfidel_atomicity_preserved": {"const": true}
+            }
+          }
+        }
+      ]
+    },
+    "truth_operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operation_type",
+        "payload"
+      ],
+      "properties": {
+        "operation_type": {"$ref": "#/$defs/operation_type"},
+        "payload": {"type": "object", "additionalProperties": true}
+      }
+    },
+    "admission_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "result_authority",
+        "requires_exact_result",
+        "can_mutate_truth",
+        "requires_governance_ref",
+        "requires_trace_ref"
+      ],
+      "properties": {
+        "result_authority": {
+          "type": "string",
+          "enum": ["advisory", "bounded", "exact_required"]
+        },
+        "requires_exact_result": {"type": "boolean"},
+        "can_mutate_truth": {"type": "boolean"},
+        "requires_governance_ref": {"type": "boolean"},
+        "requires_trace_ref": {"type": "boolean"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "can_mutate_truth": {"const": true}
+            },
+            "required": ["can_mutate_truth"]
+          },
+          "then": {
+            "properties": {
+              "result_authority": {"const": "exact_required"},
+              "requires_exact_result": {"const": true},
+              "requires_governance_ref": {"const": true},
+              "requires_trace_ref": {"const": true}
+            }
+          }
+        }
+      ]
+    },
+    "proof_obligation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "obligation_id",
+        "proof_kind",
+        "required_for_mutation"
+      ],
+      "properties": {
+        "obligation_id": {"type": "string", "minLength": 1},
+        "proof_kind": {
+          "type": "string",
+          "enum": [
+            "ValidityProof",
+            "InvalidityProof",
+            "ProjectionProof",
+            "ForcedValueProof",
+            "ContradictionProof",
+            "CommitProof"
+          ]
+        },
+        "required_for_mutation": {"type": "boolean"},
+        "notes": {"type": "string"}
+      }
+    }
+  }
+}

@@ -620,6 +620,8 @@ concept. Common entry points:
   are checked before they run.
 - [03_trace_and_replay.md](03_trace_and_replay.md) ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â how every action is
   recorded and can be replayed.
+- [74_truth_kernel_plane.md](74_truth_kernel_plane.md) -- the named internal
+  MAF Core truth-state kernel boundary.
 - Full architecture index: every `NN_*.md` file in this folder is one subsystem.
 
 For "where does responsibility start and stop" pictures inside this checkout,

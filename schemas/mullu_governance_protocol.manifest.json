@@ -1205,6 +1205,24 @@
       "surface": "trace"
     },
     {
+      "schema_id": "truth-candidate",
+      "path": "schemas/truth_candidate.schema.json",
+      "urn": "urn:mullusi:schema:mullu-truth-kernel:truth-candidate:1",
+      "surface": "truth-kernel"
+    },
+    {
+      "schema_id": "kernel-proof",
+      "path": "schemas/kernel_proof.schema.json",
+      "urn": "urn:mullusi:schema:mullu-truth-kernel:kernel-proof:1",
+      "surface": "truth-kernel"
+    },
+    {
+      "schema_id": "truth-commit-candidate",
+      "path": "schemas/truth_commit_candidate.schema.json",
+      "urn": "urn:mullusi:schema:mullu-truth-kernel:truth-commit-candidate:1",
+      "surface": "truth-kernel"
+    },
+    {
       "schema_id": "universal-construct",
       "path": "schemas/universal_construct.schema.json",
       "urn": "urn:mullusi:schema:universal-construct:1",
