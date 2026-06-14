@@ -1,9 +1,9 @@
 # ReadOnlyWorkerBinding Contract
 
-Purpose: select the first Foundation Mode read-only worker path and bind its authority, lease preflight, rehearsal receipt, failure receipt, verification, rollback, and recovery obligations without registering a live worker.
+Purpose: select the first Foundation Mode read-only worker path and bind its authority, lease preflight, rehearsal receipt, receipt-viewer projection, failure receipt, verification, rollback, and recovery obligations without registering a live worker.
 Governance scope: [OCE, RAG, CDCV, CQTE, UWMA, SRCA, PRS]
 Dependencies: `schemas/read_only_worker_binding.schema.json`, `schemas/read_only_worker_lease_preflight.schema.json`, `schemas/read_only_worker_rehearsal_receipt.schema.json`, `scripts/validate_read_only_worker_binding.py`, `scripts/validate_read_only_worker_lease_preflight.py`, `scripts/validate_read_only_worker_rehearsal_receipt.py`, `examples/read_only_worker_binding.foundation.json`, `examples/read_only_worker_lease_preflight.foundation.json`, `examples/read_only_worker_rehearsal_receipt.foundation.json`, `schemas/worker_mesh.schema.json`, `schemas/worker_failure_receipt.schema.json`, `schemas/temporal_lease_window_receipt.schema.json`.
-Invariants: selected worker path is `read_only_repo_inspection`; runtime dispatch is denied; temporal lease preflight is required before any later dispatch admission; local rehearsal evidence is dry-run only; external network, secrets, filesystem writes, connector authority, terminal closure, success claims, and raw output retention are denied; WorkerFailureReceipt remains mandatory for failed dispatch evidence; Mfidel atomicity is preserved.
+Invariants: selected worker path is `read_only_repo_inspection`; runtime dispatch is denied; temporal lease preflight is required before any later dispatch admission; local rehearsal evidence is dry-run only; console receipt projection is read-only; external network, secrets, filesystem writes, connector authority, terminal closure, success claims, and raw output retention are denied; WorkerFailureReceipt remains mandatory for failed dispatch evidence; Mfidel atomicity is preserved.
 
 ## 1. Boundary
 
@@ -64,6 +64,8 @@ Worker dispatch remains blocked until a later runtime proof thread binds an actu
 
 `ReadOnlyWorkerRehearsalReceipt` closes the local rehearsal-only evidence gap. It records dry-run inspected refs and path-hash evidence under local repository prefixes while keeping `dispatch_admitted = false`, `terminal_closure = false`, `success_claim_allowed = false`, and all external or mutation effects denied.
 
+The personal-assistant console read model binds the rehearsal receipt into its receipt panel through `receipts.viewer_binding`. This is a read-only projection only: it exposes the receipt id, schema ref, source fixture ref, worker path, dry-run mode, digest ref, and denial flags, while keeping runtime dispatch, filesystem writes, external effects, connector calls, terminal closure, and success claims false.
+
 ## 4. First-Worker Rationale
 
 `read_only_repo_inspection` is selected before search or document workers because it:
@@ -86,15 +88,17 @@ Run:
 python scripts/validate_read_only_worker_binding.py
 python scripts/validate_read_only_worker_lease_preflight.py
 python scripts/validate_read_only_worker_rehearsal_receipt.py
+python scripts/validate_personal_assistant_console_read_model.py
 python -m pytest tests/test_validate_read_only_worker_binding.py -q
 python -m pytest tests/test_validate_read_only_worker_lease_preflight.py -q
 python -m pytest tests/test_validate_read_only_worker_rehearsal_receipt.py -q
+python -m pytest tests/test_validate_personal_assistant_console_read_model.py tests/test_personal_assistant_console.py -q
 python scripts/validate_schemas.py
 python scripts/validate_protocol_manifest.py
 ```
 
 STATUS:
   Completeness: 100%
-  Invariants verified: first worker path selected, runtime dispatch denied, lease preflight required, local rehearsal receipt bound, network denied, secret access denied, filesystem writes denied, connector authority denied, terminal closure denied, success claims denied, raw output retention denied, temporal lease window receipt binding, worker failure receipt binding
+  Invariants verified: first worker path selected, runtime dispatch denied, lease preflight required, local rehearsal receipt bound, read-only receipt viewer projection bound, network denied, secret access denied, filesystem writes denied, connector authority denied, terminal closure denied, success claims denied, raw output retention denied, temporal lease window receipt binding, worker failure receipt binding
   Open issues: live worker runner, dispatch endpoint, and runtime receipt emission remain unregistered
-  Next action: bind rehearsal evidence into the future receipt viewer before enabling any worker runtime
+  Next action: design runtime receipt emission handoff before enabling any worker runtime

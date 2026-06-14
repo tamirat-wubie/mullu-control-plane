@@ -78,11 +78,12 @@
     "receipts": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["receipt_count", "items", "receipt_required_for_actions"],
+      "required": ["receipt_count", "items", "receipt_required_for_actions", "viewer_binding"],
       "properties": {
         "receipt_count": {"type": "integer", "minimum": 0},
         "items": {"type": "array", "items": {"type": "object"}},
-        "receipt_required_for_actions": {"const": true}
+        "receipt_required_for_actions": {"const": true},
+        "viewer_binding": {"$ref": "#/$defs/receipt_viewer_binding"}
       }
     },
     "skills": {
@@ -296,6 +297,40 @@
           "items": {"type": "string", "minLength": 1}
         },
         "next_action": {"type": "string", "minLength": 1}
+      }
+    },
+    "receipt_viewer_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "viewer_id",
+        "viewer_state",
+        "foundation_only",
+        "projection_count",
+        "projected_receipt_ids",
+        "source_receipt_refs",
+        "read_only_worker_rehearsal_bound",
+        "runtime_dispatch_allowed",
+        "filesystem_write_allowed",
+        "external_effect_allowed",
+        "connector_call_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed"
+      ],
+      "properties": {
+        "viewer_id": {"const": "foundation_receipt_viewer_binding"},
+        "viewer_state": {"const": "foundation_read_only"},
+        "foundation_only": {"const": true},
+        "projection_count": {"type": "integer", "minimum": 0},
+        "projected_receipt_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "source_receipt_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "read_only_worker_rehearsal_bound": {"type": "boolean"},
+        "runtime_dispatch_allowed": {"const": false},
+        "filesystem_write_allowed": {"const": false},
+        "external_effect_allowed": {"const": false},
+        "connector_call_allowed": {"const": false},
+        "terminal_closure_allowed": {"const": false},
+        "success_claim_allowed": {"const": false}
       }
     },
     "effect_boundary": {

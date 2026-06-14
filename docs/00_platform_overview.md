@@ -44,7 +44,7 @@ and receipt-backed until a later status witness promotes the project.
 - `SearchReceipt Contract` is a read-only post-decision search receipt that records evidence metadata, freshness results, citations, conflicts, retrieval errors, and retrieval safety outcomes.
 - `WorkerFailureReceipt Contract` is a non-terminal post-dispatch worker receipt that records failed steps, partial effects, unknown effects, rollback obligations, recovery obligations, and no-success guards.
 - `ReadOnlyWorkerBinding Contract` selects local repo inspection as the first worker path and binds worker mesh plus failure receipts while denying runtime dispatch, network, secrets, writes, connector authority, terminal closure, and raw output retention.
-- `ReadOnlyWorkerRehearsalReceipt Contract` records local dry-run evidence for the selected read-only worker path while still denying runtime dispatch, external effects, filesystem writes, connector calls, raw output retention, success claims, and terminal closure.
+- `ReadOnlyWorkerRehearsalReceipt Contract` records local dry-run evidence for the selected read-only worker path while still denying runtime dispatch, external effects, filesystem writes, connector calls, raw output retention, success claims, and terminal closure; the personal-assistant console receipt panel now carries a read-only projection of that rehearsal evidence.
 - `MCOI Runtime` owns computer-operation-specific observation and execution runtime surfaces.
 - `Mullu Govern` remains product-facing and explains governed execution to users and buyers.
 - `Mullu Control Plane` remains operator-facing and consumes traces, approvals, and status from the shared foundation.

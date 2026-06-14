@@ -78,6 +78,31 @@ FALSE_TEAMOPS_FIELDS = frozenset(
         "provider_call_allowed",
     }
 )
+FALSE_RECEIPT_VIEWER_FIELDS = frozenset(
+    {
+        "runtime_dispatch_allowed",
+        "filesystem_write_allowed",
+        "external_effect_allowed",
+        "connector_call_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed",
+    }
+)
+FALSE_REHEARSAL_RECEIPT_PROJECTION_FIELDS = frozenset(
+    {
+        "dispatch_admitted",
+        "runtime_dispatch_allowed",
+        "filesystem_write_allowed",
+        "external_effect_allowed",
+        "connector_call_allowed",
+        "terminal_closure_allowed",
+        "success_claim_allowed",
+    }
+)
+READ_ONLY_WORKER_REHEARSAL_RECEIPT_KIND = "read_only_worker_rehearsal_receipt"
+READ_ONLY_WORKER_REHEARSAL_RECEIPT_ID = "read-only-worker-rehearsal-receipt-foundation-repo-inspection-20260614"
+READ_ONLY_WORKER_REHEARSAL_RECEIPT_REF = "examples/read_only_worker_rehearsal_receipt.foundation.json"
+READ_ONLY_WORKER_REHEARSAL_SCHEMA_REF = "schemas/read_only_worker_rehearsal_receipt.schema.json"
 SECRET_VALUE_PATTERNS = (
     re.compile(r"sk_live_[A-Za-z0-9]+"),
     re.compile(r"ghp_[A-Za-z0-9]+"),
@@ -195,6 +220,7 @@ def _validate_console_semantics(read_model: dict[str, Any]) -> tuple[str, ...]:
     memory_metadata = _mapping(read_model.get("memory")).get("metadata")
     _require_false_fields(memory_metadata, FALSE_MEMORY_FIELDS, "memory.metadata", errors)
     _require_false_fields(read_model.get("teamops"), FALSE_TEAMOPS_FIELDS, "teamops", errors)
+    _validate_receipt_viewer(read_model, errors)
 
     memory = _mapping(read_model.get("memory"))
     if memory.get("candidate_only") is not True:
@@ -221,6 +247,86 @@ def _validate_console_semantics(read_model: dict[str, Any]) -> tuple[str, ...]:
     if private_policy.get("secret_values_serialized") is not False:
         errors.append("private_payload_policy.secret_values_serialized must be false")
     return tuple(errors)
+
+
+def _validate_receipt_viewer(read_model: dict[str, Any], errors: list[str]) -> None:
+    receipts = _mapping(read_model.get("receipts"))
+    receipt_items = receipts.get("items")
+    if not isinstance(receipt_items, list):
+        errors.append("receipts.items must be a list")
+        receipt_items = []
+    if receipts.get("receipt_count") != len(receipt_items):
+        errors.append("receipts.receipt_count must match receipts.items length")
+
+    sections = _mapping(read_model.get("sections"))
+    receipt_section = _mapping(sections.get("receipts"))
+    if receipt_section.get("item_count") != len(receipt_items):
+        errors.append("sections.receipts.item_count must match receipts.items length")
+
+    viewer_binding = _mapping(receipts.get("viewer_binding"))
+    if not viewer_binding:
+        errors.append("receipts.viewer_binding must be an object")
+        return
+    _require_false_fields(viewer_binding, FALSE_RECEIPT_VIEWER_FIELDS, "receipts.viewer_binding", errors)
+    if viewer_binding.get("viewer_state") != "foundation_read_only":
+        errors.append("receipts.viewer_binding.viewer_state must be foundation_read_only")
+    if viewer_binding.get("foundation_only") is not True:
+        errors.append("receipts.viewer_binding.foundation_only must be true")
+
+    projected_ids = _string_list(viewer_binding.get("projected_receipt_ids"))
+    source_refs = _string_list(viewer_binding.get("source_receipt_refs"))
+    item_ids = sorted(
+        str(item["receipt_id"])
+        for item in receipt_items
+        if isinstance(item, dict) and isinstance(item.get("receipt_id"), str) and item.get("receipt_id")
+    )
+    item_source_refs = sorted(
+        str(item["source_receipt_ref"])
+        for item in receipt_items
+        if isinstance(item, dict)
+        and isinstance(item.get("source_receipt_ref"), str)
+        and item.get("source_receipt_ref")
+    )
+    if viewer_binding.get("projection_count") != len(item_ids):
+        errors.append("receipts.viewer_binding.projection_count must match projected receipt count")
+    if projected_ids != item_ids:
+        errors.append("receipts.viewer_binding.projected_receipt_ids must match receipt item ids")
+    if source_refs != item_source_refs:
+        errors.append("receipts.viewer_binding.source_receipt_refs must match receipt item source refs")
+
+    rehearsal_items = [
+        item
+        for item in receipt_items
+        if isinstance(item, dict) and item.get("receipt_kind") == READ_ONLY_WORKER_REHEARSAL_RECEIPT_KIND
+    ]
+    if bool(rehearsal_items) != bool(viewer_binding.get("read_only_worker_rehearsal_bound")):
+        errors.append("receipts.viewer_binding.read_only_worker_rehearsal_bound must reflect receipt items")
+    for index, item in enumerate(rehearsal_items):
+        _validate_read_only_worker_rehearsal_projection(index, item, errors)
+
+
+def _validate_read_only_worker_rehearsal_projection(index: int, item: dict[str, Any], errors: list[str]) -> None:
+    label = f"receipts.items[{index}]"
+    expected_values = {
+        "receipt_id": READ_ONLY_WORKER_REHEARSAL_RECEIPT_ID,
+        "source_receipt_ref": READ_ONLY_WORKER_REHEARSAL_RECEIPT_REF,
+        "source_schema_ref": READ_ONLY_WORKER_REHEARSAL_SCHEMA_REF,
+        "binding_ref": "examples/read_only_worker_binding.foundation.json",
+        "lease_preflight_ref": "examples/read_only_worker_lease_preflight.foundation.json",
+        "selected_worker_path": "read_only_repo_inspection",
+        "worker_id": "worker_local_read_only_repo_inspection",
+        "rehearsal_mode": "LOCAL_DRY_RUN",
+        "solver_outcome": "SolvedVerified",
+    }
+    for field_name, expected_value in expected_values.items():
+        if item.get(field_name) != expected_value:
+            errors.append(f"{label}.{field_name} must be {expected_value}")
+    _require_false_fields(item, FALSE_REHEARSAL_RECEIPT_PROJECTION_FIELDS, label, errors)
+    output_digest = item.get("output_digest")
+    if not isinstance(output_digest, str) or not output_digest.startswith("sha256:"):
+        errors.append(f"{label}.output_digest must be a sha256 digest reference")
+    if item.get("evidence_ref_count") != 8:
+        errors.append(f"{label}.evidence_ref_count must be 8")
 
 
 def _require_false_fields(payload: Any, fields: frozenset[str], label: str, errors: list[str]) -> None:
@@ -252,6 +358,12 @@ def _scan_private_or_secret_payload(payload: Any, errors: list[str], *, path: st
 
 def _mapping(payload: Any) -> dict[str, Any]:
     return dict(payload) if isinstance(payload, dict) else {}
+
+
+def _string_list(payload: Any) -> list[str]:
+    if not isinstance(payload, list):
+        return []
+    return sorted(str(item) for item in payload if isinstance(item, str) and item)
 
 
 def _load_json_object(path: Path, label: str, errors: list[str]) -> dict[str, Any]:
