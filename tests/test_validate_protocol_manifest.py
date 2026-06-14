@@ -177,6 +177,7 @@ def test_protocol_manifest_indexes_durable_gmail_oauth_operator_handoff() -> Non
     entries = {entry["schema_id"]: entry for entry in manifest["schemas"]}
     handoff_entry = entries["durable-gmail-oauth-operator-handoff"]
     team_ops_entry = entries["team-ops-shared-inbox-operator-handoff"]
+    team_ops_binding_entry = entries["team-ops-shared-inbox-live-probe-approval-binding"]
     team_ops_authority_entry = entries["team-ops-shared-inbox-live-probe-authority"]
     team_ops_input_entry = entries["team-ops-shared-inbox-live-probe-operator-input-request"]
 
@@ -187,6 +188,13 @@ def test_protocol_manifest_indexes_durable_gmail_oauth_operator_handoff() -> Non
     assert team_ops_entry["path"] == "schemas/team_ops_shared_inbox_operator_handoff.schema.json"
     assert team_ops_entry["urn"] == "urn:mullusi:schema:team-ops-shared-inbox-operator-handoff:1"
     assert team_ops_entry["surface"] == "team_ops"
+    assert team_ops_binding_entry["path"] == (
+        "schemas/team_ops_shared_inbox_live_probe_approval_binding.schema.json"
+    )
+    assert team_ops_binding_entry["urn"] == (
+        "urn:mullusi:schema:team-ops-shared-inbox-live-probe-approval-binding:1"
+    )
+    assert team_ops_binding_entry["surface"] == "team_ops"
     assert team_ops_authority_entry["path"] == "schemas/team_ops_shared_inbox_live_probe_authority.schema.json"
     assert team_ops_authority_entry["urn"] == "urn:mullusi:schema:team-ops-shared-inbox-live-probe-authority:1"
     assert team_ops_authority_entry["surface"] == "team_ops"

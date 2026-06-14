@@ -20,8 +20,8 @@ This packet is the operator entry point for final promotion validation. It binds
 | Readiness level | `pilot-governed-core` |
 | Capability capsules | 13 |
 | Governed capabilities | 80 |
-| Aggregate closure actions | 9 |
-| Approval-required actions | 7 |
+| Aggregate closure actions | 11 |
+| Approval-required actions | 8 |
 | Closure plan schema validation | `ok=true` |
 | Closure plan drift validation | `ok=true` |
 | Terminal certificate minting | 6 minted, 0 blocked; adapter evidence and upstream readiness remain open |

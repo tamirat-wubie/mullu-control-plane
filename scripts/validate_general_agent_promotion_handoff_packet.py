@@ -54,6 +54,8 @@ PACKET_BLOCKED_ADAPTER_EVIDENCE_BLOCKERS = (
     "browser_live_evidence_missing",
     "voice_dependency_missing:OPENAI_API_KEY",
     "voice_live_evidence_missing",
+    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+    "email_calendar_live_evidence_missing",
 )
 
 REQUIRED_ENTRY_POINTS = {
@@ -699,8 +701,11 @@ def _packet_blocked_adapter_evidence_payload() -> dict[str, Any]:
             },
             {
                 "adapter_id": "communication.email_calendar_worker",
-                "blockers": [],
-                "status": "closed",
+                "blockers": [
+                    "email_calendar_dependency_missing:EMAIL_CALENDAR_CONNECTOR_TOKEN",
+                    "email_calendar_live_evidence_missing",
+                ],
+                "status": "not_closed",
             },
         ],
         "blockers": list(PACKET_BLOCKED_ADAPTER_EVIDENCE_BLOCKERS),

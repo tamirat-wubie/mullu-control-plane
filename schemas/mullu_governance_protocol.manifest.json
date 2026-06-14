@@ -575,6 +575,12 @@
       "surface": "team_ops"
     },
     {
+      "schema_id": "team-ops-shared-inbox-live-probe-approval-binding",
+      "path": "schemas/team_ops_shared_inbox_live_probe_approval_binding.schema.json",
+      "urn": "urn:mullusi:schema:team-ops-shared-inbox-live-probe-approval-binding:1",
+      "surface": "team_ops"
+    },
+    {
       "schema_id": "team-ops-shared-inbox-live-probe-authority",
       "path": "schemas/team_ops_shared_inbox_live_probe_authority.schema.json",
       "urn": "urn:mullusi:schema:team-ops-shared-inbox-live-probe-authority:1",
