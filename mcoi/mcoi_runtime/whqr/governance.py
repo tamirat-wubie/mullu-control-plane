@@ -29,6 +29,7 @@ def build_policy_decision(
     gate_result = evaluate(expr, context)
     status = _status(static_report.passed, binding_report, gate_result)
     document = WHQRDocument(root=expr)
+    expr_json = document.canonical_json()
     expr_hash = document.canonical_hash()
     reason_code = _reason_code(status, static_report.passed, binding_report, gate_result)
     reason = DecisionReason(
@@ -68,6 +69,7 @@ def build_policy_decision(
         issued_at,
         metadata={
             "reason_code": reason_code,
+            "whqr_canonical_json": expr_json,
             "whqr_canonical_hash": expr_hash,
             "whqr_semantics_hash": document.semantics_hash,
             "whqr_version": document.whqr_version,
@@ -91,6 +93,7 @@ def build_guard_verdict(decision: PolicyDecision) -> GuardVerdict:
             "subject_id": decision.subject_id,
             "issued_at": decision.issued_at,
             "decision_metadata": decision.metadata,
+            "whqr_canonical_json": decision.metadata.get("whqr_canonical_json"),
             "whqr_canonical_hash": decision.metadata.get("whqr_canonical_hash"),
             "whqr_semantics_hash": decision.metadata.get("whqr_semantics_hash"),
             "whqr_version": decision.metadata.get("whqr_version"),
