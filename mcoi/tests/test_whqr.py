@@ -191,6 +191,11 @@ def test_contract_validation_and_metadata_fail_closed() -> None:
         WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="invoice"), metadata=[])  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="metadata must be a mapping"):
         WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="invoice"), metadata="")  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="root and expr"):
+        WHQRDocument(
+            root=WHQRNode(role=WHRole.WHAT, target="invoice"),
+            expr=WHQRNode(role=WHRole.WHO, target="approver"),
+        )
 
     assert ADVERB_THRESHOLDS[Adverb.ALWAYS][0] >= ADVERB_THRESHOLDS[Adverb.OFTEN][0]
 

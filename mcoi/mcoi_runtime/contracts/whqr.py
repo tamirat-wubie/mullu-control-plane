@@ -270,6 +270,8 @@ class WHQRDocument:
         source_ref: str | None = None,
         metadata: Mapping[str, Any] | None = None,
     ) -> None:
+        if root is not None and expr is not None:
+            raise ValueError("root and expr cannot both be provided")
         value = root if root is not None else expr
         if not isinstance(value, (WHQRNode, LogicalExpr, ConnectorExpr)):
             raise ValueError("root must be a WHQR expression")
