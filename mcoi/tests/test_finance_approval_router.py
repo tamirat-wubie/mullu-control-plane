@@ -21,7 +21,7 @@ from mcoi_runtime.app.routers.finance_approval import (
     reset_finance_approval_packets_for_tests,
     router,
 )
-from mcoi_runtime.app.server_http import include_default_routers
+from mcoi_runtime.app.server_http import include_default_routers, iter_effective_app_routes
 from mcoi_runtime.persistence.finance_approval_store import FinanceApprovalPacketStore
 
 
@@ -307,7 +307,7 @@ def test_default_routers_include_finance_approval_paths() -> None:
     deps.set("finance_approval_store", FinanceApprovalPacketStore())
     app = FastAPI()
     include_default_routers(app)
-    paths = {route.path for route in app.routes}
+    paths = {route.path for route in iter_effective_app_routes(app)}
 
     assert "/api/v1/finance/approval-packets" in paths
     assert "/api/v1/finance/approval-packets/operator/read-model" in paths

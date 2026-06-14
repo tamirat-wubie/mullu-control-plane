@@ -25,6 +25,7 @@ from fastapi.testclient import TestClient
 
 from mcoi_runtime.app.routers.ops import diagnostics
 from mcoi_runtime.app.server import app
+from mcoi_runtime.app.server_http import iter_effective_app_routes
 
 client = TestClient(app, raise_server_exceptions=False)
 
@@ -36,7 +37,7 @@ _EXPENSIVE_PATHS = {"/api/v1/ops/imports", "/api/v1/ops/benchmarks"}
 
 def _get_paths() -> list[str]:
     paths: list[str] = []
-    for route in app.routes:
+    for route in iter_effective_app_routes(app):
         methods = getattr(route, "methods", None)
         path = getattr(route, "path", "")
         if methods and "GET" in methods and path.startswith("/api/") and path not in _EXPENSIVE_PATHS:

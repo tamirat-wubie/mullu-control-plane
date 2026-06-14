@@ -25,10 +25,12 @@ if str(MCOI_ROOT) not in sys.path:
     sys.path.insert(0, str(MCOI_ROOT))
 
 from fastapi import FastAPI  # noqa: E402
-from fastapi.routing import APIRoute  # noqa: E402
 
 from mcoi_runtime.app.middleware import EXEMPT_PATHS, GovernanceMiddleware  # noqa: E402
-from mcoi_runtime.app.server_http import include_default_routers  # noqa: E402
+from mcoi_runtime.app.server_http import (  # noqa: E402
+    include_default_routers,
+    iter_effective_app_routes,
+)
 
 GOVERNED_API_PREFIX = "/api/"
 API_V1_PREFIX = "/api/v1"
@@ -89,12 +91,14 @@ def build_guard_chain_coverage_report() -> dict[str, Any]:
     }
 
 
-def _api_v1_routes(app: FastAPI) -> list[APIRoute]:
+def _api_v1_routes(app: FastAPI) -> list[Any]:
     return sorted(
         (
             route
-            for route in app.routes
-            if isinstance(route, APIRoute) and route.path.startswith(API_V1_PREFIX)
+            for route in iter_effective_app_routes(app)
+            if getattr(route, "path", "").startswith(API_V1_PREFIX)
+            and hasattr(route, "methods")
+            and hasattr(route, "endpoint")
         ),
         key=lambda route: route.path,
     )
