@@ -219,6 +219,7 @@ def test_protocol_manifest_indexes_durable_gmail_oauth_operator_handoff() -> Non
     team_ops_approval_decision_entry = entries["team-ops-shared-inbox-approval-decision-receipt"]
     team_ops_send_preparation_entry = entries["team-ops-shared-inbox-send-preparation-receipt"]
     team_ops_send_execution_entry = entries["team-ops-shared-inbox-send-execution-receipt"]
+    team_ops_sent_message_observation_entry = entries["team-ops-shared-inbox-sent-message-observation-receipt"]
 
     assert validate_protocol_manifest(manifest) == []
     assert handoff_entry["path"] == "schemas/durable_gmail_oauth_operator_handoff.schema.json"
@@ -282,6 +283,13 @@ def test_protocol_manifest_indexes_durable_gmail_oauth_operator_handoff() -> Non
         "urn:mullusi:schema:team-ops-shared-inbox-send-execution-receipt:1"
     )
     assert team_ops_send_execution_entry["surface"] == "team_ops"
+    assert team_ops_sent_message_observation_entry["path"] == (
+        "schemas/team_ops_shared_inbox_sent_message_observation_receipt.schema.json"
+    )
+    assert team_ops_sent_message_observation_entry["urn"] == (
+        "urn:mullusi:schema:team-ops-shared-inbox-sent-message-observation-receipt:1"
+    )
+    assert team_ops_sent_message_observation_entry["surface"] == "team_ops"
 
 
 def test_protocol_manifest_indexes_deployment_orchestration_validation() -> None:

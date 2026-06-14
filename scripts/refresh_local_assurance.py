@@ -7,9 +7,9 @@ Governance scope: document adapter receipt, durable Gmail OAuth blocked
 handoff receipts, TeamOps shared inbox blocked handoff, approval binding,
 probe-authority, operator-input request, live-probe receipt, observation
 routing receipt, approval queue receipt, approval decision receipt, and
-send-preparation receipt, send-execution receipt, aggregate adapter evidence,
-proof coverage witness, protocol manifest validation, and finance proof-pilot
-readiness.
+send-preparation receipt, send-execution receipt, sent-message observation
+receipt, aggregate adapter evidence, proof coverage witness, protocol manifest
+validation, and finance proof-pilot readiness.
 Dependencies: repository-local assurance scripts and Python subprocess.
 Invariants:
   - The default step set performs no external writes and requires no secrets.
@@ -21,8 +21,9 @@ Invariants:
     binding, read-only probe authority, operator-input request, live-probe receipt,
     observation routing receipt, approval queue receipt, approval decision
     receipt, send-preparation receipt, and blocked send-execution receipt
-    without provider calls, mailbox writes, drafts, producer-made approval
-    decisions, local send execution, or sends.
+    plus blocked sent-message observation receipt without provider calls,
+    mailbox writes, drafts, producer-made approval decisions, local send
+    execution, observation, replay, or sends.
   - Each step returns an explicit command receipt; failures are not hidden.
 """
 
@@ -389,6 +390,32 @@ LOCAL_ASSURANCE_STEPS: tuple[AssuranceStep, ...] = (
             "--json",
         ),
         purpose="validate blocked TeamOps send-execution receipt without provider mutation claim",
+    ),
+    AssuranceStep(
+        name="team_ops_shared_inbox_sent_message_observation_receipt",
+        command=(
+            sys.executable,
+            "scripts/produce_team_ops_shared_inbox_sent_message_observation_receipt.py",
+            "--send-execution-receipt",
+            ".change_assurance/team_ops_shared_inbox_send_execution_receipt.json",
+            "--output",
+            ".change_assurance/team_ops_shared_inbox_sent_message_observation_receipt.json",
+            "--json",
+        ),
+        purpose="emit blocked TeamOps sent-message observation receipt without provider observation or replay claim",
+    ),
+    AssuranceStep(
+        name="team_ops_shared_inbox_sent_message_observation_receipt_validation",
+        command=(
+            sys.executable,
+            "scripts/validate_team_ops_shared_inbox_sent_message_observation_receipt.py",
+            "--receipt",
+            ".change_assurance/team_ops_shared_inbox_sent_message_observation_receipt.json",
+            "--output",
+            ".change_assurance/team_ops_shared_inbox_sent_message_observation_receipt_validation.json",
+            "--json",
+        ),
+        purpose="validate blocked TeamOps sent-message observation receipt without terminal closure claim",
     ),
     AssuranceStep(
         name="capability_adapter_evidence",
