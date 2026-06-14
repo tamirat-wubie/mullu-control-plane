@@ -294,7 +294,19 @@ class PersonalAssistantMemoryObservationLedger:
             "memory_types": sorted({str(candidate.observation["memory_type"]) for candidate in candidates}),
             "live_memory_write_allowed": False,
             "nested_mind_live_activation_allowed": False,
+            "raw_private_payload_storage_allowed": False,
+            "secret_value_storage_allowed": False,
+            "candidate_only": True,
             "candidates": [candidate.as_dict() for candidate in candidates],
+            "metadata": {
+                "foundation_only": True,
+                "ledger_projection": "read_model",
+                "persistence_boundary": "stateless_unless_hosted_store_is_explicitly_bound",
+                "live_memory_write_allowed": False,
+                "nested_mind_live_activation_allowed": False,
+                "raw_private_payload_storage_allowed": False,
+                "secret_value_storage_allowed": False,
+            },
         }
 
 

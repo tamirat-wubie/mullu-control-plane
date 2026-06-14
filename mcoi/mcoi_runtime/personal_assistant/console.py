@@ -53,6 +53,8 @@ _ALLOWED_POLICY_FIELD_NAMES = frozenset(
         "connector_payload_projection",
         "chat_log_projection",
         "body_projection",
+        "raw_private_payload_storage_allowed",
+        "secret_value_storage_allowed",
     }
 )
 _BLOCKED_ACTIONS = (
@@ -285,7 +287,19 @@ def _empty_memory_model() -> dict[str, Any]:
         "memory_types": [],
         "live_memory_write_allowed": False,
         "nested_mind_live_activation_allowed": False,
+        "raw_private_payload_storage_allowed": False,
+        "secret_value_storage_allowed": False,
+        "candidate_only": True,
         "candidates": [],
+        "metadata": {
+            "foundation_only": True,
+            "ledger_projection": "read_model",
+            "persistence_boundary": "stateless_unless_hosted_store_is_explicitly_bound",
+            "live_memory_write_allowed": False,
+            "nested_mind_live_activation_allowed": False,
+            "raw_private_payload_storage_allowed": False,
+            "secret_value_storage_allowed": False,
+        },
     }
 
 

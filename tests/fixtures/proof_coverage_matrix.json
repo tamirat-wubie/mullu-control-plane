@@ -997,11 +997,11 @@
   "generated_by": "scripts/proof_coverage_matrix.py",
   "route_coverage": {
     "by_coverage_state": {
-      "proven": 266,
+      "proven": 268,
       "unproven": 0,
       "witnessed": 160
     },
-    "route_count": 426,
+    "route_count": 428,
     "routes": [
       {
         "coverage_state": "witnessed",
@@ -2251,6 +2251,16 @@
       {
         "coverage_state": "proven",
         "route": "/api/v1/personal-assistant/approval-queue/preview",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/memory-observations",
+        "surface_id": "assistant_kernel_planning"
+      },
+      {
+        "coverage_state": "proven",
+        "route": "/api/v1/personal-assistant/memory-observations/preview",
         "surface_id": "assistant_kernel_planning"
       },
       {
@@ -3660,16 +3670,23 @@
         "mcoi/mcoi_runtime/assistant_kernel/identity.py",
         "mcoi/mcoi_runtime/personal_assistant/planner.py",
         "mcoi/mcoi_runtime/personal_assistant/approval.py",
+        "mcoi/mcoi_runtime/personal_assistant/memory.py",
         "mcoi/tests/test_assistant_router.py",
         "tests/test_assistant_kernel.py",
         "tests/test_gateway/test_personal_assistant_public_routes.py",
         "tests/test_personal_assistant_approval_queue.py",
+        "tests/test_personal_assistant_memory.py",
+        "tests/test_personal_assistant_memory_runtime.py",
         "tests/test_personal_assistant_planner.py",
         "schemas/personal_assistant_approval_queue.schema.json",
+        "schemas/personal_assistant_memory_observation.schema.json",
+        "schemas/personal_assistant_memory_read_model.schema.json",
         "examples/personal_assistant_approval_queue_read_model.json",
-        "scripts/validate_personal_assistant_approval_queue.py"
+        "examples/personal_assistant_memory_read_model.json",
+        "scripts/validate_personal_assistant_approval_queue.py",
+        "scripts/validate_personal_assistant_memory_observation.py"
       ],
-      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, plan, and receipt projections without executing external effects.",
+      "notes": "Assistant kernel and personal-assistant routes expose governed profile and skill read models, compile FinanceOps/TeamOps plans, and preview personal-assistant intent, WHQR, approval queue, memory observation, plan, and receipt projections without executing external effects.",
       "representative_paths": [
         "/api/v1/assistant/profiles",
         "/api/v1/assistant/finance-ops/plans",
@@ -3677,7 +3694,9 @@
         "/api/v1/personal-assistant/skills",
         "/api/v1/personal-assistant/requests/preview",
         "/api/v1/personal-assistant/approval-queue",
-        "/api/v1/personal-assistant/approval-queue/preview"
+        "/api/v1/personal-assistant/approval-queue/preview",
+        "/api/v1/personal-assistant/memory-observations",
+        "/api/v1/personal-assistant/memory-observations/preview"
       ],
       "request_proof": "request_proof",
       "runtime_witness_anchor_aliases": {
@@ -3707,6 +3726,17 @@
           "gateway_personal_assistant_approval_queue_read_model_is_empty_and_safe",
           "gateway_personal_assistant_approval_queue_preview_records_pending_packet"
         ],
+        "personal_assistant_memory_observation_preview_candidate_only": [
+          "prepare_memory_observation_emits_schema_ready_candidate_and_receipt",
+          "personal_assistant_memory_read_model_validator_rejects_live_write_claim",
+          "gateway_personal_assistant_memory_preview_prepares_candidate_without_write",
+          "gateway_personal_assistant_memory_preview_rejects_raw_payload_and_activation"
+        ],
+        "personal_assistant_memory_observation_read_model_public_safe": [
+          "personal_assistant_memory_read_model_validator_accepts_example",
+          "memory_observation_ledger_indexes_candidates_without_live_memory_write",
+          "gateway_personal_assistant_memory_read_model_is_empty_and_safe"
+        ],
         "personal_assistant_preview_blocks_with_whqr_step": [
           "personal_assistant_preview_blocks_unknown_request_with_whqr_step",
           "preview_planner_blocks_unknown_request_with_clarification_skill"
@@ -3733,7 +3763,9 @@
         "personal_assistant_preview_blocks_with_whqr_step",
         "personal_assistant_preview_errors_sanitized",
         "personal_assistant_approval_queue_read_model_public_safe",
-        "personal_assistant_approval_queue_decision_deferred"
+        "personal_assistant_approval_queue_decision_deferred",
+        "personal_assistant_memory_observation_read_model_public_safe",
+        "personal_assistant_memory_observation_preview_candidate_only"
       ],
       "surface_id": "assistant_kernel_planning"
     },
@@ -10945,8 +10977,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1430,
-    "runtime_witness_count": 1430,
+    "exact_test_anchor_count": 1432,
+    "runtime_witness_count": 1432,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -11645,10 +11677,27 @@
               "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_approval_queue_approved_still_defers_execution"
             ],
             "witness": "personal_assistant_approval_queue_decision_deferred"
+          },
+          {
+            "anchors": [
+              "tests/test_personal_assistant_memory.py::test_personal_assistant_memory_read_model_validator_accepts_example",
+              "tests/test_personal_assistant_memory_runtime.py::test_memory_observation_ledger_indexes_candidates_without_live_memory_write",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_memory_read_model_is_empty_and_safe"
+            ],
+            "witness": "personal_assistant_memory_observation_read_model_public_safe"
+          },
+          {
+            "anchors": [
+              "tests/test_personal_assistant_memory_runtime.py::test_prepare_memory_observation_emits_schema_ready_candidate_and_receipt",
+              "tests/test_personal_assistant_memory.py::test_personal_assistant_memory_read_model_validator_rejects_live_write_claim",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_memory_preview_prepares_candidate_without_write",
+              "tests/test_gateway/test_personal_assistant_public_routes.py::test_gateway_personal_assistant_memory_preview_rejects_raw_payload_and_activation"
+            ],
+            "witness": "personal_assistant_memory_observation_preview_candidate_only"
           }
         ],
-        "exact_test_anchor_count": 11,
-        "runtime_witness_count": 11,
+        "exact_test_anchor_count": 13,
+        "runtime_witness_count": 13,
         "surface_id": "assistant_kernel_planning",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []

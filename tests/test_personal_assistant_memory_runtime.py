@@ -36,6 +36,7 @@ from scripts.validate_schemas import _load_schema, _validate_schema_instance
 
 ROOT = Path(__file__).resolve().parent.parent
 MEMORY_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_memory_observation.schema.json"
+MEMORY_READ_MODEL_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_memory_read_model.schema.json"
 RECEIPT_SCHEMA_PATH = ROOT / "schemas" / "personal_assistant_receipt.schema.json"
 OBSERVED_AT = "2026-06-14T00:00:00+00:00"
 
@@ -86,9 +87,13 @@ def test_memory_observation_ledger_indexes_candidates_without_live_memory_write(
     ledger.append(project_state)
     read_model = ledger.read_model()
 
+    assert _validate_schema_instance(_load_schema(MEMORY_READ_MODEL_SCHEMA_PATH), read_model) == []
     assert read_model["candidate_count"] == 2
     assert read_model["live_memory_write_allowed"] is False
     assert read_model["nested_mind_live_activation_allowed"] is False
+    assert read_model["raw_private_payload_storage_allowed"] is False
+    assert read_model["secret_value_storage_allowed"] is False
+    assert read_model["candidate_only"] is True
     assert read_model["memory_types"] == ["preference", "project_state"]
     assert ledger.get("pa_memory_preference_runtime_001").observation["mutable"] is True
     assert "pa_memory_project_state_001" in read_model["memory_observation_ids"]

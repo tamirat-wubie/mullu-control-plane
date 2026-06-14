@@ -173,6 +173,79 @@ def test_gateway_personal_assistant_approval_queue_approved_still_defers_executi
     assert payload["effect_boundary"]["external_send_allowed"] is False
 
 
+def test_gateway_personal_assistant_memory_read_model_is_empty_and_safe() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.get("/api/v1/personal-assistant/memory-observations")
+    post_response = client.post("/api/v1/personal-assistant/memory-observations", json={})
+    payload = response.json()
+    read_model = payload["memory_read_model"]
+
+    assert response.status_code == 200
+    assert post_response.status_code == 405
+    assert payload["governed"] is True
+    assert payload["execution_allowed"] is False
+    assert payload["live_memory_write_allowed"] is False
+    assert payload["nested_mind_live_activation_allowed"] is False
+    assert read_model["candidate_count"] == 0
+    assert read_model["candidates"] == []
+    assert read_model["candidate_only"] is True
+    assert read_model["metadata"]["foundation_only"] is True
+    assert read_model["metadata"]["live_memory_write_allowed"] is False
+
+
+def test_gateway_personal_assistant_memory_preview_prepares_candidate_without_write() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+
+    response = client.post(
+        "/api/v1/personal-assistant/memory-observations/preview",
+        json=_memory_preview_payload(),
+    )
+    payload = response.json()
+    read_model = payload["memory_read_model"]
+    receipt = payload["receipt"]
+
+    assert response.status_code == 200
+    assert payload["governed"] is True
+    assert payload["execution_allowed"] is False
+    assert payload["outcome"] == "SolvedVerified"
+    assert payload["effect_boundary"]["live_memory_write_allowed"] is False
+    assert payload["effect_boundary"]["nested_mind_live_activation_allowed"] is False
+    assert payload["memory_observation"]["observation"]["nested_mind_status"] == "staging_only"
+    assert "live_memory_not_written" in receipt["actions_not_taken"]
+    assert "nested_mind_not_activated" in receipt["actions_not_taken"]
+    assert read_model["candidate_count"] == 1
+    assert read_model["live_memory_write_allowed"] is False
+    assert read_model["secret_value_storage_allowed"] is False
+
+
+def test_gateway_personal_assistant_memory_preview_rejects_raw_payload_and_activation() -> None:
+    client = TestClient(create_gateway_app(platform=StubPlatform()))
+    raw_payload = {
+        **_memory_preview_payload(),
+        "metadata": {"raw_chat_log": "private transcript"},
+    }
+    activation_payload = {
+        **_memory_preview_payload(),
+        "memory_observation_id": "pa_memory_gateway_activation_001",
+        "nested_mind_status": "awaiting_evidence",
+    }
+
+    raw_response = client.post("/api/v1/personal-assistant/memory-observations/preview", json=raw_payload)
+    activation_response = client.post(
+        "/api/v1/personal-assistant/memory-observations/preview",
+        json=activation_payload,
+    )
+    serialized_error = json.dumps(raw_response.json(), sort_keys=True)
+
+    assert raw_response.status_code == 400
+    assert activation_response.status_code == 400
+    assert raw_response.json()["detail"]["governed"] is True
+    assert activation_response.json()["detail"]["error_code"] == "invalid_personal_assistant_memory_observation_preview"
+    assert "private transcript" not in serialized_error
+    assert "raw_chat_log" not in serialized_error
+
+
 def _approval_preview_payload() -> dict[str, object]:
     return {
         "request_id": "pa_request_gateway_approval_001",
@@ -197,4 +270,24 @@ def _approval_preview_payload() -> dict[str, object]:
             "connector_mutation",
         ],
         "evidence_refs": ["proof://personal-assistant/approval/gateway-email-send-001"],
+    }
+
+
+def _memory_preview_payload() -> dict[str, object]:
+    return {
+        "request_id": "pa_request_gateway_memory_001",
+        "memory_observation_id": "pa_memory_gateway_preference_001",
+        "memory_type": "preference",
+        "claim": "User prefers one-at-a-time repository closures.",
+        "source": {
+            "source_type": "user_confirmation",
+            "source_ref": "conversation:personal-assistant-memory-preview",
+            "observed_at": "2026-06-14T10:40:00+00:00",
+        },
+        "confidence": "high",
+        "scope": "assistant_workflow",
+        "mutable": True,
+        "receipt_id": "pa_receipt_gateway_memory_source_001",
+        "evidence_refs": ["proof://personal-assistant/memory/gateway-preference-001"],
+        "observed_at": "2026-06-14T10:40:00+00:00",
     }
