@@ -138,8 +138,14 @@ def _freeze_metadata(metadata: Mapping[str, Any], field_name: str = "metadata") 
         raise ValueError(f"{field_name} must be a mapping")
     sorted_metadata: dict[str, Any] = {}
     for key, value in metadata.items():
-        sorted_metadata[require_non_empty_text(str(key), f"{field_name}.key")] = value
+        sorted_metadata[_require_text_key(key, f"{field_name}.key")] = value
     return freeze_value(dict(sorted(sorted_metadata.items(), key=lambda item: item[0])))
+
+
+def _require_text_key(key: object, field_name: str) -> str:
+    if type(key) is not str:
+        raise ValueError(f"{field_name} must be a non-empty string")
+    return require_non_empty_text(key, field_name)
 
 
 @dataclass(frozen=True, slots=True)
@@ -516,7 +522,7 @@ class SNetMeshReceipt(ContractRecord):
         )
         settlement_count_map: dict[str, int] = {}
         for key, value in self.settlement_counts.items():
-            settlement_count_map[require_non_empty_text(str(key), "settlement_counts.key")] = require_non_negative_int(
+            settlement_count_map[_require_text_key(key, "settlement_counts.key")] = require_non_negative_int(
                 value,
                 "settlement_counts.value",
             )
