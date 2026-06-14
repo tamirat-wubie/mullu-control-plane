@@ -6,7 +6,7 @@ Invariants:
   - Dry-run does not execute commands.
   - Runner injection records command receipts without shell construction.
   - Default steps include document, durable Gmail, TeamOps approval binding,
-    authority and input, adapter, protocol, and finance witnesses.
+    authority, input, observation routing, adapter, protocol, and finance witnesses.
 """
 
 from __future__ import annotations
@@ -37,6 +37,10 @@ def test_default_refresh_steps_cover_local_assurance_surfaces() -> None:
     assert names[9] == "team_ops_shared_inbox_live_probe_authority_validation"
     assert names[10] == "team_ops_shared_inbox_live_probe_operator_input_request"
     assert names[11] == "team_ops_shared_inbox_live_probe_operator_input_request_validation"
+    assert names[12] == "team_ops_shared_inbox_live_probe_receipt"
+    assert names[13] == "team_ops_shared_inbox_live_probe_receipt_validation"
+    assert names[14] == "team_ops_shared_inbox_observation_routing_receipt"
+    assert names[15] == "team_ops_shared_inbox_observation_routing_receipt_validation"
     assert "capability_adapter_evidence" in names
     assert "proof_coverage_matrix" in names
     assert "protocol_manifest" in names

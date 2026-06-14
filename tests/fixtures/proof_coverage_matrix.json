@@ -622,6 +622,13 @@
       ]
     },
     {
+      "action_id": "publish_team_ops_shared_inbox_observation_routing_receipt_contract",
+      "status": "closed",
+      "surfaces": [
+        "governed_connector_framework"
+      ]
+    },
+    {
       "action_id": "classify_governed_scheduler_routes",
       "status": "closed",
       "surfaces": [
@@ -7464,9 +7471,14 @@
         "scripts/produce_team_ops_shared_inbox_live_probe_receipt.py",
         "scripts/validate_team_ops_shared_inbox_live_probe_receipt.py",
         "tests/test_produce_team_ops_shared_inbox_live_probe_receipt.py",
-        "tests/test_validate_team_ops_shared_inbox_live_probe_receipt.py"
+        "tests/test_validate_team_ops_shared_inbox_live_probe_receipt.py",
+        "schemas/team_ops_shared_inbox_observation_routing_receipt.schema.json",
+        "scripts/produce_team_ops_shared_inbox_observation_routing_receipt.py",
+        "scripts/validate_team_ops_shared_inbox_observation_routing_receipt.py",
+        "tests/test_produce_team_ops_shared_inbox_observation_routing_receipt.py",
+        "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py"
       ],
-      "notes": "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, operator-input readiness, and observation receipt binding behind handoff readiness, separate approval evidence, and redacted read-only evidence.",
+      "notes": "Governed connector routes register typed connector definitions, invoke handlers through guard-chain admission, bound lifecycle enable/disable controls, expose bounded list/history/summary read models, sanitize connector errors before returning operator-visible receipts, bind durable Gmail OAuth handoff evidence to schema-backed operator authority before live probe promotion, and gate TeamOps shared inbox read-only probe approval binding, authority, operator-input readiness, observation receipt binding, and no-send observation routing behind handoff readiness, separate approval evidence, redacted read-only evidence, and approval-before-send obligations.",
       "representative_paths": [
         "/api/v1/connectors",
         "/api/v1/connectors/history",
@@ -7580,6 +7592,34 @@
         ],
         "team_ops_shared_inbox_handoff_writes_validation_receipt": [
           "team_ops_shared_inbox_operator_handoff_cli_writes_validation"
+        ],
+        "team_ops_shared_inbox_observation_routing_accepts_assignment_plan": [
+          "team_ops_shared_inbox_observation_routing_accepts_assignment_plan",
+          "team_ops_shared_inbox_observation_routing_validation_accepts_ready_receipt"
+        ],
+        "team_ops_shared_inbox_observation_routing_blocks_effect_drift": [
+          "team_ops_shared_inbox_observation_routing_blocks_unknown_classification",
+          "team_ops_shared_inbox_observation_routing_validation_rejects_effect_drift",
+          "team_ops_shared_inbox_observation_routing_validation_rejects_raw_fields",
+          "team_ops_shared_inbox_observation_routing_validation_rejects_unknown_classification",
+          "team_ops_shared_inbox_observation_routing_validation_rejects_missing_owner"
+        ],
+        "team_ops_shared_inbox_observation_routing_blocks_without_live_probe": [
+          "team_ops_shared_inbox_observation_routing_blocks_without_live_probe_ready",
+          "team_ops_shared_inbox_observation_routing_validation_accepts_blocked_receipt"
+        ],
+        "team_ops_shared_inbox_observation_routing_redacts_secret_markers": [
+          "team_ops_shared_inbox_observation_routing_rejects_secret_marker_ref",
+          "team_ops_shared_inbox_observation_routing_validation_rejects_secret_marker"
+        ],
+        "team_ops_shared_inbox_observation_routing_requires_redacted_observation": [
+          "team_ops_shared_inbox_observation_routing_requires_redacted_observation",
+          "team_ops_shared_inbox_observation_routing_validation_require_ready_rejects_blocked"
+        ],
+        "team_ops_shared_inbox_observation_routing_writes_validation_receipt": [
+          "team_ops_shared_inbox_observation_routing_cli_writes_report",
+          "team_ops_shared_inbox_observation_routing_validation_cli_writes_receipt",
+          "team_ops_shared_inbox_observation_routing_validation_missing_path_is_bounded"
         ],
         "team_ops_shared_inbox_probe_approval_binding_allows_ready_handoff": [
           "ready_handoff_with_probe_approval_binds_authority_input",
@@ -7730,7 +7770,13 @@
         "team_ops_shared_inbox_probe_receipt_accepts_read_only_observation",
         "team_ops_shared_inbox_probe_receipt_blocks_effect_drift",
         "team_ops_shared_inbox_probe_receipt_redacts_secret_markers",
-        "team_ops_shared_inbox_probe_receipt_writes_validation_receipt"
+        "team_ops_shared_inbox_probe_receipt_writes_validation_receipt",
+        "team_ops_shared_inbox_observation_routing_blocks_without_live_probe",
+        "team_ops_shared_inbox_observation_routing_requires_redacted_observation",
+        "team_ops_shared_inbox_observation_routing_accepts_assignment_plan",
+        "team_ops_shared_inbox_observation_routing_blocks_effect_drift",
+        "team_ops_shared_inbox_observation_routing_redacts_secret_markers",
+        "team_ops_shared_inbox_observation_routing_writes_validation_receipt"
       ],
       "surface_id": "governed_connector_framework"
     },
@@ -10664,8 +10710,8 @@
     }
   ],
   "witness_integrity": {
-    "exact_test_anchor_count": 1391,
-    "runtime_witness_count": 1391,
+    "exact_test_anchor_count": 1397,
+    "runtime_witness_count": 1397,
     "surfaces": [
       {
         "anchored_witnesses": [
@@ -16535,10 +16581,56 @@
               "tests/test_validate_team_ops_shared_inbox_live_probe_receipt.py::test_team_ops_shared_inbox_live_probe_receipt_validation_cli_writes_receipt"
             ],
             "witness": "team_ops_shared_inbox_probe_receipt_writes_validation_receipt"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_blocks_without_live_probe_ready",
+              "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_validation_accepts_blocked_receipt"
+            ],
+            "witness": "team_ops_shared_inbox_observation_routing_blocks_without_live_probe"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_requires_redacted_observation",
+              "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_validation_require_ready_rejects_blocked"
+            ],
+            "witness": "team_ops_shared_inbox_observation_routing_requires_redacted_observation"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_accepts_assignment_plan",
+              "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_validation_accepts_ready_receipt"
+            ],
+            "witness": "team_ops_shared_inbox_observation_routing_accepts_assignment_plan"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_blocks_unknown_classification",
+              "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_validation_rejects_effect_drift",
+              "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_validation_rejects_raw_fields",
+              "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_validation_rejects_unknown_classification",
+              "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_validation_rejects_missing_owner"
+            ],
+            "witness": "team_ops_shared_inbox_observation_routing_blocks_effect_drift"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_rejects_secret_marker_ref",
+              "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_validation_rejects_secret_marker"
+            ],
+            "witness": "team_ops_shared_inbox_observation_routing_redacts_secret_markers"
+          },
+          {
+            "anchors": [
+              "tests/test_produce_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_cli_writes_report",
+              "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_validation_cli_writes_receipt",
+              "tests/test_validate_team_ops_shared_inbox_observation_routing_receipt.py::test_team_ops_shared_inbox_observation_routing_validation_missing_path_is_bounded"
+            ],
+            "witness": "team_ops_shared_inbox_observation_routing_writes_validation_receipt"
           }
         ],
-        "exact_test_anchor_count": 49,
-        "runtime_witness_count": 49,
+        "exact_test_anchor_count": 55,
+        "runtime_witness_count": 55,
         "surface_id": "governed_connector_framework",
         "unanchored_witness_count": 0,
         "unanchored_witnesses": []
