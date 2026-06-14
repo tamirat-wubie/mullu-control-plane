@@ -6,7 +6,7 @@ during development without requiring live provider credentials.
 Governance scope: document adapter receipt, durable Gmail OAuth blocked
 handoff receipts, TeamOps shared inbox blocked handoff, approval binding,
 probe-authority, operator-input request, live-probe receipt, observation
-routing receipt, and approval queue receipt, aggregate adapter evidence, proof coverage witness, protocol
+routing receipt, approval queue receipt, and approval decision receipt, aggregate adapter evidence, proof coverage witness, protocol
 manifest validation, and finance proof-pilot readiness.
 Dependencies: repository-local assurance scripts and Python subprocess.
 Invariants:
@@ -17,8 +17,9 @@ Invariants:
     not mint tokens, contact Google, or claim live readiness.
   - TeamOps shared inbox steps emit blocked handoff, redacted probe approval
     binding, read-only probe authority, operator-input request, live-probe receipt,
-    observation routing receipt, and approval queue receipt without provider calls,
-    mailbox writes, drafts, approval decisions, or sends.
+    observation routing receipt, approval queue receipt, and approval decision
+    receipt without provider calls, mailbox writes, drafts, producer-made
+    approval decisions, or sends.
   - Each step returns an explicit command receipt; failures are not hidden.
 """
 
@@ -307,6 +308,32 @@ LOCAL_ASSURANCE_STEPS: tuple[AssuranceStep, ...] = (
             "--json",
         ),
         purpose="validate blocked TeamOps approval queue receipt without approval or send claim",
+    ),
+    AssuranceStep(
+        name="team_ops_shared_inbox_approval_decision_receipt",
+        command=(
+            sys.executable,
+            "scripts/produce_team_ops_shared_inbox_approval_decision_receipt.py",
+            "--approval-queue-receipt",
+            ".change_assurance/team_ops_shared_inbox_approval_queue_receipt.json",
+            "--output",
+            ".change_assurance/team_ops_shared_inbox_approval_decision_receipt.json",
+            "--json",
+        ),
+        purpose="emit blocked TeamOps approval decision receipt without producer-made decisions, drafts, or sends",
+    ),
+    AssuranceStep(
+        name="team_ops_shared_inbox_approval_decision_receipt_validation",
+        command=(
+            sys.executable,
+            "scripts/validate_team_ops_shared_inbox_approval_decision_receipt.py",
+            "--receipt",
+            ".change_assurance/team_ops_shared_inbox_approval_decision_receipt.json",
+            "--output",
+            ".change_assurance/team_ops_shared_inbox_approval_decision_receipt_validation.json",
+            "--json",
+        ),
+        purpose="validate blocked TeamOps approval decision receipt without send claim",
     ),
     AssuranceStep(
         name="capability_adapter_evidence",
