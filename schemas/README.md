@@ -163,6 +163,7 @@ files are open wire contracts. Runtime modules under `mcoi/`, `gateway/`, and
 | `multimodal_operation_receipt.schema.json` | Canonical governed multimodal operation receipt |
 | `world_state.schema.json` | Canonical world-state graph projection |
 | `worker_mesh.schema.json` | Canonical networked worker lease and dispatch receipt |
+| `read_only_worker_runtime_receipt_handoff.schema.json` | Canonical Foundation Mode handoff from read-only worker rehearsal evidence to future runtime receipt-emitter obligations |
 | `workflow.schema.json` | Shared workflow descriptor interchange surface |
 | `plan.schema.json` | Shared plan definition |
 | `policy_proof_report.schema.json` | Canonical policy prover result and counterexample report |
