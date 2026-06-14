@@ -1,0 +1,35 @@
+{
+  "request_type": "personal_assistant.request",
+  "request_id": "pa_request_math_reasoning_001",
+  "submitted_at": "2026-06-14T00:00:00+00:00",
+  "interface": "operator_console",
+  "user_goal": "Compare two monthly cost scenarios, check units, and explain assumptions without moving money or writing records.",
+  "requested_capabilities": ["personal_assistant.skill_plan.build", "personal_assistant.receipt.project"],
+  "requested_skill_ids": ["math.reasoning.plan"],
+  "risk_level": "P2",
+  "requires_approval": false,
+  "execution_mode": "preview",
+  "approval_scope": "none",
+  "missing_bindings": [],
+  "connector_refs": [],
+  "governance_refs": [
+    "docs/PERSONAL_ASSISTANT_RISK_BOUNDARY.md",
+    "docs/UNIVERSAL_ACTION_ORCHESTRATION.md"
+  ],
+  "blocked_actions": [
+    "pay_invoice",
+    "paid_subscription_action",
+    "system_of_record_write",
+    "connector_mutation",
+    "external_submission",
+    "public_post",
+    "publish"
+  ],
+  "evidence_refs": ["proof://personal-assistant/request/math-reasoning"],
+  "metadata": {
+    "fixture": "personal_assistant_request_math_reasoning",
+    "math_execution_boundary": "planning_only",
+    "live_connector_execution_allowed": false,
+    "system_of_record_write_allowed": false
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "approval_id": "pa_approval_email_send_001",
+  "request_id": "pa_request_inbox_summary_001",
+  "plan_id": "pa_plan_email_send_001",
+  "created_at": "2026-06-14T00:00:00+00:00",
+  "risk_level": "P4",
+  "approval_state": "requested",
+  "explicit_approval_required": true,
+  "approver_ref": "operator:tamirat",
+  "approval_scope": "per_recipient",
+  "proposed_actions": [
+    {
+      "action_id": "send_prepared_email_draft",
+      "skill_id": "email.send.with_approval",
+      "risk_level": "P4",
+      "effect_boundary": "external_email_send",
+      "summary": "Send one approved email draft to the named recipient only."
+    }
+  ],
+  "forbidden_without_approval": ["send", "forward", "recipient_unapproved", "connector_mutation"],
+  "decision_record": {
+    "decision": "pending",
+    "reason_codes": ["external_communication_requires_explicit_approval"],
+    "decided_at": ""
+  },
+  "receipt_ref": "pa_receipt_email_send_approval_request_001",
+  "evidence_refs": ["proof://personal-assistant/approval/email-send-001"],
+  "metadata": {
+    "fixture": "personal_assistant_approval_packet",
+    "execution_allowed": false
+  }
+}

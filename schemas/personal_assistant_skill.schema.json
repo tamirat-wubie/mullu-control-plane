@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:personal-assistant-skill:1",
+  "title": "Personal Assistant Skill",
+  "description": "Governed skill-registry entry for the personal-assistant foundation layer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "skill_id",
+    "name",
+    "description",
+    "group",
+    "mode",
+    "risk_level",
+    "requires_approval",
+    "connectors",
+    "inputs",
+    "outputs",
+    "allowed_actions",
+    "blocked_actions",
+    "receipt_required",
+    "memory_write_allowed",
+    "private_connector_required",
+    "approval_policy_ref",
+    "capability_refs",
+    "uao_required",
+    "effect_boundary",
+    "nested_mind_live_activation_allowed",
+    "public_readiness_claim_allowed",
+    "metadata"
+  ],
+  "properties": {
+    "skill_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$" },
+    "name": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "group": {
+      "type": "string",
+      "enum": [
+        "inbox",
+        "calendar",
+        "task",
+        "document",
+        "contact",
+        "teamops",
+        "research",
+        "math",
+        "github_codex",
+        "planning",
+        "memory",
+        "foundation_governance"
+      ]
+    },
+    "mode": { "type": "string", "enum": ["read_only", "draft_only", "planning_only", "approval_required", "blocked"] },
+    "risk_level": { "type": "string", "enum": ["P0", "P1", "P2", "P3", "P4", "P5"] },
+    "requires_approval": { "type": "boolean" },
+    "connectors": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "allowed_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "read",
+          "summarize",
+          "plan",
+          "draft",
+          "ask_clarification",
+          "produce_receipt",
+          "classify",
+          "detect",
+          "extract",
+          "compare",
+          "recommend",
+          "route",
+          "prepare_packet",
+          "review_receipt",
+          "optimize",
+          "memory_observe",
+          "memory_retrieve",
+          "memory_compare",
+          "send",
+          "delete",
+          "archive",
+          "forward",
+          "label_batch",
+          "create_event",
+          "move_event",
+          "cancel_event",
+          "invite_people",
+          "message_person",
+          "store_contact",
+          "export_contacts",
+          "external_submission",
+          "public_post",
+          "paid_subscription_action",
+          "open_pull_request",
+          "merge_pull_request",
+          "push_branch",
+          "deploy_service",
+          "pay_invoice",
+          "publish",
+          "connector_mutation",
+          "system_of_record_write"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "blocked_actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "receipt_required": { "type": "boolean" },
+    "memory_write_allowed": { "type": "boolean" },
+    "private_connector_required": { "type": "boolean" },
+    "approval_policy_ref": { "type": "string", "minLength": 1 },
+    "capability_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "uao_required": { "type": "boolean" },
+    "effect_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only",
+        "draft_only",
+        "internal_write_allowed",
+        "external_write_allowed",
+        "system_of_record_write_allowed",
+        "connector_mutation_allowed",
+        "money_legal_public_allowed"
+      ],
+      "properties": {
+        "read_only": { "type": "boolean" },
+        "draft_only": { "type": "boolean" },
+        "internal_write_allowed": { "type": "boolean" },
+        "external_write_allowed": { "type": "boolean" },
+        "system_of_record_write_allowed": { "type": "boolean" },
+        "connector_mutation_allowed": { "type": "boolean" },
+        "money_legal_public_allowed": { "type": "boolean" }
+      }
+    },
+    "nested_mind_live_activation_allowed": { "type": "boolean", "const": false },
+    "public_readiness_claim_allowed": { "type": "boolean", "const": false },
+    "metadata": { "type": "object", "additionalProperties": true }
+  }
+}

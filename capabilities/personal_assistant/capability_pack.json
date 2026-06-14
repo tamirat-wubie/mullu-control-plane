@@ -1,0 +1,319 @@
+{
+  "capabilities": [
+    {
+      "capability_id": "personal_assistant.intent.interpret",
+      "domain": "personal_assistant",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "output_schema_ref": "schemas/personal_assistant_plan.schema.json",
+      "effect_model": {
+        "expected_effects": ["governed_intent_projection_emitted"],
+        "forbidden_effects": ["connector_called", "external_message_sent", "workspace_file_written", "memory_written"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["request_id", "governance_refs", "risk_level"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "candidate",
+      "metadata": {
+        "display_name": "Interpret personal-assistant intent",
+        "risk_tier": "low",
+        "target_maturity": "foundation",
+        "fixture_only": true,
+        "production_ready": false
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["personal_assistant.intent.interpret"],
+          "allowed_networks": [],
+          "forbidden_effects": ["connector_called", "external_message_sent", "workspace_file_written", "memory_written"],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "personal_assistant.skill_plan.build",
+      "domain": "personal_assistant",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/personal_assistant_request.schema.json",
+      "output_schema_ref": "schemas/personal_assistant_plan.schema.json",
+      "effect_model": {
+        "expected_effects": ["skill_plan_preview_emitted"],
+        "forbidden_effects": ["action_executed", "connector_mutated", "external_message_sent", "deployment_started"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["skill_registry_ref", "approval_matrix_ref", "plan_id"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "candidate",
+      "metadata": {
+        "display_name": "Build personal-assistant skill plan",
+        "risk_tier": "low",
+        "target_maturity": "foundation",
+        "fixture_only": true,
+        "production_ready": false
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["personal_assistant.skill_plan.build"],
+          "allowed_networks": [],
+          "forbidden_effects": ["action_executed", "connector_mutated", "external_message_sent", "deployment_started"],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "personal_assistant.approval.classify",
+      "domain": "personal_assistant",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/personal_assistant_plan.schema.json",
+      "output_schema_ref": "schemas/personal_assistant_approval.schema.json",
+      "effect_model": {
+        "expected_effects": ["approval_requirement_projection_emitted"],
+        "forbidden_effects": ["approval_granted", "approval_forged", "action_executed", "external_message_sent"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["plan_id", "risk_level", "approval_matrix_ref"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "candidate",
+      "metadata": {
+        "display_name": "Classify personal-assistant approval requirement",
+        "risk_tier": "medium",
+        "target_maturity": "foundation",
+        "fixture_only": true,
+        "production_ready": false
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["personal_assistant.approval.classify"],
+          "allowed_networks": [],
+          "forbidden_effects": ["approval_granted", "approval_forged", "action_executed", "external_message_sent"],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "personal_assistant.receipt.project",
+      "domain": "personal_assistant",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/personal_assistant_plan.schema.json",
+      "output_schema_ref": "schemas/personal_assistant_receipt.schema.json",
+      "effect_model": {
+        "expected_effects": ["receipt_projection_emitted"],
+        "forbidden_effects": ["raw_private_payload_serialized", "secret_value_serialized", "provider_mutated", "external_message_sent"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["plan_id", "actions_taken", "actions_not_taken", "redaction_policy"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "candidate",
+      "metadata": {
+        "display_name": "Project personal-assistant receipt",
+        "risk_tier": "low",
+        "target_maturity": "foundation",
+        "fixture_only": true,
+        "production_ready": false
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["personal_assistant.receipt.project"],
+          "allowed_networks": [],
+          "forbidden_effects": ["raw_private_payload_serialized", "secret_value_serialized", "provider_mutated", "external_message_sent"],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    },
+    {
+      "capability_id": "personal_assistant.memory_observation.prepare",
+      "domain": "personal_assistant",
+      "version": "0.1.0",
+      "input_schema_ref": "schemas/personal_assistant_receipt.schema.json",
+      "output_schema_ref": "schemas/personal_assistant_memory_observation.schema.json",
+      "effect_model": {
+        "expected_effects": ["memory_observation_candidate_emitted"],
+        "forbidden_effects": ["memory_written", "raw_chat_log_stored", "live_nested_mind_activation", "unverified_preference_generalized"],
+        "reconciliation_required": true
+      },
+      "evidence_model": {
+        "required_evidence": ["receipt_id", "source_ref", "confidence", "scope"],
+        "terminal_certificate_required": true
+      },
+      "authority_policy": {
+        "required_roles": ["operator"],
+        "approval_chain": [],
+        "separation_of_duty": false
+      },
+      "isolation_profile": {
+        "execution_plane": "gateway_process",
+        "network_allowlist": [],
+        "secret_scope": "none"
+      },
+      "recovery_plan": {
+        "rollback_capability": "",
+        "compensation_capability": "",
+        "review_required_on_failure": true
+      },
+      "cost_model": {
+        "budget_class": "standard",
+        "max_estimated_cost": 0.0
+      },
+      "obligation_model": {
+        "owner_team": "platform-ops",
+        "failure_due_seconds": 900,
+        "escalation_route": "support@mullusi.com"
+      },
+      "certification_status": "candidate",
+      "metadata": {
+        "display_name": "Prepare personal-assistant memory observation",
+        "risk_tier": "medium",
+        "target_maturity": "foundation",
+        "fixture_only": true,
+        "production_ready": false
+      },
+      "extensions": {
+        "governed_record": {
+          "read_only": true,
+          "world_mutating": false,
+          "requires_approval": false,
+          "requires_sandbox": false,
+          "allowed_roles": ["operator"],
+          "allowed_tools": ["personal_assistant.memory_observation.prepare"],
+          "allowed_networks": [],
+          "forbidden_effects": ["memory_written", "raw_chat_log_stored", "live_nested_mind_activation", "unverified_preference_generalized"],
+          "verification_required": true,
+          "receipt_required": true,
+          "rollback_or_compensation_required": false
+        }
+      }
+    }
+  ]
+}
