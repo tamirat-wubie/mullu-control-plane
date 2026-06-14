@@ -105,6 +105,7 @@ memory_update.learning_allowed = true -> "learning" in memory_update.constitutio
 intersection(allowed_uses, forbidden_uses) != empty -> reject
 terminal_certificate.metadata.whqr_canonical_hash present -> closure.whqr_replay_binding.replay_ref binds that hash
 closure.whqr_replay_binding.semantics_hash present -> semantics_hash starts with sha256:
+closure.whqr_replay_binding.version present -> version uses major.minor.patch
 decision.execution_allowed -> fracture_report.status = passed
 decision.execution_allowed -> empty(fracture_report.blocking_check_ids)
 stage_order(fracture) < stage_order(execution)
