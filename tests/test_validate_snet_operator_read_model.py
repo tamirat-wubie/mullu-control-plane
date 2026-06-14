@@ -110,3 +110,26 @@ def test_snet_operator_read_model_zero_symbol_projection_is_valid() -> None:
     assert read_model["selected_symbols"] == []
     assert read_model["truncated_symbol_count"] == read_model["symbol_count"]
     assert read_model["receipt"]["symbol_count"] == read_model["symbol_count"]
+
+
+def test_snet_operator_read_model_malformed_root_reports_errors() -> None:
+    schema = validator._load_schema(validator.DEFAULT_SCHEMA_PATH)
+
+    list_errors = validator.validate_read_model([{}], schema)
+    string_errors = validator.validate_read_model("read-model", schema)
+
+    assert any("read model must be a JSON object" in error for error in list_errors)
+    assert any("read model must be a JSON object" in error for error in string_errors)
+    assert any("expected object" in error for error in list_errors + string_errors)
+
+
+def test_snet_operator_read_model_non_integer_truncation_reports_errors() -> None:
+    read_model = validator.build_sample_read_model()
+    schema = validator._load_schema(validator.DEFAULT_SCHEMA_PATH)
+    read_model["truncated_symbol_count"] = "1"
+
+    errors = validator.validate_read_model(read_model, schema)
+
+    assert any("truncated_symbol_count" in error for error in errors)
+    assert any("selected symbol count" in error for error in errors)
+    assert read_model["raw_answers_exposed"] is False

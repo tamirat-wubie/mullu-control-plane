@@ -6840,6 +6840,8 @@ def proof_coverage_matrix() -> dict[str, Any]:
                 "snet_operator_read_model_rejects_count_drift",
                 "snet_operator_read_model_rejects_symbol_raw_field",
                 "snet_operator_read_model_zero_symbol_projection_is_valid",
+                "snet_operator_read_model_malformed_root_reports_errors",
+                "snet_operator_read_model_non_integer_truncation_reports_errors",
                 "snet_mesh_receipt_contract_passes",
                 "snet_mesh_receipt_rejects_raw_answer_and_authority_mutations",
                 "snet_mesh_receipt_saved_file_validation",
