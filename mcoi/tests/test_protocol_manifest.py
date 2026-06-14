@@ -90,6 +90,7 @@ def test_protocol_manifest_is_valid() -> None:
     interpreted_request_entry = entries["interpreted-request"]
     interpretation_receipt_entry = entries["interpretation-receipt"]
     clarification_request_entry = entries["clarification-request"]
+    search_decision_entry = entries["search-decision"]
     capability_plan_preview_entry = entries["capability-plan-preview"]
     governed_symbolic_loop_entry = entries["governed-symbolic-loop-contract"]
     errors = validate_protocol_manifest(manifest)
@@ -109,6 +110,9 @@ def test_protocol_manifest_is_valid() -> None:
     assert clarification_request_entry["path"] == "schemas/clarification_request.schema.json"
     assert clarification_request_entry["urn"] == "urn:mullusi:schema:clarification-request:1"
     assert clarification_request_entry["surface"] == "interpretation"
+    assert search_decision_entry["path"] == "schemas/search_decision.schema.json"
+    assert search_decision_entry["urn"] == "urn:mullusi:schema:search-decision:1"
+    assert search_decision_entry["surface"] == "search"
     assert capability_plan_preview_entry["path"] == "schemas/capability_plan_preview.schema.json"
     assert capability_plan_preview_entry["urn"] == "urn:mullusi:schema:capability-plan-preview:1"
     assert capability_plan_preview_entry["surface"] == "planning"

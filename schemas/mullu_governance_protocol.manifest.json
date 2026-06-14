@@ -269,6 +269,12 @@
       "surface": "interpretation"
     },
     {
+      "schema_id": "search-decision",
+      "path": "schemas/search_decision.schema.json",
+      "urn": "urn:mullusi:schema:search-decision:1",
+      "surface": "search"
+    },
+    {
       "schema_id": "personal-assistant-request",
       "path": "schemas/personal_assistant_request.schema.json",
       "urn": "urn:mullusi:schema:personal-assistant-request:1",
