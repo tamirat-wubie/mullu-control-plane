@@ -3325,10 +3325,11 @@ def test_snet_episode_replay_surface_binds_deterministic_receipt_replay() -> Non
     assert "snet_episode_malformed_answer_bindings_report_errors" in witnesses
     assert "snet_episode_non_json_replay_inputs_report_errors" in witnesses
     assert "snet_episode_malformed_expected_receipt_report_errors" in witnesses
+    assert "snet_episode_malformed_root_reports_errors" in witnesses
     assert "snet_episode_saved_file_validation" in witnesses
     assert "committed_snet_episode_example_replays_to_expected_receipt" in witnesses
     assert "read-only SNet mesh evidence" in replay_surface["notes"]
-    assert replay_integrity["exact_test_anchor_count"] == 10
+    assert replay_integrity["exact_test_anchor_count"] == 11
     assert replay_integrity["unanchored_witness_count"] == 0
     assert closure_actions["publish_snet_episode_replay_contract"]["status"] == "closed"
 
