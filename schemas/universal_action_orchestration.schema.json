@@ -621,7 +621,24 @@
         "closure_receipt_ref": { "type": "string", "minLength": 1 },
         "reconciliation_ref": { "type": ["string", "null"] },
         "memory_ref": { "type": ["string", "null"] },
+        "whqr_replay_binding": {
+          "anyOf": [
+            { "$ref": "#/$defs/whqr_replay_binding" },
+            { "type": "null" }
+          ]
+        },
         "next_action": { "type": "string", "minLength": 1 }
+      }
+    },
+    "whqr_replay_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["replay_ref", "canonical_hash", "semantics_hash", "version"],
+      "properties": {
+        "replay_ref": { "type": "string", "pattern": "^whqr://replay/[A-Za-z0-9_.:-]+$" },
+        "canonical_hash": { "type": "string", "minLength": 1 },
+        "semantics_hash": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 }
       }
     },
     "lineage": {

@@ -18,6 +18,7 @@ import copy
 from dataclasses import dataclass, replace
 from pathlib import Path
 
+import pytest
 from jsonschema import Draft202012Validator
 
 from mcoi_runtime.adapters.executor_base import ExecutionRequest
@@ -58,7 +59,11 @@ from mcoi_runtime.contracts.meta_reasoning import (
 )
 from mcoi_runtime.contracts.simulation import RiskLevel, VerdictType
 from mcoi_runtime.contracts.solver_outcome import SolverOutcome
-from mcoi_runtime.contracts.terminal_closure import TerminalClosureDisposition
+from mcoi_runtime.contracts.terminal_closure import (
+    TerminalClosureCertificate,
+    TerminalClosureDisposition,
+)
+from mcoi_runtime.contracts.whqr import WHQRDocument, WHQRNode, WHRole
 from mcoi_runtime.contracts.world_state import (
     ContradictionRecord,
     ContradictionStrategy,
@@ -107,6 +112,39 @@ VALID_TEMPLATE = {
 
 def _clock() -> str:
     return NOW
+
+
+def _certificate_with_metadata(
+    certificate: TerminalClosureCertificate,
+    metadata: dict[str, str],
+) -> TerminalClosureCertificate:
+    return TerminalClosureCertificate(
+        certificate_id=certificate.certificate_id,
+        command_id=certificate.command_id,
+        execution_id=certificate.execution_id,
+        disposition=certificate.disposition,
+        verification_result_id=certificate.verification_result_id,
+        effect_reconciliation_id=certificate.effect_reconciliation_id,
+        evidence_refs=certificate.evidence_refs,
+        closed_at=certificate.closed_at,
+        response_closure_ref=certificate.response_closure_ref,
+        memory_entry_id=certificate.memory_entry_id,
+        compensation_outcome_id=certificate.compensation_outcome_id,
+        accepted_risk_id=certificate.accepted_risk_id,
+        case_id=certificate.case_id,
+        graph_refs=certificate.graph_refs,
+        metadata=metadata,
+    )
+
+
+def _whqr_replay_metadata() -> dict[str, str]:
+    document = WHQRDocument(root=WHQRNode(role=WHRole.WHAT, target="payment_request"))
+    return {
+        "whqr_canonical_json": document.canonical_json(),
+        "whqr_canonical_hash": document.canonical_hash(),
+        "whqr_semantics_hash": document.semantics_hash,
+        "whqr_version": document.whqr_version,
+    }
 
 
 def _replace_command_event_with_recomputed_hash(event, **changes):
@@ -335,6 +373,7 @@ def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
     assert record["recovery_plan"]["recovery_kind"] == "rollback_and_compensation"
     assert record["recovery_plan"]["recovery_plan_ref"]
     assert record["recovery_plan"]["certificate_ref"]
+    assert record["closure"]["whqr_replay_binding"] is None
     assert record["claim_ledger"]["ledger_ref"].startswith("claim-ledger://")
     assert record["claim_ledger"]["unverified_claim_ids"] == []
     assert record["fracture_report"]["report_ref"].startswith("fracture-report://")
@@ -387,6 +426,61 @@ def test_universal_action_result_exports_valid_allowed_uao_record() -> None:
     assert record["lineage"]["accepted_deltas"]
     assert record["lineage"]["rejected_deltas"] == []
     assert any(ref.startswith("world-state://snapshot/") for ref in record["input_refs"])
+
+
+def test_universal_action_record_binds_whqr_replay_metadata_in_closure_receipt() -> None:
+    kernel, _executor = _kernel_with_capability()
+    request = _action_request(intent_id="intent-whqr-replay-binding")
+    result = kernel.run(request)
+    assert result.terminal_certificate is not None
+    metadata = {**dict(result.terminal_certificate.metadata), **_whqr_replay_metadata()}
+    whqr_certificate = _certificate_with_metadata(result.terminal_certificate, metadata)
+    result = replace(result, terminal_certificate=whqr_certificate)
+
+    record = build_universal_action_orchestration_record(request=request, result=result)
+    validation_errors = _validate_uao_record(record)
+    binding = record["closure"]["whqr_replay_binding"]
+    closure_receipt = next(
+        receipt for receipt in record["receipts"] if receipt["kind"] == "closure"
+    )
+
+    assert validation_errors == []
+    assert binding["replay_ref"] == f"whqr://replay/{metadata['whqr_canonical_hash']}"
+    assert binding["canonical_hash"] == metadata["whqr_canonical_hash"]
+    assert binding["semantics_hash"] == metadata["whqr_semantics_hash"]
+    assert binding["version"] == metadata["whqr_version"]
+    assert closure_receipt["confirms"] == stable_identifier(
+        "universal-action-closure-confirmation",
+        {
+            "closure_state": record["closure_state"],
+            "reconciliation_ref": record["closure"]["reconciliation_ref"],
+            "memory_ref": record["closure"]["memory_ref"],
+            "whqr_replay_ref": binding["replay_ref"],
+            "whqr_canonical_hash": binding["canonical_hash"],
+            "whqr_semantics_hash": binding["semantics_hash"],
+            "whqr_version": binding["version"],
+        },
+    )
+
+
+def test_universal_action_record_rejects_tampered_whqr_replay_metadata() -> None:
+    kernel, _executor = _kernel_with_capability()
+    request = _action_request(intent_id="intent-whqr-replay-tamper")
+    result = kernel.run(request)
+    assert result.terminal_certificate is not None
+    metadata = {**dict(result.terminal_certificate.metadata), **_whqr_replay_metadata()}
+    metadata["whqr_canonical_json"] = metadata["whqr_canonical_json"].replace(
+        "payment_request",
+        "delete_file",
+    )
+    whqr_certificate = _certificate_with_metadata(result.terminal_certificate, metadata)
+    result = replace(result, terminal_certificate=whqr_certificate)
+
+    with pytest.raises(
+        RuntimeCoreInvariantError,
+        match="UAO closure WHQR replay document is invalid",
+    ):
+        build_universal_action_orchestration_record(request=request, result=result)
 
 
 def test_universal_action_record_rejects_malformed_life_meaning_evidence_refs() -> None:

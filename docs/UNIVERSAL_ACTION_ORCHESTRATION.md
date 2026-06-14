@@ -37,6 +37,7 @@ UniversalActionOrchestration :=
 | `closure_state` | Terminal closure state mirrored from `closure.status`. |
 | `closure.reconciliation_ref` | Reconciliation stage output retained in the closure receipt boundary. |
 | `closure.memory_ref` | Admitted memory update reference retained in the closure receipt boundary, or null when no memory update is admitted. |
+| `closure.whqr_replay_binding` | Compact WHQR semantic replay binding retained when the terminal certificate carries verified WHQR replay metadata. |
 | `memory_update.constitution` | Governed memory constitution binding source refs, owner, scope, confidence, sensitivity, expiry, allowed uses, forbidden uses, evidence refs, verification time, and mutation history. |
 
 The runtime export path is:
@@ -76,7 +77,7 @@ The validator applies these rules deterministically:
 19. Every command replay record must carry the canonical ordered UAO pipeline stage sequence before exposure.
 20. Runtime bypass detection scans effect-bearing dispatch and execute call sites for UAO or governed binding before closure.
 21. Every command replay record must bind proof hash to an independent recomputation of the persisted event-local universal action proof detail before exposure.
-22. Every closure receipt must bind closure state to reconciliation and memory references before exposure.
+22. Every closure receipt must bind closure state to reconciliation, memory, and available WHQR replay references before exposure.
 23. Every effect-bearing `allow` or post-dispatch review action must carry an available `recovery_plan` with rollback or compensation references before closure.
 24. Every UAO record must expose a `claim_ledger`; verified claims require evidence refs and evidence-free claims must be marked unverified.
 25. Every memory update must expose a `constitution`; recorded memory requires evidence refs, owner, scope, source refs, allowed uses, and mutation history.
@@ -99,6 +100,7 @@ empty(claim.evidence_refs) -> claim_id in claim_ledger.unverified_claim_ids
 memory_update.status = recorded -> non_empty(memory_update.constitution.evidence_refs)
 memory_update.learning_allowed = true -> "learning" in memory_update.constitution.allowed_uses
 intersection(allowed_uses, forbidden_uses) != empty -> reject
+terminal_certificate.metadata.whqr_canonical_hash present -> closure.whqr_replay_binding.replay_ref binds that hash
 decision.execution_allowed -> fracture_report.status = passed
 decision.execution_allowed -> empty(fracture_report.blocking_check_ids)
 stage_order(fracture) < stage_order(execution)

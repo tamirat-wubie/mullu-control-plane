@@ -22,11 +22,12 @@ from mcoi_runtime.core.governed_dispatcher import (
     GovernedDispatcher,
     GovernedDispatchContext,
 )
-from mcoi_runtime.core.invariants import stable_identifier
+from mcoi_runtime.core.invariants import RuntimeCoreInvariantError, stable_identifier
 from mcoi_runtime.contracts.execution import ExecutionResult
 from mcoi_runtime.contracts.mil import MILProgram
 from mcoi_runtime.contracts.policy import PolicyDecision
 from mcoi_runtime.contracts.simulation import RiskLevel
+from mcoi_runtime.contracts.whqr import WHQRDocument
 from mcoi_runtime.core.mil_dispatcher_bridge import dispatch_verified_mil
 from mcoi_runtime.core.mil_static_verifier import MILStaticReport, verify_mil_program
 from mcoi_runtime.core.universal_action_kernel import (
@@ -806,6 +807,10 @@ def _uao_record_binds_universal_detail(
         return False
     if closure.get("memory_ref") != (universal_detail.get("memory_ref") or None):
         return False
+    if (closure.get("whqr_replay_binding") or {}) != (
+        universal_detail.get("whqr_replay_binding") or {}
+    ):
+        return False
     return True
 
 
@@ -922,6 +927,11 @@ def _recomputed_universal_action_proof_hash(
         universal_detail.get("operating_substrate_evidence_refs")
     ):
         return None
+    whqr_replay_binding = universal_detail.get("whqr_replay_binding", {})
+    if whqr_replay_binding is None:
+        whqr_replay_binding = {}
+    if not isinstance(whqr_replay_binding, Mapping):
+        return None
     payload = {
         "action_id": universal_detail["action_id"],
         "blocked": universal_detail["blocked"],
@@ -963,6 +973,7 @@ def _recomputed_universal_action_proof_hash(
         "governed_action_id": universal_detail["governed_action_id"],
         "dispatch_ledger_hash": universal_detail["dispatch_ledger_hash"],
         "terminal_certificate_id": universal_detail["terminal_certificate_id"],
+        "whqr_replay_binding": dict(whqr_replay_binding),
         "learning_admission_id": universal_detail["learning_admission_id"],
         "reconciliation_ref": universal_detail["reconciliation_ref"],
         "memory_ref": universal_detail["memory_ref"],
@@ -1062,6 +1073,7 @@ def _uao_record_binds_closure_refs(
         closure_state=str(record.get("closure_state", "")),
         reconciliation_ref=reconciliation_ref,
         memory_ref=memory_ref,
+        whqr_replay_binding=closure.get("whqr_replay_binding"),
     )
 
 
@@ -1097,15 +1109,26 @@ def _uao_closure_confirmation(
     closure_state: str,
     reconciliation_ref: str | None,
     memory_ref: str | None,
+    whqr_replay_binding: Any = None,
 ) -> str:
-    return stable_identifier(
-        "universal-action-closure-confirmation",
-        {
-            "closure_state": closure_state,
-            "reconciliation_ref": reconciliation_ref or "",
-            "memory_ref": memory_ref or "",
-        },
-    )
+    payload = {
+        "closure_state": closure_state,
+        "reconciliation_ref": reconciliation_ref or "",
+        "memory_ref": memory_ref or "",
+    }
+    payload.update(_whqr_replay_confirmation_payload(whqr_replay_binding))
+    return stable_identifier("universal-action-closure-confirmation", payload)
+
+
+def _whqr_replay_confirmation_payload(binding: Any) -> dict[str, str]:
+    if not isinstance(binding, Mapping):
+        return {}
+    return {
+        "whqr_replay_ref": str(binding.get("replay_ref") or ""),
+        "whqr_canonical_hash": str(binding.get("canonical_hash") or ""),
+        "whqr_semantics_hash": str(binding.get("semantics_hash") or ""),
+        "whqr_version": str(binding.get("version") or ""),
+    }
 
 
 def _uao_stage_records_by_kind(value: Any) -> dict[str, Mapping[str, Any]] | None:
@@ -1421,11 +1444,63 @@ def _universal_action_transition_detail(
             if result.terminal_certificate
             else ""
         ),
+        "whqr_replay_binding": _universal_action_whqr_replay_binding(result) or {},
         "learning_admission_id": result.learning_decision.admission_id
         if result.learning_decision
         else "",
         "reconciliation_ref": _universal_action_reconciliation_ref(result),
         "memory_ref": _universal_action_memory_ref(result),
+    }
+
+
+def _universal_action_whqr_replay_binding(
+    result: UniversalActionResult,
+) -> dict[str, str] | None:
+    certificate = result.terminal_certificate
+    if certificate is None:
+        return None
+    metadata = certificate.metadata
+    canonical_json = metadata.get("whqr_canonical_json")
+    canonical_hash = metadata.get("whqr_canonical_hash")
+    semantics_hash = metadata.get("whqr_semantics_hash")
+    whqr_version = metadata.get("whqr_version")
+    if (
+        canonical_json is None
+        and canonical_hash is None
+        and semantics_hash is None
+        and whqr_version is None
+    ):
+        return None
+    if not isinstance(canonical_json, str) or not canonical_json:
+        raise RuntimeCoreInvariantError(
+            "universal action detail requires WHQR canonical replay document"
+        )
+    if not isinstance(canonical_hash, str) or not canonical_hash:
+        raise RuntimeCoreInvariantError(
+            "universal action detail requires WHQR canonical hash"
+        )
+    try:
+        document = WHQRDocument.from_canonical_json(
+            canonical_json,
+            expected_canonical_hash=canonical_hash,
+        )
+    except ValueError as exc:
+        raise RuntimeCoreInvariantError(
+            "universal action detail WHQR replay document is invalid"
+        ) from exc
+    if semantics_hash is not None and semantics_hash != document.semantics_hash:
+        raise RuntimeCoreInvariantError(
+            "universal action detail WHQR semantics hash mismatch"
+        )
+    if whqr_version is not None and whqr_version != document.whqr_version:
+        raise RuntimeCoreInvariantError(
+            "universal action detail WHQR version mismatch"
+        )
+    return {
+        "replay_ref": f"whqr://replay/{canonical_hash}",
+        "canonical_hash": canonical_hash,
+        "semantics_hash": document.semantics_hash,
+        "version": document.whqr_version,
     }
 
 
