@@ -1,0 +1,100 @@
+{
+  "request_id": "agentic-service-harness-live-producer-operator-approval-request",
+  "schema_version": 1,
+  "generated_at": "2026-06-13T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_requirements_ref": "requirements://agentic-service-harness-live-producer-witness-requirements",
+  "source_admission_gate_ref": "admission-gate://agentic-service-harness-live-producer-admission-gate",
+  "witness_kind": "operator_approval",
+  "requested_evidence_ref": "approval://operator-live-producer-approval-required",
+  "approval_status": "AwaitingEvidence",
+  "approval_collected": false,
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "live_producer_implemented": false,
+  "report_is_not_terminal_closure": true,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "read_only": true
+  },
+  "approval_request": {
+    "approval_request_id": "approval-request.operator-live-producer",
+    "approver_role": "operator",
+    "question": "Record whether the operator permits creating future planning artifacts for live task/run producer implementation after all remaining witnesses exist.",
+    "decision_required": "operator_response_required",
+    "allowed_response_kinds": [
+      "record_operator_approval_witness",
+      "record_operator_rejection_witness"
+    ],
+    "default_response_kind": "record_operator_rejection_witness",
+    "response_record_required": true,
+    "response_record_collected": false,
+    "approval_effect": "satisfies_operator_approval_witness_only",
+    "live_execution_authorized_after_response": false
+  },
+  "remaining_witnesses": [
+    {
+      "witness_kind": "effect_receipt",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "receipt://agentic-service-harness/live-producer-effect-receipt-required",
+      "blocks_live_producer": true
+    },
+    {
+      "witness_kind": "external_adapter_evidence",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://agentic-service-harness/external-adapter-live-evidence-required",
+      "blocks_live_producer": true
+    },
+    {
+      "witness_kind": "secret_handoff",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "secret-handoff://agentic-service-harness/live-producer-required",
+      "blocks_live_producer": true
+    },
+    {
+      "witness_kind": "rollback_proof",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "rollback://agentic-service-harness/live-producer-required",
+      "blocks_live_producer": true
+    }
+  ],
+  "authority_denials": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "live_execution_authorized": false
+  },
+  "effect_boundary": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "network_policy": "none"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-operator-approval-request",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_operator_approval_request.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Record an operator response as a separate witness before effect receipt, adapter evidence, secret handoff, rollback proof, or live producer implementation."
+}

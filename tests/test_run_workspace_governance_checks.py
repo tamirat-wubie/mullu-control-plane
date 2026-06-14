@@ -53,7 +53,18 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
         "agentic_service_harness_read_models",
         "agentic_service_harness_read_model_projections",
         "agentic_service_harness_read_model_integrity",
+        "agentic_service_harness_read_model_persistence",
+        "agentic_service_harness_read_only_status_route_design",
+        "agentic_service_harness_read_only_status_route",
         "agentic_service_harness_authority_transitions",
+        "agentic_service_harness_live_task_run_producer_evidence",
+        "agentic_service_harness_live_task_run_producer_rehearsal",
+        "agentic_service_harness_live_producer_admission_gate",
+        "agentic_service_harness_live_producer_witness_requirements",
+        "agentic_service_harness_live_producer_operator_approval_request",
+        "agentic_service_harness_live_producer_operator_response_witness",
+        "agentic_service_harness_live_producer_operator_decision_evidence",
+        "agentic_service_harness_live_producer_operator_decision_record",
         "foundation_mode",
         "foundation_local_proof_thread",
         *(
@@ -144,8 +155,55 @@ def test_build_check_commands_are_ordered_and_repo_local() -> None:
     assert_ordered("agentic_service_harness_contract", "agentic_service_harness_read_models")
     assert_ordered("agentic_service_harness_read_models", "agentic_service_harness_read_model_projections")
     assert_ordered("agentic_service_harness_read_model_projections", "agentic_service_harness_read_model_integrity")
-    assert_ordered("agentic_service_harness_read_model_integrity", "agentic_service_harness_authority_transitions")
-    assert_ordered("agentic_service_harness_authority_transitions", "foundation_operator_readiness_boundary")
+    assert_ordered("agentic_service_harness_read_model_integrity", "agentic_service_harness_read_model_persistence")
+    assert_ordered(
+        "agentic_service_harness_read_model_persistence",
+        "agentic_service_harness_read_only_status_route_design",
+    )
+    assert_ordered(
+        "agentic_service_harness_read_only_status_route_design",
+        "agentic_service_harness_read_only_status_route",
+    )
+    assert_ordered(
+        "agentic_service_harness_read_only_status_route",
+        "agentic_service_harness_authority_transitions",
+    )
+    assert_ordered(
+        "agentic_service_harness_authority_transitions",
+        "agentic_service_harness_live_task_run_producer_evidence",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_task_run_producer_evidence",
+        "agentic_service_harness_live_task_run_producer_rehearsal",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_task_run_producer_rehearsal",
+        "agentic_service_harness_live_producer_admission_gate",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_admission_gate",
+        "agentic_service_harness_live_producer_witness_requirements",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_witness_requirements",
+        "agentic_service_harness_live_producer_operator_approval_request",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_approval_request",
+        "agentic_service_harness_live_producer_operator_response_witness",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_response_witness",
+        "agentic_service_harness_live_producer_operator_decision_evidence",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_decision_evidence",
+        "agentic_service_harness_live_producer_operator_decision_record",
+    )
+    assert_ordered(
+        "agentic_service_harness_live_producer_operator_decision_record",
+        "foundation_operator_readiness_boundary",
+    )
     assert_ordered("foundation_source_control_review_checklist_boundary", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_source_control_boundary", "foundation_operator_readiness_boundary")
     assert_ordered("foundation_learning_path_boundary", "foundation_learning_loop_rehearsal_boundary")

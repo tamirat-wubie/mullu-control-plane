@@ -1,0 +1,115 @@
+{
+  "response_witness_id": "agentic-service-harness-live-producer-operator-response-witness",
+  "schema_version": 1,
+  "generated_at": "2026-06-13T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_approval_request_ref": "approval-request://agentic-service-harness-live-producer-operator-approval-request",
+  "source_requirements_ref": "requirements://agentic-service-harness-live-producer-witness-requirements",
+  "source_admission_gate_ref": "admission-gate://agentic-service-harness-live-producer-admission-gate",
+  "witness_kind": "operator_approval",
+  "requested_evidence_ref": "approval://operator-live-producer-approval-required",
+  "response_status": "AwaitingEvidence",
+  "response_kind": "operator_response_missing",
+  "response_record_collected": false,
+  "approval_satisfied": false,
+  "rejection_recorded": false,
+  "authority_granted": false,
+  "planning_only": true,
+  "read_only": true,
+  "live_producer_implemented": false,
+  "report_is_not_terminal_closure": true,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "read_only": true
+  },
+  "operator_response": {
+    "approval_request_id": "approval-request.operator-live-producer",
+    "approver_role": "operator",
+    "required_response_kinds": [
+      "record_operator_approval_witness",
+      "record_operator_rejection_witness"
+    ],
+    "default_response_kind": "record_operator_rejection_witness",
+    "observed_response_kind": "operator_response_missing",
+    "response_record_ref": "approval://operator-live-producer-approval-required",
+    "response_record_required": true,
+    "response_record_collected": false,
+    "approval_effect": "no_approval_effect_without_explicit_response",
+    "live_execution_authorized_after_response": false
+  },
+  "witnesses_after_response": [
+    {
+      "witness_kind": "operator_approval",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "approval://operator-live-producer-approval-required",
+      "blocks_live_producer": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "effect_receipt",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "receipt://agentic-service-harness/live-producer-effect-receipt-required",
+      "blocks_live_producer": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "external_adapter_evidence",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://agentic-service-harness/external-adapter-live-evidence-required",
+      "blocks_live_producer": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "secret_handoff",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "secret-handoff://agentic-service-harness/live-producer-required",
+      "blocks_live_producer": true,
+      "authority_granted": false
+    },
+    {
+      "witness_kind": "rollback_proof",
+      "status": "AwaitingEvidence",
+      "evidence_ref": "rollback://agentic-service-harness/live-producer-required",
+      "blocks_live_producer": true,
+      "authority_granted": false
+    }
+  ],
+  "authority_denials": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "live_execution_authorized": false
+  },
+  "effect_boundary": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "network_policy": "none"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-operator-response-witness",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_operator_response_witness.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Collect an explicit operator approval or rejection response as separate evidence before effect receipt, adapter evidence, secret handoff, rollback proof, or live producer implementation."
+}

@@ -72,6 +72,13 @@ from gateway.autonomous_capability_upgrade import (
     AutonomousCapabilityUpgradeLoop,
     CapabilityHealthSignal,
 )
+from gateway.agentic_service_harness_status import (
+    AgenticServiceHarnessReadModelSource,
+    build_agentic_service_harness_status_projection,
+)
+from gateway.agentic_service_harness_read_model_producer import (
+    AgenticServiceHarnessRuntimeReadModelProducer,
+)
 from gateway.capability_capsule_installer import install_certified_capsule_with_handoff_evidence
 from gateway.capability_fabric import build_capability_admission_gate_from_env
 from gateway.capability_isolation import build_isolated_capability_executor_from_env
@@ -995,6 +1002,9 @@ def create_gateway_app(
     )
     plan_ledger = build_capability_plan_ledger_from_env(clock=_clock)
     capability_dispatcher = build_capability_dispatcher_from_platform(platform)
+    agentic_service_harness_read_model_source = AgenticServiceHarnessReadModelSource(
+        runtime_producer=AgenticServiceHarnessRuntimeReadModelProducer()
+    )
     if mcp_capability_entries and mcp_executor is not None:
         register_mcp_capabilities(
             capability_dispatcher,
@@ -1533,6 +1543,12 @@ def create_gateway_app(
             "sessions": session_mgr.summary(),
             "governed": True,
         }
+
+    @app.get("/api/v1/harness/status")
+    def agentic_service_harness_status():
+        return build_agentic_service_harness_status_projection(
+            read_model_source=agentic_service_harness_read_model_source,
+        )
 
     @app.get("/gateway/witness")
     def gateway_witness():
@@ -3734,6 +3750,7 @@ def create_gateway_app(
     app.state.observability_recorder = observability_recorder
     app.state.federated_control_plane = federated_control_plane
     app.state.verifier = verifier
+    app.state.agentic_service_harness_read_model_source = agentic_service_harness_read_model_source
 
     return app
 
