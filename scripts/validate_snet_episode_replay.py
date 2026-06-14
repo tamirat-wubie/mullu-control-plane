@@ -204,7 +204,11 @@ def validate_episode(episode: dict[str, Any], schema: dict[str, Any] | None = No
             errors.append(f"episode exposes raw field: {raw_key}")
 
     input_payload = _input_payload_from_episode(episode)
-    expected_input_digest = _sha256_json(input_payload)
+    try:
+        expected_input_digest = _sha256_json(input_payload)
+    except (TypeError, ValueError) as exc:
+        errors.append(f"replay input digest failed: {exc}")
+        return errors
     if episode["input_digest"] != expected_input_digest:
         errors.append("input_digest must match replay input payload")
     expected_episode_id = _episode_id_from_input_digest(expected_input_digest)

@@ -111,6 +111,22 @@ def test_snet_episode_malformed_answer_bindings_report_errors() -> None:
     assert episode["raw_answers_exposed"] is False
 
 
+def test_snet_episode_non_json_replay_inputs_report_errors() -> None:
+    schema = validator._load_schema(validator.DEFAULT_SCHEMA_PATH)
+    non_finite_episode = validator.build_sample_episode()
+    non_finite_episode["confidence"] = float("nan")
+    non_json_episode = validator.build_sample_episode()
+    non_json_episode["answer_bindings"]["depends_on"] = object()
+
+    non_finite_errors = validator.validate_episode(non_finite_episode, schema)
+    non_json_errors = validator.validate_episode(non_json_episode, schema)
+
+    assert any("replay input digest failed" in error for error in non_finite_errors)
+    assert any("Out of range float values" in error for error in non_finite_errors)
+    assert any("not JSON serializable" in error for error in non_json_errors)
+    assert non_finite_episode["raw_answers_exposed"] is False
+
+
 def test_snet_episode_saved_file_validation(tmp_path) -> None:
     episode_path = tmp_path / "snet_episode.json"
     episode_path.write_text(json.dumps(validator.build_sample_episode()), encoding="utf-8")
