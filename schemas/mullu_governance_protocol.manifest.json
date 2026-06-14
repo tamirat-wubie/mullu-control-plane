@@ -1361,6 +1361,12 @@
       "surface": "worker"
     },
     {
+      "schema_id": "read-only-worker-lease-preflight",
+      "path": "schemas/read_only_worker_lease_preflight.schema.json",
+      "urn": "urn:mullusi:schema:read-only-worker-lease-preflight:1",
+      "surface": "worker"
+    },
+    {
       "schema_id": "world-state",
       "path": "schemas/world_state.schema.json",
       "urn": "urn:mullusi:schema:world-state:1",

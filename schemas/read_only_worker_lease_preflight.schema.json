@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mullusi:schema:read-only-worker-lease-preflight:1",
+  "title": "Read-Only Worker Lease Preflight",
+  "description": "Foundation Mode contract that binds the selected read-only worker path to temporal lease preflight evidence while keeping runtime dispatch denied.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "preflight_id",
+    "preflight_version",
+    "binding_ref",
+    "selected_worker_path",
+    "tenant_id",
+    "actor_id",
+    "created_at",
+    "solver_outcome",
+    "authority_scope",
+    "lease_contract",
+    "dispatch_gate",
+    "receipt_refs",
+    "contract_summary",
+    "governance_refs",
+    "evidence_refs"
+  ],
+  "properties": {
+    "preflight_id": { "type": "string", "pattern": "^read-only-worker-lease-preflight-[a-z0-9-]+$" },
+    "preflight_version": { "type": "string", "const": "read_only_worker_lease_preflight.v1" },
+    "binding_ref": { "type": "string", "const": "examples/read_only_worker_binding.foundation.json" },
+    "selected_worker_path": { "type": "string", "const": "read_only_repo_inspection" },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "actor_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "solver_outcome": {
+      "type": "string",
+      "enum": ["SolvedVerified", "AwaitingEvidence", "GovernanceBlocked"]
+    },
+    "authority_scope": { "$ref": "#/$defs/authority_scope" },
+    "lease_contract": { "$ref": "#/$defs/lease_contract" },
+    "dispatch_gate": { "$ref": "#/$defs/dispatch_gate" },
+    "receipt_refs": { "$ref": "#/$defs/receipt_refs" },
+    "contract_summary": { "$ref": "#/$defs/contract_summary" },
+    "governance_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "evidence_refs": { "$ref": "#/$defs/non_empty_string_array" },
+    "metadata": { "type": "object", "additionalProperties": true }
+  },
+  "$defs": {
+    "authority_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only",
+        "runtime_dispatch_allowed",
+        "lease_preflight_required",
+        "external_network_allowed",
+        "secret_access_allowed",
+        "filesystem_write_allowed",
+        "connector_authority_allowed",
+        "terminal_closure_allowed",
+        "raw_output_retention_allowed",
+        "mfidel_atomicity_preserved"
+      ],
+      "properties": {
+        "read_only": { "type": "boolean", "const": true },
+        "runtime_dispatch_allowed": { "type": "boolean", "const": false },
+        "lease_preflight_required": { "type": "boolean", "const": true },
+        "external_network_allowed": { "type": "boolean", "const": false },
+        "secret_access_allowed": { "type": "boolean", "const": false },
+        "filesystem_write_allowed": { "type": "boolean", "const": false },
+        "connector_authority_allowed": { "type": "boolean", "const": false },
+        "terminal_closure_allowed": { "type": "boolean", "const": false },
+        "raw_output_retention_allowed": { "type": "boolean", "const": false },
+        "mfidel_atomicity_preserved": { "type": "boolean", "const": true }
+      }
+    },
+    "lease_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "worker_id",
+        "capability",
+        "operation_family",
+        "lease_policy_id",
+        "scope_id",
+        "allowed_resource_patterns",
+        "max_lease_seconds",
+        "renewal_grace_seconds",
+        "fencing_token_required",
+        "positive_sequence_required",
+        "runtime_clock_ref",
+        "temporal_lease_window_schema_ref"
+      ],
+      "properties": {
+        "worker_id": { "type": "string", "const": "worker_local_read_only_repo_inspection" },
+        "capability": { "type": "string", "const": "read_only_repo_inspection" },
+        "operation_family": { "type": "string", "const": "local_repo_inspection" },
+        "lease_policy_id": { "type": "string", "const": "lease-policy-read-only-repo-inspection-foundation" },
+        "scope_id": { "type": "string", "const": "scope-read-only-repo-inspection-local" },
+        "allowed_resource_patterns": { "$ref": "#/$defs/non_empty_string_array" },
+        "max_lease_seconds": { "type": "integer", "minimum": 1, "maximum": 120 },
+        "renewal_grace_seconds": { "type": "integer", "minimum": 0, "maximum": 120 },
+        "fencing_token_required": { "type": "boolean", "const": true },
+        "positive_sequence_required": { "type": "boolean", "const": true },
+        "runtime_clock_ref": { "type": "string", "const": "gateway.temporal_kernel.TrustedClock" },
+        "temporal_lease_window_schema_ref": {
+          "type": "string",
+          "const": "schemas/temporal_lease_window_receipt.schema.json"
+        }
+      }
+    },
+    "dispatch_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dispatch_admitted",
+        "foundation_mode",
+        "required_temporal_statuses",
+        "blocked_without_lease_receipt",
+        "missing_lease_reason",
+        "worker_failure_receipt_required_on_failure",
+        "terminal_closure_required"
+      ],
+      "properties": {
+        "dispatch_admitted": { "type": "boolean", "const": false },
+        "foundation_mode": { "type": "boolean", "const": true },
+        "required_temporal_statuses": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["lease_active", "lease_expiring"] }
+        },
+        "blocked_without_lease_receipt": { "type": "boolean", "const": true },
+        "missing_lease_reason": { "type": "string", "const": "lease_snapshot_required" },
+        "worker_failure_receipt_required_on_failure": { "type": "boolean", "const": true },
+        "terminal_closure_required": { "type": "boolean", "const": true }
+      }
+    },
+    "receipt_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only_worker_binding_schema",
+        "read_only_worker_lease_preflight_schema",
+        "temporal_lease_window_receipt_schema",
+        "worker_mesh_schema",
+        "worker_failure_receipt_schema"
+      ],
+      "properties": {
+        "read_only_worker_binding_schema": { "type": "string", "const": "schemas/read_only_worker_binding.schema.json" },
+        "read_only_worker_lease_preflight_schema": { "type": "string", "const": "schemas/read_only_worker_lease_preflight.schema.json" },
+        "temporal_lease_window_receipt_schema": { "type": "string", "const": "schemas/temporal_lease_window_receipt.schema.json" },
+        "worker_mesh_schema": { "type": "string", "const": "schemas/worker_mesh.schema.json" },
+        "worker_failure_receipt_schema": { "type": "string", "const": "schemas/worker_failure_receipt.schema.json" }
+      }
+    },
+    "contract_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_resource_pattern_count",
+        "required_temporal_status_count",
+        "receipt_ref_count",
+        "evidence_ref_count"
+      ],
+      "properties": {
+        "allowed_resource_pattern_count": { "type": "integer", "minimum": 1 },
+        "required_temporal_status_count": { "type": "integer", "minimum": 1 },
+        "receipt_ref_count": { "type": "integer", "const": 5 },
+        "evidence_ref_count": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "non_empty_string_array": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}
