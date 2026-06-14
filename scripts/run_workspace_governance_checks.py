@@ -156,8 +156,67 @@ def build_check_commands(python_executable: str = sys.executable) -> tuple[Check
             (python_executable, "scripts/validate_agentic_service_harness_read_model_integrity.py"),
         ),
         CheckCommand(
+            "agentic_service_harness_read_model_persistence",
+            (python_executable, "scripts/validate_agentic_service_harness_read_model_persistence.py"),
+        ),
+        CheckCommand(
+            "agentic_service_harness_read_only_status_route_design",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_read_only_status_route_design.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_read_only_status_route",
+            (python_executable, "scripts/validate_agentic_service_harness_read_only_status_route.py"),
+        ),
+        CheckCommand(
             "agentic_service_harness_authority_transitions",
             (python_executable, "scripts/validate_agentic_service_harness_authority_transitions.py"),
+        ),
+        CheckCommand(
+            "agentic_service_harness_live_task_run_producer_evidence",
+            (python_executable, "scripts/validate_agentic_service_harness_live_task_run_producer_evidence.py"),
+        ),
+        CheckCommand(
+            "agentic_service_harness_live_task_run_producer_rehearsal",
+            (python_executable, "scripts/validate_agentic_service_harness_live_task_run_producer_rehearsal.py"),
+        ),
+        CheckCommand(
+            "agentic_service_harness_live_producer_admission_gate",
+            (python_executable, "scripts/validate_agentic_service_harness_live_producer_admission_gate.py"),
+        ),
+        CheckCommand(
+            "agentic_service_harness_live_producer_witness_requirements",
+            (python_executable, "scripts/validate_agentic_service_harness_live_producer_witness_requirements.py"),
+        ),
+        CheckCommand(
+            "agentic_service_harness_live_producer_operator_approval_request",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_live_producer_operator_approval_request.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_live_producer_operator_response_witness",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_live_producer_operator_response_witness.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_live_producer_operator_decision_evidence",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_live_producer_operator_decision_evidence.py",
+            ),
+        ),
+        CheckCommand(
+            "agentic_service_harness_live_producer_operator_decision_record",
+            (
+                python_executable,
+                "scripts/validate_agentic_service_harness_live_producer_operator_decision_record.py",
+            ),
         ),
         CheckCommand(
             "foundation_operator_readiness_boundary",

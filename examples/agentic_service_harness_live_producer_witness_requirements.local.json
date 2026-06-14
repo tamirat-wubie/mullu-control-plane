@@ -1,0 +1,106 @@
+{
+  "requirements_id": "agentic-service-harness-live-producer-witness-requirements",
+  "schema_version": 1,
+  "generated_at": "2026-06-13T00:00:00Z",
+  "solver_outcome": "AwaitingEvidence",
+  "source_admission_gate_ref": "admission-gate://agentic-service-harness-live-producer-admission-gate",
+  "admission_decision": "blocked",
+  "planning_only": true,
+  "read_only": true,
+  "live_producer_implemented": false,
+  "report_is_not_terminal_closure": true,
+  "terminal_closure": false,
+  "scope": {
+    "tenant_id": "tenant-local-foundation",
+    "organization_id": "org-mullusi-foundation",
+    "project_id": "project-agentic-service-harness",
+    "repository_connection_id": "repo-mullu-control-plane",
+    "read_only": true
+  },
+  "witnesses": [
+    {
+      "witness_id": "witness.operator_approval",
+      "witness_kind": "operator_approval",
+      "required": true,
+      "status": "AwaitingEvidence",
+      "evidence_ref": "approval://operator-live-producer-approval-required",
+      "admission_effect": "blocks_live_producer",
+      "authority_granted": false,
+      "next_action": "Obtain explicit operator approval for live producer implementation."
+    },
+    {
+      "witness_id": "witness.effect_receipt",
+      "witness_kind": "effect_receipt",
+      "required": true,
+      "status": "AwaitingEvidence",
+      "evidence_ref": "receipt://agentic-service-harness/live-producer-effect-receipt-required",
+      "admission_effect": "blocks_live_producer",
+      "authority_granted": false,
+      "next_action": "Produce an effect receipt proving admitted live-producer side effects."
+    },
+    {
+      "witness_id": "witness.external_adapter_evidence",
+      "witness_kind": "external_adapter_evidence",
+      "required": true,
+      "status": "AwaitingEvidence",
+      "evidence_ref": "evidence://agentic-service-harness/external-adapter-live-evidence-required",
+      "admission_effect": "blocks_live_producer",
+      "authority_granted": false,
+      "next_action": "Validate external adapter evidence before any adapter execution."
+    },
+    {
+      "witness_id": "witness.secret_handoff",
+      "witness_kind": "secret_handoff",
+      "required": true,
+      "status": "AwaitingEvidence",
+      "evidence_ref": "secret-handoff://agentic-service-harness/live-producer-required",
+      "admission_effect": "blocks_live_producer",
+      "authority_granted": false,
+      "next_action": "Prepare a redacted secret handoff without serializing secret values."
+    },
+    {
+      "witness_id": "witness.rollback_proof",
+      "witness_kind": "rollback_proof",
+      "required": true,
+      "status": "AwaitingEvidence",
+      "evidence_ref": "rollback://agentic-service-harness/live-producer-required",
+      "admission_effect": "blocks_live_producer",
+      "authority_granted": false,
+      "next_action": "Produce rollback proof before live producer admission."
+    }
+  ],
+  "authority_denials": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "live_execution_authorized": false
+  },
+  "effect_boundary": {
+    "ui_created": false,
+    "mutation_endpoints_admitted": false,
+    "external_adapter_integrated": false,
+    "branch_write_enabled": false,
+    "pull_request_creation_enabled": false,
+    "deployment_enabled": false,
+    "dns_mutation_enabled": false,
+    "secret_mutation_enabled": false,
+    "destructive_operation_enabled": false,
+    "runtime_state_written": false,
+    "network_policy": "none"
+  },
+  "validators": [
+    {
+      "validator_id": "agentic-service-harness-live-producer-witness-requirements",
+      "command": "python scripts/validate_agentic_service_harness_live_producer_witness_requirements.py",
+      "required_for_closure": true
+    }
+  ],
+  "next_action": "Collect these five witnesses as separate governed evidence before revisiting live producer implementation."
+}

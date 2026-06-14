@@ -41,6 +41,48 @@
       "surface": "runtime"
     },
     {
+      "schema_id": "agentic-service-harness-live-task-run-producer-evidence",
+      "path": "schemas/agentic_service_harness_live_task_run_producer_evidence.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-task-run-producer-evidence:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "agentic-service-harness-live-producer-admission-gate",
+      "path": "schemas/agentic_service_harness_live_producer_admission_gate.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-admission-gate:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "agentic-service-harness-live-producer-witness-requirements",
+      "path": "schemas/agentic_service_harness_live_producer_witness_requirements.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-witness-requirements:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "agentic-service-harness-live-producer-operator-approval-request",
+      "path": "schemas/agentic_service_harness_live_producer_operator_approval_request.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-approval-request:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "agentic-service-harness-live-producer-operator-response-witness",
+      "path": "schemas/agentic_service_harness_live_producer_operator_response_witness.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-response-witness:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "agentic-service-harness-live-producer-operator-decision-evidence",
+      "path": "schemas/agentic_service_harness_live_producer_operator_decision_evidence.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-decision-evidence:1",
+      "surface": "runtime"
+    },
+    {
+      "schema_id": "agentic-service-harness-live-producer-operator-decision-record",
+      "path": "schemas/agentic_service_harness_live_producer_operator_decision_record.schema.json",
+      "urn": "urn:mullusi:schema:agentic-service-harness-live-producer-operator-decision-record:1",
+      "surface": "runtime"
+    },
+    {
       "schema_id": "agent-identity",
       "path": "schemas/agent_identity.schema.json",
       "urn": "urn:mullusi:schema:agent-identity:1",

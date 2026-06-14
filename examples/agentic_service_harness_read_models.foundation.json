@@ -117,17 +117,23 @@
         ]
       },
       "commands_run_refs": [
-        "command://validator/agentic-service-harness-read-models"
+        "command://validator/agentic-service-harness-read-models",
+        "command://validator/agentic-service-harness-read-model-persistence",
+        "command://validator/agentic-service-harness-read-only-status-route-design",
+        "command://validator/agentic-service-harness-read-only-status-route"
       ],
       "tests_run_refs": [
-        "test://pytest/test-agentic-service-harness-read-models"
+        "test://pytest/test-agentic-service-harness-read-models",
+        "test://pytest/test-agentic-service-harness-read-model-persistence",
+        "test://pytest/test-agentic-service-harness-read-only-status-route-design",
+        "test://pytest/test-agentic-service-harness-read-only-status-route"
       ],
       "policy_result": "allowed_read_only",
       "risk_level": "low",
       "evidence_refs": [
         "evidence://agentic-service-harness/read-model-foundation"
       ],
-      "next_action": "Add fixture projection PR after schema review.",
+      "next_action": "Serve the runtime-local producer projection; use this fixture only as fallback evidence.",
       "read_only": true,
       "receipt_is_not_terminal_closure": true,
       "terminal_closure": false,
@@ -139,13 +145,20 @@
       "bundle_id": "evidence-read-model-foundation",
       "run_id": "run-read-model-foundation",
       "evidence_refs": [
-        "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_MODEL_BINDING_PLAN.md"
+        "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_MODEL_BINDING_PLAN.md",
+        "MULLUSI_AGENTIC_SERVICE_HARNESS_READ_ONLY_STATUS_ROUTE_DESIGN.md"
       ],
       "command_log_refs": [
-        "command://validator/agentic-service-harness-read-models"
+        "command://validator/agentic-service-harness-read-models",
+        "command://validator/agentic-service-harness-read-model-persistence",
+        "command://validator/agentic-service-harness-read-only-status-route-design",
+        "command://validator/agentic-service-harness-read-only-status-route"
       ],
       "test_log_refs": [
-        "test://pytest/test-agentic-service-harness-read-models"
+        "test://pytest/test-agentic-service-harness-read-models",
+        "test://pytest/test-agentic-service-harness-read-model-persistence",
+        "test://pytest/test-agentic-service-harness-read-only-status-route-design",
+        "test://pytest/test-agentic-service-harness-read-only-status-route"
       ],
       "diff_refs": [
         "diff://none/read-only-projection"
@@ -164,14 +177,13 @@
       "summary_id": "summary-read-model-foundation",
       "run_id": "run-read-model-foundation",
       "outcome": "AwaitingEvidence",
-      "user_visible_status": "Read-only schema contract available; fixture projection and persistence rehearsal still pending.",
+      "user_visible_status": "Read-only schema, fixture projection, integrity, persistence rehearsal, route design, static status route, and runtime source binding are available; this fallback fixture is pending when the runtime-local producer is unavailable.",
       "changed_file_count": 0,
       "tests_status": "not_run",
       "blockers": [
-        "fixture_projection_pending",
-        "local_persistence_rehearsal_pending"
+        "runtime_read_model_source_pending"
       ],
-      "next_action": "Add read-only fixture projection validator.",
+      "next_action": "Restore the runtime-local producer projection before route closure.",
       "read_only": true,
       "terminal_closure": false
     }
@@ -209,9 +221,24 @@
       "validator_id": "agentic-service-harness-read-models",
       "command": "python scripts/validate_agentic_service_harness_read_models.py --strict",
       "required_for_closure": true
+    },
+    {
+      "validator_id": "agentic-service-harness-read-model-persistence",
+      "command": "python scripts/validate_agentic_service_harness_read_model_persistence.py",
+      "required_for_closure": true
+    },
+    {
+      "validator_id": "agentic-service-harness-read-only-status-route-design",
+      "command": "python scripts/validate_agentic_service_harness_read_only_status_route_design.py",
+      "required_for_closure": true
+    },
+    {
+      "validator_id": "agentic-service-harness-read-only-status-route",
+      "command": "python scripts/validate_agentic_service_harness_read_only_status_route.py",
+      "required_for_closure": true
     }
   ],
-  "next_action": "Add read-only fixture projections in a separate PR.",
+  "next_action": "Serve the runtime-local producer projection; use this fixture only as fallback evidence.",
   "report_is_not_terminal_closure": true,
   "terminal_closure_required": true
 }
